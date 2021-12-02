@@ -474,7 +474,6 @@ open class PlaybackService : Service() {
 	private var playbackState: ChangePlaybackState? = null
 	private var playlistPosition: ChangePlaylistPosition? = null
 	private var playbackQueues: PreparedPlaybackQueueResourceManagement? = null
-	private var positionedPlayingFile: PositionedPlayingFile? = null
 	private var filePositionSubscription: Disposable? = null
 	private var playlistPlaybackBootstrapper: PlaylistPlaybackBootstrapper? = null
 	private var remoteControlProxy: RemoteControlProxy? = null
@@ -829,18 +828,7 @@ open class PlaybackService : Service() {
 
 	private fun handlePlaybackPaused() {
 		isMarkedForPlay = false
-		positionedPlayingFile?.also { file ->
-			selectedLibraryIdentifierProvider.selectedLibraryId.then {
-				it?.also { libraryId ->
-					playbackBroadcaster
-						.sendPlaybackBroadcast(
-							PlaylistEvents.onPlaylistPause,
-							libraryId,
-							file.asPositionedFile()
-						)
-				}
-			}
-		}
+		playbackBroadcaster.sendPlaybackBroadcast(PlaylistEvents.onPlaylistPause)
 
 		filePositionSubscription?.dispose()
 	}
@@ -959,8 +947,6 @@ open class PlaybackService : Service() {
 	}
 
 	private fun changePositionedPlaybackFile(positionedPlayingFile: PositionedPlayingFile) {
-		this.positionedPlayingFile = positionedPlayingFile
-
 		val playingFile = positionedPlayingFile.playingFile
 		filePositionSubscription?.dispose()
 
@@ -1026,17 +1012,7 @@ open class PlaybackService : Service() {
 	}
 
 	private fun onPlaylistPlaybackComplete() {
-		selectedLibraryIdentifierProvider.selectedLibraryId.then {
-			it?.also { libraryId ->
-				positionedPlayingFile?.asPositionedFile()?.also { positionedFile ->
-					playbackBroadcaster.sendPlaybackBroadcast(
-						PlaylistEvents.onPlaylistStop,
-						libraryId,
-						positionedFile
-					)
-				}
-			}
-		}
+		playbackBroadcaster.sendPlaybackBroadcast(PlaylistEvents.onPlaylistStop)
 		isMarkedForPlay = false
 		stopSelf(startId)
 	}
