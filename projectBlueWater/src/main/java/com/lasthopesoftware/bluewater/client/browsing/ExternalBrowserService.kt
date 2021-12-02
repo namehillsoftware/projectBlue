@@ -14,10 +14,13 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.p
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.*
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertyCache
+import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
+import com.lasthopesoftware.bluewater.client.browsing.library.access.SpecificLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRevisionProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.views.access.CachedLibraryViewsProvider
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
+import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRateLimiter
@@ -36,12 +39,12 @@ class ExternalBrowserService : MediaBrowserServiceCompat() {
 		const val serviceFileMediaIdPrefix = "sf:"
 		const val itemFileMediaIdPrefix = "it:"
 		private const val playlistFileMediaIdPrefix = "pl:"
-
 		private val rateLimiter by lazy { PromisingRateLimiter<Map<String, String>>(max(Runtime.getRuntime().availableProcessors() - 1, 1)) }
 
 		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(ExternalBrowserService::class.java) }
 
 		private val root by lazy { magicPropertyBuilder.buildProperty("root") }
+		private val recentRoot by lazy { magicPropertyBuilder.buildProperty("recentRoot") }
 		private val rejection by lazy { magicPropertyBuilder.buildProperty("rejection") }
 		val error by lazy { magicPropertyBuilder.buildProperty("error") }
 
@@ -87,8 +90,31 @@ class ExternalBrowserService : MediaBrowserServiceCompat() {
 		}
 	}
 
+	private val selectedLibraryIdProvider by lazy { SelectedBrowserLibraryIdentifierProvider(getApplicationSettingsRepository()) }
+
+	private val nowPlayingRepository by lazy {
+		val libraryRepository = LibraryRepository(this)
+		selectedLibraryIdProvider.selectedLibraryId
+			.then { l ->
+				NowPlayingRepository(
+					SpecificLibraryProvider(l!!, libraryRepository),
+					libraryRepository)
+			}
+	}
+
 	override fun onGetRoot(clientPackageName: String, clientUid: Int, rootHints: Bundle?): BrowserRoot? {
 		if (!packageValidator.isKnownCaller(clientPackageName, clientUid)) return null
+
+		rootHints?.let {
+			if (it.getBoolean(BrowserRoot.EXTRA_RECENT)) {
+				// Return a tree with a single playable media item for resumption.
+				val extras = Bundle().apply {
+					putBoolean(BrowserRoot.EXTRA_RECENT, true)
+				}
+				return BrowserRoot(recentRoot, extras)
+			}
+		}
+
 
 		val bundle = Bundle().apply {
 			putBoolean(mediaSearchSupported, true)
@@ -103,6 +129,16 @@ class ExternalBrowserService : MediaBrowserServiceCompat() {
 		}
 
 		result.detach()
+
+		if (parentId == recentRoot) {
+			nowPlayingRepository
+				.eventually { np -> np.nowPlaying }
+				.eventually { np -> promiseMediaItem(np.playlist[np.playlistPosition]) }
+				.then { mi -> result.sendResult(mutableListOf(mi)) }
+				.excuse { e -> result.sendError(Bundle().apply { putString(error, e.message) }) }
+			return
+		}
+
 		browserLibraryIdProvider
 			.selectedLibraryId
 			.eventually { maybeId ->

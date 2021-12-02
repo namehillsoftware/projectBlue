@@ -57,11 +57,7 @@ class MediaSessionBroadcaster(
 		capabilities = PlaybackState.ACTION_PLAY or standardCapabilities
 		builder.setActions(capabilities)
 		playbackState = PlaybackState.STATE_PAUSED
-		builder.setState(
-			playbackState,
-			trackPosition,
-			playbackSpeed
-		)
+		builder.setState(playbackState, trackPosition, playbackSpeed)
 		mediaSession.setPlaybackState(builder.build())
 		updateClientBitmap(null)
 	}
