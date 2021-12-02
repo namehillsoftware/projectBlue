@@ -24,6 +24,7 @@ import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.No
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRateLimiter
+import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.resources.PackageValidator
 import com.namehillsoftware.handoff.promises.Promise
@@ -95,10 +96,13 @@ class ExternalBrowserService : MediaBrowserServiceCompat() {
 	private val nowPlayingRepository by lazy {
 		val libraryRepository = LibraryRepository(this)
 		selectedLibraryIdProvider.selectedLibraryId
-			.then { l ->
-				NowPlayingRepository(
-					SpecificLibraryProvider(l!!, libraryRepository),
-					libraryRepository)
+			.then {
+				it?.let { l ->
+					NowPlayingRepository(
+						SpecificLibraryProvider(l, libraryRepository),
+						libraryRepository
+					)
+				}
 			}
 	}
 
@@ -132,9 +136,9 @@ class ExternalBrowserService : MediaBrowserServiceCompat() {
 
 		if (parentId == recentRoot) {
 			nowPlayingRepository
-				.eventually { np -> np.nowPlaying }
-				.eventually { np -> promiseMediaItem(np.playlist[np.playlistPosition]) }
-				.then { mi -> result.sendResult(mutableListOf(mi)) }
+				.eventually { np -> np?.nowPlaying.keepPromise() }
+				.eventually { it?.let { np -> promiseMediaItem(np.playlist[np.playlistPosition]) } ?: Promise.empty() }
+				.then { it?.also { mi -> result.sendResult(mutableListOf(mi)) } }
 				.excuse { e -> result.sendError(Bundle().apply { putString(error, e.message) }) }
 			return
 		}
