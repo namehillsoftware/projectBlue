@@ -1,20 +1,9 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.menu.handlers.access;
+package com.lasthopesoftware.bluewater.client.browsing.items.menu.handlers.access
 
-import android.content.Context;
+import android.content.Context
+import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Companion.launchMusicService
+import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 
-import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
-import com.namehillsoftware.handoff.promises.response.ImmediateResponse;
-
-public final class OnGetFileStringListForClickCompleteListener implements ImmediateResponse<String, Void> {
-    private final Context mContext;
-
-    public OnGetFileStringListForClickCompleteListener(final Context context) {
-        mContext = context;
-    }
-
-    @Override
-    public Void respond(String result) {
-        PlaybackService.launchMusicService(mContext, result);
-        return null;
-    }
+class OnGetFileStringListForClickCompleteListener(private val context: Context) : ImmediateResponse<String?, Unit> {
+    override fun respond(result: String?) = launchMusicService(context, result)
 }

@@ -33,8 +33,8 @@ class ExternalBrowserService : MediaBrowserServiceCompat() {
 		private const val contentStyleBrowsableHint = "android.media.browse.CONTENT_STYLE_BROWSABLE_HINT"
 		private const val contentStylePlayableHint = "android.media.browse.CONTENT_STYLE_PLAYABLE_HINT"
 		private const val contentStyleSupport = "android.media.browse.CONTENT_STYLE_SUPPORTED"
-		private const val serviceFileMediaIdPrefix = "sf:"
-		private const val itemFileMediaIdPrefix = "it:"
+		const val serviceFileMediaIdPrefix = "sf:"
+		const val itemFileMediaIdPrefix = "it:"
 		private const val playlistFileMediaIdPrefix = "pl:"
 
 		private val rateLimiter by lazy { PromisingRateLimiter<Map<String, String>>(max(Runtime.getRuntime().availableProcessors() - 1, 1)) }
@@ -134,17 +134,13 @@ class ExternalBrowserService : MediaBrowserServiceCompat() {
 	}
 
 	override fun onLoadItem(itemId: String?, result: Result<MediaBrowserCompat.MediaItem>) {
-		val itemIdParts = itemId?.split(':')
-		if (itemIdParts == null || itemIdParts.size < 2) {
-			result.sendResult(null)
-			return
-		}
+		val itemIdParts = itemId?.split(':', limit = 2)
+		if (itemIdParts == null || itemIdParts.size < 2) return super.onLoadItem(itemId, result)
+
 		val type = itemIdParts[0]
-		val id = itemIdParts[1].toIntOrNull()
-		if (id == null || type != serviceFileMediaIdPrefix) {
-			result.sendResult(null)
-			return
-		}
+		if (type != serviceFileMediaIdPrefix) return super.onLoadItem(itemId, result)
+
+		val id = itemIdParts[1].toIntOrNull() ?: return super.onLoadItem(itemId, result)
 
 		result.detach()
 
