@@ -107,7 +107,7 @@ class ExternalBrowserService : MediaBrowserServiceCompat() {
 	}
 
 	override fun onGetRoot(clientPackageName: String, clientUid: Int, rootHints: Bundle?): BrowserRoot? {
-		if (!packageValidator.isKnownCaller(clientPackageName, clientUid)) return null
+//		if (!packageValidator.isKnownCaller(clientPackageName, clientUid)) return null
 
 		rootHints?.let {
 			if (it.getBoolean(BrowserRoot.EXTRA_RECENT)) {
