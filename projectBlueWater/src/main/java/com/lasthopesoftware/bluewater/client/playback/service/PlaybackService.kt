@@ -6,9 +6,11 @@ import android.app.Service
 import android.content.*
 import android.media.AudioManager
 import android.media.MediaPlayer
-import android.os.*
+import android.os.Build
+import android.os.Handler
+import android.os.PowerManager
 import android.os.PowerManager.WakeLock
-import android.support.v4.media.session.MediaSessionCompat
+import android.os.Process
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
@@ -22,8 +24,6 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.audio.AudioCac
 import com.lasthopesoftware.bluewater.client.browsing.items.media.audio.uri.CachedAudioFileUriProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFileUriQueryParamsProvider
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListUtilities
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.access.CachedFilesProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.disk.AndroidDiskCacheDirectoryProvider
@@ -48,7 +48,6 @@ import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService.Companion.pollSessionConnection
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.BuildingSessionConnectionStatus
-import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionSettingsChangeReceiver
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.engine.*
@@ -78,7 +77,6 @@ import com.lasthopesoftware.bluewater.client.playback.service.notification.build
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.NowPlayingNotificationBuilder
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.PlaybackStartingNotificationBuilder
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.AudioBecomingNoisyReceiver
-import com.lasthopesoftware.bluewater.client.playback.service.receivers.MediaSessionCallbackReceiver
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.RemoteControlReceiver
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.RemoteControlProxy
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.connected.MediaSessionBroadcaster
@@ -94,7 +92,7 @@ import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicat
 import com.lasthopesoftware.bluewater.settings.volumeleveling.VolumeLevelSettings
 import com.lasthopesoftware.bluewater.shared.GenericBinder
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
-import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder.Companion.buildMagicPropertyName
+import com.lasthopesoftware.bluewater.shared.android.MediaSession.MediaSessionService
 import com.lasthopesoftware.bluewater.shared.android.audiofocus.AudioFocusManagement
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.notifications.NoOpChannelActivator
@@ -102,6 +100,7 @@ import com.lasthopesoftware.bluewater.shared.android.notifications.NotificationB
 import com.lasthopesoftware.bluewater.shared.android.notifications.control.NotificationsController
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.NotificationChannelActivator
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.SharedChannelProperties
+import com.lasthopesoftware.bluewater.shared.android.services.promiseBoundService
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToaster
 import com.lasthopesoftware.bluewater.shared.makePendingIntentImmutable
 import com.lasthopesoftware.bluewater.shared.observables.toMaybeObservable
@@ -132,7 +131,6 @@ open class PlaybackService : Service() {
 
 	companion object {
 		private val logger = LoggerFactory.getLogger(PlaybackService::class.java)
-		private val mediaSessionTag = buildMagicPropertyName(PlaybackService::class.java, "mediaSessionTag")
 
 		private const val playingNotificationId = 42
 		private const val connectingNotificationId = 70
@@ -255,42 +253,13 @@ open class PlaybackService : Service() {
 				PendingIntent.FLAG_UPDATE_CURRENT.makePendingIntentImmutable())
 
 		@JvmStatic
-		fun promiseIsMarkedForPlay(context: Context): Promise<Boolean> {
-			val promiseConnectedService = object : Promise<PlaybackServiceHolder>() {
-				init {
-					try {
-						context.bindService(Intent(context, PlaybackService::class.java), object : ServiceConnection {
-							override fun onServiceConnected(name: ComponentName?, service: IBinder) {
-								resolve(PlaybackServiceHolder(
-									(service as GenericBinder<*>).service as PlaybackService,
-									this))
-							}
-
-							override fun onServiceDisconnected(name: ComponentName?) {}
-
-							override fun onBindingDied(name: ComponentName?) {
-								reject(BindingUnexpectedlyDiedException(PlaybackService::class.java))
-							}
-
-							override fun onNullBinding(name: ComponentName?) {
-								resolve(PlaybackServiceHolder(
-									null,
-									this))
-							}
-						}, Context.BIND_AUTO_CREATE)
-					} catch (err: Throwable) {
-						reject(err)
-					}
-				}
-			}
-
-			return promiseConnectedService
+		fun promiseIsMarkedForPlay(context: Context): Promise<Boolean> =
+			context.promiseBoundService<PlaybackService>()
 				.then { h ->
-					val isPlaying = h.playbackService?.isMarkedForPlay ?: false
+					val isPlaying = h.service?.isMarkedForPlay ?: false
 					context.unbindService(h.serviceConnection)
 					isPlaying
 				}
-		}
 
 		private fun getNewSelfIntent(context: Context, action: String): Intent {
 			val newIntent = Intent(context, PlaybackService::class.java)
@@ -339,8 +308,6 @@ open class PlaybackService : Service() {
 			}
 			return intentFilter
 		}
-
-		private class PlaybackServiceHolder(val playbackService: PlaybackService?, val serviceConnection: ServiceConnection)
 	}
 
 	/* End streamer intent helpers */
@@ -351,23 +318,7 @@ open class PlaybackService : Service() {
 	private val audioManagerLazy = lazy { getSystemService(AUDIO_SERVICE) as AudioManager }
 	private val localBroadcastManagerLazy = lazy { LocalBroadcastManager.getInstance(this) }
 	private val remoteControlReceiver = lazy { ComponentName(packageName, RemoteControlReceiver::class.java.name) }
-	private val lazyMediaSession = lazy {
-		val newMediaSession = MediaSessionCompat(this, mediaSessionTag)
-		newMediaSession.setCallback(
-			MediaSessionCallbackReceiver(
-				this,
-				FileListParameters.getInstance(),
-				FileStringListProvider(SelectedConnectionProvider(this))
-			)
-		)
 
-		val mediaButtonIntent = Intent(Intent.ACTION_MEDIA_BUTTON)
-		mediaButtonIntent.component = remoteControlReceiver.value
-
-		val mediaPendingIntent = PendingIntent.getBroadcast(this, 0, mediaButtonIntent, 0.makePendingIntentImmutable())
-		newMediaSession.setMediaButtonReceiver(mediaPendingIntent)
-		newMediaSession
-	}
 	private val lazyMessageBus = lazy { MessageBus(localBroadcastManagerLazy.value) }
 	private val playbackBroadcaster by lazy { LocalPlaybackBroadcaster(lazyMessageBus.value) }
 	private val applicationSettings by lazy { getApplicationSettingsRepository() }
@@ -382,12 +333,22 @@ open class PlaybackService : Service() {
 			val channelName = notificationChannelActivator.activateChannel(channelConfiguration)
 			NotificationsConfiguration(channelName, playingNotificationId)
 		}
+
+	private val lazyMediaSessionService = lazy { promiseBoundService<MediaSessionService>() }
+
+	private val promisedMediaSession by lazy { lazyMediaSessionService.value.then { c -> c.service?.mediaSession } }
+
 	private val mediaStyleNotificationSetup by lazy {
-			MediaStyleNotificationSetup(
-				this,
-				NotificationBuilderProducer(this),
-				playbackNotificationsConfiguration,
-				lazyMediaSession.value)
+			promisedMediaSession.then {
+				it?.let { mediaSession ->
+					MediaStyleNotificationSetup(
+						this,
+						NotificationBuilderProducer(this),
+						playbackNotificationsConfiguration,
+						mediaSession
+					)
+				}
+			}
 		}
 	private val playbackThread = lazy {
 			HandlerThreadCreator.promiseNewHandlerThread(
@@ -395,12 +356,17 @@ open class PlaybackService : Service() {
 				Process.THREAD_PRIORITY_AUDIO)
 		}
 	private val playbackHandler = lazy { playbackThread.value.then { h -> Handler(h.looper) } }
-	private val lazyPlaybackStartingNotificationBuilder = lazy {
-		PlaybackStartingNotificationBuilder(
-			this,
-			NotificationBuilderProducer(this),
-			playbackNotificationsConfiguration,
-			lazyMediaSession.value)
+	private val playbackStartingNotificationBuilder by lazy {
+		promisedMediaSession.then {
+			it?.let { mediaSession ->
+				PlaybackStartingNotificationBuilder(
+					this,
+					NotificationBuilderProducer(this),
+					playbackNotificationsConfiguration,
+					mediaSession
+				)
+			}
+		}
 	}
 	private val selectedLibraryProvider by lazy {
 		SelectedBrowserLibraryProvider(
@@ -487,10 +453,6 @@ open class PlaybackService : Service() {
 		if (!isMarkedForPlay) lazyNotificationController.value.removeNotification(playingNotificationId)
 	}
 
-	private fun registerRemoteClientControl() {
-		lazyMediaSession.value.isActive = true
-	}
-
 	private fun registerListeners() {
 		wakeLock = (getSystemService(POWER_SERVICE) as PowerManager).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK or PowerManager.ON_AFTER_RELEASE, MediaPlayer::class.java.name)
 		wakeLock?.acquire()
@@ -510,7 +472,6 @@ open class PlaybackService : Service() {
 
 	/* Begin Event Handlers */
 	override fun onCreate() {
-		registerRemoteClientControl()
 		val playbackHaltingIntentFilter = IntentFilter()
 		playbackHaltingIntentFilter.addAction(PlaybackEngineTypeChangedBroadcaster.playbackEngineTypeChanged)
 		playbackHaltingIntentFilter.addAction(BrowserLibrarySelection.libraryChosenEvent)
@@ -662,45 +623,65 @@ open class PlaybackService : Service() {
 			val imageProvider = CachedImageProvider.getInstance(this)
 
 			remoteControlProxy?.also(localBroadcastManagerLazy.value::unregisterReceiver)
-			val broadcaster = MediaSessionBroadcaster(
-				this,
-				cachedSessionFilePropertiesProvider,
-				imageProvider,
-				lazyMediaSession.value)
-			remoteControlProxy = RemoteControlProxy(broadcaster)
-				.also { rcp ->
-					localBroadcastManagerLazy
-						.value
-						.registerReceiver(
-							rcp,
-							buildRemoteControlProxyIntentFilter(rcp))
-				}
 
-			NowPlayingNotificationBuilder(
-				this,
-				mediaStyleNotificationSetup,
-				connectionProvider,
-				cachedSessionFilePropertiesProvider,
-				imageProvider)
-				.also {
-					playbackEngineCloseables.manage(it)
-					nowPlayingNotificationBuilder = it
+			val promisedMediaBroadcaster = promisedMediaSession.then { mediaSession ->
+				mediaSession?.also {
+					val broadcaster = MediaSessionBroadcaster(
+						this,
+						cachedSessionFilePropertiesProvider,
+						imageProvider,
+						mediaSession)
+					remoteControlProxy = RemoteControlProxy(broadcaster)
+						.also { rcp ->
+							localBroadcastManagerLazy
+								.value
+								.registerReceiver(
+									rcp,
+									buildRemoteControlProxyIntentFilter(rcp))
+						}
 				}
-				.let { builder ->
-					playbackNotificationRouter?.also(localBroadcastManagerLazy.value::unregisterReceiver)
-					PlaybackNotificationRouter(PlaybackNotificationBroadcaster(
-						lazyNotificationController.value,
-						playbackNotificationsConfiguration,
-						builder,
-						lazyPlaybackStartingNotificationBuilder.value))
-				}
-				.also { router ->
-					playbackNotificationRouter = router
+			}
 
-					localBroadcastManagerLazy
-						.value
-						.registerReceiver(router, buildNotificationRouterIntentFilter(router))
-				}
+			val promisedMediaNotificationSetup = mediaStyleNotificationSetup.then { s ->
+				s
+					?.let { mediaStyleNotificationSetup ->
+						NowPlayingNotificationBuilder(
+							this,
+							mediaStyleNotificationSetup,
+							connectionProvider,
+							cachedSessionFilePropertiesProvider,
+							imageProvider
+						)
+					}
+					?.also {
+						playbackEngineCloseables.manage(it)
+						nowPlayingNotificationBuilder = it
+					}
+					?.let { builder ->
+						playbackNotificationRouter?.also(localBroadcastManagerLazy.value::unregisterReceiver)
+						playbackStartingNotificationBuilder.then { b ->
+							b?.let { playbackStartingNotificationBuilder ->
+								PlaybackNotificationRouter(
+									PlaybackNotificationBroadcaster(
+										lazyNotificationController.value,
+										playbackNotificationsConfiguration,
+										builder,
+										playbackStartingNotificationBuilder
+									)
+								)
+							}
+						}
+					}
+					?.then { router ->
+						router?.also {
+							playbackNotificationRouter = router
+
+							localBroadcastManagerLazy
+								.value
+								.registerReceiver(router, buildNotificationRouterIntentFilter(router))
+						}
+					}
+			}
 
 			val cacheConfiguration = AudioCacheConfiguration(library)
 
@@ -729,7 +710,7 @@ open class PlaybackService : Service() {
 							false),
 						remoteFileUriProvider)
 
-					playbackHandler.value.then { ph ->
+					val promisedPreparationSourceProvider = playbackHandler.value.then { ph ->
 						val playbackEngineBuilder = PreparedPlaybackQueueFeederBuilder(
 							this,
 							ph,
@@ -745,6 +726,10 @@ open class PlaybackService : Service() {
 							playbackEngineBuilder.build(library),
 							MaxFileVolumeProvider(volumeLevelSettings, cachedSessionFilePropertiesProvider))
 					}
+
+					Promise
+						.whenAll(promisedMediaBroadcaster.unitResponse(), promisedMediaNotificationSetup.unitResponse())
+						.eventually { promisedPreparationSourceProvider }
 				}
 			}
 			.then { preparationSourceProvider ->
@@ -984,7 +969,6 @@ open class PlaybackService : Service() {
 		filePositionSubscription = localSubscription
 
 		if (!areListenersRegistered) registerListeners()
-		registerRemoteClientControl()
 	}
 
 	private fun broadcastResetPlaylist(positionedFile: PositionedFile) {
@@ -1026,16 +1010,12 @@ open class PlaybackService : Service() {
 
 		if (areListenersRegistered) unregisterListeners()
 
-		if (remoteControlReceiver.isInitialized()) audioManagerLazy.value.unregisterMediaButtonEventReceiver(remoteControlReceiver.value)
 		if (playbackThread.isInitialized()) playbackThread.value.then { it.quitSafely() }
-
-		if (lazyMediaSession.isInitialized()) {
-			lazyMediaSession.value.isActive = false
-			lazyMediaSession.value.release()
-		}
 
 		filePositionSubscription?.dispose()
 		cache?.release()
+
+		if (lazyMediaSessionService.isInitialized()) lazyMediaSessionService.value.then { unbindService(it.serviceConnection) }
 
 		if (lazyObservationScheduler.isInitialized()) lazyObservationScheduler.value.shutdown()
 

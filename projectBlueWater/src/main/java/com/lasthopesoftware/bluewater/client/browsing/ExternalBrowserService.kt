@@ -23,6 +23,8 @@ import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnect
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
+import com.lasthopesoftware.bluewater.shared.android.MediaSession.MediaSessionService
+import com.lasthopesoftware.bluewater.shared.android.services.promiseBoundService
 import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRateLimiter
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
@@ -106,8 +108,19 @@ class ExternalBrowserService : MediaBrowserServiceCompat() {
 			}
 	}
 
+	private val lazyMediaSessionService = lazy { promiseBoundService<MediaSessionService>() }
+
+	override fun onCreate() {
+		lazyMediaSessionService.value.then { s ->
+			s.service?.mediaSession?.also { session ->
+				sessionToken = session.sessionToken
+			}
+		}
+		super.onCreate()
+	}
+
 	override fun onGetRoot(clientPackageName: String, clientUid: Int, rootHints: Bundle?): BrowserRoot? {
-//		if (!packageValidator.isKnownCaller(clientPackageName, clientUid)) return null
+		if (!packageValidator.isKnownCaller(clientPackageName, clientUid)) return null
 
 		rootHints?.let {
 			if (it.getBoolean(BrowserRoot.EXTRA_RECENT)) {
@@ -118,7 +131,6 @@ class ExternalBrowserService : MediaBrowserServiceCompat() {
 				return BrowserRoot(recentRoot, extras)
 			}
 		}
-
 
 		val bundle = Bundle().apply {
 			putBoolean(mediaSearchSupported, true)
@@ -217,4 +229,9 @@ class ExternalBrowserService : MediaBrowserServiceCompat() {
 					MediaBrowserCompat.MediaItem.FLAG_PLAYABLE
 				)
 			}
+
+	override fun onDestroy() {
+		if (lazyMediaSessionService.isInitialized()) lazyMediaSessionService.value.then { unbindService(it.serviceConnection) }
+		super.onDestroy()
+	}
 }

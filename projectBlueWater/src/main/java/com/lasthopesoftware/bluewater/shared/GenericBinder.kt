@@ -1,21 +1,9 @@
-package com.lasthopesoftware.bluewater.shared;
+package com.lasthopesoftware.bluewater.shared
 
-import android.app.Service;
-import android.os.Binder;
+import android.app.Service
+import android.os.Binder
 
 /**
  * Created by david on 8/19/15.
  */
-public class GenericBinder<TService extends Service> extends Binder {
-	private final TService service;
-
-	public GenericBinder(TService service) {
-		super();
-
-		this.service = service;
-	}
-
-	public TService getService() {
-		return service;
-	}
-}
+class GenericBinder<TService : Service?>(val service: TService) : Binder()
