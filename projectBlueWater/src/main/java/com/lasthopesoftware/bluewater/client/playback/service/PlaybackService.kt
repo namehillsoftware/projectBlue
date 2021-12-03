@@ -642,7 +642,7 @@ open class PlaybackService : Service() {
 				}
 			}
 
-			val promisedMediaNotificationSetup = mediaStyleNotificationSetup.then { s ->
+			val promisedMediaNotificationSetup = mediaStyleNotificationSetup.eventually { s ->
 				s
 					?.let { mediaStyleNotificationSetup ->
 						NowPlayingNotificationBuilder(
@@ -681,6 +681,7 @@ open class PlaybackService : Service() {
 								.registerReceiver(router, buildNotificationRouterIntentFilter(router))
 						}
 					}
+					.keepPromise()
 			}
 
 			val cacheConfiguration = AudioCacheConfiguration(library)
