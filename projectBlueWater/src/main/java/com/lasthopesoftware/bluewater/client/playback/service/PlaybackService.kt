@@ -334,9 +334,9 @@ open class PlaybackService : Service() {
 			NotificationsConfiguration(channelName, playingNotificationId)
 		}
 
-	private val lazyMediaSessionService = lazy { promiseBoundService<MediaSessionService>() }
+	private val lazyMediaSessionService = com.namehillsoftware.lazyj.Lazy { promiseBoundService<MediaSessionService>() }
 
-	private val promisedMediaSession by lazy { lazyMediaSessionService.value.then { c -> c.service?.mediaSession } }
+	private val promisedMediaSession by lazy { lazyMediaSessionService.getObject().then { c -> c.service?.mediaSession } }
 
 	private val mediaStyleNotificationSetup by lazy {
 			promisedMediaSession.then {
@@ -1016,7 +1016,7 @@ open class PlaybackService : Service() {
 		filePositionSubscription?.dispose()
 		cache?.release()
 
-		if (lazyMediaSessionService.isInitialized()) lazyMediaSessionService.value.then { unbindService(it.serviceConnection) }
+		if (lazyMediaSessionService.isCreated) lazyMediaSessionService.getObject().then { unbindService(it.serviceConnection) }
 
 		if (lazyObservationScheduler.isInitialized()) lazyObservationScheduler.value.shutdown()
 
