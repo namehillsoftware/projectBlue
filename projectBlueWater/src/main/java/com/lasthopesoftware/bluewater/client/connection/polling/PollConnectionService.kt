@@ -21,7 +21,6 @@ import com.lasthopesoftware.bluewater.shared.android.notifications.notificationc
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.SharedChannelProperties
 import com.lasthopesoftware.bluewater.shared.android.services.promiseBoundService
 import com.lasthopesoftware.bluewater.shared.makePendingIntentImmutable
-import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.namehillsoftware.handoff.Messenger
 import com.namehillsoftware.handoff.promises.MessengerOperator
 import com.namehillsoftware.handoff.promises.Promise
@@ -40,14 +39,11 @@ class PollConnectionService : Service(), MessengerOperator<IConnectionProvider> 
 		@JvmStatic
 		fun pollSessionConnection(context: Context, withNotification: Boolean): Promise<IConnectionProvider> =
 			context.promiseBoundService<PollConnectionService>()
-				.eventually { s ->
-					s.service
-						?.let { connectionService ->
-							connectionService.withNotification = connectionService.withNotification || withNotification
-							connectionService.lazyConnectionPoller.value
-								.must { context.unbindService(s.serviceConnection) }
-						}
-						.keepPromise()
+				.eventually {  s ->
+					val connectionService = s.service
+					connectionService.withNotification = connectionService.withNotification || withNotification
+					connectionService.lazyConnectionPoller.value
+						.must { context.unbindService(s.serviceConnection) }
 				}
 
 		private val uniqueOnConnectionLostListeners = HashSet<Runnable>()
