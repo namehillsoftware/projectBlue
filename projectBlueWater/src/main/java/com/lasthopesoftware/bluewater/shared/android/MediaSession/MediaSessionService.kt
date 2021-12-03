@@ -31,7 +31,8 @@ class MediaSessionService : Service() {
 		newMediaSession
 	}
 
-	val mediaSession = lazyMediaSession.value
+	val mediaSession
+		get() = lazyMediaSession.value
 
 	override fun onBind(intent: Intent) = binder
 
