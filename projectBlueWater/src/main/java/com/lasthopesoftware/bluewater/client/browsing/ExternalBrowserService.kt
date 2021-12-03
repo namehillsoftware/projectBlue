@@ -133,9 +133,6 @@ class ExternalBrowserService : MediaBrowserServiceCompat() {
 				// Return a tree with a single playable media item for resumption.
 				val extras = Bundle().apply {
 					putBoolean(BrowserRoot.EXTRA_RECENT, true)
-					putBoolean(contentStyleSupport, true)
-					putInt(contentStyleBrowsableHint, contentStyleGrid)
-					putInt(contentStylePlayableHint, contentStyleList)
 				}
 				return BrowserRoot(recentRoot, extras)
 			}
@@ -143,6 +140,9 @@ class ExternalBrowserService : MediaBrowserServiceCompat() {
 
 		val bundle = Bundle().apply {
 			putBoolean(mediaSearchSupported, true)
+			putBoolean(contentStyleSupport, true)
+			putInt(contentStyleBrowsableHint, contentStyleGrid)
+			putInt(contentStylePlayableHint, contentStyleList)
 		}
 		return BrowserRoot(root, bundle)
 	}
