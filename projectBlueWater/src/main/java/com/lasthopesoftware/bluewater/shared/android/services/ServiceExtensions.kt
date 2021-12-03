@@ -6,7 +6,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.ServiceConnection
 import android.os.IBinder
-import com.lasthopesoftware.bluewater.client.playback.service.BindingUnexpectedlyDiedException
 import com.lasthopesoftware.bluewater.shared.GenericBinder
 import com.namehillsoftware.handoff.promises.Promise
 
@@ -15,11 +14,18 @@ inline fun <reified TService : Service> Context.promiseBoundService(): Promise<C
 	return object : Promise<ConnectedServiceBinding<TService>>() {
 		init {
 			try {
-				context.bindService(Intent(context, TService::class.java), object : ServiceConnection {
+				val c = TService::class.java
+				context.bindService(Intent(context, c), object : ServiceConnection {
 					override fun onServiceConnected(name: ComponentName?, service: IBinder) {
+						val boundService = (service as? GenericBinder<*>)?.service as? TService
+						if (boundService == null) {
+							reject(UnexpectedNullBindingException(c))
+							return
+						}
+
 						resolve(
 							ConnectedServiceBinding(
-								(service as? GenericBinder<*>)?.service as? TService,
+								boundService,
 								this
 							)
 						)
@@ -32,12 +38,7 @@ inline fun <reified TService : Service> Context.promiseBoundService(): Promise<C
 					}
 
 					override fun onNullBinding(name: ComponentName?) {
-						resolve(
-							ConnectedServiceBinding(
-								null,
-								this
-							)
-						)
+						reject(UnexpectedNullBindingException(c))
 					}
 				}, Context.BIND_AUTO_CREATE)
 			} catch (err: Throwable) {

@@ -258,7 +258,7 @@ open class PlaybackService : Service() {
 		fun promiseIsMarkedForPlay(context: Context): Promise<Boolean> =
 			context.promiseBoundService<PlaybackService>()
 				.then { h ->
-					val isPlaying = h.service?.isMarkedForPlay ?: false
+					val isPlaying = h.service.isMarkedForPlay
 					context.unbindService(h.serviceConnection)
 					isPlaying
 				}
@@ -336,18 +336,16 @@ open class PlaybackService : Service() {
 
 	private val lazyMediaSessionService = lazy { promiseBoundService<MediaSessionService>() }
 
-	private val promisedMediaSession by lazy { lazyMediaSessionService.value.then { c -> c.service?.mediaSession } }
+	private val promisedMediaSession by lazy { lazyMediaSessionService.value.then { c -> c.service.mediaSession } }
 
 	private val mediaStyleNotificationSetup by lazy {
-			promisedMediaSession.then {
-				it?.let { mediaSession ->
-					MediaStyleNotificationSetup(
-						this,
-						NotificationBuilderProducer(this),
-						playbackNotificationsConfiguration,
-						mediaSession
-					)
-				}
+			promisedMediaSession.then { mediaSession ->
+				MediaStyleNotificationSetup(
+					this,
+					NotificationBuilderProducer(this),
+					playbackNotificationsConfiguration,
+					mediaSession
+				)
 			}
 		}
 	private val playbackThread = lazy {
@@ -357,15 +355,13 @@ open class PlaybackService : Service() {
 		}
 	private val playbackHandler = lazy { playbackThread.value.then { h -> Handler(h.looper) } }
 	private val playbackStartingNotificationBuilder by lazy {
-		promisedMediaSession.then {
-			it?.let { mediaSession ->
-				PlaybackStartingNotificationBuilder(
-					this,
-					NotificationBuilderProducer(this),
-					playbackNotificationsConfiguration,
-					mediaSession
-				)
-			}
+		promisedMediaSession.then { mediaSession ->
+			PlaybackStartingNotificationBuilder(
+				this,
+				NotificationBuilderProducer(this),
+				playbackNotificationsConfiguration,
+				mediaSession
+			)
 		}
 	}
 	private val selectedLibraryProvider by lazy {
@@ -625,39 +621,34 @@ open class PlaybackService : Service() {
 			remoteControlProxy?.also(localBroadcastManagerLazy.value::unregisterReceiver)
 
 			val promisedMediaBroadcaster = promisedMediaSession.then { mediaSession ->
-				mediaSession?.also {
-					val broadcaster = MediaSessionBroadcaster(
-						this,
-						cachedSessionFilePropertiesProvider,
-						imageProvider,
-						mediaSession)
-					remoteControlProxy = RemoteControlProxy(broadcaster)
-						.also { rcp ->
-							localBroadcastManagerLazy
-								.value
-								.registerReceiver(
-									rcp,
-									buildRemoteControlProxyIntentFilter(rcp))
-						}
-				}
+				val broadcaster = MediaSessionBroadcaster(
+					this,
+					cachedSessionFilePropertiesProvider,
+					imageProvider,
+					mediaSession)
+				remoteControlProxy = RemoteControlProxy(broadcaster)
+					.also { rcp ->
+						localBroadcastManagerLazy
+							.value
+							.registerReceiver(
+								rcp,
+								buildRemoteControlProxyIntentFilter(rcp))
+					}
 			}
 
-			val promisedMediaNotificationSetup = mediaStyleNotificationSetup.eventually { s ->
-				s
-					?.let { mediaStyleNotificationSetup ->
-						NowPlayingNotificationBuilder(
-							this,
-							mediaStyleNotificationSetup,
-							connectionProvider,
-							cachedSessionFilePropertiesProvider,
-							imageProvider
-						)
-					}
-					?.also {
+			val promisedMediaNotificationSetup = mediaStyleNotificationSetup.eventually { mediaStyleNotificationSetup ->
+					NowPlayingNotificationBuilder(
+						this,
+						mediaStyleNotificationSetup,
+						connectionProvider,
+						cachedSessionFilePropertiesProvider,
+						imageProvider
+					)
+					.also {
 						playbackEngineCloseables.manage(it)
 						nowPlayingNotificationBuilder = it
 					}
-					?.let { builder ->
+					.let { builder ->
 						playbackNotificationRouter?.also(localBroadcastManagerLazy.value::unregisterReceiver)
 						playbackStartingNotificationBuilder.then { b ->
 							b?.let { playbackStartingNotificationBuilder ->
@@ -672,7 +663,7 @@ open class PlaybackService : Service() {
 							}
 						}
 					}
-					?.then { router ->
+					.then { router ->
 						router?.also {
 							playbackNotificationRouter = router
 
@@ -681,7 +672,6 @@ open class PlaybackService : Service() {
 								.registerReceiver(router, buildNotificationRouterIntentFilter(router))
 						}
 					}
-					.keepPromise()
 			}
 
 			val cacheConfiguration = AudioCacheConfiguration(library)

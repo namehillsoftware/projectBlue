@@ -119,9 +119,7 @@ class ExternalBrowserService : MediaBrowserServiceCompat() {
 	override fun onCreate() {
 		super.onCreate()
 		lazyMediaSessionService.value.then { s ->
-			s.service?.mediaSession?.also { session ->
-				sessionToken = session.sessionToken
-			}
+			sessionToken = s.service.mediaSession.sessionToken
 		}
 	}
 
