@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.browsing
 import android.os.Bundle
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaDescriptionCompat
+import android.support.v4.media.MediaMetadataCompat
 import androidx.media.MediaBrowserServiceCompat
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
@@ -14,6 +15,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.p
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.*
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertyCache
+import com.lasthopesoftware.bluewater.client.browsing.items.media.image.CachedImageProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.SpecificLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
@@ -39,6 +41,8 @@ class ExternalBrowserService : MediaBrowserServiceCompat() {
 		private const val contentStyleBrowsableHint = "android.media.browse.CONTENT_STYLE_BROWSABLE_HINT"
 		private const val contentStylePlayableHint = "android.media.browse.CONTENT_STYLE_PLAYABLE_HINT"
 		private const val contentStyleSupport = "android.media.browse.CONTENT_STYLE_SUPPORTED"
+		private const val contentStyleList = 1
+		private const val contentStyleGrid = 2
 		const val serviceFileMediaIdPrefix = "sf:"
 		const val itemFileMediaIdPrefix = "it:"
 		private const val playlistFileMediaIdPrefix = "pl:"
@@ -93,6 +97,8 @@ class ExternalBrowserService : MediaBrowserServiceCompat() {
 		}
 	}
 
+	private val imageProvider by lazy { CachedImageProvider.getInstance(this) }
+
 	private val selectedLibraryIdProvider by lazy { SelectedBrowserLibraryIdentifierProvider(getApplicationSettingsRepository()) }
 
 	private val nowPlayingRepository by lazy {
@@ -111,12 +117,12 @@ class ExternalBrowserService : MediaBrowserServiceCompat() {
 	private val lazyMediaSessionService = lazy { promiseBoundService<MediaSessionService>() }
 
 	override fun onCreate() {
+		super.onCreate()
 		lazyMediaSessionService.value.then { s ->
 			s.service?.mediaSession?.also { session ->
 				sessionToken = session.sessionToken
 			}
 		}
-		super.onCreate()
 	}
 
 	override fun onGetRoot(clientPackageName: String, clientUid: Int, rootHints: Bundle?): BrowserRoot? {
@@ -127,6 +133,9 @@ class ExternalBrowserService : MediaBrowserServiceCompat() {
 				// Return a tree with a single playable media item for resumption.
 				val extras = Bundle().apply {
 					putBoolean(BrowserRoot.EXTRA_RECENT, true)
+					putBoolean(contentStyleSupport, true)
+					putInt(contentStyleBrowsableHint, contentStyleGrid)
+					putInt(contentStylePlayableHint, contentStyleList)
 				}
 				return BrowserRoot(recentRoot, extras)
 			}
@@ -217,18 +226,39 @@ class ExternalBrowserService : MediaBrowserServiceCompat() {
 			.excuse { e -> result.sendError(Bundle().apply { putString(error, e.message) }) }
 	}
 
-	private fun promiseMediaItem(serviceFile: ServiceFile): Promise<MediaBrowserCompat.MediaItem> =
-		filePropertiesProvider.promiseFileProperties(serviceFile)
-			.then { p ->
-				MediaBrowserCompat.MediaItem(
-					MediaDescriptionCompat
-						.Builder()
-						.setMediaId(serviceFileMediaIdPrefix + p[KnownFileProperties.KEY])
-						.setTitle(p[KnownFileProperties.NAME])
-						.build(),
-					MediaBrowserCompat.MediaItem.FLAG_PLAYABLE
-				)
+	private fun promiseMediaItem(serviceFile: ServiceFile): Promise<MediaBrowserCompat.MediaItem> {
+		val promisedImage = imageProvider.promiseFileBitmap(serviceFile)
+		return filePropertiesProvider.promiseFileProperties(serviceFile)
+			.eventually { p ->
+				val mediaMetadataBuilder = MediaMetadataCompat.Builder().apply {
+					val artist = p[KnownFileProperties.ARTIST]
+					val name = p[KnownFileProperties.NAME]
+					val album = p[KnownFileProperties.ALBUM]
+					val duration = FilePropertyHelpers.parseDurationIntoMilliseconds(p).toLong()
+
+					putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, serviceFileMediaIdPrefix + p[KnownFileProperties.KEY])
+					putString(MediaMetadataCompat.METADATA_KEY_ARTIST, artist)
+					putString(MediaMetadataCompat.METADATA_KEY_ALBUM, album)
+					putString(MediaMetadataCompat.METADATA_KEY_TITLE, name)
+					putLong(MediaMetadataCompat.METADATA_KEY_DURATION, duration)
+
+					val trackNumberString = p[KnownFileProperties.TRACK]
+					val trackNumber = trackNumberString?.toLongOrNull()
+					if (trackNumber != null) {
+						putLong(MediaMetadataCompat.METADATA_KEY_TRACK_NUMBER, trackNumber)
+					}
+				}
+
+				promisedImage.then { image ->
+					mediaMetadataBuilder.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, image)
+
+					MediaBrowserCompat.MediaItem(
+						mediaMetadataBuilder.build().description,
+						MediaBrowserCompat.MediaItem.FLAG_PLAYABLE
+					)
+				}
 			}
+	}
 
 	override fun onDestroy() {
 		if (lazyMediaSessionService.isInitialized()) lazyMediaSessionService.value.then { unbindService(it.serviceConnection) }

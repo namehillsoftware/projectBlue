@@ -37,11 +37,8 @@ class MediaSessionService : Service() {
 	override fun onBind(intent: Intent) = binder
 
 	override fun onCreate() {
-		super.onCreate()
 		lazyMediaSession.value.isActive = true
 	}
-
-	override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int = START_NOT_STICKY
 
 	override fun onDestroy() {
 		if (lazyMediaSession.isInitialized()) {
