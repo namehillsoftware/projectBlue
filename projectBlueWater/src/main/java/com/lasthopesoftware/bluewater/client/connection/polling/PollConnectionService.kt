@@ -5,7 +5,6 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Context
 import android.content.Intent
-import android.content.ServiceConnection
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
@@ -159,6 +158,4 @@ class PollConnectionService : Service(), MessengerOperator<IConnectionProvider> 
 			lazyNotificationController.value.removeAllNotifications()
 		super.onDestroy()
 	}
-
-	private class PollConnectionServiceConnectionHolder(val pollConnectionService: PollConnectionService, val serviceConnection: ServiceConnection)
 }

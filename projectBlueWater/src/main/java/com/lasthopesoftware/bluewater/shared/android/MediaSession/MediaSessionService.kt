@@ -45,6 +45,8 @@ class MediaSessionService : Service() {
 		super.onCreate()
 	}
 
+	override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int = START_NOT_STICKY
+
 	override fun onDestroy() {
 		if (lazyMediaSession.isInitialized()) {
 			with (lazyMediaSession.value) {
