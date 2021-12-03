@@ -508,7 +508,7 @@ open class PlaybackService : Service() {
 
 		val timeoutResponse = promisedTimeout.then<Unit> { throw TimeoutException("Timed out after $playbackStartTimeout") }
 		Promise.whenAny(promisedIntentHandling, timeoutResponse).excuse(unhandledRejectionHandler)
-		return START_NOT_STICKY
+		return START_STICKY
 	}
 
 	private fun actOnIntent(intent: Intent?): Promise<Unit> {
