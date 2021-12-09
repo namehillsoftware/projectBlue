@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.browsing
+package com.lasthopesoftware.bluewater.client.browsing.remote
 
 import android.os.Bundle
 import android.support.v4.media.MediaBrowserCompat
@@ -34,7 +34,7 @@ import com.lasthopesoftware.resources.PackageValidator
 import com.namehillsoftware.handoff.promises.Promise
 import kotlin.math.max
 
-class ExternalBrowserService : MediaBrowserServiceCompat() {
+class RemoteBrowserService : MediaBrowserServiceCompat() {
 	companion object {
 		// Potentially useful magic android strings (see https://github.com/android/uamp/blob/99e44c1c5106218c62eff552b64bbc12f1883a22/common/src/main/java/com/example/android/uamp/media/MusicService.kt)
 		private const val mediaSearchSupported = "android.media.browse.SEARCH_SUPPORTED"
@@ -48,7 +48,7 @@ class ExternalBrowserService : MediaBrowserServiceCompat() {
 		private const val playlistFileMediaIdPrefix = "pl:"
 		private val rateLimiter by lazy { PromisingRateLimiter<Map<String, String>>(max(Runtime.getRuntime().availableProcessors() - 1, 1)) }
 
-		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(ExternalBrowserService::class.java) }
+		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(RemoteBrowserService::class.java) }
 
 		private val root by lazy { magicPropertyBuilder.buildProperty("root") }
 		private val recentRoot by lazy { magicPropertyBuilder.buildProperty("recentRoot") }
@@ -181,7 +181,7 @@ class ExternalBrowserService : MediaBrowserServiceCompat() {
 								itemProvider
 									.promiseItems(libraryId, id)
 									.eventually { items ->
-										if (items.any()) items.map(::toMediaItem).toPromise()
+										if (items.any()) items.map(Companion::toMediaItem).toPromise()
 										else {
 											val parameters = FileListParameters.getInstance().getFileListParameters(Item(id))
 											fileProvider
@@ -190,7 +190,7 @@ class ExternalBrowserService : MediaBrowserServiceCompat() {
 										}
 									}
 							}
-							?: libraryViewsProvider.promiseLibraryViews(libraryId).then { v -> v.map(::toMediaItem) }
+							?: libraryViewsProvider.promiseLibraryViews(libraryId).then { v -> v.map(Companion::toMediaItem) }
 					}
 					?: Promise(emptyList())
 			}

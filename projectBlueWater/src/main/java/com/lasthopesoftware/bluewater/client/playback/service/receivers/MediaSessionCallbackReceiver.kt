@@ -7,12 +7,12 @@ import android.support.v4.media.MediaDescriptionCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import androidx.annotation.RequiresApi
-import com.lasthopesoftware.bluewater.client.browsing.ExternalBrowserService
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.IFileListParameterProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.handlers.access.LaunchPlaybackFromResult
+import com.lasthopesoftware.bluewater.client.browsing.remote.RemoteBrowserService
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 
 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
@@ -47,7 +47,7 @@ class MediaSessionCallbackReceiver(
 		if (itemIdParts == null || itemIdParts.size < 2) return
 
 		val type = itemIdParts[0]
-		if (type != ExternalBrowserService.itemFileMediaIdPrefix) return
+		if (type != RemoteBrowserService.itemFileMediaIdPrefix) return
 
 		val id = itemIdParts[1].toIntOrNull() ?: return
 		fileStringListProvider

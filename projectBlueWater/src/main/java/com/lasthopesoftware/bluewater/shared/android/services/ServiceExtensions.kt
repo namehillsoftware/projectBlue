@@ -18,18 +18,14 @@ inline fun <reified TService : Service> Context.promiseBoundService(): Promise<C
 				context.bindService(Intent(context, c), object : ServiceConnection {
 					override fun onServiceConnected(name: ComponentName?, service: IBinder) {
 						val boundService = (service as? GenericBinder<*>)?.service as? TService
-						if (boundService == null) {
-							reject(InvalidBindingException(c))
-							return
-						}
-
-						resolve(ConnectedServiceBinding(boundService, this))
+						if (boundService == null) reject(InvalidBindingException(c))
+						else resolve(ConnectedServiceBinding(boundService, this))
 					}
 
 					override fun onServiceDisconnected(name: ComponentName?) {}
 
 					override fun onBindingDied(name: ComponentName?) {
-						reject(BindingUnexpectedlyDiedException(TService::class.java))
+						reject(BindingUnexpectedlyDiedException(c))
 					}
 
 					override fun onNullBinding(name: ComponentName?) {
