@@ -316,8 +316,8 @@ open class PlaybackService : Service() {
 
 	private val lazyObservationScheduler = lazy { ExecutorScheduler(ThreadPools.compute, true) }
 	private val binder by lazy { GenericBinder(this) }
-	private val notificationManagerLazy = lazy { getSystemService(NOTIFICATION_SERVICE) as NotificationManager }
-	private val audioManagerLazy = lazy { getSystemService(AUDIO_SERVICE) as AudioManager }
+	private val notificationManager by lazy { getSystemService(NOTIFICATION_SERVICE) as NotificationManager }
+	private val audioManager by lazy { getSystemService(AUDIO_SERVICE) as AudioManager }
 	private val localBroadcastManagerLazy = lazy { LocalBroadcastManager.getInstance(this) }
 	private val lazyMessageBus = lazy { MessageBus(localBroadcastManagerLazy.value) }
 	private val playbackBroadcaster by lazy { LocalPlaybackBroadcaster(lazyMessageBus.value) }
@@ -329,10 +329,11 @@ open class PlaybackService : Service() {
 	private val volumeLevelSettings by lazy { VolumeLevelSettings(applicationSettings) }
 	private val channelConfiguration by lazy { SharedChannelProperties(this) }
 	private val playbackNotificationsConfiguration by lazy {
-			val notificationChannelActivator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) NotificationChannelActivator(notificationManagerLazy.value) else NoOpChannelActivator()
+			val notificationChannelActivator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) NotificationChannelActivator(notificationManager) else NoOpChannelActivator()
 			val channelName = notificationChannelActivator.activateChannel(channelConfiguration)
 			NotificationsConfiguration(channelName, playingNotificationId)
 		}
+	private val arbitratorForOs by lazy { ExternalStorageReadPermissionsArbitratorForOs(this) }
 
 	private val lazyMediaSessionService = lazy { promiseBoundService<MediaSessionService>() }
 
@@ -387,7 +388,7 @@ open class PlaybackService : Service() {
 
 	private val playbackEngineCloseables = CloseableManager()
 	private val lazyAudioBecomingNoisyReceiver = lazy { AudioBecomingNoisyReceiver() }
-	private val lazyNotificationController = lazy { NotificationsController(this, notificationManagerLazy.value) }
+	private val lazyNotificationController = lazy { NotificationsController(this, notificationManager) }
 	private val disconnectionLatch by lazy { TimedCountdownLatch(numberOfDisconnects, disconnectResetDuration) }
 	private val errorLatch by lazy { TimedCountdownLatch(numberOfErrors, errorLatchResetDuration) }
 
@@ -630,9 +631,7 @@ open class PlaybackService : Service() {
 					.also { rcp ->
 						localBroadcastManagerLazy
 							.value
-							.registerReceiver(
-								rcp,
-								buildRemoteControlProxyIntentFilter(rcp))
+							.registerReceiver(rcp, buildRemoteControlProxyIntentFilter(rcp))
 					}
 			}
 
@@ -682,7 +681,6 @@ open class PlaybackService : Service() {
 			SimpleCache(cacheDirectoryProvider, cacheEvictor)
 				.also { cache = it }
 				.let { simpleCache ->
-					val arbitratorForOs = ExternalStorageReadPermissionsArbitratorForOs(this)
 					val remoteFileUriProvider = RemoteFileUriProvider(connectionProvider, ServiceFileUriQueryParamsProvider())
 					val bestMatchUriProvider = BestMatchUriProvider(
 						library,
@@ -719,7 +717,7 @@ open class PlaybackService : Service() {
 					}
 
 					Promise
-						.whenAll(promisedMediaBroadcaster.unitResponse(), promisedMediaNotificationSetup.unitResponse())
+						.whenAll(promisedMediaBroadcaster, promisedMediaNotificationSetup.unitResponse())
 						.eventually { promisedPreparationSourceProvider }
 				}
 			}
@@ -731,41 +729,46 @@ open class PlaybackService : Service() {
 					}
 			}
 			.eventually { queues ->
-				selectedLibraryIdentifierProvider.selectedLibraryId
-					.eventually { l ->
-						PlaylistPlaybackBootstrapper(playlistVolumeManager)
-							.also {
-								playbackEngineCloseables.manage(it)
-								playlistPlaybackBootstrapper = it
-							}
-							.let { bootstrapper ->
-								val nowPlayingRepository = NowPlayingRepository(
-									SpecificLibraryProvider(l!!, libraryRepository),
-									libraryRepository)
+					PlaylistPlaybackBootstrapper(playlistVolumeManager)
+						.also {
+							playbackEngineCloseables.manage(it)
+							playlistPlaybackBootstrapper = it
+						}
+						.let { bootstrapper ->
+							selectedLibraryIdentifierProvider.selectedLibraryId
+								.eventually { l ->
+									l?.let {
+										val nowPlayingRepository = NowPlayingRepository(
+											SpecificLibraryProvider(l, libraryRepository),
+											libraryRepository
+										)
 
-								createEngine(
-									queues,
-									QueueProviders.providers(),
-									nowPlayingRepository,
-									bootstrapper)
-							}
+										createEngine(
+											queues,
+											QueueProviders.providers(),
+											nowPlayingRepository,
+											bootstrapper
+										)
+									}
+								}
 					}
 			}
 			.then { engine ->
-				playbackEngineCloseables.manage(engine)
-				playbackState = AudioManagingPlaybackStateChanger(
-					engine,
-					AudioFocusManagement(audioManagerLazy.value),
-					playlistVolumeManager)
-					.also(playbackEngineCloseables::manage)
 				engine
-					.setOnPlaybackStarted(::handlePlaybackStarted)
-					.setOnPlaybackPaused(::handlePlaybackPaused)
-					.setOnPlayingFileChanged(::changePositionedPlaybackFile)
-					.setOnPlaylistError(::uncaughtExceptionHandler)
-					.setOnPlaybackCompleted(::onPlaylistPlaybackComplete)
-					.setOnPlaylistReset(::broadcastResetPlaylist)
-					.also {
+					?.also {
+						playbackEngineCloseables.manage(engine)
+						playbackState = AudioManagingPlaybackStateChanger(
+							engine,
+							AudioFocusManagement(audioManager), playlistVolumeManager
+						).also(playbackEngineCloseables::manage)
+					}
+					?.setOnPlaybackStarted(::handlePlaybackStarted)
+					?.setOnPlaybackPaused(::handlePlaybackPaused)
+					?.setOnPlayingFileChanged(::changePositionedPlaybackFile)
+					?.setOnPlaylistError(::uncaughtExceptionHandler)
+					?.setOnPlaybackCompleted(::onPlaylistPlaybackComplete)
+					?.setOnPlaylistReset(::broadcastResetPlaylist)
+					?.also {
 						playlistPosition = it
 						playlistFiles = it
 						playbackContinuity = it

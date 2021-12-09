@@ -157,7 +157,8 @@
         <service
             android:name="androidx.work.impl.foreground.SystemForegroundService"
             android:foregroundServiceType="dataSync"
-            tools:node="merge" />
+            tools:node="merge"
+            tools:ignore="Instantiatable" />
 
         <provider
             android:name="androidx.startup.InitializationProvider"

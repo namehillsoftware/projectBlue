@@ -19,16 +19,11 @@ inline fun <reified TService : Service> Context.promiseBoundService(): Promise<C
 					override fun onServiceConnected(name: ComponentName?, service: IBinder) {
 						val boundService = (service as? GenericBinder<*>)?.service as? TService
 						if (boundService == null) {
-							reject(UnexpectedNullBindingException(c))
+							reject(InvalidBindingException(c))
 							return
 						}
 
-						resolve(
-							ConnectedServiceBinding(
-								boundService,
-								this
-							)
-						)
+						resolve(ConnectedServiceBinding(boundService, this))
 					}
 
 					override fun onServiceDisconnected(name: ComponentName?) {}
