@@ -3,40 +3,49 @@ package com.lasthopesoftware.bluewater.client.browsing.remote
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaMetadataCompat
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FilePropertyHelpers
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ProvideScopedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.ProvideImages
 import com.namehillsoftware.handoff.promises.Promise
-import org.joda.time.Duration
 
 class MediaItemServiceFileLookup(
-	fileProperties: ProvideScopedFileProperties,
-	images: ProvideImages
+	private val filePropertiesProvider: ProvideScopedFileProperties,
+	private val imageProvider: ProvideImages
 ) : GetMediaItemsFromServiceFiles {
 
 
 	override fun promiseMediaItem(serviceFile: ServiceFile): Promise<MediaBrowserCompat.MediaItem> {
-		val mediaDescription = MediaMetadataCompat.Builder().apply {
-			val artist = "Billy Bob"
-			val name = "Billy Bob Jr. Jr."
-			val album = "Bob's BIIIG Adventure"
-			val duration = Duration.standardSeconds(30).millis
+		val promisedImage = imageProvider.promiseFileBitmap(serviceFile)
+		return filePropertiesProvider.promiseFileProperties(serviceFile)
+			.eventually { p ->
+				val mediaMetadataBuilder = MediaMetadataCompat.Builder().apply {
+					val artist = p[KnownFileProperties.ARTIST]
+					val name = p[KnownFileProperties.NAME]
+					val album = p[KnownFileProperties.ALBUM]
+					val duration = FilePropertyHelpers.parseDurationIntoMilliseconds(p).toLong()
 
-			putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, RemoteBrowserService.serviceFileMediaIdPrefix + "14")
-			putString(MediaMetadataCompat.METADATA_KEY_ARTIST, artist)
-			putString(MediaMetadataCompat.METADATA_KEY_ALBUM, album)
-			putString(MediaMetadataCompat.METADATA_KEY_TITLE, name)
-			putLong(MediaMetadataCompat.METADATA_KEY_DURATION, duration)
+					putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, RemoteBrowserService.serviceFileMediaIdPrefix + p[KnownFileProperties.KEY])
+					putString(MediaMetadataCompat.METADATA_KEY_ARTIST, artist)
+					putString(MediaMetadataCompat.METADATA_KEY_ALBUM, album)
+					putString(MediaMetadataCompat.METADATA_KEY_TITLE, name)
+					putLong(MediaMetadataCompat.METADATA_KEY_DURATION, duration)
 
-			val trackNumberString = "56"
-			val trackNumber = trackNumberString.toLongOrNull()
-			if (trackNumber != null) {
-				putLong(MediaMetadataCompat.METADATA_KEY_TRACK_NUMBER, trackNumber)
+					val trackNumberString = p[KnownFileProperties.TRACK]
+					val trackNumber = trackNumberString?.toLongOrNull()
+					if (trackNumber != null) {
+						putLong(MediaMetadataCompat.METADATA_KEY_TRACK_NUMBER, trackNumber)
+					}
+				}
+
+				promisedImage.then { image ->
+					mediaMetadataBuilder.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, image)
+
+					MediaBrowserCompat.MediaItem(
+						mediaMetadataBuilder.build().description,
+						MediaBrowserCompat.MediaItem.FLAG_PLAYABLE
+					)
+				}
 			}
-		}.build()
-
-		return Promise(MediaBrowserCompat.MediaItem(
-			mediaDescription.description,
-			MediaBrowserCompat.MediaItem.FLAG_PLAYABLE
-		))
 	}
 }

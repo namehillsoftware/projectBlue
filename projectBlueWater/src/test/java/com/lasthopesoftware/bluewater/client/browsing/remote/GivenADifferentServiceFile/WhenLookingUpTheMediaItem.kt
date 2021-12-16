@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.browsing.remote.GivenAServiceFile
+package com.lasthopesoftware.bluewater.client.browsing.remote.GivenADifferentServiceFile
 
 import android.graphics.BitmapFactory
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
@@ -21,25 +21,26 @@ class `When Looking Up The Media Item` {
 		private val mediaItem by lazy {
 			val fileProperties = FakeScopedCachedFilesPropertiesProvider()
 			fileProperties.addFilePropertiesToCache(
-				ServiceFile(14),
+				ServiceFile(703),
 				mapOf(
-					Pair(KnownFileProperties.KEY, "14"),
-					Pair(KnownFileProperties.ARTIST, "Billy Bob"),
-					Pair(KnownFileProperties.ALBUM, "Bob's BIIIG Adventure"),
-					Pair(KnownFileProperties.NAME, "Billy Bob Jr. Jr."),
-					Pair(KnownFileProperties.DURATION, "30")
+					Pair(KnownFileProperties.KEY, "703"),
+					Pair(KnownFileProperties.ARTIST, "division"),
+					Pair(KnownFileProperties.ALBUM, "slide"),
+					Pair(KnownFileProperties.NAME, "habit"),
+					Pair(KnownFileProperties.DURATION, "451")
 				)
 			)
 
 			val imageProvider = mockk<ProvideImages>()
-			every { imageProvider.promiseFileBitmap(ServiceFile(14)) } returns Promise(BitmapFactory.decodeByteArray(
-				byteArrayOf(1, 2), 0, 2))
+			every { imageProvider.promiseFileBitmap(ServiceFile(703)) } returns Promise(
+				BitmapFactory.decodeByteArray(
+				byteArrayOf(3, 4), 0, 2))
 
 			val mediaItemServiceFileLookup = MediaItemServiceFileLookup(
 				fileProperties,
 				imageProvider
 			)
-			mediaItemServiceFileLookup.promiseMediaItem(ServiceFile(14))
+			mediaItemServiceFileLookup.promiseMediaItem(ServiceFile(703))
 				.toFuture()
 				.get()
 		}
@@ -48,24 +49,24 @@ class `When Looking Up The Media Item` {
 	@Test
 	fun `then the title is correct`() {
 		assertThat(mediaItem?.description?.title)
-			.isEqualTo("Billy Bob Jr. Jr.")
+			.isEqualTo("habit")
 	}
 
 	@Test
 	fun `then the artist is correct`() {
 		assertThat(mediaItem?.description?.subtitle)
-			.isEqualTo("Billy Bob")
+			.isEqualTo("division")
 	}
 
 	@Test
 	fun `then the media ID is correct`() {
-		assertThat(mediaItem?.mediaId).isEqualTo("sf:14")
+		assertThat(mediaItem?.mediaId).isEqualTo("sf:703")
 	}
 
 	@Test
 	fun `then the album is correct`() {
 		assertThat(mediaItem?.description?.description)
-			.isEqualTo("Bob's BIIIG Adventure")
+			.isEqualTo("slide")
 	}
 
 	@Test

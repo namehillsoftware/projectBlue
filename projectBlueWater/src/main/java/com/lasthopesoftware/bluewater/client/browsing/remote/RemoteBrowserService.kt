@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.client.browsing.remote
 import android.os.Bundle
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaDescriptionCompat
-import android.support.v4.media.MediaMetadataCompat
 import androidx.media.MediaBrowserServiceCompat
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
@@ -13,7 +12,10 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.F
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.SearchFileParameterProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListProvider
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.*
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.RateControlledFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedCachedFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.SelectedConnectionFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.CachedImageProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
@@ -114,6 +116,13 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 			}
 	}
 
+	private val mediaItemServiceFileLookup by lazy {
+		MediaItemServiceFileLookup(
+			filePropertiesProvider,
+			imageProvider
+		)
+	}
+
 	private val lazyMediaSessionService = lazy { promiseBoundService<MediaSessionService>() }
 
 	override fun onCreate() {
@@ -159,7 +168,7 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 					r?.nowPlaying
 						?.eventually { np ->
 							if (np.playlist.isEmpty() || np.playlistPosition < 0) Promise.empty()
-							else promiseMediaItem(np.playlist[np.playlistPosition])
+							else mediaItemServiceFileLookup.promiseMediaItem(np.playlist[np.playlistPosition])
 						}
 						.keepPromise()
 				}
@@ -186,7 +195,7 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 											val parameters = FileListParameters.getInstance().getFileListParameters(Item(id))
 											fileProvider
 												.promiseFiles(FileListParameters.Options.None, *parameters)
-												.eventually { files -> Promise.whenAll(files.map(::promiseMediaItem)) }
+												.eventually { files -> Promise.whenAll(files.map(mediaItemServiceFileLookup::promiseMediaItem)) }
 										}
 									}
 							}
@@ -209,7 +218,7 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 
 		result.detach()
 
-		promiseMediaItem(ServiceFile(id))
+		mediaItemServiceFileLookup.promiseMediaItem(ServiceFile(id))
 			.then(result::sendResult)
 			.excuse { e -> result.sendError(Bundle().apply { putString(error, e.message) }) }
 	}
@@ -219,43 +228,9 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 		val parameters = SearchFileParameterProvider.getFileListParameters(query)
 		fileProvider
 			.promiseFiles(FileListParameters.Options.None, *parameters)
-			.eventually { files -> Promise.whenAll(files.map(::promiseMediaItem)) }
+			.eventually { files -> Promise.whenAll(files.map(mediaItemServiceFileLookup::promiseMediaItem)) }
 			.then { items -> result.sendResult(items.toMutableList()) }
 			.excuse { e -> result.sendError(Bundle().apply { putString(error, e.message) }) }
-	}
-
-	private fun promiseMediaItem(serviceFile: ServiceFile): Promise<MediaBrowserCompat.MediaItem> {
-		val promisedImage = imageProvider.promiseFileBitmap(serviceFile)
-		return filePropertiesProvider.promiseFileProperties(serviceFile)
-			.eventually { p ->
-				val mediaMetadataBuilder = MediaMetadataCompat.Builder().apply {
-					val artist = p[KnownFileProperties.ARTIST]
-					val name = p[KnownFileProperties.NAME]
-					val album = p[KnownFileProperties.ALBUM]
-					val duration = FilePropertyHelpers.parseDurationIntoMilliseconds(p).toLong()
-
-					putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, serviceFileMediaIdPrefix + p[KnownFileProperties.KEY])
-					putString(MediaMetadataCompat.METADATA_KEY_ARTIST, artist)
-					putString(MediaMetadataCompat.METADATA_KEY_ALBUM, album)
-					putString(MediaMetadataCompat.METADATA_KEY_TITLE, name)
-					putLong(MediaMetadataCompat.METADATA_KEY_DURATION, duration)
-
-					val trackNumberString = p[KnownFileProperties.TRACK]
-					val trackNumber = trackNumberString?.toLongOrNull()
-					if (trackNumber != null) {
-						putLong(MediaMetadataCompat.METADATA_KEY_TRACK_NUMBER, trackNumber)
-					}
-				}
-
-				promisedImage.then { image ->
-					mediaMetadataBuilder.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, image)
-
-					MediaBrowserCompat.MediaItem(
-						mediaMetadataBuilder.build().description,
-						MediaBrowserCompat.MediaItem.FLAG_PLAYABLE
-					)
-				}
-			}
 	}
 
 	override fun onDestroy() {
