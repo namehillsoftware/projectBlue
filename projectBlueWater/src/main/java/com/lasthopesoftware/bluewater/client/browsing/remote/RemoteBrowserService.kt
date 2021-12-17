@@ -30,7 +30,7 @@ import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.MediaSession.MediaSessionService
 import com.lasthopesoftware.bluewater.shared.android.services.promiseBoundService
 import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRateLimiter
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.resources.PackageValidator
 import com.namehillsoftware.handoff.promises.Promise
 import kotlin.math.max
@@ -126,7 +126,14 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 		nowPlayingRepository.then { repository ->
 			repository
 				?.let {
-					MediaItemsBrowser(it, mediaItemServiceFileLookup)
+					MediaItemsBrowser(
+						it,
+						selectedLibraryIdProvider,
+						itemProvider,
+						fileProvider,
+						libraryViewsProvider,
+						mediaItemServiceFileLookup
+					)
 				}
 		}
 	}
@@ -169,42 +176,23 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 
 		if (parentId == recentRoot) {
 			mediaItemBrowser
-				.eventually { browser ->
-					browser
-						?.promiseNowPlayingItem()
-						?: Promise.empty()
-				}
+				.eventually { browser -> browser?.promiseNowPlayingItem().keepPromise() }
 				.then { it?.let { mutableListOf(it) }.apply(result::sendResult) }
 				.excuse { e -> result.sendError(Bundle().apply { putString(error, e.message) }) }
 			return
 		}
 
-		browserLibraryIdProvider
-			.selectedLibraryId
-			.eventually { maybeId ->
-				maybeId
-					?.let { libraryId ->
-						parentId
-							.takeIf { id -> id.startsWith(itemFileMediaIdPrefix) }
-							?.substring(3)
-							?.toIntOrNull()
-							?.let { id ->
-								itemProvider
-									.promiseItems(libraryId, id)
-									.eventually { items ->
-										if (items.any()) items.map(Companion::toMediaItem).toPromise()
-										else {
-											val parameters = FileListParameters.getInstance().getFileListParameters(Item(id))
-											fileProvider
-												.promiseFiles(FileListParameters.Options.None, *parameters)
-												.eventually { files -> Promise.whenAll(files.map(mediaItemServiceFileLookup::promiseMediaItem)) }
-										}
-									}
-							}
-							?: libraryViewsProvider.promiseLibraryViews(libraryId).then { v -> v.map(Companion::toMediaItem) }
-					}
-					?: Promise(emptyList())
+		val promisedMediaItems = parentId
+			.takeIf { id -> id.startsWith(itemFileMediaIdPrefix) }
+			?.substring(3)
+			?.toIntOrNull()
+			?.let { id ->
+				mediaItemBrowser
+					.eventually { browser -> browser?.promiseItems(Item(id)).keepPromise(emptyList()) }
 			}
+			?: mediaItemBrowser.eventually { browser -> browser?.promiseLibraryItems().keepPromise(emptyList()) }
+
+		promisedMediaItems
 			.then { items -> result.sendResult(items.toMutableList()) }
 			.excuse { e -> result.sendError(Bundle().apply { putString(error, e.message) }) }
 	}

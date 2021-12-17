@@ -49,6 +49,10 @@ class `When Getting The Now Playing Item` {
 
 			val mediaItemsBrowser = MediaItemsBrowser(
 				nowPlaying,
+				mockk(),
+				mockk(),
+				mockk(),
+				mockk(),
 				serviceFiles,
 			)
 			mediaItemsBrowser
