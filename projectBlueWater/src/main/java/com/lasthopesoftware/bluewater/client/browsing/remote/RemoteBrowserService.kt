@@ -30,7 +30,6 @@ import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.MediaSession.MediaSessionService
 import com.lasthopesoftware.bluewater.shared.android.services.promiseBoundService
 import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRateLimiter
-import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.resources.PackageValidator
 import com.namehillsoftware.handoff.promises.Promise
@@ -123,6 +122,15 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 		)
 	}
 
+	private val mediaItemBrowser by lazy {
+		nowPlayingRepository.then { repository ->
+			repository
+				?.let {
+					MediaItemsBrowser(it, mediaItemServiceFileLookup)
+				}
+		}
+	}
+
 	private val lazyMediaSessionService = lazy { promiseBoundService<MediaSessionService>() }
 
 	override fun onCreate() {
@@ -132,27 +140,24 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 		}
 	}
 
-	override fun onGetRoot(clientPackageName: String, clientUid: Int, rootHints: Bundle?): BrowserRoot? {
-		if (!packageValidator.isKnownCaller(clientPackageName, clientUid)) return null
-
-		rootHints?.let {
-			if (it.getBoolean(BrowserRoot.EXTRA_RECENT)) {
-				// Return a tree with a single playable media item for resumption.
-				val extras = Bundle().apply {
-					putBoolean(BrowserRoot.EXTRA_RECENT, true)
+	override fun onGetRoot(clientPackageName: String, clientUid: Int, rootHints: Bundle?): BrowserRoot? =
+		if (!packageValidator.isKnownCaller(clientPackageName, clientUid)) null
+		else rootHints
+			?.takeIf { it.getBoolean(BrowserRoot.EXTRA_RECENT) }
+			?.let { Bundle() }
+			?.apply { putBoolean(BrowserRoot.EXTRA_RECENT, true) }
+			// Return a tree with a single playable media item for resumption.
+			?.let { extras -> BrowserRoot(recentRoot, extras) }
+			?: Bundle()
+				.apply {
+					putBoolean(mediaSearchSupported, true)
+					putBoolean(contentStyleSupport, true)
+					putInt(contentStyleBrowsableHint, contentStyleGrid)
+					putInt(contentStylePlayableHint, contentStyleList)
 				}
-				return BrowserRoot(recentRoot, extras)
-			}
-		}
-
-		val bundle = Bundle().apply {
-			putBoolean(mediaSearchSupported, true)
-			putBoolean(contentStyleSupport, true)
-			putInt(contentStyleBrowsableHint, contentStyleGrid)
-			putInt(contentStylePlayableHint, contentStyleList)
-		}
-		return BrowserRoot(root, bundle)
-	}
+				.let { bundle ->
+					BrowserRoot(root, bundle)
+				}
 
 	override fun onLoadChildren(parentId: String, result: Result<MutableList<MediaBrowserCompat.MediaItem>>) {
 		if (parentId == rejection) {
@@ -163,14 +168,11 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 		result.detach()
 
 		if (parentId == recentRoot) {
-			nowPlayingRepository
-				.eventually { r ->
-					r?.nowPlaying
-						?.eventually { np ->
-							if (np.playlist.isEmpty() || np.playlistPosition < 0) Promise.empty()
-							else mediaItemServiceFileLookup.promiseMediaItem(np.playlist[np.playlistPosition])
-						}
-						.keepPromise()
+			mediaItemBrowser
+				.eventually { browser ->
+					browser
+						?.promiseNowPlayingItem()
+						?: Promise.empty()
 				}
 				.then { it?.let { mutableListOf(it) }.apply(result::sendResult) }
 				.excuse { e -> result.sendError(Bundle().apply { putString(error, e.message) }) }

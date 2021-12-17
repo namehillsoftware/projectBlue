@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.remote.GivenAServiceFile
 
 import android.graphics.BitmapFactory
+import android.support.v4.media.MediaBrowserCompat
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FakeScopedCachedFilesPropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties
@@ -71,5 +72,10 @@ class `When Looking Up The Media Item` {
 	@Test
 	fun `then the image is returned`() {
 		assertThat(mediaItem?.description?.iconBitmap).isNotNull
+	}
+
+	@Test
+	fun `then the item is playable`() {
+		assertThat(mediaItem?.flags).isEqualTo(MediaBrowserCompat.MediaItem.FLAG_PLAYABLE)
 	}
 }
