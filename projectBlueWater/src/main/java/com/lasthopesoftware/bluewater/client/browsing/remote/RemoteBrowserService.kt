@@ -216,6 +216,7 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 					?.promiseItems(query)
 					?.then { items -> result.sendResult(items.toMutableList()) }
 					?.excuse { e -> result.sendError(Bundle().apply { putString(error, e.message) }) }
+					.keepPromise()
 			}
 	}
 
