@@ -3,10 +3,8 @@ package com.lasthopesoftware.bluewater.client.connection.polling
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
-import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.content.ServiceConnection
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
@@ -21,6 +19,7 @@ import com.lasthopesoftware.bluewater.shared.android.notifications.NoOpChannelAc
 import com.lasthopesoftware.bluewater.shared.android.notifications.control.NotificationsController
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.NotificationChannelActivator
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.SharedChannelProperties
+import com.lasthopesoftware.bluewater.shared.android.services.promiseBoundService
 import com.lasthopesoftware.bluewater.shared.makePendingIntentImmutable
 import com.namehillsoftware.handoff.Messenger
 import com.namehillsoftware.handoff.promises.MessengerOperator
@@ -38,33 +37,14 @@ class PollConnectionService : Service(), MessengerOperator<IConnectionProvider> 
 		}
 
 		@JvmStatic
-		fun pollSessionConnection(context: Context, withNotification: Boolean): Promise<IConnectionProvider> {
-			val promiseConnectedService = object : Promise<PollConnectionServiceConnectionHolder>() {
-				init {
-					try {
-						context.bindService(Intent(context, PollConnectionService::class.java), object : ServiceConnection {
-							override fun onServiceConnected(name: ComponentName, service: IBinder) {
-								resolve(PollConnectionServiceConnectionHolder(
-									(service as GenericBinder<*>).service as PollConnectionService,
-									this))
-							}
-
-							override fun onServiceDisconnected(name: ComponentName) {}
-						}, Context.BIND_AUTO_CREATE)
-					} catch (err: Throwable) {
-						reject(err)
-					}
-				}
-			}
-
-			return promiseConnectedService
-				.eventually { s ->
-					val connectionService = s.pollConnectionService
+		fun pollSessionConnection(context: Context, withNotification: Boolean): Promise<IConnectionProvider> =
+			context.promiseBoundService<PollConnectionService>()
+				.eventually {  s ->
+					val connectionService = s.service
 					connectionService.withNotification = connectionService.withNotification || withNotification
 					connectionService.lazyConnectionPoller.value
 						.must { context.unbindService(s.serviceConnection) }
 				}
-		}
 
 		private val uniqueOnConnectionLostListeners = HashSet<Runnable>()
 
@@ -174,6 +154,4 @@ class PollConnectionService : Service(), MessengerOperator<IConnectionProvider> 
 			lazyNotificationController.value.removeAllNotifications()
 		super.onDestroy()
 	}
-
-	private class PollConnectionServiceConnectionHolder(val pollConnectionService: PollConnectionService, val serviceConnection: ServiceConnection)
 }

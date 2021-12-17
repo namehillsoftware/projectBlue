@@ -40,7 +40,7 @@ class PlaybackEngine(
 	var isPlaying = false
 		private set
 
-	private var playlist: MutableList<ServiceFile> = nowPlaying.playlist
+	private var playlist = nowPlaying.playlist.toMutableList()
 	private var isRepeating: Boolean = nowPlaying.isRepeating
 	private var playlistPosition: Int = nowPlaying.playlistPosition
 	private var fileProgress: FileProgress = StaticProgressedFile(Duration.millis(nowPlaying.filePosition).toPromise())

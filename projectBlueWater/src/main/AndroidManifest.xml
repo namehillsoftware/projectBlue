@@ -142,9 +142,23 @@
             android:enabled="true"
             android:exported="false" />
         <service
+            android:name=".shared.android.MediaSession.MediaSessionService"
+            android:enabled="true"
+            android:exported="false" />
+        <service
+            android:name=".client.browsing.remote.RemoteBrowserService"
+            android:enabled="true"
+            android:exported="true"
+            tools:ignore="ExportedService">
+            <intent-filter>
+                <action android:name="android.media.browse.MediaBrowserService" />
+            </intent-filter>
+        </service>
+        <service
             android:name="androidx.work.impl.foreground.SystemForegroundService"
             android:foregroundServiceType="dataSync"
-            tools:node="merge" />
+            tools:node="merge"
+            tools:ignore="Instantiatable" />
 
         <provider
             android:name="androidx.startup.InitializationProvider"

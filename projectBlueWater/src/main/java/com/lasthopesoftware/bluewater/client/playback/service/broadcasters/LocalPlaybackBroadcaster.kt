@@ -16,4 +16,9 @@ class LocalPlaybackBroadcaster(private val sendMessages: SendMessages) : IPlayba
 			.putExtra(PlaylistEvents.PlaybackFileParameters.fileKey, fileKey)
 		sendMessages.sendBroadcast(playbackBroadcastIntent)
 	}
+
+	override fun sendPlaybackBroadcast(broadcastMessage: String) {
+		val playbackBroadcastIntent = Intent(broadcastMessage)
+		sendMessages.sendBroadcast(playbackBroadcastIntent)
+	}
 }

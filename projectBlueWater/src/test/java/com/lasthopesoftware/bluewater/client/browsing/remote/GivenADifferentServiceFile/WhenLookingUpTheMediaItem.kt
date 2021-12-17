@@ -1,0 +1,82 @@
+package com.lasthopesoftware.bluewater.client.browsing.remote.GivenADifferentServiceFile
+
+import android.graphics.BitmapFactory
+import android.support.v4.media.MediaBrowserCompat
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FakeScopedCachedFilesPropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.items.media.image.ProvideImages
+import com.lasthopesoftware.bluewater.client.browsing.remote.MediaItemServiceFileLookup
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.namehillsoftware.handoff.promises.Promise
+import io.mockk.every
+import io.mockk.mockk
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+
+@RunWith(RobolectricTestRunner::class)
+class `When Looking Up The Media Item` {
+	companion object {
+		private val mediaItem by lazy {
+			val fileProperties = FakeScopedCachedFilesPropertiesProvider()
+			fileProperties.addFilePropertiesToCache(
+				ServiceFile(703),
+				mapOf(
+					Pair(KnownFileProperties.KEY, "703"),
+					Pair(KnownFileProperties.ARTIST, "division"),
+					Pair(KnownFileProperties.ALBUM, "slide"),
+					Pair(KnownFileProperties.NAME, "habit"),
+					Pair(KnownFileProperties.DURATION, "451")
+				)
+			)
+
+			val imageProvider = mockk<ProvideImages>()
+			every { imageProvider.promiseFileBitmap(ServiceFile(703)) } returns Promise(
+				BitmapFactory.decodeByteArray(
+				byteArrayOf(3, 4), 0, 2))
+
+			val mediaItemServiceFileLookup = MediaItemServiceFileLookup(
+				fileProperties,
+				imageProvider
+			)
+			mediaItemServiceFileLookup.promiseMediaItem(ServiceFile(703))
+				.toFuture()
+				.get()
+		}
+	}
+
+	@Test
+	fun `then the title is correct`() {
+		assertThat(mediaItem?.description?.title)
+			.isEqualTo("habit")
+	}
+
+	@Test
+	fun `then the artist is correct`() {
+		assertThat(mediaItem?.description?.subtitle)
+			.isEqualTo("division")
+	}
+
+	@Test
+	fun `then the media ID is correct`() {
+		assertThat(mediaItem?.mediaId).isEqualTo("sf:703")
+	}
+
+	@Test
+	fun `then the album is correct`() {
+		assertThat(mediaItem?.description?.description)
+			.isEqualTo("slide")
+	}
+
+	@Test
+	fun `then the image is returned`() {
+		assertThat(mediaItem?.description?.iconBitmap).isNotNull
+	}
+
+	@Test
+	fun `then the item is playable`() {
+		assertThat(mediaItem?.flags).isEqualTo(MediaBrowserCompat.MediaItem.FLAG_PLAYABLE)
+	}
+}

@@ -8,7 +8,6 @@ import android.os.Build
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
-import androidx.annotation.IntDef
 import androidx.annotation.RequiresApi
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FilePropertyHelpers
@@ -28,7 +27,7 @@ class MediaSessionBroadcaster(
 	private val mediaSession: MediaSessionCompat
 ) : IRemoteBroadcaster {
 	@Volatile
-	private var playbackState = PlaybackState.STATE_STOPPED
+	private var playbackState = PlaybackStateCompat.STATE_STOPPED
 
 	@Volatile
 	private var trackPosition: Long = -1
@@ -36,7 +35,6 @@ class MediaSessionBroadcaster(
 	@Volatile
 	private var mediaMetadata = MediaMetadataCompat.Builder().build()
 
-	@Actions
 	@Volatile
 	private var capabilities = standardCapabilities
 	private var remoteClientBitmap: Bitmap? = null
@@ -46,9 +44,9 @@ class MediaSessionBroadcaster(
 	override fun setPlaying() {
 		isPlaying = true
 		val builder = PlaybackStateCompat.Builder()
-		capabilities = PlaybackState.ACTION_PAUSE or standardCapabilities
+		capabilities = PlaybackStateCompat.ACTION_PAUSE or standardCapabilities
 		builder.setActions(capabilities)
-		playbackState = PlaybackState.STATE_PLAYING
+		playbackState = PlaybackStateCompat.STATE_PLAYING
 		builder.setState(playbackState, trackPosition, playbackSpeed)
 		mediaSession.setPlaybackState(builder.build())
 	}
@@ -59,11 +57,7 @@ class MediaSessionBroadcaster(
 		capabilities = PlaybackState.ACTION_PLAY or standardCapabilities
 		builder.setActions(capabilities)
 		playbackState = PlaybackState.STATE_PAUSED
-		builder.setState(
-			playbackState,
-			trackPosition,
-			playbackSpeed
-		)
+		builder.setState(playbackState, trackPosition, playbackSpeed)
 		mediaSession.setPlaybackState(builder.build())
 		updateClientBitmap(null)
 	}
@@ -146,22 +140,15 @@ class MediaSessionBroadcaster(
 		remoteClientBitmap = bitmap
 	}
 
-	@IntDef(
-		flag = true,
-		value = [PlaybackState.ACTION_STOP.toInt(), PlaybackState.ACTION_PAUSE.toInt(), PlaybackState.ACTION_PLAY.toInt(), PlaybackState.ACTION_REWIND.toInt(), PlaybackState.ACTION_SKIP_TO_PREVIOUS.toInt(), PlaybackState.ACTION_SKIP_TO_NEXT.toInt(), PlaybackState.ACTION_FAST_FORWARD.toInt(), PlaybackState.ACTION_SET_RATING.toInt(), PlaybackState.ACTION_SEEK_TO.toInt(), PlaybackState.ACTION_PLAY_PAUSE.toInt(), PlaybackState.ACTION_PLAY_FROM_MEDIA_ID.toInt(), PlaybackState.ACTION_PLAY_FROM_SEARCH.toInt(), PlaybackState.ACTION_SKIP_TO_QUEUE_ITEM.toInt()]
-	)
-	private annotation class Actions
-
 	companion object {
 		private val logger = LoggerFactory.getLogger(
 			MediaSessionBroadcaster::class.java
 		)
 		private const val playbackSpeed = 1.0f
 
-		@Actions
-		private val standardCapabilities = PlaybackState.ACTION_PLAY_PAUSE or
-			PlaybackState.ACTION_SKIP_TO_NEXT or
-			PlaybackState.ACTION_SKIP_TO_PREVIOUS or
-			PlaybackState.ACTION_STOP
+		private const val standardCapabilities = PlaybackStateCompat.ACTION_PLAY_PAUSE or
+			PlaybackStateCompat.ACTION_SKIP_TO_NEXT or
+			PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS or
+			PlaybackStateCompat.ACTION_STOP
 	}
 }
