@@ -8,5 +8,5 @@ interface BrowseMediaItems {
 	fun promiseNowPlayingItem(): Promise<MediaBrowserCompat.MediaItem?>
 	fun promiseItems(item: Item): Promise<Collection<MediaBrowserCompat.MediaItem>>
 	fun promiseLibraryItems(): Promise<List<MediaBrowserCompat.MediaItem>>
-	fun promiseSearchedItem(query: String): Promise<List<MediaBrowserCompat.MediaItem>>
+	fun promiseItems(query: String): Promise<Collection<MediaBrowserCompat.MediaItem>>
 }

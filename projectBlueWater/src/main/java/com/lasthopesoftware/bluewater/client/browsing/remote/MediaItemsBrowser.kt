@@ -6,6 +6,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.ProvideFiles
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.SearchFileParameterProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.views.access.ProvideLibraryViews
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.INowPlayingRepository
@@ -68,7 +69,10 @@ class MediaItemsBrowser
 				.keepPromise(emptyList())
 		}
 
-	override fun promiseSearchedItem(query: String): Promise<List<MediaBrowserCompat.MediaItem>> {
-		TODO("Not yet implemented")
+	override fun promiseItems(query: String): Promise<Collection<MediaBrowserCompat.MediaItem>> {
+		val parameters = SearchFileParameterProvider.getFileListParameters(query)
+		return fileProvider
+			.promiseFiles(FileListParameters.Options.None, *parameters)
+			.eventually { files -> Promise.whenAll(files.map(mediaItemServiceFileLookup::promiseMediaItem)) }
 	}
 }

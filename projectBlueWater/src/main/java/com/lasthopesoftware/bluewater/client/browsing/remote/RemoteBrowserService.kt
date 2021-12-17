@@ -9,8 +9,6 @@ import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.access.CachedItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.FileProvider
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.SearchFileParameterProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.RateControlledFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedCachedFilePropertiesProvider
@@ -32,7 +30,6 @@ import com.lasthopesoftware.bluewater.shared.android.services.promiseBoundServic
 import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRateLimiter
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.resources.PackageValidator
-import com.namehillsoftware.handoff.promises.Promise
 import kotlin.math.max
 
 class RemoteBrowserService : MediaBrowserServiceCompat() {
@@ -68,8 +65,6 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 	}
 
 	private val packageValidator by lazy { PackageValidator(this, R.xml.allowed_media_browser_callers) }
-
-	private val browserLibraryIdProvider by lazy { SelectedBrowserLibraryIdentifierProvider(getApplicationSettingsRepository()) }
 
 	private val libraryViewsProvider by lazy { CachedLibraryViewsProvider.getInstance(this) }
 
@@ -215,12 +210,13 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 
 	override fun onSearch(query: String, extras: Bundle?, result: Result<MutableList<MediaBrowserCompat.MediaItem>>) {
 		result.detach()
-		val parameters = SearchFileParameterProvider.getFileListParameters(query)
-		fileProvider
-			.promiseFiles(FileListParameters.Options.None, *parameters)
-			.eventually { files -> Promise.whenAll(files.map(mediaItemServiceFileLookup::promiseMediaItem)) }
-			.then { items -> result.sendResult(items.toMutableList()) }
-			.excuse { e -> result.sendError(Bundle().apply { putString(error, e.message) }) }
+		mediaItemBrowser
+			.eventually { browser ->
+				browser
+					?.promiseItems(query)
+					?.then { items -> result.sendResult(items.toMutableList()) }
+					?.excuse { e -> result.sendError(Bundle().apply { putString(error, e.message) }) }
+			}
 	}
 
 	override fun onDestroy() {
