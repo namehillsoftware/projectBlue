@@ -47,9 +47,9 @@ internal class PreparedExoPlayerPromise(
 
 	private val cancellationToken = CancellationToken()
 
-	private lateinit var exoPlayer: PromisingExoPlayer
 	private lateinit var audioRenderers: Array<Renderer>
 	private lateinit var bufferingExoPlayer: BufferingExoPlayer
+	private var exoPlayer: PromisingExoPlayer? = null
 	private var isResolved = false
 
 	init {
@@ -109,7 +109,7 @@ internal class PreparedExoPlayerPromise(
 
 	override fun run() {
 		cancellationToken.run()
-		exoPlayer.release()
+		exoPlayer?.release()
 		reject(CancellationException())
 	}
 
@@ -119,6 +119,8 @@ internal class PreparedExoPlayerPromise(
 		if (playbackState != Player.STATE_READY) return
 
 		isResolved = true
+
+		val exoPlayer = exoPlayer ?: return
 		exoPlayer.removeListener(this)
 		resolve(
 			PreparedPlayableFile(
@@ -146,8 +148,8 @@ internal class PreparedExoPlayerPromise(
 
 		logger.error("An error occurred while preparing the exo player!", error)
 
-		exoPlayer.stop()
-		exoPlayer.release()
+		exoPlayer?.stop()
+		exoPlayer?.release()
 
 		when (error.cause) {
 			is ParserException -> {
