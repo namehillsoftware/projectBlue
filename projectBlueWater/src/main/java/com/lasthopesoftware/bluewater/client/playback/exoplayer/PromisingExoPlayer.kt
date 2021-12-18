@@ -4,21 +4,10 @@ import android.os.Looper
 import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.source.MediaSource
 import com.google.android.exoplayer2.source.ShuffleOrder
-import com.google.android.exoplayer2.source.TrackGroupArray
-import com.google.android.exoplayer2.trackselection.TrackSelectionArray
 import com.google.android.exoplayer2.trackselection.TrackSelector
 import com.namehillsoftware.handoff.promises.Promise
 
 interface PromisingExoPlayer {
-	fun getAudioComponent(): Promise<ExoPlayer.AudioComponent?>
-
-	fun getVideoComponent(): Promise<ExoPlayer.VideoComponent?>
-
-	fun getTextComponent(): Promise<ExoPlayer.TextComponent?>
-
-	fun getMetadataComponent(): Promise<ExoPlayer.MetadataComponent?>
-
-	fun getDeviceComponent(): Promise<ExoPlayer.DeviceComponent?>
 
 	fun getApplicationLooper(): Promise<Looper>
 
@@ -92,13 +81,13 @@ interface PromisingExoPlayer {
 
 	fun seekTo(windowIndex: Int, positionMs: Long): Promise<PromisingExoPlayer>
 
-	fun hasPreviousWindow(): Promise<Boolean>
+	fun hasPreviousMediaItem(): Promise<Boolean>
 
-	fun seekToPreviousWindow(): Promise<PromisingExoPlayer>
+	fun seekToPreviousMediaItem(): Promise<PromisingExoPlayer>
 
-	fun hasNextWindow(): Promise<Boolean>
+	fun hasNextMediaItem(): Promise<Boolean>
 
-	fun seekToNextWindow(): Promise<PromisingExoPlayer>
+	fun seekToNextMediaItem(): Promise<PromisingExoPlayer>
 
 	fun setPlaybackParameters(playbackParameters: PlaybackParameters): Promise<PromisingExoPlayer>
 
@@ -114,9 +103,7 @@ interface PromisingExoPlayer {
 
 	fun getTrackSelector(): Promise<TrackSelector?>
 
-	fun getCurrentTrackGroups(): Promise<TrackGroupArray>
-
-	fun getCurrentTrackSelections(): Promise<TrackSelectionArray>
+	fun getCurrentTracksInfo(): Promise<TracksInfo?>
 
 	fun getCurrentManifest(): Promise<Any?>
 
@@ -124,11 +111,11 @@ interface PromisingExoPlayer {
 
 	fun getCurrentPeriodIndex(): Promise<Int>
 
-	fun getCurrentWindowIndex(): Promise<Int>
+	fun getCurrentMediaItemIndex(): Promise<Int>
 
-	fun getNextWindowIndex(): Promise<Int>
+	fun getNextMediaItemIndex(): Promise<Int>
 
-	fun getPreviousWindowIndex(): Promise<Int>
+	fun getPreviousMediaItemIndex(): Promise<Int>
 
 	fun getCurrentMediaItem(): Promise<MediaItem?>
 
@@ -146,13 +133,13 @@ interface PromisingExoPlayer {
 
 	fun getTotalBufferedDuration(): Promise<Long>
 
-	fun isCurrentWindowDynamic(): Promise<Boolean>
+	fun isCurrentMediaItemDynamic(): Promise<Boolean>
 
-	fun isCurrentWindowLive(): Promise<Boolean>
+	fun isCurrentMediaItemLive(): Promise<Boolean>
 
 	fun getCurrentLiveOffset(): Promise<Long>
 
-	fun isCurrentWindowSeekable(): Promise<Boolean>
+	fun isCurrentMediaItemSeekable(): Promise<Boolean>
 
 	fun isPlayingAd(): Promise<Boolean>
 
