@@ -42,14 +42,14 @@ internal class PreparedExoPlayerPromise(
 	RenderersFactory {
 
 	companion object {
-		private val logger = LoggerFactory.getLogger(PreparedExoPlayerPromise::class.java)
+		private val logger by lazy { LoggerFactory.getLogger(PreparedExoPlayerPromise::class.java) }
 	}
 
 	private val cancellationToken = CancellationToken()
 
-	private var exoPlayer: PromisingExoPlayer? = null
-	private var audioRenderers: Array<Renderer> = emptyArray()
-	private var bufferingExoPlayer: BufferingExoPlayer? = null
+	private lateinit var exoPlayer: PromisingExoPlayer
+	private lateinit var audioRenderers: Array<Renderer>
+	private lateinit var bufferingExoPlayer: BufferingExoPlayer
 	private var isResolved = false
 
 	init {
@@ -109,7 +109,7 @@ internal class PreparedExoPlayerPromise(
 
 	override fun run() {
 		cancellationToken.run()
-		exoPlayer?.release()
+		exoPlayer.release()
 		reject(CancellationException())
 	}
 
@@ -117,8 +117,6 @@ internal class PreparedExoPlayerPromise(
 		if (isResolved || cancellationToken.isCancelled) return
 
 		if (playbackState != Player.STATE_READY) return
-
-		val exoPlayer = exoPlayer ?: return
 
 		isResolved = true
 		exoPlayer.removeListener(this)
@@ -148,8 +146,8 @@ internal class PreparedExoPlayerPromise(
 
 		logger.error("An error occurred while preparing the exo player!", error)
 
-		exoPlayer?.stop()
-		exoPlayer?.release()
+		exoPlayer.stop()
+		exoPlayer.release()
 
 		when (error.cause) {
 			is ParserException -> {
