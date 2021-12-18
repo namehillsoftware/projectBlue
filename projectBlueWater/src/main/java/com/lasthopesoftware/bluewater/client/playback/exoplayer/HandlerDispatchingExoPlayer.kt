@@ -5,39 +5,12 @@ import android.os.Looper
 import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.source.MediaSource
 import com.google.android.exoplayer2.source.ShuffleOrder
-import com.google.android.exoplayer2.source.TrackGroupArray
-import com.google.android.exoplayer2.trackselection.TrackSelectionArray
 import com.google.android.exoplayer2.trackselection.TrackSelector
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.MessageWriter
 
 class HandlerDispatchingExoPlayer(private val innerPlayer: ExoPlayer, private val handler: Handler) : PromisingExoPlayer {
-
-	override fun getAudioComponent(): Promise<ExoPlayer.AudioComponent?> =
-		LoopedInPromise(
-			MessageWriter { innerPlayer.audioComponent },
-			handler)
-
-	override fun getVideoComponent(): Promise<ExoPlayer.VideoComponent?> =
-		LoopedInPromise(
-			MessageWriter { innerPlayer.videoComponent },
-			handler)
-
-	override fun getTextComponent(): Promise<ExoPlayer.TextComponent?> =
-		LoopedInPromise(
-			MessageWriter { innerPlayer.textComponent },
-			handler)
-
-	override fun getMetadataComponent(): Promise<ExoPlayer.MetadataComponent?> =
-		LoopedInPromise(
-			MessageWriter { innerPlayer.metadataComponent },
-			handler)
-
-	override fun getDeviceComponent(): Promise<ExoPlayer.DeviceComponent?> =
-		LoopedInPromise(
-			MessageWriter { innerPlayer.deviceComponent },
-			handler)
 
 	override fun getApplicationLooper(): Promise<Looper> =
 		LoopedInPromise(
@@ -300,28 +273,28 @@ class HandlerDispatchingExoPlayer(private val innerPlayer: ExoPlayer, private va
 			},
 			handler)
 
-	override fun hasPreviousWindow(): Promise<Boolean> =
+	override fun hasPreviousMediaItem(): Promise<Boolean> =
 		LoopedInPromise(
-			MessageWriter { innerPlayer.hasPreviousWindow() },
+			MessageWriter { innerPlayer.hasPreviousMediaItem() },
 			handler)
 
-	override fun seekToPreviousWindow(): Promise<PromisingExoPlayer> =
+	override fun seekToPreviousMediaItem(): Promise<PromisingExoPlayer> =
 		LoopedInPromise(
 			MessageWriter {
-				innerPlayer.seekToPreviousWindow()
+				innerPlayer.seekToPreviousMediaItem()
 				this
 			},
 			handler)
 
-	override fun hasNextWindow(): Promise<Boolean> =
+	override fun hasNextMediaItem(): Promise<Boolean> =
 		LoopedInPromise(
-			MessageWriter { innerPlayer.hasNextWindow() },
+			MessageWriter { innerPlayer.hasNextMediaItem() },
 			handler)
 
-	override fun seekToNextWindow(): Promise<PromisingExoPlayer> =
+	override fun seekToNextMediaItem(): Promise<PromisingExoPlayer> =
 		LoopedInPromise(
 			MessageWriter {
-				innerPlayer.seekToNextWindow()
+				innerPlayer.seekToNextMediaItem()
 				this
 			},
 			handler)
@@ -370,14 +343,9 @@ class HandlerDispatchingExoPlayer(private val innerPlayer: ExoPlayer, private va
 			MessageWriter { innerPlayer.trackSelector },
 			handler)
 
-	override fun getCurrentTrackGroups(): Promise<TrackGroupArray> =
+	override fun getCurrentTracksInfo(): Promise<TracksInfo?> =
 		LoopedInPromise(
-			MessageWriter { innerPlayer.currentTrackGroups },
-			handler)
-
-	override fun getCurrentTrackSelections(): Promise<TrackSelectionArray> =
-		LoopedInPromise(
-			MessageWriter { innerPlayer.currentTrackSelections },
+			MessageWriter { innerPlayer.currentTracksInfo },
 			handler)
 
 	override fun getCurrentManifest(): Promise<Any?> =
@@ -395,19 +363,19 @@ class HandlerDispatchingExoPlayer(private val innerPlayer: ExoPlayer, private va
 			MessageWriter { innerPlayer.currentPeriodIndex },
 			handler)
 
-	override fun getCurrentWindowIndex(): Promise<Int> =
+	override fun getCurrentMediaItemIndex(): Promise<Int> =
 		LoopedInPromise(
-			MessageWriter { innerPlayer.currentWindowIndex },
+			MessageWriter { innerPlayer.currentMediaItemIndex },
 			handler)
 
-	override fun getNextWindowIndex(): Promise<Int> =
+	override fun getNextMediaItemIndex(): Promise<Int> =
 		LoopedInPromise(
-			MessageWriter { innerPlayer.nextWindowIndex },
+			MessageWriter { innerPlayer.nextMediaItemIndex },
 			handler)
 
-	override fun getPreviousWindowIndex(): Promise<Int> =
+	override fun getPreviousMediaItemIndex(): Promise<Int> =
 		LoopedInPromise(
-			MessageWriter { innerPlayer.previousWindowIndex },
+			MessageWriter { innerPlayer.previousMediaItemIndex },
 			handler)
 
 	override fun getCurrentMediaItem(): Promise<MediaItem?> =
@@ -450,14 +418,14 @@ class HandlerDispatchingExoPlayer(private val innerPlayer: ExoPlayer, private va
 			MessageWriter { innerPlayer.totalBufferedDuration },
 			handler)
 
-	override fun isCurrentWindowDynamic(): Promise<Boolean> =
+	override fun isCurrentMediaItemDynamic(): Promise<Boolean> =
 		LoopedInPromise(
-			MessageWriter { innerPlayer.isCurrentWindowDynamic },
+			MessageWriter { innerPlayer.isCurrentMediaItemDynamic },
 			handler)
 
-	override fun isCurrentWindowLive(): Promise<Boolean> =
+	override fun isCurrentMediaItemLive(): Promise<Boolean> =
 		LoopedInPromise(
-			MessageWriter { innerPlayer.isCurrentWindowLive },
+			MessageWriter { innerPlayer.isCurrentMediaItemLive },
 			handler)
 
 	override fun getCurrentLiveOffset(): Promise<Long> =
@@ -465,9 +433,9 @@ class HandlerDispatchingExoPlayer(private val innerPlayer: ExoPlayer, private va
 			MessageWriter { innerPlayer.currentLiveOffset },
 			handler)
 
-	override fun isCurrentWindowSeekable(): Promise<Boolean> =
+	override fun isCurrentMediaItemSeekable(): Promise<Boolean> =
 		LoopedInPromise(
-			MessageWriter { innerPlayer.isCurrentWindowSeekable },
+			MessageWriter { innerPlayer.isCurrentMediaItemSeekable },
 			handler)
 
 	override fun isPlayingAd(): Promise<Boolean> =

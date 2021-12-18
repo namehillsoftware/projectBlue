@@ -4,6 +4,10 @@ import android.content.Context
 import android.net.Uri
 import android.os.Handler
 import com.google.android.exoplayer2.*
+import com.google.android.exoplayer2.audio.AudioRendererEventListener
+import com.google.android.exoplayer2.metadata.MetadataOutput
+import com.google.android.exoplayer2.text.TextOutput
+import com.google.android.exoplayer2.video.VideoRendererEventListener
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.HandlerDispatchingExoPlayer
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.PromisingExoPlayer
 import com.lasthopesoftware.bluewater.client.playback.file.EmptyPlaybackHandler
@@ -34,17 +38,18 @@ internal class PreparedExoPlayerPromise(
 	Promise<PreparedPlayableFile>(),
 	Player.Listener,
 	ImmediateResponse<Array<Renderer>, Unit>,
-	Runnable {
+	Runnable,
+	RenderersFactory {
 
 	companion object {
-		private val logger = LoggerFactory.getLogger(PreparedExoPlayerPromise::class.java)
+		private val logger by lazy { LoggerFactory.getLogger(PreparedExoPlayerPromise::class.java) }
 	}
 
 	private val cancellationToken = CancellationToken()
 
+	private lateinit var audioRenderers: Array<Renderer>
+	private lateinit var bufferingExoPlayer: BufferingExoPlayer
 	private var exoPlayer: PromisingExoPlayer? = null
-	private var audioRenderers: Array<Renderer> = emptyArray()
-	private var bufferingExoPlayer: BufferingExoPlayer? = null
 	private var isResolved = false
 
 	init {
@@ -65,7 +70,7 @@ internal class PreparedExoPlayerPromise(
 
 	override fun respond(renderers: Array<Renderer>) {
 		audioRenderers = renderers
-		val exoPlayerBuilder = ExoPlayer.Builder(context, *renderers)
+		val exoPlayerBuilder = ExoPlayer.Builder(context, this)
 			.setLoadControl(loadControl)
 			.setLooper(playbackHandler.looper)
 
@@ -116,6 +121,7 @@ internal class PreparedExoPlayerPromise(
 		val exoPlayer = exoPlayer ?: return
 
 		isResolved = true
+
 		exoPlayer.removeListener(this)
 		resolve(
 			PreparedPlayableFile(
@@ -127,6 +133,14 @@ internal class PreparedExoPlayerPromise(
 	override fun onPlayerError(error: PlaybackException) {
 		handleError(error)
 	}
+
+	override fun createRenderers(
+		eventHandler: Handler,
+		videoRendererEventListener: VideoRendererEventListener,
+		audioRendererEventListener: AudioRendererEventListener,
+		textRendererOutput: TextOutput,
+		metadataRendererOutput: MetadataOutput
+	): Array<Renderer> = audioRenderers
 
 	private fun handleError(error: Throwable) {
 		if (isResolved) return
