@@ -118,9 +118,10 @@ internal class PreparedExoPlayerPromise(
 
 		if (playbackState != Player.STATE_READY) return
 
+		val exoPlayer = exoPlayer ?: return
+
 		isResolved = true
 
-		val exoPlayer = exoPlayer ?: return
 		exoPlayer.removeListener(this)
 		resolve(
 			PreparedPlayableFile(
