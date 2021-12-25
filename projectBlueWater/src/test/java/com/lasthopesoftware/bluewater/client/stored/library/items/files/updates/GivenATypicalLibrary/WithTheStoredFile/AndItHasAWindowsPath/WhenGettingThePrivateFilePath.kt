@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.GivenATypicalLibrary.WithoutTheStoredFile
+package com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.GivenATypicalLibrary.WithTheStoredFile.AndItHasAWindowsPath
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FakeFilesPropertiesProvider
@@ -22,19 +22,17 @@ class WhenGettingThePrivateFilePath {
 				ServiceFile(340),
 				LibraryId(550),
 				mapOf(
-					Pair(KnownFileProperties.ARTIST, "liar"),
-					Pair(KnownFileProperties.ALBUM, "whenever"),
+					Pair(KnownFileProperties.ALBUM_ARTIST, "tobacco"),
+					Pair(KnownFileProperties.ALBUM, "sign"),
 					Pair(KnownFileProperties.TRACK, "670"),
-					Pair(KnownFileProperties.FILENAME, "wish somebody.mp3")
+					Pair(KnownFileProperties.FILENAME, """D:\aint\windows\great\for_music.mp3""")
 				)
 			)
 
 			val directoryLookup = mockk<LookupSyncDirectory>()
-			every { directoryLookup.promiseSyncDirectory(LibraryId(550)) } returns Promise(File("/private"))
+			every { directoryLookup.promiseSyncDirectory(LibraryId(550)) } returns Promise(File("/lock"))
 
-			val privateStoredFilePaths = PrivateStoredFilePathLookup(filePropertiesProvider, directoryLookup)
-
-			privateStoredFilePaths
+			PrivateStoredFilePathLookup(filePropertiesProvider, directoryLookup)
 				.promiseStoredFilePath(LibraryId(550), ServiceFile(340))
 				.toFuture()
 				.get()
@@ -43,6 +41,6 @@ class WhenGettingThePrivateFilePath {
 
 	@Test
 	fun thenTheFilepathIsCorrect() {
-		assertThat(filePath).isEqualTo("/private/liar/whenever/wish somebody.mp3")
+		assertThat(filePath).isEqualTo("/lock/tobacco/sign/for_music.mp3")
 	}
 }

@@ -77,7 +77,8 @@ class WhenUpdatingTheFile : AndroidContext() {
                 { Promise(emptyList()) }
             ) { 0 })
         storedFile =
-            storedFileUpdater.promiseStoredFileUpdate(LibraryId(14), ServiceFile(4))
+            storedFileUpdater
+				.promiseStoredFileUpdate(LibraryId(14), ServiceFile(4))
         		.toFuture()
 				.get()
     }
