@@ -17,7 +17,7 @@ class SyncDirectoryLookup(
 	private val freeSpace: GetFreeSpace) : LookupSyncDirectory {
 
 	companion object {
-		private val lazyEmptyFiles = lazy { Promise<Collection<File>>(emptyList()) }
+		private val lazyEmptyFiles by lazy { Promise<Collection<File>>(emptyList()) }
 	}
 
 	override fun promiseSyncDirectory(libraryId: LibraryId): Promise<File?> =
@@ -34,8 +34,8 @@ class SyncDirectoryLookup(
 						library.customSyncedFilesPath
 							?.let { p -> listOf(File(p)) }
 							?.toPromise()
-							?: lazyEmptyFiles.value
-					else -> lazyEmptyFiles.value
+							?: lazyEmptyFiles
+					else -> lazyEmptyFiles
 				}
 			}
 

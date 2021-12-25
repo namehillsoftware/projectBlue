@@ -24,7 +24,6 @@ class MediaQueryCursorProvider
 			.then(this)
 	}
 
-	@Throws(Exception::class)
 	override fun respond(fileProperties: Map<String, String>): Cursor? {
 		val originalFilename = fileProperties[KnownFileProperties.FILENAME]
 			?: throw IOException("The filename property was not retrieved. A connection needs to be re-established.")

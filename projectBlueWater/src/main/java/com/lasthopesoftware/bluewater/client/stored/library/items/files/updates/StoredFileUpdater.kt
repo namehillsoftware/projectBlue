@@ -38,9 +38,9 @@ class StoredFileUpdater(
 ) : UpdateStoredFiles {
 
 	companion object {
-		private val logger = LoggerFactory.getLogger(StoredFileUpdater::class.java)
+		private val logger by lazy { LoggerFactory.getLogger(StoredFileUpdater::class.java) }
 
-		private val insertSql = lazy {
+		private val insertSql by lazy {
 			fromTable(StoredFileEntityInformation.tableName)
 				.addColumn(StoredFileEntityInformation.serviceIdColumnName)
 				.addColumn(StoredFileEntityInformation.libraryIdColumnName)
@@ -48,7 +48,7 @@ class StoredFileUpdater(
 				.build()
 		}
 
-		private val updateSql = lazy {
+		private val updateSql by lazy {
 			UpdateBuilder
 				.fromTable(StoredFileEntityInformation.tableName)
 				.addSetter(StoredFileEntityInformation.serviceIdColumnName)
@@ -60,14 +60,14 @@ class StoredFileUpdater(
 				.buildQuery()
 		}
 
-		private val reservedCharactersPattern = lazy { Pattern.compile("[|?*<\":>+\\[\\]'/]") }
+		private val reservedCharactersPattern by lazy { Pattern.compile("[|?*<\":>+\\[\\]'/]") }
 
 		private fun replaceReservedCharsAndPath(path: String): String =
-			reservedCharactersPattern.value.matcher(path).replaceAll("_")
+			reservedCharactersPattern.matcher(path).replaceAll("_")
 
 		private fun RepositoryAccessHelper.updateStoredFile(storedFile: StoredFile) {
 			beginTransaction().use { closeableTransaction ->
-					mapSql(updateSql.value)
+					mapSql(updateSql)
 						.addParameter(StoredFileEntityInformation.serviceIdColumnName, storedFile.serviceId)
 						.addParameter(StoredFileEntityInformation.storedMediaIdColumnName, storedFile.storedMediaId)
 						.addParameter(StoredFileEntityInformation.pathColumnName, storedFile.path)
@@ -81,7 +81,7 @@ class StoredFileUpdater(
 
 		private fun RepositoryAccessHelper.createStoredFile(libraryId: LibraryId, serviceFile: ServiceFile) {
 			beginTransaction().use { closeableTransaction ->
-				mapSql(insertSql.value)
+				mapSql(insertSql)
 					.addParameter(StoredFileEntityInformation.serviceIdColumnName, serviceFile.key)
 					.addParameter(StoredFileEntityInformation.libraryIdColumnName, libraryId.id)
 					.addParameter(StoredFileEntityInformation.isOwnerColumnName, true)
@@ -137,13 +137,15 @@ class StoredFileUpdater(
 			.eventually { storedFile ->
 				storedFile
 					?.toPromise()
-					?: QueuedPromise(MessageWriter {
-						RepositoryAccessHelper(context).use { repositoryAccessHelper ->
-							logger.info("Stored file was not found for " + serviceFile.key + ", creating file")
-							repositoryAccessHelper.createStoredFile(libraryId, serviceFile)
-						}
-					}, ThreadPools.databaseTableExecutor<StoredFileAccess>())
-						.eventually { storedFiles.promiseStoredFile(libraryId, serviceFile) }
+					?: QueuedPromise(
+						MessageWriter {
+							RepositoryAccessHelper(context).use { repositoryAccessHelper ->
+								logger.info("Stored file was not found for " + serviceFile.key + ", creating file")
+								repositoryAccessHelper.createStoredFile(libraryId, serviceFile)
+							}
+						},
+						ThreadPools.databaseTableExecutor<StoredFileAccess>()
+					).eventually { storedFiles.promiseStoredFile(libraryId, serviceFile) }
 			}
 			.eventually { storedFile ->
 				promisedLibrary.eventually { library ->

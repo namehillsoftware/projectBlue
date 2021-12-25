@@ -39,6 +39,7 @@ class WhenUpdatingTheFile : AndroidContext() {
 		val filePropertiesProvider = FakeFilesPropertiesProvider()
 		filePropertiesProvider.addFilePropertiesToCache(
 			ServiceFile(4),
+			LibraryId(14),
 			mapOf(
 				Pair(KnownFileProperties.ARTIST, "artist"),
 				Pair(KnownFileProperties.ALBUM, "album"),
