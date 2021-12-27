@@ -125,18 +125,11 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 			LibraryFileProvider(LibraryFileStringListProvider(libraryConnections)),
 			FileListParameters.getInstance())
 
-		DelegatingStoredItemServiceFileCollector(
-			serviceFilesCollector,
-			cachingPolicyFactory
-		)
+		DelegatingStoredItemServiceFileCollector(serviceFilesCollector, cachingPolicyFactory)
 	}
 
 	private val storedFilesPruner by lazy {
-		StoredFilesPruner(
-			serviceFilesCollector,
-			StoredFilesCollection(context),
-			storedFileAccess
-		)
+		StoredFilesPruner(serviceFilesCollector, StoredFilesCollection(context), storedFileAccess)
 	}
 
 	private val storedFilesSynchronization by lazy {
@@ -154,10 +147,7 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
                 libraryIdentifierProvider,
                 true
             ),
-            MediaFileIdProvider(
-                cursorProvider,
-                readPermissionArbitratorForOs
-            ),
+            MediaFileIdProvider(cursorProvider, readPermissionArbitratorForOs),
             StoredFileQuery(context),
             libraryProvider,
 			StoredFilePathsLookup(
@@ -166,10 +156,7 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 					fileProperties,
 					SyncDirectoryLookup(libraryProvider, PublicDirectoryLookup(context), PrivateDirectoryLookup(context), FreeSpaceLookup)
 				),
-				SharedStoredFilePathLookup(
-					fileProperties,
-					context
-				)
+				SharedStoredFilePathLookup(fileProperties, context)
 			)
         )
 
