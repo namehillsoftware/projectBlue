@@ -31,7 +31,7 @@ class MediaItemsBrowser
 					.setMediaId(RemoteBrowserService.itemFileMediaIdPrefix + item.key)
 					.setTitle(item.value)
 					.build(),
-				MediaBrowserCompat.MediaItem.FLAG_BROWSABLE or MediaBrowserCompat.MediaItem.FLAG_PLAYABLE
+				MediaBrowserCompat.MediaItem.FLAG_BROWSABLE
 			)
 	}
 
