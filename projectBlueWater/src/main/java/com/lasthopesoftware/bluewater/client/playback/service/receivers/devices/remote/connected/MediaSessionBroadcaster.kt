@@ -149,6 +149,8 @@ class MediaSessionBroadcaster(
 		private const val standardCapabilities = PlaybackStateCompat.ACTION_PLAY_PAUSE or
 			PlaybackStateCompat.ACTION_SKIP_TO_NEXT or
 			PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS or
-			PlaybackStateCompat.ACTION_STOP
+			PlaybackStateCompat.ACTION_STOP or
+			PlaybackStateCompat.ACTION_PLAY_FROM_MEDIA_ID or
+			PlaybackStateCompat.ACTION_PLAY_FROM_SEARCH
 	}
 }
