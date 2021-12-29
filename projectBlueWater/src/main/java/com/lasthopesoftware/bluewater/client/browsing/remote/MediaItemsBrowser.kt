@@ -65,7 +65,20 @@ class MediaItemsBrowser
 	override fun promiseLibraryItems(): Promise<List<MediaBrowserCompat.MediaItem>> =
 		selectedLibraryIdProvider.selectedLibraryId.eventually { maybeId ->
 			maybeId
-				?.let { libraryId -> libraryViews.promiseLibraryViews(libraryId).then { v -> v.map(::toMediaItem) } }
+				?.let { libraryId ->
+					libraryViews.promiseLibraryViews(libraryId).then { v ->
+						v.map {
+							MediaBrowserCompat.MediaItem(
+								MediaDescriptionCompat
+									.Builder()
+									.setMediaId(RemoteBrowserService.itemFileMediaIdPrefix + it.key)
+									.setTitle(it.value)
+									.build(),
+								MediaBrowserCompat.MediaItem.FLAG_BROWSABLE
+							)
+						}
+					}
+				}
 				.keepPromise(emptyList())
 		}
 
