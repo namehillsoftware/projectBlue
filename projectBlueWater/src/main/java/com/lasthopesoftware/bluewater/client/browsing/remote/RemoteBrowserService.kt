@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.browsing.remote
 
 import android.os.Bundle
 import android.support.v4.media.MediaBrowserCompat
-import android.support.v4.media.MediaDescriptionCompat
 import androidx.media.MediaBrowserServiceCompat
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
@@ -52,16 +51,6 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 		private val recentRoot by lazy { magicPropertyBuilder.buildProperty("recentRoot") }
 		private val rejection by lazy { magicPropertyBuilder.buildProperty("rejection") }
 		val error by lazy { magicPropertyBuilder.buildProperty("error") }
-
-		private fun toMediaItem(item: Item): MediaBrowserCompat.MediaItem =
-			MediaBrowserCompat.MediaItem(
-				MediaDescriptionCompat
-					.Builder()
-					.setMediaId(itemFileMediaIdPrefix + item.key)
-					.setTitle(item.value)
-					.build(),
-				MediaBrowserCompat.MediaItem.FLAG_BROWSABLE or MediaBrowserCompat.MediaItem.FLAG_PLAYABLE
-			)
 	}
 
 	private val packageValidator by lazy { PackageValidator(this, R.xml.allowed_media_browser_callers) }

@@ -21,6 +21,8 @@ class MediaSessionCallbackReceiver(
 	private val fileListParameterProvider: IFileListParameterProvider,
 	private val fileStringListProvider: FileStringListProvider,
 ) : MediaSessionCompat.Callback() {
+	override fun onPrepare() = PlaybackService.pause(context)
+
     override fun onPlay() = PlaybackService.play(context)
 
     override fun onStop() = PlaybackService.pause(context)
