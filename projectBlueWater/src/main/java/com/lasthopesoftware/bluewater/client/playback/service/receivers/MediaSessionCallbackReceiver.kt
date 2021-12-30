@@ -45,13 +45,9 @@ class MediaSessionCallbackReceiver(
 	}
 
 	override fun onPlayFromMediaId(mediaId: String?, extras: Bundle?) {
-		val itemIdParts = mediaId?.split(':', limit = 2)
-		if (itemIdParts == null || itemIdParts.size < 2) return
+		if (mediaId == null || !mediaId.startsWith(RemoteBrowserService.itemFileMediaIdPrefix)) return
 
-		val type = itemIdParts[0]
-		if (type != RemoteBrowserService.itemFileMediaIdPrefix) return
-
-		val id = itemIdParts[1].toIntOrNull() ?: return
+		val id = mediaId.substring(3).toIntOrNull() ?: return
 		fileStringListProvider
 			.promiseFileStringList(
 				FileListParameters.Options.None,
