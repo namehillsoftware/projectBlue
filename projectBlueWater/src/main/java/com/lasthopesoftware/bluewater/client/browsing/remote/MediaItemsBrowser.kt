@@ -23,23 +23,22 @@ class MediaItemsBrowser
 	private val mediaItemServiceFileLookup: GetMediaItemsFromServiceFiles,
 ) : BrowseMediaItems {
 	companion object {
+		private fun getMediaDescription(item: Item): MediaDescriptionCompat =
+			MediaDescriptionCompat
+				.Builder()
+				.setMediaId(RemoteBrowserService.itemFileMediaIdPrefix + item.key)
+				.setTitle(item.value)
+				.build()
+
 		private fun toBrowsableMediaItem(item: Item): MediaBrowserCompat.MediaItem =
 			MediaBrowserCompat.MediaItem(
-				MediaDescriptionCompat
-					.Builder()
-					.setMediaId(RemoteBrowserService.itemFileMediaIdPrefix + item.key)
-					.setTitle(item.value)
-					.build(),
+				getMediaDescription(item),
 				MediaBrowserCompat.MediaItem.FLAG_BROWSABLE
 			)
 
 		private fun toPlayableMediaItem(item: Item): MediaBrowserCompat.MediaItem =
 			MediaBrowserCompat.MediaItem(
-				MediaDescriptionCompat
-					.Builder()
-					.setMediaId(RemoteBrowserService.itemFileMediaIdPrefix + item.key)
-					.setTitle(item.value)
-					.build(),
+				getMediaDescription(item),
 				MediaBrowserCompat.MediaItem.FLAG_PLAYABLE
 			)
 	}
