@@ -112,7 +112,7 @@ class MediaSessionBroadcaster(
 			.eventually(response(::updateClientBitmap, context))
 			.excuse { e ->
 				logger.warn(
-					"There was an error getting the image for the file with id `" + serviceFile.key + "`",
+					"There was an error getting the image for the file with id `${serviceFile.key}`",
 					e
 				)
 			}
@@ -141,9 +141,7 @@ class MediaSessionBroadcaster(
 	}
 
 	companion object {
-		private val logger = LoggerFactory.getLogger(
-			MediaSessionBroadcaster::class.java
-		)
+		private val logger by lazy { LoggerFactory.getLogger(MediaSessionBroadcaster::class.java) }
 		private const val playbackSpeed = 1.0f
 
 		private const val standardCapabilities = PlaybackStateCompat.ACTION_PLAY_PAUSE or

@@ -11,7 +11,6 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.Pro
 import com.lasthopesoftware.bluewater.client.browsing.library.views.access.ProvideLibraryViews
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.INowPlayingRepository
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 
 class MediaItemsBrowser
@@ -24,7 +23,7 @@ class MediaItemsBrowser
 	private val mediaItemServiceFileLookup: GetMediaItemsFromServiceFiles,
 ) : BrowseMediaItems {
 	companion object {
-		private fun toMediaItem(item: Item): MediaBrowserCompat.MediaItem =
+		private fun toBrowsableMediaItem(item: Item): MediaBrowserCompat.MediaItem =
 			MediaBrowserCompat.MediaItem(
 				MediaDescriptionCompat
 					.Builder()
@@ -32,6 +31,16 @@ class MediaItemsBrowser
 					.setTitle(item.value)
 					.build(),
 				MediaBrowserCompat.MediaItem.FLAG_BROWSABLE
+			)
+
+		private fun toPlayableMediaItem(item: Item): MediaBrowserCompat.MediaItem =
+			MediaBrowserCompat.MediaItem(
+				MediaDescriptionCompat
+					.Builder()
+					.setMediaId(RemoteBrowserService.itemFileMediaIdPrefix + item.key)
+					.setTitle(item.value)
+					.build(),
+				MediaBrowserCompat.MediaItem.FLAG_PLAYABLE
 			)
 	}
 
@@ -50,8 +59,14 @@ class MediaItemsBrowser
 					itemProvider
 						.promiseItems(libraryId, item.key)
 						.eventually { items ->
-							if (items.any()) items.map(::toMediaItem).toPromise()
-							else {
+							if (items.any()) {
+								val firstItem = items.first()
+								itemProvider.promiseItems(libraryId, firstItem.key)
+									.then { childItems ->
+										if (childItems.any()) items.map(::toBrowsableMediaItem)
+										else items.map(::toPlayableMediaItem)
+									}
+							} else {
 								val parameters = FileListParameters.getInstance().getFileListParameters(item)
 								fileProvider
 									.promiseFiles(FileListParameters.Options.None, *parameters)
@@ -65,7 +80,7 @@ class MediaItemsBrowser
 	override fun promiseLibraryItems(): Promise<List<MediaBrowserCompat.MediaItem>> =
 		selectedLibraryIdProvider.selectedLibraryId.eventually { maybeId ->
 			maybeId
-				?.let { libraryId -> libraryViews.promiseLibraryViews(libraryId).then { v -> v.map(::toMediaItem) } }
+				?.let { libraryId -> libraryViews.promiseLibraryViews(libraryId).then { v -> v.map(::toBrowsableMediaItem) } }
 				.keepPromise(emptyList())
 		}
 
