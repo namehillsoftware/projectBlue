@@ -278,7 +278,6 @@ class PlaybackEngine(
 		@Contract(pure = true)
 		private fun getPreviousPosition(startingPosition: Int): Int = max(startingPosition - 1, 0)
 
-		@JvmStatic
 		fun createEngine(managePlaybackQueues: ManagePlaybackQueues, positionedFileQueueProviders: Iterable<IPositionedFileQueueProvider>, nowPlayingRepository: INowPlayingRepository, playbackBootstrapper: IStartPlayback): Promise<PlaybackEngine> {
 			return nowPlayingRepository
 				.nowPlaying

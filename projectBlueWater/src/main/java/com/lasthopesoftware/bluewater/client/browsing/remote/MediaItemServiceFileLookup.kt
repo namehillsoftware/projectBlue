@@ -25,7 +25,7 @@ class MediaItemServiceFileLookup(
 					val album = p[KnownFileProperties.ALBUM]
 					val duration = FilePropertyHelpers.parseDurationIntoMilliseconds(p).toLong()
 
-					putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, RemoteBrowserService.serviceFileMediaIdPrefix + p[KnownFileProperties.KEY])
+					putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, RemoteBrowserService.serviceFileMediaIdPrefix + RemoteBrowserService.mediaIdDelimiter + p[KnownFileProperties.KEY])
 					putString(MediaMetadataCompat.METADATA_KEY_ARTIST, artist)
 					putString(MediaMetadataCompat.METADATA_KEY_ALBUM, album)
 					putString(MediaMetadataCompat.METADATA_KEY_TITLE, name)

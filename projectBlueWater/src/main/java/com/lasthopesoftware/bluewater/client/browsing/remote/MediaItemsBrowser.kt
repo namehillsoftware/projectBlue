@@ -26,7 +26,7 @@ class MediaItemsBrowser
 		private fun getMediaDescription(item: Item): MediaDescriptionCompat =
 			MediaDescriptionCompat
 				.Builder()
-				.setMediaId(RemoteBrowserService.itemFileMediaIdPrefix + item.key)
+				.setMediaId(RemoteBrowserService.itemFileMediaIdPrefix + RemoteBrowserService.mediaIdDelimiter + item.key)
 				.setTitle(item.value)
 				.build()
 

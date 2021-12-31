@@ -759,7 +759,8 @@ open class PlaybackService : Service() {
 						playbackEngineCloseables.manage(engine)
 						playbackState = AudioManagingPlaybackStateChanger(
 							engine,
-							AudioFocusManagement(audioManager), playlistVolumeManager
+							AudioFocusManagement(audioManager),
+							playlistVolumeManager
 						).also(playbackEngineCloseables::manage)
 					}
 					?.setOnPlaybackStarted(::handlePlaybackStarted)

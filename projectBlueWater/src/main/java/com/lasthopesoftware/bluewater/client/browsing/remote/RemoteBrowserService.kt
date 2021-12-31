@@ -40,9 +40,10 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 		private const val contentStyleSupport = "android.media.browse.CONTENT_STYLE_SUPPORTED"
 		private const val contentStyleList = 1
 		private const val contentStyleGrid = 2
-		const val serviceFileMediaIdPrefix = "sf:"
-		const val itemFileMediaIdPrefix = "it:"
-		private const val playlistFileMediaIdPrefix = "pl:"
+		const val serviceFileMediaIdPrefix = "sf"
+		const val itemFileMediaIdPrefix = "it"
+		private const val playlistFileMediaIdPrefix = "pl"
+		const val mediaIdDelimiter = ':'
 		private val rateLimiter by lazy { PromisingRateLimiter<Map<String, String>>(max(Runtime.getRuntime().availableProcessors() - 1, 1)) }
 
 		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(RemoteBrowserService::class.java) }
@@ -182,7 +183,7 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 	}
 
 	override fun onLoadItem(itemId: String?, result: Result<MediaBrowserCompat.MediaItem>) {
-		val itemIdParts = itemId?.split(':', limit = 2)
+		val itemIdParts = itemId?.split(mediaIdDelimiter, limit = 2)
 		if (itemIdParts == null || itemIdParts.size < 2) return super.onLoadItem(itemId, result)
 
 		val type = itemIdParts[0]
