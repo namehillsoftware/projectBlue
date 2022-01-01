@@ -117,8 +117,8 @@ class BrowseLibraryViewsFragment : Fragment(R.layout.tabbed_library_items_layout
 		private val tabbedLibraryViewsContainer: RelativeLayout
 	) : Runnable, ImmediateResponse<List<Item>, Unit> {
 
-		private val handler by lazy { Handler(context.mainLooper) }
-		private val fillVisibleViews by lazy { LoopedInPromise.response(this, handler) }
+		private val handler = lazy { Handler(context.mainLooper) }
+		private val fillVisibleViews = lazy { LoopedInPromise.response(this, handler.value) }
 
 		init {
 			tabbedLibraryViewsContainer.visibility = View.INVISIBLE
@@ -131,7 +131,7 @@ class BrowseLibraryViewsFragment : Fragment(R.layout.tabbed_library_items_layout
 				.then { it?.let { library ->
 					CachedItemProvider.getInstance(context)
 						.promiseItems(library.libraryId, library.selectedView)
-						.eventually(fillVisibleViews)
+						.eventually(fillVisibleViews.value)
 						.run {
 							if (savedInstanceState == null) this
 							else eventually(LoopedInPromise.response({
@@ -143,10 +143,10 @@ class BrowseLibraryViewsFragment : Fragment(R.layout.tabbed_library_items_layout
 
 								val savedScrollPosition = savedInstanceState.getInt(SAVED_SCROLL_POS, -1)
 								if (savedScrollPosition > -1) viewPager.scrollY = savedScrollPosition
-							}, handler))
+							}, handler.value))
 						}
 						.excuse(HandleViewIoException(context, this))
-						.eventuallyExcuse(LoopedInPromise.response(UnexpectedExceptionToasterResponse(context), handler))
+						.eventuallyExcuse(LoopedInPromise.response(UnexpectedExceptionToasterResponse(context), handler.value))
 					}
 				}
 		}

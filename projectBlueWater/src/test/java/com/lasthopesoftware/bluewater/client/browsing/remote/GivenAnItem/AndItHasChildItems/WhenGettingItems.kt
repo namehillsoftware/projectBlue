@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.browsing.remote.GivenAnItem.AndItHasChildItems.AndTheFirstChildDoesNotHaveChilditems
+package com.lasthopesoftware.bluewater.client.browsing.remote.GivenAnItem.AndItHasChildItems
 
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaMetadataCompat
@@ -20,7 +20,7 @@ import org.robolectric.RobolectricTestRunner
 class `When Getting Items` {
 	companion object {
 		private val expectedMediaItems by lazy {
-			listOf(720, 322, 409, 890).map { i ->
+			listOf(605, 842, 264, 224, 33, 412, 488, 394).map { i ->
 				val metadata = MediaMetadataCompat.Builder()
 					.apply {
 						putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, "it:$i")
@@ -36,14 +36,12 @@ class `When Getting Items` {
 
 		private val mediaItems by lazy {
 			val selectedLibraryId = mockk<ProvideSelectedLibraryId>()
-			every { selectedLibraryId.selectedLibraryId } returns Promise(LibraryId(1))
+			every { selectedLibraryId.selectedLibraryId } returns Promise(LibraryId(22))
 
 			val itemsProvider = mockk<ProvideItems>()
-			every { itemsProvider.promiseItems(LibraryId(1), 952) } returns Promise(
-				listOf(720, 322, 409, 890).map(::Item)
+			every { itemsProvider.promiseItems(LibraryId(22), 504) } returns Promise(
+				listOf(605, 842, 264, 224, 33, 412, 488, 394).map(::Item)
 			)
-
-			every { itemsProvider.promiseItems(LibraryId(1), 720) } returns Promise(emptyList())
 
 			val mediaItemsBrowser = MediaItemsBrowser(
 				mockk(),
@@ -54,7 +52,7 @@ class `When Getting Items` {
 				mockk(),
 			)
 			mediaItemsBrowser
-				.promiseItems(Item(952))
+				.promiseItems(Item(504))
 				.toFuture()
 				.get()
 		}
@@ -63,15 +61,5 @@ class `When Getting Items` {
 	@Test
 	fun `then the media items are correct`() {
 		assertThat(mediaItems?.map { i -> i.mediaId }).isEqualTo(expectedMediaItems.map { i -> i.mediaId })
-	}
-
-	@Test
-	fun `then the media items are not browsable`() {
-		assertThat(mediaItems!!).allMatch { i -> !i.isBrowsable }
-	}
-
-	@Test
-	fun `then the media items are playable`() {
-		assertThat(mediaItems!!).allMatch { i -> i.isPlayable }
 	}
 }
