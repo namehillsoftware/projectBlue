@@ -63,11 +63,16 @@ class MediaItemsBrowser
 													.mapIndexedNotNull { i, f ->
 														mediaItemsLookup[f]
 															?.let { mediaItem ->
+																val description = mediaItem.description
 																MediaBrowserCompat.MediaItem(
 																	MediaDescriptionCompat
 																		.Builder()
 																		.setMediaId(RemoteBrowserService.itemFileMediaIdPrefix + RemoteBrowserService.mediaIdDelimiter + item.key + RemoteBrowserService.mediaIdDelimiter + i)
-																		.setDescription(mediaItem.description.description)
+																		.setDescription(description.description)
+																		.setExtras(description.extras)
+																		.setTitle(description.title)
+																		.setIconBitmap(description.iconBitmap)
+																		.setSubtitle(description.subtitle)
 																		.build(),
 																	MediaBrowserCompat.MediaItem.FLAG_PLAYABLE
 																)

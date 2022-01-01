@@ -26,10 +26,15 @@ class `When Getting Items` {
 		private val serviceFileIds by lazy { listOf(549, 140, 985, 411, 565, 513, 485, 621) }
 
 		private val expectedMediaItems by lazy {
-			(0..serviceFileIds.size - 1).map { i ->
+			serviceFileIds.indices.map { i ->
 				MediaMetadataCompat.Builder()
 					.apply {
 						putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, "it:743:$i")
+						putString(MediaMetadataCompat.METADATA_KEY_ARTIST, "eat")
+						putString(MediaMetadataCompat.METADATA_KEY_ALBUM, "load")
+						putString(MediaMetadataCompat.METADATA_KEY_TITLE, "combine")
+						putLong(MediaMetadataCompat.METADATA_KEY_DURATION, 268)
+						putLong(MediaMetadataCompat.METADATA_KEY_TRACK_NUMBER, 240)
 					}
 					.build()
 					.let { metadata ->
@@ -54,6 +59,11 @@ class `When Getting Items` {
 					MediaMetadataCompat.Builder()
 						.apply {
 							putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, "sf:$id")
+							putString(MediaMetadataCompat.METADATA_KEY_ARTIST, "eat")
+							putString(MediaMetadataCompat.METADATA_KEY_ALBUM, "load")
+							putString(MediaMetadataCompat.METADATA_KEY_TITLE, "combine")
+							putLong(MediaMetadataCompat.METADATA_KEY_DURATION, 268)
+							putLong(MediaMetadataCompat.METADATA_KEY_TRACK_NUMBER, 240)
 						}
 						.build()
 						.let { metadata ->
@@ -87,8 +97,29 @@ class `When Getting Items` {
 	}
 
 	@Test
-	fun `then the media items are correct`() {
+	fun `then the media item ids are correct`() {
 		assertThat(mediaItems?.map { i -> i.mediaId }).isEqualTo(expectedMediaItems.map { i -> i.mediaId })
+	}
+
+	@Test
+	fun `then the media item titles are correct`() {
+		assertThat(mediaItems?.map { i -> i.description.title }).isEqualTo(expectedMediaItems.map { i -> i.description.title })
+	}
+
+	@Test
+	fun `then the media item subtitles are correct`() {
+		assertThat(mediaItems?.map { i -> i.description.subtitle }).isEqualTo(expectedMediaItems.map { i -> i.description.subtitle })
+	}
+
+
+	@Test
+	fun `then the media item extras are correct`() {
+		assertThat(mediaItems?.map { i -> i.description.extras }).isEqualTo(expectedMediaItems.map { i -> i.description.extras })
+	}
+
+	@Test
+	fun `then the media item descriptions are correct`() {
+		assertThat(mediaItems?.map { i -> i.description.description }).isEqualTo(expectedMediaItems.map { i -> i.description.description })
 	}
 
 	@Test
