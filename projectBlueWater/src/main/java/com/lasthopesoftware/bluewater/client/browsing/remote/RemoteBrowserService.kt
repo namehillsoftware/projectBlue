@@ -87,19 +87,6 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 
 	private val selectedLibraryIdProvider by lazy { SelectedBrowserLibraryIdentifierProvider(getApplicationSettingsRepository()) }
 
-	private val nowPlayingRepository by lazy {
-		val libraryRepository = LibraryRepository(this)
-		selectedLibraryIdProvider.selectedLibraryId
-			.then {
-				it?.let { l ->
-					NowPlayingRepository(
-						SpecificLibraryProvider(l, libraryRepository),
-						libraryRepository
-					)
-				}
-			}
-	}
-
 	private val mediaItemServiceFileLookup by lazy {
 		MediaItemServiceFileLookup(
 			filePropertiesProvider,
@@ -107,20 +94,32 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 		)
 	}
 
-	private val mediaItemBrowser by lazy {
-		nowPlayingRepository.then { repository ->
-			repository
-				?.let {
-					MediaItemsBrowser(
-						it,
-						selectedLibraryIdProvider,
-						itemProvider,
-						fileProvider,
-						libraryViewsProvider,
+	private val nowPlayingMediaItemLookup by lazy {
+		val libraryRepository = LibraryRepository(this)
+		selectedLibraryIdProvider.selectedLibraryId
+			.then {
+				it?.let { l ->
+					val repository = NowPlayingRepository(
+						SpecificLibraryProvider(l, libraryRepository),
+						libraryRepository
+					)
+
+					NowPlayingMediaItemLookup(
+						repository,
 						mediaItemServiceFileLookup
 					)
 				}
-		}
+			}
+	}
+
+	private val mediaItemBrowser by lazy {
+		MediaItemsBrowser(
+			selectedLibraryIdProvider,
+			itemProvider,
+			fileProvider,
+			libraryViewsProvider,
+			mediaItemServiceFileLookup
+		)
 	}
 
 	private val lazyMediaSessionService = lazy { promiseBoundService<MediaSessionService>() }
@@ -160,8 +159,8 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 		result.detach()
 
 		if (parentId == recentRoot) {
-			mediaItemBrowser
-				.eventually { browser -> browser?.promiseNowPlayingItem().keepPromise() }
+			nowPlayingMediaItemLookup
+				.eventually { lookup -> lookup?.promiseNowPlayingItem().keepPromise() }
 				.then { it?.let { mutableListOf(it) }.apply(result::sendResult) }
 				.excuse { e -> result.sendError(Bundle().apply { putString(error, e.message) }) }
 			return
@@ -172,10 +171,9 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 			?.substring(3)
 			?.toIntOrNull()
 			?.let { id ->
-				mediaItemBrowser
-					.eventually { browser -> browser?.promiseItems(Item(id)).keepPromise(emptyList()) }
+				mediaItemBrowser.promiseItems(Item(id)).keepPromise(emptyList())
 			}
-			?: mediaItemBrowser.eventually { browser -> browser?.promiseLibraryItems().keepPromise(emptyList()) }
+			?: mediaItemBrowser.promiseLibraryItems().keepPromise(emptyList())
 
 		promisedMediaItems
 			.then { items -> result.sendResult(items.toMutableList()) }
@@ -200,14 +198,9 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 
 	override fun onSearch(query: String, extras: Bundle?, result: Result<MutableList<MediaBrowserCompat.MediaItem>>) {
 		result.detach()
-		mediaItemBrowser
-			.eventually { browser ->
-				browser
-					?.promiseItems(query)
-					?.then { items -> result.sendResult(items.toMutableList()) }
-					?.excuse { e -> result.sendError(Bundle().apply { putString(error, e.message) }) }
-					.keepPromise()
-			}
+		mediaItemBrowser.promiseItems(query)
+			.then { items -> result.sendResult(items.toMutableList()) }
+			.excuse { e -> result.sendError(Bundle().apply { putString(error, e.message) }) }
 	}
 
 	override fun onDestroy() {

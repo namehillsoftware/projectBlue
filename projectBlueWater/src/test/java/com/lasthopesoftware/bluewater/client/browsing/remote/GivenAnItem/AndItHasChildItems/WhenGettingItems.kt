@@ -44,12 +44,11 @@ class `When Getting Items` {
 			)
 
 			val mediaItemsBrowser = MediaItemsBrowser(
-				mockk(),
-				selectedLibraryId,
-				itemsProvider,
-				mockk(),
-				mockk(),
-				mockk(),
+                selectedLibraryId,
+                itemsProvider,
+                mockk(),
+                mockk(),
+                mockk(),
 			)
 			mediaItemsBrowser
 				.promiseItems(Item(504))

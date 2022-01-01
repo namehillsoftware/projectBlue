@@ -9,14 +9,11 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.p
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.SearchFileParameterProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.views.access.ProvideLibraryViews
-import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.INowPlayingRepository
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 
-class MediaItemsBrowser
-	(
-	private val nowPlayingRepository: INowPlayingRepository,
+class MediaItemsBrowser(
 	private val selectedLibraryIdProvider: ProvideSelectedLibraryId,
 	private val itemProvider: ProvideItems,
 	private val fileProvider: ProvideFiles,
@@ -35,14 +32,6 @@ class MediaItemsBrowser
 			)
 	}
 
-	override fun promiseNowPlayingItem(): Promise<MediaBrowserCompat.MediaItem?> =
-		nowPlayingRepository
-			.nowPlaying
-			.eventually { np ->
-				if (np.playlist.isEmpty() || np.playlistPosition < 0) Promise.empty<MediaBrowserCompat.MediaItem?>()
-				else mediaItemServiceFileLookup.promiseMediaItem(np.playlist[np.playlistPosition])
-			}
-
 	override fun promiseItems(item: Item): Promise<Collection<MediaBrowserCompat.MediaItem>> =
 		selectedLibraryIdProvider.selectedLibraryId.eventually { maybeId ->
 			maybeId
@@ -59,25 +48,23 @@ class MediaItemsBrowser
 										Promise.whenAll(files.map { f -> mediaItemServiceFileLookup.promiseMediaItem(f).then { mi -> Pair(f, mi) } })
 											.then { pairs -> pairs.associate { p -> p } }
 											.then { mediaItemsLookup ->
-												files
-													.mapIndexedNotNull { i, f ->
-														mediaItemsLookup[f]
-															?.let { mediaItem ->
-																val description = mediaItem.description
-																MediaBrowserCompat.MediaItem(
-																	MediaDescriptionCompat
-																		.Builder()
-																		.setMediaId(RemoteBrowserService.itemFileMediaIdPrefix + RemoteBrowserService.mediaIdDelimiter + item.key + RemoteBrowserService.mediaIdDelimiter + i)
-																		.setDescription(description.description)
-																		.setExtras(description.extras)
-																		.setTitle(description.title)
-																		.setIconBitmap(description.iconBitmap)
-																		.setSubtitle(description.subtitle)
-																		.build(),
-																	MediaBrowserCompat.MediaItem.FLAG_PLAYABLE
-																)
-															}
+												files.mapIndexedNotNull { i, f ->
+													mediaItemsLookup[f]?.let { mediaItem ->
+														val description = mediaItem.description
+														MediaBrowserCompat.MediaItem(
+															MediaDescriptionCompat
+																.Builder()
+																.setMediaId(RemoteBrowserService.itemFileMediaIdPrefix + RemoteBrowserService.mediaIdDelimiter + item.key + RemoteBrowserService.mediaIdDelimiter + i)
+																.setDescription(description.description)
+																.setExtras(description.extras)
+																.setTitle(description.title)
+																.setIconBitmap(description.iconBitmap)
+																.setSubtitle(description.subtitle)
+																.build(),
+															MediaBrowserCompat.MediaItem.FLAG_PLAYABLE
+														)
 													}
+												}
 											}
 									}
 							}

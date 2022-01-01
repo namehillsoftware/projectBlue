@@ -81,7 +81,6 @@ class `When Getting Items` {
 			)
 
 			val mediaItemsBrowser = MediaItemsBrowser(
-				mockk(),
 				selectedLibraryId,
 				itemsProvider,
 				provideFiles,
