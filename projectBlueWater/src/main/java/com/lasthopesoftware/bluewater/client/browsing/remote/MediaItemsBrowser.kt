@@ -15,7 +15,7 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 
 class MediaItemsBrowser
-(
+	(
 	private val nowPlayingRepository: INowPlayingRepository,
 	private val selectedLibraryIdProvider: ProvideSelectedLibraryId,
 	private val itemProvider: ProvideItems,
@@ -28,20 +28,10 @@ class MediaItemsBrowser
 			MediaBrowserCompat.MediaItem(
 				MediaDescriptionCompat
 					.Builder()
-					.setMediaId(RemoteBrowserService.itemFileMediaIdPrefix + item.key)
+					.setMediaId(RemoteBrowserService.itemFileMediaIdPrefix + RemoteBrowserService.mediaIdDelimiter + item.key)
 					.setTitle(item.value)
 					.build(),
 				MediaBrowserCompat.MediaItem.FLAG_BROWSABLE
-			)
-
-		private fun toPlayableMediaItem(item: Item): MediaBrowserCompat.MediaItem =
-			MediaBrowserCompat.MediaItem(
-				MediaDescriptionCompat
-					.Builder()
-					.setMediaId(RemoteBrowserService.itemFileMediaIdPrefix + item.key)
-					.setTitle(item.value)
-					.build(),
-				MediaBrowserCompat.MediaItem.FLAG_PLAYABLE
 			)
 	}
 
@@ -65,7 +55,27 @@ class MediaItemsBrowser
 								val parameters = FileListParameters.getInstance().getFileListParameters(item)
 								fileProvider
 									.promiseFiles(FileListParameters.Options.None, *parameters)
-									.eventually { files -> Promise.whenAll(files.map(mediaItemServiceFileLookup::promiseMediaItem)) }
+									.eventually<Collection<MediaBrowserCompat.MediaItem>> { files ->
+										Promise.whenAll(files.map { f -> mediaItemServiceFileLookup.promiseMediaItem(f).then { mi -> Pair(f, mi) } })
+											.then { pairs -> pairs.associate { p -> p } }
+											.then { mediaItemsLookup ->
+												files
+													.mapIndexed { i, f ->
+														mediaItemsLookup[f]
+															?.let { mediaItem ->
+																MediaBrowserCompat.MediaItem(
+																	MediaDescriptionCompat
+																		.Builder()
+																		.setMediaId(RemoteBrowserService.itemFileMediaIdPrefix + RemoteBrowserService.mediaIdDelimiter + item.key + RemoteBrowserService.mediaIdDelimiter + i)
+																		.setDescription(mediaItem.description.description)
+																		.build(),
+																	MediaBrowserCompat.MediaItem.FLAG_PLAYABLE
+																)
+															}
+													}
+													.filterNotNull()
+											}
+									}
 							}
 						}
 				}

@@ -45,13 +45,24 @@ class MediaSessionCallbackReceiver(
 	}
 
 	override fun onPlayFromMediaId(mediaId: String?, extras: Bundle?) {
-		if (mediaId == null || !mediaId.startsWith(RemoteBrowserService.itemFileMediaIdPrefix)) return
+		val itemIdParts = mediaId?.split(RemoteBrowserService.mediaIdDelimiter, limit = 3)
+		if (itemIdParts == null || itemIdParts.size < 2) return
 
-		val id = mediaId.substring(3).toIntOrNull() ?: return
-		fileStringListProvider
+		if (itemIdParts[0] != RemoteBrowserService.itemFileMediaIdPrefix) return
+
+		val id = itemIdParts[1].toIntOrNull() ?: return
+
+		val promisedFileStringList = fileStringListProvider
 			.promiseFileStringList(
 				FileListParameters.Options.None,
-				*fileListParameterProvider.getFileListParameters(Item(id)))
-			.then(LaunchPlaybackFromResult(context))
+				*fileListParameterProvider.getFileListParameters(Item(id))
+			)
+
+		var position = 0
+		if (itemIdParts.size < 3 || itemIdParts[2].toIntOrNull()?.also { position = it } == null) {
+			promisedFileStringList.then(LaunchPlaybackFromResult(context))
+		} else {
+			promisedFileStringList.then { sl -> PlaybackService.launchMusicService(context, position, sl) }
+		}
 	}
 }

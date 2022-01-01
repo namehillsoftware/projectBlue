@@ -26,10 +26,10 @@ class `When Getting Items` {
 		private val serviceFileIds by lazy { listOf(549, 140, 985, 411, 565, 513, 485, 621) }
 
 		private val expectedMediaItems by lazy {
-			serviceFileIds.map { i ->
+			(0..serviceFileIds.size - 1).map { i ->
 				MediaMetadataCompat.Builder()
 					.apply {
-						putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, "sf:$i")
+						putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, "it:743:$i")
 					}
 					.build()
 					.let { metadata ->
@@ -89,5 +89,15 @@ class `When Getting Items` {
 	@Test
 	fun `then the media items are correct`() {
 		assertThat(mediaItems?.map { i -> i.mediaId }).isEqualTo(expectedMediaItems.map { i -> i.mediaId })
+	}
+
+	@Test
+	fun `then the media items are not browsable`() {
+		assertThat(mediaItems!!).allMatch { i -> !i.isBrowsable }
+	}
+
+	@Test
+	fun `then the media items are playable`() {
+		assertThat(mediaItems!!).allMatch { i -> i.isPlayable }
 	}
 }
