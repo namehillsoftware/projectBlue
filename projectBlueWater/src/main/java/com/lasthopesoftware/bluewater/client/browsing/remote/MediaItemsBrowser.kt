@@ -58,7 +58,6 @@ class MediaItemsBrowser(
 																.setDescription(description.description)
 																.setExtras(description.extras)
 																.setTitle(description.title)
-																.setIconBitmap(description.iconBitmap)
 																.setSubtitle(description.subtitle)
 																.build(),
 															MediaBrowserCompat.MediaItem.FLAG_PLAYABLE

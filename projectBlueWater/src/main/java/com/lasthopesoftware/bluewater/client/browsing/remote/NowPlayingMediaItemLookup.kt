@@ -13,6 +13,6 @@ class NowPlayingMediaItemLookup(
 			.nowPlaying
 			.eventually { np ->
 				if (np.playlist.isEmpty() || np.playlistPosition < 0) Promise.empty<MediaBrowserCompat.MediaItem?>()
-				else mediaItemServiceFileLookup.promiseMediaItem(np.playlist[np.playlistPosition])
+				else mediaItemServiceFileLookup.promiseMediaItemWithImage(np.playlist[np.playlistPosition])
 			}
 }

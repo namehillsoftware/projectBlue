@@ -191,7 +191,7 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 
 		result.detach()
 
-		mediaItemServiceFileLookup.promiseMediaItem(ServiceFile(id))
+		mediaItemServiceFileLookup.promiseMediaItemWithImage(ServiceFile(id))
 			.then(result::sendResult)
 			.excuse { e -> result.sendError(Bundle().apply { putString(error, e.message) }) }
 	}
