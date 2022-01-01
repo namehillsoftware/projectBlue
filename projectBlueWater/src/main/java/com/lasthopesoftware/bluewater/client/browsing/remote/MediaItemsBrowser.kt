@@ -60,7 +60,7 @@ class MediaItemsBrowser
 											.then { pairs -> pairs.associate { p -> p } }
 											.then { mediaItemsLookup ->
 												files
-													.mapIndexed { i, f ->
+													.mapIndexedNotNull { i, f ->
 														mediaItemsLookup[f]
 															?.let { mediaItem ->
 																MediaBrowserCompat.MediaItem(
@@ -73,7 +73,6 @@ class MediaItemsBrowser
 																)
 															}
 													}
-													.filterNotNull()
 											}
 									}
 							}

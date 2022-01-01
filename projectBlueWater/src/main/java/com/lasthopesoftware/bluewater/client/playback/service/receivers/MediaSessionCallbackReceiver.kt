@@ -50,7 +50,8 @@ class MediaSessionCallbackReceiver(
 
 		if (itemIdParts[0] != RemoteBrowserService.itemFileMediaIdPrefix) return
 
-		val id = itemIdParts[1].toIntOrNull() ?: return
+		val ids = itemIdParts.drop(1).mapNotNull { id -> id.toIntOrNull() }
+		val id = ids.firstOrNull() ?: return
 
 		val promisedFileStringList = fileStringListProvider
 			.promiseFileStringList(
@@ -58,11 +59,10 @@ class MediaSessionCallbackReceiver(
 				*fileListParameterProvider.getFileListParameters(Item(id))
 			)
 
-		var position = 0
-		if (itemIdParts.size < 3 || itemIdParts[2].toIntOrNull()?.also { position = it } == null) {
+		if (ids.size < 2) {
 			promisedFileStringList.then(LaunchPlaybackFromResult(context))
 		} else {
-			promisedFileStringList.then { sl -> PlaybackService.launchMusicService(context, position, sl) }
+			promisedFileStringList.then { sl -> PlaybackService.launchMusicService(context, ids[1], sl) }
 		}
 	}
 }
