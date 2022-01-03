@@ -19,16 +19,14 @@ class TrackPositionBroadcaster(private val sendMessages: SendMessages, private v
 	}
 
 	object TrackPositionChangedParameters {
-		private val magicPropertyBuilder = MagicPropertyBuilder(TrackPositionChangedParameters::class.java)
-		@JvmField
-		val filePosition = magicPropertyBuilder.buildProperty("filePosition")
-		@JvmField
-		val fileDuration = magicPropertyBuilder.buildProperty("fileDuration")
+		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(TrackPositionChangedParameters::class.java) }
+
+		val filePosition by lazy { magicPropertyBuilder.buildProperty("filePosition") }
+		val fileDuration by lazy { magicPropertyBuilder.buildProperty("fileDuration") }
 	}
 
 	companion object {
-		private val magicPropertyBuilder = MagicPropertyBuilder(TrackPositionBroadcaster::class.java)
-		@JvmField
-		val trackPositionUpdate = magicPropertyBuilder.buildProperty("trackPositionUpdate")
+		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(TrackPositionBroadcaster::class.java) }
+		val trackPositionUpdate by lazy { magicPropertyBuilder.buildProperty("trackPositionUpdate") }
 	}
 }

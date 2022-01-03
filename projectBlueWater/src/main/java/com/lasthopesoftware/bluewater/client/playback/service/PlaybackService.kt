@@ -566,18 +566,21 @@ open class PlaybackService : Service() {
 	}
 
 	private fun broadcastInitialState(): Promise<Unit> =
-		getNewNowPlayingRepository()
-			.eventually { r ->
-				r?.nowPlaying?.then { np ->
-					if (np.playlistPosition < np.playlist.size) {
-						broadcastChangedFile(
-							PositionedFile(
-								np.playlistPosition,
-								np.playlist[np.playlistPosition]
-							)
-						)
+		pausePlayback()
+			.eventually {
+				getNewNowPlayingRepository()
+					.eventually { r ->
+						r?.nowPlaying?.then { np ->
+							if (np.playlistPosition < np.playlist.size) {
+								broadcastChangedFile(
+									PositionedFile(
+										np.playlistPosition,
+										np.playlist[np.playlistPosition]
+									)
+								)
+							}
+						}.keepPromise(Unit)
 					}
-				}.keepPromise(Unit)
 			}
 
 	private fun startNewPlaylist(playlistString: String, playlistPosition: Int): Promise<Unit> {
