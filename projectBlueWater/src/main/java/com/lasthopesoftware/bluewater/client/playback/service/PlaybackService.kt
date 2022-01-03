@@ -54,7 +54,6 @@ import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnect
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionSettingsChangeReceiver
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.engine.*
-import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine.Companion.createEngine
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparationException
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueFeederBuilder
@@ -418,7 +417,7 @@ open class PlaybackService : Service() {
 
 	private var isMarkedForPlay = false
 	private var areListenersRegistered = false
-	private var playbackEnginePromise = Promise.empty<PlaybackEngine>()
+	private var playbackEnginePromise = Promise.empty<PlaybackEngine?>()
 	private var playbackContinuity: ChangePlaybackContinuity? = null
 	private var playlistFiles: ChangePlaylistFiles? = null
 	private var playbackState: ChangePlaybackState? = null
@@ -513,7 +512,6 @@ open class PlaybackService : Service() {
 		if (action == Action.togglePlayPause) action = if (isMarkedForPlay) Action.pause else Action.play
 		if (!Action.playbackStartingActions.contains(action)) stopNotificationIfNotPlaying()
 		when (action) {
-			Action.initialize -> return broadcastInitialState()
 			Action.play -> return resumePlayback()
 			Action.pause -> return pausePlayback()
 			Action.repeating -> return playbackContinuity?.playRepeatedly() ?: Unit.toPromise()
@@ -565,22 +563,6 @@ open class PlaybackService : Service() {
 		}
 	}
 
-	private fun broadcastInitialState(): Promise<Unit> =
-		pausePlayback()
-			.eventually { getNewNowPlayingRepository() }
-			.eventually { r ->
-				r?.nowPlaying?.then { np ->
-					if (np.playlistPosition < np.playlist.size) {
-						broadcastChangedFile(
-							PositionedFile(
-								np.playlistPosition,
-								np.playlist[np.playlistPosition]
-							)
-						)
-					}
-				}.keepPromise(Unit)
-			}
-
 	private fun startNewPlaylist(playlistString: String, playlistPosition: Int): Promise<Unit> {
 		val playbackState = playbackState ?: return Unit.toPromise()
 
@@ -618,7 +600,7 @@ open class PlaybackService : Service() {
 			{ initializePlaybackEngine(library) }).also { playbackEnginePromise = it }
 	}
 
-	private fun initializePlaybackEngine(library: Library): Promise<PlaybackEngine> {
+	private fun initializePlaybackEngine(library: Library): Promise<PlaybackEngine?> {
 		playbackEngineCloseables.close()
 
 		return sessionConnection.eventually { connectionProvider ->
@@ -750,19 +732,19 @@ open class PlaybackService : Service() {
 					}
 					.let { bootstrapper ->
 						getNewNowPlayingRepository()
-							.eventually { r ->
+							.then { r ->
 								r?.let {
-									createEngine(
+									PlaybackEngine(
 										queues,
 										QueueProviders.providers(),
 										r,
 										bootstrapper
 									)
-								}.keepPromise()
+								}
 							}
 				}
 			}
-			.then { engine ->
+			.eventually { engine ->
 				engine
 					?.also {
 						playbackEngineCloseables.manage(engine)
@@ -783,6 +765,17 @@ open class PlaybackService : Service() {
 						playlistFiles = it
 						playbackContinuity = it
 					}
+					?.restoreFromSavedState()
+					?.then { file ->
+						broadcastChangedFile(
+							PositionedFile(
+								file.playlistPosition,
+								file.serviceFile,
+							)
+						)
+						engine
+					}
+					.keepPromise()
 			}
 	}
 
