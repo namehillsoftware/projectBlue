@@ -1057,6 +1057,7 @@ open class PlaybackService : Service() {
 		val killMusicService by lazy { magicPropertyBuilder.buildProperty("killMusicService") }
 		val validActions by lazy {
 			setOf(
+				initialize,
 				launchMusicService,
 				play,
 				pause,
