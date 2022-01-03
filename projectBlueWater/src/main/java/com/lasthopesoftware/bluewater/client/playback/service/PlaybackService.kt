@@ -767,6 +767,7 @@ open class PlaybackService : Service() {
 					}
 					?.restoreFromSavedState()
 					?.then { file ->
+						playbackBroadcaster.sendPlaybackBroadcast(PlaylistEvents.onPlaylistPause)
 						broadcastChangedFile(
 							PositionedFile(
 								file.playlistPosition,
