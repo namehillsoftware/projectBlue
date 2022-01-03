@@ -22,7 +22,8 @@ fun <T> T.toPromise(): Promise<T> = when (this) {
 
 private object UnitPromise : Promise<Unit>(Unit)
 
-fun <T> Promise<T?>?.keepPromise(): Promise<T?> = this ?: Promise.empty()
+@Suppress("UNCHECKED_CAST")
+fun <T> Promise<T>?.keepPromise(): Promise<T?> = this as? Promise<T?> ?: Promise.empty()
 
 fun <T> Promise<T>?.keepPromise(default: T): Promise<T> = this ?: default.toPromise()
 

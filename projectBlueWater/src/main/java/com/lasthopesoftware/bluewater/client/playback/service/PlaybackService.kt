@@ -84,6 +84,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.connected.MediaSessionBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.PlaybackNotificationRouter
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity.NowPlayingActivity.Companion.startNowPlayingActivity
+import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.INowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
@@ -145,11 +146,12 @@ open class PlaybackService : Service() {
 
 		private val playbackStartTimeout = Duration.standardMinutes(2)
 
-		@JvmStatic
+		fun initialize(context: Context) =
+			context.safelyStartService(getNewSelfIntent(context, Action.initialize))
+
 		fun launchMusicService(context: Context, serializedFileList: String?) =
 			launchMusicService(context, 0, serializedFileList)
 
-		@JvmStatic
 		fun launchMusicService(context: Context, filePos: Int, serializedFileList: String?) {
 			val svcIntent = getNewSelfIntent(context, Action.launchMusicService)
 			svcIntent.putExtra(Bag.playlistPosition, filePos)
@@ -166,10 +168,8 @@ open class PlaybackService : Service() {
 			context.safelyStartService(svcIntent)
 		}
 
-		@JvmStatic
 		fun play(context: Context) = context.safelyStartServiceInForeground(getNewSelfIntent(context, Action.play))
 
-		@JvmStatic
 		fun pendingPlayingIntent(context: Context): PendingIntent =
 			PendingIntent.getService(
 				context,
@@ -190,13 +190,10 @@ open class PlaybackService : Service() {
 				getNewSelfIntent(context, Action.pause),
 				PendingIntent.FLAG_UPDATE_CURRENT.makePendingIntentImmutable())
 
-		@JvmStatic
 		fun togglePlayPause(context: Context) = context.safelyStartService(getNewSelfIntent(context, Action.togglePlayPause))
 
-		@JvmStatic
 		fun next(context: Context) = context.safelyStartService(getNewSelfIntent(context, Action.next))
 
-		@JvmStatic
 		fun pendingNextIntent(context: Context): PendingIntent =
 			PendingIntent.getService(
 				context,
@@ -204,49 +201,34 @@ open class PlaybackService : Service() {
 				getNewSelfIntent(context, Action.next),
 				PendingIntent.FLAG_UPDATE_CURRENT.makePendingIntentImmutable())
 
-		@JvmStatic
-		fun previous(context: Context) {
-			context.safelyStartService(getNewSelfIntent(context, Action.previous))
-		}
+		fun previous(context: Context) = context.safelyStartService(getNewSelfIntent(context, Action.previous))
 
-		@JvmStatic
-		fun pendingPreviousIntent(context: Context): PendingIntent {
-			return PendingIntent.getService(
+		fun pendingPreviousIntent(context: Context): PendingIntent =
+			PendingIntent.getService(
 				context,
 				0,
 				getNewSelfIntent(context, Action.previous),
 				PendingIntent.FLAG_UPDATE_CURRENT.makePendingIntentImmutable())
-		}
 
-		@JvmStatic
-		fun setRepeating(context: Context) {
-			context.safelyStartService(getNewSelfIntent(context, Action.repeating))
-		}
+		fun setRepeating(context: Context) = context.safelyStartService(getNewSelfIntent(context, Action.repeating))
 
-		@JvmStatic
-		fun setCompleting(context: Context) {
-			context.safelyStartService(getNewSelfIntent(context, Action.completing))
-		}
+		fun setCompleting(context: Context) = context.safelyStartService(getNewSelfIntent(context, Action.completing))
 
-		@JvmStatic
 		fun addFileToPlaylist(context: Context, fileKey: Int) {
 			val intent = getNewSelfIntent(context, Action.addFileToPlaylist)
 			intent.putExtra(Bag.playlistPosition, fileKey)
 			context.safelyStartService(intent)
 		}
 
-		@JvmStatic
 		fun removeFileAtPositionFromPlaylist(context: Context, filePosition: Int) {
 			val intent = getNewSelfIntent(context, Action.removeFileAtPositionFromPlaylist)
 			intent.putExtra(Bag.filePosition, filePosition)
 			context.safelyStartService(intent)
 		}
 
-		@JvmStatic
 		fun killService(context: Context) =
 			context.safelyStartService(getNewSelfIntent(context, Action.killMusicService))
 
-		@JvmStatic
 		fun pendingKillService(context: Context): PendingIntent =
 			PendingIntent.getService(
 				context,
@@ -254,7 +236,6 @@ open class PlaybackService : Service() {
 				getNewSelfIntent(context, Action.killMusicService),
 				PendingIntent.FLAG_UPDATE_CURRENT.makePendingIntentImmutable())
 
-		@JvmStatic
 		fun promiseIsMarkedForPlay(context: Context): Promise<Boolean> =
 			context.promiseBoundService<PlaybackService>()
 				.then { h ->
@@ -328,11 +309,13 @@ open class PlaybackService : Service() {
 	private val playlistVolumeManager by lazy { PlaylistVolumeManager(1.0f) }
 	private val volumeLevelSettings by lazy { VolumeLevelSettings(applicationSettings) }
 	private val channelConfiguration by lazy { SharedChannelProperties(this) }
+
 	private val playbackNotificationsConfiguration by lazy {
 			val notificationChannelActivator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) NotificationChannelActivator(notificationManager) else NoOpChannelActivator()
 			val channelName = notificationChannelActivator.activateChannel(channelConfiguration)
 			NotificationsConfiguration(channelName, playingNotificationId)
 		}
+
 	private val arbitratorForOs by lazy { ExternalStorageReadPermissionsArbitratorForOs(this) }
 
 	private val lazyMediaSessionService = lazy { promiseBoundService<MediaSessionService>() }
@@ -349,12 +332,15 @@ open class PlaybackService : Service() {
 				)
 			}
 		}
+
 	private val playbackThread = lazy {
 			HandlerThreadCreator.promiseNewHandlerThread(
 				"Playback",
 				Process.THREAD_PRIORITY_AUDIO)
 		}
+
 	private val playbackHandler = lazy { playbackThread.value.then { h -> Handler(h.looper) } }
+
 	private val playbackStartingNotificationBuilder by lazy {
 		promisedMediaSession.then { mediaSession ->
 			PlaybackStartingNotificationBuilder(
@@ -365,6 +351,7 @@ open class PlaybackService : Service() {
 			)
 		}
 	}
+
 	private val selectedLibraryProvider by lazy {
 		SelectedBrowserLibraryProvider(
 			selectedLibraryIdentifierProvider,
@@ -445,6 +432,16 @@ open class PlaybackService : Service() {
 	private var wakeLock: WakeLock? = null
 	private var cache: SimpleCache? = null
 	private var startId = 0
+	private fun getNewNowPlayingRepository(): Promise<INowPlayingRepository?> =
+		selectedLibraryIdentifierProvider.selectedLibraryId
+			.then { l ->
+				l?.let {
+					NowPlayingRepository(
+						SpecificLibraryProvider(l, libraryRepository),
+						libraryRepository
+					)
+				}
+			}
 
 	private fun stopNotificationIfNotPlaying() {
 		if (!isMarkedForPlay) lazyNotificationController.value.removeNotification(playingNotificationId)
@@ -516,6 +513,7 @@ open class PlaybackService : Service() {
 		if (action == Action.togglePlayPause) action = if (isMarkedForPlay) Action.pause else Action.play
 		if (!Action.playbackStartingActions.contains(action)) stopNotificationIfNotPlaying()
 		when (action) {
+			Action.initialize -> return broadcastInitialState()
 			Action.play -> return resumePlayback()
 			Action.pause -> return pausePlayback()
 			Action.repeating -> return playbackContinuity?.playRepeatedly() ?: Unit.toPromise()
@@ -566,6 +564,21 @@ open class PlaybackService : Service() {
 			else -> return Unit.toPromise()
 		}
 	}
+
+	private fun broadcastInitialState(): Promise<Unit> =
+		getNewNowPlayingRepository()
+			.eventually { r ->
+				r?.nowPlaying?.then { np ->
+					if (np.playlistPosition < np.playlist.size) {
+						broadcastChangedFile(
+							PositionedFile(
+								np.playlistPosition,
+								np.playlist[np.playlistPosition]
+							)
+						)
+					}
+				}.keepPromise(Unit)
+			}
 
 	private fun startNewPlaylist(playlistString: String, playlistPosition: Int): Promise<Unit> {
 		val playbackState = playbackState ?: return Unit.toPromise()
@@ -729,29 +742,24 @@ open class PlaybackService : Service() {
 					}
 			}
 			.eventually { queues ->
-					PlaylistPlaybackBootstrapper(playlistVolumeManager)
-						.also {
-							playbackEngineCloseables.manage(it)
-							playlistPlaybackBootstrapper = it
-						}
-						.let { bootstrapper ->
-							selectedLibraryIdentifierProvider.selectedLibraryId
-								.eventually { l ->
-									l?.let {
-										val nowPlayingRepository = NowPlayingRepository(
-											SpecificLibraryProvider(l, libraryRepository),
-											libraryRepository
-										)
-
-										createEngine(
-											queues,
-											QueueProviders.providers(),
-											nowPlayingRepository,
-											bootstrapper
-										)
-									}
-								}
+				PlaylistPlaybackBootstrapper(playlistVolumeManager)
+					.also {
+						playbackEngineCloseables.manage(it)
+						playlistPlaybackBootstrapper = it
 					}
+					.let { bootstrapper ->
+						getNewNowPlayingRepository()
+							.eventually { r ->
+								r?.let {
+									createEngine(
+										queues,
+										QueueProviders.providers(),
+										r,
+										bootstrapper
+									)
+								}.keepPromise()
+							}
+				}
 			}
 			.then { engine ->
 				engine
@@ -782,6 +790,7 @@ open class PlaybackService : Service() {
 		notifyBuilder
 			.setOngoing(false)
 			.setContentTitle(getText(R.string.title_svc_connecting_to_server))
+
 		when (status) {
 			BuildingSessionConnectionStatus.GettingLibrary -> notifyBuilder.setContentText(getText(R.string.lbl_getting_library_details))
 			BuildingSessionConnectionStatus.GettingLibraryFailed -> {
@@ -796,6 +805,7 @@ open class PlaybackService : Service() {
 			}
 			else -> return
 		}
+
 		lazyNotificationController.value.notifyForeground(
 			buildFullNotification(notifyBuilder),
 			connectingNotificationId)
@@ -1028,42 +1038,47 @@ open class PlaybackService : Service() {
 
 	/* End Binder Code */
 	private object Action {
-		private val magicPropertyBuilder = MagicPropertyBuilder(Action::class.java)
+		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(Action::class.java) }
 
 		/* String constant actions */
-		val launchMusicService = magicPropertyBuilder.buildProperty("launchMusicService")
-		val play = magicPropertyBuilder.buildProperty("play")
-		val pause = magicPropertyBuilder.buildProperty("pause")
-		val togglePlayPause = magicPropertyBuilder.buildProperty("togglePlayPause")
-		val repeating = magicPropertyBuilder.buildProperty("repeating")
-		val completing = magicPropertyBuilder.buildProperty("completing")
-		val previous = magicPropertyBuilder.buildProperty("previous")
-		val next = magicPropertyBuilder.buildProperty("then")
-		val seekTo = magicPropertyBuilder.buildProperty("seekTo")
-		val addFileToPlaylist = magicPropertyBuilder.buildProperty("addFileToPlaylist")
-		val removeFileAtPositionFromPlaylist = magicPropertyBuilder.buildProperty("removeFileAtPositionFromPlaylist")
-		val killMusicService = magicPropertyBuilder.buildProperty("killMusicService")
-		val validActions = setOf(launchMusicService,
-			play,
-			pause,
-			togglePlayPause,
-			previous,
-			next,
-			seekTo,
-			repeating,
-			completing,
-			addFileToPlaylist,
-			removeFileAtPositionFromPlaylist)
-		val playbackStartingActions = setOf(launchMusicService, play, togglePlayPause)
+		val initialize by lazy { magicPropertyBuilder.buildProperty("initialize") }
+		val launchMusicService by lazy { magicPropertyBuilder.buildProperty("launchMusicService") }
+		val play by lazy { magicPropertyBuilder.buildProperty("play") }
+		val pause by lazy { magicPropertyBuilder.buildProperty("pause") }
+		val togglePlayPause by lazy { magicPropertyBuilder.buildProperty("togglePlayPause") }
+		val repeating by lazy { magicPropertyBuilder.buildProperty("repeating") }
+		val completing by lazy { magicPropertyBuilder.buildProperty("completing") }
+		val previous by lazy { magicPropertyBuilder.buildProperty("previous") }
+		val next by lazy { magicPropertyBuilder.buildProperty("then") }
+		val seekTo by lazy { magicPropertyBuilder.buildProperty("seekTo") }
+		val addFileToPlaylist by lazy { magicPropertyBuilder.buildProperty("addFileToPlaylist") }
+		val removeFileAtPositionFromPlaylist by lazy { magicPropertyBuilder.buildProperty("removeFileAtPositionFromPlaylist") }
+		val killMusicService by lazy { magicPropertyBuilder.buildProperty("killMusicService") }
+		val validActions by lazy {
+			setOf(
+				launchMusicService,
+				play,
+				pause,
+				togglePlayPause,
+				previous,
+				next,
+				seekTo,
+				repeating,
+				completing,
+				addFileToPlaylist,
+				removeFileAtPositionFromPlaylist
+			)
+		}
+		val playbackStartingActions by lazy { setOf(launchMusicService, play, togglePlayPause) }
 
 		object Bag {
-			private val magicPropertyBuilder = MagicPropertyBuilder(Bag::class.java)
+			private val magicPropertyBuilder by lazy { MagicPropertyBuilder(Bag::class.java) }
 
 			/* Bag constants */
-			val playlistPosition = magicPropertyBuilder.buildProperty("playlistPosition")
-			val filePlaylist = magicPropertyBuilder.buildProperty("filePlaylist")
-			val startPos = magicPropertyBuilder.buildProperty("startPos")
-			val filePosition = magicPropertyBuilder.buildProperty("filePosition")
+			val playlistPosition by lazy { magicPropertyBuilder.buildProperty("playlistPosition") }
+			val filePlaylist by lazy { magicPropertyBuilder.buildProperty("filePlaylist") }
+			val startPos by lazy { magicPropertyBuilder.buildProperty("startPos") }
+			val filePosition by lazy { magicPropertyBuilder.buildProperty("filePosition") }
 		}
 	}
 

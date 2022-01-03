@@ -6,18 +6,22 @@ import android.content.Intent
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster
-import java.util.*
 
 class RemoteControlProxy(private val remoteBroadcaster: IRemoteBroadcaster) : BroadcastReceiver() {
-	private val mappedEvents: MutableMap<String, (Intent) -> Unit>
-	fun registerForIntents(): Set<String> {
-		return mappedEvents.keys
+	private val mappedEvents by lazy {
+		mapOf<String, (Intent) -> Unit>(
+			Pair(PlaylistEvents.onPlaylistTrackChange, ::onPlaylistChange),
+			Pair(PlaylistEvents.onPlaylistPause) { remoteBroadcaster.setPaused() },
+			Pair(PlaylistEvents.onPlaylistStart) { remoteBroadcaster.setPlaying() },
+			Pair(PlaylistEvents.onPlaylistStop) { remoteBroadcaster.setStopped() },
+			Pair(TrackPositionBroadcaster.trackPositionUpdate, ::onTrackPositionUpdate),
+		)
 	}
 
+	fun registerForIntents(): Set<String> = mappedEvents.keys
+
 	override fun onReceive(context: Context, intent: Intent) {
-		val action = intent.action ?: return
-		val eventHandler = mappedEvents[action]
-		eventHandler?.invoke(intent)
+		intent.action?.let(mappedEvents::get)?.invoke(intent)
 	}
 
 	private fun onPlaylistChange(intent: Intent) {
@@ -28,14 +32,5 @@ class RemoteControlProxy(private val remoteBroadcaster: IRemoteBroadcaster) : Br
 	private fun onTrackPositionUpdate(intent: Intent) {
 		val trackPosition = intent.getLongExtra(TrackPositionBroadcaster.TrackPositionChangedParameters.filePosition, -1)
 		if (trackPosition >= 0) remoteBroadcaster.updateTrackPosition(trackPosition)
-	}
-
-	init {
-		mappedEvents = HashMap(5)
-		mappedEvents[PlaylistEvents.onPlaylistTrackChange] = { intent -> onPlaylistChange(intent) }
-		mappedEvents[PlaylistEvents.onPlaylistPause] = { remoteBroadcaster.setPaused() }
-		mappedEvents[PlaylistEvents.onPlaylistStart] = { remoteBroadcaster.setPlaying() }
-		mappedEvents[PlaylistEvents.onPlaylistStop] = { remoteBroadcaster.setStopped() }
-		mappedEvents[TrackPositionBroadcaster.trackPositionUpdate] = { intent -> onTrackPositionUpdate(intent) }
 	}
 }
