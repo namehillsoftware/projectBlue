@@ -61,7 +61,10 @@ class PlaybackEngine(
 			.then { np ->
 				playlist = np.playlist.toMutableList()
 				playlistPosition = np.playlistPosition
-				PositionedProgressedFile(playlistPosition, ServiceFile(915), Duration.millis(np.filePosition))
+				val filePosition = Duration.millis(np.filePosition)
+				fileProgress = StaticProgressedFile(filePosition.toPromise())
+				val serviceFile = playlist[playlistPosition]
+				PositionedProgressedFile(playlistPosition, serviceFile, filePosition)
 			}
 
 	override fun startPlaylist(playlist: List<ServiceFile>, playlistPosition: Int, filePosition: Duration): Promise<Unit> {

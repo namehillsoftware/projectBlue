@@ -12,6 +12,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeDeferredPlayableFilePreparationSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CyclicalFileQueueProvider
@@ -26,8 +27,9 @@ import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 
-class WhenRestoringTheEngineState {
+class WhenRestoringEngineStateAndResumingPlayback {
 	companion object {
+		private var positionedPlayingFile: PositionedPlayingFile? = null
 		private val restoredState by lazy {
 			val fakePlaybackPreparerProvider = FakeDeferredPlayableFilePreparationSourceProvider()
 			val library = Library()
@@ -69,7 +71,14 @@ class WhenRestoringTheEngineState {
 				repository,
 				PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
 			)
-			playbackEngine.restoreFromSavedState().toFuture().get()
+			val restoredState = playbackEngine.restoreFromSavedState().toFuture().get()
+
+			playbackEngine.setOnPlayingFileChanged { c -> positionedPlayingFile = c	}
+			val promisedResumption = playbackEngine.resume()
+			fakePlaybackPreparerProvider.deferredResolution.resolve()
+			promisedResumption.toFuture().get()
+
+			restoredState
 		}
 	}
 
@@ -86,5 +95,20 @@ class WhenRestoringTheEngineState {
 	@Test
 	fun `then the file progress is correct`() {
 		assertThat(restoredState?.progress?.toFuture()?.get()?.millis).isEqualTo(893)
+	}
+
+	@Test
+	fun `then the playing file playlist position is correct`() {
+		assertThat(positionedPlayingFile?.playlistPosition).isEqualTo(3)
+	}
+
+	@Test
+	fun `then the playing file progress is correct`() {
+		assertThat(positionedPlayingFile?.progress?.toFuture()?.get()?.millis).isEqualTo(893)
+	}
+
+	@Test
+	fun `then the playing file is correct`() {
+		assertThat(positionedPlayingFile?.serviceFile).isEqualTo(ServiceFile(915))
 	}
 }

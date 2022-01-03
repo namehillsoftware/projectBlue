@@ -1,40 +1,41 @@
-package com.lasthopesoftware.bluewater.client.playback.file.preparation;
+package com.lasthopesoftware.bluewater.client.playback.file.preparation
 
-import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlayableFilePreparationSourceProvider;
-import com.lasthopesoftware.bluewater.client.playback.file.fakes.FakePreparedPlayableFile;
-import com.lasthopesoftware.bluewater.client.playback.file.fakes.ResolvablePlaybackHandler;
-import com.namehillsoftware.handoff.Messenger;
-import com.namehillsoftware.handoff.promises.MessengerOperator;
-import com.namehillsoftware.handoff.promises.Promise;
+import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlayableFilePreparationSourceProvider
+import com.lasthopesoftware.bluewater.client.playback.file.fakes.FakePreparedPlayableFile
+import com.lasthopesoftware.bluewater.client.playback.file.fakes.ResolvablePlaybackHandler
+import com.namehillsoftware.handoff.Messenger
+import com.namehillsoftware.handoff.promises.MessengerOperator
+import com.namehillsoftware.handoff.promises.Promise
+import org.joda.time.Duration
 
-public class FakeDeferredPlayableFilePreparationSourceProvider implements IPlayableFilePreparationSourceProvider {
+class FakeDeferredPlayableFilePreparationSourceProvider : IPlayableFilePreparationSourceProvider {
+	val deferredResolution = DeferredResolution()
 
-	public final DeferredResolution deferredResolution = new DeferredResolution();
+    override fun providePlayableFilePreparationSource(): PlayableFilePreparationSource {
+        return PlayableFilePreparationSource { _, preparedAt ->
+			deferredResolution.preparedAt = preparedAt
+			Promise(deferredResolution)
+        }
+    }
 
-	@Override
-	public PlayableFilePreparationSource providePlayableFilePreparationSource() {
-		return (file, preparedAt) -> new Promise<>(deferredResolution);
-	}
+    override fun getMaxQueueSize(): Int {
+        return 1
+    }
 
-	@Override
-	public int getMaxQueueSize() {
-		return 1;
-	}
+    class DeferredResolution : MessengerOperator<PreparedPlayableFile> {
+        private var resolve: Messenger<PreparedPlayableFile>? = null
 
-	public static class DeferredResolution implements MessengerOperator<PreparedPlayableFile> {
+		var preparedAt: Duration = Duration.ZERO
 
-		private Messenger<PreparedPlayableFile> resolve;
+        fun resolve(): ResolvablePlaybackHandler {
+            val playbackHandler = ResolvablePlaybackHandler()
+			playbackHandler.setCurrentPosition(preparedAt.millis.toInt())
+            resolve?.sendResolution(FakePreparedPlayableFile(playbackHandler))
+            return playbackHandler
+        }
 
-		public ResolvablePlaybackHandler resolve() {
-			final ResolvablePlaybackHandler playbackHandler = new ResolvablePlaybackHandler();
-			if (resolve != null)
-				resolve.sendResolution(new FakePreparedPlayableFile<>(playbackHandler));
-			return playbackHandler;
-		}
-
-		@Override
-		public void send(Messenger<PreparedPlayableFile> resolve) {
-			this.resolve = resolve;
-		}
-	}
+        override fun send(resolve: Messenger<PreparedPlayableFile>) {
+            this.resolve = resolve
+        }
+    }
 }
