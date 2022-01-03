@@ -8,7 +8,9 @@ import com.lasthopesoftware.bluewater.client.playback.engine.preparation.Prepara
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedProgressedFile
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.IPositionedFileQueueProvider
+import com.lasthopesoftware.bluewater.client.playback.file.progress.ReadFileProgress
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.INowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
@@ -26,7 +28,8 @@ class PlaybackEngine(
 	positionedFileQueueProviders: Iterable<IPositionedFileQueueProvider>,
 	private val nowPlayingRepository: INowPlayingRepository,
 	private val playbackBootstrapper: IStartPlayback,
-	nowPlaying: NowPlaying) :
+	nowPlaying: NowPlaying
+) :
 	ChangePlaybackState,
 	ChangePlaylistPosition,
 	ChangePlaybackContinuity,
@@ -43,7 +46,7 @@ class PlaybackEngine(
 	private var playlist = nowPlaying.playlist.toMutableList()
 	private var isRepeating: Boolean = nowPlaying.isRepeating
 	private var playlistPosition: Int = nowPlaying.playlistPosition
-	private var fileProgress: FileProgress = StaticProgressedFile(Duration.millis(nowPlaying.filePosition).toPromise())
+	private var fileProgress: ReadFileProgress = StaticProgressedFile(Duration.millis(nowPlaying.filePosition).toPromise())
 
 	private var playbackSubscription: Disposable? = null
 	private var activePlayer: IActivePlayer? = null
@@ -53,6 +56,10 @@ class PlaybackEngine(
 	private var onPlaybackPaused: OnPlaybackPaused? = null
 	private var onPlaybackCompleted: OnPlaybackCompleted? = null
 	private var onPlaylistReset: OnPlaylistReset? = null
+
+	override fun restoreFromSavedState(): Promise<PositionedProgressedFile> {
+		TODO("Not yet implemented")
+	}
 
 	override fun startPlaylist(playlist: List<ServiceFile>, playlistPosition: Int, filePosition: Duration): Promise<Unit> {
 		logger.info("Starting playback")
@@ -197,7 +204,7 @@ class PlaybackEngine(
 		val positionedFileQueueProvider = positionedFileQueueProviders.getValue(isRepeating)
 		val fileQueue = positionedFileQueueProvider.provideQueue(playlist, playlistPosition)
 		val preparedPlaybackQueue = preparedPlaybackQueueResourceManagement.initializePreparedPlaybackQueue(fileQueue)
-		return fileProgress.fileProgress.then {	startPlayback(preparedPlaybackQueue, it) }
+		return fileProgress.progress.then {	startPlayback(preparedPlaybackQueue, it) }
 	}
 
 	private fun startPlayback(preparedPlaybackQueue: PreparedPlayableFileQueue, filePosition: Duration): ConnectableObservable<PositionedPlayingFile> {
@@ -252,7 +259,7 @@ class PlaybackEngine(
 				np.playlist = playlist
 				np.playlistPosition = playlistPosition
 				np.isRepeating = isRepeating
-				fileProgress.fileProgress.eventually {
+				fileProgress.progress.eventually {
 					np.filePosition = it.millis
 					nowPlayingRepository.updateNowPlaying(np)
 				}
@@ -269,7 +276,7 @@ class PlaybackEngine(
 	}
 
 	companion object {
-		private val logger = LoggerFactory.getLogger(PlaybackEngine::class.java)
+		private val logger by lazy { LoggerFactory.getLogger(PlaybackEngine::class.java) }
 
 		@Contract(pure = true)
 		private fun getNextPosition(startingPosition: Int, playlist: Collection<ServiceFile>): Int =
@@ -292,16 +299,12 @@ class PlaybackEngine(
 		}
 	}
 
-	private interface FileProgress {
-		val fileProgress: Promise<Duration>
-	}
-
-	private class StaticProgressedFile(override val fileProgress: Promise<Duration>) : FileProgress
+	private class StaticProgressedFile(override val progress: Promise<Duration>) : ReadFileProgress
 
 	private class ProgressingFile(val positionedPlayingFile: PositionedPlayingFile)
-		: FileProgress {
+		: ReadFileProgress {
 
-		override val fileProgress: Promise<Duration>
+		override val progress: Promise<Duration>
 			get() = positionedPlayingFile.playingFile.promisePlayedFile().progress.then { it ?: Duration.ZERO }
 	}
 }
