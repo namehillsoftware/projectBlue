@@ -46,8 +46,8 @@ class MediaItemsBrowser(
 									.promiseFiles(FileListParameters.Options.None, *parameters)
 									.eventually<Collection<MediaBrowserCompat.MediaItem>> { files ->
 										Promise.whenAll(files.map { f -> mediaItemServiceFileLookup.promiseMediaItem(f).then { mi -> Pair(f, mi) } })
-											.then { pairs -> pairs.associate { p -> p } }
-											.then { mediaItemsLookup ->
+											.then { pairs ->
+												val mediaItemsLookup = pairs.associate { p -> p }
 												files.mapIndexedNotNull { i, f ->
 													mediaItemsLookup[f]?.let { mediaItem ->
 														val description = mediaItem.description

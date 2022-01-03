@@ -28,7 +28,6 @@ class PlaybackEngine(
 	positionedFileQueueProviders: Iterable<IPositionedFileQueueProvider>,
 	private val nowPlayingRepository: INowPlayingRepository,
 	private val playbackBootstrapper: IStartPlayback,
-	nowPlaying: NowPlaying
 ) :
 	ChangePlaybackState,
 	ChangePlaylistPosition,
@@ -43,10 +42,10 @@ class PlaybackEngine(
 	var isPlaying = false
 		private set
 
-	private var playlist = nowPlaying.playlist.toMutableList()
-	private var isRepeating: Boolean = nowPlaying.isRepeating
-	private var playlistPosition: Int = nowPlaying.playlistPosition
-	private var fileProgress: ReadFileProgress = StaticProgressedFile(Duration.millis(nowPlaying.filePosition).toPromise())
+	private var playlist = mutableListOf<ServiceFile>()
+	private var isRepeating = false
+	private var playlistPosition = 0
+	private var fileProgress: ReadFileProgress = StaticProgressedFile(Duration.ZERO.toPromise())
 
 	private var playbackSubscription: Disposable? = null
 	private var activePlayer: IActivePlayer? = null
@@ -57,9 +56,13 @@ class PlaybackEngine(
 	private var onPlaybackCompleted: OnPlaybackCompleted? = null
 	private var onPlaylistReset: OnPlaylistReset? = null
 
-	override fun restoreFromSavedState(): Promise<PositionedProgressedFile> {
-		TODO("Not yet implemented")
-	}
+	override fun restoreFromSavedState(): Promise<PositionedProgressedFile> =
+		nowPlayingRepository.nowPlaying
+			.then { np ->
+				playlist = np.playlist.toMutableList()
+				playlistPosition = np.playlistPosition
+				PositionedProgressedFile(playlistPosition, ServiceFile(915), Duration.millis(np.filePosition))
+			}
 
 	override fun startPlaylist(playlist: List<ServiceFile>, playlistPosition: Int, filePosition: Duration): Promise<Unit> {
 		logger.info("Starting playback")
@@ -293,8 +296,7 @@ class PlaybackEngine(
 						managePlaybackQueues,
 						positionedFileQueueProviders,
 						nowPlayingRepository,
-						playbackBootstrapper,
-						np)
+						playbackBootstrapper)
 				}
 		}
 	}

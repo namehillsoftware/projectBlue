@@ -9,13 +9,12 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ISpecificLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.PassThroughLibraryStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
-import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine.Companion.createEngine
+import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeDeferredPlayableFilePreparationSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CyclicalFileQueueProvider
-import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
@@ -24,36 +23,30 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
-import org.assertj.core.api.Assertions
-import org.junit.BeforeClass
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 
 class WhenSettingEngineToRepeat {
 	companion object {
-		private val library = Library()
-		private var nowPlaying: NowPlaying? = null
-
-		@BeforeClass
-		@JvmStatic
-		fun before() {
+		private val nowPlaying by lazy {
 			val fakePlaybackPreparerProvider = FakeDeferredPlayableFilePreparationSourceProvider()
+			val library = Library()
 			library.setId(1)
 			library.setSavedTracksString(
 				FileStringListUtilities.promiseSerializedFileStringList(
-						listOf(
-							ServiceFile(1),
-							ServiceFile(2),
-							ServiceFile(3),
-							ServiceFile(4),
-							ServiceFile(5)
-						)
-					).toFuture().get()
+					listOf(
+						ServiceFile(1),
+						ServiceFile(2),
+						ServiceFile(3),
+						ServiceFile(4),
+						ServiceFile(5)
+					)
+				).toFuture().get()
 			)
 			library.setNowPlayingId(0)
-			val libraryPromise = library.toPromise()
 			val libraryProvider = object : ISpecificLibraryProvider {
 				override val library: Promise<Library?>
-					get() = libraryPromise.then { it }
+					get() = library.toPromise()
 			}
 
 			val libraryStorage = PassThroughLibraryStorage()
@@ -69,22 +62,21 @@ class WhenSettingEngineToRepeat {
 			} returns FilePropertiesContainer(1, mapOf(Pair(KnownFileProperties.DURATION, "100")))
 
 			val repository = NowPlayingRepository(libraryProvider, libraryStorage)
-			val playbackEngine =
-				createEngine(
-					PreparedPlaybackQueueResourceManagement(
-						fakePlaybackPreparerProvider
-					) { 1 },
-					listOf(CompletingFileQueueProvider(), CyclicalFileQueueProvider()),
-					repository,
-					PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
-				).toFuture().get()
-			playbackEngine!!.playRepeatedly().toFuture().get()
-			nowPlaying = repository.nowPlaying.toFuture().get()
+			val playbackEngine = PlaybackEngine(
+				PreparedPlaybackQueueResourceManagement(
+					fakePlaybackPreparerProvider
+				) { 1 },
+				listOf(CompletingFileQueueProvider(), CyclicalFileQueueProvider()),
+				repository,
+				PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f)))
+			playbackEngine.restoreFromSavedState()
+			playbackEngine.playRepeatedly().toFuture().get()
+			repository.nowPlaying.toFuture().get()
 		}
 	}
 
 	@Test
 	fun thenNowPlayingIsSetToRepeating() {
-		Assertions.assertThat(nowPlaying!!.isRepeating).isTrue
+		assertThat(nowPlaying?.isRepeating).isTrue
 	}
 }
