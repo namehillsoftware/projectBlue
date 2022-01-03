@@ -417,6 +417,7 @@ open class PlaybackService : Service() {
 
 	private var isMarkedForPlay = false
 	private var areListenersRegistered = false
+	private var playbackEngineSync = Any()
 	private var playbackEnginePromise = Promise.empty<PlaybackEngine?>()
 	private var playbackContinuity: ChangePlaybackContinuity? = null
 	private var playlistFiles: ChangePlaylistFiles? = null
@@ -474,15 +475,69 @@ open class PlaybackService : Service() {
 	}
 
 	override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
+		fun actOnIntent(intent: Intent?): Promise<Unit> {
+			if (intent == null) return Unit.toPromise()
+			var action = intent.action ?: return Unit.toPromise()
+			val playbackPosition = playlistPosition ?: return Unit.toPromise()
+
+			if (action == Action.togglePlayPause) action = if (isMarkedForPlay) Action.pause else Action.play
+			if (!Action.playbackStartingActions.contains(action)) stopNotificationIfNotPlaying()
+			when (action) {
+				Action.play -> return resumePlayback()
+				Action.pause -> return pausePlayback()
+				Action.repeating -> return playbackContinuity?.playRepeatedly() ?: Unit.toPromise()
+				Action.completing -> return playbackContinuity?.playToCompletion() ?: Unit.toPromise()
+				Action.previous -> return playbackPosition.skipToPrevious().then(::broadcastChangedFile)
+				Action.next -> return playbackPosition.skipToNext().then(::broadcastChangedFile)
+				Action.launchMusicService -> {
+					val playlistPosition = intent.getIntExtra(Bag.playlistPosition, -1)
+					if (playlistPosition < 0) return Unit.toPromise()
+
+					val playlistString = intent.getStringExtra(Bag.filePlaylist) ?: return Unit.toPromise()
+
+					return startNewPlaylist(playlistString, playlistPosition)
+				}
+				Action.seekTo -> {
+					val playlistPosition = intent.getIntExtra(Bag.playlistPosition, -1)
+					if (playlistPosition < 0) return Unit.toPromise()
+
+					val filePosition = intent.getIntExtra(Bag.startPos, -1)
+					if (filePosition < 0) return Unit.toPromise()
+					return playbackPosition
+						.changePosition(playlistPosition, Duration.millis(filePosition.toLong()))
+						.then(::broadcastChangedFile)
+				}
+				Action.addFileToPlaylist -> {
+					val playlistFiles = playlistFiles ?: return Unit.toPromise()
+
+					val fileKey = intent.getIntExtra(Bag.playlistPosition, -1)
+					return if (fileKey < 0) Unit.toPromise() else playlistFiles
+						.addFile(ServiceFile(fileKey))
+						.then { localBroadcastManagerLazy.value.sendBroadcast(Intent(PlaylistEvents.onPlaylistChange)) }
+						.eventually(LoopedInPromise.response({
+							Toast.makeText(this, getText(R.string.lbl_song_added_to_now_playing), Toast.LENGTH_SHORT).show()
+						}, this))
+				}
+				Action.removeFileAtPositionFromPlaylist -> {
+					val playlistFiles = playlistFiles ?: return Unit.toPromise()
+
+					val filePosition = intent.getIntExtra(Bag.filePosition, -1)
+					return if (filePosition < -1) Unit.toPromise() else playlistFiles
+						.removeFileAtPosition(filePosition)
+						.then {
+							localBroadcastManagerLazy.value.sendBroadcast(Intent(PlaylistEvents.onPlaylistChange))
+						}
+						.unitResponse()
+				}
+				Action.killMusicService -> return pausePlayback().must { stopSelf(startId) }
+				else -> return Unit.toPromise()
+			}
+		}
+
 		// Should be modified to save its state locally in the future.
 		this.startId = startId
 		if (intent.action == null) {
 			stopSelf(startId)
-			return START_NOT_STICKY
-		}
-
-		if (playlistPosition != null) {
-			actOnIntent(intent).excuse(unhandledRejectionHandler)
 			return START_NOT_STICKY
 		}
 
@@ -492,75 +547,27 @@ open class PlaybackService : Service() {
 			return START_NOT_STICKY
 		}
 
-		val promisedTimeout = delay<Any?>(playbackStartTimeout)
+		synchronized(playbackEngineSync) {
+			playbackEnginePromise.must {
+				if (playlistPosition != null) {
+					actOnIntent(intent).excuse(unhandledRejectionHandler)
+					return@must
+				}
 
-		val promisedIntentHandling = selectedLibraryProvider.browserLibrary
-			.eventually { it?.let(::initializePlaybackPlaylistStateManagerSerially) ?: Promise.empty() }
-			.eventually { it?.let { actOnIntent(intent) } ?: Promise(UninitializedPlaybackEngineException()) }
-			.must { promisedTimeout.cancel() }
+				val promisedTimeout = delay<Any?>(playbackStartTimeout)
 
-		val timeoutResponse = promisedTimeout.then<Unit> { throw TimeoutException("Timed out after $playbackStartTimeout") }
-		Promise.whenAny(promisedIntentHandling, timeoutResponse).excuse(unhandledRejectionHandler)
-		return START_STICKY
-	}
+				val promisedIntentHandling = selectedLibraryProvider.browserLibrary
+					.eventually { it?.let(::initializePlaybackPlaylistStateManagerSerially) ?: Promise.empty() }
+					.eventually { it?.let { actOnIntent(intent) } ?: Promise(UninitializedPlaybackEngineException()) }
+					.must { promisedTimeout.cancel() }
 
-	private fun actOnIntent(intent: Intent?): Promise<Unit> {
-		if (intent == null) return Unit.toPromise()
-		var action = intent.action ?: return Unit.toPromise()
-		val playbackPosition = playlistPosition ?: return Unit.toPromise()
-
-		if (action == Action.togglePlayPause) action = if (isMarkedForPlay) Action.pause else Action.play
-		if (!Action.playbackStartingActions.contains(action)) stopNotificationIfNotPlaying()
-		when (action) {
-			Action.play -> return resumePlayback()
-			Action.pause -> return pausePlayback()
-			Action.repeating -> return playbackContinuity?.playRepeatedly() ?: Unit.toPromise()
-			Action.completing -> return playbackContinuity?.playToCompletion() ?: Unit.toPromise()
-			Action.previous -> return playbackPosition.skipToPrevious().then(::broadcastChangedFile)
-			Action.next -> return playbackPosition.skipToNext().then(::broadcastChangedFile)
-			Action.launchMusicService -> {
-				val playlistPosition = intent.getIntExtra(Bag.playlistPosition, -1)
-				if (playlistPosition < 0) return Unit.toPromise()
-
-				val playlistString = intent.getStringExtra(Bag.filePlaylist) ?: return Unit.toPromise()
-
-				return startNewPlaylist(playlistString, playlistPosition)
+				val timeoutResponse =
+					promisedTimeout.then<Unit> { throw TimeoutException("Timed out after $playbackStartTimeout") }
+				Promise.whenAny(promisedIntentHandling, timeoutResponse).excuse(unhandledRejectionHandler)
 			}
-			Action.seekTo -> {
-				val playlistPosition = intent.getIntExtra(Bag.playlistPosition, -1)
-				if (playlistPosition < 0) return Unit.toPromise()
-
-				val filePosition = intent.getIntExtra(Bag.startPos, -1)
-				if (filePosition < 0) return Unit.toPromise()
-				return playbackPosition
-					.changePosition(playlistPosition, Duration.millis(filePosition.toLong()))
-					.then(::broadcastChangedFile)
-			}
-			Action.addFileToPlaylist -> {
-				val playlistFiles = playlistFiles ?: return Unit.toPromise()
-
-				val fileKey = intent.getIntExtra(Bag.playlistPosition, -1)
-				return if (fileKey < 0) Unit.toPromise() else playlistFiles
-					.addFile(ServiceFile(fileKey))
-					.then { localBroadcastManagerLazy.value.sendBroadcast(Intent(PlaylistEvents.onPlaylistChange)) }
-					.eventually(LoopedInPromise.response({
-						Toast.makeText(this, getText(R.string.lbl_song_added_to_now_playing), Toast.LENGTH_SHORT).show()
-					}, this))
-			}
-			Action.removeFileAtPositionFromPlaylist -> {
-				val playlistFiles = playlistFiles ?: return Unit.toPromise()
-
-				val filePosition = intent.getIntExtra(Bag.filePosition, -1)
-				return if (filePosition < -1) Unit.toPromise() else playlistFiles
-					.removeFileAtPosition(filePosition)
-					.then {
-						localBroadcastManagerLazy.value.sendBroadcast(Intent(PlaylistEvents.onPlaylistChange))
-					}
-					.unitResponse()
-			}
-			Action.killMusicService -> return pausePlayback().must { stopSelf(startId) }
-			else -> return Unit.toPromise()
 		}
+
+		return START_STICKY
 	}
 
 	private fun startNewPlaylist(playlistString: String, playlistPosition: Int): Promise<Unit> {
@@ -593,12 +600,12 @@ open class PlaybackService : Service() {
 		return playbackState?.pause() ?: Unit.toPromise()
 	}
 
-	@Synchronized
-	private fun initializePlaybackPlaylistStateManagerSerially(library: Library): Promise<PlaybackEngine?> {
-		return playbackEnginePromise.eventually(
-			{ initializePlaybackEngine(library) },
-			{ initializePlaybackEngine(library) }).also { playbackEnginePromise = it }
-	}
+	private fun initializePlaybackPlaylistStateManagerSerially(library: Library): Promise<PlaybackEngine?> =
+		synchronized(playbackEngineSync) {
+			playbackEnginePromise.eventually(
+				{ initializePlaybackEngine(library) },
+				{ initializePlaybackEngine(library) }).also { playbackEnginePromise = it }
+		}
 
 	private fun initializePlaybackEngine(library: Library): Promise<PlaybackEngine?> {
 		playbackEngineCloseables.close()

@@ -41,6 +41,7 @@ class MediaSessionBroadcaster(
 
 	@Volatile
 	private var isPlaying = false
+
 	override fun setPlaying() {
 		isPlaying = true
 		val builder = PlaybackStateCompat.Builder()
