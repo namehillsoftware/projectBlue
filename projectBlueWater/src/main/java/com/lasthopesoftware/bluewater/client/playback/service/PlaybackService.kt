@@ -308,6 +308,7 @@ open class PlaybackService : Service() {
 	private val playlistVolumeManager by lazy { PlaylistVolumeManager(1.0f) }
 	private val volumeLevelSettings by lazy { VolumeLevelSettings(applicationSettings) }
 	private val channelConfiguration by lazy { SharedChannelProperties(this) }
+	private val trackPositionedFile by lazy { TrackPositionBroadcaster(lazyMessageBus.value) }
 
 	private val playbackNotificationsConfiguration by lazy {
 			val notificationChannelActivator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) NotificationChannelActivator(notificationManager) else NoOpChannelActivator()
@@ -958,7 +959,7 @@ open class PlaybackService : Service() {
 		val localSubscription = Observable.interval(1, TimeUnit.SECONDS, lazyObservationScheduler.value)
 			.flatMapMaybe { promisedPlayedFile.progress.toMaybeObservable() }
 			.distinctUntilChanged()
-			.subscribe(TrackPositionBroadcaster(lazyMessageBus.value, playingFile))
+			.subscribe(trackPositionedFile.observeUpdates(playingFile))
 
 		promisedPlayedFile.then {
 			selectedLibraryIdentifierProvider.selectedLibraryId.then { l ->

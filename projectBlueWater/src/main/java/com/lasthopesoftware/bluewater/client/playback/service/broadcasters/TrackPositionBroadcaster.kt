@@ -7,14 +7,31 @@ import com.lasthopesoftware.bluewater.shared.android.messages.SendMessages
 import io.reactivex.functions.Consumer
 import org.joda.time.Duration
 
-class TrackPositionBroadcaster(private val sendMessages: SendMessages, private val playingFile: PlayingFile) : Consumer<Duration> {
-	override fun accept(fileProgress: Duration) {
-		val trackPositionChangedIntent = Intent(trackPositionUpdate)
-		trackPositionChangedIntent.putExtra(TrackPositionChangedParameters.filePosition, fileProgress.millis)
+class TrackPositionBroadcaster(private val sendMessages: SendMessages) {
 
+	fun updateProgress(playingFile: PlayingFile) {
+		val promisedProgress = playingFile.progress
 		playingFile.duration.then { d ->
-			trackPositionChangedIntent.putExtra(TrackPositionChangedParameters.fileDuration, d.millis)
-			sendMessages.sendBroadcast(trackPositionChangedIntent)
+			promisedProgress.then { p ->
+				val trackPositionChangedIntent = Intent(trackPositionUpdate)
+				trackPositionChangedIntent.putExtra(TrackPositionChangedParameters.filePosition, p.millis)
+				trackPositionChangedIntent.putExtra(TrackPositionChangedParameters.fileDuration, d.millis)
+				sendMessages.sendBroadcast(trackPositionChangedIntent)
+			}
+		}
+	}
+
+	fun observeUpdates(playingFile: PlayingFile): Consumer<Duration> = TrackPositionObserver(playingFile)
+
+	private inner class TrackPositionObserver(private val playingFile: PlayingFile): Consumer<Duration> {
+		override fun accept(fileProgress: Duration) {
+			val trackPositionChangedIntent = Intent(trackPositionUpdate)
+			trackPositionChangedIntent.putExtra(TrackPositionChangedParameters.filePosition, fileProgress.millis)
+
+			playingFile.duration.then { d ->
+				trackPositionChangedIntent.putExtra(TrackPositionChangedParameters.fileDuration, d.millis)
+				sendMessages.sendBroadcast(trackPositionChangedIntent)
+			}
 		}
 	}
 

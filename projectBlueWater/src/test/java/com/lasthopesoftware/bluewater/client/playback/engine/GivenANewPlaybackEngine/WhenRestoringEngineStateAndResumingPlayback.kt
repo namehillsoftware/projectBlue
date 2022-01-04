@@ -104,7 +104,7 @@ class WhenRestoringEngineStateAndResumingPlayback {
 
 	@Test
 	fun `then the playing file progress is correct`() {
-		assertThat(positionedPlayingFile?.progress?.toFuture()?.get()?.millis).isEqualTo(893)
+		assertThat(positionedPlayingFile?.playingFile?.progress?.toFuture()?.get()?.millis).isEqualTo(893)
 	}
 
 	@Test
