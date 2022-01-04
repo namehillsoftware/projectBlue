@@ -308,13 +308,12 @@ open class PlaybackService : Service() {
 	private val playlistVolumeManager by lazy { PlaylistVolumeManager(1.0f) }
 	private val volumeLevelSettings by lazy { VolumeLevelSettings(applicationSettings) }
 	private val channelConfiguration by lazy { SharedChannelProperties(this) }
-	private val trackPositionedFile by lazy { TrackPositionBroadcaster(lazyMessageBus.value) }
 
 	private val playbackNotificationsConfiguration by lazy {
-			val notificationChannelActivator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) NotificationChannelActivator(notificationManager) else NoOpChannelActivator()
-			val channelName = notificationChannelActivator.activateChannel(channelConfiguration)
-			NotificationsConfiguration(channelName, playingNotificationId)
-		}
+		val notificationChannelActivator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) NotificationChannelActivator(notificationManager) else NoOpChannelActivator()
+		val channelName = notificationChannelActivator.activateChannel(channelConfiguration)
+		NotificationsConfiguration(channelName, playingNotificationId)
+	}
 
 	private val arbitratorForOs by lazy { ExternalStorageReadPermissionsArbitratorForOs(this) }
 
@@ -334,10 +333,10 @@ open class PlaybackService : Service() {
 		}
 
 	private val playbackThread = lazy {
-			HandlerThreadCreator.promiseNewHandlerThread(
-				"Playback",
-				Process.THREAD_PRIORITY_AUDIO)
-		}
+		HandlerThreadCreator.promiseNewHandlerThread(
+			"Playback",
+			Process.THREAD_PRIORITY_AUDIO)
+	}
 
 	private val playbackHandler = lazy { playbackThread.value.then { h -> Handler(h.looper) } }
 
@@ -433,6 +432,8 @@ open class PlaybackService : Service() {
 	private var wakeLock: WakeLock? = null
 	private var cache: SimpleCache? = null
 	private var startId = 0
+	private var trackPositionBroadcaster: TrackPositionBroadcaster? = null
+
 	private fun getNewNowPlayingRepository(): Promise<INowPlayingRepository?> =
 		selectedLibraryIdentifierProvider.selectedLibraryId
 			.then { l ->
@@ -621,6 +622,8 @@ open class PlaybackService : Service() {
 				FilePropertyCache.getInstance(),
 				ScopedFilePropertiesProvider(connectionProvider, scopedRevisionProvider, FilePropertyCache.getInstance()))
 
+			trackPositionBroadcaster = TrackPositionBroadcaster(lazyMessageBus.value, cachedSessionFilePropertiesProvider)
+
 			val imageProvider = CachedImageProvider.getInstance(this)
 
 			remoteControlProxy?.also(localBroadcastManagerLazy.value::unregisterReceiver)
@@ -782,6 +785,7 @@ open class PlaybackService : Service() {
 								file.serviceFile,
 							)
 						)
+						trackPositionBroadcaster?.broadcastProgress(file)
 						engine
 					}
 					.keepPromise()
@@ -956,10 +960,13 @@ open class PlaybackService : Service() {
 			}
 		}
 		val promisedPlayedFile = playingFile.promisePlayedFile()
-		val localSubscription = Observable.interval(1, TimeUnit.SECONDS, lazyObservationScheduler.value)
-			.flatMapMaybe { promisedPlayedFile.progress.toMaybeObservable() }
-			.distinctUntilChanged()
-			.subscribe(trackPositionedFile.observeUpdates(playingFile))
+
+		val localSubscription = trackPositionBroadcaster?.run {
+			Observable.interval(1, TimeUnit.SECONDS, lazyObservationScheduler.value)
+				.flatMapMaybe { promisedPlayedFile.progress.toMaybeObservable() }
+				.distinctUntilChanged()
+				.subscribe(observeUpdates(playingFile))
+		}
 
 		promisedPlayedFile.then {
 			selectedLibraryIdentifierProvider.selectedLibraryId.then { l ->

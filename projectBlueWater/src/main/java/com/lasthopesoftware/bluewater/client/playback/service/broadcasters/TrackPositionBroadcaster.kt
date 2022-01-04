@@ -1,24 +1,36 @@
 package com.lasthopesoftware.bluewater.client.playback.service.broadcasters
 
 import android.content.Intent
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ProvideScopedFileProperties
 import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedProgressedFile
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.messages.SendMessages
 import io.reactivex.functions.Consumer
 import org.joda.time.Duration
 
-class TrackPositionBroadcaster(private val sendMessages: SendMessages) {
+class TrackPositionBroadcaster(
+	private val sendMessages: SendMessages,
+	private val fileProperties: ProvideScopedFileProperties
+) {
 
-	fun updateProgress(playingFile: PlayingFile) {
-		val promisedProgress = playingFile.progress
-		playingFile.duration.then { d ->
-			promisedProgress.then { p ->
-				val trackPositionChangedIntent = Intent(trackPositionUpdate)
-				trackPositionChangedIntent.putExtra(TrackPositionChangedParameters.filePosition, p.millis)
-				trackPositionChangedIntent.putExtra(TrackPositionChangedParameters.fileDuration, d.millis)
-				sendMessages.sendBroadcast(trackPositionChangedIntent)
+	fun broadcastProgress(positionedProgressedFile: PositionedProgressedFile) {
+		fileProperties
+			.promiseFileProperties(positionedProgressedFile.serviceFile)
+			.then { p ->
+				p[KnownFileProperties.DURATION]
+					?.toLongOrNull()
+					?.let { duration ->
+						positionedProgressedFile.progress
+							.then { progress ->
+								val trackPositionChangedIntent = Intent(trackPositionUpdate)
+								trackPositionChangedIntent.putExtra(TrackPositionChangedParameters.filePosition, progress.millis)
+								trackPositionChangedIntent.putExtra(TrackPositionChangedParameters.fileDuration, duration)
+								sendMessages.sendBroadcast(trackPositionChangedIntent)
+							}
+					}
 			}
-		}
 	}
 
 	fun observeUpdates(playingFile: PlayingFile): Consumer<Duration> = TrackPositionObserver(playingFile)
