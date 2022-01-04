@@ -60,7 +60,6 @@ class MediaSessionBroadcaster(
 		playbackState = PlaybackState.STATE_PAUSED
 		builder.setState(playbackState, trackPosition, playbackSpeed)
 		mediaSession.setPlaybackState(builder.build())
-		updateClientBitmap(null)
 	}
 
 	override fun setStopped() {
@@ -102,11 +101,6 @@ class MediaSessionBroadcaster(
 				}
 				mediaSession.setMetadata(metadataBuilder.build().also { mediaMetadata = it })
 			}, context))
-
-		if (!isPlaying) {
-			updateClientBitmap(null)
-			return
-		}
 
 		imageProvider
 			.promiseFileBitmap(serviceFile)
