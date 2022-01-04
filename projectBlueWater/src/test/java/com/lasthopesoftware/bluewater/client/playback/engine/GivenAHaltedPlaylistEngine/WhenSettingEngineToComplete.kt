@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ISpecificLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.PassThroughLibraryStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
-import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine.Companion.createEngine
+import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeDeferredPlayableFilePreparationSourceProvider
@@ -62,15 +62,15 @@ class WhenSettingEngineToComplete {
 
 			val repository = NowPlayingRepository(libraryProvider, libraryStorage)
 			val playbackEngine =
-				createEngine(
+				PlaybackEngine(
 					PreparedPlaybackQueueResourceManagement(
 						fakePlaybackPreparerProvider
 					) { 1 },
 					listOf(CompletingFileQueueProvider(), CyclicalFileQueueProvider()),
 					repository,
 					PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
-				).toFuture().get()
-			playbackEngine!!.playToCompletion().toFuture().get()
+				)
+			playbackEngine.playToCompletion().toFuture().get()
 			nowPlaying = repository.nowPlaying.toFuture().get()
 		}
 	}

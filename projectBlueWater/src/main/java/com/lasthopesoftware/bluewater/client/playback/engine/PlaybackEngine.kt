@@ -291,17 +291,6 @@ class PlaybackEngine(
 		@Contract(pure = true)
 		private fun getPreviousPosition(startingPosition: Int): Int = max(startingPosition - 1, 0)
 
-		fun createEngine(managePlaybackQueues: ManagePlaybackQueues, positionedFileQueueProviders: Iterable<IPositionedFileQueueProvider>, nowPlayingRepository: INowPlayingRepository, playbackBootstrapper: IStartPlayback): Promise<PlaybackEngine> {
-			return nowPlayingRepository
-				.nowPlaying
-				.then { np ->
-					PlaybackEngine(
-						managePlaybackQueues,
-						positionedFileQueueProviders,
-						nowPlayingRepository,
-						playbackBootstrapper)
-				}
-		}
 	}
 
 	private class StaticProgressedFile(override val progress: Promise<Duration>) : ReadFileProgress

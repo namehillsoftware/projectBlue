@@ -4,21 +4,19 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceF
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ISpecificLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
-import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine.Companion.createEngine
+import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeDeferredPlayableFilePreparationSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
-import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
 import org.junit.Test
-import java.util.*
 
 class WhenNotObservingPlayback {
 
@@ -33,16 +31,16 @@ class WhenNotObservingPlayback {
 			val libraryStorage = mockk<ILibraryStorage>()
 			every { libraryStorage.saveLibrary(any()) } returns	Promise(library)
 
-			val playbackEngine = createEngine(
-					PreparedPlaybackQueueResourceManagement(
-						fakePlaybackPreparerProvider
-					) { 1 }, listOf(CompletingFileQueueProvider()),
-					NowPlayingRepository(libraryProvider, libraryStorage),
-					PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
-				).toFuture().get()
+			val playbackEngine = PlaybackEngine(
+				PreparedPlaybackQueueResourceManagement(
+					fakePlaybackPreparerProvider
+				) { 1 }, listOf(CompletingFileQueueProvider()),
+				NowPlayingRepository(libraryProvider, libraryStorage),
+				PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
+			)
 			playbackEngine
-				?.startPlaylist(
-					Arrays.asList(
+				.startPlaylist(
+					listOf(
 						ServiceFile(1),
 						ServiceFile(2),
 						ServiceFile(3),
@@ -60,11 +58,11 @@ class WhenNotObservingPlayback {
 
 	@Test
 	fun thenTheSavedTrackPositionIsOne() {
-		Assertions.assertThat(library.nowPlayingId).isEqualTo(1)
+		assertThat(library.nowPlayingId).isEqualTo(1)
 	}
 
 	@Test
 	fun thenTheManagerIsPlaying() {
-		Assertions.assertThat(playbackEngine?.isPlaying).isTrue
+		assertThat(playbackEngine.isPlaying).isTrue
 	}
 }

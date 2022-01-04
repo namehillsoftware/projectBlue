@@ -4,7 +4,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceF
 import com.lasthopesoftware.bluewater.client.browsing.library.access.PassThroughLibraryStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.access.PassThroughSpecificLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
-import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine.Companion.createEngine
+import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlayableFilePreparationSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
@@ -13,7 +13,6 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedP
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
-import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise
 import com.namehillsoftware.handoff.Messenger
 import com.namehillsoftware.handoff.promises.Promise
 import org.assertj.core.api.Assertions.assertThat
@@ -62,19 +61,18 @@ class WhenObservingPlayback {
 			library.setId(1)
 			val libraryProvider = PassThroughSpecificLibraryProvider(library)
 			val libraryStorage = PassThroughLibraryStorage()
-			val playbackEngine = FuturePromise(
-				createEngine(
-					PreparedPlaybackQueueResourceManagement(
-						fakePlaybackPreparerProvider,
-						fakePlaybackPreparerProvider
-					), listOf(CompletingFileQueueProvider()),
-					NowPlayingRepository(libraryProvider, libraryStorage),
-					PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
-				)
-			).get()
+			val playbackEngine = PlaybackEngine(
+				PreparedPlaybackQueueResourceManagement(
+					fakePlaybackPreparerProvider,
+					fakePlaybackPreparerProvider
+				), listOf(CompletingFileQueueProvider()),
+				NowPlayingRepository(libraryProvider, libraryStorage),
+				PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
+			)
+
 			playbackEngine
-				?.setOnPlaylistError { e: Throwable? -> error = e }
-				?.startPlaylist(
+				.setOnPlaylistError { e: Throwable? -> error = e }
+				.startPlaylist(
 					listOf(
 						ServiceFile(1),
 						ServiceFile(2),

@@ -4,7 +4,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceF
 import com.lasthopesoftware.bluewater.client.browsing.library.access.PassThroughLibraryStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.access.PassThroughSpecificLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
-import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine.Companion.createEngine
+import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeDeferredPlayableFilePreparationSourceProvider
@@ -24,16 +24,15 @@ class WhenATrackIsSwitchedTwice {
 			library.setId(1)
 			val libraryProvider = PassThroughSpecificLibraryProvider(library)
 			val libraryStorage = PassThroughLibraryStorage()
-			val playbackEngine = createEngine(
+			val playbackEngine = PlaybackEngine(
 				PreparedPlaybackQueueResourceManagement(
 					fakePlaybackPreparerProvider
 				) { 1 }, listOf(CompletingFileQueueProvider()),
 				NowPlayingRepository(libraryProvider, libraryStorage),
 				PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f)))
-				.toFuture()
-				.get()
+
 			playbackEngine
-				?.startPlaylist(
+				.startPlaylist(
 					listOf(
 						ServiceFile(1),
 						ServiceFile(2),
@@ -43,13 +42,13 @@ class WhenATrackIsSwitchedTwice {
 					), 0, Duration.ZERO
 				)
 			fakePlaybackPreparerProvider.deferredResolution.resolve()
-			playbackEngine?.changePosition(3, Duration.ZERO)?.toFuture()
+			playbackEngine.changePosition(3, Duration.ZERO).toFuture()
 
-			val futurePlaylist = playbackEngine?.changePosition(4, Duration.ZERO)?.toFuture()
+			val futurePlaylist = playbackEngine.changePosition(4, Duration.ZERO).toFuture()
 
 			fakePlaybackPreparerProvider.deferredResolution.resolve()
 
-			futurePlaylist?.get()
+			futurePlaylist.get()
 		}
 	}
 
