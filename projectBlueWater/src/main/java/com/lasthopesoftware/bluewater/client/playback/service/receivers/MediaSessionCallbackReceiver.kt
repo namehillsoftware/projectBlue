@@ -21,6 +21,8 @@ class MediaSessionCallbackReceiver(
 	private val fileListParameterProvider: IFileListParameterProvider,
 	private val fileStringListProvider: FileStringListProvider,
 ) : MediaSessionCompat.Callback() {
+	override fun onPrepare() = PlaybackService.initialize(context)
+
     override fun onPlay() = PlaybackService.play(context)
 
     override fun onStop() = PlaybackService.pause(context)
@@ -43,17 +45,24 @@ class MediaSessionCallbackReceiver(
 	}
 
 	override fun onPlayFromMediaId(mediaId: String?, extras: Bundle?) {
-		val itemIdParts = mediaId?.split(':', limit = 2)
+		val itemIdParts = mediaId?.split(RemoteBrowserService.mediaIdDelimiter, limit = 3)
 		if (itemIdParts == null || itemIdParts.size < 2) return
 
-		val type = itemIdParts[0]
-		if (type != RemoteBrowserService.itemFileMediaIdPrefix) return
+		if (itemIdParts[0] != RemoteBrowserService.itemFileMediaIdPrefix) return
 
-		val id = itemIdParts[1].toIntOrNull() ?: return
-		fileStringListProvider
+		val ids = itemIdParts.drop(1).mapNotNull { id -> id.toIntOrNull() }
+		val id = ids.firstOrNull() ?: return
+
+		val promisedFileStringList = fileStringListProvider
 			.promiseFileStringList(
 				FileListParameters.Options.None,
-				*fileListParameterProvider.getFileListParameters(Item(id)))
-			.then(LaunchPlaybackFromResult(context))
+				*fileListParameterProvider.getFileListParameters(Item(id))
+			)
+
+		if (ids.size < 2) {
+			promisedFileStringList.then(LaunchPlaybackFromResult(context))
+		} else {
+			promisedFileStringList.then { sl -> PlaybackService.launchMusicService(context, ids[1], sl) }
+		}
 	}
 }

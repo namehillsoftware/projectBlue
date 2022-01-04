@@ -6,4 +6,5 @@ import com.namehillsoftware.handoff.promises.Promise
 
 interface GetMediaItemsFromServiceFiles {
 	fun promiseMediaItem(serviceFile: ServiceFile): Promise<MediaBrowserCompat.MediaItem>
+	fun promiseMediaItemWithImage(serviceFile: ServiceFile): Promise<MediaBrowserCompat.MediaItem>
 }

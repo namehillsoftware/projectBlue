@@ -4,7 +4,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceF
 import com.lasthopesoftware.bluewater.client.browsing.library.access.PassThroughLibraryStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.access.PassThroughSpecificLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
-import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine.Companion.createEngine
+import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
@@ -13,7 +13,6 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeDefer
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
-import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
 import org.junit.BeforeClass
@@ -62,23 +61,23 @@ class WhenChangingTracks {
 			library.setId(1)
 			val libraryProvider = PassThroughSpecificLibraryProvider(library)
 			val libraryStorage = PassThroughLibraryStorage()
-			val playbackEngine = FuturePromise(
-				createEngine(
+			val playbackEngine =
+				PlaybackEngine(
 					PreparedPlaybackQueueResourceManagement(
 						fakePlaybackPreparerProvider
 					) { 1 }, listOf(CompletingFileQueueProvider()),
 					NowPlayingRepository(libraryProvider, libraryStorage),
 					PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
 				)
-			).get()
+
 			val countDownLatch = CountDownLatch(2)
 			playbackEngine
-				?.setOnPlayingFileChanged { p ->
+				.setOnPlayingFileChanged { p ->
 					startedFiles.add(p)
 					latestFile = p
 					countDownLatch.countDown()
 				}
-				?.startPlaylist(
+				.startPlaylist(
 					listOf(
 						ServiceFile(1),
 						ServiceFile(2),
@@ -88,7 +87,7 @@ class WhenChangingTracks {
 					), 0, Duration.ZERO
 				)
 			val playingPlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve()
-			playbackEngine!!.changePosition(3, Duration.ZERO).then<Any?> { p: PositionedFile? ->
+			playbackEngine.changePosition(3, Duration.ZERO).then<Any?> { p: PositionedFile? ->
 				nextSwitchedFile = p
 				countDownLatch.countDown()
 				null

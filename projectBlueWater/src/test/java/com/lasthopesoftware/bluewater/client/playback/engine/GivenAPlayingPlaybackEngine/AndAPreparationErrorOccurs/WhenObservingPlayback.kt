@@ -5,7 +5,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibrarySto
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ISpecificLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.PassThroughLibraryStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
-import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine.Companion.createEngine
+import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlayableFilePreparationSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparationException
@@ -90,7 +90,7 @@ class WhenObservingPlayback {
 			every { libraryProvider.library } returns Promise(library)
 			val libraryStorage: ILibraryStorage = PassThroughLibraryStorage()
 			val nowPlayingRepository = NowPlayingRepository(libraryProvider, libraryStorage)
-			createEngine(
+			PlaybackEngine(
 				PreparedPlaybackQueueResourceManagement(
 					fakePlaybackPreparerProvider,
 					fakePlaybackPreparerProvider
@@ -98,12 +98,10 @@ class WhenObservingPlayback {
 				nowPlayingRepository,
 				PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
 			)
-				.toFuture()
-				.get()
-				?.setOnPlaylistError { e ->
+				.setOnPlaylistError { e ->
 					if (e is PreparationException) error = e
 				}
-				?.startPlaylist(
+				.startPlaylist(
 					listOf(
 						ServiceFile(1),
 						ServiceFile(2),
@@ -114,8 +112,8 @@ class WhenObservingPlayback {
 					0,
 					Duration.ZERO
 				)
-				?.toFuture()
-				?.get()
+				.toFuture()
+				.get()
 			deferredErrorPlaybackPreparer.resolve().resolve()
 			deferredErrorPlaybackPreparer.reject()
 			nowPlaying = FuturePromise(nowPlayingRepository.nowPlaying).get()

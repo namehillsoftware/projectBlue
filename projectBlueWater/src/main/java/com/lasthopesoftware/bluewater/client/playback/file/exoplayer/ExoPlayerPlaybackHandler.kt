@@ -19,16 +19,16 @@ import org.slf4j.LoggerFactory
 class ExoPlayerPlaybackHandler(private val exoPlayer: PromisingExoPlayer) : PlayableFile, PlayingFile, Player.Listener, Runnable {
 
 	companion object {
-		private val logger = LoggerFactory.getLogger(ExoPlayerPlaybackHandler::class.java)
+		private val logger by lazy { LoggerFactory.getLogger(ExoPlayerPlaybackHandler::class.java) }
 	}
 
-	private val lazyFileProgressReader = lazy { ExoPlayerFileProgressReader(exoPlayer) }
+	private val lazyFileProgressReader by lazy { ExoPlayerFileProgressReader(exoPlayer) }
 
-	private val exoPlayerPositionSource = lazy {
+	private val exoPlayerPositionSource by lazy {
 			PromisedPlayedExoPlayer(
 				exoPlayer,
-				lazyFileProgressReader.value,
-				this@ExoPlayerPlaybackHandler)
+				lazyFileProgressReader,
+				this)
 		}
 
 	private var backingDuration = Duration.ZERO
@@ -49,10 +49,10 @@ class ExoPlayerPlaybackHandler(private val exoPlayer: PromisingExoPlayer) : Play
 		return pause().then { this }
 	}
 
-	override fun promisePlayedFile(): ProgressedPromise<Duration, PlayedFile> = exoPlayerPositionSource.value
+	override fun promisePlayedFile(): ProgressedPromise<Duration, PlayedFile> = exoPlayerPositionSource
 
 	override val progress: Promise<Duration>
-		get() = lazyFileProgressReader.value.progress
+		get() = lazyFileProgressReader.progress
 
 	override val duration: Promise<Duration>
 		get() = exoPlayer.getDuration().then { newDuration ->

@@ -5,9 +5,10 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.s
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ISpecificLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.PassThroughLibraryStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
-import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine.Companion.createEngine
+import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedProgressedFile
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeDeferredPlayableFilePreparationSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlaying
@@ -27,6 +28,7 @@ import java.util.concurrent.TimeUnit
 class WhenRemovingFilesBeforeTheCurrentlyPlayingFile {
 
 	companion object {
+		private var initialState: PositionedProgressedFile? = null
 		private val fileQueueProvider = spyk(CompletingFileQueueProvider())
 		private val library = Library()
 		private var nowPlaying: NowPlaying? = null
@@ -48,6 +50,7 @@ class WhenRemovingFilesBeforeTheCurrentlyPlayingFile {
 				)
 					.toFuture().get()
 			)
+			library.setNowPlayingProgress(35)
 			library.setNowPlayingId(2)
 
 			val libraryProvider = mockk<ISpecificLibraryProvider>()
@@ -57,18 +60,17 @@ class WhenRemovingFilesBeforeTheCurrentlyPlayingFile {
 
 			val repository = NowPlayingRepository(libraryProvider, libraryStorage)
 			val playbackEngine =
-				createEngine(
+				PlaybackEngine(
 					PreparedPlaybackQueueResourceManagement(
 						fakePlaybackPreparerProvider
 					) { 1 }, listOf(fileQueueProvider),
 					NowPlayingRepository(libraryProvider, libraryStorage),
 					PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
-				).toFuture().get()
+				)
 
-			playbackEngine!!.resume().toFuture()[1, TimeUnit.SECONDS]
-			val resolvablePlaybackHandler =
-				fakePlaybackPreparerProvider.deferredResolution.resolve()
-			resolvablePlaybackHandler.setCurrentPosition(35)
+			initialState = playbackEngine.restoreFromSavedState().toFuture().get()
+			playbackEngine.resume().toFuture()[1, TimeUnit.SECONDS]
+			val resolvablePlaybackHandler =	fakePlaybackPreparerProvider.deferredResolution.resolve()
 			playbackEngine.removeFileAtPosition(0).toFuture()[1, TimeUnit.SECONDS]
 			resolvablePlaybackHandler.setCurrentPosition(92)
 			playbackEngine.pause().toFuture().get()
@@ -89,5 +91,10 @@ class WhenRemovingFilesBeforeTheCurrentlyPlayingFile {
 	@Test
 	fun thenTheCurrentlyPlayingFileStillTracksFileProgress() {
 		assertThat(nowPlaying!!.filePosition).isEqualTo(92)
+	}
+
+	@Test
+	fun `then the initial file progress is correct`() {
+		assertThat(initialState?.progress?.toFuture()?.get()?.millis).isEqualTo(35)
 	}
 }

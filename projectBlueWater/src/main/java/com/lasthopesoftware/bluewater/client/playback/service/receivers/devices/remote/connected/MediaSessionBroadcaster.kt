@@ -41,6 +41,7 @@ class MediaSessionBroadcaster(
 
 	@Volatile
 	private var isPlaying = false
+
 	override fun setPlaying() {
 		isPlaying = true
 		val builder = PlaybackStateCompat.Builder()
@@ -59,7 +60,6 @@ class MediaSessionBroadcaster(
 		playbackState = PlaybackState.STATE_PAUSED
 		builder.setState(playbackState, trackPosition, playbackSpeed)
 		mediaSession.setPlaybackState(builder.build())
-		updateClientBitmap(null)
 	}
 
 	override fun setStopped() {
@@ -102,11 +102,6 @@ class MediaSessionBroadcaster(
 				mediaSession.setMetadata(metadataBuilder.build().also { mediaMetadata = it })
 			}, context))
 
-		if (!isPlaying) {
-			updateClientBitmap(null)
-			return
-		}
-
 		imageProvider
 			.promiseFileBitmap(serviceFile)
 			.eventually(response(::updateClientBitmap, context))
@@ -141,14 +136,14 @@ class MediaSessionBroadcaster(
 	}
 
 	companion object {
-		private val logger = LoggerFactory.getLogger(
-			MediaSessionBroadcaster::class.java
-		)
+		private val logger by lazy { LoggerFactory.getLogger(MediaSessionBroadcaster::class.java) }
 		private const val playbackSpeed = 1.0f
 
 		private const val standardCapabilities = PlaybackStateCompat.ACTION_PLAY_PAUSE or
 			PlaybackStateCompat.ACTION_SKIP_TO_NEXT or
 			PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS or
-			PlaybackStateCompat.ACTION_STOP
+			PlaybackStateCompat.ACTION_STOP or
+			PlaybackStateCompat.ACTION_PLAY_FROM_MEDIA_ID or
+			PlaybackStateCompat.ACTION_PLAY_FROM_SEARCH
 	}
 }

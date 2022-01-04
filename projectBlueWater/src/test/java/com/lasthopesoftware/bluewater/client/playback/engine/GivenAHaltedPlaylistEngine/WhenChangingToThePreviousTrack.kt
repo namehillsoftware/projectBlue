@@ -10,7 +10,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibrarySto
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ISpecificLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.PassThroughLibraryStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
-import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine.Companion.createEngine
+import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
@@ -64,16 +64,18 @@ class WhenChangingToThePreviousTrack {
 			} returns FilePropertiesContainer(1, mapOf(Pair(KnownFileProperties.DURATION, "100")))
 
 			val playbackEngine =
-				createEngine(
+				PlaybackEngine(
 					PreparedPlaybackQueueResourceManagement(
 						fakePlaybackPreparerProvider
 					) { 1 },
 					listOf(CompletingFileQueueProvider()),
 					NowPlayingRepository(libraryProvider, libraryStorage),
 					PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
-				).toFuture().get()
+				)
 
-			nextSwitchedFile = playbackEngine?.skipToPrevious()?.toFuture()?.get(1, TimeUnit.SECONDS)
+			playbackEngine.restoreFromSavedState().toFuture().get()
+
+			nextSwitchedFile = playbackEngine.skipToPrevious().toFuture().get(1, TimeUnit.SECONDS)
 		}
 	}
 

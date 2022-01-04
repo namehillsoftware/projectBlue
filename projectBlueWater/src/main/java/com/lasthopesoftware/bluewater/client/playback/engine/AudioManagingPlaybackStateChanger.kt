@@ -13,9 +13,15 @@ import com.namehillsoftware.handoff.promises.Promise
 import org.joda.time.Duration
 import java.util.concurrent.TimeoutException
 
-class AudioManagingPlaybackStateChanger(private val innerPlaybackState: ChangePlaybackState, private val audioFocus: ControlAudioFocus, private val volumeManager: IVolumeManagement)
-	: ChangePlaybackState, AutoCloseable, AudioManager.OnAudioFocusChangeListener {
-
+class AudioManagingPlaybackStateChanger(
+	private val innerPlaybackState: ChangePlaybackState,
+	private val audioFocus: ControlAudioFocus,
+	private val volumeManager: IVolumeManagement
+) :
+	ChangePlaybackState by innerPlaybackState,
+	AutoCloseable,
+	AudioManager.OnAudioFocusChangeListener
+{
 	private val lazyAudioRequest = lazy {
 		AudioFocusRequestCompat
 			.Builder(AudioManagerCompat.AUDIOFOCUS_GAIN)
