@@ -136,9 +136,7 @@ class MediaSessionBroadcaster(
 	}
 
 	companion object {
-		private val logger = LoggerFactory.getLogger(
-			MediaSessionBroadcaster::class.java
-		)
+		private val logger by lazy { LoggerFactory.getLogger(MediaSessionBroadcaster::class.java) }
 		private const val playbackSpeed = 1.0f
 
 		private const val standardCapabilities = PlaybackStateCompat.ACTION_PLAY_PAUSE or
