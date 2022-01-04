@@ -10,6 +10,7 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingProm
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.resources.FakeMessageBus
 import com.namehillsoftware.handoff.promises.Promise
+import io.mockk.mockk
 import org.assertj.core.api.AssertionsForClassTypes.assertThat
 import org.joda.time.Duration
 import org.junit.Test
@@ -20,9 +21,9 @@ import org.robolectric.RobolectricTestRunner
 class WhenBroadcastingTheFileProgress {
 
 	companion object {
-		private val receivedIntent = lazy {
+		private val receivedIntent by lazy {
 			val messageBus = FakeMessageBus(ApplicationProvider.getApplicationContext())
-			val trackPositionBroadcaster = TrackPositionBroadcaster(messageBus)
+			val trackPositionBroadcaster = TrackPositionBroadcaster(messageBus, mockk())
 			trackPositionBroadcaster.observeUpdates(object : PlayingFile {
 				override fun promisePause(): Promise<PlayableFile> {
 					return Promise.empty()
@@ -47,24 +48,24 @@ class WhenBroadcastingTheFileProgress {
 			messageBus.recordedIntents.first()
 		}
 
-		private val duration: Lazy<Long> = lazy {
-			receivedIntent.value.getLongExtra(TrackPositionBroadcaster.TrackPositionChangedParameters.fileDuration, -1)
+		private val duration by lazy {
+			receivedIntent.getLongExtra(TrackPositionBroadcaster.TrackPositionChangedParameters.fileDuration, -1)
 		}
 
-		private val progress: Lazy<Long> = lazy {
-			receivedIntent.value.getLongExtra(TrackPositionBroadcaster.TrackPositionChangedParameters.filePosition, -1)
+		private val progress by lazy {
+			receivedIntent.getLongExtra(TrackPositionBroadcaster.TrackPositionChangedParameters.filePosition, -1)
 		}
 	}
 
 	@Test
 	fun thenTheProgressIsCorrect() {
-		assertThat(progress.value).isEqualTo(Duration
+		assertThat(progress).isEqualTo(Duration
 			.standardSeconds(2)
 			.plus(Duration.standardSeconds(30)).millis)
 	}
 
 	@Test
 	fun thenTheDurationIsCorrect() {
-		assertThat(duration.value).isEqualTo(Duration.standardMinutes(3).millis)
+		assertThat(duration).isEqualTo(Duration.standardMinutes(3).millis)
 	}
 }
