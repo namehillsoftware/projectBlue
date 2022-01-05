@@ -9,7 +9,6 @@ import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.error.ExoPl
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.progress.ExoPlayerFileProgressReader
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressedPromise
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.lazyj.Lazy
 import org.joda.time.Duration
 import org.joda.time.format.PeriodFormatterBuilder
 import org.slf4j.LoggerFactory
@@ -19,7 +18,7 @@ import java.net.ProtocolException
 class PromisedPlayedExoPlayer(private val exoPlayer: PromisingExoPlayer, private val progressReader: ExoPlayerFileProgressReader, private val handler: ExoPlayerPlaybackHandler) : ProgressedPromise<Duration, PlayedFile>(), PlayedFile, Player.Listener {
 
 	companion object {
-		private val minutesAndSecondsFormatter = Lazy {
+		private val minutesAndSecondsFormatter by lazy {
 			PeriodFormatterBuilder()
 				.appendMinutes()
 				.appendSeparator(":")
@@ -29,7 +28,7 @@ class PromisedPlayedExoPlayer(private val exoPlayer: PromisingExoPlayer, private
 				.toFormatter()
 		}
 
-		private val logger = LoggerFactory.getLogger(PromisedPlayedExoPlayer::class.java)
+		private val logger by lazy { LoggerFactory.getLogger(PromisedPlayedExoPlayer::class.java) }
 	}
 
 	init {
@@ -39,31 +38,34 @@ class PromisedPlayedExoPlayer(private val exoPlayer: PromisingExoPlayer, private
 	override val progress: Promise<Duration>
 		get() = progressReader.progress
 
-	override fun onPlayerStateChanged(playWhenReady: Boolean, playbackState: Int) {
-		if (playbackState == Player.STATE_IDLE && handler.isPlaying) {
-			val formatter = minutesAndSecondsFormatter.getObject()
-			progress.then { p ->
+	override fun onPlaybackStateChanged(playbackState: Int) {
+		if (playbackState == Player.STATE_ENDED) {
+			removeListener()
+			resolve(this)
+			return
+		}
+
+		if (playbackState != Player.STATE_IDLE || !handler.isPlaying) return
+
+		progress
+			.then { p ->
 				handler.duration.then handler@{ d ->
+					val formatter = minutesAndSecondsFormatter
 					logger.warn(
 						"The player was playing, but it transitioned to idle! " +
 							"Playback progress: " + p.toPeriod().toString(formatter) + " / " + d.toPeriod().toString(formatter) + ". ")
-					if (playWhenReady) {
-						logger.warn("The file is set to playWhenReady, waiting for playback to resume.")
-						return@handler
-					}
-
+				}
+			}
+			.eventually { exoPlayer.getPlayWhenReady() }
+			.then { ready ->
+				if (ready) {
+					logger.warn("The file is set to playWhenReady, waiting for playback to resume.")
+				} else {
 					logger.warn("The file is not set to playWhenReady, triggering playback completed")
 					removeListener()
 					resolve(this)
 				}
 			}
-			return
-		}
-
-		if (playbackState != Player.STATE_ENDED) return
-
-		removeListener()
-		resolve(this)
 	}
 
 	override fun onPlayerError(error: PlaybackException) {

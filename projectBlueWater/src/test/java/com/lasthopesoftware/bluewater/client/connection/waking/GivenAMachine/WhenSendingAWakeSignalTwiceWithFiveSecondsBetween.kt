@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.connection.waking.GivenAMachine
 
-import com.annimon.stream.Stream
 import com.lasthopesoftware.bluewater.client.connection.SendPackets
 import com.lasthopesoftware.bluewater.client.connection.waking.MachineAddress
 import com.lasthopesoftware.bluewater.client.connection.waking.ServerWakeSignal
@@ -8,23 +7,16 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import io.mockk.every
 import io.mockk.mockk
-import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
 import org.junit.BeforeClass
 import org.junit.Test
 import java.util.*
 
 class WhenSendingAWakeSignalTwiceWithFiveSecondsBetween {
-	@Test
-	fun thenTheSignalIsCorrect() {
-		val allExpectedBytes =
-			Stream.rangeClosed(1, 4).flatMap { i: Int? -> Stream.of(*expectedBytes) }
-				.toList()
-		Assertions.assertThat(sentBytes).containsExactlyElementsOf(allExpectedBytes)
-	}
 
 	companion object {
-		private val expectedBytes = arrayOf<Byte>(
+		private val expectedBytes = listOf<Byte>(
 			-1,
 			-1,
 			-1,
@@ -150,5 +142,12 @@ class WhenSendingAWakeSignalTwiceWithFiveSecondsBetween {
 				)
 			).get()
 		}
+	}
+
+
+	@Test
+	fun thenTheSignalIsCorrect() {
+		val allExpectedBytes = (1..4).flatMap { expectedBytes }
+		assertThat(sentBytes).containsExactlyElementsOf(allExpectedBytes)
 	}
 }
