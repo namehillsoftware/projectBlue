@@ -1,40 +1,39 @@
-package com.lasthopesoftware.bluewater.client.settings;
+package com.lasthopesoftware.bluewater.client.settings
 
-import android.content.Intent;
+import android.content.Intent
+import androidx.test.core.app.ApplicationProvider
+import com.lasthopesoftware.bluewater.client.settings.EditClientSettingsActivity
+import com.lasthopesoftware.resources.intents.IntentFactory
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.Before
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 
-import com.lasthopesoftware.resources.intents.IntentFactory;
+class GivenALibraryId {
+    @RunWith(RobolectricTestRunner::class)
+    class WhenBuildingTheEditClientSettingsActivityIntent {
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.robolectric.RobolectricTestRunner;
-import org.robolectric.RuntimeEnvironment;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
-public class GivenALibraryId {
-
-	@RunWith(RobolectricTestRunner.class)
-	public static class WhenBuildingTheEditClientSettingsActivityIntent {
-		private static Intent returnedIntent;
+		companion object {
+			private var returnedIntent: Intent? = null
+		}
 
 		@Before
-		public void before() {
-			final EditClientSettingsActivityIntentBuilder editClientSettingsActivityIntentBuilder =
-				new EditClientSettingsActivityIntentBuilder(
-					new IntentFactory(RuntimeEnvironment.application));
-
-			returnedIntent = editClientSettingsActivityIntentBuilder.buildIntent(13);
+		fun before() {
+			val editClientSettingsActivityIntentBuilder = EditClientSettingsActivityIntentBuilder(
+				IntentFactory(ApplicationProvider.getApplicationContext())
+			)
+			returnedIntent = editClientSettingsActivityIntentBuilder.buildIntent(13)
 		}
 
-		@Test
-		public void thenTheIdInTheIntentIsSetToTheLibraryId() {
-			assertThat(returnedIntent.getIntExtra(EditClientSettingsActivity.serverIdExtra, -1)).isEqualTo(13);
-		}
+        @Test
+        fun thenTheIdInTheIntentIsSetToTheLibraryId() {
+            assertThat(returnedIntent!!.getIntExtra(EditClientSettingsActivity.serverIdExtra, -1)).isEqualTo(13)
+        }
 
-		@Test
-		public void thenTheReturnedIntentIsEditClientSettingsActivity() {
-			assertThat(returnedIntent.getComponent().getClassName()).isEqualTo(EditClientSettingsActivity.class.getName());
-		}
-	}
+        @Test
+        fun thenTheReturnedIntentIsEditClientSettingsActivity() {
+            assertThat(returnedIntent!!.component!!.className).isEqualTo(EditClientSettingsActivity::class.java.name)
+        }
+    }
 }

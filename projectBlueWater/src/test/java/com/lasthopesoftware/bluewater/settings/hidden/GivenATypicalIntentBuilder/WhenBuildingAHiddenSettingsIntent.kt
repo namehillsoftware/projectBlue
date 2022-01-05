@@ -1,34 +1,32 @@
-package com.lasthopesoftware.bluewater.settings.hidden.GivenATypicalIntentBuilder;
+package com.lasthopesoftware.bluewater.settings.hidden.GivenATypicalIntentBuilder
 
-import android.content.Intent;
+import android.content.Intent
+import androidx.test.core.app.ApplicationProvider
+import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsActivity
+import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsActivityIntentBuilder
+import com.lasthopesoftware.resources.intents.IntentFactory
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.Before
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
 
-import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsActivity;
-import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsActivityIntentBuilder;
-import com.lasthopesoftware.resources.intents.IntentFactory;
+@RunWith(RobolectricTestRunner::class)
+class WhenBuildingAHiddenSettingsIntent {
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.robolectric.RobolectricTestRunner;
-import org.robolectric.RuntimeEnvironment;
-
-import static org.assertj.core.api.Assertions.assertThat;
-
-@RunWith(RobolectricTestRunner.class)
-public class WhenBuildingAHiddenSettingsIntent {
-
-	private static Intent intent;
-
-	@Before
-	public void before() {
-		final HiddenSettingsActivityIntentBuilder hiddenSettingsActivityIntentBuilder =
-			new HiddenSettingsActivityIntentBuilder(new IntentFactory(RuntimeEnvironment.application));
-
-		intent = hiddenSettingsActivityIntentBuilder.buildHiddenSettingsIntent();
+	companion object {
+		private var intent: Intent? = null
 	}
 
-	@Test
-	public void thenAHiddenSettingsActivityIntentIsReturned() {
-		assertThat(intent.getComponent().getClassName()).isEqualTo(HiddenSettingsActivity.class.getName());
-	}
+    @Before
+    fun before() {
+        val hiddenSettingsActivityIntentBuilder =
+            HiddenSettingsActivityIntentBuilder(IntentFactory(ApplicationProvider.getApplicationContext()))
+        intent = hiddenSettingsActivityIntentBuilder.buildHiddenSettingsIntent()
+    }
+
+    @Test
+    fun thenAHiddenSettingsActivityIntentIsReturned() {
+        assertThat(intent!!.component!!.className).isEqualTo(HiddenSettingsActivity::class.java.name)
+    }
 }

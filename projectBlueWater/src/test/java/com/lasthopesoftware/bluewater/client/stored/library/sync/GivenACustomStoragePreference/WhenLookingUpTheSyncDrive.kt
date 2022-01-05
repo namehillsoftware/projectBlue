@@ -4,7 +4,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibrary
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncDirectoryLookup
-import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
 import com.lasthopesoftware.storage.directories.FakePrivateDirectoryLookup
 import com.lasthopesoftware.storage.directories.FakePublicDirectoryLookup
 import org.assertj.core.api.AssertionsForClassTypes.assertThat
@@ -42,8 +42,8 @@ class WhenLookingUpTheSyncDrive {
 				fakeLibraryProvider,
 				publicDrives,
 				fakePrivateDirectoryLookup,
-				{ f: File? -> 0 })
-			file = FuturePromise(syncDirectoryLookup.promiseSyncDirectory(LibraryId(14))).get()
+				{ 0 })
+			file = syncDirectoryLookup.promiseSyncDirectory(LibraryId(14)).toFuture().get()
 		}
 	}
 }

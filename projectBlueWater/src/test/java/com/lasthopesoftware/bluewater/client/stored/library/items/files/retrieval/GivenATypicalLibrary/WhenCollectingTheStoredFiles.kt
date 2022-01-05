@@ -12,12 +12,11 @@ import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
 import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
-import org.robolectric.RuntimeEnvironment
 
 class WhenCollectingTheStoredFiles : AndroidContext() {
 	@Throws(Exception::class)
 	override fun before() {
-		RepositoryAccessHelper(RuntimeEnvironment.application).use { repositoryAccessHelper ->
+		RepositoryAccessHelper(ApplicationProvider.getApplicationContext()).use { repositoryAccessHelper ->
 			val insertSql = fromTable(StoredFileEntityInformation.tableName)
 				.addColumn(StoredFileEntityInformation.serviceIdColumnName)
 				.addColumn(StoredFileEntityInformation.libraryIdColumnName)

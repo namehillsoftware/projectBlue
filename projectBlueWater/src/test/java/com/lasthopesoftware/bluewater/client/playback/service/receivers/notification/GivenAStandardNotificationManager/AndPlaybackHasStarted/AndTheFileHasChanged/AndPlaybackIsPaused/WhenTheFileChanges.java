@@ -1,5 +1,15 @@
 package com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.GivenAStandardNotificationManager.AndPlaybackHasStarted.AndTheFileHasChanged.AndPlaybackIsPaused;
 
+import static com.lasthopesoftware.resources.notifications.FakeNotificationCompatBuilder.newFakeBuilder;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.Service;
@@ -26,19 +36,8 @@ import com.namehillsoftware.lazyj.Lazy;
 
 import org.junit.Test;
 import org.robolectric.Robolectric;
-import org.robolectric.RuntimeEnvironment;
 
 import java.lang.reflect.InvocationTargetException;
-
-import static com.lasthopesoftware.resources.notifications.FakeNotificationCompatBuilder.newFakeBuilder;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 public class WhenTheFileChanges extends AndroidContext {
 
@@ -67,7 +66,7 @@ public class WhenTheFileChanges extends AndroidContext {
 				notificationContentBuilder,
 				() -> new Promise<>(newFakeBuilder(new Notification()))));
 
-		final LocalBroadcastManager localBroadcastManager = ScopedLocalBroadcastManager.newScopedBroadcastManager(RuntimeEnvironment.application);
+		final LocalBroadcastManager localBroadcastManager = ScopedLocalBroadcastManager.newScopedBroadcastManager(ApplicationProvider.getApplicationContext());
 
 		localBroadcastManager
 			.registerReceiver(
