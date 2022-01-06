@@ -37,7 +37,7 @@ class MediaStyleNotificationSetup(
 					.setShowCancelButton(true)
 			)
 			.setPriority(NotificationCompat.PRIORITY_DEFAULT)
-			.setColor(ContextCompat.getColor(context, R.color.clearstream_dark))
+			.setColor(ContextCompat.getColor(context, R.color.project_blue_dark))
 			.setContentIntent(pendingNowPlayingIntent)
 			.setDeleteIntent(pendingKillService(context))
 			.setShowWhen(false)

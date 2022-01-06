@@ -29,7 +29,7 @@ class PlaybackStartingNotificationBuilder(
 			.setOngoing(false)
 			.setSound(null)
 			.setPriority(NotificationCompat.PRIORITY_DEFAULT)
-			.setColor(ContextCompat.getColor(context, R.color.clearstream_dark))
+			.setColor(ContextCompat.getColor(context, R.color.project_blue_dark))
 			.setContentIntent(buildNowPlayingActivityIntent())
 			.setShowWhen(true)
 			.setSmallIcon(R.drawable.launcher_icon_dark)

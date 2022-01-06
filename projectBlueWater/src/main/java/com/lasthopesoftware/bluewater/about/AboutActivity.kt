@@ -15,9 +15,7 @@ import com.lasthopesoftware.resources.intents.IntentFactory
 
 class AboutActivity : AppCompatActivity(), OnLongClickListener {
 	private val aboutTitleBuilder = AboutTitleBuilder(this)
-	private val logoBitmap by lazy {
-		BitmapFactory.decodeResource(resources, R.mipmap.launcher_icon)
-	}
+	private val logoBitmap by lazy { BitmapFactory.decodeResource(resources, R.drawable.music_canoe_hi_res_logo) }
 	private val hiddenSettingsActivityIntentBuilder by lazy { HiddenSettingsActivityIntentBuilder(IntentFactory(this@AboutActivity)) }
 
 	override fun onCreate(savedInstanceState: Bundle?) {
