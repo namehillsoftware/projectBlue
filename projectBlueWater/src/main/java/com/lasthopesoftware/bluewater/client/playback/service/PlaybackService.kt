@@ -476,9 +476,8 @@ open class PlaybackService : Service() {
 		localBroadcastManagerLazy.value.registerReceiver(playbackHaltingEvent,	playbackHaltingIntentFilter)
 	}
 
-	override fun onStartCommand(intent: Intent, flags: Int, startId: Int): Int {
-		fun actOnIntent(intent: Intent?): Promise<Unit> {
-			if (intent == null) return Unit.toPromise()
+	override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+		fun actOnIntent(intent: Intent): Promise<Unit> {
 			var action = intent.action ?: return Unit.toPromise()
 			val playbackPosition = playlistPosition ?: return Unit.toPromise()
 
@@ -538,7 +537,7 @@ open class PlaybackService : Service() {
 
 		// Should be modified to save its state locally in the future.
 		this.startId = startId
-		if (intent.action == null) {
+		if (intent?.action == null) {
 			stopSelf(startId)
 			return START_NOT_STICKY
 		}
