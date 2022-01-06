@@ -1,67 +1,51 @@
-package com.lasthopesoftware.bluewater.about;
+package com.lasthopesoftware.bluewater.about
 
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
-import android.os.Bundle;
-import android.view.View;
-import android.widget.RelativeLayout;
-import android.widget.TextView;
-import androidx.appcompat.app.AppCompatActivity;
-import com.lasthopesoftware.bluewater.BuildConfig;
-import com.lasthopesoftware.bluewater.R;
-import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsActivityIntentBuilder;
-import com.lasthopesoftware.bluewater.shared.android.view.ScaledWrapImageView;
-import com.lasthopesoftware.resources.intents.IntentFactory;
-import com.namehillsoftware.lazyj.AbstractSynchronousLazy;
-import com.namehillsoftware.lazyj.CreateAndHold;
+import android.graphics.BitmapFactory
+import android.os.Bundle
+import android.view.View
+import android.view.View.OnLongClickListener
+import android.widget.RelativeLayout
+import android.widget.TextView
+import androidx.appcompat.app.AppCompatActivity
+import com.lasthopesoftware.bluewater.BuildConfig
+import com.lasthopesoftware.bluewater.R
+import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsActivityIntentBuilder
+import com.lasthopesoftware.bluewater.shared.android.view.ScaledWrapImageView
+import com.lasthopesoftware.resources.intents.IntentFactory
 
-public class AboutActivity extends AppCompatActivity implements View.OnLongClickListener {
+class AboutActivity : AppCompatActivity(), OnLongClickListener {
+	private val aboutTitleBuilder = AboutTitleBuilder(this)
+	private val logoBitmap by lazy {
+		BitmapFactory.decodeResource(resources, R.mipmap.launcher_icon)
+	}
+	private val hiddenSettingsActivityIntentBuilder by lazy { HiddenSettingsActivityIntentBuilder(IntentFactory(this@AboutActivity)) }
 
-	private final BuildAboutTitle aboutTitleBuilder = new AboutTitleBuilder(this);
+	override fun onCreate(savedInstanceState: Bundle?) {
+		super.onCreate(savedInstanceState)
 
-	private final CreateAndHold<Bitmap> lazyLogoBitmap = new AbstractSynchronousLazy<Bitmap>() {
-		@Override
-		protected Bitmap create() {
-			return BitmapFactory.decodeResource(getResources(), R.drawable.music_canoe_hi_res_logo);
-		}
-	};
+		setContentView(R.layout.activity_about)
 
-	private final CreateAndHold<HiddenSettingsActivityIntentBuilder> lazyHiddenSettingsActivityIntentBuilder = new AbstractSynchronousLazy<HiddenSettingsActivityIntentBuilder>() {
-		@Override
-		protected HiddenSettingsActivityIntentBuilder create() {
-			return new HiddenSettingsActivityIntentBuilder(new IntentFactory(AboutActivity.this));
-		}
-	};
+		title = aboutTitleBuilder.buildTitle()
 
-	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_about);
+		val textView = findViewById<TextView>(R.id.aboutDescription)
+		textView.text = getString(R.string.aboutAppText).format(
+			getString(R.string.app_name),
+			BuildConfig.VERSION_NAME,
+			BuildConfig.VERSION_CODE,
+			getString(R.string.company_name),
+			getString(R.string.copyright_year)
+		)
 
-		setTitle(aboutTitleBuilder.buildTitle());
+		val logoImageContainer = findViewById<RelativeLayout>(R.id.logoImageContainer)
+		logoImageContainer.setOnLongClickListener(this)
 
-		final TextView textView = findViewById(R.id.aboutDescription);
-		textView.setText(
-			String.format(
-				getString(R.string.aboutAppText),
-				getString(R.string.app_name),
-				BuildConfig.VERSION_NAME,
-				String.valueOf(BuildConfig.VERSION_CODE),
-				getString(R.string.company_name),
-				getString(R.string.copyright_year)));
-
-		final RelativeLayout logoImageContainer = findViewById(R.id.logoImageContainer);
-		logoImageContainer.setOnLongClickListener(this);
-
-		final ScaledWrapImageView scaledWrapImageView = new ScaledWrapImageView(this);
-		scaledWrapImageView.setImageBitmap(lazyLogoBitmap.getObject());
-
-		logoImageContainer.addView(scaledWrapImageView);
+		val scaledWrapImageView = ScaledWrapImageView(this)
+		scaledWrapImageView.setImageBitmap(logoBitmap)
+		logoImageContainer.addView(scaledWrapImageView)
 	}
 
-	@Override
-	public boolean onLongClick(View v) {
-		startActivity(lazyHiddenSettingsActivityIntentBuilder.getObject().buildHiddenSettingsIntent());
-		return true;
+	override fun onLongClick(v: View): Boolean {
+		startActivity(hiddenSettingsActivityIntentBuilder.buildHiddenSettingsIntent())
+		return true
 	}
 }
