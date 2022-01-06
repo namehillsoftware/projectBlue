@@ -6,10 +6,10 @@ import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPl
 import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import io.mockk.every
+import io.mockk.mockk
 import io.mockk.verify
 import org.junit.BeforeClass
 import org.junit.Test
-import org.mockito.Mockito
 import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
@@ -17,7 +17,7 @@ import java.util.concurrent.TimeoutException
 class WhenThePlayerWillNotPlayWhenReady {
 	companion object {
 		private val eventListeners: MutableCollection<Player.Listener> = ArrayList()
-		private val mockExoPlayer = Mockito.mock(PromisingExoPlayer::class.java)
+		private val mockExoPlayer = mockk<PromisingExoPlayer>()
 
 		@JvmStatic
 		@BeforeClass
