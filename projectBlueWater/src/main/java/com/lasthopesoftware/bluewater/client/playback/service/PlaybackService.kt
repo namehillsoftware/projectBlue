@@ -271,7 +271,7 @@ open class PlaybackService : Service() {
 
 		private fun buildFullNotification(notificationBuilder: NotificationCompat.Builder) =
 			notificationBuilder
-				.setSmallIcon(R.drawable.clearstream_logo_dark)
+				.setSmallIcon(R.drawable.launcher_icon_dark)
 				.setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
 				.build()
 

@@ -32,7 +32,7 @@ class PlaybackStartingNotificationBuilder(
 			.setColor(ContextCompat.getColor(context, R.color.clearstream_dark))
 			.setContentIntent(buildNowPlayingActivityIntent())
 			.setShowWhen(true)
-			.setSmallIcon(R.drawable.clearstream_logo_dark)
+			.setSmallIcon(R.drawable.launcher_icon_dark)
 			.setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
 			.setContentTitle(context.getString(R.string.app_name))
 			.setContentText(context.getString(R.string.lbl_starting_playback)))
