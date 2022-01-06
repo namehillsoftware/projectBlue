@@ -33,6 +33,7 @@ class WhenANoSuchElementExceptionOccurs {
 			every { mockExoPlayer.getPlayWhenReady() } returns true.toPromise()
 			every { mockExoPlayer.getCurrentPosition() } returns 50L.toPromise()
 			every { mockExoPlayer.getDuration() } returns 100L.toPromise()
+			every { mockExoPlayer.removeListener(any()) } returns mockExoPlayer.toPromise()
 			every { mockExoPlayer.addListener(any()) } answers {
 				eventListener = firstArg()
 				mockExoPlayer.toPromise()
