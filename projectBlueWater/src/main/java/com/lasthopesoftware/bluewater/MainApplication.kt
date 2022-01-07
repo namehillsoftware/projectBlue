@@ -53,6 +53,11 @@ import org.slf4j.LoggerFactory
 import java.io.File
 
 open class MainApplication : Application() {
+
+	companion object {
+		private var isWorkManagerInitialized = false
+	}
+
 	private val notificationManagerLazy by lazy { getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager }
 	private val storageReadPermissionsRequestNotificationBuilderLazy by lazy { StorageReadPermissionsRequestNotificationBuilder(this) }
 	private val storageWritePermissionsRequestNotificationBuilderLazy by lazy { StorageWritePermissionsRequestNotificationBuilder(this) }
@@ -227,9 +232,5 @@ open class MainApplication : Application() {
 			.detectLeakedSqlLiteObjects()
 			.penaltyLog()
 			.build())
-	}
-
-	companion object {
-		private var isWorkManagerInitialized = false
 	}
 }
