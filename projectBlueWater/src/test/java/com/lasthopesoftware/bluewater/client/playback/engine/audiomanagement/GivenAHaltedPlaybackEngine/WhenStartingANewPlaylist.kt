@@ -68,4 +68,9 @@ class WhenStartingANewPlaylist {
 	fun thenAudioFocusIsGranted() {
 		assertThat(request).isNotNull
 	}
+
+	@Test
+	fun thenIsSetToWillPauseWhenLost() {
+		assertThat(request?.willPauseWhenDucked()).isTrue
+	}
 }
