@@ -485,7 +485,7 @@ open class PlaybackService : Service() {
 			if (!Action.playbackStartingActions.contains(action)) stopNotificationIfNotPlaying()
 			when (action) {
 				Action.play -> return resumePlayback()
-				Action.pause -> return pausePlayback()
+				Action.pause, Action.initialize -> return pausePlayback()
 				Action.repeating -> return playbackContinuity?.playRepeatedly() ?: Unit.toPromise()
 				Action.completing -> return playbackContinuity?.playToCompletion() ?: Unit.toPromise()
 				Action.previous -> return playbackPosition.skipToPrevious().then(::broadcastChangedFile)
@@ -530,12 +530,10 @@ open class PlaybackService : Service() {
 						}
 						.unitResponse()
 				}
-				Action.killMusicService -> return pausePlayback().must { stopSelf(startId) }
 				else -> return Unit.toPromise()
 			}
 		}
 
-		// Should be modified to save its state locally in the future.
 		this.startId = startId
 		if (intent?.action == null) {
 			stopSelf(startId)
@@ -777,14 +775,10 @@ open class PlaybackService : Service() {
 					}
 					?.restoreFromSavedState()
 					?.then { file ->
-						playbackBroadcaster.sendPlaybackBroadcast(PlaylistEvents.onPlaylistPause)
-						broadcastChangedFile(
-							PositionedFile(
-								file.playlistPosition,
-								file.serviceFile,
-							)
-						)
-						trackPositionBroadcaster?.broadcastProgress(file)
+						file?.apply {
+							broadcastChangedFile(PositionedFile(playlistPosition, serviceFile))
+							trackPositionBroadcaster?.broadcastProgress(this)
+						}
 						engine
 					}
 					.keepPromise()
@@ -1020,18 +1014,22 @@ open class PlaybackService : Service() {
 
 		if (lazyNotificationController.isInitialized()) lazyNotificationController.value.removeAllNotifications()
 
-		playbackEngineCloseables.close()
-
 		if (areListenersRegistered) unregisterListeners()
 
-		if (playbackThread.isInitialized()) playbackThread.value.then { it.quitSafely() }
-
 		filePositionSubscription?.dispose()
-		cache?.release()
 
 		if (lazyMediaSessionService.isInitialized()) lazyMediaSessionService.value.then { unbindService(it.serviceConnection) }
 
 		if (lazyObservationScheduler.isInitialized()) lazyObservationScheduler.value.shutdown()
+
+		pausePlayback()
+			.must {
+				playbackEngineCloseables.close()
+
+				if (playbackThread.isInitialized()) playbackThread.value.then { it.quitSafely() }
+
+				cache?.release()
+			}
 
 		if (!localBroadcastManagerLazy.isInitialized()) return
 

@@ -34,8 +34,8 @@ class PlaybackEngine(
 	ChangePlaybackContinuity,
 	ChangePlaylistFiles,
 	RegisterPlaybackEngineEvents,
-	AutoCloseable {
-
+	AutoCloseable
+{
 	private val preparedPlaybackQueueResourceManagement = managePlaybackQueues
 	private val positionedFileQueueProviders = positionedFileQueueProviders.associateBy({ it.isRepeating }, { it })
 
@@ -56,15 +56,17 @@ class PlaybackEngine(
 	private var onPlaybackCompleted: OnPlaybackCompleted? = null
 	private var onPlaylistReset: OnPlaylistReset? = null
 
-	override fun restoreFromSavedState(): Promise<PositionedProgressedFile> =
+	override fun restoreFromSavedState(): Promise<PositionedProgressedFile?> =
 		nowPlayingRepository.nowPlaying
 			.then { np ->
-				playlist = np.playlist.toMutableList()
-				playlistPosition = np.playlistPosition
-				val filePosition = Duration.millis(np.filePosition)
-				fileProgress = StaticProgressedFile(filePosition.toPromise())
-				val serviceFile = playlist[playlistPosition]
-				PositionedProgressedFile(playlistPosition, serviceFile, filePosition)
+				np.playingFile
+					?.let { serviceFile ->
+						playlist = np.playlist.toMutableList()
+						playlistPosition = np.playlistPosition
+						val filePosition = Duration.millis(np.filePosition)
+						fileProgress = StaticProgressedFile(filePosition.toPromise())
+						PositionedProgressedFile(playlistPosition, serviceFile, filePosition)
+					}
 			}
 
 	override fun startPlaylist(playlist: List<ServiceFile>, playlistPosition: Int, filePosition: Duration): Promise<Unit> {
