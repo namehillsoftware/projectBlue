@@ -1056,7 +1056,7 @@ open class PlaybackService : Service() {
 		val repeating by lazy { magicPropertyBuilder.buildProperty("repeating") }
 		val completing by lazy { magicPropertyBuilder.buildProperty("completing") }
 		val previous by lazy { magicPropertyBuilder.buildProperty("previous") }
-		val next by lazy { magicPropertyBuilder.buildProperty("then") }
+		val next by lazy { magicPropertyBuilder.buildProperty("next") }
 		val seekTo by lazy { magicPropertyBuilder.buildProperty("seekTo") }
 		val addFileToPlaylist by lazy { magicPropertyBuilder.buildProperty("addFileToPlaylist") }
 		val removeFileAtPositionFromPlaylist by lazy { magicPropertyBuilder.buildProperty("removeFileAtPositionFromPlaylist") }

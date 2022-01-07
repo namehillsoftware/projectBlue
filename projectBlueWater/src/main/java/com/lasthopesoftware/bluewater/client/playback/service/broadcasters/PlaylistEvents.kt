@@ -1,30 +1,45 @@
-package com.lasthopesoftware.bluewater.client.playback.service.broadcasters;
+package com.lasthopesoftware.bluewater.client.playback.service.broadcasters
 
-import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder;
+import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
+import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder.Companion.buildMagicPropertyName
 
 /**
  * Created by david on 2/15/17.
  */
-public class PlaylistEvents {
-	private static final MagicPropertyBuilder magicPropertyBuilder = new MagicPropertyBuilder(PlaylistEvents.class);
+object PlaylistEvents {
+	private val magicPropertyBuilder by lazy { MagicPropertyBuilder(PlaylistEvents::class.java) }
 
-	public static final String onPlaylistChange = magicPropertyBuilder.buildProperty("onPlaylistChange");
-	public static final String onPlaylistStart = magicPropertyBuilder.buildProperty("onPlaylistStart");
-	public static final String onPlaylistStop = magicPropertyBuilder.buildProperty("onPlaylistStop");
-	public static final String onPlaylistPause = magicPropertyBuilder.buildProperty("onPlaylistPause");
-	public static final String onPlaylistTrackComplete = magicPropertyBuilder.buildProperty("onPlaylistTrackComplete");
-	public static final String onPlaylistTrackChange = magicPropertyBuilder.buildProperty("onPlaylistTrackChange");
-	public static final String onPlaylistTrackStart = magicPropertyBuilder.buildProperty("onPlaylistTrackStart");
+	val onPlaylistChange by lazy { magicPropertyBuilder.buildProperty("onPlaylistChange") }
 
-	public static class PlaybackFileParameters {
-		private static final MagicPropertyBuilder magicPropertyBuilder = new MagicPropertyBuilder(PlaybackFileParameters.class);
+	@JvmField
+	val onPlaylistStart = magicPropertyBuilder.buildProperty("onPlaylistStart")
 
-		public static final String fileKey = magicPropertyBuilder.buildProperty("fileKey");
-		public static final String fileLibraryId = magicPropertyBuilder.buildProperty("fileLibraryId");
-		public static final String isPlaying = magicPropertyBuilder.buildProperty("isPlaying");
+	@JvmField
+	val onPlaylistStop = magicPropertyBuilder.buildProperty("onPlaylistStop")
+
+	@JvmField
+	val onPlaylistPause = magicPropertyBuilder.buildProperty("onPlaylistPause")
+
+	@JvmField
+	val onPlaylistTrackComplete = magicPropertyBuilder.buildProperty("onPlaylistTrackComplete")
+
+	@JvmField
+	val onPlaylistTrackChange = magicPropertyBuilder.buildProperty("onPlaylistTrackChange")
+
+	val onPlaylistTrackStart by lazy { magicPropertyBuilder.buildProperty("onPlaylistTrackStart") }
+
+	object PlaybackFileParameters {
+		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(PlaybackFileParameters::class.java) }
+
+		@JvmField
+		val fileKey = magicPropertyBuilder.buildProperty("fileKey")
+
+		val fileLibraryId by lazy { magicPropertyBuilder.buildProperty("fileLibraryId") }
+
+		val isPlaying by lazy { magicPropertyBuilder.buildProperty("isPlaying") }
 	}
 
-	public static class PlaylistParameters {
-		public static final String playlistPosition = MagicPropertyBuilder.buildMagicPropertyName(PlaylistParameters.class, "playlistPosition");
+	object PlaylistParameters {
+		val playlistPosition by lazy { buildMagicPropertyName<PlaylistParameters>("playlistPosition") }
 	}
 }

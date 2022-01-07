@@ -371,7 +371,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 
 	companion object {
 		@JvmField
-		val showDownloadsAction = MagicPropertyBuilder.buildMagicPropertyName(BrowserEntryActivity::class.java, "showDownloadsAction")
+		val showDownloadsAction = MagicPropertyBuilder.buildMagicPropertyName<BrowserEntryActivity>("showDownloadsAction")
 		private val specialViews = listOf("Active Downloads")
 	}
 }

@@ -64,7 +64,7 @@ class FileDetailsActivity : AppCompatActivity() {
 		setContentView(R.layout.activity_view_file_details)
 		setSupportActionBar(findViewById(R.id.fileDetailsToolbar))
 		supportActionBar?.setDisplayHomeAsUpEnabled(true)
-		fileKey = intent.getIntExtra(FILE_KEY, -1)
+		fileKey = intent.getIntExtra(Companion.fileKey, -1)
 		setView(fileKey)
 		NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton(findViewById(R.id.viewFileDetailsRelativeLayout))
 	}
@@ -136,7 +136,7 @@ class FileDetailsActivity : AppCompatActivity() {
 
 		// Update the intent
 		setIntent(intent)
-		fileKey = intent.getIntExtra(FILE_KEY, -1)
+		fileKey = intent.getIntExtra(Companion.fileKey, -1)
 		setView(fileKey)
 	}
 
@@ -155,7 +155,7 @@ class FileDetailsActivity : AppCompatActivity() {
 
 	companion object {
 		@JvmField
-		val FILE_KEY: String = MagicPropertyBuilder.buildMagicPropertyName(FileDetailsActivity::class.java, "FILE_KEY")
+		val fileKey = MagicPropertyBuilder.buildMagicPropertyName<FileDetailsActivity>("FILE_KEY")
 
 		private const val trackNameMarqueeDelay = 1500
 
