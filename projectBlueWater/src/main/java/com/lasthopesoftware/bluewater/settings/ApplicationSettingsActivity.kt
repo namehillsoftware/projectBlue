@@ -122,7 +122,7 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 				if (wasTutorialShown) {
 					modifyNotificationSettingsButton.findView().setOnClickListener { launchNotificationSettings() }
 				} else {
-					val displayColor = getColor(R.color.clearstream_blue)
+					val displayColor = getColor(R.color.project_blue_light)
 					val tourGuide = TourGuide.init(this).with(TourGuide.Technique.CLICK)
 						.setPointer(Pointer().setColor(displayColor))
 						.setToolTip(ToolTip()

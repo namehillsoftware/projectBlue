@@ -34,7 +34,7 @@ public class StoragePermissionsRequestNotificationBuilder implements IStoragePer
 	@NonNull
 	@Override
 	public Notification buildStoragePermissionsRequestNotification(int libraryId) {
-		notificationBuilder.setSmallIcon(R.drawable.clearstream_logo_dark);
+		notificationBuilder.setSmallIcon(R.drawable.launcher_icon_dark);
 		notificationBuilder.setContentTitle(stringResourceProvider.getString(R.string.permissions_needed));
 		notificationBuilder.setContentText(stringResourceProvider.getString(R.string.permissions_needed_launch_settings));
 
