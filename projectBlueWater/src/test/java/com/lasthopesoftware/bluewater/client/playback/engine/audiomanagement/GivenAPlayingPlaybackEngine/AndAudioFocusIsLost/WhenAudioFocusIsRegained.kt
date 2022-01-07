@@ -16,7 +16,7 @@ import org.joda.time.Duration
 import org.junit.BeforeClass
 import org.junit.Test
 
-class WhenPausingPlayback {
+class WhenAudioFocusIsRegained {
 
 	companion object Setup {
 
@@ -30,7 +30,10 @@ class WhenPausingPlayback {
 			override fun startPlaylist(playlist: List<ServiceFile>, playlistPosition: Int, filePosition: Duration): Promise<Unit> =
 				Unit.toPromise()
 
-			override fun resume(): Promise<Unit> = Unit.toPromise()
+			override fun resume(): Promise<Unit> {
+				isPaused = false
+				return Unit.toPromise()
+			}
 
 			override fun pause(): Promise<Unit> {
 				isPaused = true
@@ -73,7 +76,7 @@ class WhenPausingPlayback {
 	}
 
 	@Test
-	fun thenPlaybackIsPaused() {
-		assertThat(isPaused).isTrue
+	fun `then playback is not paused`() {
+		assertThat(isPaused).isFalse
 	}
 }

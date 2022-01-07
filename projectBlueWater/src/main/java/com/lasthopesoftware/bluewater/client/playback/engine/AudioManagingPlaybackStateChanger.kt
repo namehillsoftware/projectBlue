@@ -62,6 +62,7 @@ class AudioManagingPlaybackStateChanger(
 			// resume playback
 			volumeManager.setVolume(1.0f)
 			if (!isPlaying) innerPlaybackState.resume()
+			isPlaying = true
 			return
 		}
 
