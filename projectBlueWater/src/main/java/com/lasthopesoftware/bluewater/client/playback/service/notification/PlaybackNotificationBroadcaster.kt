@@ -70,29 +70,28 @@ class PlaybackNotificationBroadcaster(
 			val loadingBuilderNotification =
 				nowPlayingNotificationContentBuilder.getLoadingNotification(isPlaying).build()
 
-			if (isPlaying) {
-				notificationsController.notifyForeground(loadingBuilderNotification, notificationId)
-				isNotificationStarted = true
-			}
-
-			if (!isPlaying && isNotificationStarted) {
-				notificationsController.notifyBackground(loadingBuilderNotification, notificationId)
+			when {
+				isPlaying -> {
+					isNotificationStarted = true
+					notificationsController.notifyForeground(loadingBuilderNotification, notificationId)
+				}
+				isNotificationStarted -> {
+					notificationsController.notifyEither(loadingBuilderNotification, notificationId)
+				}
 			}
 
 			nowPlayingNotificationContentBuilder.promiseNowPlayingNotification(serviceFile, isPlaying)
 				.then { builder ->
 					synchronized(notificationSync) {
-						if (!isPlaying) {
-							if (!isNotificationStarted) return@then
-							notificationsController.notifyBackground(
-								builder.build(),
-								notificationId
-							)
-							return@then
+						when {
+							isPlaying -> {
+								isNotificationStarted = true
+								notificationsController.notifyForeground(builder.build(), notificationId)
+							}
+							isNotificationStarted -> {
+								notificationsController.notifyEither(builder.build(), notificationId)
+							}
 						}
-
-						isNotificationStarted = true
-						notificationsController.notifyForeground(builder.build(), notificationId)
 					}
 				}
 		}

@@ -1,112 +1,82 @@
-package com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.GivenAStandardNotificationManager.AndPlaybackHasStarted.AndTheFileHasChanged.AndPlaybackIsPaused.ThenStartedAgain;
+package com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.GivenAStandardNotificationManager.AndPlaybackHasStarted.AndTheFileHasChanged.AndPlaybackIsPaused.ThenStartedAgain
 
-import android.app.Notification;
-import android.content.Intent;
+import android.app.Notification
+import android.content.Intent
+import androidx.test.core.app.ApplicationProvider
+import com.lasthopesoftware.AndroidContext
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
+import com.lasthopesoftware.bluewater.client.playback.service.notification.NotificationsConfiguration
+import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationBroadcaster
+import com.lasthopesoftware.bluewater.client.playback.service.notification.building.BuildNowPlayingNotificationContent
+import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.PlaybackNotificationRouter
+import com.lasthopesoftware.bluewater.shared.android.notifications.control.ControlNotifications
+import com.lasthopesoftware.resources.notifications.FakeNotificationCompatBuilder
+import com.namehillsoftware.handoff.promises.Promise
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.verify
+import org.junit.Test
 
-import androidx.test.core.app.ApplicationProvider;
+class WhenTheFileChanges : AndroidContext() {
 
-import com.lasthopesoftware.AndroidContext;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
-import com.lasthopesoftware.bluewater.client.playback.service.notification.NotificationsConfiguration;
-import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationBroadcaster;
-import com.lasthopesoftware.bluewater.client.playback.service.notification.building.BuildNowPlayingNotificationContent;
-import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.PlaybackNotificationRouter;
-import com.lasthopesoftware.bluewater.shared.android.notifications.control.ControlNotifications;
-import com.namehillsoftware.handoff.promises.Promise;
+	companion object {
+		private val loadingNotification = Notification()
+		private val firstNotification = Notification()
+		private val secondNotification = Notification()
+		private val notificationController = mockk<ControlNotifications>(relaxUnitFun = true, relaxed = true)
+	}
 
-import org.junit.Test;
+	override fun before() {
+		val notificationContentBuilder = mockk<BuildNowPlayingNotificationContent>()
+		every { notificationContentBuilder.getLoadingNotification(any()) } returns FakeNotificationCompatBuilder.newFakeBuilder(loadingNotification)
+		every { notificationContentBuilder.promiseNowPlayingNotification(ServiceFile(1), any()) } returns Promise(FakeNotificationCompatBuilder.newFakeBuilder(firstNotification))
+		every { notificationContentBuilder.promiseNowPlayingNotification(ServiceFile(2), any()) } returns Promise(FakeNotificationCompatBuilder.newFakeBuilder(secondNotification))
 
-import static com.lasthopesoftware.resources.notifications.FakeNotificationCompatBuilder.newFakeBuilder;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+		val playbackNotificationRouter = PlaybackNotificationRouter(PlaybackNotificationBroadcaster(
+			notificationController,
+			NotificationsConfiguration("", 43),
+			notificationContentBuilder
+		) { Promise(FakeNotificationCompatBuilder.newFakeBuilder(firstNotification)) })
 
-public class WhenTheFileChanges extends AndroidContext {
+		playbackNotificationRouter.onReceive(ApplicationProvider.getApplicationContext(), Intent(PlaylistEvents.onPlaylistStart))
 
-	private static final Notification loadingNotification = new Notification();
-	private static final Notification firstNotification = new Notification();
-	private static final Notification secondNotification = new Notification();
-	private static final ControlNotifications notificationsController = mock(ControlNotifications.class);
-
-	@Override
-	public void before() {
-		final BuildNowPlayingNotificationContent notificationContentBuilder = mock(BuildNowPlayingNotificationContent.class);
-		when(notificationContentBuilder.getLoadingNotification(anyBoolean()))
-			.thenReturn(newFakeBuilder(loadingNotification));
-
-		when(notificationContentBuilder.promiseNowPlayingNotification(
-			argThat(arg -> new ServiceFile(1).equals(arg)),
-			anyBoolean()))
-			.thenReturn(new Promise<>(newFakeBuilder(new Notification())));
-
-		when(notificationContentBuilder.promiseNowPlayingNotification(
-			argThat(arg -> new ServiceFile(2).equals(arg)),
-			anyBoolean()))
-			.thenReturn(new Promise<>(newFakeBuilder(secondNotification)));
-
-		final PlaybackNotificationRouter playbackNotificationRouter =
-			new PlaybackNotificationRouter(new PlaybackNotificationBroadcaster(
-				notificationsController,
-				new NotificationsConfiguration("",43),
-				notificationContentBuilder,
-				() -> new Promise<>(newFakeBuilder(firstNotification))));
-
-		playbackNotificationRouter
-			.onReceive(
-				ApplicationProvider.getApplicationContext(),
-				new Intent(PlaylistEvents.onPlaylistStart));
-
-		{
-			final Intent playlistChangeIntent = new Intent(PlaylistEvents.onPlaylistTrackChange);
-			playlistChangeIntent.putExtra(PlaylistEvents.PlaybackFileParameters.fileKey, 1);
-			playbackNotificationRouter
-				.onReceive(
-					ApplicationProvider.getApplicationContext(),
-					playlistChangeIntent);
+		run {
+			val playlistChangeIntent = Intent(PlaylistEvents.onPlaylistTrackChange)
+			playlistChangeIntent.putExtra(PlaylistEvents.PlaybackFileParameters.fileKey, 1)
+			playbackNotificationRouter.onReceive(ApplicationProvider.getApplicationContext(), playlistChangeIntent)
 		}
 
-		playbackNotificationRouter
-			.onReceive(
-				ApplicationProvider.getApplicationContext(),
-				new Intent(PlaylistEvents.onPlaylistPause));
+		playbackNotificationRouter.onReceive(ApplicationProvider.getApplicationContext(), Intent(PlaylistEvents.onPlaylistPause))
 
-		{
-			final Intent playlistChangeIntent = new Intent(PlaylistEvents.onPlaylistTrackChange);
-			playlistChangeIntent.putExtra(PlaylistEvents.PlaybackFileParameters.fileKey, 2);
+		run {
+			val playlistChangeIntent = Intent(PlaylistEvents.onPlaylistTrackChange)
+			playlistChangeIntent.putExtra(PlaylistEvents.PlaybackFileParameters.fileKey, 2)
 			playbackNotificationRouter
-				.onReceive(
-					ApplicationProvider.getApplicationContext(),
-					playlistChangeIntent);
+				.onReceive(ApplicationProvider.getApplicationContext(), playlistChangeIntent)
 		}
 
-		playbackNotificationRouter
-			.onReceive(
-				ApplicationProvider.getApplicationContext(),
-				new Intent(PlaylistEvents.onPlaylistStart));
+		playbackNotificationRouter.onReceive(ApplicationProvider.getApplicationContext(), Intent(PlaylistEvents.onPlaylistStart))
 	}
 
 	@Test
-	public void thenTheLoadingNotificationIsCalledCorrectly() {
-		verify(notificationsController, times(2)).notifyForeground(loadingNotification, 43);
-		verify(notificationsController, times(1)).notifyBackground(loadingNotification, 43);
+	fun thenTheLoadingNotificationIsCalledCorrectly() {
+		verify(exactly = 2) { notificationController.notifyForeground(loadingNotification, 43) }
+		verify(exactly = 1) { notificationController.notifyEither(loadingNotification, 43) }
 	}
 
 	@Test
-	public void thenTheServiceIsStartedOnTheFirstServiceItem() {
-		verify(notificationsController).notifyForeground(firstNotification, 43);
+	fun thenTheServiceIsStartedOnTheFirstServiceItem() {
+		verify(atLeast = 1) { notificationController.notifyForeground(firstNotification, 43) }
 	}
 
 	@Test
-	public void thenTheNotificationIsSetToThePausedNotification() {
-		verify(notificationsController, times(1)).notifyBackground(secondNotification, 43);
+	fun thenTheNotificationIsSetToThePausedNotification() {
+		verify(exactly = 1) { notificationController.notifyEither(secondNotification, 43) }
 	}
 
 	@Test
-	public void thenTheServiceIsStartedOnTheSecondServiceItem() {
-		verify(notificationsController, times(1)).notifyForeground(secondNotification, 43);
+	fun thenTheServiceIsStartedOnTheSecondServiceItem() {
+		verify(exactly = 1) { notificationController.notifyForeground(secondNotification, 43) }
 	}
 }

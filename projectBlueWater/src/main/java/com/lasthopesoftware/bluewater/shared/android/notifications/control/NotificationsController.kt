@@ -9,12 +9,13 @@ class NotificationsController(
 	private val service: Service,
 	private val notificationManager: NotificationManager
 ) : ControlNotifications {
+
 	private val syncObject = Any()
 	private val notificationForegroundStatuses = SparseBooleanArray()
 
 	override fun notifyEither(notification: Notification?, notificationId: Int) {
 		synchronized(syncObject) {
-			markNotificationBackground(notificationId)
+			notificationForegroundStatuses.put(notificationId, notificationForegroundStatuses[notificationId, false])
 			notificationManager.notify(notificationId, notification)
 		}
 	}
