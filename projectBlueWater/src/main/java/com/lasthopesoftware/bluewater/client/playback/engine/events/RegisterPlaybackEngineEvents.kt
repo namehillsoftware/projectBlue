@@ -5,6 +5,7 @@ interface RegisterPlaybackEngineEvents {
 	fun setOnPlaylistError(onPlaylistError: OnPlaylistError?): RegisterPlaybackEngineEvents
 	fun setOnPlaybackStarted(onPlaybackStarted: OnPlaybackStarted?): RegisterPlaybackEngineEvents
 	fun setOnPlaybackPaused(onPlaybackPaused: OnPlaybackPaused?): RegisterPlaybackEngineEvents
+	fun setOnPlaybackInterrupted(onPlaybackInterrupted: OnPlaybackInterrupted?): RegisterPlaybackEngineEvents
 	fun setOnPlaybackCompleted(onPlaybackCompleted: OnPlaybackCompleted?): RegisterPlaybackEngineEvents
 	fun setOnPlaylistReset(onPlaylistReset: OnPlaylistReset?): RegisterPlaybackEngineEvents
 }

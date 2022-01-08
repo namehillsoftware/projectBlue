@@ -54,6 +54,7 @@ class PlaybackEngine(
 	private var onPlaylistError: OnPlaylistError? = null
 	private var onPlaybackStarted: OnPlaybackStarted? = null
 	private var onPlaybackPaused: OnPlaybackPaused? = null
+	private var onPlaybackInterrupted: OnPlaybackInterrupted? = null
 	private var onPlaybackCompleted: OnPlaybackCompleted? = null
 	private var onPlaylistReset: OnPlaylistReset? = null
 
@@ -144,21 +145,11 @@ class PlaybackEngine(
 			?: resumePlayback()
 	}
 
-	override fun pause(): Promise<Unit> = interruptPlaybackIndefinitely()
+	override fun pause(): Promise<Unit> =
+		pausePlayback().then { onPlaybackPaused?.onPlaybackPaused() }
 
-	override fun interruptPlaybackTemporarily(): Promise<Unit> {
-		TODO("Not yet implemented")
-	}
-
-	override fun interruptPlaybackIndefinitely(): Promise<Unit> {
-		val promisedPause = activePlayer?.pause() ?: Unit.toPromise()
-
-		isPlaying = false
-
-		return promisedPause
-			.eventually { saveState() }
-			.then { onPlaybackPaused?.onPlaybackPaused() }
-	}
+	override fun interruptPlaybackTemporarily(): Promise<Unit> =
+		pausePlayback().then { onPlaybackInterrupted?.onPlaybackInterrupted() }
 
 	override fun setOnPlayingFileChanged(onPlayingFileChanged: OnPlayingFileChanged?): PlaybackEngine {
 		this.onPlayingFileChanged = onPlayingFileChanged
@@ -177,6 +168,11 @@ class PlaybackEngine(
 
 	override fun setOnPlaybackPaused(onPlaybackPaused: OnPlaybackPaused?): PlaybackEngine {
 		this.onPlaybackPaused = onPlaybackPaused
+		return this
+	}
+
+	override fun setOnPlaybackInterrupted(onPlaybackInterrupted: OnPlaybackInterrupted?): RegisterPlaybackEngineEvents {
+		this.onPlaybackInterrupted = onPlaybackInterrupted
 		return this
 	}
 
@@ -213,6 +209,15 @@ class PlaybackEngine(
 				updatePreparedFileQueueUsingState()
 				saveState()
 			}
+	}
+
+	private fun pausePlayback(): Promise<NowPlaying> {
+		val promisedPause = activePlayer?.pause() ?: Unit.toPromise()
+
+		isPlaying = false
+
+		return promisedPause
+			.eventually { saveState() }
 	}
 
 	private fun resumePlayback(): Promise<Unit> {

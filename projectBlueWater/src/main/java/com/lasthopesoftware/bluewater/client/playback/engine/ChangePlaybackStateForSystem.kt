@@ -6,5 +6,5 @@ import com.namehillsoftware.handoff.promises.Promise
 interface ChangePlaybackStateForSystem {
 	fun restoreFromSavedState(): Promise<PositionedProgressedFile?>
 	fun interruptPlaybackTemporarily(): Promise<Unit>
-	fun interruptPlaybackIndefinitely(): Promise<Unit>
+	fun pause(): Promise<Unit>
 }
