@@ -30,6 +30,7 @@ class PlaybackEngine(
 	private val playbackBootstrapper: IStartPlayback,
 ) :
 	ChangePlaybackState,
+	ChangePlaybackStateForSystem,
 	ChangePlaylistPosition,
 	ChangePlaybackContinuity,
 	ChangePlaylistFiles,
@@ -143,7 +144,13 @@ class PlaybackEngine(
 			?: resumePlayback()
 	}
 
-	override fun pause(): Promise<Unit> {
+	override fun pause(): Promise<Unit> = interruptPlaybackIndefinitely()
+
+	override fun interruptPlaybackTemporarily(): Promise<Unit> {
+		TODO("Not yet implemented")
+	}
+
+	override fun interruptPlaybackIndefinitely(): Promise<Unit> {
 		val promisedPause = activePlayer?.pause() ?: Unit.toPromise()
 
 		isPlaying = false
