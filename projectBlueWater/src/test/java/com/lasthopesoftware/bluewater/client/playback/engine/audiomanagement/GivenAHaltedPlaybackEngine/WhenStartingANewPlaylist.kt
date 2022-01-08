@@ -70,7 +70,7 @@ class WhenStartingANewPlaylist {
 	}
 
 	@Test
-	fun thenIsSetToWillPauseWhenLost() {
-		assertThat(request?.willPauseWhenDucked()).isTrue
+	fun `then it will not pause when ducked`() {
+		assertThat(request?.willPauseWhenDucked()).isFalse
 	}
 }

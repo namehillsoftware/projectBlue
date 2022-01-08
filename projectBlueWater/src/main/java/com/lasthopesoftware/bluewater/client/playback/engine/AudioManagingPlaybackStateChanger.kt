@@ -30,7 +30,7 @@ class AudioManagingPlaybackStateChanger(
 				.setUsage(AudioAttributesCompat.USAGE_MEDIA)
 				.build())
 			.setOnAudioFocusChangeListener(this)
-			.setWillPauseWhenDucked(true)
+			.setWillPauseWhenDucked(false)
 			.build()
 	}
 
