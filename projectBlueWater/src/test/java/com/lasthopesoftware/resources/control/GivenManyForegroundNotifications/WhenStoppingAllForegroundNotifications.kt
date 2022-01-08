@@ -1,51 +1,39 @@
-package com.lasthopesoftware.resources.control.GivenManyForegroundNotifications;
+package com.lasthopesoftware.resources.control.GivenManyForegroundNotifications
 
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.Service;
+import com.lasthopesoftware.AndroidContext
+import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
+import com.lasthopesoftware.bluewater.shared.android.notifications.control.NotificationsController
+import io.mockk.mockk
+import io.mockk.spyk
+import io.mockk.verify
+import org.junit.Test
+import org.robolectric.Robolectric
 
-import com.lasthopesoftware.AndroidContext;
-import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
-import com.lasthopesoftware.bluewater.shared.android.notifications.control.NotificationsController;
-import com.namehillsoftware.lazyj.CreateAndHold;
-import com.namehillsoftware.lazyj.Lazy;
+class WhenStoppingAllForegroundNotifications : AndroidContext() {
 
-import org.junit.Test;
-import org.robolectric.Robolectric;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-
-public class WhenStoppingAllForegroundNotifications extends AndroidContext {
-
-	private static final CreateAndHold<Service> service = new Lazy<>(() -> spy(Robolectric.buildService(PlaybackService.class).get()));
-	private static final NotificationManager notificationManager = mock(NotificationManager.class);
-
-	@Override
-	public void before() throws Exception {
-		final NotificationsController notificationsController = new NotificationsController(service.getObject(), notificationManager);
-
-		notificationsController.notifyForeground(mock(Notification.class), 13);
-		notificationsController.notifyForeground(mock(Notification.class), 33);
-		notificationsController.notifyForeground(mock(Notification.class), 77);
-		notificationsController.notifyBackground(mock(Notification.class), 88);
-
-		notificationsController.stopForegroundNotification(13);
-		notificationsController.stopForegroundNotification(33);
-		notificationsController.stopForegroundNotification(77);
+	companion object {
+		private val service by lazy { spyk(Robolectric.buildService(PlaybackService::class.java).get()) }
 	}
 
-	@Test
-	public void thenTheServiceStartsForegroundForEachForegroundNotification() {
-		verify(service.getObject(), times(3)).startForeground(anyInt(), any());
-	}
+    override fun before() {
+		val notificationsController = NotificationsController(service, mockk(relaxed = true, relaxUnitFun = true))
+        notificationsController.notifyForeground(mockk(), 13)
+        notificationsController.notifyForeground(mockk(), 33)
+        notificationsController.notifyForeground(mockk(), 77)
+        notificationsController.notifyEither(mockk(), 89)
+        notificationsController.notifyBackground(mockk(), 88)
+        notificationsController.stopForegroundNotification(13)
+        notificationsController.stopForegroundNotification(33)
+        notificationsController.stopForegroundNotification(77)
+    }
 
-	@Test
-	public void thenTheServiceIsNotInTheForegroundAndTheNotificationIsNotRemoved() {
-		verify(service.getObject(), times(1)).stopForeground(false);
-	}
+    @Test
+    fun thenTheServiceStartsForegroundForEachForegroundNotification() {
+		verify(exactly = 3) { service.startForeground(any(), any()) }
+    }
+
+    @Test
+    fun thenTheServiceIsNotInTheForegroundAndTheNotificationIsNotRemoved() {
+		verify(exactly = 1) { service.stopForeground(false) }
+    }
 }

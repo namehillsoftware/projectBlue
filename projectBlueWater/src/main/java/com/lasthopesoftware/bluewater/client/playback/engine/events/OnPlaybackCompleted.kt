@@ -1,5 +1,5 @@
-package com.lasthopesoftware.bluewater.client.playback.engine.events;
+package com.lasthopesoftware.bluewater.client.playback.engine.events
 
-public interface OnPlaybackCompleted {
-	void onPlaybackCompleted();
+fun interface OnPlaybackCompleted {
+    fun onPlaybackCompleted()
 }

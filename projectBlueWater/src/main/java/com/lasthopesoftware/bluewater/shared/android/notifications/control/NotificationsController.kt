@@ -1,104 +1,90 @@
-package com.lasthopesoftware.bluewater.shared.android.notifications.control;
+package com.lasthopesoftware.bluewater.shared.android.notifications.control
 
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.Service;
-import android.util.SparseBooleanArray;
+import android.app.Notification
+import android.app.NotificationManager
+import android.app.Service
+import android.util.SparseBooleanArray
 
-public class NotificationsController implements ControlNotifications {
+class NotificationsController(
+	private val service: Service,
+	private val notificationManager: NotificationManager
+) : ControlNotifications {
+	private val syncObject = Any()
+	private val notificationForegroundStatuses = SparseBooleanArray()
 
-	private final Object syncObject = new Object();
-	private final SparseBooleanArray notificationForegroundStatuses = new SparseBooleanArray();
-	private final Service service;
-	private final NotificationManager notificationManager;
-
-	public NotificationsController(Service service, NotificationManager notificationManager) {
-		this.service = service;
-		this.notificationManager = notificationManager;
-	}
-
-	@Override
-	public void notifyBackground(Notification notification, int notificationId) {
-		synchronized (syncObject) {
-			if (isOnlyNotificationForeground(notificationId))
-				service.stopForeground(false);
-
-			markNotificationBackground(notificationId);
-
-			notificationManager.notify(notificationId, notification);
+	override fun notifyEither(notification: Notification?, notificationId: Int) {
+		synchronized(syncObject) {
+			markNotificationBackground(notificationId)
+			notificationManager.notify(notificationId, notification)
 		}
 	}
 
-	@Override
-	public void notifyForeground(Notification notification, int notificationId) {
-		synchronized (syncObject) {
-			service.startForeground(notificationId, notification);
-
-			markNotificationForeground(notificationId);
+	override fun notifyBackground(notification: Notification?, notificationId: Int) {
+		synchronized(syncObject) {
+			if (isOnlyNotificationForeground(notificationId)) service.stopForeground(false)
+			markNotificationBackground(notificationId)
+			notificationManager.notify(notificationId, notification)
 		}
 	}
 
-	@Override
-	public void removeAllNotifications() {
-		synchronized (syncObject) {
+	override fun notifyForeground(notification: Notification?, notificationId: Int) {
+		synchronized(syncObject) {
+			service.startForeground(notificationId, notification)
+			markNotificationForeground(notificationId)
+		}
+	}
+
+	override fun removeAllNotifications() {
+		synchronized(syncObject) {
 			while (notificationForegroundStatuses.size() > 0)
-				removeNotification(notificationForegroundStatuses.keyAt(0));
+				removeNotification(notificationForegroundStatuses.keyAt(0))
 		}
 	}
 
-	@Override
-	public void removeNotification(int notificationId) {
-		synchronized (syncObject) {
-			notificationForegroundStatuses.delete(notificationId);
-			notificationManager.cancel(notificationId);
-			if (isAllNotificationsBackground()) service.stopForeground(true);
+	override fun removeNotification(notificationId: Int) {
+		synchronized(syncObject) {
+			notificationForegroundStatuses.delete(notificationId)
+			notificationManager.cancel(notificationId)
+			if (isAllNotificationsBackground) service.stopForeground(true)
 		}
 	}
 
-	@Override
-	public void stopForegroundNotification(int notificationId) {
-		synchronized (syncObject) {
-			markNotificationBackground(notificationId);
-			if (isAllNotificationsBackground()) service.stopForeground(false);
+	override fun stopForegroundNotification(notificationId: Int) {
+		synchronized(syncObject) {
+			markNotificationBackground(notificationId)
+			if (isAllNotificationsBackground) service.stopForeground(false)
 		}
 	}
 
-	private boolean isOnlyNotificationForeground(int notificationId) {
-		synchronized (syncObject) {
-			return isNotificationForeground(notificationId) && isAllNotificationsBackgroundExcept(notificationId);
+	private fun isOnlyNotificationForeground(notificationId: Int): Boolean =
+		synchronized(syncObject) {
+			isNotificationForeground(notificationId) && isAllNotificationsBackgroundExcept(
+				notificationId
+			)
 		}
+
+	private fun isNotificationForeground(notificationId: Int): Boolean {
+		synchronized(syncObject) { return notificationForegroundStatuses[notificationId, false] }
 	}
 
-	private boolean isNotificationForeground(int notificationId) {
-		synchronized (syncObject) {
-			return notificationForegroundStatuses.get(notificationId, false);
-		}
-	}
+	private val isAllNotificationsBackground: Boolean
+		get() = isAllNotificationsBackgroundExcept(null)
 
-	private boolean isAllNotificationsBackground() {
-		return isAllNotificationsBackgroundExcept(null);
-	}
-
-	private boolean isAllNotificationsBackgroundExcept(Integer except) {
-		synchronized (syncObject) {
-			for (int i = 0; i < notificationForegroundStatuses.size(); i++) {
-				if (except != null && notificationForegroundStatuses.keyAt(i) == except) continue;
-				if (notificationForegroundStatuses.valueAt(i)) return false;
+	private fun isAllNotificationsBackgroundExcept(except: Int?): Boolean {
+		synchronized(syncObject) {
+			for (i in 0 until notificationForegroundStatuses.size()) {
+				if (notificationForegroundStatuses.keyAt(i) == except) continue
+				if (notificationForegroundStatuses.valueAt(i)) return false
 			}
 		}
-
-		return true;
+		return true
 	}
 
-	private void markNotificationBackground(int notificationId) {
-		synchronized (syncObject) {
-			notificationForegroundStatuses.put(notificationId, false);
-		}
+	private fun markNotificationBackground(notificationId: Int) {
+		synchronized(syncObject) { notificationForegroundStatuses.put(notificationId, false) }
 	}
 
-	private void markNotificationForeground(int notificationId) {
-		synchronized (syncObject) {
-			notificationForegroundStatuses.put(notificationId, true);
-		}
+	private fun markNotificationForeground(notificationId: Int) {
+		synchronized(syncObject) { notificationForegroundStatuses.put(notificationId, true) }
 	}
 }
