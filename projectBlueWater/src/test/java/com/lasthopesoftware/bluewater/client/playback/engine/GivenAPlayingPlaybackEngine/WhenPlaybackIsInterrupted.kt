@@ -19,7 +19,7 @@ import org.joda.time.Duration
 import org.junit.BeforeClass
 import org.junit.Test
 
-class WhenPlaybackIsInterruptedTemporarily {
+class WhenPlaybackIsInterrupted {
 	companion object {
 		private var isInterrupted = false
 		private var playbackEngine: PlaybackEngine? = null
@@ -58,7 +58,7 @@ class WhenPlaybackIsInterruptedTemporarily {
 			resolveablePlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve()
 			playingPlaybackHandler.resolve()
 			resolveablePlaybackHandler?.setCurrentPosition(30)
-			playbackEngine?.interruptPlaybackTemporarily()
+			playbackEngine?.interrupt()
 			nowPlaying = FuturePromise(nowPlayingRepository.nowPlaying).get()
 		}
 	}

@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.service.notification.GivenAStandardNotificationManager.AndPlaybackHasStarted.AndTheFileHasChanged.AndPlaybackIsPaused
+package com.lasthopesoftware.bluewater.client.playback.service.notification.GivenAStandardNotificationManager.AndPlaybackHasStarted.AndTheFileHasChanged
 
 import android.app.Notification
 import com.lasthopesoftware.AndroidContext
@@ -14,38 +14,33 @@ import io.mockk.mockk
 import io.mockk.verify
 import org.junit.Test
 
-class WhenTheFileChanges : AndroidContext() {
-
+class WhenPlaybackIsInterrupted : AndroidContext() {
 	companion object {
-		private val secondNotification = Notification()
+		private val pausedNotification = Notification()
 		private val notificationController = mockk<ControlNotifications>(relaxUnitFun = true, relaxed = true)
 		private val notificationContentBuilder = mockk<BuildNowPlayingNotificationContent>()
 	}
 
 	override fun before() {
-		every { notificationContentBuilder.getLoadingNotification(any()) } returns FakeNotificationCompatBuilder.newFakeBuilder(Notification())
-		every { notificationContentBuilder.promiseNowPlayingNotification(any(), any()) } returns Promise(FakeNotificationCompatBuilder.newFakeBuilder(Notification()))
-		every { notificationContentBuilder.promiseNowPlayingNotification(ServiceFile(2), false) } returns Promise(FakeNotificationCompatBuilder.newFakeBuilder(secondNotification))
-
+		every { notificationContentBuilder.getLoadingNotification(any()) } returns FakeNotificationCompatBuilder.newFakeBuilder(
+			Notification()
+		)
+		every { notificationContentBuilder.promiseNowPlayingNotification(any(), any()) } returns Promise(
+			FakeNotificationCompatBuilder.newFakeBuilder(Notification()))
+		every { notificationContentBuilder.promiseNowPlayingNotification(ServiceFile(655), false) } returns Promise(
+			FakeNotificationCompatBuilder.newFakeBuilder(pausedNotification))
 		val playbackNotificationBroadcaster = PlaybackNotificationBroadcaster(
 			notificationController,
 			NotificationsConfiguration("", 43),
 			notificationContentBuilder
 		) { Promise(FakeNotificationCompatBuilder.newFakeBuilder(Notification())) }
-
 		playbackNotificationBroadcaster.notifyPlaying()
-		playbackNotificationBroadcaster.notifyPlayingFileChanged(ServiceFile(1))
-		playbackNotificationBroadcaster.notifyPaused()
-		playbackNotificationBroadcaster.notifyPlayingFileChanged(ServiceFile(2))
+		playbackNotificationBroadcaster.notifyPlayingFileChanged(ServiceFile(655))
+		playbackNotificationBroadcaster.notifyInterrupted()
 	}
 
 	@Test
-	fun `then the service is started in the foreground`() {
-		verify(atLeast = 1) { notificationController.notifyForeground(any(), 43) }
-	}
-
-	@Test
-	fun `then the service should go into the background`() {
-		verify(exactly = 1) { notificationController.notifyEither(secondNotification, 43) }
+	fun `then the notification is set to the paused notification`() {
+		verify { notificationController.notifyForeground(pausedNotification, 43) }
 	}
 }

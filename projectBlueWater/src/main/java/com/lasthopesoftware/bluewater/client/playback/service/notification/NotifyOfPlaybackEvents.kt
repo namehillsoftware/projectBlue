@@ -1,10 +1,11 @@
-package com.lasthopesoftware.bluewater.client.playback.service.notification;
+package com.lasthopesoftware.bluewater.client.playback.service.notification
 
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 
-public interface NotifyOfPlaybackEvents {
-	void notifyPlaying();
-	void notifyPaused();
-	void notifyStopped();
-	void notifyPlayingFileChanged(ServiceFile serviceFile);
+interface NotifyOfPlaybackEvents {
+    fun notifyPlaying()
+    fun notifyPaused()
+    fun notifyInterrupted()
+    fun notifyStopped()
+    fun notifyPlayingFileChanged(serviceFile: ServiceFile)
 }

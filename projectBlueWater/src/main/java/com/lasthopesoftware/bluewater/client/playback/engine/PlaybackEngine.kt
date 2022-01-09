@@ -148,7 +148,7 @@ class PlaybackEngine(
 	override fun pause(): Promise<Unit> =
 		pausePlayback().then { onPlaybackPaused?.onPlaybackPaused() }
 
-	override fun interruptPlaybackTemporarily(): Promise<Unit> =
+	override fun interrupt(): Promise<Unit> =
 		pausePlayback().then { onPlaybackInterrupted?.onPlaybackInterrupted() }
 
 	override fun setOnPlayingFileChanged(onPlayingFileChanged: OnPlayingFileChanged?): PlaybackEngine {

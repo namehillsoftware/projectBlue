@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.service.notification
 
+import android.app.Notification
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.BuildNowPlayingNotificationContent
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.BuildPlaybackStartingNotification
@@ -45,7 +46,21 @@ class PlaybackNotificationBroadcaster(
 			serviceFile,
 			false.also { isPlaying = it })
 			.then { builder ->
-				notificationsController.notifyEither(builder.build(), notificationId)
+				notificationsController.notifyBackground(builder.build(), notificationId)
+			}
+	}
+
+	override fun notifyInterrupted() {
+		if (serviceFile == null) {
+			notificationsController.stopForegroundNotification(notificationId)
+			return
+		}
+
+		nowPlayingNotificationContentBuilder.promiseNowPlayingNotification(
+			serviceFile,
+			false.also { isPlaying = it })
+			.then { builder ->
+				notificationsController.notifyForeground(builder.build(), notificationId)
 			}
 	}
 
@@ -62,6 +77,18 @@ class PlaybackNotificationBroadcaster(
 	}
 
 	private fun updateNowPlaying(serviceFile: ServiceFile) {
+		fun displayNotification(notification: Notification) {
+			when {
+				isPlaying -> {
+					isNotificationStarted = true
+					notificationsController.notifyForeground(notification, notificationId)
+				}
+				isNotificationStarted -> {
+					notificationsController.notifyEither(notification, notificationId)
+				}
+			}
+		}
+
 		synchronized(notificationSync) {
 			this.serviceFile = serviceFile
 
@@ -70,29 +97,11 @@ class PlaybackNotificationBroadcaster(
 			val loadingBuilderNotification =
 				nowPlayingNotificationContentBuilder.getLoadingNotification(isPlaying).build()
 
-			when {
-				isPlaying -> {
-					isNotificationStarted = true
-					notificationsController.notifyForeground(loadingBuilderNotification, notificationId)
-				}
-				isNotificationStarted -> {
-					notificationsController.notifyEither(loadingBuilderNotification, notificationId)
-				}
-			}
+			displayNotification(loadingBuilderNotification)
 
 			nowPlayingNotificationContentBuilder.promiseNowPlayingNotification(serviceFile, isPlaying)
 				.then { builder ->
-					synchronized(notificationSync) {
-						when {
-							isPlaying -> {
-								isNotificationStarted = true
-								notificationsController.notifyForeground(builder.build(), notificationId)
-							}
-							isNotificationStarted -> {
-								notificationsController.notifyEither(builder.build(), notificationId)
-							}
-						}
-					}
+					synchronized(notificationSync) { displayNotification(builder.build()) }
 				}
 		}
 	}
