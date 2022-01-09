@@ -171,7 +171,7 @@ class PlaybackEngine(
 		return this
 	}
 
-	override fun setOnPlaybackInterrupted(onPlaybackInterrupted: OnPlaybackInterrupted?): RegisterPlaybackEngineEvents {
+	override fun setOnPlaybackInterrupted(onPlaybackInterrupted: OnPlaybackInterrupted?): PlaybackEngine {
 		this.onPlaybackInterrupted = onPlaybackInterrupted
 		return this
 	}

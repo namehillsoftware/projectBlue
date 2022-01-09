@@ -133,6 +133,7 @@ import java.util.concurrent.TimeoutException
 open class PlaybackService :
 	Service(),
 	OnPlaybackPaused,
+	OnPlaybackInterrupted,
 	OnPlaybackStarted,
 	OnPlayingFileChanged,
 	OnPlaybackCompleted,
@@ -589,6 +590,12 @@ open class PlaybackService :
 		filePositionSubscription?.dispose()
 	}
 
+	override fun onPlaybackInterrupted() {
+		isMarkedForPlay = false
+		playbackBroadcaster.sendPlaybackBroadcast(PlaylistEvents.onPlaylistInterrupted)
+
+		filePositionSubscription?.dispose()
+	}
 
 	override fun onPlaybackCompleted() {
 		playbackBroadcaster.sendPlaybackBroadcast(PlaylistEvents.onPlaylistStop)
@@ -813,6 +820,7 @@ open class PlaybackService :
 					}
 					?.setOnPlaybackStarted(this)
 					?.setOnPlaybackPaused(this)
+					?.setOnPlaybackInterrupted(this)
 					?.setOnPlayingFileChanged(this)
 					?.setOnPlaylistError(::uncaughtExceptionHandler)
 					?.setOnPlaybackCompleted(this)
