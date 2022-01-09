@@ -18,14 +18,10 @@ class PlaybackNotificationRouter(private val playbackNotificationBroadcaster: No
 		)
 	}
 
-	fun registerForIntents(): Set<String> {
-		return mappedEvents.keys
-	}
+	fun registerForIntents(): Set<String> = mappedEvents.keys
 
 	override fun onReceive(context: Context, intent: Intent) {
-		val action = intent.action ?: return
-		val eventHandler = mappedEvents[action]
-		eventHandler?.invoke(intent)
+		intent.action?.let(mappedEvents::get)?.invoke(intent)
 	}
 
 	private fun onPlaylistChange(intent: Intent) {

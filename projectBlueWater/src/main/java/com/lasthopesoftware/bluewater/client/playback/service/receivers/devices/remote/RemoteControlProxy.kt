@@ -12,6 +12,7 @@ class RemoteControlProxy(private val remoteBroadcaster: IRemoteBroadcaster) : Br
 		mapOf(
 			Pair(PlaylistEvents.onPlaylistTrackChange, ::onPlaylistChange),
 			Pair(PlaylistEvents.onPlaylistPause) { remoteBroadcaster.setPaused() },
+			Pair(PlaylistEvents.onPlaylistInterrupted) { remoteBroadcaster.setPaused() },
 			Pair(PlaylistEvents.onPlaylistStart) { remoteBroadcaster.setPlaying() },
 			Pair(PlaylistEvents.onPlaylistStop) { remoteBroadcaster.setStopped() },
 			Pair(TrackPositionBroadcaster.trackPositionUpdate, ::onTrackPositionUpdate),

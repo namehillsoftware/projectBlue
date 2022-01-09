@@ -275,9 +275,11 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 
 		nowPlayingToggledVisibilityControls.toggleVisibility(false)
 
-		val playbackStoppedIntentFilter = IntentFilter()
-		playbackStoppedIntentFilter.addAction(PlaylistEvents.onPlaylistPause)
-		playbackStoppedIntentFilter.addAction(PlaylistEvents.onPlaylistStop)
+		val playbackStoppedIntentFilter = IntentFilter().apply {
+			addAction(PlaylistEvents.onPlaylistPause)
+			addAction(PlaylistEvents.onPlaylistInterrupted)
+			addAction(PlaylistEvents.onPlaylistStop)
+		}
 		localBroadcastManager.registerReceiver(onPlaybackStoppedReceiver, playbackStoppedIntentFilter)
 		localBroadcastManager.registerReceiver(onPlaybackStartedReceiver, IntentFilter(PlaylistEvents.onPlaylistStart))
 		localBroadcastManager.registerReceiver(onPlaybackChangedReceiver, IntentFilter(PlaylistEvents.onPlaylistTrackChange))
