@@ -1,5 +1,6 @@
-package com.lasthopesoftware.bluewater.client.playback.engine.audiomanagement.GivenAPlayingPlaybackEngine
+package com.lasthopesoftware.bluewater.client.playback.engine.audiomanagement.GivenAPlayingPlaybackEngine.AndAudioFocusIsTemporarilyLost.AndRegained
 
+import android.media.AudioManager
 import androidx.media.AudioFocusRequestCompat
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.playback.engine.AudioManagingPlaybackStateChanger
@@ -14,10 +15,11 @@ import org.joda.time.Duration
 import org.junit.BeforeClass
 import org.junit.Test
 
-class WhenPausingPlayback {
+class WhenAudioFocusIsLost {
 
 	companion object Setup {
 
+		private val audioFocusRequests: MutableList<AudioFocusRequestCompat> = ArrayList()
 		private var isPaused = false
 		private var isAbandoned = false
 
@@ -25,7 +27,10 @@ class WhenPausingPlayback {
 			override fun startPlaylist(playlist: List<ServiceFile>, playlistPosition: Int, filePosition: Duration): Promise<Unit> =
 				Unit.toPromise()
 
-			override fun resume(): Promise<Unit> = Unit.toPromise()
+			override fun resume(): Promise<Unit> {
+				isPaused = false
+				return Unit.toPromise()
+			}
 
 			override fun pause(): Promise<Unit> {
 				isPaused = true
@@ -34,8 +39,10 @@ class WhenPausingPlayback {
 		}
 
 		private val audioFocus = object : ControlAudioFocus {
-			override fun promiseAudioFocus(audioFocusRequest: AudioFocusRequestCompat): Promise<AudioFocusRequestCompat> =
-				audioFocusRequest.toPromise()
+			override fun promiseAudioFocus(audioFocusRequest: AudioFocusRequestCompat): Promise<AudioFocusRequestCompat> {
+				audioFocusRequests.add(audioFocusRequest)
+				return audioFocusRequest.toPromise()
+			}
 
 			override fun abandonAudioFocus(audioFocusRequest: AudioFocusRequestCompat) {
 				isAbandoned = true
@@ -51,13 +58,20 @@ class WhenPausingPlayback {
 				audioFocus,
 				mockk(relaxed = true))
 			audioManagingPlaybackStateChanger.resume().toFuture().get()
-			audioManagingPlaybackStateChanger.pause().toFuture().get()
+			audioManagingPlaybackStateChanger.onAudioFocusChange(AudioManager.AUDIOFOCUS_LOSS_TRANSIENT)
+			audioManagingPlaybackStateChanger.onAudioFocusChange(AudioManager.AUDIOFOCUS_GAIN)
+			audioManagingPlaybackStateChanger.onAudioFocusChange(AudioManager.AUDIOFOCUS_LOSS_TRANSIENT)
 		}
 	}
 
 	@Test
-	fun thenAudioFocusIsReleased() {
-		assertThat(isAbandoned).isTrue
+	fun thenAudioFocusIsNotReleasedBecauseFocusWillBeNeededAgain() {
+		assertThat(isAbandoned).isFalse
+	}
+
+	@Test
+	fun thenAudioFocusIsOnlyRequestedOnce() {
+		assertThat(audioFocusRequests).hasSize(1)
 	}
 
 	@Test

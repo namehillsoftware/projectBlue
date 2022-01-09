@@ -15,7 +15,9 @@ class NotificationsController(
 
 	override fun notifyEither(notification: Notification?, notificationId: Int) {
 		synchronized(syncObject) {
-			notificationForegroundStatuses.put(notificationId, notificationForegroundStatuses[notificationId, false])
+			if (notificationForegroundStatuses.indexOfKey(notificationId) < 0)
+				notificationForegroundStatuses.put(notificationId, false)
+
 			notificationManager.notify(notificationId, notification)
 		}
 	}

@@ -54,6 +54,7 @@ class WhenAudioFocusIsRegained {
 		fun context() {
 			val audioManagingPlaybackStateChanger = AudioManagingPlaybackStateChanger(
 				innerPlaybackState,
+				mockk(),
 				audioFocus,
 				mockk(relaxed = true))
 			audioManagingPlaybackStateChanger.resume().toFuture().get()
@@ -63,8 +64,8 @@ class WhenAudioFocusIsRegained {
 	}
 
 	@Test
-	fun thenAudioFocusIsNotReleasedBecauseFocusWillBeNeededAgain() {
-		assertThat(isAbandoned).isFalse
+	fun `then audio focus is abandoned`() {
+		assertThat(isAbandoned).isTrue
 	}
 
 	@Test

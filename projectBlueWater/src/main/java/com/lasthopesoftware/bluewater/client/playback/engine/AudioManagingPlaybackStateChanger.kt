@@ -15,6 +15,7 @@ import java.util.concurrent.TimeoutException
 
 class AudioManagingPlaybackStateChanger(
 	private val innerPlaybackState: ChangePlaybackState,
+	private val systemPlaybackState: ChangePlaybackStateForSystem,
 	private val audioFocus: ControlAudioFocus,
 	private val volumeManager: IVolumeManagement
 ) :
@@ -70,10 +71,15 @@ class AudioManagingPlaybackStateChanger(
 		if (!isPlaying) return
 
 		when (focusChange) {
-			AudioManager.AUDIOFOCUS_LOSS, AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
+			AudioManager.AUDIOFOCUS_LOSS -> {
+				// Lost focus but it will not be regained, release resources
+				isPlaying = false
+				systemPlaybackState.pause()
+			}
+			AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
 				// Lost focus but it will be regained... cannot release resources
 				isPlaying = false
-				innerPlaybackState.pause()
+				systemPlaybackState.interrupt()
 			}
 			AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK ->
 				// Lost focus for a short time, but it's ok to keep playing at an attenuated level

@@ -1,5 +1,6 @@
-package com.lasthopesoftware.bluewater.client.playback.engine.audiomanagement.GivenAHaltedPlaybackEngine
+package com.lasthopesoftware.bluewater.client.playback.engine.audiomanagement.GivenAPlayingPlaybackEngine.AndAudioFocusIsTemporarilyLost
 
+import android.media.AudioManager
 import androidx.media.AudioFocusRequestCompat
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.playback.engine.AudioManagingPlaybackStateChanger
@@ -13,32 +14,39 @@ import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
 import org.junit.BeforeClass
 import org.junit.Test
-import java.util.concurrent.TimeUnit
 
-class WhenStartingANewPlaylist {
+class WhenAudioFocusIsRegained {
+
 	companion object Setup {
 
-		private var isStarted = false
-		private var request: AudioFocusRequestCompat? = null
+		private val audioFocusRequests: MutableList<AudioFocusRequestCompat> = ArrayList()
+		private var isPaused = false
+		private var isAbandoned = false
 
 		private val innerPlaybackState = object : ChangePlaybackState {
-			override fun startPlaylist(playlist: List<ServiceFile>, playlistPosition: Int, filePosition: Duration): Promise<Unit> {
-				isStarted = true
+			override fun startPlaylist(playlist: List<ServiceFile>, playlistPosition: Int, filePosition: Duration): Promise<Unit> =
+				Unit.toPromise()
+
+			override fun resume(): Promise<Unit> {
+				isPaused = false
 				return Unit.toPromise()
 			}
 
-			override fun resume(): Promise<Unit> = Unit.toPromise()
-
-			override fun pause(): Promise<Unit> = Unit.toPromise()
+			override fun pause(): Promise<Unit> {
+				isPaused = true
+				return Unit.toPromise()
+			}
 		}
 
 		private val audioFocus = object : ControlAudioFocus {
 			override fun promiseAudioFocus(audioFocusRequest: AudioFocusRequestCompat): Promise<AudioFocusRequestCompat> {
-				request = audioFocusRequest
+				audioFocusRequests.add(audioFocusRequest)
 				return audioFocusRequest.toPromise()
 			}
 
-			override fun abandonAudioFocus(audioFocusRequest: AudioFocusRequestCompat) {}
+			override fun abandonAudioFocus(audioFocusRequest: AudioFocusRequestCompat) {
+				isAbandoned = true
+			}
 		}
 
 		@JvmStatic
@@ -49,26 +57,24 @@ class WhenStartingANewPlaylist {
 				mockk(),
 				audioFocus,
 				mockk(relaxed = true))
-
-			audioManagingPlaybackStateChanger
-				.startPlaylist(ArrayList(), 0, Duration.ZERO)
-				.toFuture()
-				.get(20, TimeUnit.SECONDS)
+			audioManagingPlaybackStateChanger.resume().toFuture().get()
+			audioManagingPlaybackStateChanger.onAudioFocusChange(AudioManager.AUDIOFOCUS_LOSS_TRANSIENT)
+			audioManagingPlaybackStateChanger.onAudioFocusChange(AudioManager.AUDIOFOCUS_GAIN)
 		}
 	}
 
 	@Test
-	fun thenPlaybackIsStarted() {
-		assertThat(isStarted).isTrue
+	fun thenAudioFocusIsNotReleasedBecauseFocusWillBeNeededAgain() {
+		assertThat(isAbandoned).isFalse
 	}
 
 	@Test
-	fun thenAudioFocusIsGranted() {
-		assertThat(request).isNotNull
+	fun thenAudioFocusIsOnlyRequestedOnce() {
+		assertThat(audioFocusRequests).hasSize(1)
 	}
 
 	@Test
-	fun `then it will not pause when ducked`() {
-		assertThat(request?.willPauseWhenDucked()).isFalse
+	fun `then playback is not paused`() {
+		assertThat(isPaused).isFalse
 	}
 }

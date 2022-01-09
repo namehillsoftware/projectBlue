@@ -56,25 +56,17 @@ class WhenTheFileChanges : AndroidContext() {
 
 		playbackNotificationRouter.onReceive(ApplicationProvider.getApplicationContext(), Intent(PlaylistEvents.onPlaylistStart))
 
-		run {
-			val playlistChangeIntent = Intent(PlaylistEvents.onPlaylistTrackChange)
-			playlistChangeIntent.putExtra(PlaylistEvents.PlaybackFileParameters.fileKey, 1)
-			playbackNotificationRouter.onReceive(
-				ApplicationProvider.getApplicationContext(),
-				playlistChangeIntent
-			)
-		}
+		playbackNotificationRouter.onReceive(
+			ApplicationProvider.getApplicationContext(),
+			Intent(PlaylistEvents.onPlaylistTrackChange).putExtra(PlaylistEvents.PlaybackFileParameters.fileKey, 1)
+		)
 
 		playbackNotificationRouter.onReceive(ApplicationProvider.getApplicationContext(), Intent(PlaylistEvents.onPlaylistPause))
 
-		run {
-			val playlistChangeIntent = Intent(PlaylistEvents.onPlaylistTrackChange)
-			playlistChangeIntent.putExtra(PlaylistEvents.PlaybackFileParameters.fileKey, 2)
-			playbackNotificationRouter.onReceive(
-				ApplicationProvider.getApplicationContext(),
-				playlistChangeIntent
-			)
-		}
+		playbackNotificationRouter.onReceive(
+			ApplicationProvider.getApplicationContext(),
+			Intent(PlaylistEvents.onPlaylistTrackChange).putExtra(PlaylistEvents.PlaybackFileParameters.fileKey, 2)
+		)
 	}
 
 	@Test
@@ -83,8 +75,8 @@ class WhenTheFileChanges : AndroidContext() {
 	}
 
 	@Test
-	fun thenTheServiceContinuesInTheForeground() {
-		verify(exactly = 0) { service.stopForeground(false) }
+	fun `then the service goes into the background`() {
+		verify(exactly = 1) { service.stopForeground(false) }
 	}
 
 	@Test

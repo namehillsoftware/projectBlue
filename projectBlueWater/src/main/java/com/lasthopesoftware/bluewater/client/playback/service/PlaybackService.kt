@@ -806,6 +806,7 @@ open class PlaybackService :
 						playbackEngineCloseables.manage(engine)
 						playbackState = AudioManagingPlaybackStateChanger(
 							engine,
+							engine,
 							AudioFocusManagement(audioManager),
 							playlistVolumeManager
 						).also(playbackEngineCloseables::manage)

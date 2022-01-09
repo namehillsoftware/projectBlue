@@ -42,9 +42,8 @@ class PlaybackNotificationBroadcaster(
 			return
 		}
 
-		nowPlayingNotificationContentBuilder.promiseNowPlayingNotification(
-			serviceFile,
-			false.also { isPlaying = it })
+		nowPlayingNotificationContentBuilder
+			.promiseNowPlayingNotification(serviceFile, false.also { isPlaying = it })
 			.then { builder ->
 				notificationsController.notifyBackground(builder.build(), notificationId)
 			}
@@ -56,9 +55,8 @@ class PlaybackNotificationBroadcaster(
 			return
 		}
 
-		nowPlayingNotificationContentBuilder.promiseNowPlayingNotification(
-			serviceFile,
-			false.also { isPlaying = it })
+		nowPlayingNotificationContentBuilder
+			.promiseNowPlayingNotification(serviceFile, false.also { isPlaying = it })
 			.then { builder ->
 				notificationsController.notifyForeground(builder.build(), notificationId)
 			}
@@ -77,7 +75,7 @@ class PlaybackNotificationBroadcaster(
 	}
 
 	private fun updateNowPlaying(serviceFile: ServiceFile) {
-		fun displayNotification(notification: Notification) {
+		fun notify(notification: Notification) {
 			when {
 				isPlaying -> {
 					isNotificationStarted = true
@@ -97,11 +95,11 @@ class PlaybackNotificationBroadcaster(
 			val loadingBuilderNotification =
 				nowPlayingNotificationContentBuilder.getLoadingNotification(isPlaying).build()
 
-			displayNotification(loadingBuilderNotification)
+			notify(loadingBuilderNotification)
 
 			nowPlayingNotificationContentBuilder.promiseNowPlayingNotification(serviceFile, isPlaying)
 				.then { builder ->
-					synchronized(notificationSync) { displayNotification(builder.build()) }
+					synchronized(notificationSync) { notify(builder.build()) }
 				}
 		}
 	}

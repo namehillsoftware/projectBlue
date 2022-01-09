@@ -22,7 +22,7 @@ import io.mockk.verify
 import org.junit.Test
 import org.robolectric.Robolectric
 
-class WhenPlaybackIsPaused : AndroidContext() {
+class WhenPlaybackIsInterrupted : AndroidContext() {
 
 	companion object {
 		private val pausedNotification = Notification()
@@ -50,12 +50,12 @@ class WhenPlaybackIsPaused : AndroidContext() {
 		playbackNotificationRouter
 			.onReceive(
 				ApplicationProvider.getApplicationContext(),
-				Intent(PlaylistEvents.onPlaylistPause)
+				Intent(PlaylistEvents.onPlaylistInterrupted)
 			)
 	}
 
 	@Test
-	fun thenTheServiceContinuesInTheBackground() {
+	fun `then the service continues in the background`() {
 		verify { service.stopForeground(false) }
 	}
 
