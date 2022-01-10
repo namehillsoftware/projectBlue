@@ -56,6 +56,7 @@ import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicat
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
+import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils.getThemedDrawable
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToaster
 import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
@@ -83,7 +84,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 		private var viewStructure: ViewStructure? = null
 		private fun setRepeatingIcon(imageButton: ImageButton?, isRepeating: Boolean) {
 			imageButton?.setImageDrawable(
-				ViewUtils.getDrawable(imageButton.context, if (isRepeating) R.drawable.av_repeat_dark else R.drawable.av_no_repeat_dark))
+				imageButton.context.getThemedDrawable(if (isRepeating) R.drawable.av_repeat_dark else R.drawable.av_no_repeat_dark))
 		}
 	}
 
@@ -442,7 +443,9 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 	}
 
 	private fun updateKeepScreenOnStatus() {
-		isScreenKeptOnButton.findView().setImageDrawable(ViewUtils.getDrawable(this, if (isScreenKeptOn) R.drawable.ic_screen_on_white_36dp else R.drawable.ic_screen_off_white_36dp))
+		isScreenKeptOnButton.findView().setImageDrawable(getThemedDrawable(
+			if (isScreenKeptOn) R.drawable.ic_screen_on_white_36dp
+			else R.drawable.ic_screen_off_white_36dp))
 		if (isScreenKeptOn) window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) else disableKeepScreenOn()
 	}
 

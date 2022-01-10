@@ -45,6 +45,7 @@ import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicat
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
+import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils.buildStandardMenu
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
@@ -302,7 +303,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 			}
 	}
 
-	override fun onCreateOptionsMenu(menu: Menu): Boolean = ViewUtils.buildStandardMenu(this, menu)
+	override fun onCreateOptionsMenu(menu: Menu): Boolean = buildStandardMenu(menu)
 
 	override fun onOptionsItemSelected(item: MenuItem): Boolean =
 		drawerToggle.isInitialized()
