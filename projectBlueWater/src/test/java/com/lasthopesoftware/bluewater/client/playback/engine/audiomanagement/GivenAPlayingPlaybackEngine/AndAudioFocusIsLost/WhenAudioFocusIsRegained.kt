@@ -25,6 +25,11 @@ class WhenAudioFocusIsRegained {
 
 		private val playbackStateForSystem by lazy {
 			mockk<ChangePlaybackStateForSystem>().apply {
+				every { resume() } answers {
+					isPaused = false
+					Unit.toPromise()
+				}
+
 				every { pause() } answers {
 					isPaused = true
 					Unit.toPromise()

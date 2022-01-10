@@ -7,4 +7,5 @@ interface ChangePlaybackStateForSystem {
 	fun restoreFromSavedState(): Promise<PositionedProgressedFile?>
 	fun interrupt(): Promise<Unit>
 	fun pause(): Promise<Unit>
+	fun resume(): Promise<Unit>
 }

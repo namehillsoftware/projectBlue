@@ -29,6 +29,11 @@ class WhenAudioFocusIsLost {
 					isPaused = true
 					Unit.toPromise()
 				}
+
+				every { resume() } answers {
+					isPaused = false
+					Unit.toPromise()
+				}
 			}
 		}
 

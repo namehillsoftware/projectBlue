@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.service.notification.GivenAStandardNotificationManager.AndPlaybackHasStarted.AndTheFileHasChanged.AndPlaybackIsPaused.ThenStartedAgain
+package com.lasthopesoftware.bluewater.client.playback.service.notification.GivenAStandardNotificationManager.AndPlaybackHasStarted.AndTheFileHasChanged.AndPlaybackIsInterrupted.ThenStartedAgain
 
 import android.app.Notification
 import com.lasthopesoftware.AndroidContext
@@ -26,9 +26,15 @@ class WhenTheFileChanges : AndroidContext() {
 	}
 
 	override fun before() {
-		every { notificationContentBuilder.getLoadingNotification(any()) } returns FakeNotificationCompatBuilder.newFakeBuilder(loadingNotification)
-		every { notificationContentBuilder.promiseNowPlayingNotification(ServiceFile(1), any()) } returns Promise(FakeNotificationCompatBuilder.newFakeBuilder(firstNotification))
-		every { notificationContentBuilder.promiseNowPlayingNotification(ServiceFile(2), any()) } returns Promise(FakeNotificationCompatBuilder.newFakeBuilder(secondNotification))
+		every { notificationContentBuilder.getLoadingNotification(any()) } returns FakeNotificationCompatBuilder.newFakeBuilder(
+			loadingNotification
+		)
+		every { notificationContentBuilder.promiseNowPlayingNotification(ServiceFile(1), any()) } returns Promise(FakeNotificationCompatBuilder.newFakeBuilder(
+			firstNotification
+		))
+		every { notificationContentBuilder.promiseNowPlayingNotification(ServiceFile(2), any()) } returns Promise(FakeNotificationCompatBuilder.newFakeBuilder(
+			secondNotification
+		))
 
 		val playbackNotificationBroadcaster = PlaybackNotificationBroadcaster(
 			notificationController,
@@ -38,7 +44,7 @@ class WhenTheFileChanges : AndroidContext() {
 
 		playbackNotificationBroadcaster.notifyPlaying()
 		playbackNotificationBroadcaster.notifyPlayingFileChanged(ServiceFile(1))
-		playbackNotificationBroadcaster.notifyPaused()
+		playbackNotificationBroadcaster.notifyInterrupted()
 		playbackNotificationBroadcaster.notifyPlayingFileChanged(ServiceFile(2))
 		playbackNotificationBroadcaster.notifyPlaying()
 	}
@@ -56,16 +62,16 @@ class WhenTheFileChanges : AndroidContext() {
 
 	@Test
 	fun thenTheNotificationIsSetToThePausedNotification() {
-		verify(exactly = 1) { notificationController.notifyBackground(firstNotification, 43) }
-	}
-
-	@Test
-	fun `then the service should stay in the background after changing tracks`() {
-		verify(exactly = 1) { notificationController.notifyEither(secondNotification, 43) }
+		verify { notificationController.notifyEither(secondNotification, 43) }
 	}
 
 	@Test
 	fun thenTheServiceIsStartedOnTheSecondServiceItem() {
 		verify { notificationController.notifyForeground(secondNotification, 43) }
+	}
+
+	@Test
+	fun `then the service should never go into the background`() {
+		verify(exactly = 0) { notificationController.notifyBackground(secondNotification, 43) }
 	}
 }
