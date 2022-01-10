@@ -75,6 +75,7 @@ class AudioManagingPlaybackStateChanger(
 				// Lost focus but it will not be regained, release resources
 				isPlaying = false
 				systemPlaybackState.pause()
+					.eventually { abandonAudioFocus() }
 			}
 			AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> {
 				// Lost focus but it will be regained... cannot release resources
