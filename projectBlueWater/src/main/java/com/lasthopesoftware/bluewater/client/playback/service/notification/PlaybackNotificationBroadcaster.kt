@@ -12,8 +12,10 @@ class PlaybackNotificationBroadcaster(
 	private val nowPlayingNotificationContentBuilder: BuildNowPlayingNotificationContent,
 	private val playbackStartingNotification: BuildPlaybackStartingNotification
 ) : NotifyOfPlaybackEvents {
-	private val notificationId: Int = notificationsConfiguration.notificationId
+
+	private val notificationId = notificationsConfiguration.notificationId
 	private val notificationSync = Any()
+
 	private var isPlaying = false
 	private var isNotificationStarted = false
 	private var serviceFile: ServiceFile? = null
