@@ -621,7 +621,7 @@ open class PlaybackService :
 	}
 
 	override fun onPlayingFileChanged(positionedPlayingFile: PositionedPlayingFile) {
-		positionedPlayingFile.also(::changePositionedPlaybackFile)
+		changePositionedPlaybackFile(positionedPlayingFile)
 	}
 
 	private fun startNewPlaylist(playlistString: String, playlistPosition: Int): Promise<Unit> {
