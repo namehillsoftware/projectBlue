@@ -178,8 +178,6 @@ open class PlaybackService :
 
 		fun play(context: Context) = context.safelyStartServiceInForeground(getNewSelfIntent(context, Action.play))
 
-		fun playIfActive(context: Context) = context.safelyStartServiceInForeground(getNewSelfIntent(context, Action.playIfActive))
-
 		fun pendingPlayingIntent(context: Context): PendingIntent =
 			PendingIntent.getService(
 				context,
@@ -495,7 +493,7 @@ open class PlaybackService :
 			if (action == Action.togglePlayPause) action = if (isMarkedForPlay) Action.pause else Action.play
 			if (!Action.playbackStartingActions.contains(action)) stopNotificationIfNotPlaying()
 			when (action) {
-				Action.play, Action.playIfActive -> return resumePlayback()
+				Action.play -> return resumePlayback()
 				Action.pause, Action.initialize -> return pausePlayback()
 				Action.repeating -> return playbackContinuity?.playRepeatedly() ?: Unit.toPromise()
 				Action.completing -> return playbackContinuity?.playToCompletion() ?: Unit.toPromise()
@@ -563,9 +561,6 @@ open class PlaybackService :
 					actOnIntent(intent).excuse(unhandledRejectionHandler)
 					return@then
 				}
-
-				// Exit early if the playback engine is not active
-				if (action == Action.playIfActive) return@then
 
 				val promisedTimeout = delay<Any?>(playbackStartTimeout)
 
@@ -1078,7 +1073,6 @@ open class PlaybackService :
 		val initialize by lazy { magicPropertyBuilder.buildProperty("initialize") }
 		val launchMusicService by lazy { magicPropertyBuilder.buildProperty("launchMusicService") }
 		val play by lazy { magicPropertyBuilder.buildProperty("play") }
-		val playIfActive by lazy { magicPropertyBuilder.buildProperty("resumeIfActive") }
 		val pause by lazy { magicPropertyBuilder.buildProperty("pause") }
 		val togglePlayPause by lazy { magicPropertyBuilder.buildProperty("togglePlayPause") }
 		val repeating by lazy { magicPropertyBuilder.buildProperty("repeating") }
@@ -1094,7 +1088,6 @@ open class PlaybackService :
 				initialize,
 				launchMusicService,
 				play,
-				playIfActive,
 				pause,
 				togglePlayPause,
 				previous,
@@ -1106,7 +1099,7 @@ open class PlaybackService :
 				removeFileAtPositionFromPlaylist
 			)
 		}
-		val playbackStartingActions by lazy { setOf(launchMusicService, play, togglePlayPause, playIfActive) }
+		val playbackStartingActions by lazy { setOf(launchMusicService, play, togglePlayPause) }
 
 		object Bag {
 			private val magicPropertyBuilder by lazy { MagicPropertyBuilder(Bag::class.java) }

@@ -23,7 +23,7 @@ class MediaSessionCallbackReceiver(
 ) : MediaSessionCompat.Callback() {
 	override fun onPrepare() = PlaybackService.initialize(context)
 
-    override fun onPlay() = PlaybackService.playIfActive(context)
+    override fun onPlay() = PlaybackService.play(context)
 
     override fun onStop() = PlaybackService.pause(context)
 
