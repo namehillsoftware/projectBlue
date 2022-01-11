@@ -115,25 +115,25 @@ open class MainApplication : Application() {
 
 		messageBus.registerReceiver(object : BroadcastReceiver() {
 			override fun onReceive(context: Context, intent: Intent) {
-				val libraryId = intent.getIntExtra(StorageReadPermissionsRequestedBroadcaster.ReadPermissionsLibraryId, -1)
+				val libraryId = intent.getIntExtra(StorageReadPermissionsRequestedBroadcaster.readPermissionsLibraryId, -1)
 				if (libraryId < 0) return
 				notificationManagerLazy.notify(
 					336,
 					storageReadPermissionsRequestNotificationBuilderLazy
 						.buildReadPermissionsRequestNotification(libraryId))
 			}
-		}, IntentFilter(StorageReadPermissionsRequestedBroadcaster.ReadPermissionsNeeded))
+		}, IntentFilter(StorageReadPermissionsRequestedBroadcaster.readPermissionsNeeded))
 
 		messageBus.registerReceiver(object : BroadcastReceiver() {
 			override fun onReceive(context: Context, intent: Intent) {
-				val libraryId = intent.getIntExtra(StorageWritePermissionsRequestedBroadcaster.WritePermissionsLibraryId, -1)
+				val libraryId = intent.getIntExtra(StorageWritePermissionsRequestedBroadcaster.writePermissionsLibraryId, -1)
 				if (libraryId < 0) return
 				notificationManagerLazy.notify(
 					396,
 					storageWritePermissionsRequestNotificationBuilderLazy
 						.buildWritePermissionsRequestNotification(libraryId))
 			}
-		}, IntentFilter(StorageWritePermissionsRequestedBroadcaster.WritePermissionsNeeded))
+		}, IntentFilter(StorageWritePermissionsRequestedBroadcaster.writePermissionsNeeded))
 
 		messageBus.registerReceiver(
 			ConnectionSessionSettingsChangeReceiver(ConnectionSessionManager.get(this)),

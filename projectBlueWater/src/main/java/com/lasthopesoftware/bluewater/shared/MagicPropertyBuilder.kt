@@ -6,6 +6,9 @@ class MagicPropertyBuilder(c: Class<*>) {
 	fun buildProperty(propertyName: String): String = buildMagicPropertyName(canonicalName, propertyName)
 
 	companion object {
+		inline fun <reified T> buildMagicPropertyName(propertyName: String) =
+			buildMagicPropertyName(T::class.java, propertyName)
+
 		@JvmStatic
 		fun buildMagicPropertyName(c: Class<*>, propertyName: String): String =
 			buildMagicPropertyName(c.canonicalName, propertyName)

@@ -9,9 +9,10 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.Track
 
 class RemoteControlProxy(private val remoteBroadcaster: IRemoteBroadcaster) : BroadcastReceiver() {
 	private val mappedEvents by lazy {
-		mapOf<String, (Intent) -> Unit>(
+		mapOf(
 			Pair(PlaylistEvents.onPlaylistTrackChange, ::onPlaylistChange),
 			Pair(PlaylistEvents.onPlaylistPause) { remoteBroadcaster.setPaused() },
+			Pair(PlaylistEvents.onPlaylistInterrupted) { remoteBroadcaster.setPaused() },
 			Pair(PlaylistEvents.onPlaylistStart) { remoteBroadcaster.setPlaying() },
 			Pair(PlaylistEvents.onPlaylistStop) { remoteBroadcaster.setStopped() },
 			Pair(TrackPositionBroadcaster.trackPositionUpdate, ::onTrackPositionUpdate),

@@ -60,9 +60,7 @@ class PollConnectionService : Service(), MessengerOperator<IConnectionProvider> 
 			synchronized(uniqueOnConnectionLostListeners) { uniqueOnConnectionLostListeners.remove(listener) }
 		}
 
-		private val stopWaitingForConnectionAction = MagicPropertyBuilder.buildMagicPropertyName(
-			PollConnectionService::class.java,
-			"stopWaitingForConnection")
+		private val stopWaitingForConnectionAction by lazy { MagicPropertyBuilder.buildMagicPropertyName<PollConnectionService>("stopWaitingForConnection") }
 	}
 
 	private var withNotification = false

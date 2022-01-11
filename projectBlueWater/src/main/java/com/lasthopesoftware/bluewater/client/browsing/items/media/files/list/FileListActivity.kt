@@ -34,6 +34,7 @@ import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.NowPlaying
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
+import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils.buildStandardMenu
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 
@@ -126,7 +127,7 @@ class FileListActivity :
 		itemId = savedInstanceState.getInt(key)
 	}
 
-	override fun onCreateOptionsMenu(menu: Menu) = ViewUtils.buildStandardMenu(this, menu)
+	override fun onCreateOptionsMenu(menu: Menu) = buildStandardMenu(menu)
 
 	override fun onOptionsItemSelected(item: MenuItem) =
 		ViewUtils.handleNavMenuClicks(this, item) || super.onOptionsItemSelected(item)

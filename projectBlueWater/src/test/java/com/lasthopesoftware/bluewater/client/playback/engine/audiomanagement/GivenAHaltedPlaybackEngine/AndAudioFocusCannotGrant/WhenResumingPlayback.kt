@@ -4,7 +4,6 @@ import androidx.media.AudioFocusRequestCompat
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.playback.engine.AudioManagingPlaybackStateChanger
 import com.lasthopesoftware.bluewater.client.playback.engine.ChangePlaybackState
-import com.lasthopesoftware.bluewater.client.playback.file.PositionedProgressedFile
 import com.lasthopesoftware.bluewater.shared.android.audiofocus.ControlAudioFocus
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
@@ -27,9 +26,11 @@ class WhenResumingPlayback {
 		private var timeoutException: TimeoutException? = null
 
 		private val innerPlaybackState = object : ChangePlaybackState {
-			override fun restoreFromSavedState(): Promise<PositionedProgressedFile?> = Promise.empty()
-
-			override fun startPlaylist(playlist: List<ServiceFile>, playlistPosition: Int, filePosition: Duration): Promise<Unit> =
+			override fun startPlaylist(
+				playlist: List<ServiceFile>,
+				playlistPosition: Int,
+				filePosition: Duration
+			): Promise<Unit> =
 				Unit.toPromise()
 
 			override fun resume(): Promise<Unit> {
@@ -51,9 +52,11 @@ class WhenResumingPlayback {
 		@BeforeClass
 		fun context() {
 			val audioManagingPlaybackStateChanger = AudioManagingPlaybackStateChanger(
-                    innerPlaybackState,
-                    audioFocus,
-                    mockk(relaxed = true))
+				innerPlaybackState,
+				mockk(),
+				audioFocus,
+				mockk(relaxed = true)
+			)
 
 			try {
 				audioManagingPlaybackStateChanger.resume().toFuture().get(20, TimeUnit.SECONDS)

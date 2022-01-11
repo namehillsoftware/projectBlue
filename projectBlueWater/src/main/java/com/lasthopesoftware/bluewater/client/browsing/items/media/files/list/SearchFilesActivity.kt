@@ -30,7 +30,7 @@ import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.NowPlayingFloatingActionButton
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.NowPlayingFloatingActionButton.Companion.addNowPlayingFloatingActionButton
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
-import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
+import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils.buildStandardMenu
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 
@@ -60,7 +60,7 @@ class SearchFilesActivity : AppCompatActivity(), IItemListViewContainer {
 	}
 
 	override fun onCreateOptionsMenu(menu: Menu): Boolean {
-		return ViewUtils.buildStandardMenu(this, menu)
+		return buildStandardMenu(menu)
 	}
 
 	override fun onNewIntent(intent: Intent) {

@@ -200,7 +200,7 @@ class EditClientSettingsActivity : AppCompatActivity() {
 
 	companion object {
 		@JvmField
-		val serverIdExtra = MagicPropertyBuilder.buildMagicPropertyName(EditClientSettingsActivity::class.java, "serverIdExtra")
+		val serverIdExtra = MagicPropertyBuilder.buildMagicPropertyName<EditClientSettingsActivity>("serverIdExtra")
 		private const val selectDirectoryResultId = 93
 		private const val permissionsRequestInteger = 1
 	}

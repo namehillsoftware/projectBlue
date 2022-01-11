@@ -55,6 +55,7 @@ import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnect
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.engine.*
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
+import com.lasthopesoftware.bluewater.client.playback.engine.events.*
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparationException
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueFeederBuilder
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
@@ -129,7 +130,15 @@ import java.util.concurrent.CancellationException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
-open class PlaybackService : Service() {
+open class PlaybackService :
+	Service(),
+	OnPlaybackPaused,
+	OnPlaybackInterrupted,
+	OnPlaybackStarted,
+	OnPlayingFileChanged,
+	OnPlaybackCompleted,
+	OnPlaylistReset
+{
 
 	companion object {
 		private val logger = LoggerFactory.getLogger(PlaybackService::class.java)
@@ -534,6 +543,19 @@ open class PlaybackService : Service() {
 			}
 		}
 
+		fun initializeEngineAndActOnIntent(intent: Intent) {
+			val promisedTimeout = delay<Any?>(playbackStartTimeout)
+
+			val promisedIntentHandling = selectedLibraryProvider.browserLibrary
+				.eventually { it?.let(::initializePlaybackPlaylistStateManagerSerially) ?: Promise.empty() }
+				.eventually { it?.let { actOnIntent(intent) } ?: Promise(UninitializedPlaybackEngineException()) }
+				.must { promisedTimeout.cancel() }
+
+			val timeoutResponse =
+				promisedTimeout.then<Unit> { throw TimeoutException("Timed out after $playbackStartTimeout") }
+			Promise.whenAny(promisedIntentHandling, timeoutResponse).excuse(unhandledRejectionHandler)
+		}
+
 		this.startId = startId
 		if (intent?.action == null) {
 			stopSelf(startId)
@@ -547,26 +569,61 @@ open class PlaybackService : Service() {
 		}
 
 		synchronized(playbackEngineSync) {
-			playbackEnginePromise.must {
-				if (playlistPosition != null) {
-					actOnIntent(intent).excuse(unhandledRejectionHandler)
-					return@must
-				}
+			playbackEnginePromise.then(
+				{ engine ->
+					if (engine != null) {
+						actOnIntent(intent).excuse(unhandledRejectionHandler)
+						return@then
+					}
 
-				val promisedTimeout = delay<Any?>(playbackStartTimeout)
-
-				val promisedIntentHandling = selectedLibraryProvider.browserLibrary
-					.eventually { it?.let(::initializePlaybackPlaylistStateManagerSerially) ?: Promise.empty() }
-					.eventually { it?.let { actOnIntent(intent) } ?: Promise(UninitializedPlaybackEngineException()) }
-					.must { promisedTimeout.cancel() }
-
-				val timeoutResponse =
-					promisedTimeout.then<Unit> { throw TimeoutException("Timed out after $playbackStartTimeout") }
-				Promise.whenAny(promisedIntentHandling, timeoutResponse).excuse(unhandledRejectionHandler)
-			}
+					initializeEngineAndActOnIntent(intent)
+				},
+				{ initializeEngineAndActOnIntent(intent) }
+			)
 		}
 
 		return START_STICKY
+	}
+
+	override fun onPlaybackPaused() {
+		isMarkedForPlay = false
+		playbackBroadcaster.sendPlaybackBroadcast(PlaylistEvents.onPlaylistPause)
+
+		filePositionSubscription?.dispose()
+	}
+
+	override fun onPlaybackInterrupted() {
+		isMarkedForPlay = false
+		playbackBroadcaster.sendPlaybackBroadcast(PlaylistEvents.onPlaylistInterrupted)
+
+		filePositionSubscription?.dispose()
+	}
+
+	override fun onPlaybackCompleted() {
+		playbackBroadcaster.sendPlaybackBroadcast(PlaylistEvents.onPlaylistStop)
+		isMarkedForPlay = false
+		stopSelf(startId)
+	}
+
+	override fun onPlaybackStarted() {
+		isMarkedForPlay = true
+		playbackStartedBroadcaster.broadcastPlaybackStarted()
+	}
+
+	override fun onPlaylistReset(positionedFile: PositionedFile) {
+		selectedLibraryIdentifierProvider.selectedLibraryId.then { l ->
+			l?.also {
+				playbackBroadcaster.sendPlaybackBroadcast(
+					PlaylistEvents.onPlaylistTrackChange,
+					it,
+					positionedFile
+				)
+			}
+		}
+	}
+
+	override fun onPlayingFileChanged(positionedPlayingFile: PositionedPlayingFile) {
+		changePositionedPlaybackFile(positionedPlayingFile)
 	}
 
 	private fun startNewPlaylist(playlistString: String, playlistPosition: Int): Promise<Unit> {
@@ -758,16 +815,18 @@ open class PlaybackService : Service() {
 						playbackEngineCloseables.manage(engine)
 						playbackState = AudioManagingPlaybackStateChanger(
 							engine,
+							engine,
 							AudioFocusManagement(audioManager),
 							playlistVolumeManager
 						).also(playbackEngineCloseables::manage)
 					}
-					?.setOnPlaybackStarted(::handlePlaybackStarted)
-					?.setOnPlaybackPaused(::handlePlaybackPaused)
-					?.setOnPlayingFileChanged(::changePositionedPlaybackFile)
+					?.setOnPlaybackStarted(this)
+					?.setOnPlaybackPaused(this)
+					?.setOnPlaybackInterrupted(this)
+					?.setOnPlayingFileChanged(this)
 					?.setOnPlaylistError(::uncaughtExceptionHandler)
-					?.setOnPlaybackCompleted(::onPlaylistPlaybackComplete)
-					?.setOnPlaylistReset(::broadcastResetPlaylist)
+					?.setOnPlaybackCompleted(this)
+					?.setOnPlaylistReset(this)
 					?.also {
 						playlistPosition = it
 						playlistFiles = it
@@ -809,18 +868,6 @@ open class PlaybackService : Service() {
 		lazyNotificationController.value.notifyForeground(
 			buildFullNotification(notifyBuilder),
 			connectingNotificationId)
-	}
-
-	private fun handlePlaybackStarted() {
-		isMarkedForPlay = true
-		playbackStartedBroadcaster.broadcastPlaybackStarted()
-	}
-
-	private fun handlePlaybackPaused() {
-		isMarkedForPlay = false
-		playbackBroadcaster.sendPlaybackBroadcast(PlaylistEvents.onPlaylistPause)
-
-		filePositionSubscription?.dispose()
 	}
 
 	private fun uncaughtExceptionHandler(exception: Throwable?) {
@@ -979,18 +1026,6 @@ open class PlaybackService : Service() {
 		if (!areListenersRegistered) registerListeners()
 	}
 
-	private fun broadcastResetPlaylist(positionedFile: PositionedFile) {
-		selectedLibraryIdentifierProvider.selectedLibraryId.then { l ->
-			l?.also {
-				playbackBroadcaster.sendPlaybackBroadcast(
-					PlaylistEvents.onPlaylistTrackChange,
-					it,
-					positionedFile
-				)
-			}
-		}
-	}
-
 	private fun broadcastChangedFile(positionedFile: PositionedFile) {
 		selectedLibraryIdentifierProvider.selectedLibraryId.then { l ->
 			l?.also {
@@ -1001,12 +1036,6 @@ open class PlaybackService : Service() {
 				)
 			}
 		}
-	}
-
-	private fun onPlaylistPlaybackComplete() {
-		playbackBroadcaster.sendPlaybackBroadcast(PlaylistEvents.onPlaylistStop)
-		isMarkedForPlay = false
-		stopSelf(startId)
 	}
 
 	override fun onDestroy() {
@@ -1056,7 +1085,7 @@ open class PlaybackService : Service() {
 		val repeating by lazy { magicPropertyBuilder.buildProperty("repeating") }
 		val completing by lazy { magicPropertyBuilder.buildProperty("completing") }
 		val previous by lazy { magicPropertyBuilder.buildProperty("previous") }
-		val next by lazy { magicPropertyBuilder.buildProperty("then") }
+		val next by lazy { magicPropertyBuilder.buildProperty("next") }
 		val seekTo by lazy { magicPropertyBuilder.buildProperty("seekTo") }
 		val addFileToPlaylist by lazy { magicPropertyBuilder.buildProperty("addFileToPlaylist") }
 		val removeFileAtPositionFromPlaylist by lazy { magicPropertyBuilder.buildProperty("removeFileAtPositionFromPlaylist") }
