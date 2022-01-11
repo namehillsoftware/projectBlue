@@ -543,6 +543,19 @@ open class PlaybackService :
 			}
 		}
 
+		fun initializeEngineAndActOnIntent(intent: Intent) {
+			val promisedTimeout = delay<Any?>(playbackStartTimeout)
+
+			val promisedIntentHandling = selectedLibraryProvider.browserLibrary
+				.eventually { it?.let(::initializePlaybackPlaylistStateManagerSerially) ?: Promise.empty() }
+				.eventually { it?.let { actOnIntent(intent) } ?: Promise(UninitializedPlaybackEngineException()) }
+				.must { promisedTimeout.cancel() }
+
+			val timeoutResponse =
+				promisedTimeout.then<Unit> { throw TimeoutException("Timed out after $playbackStartTimeout") }
+			Promise.whenAny(promisedIntentHandling, timeoutResponse).excuse(unhandledRejectionHandler)
+		}
+
 		this.startId = startId
 		if (intent?.action == null) {
 			stopSelf(startId)
@@ -563,30 +576,9 @@ open class PlaybackService :
 						return@then
 					}
 
-					val promisedTimeout = delay<Any?>(playbackStartTimeout)val promisedIntentHandling = selectedLibraryProvider.browserLibrary
-						.eventually { it?.let(::initializePlaybackPlaylistStateManagerSerially) ?: Promise.empty() }
-						.eventually { it?.let { actOnIntent(intent) } ?: Promise(UninitializedPlaybackEngineException()) }
-						.must { promisedTimeout.cancel() }
-
-					val timeoutResponse =
-						promisedTimeout.then<Unit> { throw TimeoutException("Timed out after $playbackStartTimeout") }
-					Promise.whenAny(promisedIntentHandling, timeoutResponse).excuse(unhandledRejectionHandler)
+					initializeEngineAndActOnIntent(intent)
 				},
-				{
-					// Exit early if the playback engine is not active
-					if (action == Action.playIfActive) return@then
-
-					val promisedTimeout = delay<Any?>(playbackStartTimeout)
-
-					val promisedIntentHandling = selectedLibraryProvider.browserLibrary
-						.eventually { it?.let(::initializePlaybackPlaylistStateManagerSerially) ?: Promise.empty() }
-						.eventually { it?.let { actOnIntent(intent) } ?: Promise(UninitializedPlaybackEngineException()) }
-						.must { promisedTimeout.cancel() }
-
-					val timeoutResponse =
-						promisedTimeout.then<Unit> { throw TimeoutException("Timed out after $playbackStartTimeout") }
-					Promise.whenAny(promisedIntentHandling, timeoutResponse).excuse(unhandledRejectionHandler)
-				}
+				{ initializeEngineAndActOnIntent(intent) }
 			)
 		}
 
