@@ -1,17 +1,20 @@
-package com.lasthopesoftware.bluewater.settings.hidden;
+package com.lasthopesoftware.bluewater.settings.hidden
 
-import android.os.Bundle;
-import androidx.annotation.Nullable;
-import androidx.appcompat.app.AppCompatActivity;
-import com.lasthopesoftware.bluewater.R;
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Column
+import androidx.compose.material.Text
 
+class HiddenSettingsActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
 
-public class HiddenSettingsActivity extends AppCompatActivity {
-
-	@Override
-	protected void onCreate(@Nullable Bundle savedInstanceState) {
-		super.onCreate(savedInstanceState);
-
-		setContentView(R.layout.activity_hidden_settings);
-	}
+		setContent {
+			Column {
+				Text("Congratulations, you've made it to the hidden settings!" +
+					" Sometimes settings show up here that aren't mean for normal usage.")
+			}
+		}
+    }
 }
