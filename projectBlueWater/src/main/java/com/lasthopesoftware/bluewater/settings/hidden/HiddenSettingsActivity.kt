@@ -13,7 +13,7 @@ class HiddenSettingsActivity : ComponentActivity() {
 		setContent {
 			Column {
 				Text("Congratulations, you've made it to the hidden settings!" +
-					" Sometimes settings show up here that aren't mean for normal usage.")
+					" Sometimes settings show up here that aren't meant for normal usage.")
 			}
 		}
     }
