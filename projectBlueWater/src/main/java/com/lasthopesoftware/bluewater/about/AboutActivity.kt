@@ -1,8 +1,6 @@
 package com.lasthopesoftware.bluewater.about
 
 import android.os.Bundle
-import android.view.View
-import android.view.View.OnLongClickListener
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -24,9 +22,8 @@ import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsActivityInte
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.theme.ProjectBlueTheme
 import com.lasthopesoftware.resources.intents.IntentFactory
 
-class AboutActivity : ComponentActivity(), OnLongClickListener {
+class AboutActivity : ComponentActivity() {
 	private val aboutTitleBuilder by lazy { AboutTitleBuilder(this) }
-	private val hiddenSettingsActivityIntentBuilder by lazy { HiddenSettingsActivityIntentBuilder(IntentFactory(this@AboutActivity)) }
 
 	@ExperimentalFoundationApi
 	override fun onCreate(savedInstanceState: Bundle?) {
@@ -40,11 +37,6 @@ class AboutActivity : ComponentActivity(), OnLongClickListener {
 			}
 		}
 	}
-
-	override fun onLongClick(v: View): Boolean {
-		startActivity(hiddenSettingsActivityIntentBuilder.buildHiddenSettingsIntent())
-		return true
-	}
 }
 
 @ExperimentalFoundationApi
@@ -53,34 +45,35 @@ class AboutActivity : ComponentActivity(), OnLongClickListener {
 fun AboutView() {
 	ProjectBlueTheme {
 		Column {
-			val context = LocalContext.current
-			val hiddenSettingsActivityIntentBuilder = HiddenSettingsActivityIntentBuilder(IntentFactory(context))
-			Image(
-				painter = painterResource(id = R.drawable.project_blue_logo_circular),
-				contentDescription = "Project Blue log",
-				contentScale = ContentScale.Fit,
-				alignment = Alignment.Center,
-				modifier = Modifier.combinedClickable(
-					enabled = true,
-					onLongClick = {
-						context.startActivity(
-							hiddenSettingsActivityIntentBuilder.buildHiddenSettingsIntent()
-						)
-					}
-				) {}
-			)
+			with (LocalContext.current) {
+				val hiddenSettingsActivityIntentBuilder = HiddenSettingsActivityIntentBuilder(IntentFactory(this))
+				Image(
+					painter = painterResource(id = R.drawable.project_blue_logo_circular),
+					contentDescription = "Project Blue log",
+					contentScale = ContentScale.Fit,
+					alignment = Alignment.Center,
+					modifier = Modifier.combinedClickable(
+						enabled = true,
+						onLongClick = {
+							startActivity(
+								hiddenSettingsActivityIntentBuilder.buildHiddenSettingsIntent()
+							)
+						}
+					) {}
+				)
 
-			Text(
-				context.getString(R.string.aboutAppText).format(
-					context.getString(R.string.app_name),
-					BuildConfig.VERSION_NAME,
-					BuildConfig.VERSION_CODE,
-					context.getString(R.string.company_name),
-					context.getString(R.string.copyright_year)
-				),
-				textAlign = TextAlign.Center,
-				modifier = Modifier.align(Alignment.CenterHorizontally)
-			)
+				Text(
+					getString(R.string.aboutAppText).format(
+						getString(R.string.app_name),
+						BuildConfig.VERSION_NAME,
+						BuildConfig.VERSION_CODE,
+						getString(R.string.company_name),
+						getString(R.string.copyright_year)
+					),
+					textAlign = TextAlign.Center,
+					modifier = Modifier.align(Alignment.CenterHorizontally)
+				)
+			}
 		}
 	}
 }
