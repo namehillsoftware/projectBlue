@@ -79,6 +79,7 @@ fun AboutView() {
 					context.getString(R.string.copyright_year)
 				),
 				textAlign = TextAlign.Center,
+				modifier = Modifier.align(Alignment.CenterHorizontally)
 			)
 		}
 	}
