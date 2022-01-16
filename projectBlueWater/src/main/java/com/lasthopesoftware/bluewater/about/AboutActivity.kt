@@ -6,7 +6,8 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -44,22 +45,23 @@ class AboutActivity : ComponentActivity() {
 @Composable
 fun AboutView() {
 	ProjectBlueTheme {
-		Column {
+		Box(Modifier.fillMaxSize()) {
 			with (LocalContext.current) {
 				val hiddenSettingsActivityIntentBuilder = HiddenSettingsActivityIntentBuilder(IntentFactory(this))
 				Image(
 					painter = painterResource(id = R.drawable.project_blue_logo_circular),
-					contentDescription = "Project Blue log",
+					contentDescription = "Project Blue logo",
 					contentScale = ContentScale.Fit,
-					alignment = Alignment.Center,
+					alignment = Alignment.TopCenter,
 					modifier = Modifier.combinedClickable(
 						enabled = true,
 						onLongClick = {
 							startActivity(
 								hiddenSettingsActivityIntentBuilder.buildHiddenSettingsIntent()
 							)
-						}
-					) {}
+						},
+						onClick = {}
+					).then(Modifier.fillMaxSize())
 				)
 
 				Text(
@@ -71,7 +73,7 @@ fun AboutView() {
 						getString(R.string.copyright_year)
 					),
 					textAlign = TextAlign.Center,
-					modifier = Modifier.align(Alignment.CenterHorizontally)
+					modifier = Modifier.align(Alignment.BottomCenter)
 				)
 			}
 		}
