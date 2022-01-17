@@ -46,6 +46,7 @@ class WhenStartingANewPlaylist {
 		fun context() {
 			val audioManagingPlaybackStateChanger = AudioManagingPlaybackStateChanger(
 				innerPlaybackState,
+				mockk(),
 				audioFocus,
 				mockk(relaxed = true))
 
@@ -64,5 +65,10 @@ class WhenStartingANewPlaylist {
 	@Test
 	fun thenAudioFocusIsGranted() {
 		assertThat(request).isNotNull
+	}
+
+	@Test
+	fun `then it will not pause when ducked`() {
+		assertThat(request?.willPauseWhenDucked()).isFalse
 	}
 }

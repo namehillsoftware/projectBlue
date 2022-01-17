@@ -5,7 +5,6 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.PassThrough
 import com.lasthopesoftware.bluewater.client.browsing.library.access.PassThroughSpecificLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
-import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine.Companion.createEngine
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
@@ -23,6 +22,56 @@ import org.junit.Test
 import java.util.*
 
 class WhenPlaybackIsPausedAndPositionIsChangedAndRestarted {
+	companion object {
+		private var playbackEngine: PlaybackEngine? = null
+		private var nowPlaying: NowPlaying? = null
+		private val positionedFiles: MutableList<PositionedPlayingFile> = ArrayList()
+
+		@BeforeClass
+		@JvmStatic
+		fun before() {
+			val fakePlaybackPreparerProvider = FakeDeferredPlayableFilePreparationSourceProvider()
+			val library = Library()
+			library.setId(1)
+			val libraryProvider = PassThroughSpecificLibraryProvider(library)
+			val libraryStorage = PassThroughLibraryStorage()
+			val nowPlayingRepository = NowPlayingRepository(libraryProvider, libraryStorage)
+			playbackEngine =
+				PlaybackEngine(
+					PreparedPlaybackQueueResourceManagement(
+						fakePlaybackPreparerProvider
+					) { 1 }, listOf(CompletingFileQueueProvider()),
+					nowPlayingRepository,
+					PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
+				)
+
+			playbackEngine
+				?.setOnPlayingFileChanged { f -> positionedFiles.add(f) }
+				?.startPlaylist(
+					listOf(
+						ServiceFile(1),
+						ServiceFile(2),
+						ServiceFile(3),
+						ServiceFile(4),
+						ServiceFile(5)
+					), 0, Duration.ZERO
+				)
+			val playingPlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve()
+			fakePlaybackPreparerProvider.deferredResolution.resolve()
+			playingPlaybackHandler.resolve()
+			playbackEngine?.pause()
+			nowPlaying =
+				playbackEngine
+					?.skipToNext()
+					?.eventually { playbackEngine!!.skipToNext() }
+					?.then { playbackEngine!!.resume() }
+					?.then { fakePlaybackPreparerProvider.deferredResolution.resolve() }
+					?.eventually { nowPlayingRepository.nowPlaying }
+					?.toFuture()
+					?.get()
+		}
+	}
+
 	@Test
 	fun thenThePlaybackStateIsPlaying() {
 		assertThat(
@@ -72,57 +121,5 @@ class WhenPlaybackIsPausedAndPositionIsChangedAndRestarted {
 			positionedFiles
 				.map { obj -> obj.asPositionedFile() })
 			.doesNotContain(PositionedFile(2, ServiceFile(3)))
-	}
-
-	companion object {
-		private var playbackEngine: PlaybackEngine? = null
-		private var nowPlaying: NowPlaying? = null
-		private val positionedFiles: MutableList<PositionedPlayingFile> = ArrayList()
-
-		@BeforeClass
-		@JvmStatic
-		fun before() {
-			val fakePlaybackPreparerProvider = FakeDeferredPlayableFilePreparationSourceProvider()
-			val library = Library()
-			library.setId(1)
-			val libraryProvider = PassThroughSpecificLibraryProvider(library)
-			val libraryStorage = PassThroughLibraryStorage()
-			val nowPlayingRepository = NowPlayingRepository(libraryProvider, libraryStorage)
-			playbackEngine =
-				createEngine(
-					PreparedPlaybackQueueResourceManagement(
-						fakePlaybackPreparerProvider
-					) { 1 }, listOf(CompletingFileQueueProvider()),
-					nowPlayingRepository,
-					PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
-				)
-					.toFuture()
-					.get()
-
-			playbackEngine
-				?.setOnPlayingFileChanged { f -> positionedFiles.add(f) }
-				?.startPlaylist(
-					listOf(
-						ServiceFile(1),
-						ServiceFile(2),
-						ServiceFile(3),
-						ServiceFile(4),
-						ServiceFile(5)
-					), 0, Duration.ZERO
-				)
-			val playingPlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve()
-			fakePlaybackPreparerProvider.deferredResolution.resolve()
-			playingPlaybackHandler.resolve()
-			playbackEngine?.pause()
-			nowPlaying =
-				playbackEngine
-					?.skipToNext()
-					?.eventually { playbackEngine!!.skipToNext() }
-					?.then { playbackEngine!!.resume() }
-					?.then { fakePlaybackPreparerProvider.deferredResolution.resolve() }
-					?.eventually { nowPlayingRepository.nowPlaying }
-					?.toFuture()
-					?.get()
-		}
 	}
 }

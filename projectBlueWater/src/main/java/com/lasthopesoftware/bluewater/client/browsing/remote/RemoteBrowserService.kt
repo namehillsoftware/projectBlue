@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.browsing.remote
 
 import android.os.Bundle
 import android.support.v4.media.MediaBrowserCompat
-import android.support.v4.media.MediaDescriptionCompat
 import androidx.media.MediaBrowserServiceCompat
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
@@ -41,9 +40,10 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 		private const val contentStyleSupport = "android.media.browse.CONTENT_STYLE_SUPPORTED"
 		private const val contentStyleList = 1
 		private const val contentStyleGrid = 2
-		const val serviceFileMediaIdPrefix = "sf:"
-		const val itemFileMediaIdPrefix = "it:"
-		private const val playlistFileMediaIdPrefix = "pl:"
+		const val serviceFileMediaIdPrefix = "sf"
+		const val itemFileMediaIdPrefix = "it"
+		private const val playlistFileMediaIdPrefix = "pl"
+		const val mediaIdDelimiter = ':'
 		private val rateLimiter by lazy { PromisingRateLimiter<Map<String, String>>(max(Runtime.getRuntime().availableProcessors() - 1, 1)) }
 
 		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(RemoteBrowserService::class.java) }
@@ -52,16 +52,6 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 		private val recentRoot by lazy { magicPropertyBuilder.buildProperty("recentRoot") }
 		private val rejection by lazy { magicPropertyBuilder.buildProperty("rejection") }
 		val error by lazy { magicPropertyBuilder.buildProperty("error") }
-
-		private fun toMediaItem(item: Item): MediaBrowserCompat.MediaItem =
-			MediaBrowserCompat.MediaItem(
-				MediaDescriptionCompat
-					.Builder()
-					.setMediaId(itemFileMediaIdPrefix + item.key)
-					.setTitle(item.value)
-					.build(),
-				MediaBrowserCompat.MediaItem.FLAG_BROWSABLE or MediaBrowserCompat.MediaItem.FLAG_PLAYABLE
-			)
 	}
 
 	private val packageValidator by lazy { PackageValidator(this, R.xml.allowed_media_browser_callers) }
@@ -97,19 +87,6 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 
 	private val selectedLibraryIdProvider by lazy { SelectedBrowserLibraryIdentifierProvider(getApplicationSettingsRepository()) }
 
-	private val nowPlayingRepository by lazy {
-		val libraryRepository = LibraryRepository(this)
-		selectedLibraryIdProvider.selectedLibraryId
-			.then {
-				it?.let { l ->
-					NowPlayingRepository(
-						SpecificLibraryProvider(l, libraryRepository),
-						libraryRepository
-					)
-				}
-			}
-	}
-
 	private val mediaItemServiceFileLookup by lazy {
 		MediaItemServiceFileLookup(
 			filePropertiesProvider,
@@ -117,20 +94,32 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 		)
 	}
 
-	private val mediaItemBrowser by lazy {
-		nowPlayingRepository.then { repository ->
-			repository
-				?.let {
-					MediaItemsBrowser(
-						it,
-						selectedLibraryIdProvider,
-						itemProvider,
-						fileProvider,
-						libraryViewsProvider,
+	private val nowPlayingMediaItemLookup by lazy {
+		val libraryRepository = LibraryRepository(this)
+		selectedLibraryIdProvider.selectedLibraryId
+			.then {
+				it?.let { l ->
+					val repository = NowPlayingRepository(
+						SpecificLibraryProvider(l, libraryRepository),
+						libraryRepository
+					)
+
+					NowPlayingMediaItemLookup(
+						repository,
 						mediaItemServiceFileLookup
 					)
 				}
-		}
+			}
+	}
+
+	private val mediaItemBrowser by lazy {
+		MediaItemsBrowser(
+			selectedLibraryIdProvider,
+			itemProvider,
+			fileProvider,
+			libraryViewsProvider,
+			mediaItemServiceFileLookup
+		)
 	}
 
 	private val lazyMediaSessionService = lazy { promiseBoundService<MediaSessionService>() }
@@ -170,8 +159,8 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 		result.detach()
 
 		if (parentId == recentRoot) {
-			mediaItemBrowser
-				.eventually { browser -> browser?.promiseNowPlayingItem().keepPromise() }
+			nowPlayingMediaItemLookup
+				.eventually { lookup -> lookup?.promiseNowPlayingItem().keepPromise() }
 				.then { it?.let { mutableListOf(it) }.apply(result::sendResult) }
 				.excuse { e -> result.sendError(Bundle().apply { putString(error, e.message) }) }
 			return
@@ -182,10 +171,9 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 			?.substring(3)
 			?.toIntOrNull()
 			?.let { id ->
-				mediaItemBrowser
-					.eventually { browser -> browser?.promiseItems(Item(id)).keepPromise(emptyList()) }
+				mediaItemBrowser.promiseItems(Item(id)).keepPromise(emptyList())
 			}
-			?: mediaItemBrowser.eventually { browser -> browser?.promiseLibraryItems().keepPromise(emptyList()) }
+			?: mediaItemBrowser.promiseLibraryItems().keepPromise(emptyList())
 
 		promisedMediaItems
 			.then { items -> result.sendResult(items.toMutableList()) }
@@ -193,7 +181,7 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 	}
 
 	override fun onLoadItem(itemId: String?, result: Result<MediaBrowserCompat.MediaItem>) {
-		val itemIdParts = itemId?.split(':', limit = 2)
+		val itemIdParts = itemId?.split(mediaIdDelimiter, limit = 2)
 		if (itemIdParts == null || itemIdParts.size < 2) return super.onLoadItem(itemId, result)
 
 		val type = itemIdParts[0]
@@ -203,21 +191,16 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 
 		result.detach()
 
-		mediaItemServiceFileLookup.promiseMediaItem(ServiceFile(id))
+		mediaItemServiceFileLookup.promiseMediaItemWithImage(ServiceFile(id))
 			.then(result::sendResult)
 			.excuse { e -> result.sendError(Bundle().apply { putString(error, e.message) }) }
 	}
 
 	override fun onSearch(query: String, extras: Bundle?, result: Result<MutableList<MediaBrowserCompat.MediaItem>>) {
 		result.detach()
-		mediaItemBrowser
-			.eventually { browser ->
-				browser
-					?.promiseItems(query)
-					?.then { items -> result.sendResult(items.toMutableList()) }
-					?.excuse { e -> result.sendError(Bundle().apply { putString(error, e.message) }) }
-					.keepPromise()
-			}
+		mediaItemBrowser.promiseItems(query)
+			.then { items -> result.sendResult(items.toMutableList()) }
+			.excuse { e -> result.sendError(Bundle().apply { putString(error, e.message) }) }
 	}
 
 	override fun onDestroy() {

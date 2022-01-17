@@ -10,16 +10,16 @@ import com.lasthopesoftware.bluewater.client.browsing.items.menu.handlers.Abstra
 public class ViewFileDetailsClickListener extends AbstractMenuClickHandler {
 
 	private final ServiceFile serviceFile;
-	
+
 	public ViewFileDetailsClickListener(NotifyOnFlipViewAnimator viewFlipper, ServiceFile serviceFile) {
         super(viewFlipper);
 		this.serviceFile = serviceFile;
 	}
-	
+
 	@Override
 	public void onClick(View v) {
 		Intent intent = new Intent(v.getContext(), FileDetailsActivity.class);
-		intent.putExtra(FileDetailsActivity.FILE_KEY, serviceFile.getKey());
+		intent.putExtra(FileDetailsActivity.fileKey, serviceFile.getKey());
 		v.getContext().startActivity(intent);
 
         super.onClick(v);

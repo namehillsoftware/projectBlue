@@ -10,10 +10,11 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibrarySto
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ISpecificLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.PassThroughLibraryStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
-import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine.Companion.createEngine
+import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedProgressedFile
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeDeferredPlayableFilePreparationSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlayingRepository
@@ -33,6 +34,7 @@ class WhenChangingTracks {
 
 	companion object {
 		private val library = Library()
+		private var initialState: PositionedProgressedFile? = null
 		private var nextSwitchedFile: PositionedFile? = null
 
 		@BeforeClass
@@ -60,24 +62,31 @@ class WhenChangingTracks {
 			every {
 				filePropertiesContainerRepository.getFilePropertiesContainer(UrlKeyHolder(EmptyUrl.url, ServiceFile(4)))
 			} returns FilePropertiesContainer(1, mapOf(Pair(KnownFileProperties.DURATION, "100")))
-			val playbackEngine = createEngine(
+			val playbackEngine = PlaybackEngine(
 					PreparedPlaybackQueueResourceManagement(
 						fakePlaybackPreparerProvider
 					) { 1 }, listOf(CompletingFileQueueProvider()),
 					NowPlayingRepository(libraryProvider, libraryStorage),
 					PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
-				).toFuture().get()
-			nextSwitchedFile = playbackEngine!!.changePosition(3, Duration.ZERO).toFuture()[1, TimeUnit.SECONDS]
+				)
+
+			initialState = playbackEngine.restoreFromSavedState().toFuture().get()
+			nextSwitchedFile = playbackEngine.changePosition(3, Duration.ZERO).toFuture()[1, TimeUnit.SECONDS]
 		}
 	}
 
 	@Test
-	fun thenTheNextFileChangeIsTheSwitchedToTheCorrectTrackPosition() {
+	fun `then the initial playlist position is correct`() {
+		assertThat(initialState?.playlistPosition).isEqualTo(0)
+	}
+
+	@Test
+	fun `then the next file change is the correct playlist position`() {
 		assertThat(nextSwitchedFile!!.playlistPosition).isEqualTo(3)
 	}
 
 	@Test
-	fun thenTheSavedLibraryIsAtTheCorrectTrackPosition() {
+	fun `then the saved library is at the correct playlist position`() {
 		assertThat(library.nowPlayingId).isEqualTo(3)
 	}
 }

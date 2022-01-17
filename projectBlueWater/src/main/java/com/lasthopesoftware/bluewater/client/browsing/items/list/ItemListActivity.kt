@@ -34,6 +34,7 @@ import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
+import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils.buildStandardMenu
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
@@ -158,7 +159,7 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer {
 		itemId = savedInstanceState.getInt(KEY)
 	}
 
-	override fun onCreateOptionsMenu(menu: Menu): Boolean = ViewUtils.buildStandardMenu(this, menu)
+	override fun onCreateOptionsMenu(menu: Menu): Boolean = buildStandardMenu(menu)
 
 	override fun onOptionsItemSelected(item: MenuItem): Boolean =
 		ViewUtils.handleNavMenuClicks(this, item) || super.onOptionsItemSelected(item)

@@ -3,7 +3,11 @@ package com.lasthopesoftware.bluewater.client.playback.file
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.playback.file.volume.ManagePlayableFileVolume
 
-class PositionedPlayingFile(val playingFile: PlayingFile, val playableFileVolumeManager: ManagePlayableFileVolume, private val positionedFile: PositionedFile) : Comparable<PositionedPlayingFile> {
+class PositionedPlayingFile(
+	val playingFile: PlayingFile,
+	val playableFileVolumeManager: ManagePlayableFileVolume,
+	private val positionedFile: PositionedFile
+) : Comparable<PositionedPlayingFile> {
 	constructor(playlistPosition: Int, playingFile: PlayingFile, playableFileVolumeManager: ManagePlayableFileVolume, serviceFile: ServiceFile)
 		: this(playingFile, playableFileVolumeManager, PositionedFile(playlistPosition, serviceFile))
 

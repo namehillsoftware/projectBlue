@@ -44,12 +44,11 @@ class `When Getting Library Items` {
 			every { libraryViews.promiseLibraryViews(LibraryId(489)) } returns Promise(viewIds.map(::StandardViewItem))
 
 			val mediaItemsBrowser = MediaItemsBrowser(
-				mockk(),
-				selectedLibraryId,
-				mockk(),
-				mockk(),
-				libraryViews,
-				mockk(),
+                selectedLibraryId,
+                mockk(),
+                mockk(),
+                libraryViews,
+                mockk(),
 			)
 			mediaItemsBrowser
 				.promiseLibraryItems()

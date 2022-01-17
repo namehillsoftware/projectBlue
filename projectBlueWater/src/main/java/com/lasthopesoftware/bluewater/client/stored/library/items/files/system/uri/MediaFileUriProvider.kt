@@ -13,7 +13,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.IMediaQueryCursorProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
 import com.lasthopesoftware.bluewater.shared.IoCommon
-import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder.Companion.buildMagicPropertyName
+import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.storage.read.permissions.IStorageReadPermissionArbitratorForOs
 import com.namehillsoftware.handoff.promises.Promise
@@ -69,24 +69,14 @@ class MediaFileUriProvider
 			}
 
     companion object {
-        val mediaFileFoundEvent = buildMagicPropertyName(
-            MediaFileUriProvider::class.java, "mediaFileFoundEvent"
-        )
-        val mediaFileFoundMediaId = buildMagicPropertyName(
-            MediaFileUriProvider::class.java, "mediaFileFoundMediaId"
-        )
-        val mediaFileFoundFileKey = buildMagicPropertyName(
-            MediaFileUriProvider::class.java, "mediaFileFoundFileKey"
-        )
-        val mediaFileFoundPath = buildMagicPropertyName(
-            MediaFileUriProvider::class.java, "mediaFileFoundPath"
-        )
-        val mediaFileFoundLibraryId = buildMagicPropertyName(
-            MediaFileUriProvider::class.java, "mediaFileFoundLibraryId"
-        )
-        private val audioIdKey = MediaStore.Audio.keyFor("audio_id")
-        private val logger = LoggerFactory.getLogger(
-            MediaFileUriProvider::class.java
-        )
+		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(MediaFileUriProvider::class.java) }
+
+        val mediaFileFoundEvent by lazy { magicPropertyBuilder.buildProperty("mediaFileFoundEvent") }
+        val mediaFileFoundMediaId by lazy { magicPropertyBuilder.buildProperty("mediaFileFoundMediaId") }
+        val mediaFileFoundFileKey by lazy { magicPropertyBuilder.buildProperty("mediaFileFoundFileKey") }
+        val mediaFileFoundPath by lazy { magicPropertyBuilder.buildProperty("mediaFileFoundPath") }
+        val mediaFileFoundLibraryId by lazy { magicPropertyBuilder.buildProperty("mediaFileFoundLibraryId") }
+        private val audioIdKey by lazy { MediaStore.Audio.keyFor("audio_id") }
+        private val logger by lazy { LoggerFactory.getLogger(MediaFileUriProvider::class.java) }
     }
 }

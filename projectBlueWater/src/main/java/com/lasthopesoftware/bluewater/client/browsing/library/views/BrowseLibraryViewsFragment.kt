@@ -30,9 +30,11 @@ import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 class BrowseLibraryViewsFragment : Fragment(R.layout.tabbed_library_items_layout), IItemListMenuChangeHandler, TabLayout.OnTabSelectedListener {
 
 	companion object {
-		private val SAVED_TAB_KEY = MagicPropertyBuilder.buildMagicPropertyName(BrowseLibraryViewsFragment::class.java, "SAVED_TAB_KEY")
-		private val SAVED_SCROLL_POS = MagicPropertyBuilder.buildMagicPropertyName(BrowseLibraryViewsFragment::class.java, "SAVED_SCROLL_POS")
-		private val SAVED_SELECTED_VIEW = MagicPropertyBuilder.buildMagicPropertyName(BrowseLibraryViewsFragment::class.java, "SAVED_SELECTED_VIEW")
+		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(BrowseLibraryViewsFragment::class.java) }
+
+		private val savedTabKey by lazy { magicPropertyBuilder.buildProperty("savedTabKey") }
+		private val savedScrollPos by lazy { magicPropertyBuilder.buildProperty("savedScrollPos") }
+		private val savedSelectedView by lazy { magicPropertyBuilder.buildProperty("SAVED_SELECTED_VIEW") }
 	}
 
 	private val lazyLibraryViewPagerAdapter = lazy {
@@ -94,10 +96,10 @@ class BrowseLibraryViewsFragment : Fragment(R.layout.tabbed_library_items_layout
 	override fun onSaveInstanceState(outState: Bundle) {
 		super.onSaveInstanceState(outState)
 		val viewPager = viewPager
-		outState.putInt(SAVED_TAB_KEY, viewPager.currentItem)
-		outState.putInt(SAVED_SCROLL_POS, viewPager.scrollY)
+		outState.putInt(savedTabKey, viewPager.currentItem)
+		outState.putInt(savedScrollPos, viewPager.scrollY)
 		selectedBrowserLibrary
-			.then { library -> if (library != null) outState.putInt(SAVED_SELECTED_VIEW, library.selectedView) }
+			.then { library -> if (library != null) outState.putInt(savedSelectedView, library.selectedView) }
 	}
 
 	private val selectedBrowserLibrary: Promise<Library?>
@@ -135,13 +137,13 @@ class BrowseLibraryViewsFragment : Fragment(R.layout.tabbed_library_items_layout
 						.run {
 							if (savedInstanceState == null) this
 							else eventually(LoopedInPromise.response({
-								val savedSelectedView = savedInstanceState.getInt(SAVED_SELECTED_VIEW, -1)
+								val savedSelectedView = savedInstanceState.getInt(savedSelectedView, -1)
 								if (savedSelectedView < 0 || savedSelectedView != library.selectedView) return@response
 
-								val savedTabKey = savedInstanceState.getInt(SAVED_TAB_KEY, -1)
+								val savedTabKey = savedInstanceState.getInt(savedTabKey, -1)
 								if (savedTabKey > -1) viewPager.currentItem = savedTabKey
 
-								val savedScrollPosition = savedInstanceState.getInt(SAVED_SCROLL_POS, -1)
+								val savedScrollPosition = savedInstanceState.getInt(savedScrollPos, -1)
 								if (savedScrollPosition > -1) viewPager.scrollY = savedScrollPosition
 							}, handler.value))
 						}

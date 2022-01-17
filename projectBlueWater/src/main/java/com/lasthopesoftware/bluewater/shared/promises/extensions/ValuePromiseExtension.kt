@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.shared.promises.extensions
 
 import com.google.common.util.concurrent.ListenableFuture
+import com.lasthopesoftware.bluewater.shared.promises.ForwardedResponse.Companion.forward
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import io.reactivex.Completable
@@ -22,7 +23,7 @@ fun <T> T.toPromise(): Promise<T> = when (this) {
 
 private object UnitPromise : Promise<Unit>(Unit)
 
-fun <T> Promise<T?>?.keepPromise(): Promise<T?> = this ?: Promise.empty()
+fun <T> Promise<T>?.keepPromise(): Promise<T?> = this?.forward() ?: Promise.empty()
 
 fun <T> Promise<T>?.keepPromise(default: T): Promise<T> = this ?: default.toPromise()
 

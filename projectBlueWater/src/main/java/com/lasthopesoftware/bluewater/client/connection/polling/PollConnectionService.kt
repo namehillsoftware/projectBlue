@@ -60,9 +60,7 @@ class PollConnectionService : Service(), MessengerOperator<IConnectionProvider> 
 			synchronized(uniqueOnConnectionLostListeners) { uniqueOnConnectionLostListeners.remove(listener) }
 		}
 
-		private val stopWaitingForConnectionAction = MagicPropertyBuilder.buildMagicPropertyName(
-			PollConnectionService::class.java,
-			"stopWaitingForConnection")
+		private val stopWaitingForConnectionAction by lazy { MagicPropertyBuilder.buildMagicPropertyName<PollConnectionService>("stopWaitingForConnection") }
 	}
 
 	private var withNotification = false
@@ -143,7 +141,7 @@ class PollConnectionService : Service(), MessengerOperator<IConnectionProvider> 
 			.setContentIntent(pi)
 			.setContentTitle(getText(R.string.lbl_waiting_for_connection))
 			.setContentText(getText(R.string.lbl_click_to_cancel))
-			.setSmallIcon(R.drawable.clearstream_logo_dark)
+			.setSmallIcon(R.drawable.launcher_icon_dark)
 			.setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
 
 		lazyNotificationController.value.notifyBackground(builder.build(), notificationsConfiguration.notificationId)

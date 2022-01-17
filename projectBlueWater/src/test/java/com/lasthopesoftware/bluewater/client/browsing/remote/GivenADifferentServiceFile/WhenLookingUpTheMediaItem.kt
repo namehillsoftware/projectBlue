@@ -71,8 +71,8 @@ class `When Looking Up The Media Item` {
 	}
 
 	@Test
-	fun `then the image is returned`() {
-		assertThat(mediaItem?.description?.iconBitmap).isNotNull
+	fun `then the image is not returned`() {
+		assertThat(mediaItem?.description?.iconBitmap).isNull()
 	}
 
 	@Test

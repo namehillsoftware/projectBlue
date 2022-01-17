@@ -9,17 +9,13 @@ import com.lasthopesoftware.bluewater.shared.android.messages.SendMessages
  */
 class StorageWritePermissionsRequestedBroadcaster(private val sendMessages: SendMessages) :	IStorageWritePermissionsRequestedBroadcaster {
 	override fun sendWritePermissionsNeededBroadcast(libraryId: Int) {
-		val writePermissionsNeededIntent = Intent(WritePermissionsNeeded)
-		writePermissionsNeededIntent.putExtra(WritePermissionsLibraryId, libraryId)
+		val writePermissionsNeededIntent = Intent(writePermissionsNeeded)
+		writePermissionsNeededIntent.putExtra(writePermissionsLibraryId, libraryId)
 		sendMessages.sendBroadcast(writePermissionsNeededIntent)
 	}
 
 	companion object {
-		val WritePermissionsNeeded = buildMagicPropertyName(
-			StorageWritePermissionsRequestedBroadcaster::class.java, "WritePermissionsNeeded"
-		)
-		val WritePermissionsLibraryId = buildMagicPropertyName(
-			StorageWritePermissionsRequestedBroadcaster::class.java, "WritePermissionsLibraryId"
-		)
+		val writePermissionsNeeded by lazy { buildMagicPropertyName<StorageWritePermissionsRequestedBroadcaster>("writePermissionsNeeded") }
+		val writePermissionsLibraryId by lazy { buildMagicPropertyName<StorageWritePermissionsRequestedBroadcaster>("writePermissionsLibraryId") }
 	}
 }

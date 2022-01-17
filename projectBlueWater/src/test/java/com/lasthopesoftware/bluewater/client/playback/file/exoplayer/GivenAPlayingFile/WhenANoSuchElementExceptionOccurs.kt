@@ -1,51 +1,51 @@
 package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.GivenAPlayingFile
 
 import com.google.android.exoplayer2.ExoPlaybackException
+import com.google.android.exoplayer2.PlaybackException.ERROR_CODE_UNSPECIFIED
 import com.google.android.exoplayer2.Player
-import com.lasthopesoftware.any
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.PromisingExoPlayer
+import com.lasthopesoftware.bluewater.client.playback.file.PlayedFile
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.error.ExoPlayerException
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
-import org.assertj.core.api.AssertionsForClassTypes
+import io.mockk.every
+import io.mockk.mockk
+import org.assertj.core.api.AssertionsForClassTypes.assertThat
 import org.junit.BeforeClass
 import org.junit.Test
-import org.mockito.ArgumentMatchers.anyBoolean
-import org.mockito.Mockito
-import org.mockito.invocation.InvocationOnMock
 import java.util.*
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeoutException
 
 class WhenANoSuchElementExceptionOccurs {
 
 	companion object {
 		private var exoPlayerException: ExoPlayerException? = null
-		private var eventListener: Player.EventListener? = null
-		private var isComplete: Boolean? = null
+		private var eventListener: Player.Listener? = null
+		private var playedFile: PlayedFile? = null
 
 		@JvmStatic
 		@BeforeClass
-		@Throws(InterruptedException::class, TimeoutException::class, ExecutionException::class)
 		fun before() {
-			val mockExoPlayer = Mockito.mock(PromisingExoPlayer::class.java)
-			Mockito.`when`(mockExoPlayer.setPlayWhenReady(anyBoolean())).thenReturn(mockExoPlayer.toPromise())
-			Mockito.`when`(mockExoPlayer.getPlayWhenReady()).thenReturn(true.toPromise())
-			Mockito.`when`(mockExoPlayer.getCurrentPosition()).thenReturn(50L.toPromise())
-			Mockito.`when`(mockExoPlayer.getDuration()).thenReturn(100L.toPromise())
-			Mockito.doAnswer { invocation: InvocationOnMock ->
-				eventListener = invocation.getArgument(0)
+			val mockExoPlayer = mockk<PromisingExoPlayer>()
+			every { mockExoPlayer.setPlayWhenReady(any()) } returns mockExoPlayer.toPromise()
+			every { mockExoPlayer.getPlayWhenReady() } returns true.toPromise()
+			every { mockExoPlayer.getCurrentPosition() } returns 50L.toPromise()
+			every { mockExoPlayer.getDuration() } returns 100L.toPromise()
+			every { mockExoPlayer.removeListener(any()) } returns mockExoPlayer.toPromise()
+			every { mockExoPlayer.addListener(any()) } answers {
+				eventListener = firstArg()
 				mockExoPlayer.toPromise()
-			}.`when`(mockExoPlayer).addListener(any())
+			}
+
 			val exoPlayerPlaybackHandlerPlayerPlaybackHandler = ExoPlayerPlaybackHandler(mockExoPlayer)
 			val promisedFuture = exoPlayerPlaybackHandlerPlayerPlaybackHandler.promisePlayback()
-				.eventually { obj -> obj.promisePlayedFile() }
-				.then({ true }) { false }.toFuture()
-			eventListener!!.onPlayerError(ExoPlaybackException.createForUnexpected(NoSuchElementException()))
+				.eventually { it.promisePlayedFile() }
+				.toFuture()
+			eventListener?.onPlayerError(ExoPlaybackException.createForUnexpected(NoSuchElementException(), ERROR_CODE_UNSPECIFIED))
 			try {
-				isComplete = promisedFuture[1, TimeUnit.SECONDS]
+				playedFile = promisedFuture[1, TimeUnit.SECONDS]
 			} catch (e: ExecutionException) {
 				if (e.cause is ExoPlayerException) {
 					exoPlayerException = e.cause as ExoPlayerException?
@@ -58,11 +58,11 @@ class WhenANoSuchElementExceptionOccurs {
 
 	@Test
 	fun thenPlaybackCompletes() {
-		AssertionsForClassTypes.assertThat(isComplete).isTrue
+		assertThat(playedFile).isNotNull
 	}
 
 	@Test
 	fun thenNoPlaybackErrorOccurs() {
-		AssertionsForClassTypes.assertThat(exoPlayerException).isNull()
+		assertThat(exoPlayerException).isNull()
 	}
 }

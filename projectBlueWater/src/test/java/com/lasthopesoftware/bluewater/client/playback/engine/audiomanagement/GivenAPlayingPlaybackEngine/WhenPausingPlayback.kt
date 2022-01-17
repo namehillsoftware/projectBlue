@@ -47,6 +47,7 @@ class WhenPausingPlayback {
 		fun context() {
 			val audioManagingPlaybackStateChanger = AudioManagingPlaybackStateChanger(
 				innerPlaybackState,
+				mockk(),
 				audioFocus,
 				mockk(relaxed = true))
 			audioManagingPlaybackStateChanger.resume().toFuture().get()

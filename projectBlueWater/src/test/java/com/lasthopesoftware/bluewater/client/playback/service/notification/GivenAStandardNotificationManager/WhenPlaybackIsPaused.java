@@ -1,9 +1,18 @@
 package com.lasthopesoftware.bluewater.client.playback.service.notification.GivenAStandardNotificationManager;
 
+import static com.lasthopesoftware.resources.notifications.FakeNotificationCompatBuilder.newFakeBuilder;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Intent;
+
+import androidx.test.core.app.ApplicationProvider;
 
 import com.lasthopesoftware.AndroidContext;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
@@ -20,14 +29,6 @@ import com.namehillsoftware.lazyj.Lazy;
 
 import org.junit.Test;
 import org.robolectric.Robolectric;
-import org.robolectric.RuntimeEnvironment;
-
-import static com.lasthopesoftware.resources.notifications.FakeNotificationCompatBuilder.newFakeBuilder;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 public class WhenPlaybackIsPaused extends AndroidContext {
 	private static final Notification pausedNotification = new Notification();
@@ -54,7 +55,7 @@ public class WhenPlaybackIsPaused extends AndroidContext {
 
 		playbackNotificationRouter
 			.onReceive(
-				RuntimeEnvironment.application,
+				ApplicationProvider.getApplicationContext(),
 				new Intent(PlaylistEvents.onPlaylistPause));
 	}
 

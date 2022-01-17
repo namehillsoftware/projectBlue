@@ -16,7 +16,7 @@ class WhenGettingOtherImageBytes {
 		private val imageBytes by lazy {
 			val fakeConnectionProvider = FakeConnectionProvider()
 			fakeConnectionProvider.mapResponse(
-				{ p ->
+				{
 					FakeConnectionResponseTuple(
 						200,
 						byteArrayOf(46, 78, 99, 42)

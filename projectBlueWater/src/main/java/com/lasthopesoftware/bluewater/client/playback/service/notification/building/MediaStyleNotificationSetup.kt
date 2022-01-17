@@ -37,11 +37,11 @@ class MediaStyleNotificationSetup(
 					.setShowCancelButton(true)
 			)
 			.setPriority(NotificationCompat.PRIORITY_DEFAULT)
-			.setColor(ContextCompat.getColor(context, R.color.clearstream_dark))
+			.setColor(ContextCompat.getColor(context, R.color.project_blue_dark))
 			.setContentIntent(pendingNowPlayingIntent)
 			.setDeleteIntent(pendingKillService(context))
 			.setShowWhen(false)
-			.setSmallIcon(R.drawable.clearstream_logo_dark)
+			.setSmallIcon(R.drawable.launcher_icon_dark)
 			.setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
 	}
 }

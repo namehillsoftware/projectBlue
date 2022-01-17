@@ -8,11 +8,10 @@ import com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.Ma
 import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
 import com.namehillsoftware.handoff.promises.Promise
-import org.assertj.core.api.AssertionsForClassTypes
+import org.assertj.core.api.AssertionsForClassTypes.assertThat
 import org.joda.time.Duration
 import org.junit.BeforeClass
 import org.junit.Test
-import java.util.concurrent.ExecutionException
 
 class WhenItIsPrepared {
 
@@ -22,10 +21,9 @@ class WhenItIsPrepared {
 
 		@JvmStatic
 		@BeforeClass
-		@Throws(ExecutionException::class, InterruptedException::class)
 		fun establish() {
 			val fakeFilePreparer = FakeFilePreparer(emptyPlaybackHandler, emptyPlaybackHandler)
-			val maxFileVolumePreparer = MaxFileVolumePreparer(fakeFilePreparer) { sf: ServiceFile? -> Promise(.89f) }
+			val maxFileVolumePreparer = MaxFileVolumePreparer(fakeFilePreparer) { Promise(.89f) }
 			returnedFile = FuturePromise(maxFileVolumePreparer.promisePreparedPlaybackFile(
 				ServiceFile(5),
 				Duration.ZERO)).get()
@@ -34,11 +32,11 @@ class WhenItIsPrepared {
 
 	@Test
 	fun thenTheFileIsReturned() {
-		AssertionsForClassTypes.assertThat(returnedFile!!.playbackHandler).isEqualTo(emptyPlaybackHandler)
+		assertThat(returnedFile!!.playbackHandler).isEqualTo(emptyPlaybackHandler)
 	}
 
 	@Test
 	fun thenTheVolumeIsManagedByTheMaxFileVolumeManager() {
-		AssertionsForClassTypes.assertThat(returnedFile!!.playableFileVolumeManager.volume.toFuture().get()).isEqualTo(.89f)
+		assertThat(returnedFile!!.playableFileVolumeManager.volume.toFuture().get()).isEqualTo(.89f)
 	}
 }

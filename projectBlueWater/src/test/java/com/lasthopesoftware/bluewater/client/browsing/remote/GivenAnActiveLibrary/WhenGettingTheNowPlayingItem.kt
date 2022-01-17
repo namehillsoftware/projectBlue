@@ -4,7 +4,7 @@ import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaMetadataCompat
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.remote.GetMediaItemsFromServiceFiles
-import com.lasthopesoftware.bluewater.client.browsing.remote.MediaItemsBrowser
+import com.lasthopesoftware.bluewater.client.browsing.remote.NowPlayingMediaItemLookup
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.INowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
@@ -45,14 +45,10 @@ class `When Getting The Now Playing Item` {
 			)
 
 			val serviceFiles = mockk<GetMediaItemsFromServiceFiles>()
-			every { serviceFiles.promiseMediaItem(ServiceFile(393)) } returns expectedMediaItem.toPromise()
+			every { serviceFiles.promiseMediaItemWithImage(ServiceFile(393)) } returns expectedMediaItem.toPromise()
 
-			val mediaItemsBrowser = MediaItemsBrowser(
+			val mediaItemsBrowser = NowPlayingMediaItemLookup(
 				nowPlaying,
-				mockk(),
-				mockk(),
-				mockk(),
-				mockk(),
 				serviceFiles,
 			)
 			mediaItemsBrowser

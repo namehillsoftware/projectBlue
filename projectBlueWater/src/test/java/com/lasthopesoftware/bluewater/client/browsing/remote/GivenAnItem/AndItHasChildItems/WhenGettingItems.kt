@@ -44,12 +44,11 @@ class `When Getting Items` {
 			)
 
 			val mediaItemsBrowser = MediaItemsBrowser(
-				mockk(),
-				selectedLibraryId,
-				itemsProvider,
-				mockk(),
-				mockk(),
-				mockk(),
+                selectedLibraryId,
+                itemsProvider,
+                mockk(),
+                mockk(),
+                mockk(),
 			)
 			mediaItemsBrowser
 				.promiseItems(Item(504))
@@ -59,7 +58,17 @@ class `When Getting Items` {
 	}
 
 	@Test
-	fun `then the media items are correct`() {
+	fun `then the media items have the correct ids`() {
 		assertThat(mediaItems?.map { i -> i.mediaId }).isEqualTo(expectedMediaItems.map { i -> i.mediaId })
+	}
+
+	@Test
+	fun `then the media items are browsable`() {
+		assertThat(mediaItems!!).allMatch { i -> i.isBrowsable }
+	}
+
+	@Test
+	fun `then the media items are not playable`() {
+		assertThat(mediaItems!!).allMatch { i -> !i.isPlayable }
 	}
 }

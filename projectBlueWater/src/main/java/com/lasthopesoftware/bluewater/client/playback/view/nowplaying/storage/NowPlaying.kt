@@ -16,6 +16,12 @@ class NowPlaying constructor(
     @JvmField
 	var playlist: List<ServiceFile> = emptyList()
 
+	val playingFile: ServiceFile?
+		get() =
+			if (playlistPosition > -1 && playlistPosition < playlist.size) playlist[playlistPosition]
+			else null
+
+
     constructor(
         playlist: List<ServiceFile>,
         playlistPosition: Int,
