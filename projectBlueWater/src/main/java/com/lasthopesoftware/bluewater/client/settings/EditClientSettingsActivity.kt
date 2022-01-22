@@ -30,10 +30,17 @@ import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicat
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
-import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
+import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import java.util.*
 
-class EditClientSettingsActivity : AppCompatActivity() {
+class EditClientSettingsActivity : AppCompatActivity(), View.OnClickListener, ImmediateResponse<Library?, Unit> {
+
+	companion object {
+		val serverIdExtra by lazy { MagicPropertyBuilder.buildMagicPropertyName<EditClientSettingsActivity>("serverIdExtra") }
+		private const val permissionsRequestInteger = 1
+	}
+
 	private val saveButton = LazyViewFinder<Button>(this, R.id.btnConnect)
 	private val txtAccessCode = LazyViewFinder<EditText>(this, R.id.txtAccessCode)
 	private val txtUserName = LazyViewFinder<EditText>(this, R.id.txtUserName)
@@ -55,7 +62,7 @@ class EditClientSettingsActivity : AppCompatActivity() {
 	}
 	private val applicationSettingsRepository by lazy { getApplicationSettingsRepository() }
 	private val messageBus by lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
-	private val settingsMenu = lazy {
+	private val settingsMenu by lazy {
 		EditClientSettingsMenu(
 			this,
 			AboutTitleBuilder(this),
@@ -70,7 +77,57 @@ class EditClientSettingsActivity : AppCompatActivity() {
 	}
 	private var library: Library? = null
 
-	private val connectionButtonListener = View.OnClickListener {
+	public override fun onCreate(savedInstanceState: Bundle?) {
+		super.onCreate(savedInstanceState)
+		setContentView(R.layout.activity_edit_server_settings)
+		setSupportActionBar(findViewById(R.id.serverSettingsToolbar))
+		supportActionBar?.setDisplayHomeAsUpEnabled(true)
+		saveButton.findView().setOnClickListener(this)
+	}
+
+	override fun onCreateOptionsMenu(menu: Menu): Boolean = settingsMenu.buildSettingsMenu(menu)
+
+	override fun onStart() {
+		super.onStart()
+		initializeLibrary(intent)
+	}
+
+	override fun onNewIntent(intent: Intent) {
+		super.onNewIntent(intent)
+		initializeLibrary(intent)
+	}
+
+	override fun onOptionsItemSelected(item: MenuItem): Boolean =
+		settingsMenu.handleSettingsMenuClicks(item, library)
+
+	private fun initializeLibrary(intent: Intent) {
+		val syncFilesRadioGroup = rgSyncFileOptions.findView()
+		syncFilesRadioGroup.check(R.id.rbPrivateToApp)
+
+		val libraryId = intent.getIntExtra(serverIdExtra, -1)
+		if (libraryId < 0) return
+
+		libraryProvider
+			.getLibrary(LibraryId(libraryId))
+			.eventually(response(this, this))
+	}
+
+	override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
+		super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+		if (requestCode != permissionsRequestInteger) return
+
+		for (grantResult in grantResults) {
+			if (grantResult == PackageManager.PERMISSION_GRANTED) continue
+			Toast.makeText(this, R.string.permissions_must_be_granted_for_settings, Toast.LENGTH_LONG).show()
+			saveButton.findView().isEnabled = true
+			return
+		}
+
+		saveLibraryAndFinish()
+	}
+
+	override fun onClick(v: View?) {
 		saveButton.findView().isEnabled = false
 
 		val localLibrary = library ?: Library(_nowPlayingId = -1)
@@ -96,89 +153,38 @@ class EditClientSettingsActivity : AppCompatActivity() {
 			permissionsToRequest.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
 		if (permissionsToRequest.size > 0) {
 			val permissionsToRequestArray = permissionsToRequest.toTypedArray()
-			ActivityCompat.requestPermissions(this@EditClientSettingsActivity, permissionsToRequestArray, permissionsRequestInteger)
+			ActivityCompat.requestPermissions(this, permissionsToRequestArray, permissionsRequestInteger)
 		} else {
 			saveLibraryAndFinish()
 		}
 	}
 
-	public override fun onCreate(savedInstanceState: Bundle?) {
-		super.onCreate(savedInstanceState)
-		setContentView(R.layout.activity_edit_server_settings)
-		setSupportActionBar(findViewById(R.id.serverSettingsToolbar))
-		supportActionBar?.setDisplayHomeAsUpEnabled(true)
-		saveButton.findView().setOnClickListener(connectionButtonListener)
-	}
+	override fun respond(result: Library?) {
+		library = result ?: return
 
-	override fun onCreateOptionsMenu(menu: Menu): Boolean = settingsMenu.value.buildSettingsMenu(menu)
+		chkLocalOnly.findView().isChecked = result.isLocalOnly
+		chkIsUsingExistingFiles.findView().isChecked = result.isUsingExistingFiles
+		chkIsUsingLocalConnectionForSync.findView().isChecked = result.isSyncLocalConnectionsOnly
+		chkIsWakeOnLanEnabled.findView().isChecked = result.isWakeOnLanEnabled
 
-	override fun onStart() {
-		super.onStart()
-		initializeLibrary(intent)
-	}
-
-	override fun onNewIntent(intent: Intent) {
-		super.onNewIntent(intent)
-		initializeLibrary(intent)
-	}
-
-	override fun onOptionsItemSelected(item: MenuItem): Boolean =
-		settingsMenu.value.handleSettingsMenuClicks(item, library)
-
-	private fun initializeLibrary(intent: Intent) {
 		val syncFilesRadioGroup = rgSyncFileOptions.findView()
-		syncFilesRadioGroup.check(R.id.rbPrivateToApp)
+		syncFilesRadioGroup.check(when (result.syncedFileLocation) {
+			SyncedFileLocation.EXTERNAL -> R.id.rbPublicLocation
+			SyncedFileLocation.INTERNAL -> R.id.rbPrivateToApp
+			else -> -1
+		})
 
-		val libraryId = intent.getIntExtra(serverIdExtra, -1)
-		if (libraryId < 0) return
-
-		libraryProvider
-			.getLibrary(LibraryId(libraryId))
-			.eventually(LoopedInPromise.response({ result ->
-				library = result ?: return@response
-
-				chkLocalOnly.findView().isChecked = result.isLocalOnly
-				chkIsUsingExistingFiles.findView().isChecked = result.isUsingExistingFiles
-				chkIsUsingLocalConnectionForSync.findView().isChecked = result.isSyncLocalConnectionsOnly
-				chkIsWakeOnLanEnabled.findView().isChecked = result.isWakeOnLanEnabled
-
-				syncFilesRadioGroup.check(when (result.syncedFileLocation) {
-					SyncedFileLocation.EXTERNAL -> R.id.rbPublicLocation
-					SyncedFileLocation.INTERNAL -> R.id.rbPrivateToApp
-					else -> -1
-				})
-
-				txtAccessCode.findView().setText(result.accessCode)
-				txtUserName.findView().setText(result.userName)
-				txtPassword.findView().setText(result.password)
-			}, this))
-	}
-
-	override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
-		if (requestCode != permissionsRequestInteger) return
-
-		for (grantResult in grantResults) {
-			if (grantResult == PackageManager.PERMISSION_GRANTED) continue
-			Toast.makeText(this, R.string.permissions_must_be_granted_for_settings, Toast.LENGTH_LONG).show()
-			saveButton.findView().isEnabled = true
-			return
-		}
-
-		saveLibraryAndFinish()
+		txtAccessCode.findView().setText(result.accessCode)
+		txtUserName.findView().setText(result.userName)
+		txtPassword.findView().setText(result.password)
 	}
 
 	private fun saveLibraryAndFinish() {
 		val library = library ?: return
 
-		libraryStorage.saveLibrary(library).eventually(LoopedInPromise.response({
+		libraryStorage.saveLibrary(library).eventually(response({
 			saveButton.findView().text = getText(R.string.btn_saved)
 			finish()
 		}, this))
-	}
-
-	companion object {
-		@JvmField
-		val serverIdExtra = MagicPropertyBuilder.buildMagicPropertyName<EditClientSettingsActivity>("serverIdExtra")
-		private const val permissionsRequestInteger = 1
 	}
 }

@@ -12,7 +12,7 @@ import java.util.regex.Pattern
 class PrivateStoredFilePathLookup(
 	private val libraryFileProperties: ProvideLibraryFileProperties,
 	private val lookupSyncDirectory: LookupSyncDirectory,
-) : GetPrivateStoredFilePaths {
+) : ProduceStoredFilePaths {
 
 	companion object {
 		private val reservedCharactersPattern by lazy { Pattern.compile("[|?*<\":>+\\[\\]'/]") }

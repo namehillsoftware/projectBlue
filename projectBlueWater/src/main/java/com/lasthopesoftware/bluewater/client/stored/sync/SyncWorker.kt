@@ -49,7 +49,6 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.M
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.MediaQueryCursorProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.PrivateStoredFilePathLookup
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.SharedStoredFilePathLookup
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFilePathsLookup
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFileUpdater
 import com.lasthopesoftware.bluewater.client.stored.library.sync.LibrarySyncsHandler
@@ -155,8 +154,7 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 				PrivateStoredFilePathLookup(
 					fileProperties,
 					SyncDirectoryLookup(libraryProvider, PublicDirectoryLookup(context), PrivateDirectoryLookup(context), FreeSpaceLookup)
-				),
-				SharedStoredFilePathLookup(fileProperties, context)
+				)
 			)
         )
 

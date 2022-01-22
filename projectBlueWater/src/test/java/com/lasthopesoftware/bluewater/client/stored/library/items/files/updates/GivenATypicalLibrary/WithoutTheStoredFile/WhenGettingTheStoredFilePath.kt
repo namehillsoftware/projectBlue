@@ -28,7 +28,7 @@ class WhenGettingTheStoredFilePath {
 			val privateFiles = mockk<PrivateStoredFilePathLookup>()
 			every { privateFiles.promiseStoredFilePath(LibraryId(600), ServiceFile(26)) } returns Promise("empty")
 
-			val storedFilePaths = StoredFilePathsLookup(libraryProvider, privateFiles, externalFiles)
+			val storedFilePaths = StoredFilePathsLookup(libraryProvider, privateFiles)
 			storedFilePaths
 				.promiseStoredFilePath(LibraryId(600), ServiceFile(26))
 				.toFuture()

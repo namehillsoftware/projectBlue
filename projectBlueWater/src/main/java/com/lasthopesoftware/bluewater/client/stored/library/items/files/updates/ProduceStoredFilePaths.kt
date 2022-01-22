@@ -4,6 +4,6 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceF
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.namehillsoftware.handoff.promises.Promise
 
-interface GetPrivateStoredFilePaths {
+interface ProduceStoredFilePaths {
 	fun promiseStoredFilePath(libraryId: LibraryId, serviceFile: ServiceFile): Promise<String?>
 }
