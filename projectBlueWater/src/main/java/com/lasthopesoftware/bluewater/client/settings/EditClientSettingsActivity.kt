@@ -35,7 +35,12 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import java.util.*
 
-class EditClientSettingsActivity : AppCompatActivity(), View.OnClickListener, ImmediateResponse<Library?, Unit> {
+class EditClientSettingsActivity :
+	AppCompatActivity(),
+	View.OnClickListener,
+	RadioGroup.OnCheckedChangeListener,
+	ImmediateResponse<Library?, Unit>
+{
 
 	companion object {
 		val serverIdExtra by lazy { MagicPropertyBuilder.buildMagicPropertyName<EditClientSettingsActivity>("serverIdExtra") }
@@ -103,7 +108,12 @@ class EditClientSettingsActivity : AppCompatActivity(), View.OnClickListener, Im
 		settingsMenu.handleSettingsMenuClicks(item, library)
 
 	private fun initializeLibrary(intent: Intent) {
-		rgSyncFileOptions.findView().check(R.id.rbPrivateToApp)
+		rgSyncFileOptions.findView().apply {
+			check(R.id.rbPrivateToApp)
+
+			setOnCheckedChangeListener(this@EditClientSettingsActivity)
+		}
+
 		Environment.getExternalStorageDirectory()?.path?.also(txtSyncPath.findView()::setText)
 
 		val libraryId = intent.getIntExtra(serverIdExtra, -1)
@@ -127,6 +137,10 @@ class EditClientSettingsActivity : AppCompatActivity(), View.OnClickListener, Im
 		}
 
 		saveLibraryAndFinish()
+	}
+
+	override fun onCheckedChanged(group: RadioGroup?, checkedId: Int) {
+		txtSyncPath.findView().isEnabled = checkedId == R.id.rbCustomLocation
 	}
 
 	override fun onClick(v: View?) {
