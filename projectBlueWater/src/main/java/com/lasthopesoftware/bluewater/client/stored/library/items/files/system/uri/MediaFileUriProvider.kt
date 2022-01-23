@@ -40,10 +40,10 @@ class MediaFileUriProvider
 				cursor?.use {
 					if (!cursor.moveToFirst()) return@then null
 					val fileUriString =
-						cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA))
+						cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA))
 					if (fileUriString == null || fileUriString.isEmpty()) return@then null
 
-					// The serviceFile object will produce a properly escaped ServiceFile URI, as opposed to what is stored in the DB
+					// The file object will produce a properly escaped file URI, as opposed to what is stored in the DB
 					val systemFile = File(
 						fileUriString.replaceFirst(IoCommon.FileUriScheme + "://", "")
 					)

@@ -2,8 +2,6 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.files.updates
 
 import android.content.Context
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ProvideLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
@@ -12,8 +10,6 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.reposito
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.GetStoredFiles
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.ProvideMediaFileIds
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFileUpdater
-import com.lasthopesoftware.bluewater.client.stored.library.sync.LookupSyncDirectory
 import com.lasthopesoftware.bluewater.repository.InsertBuilder.Companion.fromTable
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
 import com.lasthopesoftware.bluewater.repository.UpdateBuilder
@@ -23,9 +19,7 @@ import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
-import org.apache.commons.io.FilenameUtils
 import org.slf4j.LoggerFactory
-import java.util.regex.Pattern
 
 class StoredFileUpdater(
 	private val context: Context,
@@ -33,14 +27,13 @@ class StoredFileUpdater(
 	private val mediaFileIdProvider: ProvideMediaFileIds,
 	private val storedFiles: GetStoredFiles,
 	private val libraryProvider: ILibraryProvider,
-	private val libraryFileProperties: ProvideLibraryFileProperties,
-	private val lookupSyncDirectory: LookupSyncDirectory
+	private val lookupStoredFilePaths: GetStoredFilePaths
 ) : UpdateStoredFiles {
 
 	companion object {
-		private val logger = LoggerFactory.getLogger(StoredFileUpdater::class.java)
+		private val logger by lazy { LoggerFactory.getLogger(StoredFileUpdater::class.java) }
 
-		private val insertSql = lazy {
+		private val insertSql by lazy {
 			fromTable(StoredFileEntityInformation.tableName)
 				.addColumn(StoredFileEntityInformation.serviceIdColumnName)
 				.addColumn(StoredFileEntityInformation.libraryIdColumnName)
@@ -48,7 +41,7 @@ class StoredFileUpdater(
 				.build()
 		}
 
-		private val updateSql = lazy {
+		private val updateSql by lazy {
 			UpdateBuilder
 				.fromTable(StoredFileEntityInformation.tableName)
 				.addSetter(StoredFileEntityInformation.serviceIdColumnName)
@@ -60,14 +53,9 @@ class StoredFileUpdater(
 				.buildQuery()
 		}
 
-		private val reservedCharactersPattern = lazy { Pattern.compile("[|?*<\":>+\\[\\]'/]") }
-
-		private fun replaceReservedCharsAndPath(path: String): String =
-			reservedCharactersPattern.value.matcher(path).replaceAll("_")
-
 		private fun RepositoryAccessHelper.updateStoredFile(storedFile: StoredFile) {
 			beginTransaction().use { closeableTransaction ->
-					mapSql(updateSql.value)
+					mapSql(updateSql)
 						.addParameter(StoredFileEntityInformation.serviceIdColumnName, storedFile.serviceId)
 						.addParameter(StoredFileEntityInformation.storedMediaIdColumnName, storedFile.storedMediaId)
 						.addParameter(StoredFileEntityInformation.pathColumnName, storedFile.path)
@@ -81,7 +69,7 @@ class StoredFileUpdater(
 
 		private fun RepositoryAccessHelper.createStoredFile(libraryId: LibraryId, serviceFile: ServiceFile) {
 			beginTransaction().use { closeableTransaction ->
-				mapSql(insertSql.value)
+				mapSql(insertSql)
 					.addParameter(StoredFileEntityInformation.serviceIdColumnName, serviceFile.key)
 					.addParameter(StoredFileEntityInformation.libraryIdColumnName, libraryId.id)
 					.addParameter(StoredFileEntityInformation.isOwnerColumnName, true)
@@ -94,56 +82,23 @@ class StoredFileUpdater(
 	override fun promiseStoredFileUpdate(libraryId: LibraryId, serviceFile: ServiceFile): Promise<StoredFile?> {
 		fun storedFileWithFilePath(storedFile: StoredFile): Promise<StoredFile?> =
 			if (storedFile.path != null) Promise(storedFile)
-			else libraryFileProperties
-				.promiseFileProperties(libraryId, serviceFile)
-				.eventually { fileProperties ->
-					lookupSyncDirectory
-						.promiseSyncDirectory(libraryId)
-						.then { syncDir ->
-							var fullPath = syncDir?.path ?: return@then null
-
-							val artist = fileProperties[KnownFileProperties.ALBUM_ARTIST]
-								?: fileProperties[KnownFileProperties.ARTIST]
-							if (artist != null) fullPath = FilenameUtils.concat(
-								fullPath,
-								replaceReservedCharsAndPath(artist.trim { it <= ' ' })
-							)
-
-							val album = fileProperties[KnownFileProperties.ALBUM]
-							if (album != null) fullPath = FilenameUtils.concat(
-								fullPath,
-								replaceReservedCharsAndPath(album.trim { it <= ' ' })
-							)
-
-							val fileName = fileProperties[KnownFileProperties.FILENAME]?.let { f ->
-								var lastPathIndex = f.lastIndexOf('\\')
-								if (lastPathIndex < 0) lastPathIndex = f.lastIndexOf('/')
-								if (lastPathIndex < 0) f
-								else {
-									var newFileName = f.substring(lastPathIndex + 1)
-									val extensionIndex = newFileName.lastIndexOf('.')
-									if (extensionIndex > -1)
-										newFileName = newFileName.substring(0, extensionIndex + 1) + "mp3"
-									newFileName
-								}
-							}
-							fullPath = FilenameUtils.concat(fullPath, fileName).trim { it <= ' ' }
-							storedFile.setPath(fullPath)
-						}
-				}
+			else lookupStoredFilePaths.promiseStoredFilePath(libraryId, serviceFile)
+				.then { p -> storedFile.apply { path = p } }
 
 		val promisedLibrary = libraryProvider.getLibrary(libraryId)
 		return storedFiles.promiseStoredFile(libraryId, serviceFile)
 			.eventually { storedFile ->
 				storedFile
 					?.toPromise()
-					?: QueuedPromise(MessageWriter {
-						RepositoryAccessHelper(context).use { repositoryAccessHelper ->
-							logger.info("Stored file was not found for " + serviceFile.key + ", creating file")
-							repositoryAccessHelper.createStoredFile(libraryId, serviceFile)
-						}
-					}, ThreadPools.databaseTableExecutor<StoredFileAccess>())
-						.eventually { storedFiles.promiseStoredFile(libraryId, serviceFile) }
+					?: QueuedPromise(
+						MessageWriter {
+							RepositoryAccessHelper(context).use { repositoryAccessHelper ->
+								logger.info("Stored file was not found for " + serviceFile.key + ", creating file")
+								repositoryAccessHelper.createStoredFile(libraryId, serviceFile)
+							}
+						},
+						ThreadPools.databaseTableExecutor<StoredFileAccess>()
+					).eventually { storedFiles.promiseStoredFile(libraryId, serviceFile) }
 			}
 			.eventually { storedFile ->
 				promisedLibrary.eventually { library ->

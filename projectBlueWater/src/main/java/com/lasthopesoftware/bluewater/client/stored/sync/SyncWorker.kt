@@ -48,6 +48,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieva
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.MediaFileIdProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.MediaQueryCursorProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFilePathsLookup
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFileUpdater
 import com.lasthopesoftware.bluewater.client.stored.library.sync.LibrarySyncsHandler
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncChecker
@@ -122,18 +123,11 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 			LibraryFileProvider(LibraryFileStringListProvider(libraryConnections)),
 			FileListParameters.getInstance())
 
-		DelegatingStoredItemServiceFileCollector(
-			serviceFilesCollector,
-			cachingPolicyFactory
-		)
+		DelegatingStoredItemServiceFileCollector(serviceFilesCollector, cachingPolicyFactory)
 	}
 
 	private val storedFilesPruner by lazy {
-		StoredFilesPruner(
-			serviceFilesCollector,
-			StoredFilesCollection(context),
-			storedFileAccess
-		)
+		StoredFilesPruner(serviceFilesCollector, StoredFilesCollection(context), storedFileAccess)
 	}
 
 	private val storedFilesSynchronization by lazy {
@@ -143,23 +137,22 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 		)
 
 		val storedFileUpdater = StoredFileUpdater(
-			context,
-			MediaFileUriProvider(
-				context,
-				cursorProvider,
-				readPermissionArbitratorForOs,
-				libraryIdentifierProvider,
-				true
-			),
-			MediaFileIdProvider(
-				cursorProvider,
-				readPermissionArbitratorForOs
-			),
-			StoredFileQuery(context),
-			libraryProvider,
-			fileProperties,
-			SyncDirectoryLookup(libraryProvider, PublicDirectoryLookup(context), PrivateDirectoryLookup(context), FreeSpaceLookup)
-		)
+            context,
+            MediaFileUriProvider(
+                context,
+                cursorProvider,
+                readPermissionArbitratorForOs,
+                libraryIdentifierProvider,
+                true
+            ),
+            MediaFileIdProvider(cursorProvider, readPermissionArbitratorForOs),
+            StoredFileQuery(context),
+            libraryProvider,
+			StoredFilePathsLookup(
+				fileProperties,
+				SyncDirectoryLookup(libraryProvider, PublicDirectoryLookup(context), PrivateDirectoryLookup(context), FreeSpaceLookup)
+			)
+        )
 
 		val syncHandler = LibrarySyncsHandler(
 			serviceFilesCollector,
