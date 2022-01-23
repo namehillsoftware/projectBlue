@@ -4,7 +4,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceF
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FakeFilesPropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.PrivateStoredFilePathLookup
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFilePathsLookup
 import com.lasthopesoftware.bluewater.client.stored.library.sync.LookupSyncDirectory
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
 import com.namehillsoftware.handoff.promises.Promise
@@ -14,7 +14,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import java.io.File
 
-class WhenGettingThePrivateFilePath {
+class WhenGettingTheStoredFilePath {
 	companion object {
 		private val filePath by lazy {
 			val filePropertiesProvider = FakeFilesPropertiesProvider()
@@ -32,7 +32,7 @@ class WhenGettingThePrivateFilePath {
 			val directoryLookup = mockk<LookupSyncDirectory>()
 			every { directoryLookup.promiseSyncDirectory(LibraryId(550)) } returns Promise(File("/private"))
 
-			val privateStoredFilePaths = PrivateStoredFilePathLookup(filePropertiesProvider, directoryLookup)
+			val privateStoredFilePaths = StoredFilePathsLookup(filePropertiesProvider, directoryLookup)
 
 			privateStoredFilePaths
 				.promiseStoredFilePath(LibraryId(550), ServiceFile(340))
