@@ -108,9 +108,8 @@ class EditClientSettingsActivity :
 		settingsMenu.handleSettingsMenuClicks(item, library)
 
 	private fun initializeLibrary(intent: Intent) {
-		rgSyncFileOptions.findView().apply {
+		with (rgSyncFileOptions.findView()) {
 			check(R.id.rbPrivateToApp)
-
 			setOnCheckedChangeListener(this@EditClientSettingsActivity)
 		}
 
