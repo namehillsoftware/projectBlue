@@ -37,7 +37,7 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 	private val serverListView = LazyViewFinder<RecyclerView>(this, R.id.loadedRecyclerView)
 	private val addServerButton = LazyViewFinder<Button>(this, R.id.addServerButton)
 	private val killPlaybackEngineButton = LazyViewFinder<Button>(this, R.id.killPlaybackEngine)
-	private val settingsMenu = SettingsMenu(this, AboutTitleBuilder(this))
+	private val settingsMenu by lazy { SettingsMenu(this, AboutTitleBuilder(this)) }
 	private val applicationSettingsRepository by lazy { getApplicationSettingsRepository() }
 	private val messageBus by lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
 
