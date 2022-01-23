@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.os.Environment
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -45,6 +46,7 @@ class EditClientSettingsActivity : AppCompatActivity(), View.OnClickListener, Im
 	private val txtAccessCode = LazyViewFinder<EditText>(this, R.id.txtAccessCode)
 	private val txtUserName = LazyViewFinder<EditText>(this, R.id.txtUserName)
 	private val txtPassword = LazyViewFinder<EditText>(this, R.id.txtPassword)
+	private val txtSyncPath = LazyViewFinder<TextView>(this, R.id.txtSyncPath)
 	private val chkLocalOnly = LazyViewFinder<CheckBox>(this, R.id.chkLocalOnly)
 	private val rgSyncFileOptions = LazyViewFinder<RadioGroup>(this, R.id.rgSyncFileOptions)
 	private val chkIsUsingExistingFiles = LazyViewFinder<CheckBox>(this, R.id.chkIsUsingExistingFiles)
@@ -101,8 +103,8 @@ class EditClientSettingsActivity : AppCompatActivity(), View.OnClickListener, Im
 		settingsMenu.handleSettingsMenuClicks(item, library)
 
 	private fun initializeLibrary(intent: Intent) {
-		val syncFilesRadioGroup = rgSyncFileOptions.findView()
-		syncFilesRadioGroup.check(R.id.rbPrivateToApp)
+		rgSyncFileOptions.findView().check(R.id.rbPrivateToApp)
+		Environment.getExternalStorageDirectory()?.path?.also(txtSyncPath.findView()::setText)
 
 		val libraryId = intent.getIntExtra(serverIdExtra, -1)
 		if (libraryId < 0) return
@@ -137,9 +139,11 @@ class EditClientSettingsActivity : AppCompatActivity(), View.OnClickListener, Im
 			.setUserName(txtUserName.findView().text.toString())
 			.setPassword(txtPassword.findView().text.toString())
 			.setLocalOnly(chkLocalOnly.findView().isChecked)
+			.setCustomSyncedFilesPath(txtSyncPath.findView().text.toString())
 			.setSyncedFileLocation(when (rgSyncFileOptions.findView().checkedRadioButtonId) {
 				R.id.rbPublicLocation -> SyncedFileLocation.EXTERNAL
 				R.id.rbPrivateToApp -> SyncedFileLocation.INTERNAL
+				R.id.rbCustomLocation -> SyncedFileLocation.CUSTOM
 				else -> null
 			})
 			.setIsUsingExistingFiles(chkIsUsingExistingFiles.findView().isChecked)
@@ -167,10 +171,13 @@ class EditClientSettingsActivity : AppCompatActivity(), View.OnClickListener, Im
 		chkIsUsingLocalConnectionForSync.findView().isChecked = result.isSyncLocalConnectionsOnly
 		chkIsWakeOnLanEnabled.findView().isChecked = result.isWakeOnLanEnabled
 
-		val syncFilesRadioGroup = rgSyncFileOptions.findView()
-		syncFilesRadioGroup.check(when (result.syncedFileLocation) {
+		val customSyncPath = result.customSyncedFilesPath
+		if (customSyncPath != null && customSyncPath.isNotEmpty()) txtSyncPath.findView().text = customSyncPath
+
+		rgSyncFileOptions.findView().check(when (result.syncedFileLocation) {
 			SyncedFileLocation.EXTERNAL -> R.id.rbPublicLocation
 			SyncedFileLocation.INTERNAL -> R.id.rbPrivateToApp
+			SyncedFileLocation.CUSTOM -> R.id.rbCustomLocation
 			else -> -1
 		})
 
