@@ -1,4 +1,4 @@
-FROM gradle:7.1.1-jdk11
+FROM gradle:7.3.3-jdk11
 
 # Install system dependencies
 RUN apt-get update -qq && apt-get install -qq -y --no-install-recommends \

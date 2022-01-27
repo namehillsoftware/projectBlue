@@ -24,10 +24,13 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.list.IItemListViewContainer
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuChangeHandler
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.list.SearchFilesFragment
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistListFragment
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.*
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library.ViewType
 import com.lasthopesoftware.bluewater.client.browsing.library.views.*
@@ -50,7 +53,6 @@ import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToast
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import org.slf4j.LoggerFactory
-import java.util.*
 
 class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnable {
 	private var connectionRestoreCode: Int? = null
@@ -78,6 +80,40 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 	private val messageHandler by lazy { Handler(mainLooper) }
 
 	private val lazyLocalBroadcastManager = lazy { LocalBroadcastManager.getInstance(this) }
+
+	private val itemListMenuChangeHandler by lazy { ItemListMenuChangeHandler(this) }
+
+	private val specialViews by lazy {
+		val views = arrayOf(
+			SpecialView(
+				ViewType.SearchView,
+				getString(R.string.lbl_search),
+				SearchViewItem(),
+				supportFragmentManager.fragments.firstOrNull { f -> f is SearchFilesFragment }
+					?: SearchFilesFragment()
+			),
+			SpecialView(
+				ViewType.DownloadView,
+				getString(R.string.activeDownloads),
+				DownloadViewItem(),
+				supportFragmentManager.fragments.firstOrNull { f -> f is ActiveFileDownloadsFragment }
+					?: ActiveFileDownloadsFragment()
+			),
+		)
+
+		val ft = supportFragmentManager.beginTransaction()
+		try {
+			for (view in views) {
+				if (!supportFragmentManager.fragments.contains(view.fragment))
+					ft.add(R.id.browseLibraryContainer, view.fragment)
+				ft.hide(view.fragment)
+			}
+		} finally {
+		    ft.commit()
+		}
+
+		views
+	}
 
 	private val drawerToggle = lazy {
 		val selectViewTitle = getText(R.string.select_view_title)
@@ -155,7 +191,9 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 		drawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START)
 		drawerLayout.addDrawerListener(drawerToggle.value)
 
-		specialLibraryItemsListView.findView().onItemClickListener = OnItemClickListener { _, _, _, _ -> updateSelectedView(ViewType.DownloadView, 0) }
+		specialLibraryItemsListView.findView().onItemClickListener = OnItemClickListener { _, _, position, _ ->
+			updateSelectedView(specialViews[position].viewType, position)
+		}
 	}
 
 	override fun onStart() {
@@ -208,7 +246,14 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 
 	private fun displayLibrary(library: Library?) {
 		if (library == null) return
-		specialLibraryItemsListView.findView().adapter = SelectStaticViewAdapter(this, specialViews, library.selectedViewType, library.selectedView)
+
+		specialLibraryItemsListView.findView().adapter = SelectStaticViewAdapter(
+			this,
+			specialViews.map { it.name },
+			library.selectedViewType,
+			library.selectedView
+		)
+
 		run()
 	}
 
@@ -248,11 +293,15 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 		selectViewsListView.findView().onItemClickListener = getOnSelectViewClickListener(items)
 		hideAllViews()
 
-		if (selectedView is DownloadViewItem) {
-			oldTitle = specialViews[0]
+		val specialView = specialViews.firstOrNull { v -> v.viewItem == selectedView }
+		if (specialView != null) {
+			oldTitle = specialView.name
 			supportActionBar?.title = oldTitle
-			val activeFileDownloadsFragment = ActiveFileDownloadsFragment()
-			swapFragments(activeFileDownloadsFragment)
+			val fragment = specialView.fragment
+			if (fragment is SearchFilesFragment)
+				fragment.setOnItemListMenuChangeHandler(itemListMenuChangeHandler)
+
+			swapFragments(fragment)
 			return
 		}
 
@@ -265,13 +314,13 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 
 		if (selectedView is PlaylistViewItem) {
 			val playlistListFragment = PlaylistListFragment()
-			playlistListFragment.setOnItemListMenuChangeHandler(ItemListMenuChangeHandler(this))
+			playlistListFragment.setOnItemListMenuChangeHandler(itemListMenuChangeHandler)
 			swapFragments(playlistListFragment)
 			return
 		}
 
 		val browseLibraryViewsFragment = BrowseLibraryViewsFragment()
-		browseLibraryViewsFragment.setOnItemListMenuChangeHandler(ItemListMenuChangeHandler(this))
+		browseLibraryViewsFragment.setOnItemListMenuChangeHandler(itemListMenuChangeHandler)
 		swapFragments(browseLibraryViewsFragment)
 	}
 
@@ -339,8 +388,18 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 	private fun swapFragments(newFragment: Fragment) {
 		val ft = supportFragmentManager.beginTransaction()
 		try {
-			activeFragment?.also { ft.remove(it) }
+			if (specialViews.any { v -> v.fragment == activeFragment})
+				activeFragment?.also(ft::hide)
+			else
+				activeFragment?.also(ft::remove)
+
+			if (specialViews.any { v -> v.fragment == newFragment }) {
+				ft.show(newFragment)
+				return
+			}
+
 			ft.add(R.id.browseLibraryContainer, newFragment)
+			ft.show(newFragment)
 		} finally {
 			ft.commit()
 			activeFragment = newFragment
@@ -367,12 +426,14 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 		if (lazyLocalBroadcastManager.isInitialized())
 			lazyLocalBroadcastManager.value.unregisterReceiver(connectionSettingsUpdatedReceiver)
 
+
+
 		super.onDestroy()
 	}
 
+	private class SpecialView(val viewType: ViewType, val name: String, val viewItem: ViewItem, val fragment: Fragment)
+
 	companion object {
-		@JvmField
-		val showDownloadsAction = MagicPropertyBuilder.buildMagicPropertyName<BrowserEntryActivity>("showDownloadsAction")
-		private val specialViews = listOf("Active Downloads")
+		val showDownloadsAction by lazy { MagicPropertyBuilder.buildMagicPropertyName<BrowserEntryActivity>("showDownloadsAction") }
 	}
 }

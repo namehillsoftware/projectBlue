@@ -144,6 +144,6 @@ data class Library(
 
 	@Keep
 	enum class ViewType {
-		StandardServerView, PlaylistView, DownloadView
+		StandardServerView, PlaylistView, DownloadView, SearchView
 	}
 }

@@ -4,7 +4,6 @@ import android.content.Context
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import com.lasthopesoftware.bluewater.R
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.fragment.adapter.viewholder.ActiveFileDownloadsViewHolder
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFileDiffer
 import com.lasthopesoftware.bluewater.shared.android.adapters.DeferredListAdapter

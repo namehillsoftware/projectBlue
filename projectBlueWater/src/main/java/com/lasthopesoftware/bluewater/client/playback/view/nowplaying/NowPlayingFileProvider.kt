@@ -17,7 +17,6 @@ class NowPlayingFileProvider private constructor(private val nowPlayingRepositor
 			.then { np -> if (np.playlist.size > 0) np.playlist[np.playlistPosition] else null }
 
 	companion object {
-		@JvmStatic
 		fun fromActiveLibrary(context: Context): Promise<NowPlayingFileProvider?> {
 			val libraryRepository = LibraryRepository(context)
 			val applicationSettingsRepository = context.getApplicationSettingsRepository()
