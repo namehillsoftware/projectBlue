@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.shared.android.view
 
 import android.app.Activity
-import android.app.SearchManager
 import android.content.Context
 import android.content.Intent
 import android.graphics.Typeface
@@ -10,7 +9,6 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import androidx.annotation.IntDef
-import androidx.appcompat.widget.SearchView
 import androidx.core.app.NavUtils
 import androidx.core.app.TaskStackBuilder
 import androidx.core.content.ContextCompat
@@ -20,9 +18,6 @@ import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity
 object ViewUtils {
     fun Activity.buildStandardMenu(menu: Menu): Boolean {
         menuInflater.inflate(R.menu.menu_blue_water, menu)
-        val searchManager = getSystemService(Context.SEARCH_SERVICE) as SearchManager
-        val searchView = menu.findItem(R.id.search).actionView as SearchView
-        searchView.setSearchableInfo(searchManager.getSearchableInfo(componentName))
         return true
     }
 
