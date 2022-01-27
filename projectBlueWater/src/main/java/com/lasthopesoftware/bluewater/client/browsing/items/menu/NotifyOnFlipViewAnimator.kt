@@ -1,32 +1,24 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.menu;
+package com.lasthopesoftware.bluewater.client.browsing.items.menu
 
-import android.content.Context;
-import android.util.AttributeSet;
-import android.widget.ViewAnimator;
+import android.content.Context
+import android.util.AttributeSet
+import android.widget.ViewAnimator
 
 /**
  * Created by david on 10/28/15.
  */
-public class NotifyOnFlipViewAnimator extends ViewAnimator {
+class NotifyOnFlipViewAnimator : ViewAnimator {
+    private var onViewChangedListener: OnViewChangedListener? = null
 
-    private OnViewChangedListener onViewChangedListener;
+    constructor(context: Context) : super(context)
+	constructor(context: Context, attrs: AttributeSet) : super(context, attrs)
 
-    public NotifyOnFlipViewAnimator(Context context) {
-        super(context);
+	override fun setDisplayedChild(whichChild: Int) {
+        super.setDisplayedChild(whichChild)
+        onViewChangedListener?.onViewChanged(this)
     }
 
-    public NotifyOnFlipViewAnimator(Context context, AttributeSet attrs) {
-        super(context, attrs);
-    }
-
-    @Override
-    public void setDisplayedChild(final int whichChild) {
-        super.setDisplayedChild(whichChild);
-
-        onViewChangedListener.onViewChanged(this);
-    }
-
-    public void setViewChangedListener(OnViewChangedListener onViewChangedListener) {
-        this.onViewChangedListener = onViewChangedListener;
+    fun setViewChangedListener(onViewChangedListener: OnViewChangedListener?) {
+        this.onViewChangedListener = onViewChangedListener
     }
 }
