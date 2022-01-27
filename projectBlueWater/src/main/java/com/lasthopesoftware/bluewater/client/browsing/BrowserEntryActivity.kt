@@ -297,10 +297,11 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 		if (specialView != null) {
 			oldTitle = specialView.name
 			supportActionBar?.title = oldTitle
-			if (specialView.fragment is SearchFilesFragment)
-				specialView.fragment.setOnItemListMenuChangeHandler(itemListMenuChangeHandler)
+			val fragment = specialView.fragment
+			if (fragment is SearchFilesFragment)
+				fragment.setOnItemListMenuChangeHandler(itemListMenuChangeHandler)
 
-			swapFragments(specialView.fragment)
+			swapFragments(fragment)
 			return
 		}
 
