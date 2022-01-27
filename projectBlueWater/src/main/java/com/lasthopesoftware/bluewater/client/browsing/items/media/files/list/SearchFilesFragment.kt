@@ -1,0 +1,120 @@
+package com.lasthopesoftware.bluewater.client.browsing.items.media.files.list
+
+import android.os.Bundle
+import android.view.KeyEvent
+import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
+import android.widget.EditText
+import android.widget.ProgressBar
+import android.widget.RelativeLayout
+import android.widget.ViewAnimator
+import androidx.fragment.app.Fragment
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import androidx.recyclerview.widget.DividerItemDecoration
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.lasthopesoftware.bluewater.R
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.FileProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.SearchFileParameterProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.menu.FileListItemMenuBuilder
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.menu.FileListItemNowPlayingRegistrar
+import com.lasthopesoftware.bluewater.client.browsing.items.menu.handlers.ViewChangedHandler
+import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
+import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
+import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.NowPlayingFileProvider.Companion.fromActiveLibrary
+import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.NowPlayingFloatingActionButton
+import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
+import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
+
+class SearchFilesFragment : Fragment(), View.OnKeyListener {
+
+	private var itemListMenuChangeHandler: IItemListMenuChangeHandler? = null
+
+	private val lazyFileProvider = lazy {
+		val stringListProvider = FileStringListProvider(SelectedConnectionProvider(requireContext()))
+		FileProvider(stringListProvider)
+	}
+
+	private var viewAnimator: ViewAnimator? = null
+	private var nowPlayingFloatingActionButton: NowPlayingFloatingActionButton? = null
+
+	private var recyclerView: RecyclerView? = null
+	private var progressBar: ProgressBar? = null
+	private var layout: RelativeLayout? = null
+	private var searchPrompt: EditText? = null
+
+	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
+		layout = (inflater.inflate(R.layout.asynchronous_search_view, container, false) as RelativeLayout).apply {
+			progressBar = findViewById(R.id.recyclerLoadingProgress)
+			recyclerView = findViewById(R.id.loadedRecyclerView)
+			searchPrompt = findViewById<EditText?>(R.id.searchPrompt)?.apply {
+				setOnKeyListener(this@SearchFilesFragment)
+				setImeActionLabel(context.getString(R.string.lbl_search), KeyEvent.KEYCODE_ENTER)
+			}
+		}
+		return layout
+	}
+
+	override fun onKey(v: View?, keyCode: Int, event: KeyEvent?): Boolean {
+		if (keyCode != KeyEvent.KEYCODE_ENTER || event?.action != KeyEvent.ACTION_UP) return false
+
+		searchPrompt?.text.toString().also(::doSearch)
+		return true
+	}
+
+	private fun doSearch(query: String) {
+		val context = context ?: return
+
+		recyclerView?.visibility = View.VISIBLE
+		progressBar?.visibility = View.INVISIBLE
+
+		(object : Runnable {
+			override fun run() {
+				val parameters = SearchFileParameterProvider.getFileListParameters(query)
+				lazyFileProvider.value.promiseFiles(FileListParameters.Options.None, *parameters)
+					.eventually { serviceFiles ->
+						fromActiveLibrary(context)
+							.eventually(LoopedInPromise.response({
+								it
+									?.let { nowPlayingFileProvider ->
+										FileListItemMenuBuilder(
+											serviceFiles,
+											nowPlayingFileProvider,
+											FileListItemNowPlayingRegistrar(LocalBroadcastManager.getInstance(context))
+										)
+									}
+									?.also { fileListItemMenuBuilder ->
+										itemListMenuChangeHandler?.apply {
+											fileListItemMenuBuilder.setOnViewChangedListener(
+												ViewChangedHandler()
+													.setOnViewChangedListener(this)
+													.setOnAnyMenuShown(this)
+													.setOnAllMenusHidden(this)
+											)
+										}
+
+										recyclerView?.apply {
+											adapter = FileListAdapter(serviceFiles, fileListItemMenuBuilder)
+											val newLayoutManager = LinearLayoutManager(context)
+											layoutManager = newLayoutManager
+											addItemDecoration(DividerItemDecoration(context, newLayoutManager.orientation))
+											visibility = View.VISIBLE
+										}
+										progressBar?.visibility = View.INVISIBLE
+									}
+							}, context))
+					}
+					.excuse(HandleViewIoException(context, this))
+					.eventuallyExcuse(LoopedInPromise.response(UnexpectedExceptionToasterResponse(context), context))
+			}
+		}).run()
+	}
+
+	fun setOnItemListMenuChangeHandler(itemListMenuChangeHandler: IItemListMenuChangeHandler?) {
+		this.itemListMenuChangeHandler = itemListMenuChangeHandler
+	}
+}
