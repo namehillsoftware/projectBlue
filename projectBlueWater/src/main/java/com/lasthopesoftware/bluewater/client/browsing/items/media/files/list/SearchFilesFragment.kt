@@ -8,7 +8,6 @@ import android.view.ViewGroup
 import android.widget.EditText
 import android.widget.ProgressBar
 import android.widget.RelativeLayout
-import android.widget.ViewAnimator
 import androidx.fragment.app.Fragment
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.DividerItemDecoration
@@ -26,7 +25,6 @@ import com.lasthopesoftware.bluewater.client.browsing.items.menu.handlers.ViewCh
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.NowPlayingFileProvider.Companion.fromActiveLibrary
-import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.NowPlayingFloatingActionButton
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 
@@ -39,16 +37,12 @@ class SearchFilesFragment : Fragment(), View.OnKeyListener {
 		FileProvider(stringListProvider)
 	}
 
-	private var viewAnimator: ViewAnimator? = null
-	private var nowPlayingFloatingActionButton: NowPlayingFloatingActionButton? = null
-
 	private var recyclerView: RecyclerView? = null
 	private var progressBar: ProgressBar? = null
-	private var layout: RelativeLayout? = null
 	private var searchPrompt: EditText? = null
 
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-		layout = (inflater.inflate(R.layout.asynchronous_search_view, container, false) as RelativeLayout).apply {
+		return (inflater.inflate(R.layout.asynchronous_search_view, container, false) as RelativeLayout).apply {
 			progressBar = findViewById(R.id.recyclerLoadingProgress)
 			recyclerView = findViewById(R.id.loadedRecyclerView)
 			searchPrompt = findViewById<EditText?>(R.id.searchPrompt)?.apply {
@@ -56,7 +50,6 @@ class SearchFilesFragment : Fragment(), View.OnKeyListener {
 				setImeActionLabel(context.getString(R.string.lbl_search), KeyEvent.KEYCODE_ENTER)
 			}
 		}
-		return layout
 	}
 
 	override fun onKey(v: View?, keyCode: Int, event: KeyEvent?): Boolean {

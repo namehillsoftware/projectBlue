@@ -24,10 +24,13 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.list.IItemListViewContainer
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuChangeHandler
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.list.SearchFilesFragment
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistListFragment
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.*
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library.ViewType
 import com.lasthopesoftware.bluewater.client.browsing.library.views.*
@@ -50,7 +53,6 @@ import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToast
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import org.slf4j.LoggerFactory
-import java.util.*
 
 class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnable {
 	private var connectionRestoreCode: Int? = null
@@ -208,7 +210,14 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 
 	private fun displayLibrary(library: Library?) {
 		if (library == null) return
-		specialLibraryItemsListView.findView().adapter = SelectStaticViewAdapter(this, specialViews, library.selectedViewType, library.selectedView)
+
+		specialLibraryItemsListView.findView().adapter = SelectStaticViewAdapter(
+			this,
+			specialViews,
+			library.selectedViewType,
+			library.selectedView
+		)
+
 		run()
 	}
 
@@ -249,10 +258,17 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 		hideAllViews()
 
 		if (selectedView is DownloadViewItem) {
-			oldTitle = specialViews[0]
+			oldTitle = specialViews[1]
 			supportActionBar?.title = oldTitle
 			val activeFileDownloadsFragment = ActiveFileDownloadsFragment()
 			swapFragments(activeFileDownloadsFragment)
+			return
+		}
+
+		if (selectedView is SearchViewItem) {
+			oldTitle = specialViews[0]
+			supportActionBar?.title = oldTitle
+			swapFragments(SearchFilesFragment())
 			return
 		}
 
@@ -371,8 +387,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 	}
 
 	companion object {
-		@JvmField
-		val showDownloadsAction = MagicPropertyBuilder.buildMagicPropertyName<BrowserEntryActivity>("showDownloadsAction")
-		private val specialViews = listOf("Active Downloads")
+		val showDownloadsAction by lazy { MagicPropertyBuilder.buildMagicPropertyName<BrowserEntryActivity>("showDownloadsAction") }
+		private val specialViews by lazy { listOf("Search", "Active Downloads") }
 	}
 }
