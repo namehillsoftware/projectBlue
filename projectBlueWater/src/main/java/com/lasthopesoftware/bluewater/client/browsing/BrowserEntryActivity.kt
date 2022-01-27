@@ -157,7 +157,9 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 		drawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START)
 		drawerLayout.addDrawerListener(drawerToggle.value)
 
-		specialLibraryItemsListView.findView().onItemClickListener = OnItemClickListener { _, _, _, _ -> updateSelectedView(ViewType.DownloadView, 0) }
+		specialLibraryItemsListView.findView().onItemClickListener = OnItemClickListener { _, _, position, _ ->
+			updateSelectedView(specialViews[position].first, position)
+		}
 	}
 
 	override fun onStart() {
@@ -213,7 +215,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 
 		specialLibraryItemsListView.findView().adapter = SelectStaticViewAdapter(
 			this,
-			specialViews,
+			specialViews.map { it.second },
 			library.selectedViewType,
 			library.selectedView
 		)
@@ -258,7 +260,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 		hideAllViews()
 
 		if (selectedView is DownloadViewItem) {
-			oldTitle = specialViews[1]
+			oldTitle = specialViews[1].second
 			supportActionBar?.title = oldTitle
 			val activeFileDownloadsFragment = ActiveFileDownloadsFragment()
 			swapFragments(activeFileDownloadsFragment)
@@ -266,7 +268,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 		}
 
 		if (selectedView is SearchViewItem) {
-			oldTitle = specialViews[0]
+			oldTitle = specialViews[0].second
 			supportActionBar?.title = oldTitle
 			val searchFilesFragment = SearchFilesFragment()
 			searchFilesFragment.setOnItemListMenuChangeHandler(ItemListMenuChangeHandler(this))
@@ -390,6 +392,11 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 
 	companion object {
 		val showDownloadsAction by lazy { MagicPropertyBuilder.buildMagicPropertyName<BrowserEntryActivity>("showDownloadsAction") }
-		private val specialViews by lazy { listOf("Search", "Active Downloads") }
+		private val specialViews by lazy {
+			arrayOf(
+				Pair(ViewType.SearchView, "Search"),
+				Pair(ViewType.DownloadView, "Active Downloads"),
+			)
+		}
 	}
 }

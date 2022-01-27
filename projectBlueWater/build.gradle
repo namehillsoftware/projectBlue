@@ -71,16 +71,12 @@ android {
 			signingConfig (isSignedExternally() ? signingConfigs.release : signingConfig)
         }
     }
-
     packagingOptions {
-        exclude 'META-INF/LICENSE.txt'
-        exclude 'META-INF/NOTICE.txt'
-		exclude 'META-INF/INDEX.LIST'
+        resources {
+            excludes += ['META-INF/LICENSE.txt', 'META-INF/NOTICE.txt', 'META-INF/INDEX.LIST']
+        }
     }
 
-    lintOptions {
-        abortOnError false
-    }
 
     defaultConfig {
 
@@ -98,6 +94,9 @@ android {
 			}
 		}
 	}
+    lint {
+        abortOnError false
+    }
 }
 
 def getGeneratedVersionCode() {
