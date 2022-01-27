@@ -27,12 +27,17 @@ import com.lasthopesoftware.bluewater.client.browsing.items.menu.handlers.ViewCh
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.NowPlayingFileProvider.Companion.fromActiveLibrary
+import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
 
-class SearchFilesFragment : Fragment(), TextView.OnEditorActionListener {
+class SearchFilesFragment : Fragment(), View.OnKeyListener, TextView.OnEditorActionListener {
+
+	companion object {
+		private val searchPromptKey by lazy { MagicPropertyBuilder.buildMagicPropertyName<SearchFilesFragment>("searchPromptKey") }
+	}
 
 	private var itemListMenuChangeHandler: IItemListMenuChangeHandler? = null
 
@@ -51,6 +56,7 @@ class SearchFilesFragment : Fragment(), TextView.OnEditorActionListener {
 	private var recyclerView: RecyclerView? = null
 	private var progressBar: ProgressBar? = null
 	private var searchPrompt: EditText? = null
+	private var currentSearchPrompt: String? = null
 
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
 		return (inflater.inflate(R.layout.asynchronous_search_view, container, false) as RelativeLayout).apply {
@@ -58,10 +64,18 @@ class SearchFilesFragment : Fragment(), TextView.OnEditorActionListener {
 			recyclerView = findViewById(R.id.loadedRecyclerView)
 			searchPrompt = findViewById<EditText?>(R.id.searchPrompt)?.apply {
 				setOnEditorActionListener(this@SearchFilesFragment)
+				setOnKeyListener(this@SearchFilesFragment)
 				imeOptions = EditorInfo.IME_ACTION_SEARCH
 				setImeActionLabel(context.getString(R.string.lbl_search), KeyEvent.KEYCODE_ENTER)
 			}
 		}
+	}
+
+	override fun onKey(v: View?, keyCode: Int, event: KeyEvent?): Boolean {
+		if (keyCode != KeyEvent.KEYCODE_ENTER || event?.action != KeyEvent.ACTION_UP) return false
+
+		searchPrompt?.text.toString().also(::doSearch)
+		return true
 	}
 
 	override fun onEditorAction(v: TextView?, actionId: Int, event: KeyEvent?): Boolean {
@@ -71,7 +85,23 @@ class SearchFilesFragment : Fragment(), TextView.OnEditorActionListener {
 		return true
 	}
 
+	override fun onSaveInstanceState(outState: Bundle) {
+		super.onSaveInstanceState(outState)
+
+		outState.putString(searchPromptKey, currentSearchPrompt)
+	}
+
+	override fun onViewStateRestored(savedInstanceState: Bundle?) {
+		super.onViewStateRestored(savedInstanceState)
+
+		savedInstanceState?.getString(searchPromptKey)?.also{
+			searchPrompt?.setText(it)
+			doSearch(it)
+		}
+	}
+
 	private fun doSearch(query: String) {
+		currentSearchPrompt = query
 		currentCancellationProxy?.run()
 		val newCancellationProxy = CancellationProxy()
 		currentCancellationProxy = newCancellationProxy
