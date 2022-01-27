@@ -90,7 +90,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 				getString(R.string.lbl_search),
 				SearchViewItem(),
 				supportFragmentManager.fragments.firstOrNull { f -> f is SearchFilesFragment }
-					?: SearchFilesFragment().apply { setOnItemListMenuChangeHandler(itemListMenuChangeHandler) }
+					?: SearchFilesFragment()
 			),
 			SpecialView(
 				ViewType.DownloadView,
@@ -297,6 +297,9 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 		if (specialView != null) {
 			oldTitle = specialView.name
 			supportActionBar?.title = oldTitle
+			if (specialView.fragment is SearchFilesFragment)
+				specialView.fragment.setOnItemListMenuChangeHandler(itemListMenuChangeHandler)
+
 			swapFragments(specialView.fragment)
 			return
 		}
