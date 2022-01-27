@@ -74,6 +74,8 @@ class SearchFilesFragment : Fragment(), View.OnKeyListener {
 
 		(object : Runnable {
 			override fun run() {
+				if (newCancellationProxy.isCancelled) return
+
 				val parameters = SearchFileParameterProvider.getFileListParameters(query)
 				lazyFileProvider.value
 					.promiseFiles(FileListParameters.Options.None, *parameters)

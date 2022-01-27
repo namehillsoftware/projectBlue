@@ -268,7 +268,9 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 		if (selectedView is SearchViewItem) {
 			oldTitle = specialViews[0]
 			supportActionBar?.title = oldTitle
-			swapFragments(SearchFilesFragment())
+			val searchFilesFragment = SearchFilesFragment()
+			searchFilesFragment.setOnItemListMenuChangeHandler(ItemListMenuChangeHandler(this))
+			swapFragments(searchFilesFragment)
 			return
 		}
 
