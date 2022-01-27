@@ -27,6 +27,8 @@ import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnect
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.NowPlayingFileProvider.Companion.fromActiveLibrary
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
 
 class SearchFilesFragment : Fragment(), View.OnKeyListener {
 
@@ -37,6 +39,7 @@ class SearchFilesFragment : Fragment(), View.OnKeyListener {
 		FileProvider(stringListProvider)
 	}
 
+	private var currentCancellationProxy: CancellationProxy? = null
 	private var recyclerView: RecyclerView? = null
 	private var progressBar: ProgressBar? = null
 	private var searchPrompt: EditText? = null
@@ -62,17 +65,25 @@ class SearchFilesFragment : Fragment(), View.OnKeyListener {
 	private fun doSearch(query: String) {
 		val context = context ?: return
 
+		currentCancellationProxy?.run()
+		val newCancellationProxy = CancellationProxy()
+		currentCancellationProxy = newCancellationProxy
+
 		recyclerView?.visibility = View.VISIBLE
 		progressBar?.visibility = View.INVISIBLE
 
 		(object : Runnable {
 			override fun run() {
 				val parameters = SearchFileParameterProvider.getFileListParameters(query)
-				lazyFileProvider.value.promiseFiles(FileListParameters.Options.None, *parameters)
+				lazyFileProvider.value
+					.promiseFiles(FileListParameters.Options.None, *parameters)
+					.also(newCancellationProxy::doCancel)
 					.eventually { serviceFiles ->
-						fromActiveLibrary(context)
+						if (newCancellationProxy.isCancelled) Unit.toPromise()
+						else fromActiveLibrary(context)
 							.eventually(LoopedInPromise.response({
-								it
+								if (newCancellationProxy.isCancelled) Unit
+								else it
 									?.let { nowPlayingFileProvider ->
 										FileListItemMenuBuilder(
 											serviceFiles,
