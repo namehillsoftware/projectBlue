@@ -45,6 +45,8 @@ class SearchFilesFragment : Fragment(), TextView.OnEditorActionListener {
 		FileListItemNowPlayingRegistrar(LocalBroadcastManager.getInstance(requireContext()))
 	}
 
+	private val nowPlayingFileProvider by lazy { fromActiveLibrary(requireContext()) }
+
 	private var currentCancellationProxy: CancellationProxy? = null
 	private var recyclerView: RecyclerView? = null
 	private var progressBar: ProgressBar? = null
@@ -70,8 +72,6 @@ class SearchFilesFragment : Fragment(), TextView.OnEditorActionListener {
 	}
 
 	private fun doSearch(query: String) {
-		val context = context ?: return
-
 		currentCancellationProxy?.run()
 		val newCancellationProxy = CancellationProxy()
 		currentCancellationProxy = newCancellationProxy
@@ -79,55 +79,58 @@ class SearchFilesFragment : Fragment(), TextView.OnEditorActionListener {
 		recyclerView?.visibility = View.VISIBLE
 		progressBar?.visibility = View.INVISIBLE
 
-		(object : Runnable {
-			override fun run() {
-				if (newCancellationProxy.isCancelled) return
-
-				val parameters = SearchFileParameterProvider.getFileListParameters(query)
-				fileProvider
-					.promiseFiles(FileListParameters.Options.None, *parameters)
-					.also(newCancellationProxy::doCancel)
-					.eventually { serviceFiles ->
-						if (newCancellationProxy.isCancelled) Unit.toPromise()
-						else fromActiveLibrary(context)
-							.eventually(LoopedInPromise.response({
-								if (newCancellationProxy.isCancelled) Unit
-								else it
-									?.let { nowPlayingFileProvider ->
-										FileListItemMenuBuilder(
-											serviceFiles,
-											nowPlayingFileProvider,
-											nowPlayingRegistrar
-										)
-									}
-									?.also { fileListItemMenuBuilder ->
-										itemListMenuChangeHandler?.apply {
-											fileListItemMenuBuilder.setOnViewChangedListener(
-												ViewChangedHandler()
-													.setOnViewChangedListener(this)
-													.setOnAnyMenuShown(this)
-													.setOnAllMenusHidden(this)
-											)
-										}
-
-										recyclerView?.apply {
-											adapter = FileListAdapter(serviceFiles, fileListItemMenuBuilder)
-											val newLayoutManager = LinearLayoutManager(context)
-											layoutManager = newLayoutManager
-											addItemDecoration(DividerItemDecoration(context, newLayoutManager.orientation))
-											visibility = View.VISIBLE
-										}
-										progressBar?.visibility = View.INVISIBLE
-									}
-							}, context))
-					}
-					.excuse(HandleViewIoException(context, this))
-					.eventuallyExcuse(LoopedInPromise.response(UnexpectedExceptionToasterResponse(context), context))
-			}
-		}).run()
+		SearchAction(query, newCancellationProxy).run()
 	}
 
 	fun setOnItemListMenuChangeHandler(itemListMenuChangeHandler: IItemListMenuChangeHandler?) {
 		this.itemListMenuChangeHandler = itemListMenuChangeHandler
+	}
+
+	private inner class SearchAction(private val query: String, private val cancellationProxy: CancellationProxy) : Runnable {
+		override fun run() {
+			val context = context ?: return
+			if (cancellationProxy.isCancelled) return
+
+			val parameters = SearchFileParameterProvider.getFileListParameters(query)
+			fileProvider
+				.promiseFiles(FileListParameters.Options.None, *parameters)
+				.also(cancellationProxy::doCancel)
+				.eventually { serviceFiles ->
+					if (cancellationProxy.isCancelled) Unit.toPromise()
+					else nowPlayingFileProvider
+						.eventually(LoopedInPromise.response({
+							if (cancellationProxy.isCancelled) Unit
+							else it
+								?.let { nowPlayingFileProvider ->
+									FileListItemMenuBuilder(
+										serviceFiles,
+										nowPlayingFileProvider,
+										nowPlayingRegistrar
+									)
+								}
+								?.also { fileListItemMenuBuilder ->
+									itemListMenuChangeHandler?.apply {
+										fileListItemMenuBuilder.setOnViewChangedListener(
+											ViewChangedHandler()
+												.setOnViewChangedListener(this)
+												.setOnAnyMenuShown(this)
+												.setOnAllMenusHidden(this)
+										)
+									}
+
+									recyclerView?.apply {
+										adapter = FileListAdapter(serviceFiles, fileListItemMenuBuilder)
+										val newLayoutManager = LinearLayoutManager(context)
+										layoutManager = newLayoutManager
+										addItemDecoration(DividerItemDecoration(context, newLayoutManager.orientation))
+										visibility = View.VISIBLE
+									}
+									progressBar?.visibility = View.INVISIBLE
+								}
+						}, context))
+				}
+				.excuse(HandleViewIoException(context, this))
+				.eventuallyExcuse(LoopedInPromise.response(UnexpectedExceptionToasterResponse(context), context))
+		}
 	}
 }
