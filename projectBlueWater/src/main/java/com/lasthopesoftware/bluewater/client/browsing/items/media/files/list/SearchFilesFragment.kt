@@ -5,9 +5,11 @@ import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.view.inputmethod.EditorInfo
 import android.widget.EditText
 import android.widget.ProgressBar
 import android.widget.RelativeLayout
+import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.DividerItemDecoration
@@ -30,7 +32,7 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
 
-class SearchFilesFragment : Fragment(), View.OnKeyListener {
+class SearchFilesFragment : Fragment(), TextView.OnEditorActionListener {
 
 	private var itemListMenuChangeHandler: IItemListMenuChangeHandler? = null
 
@@ -53,16 +55,17 @@ class SearchFilesFragment : Fragment(), View.OnKeyListener {
 			progressBar = findViewById(R.id.recyclerLoadingProgress)
 			recyclerView = findViewById(R.id.loadedRecyclerView)
 			searchPrompt = findViewById<EditText?>(R.id.searchPrompt)?.apply {
-				setOnKeyListener(this@SearchFilesFragment)
+				setOnEditorActionListener(this@SearchFilesFragment)
+				imeOptions = EditorInfo.IME_ACTION_SEARCH
 				setImeActionLabel(context.getString(R.string.lbl_search), KeyEvent.KEYCODE_ENTER)
 			}
 		}
 	}
 
-	override fun onKey(v: View?, keyCode: Int, event: KeyEvent?): Boolean {
-		if (keyCode != KeyEvent.KEYCODE_ENTER || event?.action != KeyEvent.ACTION_UP) return false
+	override fun onEditorAction(v: TextView?, actionId: Int, event: KeyEvent?): Boolean {
+		if (actionId != EditorInfo.IME_ACTION_SEARCH) return false
 
-		searchPrompt?.text.toString().also(::doSearch)
+		v?.text.toString().also(::doSearch)
 		return true
 	}
 

@@ -24,6 +24,7 @@
             android:ems="10"
             android:hint="@string/lbl_search_hint"
             android:importantForAutofill="no"
+            android:imeOptions="actionSearch"
             android:inputType="text">
             <requestFocus />
         </EditText>
