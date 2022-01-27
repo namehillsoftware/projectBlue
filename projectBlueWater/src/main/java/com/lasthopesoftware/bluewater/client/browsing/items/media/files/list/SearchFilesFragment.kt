@@ -34,9 +34,13 @@ class SearchFilesFragment : Fragment(), View.OnKeyListener {
 
 	private var itemListMenuChangeHandler: IItemListMenuChangeHandler? = null
 
-	private val lazyFileProvider = lazy {
+	private val fileProvider by lazy {
 		val stringListProvider = FileStringListProvider(SelectedConnectionProvider(requireContext()))
 		FileProvider(stringListProvider)
+	}
+
+	private val nowPlayingRegistrar by lazy {
+		FileListItemNowPlayingRegistrar(LocalBroadcastManager.getInstance(requireContext()))
 	}
 
 	private var currentCancellationProxy: CancellationProxy? = null
@@ -77,7 +81,7 @@ class SearchFilesFragment : Fragment(), View.OnKeyListener {
 				if (newCancellationProxy.isCancelled) return
 
 				val parameters = SearchFileParameterProvider.getFileListParameters(query)
-				lazyFileProvider.value
+				fileProvider
 					.promiseFiles(FileListParameters.Options.None, *parameters)
 					.also(newCancellationProxy::doCancel)
 					.eventually { serviceFiles ->
@@ -90,7 +94,7 @@ class SearchFilesFragment : Fragment(), View.OnKeyListener {
 										FileListItemMenuBuilder(
 											serviceFiles,
 											nowPlayingFileProvider,
-											FileListItemNowPlayingRegistrar(LocalBroadcastManager.getInstance(context))
+											nowPlayingRegistrar
 										)
 									}
 									?.also { fileListItemMenuBuilder ->
