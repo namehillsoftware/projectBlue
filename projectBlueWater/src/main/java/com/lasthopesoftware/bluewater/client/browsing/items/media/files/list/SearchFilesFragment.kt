@@ -60,18 +60,18 @@ class SearchFilesFragment : Fragment(), View.OnKeyListener, TextView.OnEditorAct
 	private var searchPrompt: EditText? = null
 	private var currentSearchPrompt: String? = null
 
-	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-		return (inflater.inflate(R.layout.asynchronous_search_view, container, false) as RelativeLayout).apply {
+	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View =
+		(inflater.inflate(R.layout.asynchronous_search_view, container, false) as RelativeLayout).apply {
 			progressBar = findViewById(R.id.recyclerLoadingProgress)
 			recyclerView = findViewById(R.id.loadedRecyclerView)
 			searchPrompt = findViewById<EditText?>(R.id.searchPrompt)?.apply {
-				setOnEditorActionListener(this@SearchFilesFragment)
-				setOnKeyListener(this@SearchFilesFragment)
+				this@SearchFilesFragment
+					.also(::setOnEditorActionListener)
+					.also(::setOnKeyListener)
 				imeOptions = EditorInfo.IME_ACTION_SEARCH
 				setImeActionLabel(context.getString(R.string.lbl_search), KeyEvent.KEYCODE_ENTER)
 			}
 		}
-	}
 
 	override fun onKey(v: View?, keyCode: Int, event: KeyEvent?): Boolean {
 		if (keyCode != KeyEvent.KEYCODE_ENTER || event?.action != KeyEvent.ACTION_UP) return false
@@ -89,6 +89,7 @@ class SearchFilesFragment : Fragment(), View.OnKeyListener, TextView.OnEditorAct
 			doSearch(text.toString())
 			ViewCompat.getWindowInsetsController(this)?.hide(WindowInsetsCompat.Type.ime())
 		}
+
 		return true
 	}
 
