@@ -16,6 +16,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
@@ -93,6 +94,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 	private val pauseButton = LazyViewFinder<ImageButton>(this, R.id.btnPause)
 	private val songRating = LazyViewFinder<RatingBar>(this, R.id.rbSongRating)
 	private val contentView = LazyViewFinder<RelativeLayout>(this, R.id.rlCtlNowPlaying)
+	private val bottomSheet = LazyViewFinder<RelativeLayout>(this, R.id.nowPlayingBottomSheet)
 	private val songProgressBar = LazyViewFinder<ProgressBar>(this, R.id.pbNowPlaying)
 	private val nowPlayingImageViewFinder = LazyViewFinder<ImageView>(this, R.id.imgNowPlaying)
 	private val nowPlayingArtist = LazyViewFinder<TextView>(this, R.id.tvSongArtist)
@@ -102,6 +104,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 	private val loadingProgressBar = LazyViewFinder<ProgressBar>(this, R.id.pbLoadingImg)
 	private val viewNowPlayingListButton = LazyViewFinder<ImageButton>(this, R.id.viewNowPlayingListButton)
 	private val readOnlyConnectionLabel = LazyViewFinder<TextView>(this, R.id.readOnlyConnectionLabel)
+	private val nowPlayingControlsContainer = LazyViewFinder<RelativeLayout>(this, R.id.nowPlayingControlsContainer)
 
 	private val localBroadcastManager by lazy { LocalBroadcastManager.getInstance(this) }
 
@@ -315,6 +318,14 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 						}
 						.eventually(LoopedInPromise.response({ updateNowPlayingListViewPosition() }, messageHandler))
 				}
+		}
+
+		val bottomSheet = bottomSheet.findView()
+		bottomSheet.setOnClickListener { showNowPlayingControls() }
+		val bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet)
+		val nowPlayingControls = nowPlayingControlsContainer.findView()
+		nowPlayingControls.post {
+			bottomSheetBehavior.peekHeight = nowPlayingControls.height
 		}
 	}
 
