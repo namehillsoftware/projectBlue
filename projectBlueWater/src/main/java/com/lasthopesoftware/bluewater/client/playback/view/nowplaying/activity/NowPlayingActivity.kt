@@ -1,20 +1,18 @@
 package com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity
 
-import android.content.*
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
 import android.graphics.Bitmap
 import android.os.Bundle
 import android.os.Handler
-import android.view.Surface
 import android.view.View
 import android.view.WindowManager
 import android.widget.*
 import android.widget.ImageView.ScaleType
 import android.widget.RatingBar.OnRatingBarChangeListener
-import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.content.ContextCompat
-import androidx.core.view.GravityCompat
-import androidx.drawerlayout.widget.DrawerLayout
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -103,7 +101,6 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 	private val nowPlayingImageLoading = LazyViewFinder<ImageView>(this, R.id.imgNowPlayingLoading)
 	private val loadingProgressBar = LazyViewFinder<ProgressBar>(this, R.id.pbLoadingImg)
 	private val viewNowPlayingListButton = LazyViewFinder<ImageButton>(this, R.id.viewNowPlayingListButton)
-	private val drawerLayout = LazyViewFinder<DrawerLayout>(this, R.id.nowPlayingDrawer)
 	private val readOnlyConnectionLabel = LazyViewFinder<TextView>(this, R.id.readOnlyConnectionLabel)
 
 	private val localBroadcastManager by lazy { LocalBroadcastManager.getInstance(this) }
@@ -188,31 +185,6 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 	}
 
 	private val lazyDefaultImage by lazy { DefaultImageProvider(this).promiseFileBitmap() }
-
-	private val drawerToggle by lazy {
-		nowPlayingDrawerListView.eventually(LoopedInPromise.response({ lv ->
-			object : ActionBarDrawerToggle(
-				this@NowPlayingActivity,  /* host Activity */
-				drawerLayout.findView(),  /* DrawerLayout object */
-				R.string.drawer_open,  /* "open drawer" description */
-				R.string.drawer_close /* "close drawer" description */
-			) {
-				/** Called when a drawer has settled in a completely closed state.  */
-				override fun onDrawerClosed(view: View) {
-					super.onDrawerClosed(view)
-					isDrawerOpened = false
-				}
-
-				/** Called when a drawer has settled in a completely open state.  */
-				override fun onDrawerOpened(drawerView: View) {
-					super.onDrawerOpened(drawerView)
-					isDrawerOpened = true
-					lv.bringToFront()
-					drawerLayout.findView().requestLayout()
-				}
-			}
-		}, messageHandler))
-	}
 
 	private val onConnectionLostListener = Runnable { WaitForConnectionDialog.show(this) }
 
@@ -334,8 +306,6 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 			updateKeepScreenOnStatus()
 		}
 
-		setupNowPlayingListDrawer()
-
 		nowPlayingRepository.then { npr ->
 			npr.nowPlaying
 				.then { nowPlaying ->
@@ -346,25 +316,6 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 						.eventually(LoopedInPromise.response({ updateNowPlayingListViewPosition() }, messageHandler))
 				}
 		}
-	}
-
-	private fun setupNowPlayingListDrawer() {
-		viewNowPlayingListButton.findView()
-			.setOnClickListener { drawerLayout.findView().openDrawer(GravityCompat.END) }
-		drawerLayout.findView().setScrimColor(ContextCompat.getColor(this, android.R.color.transparent))
-		drawerLayout.findView().setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START)
-		drawerToggle.then(drawerLayout.findView()::addDrawerListener)
-
-		val rotation = windowManager.defaultDisplay.rotation
-		if (rotation != Surface.ROTATION_90) return
-
-		val nowPlayingDrawerContainer = findViewById<LinearLayout>(R.id.nowPlayingDrawerContainer)
-		val newLayoutParams = DrawerLayout.LayoutParams(nowPlayingDrawerContainer.layoutParams)
-		newLayoutParams.gravity = GravityCompat.START
-		nowPlayingDrawerContainer.layoutParams = newLayoutParams
-		viewNowPlayingListButton.findView()
-			.setOnClickListener { drawerLayout.findView().openDrawer(GravityCompat.START) }
-		drawerLayout.findView().setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.END)
 	}
 
 	public override fun onStart() {
@@ -660,10 +611,6 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 
 	override fun onBackPressed() {
 		if (LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator)) return
-		if (isDrawerOpened) {
-			drawerLayout.findView().closeDrawers()
-			return
-		}
 		super.onBackPressed()
 	}
 

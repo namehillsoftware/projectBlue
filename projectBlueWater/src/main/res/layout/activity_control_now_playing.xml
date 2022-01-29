@@ -4,6 +4,7 @@
     android:layout_height="match_parent">
 
     <RelativeLayout
+        android:id="@+id/nowPlayingHeaderContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentTop="true">
@@ -87,97 +88,117 @@
         </LinearLayout>
     </RelativeLayout>
 
-    <LinearLayout
-        android:id="@+id/songRatingLinearLayout"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_above="@+id/llNpButtons"
-        android:layout_centerHorizontal="true"
-        android:orientation="vertical"
-        android:layout_marginBottom="44dp">
-
-        <RatingBar
-            android:id="@+id/rbSongRating"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:max="5"
-            android:rating="0"
-            android:stepSize="1" />
-
-        <TextView
-            android:id="@+id/readOnlyConnectionLabel"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/readOnlyConnection"
-            android:textAppearance="?android:attr/textAppearanceSmall"
-            android:layout_gravity="center_horizontal"/>
-
-    </LinearLayout>
-
-    <ProgressBar
-        android:id="@+id/pbNowPlaying"
-        style="?android:attr/progressBarStyleHorizontal"
+    <SlidingDrawer
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_above="@+id/llNpButtons"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentLeft="true"
-        android:layout_marginBottom="20dp"
-        android:indeterminate="false"
-        android:max="100" />
-
-    <LinearLayout
-        android:id="@+id/llNpButtons"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:layout_alignParentStart="true"
         android:layout_alignParentLeft="true"
         android:layout_alignParentBottom="true"
-        android:orientation="horizontal"
-        android:paddingLeft="2dip"
-        android:paddingRight="2dip">
+        android:handle="@+id/nowPlayingControlsContainer"
+        android:content="@+id/nowPlayingDrawerListView">
+        <RelativeLayout
+            android:id="@id/nowPlayingControlsContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" >
+            <LinearLayout
+                android:id="@+id/songRatingLinearLayout"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentTop="true"
+                android:layout_centerHorizontal="true"
+                android:orientation="vertical"
+                android:layout_marginBottom="44dp">
 
-        <ImageButton
-            android:id="@+id/btnPrevious"
-            android:layout_width="0dip"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="20dp"
-            android:layout_weight="1"
-            android:background="?android:attr/selectableItemBackground"
-            android:contentDescription="@string/btn_previous"
-            android:src="@drawable/av_rewind_dark" />
+                <RatingBar
+                    android:id="@+id/rbSongRating"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:max="5"
+                    android:rating="0"
+                    android:stepSize="1" />
 
-        <ViewFlipper
-            android:id="@+id/vfPlayPause"
-            android:layout_width="0dip"
-            android:layout_height="wrap_content"
-            android:layout_weight="1">
+                <TextView
+                    android:id="@+id/readOnlyConnectionLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/readOnlyConnection"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:layout_gravity="center_horizontal"/>
 
-            <ImageButton
-                android:id="@+id/btnPlay"
+            </LinearLayout>
+
+            <ProgressBar
+                android:id="@+id/pbNowPlaying"
+                style="?android:attr/progressBarStyleHorizontal"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="?android:attr/selectableItemBackground"
-                android:contentDescription="@string/btn_play"
-                android:src="@drawable/av_play_dark" />
+                android:layout_below="@+id/songRatingLinearLayout"
+                android:layout_alignParentStart="true"
+                android:layout_alignParentLeft="true"
+                android:layout_marginBottom="20dp"
+                android:indeterminate="false"
+                android:max="100" />
 
-            <ImageButton
-                android:id="@+id/btnPause"
+            <LinearLayout
+                android:id="@+id/llNpButtons"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="?android:attr/selectableItemBackground"
-                android:contentDescription="@string/btn_pause"
-                android:src="@drawable/av_pause_dark" />
-        </ViewFlipper>
+                android:layout_alignParentStart="true"
+                android:layout_alignParentLeft="true"
+                android:layout_below="@+id/pbNowPlaying"
+                android:orientation="horizontal"
+                android:paddingLeft="2dip"
+                android:paddingRight="2dip">
 
-        <ImageButton
-            android:id="@+id/btnNext"
-            android:layout_width="0dip"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:background="?android:attr/selectableItemBackground"
-            android:contentDescription="@string/btn_next"
-            android:src="@drawable/av_fast_forward_dark" />
-    </LinearLayout>
+                <ImageButton
+                    android:id="@+id/btnPrevious"
+                    android:layout_width="0dip"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="20dp"
+                    android:layout_weight="1"
+                    android:background="?android:attr/selectableItemBackground"
+                    android:contentDescription="@string/btn_previous"
+                    android:src="@drawable/av_rewind_dark" />
+
+                <ViewFlipper
+                    android:id="@+id/vfPlayPause"
+                    android:layout_width="0dip"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1">
+
+                    <ImageButton
+                        android:id="@+id/btnPlay"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="?android:attr/selectableItemBackground"
+                        android:contentDescription="@string/btn_play"
+                        android:src="@drawable/av_play_dark" />
+
+                    <ImageButton
+                        android:id="@+id/btnPause"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="?android:attr/selectableItemBackground"
+                        android:contentDescription="@string/btn_pause"
+                        android:src="@drawable/av_pause_dark" />
+                </ViewFlipper>
+
+                <ImageButton
+                    android:id="@+id/btnNext"
+                    android:layout_width="0dip"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="?android:attr/selectableItemBackground"
+                    android:contentDescription="@string/btn_next"
+                    android:src="@drawable/av_fast_forward_dark" />
+            </LinearLayout>
+        </RelativeLayout>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@id/nowPlayingDrawerListView"
+            android:background="@color/now_playing_list_color"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    </SlidingDrawer>
 
 </RelativeLayout>
