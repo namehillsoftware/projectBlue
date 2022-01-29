@@ -327,6 +327,14 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 		nowPlayingControls.post {
 			bottomSheetBehavior.peekHeight = nowPlayingControls.height
 		}
+
+		viewNowPlayingListButton.findView().setOnClickListener {
+			bottomSheetBehavior.state = when (bottomSheetBehavior.state) {
+				BottomSheetBehavior.STATE_COLLAPSED -> BottomSheetBehavior.STATE_EXPANDED
+				BottomSheetBehavior.STATE_EXPANDED -> BottomSheetBehavior.STATE_COLLAPSED
+				else -> bottomSheetBehavior.state
+			}
+		}
 	}
 
 	public override fun onStart() {
