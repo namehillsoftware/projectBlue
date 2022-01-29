@@ -111,7 +111,6 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 	private val nowPlayingToggledVisibilityControls by lazy {
 		NowPlayingToggledVisibilityControls(
 			LazyViewFinder(this, R.id.llNpButtons),
-			LazyViewFinder(this, R.id.menuControlsLinearLayout),
 			LazyViewFinder(this, R.id.songRatingLinearLayout)
 		)
 	}
@@ -324,9 +323,8 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 		bottomSheet.setOnClickListener { showNowPlayingControls() }
 		val bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet)
 		val nowPlayingControls = nowPlayingControlsContainer.findView()
-		nowPlayingControls.post {
-			bottomSheetBehavior.peekHeight = nowPlayingControls.height
-		}
+		nowPlayingControls.measure(0, 0)
+		bottomSheetBehavior.peekHeight = nowPlayingControls.measuredHeight
 
 		viewNowPlayingListButton.findView().setOnClickListener {
 			bottomSheetBehavior.state = when (bottomSheetBehavior.state) {
