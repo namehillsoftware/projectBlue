@@ -112,6 +112,7 @@ class NowPlayingActivity :
 
 	private val nowPlayingToggledVisibilityControls by lazy {
 		NowPlayingToggledVisibilityControls(
+			LazyViewFinder(this, R.id.viewNowPlayingListHandle),
 			LazyViewFinder(this, R.id.llNpButtons),
 			LazyViewFinder(this, R.id.menuControlsLinearLayout),
 			LazyViewFinder(this, R.id.songRatingLinearLayout)
