@@ -96,7 +96,7 @@ class NowPlayingActivity :
 	private val playButton = LazyViewFinder<ImageButton>(this, R.id.btnPlay)
 	private val pauseButton = LazyViewFinder<ImageButton>(this, R.id.btnPause)
 	private val songRating = LazyViewFinder<RatingBar>(this, R.id.rbSongRating)
-	private val contentView = LazyViewFinder<RelativeLayout>(this, R.id.rlCtlNowPlaying)
+	private val contentView = LazyViewFinder<View>(this, R.id.nowPlayingContentView)
 	private val bottomSheet = LazyViewFinder<RelativeLayout>(this, R.id.nowPlayingBottomSheet)
 	private val songProgressBar = LazyViewFinder<ProgressBar>(this, R.id.pbNowPlaying)
 	private val nowPlayingImageViewFinder = LazyViewFinder<ImageView>(this, R.id.imgNowPlaying)
