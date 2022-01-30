@@ -375,6 +375,10 @@ class NowPlayingActivity :
 			connectionRestoreCode = it
 			if (it == null) initializeView()
 		}, messageHandler))
+	}
+
+	override fun onRestoreInstanceState(savedInstanceState: Bundle) {
+		super.onRestoreInstanceState(savedInstanceState)
 
 		if (bottomSheetBehavior.state != BottomSheetBehavior.STATE_EXPANDED) return
 
