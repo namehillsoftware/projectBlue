@@ -346,17 +346,17 @@ class NowPlayingActivity :
 				}
 
 				with (nowPlayingListViewHandle.findView()) {
-					rotationX = when (newState) {
+					rotation = when (newState) {
 						BottomSheetBehavior.STATE_COLLAPSED -> 0f
 						BottomSheetBehavior.STATE_EXPANDED -> 180f
-						else -> rotationX
+						else -> rotation
 					}
 				}
 			}
 
 			override fun onSlide(bottomSheet: View, slideOffset: Float) {
 				nowPlayingHeaderContainer.findView().alpha = 1 - slideOffset
-				nowPlayingListViewHandle.findView().rotationX = 180f * slideOffset
+				nowPlayingListViewHandle.findView().rotation = 180f * slideOffset
 			}
 		})
 
