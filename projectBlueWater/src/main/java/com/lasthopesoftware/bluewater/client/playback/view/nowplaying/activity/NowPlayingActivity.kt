@@ -193,7 +193,9 @@ class NowPlayingActivity :
 		}
 	}
 
-	private val lazyDefaultImage by lazy { DefaultImageProvider(this).promiseFileBitmap() }
+	private val defaultImage by lazy { DefaultImageProvider(this).promiseFileBitmap() }
+
+	private val bottomSheetBehavior by lazy { BottomSheetBehavior.from(bottomSheet.findView()) }
 
 	private val onConnectionLostListener = Runnable { WaitForConnectionDialog.show(this) }
 
@@ -332,16 +334,10 @@ class NowPlayingActivity :
 		val bottomSheet = bottomSheet.findView()
 		bottomSheet.setOnClickListener { showNowPlayingControls() }
 
-		val bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet)
-
-		val nowPlayingHeaderContainer = nowPlayingHeaderContainer.findView()
-		if (bottomSheetBehavior.state == BottomSheetBehavior.STATE_EXPANDED)
-			nowPlayingHeaderContainer.alpha = 0f
-
 		bottomSheetBehavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
 			override fun onStateChanged(bottomSheet: View, newState: Int) {
 				isDrawerOpened = newState != BottomSheetBehavior.STATE_EXPANDED
-				with (nowPlayingHeaderContainer) {
+				with (nowPlayingHeaderContainer.findView()) {
 					alpha = when (newState) {
 						BottomSheetBehavior.STATE_COLLAPSED -> 1f
 						BottomSheetBehavior.STATE_EXPANDED -> 0f
@@ -359,7 +355,7 @@ class NowPlayingActivity :
 			}
 
 			override fun onSlide(bottomSheet: View, slideOffset: Float) {
-				nowPlayingHeaderContainer.alpha = 1 - slideOffset
+				nowPlayingHeaderContainer.findView().alpha = 1 - slideOffset
 				nowPlayingListViewHandle.findView().rotationX = 180f * slideOffset
 			}
 		})
@@ -379,6 +375,11 @@ class NowPlayingActivity :
 			connectionRestoreCode = it
 			if (it == null) initializeView()
 		}, messageHandler))
+
+		if (bottomSheetBehavior.state != BottomSheetBehavior.STATE_EXPANDED) return
+
+		nowPlayingHeaderContainer.findView().alpha = 0f
+		nowPlayingListViewHandle.findView().rotationX = 180f
 	}
 
 	override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -399,7 +400,7 @@ class NowPlayingActivity :
 	}
 
 	private fun setNowPlayingBackgroundBitmap() =
-		lazyDefaultImage
+		defaultImage
 			.eventually(LoopedInPromise.response({ bitmap ->
 				val nowPlayingImageLoadingView = nowPlayingImageLoading.findView()
 				nowPlayingImageLoadingView.setImageBitmap(bitmap)
