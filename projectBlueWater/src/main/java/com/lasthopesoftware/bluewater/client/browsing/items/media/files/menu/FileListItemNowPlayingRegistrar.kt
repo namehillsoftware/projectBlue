@@ -10,12 +10,15 @@ import com.lasthopesoftware.bluewater.shared.android.messages.RegisterForMessage
 
 class FileListItemNowPlayingRegistrar(private val messageRegistrar: RegisterForMessages) {
 	private val syncObj = Any()
-	private val registeredHandlers = ArrayList<FileListItemNowPlayingHandler>()
+	private val registeredHandlers = HashSet<FileListItemNowPlayingHandler>()
 
 	fun registerNewHandler(receiver: ReceiveBroadcastEvents): AutoCloseable {
-		val fileListItemNowPlayingHandler = FileListItemNowPlayingHandler(receiver)
-		messageRegistrar.registerReceiver(fileListItemNowPlayingHandler, IntentFilter(PlaylistEvents.onPlaylistTrackChange))
-		return fileListItemNowPlayingHandler
+		synchronized(syncObj) {
+			val fileListItemNowPlayingHandler = FileListItemNowPlayingHandler(receiver)
+			messageRegistrar.registerReceiver(fileListItemNowPlayingHandler, IntentFilter(PlaylistEvents.onPlaylistTrackChange))
+			registeredHandlers.add(fileListItemNowPlayingHandler)
+			return fileListItemNowPlayingHandler
+		}
 	}
 
 	fun clear() {
