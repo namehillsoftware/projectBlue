@@ -105,7 +105,6 @@ class NowPlayingActivity :
 	private val nowPlayingTitle = LazyViewFinder<TextView>(this, R.id.tvSongTitle)
 	private val nowPlayingImageLoading = LazyViewFinder<ImageView>(this, R.id.imgNowPlayingLoading)
 	private val loadingProgressBar = LazyViewFinder<ProgressBar>(this, R.id.pbLoadingImg)
-	private val viewNowPlayingListButton = LazyViewFinder<ImageButton>(this, R.id.viewNowPlayingListButton)
 	private val readOnlyConnectionLabel = LazyViewFinder<TextView>(this, R.id.readOnlyConnectionLabel)
 	private val nowPlayingHeaderContainer = LazyViewFinder<RelativeLayout>(this, R.id.nowPlayingHeaderContainer)
 
@@ -350,14 +349,6 @@ class NowPlayingActivity :
 		nowPlayingListView.then { lv ->
 			lv.viewTreeObserver.addOnGlobalLayoutListener {
 				bottomSheetBehavior.peekHeight = lv.top
-			}
-		}
-
-		viewNowPlayingListButton.findView().setOnClickListener {
-			bottomSheetBehavior.state = when (bottomSheetBehavior.state) {
-				BottomSheetBehavior.STATE_COLLAPSED -> BottomSheetBehavior.STATE_EXPANDED
-				BottomSheetBehavior.STATE_EXPANDED -> BottomSheetBehavior.STATE_COLLAPSED
-				else -> bottomSheetBehavior.state
 			}
 		}
 	}
