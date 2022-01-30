@@ -367,7 +367,7 @@ class NowPlayingActivity :
 		}
 	}
 
-	public override fun onStart() {
+	override fun onStart() {
 		super.onStart()
 		updateKeepScreenOnStatus()
 
@@ -389,6 +389,36 @@ class NowPlayingActivity :
 	override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
 		if (requestCode == connectionRestoreCode) initializeView()
 		super.onActivityResult(requestCode, resultCode, data)
+	}
+
+	override fun onStop() {
+		super.onStop()
+		disableKeepScreenOn()
+	}
+
+	override fun onDestroy() {
+		super.onDestroy()
+		timerTask?.cancel()
+		removeOnConnectionLostListener(onConnectionLostListener)
+
+		if (fileListItemNowPlayingRegistrar.isInitialized()) fileListItemNowPlayingRegistrar.value.clear()
+		if (messageBus.isInitialized()) messageBus.value.clear()
+	}
+
+	override fun onAllMenusHidden() {}
+	override fun onAnyMenuShown() {}
+
+	override fun onViewChanged(viewAnimator: ViewAnimator) {
+		this.viewAnimator = viewAnimator
+	}
+
+	override fun onBackPressed() {
+		if (LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator)) return
+		if (bottomSheetBehavior.state == BottomSheetBehavior.STATE_EXPANDED) {
+			bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
+			return
+		}
+		super.onBackPressed()
 	}
 
 	private fun updateNowPlayingListViewPosition() {
@@ -471,21 +501,21 @@ class NowPlayingActivity :
 		nowPlayingRepository
 			.then { npr ->
 				npr.nowPlaying
-				.eventually { np ->
-					if (np.playlistPosition >= np.playlist.size) Unit.toPromise()
-					else lazySelectedConnectionProvider
-						.promiseSessionConnection()
-						.eventually(LoopedInPromise.response({ connectionProvider ->
-							connectionProvider?.urlProvider?.baseUrl?.let { baseUrl ->
-								val serviceFile = np.playlist[np.playlistPosition]
-								val filePosition = viewStructure
-									?.takeIf { it.urlKeyHolder == UrlKeyHolder(baseUrl, serviceFile) }
-									?.filePosition
-									?: 0
-								setView(serviceFile, filePosition)
-							}
-						}, messageHandler))
-				}
+					.eventually { np ->
+						if (np.playlistPosition >= np.playlist.size) Unit.toPromise()
+						else lazySelectedConnectionProvider
+							.promiseSessionConnection()
+							.eventually(LoopedInPromise.response({ connectionProvider ->
+								connectionProvider?.urlProvider?.baseUrl?.let { baseUrl ->
+									val serviceFile = np.playlist[np.playlistPosition]
+									val filePosition = viewStructure
+										?.takeIf { it.urlKeyHolder == UrlKeyHolder(baseUrl, serviceFile) }
+										?.filePosition
+										?: 0
+									setView(serviceFile, filePosition)
+								}
+							}, messageHandler))
+					}
 			}
 			.excuse { e -> logger.error("An error occurred while getting the Now Playing data", e) }
 	}
@@ -642,32 +672,6 @@ class NowPlayingActivity :
 			}
 		}.apply { timerTask = this }
 		messageHandler.postDelayed(newTimerTask, 5000)
-	}
-
-	override fun onStop() {
-		super.onStop()
-		disableKeepScreenOn()
-	}
-
-	public override fun onDestroy() {
-		super.onDestroy()
-		timerTask?.cancel()
-		removeOnConnectionLostListener(onConnectionLostListener)
-
-		if (fileListItemNowPlayingRegistrar.isInitialized()) fileListItemNowPlayingRegistrar.value.clear()
-		if (messageBus.isInitialized()) messageBus.value.clear()
-	}
-
-	override fun onAllMenusHidden() {}
-	override fun onAnyMenuShown() {}
-
-	override fun onViewChanged(viewAnimator: ViewAnimator) {
-		this.viewAnimator = viewAnimator
-	}
-
-	override fun onBackPressed() {
-		if (LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator)) return
-		super.onBackPressed()
 	}
 
 	private class ViewStructure(val urlKeyHolder: UrlKeyHolder<ServiceFile>, val serviceFile: ServiceFile) {
