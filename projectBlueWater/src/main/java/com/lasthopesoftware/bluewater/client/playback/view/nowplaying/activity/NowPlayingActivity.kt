@@ -114,6 +114,7 @@ class NowPlayingActivity :
 	private val nowPlayingToggledVisibilityControls by lazy {
 		NowPlayingToggledVisibilityControls(
 			LazyViewFinder(this, R.id.llNpButtons),
+			LazyViewFinder(this, R.id.menuControlsLinearLayout),
 			LazyViewFinder(this, R.id.songRatingLinearLayout)
 		)
 	}
@@ -331,13 +332,18 @@ class NowPlayingActivity :
 		bottomSheet.setOnClickListener { showNowPlayingControls() }
 
 		val bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet)
+
+		val nowPlayingHeaderContainer = nowPlayingHeaderContainer.findView()
+		if (bottomSheetBehavior.state == BottomSheetBehavior.STATE_EXPANDED)
+			nowPlayingHeaderContainer.alpha = 0f
+
 		bottomSheetBehavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
 			override fun onStateChanged(bottomSheet: View, newState: Int) {
 				isDrawerOpened = newState != BottomSheetBehavior.STATE_EXPANDED
 			}
 
 			override fun onSlide(bottomSheet: View, slideOffset: Float) {
-				nowPlayingHeaderContainer.findView().alpha = 1 - slideOffset
+				nowPlayingHeaderContainer.alpha = 1 - slideOffset
 			}
 		})
 
