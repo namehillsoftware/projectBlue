@@ -102,7 +102,7 @@
                 android:background="?android:attr/selectableItemBackground"
                 android:contentDescription="@string/btn_view_files"
                 android:paddingTop="@dimen/now_playing_menu_padding"
-                android:src="@drawable/ic_menu_white_36dp" />
+                android:src="@drawable/chevron_up_36dp" />
 
             <LinearLayout
                 android:id="@+id/songRatingLinearLayout"

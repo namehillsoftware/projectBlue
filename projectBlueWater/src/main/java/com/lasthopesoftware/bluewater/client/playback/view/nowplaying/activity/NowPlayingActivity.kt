@@ -107,6 +107,7 @@ class NowPlayingActivity :
 	private val loadingProgressBar = LazyViewFinder<ProgressBar>(this, R.id.pbLoadingImg)
 	private val readOnlyConnectionLabel = LazyViewFinder<TextView>(this, R.id.readOnlyConnectionLabel)
 	private val nowPlayingHeaderContainer = LazyViewFinder<RelativeLayout>(this, R.id.nowPlayingHeaderContainer)
+	private val nowPlayingListViewHandle = LazyViewFinder<ImageView>(this, R.id.viewNowPlayingListHandle)
 
 	private val messageBus = lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
 
@@ -340,10 +341,26 @@ class NowPlayingActivity :
 		bottomSheetBehavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
 			override fun onStateChanged(bottomSheet: View, newState: Int) {
 				isDrawerOpened = newState != BottomSheetBehavior.STATE_EXPANDED
+				with (nowPlayingHeaderContainer) {
+					alpha = when (bottomSheetBehavior.state) {
+						BottomSheetBehavior.STATE_COLLAPSED -> 1f
+						BottomSheetBehavior.STATE_EXPANDED -> 0f
+						else -> alpha
+					}
+				}
+
+				with (nowPlayingListViewHandle.findView()) {
+					rotationX = when (bottomSheetBehavior.state) {
+						BottomSheetBehavior.STATE_COLLAPSED -> 0f
+						BottomSheetBehavior.STATE_EXPANDED -> 180f
+						else -> alpha
+					}
+				}
 			}
 
 			override fun onSlide(bottomSheet: View, slideOffset: Float) {
 				nowPlayingHeaderContainer.alpha = 1 - slideOffset
+				nowPlayingListViewHandle.findView().rotationX = 180f * slideOffset
 			}
 		})
 
