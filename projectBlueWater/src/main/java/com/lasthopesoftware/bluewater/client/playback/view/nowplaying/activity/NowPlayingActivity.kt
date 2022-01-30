@@ -383,7 +383,7 @@ class NowPlayingActivity :
 		if (bottomSheetBehavior.state != BottomSheetBehavior.STATE_EXPANDED) return
 
 		nowPlayingHeaderContainer.findView().alpha = 0f
-		nowPlayingListViewHandle.findView().rotationX = 180f
+		nowPlayingListViewHandle.findView().rotation = 180f
 	}
 
 	override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
