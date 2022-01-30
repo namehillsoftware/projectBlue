@@ -68,11 +68,13 @@ import java.util.*
 import java.util.concurrent.CancellationException
 import kotlin.math.roundToInt
 
-class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
-
+class NowPlayingActivity :
+	AppCompatActivity(),
+	IItemListMenuChangeHandler
+{
 	companion object {
-		private val logger = LoggerFactory.getLogger(NowPlayingActivity::class.java)
-		@JvmStatic
+		private val logger by lazy { LoggerFactory.getLogger(NowPlayingActivity::class.java) }
+
 		fun startNowPlayingActivity(context: Context) {
 			val viewIntent = Intent(context, NowPlayingActivity::class.java)
 			viewIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
@@ -323,6 +325,14 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 		bottomSheet.setOnClickListener { showNowPlayingControls() }
 
 		val bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet)
+		bottomSheetBehavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
+			override fun onStateChanged(bottomSheet: View, newState: Int) {
+				isDrawerOpened = newState != BottomSheetBehavior.STATE_EXPANDED
+			}
+
+			override fun onSlide(bottomSheet: View, slideOffset: Float) {}
+		})
+
 		nowPlayingListView.then { lv ->
 			lv.viewTreeObserver.addOnGlobalLayoutListener {
 				bottomSheetBehavior.peekHeight = lv.top
