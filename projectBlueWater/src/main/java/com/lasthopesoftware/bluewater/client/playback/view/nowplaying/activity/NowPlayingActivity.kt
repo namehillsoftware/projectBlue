@@ -353,7 +353,7 @@ class NowPlayingActivity :
 					rotationX = when (newState) {
 						BottomSheetBehavior.STATE_COLLAPSED -> 0f
 						BottomSheetBehavior.STATE_EXPANDED -> 180f
-						else -> alpha
+						else -> rotationX
 					}
 				}
 			}
