@@ -342,7 +342,7 @@ class NowPlayingActivity :
 			override fun onStateChanged(bottomSheet: View, newState: Int) {
 				isDrawerOpened = newState != BottomSheetBehavior.STATE_EXPANDED
 				with (nowPlayingHeaderContainer) {
-					alpha = when (bottomSheetBehavior.state) {
+					alpha = when (newState) {
 						BottomSheetBehavior.STATE_COLLAPSED -> 1f
 						BottomSheetBehavior.STATE_EXPANDED -> 0f
 						else -> alpha
@@ -350,7 +350,7 @@ class NowPlayingActivity :
 				}
 
 				with (nowPlayingListViewHandle.findView()) {
-					rotationX = when (bottomSheetBehavior.state) {
+					rotationX = when (newState) {
 						BottomSheetBehavior.STATE_COLLAPSED -> 0f
 						BottomSheetBehavior.STATE_EXPANDED -> 180f
 						else -> alpha
