@@ -356,7 +356,7 @@ class NowPlayingActivity :
 
 			override fun onSlide(bottomSheet: View, slideOffset: Float) {
 				nowPlayingHeaderContainer.findView().alpha = 1 - slideOffset
-				nowPlayingListViewHandle.findView().rotation = 180f * slideOffset
+				nowPlayingListViewHandle.findView().rotation = 360f - (180f * slideOffset)
 			}
 		})
 
