@@ -99,7 +99,6 @@
                 android:layout_height="wrap_content"
                 android:layout_centerHorizontal="true"
                 android:layout_alignParentTop="true"
-                android:alpha=".80"
                 android:background="?android:attr/selectableItemBackground"
                 android:contentDescription="@string/btn_view_files"
                 android:paddingTop="@dimen/now_playing_menu_padding"
