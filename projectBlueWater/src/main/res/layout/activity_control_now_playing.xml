@@ -1,98 +1,98 @@
-<RelativeLayout
+<androidx.coordinatorlayout.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/rlCtlNowPlaying"
+    android:layout_below="@id/nowPlayingHeaderContainer"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
     <RelativeLayout
-        android:id="@+id/nowPlayingHeaderContainer"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentTop="true">
-
-        <LinearLayout
-            android:id="@+id/menuControlsLinearLayout"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentEnd="true"
-            android:layout_alignParentRight="true"
-            android:layout_centerInParent="true"
-            android:layout_marginTop="10dp"
-            android:measureWithLargestChild="true"
-            android:orientation="vertical">
-
-            <ImageButton
-                android:id="@+id/repeatButton"
-                android:layout_width="match_parent"
-                android:layout_height="0dip"
-                android:layout_gravity="center_horizontal"
-                android:layout_weight="1"
-                android:background="?android:attr/selectableItemBackground"
-                android:contentDescription="@string/btn_repeat_playlist"
-                android:paddingTop="@dimen/now_playing_menu_padding"
-                android:paddingBottom="@dimen/now_playing_menu_padding"
-                android:src="@drawable/av_no_repeat_dark" />
-
-            <ImageButton
-                android:id="@+id/isScreenKeptOnButton"
-                android:layout_width="match_parent"
-                android:layout_height="0dip"
-                android:layout_gravity="center_horizontal"
-                android:layout_weight="1"
-                android:alpha=".80"
-                android:background="?android:attr/selectableItemBackground"
-                android:contentDescription="@string/screen_is_off"
-                android:paddingBottom="@dimen/now_playing_menu_padding"
-                android:src="@drawable/ic_screen_off_white_36dp" />
-
-            <ImageButton
-                android:id="@+id/viewNowPlayingListButton"
-                android:layout_width="match_parent"
-                android:layout_height="0dip"
-                android:layout_gravity="center_horizontal"
-                android:layout_weight="1"
-                android:alpha=".80"
-                android:background="?android:attr/selectableItemBackground"
-                android:contentDescription="@string/btn_view_files"
-                android:paddingTop="@dimen/now_playing_menu_padding"
-                android:src="@drawable/ic_menu_white_36dp" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_toStartOf="@id/menuControlsLinearLayout"
-            android:layout_toLeftOf="@id/menuControlsLinearLayout"
-            android:orientation="vertical">
-
-            <TextView
-                android:id="@+id/tvSongTitle"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:ellipsize="marquee"
-                android:marqueeRepeatLimit="1"
-                android:singleLine="true"
-                android:text="@string/lbl_song_title"
-                android:textAppearance="?android:attr/textAppearanceLarge"
-                android:textColor="@color/white" />
-
-            <TextView
-                android:id="@+id/tvSongArtist"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:ellipsize="marquee"
-                android:marqueeRepeatLimit="marquee_forever"
-                android:singleLine="true"
-                android:text="@string/lbl_song_artist"
-                android:textAppearance="?android:attr/textAppearanceSmall"
-                android:textColor="@color/white" />
-        </LinearLayout>
-    </RelativeLayout>
-
-    <androidx.coordinatorlayout.widget.CoordinatorLayout
-        android:layout_below="@id/nowPlayingHeaderContainer"
+        android:id="@+id/rlCtlNowPlaying"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
+        <RelativeLayout
+            android:id="@+id/nowPlayingHeaderContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true">
+
+            <LinearLayout
+                android:id="@+id/menuControlsLinearLayout"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentRight="true"
+                android:layout_centerInParent="true"
+                android:layout_marginTop="10dp"
+                android:measureWithLargestChild="true"
+                android:orientation="vertical">
+
+                <ImageButton
+                    android:id="@+id/repeatButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dip"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_weight="1"
+                    android:background="?android:attr/selectableItemBackground"
+                    android:contentDescription="@string/btn_repeat_playlist"
+                    android:paddingTop="@dimen/now_playing_menu_padding"
+                    android:paddingBottom="@dimen/now_playing_menu_padding"
+                    android:src="@drawable/av_no_repeat_dark" />
+
+                <ImageButton
+                    android:id="@+id/isScreenKeptOnButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dip"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_weight="1"
+                    android:alpha=".80"
+                    android:background="?android:attr/selectableItemBackground"
+                    android:contentDescription="@string/screen_is_off"
+                    android:paddingBottom="@dimen/now_playing_menu_padding"
+                    android:src="@drawable/ic_screen_off_white_36dp" />
+
+                <ImageButton
+                    android:id="@+id/viewNowPlayingListButton"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dip"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_weight="1"
+                    android:alpha=".80"
+                    android:background="?android:attr/selectableItemBackground"
+                    android:contentDescription="@string/btn_view_files"
+                    android:paddingTop="@dimen/now_playing_menu_padding"
+                    android:src="@drawable/ic_menu_white_36dp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_toStartOf="@id/menuControlsLinearLayout"
+                android:layout_toLeftOf="@id/menuControlsLinearLayout"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvSongTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="marquee"
+                    android:marqueeRepeatLimit="1"
+                    android:singleLine="true"
+                    android:text="@string/lbl_song_title"
+                    android:textAppearance="?android:attr/textAppearanceLarge"
+                    android:textColor="@color/white" />
+
+                <TextView
+                    android:id="@+id/tvSongArtist"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="marquee"
+                    android:marqueeRepeatLimit="marquee_forever"
+                    android:singleLine="true"
+                    android:text="@string/lbl_song_artist"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:textColor="@color/white" />
+            </LinearLayout>
+        </RelativeLayout>
+
         <RelativeLayout
             android:id="@+id/nowPlayingBottomSheet"
             android:layout_width="match_parent"
@@ -208,5 +208,5 @@
                 android:layout_below="@id/nowPlayingControlsContainer"
                 android:background="@color/now_playing_list_color" />
         </RelativeLayout>
-    </androidx.coordinatorlayout.widget.CoordinatorLayout>
-</RelativeLayout>
+    </RelativeLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

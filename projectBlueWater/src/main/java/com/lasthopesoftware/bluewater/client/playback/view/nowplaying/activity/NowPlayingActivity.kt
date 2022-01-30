@@ -106,7 +106,7 @@ class NowPlayingActivity :
 	private val loadingProgressBar = LazyViewFinder<ProgressBar>(this, R.id.pbLoadingImg)
 	private val viewNowPlayingListButton = LazyViewFinder<ImageButton>(this, R.id.viewNowPlayingListButton)
 	private val readOnlyConnectionLabel = LazyViewFinder<TextView>(this, R.id.readOnlyConnectionLabel)
-	private val nowPlayingControlsContainer = LazyViewFinder<RelativeLayout>(this, R.id.nowPlayingControlsContainer)
+	private val nowPlayingHeaderContainer = LazyViewFinder<RelativeLayout>(this, R.id.nowPlayingHeaderContainer)
 
 	private val localBroadcastManager by lazy { LocalBroadcastManager.getInstance(this) }
 
@@ -330,7 +330,9 @@ class NowPlayingActivity :
 				isDrawerOpened = newState != BottomSheetBehavior.STATE_EXPANDED
 			}
 
-			override fun onSlide(bottomSheet: View, slideOffset: Float) {}
+			override fun onSlide(bottomSheet: View, slideOffset: Float) {
+				nowPlayingHeaderContainer.findView().alpha = 1 - slideOffset
+			}
 		})
 
 		nowPlayingListView.then { lv ->
