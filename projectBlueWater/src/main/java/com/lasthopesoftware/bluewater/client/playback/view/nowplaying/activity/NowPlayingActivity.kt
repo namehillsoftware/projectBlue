@@ -53,6 +53,7 @@ import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.menu.NowPl
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
+import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils.getThemedDrawable
@@ -108,7 +109,7 @@ class NowPlayingActivity :
 	private val readOnlyConnectionLabel = LazyViewFinder<TextView>(this, R.id.readOnlyConnectionLabel)
 	private val nowPlayingHeaderContainer = LazyViewFinder<RelativeLayout>(this, R.id.nowPlayingHeaderContainer)
 
-	private val localBroadcastManager by lazy { LocalBroadcastManager.getInstance(this) }
+	private val messageBus = lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
 
 	private val nowPlayingToggledVisibilityControls by lazy {
 		NowPlayingToggledVisibilityControls(
@@ -133,7 +134,7 @@ class NowPlayingActivity :
 		nowPlayingRepository.eventually(LoopedInPromise.response({ r ->
 			val nowPlayingFileListMenuBuilder = NowPlayingFileListItemMenuBuilder(
 				r,
-				FileListItemNowPlayingRegistrar(localBroadcastManager))
+				FileListItemNowPlayingRegistrar(messageBus.value))
 
 			nowPlayingFileListMenuBuilder.setOnViewChangedListener(
 				ViewChangedHandler()
@@ -257,11 +258,14 @@ class NowPlayingActivity :
 			addAction(PlaylistEvents.onPlaylistInterrupted)
 			addAction(PlaylistEvents.onPlaylistStop)
 		}
-		localBroadcastManager.registerReceiver(onPlaybackStoppedReceiver, playbackStoppedIntentFilter)
-		localBroadcastManager.registerReceiver(onPlaybackStartedReceiver, IntentFilter(PlaylistEvents.onPlaylistStart))
-		localBroadcastManager.registerReceiver(onPlaybackChangedReceiver, IntentFilter(PlaylistEvents.onPlaylistTrackChange))
-		localBroadcastManager.registerReceiver(onPlaylistChangedReceiver, IntentFilter(PlaylistEvents.onPlaylistChange))
-		localBroadcastManager.registerReceiver(onTrackPositionChanged, IntentFilter(TrackPositionBroadcaster.trackPositionUpdate))
+
+		with (messageBus.value) {
+			registerReceiver(onPlaybackStoppedReceiver, playbackStoppedIntentFilter)
+			registerReceiver(onPlaybackStartedReceiver, IntentFilter(PlaylistEvents.onPlaylistStart))
+			registerReceiver(onPlaybackChangedReceiver, IntentFilter(PlaylistEvents.onPlaylistTrackChange))
+			registerReceiver(onPlaylistChangedReceiver, IntentFilter(PlaylistEvents.onPlaylistChange))
+			registerReceiver(onTrackPositionChanged, IntentFilter(TrackPositionBroadcaster.trackPositionUpdate))
+		}
 
 		addOnConnectionLostListener(onConnectionLostListener)
 
@@ -626,12 +630,17 @@ class NowPlayingActivity :
 	public override fun onDestroy() {
 		super.onDestroy()
 		timerTask?.cancel()
-		localBroadcastManager.unregisterReceiver(onPlaybackStoppedReceiver)
-		localBroadcastManager.unregisterReceiver(onPlaybackStartedReceiver)
-		localBroadcastManager.unregisterReceiver(onPlaybackChangedReceiver)
-		localBroadcastManager.unregisterReceiver(onPlaylistChangedReceiver)
-		localBroadcastManager.unregisterReceiver(onTrackPositionChanged)
 		removeOnConnectionLostListener(onConnectionLostListener)
+
+		if (!messageBus.isInitialized()) return
+
+		with (messageBus.value) {
+			unregisterReceiver(onPlaybackStoppedReceiver)
+			unregisterReceiver(onPlaybackStartedReceiver)
+			unregisterReceiver(onPlaybackChangedReceiver)
+			unregisterReceiver(onPlaylistChangedReceiver)
+			unregisterReceiver(onTrackPositionChanged)
+		}
 	}
 
 	override fun onAllMenusHidden() {}

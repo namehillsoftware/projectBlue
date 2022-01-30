@@ -32,6 +32,7 @@ import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.NowPlayingFloatingActionButton
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.NowPlayingFloatingActionButton.Companion.addNowPlayingFloatingActionButton
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
+import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils.buildStandardMenu
@@ -47,6 +48,7 @@ class FileListActivity :
 		val stringListProvider = FileStringListProvider(SelectedConnectionProvider(this))
 		FileProvider(stringListProvider)
 	}
+	private val messageBus by lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
 	private val pbLoading = LazyViewFinder<ProgressBar>(this, R.id.recyclerLoadingProgress)
 	private val fileListView = LazyViewFinder<RecyclerView>(this, R.id.loadedRecyclerView)
 
@@ -84,7 +86,7 @@ class FileListActivity :
 							val fileListItemMenuBuilder = FileListItemMenuBuilder(
 								serviceFiles,
 								nowPlayingFileProvider,
-								FileListItemNowPlayingRegistrar(LocalBroadcastManager.getInstance(this))
+								FileListItemNowPlayingRegistrar(messageBus)
 							)
 
 							ItemListMenuChangeHandler(this).apply {
