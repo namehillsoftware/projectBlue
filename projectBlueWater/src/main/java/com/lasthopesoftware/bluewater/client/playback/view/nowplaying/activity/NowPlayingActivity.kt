@@ -130,11 +130,13 @@ class NowPlayingActivity :
 			}
 	}
 
+	private val fileListItemNowPlayingRegistrar = lazy { FileListItemNowPlayingRegistrar(messageBus.value) }
+
 	private val nowPlayingListAdapter by lazy {
 		nowPlayingRepository.eventually(LoopedInPromise.response({ r ->
 			val nowPlayingFileListMenuBuilder = NowPlayingFileListItemMenuBuilder(
 				r,
-				FileListItemNowPlayingRegistrar(messageBus.value))
+				fileListItemNowPlayingRegistrar.value)
 
 			nowPlayingFileListMenuBuilder.setOnViewChangedListener(
 				ViewChangedHandler()
@@ -226,7 +228,7 @@ class NowPlayingActivity :
 								adapter
 									.updateListEventually(np.playlist.mapIndexed { i, s -> PositionedFile(i, s) })
 									.eventually(LoopedInPromise.response({
-										if (!isDrawerOpened) updateNowPlayingListViewPosition()
+										updateNowPlayingListViewPosition()
 										setView()
 									}, messageHandler))
 							}
@@ -632,15 +634,8 @@ class NowPlayingActivity :
 		timerTask?.cancel()
 		removeOnConnectionLostListener(onConnectionLostListener)
 
-		if (!messageBus.isInitialized()) return
-
-		with (messageBus.value) {
-			unregisterReceiver(onPlaybackStoppedReceiver)
-			unregisterReceiver(onPlaybackStartedReceiver)
-			unregisterReceiver(onPlaybackChangedReceiver)
-			unregisterReceiver(onPlaylistChangedReceiver)
-			unregisterReceiver(onTrackPositionChanged)
-		}
+		if (fileListItemNowPlayingRegistrar.isInitialized()) fileListItemNowPlayingRegistrar.value.clear()
+		if (messageBus.isInitialized()) messageBus.value.clear()
 	}
 
 	override fun onAllMenusHidden() {}

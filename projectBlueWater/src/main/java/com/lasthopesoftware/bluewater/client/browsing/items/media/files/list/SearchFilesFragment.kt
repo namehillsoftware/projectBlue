@@ -49,7 +49,7 @@ class SearchFilesFragment : Fragment(), View.OnKeyListener, TextView.OnEditorAct
 		FileProvider(stringListProvider)
 	}
 
-	private val nowPlayingRegistrar by lazy {
+	private val nowPlayingRegistrar = lazy {
 		FileListItemNowPlayingRegistrar(
 			MessageBus(LocalBroadcastManager.getInstance(requireContext())))
 	}
@@ -110,6 +110,12 @@ class SearchFilesFragment : Fragment(), View.OnKeyListener, TextView.OnEditorAct
 		}
 	}
 
+	override fun onDestroy() {
+		super.onDestroy()
+
+		if (nowPlayingRegistrar.isInitialized()) nowPlayingRegistrar.value.clear()
+	}
+
 	private fun doSearch(query: String) {
 		currentSearchPrompt = query
 		currentCancellationProxy?.run()
@@ -142,10 +148,11 @@ class SearchFilesFragment : Fragment(), View.OnKeyListener, TextView.OnEditorAct
 							if (cancellationProxy.isCancelled) Unit
 							else it
 								?.let { nowPlayingFileProvider ->
+									nowPlayingRegistrar.value.clear()
 									FileListItemMenuBuilder(
 										serviceFiles,
 										nowPlayingFileProvider,
-										nowPlayingRegistrar
+										nowPlayingRegistrar.value
 									)
 								}
 								?.also { fileListItemMenuBuilder ->
