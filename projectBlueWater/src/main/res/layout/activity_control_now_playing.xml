@@ -156,13 +156,13 @@
                     android:layout_alignParentLeft="true"
                     android:orientation="horizontal"
                     android:paddingLeft="2dip"
-                    android:paddingRight="2dip">
+                    android:paddingRight="2dip"
+                    android:layout_marginBottom="20dp">
 
                     <ImageButton
                         android:id="@+id/btnPrevious"
                         android:layout_width="0dip"
                         android:layout_height="wrap_content"
-                        android:layout_marginBottom="20dp"
                         android:layout_weight="1"
                         android:background="?android:attr/selectableItemBackground"
                         android:contentDescription="@string/btn_previous"
@@ -202,7 +202,7 @@
                 </LinearLayout>
             </RelativeLayout>
             <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/nowPlayingDrawerListView"
+                android:id="@+id/nowPlayingListView"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_below="@id/nowPlayingControlsContainer"

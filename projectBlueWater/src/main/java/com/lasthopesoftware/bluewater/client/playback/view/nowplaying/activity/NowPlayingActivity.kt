@@ -143,8 +143,8 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 		}, messageHandler))
 	}
 
-	private val nowPlayingDrawerListView by lazy {
-		val listView = findViewById<RecyclerView>(R.id.nowPlayingDrawerListView)
+	private val nowPlayingListView by lazy {
+		val listView = findViewById<RecyclerView>(R.id.nowPlayingListView)
 		nowPlayingListAdapter.eventually(LoopedInPromise.response({ a ->
 			listView.adapter = a
 			listView.layoutManager = LinearLayoutManager(this)
@@ -321,10 +321,13 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 
 		val bottomSheet = bottomSheet.findView()
 		bottomSheet.setOnClickListener { showNowPlayingControls() }
+
 		val bottomSheetBehavior = BottomSheetBehavior.from(bottomSheet)
-		val nowPlayingControls = nowPlayingControlsContainer.findView()
-		nowPlayingControls.measure(0, 0)
-		bottomSheetBehavior.peekHeight = nowPlayingControls.measuredHeight
+		nowPlayingListView.then { lv ->
+			lv.viewTreeObserver.addOnGlobalLayoutListener {
+				bottomSheetBehavior.peekHeight = lv.top
+			}
+		}
 
 		viewNowPlayingListButton.findView().setOnClickListener {
 			bottomSheetBehavior.state = when (bottomSheetBehavior.state) {
@@ -357,7 +360,7 @@ class NowPlayingActivity : AppCompatActivity(), IItemListMenuChangeHandler {
 				.then { nowPlaying ->
 					val newPosition = nowPlaying.playlistPosition
 					if (newPosition > -1 && newPosition < nowPlaying.playlist.size)
-						nowPlayingDrawerListView.eventually(LoopedInPromise.response({ lv -> lv.scrollToPosition(newPosition) }, messageHandler))
+						nowPlayingListView.eventually(LoopedInPromise.response({ lv -> lv.scrollToPosition(newPosition) }, messageHandler))
 				}
 		}
 	}
