@@ -107,7 +107,7 @@ class NowPlayingActivity :
 	private val loadingProgressBar = LazyViewFinder<ProgressBar>(this, R.id.pbLoadingImg)
 	private val readOnlyConnectionLabel = LazyViewFinder<TextView>(this, R.id.readOnlyConnectionLabel)
 	private val nowPlayingHeaderContainer = LazyViewFinder<RelativeLayout>(this, R.id.nowPlayingHeaderContainer)
-	private val nowPlayingListViewHandle = LazyViewFinder<ImageView>(this, R.id.viewNowPlayingListHandle)
+	private val nowPlayingListViewHandle = LazyViewFinder<ImageButton>(this, R.id.viewNowPlayingListHandle)
 
 	private val messageBus = lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
 
@@ -363,6 +363,16 @@ class NowPlayingActivity :
 		nowPlayingListView.then { lv ->
 			lv.viewTreeObserver.addOnGlobalLayoutListener {
 				bottomSheetBehavior.peekHeight = lv.top
+			}
+		}
+
+		nowPlayingListViewHandle.findView().setOnClickListener {
+			with (bottomSheetBehavior) {
+				state = when (state) {
+					BottomSheetBehavior.STATE_COLLAPSED -> BottomSheetBehavior.STATE_EXPANDED
+					BottomSheetBehavior.STATE_EXPANDED -> BottomSheetBehavior.STATE_COLLAPSED
+					else -> state
+				}
 			}
 		}
 	}
