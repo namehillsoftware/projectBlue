@@ -13,18 +13,25 @@ class FileListItemNowPlayingRegistrar(private val messageRegistrar: RegisterForM
 	private val registeredHandlers = HashSet<FileListItemNowPlayingHandler>()
 
 	fun registerNewHandler(receiver: ReceiveBroadcastEvents): AutoCloseable {
+		val fileListItemNowPlayingHandler = FileListItemNowPlayingHandler(receiver)
 		synchronized(syncObj) {
-			val fileListItemNowPlayingHandler = FileListItemNowPlayingHandler(receiver)
 			messageRegistrar.registerReceiver(fileListItemNowPlayingHandler, IntentFilter(PlaylistEvents.onPlaylistTrackChange))
 			registeredHandlers.add(fileListItemNowPlayingHandler)
-			return fileListItemNowPlayingHandler
 		}
+		return fileListItemNowPlayingHandler
 	}
 
 	fun clear() {
 		synchronized(syncObj) {
-			while (registeredHandlers.isNotEmpty())
-				registeredHandlers.firstOrNull()?.close()
+			registeredHandlers.forEach(messageRegistrar::unregisterReceiver)
+			registeredHandlers.clear()
+		}
+	}
+
+	private fun remove(handler: FileListItemNowPlayingHandler) {
+		synchronized(syncObj) {
+			messageRegistrar.unregisterReceiver(handler)
+			registeredHandlers.remove(handler)
 		}
 	}
 
@@ -34,11 +41,6 @@ class FileListItemNowPlayingRegistrar(private val messageRegistrar: RegisterForM
 			if (context != null && intent != null) receiver.onReceive(context, intent)
 		}
 
-		override fun close() {
-			synchronized(syncObj) {
-				messageRegistrar.unregisterReceiver(this)
-				registeredHandlers.remove(this)
-			}
-		}
+		override fun close() = remove(this)
 	}
 }
