@@ -19,24 +19,12 @@
             android:layout_centerInParent="true"
             android:layout_marginTop="10dp"
             android:measureWithLargestChild="true"
-            android:orientation="horizontal">
-
-            <ImageButton
-                android:id="@+id/isScreenKeptOnButton"
-                android:layout_width="0dip"
-                android:layout_height="match_parent"
-                android:layout_gravity="center_horizontal"
-                android:layout_weight="1"
-                android:alpha=".80"
-                android:background="?android:attr/selectableItemBackground"
-                android:contentDescription="@string/screen_is_off"
-                android:paddingBottom="@dimen/now_playing_menu_padding"
-                android:src="@drawable/ic_screen_off_white_36dp" />
+            android:orientation="vertical">
 
             <ImageButton
                 android:id="@+id/repeatButton"
-                android:layout_width="0dip"
-                android:layout_height="match_parent"
+                android:layout_width="match_parent"
+                android:layout_height="0dip"
                 android:layout_gravity="center_horizontal"
                 android:layout_weight="1"
                 android:background="?android:attr/selectableItemBackground"
@@ -44,6 +32,30 @@
                 android:paddingTop="@dimen/now_playing_menu_padding"
                 android:paddingBottom="@dimen/now_playing_menu_padding"
                 android:src="@drawable/av_no_repeat_dark" />
+
+            <ImageButton
+                android:id="@+id/isScreenKeptOnButton"
+                android:layout_width="match_parent"
+                android:layout_height="0dip"
+                android:layout_gravity="center_horizontal"
+                android:layout_weight="1"
+                android:background="?android:attr/selectableItemBackground"
+                android:contentDescription="@string/screen_is_off"
+                android:paddingBottom="@dimen/now_playing_menu_padding"
+                android:src="@drawable/ic_screen_off_white_36dp"
+                android:alpha=".80"/>
+
+            <ImageButton
+                android:id="@+id/viewNowPlayingListButton"
+                android:layout_width="match_parent"
+                android:layout_height="0dip"
+                android:layout_gravity="center_horizontal"
+                android:layout_weight="1"
+                android:background="?android:attr/selectableItemBackground"
+                android:contentDescription="@string/btn_view_files"
+                android:paddingTop="@dimen/now_playing_menu_padding"
+                android:src="@drawable/ic_menu_white_36dp"
+                android:alpha=".80"/>
         </LinearLayout>
 
         <LinearLayout
