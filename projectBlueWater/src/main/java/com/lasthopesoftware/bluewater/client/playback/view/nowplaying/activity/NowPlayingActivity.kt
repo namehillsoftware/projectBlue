@@ -108,6 +108,7 @@ class NowPlayingActivity :
 	private val readOnlyConnectionLabel = LazyViewFinder<TextView>(this, R.id.readOnlyConnectionLabel)
 	private val nowPlayingHeaderContainer = LazyViewFinder<RelativeLayout>(this, R.id.nowPlayingHeaderContainer)
 	private val nowPlayingListViewHandle = LazyViewFinder<ImageButton>(this, R.id.viewNowPlayingListHandle)
+	private val viewNowPlayingListButton = LazyViewFinder<ImageButton>(this, R.id.viewNowPlayingListButton)
 
 	private val messageBus = lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
 
@@ -265,7 +266,7 @@ class NowPlayingActivity :
 			addAction(PlaylistEvents.onPlaylistStop)
 		}
 
-		with (messageBus.value) {
+		with(messageBus.value) {
 			registerReceiver(onPlaybackStoppedReceiver, playbackStoppedIntentFilter)
 			registerReceiver(onPlaybackStartedReceiver, IntentFilter(PlaylistEvents.onPlaylistStart))
 			registerReceiver(onPlaybackChangedReceiver, IntentFilter(PlaylistEvents.onPlaylistTrackChange))
@@ -301,16 +302,16 @@ class NowPlayingActivity :
 			if (nowPlayingToggledVisibilityControls.isVisible) PlaybackService.previous(v.context)
 		}
 
-		val shuffleButton = findViewById<ImageButton>(R.id.repeatButton)
-		setRepeatingIcon(shuffleButton)
-		shuffleButton?.setOnClickListener { v ->
+		val repeatButton = findViewById<ImageButton>(R.id.repeatButton)
+		setRepeatingIcon(repeatButton)
+		repeatButton?.setOnClickListener { v ->
 			nowPlayingRepository
 				.then { r ->
 					r.nowPlaying.eventually(LoopedInPromise.response({ result ->
 						val isRepeating = !result.isRepeating
 						if (isRepeating) PlaybackService.setRepeating(v.context)
 						else PlaybackService.setCompleting(v.context)
-						setRepeatingIcon(shuffleButton, isRepeating)
+						setRepeatingIcon(repeatButton, isRepeating)
 					}, messageHandler))
 				}
 		}
@@ -337,7 +338,7 @@ class NowPlayingActivity :
 		bottomSheetBehavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
 			override fun onStateChanged(bottomSheet: View, newState: Int) {
 				isDrawerOpened = newState != BottomSheetBehavior.STATE_EXPANDED
-				with (nowPlayingHeaderContainer.findView()) {
+				with(nowPlayingHeaderContainer.findView()) {
 					alpha = when (newState) {
 						BottomSheetBehavior.STATE_COLLAPSED -> 1f
 						BottomSheetBehavior.STATE_EXPANDED -> 0f
@@ -345,7 +346,7 @@ class NowPlayingActivity :
 					}
 				}
 
-				with (nowPlayingListViewHandle.findView()) {
+				with(nowPlayingListViewHandle.findView()) {
 					rotation = when (newState) {
 						BottomSheetBehavior.STATE_COLLAPSED -> 0f
 						BottomSheetBehavior.STATE_EXPANDED -> 180f
@@ -366,8 +367,8 @@ class NowPlayingActivity :
 			}
 		}
 
-		nowPlayingListViewHandle.findView().setOnClickListener {
-			with (bottomSheetBehavior) {
+		val toggleListClickHandler = View.OnClickListener {
+			with(bottomSheetBehavior) {
 				state = when (state) {
 					BottomSheetBehavior.STATE_COLLAPSED -> BottomSheetBehavior.STATE_EXPANDED
 					BottomSheetBehavior.STATE_EXPANDED -> BottomSheetBehavior.STATE_COLLAPSED
@@ -375,6 +376,9 @@ class NowPlayingActivity :
 				}
 			}
 		}
+
+		nowPlayingListViewHandle.findView().setOnClickListener(toggleListClickHandler)
+		viewNowPlayingListButton.findView().setOnClickListener(toggleListClickHandler)
 	}
 
 	override fun onStart() {
@@ -560,8 +564,12 @@ class NowPlayingActivity :
 			val artist = fileProperties[KnownFileProperties.ARTIST]
 			nowPlayingArtist.findView().text = artist
 			val title = fileProperties[KnownFileProperties.NAME]
-			nowPlayingTitle.findView().text = title
-			nowPlayingTitle.findView().isSelected = true
+
+			with (nowPlayingTitle.findView()) {
+				text = title
+				isSelected = true
+			}
+
 			val duration = FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties)
 			setTrackDuration(if (duration > 0) duration.toLong() else 100.toLong())
 			setTrackProgress(initialFilePosition)
@@ -569,20 +577,21 @@ class NowPlayingActivity :
 			val stringRating = fileProperties[KnownFileProperties.RATING]
 			val fileRating = stringRating?.toFloatOrNull()
 
-			val songRatingBar = songRating.findView()
-			songRatingBar.rating = fileRating ?: 0f
-			songRatingBar.isEnabled = !isReadOnly
-			readOnlyConnectionLabel.findView().visibility = if (isReadOnly) View.VISIBLE else View.GONE
+			with (songRating.findView()) {
+				rating = fileRating ?: 0f
+				isEnabled = !isReadOnly
+				readOnlyConnectionLabel.findView().visibility = if (isReadOnly) View.VISIBLE else View.GONE
 
-			if (isReadOnly) return
+				if (isReadOnly) return
 
-			songRatingBar.onRatingBarChangeListener = OnRatingBarChangeListener { _, newRating, fromUser ->
-				if (fromUser && nowPlayingToggledVisibilityControls.isVisible) {
-					val ratingToString = newRating.roundToInt().toString()
-					filePropertiesStorage
-						.promiseFileUpdate(serviceFile, KnownFileProperties.RATING, ratingToString, false)
-						.eventuallyExcuse(LoopedInPromise.response(::handleIoException, messageHandler))
-					viewStructure?.fileProperties?.put(KnownFileProperties.RATING, ratingToString)
+				onRatingBarChangeListener = OnRatingBarChangeListener { _, newRating, fromUser ->
+					if (fromUser && nowPlayingToggledVisibilityControls.isVisible) {
+						val ratingToString = newRating.roundToInt().toString()
+						filePropertiesStorage
+							.promiseFileUpdate(serviceFile, KnownFileProperties.RATING, ratingToString, false)
+							.eventuallyExcuse(LoopedInPromise.response(::handleIoException, messageHandler))
+						viewStructure?.fileProperties?.put(KnownFileProperties.RATING, ratingToString)
+					}
 				}
 			}
 		}
@@ -590,8 +599,11 @@ class NowPlayingActivity :
 		fun disableViewWithMessage() {
 			nowPlayingTitle.findView().setText(R.string.lbl_loading)
 			nowPlayingArtist.findView().text = ""
-			songRating.findView().rating = 0f
-			songRating.findView().isEnabled = false
+
+			with (songRating.findView()) {
+				rating = 0f
+				isEnabled = false
+			}
 		}
 
 		fun handleException(exception: Throwable) {
