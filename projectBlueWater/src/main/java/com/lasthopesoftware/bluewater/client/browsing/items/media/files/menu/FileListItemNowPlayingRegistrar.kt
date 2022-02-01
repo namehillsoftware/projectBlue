@@ -17,14 +17,13 @@ class FileListItemNowPlayingRegistrar(private val messageRegistrar: RegisterForM
 	private val syncObj = Any()
 	private val registeredHandlers = HashSet<FileListItemNowPlayingHandler>()
 
-	fun registerNewHandler(receiver: ReceiveBroadcastEvents): AutoCloseable {
-		val fileListItemNowPlayingHandler = FileListItemNowPlayingHandler(receiver)
-		synchronized(syncObj) {
-			messageRegistrar.registerReceiver(fileListItemNowPlayingHandler, intentFilter)
-			registeredHandlers.add(fileListItemNowPlayingHandler)
+	fun registerNewHandler(receiver: ReceiveBroadcastEvents): AutoCloseable =
+		FileListItemNowPlayingHandler(receiver).also {
+			synchronized(syncObj) {
+				messageRegistrar.registerReceiver(it, intentFilter)
+				registeredHandlers.add(it)
+			}
 		}
-		return fileListItemNowPlayingHandler
-	}
 
 	fun clear() {
 		synchronized(syncObj) {
