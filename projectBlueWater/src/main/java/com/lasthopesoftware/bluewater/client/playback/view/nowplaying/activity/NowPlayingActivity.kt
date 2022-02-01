@@ -337,7 +337,7 @@ class NowPlayingActivity :
 
 		bottomSheetBehavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
 			override fun onStateChanged(bottomSheet: View, newState: Int) {
-				isDrawerOpened = newState != BottomSheetBehavior.STATE_EXPANDED
+				isDrawerOpened = newState == BottomSheetBehavior.STATE_EXPANDED
 				with(nowPlayingHeaderContainer.findView()) {
 					alpha = when (newState) {
 						BottomSheetBehavior.STATE_COLLAPSED -> 1f
