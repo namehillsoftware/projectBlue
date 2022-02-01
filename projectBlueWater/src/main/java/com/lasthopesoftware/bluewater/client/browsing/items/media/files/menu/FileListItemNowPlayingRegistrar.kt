@@ -9,13 +9,18 @@ import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEv
 import com.lasthopesoftware.bluewater.shared.android.messages.RegisterForMessages
 
 class FileListItemNowPlayingRegistrar(private val messageRegistrar: RegisterForMessages) {
+
+	companion object {
+		private val intentFilter = IntentFilter(PlaylistEvents.onPlaylistTrackChange)
+	}
+
 	private val syncObj = Any()
 	private val registeredHandlers = HashSet<FileListItemNowPlayingHandler>()
 
 	fun registerNewHandler(receiver: ReceiveBroadcastEvents): AutoCloseable {
 		val fileListItemNowPlayingHandler = FileListItemNowPlayingHandler(receiver)
 		synchronized(syncObj) {
-			messageRegistrar.registerReceiver(fileListItemNowPlayingHandler, IntentFilter(PlaylistEvents.onPlaylistTrackChange))
+			messageRegistrar.registerReceiver(fileListItemNowPlayingHandler, intentFilter)
 			registeredHandlers.add(fileListItemNowPlayingHandler)
 		}
 		return fileListItemNowPlayingHandler
