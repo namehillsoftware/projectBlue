@@ -106,19 +106,21 @@
             android:layout_alignParentTop="true">
 
             <ImageButton
-                android:id="@+id/viewNowPlayingListHandle"
+                android:id="@+id/closeNowPlayingList"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_centerHorizontal="true"
+                android:layout_alignParentRight="true"
+                android:layout_alignParentEnd="true"
                 android:layout_alignParentTop="true"
                 android:background="?android:attr/selectableItemBackground"
                 android:contentDescription="@string/btn_view_files"
                 android:paddingTop="@dimen/now_playing_menu_padding"
-                android:src="@drawable/chevron_up_36dp" />
+                android:src="@drawable/ic_remove_item_white_36dp"
+                android:alpha="0" />
 
             <LinearLayout
                 android:id="@+id/songRatingLinearLayout"
-                android:layout_below="@id/viewNowPlayingListHandle"
+                android:layout_below="@id/closeNowPlayingList"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerHorizontal="true"
