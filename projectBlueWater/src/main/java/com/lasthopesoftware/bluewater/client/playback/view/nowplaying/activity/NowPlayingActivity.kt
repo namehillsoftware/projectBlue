@@ -114,6 +114,7 @@ class NowPlayingActivity :
 	private val nowPlayingHeaderContainer = LazyViewFinder<RelativeLayout>(this, R.id.nowPlayingHeaderContainer)
 	private val closeNowPlayingListButton = LazyViewFinder<ImageButton>(this, R.id.closeNowPlayingList)
 	private val viewNowPlayingListButton = LazyViewFinder<ImageButton>(this, R.id.viewNowPlayingListButton)
+	private val nowPlayingControlsContainer = LazyViewFinder<RelativeLayout>(this, R.id.nowPlayingControlsContainer)
 
 	private val messageBus = lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
 
@@ -346,7 +347,7 @@ class NowPlayingActivity :
 		bottomSheetBehavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
 			override fun onStateChanged(bottomSheet: View, newState: Int) {
 				isDrawerOpened = newState == BottomSheetBehavior.STATE_EXPANDED
-				with(nowPlayingHeaderContainer.findView()) {
+				with (nowPlayingHeaderContainer.findView()) {
 					alpha = when (newState) {
 						BottomSheetBehavior.STATE_COLLAPSED -> 1f
 						BottomSheetBehavior.STATE_EXPANDED -> 0f
@@ -354,13 +355,16 @@ class NowPlayingActivity :
 					}
 				}
 
-				with(closeNowPlayingListButton.findView()) {
+				with (closeNowPlayingListButton.findView()) {
 					alpha = when (newState) {
 						BottomSheetBehavior.STATE_COLLAPSED -> 0f
 						BottomSheetBehavior.STATE_EXPANDED -> 1f
 						else -> alpha
 					}
 				}
+
+				nowPlayingControlsContainer.findView().visibility =
+					ViewUtils.getVisibility(newState == BottomSheetBehavior.STATE_COLLAPSED)
 			}
 
 			override fun onSlide(bottomSheet: View, slideOffset: Float) {
