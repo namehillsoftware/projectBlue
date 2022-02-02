@@ -94,11 +94,15 @@ class NowPlayingActivity :
 	private var viewAnimator: ViewAnimator? = null
 	private val messageHandler by lazy { Handler(mainLooper) }
 	private val playButton = LazyViewFinder<ImageButton>(this, R.id.btnPlay)
+	private val miniPlayButton = LazyViewFinder<ImageButton>(this, R.id.miniPlay)
 	private val pauseButton = LazyViewFinder<ImageButton>(this, R.id.btnPause)
+	private val miniPauseButton = LazyViewFinder<ImageButton>(this, R.id.miniPause)
 	private val songRating = LazyViewFinder<RatingBar>(this, R.id.rbSongRating)
+	private val miniSongRating = LazyViewFinder<RatingBar>(this, R.id.miniSongRating)
 	private val contentView = LazyViewFinder<View>(this, R.id.nowPlayingContentView)
 	private val bottomSheet = LazyViewFinder<RelativeLayout>(this, R.id.nowPlayingBottomSheet)
 	private val songProgressBar = LazyViewFinder<ProgressBar>(this, R.id.pbNowPlaying)
+	private val miniSongProgressBar = LazyViewFinder<ProgressBar>(this, R.id.miniNowPlayingBar)
 	private val nowPlayingImageViewFinder = LazyViewFinder<ImageView>(this, R.id.imgNowPlaying)
 	private val nowPlayingArtist = LazyViewFinder<TextView>(this, R.id.tvSongArtist)
 	private val isScreenKeptOnButton = LazyViewFinder<ImageButton>(this, R.id.isScreenKeptOnButton)
@@ -280,19 +284,23 @@ class NowPlayingActivity :
 
 		contentView.findView().setOnClickListener { showNowPlayingControls() }
 
-		playButton.findView().setOnClickListener { v ->
-			if (!nowPlayingToggledVisibilityControls.isVisible) return@setOnClickListener
+		val playButtonClick = View.OnClickListener { v ->
+			if (!nowPlayingToggledVisibilityControls.isVisible) return@OnClickListener
 			PlaybackService.play(v.context)
-			playButton.findView().visibility = View.INVISIBLE
-			pauseButton.findView().visibility = View.VISIBLE
+			togglePlayingButtons(true)
 		}
 
-		pauseButton.findView().setOnClickListener { v ->
-			if (!nowPlayingToggledVisibilityControls.isVisible) return@setOnClickListener
+		playButton.findView().setOnClickListener(playButtonClick)
+		miniPlayButton.findView().setOnClickListener(playButtonClick)
+
+		val pauseButtonClick = View.OnClickListener { v ->
+			if (!nowPlayingToggledVisibilityControls.isVisible) return@OnClickListener
 			PlaybackService.pause(v.context)
-			playButton.findView().visibility = View.VISIBLE
-			pauseButton.findView().visibility = View.INVISIBLE
+			togglePlayingButtons(false)
 		}
+
+		pauseButton.findView().setOnClickListener(pauseButtonClick)
+		miniPauseButton.findView().setOnClickListener(pauseButtonClick)
 
 		findViewById<ImageButton>(R.id.btnNext)?.setOnClickListener { v ->
 			if (nowPlayingToggledVisibilityControls.isVisible) PlaybackService.next(v.context)
@@ -450,8 +458,7 @@ class NowPlayingActivity :
 			}, messageHandler))
 
 	private fun initializeView() {
-		playButton.findView().visibility = View.VISIBLE
-		pauseButton.findView().visibility = View.INVISIBLE
+		togglePlayingButtons(false)
 		nowPlayingRepository
 			.eventually { npr ->
 				npr
@@ -501,8 +508,13 @@ class NowPlayingActivity :
 	}
 
 	private fun togglePlayingButtons(isPlaying: Boolean) {
-		playButton.findView().visibility = ViewUtils.getVisibility(!isPlaying)
-		pauseButton.findView().visibility = ViewUtils.getVisibility(isPlaying)
+		ViewUtils.getVisibility(!isPlaying)
+			.apply(playButton.findView()::setVisibility)
+			.apply(miniPlayButton.findView()::setVisibility)
+
+		ViewUtils.getVisibility(isPlaying)
+			.apply(pauseButton.findView()::setVisibility)
+			.apply(miniPauseButton.findView()::setVisibility)
 	}
 
 	private fun setView() {
@@ -560,25 +572,8 @@ class NowPlayingActivity :
 				miniReadOnlyConnectionLabel.findView().visibility = if (isReadOnly) View.VISIBLE else View.GONE
 			}
 
-			val artist = fileProperties[KnownFileProperties.ARTIST]
-			nowPlayingArtist.findView().text = artist
-			val title = fileProperties[KnownFileProperties.NAME]
-
-			with (nowPlayingTitle.findView()) {
-				text = title
-				isSelected = true
-			}
-
-			val duration = FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties)
-			setTrackDuration(if (duration > 0) duration.toLong() else 100.toLong())
-			setTrackProgress(initialFilePosition)
-
-			val stringRating = fileProperties[KnownFileProperties.RATING]
-			val fileRating = stringRating?.toFloatOrNull()
-
-			updateReadOnlyLabel()
-			with (songRating.findView()) {
-				rating = fileRating ?: 0f
+			fun RatingBar.updateSongRating(fileRating: Float) {
+				rating = fileRating
 				isEnabled = !isReadOnly
 
 				if (isReadOnly) return
@@ -593,6 +588,26 @@ class NowPlayingActivity :
 					}
 				}
 			}
+
+			val artist = fileProperties[KnownFileProperties.ARTIST]
+			nowPlayingArtist.findView().text = artist
+			val title = fileProperties[KnownFileProperties.NAME]
+
+			with (nowPlayingTitle.findView()) {
+				text = title
+				isSelected = true
+			}
+
+			val duration = FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties)
+			setTrackDuration(if (duration > 0) duration.toLong() else 100.toLong())
+			setTrackProgress(initialFilePosition)
+
+			val stringRating = fileProperties[KnownFileProperties.RATING]
+			val fileRating = stringRating?.toFloatOrNull() ?: 0f
+
+			updateReadOnlyLabel()
+			songRating.findView().updateSongRating(fileRating)
+			miniSongRating.findView().updateSongRating(fileRating)
 		}
 
 		fun disableViewWithMessage() {
@@ -662,11 +677,13 @@ class NowPlayingActivity :
 
 	private fun setTrackDuration(duration: Long) {
 		songProgressBar.findView().max = duration.toInt()
+		miniSongProgressBar.findView().max = duration.toInt()
 		viewStructure?.fileDuration = duration
 	}
 
 	private fun setTrackProgress(progress: Long) {
 		songProgressBar.findView().progress = progress.toInt()
+		miniSongProgressBar.findView().progress = progress.toInt()
 		viewStructure?.filePosition = progress
 	}
 
