@@ -107,14 +107,13 @@ class NowPlayingActivity :
 	private val loadingProgressBar = LazyViewFinder<ProgressBar>(this, R.id.pbLoadingImg)
 	private val readOnlyConnectionLabel = LazyViewFinder<TextView>(this, R.id.readOnlyConnectionLabel)
 	private val nowPlayingHeaderContainer = LazyViewFinder<RelativeLayout>(this, R.id.nowPlayingHeaderContainer)
-	private val nowPlayingListViewHandle = LazyViewFinder<ImageButton>(this, R.id.viewNowPlayingListHandle)
+	private val closeNowPlayingListButton = LazyViewFinder<ImageButton>(this, R.id.closeNowPlayingList)
 	private val viewNowPlayingListButton = LazyViewFinder<ImageButton>(this, R.id.viewNowPlayingListButton)
 
 	private val messageBus = lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
 
 	private val nowPlayingToggledVisibilityControls by lazy {
 		NowPlayingToggledVisibilityControls(
-			LazyViewFinder(this, R.id.viewNowPlayingListHandle),
 			LazyViewFinder(this, R.id.llNpButtons),
 			LazyViewFinder(this, R.id.menuControlsLinearLayout),
 			LazyViewFinder(this, R.id.songRatingLinearLayout)
@@ -346,18 +345,18 @@ class NowPlayingActivity :
 					}
 				}
 
-				with(nowPlayingListViewHandle.findView()) {
-					rotation = when (newState) {
+				with(closeNowPlayingListButton.findView()) {
+					alpha = when (newState) {
 						BottomSheetBehavior.STATE_COLLAPSED -> 0f
-						BottomSheetBehavior.STATE_EXPANDED -> 180f
-						else -> rotation
+						BottomSheetBehavior.STATE_EXPANDED -> 1f
+						else -> alpha
 					}
 				}
 			}
 
 			override fun onSlide(bottomSheet: View, slideOffset: Float) {
 				nowPlayingHeaderContainer.findView().alpha = 1 - slideOffset
-				nowPlayingListViewHandle.findView().rotation = 360f - (180f * slideOffset)
+				closeNowPlayingListButton.findView().alpha = slideOffset
 			}
 		})
 
@@ -377,7 +376,7 @@ class NowPlayingActivity :
 			}
 		}
 
-		nowPlayingListViewHandle.findView().setOnClickListener(toggleListClickHandler)
+		closeNowPlayingListButton.findView().setOnClickListener(toggleListClickHandler)
 		viewNowPlayingListButton.findView().setOnClickListener(toggleListClickHandler)
 	}
 
@@ -397,7 +396,7 @@ class NowPlayingActivity :
 		if (bottomSheetBehavior.state != BottomSheetBehavior.STATE_EXPANDED) return
 
 		nowPlayingHeaderContainer.findView().alpha = 0f
-		nowPlayingListViewHandle.findView().rotation = 180f
+		closeNowPlayingListButton.findView().alpha = 1f
 	}
 
 	override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {

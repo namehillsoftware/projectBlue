@@ -1,12 +1,10 @@
 package com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity
 
 import android.view.View
-import android.widget.ImageView
 import android.widget.LinearLayout
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 
 internal class NowPlayingToggledVisibilityControls(
-	private val nowPlayingListHandle: LazyViewFinder<ImageView>,
     private val playerControlsLinearLayout: LazyViewFinder<LinearLayout>,
     private val menuControlsLinearLayout: LazyViewFinder<LinearLayout>,
     private val ratingBarLinearLayout: LazyViewFinder<LinearLayout>
@@ -18,7 +16,6 @@ internal class NowPlayingToggledVisibilityControls(
         this.isVisible = isVisible
         val normalVisibility = if (isVisible) View.VISIBLE else View.INVISIBLE
 
-		nowPlayingListHandle.findView().visibility = normalVisibility
         playerControlsLinearLayout.findView().visibility = normalVisibility
 		ratingBarLinearLayout.findView().visibility = normalVisibility
 
