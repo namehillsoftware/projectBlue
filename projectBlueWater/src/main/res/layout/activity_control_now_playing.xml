@@ -9,6 +9,7 @@
         android:id="@+id/nowPlayingMainSheet"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
+
         <RelativeLayout
             android:id="@+id/nowPlayingHeaderContainer"
             android:layout_width="match_parent"
@@ -43,11 +44,11 @@
                     android:layout_height="0dip"
                     android:layout_gravity="center_horizontal"
                     android:layout_weight="1"
+                    android:alpha=".80"
                     android:background="?android:attr/selectableItemBackground"
                     android:contentDescription="@string/screen_is_off"
                     android:paddingBottom="@dimen/now_playing_menu_padding"
-                    android:src="@drawable/ic_screen_off_white_36dp"
-                    android:alpha=".80"/>
+                    android:src="@drawable/ic_screen_off_white_36dp" />
 
                 <ImageButton
                     android:id="@+id/viewNowPlayingListButton"
@@ -55,11 +56,11 @@
                     android:layout_height="0dip"
                     android:layout_gravity="center_horizontal"
                     android:layout_weight="1"
+                    android:alpha=".80"
                     android:background="?android:attr/selectableItemBackground"
                     android:contentDescription="@string/btn_view_files"
                     android:paddingTop="@dimen/now_playing_menu_padding"
-                    android:src="@drawable/ic_menu_white_36dp"
-                    android:alpha=".80"/>
+                    android:src="@drawable/ic_menu_white_36dp" />
             </LinearLayout>
 
             <LinearLayout
@@ -244,14 +245,14 @@
                     android:layout_height="wrap_content"
                     android:layout_toEndOf="@id/miniSongRatingContainer"
                     android:orientation="horizontal"
-                    android:paddingStart="5dip"
-                    android:paddingTop="8dp"
-                    android:gravity="center_vertical">
+                    android:paddingStart="20dp"
+                    android:layout_centerVertical="true">
                     <ViewFlipper
                         android:id="@+id/miniPlayPause"
                         android:layout_width="0dip"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1">
+                        android:layout_weight="1"
+                        android:layout_gravity="center_vertical">
 
                         <ImageButton
                             android:id="@+id/miniPlay"
