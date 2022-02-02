@@ -291,17 +291,27 @@ class NowPlayingActivity :
 			togglePlayingButtons(true)
 		}
 
-		playButton.findView().setOnClickListener(playButtonClick)
-		miniPlayButton.findView().setOnClickListener(playButtonClick)
+		playButton.findView().setOnClickListener { v ->
+			if (!nowPlayingToggledVisibilityControls.isVisible) return@setOnClickListener
+			PlaybackService.play(v.context)
+			togglePlayingButtons(true)
+		}
 
-		val pauseButtonClick = View.OnClickListener { v ->
-			if (!nowPlayingToggledVisibilityControls.isVisible) return@OnClickListener
+		miniPlayButton.findView().setOnClickListener { v ->
+			PlaybackService.play(v.context)
+			togglePlayingButtons(true)
+		}
+
+		pauseButton.findView().setOnClickListener { v ->
+			if (!nowPlayingToggledVisibilityControls.isVisible) return@setOnClickListener
 			PlaybackService.pause(v.context)
 			togglePlayingButtons(false)
 		}
 
-		pauseButton.findView().setOnClickListener(pauseButtonClick)
-		miniPauseButton.findView().setOnClickListener(pauseButtonClick)
+		miniPauseButton.findView().setOnClickListener { v ->
+			PlaybackService.pause(v.context)
+			togglePlayingButtons(false)
+		}
 
 		findViewById<ImageButton>(R.id.btnNext)?.setOnClickListener { v ->
 			if (nowPlayingToggledVisibilityControls.isVisible) PlaybackService.next(v.context)
