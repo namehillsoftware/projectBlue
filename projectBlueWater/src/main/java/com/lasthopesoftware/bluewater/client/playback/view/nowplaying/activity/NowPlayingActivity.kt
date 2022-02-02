@@ -106,6 +106,7 @@ class NowPlayingActivity :
 	private val nowPlayingImageLoading = LazyViewFinder<ImageView>(this, R.id.imgNowPlayingLoading)
 	private val loadingProgressBar = LazyViewFinder<ProgressBar>(this, R.id.pbLoadingImg)
 	private val readOnlyConnectionLabel = LazyViewFinder<TextView>(this, R.id.readOnlyConnectionLabel)
+	private val miniReadOnlyConnectionLabel = LazyViewFinder<TextView>(this, R.id.miniReadOnlyConnectionLabel)
 	private val nowPlayingHeaderContainer = LazyViewFinder<RelativeLayout>(this, R.id.nowPlayingHeaderContainer)
 	private val closeNowPlayingListButton = LazyViewFinder<ImageButton>(this, R.id.closeNowPlayingList)
 	private val viewNowPlayingListButton = LazyViewFinder<ImageButton>(this, R.id.viewNowPlayingListButton)
@@ -360,12 +361,6 @@ class NowPlayingActivity :
 			}
 		})
 
-		nowPlayingListView.then { lv ->
-			lv.viewTreeObserver.addOnGlobalLayoutListener {
-				bottomSheetBehavior.peekHeight = lv.top
-			}
-		}
-
 		val toggleListClickHandler = View.OnClickListener {
 			with(bottomSheetBehavior) {
 				state = when (state) {
@@ -560,6 +555,11 @@ class NowPlayingActivity :
 		}
 
 		fun setFileProperties(fileProperties: Map<String, String>, isReadOnly: Boolean) {
+			fun updateReadOnlyLabel() {
+				readOnlyConnectionLabel.findView().visibility = if (isReadOnly) View.VISIBLE else View.GONE
+				miniReadOnlyConnectionLabel.findView().visibility = if (isReadOnly) View.VISIBLE else View.GONE
+			}
+
 			val artist = fileProperties[KnownFileProperties.ARTIST]
 			nowPlayingArtist.findView().text = artist
 			val title = fileProperties[KnownFileProperties.NAME]
@@ -576,10 +576,10 @@ class NowPlayingActivity :
 			val stringRating = fileProperties[KnownFileProperties.RATING]
 			val fileRating = stringRating?.toFloatOrNull()
 
+			updateReadOnlyLabel()
 			with (songRating.findView()) {
 				rating = fileRating ?: 0f
 				isEnabled = !isReadOnly
-				readOnlyConnectionLabel.findView().visibility = if (isReadOnly) View.VISIBLE else View.GONE
 
 				if (isReadOnly) return
 
