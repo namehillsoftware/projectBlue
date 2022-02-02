@@ -88,6 +88,10 @@ class NowPlayingActivity :
 			imageButton?.setImageDrawable(
 				imageButton.context.getThemedDrawable(if (isRepeating) R.drawable.av_repeat_dark else R.drawable.av_no_repeat_dark))
 		}
+		private fun RatingBar.disableAndClear() {
+			rating = 0f
+			isEnabled = false
+		}
 	}
 
 	private var connectionRestoreCode: Int? = null
@@ -645,10 +649,8 @@ class NowPlayingActivity :
 			nowPlayingTitle.findView().setText(R.string.lbl_loading)
 			nowPlayingArtist.findView().text = ""
 
-			with (songRating.findView()) {
-				rating = 0f
-				isEnabled = false
-			}
+			songRating.findView().disableAndClear()
+			miniSongRating.findView().disableAndClear()
 		}
 
 		fun handleException(exception: Throwable) {
