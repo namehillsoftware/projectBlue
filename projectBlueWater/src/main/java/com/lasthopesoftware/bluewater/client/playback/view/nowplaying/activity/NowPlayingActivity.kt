@@ -586,23 +586,6 @@ class NowPlayingActivity :
 				miniReadOnlyConnectionLabel.findView().visibility = if (isReadOnly) View.VISIBLE else View.GONE
 			}
 
-			fun RatingBar.updateSongRating(fileRating: Float) {
-				rating = fileRating
-				isEnabled = !isReadOnly
-
-				if (isReadOnly) return
-
-				onRatingBarChangeListener = OnRatingBarChangeListener { _, newRating, fromUser ->
-					if (fromUser && nowPlayingToggledVisibilityControls.isVisible) {
-						val ratingToString = newRating.roundToInt().toString()
-						filePropertiesStorage
-							.promiseFileUpdate(serviceFile, KnownFileProperties.RATING, ratingToString, false)
-							.eventuallyExcuse(LoopedInPromise.response(::handleIoException, messageHandler))
-						viewStructure?.fileProperties?.put(KnownFileProperties.RATING, ratingToString)
-					}
-				}
-			}
-
 			val artist = fileProperties[KnownFileProperties.ARTIST]
 			nowPlayingArtist.findView().text = artist
 			val title = fileProperties[KnownFileProperties.NAME]
@@ -620,8 +603,42 @@ class NowPlayingActivity :
 			val fileRating = stringRating?.toFloatOrNull() ?: 0f
 
 			updateReadOnlyLabel()
-			songRating.findView().updateSongRating(fileRating)
-			miniSongRating.findView().updateSongRating(fileRating)
+
+			with (miniSongRating.findView()) {
+				rating = fileRating
+				isEnabled = !isReadOnly
+
+				onRatingBarChangeListener =
+					if (isReadOnly) null
+					else OnRatingBarChangeListener { _, newRating, fromUser ->
+						if (fromUser) {
+							songRating.findView().rating = newRating
+							val ratingToString = newRating.roundToInt().toString()
+							filePropertiesStorage
+								.promiseFileUpdate(serviceFile, KnownFileProperties.RATING, ratingToString, false)
+								.eventuallyExcuse(LoopedInPromise.response(::handleIoException, messageHandler))
+							viewStructure?.fileProperties?.put(KnownFileProperties.RATING, ratingToString)
+						}
+					}
+			}
+
+			with (songRating.findView()) {
+				rating = fileRating
+				isEnabled = !isReadOnly
+
+				onRatingBarChangeListener =
+					if (isReadOnly) null
+					else OnRatingBarChangeListener { _, newRating, fromUser ->
+						if (fromUser && nowPlayingToggledVisibilityControls.isVisible) {
+							miniSongRating.findView().rating = newRating
+							val ratingToString = newRating.roundToInt().toString()
+							filePropertiesStorage
+								.promiseFileUpdate(serviceFile, KnownFileProperties.RATING, ratingToString, false)
+								.eventuallyExcuse(LoopedInPromise.response(::handleIoException, messageHandler))
+							viewStructure?.fileProperties?.put(KnownFileProperties.RATING, ratingToString)
+						}
+					}
+			}
 		}
 
 		fun disableViewWithMessage() {
