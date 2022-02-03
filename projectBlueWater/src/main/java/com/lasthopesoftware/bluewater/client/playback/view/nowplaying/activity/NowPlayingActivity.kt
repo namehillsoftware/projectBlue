@@ -364,9 +364,6 @@ class NowPlayingActivity :
 						else -> alpha
 					}
 				}
-
-				nowPlayingControlsContainer.findView().visibility =
-					ViewUtils.getVisibility(newState == BottomSheetBehavior.STATE_COLLAPSED)
 			}
 
 			override fun onSlide(bottomSheet: View, slideOffset: Float) {
