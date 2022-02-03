@@ -16,55 +16,51 @@
             android:layout_height="wrap_content"
             android:layout_alignParentTop="true">
 
-        <LinearLayout
-            android:id="@+id/menuControlsLinearLayout"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_alignParentEnd="true"
-            android:layout_alignParentRight="true"
-            android:layout_centerInParent="true"
-            android:layout_marginTop="10dp"
-            android:layout_marginEnd="10dp"
-            android:measureWithLargestChild="true"
-            android:orientation="horizontal">
+            <LinearLayout
+                android:id="@+id/menuControlsLinearLayout"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_centerInParent="true"
+                android:layout_marginTop="10dp"
+                android:measureWithLargestChild="true"
+                android:orientation="horizontal">
 
-            <ImageButton
-                android:id="@+id/isScreenKeptOnButton"
-                android:layout_width="0dip"
-                android:layout_height="match_parent"
-                android:layout_gravity="center_horizontal"
-                android:layout_weight="1"
-                android:alpha=".80"
-                android:background="?android:attr/selectableItemBackground"
-                android:contentDescription="@string/screen_is_off"
-                android:paddingEnd="@dimen/now_playing_menu_padding"
-                android:paddingStart="@dimen/now_playing_menu_padding"
-                android:src="@drawable/ic_screen_off_white_36dp" />
+                <ImageButton
+                    android:id="@+id/isScreenKeptOnButton"
+                    android:layout_width="0dip"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_weight="1"
+                    android:alpha=".80"
+                    android:background="?android:attr/selectableItemBackground"
+                    android:contentDescription="@string/screen_is_off"
+                    android:paddingEnd="@dimen/now_playing_menu_padding"
+                    android:src="@drawable/ic_screen_off_white_36dp" />
 
-            <ImageButton
-                android:id="@+id/repeatButton"
-                android:layout_width="0dip"
-                android:layout_height="match_parent"
-                android:layout_gravity="center_horizontal"
-                android:layout_weight="1"
-                android:background="?android:attr/selectableItemBackground"
-                android:contentDescription="@string/btn_repeat_playlist"
-                android:paddingEnd="@dimen/now_playing_menu_padding"
-                android:paddingStart="@dimen/now_playing_menu_padding"
-                android:src="@drawable/av_no_repeat_dark" />
+                <ImageButton
+                    android:id="@+id/repeatButton"
+                    android:layout_width="0dip"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_weight="1"
+                    android:background="?android:attr/selectableItemBackground"
+                    android:contentDescription="@string/btn_repeat_playlist"
+                    android:paddingEnd="@dimen/now_playing_menu_padding"
+                    android:src="@drawable/av_no_repeat_dark" />
 
-            <ImageButton
-                android:id="@+id/viewNowPlayingListButton"
-                android:layout_width="0dip"
-                android:layout_height="match_parent"
-                android:layout_gravity="center_horizontal"
-                android:layout_weight="1"
-                android:background="?android:attr/selectableItemBackground"
-                android:contentDescription="@string/btn_view_files"
-                android:paddingStart="@dimen/now_playing_menu_padding"
-                android:src="@drawable/chevron_up_36dp"
-                android:alpha=".80"/>
-        </LinearLayout>
+                <ImageButton
+                    android:id="@+id/viewNowPlayingListButton"
+                    android:layout_width="0dip"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_weight="1"
+                    android:background="?android:attr/selectableItemBackground"
+                    android:contentDescription="@string/btn_view_files"
+                    android:paddingEnd="@dimen/now_playing_menu_padding"
+                    android:src="@drawable/chevron_up_36dp"
+                    android:alpha=".80"/>
+            </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
