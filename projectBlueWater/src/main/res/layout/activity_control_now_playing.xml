@@ -61,7 +61,6 @@
                 android:layout_weight="1"
                 android:background="?android:attr/selectableItemBackground"
                 android:contentDescription="@string/btn_view_files"
-                android:paddingEnd="@dimen/now_playing_menu_padding"
                 android:paddingStart="@dimen/now_playing_menu_padding"
                 android:src="@drawable/chevron_up_36dp"
                 android:alpha=".80"/>
