@@ -1,6 +1,7 @@
 <androidx.coordinatorlayout.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/nowPlayingContentView"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
@@ -36,7 +37,8 @@
                     android:background="?android:attr/selectableItemBackground"
                     android:contentDescription="@string/screen_is_off"
                     android:paddingEnd="@dimen/now_playing_menu_padding"
-                    android:src="@drawable/ic_screen_off_white_36dp" />
+                    android:src="@drawable/ic_screen_off_white_36dp"
+                    tools:ignore="RtlSymmetry" />
 
                 <ImageButton
                     android:id="@+id/repeatButton"
@@ -47,7 +49,8 @@
                     android:background="?android:attr/selectableItemBackground"
                     android:contentDescription="@string/btn_repeat_playlist"
                     android:paddingEnd="@dimen/now_playing_menu_padding"
-                    android:src="@drawable/av_no_repeat_dark" />
+                    android:src="@drawable/av_no_repeat_dark"
+                    tools:ignore="RtlSymmetry" />
 
                 <ImageButton
                     android:id="@+id/viewNowPlayingListButton"
@@ -59,7 +62,8 @@
                     android:contentDescription="@string/btn_view_files"
                     android:paddingEnd="@dimen/now_playing_menu_padding"
                     android:src="@drawable/chevron_up_36dp"
-                    android:alpha=".80"/>
+                    android:alpha=".80"
+                    tools:ignore="RtlSymmetry" />
             </LinearLayout>
 
             <LinearLayout
