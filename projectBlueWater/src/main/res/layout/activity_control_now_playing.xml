@@ -240,23 +240,24 @@
 
                 </LinearLayout>
 
-                <LinearLayout
+                <RelativeLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_toEndOf="@id/miniSongRatingContainer"
-                    android:orientation="horizontal"
-                    android:paddingStart="20dp"
-                    android:layout_centerVertical="true">
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:layout_toEndOf="@id/miniSongRatingContainer">
+
                     <ViewFlipper
                         android:id="@+id/miniPlayPause"
-                        android:layout_width="0dip"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:layout_gravity="center_vertical">
+                        android:layout_centerVertical="true"
+                        android:layout_marginEnd="10dp"
+                        android:layout_toStartOf="@id/closeNowPlayingList">
 
                         <ImageButton
                             android:id="@+id/miniPlay"
-                            android:layout_width="match_parent"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:background="?android:attr/selectableItemBackground"
                             android:contentDescription="@string/btn_play"
@@ -264,7 +265,7 @@
 
                         <ImageButton
                             android:id="@+id/miniPause"
-                            android:layout_width="match_parent"
+                            android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:background="?android:attr/selectableItemBackground"
                             android:contentDescription="@string/btn_pause"
@@ -273,13 +274,15 @@
 
                     <ImageButton
                         android:id="@+id/closeNowPlayingList"
-                        android:layout_width="0dip"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        android:layout_marginEnd="10dp"
                         android:background="?android:attr/selectableItemBackground"
                         android:contentDescription="@string/btn_hide_files"
                         android:src="@drawable/chevron_down_36dp" />
-                </LinearLayout>
+                </RelativeLayout>
             </RelativeLayout>
 
             <ProgressBar
