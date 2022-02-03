@@ -84,10 +84,12 @@ class NowPlayingActivity :
 
 		private var isScreenKeptOn = false
 		private var viewStructure: ViewStructure? = null
+
 		private fun setRepeatingIcon(imageButton: ImageButton?, isRepeating: Boolean) {
 			imageButton?.setImageDrawable(
 				imageButton.context.getThemedDrawable(if (isRepeating) R.drawable.av_repeat_dark else R.drawable.av_no_repeat_dark))
 		}
+
 		private fun RatingBar.disableAndClear() {
 			rating = 0f
 			isEnabled = false
@@ -115,10 +117,10 @@ class NowPlayingActivity :
 	private val loadingProgressBar = LazyViewFinder<ProgressBar>(this, R.id.pbLoadingImg)
 	private val readOnlyConnectionLabel = LazyViewFinder<TextView>(this, R.id.readOnlyConnectionLabel)
 	private val miniReadOnlyConnectionLabel = LazyViewFinder<TextView>(this, R.id.miniReadOnlyConnectionLabel)
-	private val nowPlayingHeaderContainer = LazyViewFinder<RelativeLayout>(this, R.id.nowPlayingHeaderContainer)
 	private val closeNowPlayingListButton = LazyViewFinder<ImageButton>(this, R.id.closeNowPlayingList)
 	private val viewNowPlayingListButton = LazyViewFinder<ImageButton>(this, R.id.viewNowPlayingListButton)
 	private val nowPlayingControlsContainer = LazyViewFinder<RelativeLayout>(this, R.id.nowPlayingControlsContainer)
+	private val nowPlayingMainSheet = LazyViewFinder<RelativeLayout>(this, R.id.nowPlayingMainSheet)
 
 	private val messageBus = lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
 
@@ -289,12 +291,6 @@ class NowPlayingActivity :
 
 		contentView.findView().setOnClickListener { showNowPlayingControls() }
 
-		val playButtonClick = View.OnClickListener { v ->
-			if (!nowPlayingToggledVisibilityControls.isVisible) return@OnClickListener
-			PlaybackService.play(v.context)
-			togglePlayingButtons(true)
-		}
-
 		playButton.findView().setOnClickListener { v ->
 			if (!nowPlayingToggledVisibilityControls.isVisible) return@setOnClickListener
 			PlaybackService.play(v.context)
@@ -361,18 +357,10 @@ class NowPlayingActivity :
 		bottomSheetBehavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
 			override fun onStateChanged(bottomSheet: View, newState: Int) {
 				isDrawerOpened = newState == BottomSheetBehavior.STATE_EXPANDED
-				with (nowPlayingHeaderContainer.findView()) {
+				with (nowPlayingMainSheet.findView()) {
 					alpha = when (newState) {
 						BottomSheetBehavior.STATE_COLLAPSED -> 1f
 						BottomSheetBehavior.STATE_EXPANDED -> 0f
-						else -> alpha
-					}
-				}
-
-				with (closeNowPlayingListButton.findView()) {
-					alpha = when (newState) {
-						BottomSheetBehavior.STATE_COLLAPSED -> 0f
-						BottomSheetBehavior.STATE_EXPANDED -> 1f
 						else -> alpha
 					}
 				}
@@ -382,8 +370,7 @@ class NowPlayingActivity :
 			}
 
 			override fun onSlide(bottomSheet: View, slideOffset: Float) {
-				nowPlayingHeaderContainer.findView().alpha = 1 - slideOffset
-				closeNowPlayingListButton.findView().alpha = slideOffset
+				nowPlayingMainSheet.findView().alpha = 1 - slideOffset
 			}
 		})
 
@@ -416,8 +403,7 @@ class NowPlayingActivity :
 
 		if (bottomSheetBehavior.state != BottomSheetBehavior.STATE_EXPANDED) return
 
-		nowPlayingHeaderContainer.findView().alpha = 0f
-		closeNowPlayingListButton.findView().alpha = 1f
+		nowPlayingMainSheet.findView().alpha = 0f
 	}
 
 	override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
