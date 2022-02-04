@@ -50,7 +50,7 @@ class FileListItemMenuBuilder(
 				}, textView.context))
 
 			fileListItemNowPlayingHandler?.close()
-			fileListItemNowPlayingHandler = fileListItemNowPlayingRegistrar.registerNewHandler(fileListItemContainer) { _, intent ->
+			fileListItemNowPlayingHandler = fileListItemNowPlayingRegistrar.registerNewHandler { _, intent ->
 				val fileKey = intent.getIntExtra(PlaylistEvents.PlaybackFileParameters.fileKey, -1)
 				textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(serviceFile.key == fileKey))
 			}

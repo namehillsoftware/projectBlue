@@ -4,9 +4,6 @@ import android.view.View
 import android.widget.LinearLayout
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 
-/**
- * Created by david on 10/16/15.
- */
 internal class NowPlayingToggledVisibilityControls(
     private val playerControlsLinearLayout: LazyViewFinder<LinearLayout>,
     private val menuControlsLinearLayout: LazyViewFinder<LinearLayout>,

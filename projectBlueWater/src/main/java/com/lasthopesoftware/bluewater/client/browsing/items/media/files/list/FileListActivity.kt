@@ -32,6 +32,7 @@ import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.NowPlayingFloatingActionButton
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.NowPlayingFloatingActionButton.Companion.addNowPlayingFloatingActionButton
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
+import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils.buildStandardMenu
@@ -43,10 +44,25 @@ class FileListActivity :
 	IItemListViewContainer,
 	Runnable {
 
+	companion object {
+		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(FileListActivity::class.java) }
+		private val key by lazy { magicPropertyBuilder.buildProperty("key") }
+		private val value by lazy { magicPropertyBuilder.buildProperty("value") }
+
+		@JvmStatic
+		fun startFileListActivity(context: Context, item: IItem) {
+			val fileListIntent = Intent(context, FileListActivity::class.java)
+			fileListIntent.putExtra(key, item.key)
+			fileListIntent.putExtra(value, item.value)
+			context.startActivity(fileListIntent)
+		}
+	}
+
 	private val fileProvider by lazy {
 		val stringListProvider = FileStringListProvider(SelectedConnectionProvider(this))
 		FileProvider(stringListProvider)
 	}
+	private val fileListItemNowPlayingRegistrar = lazy { FileListItemNowPlayingRegistrar(MessageBus(LocalBroadcastManager.getInstance(this))) }
 	private val pbLoading = LazyViewFinder<ProgressBar>(this, R.id.recyclerLoadingProgress)
 	private val fileListView = LazyViewFinder<RecyclerView>(this, R.id.loadedRecyclerView)
 
@@ -84,7 +100,7 @@ class FileListActivity :
 							val fileListItemMenuBuilder = FileListItemMenuBuilder(
 								serviceFiles,
 								nowPlayingFileProvider,
-								FileListItemNowPlayingRegistrar(LocalBroadcastManager.getInstance(this))
+								fileListItemNowPlayingRegistrar.value
 							)
 
 							ItemListMenuChangeHandler(this).apply {
@@ -112,17 +128,17 @@ class FileListActivity :
 			.then { finish() }
 	}
 
-	public override fun onStart() {
+	override fun onStart() {
 		super.onStart()
 		restoreSelectedConnection(this)
 	}
 
-	public override fun onSaveInstanceState(savedInstanceState: Bundle) {
+	override fun onSaveInstanceState(savedInstanceState: Bundle) {
 		super.onSaveInstanceState(savedInstanceState)
 		savedInstanceState.putInt(key, itemId)
 	}
 
-	public override fun onRestoreInstanceState(savedInstanceState: Bundle) {
+	override fun onRestoreInstanceState(savedInstanceState: Bundle) {
 		super.onRestoreInstanceState(savedInstanceState)
 		itemId = savedInstanceState.getInt(key)
 	}
@@ -143,16 +159,9 @@ class FileListActivity :
 
 	override fun getNowPlayingFloatingActionButton() = nowPlayingFloatingActionButton
 
-	companion object {
-		private val magicPropertyBuilder = MagicPropertyBuilder(FileListActivity::class.java)
-		private val key = magicPropertyBuilder.buildProperty("key")
-		private val value = magicPropertyBuilder.buildProperty("value")
-		@JvmStatic
-		fun startFileListActivity(context: Context, item: IItem) {
-			val fileListIntent = Intent(context, FileListActivity::class.java)
-			fileListIntent.putExtra(key, item.key)
-			fileListIntent.putExtra(value, item.value)
-			context.startActivity(fileListIntent)
-		}
+	override fun onDestroy() {
+		super.onDestroy()
+
+		if (fileListItemNowPlayingRegistrar.isInitialized()) fileListItemNowPlayingRegistrar.value.clear()
 	}
 }

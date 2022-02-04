@@ -30,6 +30,7 @@ import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.NowPlayingFileProvider.Companion.fromActiveLibrary
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
+import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
@@ -48,8 +49,9 @@ class SearchFilesFragment : Fragment(), View.OnKeyListener, TextView.OnEditorAct
 		FileProvider(stringListProvider)
 	}
 
-	private val nowPlayingRegistrar by lazy {
-		FileListItemNowPlayingRegistrar(LocalBroadcastManager.getInstance(requireContext()))
+	private val nowPlayingRegistrar = lazy {
+		FileListItemNowPlayingRegistrar(
+			MessageBus(LocalBroadcastManager.getInstance(requireContext())))
 	}
 
 	private val nowPlayingFileProvider by lazy { fromActiveLibrary(requireContext()) }
@@ -108,6 +110,12 @@ class SearchFilesFragment : Fragment(), View.OnKeyListener, TextView.OnEditorAct
 		}
 	}
 
+	override fun onDestroy() {
+		super.onDestroy()
+
+		if (nowPlayingRegistrar.isInitialized()) nowPlayingRegistrar.value.clear()
+	}
+
 	private fun doSearch(query: String) {
 		currentSearchPrompt = query
 		currentCancellationProxy?.run()
@@ -140,10 +148,11 @@ class SearchFilesFragment : Fragment(), View.OnKeyListener, TextView.OnEditorAct
 							if (cancellationProxy.isCancelled) Unit
 							else it
 								?.let { nowPlayingFileProvider ->
+									nowPlayingRegistrar.value.clear()
 									FileListItemMenuBuilder(
 										serviceFiles,
 										nowPlayingFileProvider,
-										nowPlayingRegistrar
+										nowPlayingRegistrar.value
 									)
 								}
 								?.also { fileListItemMenuBuilder ->
