@@ -12,21 +12,22 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ProvideScopedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.ProvideImages
 import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfScopedConnectionIsReadOnly
-import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService
-import com.lasthopesoftware.bluewater.client.connection.polling.WaitForConnectionDialog
 import com.lasthopesoftware.bluewater.client.connection.selected.ProvideSelectedConnection
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.INowPlayingRepository
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.android.messages.RegisterForMessages
-import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
+import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.resources.strings.GetStringResources
 import com.namehillsoftware.handoff.promises.Promise
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import org.joda.time.Duration
 import org.slf4j.LoggerFactory
+import java.io.Closeable
 import java.util.concurrent.CancellationException
 
 class NowPlayingViewModel(
@@ -37,7 +38,7 @@ class NowPlayingViewModel(
 	private val fileProperties: ProvideScopedFileProperties,
 	private val checkAuthentication: CheckIfScopedConnectionIsReadOnly,
 	private val stringResources: GetStringResources
-) : ViewModel() {
+) : ViewModel(), Closeable {
 
 	companion object {
 		private val logger by lazy { LoggerFactory.getLogger(NowPlayingViewModel::class.java) }
@@ -62,37 +63,43 @@ class NowPlayingViewModel(
 	private val onPlaybackStartedReceiver = object : BroadcastReceiver() {
 		override fun onReceive(context: Context, intent: Intent) {
 			isPlayingState.value = true
+			updateKeepScreenOnStatus()
 		}
 	}
 
 	private val onPlaybackStoppedReceiver = object : BroadcastReceiver() {
 		override fun onReceive(context: Context, intent: Intent) {
 			isPlayingState.value = false
+			updateKeepScreenOnStatus()
 		}
 	}
 
 	private val onPlaybackChangedReceiver = object : BroadcastReceiver() {
 		override fun onReceive(context: Context?, intent: Intent?) {
+			setView()
+			showNowPlayingControls()
+		}
+	}
+
+	private val onPlaylistChangedReceiver = object : BroadcastReceiver() {
+		override fun onReceive(context: Context, intent: Intent) {
 			nowPlayingRepository.nowPlaying
 				.then { np ->
-					np.playingFile?.let { serviceFile ->
-						selectedConnectionProvider
-							.promiseSessionConnection()
-							.then { connectionProvider ->
-								connectionProvider?.urlProvider?.baseUrl?.let { baseUrl ->
-									val filePosition =
-										if (cachedPromises?.urlKeyHolder == UrlKeyHolder(baseUrl, serviceFile)) filePositionState.value
-										else 0
-									setView(serviceFile, filePosition)
-								}
-							}
-					}
+					nowPlayingListState.value = np.playlist.mapIndexed(::PositionedFile)
+					setView()
 				}
 		}
 	}
 
-	private var currentServiceFileByUrl: UrlKeyHolder<ServiceFile>? = null
-	private var promisedNowPlayingImage: Promise<Bitmap?>? = null
+	private val onTrackPositionChanged = object : BroadcastReceiver() {
+		override fun onReceive(context: Context, intent: Intent) {
+			val fileDuration = intent.getLongExtra(TrackPositionBroadcaster.TrackPositionChangedParameters.fileDuration, -1)
+			if (fileDuration > -1) setTrackDuration(fileDuration)
+			val filePosition = intent.getLongExtra(TrackPositionBroadcaster.TrackPositionChangedParameters.filePosition, -1)
+			if (filePosition > -1) setTrackProgress(filePosition)
+		}
+	}
+
 	private var cachedPromises: CachedPromises? = null
 
 	private val filePositionState = MutableStateFlow(0L)
@@ -105,17 +112,73 @@ class NowPlayingViewModel(
 	private val nowPlayingImageState = MutableStateFlow<Bitmap?>(null)
 	private val songRatingState = MutableStateFlow(0F)
 	private val isSongRatingEnabledState = MutableStateFlow(false)
+	private val nowPlayingListState = MutableStateFlow(emptyList<PositionedFile>())
+	private val nowPlayingFileState = MutableStateFlow<PositionedFile?>(null)
+	private val isScreenOnEnabledState = MutableStateFlow(false)
+	private val isScreenOnState = MutableStateFlow(false)
+	private val isScreenControlsVisibleState = MutableStateFlow(false)
 
 	val filePosition = filePositionState.asStateFlow()
 	val fileDuration = fileDurationState.asStateFlow()
-	val isFilePropertiesReadOnly = isReadOnlyState.asStateFlow()
-	val isNowPlayingImageLoading = isNowPlayingImageLoadingState.asStateFlow()
 	val isPlaying = isPlayingState.asStateFlow()
+	val isReadOnly = isReadOnlyState.asStateFlow()
+	val isNowPlayingImageLoading = isNowPlayingImageLoadingState.asStateFlow()
+	val isFilePropertiesReadOnly = isReadOnlyState.asStateFlow()
 	val artist = artistState.asStateFlow()
 	val title = titleState.asStateFlow()
+	val nowPlayingImage = nowPlayingImageState.asStateFlow()
+	val songRating = songRatingState.asStateFlow()
+	val isSongRatingEnabled = songRatingState.asStateFlow()
+	val nowPlayingList = nowPlayingListState.asStateFlow()
+	val nowPlayingFile = nowPlayingFileState.asStateFlow()
+	val isScreenOnEnabled = isScreenOnEnabledState.asStateFlow()
+	val isScreenOn = isScreenOnState.asStateFlow()
+	val isScreenControlsVisible = isScreenControlsVisibleState.asStateFlow()
 
-	fun release() {
-		promisedNowPlayingImage?.cancel()
+	override fun close() {
+		cachedPromises?.release()
+	}
+
+	fun initializeViewModel() {
+		isPlayingState.value = false
+		nowPlayingRepository
+			.nowPlaying
+			.eventually { np ->
+				selectedConnectionProvider
+					.promiseSessionConnection()
+					.then { connectionProvider ->
+						val serviceFile = np.playlist[np.playlistPosition]
+						val filePosition = connectionProvider?.urlProvider?.baseUrl
+							?.let { baseUrl ->
+								if (cachedPromises?.urlKeyHolder == UrlKeyHolder(baseUrl, serviceFile)) filePositionState.value
+								else np.filePosition
+							}
+							?: np.filePosition
+						setView(serviceFile, filePosition)
+					}
+			}
+//			}
+//			.excuse { error -> NowPlayingActivity.logger.warn("An error occurred initializing `NowPlayingActivity`", error) }
+
+//		PlaybackService.promiseIsMarkedForPlay(this).then(::togglePlayingButtons)
+	}
+
+	private fun setView() {
+		nowPlayingRepository.nowPlaying
+			.then { np ->
+				np.playingFile?.let { serviceFile ->
+					selectedConnectionProvider
+						.promiseSessionConnection()
+						.then { connectionProvider ->
+							connectionProvider?.urlProvider?.baseUrl?.let { baseUrl ->
+								val filePosition =
+									if (cachedPromises?.urlKeyHolder == UrlKeyHolder(baseUrl, serviceFile)) filePositionState.value
+									else 0
+								setView(serviceFile, filePosition)
+							}
+						}
+				}
+			}
 	}
 
 	private fun setView(serviceFile: ServiceFile, initialFilePosition: Long) {
@@ -198,17 +261,17 @@ class NowPlayingViewModel(
 		}
 
 		fun handleException(exception: Throwable) {
-			val isIoException = handleIoException(exception)
-			if (!isIoException) return
-
-			PollConnectionService.pollSessionConnection(this).then {
-				if (serviceFile == NowPlayingActivity.viewStructure?.serviceFile) {
-					promisedNowPlayingImage?.cancel()
-					promisedNowPlayingImage = null
-				}
-				setView(serviceFile, initialFilePosition)
-			}
-			WaitForConnectionDialog.show(this)
+//			val isIoException = handleIoException(exception)
+//			if (!isIoException) return
+//
+//			PollConnectionService.pollSessionConnection(this).then {
+//				if (serviceFile == NowPlayingActivity.viewStructure?.serviceFile) {
+//					promisedNowPlayingImage?.cancel()
+//					promisedNowPlayingImage = null
+//				}
+//				setView(serviceFile, initialFilePosition)
+//			}
+//			WaitForConnectionDialog.show(this)
 		}
 
 		selectedConnectionProvider.promiseSessionConnection()
@@ -240,8 +303,19 @@ class NowPlayingViewModel(
 							else setFileProperties(fileProperties, isReadOnly)
 						}
 					}
-					.eventuallyExcuse(LoopedInPromise.response(::handleException, messageHandler))
+//					.eventuallyExcuse(LoopedInPromise.response(::handleException, messageHandler))
 			}
+	}
+
+	private fun updateKeepScreenOnStatus() {
+		isScreenOnState.value = isPlayingState.value && isScreenOnEnabledState.value
+	}
+
+	private fun showNowPlayingControls() {
+		isScreenControlsVisibleState.value = true
+		PromiseDelay
+			.delay<Any?>(Duration.standardSeconds(5))
+			.then { isScreenControlsVisibleState.value = false }
 	}
 
 	private fun setTrackDuration(duration: Long) {
