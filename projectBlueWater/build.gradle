@@ -123,8 +123,6 @@ dependencies {
 	def core_version = '1.7.0'
 	def lifecycle_version = '2.4.0'
 
-	kapt('org.jetbrains.kotlin.kapt:kotlin-kapt:1.6.10')
-
 	implementation "androidx.core:core-ktx:$core_version"
 	implementation 'androidx.annotation:annotation:1.3.0'
 	implementation 'androidx.work:work-runtime:2.7.1'
