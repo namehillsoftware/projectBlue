@@ -9,7 +9,9 @@ import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FilePropertyHelpers
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ProvideScopedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.ProvideImages
+import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfScopedConnectionIsReadOnly
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService
 import com.lasthopesoftware.bluewater.client.connection.polling.WaitForConnectionDialog
 import com.lasthopesoftware.bluewater.client.connection.selected.ProvideSelectedConnection
@@ -22,7 +24,6 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.resources.strings.GetStringResources
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import org.slf4j.LoggerFactory
@@ -33,6 +34,8 @@ class NowPlayingViewModel(
 	private val nowPlayingRepository: INowPlayingRepository,
 	private val selectedConnectionProvider: ProvideSelectedConnection,
 	private val imageProvider: ProvideImages,
+	private val fileProperties: ProvideScopedFileProperties,
+	private val checkAuthentication: CheckIfScopedConnectionIsReadOnly,
 	private val stringResources: GetStringResources
 ) : ViewModel() {
 
@@ -77,10 +80,9 @@ class NowPlayingViewModel(
 							.promiseSessionConnection()
 							.then { connectionProvider ->
 								connectionProvider?.urlProvider?.baseUrl?.let { baseUrl ->
-									val filePosition = NowPlayingActivity.viewStructure
-										?.takeIf { it.urlKeyHolder == UrlKeyHolder(baseUrl, serviceFile) }
-										?.filePosition
-										?: 0
+									val filePosition =
+										if (cachedPromises?.urlKeyHolder == UrlKeyHolder(baseUrl, serviceFile)) filePositionState.value
+										else 0
 									setView(serviceFile, filePosition)
 								}
 							}
@@ -91,8 +93,8 @@ class NowPlayingViewModel(
 
 	private var currentServiceFileByUrl: UrlKeyHolder<ServiceFile>? = null
 	private var promisedNowPlayingImage: Promise<Bitmap?>? = null
+	private var cachedPromises: CachedPromises? = null
 
-	private val filePropertiesState = MutableStateFlow<MutableMap<String, String>?>(null)
 	private val filePositionState = MutableStateFlow(0L)
 	private val fileDurationState = MutableStateFlow(0L)
 	private val isPlayingState = MutableStateFlow(false)
@@ -101,8 +103,9 @@ class NowPlayingViewModel(
 	private val artistState = MutableStateFlow<String?>(null)
 	private val titleState = MutableStateFlow<String?>(null)
 	private val nowPlayingImageState = MutableStateFlow<Bitmap?>(null)
+	private val songRatingState = MutableStateFlow(0F)
+	private val isSongRatingEnabledState = MutableStateFlow(false)
 
-	val fileProperties = filePropertiesState.asStateFlow()
 	val filePosition = filePositionState.asStateFlow()
 	val fileDuration = fileDurationState.asStateFlow()
 	val isFilePropertiesReadOnly = isReadOnlyState.asStateFlow()
@@ -116,12 +119,12 @@ class NowPlayingViewModel(
 	}
 
 	private fun setView(serviceFile: ServiceFile, initialFilePosition: Long) {
-		fun setNowPlayingImage(serviceFileByUrl: UrlKeyHolder<ServiceFile>) {
+		fun setNowPlayingImage(cachedPromises: CachedPromises) {
 			isNowPlayingImageLoadingState.value = true
-			val promisedNowPlayingImage = this.promisedNowPlayingImage ?: imageProvider.promiseFileBitmap(serviceFile).also { promisedNowPlayingImage = it }
-			promisedNowPlayingImage
+			cachedPromises
+				.promisedImage
 				.then { bitmap ->
-					if (currentServiceFileByUrl != serviceFileByUrl) Unit
+					if (this.cachedPromises?.urlKeyHolder != cachedPromises.urlKeyHolder) Unit
 					else {
 						nowPlayingImageState.value = bitmap
 						isNowPlayingImageLoadingState.value = false
@@ -145,52 +148,53 @@ class NowPlayingViewModel(
 			val fileRating = stringRating?.toFloatOrNull() ?: 0f
 
 			isReadOnlyState.value = isReadOnly
+			songRatingState.value = fileRating
 
-			with (miniSongRating.findView()) {
-				rating = fileRating
-				isEnabled = !isReadOnly
-
-				onRatingBarChangeListener =
-					if (isReadOnly) null
-					else OnRatingBarChangeListener { _, newRating, fromUser ->
-						if (fromUser) {
-							songRating.findView().rating = newRating
-							val ratingToString = newRating.roundToInt().toString()
-							filePropertiesStorage
-								.promiseFileUpdate(serviceFile, com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties.RATING, ratingToString, false)
-								.eventuallyExcuse(com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.response(::handleIoException, messageHandler))
-							com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity.NowPlayingActivity.viewStructure?.fileProperties?.put(
-								com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties.RATING, ratingToString)
-						}
-					}
-			}
-
-			with (songRating.findView()) {
-				rating = fileRating
-				isEnabled = !isReadOnly
-
-				onRatingBarChangeListener =
-					if (isReadOnly) null
-					else OnRatingBarChangeListener { _, newRating, fromUser ->
-						if (fromUser && nowPlayingToggledVisibilityControls.isVisible) {
-							miniSongRating.findView().rating = newRating
-							val ratingToString = newRating.roundToInt().toString()
-							filePropertiesStorage
-								.promiseFileUpdate(serviceFile, com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties.RATING, ratingToString, false)
-								.eventuallyExcuse(com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.response(::handleIoException, messageHandler))
-							com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity.NowPlayingActivity.viewStructure?.fileProperties?.put(
-								com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties.RATING, ratingToString)
-						}
-					}
-			}
+//			with (miniSongRating.findView()) {
+//				rating = fileRating
+//				isEnabled = !isReadOnly
+//
+//				onRatingBarChangeListener =
+//					if (isReadOnly) null
+//					else OnRatingBarChangeListener { _, newRating, fromUser ->
+//						if (fromUser) {
+//							songRating.findView().rating = newRating
+//							val ratingToString = newRating.roundToInt().toString()
+//							filePropertiesStorage
+//								.promiseFileUpdate(serviceFile, com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties.RATING, ratingToString, false)
+//								.eventuallyExcuse(com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.response(::handleIoException, messageHandler))
+//							com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity.NowPlayingActivity.viewStructure?.fileProperties?.put(
+//								com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties.RATING, ratingToString)
+//						}
+//					}
+//			}
+//
+//			with (songRating.findView()) {
+//				rating = fileRating
+//				isEnabled = !isReadOnly
+//
+//				onRatingBarChangeListener =
+//					if (isReadOnly) null
+//					else OnRatingBarChangeListener { _, newRating, fromUser ->
+//						if (fromUser && nowPlayingToggledVisibilityControls.isVisible) {
+//							miniSongRating.findView().rating = newRating
+//							val ratingToString = newRating.roundToInt().toString()
+//							filePropertiesStorage
+//								.promiseFileUpdate(serviceFile, com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties.RATING, ratingToString, false)
+//								.eventuallyExcuse(com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.response(::handleIoException, messageHandler))
+//							com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity.NowPlayingActivity.viewStructure?.fileProperties?.put(
+//								com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties.RATING, ratingToString)
+//						}
+//					}
+//			}
 		}
 
 		fun disableViewWithMessage() {
 			titleState.value = stringResources.loading
 			artistState.value = ""
 
-			songRating.findView().disableAndClear()
-			miniSongRating.findView().disableAndClear()
+			songRatingState.value = 0F
+			isSongRatingEnabledState.value = false
 		}
 
 		fun handleException(exception: Throwable) {
@@ -212,38 +216,28 @@ class NowPlayingViewModel(
 				val baseUrl = connectionProvider?.urlProvider?.baseUrl ?: return@then
 
 				val urlKeyHolder = UrlKeyHolder(baseUrl, serviceFile)
-				if (currentServiceFileByUrl != urlKeyHolder) {
-					release()
-				}
+				val currentCachedPromises = cachedPromises
+					?.takeIf { urlKeyHolder == urlKeyHolder }
+					?: run {
+						cachedPromises?.release()
+						CachedPromises(
+							urlKeyHolder,
+							checkAuthentication.promiseIsReadOnly(),
+							fileProperties.promiseFileProperties(serviceFile),
+							imageProvider.promiseFileBitmap(serviceFile)
+						).also { cachedPromises = it }
+					}
 
-				val localViewStructure = NowPlayingActivity.viewStructure ?: NowPlayingActivity.ViewStructure(
-					urlKeyHolder,
-					serviceFile
-				)
-				NowPlayingActivity.viewStructure = localViewStructure
-
-				setNowPlayingImage(localViewStructure)
-
-				val cachedFileProperties = localViewStructure.fileProperties
-				val isReadOnly = localViewStructure.isFilePropertiesReadOnly
-				if (cachedFileProperties != null && isReadOnly != null) {
-					setFileProperties(cachedFileProperties, isReadOnly)
-					return@ImmediateResponse
-				}
+				setNowPlayingImage(currentCachedPromises)
 
 				disableViewWithMessage()
-				val promisedIsConnectionReadOnly = lazySelectedConnectionAuthenticationChecker.promiseIsReadOnly()
-				lazyFilePropertiesProvider
-					.promiseFileProperties(serviceFile)
+				currentCachedPromises
+					.promisedProperties
 					.eventually { fileProperties ->
-						if (localViewStructure !== NowPlayingActivity.viewStructure) Unit.toPromise()
-						else promisedIsConnectionReadOnly.eventually { isReadOnly ->
-							if (localViewStructure !== NowPlayingActivity.viewStructure) Unit.toPromise()
-							else LoopedInPromise(MessageWriter {
-								localViewStructure.fileProperties = fileProperties.toMutableMap()
-								localViewStructure.isFilePropertiesReadOnly = isReadOnly
-								setFileProperties(fileProperties, isReadOnly)
-							}, messageHandler)
+						if (cachedPromises?.urlKeyHolder != urlKeyHolder) Unit.toPromise()
+						else currentCachedPromises.promisedIsReadOnly.then { isReadOnly ->
+							if (cachedPromises?.urlKeyHolder != urlKeyHolder) Unit.toPromise()
+							else setFileProperties(fileProperties, isReadOnly)
 						}
 					}
 					.eventuallyExcuse(LoopedInPromise.response(::handleException, messageHandler))
@@ -251,14 +245,23 @@ class NowPlayingViewModel(
 	}
 
 	private fun setTrackDuration(duration: Long) {
-		songProgressBar.findView().max = duration.toInt()
-		miniSongProgressBar.findView().max = duration.toInt()
-		NowPlayingActivity.viewStructure?.fileDuration = duration
+		fileDurationState.value = duration
 	}
 
 	private fun setTrackProgress(progress: Long) {
-		songProgressBar.findView().progress = progress.toInt()
-		miniSongProgressBar.findView().progress = progress.toInt()
-		NowPlayingActivity.viewStructure?.filePosition = progress
+		filePositionState.value = progress
+	}
+
+	private class CachedPromises(
+		val urlKeyHolder: UrlKeyHolder<ServiceFile>,
+		val promisedIsReadOnly: Promise<Boolean>,
+		val promisedProperties: Promise<Map<String, String>>,
+		val promisedImage: Promise<Bitmap?>
+	) {
+		fun release() {
+			promisedIsReadOnly.cancel()
+			promisedProperties.cancel()
+			promisedImage.cancel()
+		}
 	}
 }
