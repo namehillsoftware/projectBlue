@@ -119,7 +119,6 @@ class NowPlayingActivity :
 	private val miniReadOnlyConnectionLabel = LazyViewFinder<TextView>(this, R.id.miniReadOnlyConnectionLabel)
 	private val closeNowPlayingListButton = LazyViewFinder<ImageButton>(this, R.id.closeNowPlayingList)
 	private val viewNowPlayingListButton = LazyViewFinder<ImageButton>(this, R.id.viewNowPlayingListButton)
-	private val nowPlayingControlsContainer = LazyViewFinder<RelativeLayout>(this, R.id.nowPlayingControlsContainer)
 	private val nowPlayingMainSheet = LazyViewFinder<RelativeLayout>(this, R.id.nowPlayingMainSheet)
 
 	private val messageBus = lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
