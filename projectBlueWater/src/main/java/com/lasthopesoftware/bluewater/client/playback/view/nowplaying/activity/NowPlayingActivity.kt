@@ -61,6 +61,8 @@ import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToast
 import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.resources.strings.StringResources
+import com.lasthopesoftware.resources.viewmodels.buildViewModel
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
@@ -202,6 +204,18 @@ class NowPlayingActivity :
 				lazySessionRevisionProvider,
 				FilePropertyCache.getInstance())
 		}
+	}
+
+	private val model by buildViewModel {
+		NowPlayingViewModel(
+			messageBus.value,
+			nowPlayingRepository,
+			lazySelectedConnectionProvider,
+			imageProvider,
+			lazyFilePropertiesProvider,
+			lazySelectedConnectionAuthenticationChecker,
+			StringResources(this)
+		)
 	}
 
 	private val defaultImage by lazy { DefaultImageProvider(this).promiseFileBitmap() }
