@@ -42,6 +42,7 @@ class NowPlayingViewModel(
 
 	companion object {
 		private val logger by lazy { LoggerFactory.getLogger(NowPlayingViewModel::class.java) }
+		private val screenControlVisibilityTime by lazy { Duration.standardSeconds(5) }
 	}
 
 	private val onPlaybackStartedReceiver = object : BroadcastReceiver() {
@@ -159,10 +160,9 @@ class NowPlayingViewModel(
 						}
 					}
 			}
-//			}
-//			.excuse { error -> NowPlayingActivity.logger.warn("An error occurred initializing `NowPlayingActivity`", error) }
+			.excuse { error -> logger.warn("An error occurred initializing `NowPlayingActivity`", error) }
 
-//		PlaybackService.promiseIsMarkedForPlay(this).then(::togglePlayingButtons)
+//		PlaybackService.promiseIsMarkedForPlay(this).then(::togglePlaying)
 	}
 
 	fun togglePlaying(isPlaying: Boolean) {
@@ -172,6 +172,13 @@ class NowPlayingViewModel(
 	fun toggleScreenOn() {
 		isScreenOnEnabledState.value = !isScreenOnEnabledState.value
 		updateKeepScreenOnStatus()
+	}
+
+	fun showNowPlayingControls() {
+		isScreenControlsVisibleState.value = true
+		PromiseDelay
+			.delay<Any?>(screenControlVisibilityTime)
+			.then { isScreenControlsVisibleState.value = false }
 	}
 
 	private fun setView() {
@@ -319,13 +326,6 @@ class NowPlayingViewModel(
 
 	private fun updateKeepScreenOnStatus() {
 		isScreenOnState.value = isPlayingState.value && isScreenOnEnabledState.value
-	}
-
-	private fun showNowPlayingControls() {
-		isScreenControlsVisibleState.value = true
-		PromiseDelay
-			.delay<Any?>(Duration.standardSeconds(5))
-			.then { isScreenControlsVisibleState.value = false }
 	}
 
 	private fun setTrackDuration(duration: Number) {
