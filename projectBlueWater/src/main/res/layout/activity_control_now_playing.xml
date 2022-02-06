@@ -43,9 +43,9 @@
                         android:layout_weight="1"
                         android:alpha=".80"
                         android:background="?android:attr/selectableItemBackground"
-                        android:contentDescription="@{vm.isScreenOn ? @string/screen_is_on : @string/screen_is_off}"
+                        android:contentDescription="@{vm.isScreenOnEnabled ? @string/screen_is_on : @string/screen_is_off}"
                         android:paddingEnd="@dimen/now_playing_menu_padding"
-                        android:src="@{vm.isScreenOn ? @drawable/ic_screen_on_white_36dp : @drawable/ic_screen_off_white_36dp}"
+                        android:src="@{vm.isScreenOnEnabled ? @drawable/ic_screen_on_white_36dp : @drawable/ic_screen_off_white_36dp}"
                         tools:ignore="RtlSymmetry" />
 
                     <ImageButton
@@ -57,7 +57,7 @@
                         android:background="?android:attr/selectableItemBackground"
                         android:contentDescription="@string/btn_repeat_playlist"
                         android:paddingEnd="@dimen/now_playing_menu_padding"
-                        android:src="@drawable/av_no_repeat_dark"
+                        android:src="@{vm.isRepeating ? @drawable/av_repeat_dark : @drawable/av_no_repeat_dark}"
                         tools:ignore="RtlSymmetry" />
 
                     <ImageButton
@@ -209,7 +209,7 @@
         </RelativeLayout>
 
         <RelativeLayout
-            android:id="@+id/nowPlayingBottomSheet"
+            android:id="@+id/bottom_sheet"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             app:behavior_hideable="false"

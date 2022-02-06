@@ -117,13 +117,13 @@ class NowPlayingViewModel(
 	private val isScreenOnEnabledState = MutableStateFlow(false)
 	private val isScreenOnState = MutableStateFlow(false)
 	private val isScreenControlsVisibleState = MutableStateFlow(false)
+	private val isRepeatingState = MutableStateFlow(false)
 
 	val filePosition = filePositionState.asStateFlow()
 	val fileDuration = fileDurationState.asStateFlow()
 	val isPlaying = isPlayingState.asStateFlow()
 	val isReadOnly = isReadOnlyState.asStateFlow()
 	val isNowPlayingImageLoading = isNowPlayingImageLoadingState.asStateFlow()
-	val isFilePropertiesReadOnly = isReadOnlyState.asStateFlow()
 	val artist = artistState.asStateFlow()
 	val title = titleState.asStateFlow()
 	val nowPlayingImage = nowPlayingImageState.asStateFlow()
@@ -134,6 +134,7 @@ class NowPlayingViewModel(
 	val isScreenOnEnabled = isScreenOnEnabledState.asStateFlow()
 	val isScreenOn = isScreenOnState.asStateFlow()
 	val isScreenControlsVisible = isScreenControlsVisibleState.asStateFlow()
+	val isRepeating = isRepeatingState.asStateFlow()
 
 	override fun close() {
 		cachedPromises?.release()
@@ -144,6 +145,7 @@ class NowPlayingViewModel(
 		nowPlayingRepository
 			.nowPlaying
 			.eventually { np ->
+				isRepeatingState.value = np.isRepeating
 				selectedConnectionProvider
 					.promiseSessionConnection()
 					.then { connectionProvider ->
