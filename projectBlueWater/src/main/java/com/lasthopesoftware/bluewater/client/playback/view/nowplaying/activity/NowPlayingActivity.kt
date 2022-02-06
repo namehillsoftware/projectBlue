@@ -47,6 +47,7 @@ import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSele
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
+import com.lasthopesoftware.bluewater.client.playback.service.PlaybackStateLookup
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.list.NowPlayingFileListAdapter
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.menu.NowPlayingFileListItemMenuBuilder
@@ -217,6 +218,7 @@ class NowPlayingActivity :
 						imageProvider,
 						lazyFilePropertiesProvider,
 						lazySelectedConnectionAuthenticationChecker,
+						PlaybackStateLookup(this),
 						StringResources(this)
 					)
 				}.apply { binding.vm = this }
@@ -308,14 +310,6 @@ class NowPlayingActivity :
 			vm.isScreenOn.onEach {
 				if (it) window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 				else disableKeepScreenOn()
-			}.launchIn(lifecycleScope)
-
-			vm.nowPlayingImage.onEach { bitmap ->
-				val nowPlayingImage = binding.coverArt.imgNowPlaying
-				nowPlayingImage.setImageBitmap(bitmap)
-				if (bitmap != null) {
-					nowPlayingImage.scaleType = ScaleType.CENTER_CROP
-				}
 			}.launchIn(lifecycleScope)
 
 			with (binding.control) {
