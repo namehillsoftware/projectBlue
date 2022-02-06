@@ -13,6 +13,7 @@ import android.widget.ImageView.ScaleType
 import android.widget.RatingBar.OnRatingBarChangeListener
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
+import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -67,6 +68,7 @@ import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import org.slf4j.LoggerFactory
 import java.util.*
@@ -205,19 +207,20 @@ class NowPlayingActivity :
 	}
 
 	private val model by lazy {
-		nowPlayingRepository.then {
-			buildViewModel {
-				NowPlayingViewModel(
-					messageBus.value,
-					it,
-					lazySelectedConnectionProvider,
-					imageProvider,
-					lazyFilePropertiesProvider,
-					lazySelectedConnectionAuthenticationChecker,
-					StringResources(this)
-				)
-			}
-		}
+		nowPlayingRepository
+			.eventually(LoopedInPromise.response({
+				buildViewModel {
+					NowPlayingViewModel(
+						messageBus.value,
+						it,
+						lazySelectedConnectionProvider,
+						imageProvider,
+						lazyFilePropertiesProvider,
+						lazySelectedConnectionAuthenticationChecker,
+						StringResources(this)
+					)
+				}.apply { binding.vm = this }
+			}, messageHandler))
 	}
 
 	private val defaultImage by lazy { DefaultImageProvider(this).promiseFileBitmap() }
@@ -277,30 +280,35 @@ class NowPlayingActivity :
 		}
 	}
 
-	private lateinit var binding: ActivityViewNowPlayingBinding
+	private val binding by lazy {
+		DataBindingUtil.setContentView<ActivityViewNowPlayingBinding>(this, R.layout.activity_view_now_playing)
+	}
 	private var timerTask: TimerTask? = null
 	private var isDrawerOpened = false
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
-		binding = DataBindingUtil.setContentView(this, R.layout.activity_view_now_playing)
+		binding.lifecycleOwner = this
 		model.then { vm ->
-			binding.vm = vm
-
 			vm.nowPlayingList.onEach { l ->
 				nowPlayingListAdapter
 					.eventually { npa -> npa.updateListEventually(l) }
-			}
+			}.launchIn(lifecycleScope)
 
 			vm.nowPlayingFile.filterNotNull().onEach {
-				nowPlayingListView.eventually(LoopedInPromise.response({ lv -> lv.scrollToPosition(it.playlistPosition) }, messageHandler))
-			}
+				nowPlayingListView.eventually(
+					LoopedInPromise.response(
+						{ lv -> lv.scrollToPosition(it.playlistPosition) },
+						messageHandler
+					)
+				)
+			}.launchIn(lifecycleScope)
 
 			vm.isScreenOn.onEach {
 				if (it) window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 				else disableKeepScreenOn()
-			}
+			}.launchIn(lifecycleScope)
 
 			vm.nowPlayingImage.onEach { bitmap ->
 				val nowPlayingImage = binding.coverArt.imgNowPlaying
@@ -308,7 +316,7 @@ class NowPlayingActivity :
 				if (bitmap != null) {
 					nowPlayingImage.scaleType = ScaleType.CENTER_CROP
 				}
-			}
+			}.launchIn(lifecycleScope)
 
 			binding.control.btnPlay.setOnClickListener { v ->
 				if (!vm.isScreenControlsVisible.value) return@setOnClickListener
@@ -469,18 +477,6 @@ class NowPlayingActivity :
 				nowPlayingImageLoadingView.setImageBitmap(bitmap)
 				nowPlayingImageLoadingView.scaleType = ScaleType.CENTER_CROP
 			}, messageHandler))
-
-	private fun setRepeatingIcon(imageButton: ImageButton?) {
-		setRepeatingIcon(imageButton, false)
-		nowPlayingRepository
-			.then { npr ->
-				npr
-					.nowPlaying
-					.eventually(LoopedInPromise.response({ result ->
-						if (result != null) setRepeatingIcon(imageButton, result.isRepeating)
-					}, messageHandler))
-			}
-	}
 
 	private fun updateKeepScreenOnStatus() {
 		isScreenKeptOnButton.findView().setImageDrawable(getThemedDrawable(
