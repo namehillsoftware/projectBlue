@@ -123,9 +123,8 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:max="5"
-                        android:rating="0"
                         android:stepSize="1"
-                        android:value="@{vm.songRating}"
+                        android:rating="@={vm.songRating}"
                         android:isIndicator="@{!vm.isSongRatingEnabled}" />
 
                     <TextView
@@ -244,9 +243,8 @@
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:max="5"
-                            android:rating="0"
                             android:stepSize="1"
-                            android:value="@{vm.songRating}"
+                            android:rating="@={vm.songRating}"
                             android:isIndicator="@{!vm.isSongRatingEnabled}" />
 
                         <TextView
@@ -255,6 +253,7 @@
                             android:layout_height="wrap_content"
                             android:layout_gravity="center_horizontal"
                             android:text="@string/readOnlyConnection"
+                            android:visibility="@{vm.isReadOnly ? View.VISIBLE : View.GONE}"
                             android:textAppearance="?android:attr/textAppearanceSmall" />
 
                     </LinearLayout>

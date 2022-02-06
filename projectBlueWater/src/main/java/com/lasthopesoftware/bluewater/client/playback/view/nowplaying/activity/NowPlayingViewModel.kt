@@ -31,7 +31,7 @@ import java.io.Closeable
 import java.util.concurrent.CancellationException
 
 class NowPlayingViewModel(
-	messages: RegisterForMessages,
+	private val messages: RegisterForMessages,
 	private val nowPlayingRepository: INowPlayingRepository,
 	private val selectedConnectionProvider: ProvideSelectedConnection,
 	private val imageProvider: ProvideImages,
@@ -42,22 +42,6 @@ class NowPlayingViewModel(
 
 	companion object {
 		private val logger by lazy { LoggerFactory.getLogger(NowPlayingViewModel::class.java) }
-	}
-
-	init {
-		val playbackStoppedIntentFilter = IntentFilter().apply {
-			addAction(PlaylistEvents.onPlaylistPause)
-			addAction(PlaylistEvents.onPlaylistInterrupted)
-			addAction(PlaylistEvents.onPlaylistStop)
-		}
-
-	    with(messages) {
-			registerReceiver(onPlaybackStoppedReceiver, playbackStoppedIntentFilter)
-			registerReceiver(onPlaybackStartedReceiver, IntentFilter(PlaylistEvents.onPlaylistStart))
-			registerReceiver(onPlaybackChangedReceiver, IntentFilter(PlaylistEvents.onPlaylistTrackChange))
-			registerReceiver(onPlaylistChangedReceiver, IntentFilter(PlaylistEvents.onPlaylistChange))
-			registerReceiver(onTrackPositionChanged, IntentFilter(TrackPositionBroadcaster.trackPositionUpdate))
-		}
 	}
 
 	private val onPlaybackStartedReceiver = object : BroadcastReceiver() {
@@ -127,8 +111,8 @@ class NowPlayingViewModel(
 	val artist = artistState.asStateFlow()
 	val title = titleState.asStateFlow()
 	val nowPlayingImage = nowPlayingImageState.asStateFlow()
-	val songRating = songRatingState.asStateFlow()
-	val isSongRatingEnabled = songRatingState.asStateFlow()
+	val songRating = songRatingState
+	val isSongRatingEnabled = isSongRatingEnabledState.asStateFlow()
 	val nowPlayingList = nowPlayingListState.asStateFlow()
 	val nowPlayingFile = nowPlayingFileState.asStateFlow()
 	val isScreenOnEnabled = isScreenOnEnabledState.asStateFlow()
@@ -141,6 +125,20 @@ class NowPlayingViewModel(
 	}
 
 	fun initializeViewModel() {
+		val playbackStoppedIntentFilter = IntentFilter().apply {
+			addAction(PlaylistEvents.onPlaylistPause)
+			addAction(PlaylistEvents.onPlaylistInterrupted)
+			addAction(PlaylistEvents.onPlaylistStop)
+		}
+
+		with(messages) {
+			registerReceiver(onPlaybackStoppedReceiver, playbackStoppedIntentFilter)
+			registerReceiver(onPlaybackStartedReceiver, IntentFilter(PlaylistEvents.onPlaylistStart))
+			registerReceiver(onPlaybackChangedReceiver, IntentFilter(PlaylistEvents.onPlaylistTrackChange))
+			registerReceiver(onPlaylistChangedReceiver, IntentFilter(PlaylistEvents.onPlaylistChange))
+			registerReceiver(onTrackPositionChanged, IntentFilter(TrackPositionBroadcaster.trackPositionUpdate))
+		}
+
 		isPlayingState.value = false
 		nowPlayingRepository
 			.nowPlaying
@@ -149,14 +147,16 @@ class NowPlayingViewModel(
 				selectedConnectionProvider
 					.promiseSessionConnection()
 					.then { connectionProvider ->
-						val serviceFile = np.playlist[np.playlistPosition]
-						val filePosition = connectionProvider?.urlProvider?.baseUrl
-							?.let { baseUrl ->
-								if (cachedPromises?.urlKeyHolder == UrlKeyHolder(baseUrl, serviceFile)) filePositionState.value
-								else np.filePosition
-							}
-							?: np.filePosition
-						setView(serviceFile, filePosition)
+						nowPlayingListState.value = np.playlist.mapIndexed(::PositionedFile)
+						np.playingFile?.also { serviceFile ->
+							val filePosition = connectionProvider?.urlProvider?.baseUrl
+								?.let { baseUrl ->
+									if (cachedPromises?.urlKeyHolder == UrlKeyHolder(baseUrl, serviceFile)) filePositionState.value
+									else np.filePosition
+								}
+								?: np.filePosition
+							setView(serviceFile, filePosition)
+						}
 					}
 			}
 //			}
@@ -198,8 +198,7 @@ class NowPlayingViewModel(
 			cachedPromises
 				.promisedImage
 				.then { bitmap ->
-					if (this.cachedPromises?.urlKeyHolder != cachedPromises.urlKeyHolder) Unit
-					else {
+					if (this.cachedPromises?.urlKeyHolder == cachedPromises.urlKeyHolder) {
 						nowPlayingImageState.value = bitmap
 						isNowPlayingImageLoadingState.value = false
 					}
@@ -223,6 +222,7 @@ class NowPlayingViewModel(
 
 			isReadOnlyState.value = isReadOnly
 			songRatingState.value = fileRating
+		}
 
 //			with (miniSongRating.findView()) {
 //				rating = fileRating
@@ -261,7 +261,6 @@ class NowPlayingViewModel(
 //						}
 //					}
 //			}
-		}
 
 		fun disableViewWithMessage() {
 			titleState.value = stringResources.loading
@@ -310,8 +309,8 @@ class NowPlayingViewModel(
 					.eventually { fileProperties ->
 						if (cachedPromises?.urlKeyHolder != urlKeyHolder) Unit.toPromise()
 						else currentCachedPromises.promisedIsReadOnly.then { isReadOnly ->
-							if (cachedPromises?.urlKeyHolder != urlKeyHolder) Unit.toPromise()
-							else setFileProperties(fileProperties, isReadOnly)
+							if (cachedPromises?.urlKeyHolder == urlKeyHolder)
+								setFileProperties(fileProperties, isReadOnly)
 						}
 					}
 //					.eventuallyExcuse(LoopedInPromise.response(::handleException, messageHandler))
