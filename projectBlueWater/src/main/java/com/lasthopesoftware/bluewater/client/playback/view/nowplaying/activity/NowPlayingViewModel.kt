@@ -14,6 +14,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.image.ProvideI
 import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfScopedConnectionIsReadOnly
 import com.lasthopesoftware.bluewater.client.connection.selected.ProvideSelectedConnection
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
+import com.lasthopesoftware.bluewater.client.playback.service.GetPlaybackState
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.INowPlayingRepository
@@ -37,6 +38,7 @@ class NowPlayingViewModel(
 	private val imageProvider: ProvideImages,
 	private val fileProperties: ProvideScopedFileProperties,
 	private val checkAuthentication: CheckIfScopedConnectionIsReadOnly,
+	private val playbackState: GetPlaybackState,
 	private val stringResources: GetStringResources
 ) : ViewModel(), Closeable {
 
@@ -162,7 +164,7 @@ class NowPlayingViewModel(
 			}
 			.excuse { error -> logger.warn("An error occurred initializing `NowPlayingActivity`", error) }
 
-//		PlaybackService.promiseIsMarkedForPlay(this).then(::togglePlaying)
+		playbackState.promiseIsMarkedForPlay().then(::togglePlaying)
 	}
 
 	fun togglePlaying(isPlaying: Boolean) {
