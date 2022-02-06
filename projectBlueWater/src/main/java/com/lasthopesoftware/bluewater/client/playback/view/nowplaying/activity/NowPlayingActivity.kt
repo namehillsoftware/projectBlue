@@ -318,46 +318,46 @@ class NowPlayingActivity :
 				}
 			}.launchIn(lifecycleScope)
 
-			binding.control.btnPlay.setOnClickListener { v ->
-				if (!vm.isScreenControlsVisible.value) return@setOnClickListener
-				PlaybackService.play(v.context)
-				vm.togglePlaying(true)
-			}
+			with (binding.control) {
+				btnPlay.setOnClickListener { v ->
+					if (!vm.isScreenControlsVisible.value) return@setOnClickListener
+					PlaybackService.play(v.context)
+					vm.togglePlaying(true)
+				}
 
-			binding.control.miniPlay.setOnClickListener { v ->
-				PlaybackService.play(v.context)
-				vm.togglePlaying(true)
-			}
+				miniPlay.setOnClickListener { v ->
+					PlaybackService.play(v.context)
+					vm.togglePlaying(true)
+				}
 
-			binding.control.btnPause.setOnClickListener { v ->
-				if (!vm.isScreenControlsVisible.value) return@setOnClickListener
-				PlaybackService.pause(v.context)
-				vm.togglePlaying(false)
-			}
+				btnPause.setOnClickListener { v ->
+					if (!vm.isScreenControlsVisible.value) return@setOnClickListener
+					PlaybackService.pause(v.context)
+					vm.togglePlaying(false)
+				}
 
-			binding.control.miniPause.setOnClickListener { v ->
-				PlaybackService.pause(v.context)
-				vm.togglePlaying(false)
-			}
+				miniPause.setOnClickListener { v ->
+					PlaybackService.pause(v.context)
+					vm.togglePlaying(false)
+				}
 
-			binding.control.btnNext.setOnClickListener { v ->
-				if (vm.isScreenControlsVisible.value) PlaybackService.next(v.context)
-			}
+				btnNext.setOnClickListener { v ->
+					if (vm.isScreenControlsVisible.value) PlaybackService.next(v.context)
+				}
 
-			binding.control.btnPrevious.setOnClickListener { v ->
-				if (vm.isScreenControlsVisible.value) PlaybackService.previous(v.context)
-			}
+				btnPrevious.setOnClickListener { v ->
+					if (vm.isScreenControlsVisible.value) PlaybackService.previous(v.context)
+				}
 
-			binding.control.isScreenKeptOnButton.setOnClickListener { vm.toggleScreenOn() }
+				isScreenKeptOnButton.setOnClickListener { vm.toggleScreenOn() }
+
+				nowPlayingContentView.setOnClickListener { vm.showNowPlayingControls() }
+			}
 		}
-
-		nowPlayingToggledVisibilityControls.toggleVisibility(false)
 
 		addOnConnectionLostListener(onConnectionLostListener)
 
 		setNowPlayingBackgroundBitmap()
-
-		binding.control.nowPlayingContentView.setOnClickListener { showNowPlayingControls() }
 
 		val repeatButton = binding.control.repeatButton
 		repeatButton.setOnClickListener { v ->
