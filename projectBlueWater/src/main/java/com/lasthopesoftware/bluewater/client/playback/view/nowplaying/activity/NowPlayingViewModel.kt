@@ -14,7 +14,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.image.ProvideI
 import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfScopedConnectionIsReadOnly
 import com.lasthopesoftware.bluewater.client.connection.selected.ProvideSelectedConnection
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
-import com.lasthopesoftware.bluewater.client.playback.service.GetPlaybackState
+import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.INowPlayingRepository
@@ -26,6 +26,7 @@ import com.lasthopesoftware.resources.strings.GetStringResources
 import com.namehillsoftware.handoff.promises.Promise
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.onEach
 import org.joda.time.Duration
 import org.slf4j.LoggerFactory
 import java.io.Closeable
@@ -38,7 +39,7 @@ class NowPlayingViewModel(
 	private val imageProvider: ProvideImages,
 	private val fileProperties: ProvideScopedFileProperties,
 	private val checkAuthentication: CheckIfScopedConnectionIsReadOnly,
-	private val playbackState: GetPlaybackState,
+	private val playbackService: ControlPlaybackService,
 	private val stringResources: GetStringResources
 ) : ViewModel(), Closeable {
 
@@ -147,6 +148,10 @@ class NowPlayingViewModel(
 			.nowPlaying
 			.eventually { np ->
 				isRepeatingState.value = np.isRepeating
+				isRepeatingState.onEach { isRepeating ->
+					if (isRepeating) playbackService.setRepeating()
+					else playbackService.setCompleting()
+				}
 				selectedConnectionProvider
 					.promiseSessionConnection()
 					.then { connectionProvider ->
@@ -164,7 +169,7 @@ class NowPlayingViewModel(
 			}
 			.excuse { error -> logger.warn("An error occurred initializing `NowPlayingActivity`", error) }
 
-		playbackState.promiseIsMarkedForPlay().then(::togglePlaying)
+		playbackService.promiseIsMarkedForPlay().then(::togglePlaying)
 	}
 
 	fun togglePlaying(isPlaying: Boolean) {
@@ -181,6 +186,11 @@ class NowPlayingViewModel(
 		PromiseDelay
 			.delay<Any?>(screenControlVisibilityTime)
 			.then { isScreenControlsVisibleState.value = false }
+	}
+
+	fun toggleRepeating() {
+		if (isRepeatingState.value) playbackService.setRepeating()
+		else playbackService.setCompleting()
 	}
 
 	private fun setView() {

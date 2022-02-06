@@ -47,7 +47,7 @@ import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSele
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
-import com.lasthopesoftware.bluewater.client.playback.service.PlaybackStateLookup
+import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.list.NowPlayingFileListAdapter
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.menu.NowPlayingFileListItemMenuBuilder
@@ -218,7 +218,7 @@ class NowPlayingActivity :
 						imageProvider,
 						lazyFilePropertiesProvider,
 						lazySelectedConnectionAuthenticationChecker,
-						PlaybackStateLookup(this),
+						PlaybackServiceController(this),
 						StringResources(this)
 					)
 				}.apply { binding.vm = this }
@@ -342,6 +342,8 @@ class NowPlayingActivity :
 				btnPrevious.setOnClickListener { v ->
 					if (vm.isScreenControlsVisible.value) PlaybackService.previous(v.context)
 				}
+
+				repeatButton.setOnClickListener { vm.toggleRepeating() }
 
 				isScreenKeptOnButton.setOnClickListener { vm.toggleScreenOn() }
 
