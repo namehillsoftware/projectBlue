@@ -109,8 +109,6 @@ class NowPlayingActivity :
 	private val miniPauseButton = LazyViewFinder<ImageButton>(this, R.id.miniPause)
 	private val songRating = LazyViewFinder<RatingBar>(this, R.id.rbSongRating)
 	private val miniSongRating = LazyViewFinder<RatingBar>(this, R.id.miniSongRating)
-	private val contentView = LazyViewFinder<View>(this, R.id.nowPlayingContentView)
-	private val bottomSheet = LazyViewFinder<RelativeLayout>(this, R.id.nowPlayingBottomSheet)
 	private val songProgressBar = LazyViewFinder<ProgressBar>(this, R.id.pbNowPlaying)
 	private val miniSongProgressBar = LazyViewFinder<ProgressBar>(this, R.id.miniNowPlayingBar)
 	private val nowPlayingImageViewFinder = LazyViewFinder<ImageView>(this, R.id.imgNowPlaying)
@@ -121,8 +119,6 @@ class NowPlayingActivity :
 	private val loadingProgressBar = LazyViewFinder<ProgressBar>(this, R.id.pbLoadingImg)
 	private val readOnlyConnectionLabel = LazyViewFinder<TextView>(this, R.id.readOnlyConnectionLabel)
 	private val miniReadOnlyConnectionLabel = LazyViewFinder<TextView>(this, R.id.miniReadOnlyConnectionLabel)
-	private val closeNowPlayingListButton = LazyViewFinder<ImageButton>(this, R.id.closeNowPlayingList)
-	private val viewNowPlayingListButton = LazyViewFinder<ImageButton>(this, R.id.viewNowPlayingListButton)
 	private val nowPlayingMainSheet = LazyViewFinder<RelativeLayout>(this, R.id.nowPlayingMainSheet)
 
 	private val messageBus = lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
@@ -226,7 +222,7 @@ class NowPlayingActivity :
 
 	private val defaultImage by lazy { DefaultImageProvider(this).promiseFileBitmap() }
 
-	private val bottomSheetBehavior by lazy { BottomSheetBehavior.from(bottomSheet.findView()) }
+	private val bottomSheetBehavior by lazy { BottomSheetBehavior.from(binding.control.bottomSheet) }
 
 	private val onConnectionLostListener = Runnable { WaitForConnectionDialog.show(this) }
 
@@ -281,15 +277,14 @@ class NowPlayingActivity :
 		}
 	}
 
+	private lateinit var binding: ActivityViewNowPlayingBinding
 	private var timerTask: TimerTask? = null
 	private var isDrawerOpened = false
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
-		setContentView(R.layout.activity_view_now_playing)
 
-		val binding = DataBindingUtil.setContentView<ActivityViewNowPlayingBinding>(this, R.layout.activity_view_now_playing)
-
+		binding = DataBindingUtil.setContentView(this, R.layout.activity_view_now_playing)
 		model.then { vm ->
 			binding.vm = vm
 
@@ -354,11 +349,10 @@ class NowPlayingActivity :
 
 		setNowPlayingBackgroundBitmap()
 
-		contentView.findView().setOnClickListener { showNowPlayingControls() }
+		binding.control.nowPlayingContentView.setOnClickListener { showNowPlayingControls() }
 
-		val repeatButton = findViewById<ImageButton>(R.id.repeatButton)
-		setRepeatingIcon(repeatButton)
-		repeatButton?.setOnClickListener { v ->
+		val repeatButton = binding.control.repeatButton
+		repeatButton.setOnClickListener { v ->
 			nowPlayingRepository
 				.then { r ->
 					r.nowPlaying.eventually(LoopedInPromise.response({ result ->
@@ -370,7 +364,7 @@ class NowPlayingActivity :
 				}
 		}
 
-		val bottomSheet = bottomSheet.findView()
+		val bottomSheet = binding.control.bottomSheet
 		bottomSheet.setOnClickListener { showNowPlayingControls() }
 
 		bottomSheetBehavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
@@ -400,8 +394,8 @@ class NowPlayingActivity :
 			}
 		}
 
-		closeNowPlayingListButton.findView().setOnClickListener(toggleListClickHandler)
-		viewNowPlayingListButton.findView().setOnClickListener(toggleListClickHandler)
+		binding.control.closeNowPlayingList.setOnClickListener(toggleListClickHandler)
+		binding.control.viewNowPlayingListButton.setOnClickListener(toggleListClickHandler)
 	}
 
 	override fun onStart() {
@@ -418,7 +412,7 @@ class NowPlayingActivity :
 
 		if (bottomSheetBehavior.state != BottomSheetBehavior.STATE_EXPANDED) return
 
-		nowPlayingMainSheet.findView().alpha = 0f
+		binding.control.nowPlayingMainSheet.alpha = 0f
 	}
 
 	override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -703,7 +697,6 @@ class NowPlayingActivity :
 
 	private fun showNowPlayingControls() {
 		nowPlayingToggledVisibilityControls.toggleVisibility(true)
-		contentView.findView().invalidate()
 		timerTask?.cancel()
 		val newTimerTask = object : TimerTask() {
 			var cancelled = false
