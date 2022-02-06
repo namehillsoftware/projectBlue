@@ -1,35 +1,43 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/rlViewCoverArt"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent">
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android">
+	<data>
+		<import type="android.view.View"/>
+		<variable name="vm" type="com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity.NowPlayingViewModel"/>
+	</data>
 
-	<ImageView
-		android:id="@+id/imgNowPlayingLoading"
+	<RelativeLayout
+		android:id="@+id/rlViewCoverArt"
 		android:layout_width="match_parent"
-		android:layout_height="match_parent"
-		android:layout_alignParentStart="true"
-		android:layout_alignParentLeft="true"
-		android:layout_alignParentTop="true"
-		android:contentDescription="@string/img_now_playing_loading" />
+		android:layout_height="match_parent">
 
-	<ProgressBar
-		android:id="@+id/pbLoadingImg"
-		style="?android:attr/progressBarStyleLarge"
-		android:layout_width="match_parent"
-		android:layout_height="wrap_content"
-		android:layout_centerHorizontal="true"
-		android:layout_centerVertical="true"
-		android:indeterminate="true"
-		android:visibility="visible" />
+		<ImageView
+			android:id="@+id/imgNowPlayingLoading"
+			android:layout_width="match_parent"
+			android:layout_height="match_parent"
+			android:layout_alignParentStart="true"
+			android:layout_alignParentLeft="true"
+			android:layout_alignParentTop="true"
+			android:contentDescription="@string/img_now_playing_loading" />
 
-	<ImageView
-	    android:id="@+id/imgNowPlaying"
-	    android:layout_width="match_parent"
-	    android:layout_height="match_parent"
-	    android:layout_alignParentStart="true"
-	    android:layout_alignParentLeft="true"
-	    android:layout_alignParentTop="true"
-	    android:contentDescription="@string/img_now_playing" />
+		<ProgressBar
+			android:id="@+id/pbLoadingImg"
+			style="?android:attr/progressBarStyleLarge"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_centerHorizontal="true"
+			android:layout_centerVertical="true"
+			android:indeterminate="true"
+			android:visibility="@{vm.isNowPlayingImageLoading ? View.VISIBLE : View.INVISIBLE}" />
+
+		<ImageView
+			android:id="@+id/imgNowPlaying"
+			android:layout_width="match_parent"
+			android:layout_height="match_parent"
+			android:layout_alignParentStart="true"
+			android:layout_alignParentTop="true"
+			android:contentDescription="@string/img_now_playing"
+			android:visibility="@{!vm.isNowPlayingImageLoading ? View.VISIBLE : View.INVISIBLE}" />
 
 
- </RelativeLayout>
+	</RelativeLayout>
+</layout>

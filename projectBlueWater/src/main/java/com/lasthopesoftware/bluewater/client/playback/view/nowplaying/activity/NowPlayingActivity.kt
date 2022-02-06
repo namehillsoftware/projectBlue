@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.graphics.Bitmap
 import android.os.Bundle
 import android.os.Handler
@@ -13,6 +12,7 @@ import android.widget.*
 import android.widget.ImageView.ScaleType
 import android.widget.RatingBar.OnRatingBarChangeListener
 import androidx.appcompat.app.AppCompatActivity
+import androidx.databinding.DataBindingUtil
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -46,11 +46,11 @@ import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSele
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.list.NowPlayingFileListAdapter
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.menu.NowPlayingFileListItemMenuBuilder
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlayingRepository
+import com.lasthopesoftware.bluewater.databinding.ActivityViewNowPlayingBinding
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
@@ -66,6 +66,8 @@ import com.lasthopesoftware.resources.viewmodels.buildViewModel
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.onEach
 import org.slf4j.LoggerFactory
 import java.util.*
 import java.util.concurrent.CancellationException
@@ -206,16 +208,20 @@ class NowPlayingActivity :
 		}
 	}
 
-	private val model by buildViewModel {
-		NowPlayingViewModel(
-			messageBus.value,
-			nowPlayingRepository,
-			lazySelectedConnectionProvider,
-			imageProvider,
-			lazyFilePropertiesProvider,
-			lazySelectedConnectionAuthenticationChecker,
-			StringResources(this)
-		)
+	private val model by lazy {
+		nowPlayingRepository.then {
+			buildViewModel {
+				NowPlayingViewModel(
+					messageBus.value,
+					it,
+					lazySelectedConnectionProvider,
+					imageProvider,
+					lazyFilePropertiesProvider,
+					lazySelectedConnectionAuthenticationChecker,
+					StringResources(this)
+				)
+			}
+		}
 	}
 
 	private val defaultImage by lazy { DefaultImageProvider(this).promiseFileBitmap() }
@@ -282,57 +288,73 @@ class NowPlayingActivity :
 		super.onCreate(savedInstanceState)
 		setContentView(R.layout.activity_view_now_playing)
 
+		val binding = DataBindingUtil.setContentView<ActivityViewNowPlayingBinding>(this, R.layout.activity_view_now_playing)
+
+		model.then { vm ->
+			binding.vm = vm
+
+			vm.nowPlayingList.onEach { l ->
+				nowPlayingListAdapter
+					.eventually { npa -> npa.updateListEventually(l) }
+			}
+
+			vm.nowPlayingFile.filterNotNull().onEach {
+				nowPlayingListView.eventually(LoopedInPromise.response({ lv -> lv.scrollToPosition(it.playlistPosition) }, messageHandler))
+			}
+
+			vm.isScreenOn.onEach {
+				if (it) window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+				else disableKeepScreenOn()
+			}
+
+			vm.nowPlayingImage.onEach { bitmap ->
+				val nowPlayingImage = binding.coverArt.imgNowPlaying
+				nowPlayingImage.setImageBitmap(bitmap)
+				if (bitmap != null) {
+					nowPlayingImage.scaleType = ScaleType.CENTER_CROP
+				}
+			}
+
+			binding.control.btnPlay.setOnClickListener { v ->
+				if (!vm.isScreenControlsVisible.value) return@setOnClickListener
+				PlaybackService.play(v.context)
+				vm.togglePlaying(true)
+			}
+
+			binding.control.miniPlay.setOnClickListener { v ->
+				PlaybackService.play(v.context)
+				vm.togglePlaying(true)
+			}
+
+			binding.control.btnPause.setOnClickListener { v ->
+				if (!vm.isScreenControlsVisible.value) return@setOnClickListener
+				PlaybackService.pause(v.context)
+				vm.togglePlaying(false)
+			}
+
+			binding.control.miniPause.setOnClickListener { v ->
+				PlaybackService.pause(v.context)
+				vm.togglePlaying(false)
+			}
+
+			binding.control.btnNext.setOnClickListener { v ->
+				if (vm.isScreenControlsVisible.value) PlaybackService.next(v.context)
+			}
+
+			binding.control.btnPrevious.setOnClickListener { v ->
+				if (vm.isScreenControlsVisible.value) PlaybackService.previous(v.context)
+			}
+
+			binding.control.isScreenKeptOnButton.setOnClickListener { vm.toggleScreenOn() }
+		}
+
 		nowPlayingToggledVisibilityControls.toggleVisibility(false)
-
-		val playbackStoppedIntentFilter = IntentFilter().apply {
-			addAction(PlaylistEvents.onPlaylistPause)
-			addAction(PlaylistEvents.onPlaylistInterrupted)
-			addAction(PlaylistEvents.onPlaylistStop)
-		}
-
-		with(messageBus.value) {
-			registerReceiver(onPlaybackStoppedReceiver, playbackStoppedIntentFilter)
-			registerReceiver(onPlaybackStartedReceiver, IntentFilter(PlaylistEvents.onPlaylistStart))
-			registerReceiver(onPlaybackChangedReceiver, IntentFilter(PlaylistEvents.onPlaylistTrackChange))
-			registerReceiver(onPlaylistChangedReceiver, IntentFilter(PlaylistEvents.onPlaylistChange))
-			registerReceiver(onTrackPositionChanged, IntentFilter(TrackPositionBroadcaster.trackPositionUpdate))
-		}
 
 		addOnConnectionLostListener(onConnectionLostListener)
 
 		setNowPlayingBackgroundBitmap()
 
 		contentView.findView().setOnClickListener { showNowPlayingControls() }
-
-		playButton.findView().setOnClickListener { v ->
-			if (!nowPlayingToggledVisibilityControls.isVisible) return@setOnClickListener
-			PlaybackService.play(v.context)
-			togglePlayingButtons(true)
-		}
-
-		miniPlayButton.findView().setOnClickListener { v ->
-			PlaybackService.play(v.context)
-			togglePlayingButtons(true)
-		}
-
-		pauseButton.findView().setOnClickListener { v ->
-			if (!nowPlayingToggledVisibilityControls.isVisible) return@setOnClickListener
-			PlaybackService.pause(v.context)
-			togglePlayingButtons(false)
-		}
-
-		miniPauseButton.findView().setOnClickListener { v ->
-			PlaybackService.pause(v.context)
-			togglePlayingButtons(false)
-		}
-
-		findViewById<ImageButton>(R.id.btnNext)?.setOnClickListener { v ->
-			if (nowPlayingToggledVisibilityControls.isVisible) PlaybackService.next(v.context)
-		}
-
-		findViewById<ImageButton>(R.id.btnPrevious)?.setOnClickListener { v ->
-			if (nowPlayingToggledVisibilityControls.isVisible) PlaybackService.previous(v.context)
-		}
 
 		val repeatButton = findViewById<ImageButton>(R.id.repeatButton)
 		setRepeatingIcon(repeatButton)
@@ -345,22 +367,6 @@ class NowPlayingActivity :
 						else PlaybackService.setCompleting(v.context)
 						setRepeatingIcon(repeatButton, isRepeating)
 					}, messageHandler))
-				}
-		}
-
-		isScreenKeptOnButton.findView().setOnClickListener {
-			isScreenKeptOn = !isScreenKeptOn
-			updateKeepScreenOnStatus()
-		}
-
-		nowPlayingRepository.then { npr ->
-			npr.nowPlaying
-				.then { nowPlaying ->
-					nowPlayingListAdapter
-						.eventually { npa ->
-							npa.updateListEventually(nowPlaying.playlist.mapIndexed { i, sf -> PositionedFile(i, sf) })
-						}
-						.eventually(LoopedInPromise.response({ updateNowPlayingListViewPosition() }, messageHandler))
 				}
 		}
 
@@ -400,11 +406,10 @@ class NowPlayingActivity :
 
 	override fun onStart() {
 		super.onStart()
-		updateKeepScreenOnStatus()
 
 		restoreSelectedConnection(this).eventually(LoopedInPromise.response({
 			connectionRestoreCode = it
-			if (it == null) initializeView()
+			if (it == null) model.then { vm -> vm.initializeViewModel() }
 		}, messageHandler))
 	}
 
@@ -417,7 +422,7 @@ class NowPlayingActivity :
 	}
 
 	override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-		if (requestCode == connectionRestoreCode) initializeView()
+		if (requestCode == connectionRestoreCode) model.then { vm -> vm.initializeViewModel() }
 		super.onActivityResult(requestCode, resultCode, data)
 	}
 
@@ -470,33 +475,6 @@ class NowPlayingActivity :
 				nowPlayingImageLoadingView.setImageBitmap(bitmap)
 				nowPlayingImageLoadingView.scaleType = ScaleType.CENTER_CROP
 			}, messageHandler))
-
-	private fun initializeView() {
-		togglePlayingButtons(false)
-		nowPlayingRepository
-			.eventually { npr ->
-				npr
-					.nowPlaying
-					.eventually { np ->
-						lazySelectedConnectionProvider
-							.promiseSessionConnection()
-							.eventually(LoopedInPromise.response({ connectionProvider ->
-								val serviceFile = np.playlist[np.playlistPosition]
-								val filePosition = connectionProvider?.urlProvider?.baseUrl
-									?.let { baseUrl ->
-										viewStructure
-											?.takeIf { it.urlKeyHolder == UrlKeyHolder(baseUrl, serviceFile) }
-									}
-									?.filePosition
-									?: np.filePosition
-								setView(serviceFile, filePosition)
-							}, messageHandler))
-					}
-			}
-			.excuse { error -> logger.warn("An error occurred initializing `NowPlayingActivity`", error) }
-
-		PlaybackService.promiseIsMarkedForPlay(this).then(::togglePlayingButtons)
-	}
 
 	private fun setRepeatingIcon(imageButton: ImageButton?) {
 		setRepeatingIcon(imageButton, false)
