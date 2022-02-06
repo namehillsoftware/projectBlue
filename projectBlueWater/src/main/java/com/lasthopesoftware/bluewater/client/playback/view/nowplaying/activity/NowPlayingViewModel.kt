@@ -102,8 +102,8 @@ class NowPlayingViewModel(
 
 	private var cachedPromises: CachedPromises? = null
 
-	private val filePositionState = MutableStateFlow(0L)
-	private val fileDurationState = MutableStateFlow(0L)
+	private val filePositionState = MutableStateFlow(0)
+	private val fileDurationState = MutableStateFlow(0)
 	private val isPlayingState = MutableStateFlow(false)
 	private val isReadOnlyState = MutableStateFlow(false)
 	private val isNowPlayingImageLoadingState = MutableStateFlow(false)
@@ -163,6 +163,15 @@ class NowPlayingViewModel(
 //		PlaybackService.promiseIsMarkedForPlay(this).then(::togglePlayingButtons)
 	}
 
+	fun togglePlaying(isPlaying: Boolean) {
+		isPlayingState.value = isPlaying
+	}
+
+	fun toggleScreenOn() {
+		isScreenOnEnabledState.value = !isScreenOnEnabledState.value
+		updateKeepScreenOnStatus()
+	}
+
 	private fun setView() {
 		nowPlayingRepository.nowPlaying
 			.then { np ->
@@ -181,7 +190,7 @@ class NowPlayingViewModel(
 			}
 	}
 
-	private fun setView(serviceFile: ServiceFile, initialFilePosition: Long) {
+	private fun setView(serviceFile: ServiceFile, initialFilePosition: Number) {
 		fun setNowPlayingImage(cachedPromises: CachedPromises) {
 			isNowPlayingImageLoadingState.value = true
 			cachedPromises
@@ -318,12 +327,12 @@ class NowPlayingViewModel(
 			.then { isScreenControlsVisibleState.value = false }
 	}
 
-	private fun setTrackDuration(duration: Long) {
-		fileDurationState.value = duration
+	private fun setTrackDuration(duration: Number) {
+		fileDurationState.value = duration.toInt()
 	}
 
-	private fun setTrackProgress(progress: Long) {
-		filePositionState.value = progress
+	private fun setTrackProgress(progress: Number) {
+		filePositionState.value = progress.toInt()
 	}
 
 	private class CachedPromises(
