@@ -6,10 +6,12 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FilePropertyHelpers
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ProvideScopedFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.storage.UpdateFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.ProvideImages
 import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfScopedConnectionIsReadOnly
 import com.lasthopesoftware.bluewater.client.connection.selected.ProvideSelectedConnection
@@ -24,12 +26,16 @@ import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.resources.strings.GetStringResources
 import com.namehillsoftware.handoff.promises.Promise
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import org.joda.time.Duration
 import org.slf4j.LoggerFactory
 import java.io.Closeable
 import java.util.concurrent.CancellationException
+import kotlin.math.roundToInt
 
 class NowPlayingViewModel(
 	private val messages: RegisterForMessages,
@@ -37,6 +43,7 @@ class NowPlayingViewModel(
 	private val selectedConnectionProvider: ProvideSelectedConnection,
 	private val imageProvider: ProvideImages,
 	private val fileProperties: ProvideScopedFileProperties,
+	private val updateFileProperties: UpdateFileProperties,
 	private val checkAuthentication: CheckIfScopedConnectionIsReadOnly,
 	private val playbackService: ControlPlaybackService,
 	private val stringResources: GetStringResources
@@ -88,6 +95,7 @@ class NowPlayingViewModel(
 	}
 
 	private var cachedPromises: CachedPromises? = null
+	private var ratingUpdateJob: Job? = null
 
 	private val filePositionState = MutableStateFlow(0)
 	private val fileDurationState = MutableStateFlow(0)
@@ -196,12 +204,16 @@ class NowPlayingViewModel(
 					selectedConnectionProvider
 						.promiseSessionConnection()
 						.then { connectionProvider ->
-							connectionProvider?.urlProvider?.baseUrl?.let { baseUrl ->
-								val filePosition =
+							connectionProvider
+								?.urlProvider
+								?.baseUrl
+								?.let { baseUrl ->
 									if (cachedPromises?.urlKeyHolder == UrlKeyHolder(baseUrl, serviceFile)) filePositionState.value
 									else 0
-								setView(serviceFile, filePosition)
-							}
+								}
+								?.also { filePosition ->
+									setView(serviceFile, filePosition)
+								}
 						}
 				}
 			}
@@ -235,8 +247,17 @@ class NowPlayingViewModel(
 			val stringRating = fileProperties[KnownFileProperties.RATING]
 			val fileRating = stringRating?.toFloatOrNull() ?: 0f
 
+			ratingUpdateJob?.cancel()
+
 			isReadOnlyState.value = isReadOnly
 			songRatingState.value = fileRating
+
+			ratingUpdateJob = songRatingState.onEach { newRating ->
+				val ratingToString = newRating.roundToInt().toString()
+				updateFileProperties
+					.promiseFileUpdate(serviceFile, KnownFileProperties.RATING, ratingToString, false)
+//					.eventuallyExcuse(com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.response(::handleIoException, messageHandler))
+			}.launchIn(viewModelScope)
 		}
 
 //			with (miniSongRating.findView()) {
