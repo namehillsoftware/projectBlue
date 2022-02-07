@@ -348,6 +348,13 @@ class NowPlayingActivity :
 
 				nowPlayingContentView.setOnClickListener { vm.showNowPlayingControls() }
 
+				val onRatingBarChangeListener = OnRatingBarChangeListener{ _, rating, fromUser ->
+					if (fromUser) vm.updateRating(rating)
+				}
+
+				rbSongRating.onRatingBarChangeListener = onRatingBarChangeListener
+				miniSongRating.onRatingBarChangeListener = onRatingBarChangeListener
+
 				bottomSheet.setOnClickListener { showNowPlayingControls() }
 
 				bottomSheetBehavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
