@@ -125,6 +125,7 @@
                         android:layout_height="wrap_content"
                         android:max="5"
                         android:stepSize="1"
+                        android:visibility="@{vm.isScreenControlsVisible ? View.VISIBLE : View.INVISIBLE}"
                         android:rating="@{vm.songRating}"
                         android:isIndicator="@{!vm.isSongRatingEnabled}" />
 
@@ -246,7 +247,6 @@
                             android:layout_height="wrap_content"
                             android:max="5"
                             android:stepSize="1"
-                            android:visibility="@{!vm.isPlaying ? View.VISIBLE : View.INVISIBLE}"
                             android:rating="@{vm.songRating}"
                             android:isIndicator="@{!vm.isSongRatingEnabled}" />
 

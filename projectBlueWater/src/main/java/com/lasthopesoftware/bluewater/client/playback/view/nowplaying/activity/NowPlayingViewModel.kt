@@ -271,7 +271,7 @@ class NowPlayingViewModel(
 			titleState.value = fileProperties[KnownFileProperties.NAME]
 
 			val duration = FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties)
-			setTrackDuration(if (duration > 0) duration.toLong() else 100.toLong())
+			setTrackDuration(if (duration > 0) duration.toLong() else 100L)
 			setTrackProgress(initialFilePosition)
 
 			val stringRating = fileProperties[KnownFileProperties.RATING]
