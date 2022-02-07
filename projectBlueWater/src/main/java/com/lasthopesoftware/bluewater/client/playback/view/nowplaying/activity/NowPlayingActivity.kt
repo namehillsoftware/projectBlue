@@ -206,44 +206,9 @@ class NowPlayingActivity :
 		}
 	}
 
-	private val model by lazy {
-		nowPlayingRepository
-			.eventually(LoopedInPromise.response({
-				buildViewModel {
-					NowPlayingViewModel(
-						messageBus.value,
-						it,
-						lazySelectedConnectionProvider,
-						imageProvider,
-						lazyFilePropertiesProvider,
-						filePropertiesStorage,
-						lazySelectedConnectionAuthenticationChecker,
-						PlaybackServiceController(this),
-						StringResources(this)
-					)
-				}.apply {
-					binding.vm = this
-
-					nowPlayingList.onEach { l ->
-						nowPlayingListAdapter
-							.eventually { npa -> npa.updateListEventually(l) }
-					}.launchIn(lifecycleScope)
-
-					nowPlayingFile.filterNotNull().onEach {
-						nowPlayingListView.eventually(
-							LoopedInPromise.response(
-								{ lv -> lv.scrollToPosition(it.playlistPosition) },
-								messageHandler
-							)
-						)
-					}.launchIn(lifecycleScope)
-				}
-			}, messageHandler))
-	}
-
 	private val defaultImage by lazy { DefaultImageProvider(this).promiseFileBitmap() }
 
-	private val bottomSheetBehavior by lazy { BottomSheetBehavior.from(binding.control.bottomSheet) }
+	private val bottomSheetBehavior by lazy { binding.then { BottomSheetBehavior.from(it.control.bottomSheet) } }
 
 	private val onConnectionLostListener = Runnable { WaitForConnectionDialog.show(this) }
 
@@ -301,7 +266,41 @@ class NowPlayingActivity :
 	private val binding by lazy {
 		val binding = DataBindingUtil.setContentView<ActivityViewNowPlayingBinding>(this, R.layout.activity_view_now_playing)
 		binding.lifecycleOwner = this
-		binding
+
+		nowPlayingRepository
+			.eventually(LoopedInPromise.response({
+				buildViewModel {
+					NowPlayingViewModel(
+						messageBus.value,
+						it,
+						lazySelectedConnectionProvider,
+						imageProvider,
+						lazyFilePropertiesProvider,
+						filePropertiesStorage,
+						lazySelectedConnectionAuthenticationChecker,
+						PlaybackServiceController(this),
+						StringResources(this)
+					)
+				}.apply {
+					nowPlayingList.onEach { l ->
+						nowPlayingListAdapter
+							.eventually { npa -> npa.updateListEventually(l) }
+					}.launchIn(lifecycleScope)
+
+					nowPlayingFile.filterNotNull().onEach {
+						nowPlayingListView.eventually(
+							LoopedInPromise.response(
+								{ lv -> lv.scrollToPosition(it.playlistPosition) },
+								messageHandler
+							)
+						)
+					}.launchIn(lifecycleScope)
+				}
+			}, messageHandler))
+			.then { vm ->
+				binding.vm = vm
+				binding
+			}
 	}
 	private var timerTask: TimerTask? = null
 	private var isDrawerOpened = false
@@ -309,7 +308,8 @@ class NowPlayingActivity :
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
-		model.then { vm ->
+		binding.then { binding ->
+			val vm = binding.vm
 			vm.isScreenOn.onEach {
 				if (it) window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 				else disableKeepScreenOn()
@@ -351,45 +351,46 @@ class NowPlayingActivity :
 				isScreenKeptOnButton.setOnClickListener { vm.toggleScreenOn() }
 
 				nowPlayingContentView.setOnClickListener { vm.showNowPlayingControls() }
+
+				bottomSheet.setOnClickListener { showNowPlayingControls() }
+
+				bottomSheetBehavior.then { behavior ->
+					behavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
+						override fun onStateChanged(bottomSheet: View, newState: Int) {
+							isDrawerOpened = newState == BottomSheetBehavior.STATE_EXPANDED
+							with (nowPlayingMainSheet) {
+								alpha = when (newState) {
+									BottomSheetBehavior.STATE_COLLAPSED -> 1f
+									BottomSheetBehavior.STATE_EXPANDED -> 0f
+									else -> alpha
+								}
+							}
+						}
+
+						override fun onSlide(bottomSheet: View, slideOffset: Float) {
+							nowPlayingMainSheet.alpha = 1 - slideOffset
+						}
+					})
+
+					val toggleListClickHandler = View.OnClickListener {
+						with(behavior) {
+							state = when (state) {
+								BottomSheetBehavior.STATE_COLLAPSED -> BottomSheetBehavior.STATE_EXPANDED
+								BottomSheetBehavior.STATE_EXPANDED -> BottomSheetBehavior.STATE_COLLAPSED
+								else -> state
+							}
+						}
+					}
+
+					closeNowPlayingList.setOnClickListener(toggleListClickHandler)
+					viewNowPlayingListButton.setOnClickListener(toggleListClickHandler)
+				}
 			}
 		}
 
 		addOnConnectionLostListener(onConnectionLostListener)
 
 		setNowPlayingBackgroundBitmap()
-
-		val bottomSheet = binding.control.bottomSheet
-		bottomSheet.setOnClickListener { showNowPlayingControls() }
-
-		bottomSheetBehavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
-			override fun onStateChanged(bottomSheet: View, newState: Int) {
-				isDrawerOpened = newState == BottomSheetBehavior.STATE_EXPANDED
-				with (nowPlayingMainSheet.findView()) {
-					alpha = when (newState) {
-						BottomSheetBehavior.STATE_COLLAPSED -> 1f
-						BottomSheetBehavior.STATE_EXPANDED -> 0f
-						else -> alpha
-					}
-				}
-			}
-
-			override fun onSlide(bottomSheet: View, slideOffset: Float) {
-				nowPlayingMainSheet.findView().alpha = 1 - slideOffset
-			}
-		})
-
-		val toggleListClickHandler = View.OnClickListener {
-			with(bottomSheetBehavior) {
-				state = when (state) {
-					BottomSheetBehavior.STATE_COLLAPSED -> BottomSheetBehavior.STATE_EXPANDED
-					BottomSheetBehavior.STATE_EXPANDED -> BottomSheetBehavior.STATE_COLLAPSED
-					else -> state
-				}
-			}
-		}
-
-		binding.control.closeNowPlayingList.setOnClickListener(toggleListClickHandler)
-		binding.control.viewNowPlayingListButton.setOnClickListener(toggleListClickHandler)
 	}
 
 	override fun onStart() {
@@ -397,16 +398,17 @@ class NowPlayingActivity :
 
 		restoreSelectedConnection(this).eventually(LoopedInPromise.response({
 			connectionRestoreCode = it
-			if (it == null) model.then { vm -> vm.initializeViewModel() }
+			if (it == null) binding.then { it.vm.initializeViewModel() }
 		}, messageHandler))
 	}
 
 	override fun onRestoreInstanceState(savedInstanceState: Bundle) {
 		super.onRestoreInstanceState(savedInstanceState)
 
-		if (bottomSheetBehavior.state != BottomSheetBehavior.STATE_EXPANDED) return
-
-		binding.control.nowPlayingMainSheet.alpha = 0f
+		bottomSheetBehavior.then {
+			if (it.state == BottomSheetBehavior.STATE_EXPANDED)
+				binding.then { b -> b.control.nowPlayingMainSheet.alpha = 0f }
+		}
 	}
 
 	override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
