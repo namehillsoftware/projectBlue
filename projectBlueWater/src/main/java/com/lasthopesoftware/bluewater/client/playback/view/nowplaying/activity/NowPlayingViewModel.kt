@@ -23,6 +23,7 @@ import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.IN
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.android.messages.RegisterForMessages
 import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay
+import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.resources.strings.GetStringResources
 import com.namehillsoftware.handoff.promises.Promise
@@ -96,6 +97,7 @@ class NowPlayingViewModel(
 
 	private var cachedPromises: CachedPromises? = null
 	private var ratingUpdateJob: Job? = null
+	private var controlsShownPromise: Promise<Any?> = Promise.empty()
 
 	private val filePositionState = MutableStateFlow(0)
 	private val fileDurationState = MutableStateFlow(0)
@@ -184,11 +186,19 @@ class NowPlayingViewModel(
 		updateKeepScreenOnStatus()
 	}
 
+	@Synchronized
 	fun showNowPlayingControls() {
+		controlsShownPromise.cancel()
+
 		isScreenControlsVisibleState.value = true
-		PromiseDelay
-			.delay<Any?>(screenControlVisibilityTime)
-			.then { isScreenControlsVisibleState.value = false }
+		controlsShownPromise = CancellableProxyPromise { cp ->
+			val promisedDelay = PromiseDelay.delay<Any?>(screenControlVisibilityTime)
+			promisedDelay.then {
+				if (!cp.isCancelled)
+					isScreenControlsVisibleState.value = false
+			}
+			promisedDelay
+		}
 	}
 
 	fun toggleRepeating() {
