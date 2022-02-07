@@ -28,10 +28,7 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.resources.strings.GetStringResources
 import com.namehillsoftware.handoff.promises.Promise
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.*
 import org.joda.time.Duration
 import org.slf4j.LoggerFactory
 import java.io.Closeable
@@ -94,7 +91,7 @@ class NowPlayingViewModel(
 	val artist = artistState.asStateFlow()
 	val title = titleState.asStateFlow()
 	val nowPlayingImage = nowPlayingImageState.asStateFlow()
-	val songRating = songRatingState
+	val songRating = songRatingState.asStateFlow()
 	val isSongRatingEnabled = isSongRatingEnabledState.asStateFlow()
 	val nowPlayingList = nowPlayingListState.asStateFlow()
 	val nowPlayingFile = nowPlayingFileState.asStateFlow()
@@ -205,6 +202,10 @@ class NowPlayingViewModel(
 		updateKeepScreenOnStatus()
 	}
 
+	fun updateRating(rating: Float) {
+		songRatingState.value = rating
+	}
+
 	@Synchronized
 	fun showNowPlayingControls() {
 		controlsShownPromise.cancel()
@@ -276,13 +277,11 @@ class NowPlayingViewModel(
 			val stringRating = fileProperties[KnownFileProperties.RATING]
 			val fileRating = stringRating?.toFloatOrNull() ?: 0f
 
-			ratingUpdateJob?.cancel()
-
 			isReadOnlyState.value = isReadOnly
 			songRatingState.value = fileRating
 
-			ratingUpdateJob = songRatingState.onEach { newRating ->
-				if (newRating == 0f || !isSongRatingEnabledState.value) return@onEach
+			ratingUpdateJob = songRatingState.drop(1).onEach { newRating ->
+				if (!isSongRatingEnabledState.value) return@onEach
 
 				val ratingToString = newRating.roundToInt().toString()
 				updateFileProperties
@@ -297,8 +296,9 @@ class NowPlayingViewModel(
 			titleState.value = stringResources.loading
 			artistState.value = ""
 
-			songRatingState.value = 0F
+			ratingUpdateJob?.cancel()
 			isSongRatingEnabledState.value = false
+			songRatingState.value = 0F
 		}
 
 		fun handleException(exception: Throwable) {
