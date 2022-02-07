@@ -55,45 +55,15 @@ class NowPlayingViewModel(
 		private val screenControlVisibilityTime by lazy { Duration.standardSeconds(5) }
 	}
 
-	private val onPlaybackStartedReceiver = object : BroadcastReceiver() {
-		override fun onReceive(context: Context, intent: Intent) {
-			isPlayingState.value = true
-			updateKeepScreenOnStatus()
-		}
-	}
+	private val onPlaybackStartedReceiver : BroadcastReceiver
 
-	private val onPlaybackStoppedReceiver = object : BroadcastReceiver() {
-		override fun onReceive(context: Context, intent: Intent) {
-			isPlayingState.value = false
-			updateKeepScreenOnStatus()
-		}
-	}
+	private val onPlaybackStoppedReceiver : BroadcastReceiver
 
-	private val onPlaybackChangedReceiver = object : BroadcastReceiver() {
-		override fun onReceive(context: Context?, intent: Intent?) {
-			setView()
-			showNowPlayingControls()
-		}
-	}
+	private val onPlaybackChangedReceiver : BroadcastReceiver
 
-	private val onPlaylistChangedReceiver = object : BroadcastReceiver() {
-		override fun onReceive(context: Context, intent: Intent) {
-			nowPlayingRepository.nowPlaying
-				.then { np ->
-					nowPlayingListState.value = np.playlist.mapIndexed(::PositionedFile)
-					setView()
-				}
-		}
-	}
+	private val onPlaylistChangedReceiver : BroadcastReceiver
 
-	private val onTrackPositionChanged = object : BroadcastReceiver() {
-		override fun onReceive(context: Context, intent: Intent) {
-			val fileDuration = intent.getLongExtra(TrackPositionBroadcaster.TrackPositionChangedParameters.fileDuration, -1)
-			if (fileDuration > -1) setTrackDuration(fileDuration)
-			val filePosition = intent.getLongExtra(TrackPositionBroadcaster.TrackPositionChangedParameters.filePosition, -1)
-			if (filePosition > -1) setTrackProgress(filePosition)
-		}
-	}
+	private val onTrackPositionChanged : BroadcastReceiver
 
 	private var cachedPromises: CachedPromises? = null
 	private var ratingUpdateJob: Job? = null
@@ -133,11 +103,47 @@ class NowPlayingViewModel(
 	val isScreenControlsVisible = isScreenControlsVisibleState.asStateFlow()
 	val isRepeating = isRepeatingState.asStateFlow()
 
-	override fun close() {
-		cachedPromises?.release()
-	}
+	init {
+		onPlaybackStartedReceiver = object : BroadcastReceiver() {
+			override fun onReceive(context: Context, intent: Intent) {
+				isPlayingState.value = true
+				updateKeepScreenOnStatus()
+			}
+		}
 
-	fun initializeViewModel() {
+		onPlaybackStoppedReceiver = object : BroadcastReceiver() {
+			override fun onReceive(context: Context, intent: Intent) {
+				isPlayingState.value = false
+				updateKeepScreenOnStatus()
+			}
+		}
+
+		onPlaybackChangedReceiver = object : BroadcastReceiver() {
+			override fun onReceive(context: Context?, intent: Intent?) {
+				setView()
+				showNowPlayingControls()
+			}
+		}
+
+		onPlaylistChangedReceiver = object : BroadcastReceiver() {
+			override fun onReceive(context: Context, intent: Intent) {
+				nowPlayingRepository.nowPlaying
+					.then { np ->
+						nowPlayingListState.value = np.playlist.mapIndexed(::PositionedFile)
+						setView()
+					}
+			}
+		}
+
+		onTrackPositionChanged = object : BroadcastReceiver() {
+			override fun onReceive(context: Context, intent: Intent) {
+				val fileDuration = intent.getLongExtra(TrackPositionBroadcaster.TrackPositionChangedParameters.fileDuration, -1)
+				if (fileDuration > -1) setTrackDuration(fileDuration)
+				val filePosition = intent.getLongExtra(TrackPositionBroadcaster.TrackPositionChangedParameters.filePosition, -1)
+				if (filePosition > -1) setTrackProgress(filePosition)
+			}
+		}
+
 		val playbackStoppedIntentFilter = IntentFilter().apply {
 			addAction(PlaylistEvents.onPlaylistPause)
 			addAction(PlaylistEvents.onPlaylistInterrupted)
@@ -151,7 +157,20 @@ class NowPlayingViewModel(
 			registerReceiver(onPlaylistChangedReceiver, IntentFilter(PlaylistEvents.onPlaylistChange))
 			registerReceiver(onTrackPositionChanged, IntentFilter(TrackPositionBroadcaster.trackPositionUpdate))
 		}
+	}
 
+	override fun close() {
+		cachedPromises?.release()
+		with(messages) {
+			unregisterReceiver(onPlaybackStoppedReceiver)
+			unregisterReceiver(onPlaybackStartedReceiver)
+			unregisterReceiver(onPlaybackChangedReceiver)
+			unregisterReceiver(onPlaylistChangedReceiver)
+			unregisterReceiver(onTrackPositionChanged)
+		}
+	}
+
+	fun initializeViewModel() {
 		isPlayingState.value = false
 		nowPlayingRepository
 			.nowPlaying
