@@ -217,6 +217,7 @@ class NowPlayingActivity :
 						lazySelectedConnectionProvider,
 						imageProvider,
 						lazyFilePropertiesProvider,
+						filePropertiesStorage,
 						lazySelectedConnectionAuthenticationChecker,
 						PlaybackServiceController(this),
 						StringResources(this)
@@ -354,19 +355,6 @@ class NowPlayingActivity :
 		addOnConnectionLostListener(onConnectionLostListener)
 
 		setNowPlayingBackgroundBitmap()
-
-		val repeatButton = binding.control.repeatButton
-		repeatButton.setOnClickListener { v ->
-			nowPlayingRepository
-				.then { r ->
-					r.nowPlaying.eventually(LoopedInPromise.response({ result ->
-						val isRepeating = !result.isRepeating
-						if (isRepeating) PlaybackService.setRepeating(v.context)
-						else PlaybackService.setCompleting(v.context)
-						setRepeatingIcon(repeatButton, isRepeating)
-					}, messageHandler))
-				}
-		}
 
 		val bottomSheet = binding.control.bottomSheet
 		bottomSheet.setOnClickListener { showNowPlayingControls() }
