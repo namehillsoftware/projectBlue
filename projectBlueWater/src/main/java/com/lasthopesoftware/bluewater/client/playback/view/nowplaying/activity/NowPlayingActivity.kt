@@ -16,7 +16,6 @@ import androidx.databinding.DataBindingUtil
 import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler
@@ -165,7 +164,7 @@ class NowPlayingActivity :
 	}
 
 	private val nowPlayingListView by lazy {
-		val listView = findViewById<RecyclerView>(R.id.nowPlayingListView)
+		val listView = binding.control.nowPlayingListView
 		nowPlayingListAdapter.eventually(LoopedInPromise.response({ a ->
 			listView.adapter = a
 			listView.layoutManager = LinearLayoutManager(this)
@@ -222,7 +221,23 @@ class NowPlayingActivity :
 						PlaybackServiceController(this),
 						StringResources(this)
 					)
-				}.apply { binding.vm = this }
+				}.apply {
+					binding.vm = this
+
+					nowPlayingList.onEach { l ->
+						nowPlayingListAdapter
+							.eventually { npa -> npa.updateListEventually(l) }
+					}.launchIn(lifecycleScope)
+
+					nowPlayingFile.filterNotNull().onEach {
+						nowPlayingListView.eventually(
+							LoopedInPromise.response(
+								{ lv -> lv.scrollToPosition(it.playlistPosition) },
+								messageHandler
+							)
+						)
+					}.launchIn(lifecycleScope)
+				}
 			}, messageHandler))
 	}
 
@@ -284,7 +299,9 @@ class NowPlayingActivity :
 	}
 
 	private val binding by lazy {
-		DataBindingUtil.setContentView<ActivityViewNowPlayingBinding>(this, R.layout.activity_view_now_playing)
+		val binding = DataBindingUtil.setContentView<ActivityViewNowPlayingBinding>(this, R.layout.activity_view_now_playing)
+		binding.lifecycleOwner = this
+		binding
 	}
 	private var timerTask: TimerTask? = null
 	private var isDrawerOpened = false
@@ -292,22 +309,7 @@ class NowPlayingActivity :
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
-		binding.lifecycleOwner = this
 		model.then { vm ->
-			vm.nowPlayingList.onEach { l ->
-				nowPlayingListAdapter
-					.eventually { npa -> npa.updateListEventually(l) }
-			}.launchIn(lifecycleScope)
-
-			vm.nowPlayingFile.filterNotNull().onEach {
-				nowPlayingListView.eventually(
-					LoopedInPromise.response(
-						{ lv -> lv.scrollToPosition(it.playlistPosition) },
-						messageHandler
-					)
-				)
-			}.launchIn(lifecycleScope)
-
 			vm.isScreenOn.onEach {
 				if (it) window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 				else disableKeepScreenOn()
