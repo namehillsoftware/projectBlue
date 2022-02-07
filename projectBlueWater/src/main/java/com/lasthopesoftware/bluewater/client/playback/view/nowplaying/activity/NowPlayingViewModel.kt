@@ -26,7 +26,6 @@ import com.lasthopesoftware.resources.strings.GetStringResources
 import com.namehillsoftware.handoff.promises.Promise
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.onEach
 import org.joda.time.Duration
 import org.slf4j.LoggerFactory
 import java.io.Closeable
@@ -148,10 +147,6 @@ class NowPlayingViewModel(
 			.nowPlaying
 			.eventually { np ->
 				isRepeatingState.value = np.isRepeating
-				isRepeatingState.onEach { isRepeating ->
-					if (isRepeating) playbackService.setRepeating()
-					else playbackService.setCompleting()
-				}
 				selectedConnectionProvider
 					.promiseSessionConnection()
 					.then { connectionProvider ->
@@ -189,6 +184,7 @@ class NowPlayingViewModel(
 	}
 
 	fun toggleRepeating() {
+		isRepeatingState.value = !isRepeatingState.value
 		if (isRepeatingState.value) playbackService.setRepeating()
 		else playbackService.setCompleting()
 	}
