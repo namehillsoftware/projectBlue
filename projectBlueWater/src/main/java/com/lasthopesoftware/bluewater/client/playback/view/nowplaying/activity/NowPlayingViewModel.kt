@@ -282,11 +282,15 @@ class NowPlayingViewModel(
 			songRatingState.value = fileRating
 
 			ratingUpdateJob = songRatingState.onEach { newRating ->
+				if (newRating == 0f || !isSongRatingEnabledState.value) return@onEach
+
 				val ratingToString = newRating.roundToInt().toString()
 				updateFileProperties
 					.promiseFileUpdate(serviceFile, KnownFileProperties.RATING, ratingToString, false)
 //					.eventuallyExcuse(com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.response(::handleIoException, messageHandler))
 			}.launchIn(viewModelScope)
+
+			isSongRatingEnabledState.value = true
 		}
 
 		fun disableViewWithMessage() {
