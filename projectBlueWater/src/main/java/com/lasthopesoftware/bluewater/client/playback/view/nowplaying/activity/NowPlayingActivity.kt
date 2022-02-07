@@ -312,27 +312,19 @@ class NowPlayingActivity :
 			}.launchIn(lifecycleScope)
 
 			with (binding.control) {
-				btnPlay.setOnClickListener { v ->
-					if (!vm.isScreenControlsVisible.value) return@setOnClickListener
-					PlaybackService.play(v.context)
-					vm.togglePlaying(true)
+				btnPlay.setOnClickListener {
+					if (vm.isScreenControlsVisible.value)
+						vm.togglePlaying(true)
 				}
 
-				miniPlay.setOnClickListener { v ->
-					PlaybackService.play(v.context)
-					vm.togglePlaying(true)
+				miniPlay.setOnClickListener { vm.togglePlaying(true) }
+
+				btnPause.setOnClickListener {
+					if (vm.isScreenControlsVisible.value)
+						vm.togglePlaying(false)
 				}
 
-				btnPause.setOnClickListener { v ->
-					if (!vm.isScreenControlsVisible.value) return@setOnClickListener
-					PlaybackService.pause(v.context)
-					vm.togglePlaying(false)
-				}
-
-				miniPause.setOnClickListener { v ->
-					PlaybackService.pause(v.context)
-					vm.togglePlaying(false)
-				}
+				miniPause.setOnClickListener { vm.togglePlaying(false) }
 
 				btnNext.setOnClickListener { v ->
 					if (vm.isScreenControlsVisible.value) PlaybackService.next(v.context)
