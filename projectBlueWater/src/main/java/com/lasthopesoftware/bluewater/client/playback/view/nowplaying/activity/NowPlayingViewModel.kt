@@ -260,44 +260,6 @@ class NowPlayingViewModel(
 			}.launchIn(viewModelScope)
 		}
 
-//			with (miniSongRating.findView()) {
-//				rating = fileRating
-//				isEnabled = !isReadOnly
-//
-//				onRatingBarChangeListener =
-//					if (isReadOnly) null
-//					else OnRatingBarChangeListener { _, newRating, fromUser ->
-//						if (fromUser) {
-//							songRating.findView().rating = newRating
-//							val ratingToString = newRating.roundToInt().toString()
-//							filePropertiesStorage
-//								.promiseFileUpdate(serviceFile, com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties.RATING, ratingToString, false)
-//								.eventuallyExcuse(com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.response(::handleIoException, messageHandler))
-//							com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity.NowPlayingActivity.viewStructure?.fileProperties?.put(
-//								com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties.RATING, ratingToString)
-//						}
-//					}
-//			}
-//
-//			with (songRating.findView()) {
-//				rating = fileRating
-//				isEnabled = !isReadOnly
-//
-//				onRatingBarChangeListener =
-//					if (isReadOnly) null
-//					else OnRatingBarChangeListener { _, newRating, fromUser ->
-//						if (fromUser && nowPlayingToggledVisibilityControls.isVisible) {
-//							miniSongRating.findView().rating = newRating
-//							val ratingToString = newRating.roundToInt().toString()
-//							filePropertiesStorage
-//								.promiseFileUpdate(serviceFile, com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties.RATING, ratingToString, false)
-//								.eventuallyExcuse(com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.response(::handleIoException, messageHandler))
-//							com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity.NowPlayingActivity.viewStructure?.fileProperties?.put(
-//								com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties.RATING, ratingToString)
-//						}
-//					}
-//			}
-
 		fun disableViewWithMessage() {
 			titleState.value = stringResources.loading
 			artistState.value = ""
