@@ -298,7 +298,7 @@ class NowPlayingViewModel(
 
 				val urlKeyHolder = UrlKeyHolder(baseUrl, serviceFile)
 				val currentCachedPromises = cachedPromises
-					?.takeIf { urlKeyHolder == urlKeyHolder }
+					?.takeIf { it.urlKeyHolder == urlKeyHolder }
 					?: run {
 						cachedPromises?.release()
 						CachedPromises(
