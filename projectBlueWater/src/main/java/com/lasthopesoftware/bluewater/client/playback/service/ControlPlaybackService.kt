@@ -8,4 +8,8 @@ interface ControlPlaybackService {
 	fun setRepeating()
 
 	fun setCompleting()
+
+	fun play()
+
+	fun pause()
 }

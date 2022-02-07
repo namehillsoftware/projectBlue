@@ -194,6 +194,9 @@ class NowPlayingViewModel(
 	}
 
 	fun togglePlaying(isPlaying: Boolean) {
+		if (isPlaying) playbackService.play()
+		else playbackService.pause()
+
 		isPlayingState.value = isPlaying
 	}
 
