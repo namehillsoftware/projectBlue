@@ -13,7 +13,9 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ProvideScopedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.storage.UpdateFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.ProvideImages
+import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
 import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfScopedConnectionIsReadOnly
+import com.lasthopesoftware.bluewater.client.connection.polling.PollForConnections
 import com.lasthopesoftware.bluewater.client.connection.selected.ProvideSelectedConnection
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
@@ -46,6 +48,7 @@ class NowPlayingViewModel(
 	private val updateFileProperties: UpdateFileProperties,
 	private val checkAuthentication: CheckIfScopedConnectionIsReadOnly,
 	private val playbackService: ControlPlaybackService,
+	private val pollConnections: PollForConnections,
 	private val stringResources: GetStringResources
 ) : ViewModel(), Closeable {
 
@@ -54,19 +57,15 @@ class NowPlayingViewModel(
 		private val screenControlVisibilityTime by lazy { Duration.standardSeconds(5) }
 	}
 
-	private val onPlaybackStartedReceiver : BroadcastReceiver
-
-	private val onPlaybackStoppedReceiver : BroadcastReceiver
-
-	private val onPlaybackChangedReceiver : BroadcastReceiver
-
-	private val onPlaylistChangedReceiver : BroadcastReceiver
-
-	private val onTrackPositionChanged : BroadcastReceiver
+	private val onPlaybackStartedReceiver: BroadcastReceiver
+	private val onPlaybackStoppedReceiver: BroadcastReceiver
+	private val onPlaybackChangedReceiver: BroadcastReceiver
+	private val onPlaylistChangedReceiver: BroadcastReceiver
+	private val onTrackPositionChanged: BroadcastReceiver
 
 	private var cachedPromises: CachedPromises? = null
 	private var ratingUpdateJob: Job? = null
-	private var controlsShownPromise: Promise<Any?> = Promise.empty()
+	private var controlsShownPromise = Promise.empty<Any?>()
 
 	private val promisedDefaultImage by lazy { defaultImageProvider.promiseFileBitmap() }
 
@@ -87,6 +86,7 @@ class NowPlayingViewModel(
 	private val isScreenOnState = MutableStateFlow(false)
 	private val isScreenControlsVisibleState = MutableStateFlow(false)
 	private val isRepeatingState = MutableStateFlow(false)
+	private val unexpectedErrorState = MutableStateFlow<Throwable?>(null)
 
 	val filePosition = filePositionState.asStateFlow()
 	val fileDuration = fileDurationState.asStateFlow()
@@ -105,6 +105,7 @@ class NowPlayingViewModel(
 	val isScreenOn = isScreenOnState.asStateFlow()
 	val isScreenControlsVisible = isScreenControlsVisibleState.asStateFlow()
 	val isRepeating = isRepeatingState.asStateFlow()
+	val unexpectedError = unexpectedErrorState.asStateFlow()
 
 	init {
 		onPlaybackStartedReceiver = object : BroadcastReceiver() {
@@ -163,7 +164,7 @@ class NowPlayingViewModel(
 	}
 
 	override fun close() {
-		cachedPromises?.release()
+		cachedPromises?.close()
 		with(messages) {
 			unregisterReceiver(onPlaybackStoppedReceiver)
 			unregisterReceiver(onPlaybackStartedReceiver)
@@ -171,6 +172,7 @@ class NowPlayingViewModel(
 			unregisterReceiver(onPlaylistChangedReceiver)
 			unregisterReceiver(onTrackPositionChanged)
 		}
+		controlsShownPromise.cancel()
 	}
 
 	fun initializeViewModel() {
@@ -257,6 +259,24 @@ class NowPlayingViewModel(
 	}
 
 	private fun setView(serviceFile: ServiceFile, initialFilePosition: Number) {
+		fun handleIoException(exception: Throwable) =
+			if (ConnectionLostExceptionFilter.isConnectionLostException(exception)) true
+			else {
+				unexpectedErrorState.value = exception
+				false
+			}
+
+		fun handleException(currentUrlKey: UrlKeyHolder<ServiceFile>, exception: Throwable) {
+			val isIoException = handleIoException(exception)
+			if (!isIoException) return
+
+			unexpectedErrorState.value = exception
+			pollConnections.pollSessionConnection().then {
+				if (cachedPromises?.urlKeyHolder == currentUrlKey)
+					setView(serviceFile, initialFilePosition)
+			}
+		}
+
 		fun setNowPlayingImage(cachedPromises: CachedPromises) {
 			isNowPlayingImageLoadingState.value = true
 			cachedPromises
@@ -268,8 +288,11 @@ class NowPlayingViewModel(
 					}
 				}
 				.excuse { e ->
-					if (e is CancellationException)	logger.info("Bitmap retrieval cancelled", e)
-					else logger.error("There was an error retrieving the image for serviceFile $serviceFile", e)
+					if (e is CancellationException)	logger.debug("Bitmap retrieval cancelled", e)
+					else {
+						logger.error("There was an error retrieving the image for serviceFile $serviceFile", e)
+						handleException(cachedPromises.urlKeyHolder, e)
+					}
 				}
 		}
 
@@ -293,7 +316,7 @@ class NowPlayingViewModel(
 				val ratingToString = newRating.roundToInt().toString()
 				updateFileProperties
 					.promiseFileUpdate(serviceFile, KnownFileProperties.RATING, ratingToString, false)
-//					.eventuallyExcuse(com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.response(::handleIoException, messageHandler))
+					.excuse(::handleIoException)
 			}.launchIn(viewModelScope)
 
 			isSongRatingEnabledState.value = true
@@ -308,20 +331,6 @@ class NowPlayingViewModel(
 			songRatingState.value = 0F
 		}
 
-		fun handleException(exception: Throwable) {
-//			val isIoException = handleIoException(exception)
-//			if (!isIoException) return
-//
-//			PollConnectionService.pollSessionConnection(this).then {
-//				if (serviceFile == NowPlayingActivity.viewStructure?.serviceFile) {
-//					promisedNowPlayingImage?.cancel()
-//					promisedNowPlayingImage = null
-//				}
-//				setView(serviceFile, initialFilePosition)
-//			}
-//			WaitForConnectionDialog.show(this)
-		}
-
 		selectedConnectionProvider.promiseSessionConnection()
 			.then { connectionProvider ->
 				val baseUrl = connectionProvider?.urlProvider?.baseUrl ?: return@then
@@ -330,7 +339,7 @@ class NowPlayingViewModel(
 				val currentCachedPromises = cachedPromises
 					?.takeIf { it.urlKeyHolder == urlKeyHolder }
 					?: run {
-						cachedPromises?.release()
+						cachedPromises?.close()
 						CachedPromises(
 							urlKeyHolder,
 							checkAuthentication.promiseIsReadOnly(),
@@ -351,7 +360,7 @@ class NowPlayingViewModel(
 								setFileProperties(fileProperties, isReadOnly)
 						}
 					}
-//					.eventuallyExcuse(LoopedInPromise.response(::handleException, messageHandler))
+					.excuse { exception -> handleException(urlKeyHolder, exception) }
 			}
 	}
 
@@ -372,8 +381,10 @@ class NowPlayingViewModel(
 		val promisedIsReadOnly: Promise<Boolean>,
 		val promisedProperties: Promise<Map<String, String>>,
 		val promisedImage: Promise<Bitmap?>
-	) {
-		fun release() {
+	)
+		: AutoCloseable
+	{
+		override fun close() {
 			promisedIsReadOnly.cancel()
 			promisedProperties.cancel()
 			promisedImage.cancel()

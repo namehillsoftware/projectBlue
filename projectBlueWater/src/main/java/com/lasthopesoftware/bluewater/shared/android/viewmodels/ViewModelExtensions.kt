@@ -20,9 +20,8 @@ inline fun <reified V: ViewModel> ComponentActivity.buildViewModelLazily(noinlin
 	)
 
 @MainThread
-inline fun <reified V: ViewModel> ComponentActivity.buildViewModel(noinline initializer: () -> V): V {
-	return ViewModelProvider(viewModelStore, object : ViewModelProvider.Factory {
+inline fun <reified V: ViewModel> ComponentActivity.buildViewModel(noinline initializer: () -> V): V =
+	ViewModelProvider(viewModelStore, object : ViewModelProvider.Factory {
 		@Suppress("UNCHECKED_CAST")
 		override fun <T : ViewModel> create(modelClass: Class<T>): T = initializer.invoke() as T
 	})[V::class.java]
-}

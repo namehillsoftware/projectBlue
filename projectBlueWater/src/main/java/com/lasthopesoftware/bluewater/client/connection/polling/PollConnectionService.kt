@@ -25,19 +25,13 @@ import com.namehillsoftware.handoff.Messenger
 import com.namehillsoftware.handoff.promises.MessengerOperator
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken
-import java.util.*
 import java.util.concurrent.CancellationException
 
 class PollConnectionService : Service(), MessengerOperator<IConnectionProvider> {
 
 	companion object {
 		@JvmStatic
-		fun pollSessionConnection(context: Context): Promise<IConnectionProvider> {
-			return pollSessionConnection(context, false)
-		}
-
-		@JvmStatic
-		fun pollSessionConnection(context: Context, withNotification: Boolean): Promise<IConnectionProvider> =
+		fun pollSessionConnection(context: Context, withNotification: Boolean = false): Promise<IConnectionProvider> =
 			context.promiseBoundService<PollConnectionService>()
 				.eventually {  s ->
 					val connectionService = s.service
