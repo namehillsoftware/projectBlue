@@ -34,7 +34,7 @@
                     android:layout_marginTop="10dp"
                     android:measureWithLargestChild="true"
                     android:orientation="horizontal"
-                    android:visibility="@{vm.isScreenControlsVisible ? View.VISIBLE : View.GONE}">
+                    app:isVisible="@{vm.isScreenControlsVisible}">
 
                     <ImageButton
                         android:id="@+id/isScreenKeptOnButton"
@@ -125,7 +125,7 @@
                         android:layout_height="wrap_content"
                         android:max="5"
                         android:stepSize="1"
-                        android:visibility="@{vm.isScreenControlsVisible ? View.VISIBLE : View.INVISIBLE}"
+                        app:isVisible="@{vm.isScreenControlsVisible}"
                         android:rating="@{vm.songRating}"
                         android:isIndicator="@{!vm.isSongRatingEnabled}" />
 
@@ -162,7 +162,8 @@
                     android:paddingLeft="2dip"
                     android:paddingRight="2dip"
                     android:layout_marginBottom="20dp"
-                    android:visibility="@{vm.isScreenControlsVisible ? View.VISIBLE : View.INVISIBLE}">
+                    app:isVisible="@{vm.isScreenControlsVisible}"
+                    >
 
                     <ImageButton
                         android:id="@+id/btnPrevious"
@@ -186,7 +187,7 @@
                             android:background="?android:attr/selectableItemBackground"
                             android:contentDescription="@string/btn_play"
                             android:src="@drawable/av_play_dark"
-                            android:visibility="@{!vm.isPlaying ? View.VISIBLE : View.INVISIBLE}" />
+                            app:isVisible="@{!vm.isPlaying}" />
 
                         <ImageButton
                             android:id="@+id/btnPause"
@@ -195,7 +196,7 @@
                             android:background="?android:attr/selectableItemBackground"
                             android:contentDescription="@string/btn_pause"
                             android:src="@drawable/av_pause_dark"
-                            android:visibility="@{vm.isPlaying ? View.VISIBLE : View.INVISIBLE}" />
+                            app:isVisible="@{vm.isPlaying}" />
                     </ViewFlipper>
 
                     <ImageButton

@@ -58,12 +58,12 @@ import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils.getThemedDrawable
+import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModel
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToaster
 import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.resources.strings.StringResources
-import com.lasthopesoftware.resources.viewmodels.buildViewModel
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse

@@ -28,7 +28,7 @@
 			android:layout_centerHorizontal="true"
 			android:layout_centerVertical="true"
 			android:indeterminate="true"
-			android:visibility="@{vm.isNowPlayingImageLoading ? View.VISIBLE : View.INVISIBLE}" />
+			app:isVisible="@{vm.isNowPlayingImageLoading}" />
 
 		<ImageView
 			android:id="@+id/imgNowPlaying"
@@ -39,7 +39,7 @@
 			app:src="@{vm.nowPlayingImage}"
 			android:scaleType="centerCrop"
 			android:contentDescription="@string/img_now_playing"
-			android:visibility="@{!vm.isNowPlayingImageLoading ? View.VISIBLE : View.INVISIBLE}" />
+			app:isVisible="@{!vm.isNowPlayingImageLoading}" />
 
 
 	</RelativeLayout>
