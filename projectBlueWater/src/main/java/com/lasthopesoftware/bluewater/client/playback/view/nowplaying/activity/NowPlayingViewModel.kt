@@ -233,9 +233,11 @@ class NowPlayingViewModel(
 	}
 
 	fun toggleRepeating() {
-		isRepeatingState.value = !isRepeatingState.value
-		if (isRepeatingState.value) playbackService.setRepeating()
-		else playbackService.setCompleting()
+		with (isRepeatingState) {
+			value = !value
+			if (value) playbackService.setRepeating()
+			else playbackService.setCompleting()
+		}
 	}
 
 	private fun setView() {
