@@ -161,6 +161,7 @@ class NowPlayingViewModel(
 	}
 
 	override fun close() {
+		ratingUpdateJob?.cancel()
 		cachedPromises?.close()
 		with(messages) {
 			unregisterReceiver(onPlaybackStoppedReceiver)

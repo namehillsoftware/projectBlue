@@ -155,26 +155,27 @@ class NowPlayingActivity :
 			listView.layoutManager = LinearLayoutManager(this)
 		}, messageHandler))
 
-		Promise.whenAll(
-			nowPlayingRepository
-				.eventually(LoopedInPromise.response({
-					binding.vm = buildViewModel {
-						NowPlayingViewModel(
-							messageBus.value,
-							it,
-							lazySelectedConnectionProvider,
-							defaultImageProvider,
-							imageProvider,
-							lazyFilePropertiesProvider,
-							filePropertiesStorage,
-							lazySelectedConnectionAuthenticationChecker,
-							PlaybackServiceController(this),
-							ConnectionPoller(this),
-							StringResources(this)
-						)
-					}
-				}, messageHandler)),
-			promisedListViewSetup)
+		val promisedViewModelSetup = nowPlayingRepository
+			.eventually(LoopedInPromise.response({
+				binding.vm = buildViewModel {
+					NowPlayingViewModel(
+						messageBus.value,
+						it,
+						lazySelectedConnectionProvider,
+						defaultImageProvider,
+						imageProvider,
+						lazyFilePropertiesProvider,
+						filePropertiesStorage,
+						lazySelectedConnectionAuthenticationChecker,
+						PlaybackServiceController(this),
+						ConnectionPoller(this),
+						StringResources(this)
+					)
+				}
+			}, messageHandler))
+
+		Promise
+			.whenAll(promisedViewModelSetup, promisedListViewSetup)
 			.then { binding }
 	}
 
