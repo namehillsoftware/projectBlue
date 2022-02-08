@@ -22,6 +22,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.Track
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.INowPlayingRepository
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.android.messages.RegisterForMessages
+import com.lasthopesoftware.bluewater.shared.images.ProvideDefaultImage
 import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay
 import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
@@ -39,6 +40,7 @@ class NowPlayingViewModel(
 	private val messages: RegisterForMessages,
 	private val nowPlayingRepository: INowPlayingRepository,
 	private val selectedConnectionProvider: ProvideSelectedConnection,
+	private val defaultImageProvider: ProvideDefaultImage,
 	private val imageProvider: ProvideImages,
 	private val fileProperties: ProvideScopedFileProperties,
 	private val updateFileProperties: UpdateFileProperties,
@@ -66,6 +68,8 @@ class NowPlayingViewModel(
 	private var ratingUpdateJob: Job? = null
 	private var controlsShownPromise: Promise<Any?> = Promise.empty()
 
+	private val promisedDefaultImage by lazy { defaultImageProvider.promiseFileBitmap() }
+
 	private val filePositionState = MutableStateFlow(0)
 	private val fileDurationState = MutableStateFlow(0)
 	private val isPlayingState = MutableStateFlow(false)
@@ -73,6 +77,7 @@ class NowPlayingViewModel(
 	private val isNowPlayingImageLoadingState = MutableStateFlow(false)
 	private val artistState = MutableStateFlow<String?>(stringResources.defaultArtist)
 	private val titleState = MutableStateFlow<String?>(stringResources.defaultTitle)
+	private val defaultImageState = MutableStateFlow<Bitmap?>(null)
 	private val nowPlayingImageState = MutableStateFlow<Bitmap?>(null)
 	private val songRatingState = MutableStateFlow(0F)
 	private val isSongRatingEnabledState = MutableStateFlow(false)
@@ -91,6 +96,7 @@ class NowPlayingViewModel(
 	val artist = artistState.asStateFlow()
 	val title = titleState.asStateFlow()
 	val nowPlayingImage = nowPlayingImageState.asStateFlow()
+	val defaultImage = defaultImageState.asStateFlow()
 	val songRating = songRatingState.asStateFlow()
 	val isSongRatingEnabled = isSongRatingEnabledState.asStateFlow()
 	val nowPlayingList = nowPlayingListState.asStateFlow()
@@ -191,6 +197,7 @@ class NowPlayingViewModel(
 			.excuse { error -> logger.warn("An error occurred initializing `NowPlayingActivity`", error) }
 
 		playbackService.promiseIsMarkedForPlay().then(::togglePlaying)
+		promisedDefaultImage.then { defaultImageState.value = it }
 	}
 
 	fun togglePlaying(isPlaying: Boolean) {
