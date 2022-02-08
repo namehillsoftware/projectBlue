@@ -208,7 +208,7 @@ class NowPlayingViewModel(
 
 	fun updateRating(rating: Float) {
 		if (!isSongRatingEnabledState.value) return
-		val serviceFile = nowPlayingFile.value?.serviceFile ?: return
+		val serviceFile = nowPlayingFileState.value?.serviceFile ?: return
 
 		songRatingState.value = rating
 		val ratingToString = rating.roundToInt().toString()
@@ -242,6 +242,7 @@ class NowPlayingViewModel(
 		nowPlayingRepository.nowPlaying
 			.then { np ->
 				np.playingFile?.let { serviceFile ->
+					nowPlayingFileState.value = PositionedFile(np.playlistPosition, serviceFile)
 					selectedConnectionProvider
 						.promiseSessionConnection()
 						.then { connectionProvider ->
