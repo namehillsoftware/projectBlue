@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 
 class NowPlaying constructor(
 	@JvmField
@@ -13,10 +14,9 @@ class NowPlaying constructor(
     var isRepeating: Boolean
 ) {
 
-	val playingFile: ServiceFile?
+	val playingFile: PositionedFile?
 		get() =
-			if (playlistPosition > -1 && playlistPosition < playlist.size) playlist[playlistPosition]
-			else null
+			playlistPosition.takeIf { it > -1 && it < playlist.size }?.let { PositionedFile(it, playlist[it]) }
 
     constructor(playlistPosition: Int, filePosition: Long, isRepeating: Boolean)
 		: this(emptyList(), playlistPosition, filePosition, isRepeating)
