@@ -199,7 +199,8 @@ class NowPlayingActivity :
 				}.launchIn(lifecycleScope)
 
 				vm.nowPlayingFile.filterNotNull().onEach {
-					nowPlayingListView.scrollToPosition(it.playlistPosition)
+					if (bottomSheetBehavior.state == BottomSheetBehavior.STATE_COLLAPSED)
+						nowPlayingListView.scrollToPosition(it.playlistPosition)
 				}.launchIn(lifecycleScope)
 
 				vm.unexpectedError.filterNotNull().onEach {
