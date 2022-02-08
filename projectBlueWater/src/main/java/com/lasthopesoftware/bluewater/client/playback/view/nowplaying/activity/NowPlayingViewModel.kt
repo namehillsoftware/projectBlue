@@ -51,7 +51,8 @@ class NowPlayingViewModel(
 	private val checkAuthentication: CheckIfScopedConnectionIsReadOnly,
 	private val playbackService: ControlPlaybackService,
 	private val pollConnections: PollForConnections,
-	private val stringResources: GetStringResources
+	private val stringResources: GetStringResources,
+	private val nowPlayingDisplaySettings: StoreNowPlayingDisplaySettings,
 ) : ViewModel(), Closeable {
 	private val onPlaybackStartedReceiver: BroadcastReceiver
 	private val onPlaybackStoppedReceiver: BroadcastReceiver
@@ -195,6 +196,9 @@ class NowPlayingViewModel(
 
 		playbackService.promiseIsMarkedForPlay().then(::togglePlaying)
 		promisedDefaultImage.then { defaultImageState.value = it }
+
+		isScreenOnEnabledState.value = nowPlayingDisplaySettings.isScreenOnDuringPlayback
+		updateKeepScreenOnStatus()
 	}
 
 	fun togglePlaying(isPlaying: Boolean) {
@@ -204,6 +208,7 @@ class NowPlayingViewModel(
 
 	fun toggleScreenOn() {
 		isScreenOnEnabledState.value = !isScreenOnEnabledState.value
+		nowPlayingDisplaySettings.isScreenOnDuringPlayback = isScreenOnEnabledState.value
 		updateKeepScreenOnStatus()
 	}
 
