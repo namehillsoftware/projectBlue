@@ -180,14 +180,14 @@ class NowPlayingViewModel(
 					.promiseSessionConnection()
 					.then { connectionProvider ->
 						nowPlayingListState.value = np.playlist.mapIndexed(::PositionedFile)
-						np.playingFile?.also { serviceFile ->
+						np.playingFile?.also { positionedFile ->
 							val filePosition = connectionProvider?.urlProvider?.baseUrl
 								?.let { baseUrl ->
-									if (cachedPromises?.urlKeyHolder == UrlKeyHolder(baseUrl, serviceFile)) filePositionState.value
+									if (cachedPromises?.urlKeyHolder == UrlKeyHolder(baseUrl, positionedFile.serviceFile)) filePositionState.value
 									else np.filePosition
 								}
 								?: np.filePosition
-							setView(serviceFile, filePosition)
+							setView(positionedFile.serviceFile, filePosition)
 						}
 					}
 			}
@@ -241,8 +241,8 @@ class NowPlayingViewModel(
 	private fun setView() {
 		nowPlayingRepository.nowPlaying
 			.then { np ->
-				np.playingFile?.let { serviceFile ->
-					nowPlayingFileState.value = PositionedFile(np.playlistPosition, serviceFile)
+				np.playingFile?.let { positionedFile ->
+					nowPlayingFileState.value = positionedFile
 					selectedConnectionProvider
 						.promiseSessionConnection()
 						.then { connectionProvider ->
@@ -250,11 +250,11 @@ class NowPlayingViewModel(
 								?.urlProvider
 								?.baseUrl
 								?.let { baseUrl ->
-									if (cachedPromises?.urlKeyHolder == UrlKeyHolder(baseUrl, serviceFile)) filePositionState.value
+									if (cachedPromises?.urlKeyHolder == UrlKeyHolder(baseUrl, positionedFile.serviceFile)) filePositionState.value
 									else 0
 								}
 								?.also { filePosition ->
-									setView(serviceFile, filePosition)
+									setView(positionedFile.serviceFile, filePosition)
 								}
 						}
 				}

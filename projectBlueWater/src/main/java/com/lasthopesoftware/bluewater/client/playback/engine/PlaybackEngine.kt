@@ -23,6 +23,15 @@ import org.joda.time.Duration
 import org.slf4j.LoggerFactory
 import kotlin.math.max
 
+private val logger by lazy { LoggerFactory.getLogger(PlaybackEngine::class.java) }
+
+@Contract(pure = true)
+private fun getNextPosition(startingPosition: Int, playlist: Collection<ServiceFile>): Int =
+	if (startingPosition < playlist.size - 1) startingPosition + 1 else 0
+
+@Contract(pure = true)
+private fun getPreviousPosition(startingPosition: Int): Int = max(startingPosition - 1, 0)
+
 class PlaybackEngine(
 	managePlaybackQueues: ManagePlaybackQueues,
 	positionedFileQueueProviders: Iterable<IPositionedFileQueueProvider>,
@@ -61,13 +70,13 @@ class PlaybackEngine(
 	override fun restoreFromSavedState(): Promise<PositionedProgressedFile?> =
 		nowPlayingRepository.nowPlaying
 			.then { np ->
+				playlist = np.playlist.toMutableList()
 				np.playingFile
-					?.let { serviceFile ->
-						playlist = np.playlist.toMutableList()
-						playlistPosition = np.playlistPosition
+					?.let { positionedFile ->
+						playlistPosition = positionedFile.playlistPosition
 						val filePosition = Duration.millis(np.filePosition)
 						fileProgress = StaticProgressedFile(filePosition.toPromise())
-						PositionedProgressedFile(playlistPosition, serviceFile, filePosition)
+						PositionedProgressedFile(positionedFile.playlistPosition, positionedFile.serviceFile, filePosition)
 					}
 			}
 
@@ -293,18 +302,6 @@ class PlaybackEngine(
 		onPlaylistError = null
 		activePlayer = null
 		playbackSubscription?.dispose()
-	}
-
-	companion object {
-		private val logger by lazy { LoggerFactory.getLogger(PlaybackEngine::class.java) }
-
-		@Contract(pure = true)
-		private fun getNextPosition(startingPosition: Int, playlist: Collection<ServiceFile>): Int =
-			if (startingPosition < playlist.size - 1) startingPosition + 1 else 0
-
-		@Contract(pure = true)
-		private fun getPreviousPosition(startingPosition: Int): Int = max(startingPosition - 1, 0)
-
 	}
 
 	private class StaticProgressedFile(override val progress: Promise<Duration>) : ReadFileProgress
