@@ -200,7 +200,9 @@ class NowPlayingActivity :
 		}
 	}
 
-	private val defaultImage by lazy { DefaultImageProvider(this).promiseFileBitmap() }
+	private val defaultImageProvider by lazy { DefaultImageProvider(this) }
+
+	private val defaultImage by lazy { defaultImageProvider.promiseFileBitmap() }
 
 	private lateinit var bottomSheetBehavior: BottomSheetBehavior<RelativeLayout>
 
@@ -269,6 +271,7 @@ class NowPlayingActivity :
 						messageBus.value,
 						it,
 						lazySelectedConnectionProvider,
+						defaultImageProvider,
 						imageProvider,
 						lazyFilePropertiesProvider,
 						filePropertiesStorage,
@@ -390,8 +393,6 @@ class NowPlayingActivity :
 		}
 
 		addOnConnectionLostListener(onConnectionLostListener)
-
-		setNowPlayingBackgroundBitmap()
 	}
 
 	override fun onStart() {
@@ -456,14 +457,6 @@ class NowPlayingActivity :
 //				}
 //		}
 //	}
-
-	private fun setNowPlayingBackgroundBitmap() =
-		defaultImage
-			.eventually(LoopedInPromise.response({ bitmap ->
-				val nowPlayingImageLoadingView = nowPlayingImageLoading.findView()
-				nowPlayingImageLoadingView.setImageBitmap(bitmap)
-				nowPlayingImageLoadingView.scaleType = ScaleType.CENTER_CROP
-			}, messageHandler))
 
 	private fun updateKeepScreenOnStatus() {
 		isScreenKeptOnButton.findView().setImageDrawable(getThemedDrawable(

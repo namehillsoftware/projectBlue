@@ -9,8 +9,8 @@ import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 
-class DefaultImageProvider(private val context: Context) {
-	fun promiseFileBitmap(): Promise<Bitmap> = promiseFillerBitmap(context)
+class DefaultImageProvider(private val context: Context) : ProvideDefaultImage {
+	override fun promiseFileBitmap(): Promise<Bitmap> = promiseFillerBitmap(context)
 
 	companion object {
 		private lateinit var fillerBitmap: Bitmap
