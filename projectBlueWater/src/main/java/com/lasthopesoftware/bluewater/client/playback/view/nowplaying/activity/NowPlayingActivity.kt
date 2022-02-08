@@ -169,7 +169,8 @@ class NowPlayingActivity :
 						lazySelectedConnectionAuthenticationChecker,
 						PlaybackServiceController(this),
 						ConnectionPoller(this),
-						StringResources(this)
+						StringResources(this),
+						InMemoryNowPlayingDisplaySettings
 					)
 				}
 			}, messageHandler))
