@@ -51,6 +51,7 @@ import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToast
 import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.resources.strings.StringResources
+import com.namehillsoftware.handoff.promises.Promise
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -149,33 +150,32 @@ class NowPlayingActivity :
 		bottomSheetBehavior = BottomSheetBehavior.from(binding.control.bottomSheet)
 
 		val listView = binding.control.nowPlayingListView
-		nowPlayingListAdapter.eventually(LoopedInPromise.response({ a ->
+		val promisedListViewSetup = nowPlayingListAdapter.eventually(LoopedInPromise.response({ a ->
 			listView.adapter = a
 			listView.layoutManager = LinearLayoutManager(this)
 		}, messageHandler))
 
-		nowPlayingRepository
-			.eventually(LoopedInPromise.response({
-				buildViewModel {
-					NowPlayingViewModel(
-						messageBus.value,
-						it,
-						lazySelectedConnectionProvider,
-						defaultImageProvider,
-						imageProvider,
-						lazyFilePropertiesProvider,
-						filePropertiesStorage,
-						lazySelectedConnectionAuthenticationChecker,
-						PlaybackServiceController(this),
-						ConnectionPoller(this),
-						StringResources(this)
-					)
-				}
-			}, messageHandler))
-			.then { vm ->
-				binding.vm = vm
-				binding
-			}
+		Promise.whenAll(
+			nowPlayingRepository
+				.eventually(LoopedInPromise.response({
+					binding.vm = buildViewModel {
+						NowPlayingViewModel(
+							messageBus.value,
+							it,
+							lazySelectedConnectionProvider,
+							defaultImageProvider,
+							imageProvider,
+							lazyFilePropertiesProvider,
+							filePropertiesStorage,
+							lazySelectedConnectionAuthenticationChecker,
+							PlaybackServiceController(this),
+							ConnectionPoller(this),
+							StringResources(this)
+						)
+					}
+				}, messageHandler)),
+			promisedListViewSetup)
+			.then { binding }
 	}
 
 	private var isDrawerOpened = false
