@@ -105,15 +105,13 @@ class NowPlayingViewModel(
 	init {
 		onPlaybackStartedReceiver = object : BroadcastReceiver() {
 			override fun onReceive(context: Context, intent: Intent) {
-				isPlayingState.value = true
-				updateKeepScreenOnStatus()
+				togglePlaying(true)
 			}
 		}
 
 		onPlaybackStoppedReceiver = object : BroadcastReceiver() {
 			override fun onReceive(context: Context, intent: Intent) {
-				isPlayingState.value = false
-				updateKeepScreenOnStatus()
+				togglePlaying(true)
 			}
 		}
 
@@ -128,6 +126,7 @@ class NowPlayingViewModel(
 			override fun onReceive(context: Context, intent: Intent) {
 				nowPlayingRepository.nowPlaying
 					.then { np ->
+						nowPlayingFileState.value = np.playingFile
 						nowPlayingListState.value = np.playlist.mapIndexed(::PositionedFile)
 						setView()
 					}
@@ -171,7 +170,7 @@ class NowPlayingViewModel(
 	}
 
 	fun initializeViewModel() {
-		isPlayingState.value = false
+		togglePlaying(false)
 		nowPlayingRepository
 			.nowPlaying
 			.eventually { np ->
@@ -180,6 +179,7 @@ class NowPlayingViewModel(
 					.promiseSessionConnection()
 					.then { connectionProvider ->
 						nowPlayingListState.value = np.playlist.mapIndexed(::PositionedFile)
+						nowPlayingFileState.value = np.playingFile
 						np.playingFile?.also { positionedFile ->
 							val filePosition = connectionProvider?.urlProvider?.baseUrl
 								?.let { baseUrl ->
@@ -199,6 +199,7 @@ class NowPlayingViewModel(
 
 	fun togglePlaying(isPlaying: Boolean) {
 		isPlayingState.value = isPlaying
+		updateKeepScreenOnStatus()
 	}
 
 	fun toggleScreenOn() {
@@ -243,8 +244,9 @@ class NowPlayingViewModel(
 	private fun setView() {
 		nowPlayingRepository.nowPlaying
 			.then { np ->
+				disableViewWithMessage()
+				nowPlayingFileState.value = np.playingFile
 				np.playingFile?.let { positionedFile ->
-					nowPlayingFileState.value = positionedFile
 					selectedConnectionProvider
 						.promiseSessionConnection()
 						.then { connectionProvider ->
@@ -261,6 +263,14 @@ class NowPlayingViewModel(
 						}
 				}
 			}
+	}
+
+	private fun disableViewWithMessage() {
+		titleState.value = stringResources.loading
+		artistState.value = ""
+
+		isSongRatingEnabledState.value = false
+		songRatingState.value = 0F
 	}
 
 	private fun handleIoException(exception: Throwable) =
@@ -317,14 +327,6 @@ class NowPlayingViewModel(
 			songRatingState.value = fileRating
 
 			isSongRatingEnabledState.value = true
-		}
-
-		fun disableViewWithMessage() {
-			titleState.value = stringResources.loading
-			artistState.value = ""
-
-			isSongRatingEnabledState.value = false
-			songRatingState.value = 0F
 		}
 
 		selectedConnectionProvider.promiseSessionConnection()
