@@ -6,7 +6,6 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FilePropertyHelpers
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties
@@ -30,8 +29,8 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProx
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.resources.strings.GetStringResources
 import com.namehillsoftware.handoff.promises.Promise
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import org.joda.time.Duration
 import org.slf4j.LoggerFactory
 import java.io.Closeable
@@ -61,7 +60,6 @@ class NowPlayingViewModel(
 	private val onTrackPositionChanged: BroadcastReceiver
 
 	private var cachedPromises: CachedPromises? = null
-	private var ratingUpdateJob: Job? = null
 	private var controlsShownPromise = Promise.empty<Any?>()
 
 	private val promisedDefaultImage by lazy { defaultImageProvider.promiseFileBitmap() }
@@ -161,7 +159,6 @@ class NowPlayingViewModel(
 	}
 
 	override fun close() {
-		ratingUpdateJob?.cancel()
 		cachedPromises?.close()
 		with(messages) {
 			unregisterReceiver(onPlaybackStoppedReceiver)
@@ -210,7 +207,14 @@ class NowPlayingViewModel(
 	}
 
 	fun updateRating(rating: Float) {
+		if (!isSongRatingEnabledState.value) return
+		val serviceFile = nowPlayingFile.value?.serviceFile ?: return
+
 		songRatingState.value = rating
+		val ratingToString = rating.roundToInt().toString()
+		updateFileProperties
+			.promiseFileUpdate(serviceFile, KnownFileProperties.RATING, ratingToString, false)
+			.excuse(::handleIoException)
 	}
 
 	@Synchronized
@@ -256,13 +260,14 @@ class NowPlayingViewModel(
 			}
 	}
 
+	private fun handleIoException(exception: Throwable) =
+		if (ConnectionLostExceptionFilter.isConnectionLostException(exception)) true
+		else {
+			unexpectedErrorState.value = exception
+			false
+		}
+
 	private fun setView(serviceFile: ServiceFile, initialFilePosition: Number) {
-		fun handleIoException(exception: Throwable) =
-			if (ConnectionLostExceptionFilter.isConnectionLostException(exception)) true
-			else {
-				unexpectedErrorState.value = exception
-				false
-			}
 
 		fun handleException(currentUrlKey: UrlKeyHolder<ServiceFile>, exception: Throwable) {
 			val isIoException = handleIoException(exception)
@@ -308,15 +313,6 @@ class NowPlayingViewModel(
 			isReadOnlyState.value = isReadOnly
 			songRatingState.value = fileRating
 
-			ratingUpdateJob = songRatingState.drop(1).onEach { newRating ->
-				if (!isSongRatingEnabledState.value) return@onEach
-
-				val ratingToString = newRating.roundToInt().toString()
-				updateFileProperties
-					.promiseFileUpdate(serviceFile, KnownFileProperties.RATING, ratingToString, false)
-					.excuse(::handleIoException)
-			}.launchIn(viewModelScope)
-
 			isSongRatingEnabledState.value = true
 		}
 
@@ -324,7 +320,6 @@ class NowPlayingViewModel(
 			titleState.value = stringResources.loading
 			artistState.value = ""
 
-			ratingUpdateJob?.cancel()
 			isSongRatingEnabledState.value = false
 			songRatingState.value = 0F
 		}
