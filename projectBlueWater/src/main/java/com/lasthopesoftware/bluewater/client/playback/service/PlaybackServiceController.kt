@@ -9,8 +9,4 @@ class PlaybackServiceController(private val context: Context) : ControlPlaybackS
 	override fun setRepeating() = PlaybackService.setRepeating(context)
 
 	override fun setCompleting() = PlaybackService.setCompleting(context)
-
-	override fun play() = PlaybackService.play(context)
-
-	override fun pause() = PlaybackService.play(context)
 }
