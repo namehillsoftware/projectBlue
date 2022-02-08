@@ -1,4 +1,4 @@
-package com.lasthopesoftware.resources.viewmodels
+package com.lasthopesoftware.bluewater.shared.android.viewmodels
 
 import androidx.activity.ComponentActivity
 import androidx.annotation.MainThread
