@@ -38,6 +38,9 @@ import java.io.Closeable
 import java.util.concurrent.CancellationException
 import kotlin.math.roundToInt
 
+private val logger by lazy { LoggerFactory.getLogger(NowPlayingViewModel::class.java) }
+private val screenControlVisibilityTime by lazy { Duration.standardSeconds(5) }
+
 class NowPlayingViewModel(
 	private val messages: RegisterForMessages,
 	private val nowPlayingRepository: INowPlayingRepository,
@@ -51,12 +54,6 @@ class NowPlayingViewModel(
 	private val pollConnections: PollForConnections,
 	private val stringResources: GetStringResources
 ) : ViewModel(), Closeable {
-
-	companion object {
-		private val logger by lazy { LoggerFactory.getLogger(NowPlayingViewModel::class.java) }
-		private val screenControlVisibilityTime by lazy { Duration.standardSeconds(5) }
-	}
-
 	private val onPlaybackStartedReceiver: BroadcastReceiver
 	private val onPlaybackStoppedReceiver: BroadcastReceiver
 	private val onPlaybackChangedReceiver: BroadcastReceiver
