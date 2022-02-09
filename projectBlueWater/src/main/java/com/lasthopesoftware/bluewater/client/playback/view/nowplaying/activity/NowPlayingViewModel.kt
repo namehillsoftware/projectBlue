@@ -4,14 +4,12 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FilePropertyHelpers
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ProvideScopedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.storage.UpdateFileProperties
-import com.lasthopesoftware.bluewater.client.browsing.items.media.image.ProvideImages
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
 import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfScopedConnectionIsReadOnly
 import com.lasthopesoftware.bluewater.client.connection.polling.PollForConnections
@@ -23,7 +21,6 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.Track
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.INowPlayingRepository
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.android.messages.RegisterForMessages
-import com.lasthopesoftware.bluewater.shared.images.ProvideDefaultImage
 import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay
 import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
@@ -34,7 +31,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import org.joda.time.Duration
 import org.slf4j.LoggerFactory
 import java.io.Closeable
-import java.util.concurrent.CancellationException
 import kotlin.math.roundToInt
 
 private val logger by lazy { LoggerFactory.getLogger(NowPlayingViewModel::class.java) }
@@ -44,8 +40,6 @@ class NowPlayingViewModel(
 	private val messages: RegisterForMessages,
 	private val nowPlayingRepository: INowPlayingRepository,
 	private val selectedConnectionProvider: ProvideSelectedConnection,
-	private val defaultImageProvider: ProvideDefaultImage,
-	private val imageProvider: ProvideImages,
 	private val fileProperties: ProvideScopedFileProperties,
 	private val updateFileProperties: UpdateFileProperties,
 	private val checkAuthentication: CheckIfScopedConnectionIsReadOnly,
@@ -63,17 +57,12 @@ class NowPlayingViewModel(
 	private var cachedPromises: CachedPromises? = null
 	private var controlsShownPromise = Promise.empty<Any?>()
 
-	private val promisedDefaultImage by lazy { defaultImageProvider.promiseFileBitmap() }
-
 	private val filePositionState = MutableStateFlow(0)
 	private val fileDurationState = MutableStateFlow(0)
 	private val isPlayingState = MutableStateFlow(false)
 	private val isReadOnlyState = MutableStateFlow(false)
-	private val isNowPlayingImageLoadingState = MutableStateFlow(false)
 	private val artistState = MutableStateFlow<String?>(stringResources.defaultArtist)
 	private val titleState = MutableStateFlow<String?>(stringResources.defaultTitle)
-	private val defaultImageState = MutableStateFlow<Bitmap?>(null)
-	private val nowPlayingImageState = MutableStateFlow<Bitmap?>(null)
 	private val songRatingState = MutableStateFlow(0F)
 	private val isSongRatingEnabledState = MutableStateFlow(false)
 	private val nowPlayingListState = MutableStateFlow(emptyList<PositionedFile>())
@@ -88,11 +77,8 @@ class NowPlayingViewModel(
 	val fileDuration = fileDurationState.asStateFlow()
 	val isPlaying = isPlayingState.asStateFlow()
 	val isReadOnly = isReadOnlyState.asStateFlow()
-	val isNowPlayingImageLoading = isNowPlayingImageLoadingState.asStateFlow()
 	val artist = artistState.asStateFlow()
 	val title = titleState.asStateFlow()
-	val nowPlayingImage = nowPlayingImageState.asStateFlow()
-	val defaultImage = defaultImageState.asStateFlow()
 	val songRating = songRatingState.asStateFlow()
 	val isSongRatingEnabled = isSongRatingEnabledState.asStateFlow()
 	val nowPlayingList = nowPlayingListState.asStateFlow()
@@ -195,7 +181,6 @@ class NowPlayingViewModel(
 			.excuse { error -> logger.warn("An error occurred initializing `NowPlayingActivity`", error) }
 
 		playbackService.promiseIsMarkedForPlay().then(::togglePlaying)
-		promisedDefaultImage.then { defaultImageState.value = it }
 
 		isScreenOnEnabledState.value = nowPlayingDisplaySettings.isScreenOnDuringPlayback
 		updateKeepScreenOnStatus()
@@ -298,25 +283,6 @@ class NowPlayingViewModel(
 			}
 		}
 
-		fun setNowPlayingImage(cachedPromises: CachedPromises) {
-			isNowPlayingImageLoadingState.value = true
-			cachedPromises
-				.promisedImage
-				.then { bitmap ->
-					if (this.cachedPromises?.urlKeyHolder == cachedPromises.urlKeyHolder) {
-						nowPlayingImageState.value = bitmap
-						isNowPlayingImageLoadingState.value = false
-					}
-				}
-				.excuse { e ->
-					if (e is CancellationException)	logger.debug("Bitmap retrieval cancelled", e)
-					else {
-						logger.error("There was an error retrieving the image for serviceFile $serviceFile", e)
-						handleException(cachedPromises.urlKeyHolder, e)
-					}
-				}
-		}
-
 		fun setFileProperties(fileProperties: Map<String, String>, isReadOnly: Boolean) {
 			artistState.value = fileProperties[KnownFileProperties.ARTIST]
 			titleState.value = fileProperties[KnownFileProperties.NAME]
@@ -347,11 +313,8 @@ class NowPlayingViewModel(
 							urlKeyHolder,
 							checkAuthentication.promiseIsReadOnly(),
 							fileProperties.promiseFileProperties(serviceFile),
-							imageProvider.promiseFileBitmap(serviceFile)
 						).also { cachedPromises = it }
 					}
-
-				setNowPlayingImage(currentCachedPromises)
 
 				disableViewWithMessage()
 				currentCachedPromises
@@ -383,14 +346,12 @@ class NowPlayingViewModel(
 		val urlKeyHolder: UrlKeyHolder<ServiceFile>,
 		val promisedIsReadOnly: Promise<Boolean>,
 		val promisedProperties: Promise<Map<String, String>>,
-		val promisedImage: Promise<Bitmap?>
 	)
 		: AutoCloseable
 	{
 		override fun close() {
 			promisedIsReadOnly.cancel()
 			promisedProperties.cancel()
-			promisedImage.cancel()
 		}
 	}
 }
