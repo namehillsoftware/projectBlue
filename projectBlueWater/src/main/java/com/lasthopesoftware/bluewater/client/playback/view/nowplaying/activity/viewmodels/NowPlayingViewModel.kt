@@ -261,6 +261,7 @@ class NowPlayingViewModel(
 
 			unexpectedErrorState.value = exception
 			pollConnections.pollSessionConnection().then {
+				cachedPromises?.close()
 				cachedPromises = null
 				updateViewFromRepository()
 			}
