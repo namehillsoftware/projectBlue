@@ -57,6 +57,7 @@ class NowPlayingViewModel(
 	private var cachedPromises: CachedPromises? = null
 	private var controlsShownPromise = Promise.empty<Any?>()
 
+	private val cachedPromiseSync = Any()
 	private val filePositionState = MutableStateFlow(0)
 	private val fileDurationState = MutableStateFlow(0)
 	private val isPlayingState = MutableStateFlow(false)
@@ -216,7 +217,6 @@ class NowPlayingViewModel(
 	private fun updateViewFromRepository() {
 		nowPlayingRepository.nowPlaying
 			.then { np ->
-				disableViewWithMessage()
 				nowPlayingListState.value = np.playlist.mapIndexed(::PositionedFile)
 				nowPlayingFileState.value = np.playingFile
 				np.playingFile?.let { positionedFile ->
@@ -261,8 +261,10 @@ class NowPlayingViewModel(
 
 			unexpectedErrorState.value = exception
 			pollConnections.pollSessionConnection().then {
-				cachedPromises?.close()
-				cachedPromises = null
+				synchronized(cachedPromiseSync) {
+					cachedPromises?.close()
+					cachedPromises = null
+				}
 				updateViewFromRepository()
 			}
 		}
@@ -289,14 +291,17 @@ class NowPlayingViewModel(
 				val baseUrl = connectionProvider?.urlProvider?.baseUrl ?: return@then
 
 				val urlKeyHolder = UrlKeyHolder(baseUrl, serviceFile)
-				if (cachedPromises?.urlKeyHolder == urlKeyHolder) return@then
 
-				cachedPromises?.close()
-				val currentCachedPromises = CachedPromises(
-					urlKeyHolder,
-					checkAuthentication.promiseIsReadOnly(),
-					fileProperties.promiseFileProperties(serviceFile),
-				).also { cachedPromises = it }
+				val currentCachedPromises = synchronized(cachedPromiseSync) {
+					if (cachedPromises?.urlKeyHolder == urlKeyHolder) return@then
+
+					cachedPromises?.close()
+					CachedPromises(
+						urlKeyHolder,
+						checkAuthentication.promiseIsReadOnly(),
+						fileProperties.promiseFileProperties(serviceFile),
+					).also { cachedPromises = it }
+				}
 
 				disableViewWithMessage()
 				currentCachedPromises
