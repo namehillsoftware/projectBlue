@@ -97,7 +97,10 @@ class NowPlayingCoverArtViewModel(
 			if (!isIoException) return
 
 			unexpectedErrorState.value = exception
-			pollConnections.pollSessionConnection().then { setView() }
+			pollConnections.pollSessionConnection().then {
+				cachedPromises = null
+				setView()
+			}
 		}
 
 		fun setNowPlayingImage(cachedPromises: CachedPromises) {
