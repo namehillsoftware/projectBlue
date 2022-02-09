@@ -58,7 +58,7 @@ class NowPlayingViewModel(
 
 	private val cachedPromiseSync = Any()
 	private val filePositionState = MutableStateFlow(0)
-	private val fileDurationState = MutableStateFlow(0)
+	private val fileDurationState = MutableStateFlow(Int.MAX_VALUE) // Use max so that position updates will take effect
 	private val isPlayingState = MutableStateFlow(false)
 	private val isReadOnlyState = MutableStateFlow(false)
 	private val artistState = MutableStateFlow<String?>(stringResources.defaultArtist)
@@ -271,7 +271,7 @@ class NowPlayingViewModel(
 			titleState.value = fileProperties[KnownFileProperties.NAME]
 
 			val duration = FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties)
-			setTrackDuration(if (duration > 0) duration.toLong() else 100L)
+			setTrackDuration(if (duration > 0) duration else 100)
 			setTrackProgress(initialFilePosition)
 
 			val stringRating = fileProperties[KnownFileProperties.RATING]
