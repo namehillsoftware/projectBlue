@@ -32,14 +32,13 @@ import java.util.concurrent.CancellationException
 class PollConnectionService : Service(), MessengerOperator<IConnectionProvider> {
 
 	companion object {
-		@JvmStatic
 		fun pollSessionConnection(context: Context, withNotification: Boolean = false): Promise<IConnectionProvider> =
 			context.promiseBoundService<PollConnectionService>()
 				.eventually {  s ->
-					val connectionService = s.service
-					connectionService.withNotification = connectionService.withNotification || withNotification
-					connectionService.lazyConnectionPoller.value
-						.must { context.unbindService(s.serviceConnection) }
+					s.service.let {
+						it.withNotification = it.withNotification || withNotification
+						it.lazyConnectionPoller.value.must { context.unbindService(s.serviceConnection) }
+					}
 				}
 
 		private val stopWaitingForConnectionAction by lazy { MagicPropertyBuilder.buildMagicPropertyName<PollConnectionService>("stopWaitingForConnection") }

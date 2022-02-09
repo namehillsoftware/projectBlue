@@ -6,6 +6,7 @@
     <data>
         <import type="android.view.View"/>
         <variable name="vm" type="com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity.NowPlayingViewModel"/>
+        <variable name="coverArtVm" type="com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity.NowPlayingCoverArtViewModel"/>
     </data>
 
     <RelativeLayout
@@ -20,7 +21,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
-            bind:vm="@{vm}" />
+            bind:vm="@{coverArtVm}" />
 
         <RelativeLayout
             android:layout_width="match_parent"

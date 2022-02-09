@@ -109,9 +109,7 @@ class NowPlayingActivity :
 
 	private val lazySelectedConnectionProvider by lazy { SelectedConnectionProvider(this) }
 
-	private val lazySessionRevisionProvider by lazy {
-		SelectedConnectionRevisionProvider(lazySelectedConnectionProvider)
-	}
+	private val lazySessionRevisionProvider by lazy { SelectedConnectionRevisionProvider(lazySelectedConnectionProvider) }
 
 	private val lazyFilePropertiesProvider by lazy {
 		SelectedConnectionFilePropertiesProvider(lazySelectedConnectionProvider) { c ->
@@ -178,6 +176,17 @@ class NowPlayingActivity :
 						InMemoryNowPlayingDisplaySettings
 					)
 				}
+
+				binding.coverArtVm = buildViewModel {
+					NowPlayingCoverArtViewModel(
+						messageBus.value,
+						it,
+						lazySelectedConnectionProvider,
+						defaultImageProvider,
+						imageProvider,
+						ConnectionPoller(this),
+					)
+				}
 			}, messageHandler))
 
 		Promise
@@ -198,6 +207,14 @@ class NowPlayingActivity :
 				else disableKeepScreenOn()
 			}.launchIn(lifecycleScope)
 
+			vm.unexpectedError.filterNotNull().onEach {
+				UnexpectedExceptionToaster.announce(this, it)
+			}.launchIn(lifecycleScope)
+
+			binding.coverArtVm?.unexpectedError?.filterNotNull()?.onEach {
+				UnexpectedExceptionToaster.announce(this, it)
+			}?.launchIn(lifecycleScope)
+
 			with (binding.control) {
 				vm.nowPlayingList.onEach { l ->
 					nowPlayingListAdapter
@@ -207,10 +224,6 @@ class NowPlayingActivity :
 				vm.nowPlayingFile.filterNotNull().onEach {
 					if (bottomSheetBehavior.state == BottomSheetBehavior.STATE_COLLAPSED)
 						nowPlayingListView.scrollToPosition(it.playlistPosition)
-				}.launchIn(lifecycleScope)
-
-				vm.unexpectedError.filterNotNull().onEach {
-					UnexpectedExceptionToaster.announce(this@NowPlayingActivity, it)
 				}.launchIn(lifecycleScope)
 
 				btnPlay.setOnClickListener { v ->
