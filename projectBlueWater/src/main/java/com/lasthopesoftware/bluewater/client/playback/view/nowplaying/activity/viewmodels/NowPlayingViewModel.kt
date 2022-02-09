@@ -30,7 +30,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import org.joda.time.Duration
 import org.slf4j.LoggerFactory
-import java.io.Closeable
 import kotlin.math.roundToInt
 
 private val logger by lazy { LoggerFactory.getLogger(NowPlayingViewModel::class.java) }
@@ -47,7 +46,7 @@ class NowPlayingViewModel(
 	private val pollConnections: PollForConnections,
 	private val stringResources: GetStringResources,
 	private val nowPlayingDisplaySettings: StoreNowPlayingDisplaySettings,
-) : ViewModel(), Closeable {
+) : ViewModel() {
 	private val onPlaybackStartedReceiver: BroadcastReceiver
 	private val onPlaybackStoppedReceiver: BroadcastReceiver
 	private val onPlaybackChangedReceiver: BroadcastReceiver
@@ -140,7 +139,7 @@ class NowPlayingViewModel(
 		}
 	}
 
-	override fun close() {
+	override fun onCleared() {
 		cachedPromises?.close()
 		with(messages) {
 			unregisterReceiver(onPlaybackStoppedReceiver)
@@ -156,9 +155,7 @@ class NowPlayingViewModel(
 		togglePlaying(false)
 		nowPlayingRepository
 			.nowPlaying
-			.then { np ->
-				isRepeatingState.value = np.isRepeating
-			}
+			.then { np -> isRepeatingState.value = np.isRepeating }
 			.excuse { error -> logger.warn("An error occurred initializing `NowPlayingActivity`", error) }
 
 		updateViewFromRepository()
