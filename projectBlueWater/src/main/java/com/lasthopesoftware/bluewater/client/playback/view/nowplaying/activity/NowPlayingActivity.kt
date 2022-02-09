@@ -41,6 +41,9 @@ import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSele
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
+import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity.viewmodels.InMemoryNowPlayingDisplaySettings
+import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity.viewmodels.NowPlayingCoverArtViewModel
+import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity.viewmodels.NowPlayingViewModel
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.list.NowPlayingFileListAdapter
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.menu.NowPlayingFileListItemMenuBuilder
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlayingRepository
@@ -152,8 +155,8 @@ class NowPlayingActivity :
 		binding.lifecycleOwner = this
 		bottomSheetBehavior = BottomSheetBehavior.from(binding.control.bottomSheet)
 
-		val listView = binding.control.nowPlayingListView
 		val promisedListViewSetup = nowPlayingListAdapter.eventually(LoopedInPromise.response({ a ->
+			val listView = binding.control.nowPlayingListView
 			listView.adapter = a
 			listView.layoutManager = LinearLayoutManager(this)
 		}, messageHandler))
@@ -220,7 +223,7 @@ class NowPlayingActivity :
 				}.launchIn(lifecycleScope)
 
 				vm.nowPlayingFile.filterNotNull().onEach {
-					if (bottomSheetBehavior.state == BottomSheetBehavior.STATE_COLLAPSED)
+					if (!isDrawerOpened)
 						nowPlayingListView.scrollToPosition(it.playlistPosition)
 				}.launchIn(lifecycleScope)
 
