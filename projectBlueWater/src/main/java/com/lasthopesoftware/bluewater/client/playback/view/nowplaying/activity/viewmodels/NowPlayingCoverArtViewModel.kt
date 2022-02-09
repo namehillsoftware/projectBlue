@@ -98,6 +98,7 @@ class NowPlayingCoverArtViewModel(
 
 			unexpectedErrorState.value = exception
 			pollConnections.pollSessionConnection().then {
+				cachedPromises?.close()
 				cachedPromises = null
 				setView()
 			}
