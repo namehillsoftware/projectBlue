@@ -165,8 +165,6 @@ class NowPlayingActivity :
 						messageBus.value,
 						it,
 						lazySelectedConnectionProvider,
-						defaultImageProvider,
-						imageProvider,
 						lazyFilePropertiesProvider,
 						filePropertiesStorage,
 						lazySelectedConnectionAuthenticationChecker,
@@ -309,7 +307,10 @@ class NowPlayingActivity :
 
 		restoreSelectedConnection(this).eventually(LoopedInPromise.response({
 			connectionRestoreCode = it
-			if (it == null) binding.then { b -> b.vm?.initializeViewModel() }
+			if (it == null) binding.then { b ->
+				b.vm?.initializeViewModel()
+				b.coverArtVm?.initializeViewModel()
+			}
 		}, messageHandler))
 	}
 
@@ -321,7 +322,10 @@ class NowPlayingActivity :
 	}
 
 	override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-		if (requestCode == connectionRestoreCode) binding.then { b -> b.vm?.initializeViewModel() }
+		if (requestCode == connectionRestoreCode) binding.then { b ->
+			b.vm?.initializeViewModel()
+			b.coverArtVm?.initializeViewModel()
+		}
 		super.onActivityResult(requestCode, resultCode, data)
 	}
 
