@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity
+package com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity.viewmodels
 
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -104,14 +104,14 @@ class NowPlayingViewModel(
 
 		onPlaybackChangedReceiver = object : BroadcastReceiver() {
 			override fun onReceive(context: Context?, intent: Intent?) {
-				setView()
+				updateViewFromRepository()
 				showNowPlayingControls()
 			}
 		}
 
 		onPlaylistChangedReceiver = object : BroadcastReceiver() {
 			override fun onReceive(context: Context, intent: Intent) {
-				setView()
+				updateViewFromRepository()
 			}
 		}
 
@@ -160,7 +160,7 @@ class NowPlayingViewModel(
 			}
 			.excuse { error -> logger.warn("An error occurred initializing `NowPlayingActivity`", error) }
 
-		setView()
+		updateViewFromRepository()
 
 		playbackService.promiseIsMarkedForPlay().then(::togglePlaying)
 
@@ -213,7 +213,7 @@ class NowPlayingViewModel(
 		}
 	}
 
-	private fun setView() {
+	private fun updateViewFromRepository() {
 		nowPlayingRepository.nowPlaying
 			.then { np ->
 				disableViewWithMessage()
@@ -255,14 +255,14 @@ class NowPlayingViewModel(
 
 	private fun setView(serviceFile: ServiceFile, initialFilePosition: Number) {
 
-		fun handleException(currentUrlKey: UrlKeyHolder<ServiceFile>, exception: Throwable) {
+		fun handleException(exception: Throwable) {
 			val isIoException = handleIoException(exception)
 			if (!isIoException) return
 
 			unexpectedErrorState.value = exception
 			pollConnections.pollSessionConnection().then {
-				if (cachedPromises?.urlKeyHolder == currentUrlKey)
-					setView(serviceFile, initialFilePosition)
+				cachedPromises = null
+				updateViewFromRepository()
 			}
 		}
 
@@ -288,16 +288,14 @@ class NowPlayingViewModel(
 				val baseUrl = connectionProvider?.urlProvider?.baseUrl ?: return@then
 
 				val urlKeyHolder = UrlKeyHolder(baseUrl, serviceFile)
-				val currentCachedPromises = cachedPromises
-					?.takeIf { it.urlKeyHolder == urlKeyHolder }
-					?: run {
-						cachedPromises?.close()
-						CachedPromises(
-							urlKeyHolder,
-							checkAuthentication.promiseIsReadOnly(),
-							fileProperties.promiseFileProperties(serviceFile),
-						).also { cachedPromises = it }
-					}
+				if (cachedPromises?.urlKeyHolder == urlKeyHolder) return@then
+
+				cachedPromises?.close()
+				val currentCachedPromises = CachedPromises(
+					urlKeyHolder,
+					checkAuthentication.promiseIsReadOnly(),
+					fileProperties.promiseFileProperties(serviceFile),
+				).also { cachedPromises = it }
 
 				disableViewWithMessage()
 				currentCachedPromises
@@ -309,7 +307,7 @@ class NowPlayingViewModel(
 								setFileProperties(fileProperties, isReadOnly)
 						}
 					}
-					.excuse { exception -> handleException(urlKeyHolder, exception) }
+					.excuse { exception -> handleException(exception) }
 			}
 	}
 

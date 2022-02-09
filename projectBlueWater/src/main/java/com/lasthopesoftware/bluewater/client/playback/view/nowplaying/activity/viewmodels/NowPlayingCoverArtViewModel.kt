@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity
+package com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity.viewmodels
 
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -92,15 +92,12 @@ class NowPlayingCoverArtViewModel(
 
 	private fun setView(serviceFile: ServiceFile) {
 
-		fun handleException(currentUrlKey: UrlKeyHolder<ServiceFile>, exception: Throwable) {
+		fun handleException(exception: Throwable) {
 			val isIoException = handleIoException(exception)
 			if (!isIoException) return
 
 			unexpectedErrorState.value = exception
-			pollConnections.pollSessionConnection().then {
-				if (cachedPromises?.urlKeyHolder == currentUrlKey)
-					setView(serviceFile)
-			}
+			pollConnections.pollSessionConnection().then { setView() }
 		}
 
 		fun setNowPlayingImage(cachedPromises: CachedPromises) {
@@ -117,7 +114,7 @@ class NowPlayingCoverArtViewModel(
 					if (e is CancellationException)	logger.debug("Bitmap retrieval cancelled", e)
 					else {
 						logger.error("There was an error retrieving the image for serviceFile $serviceFile", e)
-						handleException(cachedPromises.urlKeyHolder, e)
+						handleException(e)
 					}
 				}
 		}
@@ -127,16 +124,14 @@ class NowPlayingCoverArtViewModel(
 				val baseUrl = connectionProvider?.urlProvider?.baseUrl ?: return@then
 
 				val urlKeyHolder = UrlKeyHolder(baseUrl, serviceFile)
-				val currentCachedPromises = cachedPromises
-					?.takeIf { it.urlKeyHolder == urlKeyHolder }
-					?: run {
-						cachedPromises?.close()
-						CachedPromises(
-							urlKeyHolder,
-							imageProvider.promiseFileBitmap(serviceFile)
-						).also { cachedPromises = it }
-					}
+				if (cachedPromises?.urlKeyHolder == urlKeyHolder) return@then
 
+				cachedPromises?.close()
+
+				val currentCachedPromises = CachedPromises(
+					urlKeyHolder,
+					imageProvider.promiseFileBitmap(serviceFile)
+				).also { cachedPromises = it }
 				setNowPlayingImage(currentCachedPromises)
 			}
 	}
