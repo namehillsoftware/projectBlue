@@ -99,7 +99,7 @@ class NowPlayingViewModel(
 
 		onPlaybackStoppedReceiver = object : BroadcastReceiver() {
 			override fun onReceive(context: Context, intent: Intent) {
-				togglePlaying(true)
+				togglePlaying(false)
 			}
 		}
 
