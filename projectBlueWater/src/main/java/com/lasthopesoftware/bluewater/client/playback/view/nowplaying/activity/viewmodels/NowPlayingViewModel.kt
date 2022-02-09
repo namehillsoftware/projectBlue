@@ -228,7 +228,7 @@ class NowPlayingViewModel(
 								?.baseUrl
 								?.let { baseUrl ->
 									if (cachedPromises?.urlKeyHolder == UrlKeyHolder(baseUrl, positionedFile.serviceFile)) filePositionState.value
-									else 0
+									else np.filePosition
 								}
 								?.also { filePosition ->
 									setView(positionedFile.serviceFile, filePosition)
