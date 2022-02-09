@@ -111,12 +111,7 @@ class NowPlayingViewModel(
 
 		onPlaylistChangedReceiver = object : BroadcastReceiver() {
 			override fun onReceive(context: Context, intent: Intent) {
-				nowPlayingRepository.nowPlaying
-					.then { np ->
-						nowPlayingFileState.value = np.playingFile
-						nowPlayingListState.value = np.playlist.mapIndexed(::PositionedFile)
-						setView()
-					}
+				setView()
 			}
 		}
 
@@ -160,25 +155,12 @@ class NowPlayingViewModel(
 		togglePlaying(false)
 		nowPlayingRepository
 			.nowPlaying
-			.eventually { np ->
+			.then { np ->
 				isRepeatingState.value = np.isRepeating
-				selectedConnectionProvider
-					.promiseSessionConnection()
-					.then { connectionProvider ->
-						nowPlayingListState.value = np.playlist.mapIndexed(::PositionedFile)
-						nowPlayingFileState.value = np.playingFile
-						np.playingFile?.also { positionedFile ->
-							val filePosition = connectionProvider?.urlProvider?.baseUrl
-								?.let { baseUrl ->
-									if (cachedPromises?.urlKeyHolder == UrlKeyHolder(baseUrl, positionedFile.serviceFile)) filePositionState.value
-									else np.filePosition
-								}
-								?: np.filePosition
-							setView(positionedFile.serviceFile, filePosition)
-						}
-					}
 			}
 			.excuse { error -> logger.warn("An error occurred initializing `NowPlayingActivity`", error) }
+
+		setView()
 
 		playbackService.promiseIsMarkedForPlay().then(::togglePlaying)
 
@@ -235,6 +217,7 @@ class NowPlayingViewModel(
 		nowPlayingRepository.nowPlaying
 			.then { np ->
 				disableViewWithMessage()
+				nowPlayingListState.value = np.playlist.mapIndexed(::PositionedFile)
 				nowPlayingFileState.value = np.playingFile
 				np.playingFile?.let { positionedFile ->
 					selectedConnectionProvider
