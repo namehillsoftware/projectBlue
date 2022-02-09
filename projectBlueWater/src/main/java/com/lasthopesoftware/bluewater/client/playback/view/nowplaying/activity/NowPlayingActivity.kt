@@ -1,7 +1,9 @@
 package com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity
 
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.os.Bundle
 import android.os.Handler
 import android.view.View
@@ -33,8 +35,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.revisions.Selected
 import com.lasthopesoftware.bluewater.client.connection.authentication.ScopedConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.authentication.SelectedConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.polling.ConnectionPoller
-import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService.Companion.addOnConnectionLostListener
-import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService.Companion.removeOnConnectionLostListener
+import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService
 import com.lasthopesoftware.bluewater.client.connection.polling.WaitForConnectionDialog
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity.Companion.restoreSelectedConnection
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
@@ -142,7 +143,11 @@ class NowPlayingActivity :
 
 	private lateinit var bottomSheetBehavior: BottomSheetBehavior<RelativeLayout>
 
-	private val onConnectionLostListener = Runnable { WaitForConnectionDialog.show(this) }
+	private val onConnectionLostListener = object : BroadcastReceiver() {
+		override fun onReceive(context: Context?, intent: Intent?) {
+			context?.let(WaitForConnectionDialog::show)
+		}
+	}
 
 	private val binding by lazy {
 		val binding = DataBindingUtil.setContentView<ActivityViewNowPlayingBinding>(this, R.layout.activity_view_now_playing)
@@ -283,7 +288,7 @@ class NowPlayingActivity :
 			}
 		}
 
-		addOnConnectionLostListener(onConnectionLostListener)
+		messageBus.value.registerReceiver(onConnectionLostListener, IntentFilter(PollConnectionService.connectionLostNotification))
 	}
 
 	override fun onStart() {
@@ -314,7 +319,6 @@ class NowPlayingActivity :
 
 	override fun onDestroy() {
 		super.onDestroy()
-		removeOnConnectionLostListener(onConnectionLostListener)
 
 		if (fileListItemNowPlayingRegistrar.isInitialized()) fileListItemNowPlayingRegistrar.value.clear()
 		if (messageBus.isInitialized()) messageBus.value.clear()
