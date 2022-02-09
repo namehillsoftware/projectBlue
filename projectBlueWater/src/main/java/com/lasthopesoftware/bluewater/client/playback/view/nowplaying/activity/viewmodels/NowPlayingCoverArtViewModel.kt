@@ -20,7 +20,6 @@ import com.namehillsoftware.handoff.promises.Promise
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import org.slf4j.LoggerFactory
-import java.io.Closeable
 import java.util.concurrent.CancellationException
 
 private val logger by lazy { LoggerFactory.getLogger(NowPlayingCoverArtViewModel::class.java) }
@@ -32,7 +31,7 @@ class NowPlayingCoverArtViewModel(
 	private val defaultImageProvider: ProvideDefaultImage,
 	private val imageProvider: ProvideImages,
 	private val pollConnections: PollForConnections,
-) : ViewModel(), Closeable {
+) : ViewModel() {
 	private val onPlaybackChangedReceiver: BroadcastReceiver
 
 	private var cachedPromises: CachedPromises? = null
@@ -64,7 +63,7 @@ class NowPlayingCoverArtViewModel(
 		messages.registerReceiver(onPlaybackChangedReceiver, playingFileChangedFilter)
 	}
 
-	override fun close() {
+	override fun onCleared() {
 		cachedPromises?.close()
 		messages.unregisterReceiver(onPlaybackChangedReceiver)
 	}
