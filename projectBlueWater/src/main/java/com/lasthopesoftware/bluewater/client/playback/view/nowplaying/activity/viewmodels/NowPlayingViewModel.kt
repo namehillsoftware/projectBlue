@@ -46,6 +46,7 @@ class NowPlayingViewModel(
 	private val pollConnections: PollForConnections,
 	private val stringResources: GetStringResources,
 	private val nowPlayingDisplaySettings: StoreNowPlayingDisplaySettings,
+	private val liveNowPlayingFilePosition: GetLiveNowPlayingFilePosition,
 ) : ViewModel() {
 	private val onPlaybackStartedReceiver: BroadcastReceiver
 	private val onPlaybackStoppedReceiver: BroadcastReceiver
@@ -225,7 +226,7 @@ class NowPlayingViewModel(
 								?.baseUrl
 								?.let { baseUrl ->
 									if (cachedPromises?.urlKeyHolder == UrlKeyHolder(baseUrl, positionedFile.serviceFile)) filePositionState.value
-									else np.filePosition
+									else liveNowPlayingFilePosition.progressedFile?.second?.millis ?: np.filePosition
 								}
 								?.also { filePosition ->
 									setView(positionedFile.serviceFile, filePosition)

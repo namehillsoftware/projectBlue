@@ -5,17 +5,22 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfScopedConnectionIsReadOnly
 import com.lasthopesoftware.bluewater.client.connection.selected.ProvideSelectedConnection
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
+import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity.viewmodels.GetLiveNowPlayingFilePosition
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity.viewmodels.NowPlayingViewModel
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity.viewmodels.StoreNowPlayingDisplaySettings
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.INowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlaying
+import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
+import org.joda.time.Duration
 import org.junit.Test
+import java.net.URL
 
 private val nowPlayingViewModel by lazy {
 	val nowPlayingRepository = mockk<INowPlayingRepository>().apply {
@@ -58,6 +63,13 @@ private val nowPlayingViewModel by lazy {
 		every { isScreenOnDuringPlayback } returns true
 	}
 
+	val liveNowPlayingFilePosition = mockk<GetLiveNowPlayingFilePosition>().apply {
+		every { progressedFile } returns Pair(
+			UrlKeyHolder(URL("http://test"), PositionedFile(3, ServiceFile(355))),
+			Duration.millis(853127)
+		)
+	}
+
 	val nowPlayingViewModel = NowPlayingViewModel(
 		mockk(relaxUnitFun = true),
 		nowPlayingRepository,
@@ -68,7 +80,8 @@ private val nowPlayingViewModel by lazy {
 		playbackService,
 		mockk(),
 		mockk(relaxed = true),
-		storeNowPlayingDisplaySettings
+		storeNowPlayingDisplaySettings,
+		liveNowPlayingFilePosition
 	)
 
 	nowPlayingViewModel.initializeViewModel()
