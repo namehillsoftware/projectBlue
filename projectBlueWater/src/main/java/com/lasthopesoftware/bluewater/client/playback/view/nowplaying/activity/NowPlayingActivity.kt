@@ -42,6 +42,7 @@ import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnect
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity.viewmodels.InMemoryNowPlayingDisplaySettings
+import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity.viewmodels.LiveNowPlayingFilePosition
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity.viewmodels.NowPlayingCoverArtViewModel
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity.viewmodels.NowPlayingViewModel
 import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.list.NowPlayingFileListAdapter
@@ -174,7 +175,8 @@ class NowPlayingActivity :
 						PlaybackServiceController(this),
 						ConnectionPoller(this),
 						StringResources(this),
-						InMemoryNowPlayingDisplaySettings
+						InMemoryNowPlayingDisplaySettings,
+						LiveNowPlayingFilePosition()
 					)
 				}
 
