@@ -79,7 +79,7 @@ private val nowPlayingViewModel by lazy {
 class WhenInitializingTheNowPlayingViewModel {
 
 	@Test
-	fun thenTheFilePositionIsCorrect() {
+	fun thenTheFilePositionIsFromThePlayingFile() {
 		assertThat(nowPlayingViewModel.filePosition.value).isEqualTo(853127)
 	}
 }
