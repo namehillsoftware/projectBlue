@@ -341,7 +341,7 @@ class NowPlayingActivity :
 		super.onDestroy()
 
 		if (fileListItemNowPlayingRegistrar.isInitialized()) fileListItemNowPlayingRegistrar.value.clear()
-		if (messageBus.isInitialized()) messageBus.value.clear()
+		if (messageBus.isInitialized()) messageBus.value.unregisterReceiver(onConnectionLostListener)
 	}
 
 	override fun onAllMenusHidden() {}
