@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.playback.nowplaying.storage
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster
 import com.namehillsoftware.handoff.promises.Promise
 
@@ -15,7 +16,12 @@ class LiveNowPlayingLookup(private val inner: GetNowPlayingState) : BroadcastRec
 			.then { np -> np?.apply { filePosition = trackedPosition ?: filePosition } }
 
 	override fun onReceive(context: Context?, intent: Intent?) {
-		val filePosition = intent?.getLongExtra(TrackPositionBroadcaster.TrackPositionChangedParameters.filePosition, -1) ?: -1
-		trackedPosition = if (filePosition > -1) filePosition else null
+		trackedPosition = when (intent?.action) {
+			TrackPositionBroadcaster.trackPositionUpdate -> intent
+				.getLongExtra(TrackPositionBroadcaster.TrackPositionChangedParameters.filePosition, -1)
+				.takeIf { it > -1 }
+			PlaylistEvents.onPlaylistTrackChange -> null
+			else -> trackedPosition
+		}
 	}
 }
