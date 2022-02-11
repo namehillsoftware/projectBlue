@@ -39,7 +39,7 @@ class LiveNowPlayingLookup private constructor(
 		}
 
 		fun getInstance(): LiveNowPlayingLookup {
-			if (!::instance.isInitialized) throw java.lang.IllegalStateException("Instance should be initialized in application root")
+			if (!::instance.isInitialized) throw IllegalStateException("Instance should be initialized in application root")
 
 			return instance
 		}
