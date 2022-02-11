@@ -39,7 +39,9 @@ import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnect
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionSettingsChangeReceiver
 import com.lasthopesoftware.bluewater.client.connection.settings.changes.ObservableConnectionSettingsLibraryStorage
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingInstance
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.pebble.PebbleFileChangedNotificationRegistration
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble.PlaybackFileStartedScrobblerRegistration
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble.PlaybackFileStoppedScrobblerRegistration
@@ -159,10 +161,14 @@ open class MainApplication : Application() {
 			SessionConnectionRegistrationsMaintainer(messageBus, connectionDependentReceiverRegistrations),
 			IntentFilter(SelectedConnection.buildSessionBroadcast))
 
-		val libraryRepository = LibraryRepository(this)
+		val liveNowPlayingLookup = LiveNowPlayingLookup.initializeInstance(this)
 		messageBus.registerReceiver(
-			LiveNowPlayingInstance(messageBus, SelectedBrowserLibraryIdentifierProvider(applicationSettings), libraryRepository, libraryRepository),
-			IntentFilter(BrowserLibrarySelection.libraryChosenEvent)
+			liveNowPlayingLookup,
+			IntentFilter().apply {
+				addAction(BrowserLibrarySelection.libraryChosenEvent)
+				addAction(TrackPositionBroadcaster.trackPositionUpdate)
+				addAction(PlaylistEvents.onPlaylistTrackChange)
+			}
 		)
 	}
 

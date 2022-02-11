@@ -39,7 +39,7 @@ import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionSe
 import com.lasthopesoftware.bluewater.client.connection.polling.WaitForConnectionDialog
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity.Companion.restoreSelectedConnection
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingInstance
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.InMemoryNowPlayingDisplaySettings
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingCoverArtViewModel
@@ -162,32 +162,31 @@ class NowPlayingActivity :
 			listView.layoutManager = LinearLayoutManager(this)
 		}, messageHandler))
 
-		LiveNowPlayingInstance.nowPlayingLookupInstance?.also { liveNowPlayingLookup ->
-			binding.vm = buildViewModel {
-				NowPlayingViewModel(
-					messageBus.value,
-					liveNowPlayingLookup,
-					lazySelectedConnectionProvider,
-					lazyFilePropertiesProvider,
-					filePropertiesStorage,
-					lazySelectedConnectionAuthenticationChecker,
-					PlaybackServiceController(this),
-					ConnectionPoller(this),
-					StringResources(this),
-					InMemoryNowPlayingDisplaySettings
-				)
-			}
+		val liveNowPlayingLookup = LiveNowPlayingLookup.getInstance()
+		binding.vm = buildViewModel {
+			NowPlayingViewModel(
+				messageBus.value,
+				liveNowPlayingLookup,
+				lazySelectedConnectionProvider,
+				lazyFilePropertiesProvider,
+				filePropertiesStorage,
+				lazySelectedConnectionAuthenticationChecker,
+				PlaybackServiceController(this),
+				ConnectionPoller(this),
+				StringResources(this),
+				InMemoryNowPlayingDisplaySettings
+			)
+		}
 
-			binding.coverArtVm = buildViewModel {
-				NowPlayingCoverArtViewModel(
-					messageBus.value,
-					liveNowPlayingLookup,
-					lazySelectedConnectionProvider,
-					defaultImageProvider,
-					imageProvider,
-					ConnectionPoller(this),
-				)
-			}
+		binding.coverArtVm = buildViewModel {
+			NowPlayingCoverArtViewModel(
+				messageBus.value,
+				liveNowPlayingLookup,
+				lazySelectedConnectionProvider,
+				defaultImageProvider,
+				imageProvider,
+				ConnectionPoller(this),
+			)
 		}
 
 		promisedListViewSetup.then { binding }
