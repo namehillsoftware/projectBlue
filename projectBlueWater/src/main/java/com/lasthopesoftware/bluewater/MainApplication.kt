@@ -161,7 +161,7 @@ open class MainApplication : Application() {
 
 		val libraryRepository = LibraryRepository(this)
 		messageBus.registerReceiver(
-			LiveNowPlayingInstance(messageBus, libraryRepository, libraryRepository),
+			LiveNowPlayingInstance(messageBus, SelectedBrowserLibraryIdentifierProvider(applicationSettings), libraryRepository, libraryRepository),
 			IntentFilter(BrowserLibrarySelection.libraryChosenEvent)
 		)
 	}
