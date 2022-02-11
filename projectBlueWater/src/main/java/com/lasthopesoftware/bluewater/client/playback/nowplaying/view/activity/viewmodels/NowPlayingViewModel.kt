@@ -46,7 +46,6 @@ class NowPlayingViewModel(
 	private val pollConnections: PollForConnections,
 	private val stringResources: GetStringResources,
 	private val nowPlayingDisplaySettings: StoreNowPlayingDisplaySettings,
-	private val liveNowPlayingFilePosition: GetLiveNowPlayingFilePosition,
 ) : ViewModel() {
 	private val onPlaybackStartedReceiver: BroadcastReceiver
 	private val onPlaybackStoppedReceiver: BroadcastReceiver
