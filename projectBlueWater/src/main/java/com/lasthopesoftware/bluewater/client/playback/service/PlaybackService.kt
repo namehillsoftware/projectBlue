@@ -69,7 +69,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.QueueProviders
 import com.lasthopesoftware.bluewater.client.playback.file.volume.MaxFileVolumeProvider
 import com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.MaxFileVolumePreparationProvider
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.INowPlayingRepository
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.MaintainNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.NowPlayingActivity.Companion.startNowPlayingActivity
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Action.Bag
@@ -442,7 +442,7 @@ open class PlaybackService :
 	private var startId = 0
 	private var trackPositionBroadcaster: TrackPositionBroadcaster? = null
 
-	private fun getNewNowPlayingRepository(): Promise<INowPlayingRepository?> =
+	private fun getNewNowPlayingRepository(): Promise<MaintainNowPlayingState?> =
 		selectedLibraryIdentifierProvider.selectedLibraryId
 			.then { l ->
 				l?.let {

@@ -39,9 +39,9 @@ import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionSe
 import com.lasthopesoftware.bluewater.client.connection.polling.WaitForConnectionDialog
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity.Companion.restoreSelectedConnection
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingInstance
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.InMemoryNowPlayingDisplaySettings
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.LiveNowPlayingFilePosition
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingCoverArtViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.list.NowPlayingFileListAdapter
@@ -56,7 +56,6 @@ import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToast
 import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.resources.strings.StringResources
-import com.namehillsoftware.handoff.promises.Promise
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
@@ -163,39 +162,35 @@ class NowPlayingActivity :
 			listView.layoutManager = LinearLayoutManager(this)
 		}, messageHandler))
 
-		val promisedViewModelSetup = nowPlayingRepository
-			.eventually(LoopedInPromise.response({
-				binding.vm = buildViewModel {
-					NowPlayingViewModel(
-						messageBus.value,
-						it,
-						lazySelectedConnectionProvider,
-						lazyFilePropertiesProvider,
-						filePropertiesStorage,
-						lazySelectedConnectionAuthenticationChecker,
-						PlaybackServiceController(this),
-						ConnectionPoller(this),
-						StringResources(this),
-						InMemoryNowPlayingDisplaySettings,
-						LiveNowPlayingFilePosition()
-					)
-				}
+		LiveNowPlayingInstance.nowPlayingLookupInstance?.also { liveNowPlayingLookup ->
+			binding.vm = buildViewModel {
+				NowPlayingViewModel(
+					messageBus.value,
+					liveNowPlayingLookup,
+					lazySelectedConnectionProvider,
+					lazyFilePropertiesProvider,
+					filePropertiesStorage,
+					lazySelectedConnectionAuthenticationChecker,
+					PlaybackServiceController(this),
+					ConnectionPoller(this),
+					StringResources(this),
+					InMemoryNowPlayingDisplaySettings
+				)
+			}
 
-				binding.coverArtVm = buildViewModel {
-					NowPlayingCoverArtViewModel(
-						messageBus.value,
-						it,
-						lazySelectedConnectionProvider,
-						defaultImageProvider,
-						imageProvider,
-						ConnectionPoller(this),
-					)
-				}
-			}, messageHandler))
+			binding.coverArtVm = buildViewModel {
+				NowPlayingCoverArtViewModel(
+					messageBus.value,
+					liveNowPlayingLookup,
+					lazySelectedConnectionProvider,
+					defaultImageProvider,
+					imageProvider,
+					ConnectionPoller(this),
+				)
+			}
+		}
 
-		Promise
-			.whenAll(promisedViewModelSetup, promisedListViewSetup)
-			.then { binding }
+		promisedListViewSetup.then { binding }
 	}
 
 	private var isDrawerOpened = false

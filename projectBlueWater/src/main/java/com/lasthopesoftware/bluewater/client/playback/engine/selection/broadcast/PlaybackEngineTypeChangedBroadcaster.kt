@@ -16,7 +16,7 @@ class PlaybackEngineTypeChangedBroadcaster(private val sendMessages: SendMessage
 		private val magicPropertyBuilder = MagicPropertyBuilder(
 			PlaybackEngineTypeChangedBroadcaster::class.java
 		)
-		@kotlin.jvm.JvmField
+
 		val playbackEngineTypeChanged = magicPropertyBuilder.buildProperty("playbackEngineTypeChanged")
 		@kotlin.jvm.JvmField
 		val playbackEngineTypeKey = magicPropertyBuilder.buildProperty("playbackEngineTypeKey")

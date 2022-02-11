@@ -11,7 +11,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.image.ProvideI
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
 import com.lasthopesoftware.bluewater.client.connection.polling.PollForConnections
 import com.lasthopesoftware.bluewater.client.connection.selected.ProvideSelectedConnection
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.INowPlayingRepository
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.android.messages.RegisterForMessages
@@ -25,12 +25,12 @@ import java.util.concurrent.CancellationException
 private val logger by lazy { LoggerFactory.getLogger(NowPlayingCoverArtViewModel::class.java) }
 
 class NowPlayingCoverArtViewModel(
-    private val messages: RegisterForMessages,
-    private val nowPlayingRepository: INowPlayingRepository,
-    private val selectedConnectionProvider: ProvideSelectedConnection,
-    private val defaultImageProvider: ProvideDefaultImage,
-    private val imageProvider: ProvideImages,
-    private val pollConnections: PollForConnections,
+	private val messages: RegisterForMessages,
+	private val nowPlayingRepository: GetNowPlayingState,
+	private val selectedConnectionProvider: ProvideSelectedConnection,
+	private val defaultImageProvider: ProvideDefaultImage,
+	private val imageProvider: ProvideImages,
+	private val pollConnections: PollForConnections,
 ) : ViewModel() {
 	private val onPlaybackChangedReceiver: BroadcastReceiver
 

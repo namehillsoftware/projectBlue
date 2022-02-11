@@ -8,7 +8,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.Sel
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.namehillsoftware.handoff.promises.Promise
 
-class NowPlayingFileProvider private constructor(private val nowPlayingRepository: INowPlayingRepository) :
+class NowPlayingFileProvider private constructor(private val nowPlayingRepository: MaintainNowPlayingState) :
 	ProvideNowPlayingFiles {
 	override val nowPlayingFile: Promise<ServiceFile?>
 		get() = nowPlayingRepository
