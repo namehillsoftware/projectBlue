@@ -13,7 +13,7 @@ import java.util.concurrent.ConcurrentHashMap
 class NowPlayingRepository(
     private val libraryProvider: ISpecificLibraryProvider,
     private val libraryRepository: ILibraryStorage
-) : INowPlayingRepository {
+) : MaintainNowPlayingState {
 
 	companion object {
 		private val nowPlayingCache = ConcurrentHashMap<Int, NowPlaying>()

@@ -11,7 +11,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedProgressedFile
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.IPositionedFileQueueProvider
 import com.lasthopesoftware.bluewater.client.playback.file.progress.ReadFileProgress
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.INowPlayingRepository
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.MaintainNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
@@ -36,7 +36,7 @@ private fun getPreviousPosition(startingPosition: Int): Int = max(startingPositi
 class PlaybackEngine(
     managePlaybackQueues: ManagePlaybackQueues,
     positionedFileQueueProviders: Iterable<IPositionedFileQueueProvider>,
-    private val nowPlayingRepository: INowPlayingRepository,
+    private val nowPlayingRepository: MaintainNowPlayingState,
     private val playbackBootstrapper: IStartPlayback,
 ) :
 	ChangePlaybackState,

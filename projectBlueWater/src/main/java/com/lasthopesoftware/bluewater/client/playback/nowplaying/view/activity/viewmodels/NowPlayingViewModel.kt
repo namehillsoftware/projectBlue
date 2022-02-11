@@ -15,7 +15,7 @@ import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfSc
 import com.lasthopesoftware.bluewater.client.connection.polling.PollForConnections
 import com.lasthopesoftware.bluewater.client.connection.selected.ProvideSelectedConnection
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.INowPlayingRepository
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster
@@ -37,7 +37,7 @@ private val screenControlVisibilityTime by lazy { Duration.standardSeconds(5) }
 
 class NowPlayingViewModel(
 	private val messages: RegisterForMessages,
-	private val nowPlayingRepository: INowPlayingRepository,
+	private val nowPlayingRepository: GetNowPlayingState,
 	private val selectedConnectionProvider: ProvideSelectedConnection,
 	private val fileProperties: ProvideScopedFileProperties,
 	private val updateFileProperties: UpdateFileProperties,
@@ -226,7 +226,7 @@ class NowPlayingViewModel(
 								?.baseUrl
 								?.let { baseUrl ->
 									if (cachedPromises?.urlKeyHolder == UrlKeyHolder(baseUrl, positionedFile.serviceFile)) filePositionState.value
-									else liveNowPlayingFilePosition.progressedFile?.second?.millis ?: np.filePosition
+									else np.filePosition
 								}
 								?.also { filePosition ->
 									setView(positionedFile.serviceFile, filePosition)

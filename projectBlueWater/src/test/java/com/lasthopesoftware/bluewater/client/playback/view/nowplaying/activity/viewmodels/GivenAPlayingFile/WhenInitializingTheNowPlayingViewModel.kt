@@ -6,7 +6,7 @@ import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfScopedConnectionIsReadOnly
 import com.lasthopesoftware.bluewater.client.connection.selected.ProvideSelectedConnection
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.INowPlayingRepository
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.MaintainNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.GetLiveNowPlayingFilePosition
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingViewModel
@@ -23,7 +23,7 @@ import org.junit.Test
 import java.net.URL
 
 private val nowPlayingViewModel by lazy {
-	val nowPlayingRepository = mockk<INowPlayingRepository>().apply {
+	val nowPlayingRepository = mockk<MaintainNowPlayingState>().apply {
 		every { promiseNowPlaying() } returns Promise(
 			NowPlaying(
 				listOf(
@@ -89,10 +89,10 @@ private val nowPlayingViewModel by lazy {
 	nowPlayingViewModel
 }
 
-class WhenInitializingTheNowPlayingViewModel {
+class `When Initializing The NowPlayingViewModel` {
 
 	@Test
-	fun thenTheFilePositionIsFromThePlayingFile() {
-		assertThat(nowPlayingViewModel.filePosition.value).isEqualTo(853127)
+	fun `then the file position is correct`() {
+		assertThat(nowPlayingViewModel.filePosition.value).isEqualTo(439774)
 	}
 }
