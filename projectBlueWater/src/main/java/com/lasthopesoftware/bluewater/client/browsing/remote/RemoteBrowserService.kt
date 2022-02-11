@@ -21,7 +21,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.Sel
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRevisionProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.views.access.CachedLibraryViewsProvider
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
-import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlayingRepository
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.MediaSession.MediaSessionService
@@ -99,10 +99,11 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 		selectedLibraryIdProvider.selectedLibraryId
 			.then {
 				it?.let { l ->
-					val repository = NowPlayingRepository(
-						SpecificLibraryProvider(l, libraryRepository),
-						libraryRepository
-					)
+					val repository =
+                        NowPlayingRepository(
+                            SpecificLibraryProvider(l, libraryRepository),
+                            libraryRepository
+                        )
 
 					NowPlayingMediaItemLookup(
 						repository,

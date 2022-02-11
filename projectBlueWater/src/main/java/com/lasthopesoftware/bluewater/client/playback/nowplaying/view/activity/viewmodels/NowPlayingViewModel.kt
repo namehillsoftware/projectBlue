@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity.viewmodels
+package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels
 
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -15,10 +15,10 @@ import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfSc
 import com.lasthopesoftware.bluewater.client.connection.polling.PollForConnections
 import com.lasthopesoftware.bluewater.client.connection.selected.ProvideSelectedConnection
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.INowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster
-import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.INowPlayingRepository
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.android.messages.RegisterForMessages
 import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay
@@ -155,8 +155,8 @@ class NowPlayingViewModel(
 	fun initializeViewModel() {
 		togglePlaying(false)
 		nowPlayingRepository
-			.nowPlaying
-			.then { np -> isRepeatingState.value = np.isRepeating }
+			.promiseNowPlaying()
+			.then { np -> isRepeatingState.value = np?.isRepeating ?: false }
 			.excuse { error -> logger.warn("An error occurred initializing `NowPlayingActivity`", error) }
 
 		updateViewFromRepository()
@@ -213,11 +213,11 @@ class NowPlayingViewModel(
 	}
 
 	private fun updateViewFromRepository() {
-		nowPlayingRepository.nowPlaying
+		nowPlayingRepository.promiseNowPlaying()
 			.then { np ->
-				nowPlayingListState.value = np.playlist.mapIndexed(::PositionedFile)
-				nowPlayingFileState.value = np.playingFile
-				np.playingFile?.let { positionedFile ->
+				nowPlayingListState.value = np?.playlist?.mapIndexed(::PositionedFile) ?: emptyList()
+				nowPlayingFileState.value = np?.playingFile
+				np?.playingFile?.let { positionedFile ->
 					selectedConnectionProvider
 						.promiseSessionConnection()
 						.then { connectionProvider ->

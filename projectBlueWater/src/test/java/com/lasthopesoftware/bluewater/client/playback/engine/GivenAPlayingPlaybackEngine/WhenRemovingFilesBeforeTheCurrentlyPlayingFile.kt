@@ -11,8 +11,8 @@ import com.lasthopesoftware.bluewater.client.playback.engine.preparation.Prepare
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedProgressedFile
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeDeferredPlayableFilePreparationSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
-import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlaying
-import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlayingRepository
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
 import com.namehillsoftware.handoff.promises.Promise
@@ -58,13 +58,20 @@ class WhenRemovingFilesBeforeTheCurrentlyPlayingFile {
 
 			val libraryStorage = PassThroughLibraryStorage()
 
-			val repository = NowPlayingRepository(libraryProvider, libraryStorage)
+			val repository =
+                NowPlayingRepository(
+                    libraryProvider,
+                    libraryStorage
+                )
 			val playbackEngine =
 				PlaybackEngine(
 					PreparedPlaybackQueueResourceManagement(
 						fakePlaybackPreparerProvider
 					) { 1 }, listOf(fileQueueProvider),
-					NowPlayingRepository(libraryProvider, libraryStorage),
+                    NowPlayingRepository(
+                        libraryProvider,
+                        libraryStorage
+                    ),
 					PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
 				)
 
@@ -74,7 +81,7 @@ class WhenRemovingFilesBeforeTheCurrentlyPlayingFile {
 			playbackEngine.removeFileAtPosition(0).toFuture()[1, TimeUnit.SECONDS]
 			resolvablePlaybackHandler.setCurrentPosition(92)
 			playbackEngine.pause().toFuture().get()
-			nowPlaying = repository.nowPlaying.toFuture().get()
+			nowPlaying = repository.promiseNowPlaying().toFuture().get()
 		}
 	}
 

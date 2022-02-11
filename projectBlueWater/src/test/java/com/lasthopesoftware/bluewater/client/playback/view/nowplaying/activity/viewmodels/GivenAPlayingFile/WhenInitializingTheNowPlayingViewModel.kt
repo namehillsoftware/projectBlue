@@ -6,12 +6,12 @@ import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfScopedConnectionIsReadOnly
 import com.lasthopesoftware.bluewater.client.connection.selected.ProvideSelectedConnection
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.INowPlayingRepository
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.GetLiveNowPlayingFilePosition
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingViewModel
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.StoreNowPlayingDisplaySettings
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
-import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity.viewmodels.GetLiveNowPlayingFilePosition
-import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity.viewmodels.NowPlayingViewModel
-import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity.viewmodels.StoreNowPlayingDisplaySettings
-import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.INowPlayingRepository
-import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
@@ -24,7 +24,7 @@ import java.net.URL
 
 private val nowPlayingViewModel by lazy {
 	val nowPlayingRepository = mockk<INowPlayingRepository>().apply {
-		every { nowPlaying } returns Promise(
+		every { promiseNowPlaying() } returns Promise(
 			NowPlaying(
 				listOf(
 					ServiceFile(815),

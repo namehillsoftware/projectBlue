@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.view.nowplaying.menu
+package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.menu
 
 import android.widget.ImageButton
 import androidx.recyclerview.widget.RecyclerView
@@ -10,10 +10,10 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.menu.Fil
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.menu.FileNameTextViewSetter
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.INowPlayingRepository
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.menu.listeners.FileSeekToClickListener
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.menu.listeners.RemovePlaylistFileClickListener
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
-import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.menu.listeners.FileSeekToClickListener
-import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.menu.listeners.RemovePlaylistFileClickListener
-import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.INowPlayingRepository
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
@@ -47,10 +47,10 @@ class NowPlayingFileListItemMenuBuilder(private val nowPlayingRepository: INowPl
 			val viewFlipper = fileListItem.viewAnimator
 
 			nowPlayingRepository
-				.nowPlaying
+				.promiseNowPlaying()
 				.eventually(LoopedInPromise.response({ np ->
-					textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(position == np.playlistPosition))
-					viewFlipper.isSelected = position == np.playlistPosition
+					textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(position == np?.playlistPosition))
+					viewFlipper.isSelected = position == np?.playlistPosition
 				}, textView.context))
 
 			fileListItemNowPlayingHandler?.close()

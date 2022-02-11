@@ -10,10 +10,10 @@ import com.lasthopesoftware.bluewater.client.playback.engine.preparation.Prepare
 import com.lasthopesoftware.bluewater.client.playback.file.fakes.ResolvablePlaybackHandler
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeDeferredPlayableFilePreparationSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
-import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlaying
-import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlayingRepository
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
-import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
 import org.junit.BeforeClass
@@ -33,7 +33,11 @@ class WhenPlaybackIsPaused {
 			library.setId(1)
 			val libraryProvider = PassThroughSpecificLibraryProvider(library)
 			val libraryStorage = PassThroughLibraryStorage()
-			val nowPlayingRepository = NowPlayingRepository(libraryProvider, libraryStorage)
+			val nowPlayingRepository =
+                NowPlayingRepository(
+                    libraryProvider,
+                    libraryStorage
+                )
 			playbackEngine = PlaybackEngine(
 				PreparedPlaybackQueueResourceManagement(
 					fakePlaybackPreparerProvider
@@ -56,7 +60,7 @@ class WhenPlaybackIsPaused {
 			playingPlaybackHandler.resolve()
 			resolveablePlaybackHandler?.setCurrentPosition(30)
 			playbackEngine!!.pause()
-			nowPlaying = FuturePromise(nowPlayingRepository.nowPlaying).get()
+			nowPlaying = nowPlayingRepository.promiseNowPlaying().toFuture().get()
 		}
 	}
 

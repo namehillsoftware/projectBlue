@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage
+package com.lasthopesoftware.bluewater.client.playback.nowplaying.storage
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile

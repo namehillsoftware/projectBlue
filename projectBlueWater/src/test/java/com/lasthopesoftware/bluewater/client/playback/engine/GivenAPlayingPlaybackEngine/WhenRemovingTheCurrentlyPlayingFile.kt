@@ -16,7 +16,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedProgressedFile
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeDeferredPlayableFilePreparationSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
-import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlayingRepository
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
@@ -70,7 +70,10 @@ class WhenRemovingTheCurrentlyPlayingFile {
 					PreparedPlaybackQueueResourceManagement(
 						fakePlaybackPreparerProvider
 					) { 1 }, listOf(fileQueueProvider),
-					NowPlayingRepository(libraryProvider, libraryStorage),
+                    NowPlayingRepository(
+                        libraryProvider,
+                        libraryStorage
+                    ),
 					PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
 				)
 

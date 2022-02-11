@@ -11,7 +11,7 @@ import com.lasthopesoftware.bluewater.client.playback.engine.preparation.Prepare
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
-import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlayingRepository
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
 import com.namehillsoftware.handoff.Messenger
 import com.namehillsoftware.handoff.promises.Promise
@@ -66,7 +66,10 @@ class WhenObservingPlayback {
 					fakePlaybackPreparerProvider,
 					fakePlaybackPreparerProvider
 				), listOf(CompletingFileQueueProvider()),
-				NowPlayingRepository(libraryProvider, libraryStorage),
+                NowPlayingRepository(
+                    libraryProvider,
+                    libraryStorage
+                ),
 				PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
 			)
 
