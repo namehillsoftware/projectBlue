@@ -11,13 +11,12 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeDeferredPlayableFilePreparationSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
-import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlayingRepository
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
 import org.junit.BeforeClass
 import org.junit.Test
-import java.util.*
 import java.util.concurrent.CountDownLatch
 
 class WhenChangingTracks {
@@ -66,7 +65,10 @@ class WhenChangingTracks {
 					PreparedPlaybackQueueResourceManagement(
 						fakePlaybackPreparerProvider
 					) { 1 }, listOf(CompletingFileQueueProvider()),
-					NowPlayingRepository(libraryProvider, libraryStorage),
+                    NowPlayingRepository(
+                        libraryProvider,
+                        libraryStorage
+                    ),
 					PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
 				)
 

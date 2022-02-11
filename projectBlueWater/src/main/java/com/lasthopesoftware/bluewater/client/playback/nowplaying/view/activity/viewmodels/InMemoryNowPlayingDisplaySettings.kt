@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity.viewmodels
+package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels
 
 object InMemoryNowPlayingDisplaySettings : StoreNowPlayingDisplaySettings {
 	override var isScreenOnDuringPlayback = false

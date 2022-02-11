@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity
+package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity
 
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -39,15 +39,15 @@ import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionSe
 import com.lasthopesoftware.bluewater.client.connection.polling.WaitForConnectionDialog
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity.Companion.restoreSelectedConnection
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.InMemoryNowPlayingDisplaySettings
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.LiveNowPlayingFilePosition
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingCoverArtViewModel
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingViewModel
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.list.NowPlayingFileListAdapter
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.menu.NowPlayingFileListItemMenuBuilder
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
-import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity.viewmodels.InMemoryNowPlayingDisplaySettings
-import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity.viewmodels.LiveNowPlayingFilePosition
-import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity.viewmodels.NowPlayingCoverArtViewModel
-import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity.viewmodels.NowPlayingViewModel
-import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.list.NowPlayingFileListAdapter
-import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.menu.NowPlayingFileListItemMenuBuilder
-import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.databinding.ActivityViewNowPlayingBinding
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
@@ -87,7 +87,8 @@ class NowPlayingActivity :
 			.then { l ->
 				NowPlayingRepository(
 					SpecificLibraryProvider(l!!, libraryRepository),
-					libraryRepository)
+					libraryRepository
+				)
 			}
 	}
 

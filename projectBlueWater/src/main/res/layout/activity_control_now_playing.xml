@@ -6,7 +6,7 @@
 
     <data>
         <import type="android.view.View"/>
-        <variable name="vm" type="com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity.viewmodels.NowPlayingViewModel"/>
+        <variable name="vm" type="com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingViewModel"/>
     </data>
 
     <androidx.coordinatorlayout.widget.CoordinatorLayout

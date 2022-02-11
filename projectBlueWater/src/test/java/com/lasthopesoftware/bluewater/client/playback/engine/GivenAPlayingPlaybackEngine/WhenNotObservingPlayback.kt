@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistP
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeDeferredPlayableFilePreparationSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
-import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlayingRepository
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
@@ -35,7 +35,10 @@ class WhenNotObservingPlayback {
 				PreparedPlaybackQueueResourceManagement(
 					fakePlaybackPreparerProvider
 				) { 1 }, listOf(CompletingFileQueueProvider()),
-				NowPlayingRepository(libraryProvider, libraryStorage),
+                NowPlayingRepository(
+                    libraryProvider,
+                    libraryStorage
+                ),
 				PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
 			)
 			playbackEngine

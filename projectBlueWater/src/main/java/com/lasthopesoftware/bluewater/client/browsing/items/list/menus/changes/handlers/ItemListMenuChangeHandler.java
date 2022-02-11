@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.
 import android.widget.ViewAnimator;
 
 import com.lasthopesoftware.bluewater.client.browsing.items.list.IItemListViewContainer;
-import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.NowPlayingFloatingActionButton;
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingFloatingActionButton;
 
 /**
  * Created by david on 11/2/15.

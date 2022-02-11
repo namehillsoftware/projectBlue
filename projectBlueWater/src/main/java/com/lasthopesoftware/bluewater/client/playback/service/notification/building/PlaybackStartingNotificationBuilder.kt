@@ -7,9 +7,9 @@ import android.support.v4.media.session.MediaSessionCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.lasthopesoftware.bluewater.R
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.NowPlayingActivity
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Companion.pendingKillService
 import com.lasthopesoftware.bluewater.client.playback.service.notification.NotificationsConfiguration
-import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity.NowPlayingActivity
 import com.lasthopesoftware.bluewater.shared.android.notifications.ProduceNotificationBuilders
 import com.lasthopesoftware.bluewater.shared.makePendingIntentImmutable
 import com.namehillsoftware.handoff.promises.Promise

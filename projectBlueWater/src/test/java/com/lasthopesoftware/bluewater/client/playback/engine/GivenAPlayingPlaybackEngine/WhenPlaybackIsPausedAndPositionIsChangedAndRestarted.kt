@@ -11,15 +11,14 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeDeferredPlayableFilePreparationSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
-import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlaying
-import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlayingRepository
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
 import org.junit.BeforeClass
 import org.junit.Test
-import java.util.*
 
 class WhenPlaybackIsPausedAndPositionIsChangedAndRestarted {
 	companion object {
@@ -35,7 +34,11 @@ class WhenPlaybackIsPausedAndPositionIsChangedAndRestarted {
 			library.setId(1)
 			val libraryProvider = PassThroughSpecificLibraryProvider(library)
 			val libraryStorage = PassThroughLibraryStorage()
-			val nowPlayingRepository = NowPlayingRepository(libraryProvider, libraryStorage)
+			val nowPlayingRepository =
+                NowPlayingRepository(
+                    libraryProvider,
+                    libraryStorage
+                )
 			playbackEngine =
 				PlaybackEngine(
 					PreparedPlaybackQueueResourceManagement(
@@ -66,7 +69,7 @@ class WhenPlaybackIsPausedAndPositionIsChangedAndRestarted {
 					?.eventually { playbackEngine!!.skipToNext() }
 					?.then { playbackEngine!!.resume() }
 					?.then { fakePlaybackPreparerProvider.deferredResolution.resolve() }
-					?.eventually { nowPlayingRepository.nowPlaying }
+					?.eventually { nowPlayingRepository.promiseNowPlaying() }
 					?.toFuture()
 					?.get()
 		}

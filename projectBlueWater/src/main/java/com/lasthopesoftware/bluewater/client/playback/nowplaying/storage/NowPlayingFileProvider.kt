@@ -1,20 +1,19 @@
-package com.lasthopesoftware.bluewater.client.playback.view.nowplaying
+package com.lasthopesoftware.bluewater.client.playback.nowplaying.storage
 
 import android.content.Context
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.SpecificLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
-import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.INowPlayingRepository
-import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.namehillsoftware.handoff.promises.Promise
 
-class NowPlayingFileProvider private constructor(private val nowPlayingRepository: INowPlayingRepository) : INowPlayingFileProvider {
-	override val nowPlayingFile: Promise<ServiceFile>
+class NowPlayingFileProvider private constructor(private val nowPlayingRepository: INowPlayingRepository) :
+	ProvideNowPlayingFiles {
+	override val nowPlayingFile: Promise<ServiceFile?>
 		get() = nowPlayingRepository
-			.nowPlaying
-			.then { np -> if (np.playlist.size > 0) np.playlist[np.playlistPosition] else null }
+			.promiseNowPlaying()
+			.then { np -> np?.playingFile?.serviceFile }
 
 	companion object {
 		fun fromActiveLibrary(context: Context): Promise<NowPlayingFileProvider?> {
@@ -27,7 +26,9 @@ class NowPlayingFileProvider private constructor(private val nowPlayingRepositor
 						NowPlayingFileProvider(
 							NowPlayingRepository(
 								SpecificLibraryProvider(it, libraryRepository),
-								libraryRepository))
+								libraryRepository
+							)
+						)
 					}
 				}
 		}

@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.view.nowplaying.menu.listeners;
+package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.menu.listeners;
 
 import android.view.View;
 

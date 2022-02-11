@@ -15,8 +15,8 @@ import com.lasthopesoftware.bluewater.client.playback.engine.preparation.Prepare
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeDeferredPlayableFilePreparationSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CyclicalFileQueueProvider
-import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlaying
-import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlayingRepository
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
@@ -60,7 +60,11 @@ class WhenSettingEngineToComplete {
 				filePropertiesContainerRepository.getFilePropertiesContainer(UrlKeyHolder(EmptyUrl.url, ServiceFile(4)))
 			} returns FilePropertiesContainer(1, mapOf(Pair(KnownFileProperties.DURATION, "100")))
 
-			val repository = NowPlayingRepository(libraryProvider, libraryStorage)
+			val repository =
+                NowPlayingRepository(
+                    libraryProvider,
+                    libraryStorage
+                )
 			val playbackEngine =
 				PlaybackEngine(
 					PreparedPlaybackQueueResourceManagement(
@@ -71,7 +75,7 @@ class WhenSettingEngineToComplete {
 					PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
 				)
 			playbackEngine.playToCompletion().toFuture().get()
-			nowPlaying = repository.nowPlaying.toFuture().get()
+			nowPlaying = repository.promiseNowPlaying().toFuture().get()
 		}
 	}
 

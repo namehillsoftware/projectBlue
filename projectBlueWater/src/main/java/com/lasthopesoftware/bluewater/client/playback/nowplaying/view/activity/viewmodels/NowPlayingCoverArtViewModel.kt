@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity.viewmodels
+package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels
 
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -11,8 +11,8 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.image.ProvideI
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
 import com.lasthopesoftware.bluewater.client.connection.polling.PollForConnections
 import com.lasthopesoftware.bluewater.client.connection.selected.ProvideSelectedConnection
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.INowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
-import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.INowPlayingRepository
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.android.messages.RegisterForMessages
 import com.lasthopesoftware.bluewater.shared.images.ProvideDefaultImage
@@ -25,12 +25,12 @@ import java.util.concurrent.CancellationException
 private val logger by lazy { LoggerFactory.getLogger(NowPlayingCoverArtViewModel::class.java) }
 
 class NowPlayingCoverArtViewModel(
-	private val messages: RegisterForMessages,
-	private val nowPlayingRepository: INowPlayingRepository,
-	private val selectedConnectionProvider: ProvideSelectedConnection,
-	private val defaultImageProvider: ProvideDefaultImage,
-	private val imageProvider: ProvideImages,
-	private val pollConnections: PollForConnections,
+    private val messages: RegisterForMessages,
+    private val nowPlayingRepository: INowPlayingRepository,
+    private val selectedConnectionProvider: ProvideSelectedConnection,
+    private val defaultImageProvider: ProvideDefaultImage,
+    private val imageProvider: ProvideImages,
+    private val pollConnections: PollForConnections,
 ) : ViewModel() {
 	private val onPlaybackChangedReceiver: BroadcastReceiver
 
@@ -75,9 +75,10 @@ class NowPlayingCoverArtViewModel(
 	}
 
 	private fun setView() {
-		nowPlayingRepository.nowPlaying
+		nowPlayingRepository
+			.promiseNowPlaying()
 			.then { np ->
-				np.playingFile?.also { positionedFile -> setView(positionedFile.serviceFile) }
+				np?.playingFile?.also { positionedFile -> setView(positionedFile.serviceFile) }
 			}
 			.excuse { error -> logger.warn("An error occurred initializing `NowPlayingActivity`", error) }
 	}
