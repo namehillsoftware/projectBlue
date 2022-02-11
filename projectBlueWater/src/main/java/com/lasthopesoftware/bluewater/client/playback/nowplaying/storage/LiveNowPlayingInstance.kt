@@ -10,12 +10,20 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.SpecificLib
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection.Companion.chosenLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster
 import com.lasthopesoftware.bluewater.shared.android.messages.RegisterForMessages
 
 class LiveNowPlayingInstance(private val messageBus: RegisterForMessages, selectedLibraryIdentifierProvider: ProvideSelectedLibraryId, private val libraryProvider: ILibraryProvider, private val libraryStorage: ILibraryStorage) : BroadcastReceiver() {
 	companion object {
 		var nowPlayingLookupInstance: LiveNowPlayingLookup? = null
+	}
+
+	private val intentFilter by lazy {
+		IntentFilter().apply {
+			addAction(TrackPositionBroadcaster.trackPositionUpdate)
+			addAction(PlaylistEvents.onPlaylistTrackChange)
+		}
 	}
 
 	init {
@@ -42,7 +50,7 @@ class LiveNowPlayingInstance(private val messageBus: RegisterForMessages, select
 			)
 		).also {
 			nowPlayingLookupInstance = it
-			messageBus.registerReceiver(it, IntentFilter(TrackPositionBroadcaster.trackPositionUpdate))
+			messageBus.registerReceiver(it, intentFilter)
 		}
 	}
 }
