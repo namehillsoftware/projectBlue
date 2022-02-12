@@ -15,6 +15,7 @@ import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnect
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.Companion.getInstance
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
+import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.namehillsoftware.handoff.promises.Promise
@@ -32,7 +33,7 @@ class InstantiateSelectedConnectionActivity : Activity() {
 		browseLibraryIntent
 	}
 
-	private val localBroadcastManager by lazy { LocalBroadcastManager.getInstance(this) }
+	private val messageBus by lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
 
 	private val handler by lazy { Handler(mainLooper) }
 
@@ -52,7 +53,7 @@ class InstantiateSelectedConnectionActivity : Activity() {
 		lblConnectionStatus.findView().setText(R.string.lbl_connecting)
 		cancelButton.findView().setOnClickListener { cancel() }
 
-		localBroadcastManager.registerReceiver(buildSessionConnectionReceiver, IntentFilter(
+		messageBus.registerReceiver(buildSessionConnectionReceiver, IntentFilter(
 			SelectedConnection.buildSessionBroadcast
 		))
 
@@ -69,7 +70,7 @@ class InstantiateSelectedConnectionActivity : Activity() {
 			}, handler), LoopedInPromise.response({
 				launchActivityDelayed(selectServerIntent)
 			}, handler))
-			.must { localBroadcastManager.unregisterReceiver(buildSessionConnectionReceiver) }
+			.must { messageBus.unregisterReceiver(buildSessionConnectionReceiver) }
 	}
 
 	override fun onBackPressed() {

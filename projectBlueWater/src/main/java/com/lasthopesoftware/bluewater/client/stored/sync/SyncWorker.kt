@@ -139,12 +139,12 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 		val storedFileUpdater = StoredFileUpdater(
             context,
             MediaFileUriProvider(
-                context,
-                cursorProvider,
-                readPermissionArbitratorForOs,
-                libraryIdentifierProvider,
-                true
-            ),
+				cursorProvider,
+				readPermissionArbitratorForOs,
+				libraryIdentifierProvider,
+				true,
+				messageBus
+			),
             MediaFileIdProvider(cursorProvider, readPermissionArbitratorForOs),
             StoredFileQuery(context),
             libraryProvider,

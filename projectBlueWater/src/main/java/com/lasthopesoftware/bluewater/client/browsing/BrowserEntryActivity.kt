@@ -46,6 +46,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.fragment
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
+import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils.buildStandardMenu
@@ -79,7 +80,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 
 	private val messageHandler by lazy { Handler(mainLooper) }
 
-	private val lazyLocalBroadcastManager = lazy { LocalBroadcastManager.getInstance(this) }
+	private val lazyMessageBus = lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
 
 	private val itemListMenuChangeHandler by lazy { ItemListMenuChangeHandler(this) }
 
@@ -174,7 +175,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 		connectionSettingsChangedFilter.addAction(BrowserLibrarySelection.libraryChosenEvent)
 		connectionSettingsChangedFilter.addAction(SelectedConnectionSettingsChangeReceiver.connectionSettingsUpdated)
 
-		lazyLocalBroadcastManager.value.registerReceiver(
+		lazyMessageBus.value.registerReceiver(
 			connectionSettingsUpdatedReceiver,
 			connectionSettingsChangedFilter)
 
@@ -423,11 +424,8 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 	override fun getNowPlayingFloatingActionButton(): NowPlayingFloatingActionButton = nowPlayingFloatingActionButton
 
 	override fun onDestroy() {
-		if (lazyLocalBroadcastManager.isInitialized())
-			lazyLocalBroadcastManager.value.unregisterReceiver(connectionSettingsUpdatedReceiver)
-
-
-
+		if (lazyMessageBus.isInitialized())
+			lazyMessageBus.value.clear()
 		super.onDestroy()
 	}
 

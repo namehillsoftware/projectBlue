@@ -1,4 +1,5 @@
 package com.lasthopesoftware.bluewater.databinding;
+import com.lasthopesoftware.bluewater.R;
 import com.lasthopesoftware.bluewater.BR;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -12,14 +13,14 @@ public class ActivityViewNowPlayingBindingImpl extends ActivityViewNowPlayingBin
     private static final android.util.SparseIntArray sViewsWithIds;
     static {
         sIncludes = new androidx.databinding.ViewDataBinding.IncludedLayouts(4);
-        sIncludes.setIncludes(0,
+        sIncludes.setIncludes(0, 
             new String[] {"activity_view_cover_art"},
             new int[] {2},
             new int[] {com.lasthopesoftware.bluewater.R.layout.activity_view_cover_art});
-        sIncludes.setIncludes(1,
-            new String[] {"activity_control_now_playing"},
+        sIncludes.setIncludes(1, 
+            new String[] {"control_now_playing"},
             new int[] {3},
-            new int[] {com.lasthopesoftware.bluewater.R.layout.control_now_playing_top_sheet});
+            new int[] {com.lasthopesoftware.bluewater.R.layout.control_now_playing});
         sViewsWithIds = null;
     }
     // views
@@ -35,7 +36,7 @@ public class ActivityViewNowPlayingBindingImpl extends ActivityViewNowPlayingBin
     }
     private ActivityViewNowPlayingBindingImpl(androidx.databinding.DataBindingComponent bindingComponent, View root, Object[] bindings) {
         super(bindingComponent, root, 2
-            , (com.lasthopesoftware.bluewater.databinding.ActivityControlNowPlayingBinding) bindings[3]
+            , (com.lasthopesoftware.bluewater.databinding.ControlNowPlayingBinding) bindings[3]
             , (com.lasthopesoftware.bluewater.databinding.ActivityViewCoverArtBinding) bindings[2]
             , (android.widget.RelativeLayout) bindings[0]
             );
@@ -120,7 +121,7 @@ public class ActivityViewNowPlayingBindingImpl extends ActivityViewNowPlayingBin
             case 0 :
                 return onChangeCoverArt((com.lasthopesoftware.bluewater.databinding.ActivityViewCoverArtBinding) object, fieldId);
             case 1 :
-                return onChangeControl((com.lasthopesoftware.bluewater.databinding.ActivityControlNowPlayingBinding) object, fieldId);
+                return onChangeControl((com.lasthopesoftware.bluewater.databinding.ControlNowPlayingBinding) object, fieldId);
         }
         return false;
     }
@@ -133,7 +134,7 @@ public class ActivityViewNowPlayingBindingImpl extends ActivityViewNowPlayingBin
         }
         return false;
     }
-    private boolean onChangeControl(com.lasthopesoftware.bluewater.databinding.ActivityControlNowPlayingBinding Control, int fieldId) {
+    private boolean onChangeControl(com.lasthopesoftware.bluewater.databinding.ControlNowPlayingBinding Control, int fieldId) {
         if (fieldId == BR._all) {
             synchronized(this) {
                     mDirtyFlags |= 0x2L;

@@ -1,19 +1,11 @@
-package com.lasthopesoftware.bluewater.client.playback.service.broadcasters;
+package com.lasthopesoftware.bluewater.client.playback.service.broadcasters
 
-import android.content.Intent;
+import android.content.Intent
+import com.lasthopesoftware.bluewater.shared.android.messages.SendMessages
 
-import androidx.localbroadcastmanager.content.LocalBroadcastManager;
-
-public class PlaybackStartedBroadcaster {
-
-	private final LocalBroadcastManager localBroadcastManager;
-
-	public PlaybackStartedBroadcaster(LocalBroadcastManager localBroadcastManager) {
-		this.localBroadcastManager = localBroadcastManager;
-	}
-
-	public void broadcastPlaybackStarted() {
-		final Intent playbackBroadcastIntent = new Intent(PlaylistEvents.onPlaylistStart);
-		localBroadcastManager.sendBroadcast(playbackBroadcastIntent);
-	}
+class PlaybackStartedBroadcaster(private val sendMessages: SendMessages) {
+    fun broadcastPlaybackStarted() {
+        val playbackBroadcastIntent = Intent(PlaylistEvents.onPlaylistStart)
+        sendMessages.sendBroadcast(playbackBroadcastIntent)
+    }
 }

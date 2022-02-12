@@ -6,9 +6,11 @@ import android.view.View;
 import androidx.databinding.DataBinderMapper;
 import androidx.databinding.DataBindingComponent;
 import androidx.databinding.ViewDataBinding;
-import com.lasthopesoftware.bluewater.databinding.ActivityControlNowPlayingBindingImpl;
 import com.lasthopesoftware.bluewater.databinding.ActivityViewCoverArtBindingImpl;
 import com.lasthopesoftware.bluewater.databinding.ActivityViewNowPlayingBindingImpl;
+import com.lasthopesoftware.bluewater.databinding.ControlNowPlayingBindingImpl;
+import com.lasthopesoftware.bluewater.databinding.ControlNowPlayingBottomSheetBindingImpl;
+import com.lasthopesoftware.bluewater.databinding.ControlNowPlayingTopSheetBindingImpl;
 import java.lang.IllegalArgumentException;
 import java.lang.Integer;
 import java.lang.Object;
@@ -20,18 +22,24 @@ import java.util.HashMap;
 import java.util.List;
 
 public class DataBinderMapperImpl extends DataBinderMapper {
-  private static final int LAYOUT_ACTIVITYCONTROLNOWPLAYING = 1;
+  private static final int LAYOUT_ACTIVITYVIEWCOVERART = 1;
 
-  private static final int LAYOUT_ACTIVITYVIEWCOVERART = 2;
+  private static final int LAYOUT_ACTIVITYVIEWNOWPLAYING = 2;
 
-  private static final int LAYOUT_ACTIVITYVIEWNOWPLAYING = 3;
+  private static final int LAYOUT_CONTROLNOWPLAYING = 3;
 
-  private static final SparseIntArray INTERNAL_LAYOUT_ID_LOOKUP = new SparseIntArray(3);
+  private static final int LAYOUT_CONTROLNOWPLAYINGBOTTOMSHEET = 4;
+
+  private static final int LAYOUT_CONTROLNOWPLAYINGTOPSHEET = 5;
+
+  private static final SparseIntArray INTERNAL_LAYOUT_ID_LOOKUP = new SparseIntArray(5);
 
   static {
-    INTERNAL_LAYOUT_ID_LOOKUP.put(com.lasthopesoftware.bluewater.R.layout.control_now_playing_top_sheet, LAYOUT_ACTIVITYCONTROLNOWPLAYING);
     INTERNAL_LAYOUT_ID_LOOKUP.put(com.lasthopesoftware.bluewater.R.layout.activity_view_cover_art, LAYOUT_ACTIVITYVIEWCOVERART);
     INTERNAL_LAYOUT_ID_LOOKUP.put(com.lasthopesoftware.bluewater.R.layout.activity_view_now_playing, LAYOUT_ACTIVITYVIEWNOWPLAYING);
+    INTERNAL_LAYOUT_ID_LOOKUP.put(com.lasthopesoftware.bluewater.R.layout.control_now_playing, LAYOUT_CONTROLNOWPLAYING);
+    INTERNAL_LAYOUT_ID_LOOKUP.put(com.lasthopesoftware.bluewater.R.layout.control_now_playing_bottom_sheet, LAYOUT_CONTROLNOWPLAYINGBOTTOMSHEET);
+    INTERNAL_LAYOUT_ID_LOOKUP.put(com.lasthopesoftware.bluewater.R.layout.control_now_playing_top_sheet, LAYOUT_CONTROLNOWPLAYINGTOPSHEET);
   }
 
   @Override
@@ -43,12 +51,6 @@ public class DataBinderMapperImpl extends DataBinderMapper {
         throw new RuntimeException("view must have a tag");
       }
       switch(localizedLayoutId) {
-        case  LAYOUT_ACTIVITYCONTROLNOWPLAYING: {
-          if ("layout/activity_control_now_playing_0".equals(tag)) {
-            return new ActivityControlNowPlayingBindingImpl(component, view);
-          }
-          throw new IllegalArgumentException("The tag for activity_control_now_playing is invalid. Received: " + tag);
-        }
         case  LAYOUT_ACTIVITYVIEWCOVERART: {
           if ("layout/activity_view_cover_art_0".equals(tag)) {
             return new ActivityViewCoverArtBindingImpl(component, view);
@@ -60,6 +62,24 @@ public class DataBinderMapperImpl extends DataBinderMapper {
             return new ActivityViewNowPlayingBindingImpl(component, view);
           }
           throw new IllegalArgumentException("The tag for activity_view_now_playing is invalid. Received: " + tag);
+        }
+        case  LAYOUT_CONTROLNOWPLAYING: {
+          if ("layout/control_now_playing_0".equals(tag)) {
+            return new ControlNowPlayingBindingImpl(component, view);
+          }
+          throw new IllegalArgumentException("The tag for control_now_playing is invalid. Received: " + tag);
+        }
+        case  LAYOUT_CONTROLNOWPLAYINGBOTTOMSHEET: {
+          if ("layout/control_now_playing_bottom_sheet_0".equals(tag)) {
+            return new ControlNowPlayingBottomSheetBindingImpl(component, view);
+          }
+          throw new IllegalArgumentException("The tag for control_now_playing_bottom_sheet is invalid. Received: " + tag);
+        }
+        case  LAYOUT_CONTROLNOWPLAYINGTOPSHEET: {
+          if ("layout/control_now_playing_top_sheet_0".equals(tag)) {
+            return new ControlNowPlayingTopSheetBindingImpl(component, view);
+          }
+          throw new IllegalArgumentException("The tag for control_now_playing_top_sheet is invalid. Received: " + tag);
         }
       }
     }
@@ -116,12 +136,14 @@ public class DataBinderMapperImpl extends DataBinderMapper {
   }
 
   private static class InnerLayoutIdLookup {
-    static final HashMap<String, Integer> sKeys = new HashMap<String, Integer>(3);
+    static final HashMap<String, Integer> sKeys = new HashMap<String, Integer>(5);
 
     static {
-      sKeys.put("layout/activity_control_now_playing_0", com.lasthopesoftware.bluewater.R.layout.control_now_playing_top_sheet);
       sKeys.put("layout/activity_view_cover_art_0", com.lasthopesoftware.bluewater.R.layout.activity_view_cover_art);
       sKeys.put("layout/activity_view_now_playing_0", com.lasthopesoftware.bluewater.R.layout.activity_view_now_playing);
+      sKeys.put("layout/control_now_playing_0", com.lasthopesoftware.bluewater.R.layout.control_now_playing);
+      sKeys.put("layout/control_now_playing_bottom_sheet_0", com.lasthopesoftware.bluewater.R.layout.control_now_playing_bottom_sheet);
+      sKeys.put("layout/control_now_playing_top_sheet_0", com.lasthopesoftware.bluewater.R.layout.control_now_playing_top_sheet);
     }
   }
 }
