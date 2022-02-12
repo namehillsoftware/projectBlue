@@ -5,8 +5,8 @@ import android.support.v4.media.MediaMetadataCompat
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.remote.GetMediaItemsFromServiceFiles
 import com.lasthopesoftware.bluewater.client.browsing.remote.NowPlayingMediaItemLookup
-import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.INowPlayingRepository
-import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlaying
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.MaintainNowPlayingState
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
@@ -34,8 +34,8 @@ class `When Getting The Now Playing Item` {
 		}
 
 		private val mediaItem by lazy {
-			val nowPlaying = mockk<INowPlayingRepository>()
-			every { nowPlaying.nowPlaying } returns Promise(
+			val nowPlaying = mockk<MaintainNowPlayingState>()
+			every { nowPlaying.promiseNowPlaying() } returns Promise(
 				NowPlaying(
 					listOf(ServiceFile(89), ServiceFile(393), ServiceFile(714), ServiceFile(760)),
 					1,

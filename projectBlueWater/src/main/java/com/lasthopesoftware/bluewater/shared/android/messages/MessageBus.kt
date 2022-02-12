@@ -7,6 +7,7 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager
 
 class MessageBus(private val localBroadcastManager: LocalBroadcastManager): SendMessages, RegisterForMessages {
 
+	private val receiverSync = Any()
 	private val receivers = HashSet<BroadcastReceiver>()
 
 	override fun sendBroadcast(intent: Intent) {
@@ -14,17 +15,23 @@ class MessageBus(private val localBroadcastManager: LocalBroadcastManager): Send
 	}
 
 	override fun registerReceiver(receiver: BroadcastReceiver, filter: IntentFilter) {
-		receivers.add(receiver)
-		localBroadcastManager.registerReceiver(receiver, filter)
+		synchronized(receiverSync) {
+			receivers.add(receiver)
+			localBroadcastManager.registerReceiver(receiver, filter)
+		}
 	}
 
 	override fun unregisterReceiver(receiver: BroadcastReceiver) {
-		receivers.remove(receiver)
-		localBroadcastManager.unregisterReceiver(receiver)
+		synchronized(receiverSync) {
+			receivers.remove(receiver)
+			localBroadcastManager.unregisterReceiver(receiver)
+		}
 	}
 
 	fun clear() {
-		receivers.forEach(localBroadcastManager::unregisterReceiver)
-		receivers.clear()
+		synchronized(receiverSync) {
+			receivers.forEach(localBroadcastManager::unregisterReceiver)
+			receivers.clear()
+		}
 	}
 }

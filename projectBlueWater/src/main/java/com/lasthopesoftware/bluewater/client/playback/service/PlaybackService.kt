@@ -69,6 +69,9 @@ import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.QueueProviders
 import com.lasthopesoftware.bluewater.client.playback.file.volume.MaxFileVolumeProvider
 import com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.MaxFileVolumePreparationProvider
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.MaintainNowPlayingState
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.NowPlayingActivity.Companion.startNowPlayingActivity
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Action.Bag
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.LocalPlaybackBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaybackStartedBroadcaster
@@ -83,9 +86,6 @@ import com.lasthopesoftware.bluewater.client.playback.service.receivers.AudioBec
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.RemoteControlProxy
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.connected.MediaSessionBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.PlaybackNotificationRouter
-import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity.NowPlayingActivity.Companion.startNowPlayingActivity
-import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.INowPlayingRepository
-import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.MediaQueryCursorProvider
@@ -125,7 +125,6 @@ import io.reactivex.internal.schedulers.ExecutorScheduler
 import org.joda.time.Duration
 import org.slf4j.LoggerFactory
 import java.io.IOException
-import java.util.*
 import java.util.concurrent.CancellationException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
@@ -443,14 +442,14 @@ open class PlaybackService :
 	private var startId = 0
 	private var trackPositionBroadcaster: TrackPositionBroadcaster? = null
 
-	private fun getNewNowPlayingRepository(): Promise<INowPlayingRepository?> =
+	private fun getNewNowPlayingRepository(): Promise<MaintainNowPlayingState?> =
 		selectedLibraryIdentifierProvider.selectedLibraryId
 			.then { l ->
 				l?.let {
-					NowPlayingRepository(
-						SpecificLibraryProvider(l, libraryRepository),
-						libraryRepository
-					)
+                    NowPlayingRepository(
+                        SpecificLibraryProvider(l, libraryRepository),
+                        libraryRepository
+                    )
 				}
 			}
 
@@ -461,9 +460,7 @@ open class PlaybackService :
 	private fun registerListeners() {
 		wakeLock = (getSystemService(POWER_SERVICE) as PowerManager).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK or PowerManager.ON_AFTER_RELEASE, MediaPlayer::class.java.name)
 		wakeLock?.acquire()
-		registerReceiver(
-			lazyAudioBecomingNoisyReceiver.value,
-			IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY))
+		registerReceiver(lazyAudioBecomingNoisyReceiver.value, IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY))
 		areListenersRegistered = true
 	}
 
@@ -477,10 +474,11 @@ open class PlaybackService :
 
 	/* Begin Event Handlers */
 	override fun onCreate() {
-		val playbackHaltingIntentFilter = IntentFilter()
-		playbackHaltingIntentFilter.addAction(PlaybackEngineTypeChangedBroadcaster.playbackEngineTypeChanged)
-		playbackHaltingIntentFilter.addAction(BrowserLibrarySelection.libraryChosenEvent)
-		playbackHaltingIntentFilter.addAction(SelectedConnectionSettingsChangeReceiver.connectionSettingsUpdated)
+		val playbackHaltingIntentFilter = IntentFilter().apply {
+			addAction(PlaybackEngineTypeChangedBroadcaster.playbackEngineTypeChanged)
+			addAction(BrowserLibrarySelection.libraryChosenEvent)
+			addAction(SelectedConnectionSettingsChangeReceiver.connectionSettingsUpdated)
+		}
 
 		localBroadcastManagerLazy.value.registerReceiver(playbackHaltingEvent,	playbackHaltingIntentFilter)
 	}
@@ -625,6 +623,8 @@ open class PlaybackService :
 	override fun onPlayingFileChanged(positionedPlayingFile: PositionedPlayingFile) {
 		changePositionedPlaybackFile(positionedPlayingFile)
 	}
+
+	override fun onBind(intent: Intent) = binder
 
 	private fun startNewPlaylist(playlistString: String, playlistPosition: Int): Promise<Unit> {
 		val playbackState = playbackState ?: return Unit.toPromise()
@@ -871,6 +871,64 @@ open class PlaybackService :
 	}
 
 	private fun uncaughtExceptionHandler(exception: Throwable?) {
+		fun handlePlaybackEngineInitializationException(exception: PlaybackEngineInitializationException) {
+			logger.error("There was an error initializing the playback engine", exception)
+			stopSelf(startId)
+		}
+
+		fun handlePreparationException(preparationException: PreparationException) {
+			logger.error("An error occurred during file preparation for file " + preparationException.positionedFile.serviceFile, preparationException)
+			uncaughtExceptionHandler(preparationException.cause)
+		}
+
+		fun handleExoPlaybackException(exception: ExoPlaybackException) {
+			logger.error("An ExoPlaybackException occurred")
+
+			when (val cause = exception.cause) {
+				is IllegalStateException -> {
+					logger.error("The ExoPlayer player ended up in an illegal state, closing and restarting the player", cause)
+					closeAndRestartPlaylistManager(exception)
+					return
+				}
+				is NoSuchElementException -> {
+					logger.error("The ExoPlayer player was unable to deque data, closing and restarting the player", cause)
+					closeAndRestartPlaylistManager(exception)
+					return
+				}
+				null -> stopSelf(startId)
+				else -> uncaughtExceptionHandler(exception.cause)
+			}
+		}
+
+		fun handleIoException(exception: IOException?) {
+			if (exception is InvalidResponseCodeException && exception.responseCode == 416) {
+				logger.warn("Received an error code of " + exception.responseCode + ", will attempt restarting the player", exception)
+				closeAndRestartPlaylistManager(exception)
+				return
+			}
+
+			logger.error("An IO exception occurred during playback", exception)
+			handleDisconnection()
+		}
+
+		fun handlePlaybackException(exception: PlaybackException) {
+			when (val cause = exception.cause) {
+				is ExoPlaybackException -> handleExoPlaybackException(cause)
+				is IllegalStateException -> {
+					logger.error("The player ended up in an illegal state - closing and restarting the player", exception)
+					closeAndRestartPlaylistManager(exception)
+				}
+				is IOException -> handleIoException(cause)
+				null -> logger.error("An unexpected playback exception occurred", exception)
+				else -> uncaughtExceptionHandler(cause)
+			}
+		}
+
+		fun handleTimeoutException(exception: TimeoutException) {
+			logger.warn("A timeout occurred during playback, will attempt restarting the player", exception)
+			closeAndRestartPlaylistManager(exception)
+		}
+
 		when (exception) {
 			is PlaybackEngineInitializationException -> handlePlaybackEngineInitializationException(exception)
 			is PreparationException -> handlePreparationException(exception)
@@ -884,64 +942,6 @@ open class PlaybackService :
 				stopSelf(startId)
 			}
 		}
-	}
-
-	private fun handlePlaybackEngineInitializationException(exception: PlaybackEngineInitializationException) {
-		logger.error("There was an error initializing the playback engine", exception)
-		stopSelf(startId)
-	}
-
-	private fun handlePreparationException(preparationException: PreparationException) {
-		logger.error("An error occurred during file preparation for file " + preparationException.positionedFile.serviceFile, preparationException)
-		uncaughtExceptionHandler(preparationException.cause)
-	}
-
-	private fun handlePlaybackException(exception: PlaybackException) {
-		when (val cause = exception.cause) {
-			is ExoPlaybackException -> handleExoPlaybackException(cause)
-			is IllegalStateException -> {
-				logger.error("The player ended up in an illegal state - closing and restarting the player", exception)
-				closeAndRestartPlaylistManager(exception)
-			}
-			is IOException -> handleIoException(cause)
-			null -> logger.error("An unexpected playback exception occurred", exception)
-			else -> uncaughtExceptionHandler(cause)
-		}
-	}
-
-	private fun handleExoPlaybackException(exception: ExoPlaybackException) {
-		logger.error("An ExoPlaybackException occurred")
-
-		when (val cause = exception.cause) {
-			is IllegalStateException -> {
-				logger.error("The ExoPlayer player ended up in an illegal state, closing and restarting the player", cause)
-				closeAndRestartPlaylistManager(exception)
-				return
-			}
-			is NoSuchElementException -> {
-				logger.error("The ExoPlayer player was unable to deque data, closing and restarting the player", cause)
-				closeAndRestartPlaylistManager(exception)
-				return
-			}
-			null -> stopSelf(startId)
-			else -> uncaughtExceptionHandler(exception.cause)
-		}
-	}
-
-	private fun handleIoException(exception: IOException?) {
-		if (exception is InvalidResponseCodeException && exception.responseCode == 416) {
-			logger.warn("Received an error code of " + exception.responseCode + ", will attempt restarting the player", exception)
-			closeAndRestartPlaylistManager(exception)
-			return
-		}
-
-		logger.error("An IO exception occurred during playback", exception)
-		handleDisconnection()
-	}
-
-	private fun handleTimeoutException(exception: TimeoutException) {
-		logger.warn("A timeout occurred during playback, will attempt restarting the player", exception)
-		closeAndRestartPlaylistManager(exception)
 	}
 
 	private fun handleDisconnection() {
@@ -1068,9 +1068,6 @@ open class PlaybackService :
 		remoteControlProxy?.also(localBroadcastManagerLazy.value::unregisterReceiver)
 		playbackNotificationRouter?.also(localBroadcastManagerLazy.value::unregisterReceiver)
 	}
-
-	/* End Event Handlers */ /* Begin Binder Code */
-	override fun onBind(intent: Intent) = binder
 
 	/* End Binder Code */
 	private object Action {

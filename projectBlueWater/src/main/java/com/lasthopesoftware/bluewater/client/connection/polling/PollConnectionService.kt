@@ -9,12 +9,14 @@ import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.Companion.getInstance
 import com.lasthopesoftware.bluewater.client.playback.service.notification.NotificationsConfiguration
 import com.lasthopesoftware.bluewater.shared.GenericBinder
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
+import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.notifications.NoOpChannelActivator
 import com.lasthopesoftware.bluewater.shared.android.notifications.control.NotificationsController
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.NotificationChannelActivator
@@ -25,68 +27,50 @@ import com.namehillsoftware.handoff.Messenger
 import com.namehillsoftware.handoff.promises.MessengerOperator
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken
-import java.util.*
 import java.util.concurrent.CancellationException
 
 class PollConnectionService : Service(), MessengerOperator<IConnectionProvider> {
 
 	companion object {
-		@JvmStatic
-		fun pollSessionConnection(context: Context): Promise<IConnectionProvider> {
-			return pollSessionConnection(context, false)
-		}
-
-		@JvmStatic
-		fun pollSessionConnection(context: Context, withNotification: Boolean): Promise<IConnectionProvider> =
+		fun pollSessionConnection(context: Context, withNotification: Boolean = false): Promise<IConnectionProvider> =
 			context.promiseBoundService<PollConnectionService>()
 				.eventually {  s ->
-					val connectionService = s.service
-					connectionService.withNotification = connectionService.withNotification || withNotification
-					connectionService.lazyConnectionPoller.value
-						.must { context.unbindService(s.serviceConnection) }
+					s.service.let {
+						it.withNotification = it.withNotification || withNotification
+						it.lazyConnectionPoller.value.must { context.unbindService(s.serviceConnection) }
+					}
 				}
 
-		private val uniqueOnConnectionLostListeners = HashSet<Runnable>()
-
-		/* Differs from the normal on start listener in that it uses a static list that will be re-populated when a new Poll Connection task starts.
-	 */
-		@JvmStatic
-		fun addOnConnectionLostListener(listener: Runnable) {
-			synchronized(uniqueOnConnectionLostListeners) { uniqueOnConnectionLostListeners.add(listener) }
-		}
-
-		@JvmStatic
-		fun removeOnConnectionLostListener(listener: Runnable) {
-			synchronized(uniqueOnConnectionLostListeners) { uniqueOnConnectionLostListeners.remove(listener) }
-		}
-
 		private val stopWaitingForConnectionAction by lazy { MagicPropertyBuilder.buildMagicPropertyName<PollConnectionService>("stopWaitingForConnection") }
+
+		val connectionLostNotification by lazy { MagicPropertyBuilder.buildMagicPropertyName<PollConnectionService>("connectionLostNotification") }
 	}
 
 	private var withNotification = false
 
 	private val notificationId = 99
-	private val lazyBinder = lazy { GenericBinder(this) }
-	private val lazyHandler = lazy { Handler(mainLooper) }
+	private val binder by lazy { GenericBinder(this) }
+	private val handler by lazy { Handler(mainLooper) }
+	private val messageBus by lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
 
 	private val lazyConnectionPoller = lazy {
-		for (connectionLostListener in uniqueOnConnectionLostListeners) connectionLostListener.run()
+		messageBus.sendBroadcast(Intent(connectionLostNotification))
 		Promise(this)
 	}
 
-	private val lazyChannelConfiguration = lazy { SharedChannelProperties(this) }
-	private val notificationManagerLazy = lazy { getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager }
-	private val lazyNotificationController = lazy { NotificationsController(this, notificationManagerLazy.value) }
-	private val lazyNotificationsConfiguration = lazy {
+	private val channelConfiguration by lazy { SharedChannelProperties(this) }
+	private val notificationManager by lazy { getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager }
+	private val notificationsConfiguration by lazy {
 		val notificationChannelActivator =
-			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) NotificationChannelActivator(notificationManagerLazy.value)
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) NotificationChannelActivator(notificationManager)
 			else NoOpChannelActivator()
 
-		val channelName = notificationChannelActivator.activateChannel(lazyChannelConfiguration.value)
+		val channelName = notificationChannelActivator.activateChannel(channelConfiguration)
 		NotificationsConfiguration(channelName, notificationId)
 	}
+	private val lazyNotificationController = lazy { NotificationsController(this, notificationManager) }
 
-	override fun onBind(intent: Intent): IBinder = lazyBinder.value
+	override fun onBind(intent: Intent): IBinder = binder
 
 	override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
 		if (intent?.action == stopWaitingForConnectionAction && lazyConnectionPoller.isInitialized())
@@ -114,16 +98,15 @@ class PollConnectionService : Service(), MessengerOperator<IConnectionProvider> 
 			.promiseTestedSessionConnection()
 			.then({
 				when (it) {
-					null -> lazyHandler.value.postDelayed(
+					null -> handler.postDelayed(
 						{ pollSessionConnection(messenger, cancellationToken, nextConnectionTime) },
 						connectionTime.toLong())
 					else -> messenger.sendResolution(it)
 				}
 			}, {
-				lazyHandler.value
-					.postDelayed(
-						{ pollSessionConnection(messenger, cancellationToken, nextConnectionTime) },
-						connectionTime.toLong())
+				handler.postDelayed(
+					{ pollSessionConnection(messenger, cancellationToken, nextConnectionTime) },
+					connectionTime.toLong())
 			})
 	}
 
@@ -133,8 +116,6 @@ class PollConnectionService : Service(), MessengerOperator<IConnectionProvider> 
 		intent.action = stopWaitingForConnectionAction
 
 		val pi = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT.makePendingIntentImmutable())
-
-		val notificationsConfiguration = lazyNotificationsConfiguration.value
 
 		val builder = NotificationCompat.Builder(this, notificationsConfiguration.notificationChannel)
 			.setOngoing(true)

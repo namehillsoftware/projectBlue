@@ -24,6 +24,7 @@ class SessionConnectionRegistrationsMaintainer(private val messageRegistrar: Reg
 			.then(this) // remove existing registrations
 			.eventually { getInstance(context).promiseSessionConnection() }
 			.then { connectionProvider ->
+				connectionProvider ?: return@then emptyList()
 				connectionDependentReceiverRegistrations.map { registration ->
 					val receiver = registration.registerWithConnectionProvider(connectionProvider)
 					for (i in registration.forIntents())

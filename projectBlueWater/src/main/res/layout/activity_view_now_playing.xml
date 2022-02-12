@@ -1,27 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/viewNowPlayingRelativeLayout"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical">
+<layout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:bind="http://schemas.android.com/apk/res-auto">
 
-    <include
-        layout="@layout/activity_view_cover_art"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal" />
+    <data>
+        <variable name="vm" type="com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingViewModel"/>
+        <variable name="coverArtVm" type="com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingCoverArtViewModel"/>
+    </data>
 
     <RelativeLayout
+        android:id="@+id/viewNowPlayingRelativeLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/overlay_dark"
-        android:fitsSystemWindows="true">
+        android:orientation="vertical">
 
         <include
-            layout="@layout/activity_control_now_playing"
+            layout="@layout/activity_view_cover_art"
+            android:id="@+id/coverArt"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal" />
-    </RelativeLayout>
+            android:layout_gravity="center_horizontal"
+            bind:vm="@{coverArtVm}" />
 
-</RelativeLayout>
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/overlay_dark"
+            android:fitsSystemWindows="true">
+
+            <include
+                layout="@layout/control_now_playing"
+                android:id="@+id/control"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                bind:vm="@{vm}"/>
+        </RelativeLayout>
+
+    </RelativeLayout>
+</layout>

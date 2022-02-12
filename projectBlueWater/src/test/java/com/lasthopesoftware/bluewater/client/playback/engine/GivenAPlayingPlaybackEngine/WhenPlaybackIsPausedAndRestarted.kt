@@ -10,15 +10,14 @@ import com.lasthopesoftware.bluewater.client.playback.engine.preparation.Prepare
 import com.lasthopesoftware.bluewater.client.playback.file.fakes.ResolvablePlaybackHandler
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeDeferredPlayableFilePreparationSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
-import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlaying
-import com.lasthopesoftware.bluewater.client.playback.view.nowplaying.storage.NowPlayingRepository
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
 import org.junit.BeforeClass
 import org.junit.Test
-import java.util.*
 
 class WhenPlaybackIsPausedAndRestarted {
 	companion object {
@@ -36,7 +35,11 @@ class WhenPlaybackIsPausedAndRestarted {
 			library.setId(1)
 			val libraryProvider = PassThroughSpecificLibraryProvider(library)
 			val libraryStorage = PassThroughLibraryStorage()
-			val nowPlayingRepository = NowPlayingRepository(libraryProvider, libraryStorage)
+			val nowPlayingRepository =
+                NowPlayingRepository(
+                    libraryProvider,
+                    libraryStorage
+                )
 			playbackEngine = PlaybackEngine(
 				PreparedPlaybackQueueResourceManagement(
 					fakePlaybackPreparerProvider
@@ -62,9 +65,9 @@ class WhenPlaybackIsPausedAndRestarted {
 			playingPlaybackHandler.resolve()
 			resolveablePlaybackHandler?.setCurrentPosition(30)
 			playbackEngine?.pause()?.toFuture()?.get()
-			nowPlaying = nowPlayingRepository.nowPlaying.toFuture().get()
+			nowPlaying = nowPlayingRepository.promiseNowPlaying().toFuture().get()
 			playbackEngine?.resume()?.toFuture()?.get()
-			nowPlaying = nowPlayingRepository.nowPlaying.toFuture().get()
+			nowPlaying = nowPlayingRepository.promiseNowPlaying().toFuture().get()
 		}
 	}
 
