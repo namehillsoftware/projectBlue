@@ -16,19 +16,22 @@ class MessageBus(private val localBroadcastManager: LocalBroadcastManager): Send
 	}
 
 	override fun registerReceiver(receiver: ReceiveBroadcastEvents, filter: IntentFilter) {
-		synchronized(receiverSync) {
-			if (receivers.containsKey(receiver)) return
+		if (receivers.containsKey(receiver)) return
 
-			val delegatedReceiver = DelegatedBroadcastReceiver(receiver)
-			receivers[receiver] = delegatedReceiver
-			localBroadcastManager.registerReceiver(delegatedReceiver, filter)
-		}
+		synchronized(receiverSync) {
+			if (receivers.containsKey(receiver)) null
+			else {
+				val delegatedReceiver = DelegatedBroadcastReceiver(receiver)
+				receivers[receiver] = delegatedReceiver
+				delegatedReceiver
+			}
+		}?.also { localBroadcastManager.registerReceiver(it, filter) }
 	}
 
 	override fun unregisterReceiver(receiver: ReceiveBroadcastEvents) {
 		synchronized(receiverSync) {
-			receivers.remove(receiver)?.also(localBroadcastManager::unregisterReceiver)
-		}
+			receivers.remove(receiver)
+		}?.also(localBroadcastManager::unregisterReceiver)
 	}
 
 	fun clear() {
