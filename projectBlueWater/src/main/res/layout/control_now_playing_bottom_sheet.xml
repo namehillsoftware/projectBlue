@@ -8,12 +8,9 @@
     </data>
 
     <RelativeLayout
-        android:id="@+id/bottom_sheet"
+        android:id="@+id/nowPlayingBottomSheet"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        app:behavior_hideable="false"
-        app:behavior_peekHeight="0dp"
-        app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior">
+        android:layout_height="match_parent">
 
         <RelativeLayout
             android:id="@+id/nowPlayingMiniControls"
@@ -80,7 +77,7 @@
                             android:background="?android:attr/selectableItemBackground"
                             android:contentDescription="@string/btn_play"
                             android:src="@drawable/av_play_dark"
-                            android:visibility="@{!vm.isPlaying ? View.VISIBLE : View.INVISIBLE}" />
+                            app:isVisible="@{!vm.isPlaying}" />
 
                         <ImageButton
                             android:id="@+id/miniPause"
@@ -89,7 +86,7 @@
                             android:background="?android:attr/selectableItemBackground"
                             android:contentDescription="@string/btn_pause"
                             android:src="@drawable/av_pause_dark"
-                            android:visibility="@{vm.isPlaying ? View.VISIBLE : View.INVISIBLE}" />
+                            app:isVisible="@{vm.isPlaying}" />
                     </ViewFlipper>
 
                     <ImageButton

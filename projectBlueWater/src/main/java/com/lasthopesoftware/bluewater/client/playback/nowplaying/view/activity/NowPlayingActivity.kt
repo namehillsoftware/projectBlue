@@ -8,7 +8,6 @@ import android.os.Handler
 import android.view.View
 import android.view.WindowManager
 import android.widget.RatingBar.OnRatingBarChangeListener
-import android.widget.RelativeLayout
 import android.widget.ViewAnimator
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
@@ -143,7 +142,7 @@ class NowPlayingActivity :
 
 	private val defaultImageProvider by lazy { DefaultImageProvider(this) }
 
-	private lateinit var bottomSheetBehavior: BottomSheetBehavior<RelativeLayout>
+	private lateinit var bottomSheetBehavior: BottomSheetBehavior<View>
 
 	private val onConnectionLostListener =
 		ReceiveBroadcastEvents { _, _ -> WaitForConnectionDialog.show(this) }
@@ -151,10 +150,10 @@ class NowPlayingActivity :
 	private val binding by lazy {
 		val binding = DataBindingUtil.setContentView<ActivityViewNowPlayingBinding>(this, R.layout.activity_view_now_playing)
 		binding.lifecycleOwner = this
-		bottomSheetBehavior = BottomSheetBehavior.from(binding.control.nowPlayingBottomSheet.bottomSheet)
+		bottomSheetBehavior = BottomSheetBehavior.from(binding.control.bottomSheetHandle)
 
 		val promisedListViewSetup = nowPlayingListAdapter.eventually(LoopedInPromise.response({ a ->
-			val listView = binding.control.nowPlayingBottomSheet.nowPlayingListView
+			val listView = binding.control.bottomSheet.nowPlayingListView
 			listView.adapter = a
 			listView.layoutManager = LinearLayoutManager(this)
 		}, messageHandler))
@@ -276,7 +275,7 @@ class NowPlayingActivity :
 				viewNowPlayingListButton.setOnClickListener(toggleListClickHandler)
 			}
 
-			with (binding.control.nowPlayingBottomSheet) {
+			with (binding.control.bottomSheet) {
 				vm.nowPlayingFile.filterNotNull().onEach {
 					if (!isDrawerOpened)
 						nowPlayingListView.scrollToPosition(it.playlistPosition)
