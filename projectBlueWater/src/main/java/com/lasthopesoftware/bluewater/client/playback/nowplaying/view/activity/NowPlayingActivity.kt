@@ -154,10 +154,10 @@ class NowPlayingActivity :
 	private val binding by lazy {
 		val binding = DataBindingUtil.setContentView<ActivityViewNowPlayingBinding>(this, R.layout.activity_view_now_playing)
 		binding.lifecycleOwner = this
-		bottomSheetBehavior = BottomSheetBehavior.from(binding.control.bottomSheet)
+		bottomSheetBehavior = BottomSheetBehavior.from(binding.control.nowPlayingBottomSheet.bottomSheet)
 
 		val promisedListViewSetup = nowPlayingListAdapter.eventually(LoopedInPromise.response({ a ->
-			val listView = binding.control.nowPlayingListView
+			val listView = binding.control.nowPlayingBottomSheet.nowPlayingListView
 			listView.adapter = a
 			listView.layoutManager = LinearLayoutManager(this)
 		}, messageHandler))
@@ -209,39 +209,38 @@ class NowPlayingActivity :
 				UnexpectedExceptionToaster.announce(this, it)
 			}.launchIn(lifecycleScope)
 
+			vm.nowPlayingList.onEach { l ->
+				nowPlayingListAdapter
+					.eventually { npa -> npa.updateListEventually(l) }
+			}.launchIn(lifecycleScope)
+
 			binding.coverArtVm?.unexpectedError?.filterNotNull()?.onEach {
 				UnexpectedExceptionToaster.announce(this, it)
 			}?.launchIn(lifecycleScope)
 
-			with (binding.control) {
-				vm.nowPlayingList.onEach { l ->
-					nowPlayingListAdapter
-						.eventually { npa -> npa.updateListEventually(l) }
-				}.launchIn(lifecycleScope)
+			val onRatingBarChangeListener = OnRatingBarChangeListener{ _, rating, fromUser ->
+				if (fromUser) vm.updateRating(rating)
+			}
 
-				vm.nowPlayingFile.filterNotNull().onEach {
-					if (!isDrawerOpened)
-						nowPlayingListView.scrollToPosition(it.playlistPosition)
-				}.launchIn(lifecycleScope)
+			val toggleListClickHandler = View.OnClickListener {
+				with(bottomSheetBehavior) {
+					state = when (state) {
+						BottomSheetBehavior.STATE_COLLAPSED -> BottomSheetBehavior.STATE_EXPANDED
+						BottomSheetBehavior.STATE_EXPANDED -> BottomSheetBehavior.STATE_COLLAPSED
+						else -> state
+					}
+				}
+			}
 
+			with (binding.control.topSheet) {
 				btnPlay.setOnClickListener { v ->
 					if (!vm.isScreenControlsVisible.value) return@setOnClickListener
 					PlaybackService.play(v.context)
 					vm.togglePlaying(true)
 				}
 
-				miniPlay.setOnClickListener { v ->
-					PlaybackService.play(v.context)
-					vm.togglePlaying(true)
-				}
-
 				btnPause.setOnClickListener { v ->
 					if (!vm.isScreenControlsVisible.value) return@setOnClickListener
-					PlaybackService.pause(v.context)
-					vm.togglePlaying(false)
-				}
-
-				miniPause.setOnClickListener { v ->
 					PlaybackService.pause(v.context)
 					vm.togglePlaying(false)
 				}
@@ -258,19 +257,12 @@ class NowPlayingActivity :
 
 				isScreenKeptOnButton.setOnClickListener { vm.toggleScreenOn() }
 
-				nowPlayingContentView.setOnClickListener { vm.showNowPlayingControls() }
-
-				val onRatingBarChangeListener = OnRatingBarChangeListener{ _, rating, fromUser ->
-					if (fromUser) vm.updateRating(rating)
-				}
-
 				rbSongRating.onRatingBarChangeListener = onRatingBarChangeListener
-				miniSongRating.onRatingBarChangeListener = onRatingBarChangeListener
 
 				bottomSheetBehavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
 					override fun onStateChanged(bottomSheet: View, newState: Int) {
 						isDrawerOpened = newState == BottomSheetBehavior.STATE_EXPANDED
-						with (nowPlayingMainSheet) {
+						with (nowPlayingTopSheet) {
 							alpha = when (newState) {
 								BottomSheetBehavior.STATE_COLLAPSED -> 1f
 								BottomSheetBehavior.STATE_EXPANDED -> 0f
@@ -280,23 +272,35 @@ class NowPlayingActivity :
 					}
 
 					override fun onSlide(bottomSheet: View, slideOffset: Float) {
-						nowPlayingMainSheet.alpha = 1 - slideOffset
+						nowPlayingTopSheet.alpha = 1 - slideOffset
 					}
 				})
 
-				val toggleListClickHandler = View.OnClickListener {
-					with(bottomSheetBehavior) {
-						state = when (state) {
-							BottomSheetBehavior.STATE_COLLAPSED -> BottomSheetBehavior.STATE_EXPANDED
-							BottomSheetBehavior.STATE_EXPANDED -> BottomSheetBehavior.STATE_COLLAPSED
-							else -> state
-						}
-					}
-				}
-
-				closeNowPlayingList.setOnClickListener(toggleListClickHandler)
 				viewNowPlayingListButton.setOnClickListener(toggleListClickHandler)
 			}
+
+			with (binding.control.nowPlayingBottomSheet) {
+				vm.nowPlayingFile.filterNotNull().onEach {
+					if (!isDrawerOpened)
+						nowPlayingListView.scrollToPosition(it.playlistPosition)
+				}.launchIn(lifecycleScope)
+
+				miniPlay.setOnClickListener { v ->
+					PlaybackService.play(v.context)
+					vm.togglePlaying(true)
+				}
+
+				miniPause.setOnClickListener { v ->
+					PlaybackService.pause(v.context)
+					vm.togglePlaying(false)
+				}
+
+				miniSongRating.onRatingBarChangeListener = onRatingBarChangeListener
+
+				closeNowPlayingList.setOnClickListener(toggleListClickHandler)
+			}
+
+			binding.control.nowPlayingContentView.setOnClickListener { vm.showNowPlayingControls() }
 		}
 
 		messageBus.value.registerReceiver(onConnectionLostListener, IntentFilter(PollConnectionService.connectionLostNotification))
@@ -318,7 +322,7 @@ class NowPlayingActivity :
 		super.onRestoreInstanceState(savedInstanceState)
 
 		if (bottomSheetBehavior.state == BottomSheetBehavior.STATE_EXPANDED)
-			binding.then { b -> b.control.nowPlayingMainSheet.alpha = 0f }
+			binding.then { b -> b.control.topSheet.nowPlayingTopSheet.alpha = 0f }
 	}
 
 	override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {

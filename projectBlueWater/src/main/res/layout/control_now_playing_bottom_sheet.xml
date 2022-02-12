@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <data>
+        <import type="android.view.View"/>
+        <variable name="vm" type="com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingViewModel"/>
+    </data>
+
+    <RelativeLayout
+        android:id="@+id/bottom_sheet"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:behavior_hideable="false"
+        app:behavior_peekHeight="0dp"
+        app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior">
+
+        <RelativeLayout
+            android:id="@+id/nowPlayingMiniControls"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentTop="true">
+
+            <RelativeLayout
+                android:id="@+id/reducedNowPlayingButtonsContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_alignParentStart="true"
+                android:orientation="horizontal"
+                android:padding="2dip">
+
+                <LinearLayout
+                    android:id="@+id/miniSongRatingContainer"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_alignParentStart="true"
+                    android:gravity="center_vertical">
+
+                    <RatingBar
+                        android:id="@+id/miniSongRating"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:max="5"
+                        android:stepSize="1"
+                        android:rating="@{vm.songRating}"
+                        android:isIndicator="@{!vm.isSongRatingEnabled}" />
+
+                    <TextView
+                        android:id="@+id/miniReadOnlyConnectionLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_horizontal"
+                        android:text="@string/readOnlyConnection"
+                        android:visibility="@{vm.isReadOnly ? View.VISIBLE : View.GONE}"
+                        android:textAppearance="?android:attr/textAppearanceSmall" />
+
+                </LinearLayout>
+
+                <RelativeLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:layout_toEndOf="@id/miniSongRatingContainer">
+
+                    <ViewFlipper
+                        android:id="@+id/miniPlayPause"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_centerVertical="true"
+                        android:layout_marginEnd="20dp"
+                        android:layout_toStartOf="@id/closeNowPlayingList">
+
+                        <ImageButton
+                            android:id="@+id/miniPlay"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:background="?android:attr/selectableItemBackground"
+                            android:contentDescription="@string/btn_play"
+                            android:src="@drawable/av_play_dark"
+                            android:visibility="@{!vm.isPlaying ? View.VISIBLE : View.INVISIBLE}" />
+
+                        <ImageButton
+                            android:id="@+id/miniPause"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:background="?android:attr/selectableItemBackground"
+                            android:contentDescription="@string/btn_pause"
+                            android:src="@drawable/av_pause_dark"
+                            android:visibility="@{vm.isPlaying ? View.VISIBLE : View.INVISIBLE}" />
+                    </ViewFlipper>
+
+                    <ImageButton
+                        android:id="@+id/closeNowPlayingList"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        android:layout_marginEnd="10dp"
+                        android:background="?android:attr/selectableItemBackground"
+                        android:contentDescription="@string/btn_hide_files"
+                        android:src="@drawable/chevron_up_36dp"
+                        android:rotation="180"
+                        android:alpha=".80"/>
+                </RelativeLayout>
+            </RelativeLayout>
+
+            <ProgressBar
+                android:id="@+id/miniNowPlayingBar"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/reducedNowPlayingButtonsContainer"
+                android:layout_alignParentStart="true"
+                android:indeterminate="false"
+                android:progress="@{vm.filePosition}"
+                android:max="@{vm.fileDuration}" />
+        </RelativeLayout>
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/nowPlayingListView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_below="@id/nowPlayingMiniControls"
+            android:background="@color/now_playing_list_color" />
+    </RelativeLayout>
+</layout>

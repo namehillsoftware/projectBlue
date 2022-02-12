@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:bind="http://schemas.android.com/apk/res-auto">
+
+    <data>
+        <import type="android.view.View"/>
+        <variable name="vm" type="com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingViewModel"/>
+    </data>
+
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
+        android:id="@+id/nowPlayingContentView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <include
+            layout="@layout/control_now_playing_top_sheet"
+            android:id="@+id/topSheet"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            bind:vm="@{vm}"/>
+
+        <include
+            layout="@layout/control_now_playing_bottom_sheet"
+            android:id="@+id/nowPlayingBottomSheet"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            bind:vm="@{vm}"/>
+
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
+</layout>
