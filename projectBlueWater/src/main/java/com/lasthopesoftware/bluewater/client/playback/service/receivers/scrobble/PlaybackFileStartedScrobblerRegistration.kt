@@ -15,11 +15,10 @@ import com.lasthopesoftware.bluewater.client.connection.receivers.IConnectionDep
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
 import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
 
-class PlaybackFileStartedScrobblerRegistration : IConnectionDependentReceiverRegistration {
+class PlaybackFileStartedScrobblerRegistration(private val context: Context) : IConnectionDependentReceiverRegistration {
 
 	companion object {
-		private val intents: Collection<IntentFilter> =
-			setOf(IntentFilter(PlaylistEvents.onPlaylistTrackStart))
+		private val intents by lazy { setOf(IntentFilter(PlaylistEvents.onPlaylistTrackStart)) }
 	}
 
     override fun registerWithConnectionProvider(connectionProvider: IConnectionProvider): ReceiveBroadcastEvents {
@@ -40,11 +39,11 @@ class PlaybackFileStartedScrobblerRegistration : IConnectionDependentReceiverReg
 
     override fun forIntents(): Collection<IntentFilter> = intents
 
-    private class PlaybackFileChangedScrobbleDroidProxy(
+    private inner class PlaybackFileChangedScrobbleDroidProxy(
         private val scopedCachedFilePropertiesProvider: ScopedCachedFilePropertiesProvider,
         private val scrobbleIntentProvider: ScrobbleIntentProvider
     ) : ReceiveBroadcastEvents {
-        override fun onReceive(context: Context, intent: Intent) {
+        override fun onReceive(intent: Intent) {
             val fileKey = intent.getIntExtra(PlaylistEvents.PlaybackFileParameters.fileKey, -1)
             if (fileKey < 0) return
             scopedCachedFilePropertiesProvider

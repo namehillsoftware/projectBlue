@@ -21,7 +21,7 @@ class FakeMessageBus(private val context: Context) : SendMessages, RegisterForMe
 		val scheme = intent.scheme
 		val categories = intent.categories
 		for (receiver in receivers.filter { p -> p.second.match(action, type, scheme, data, categories, "FakeMessageSender") >= 0 }) {
-			receiver.first.onReceive(context, intent)
+			receiver.first.onReceive(intent)
 		}
 	}
 

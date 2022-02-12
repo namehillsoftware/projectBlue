@@ -67,7 +67,7 @@ class ItemListFragment : Fragment() {
 			intentFilter.addAction(MenuNotifications.launchingActivity)
 			intentFilter.addAction(MenuNotifications.launchingActivityHalted)
 			registerReceiver(
-				{ _, intent ->
+				{ intent ->
 					val isLaunching = intent.action != MenuNotifications.launchingActivity
 
 					recyclerView?.visibility = ViewUtils.getVisibility(!isLaunching)

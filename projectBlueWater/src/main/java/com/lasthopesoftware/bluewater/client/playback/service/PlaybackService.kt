@@ -394,12 +394,12 @@ open class PlaybackService :
 		}
 	}
 
-	private val playbackHaltingEvent = ReceiveBroadcastEvents { _, _ ->
+	private val playbackHaltingEvent = ReceiveBroadcastEvents {
 			pausePlayback()
 			stopSelf(startId)
 		}
 
-	private val buildSessionReceiver = ReceiveBroadcastEvents { _, intent ->
+	private val buildSessionReceiver = ReceiveBroadcastEvents { intent ->
 			val buildStatus = intent.getIntExtra(SelectedConnection.buildSessionBroadcastStatus, -1)
 			handleBuildConnectionStatusChange(buildStatus)
 		}

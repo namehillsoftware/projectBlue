@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.app.Application
 import android.app.NotificationManager
 import android.content.Context
-import android.content.Intent
 import android.content.IntentFilter
 import android.os.Environment
 import android.os.StrictMode
@@ -38,7 +37,6 @@ import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessio
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionSettingsChangeReceiver
 import com.lasthopesoftware.bluewater.client.connection.settings.changes.ObservableConnectionSettingsLibraryStorage
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
-import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.pebble.PebbleFileChangedNotificationRegistration
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble.PlaybackFileStartedScrobblerRegistration
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble.PlaybackFileStoppedScrobblerRegistration
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
@@ -89,7 +87,7 @@ open class MainApplication : Application() {
 	}
 
 	private fun registerAppBroadcastReceivers() {
-		messageBus.registerReceiver(ReceiveBroadcastEvents { _: Context, intent: Intent ->
+		messageBus.registerReceiver(ReceiveBroadcastEvents { intent ->
 			val libraryId = intent.getIntExtra(MediaFileUriProvider.mediaFileFoundFileKey, -1)
 			if (libraryId < 0) return@ReceiveBroadcastEvents
 
@@ -111,7 +109,7 @@ open class MainApplication : Application() {
 				}
 		}, IntentFilter(MediaFileUriProvider.mediaFileFoundEvent))
 
-		messageBus.registerReceiver({ _, intent ->
+		messageBus.registerReceiver({ intent ->
 			intent.getIntExtra(StorageReadPermissionsRequestedBroadcaster.readPermissionsLibraryId, -1)
 				.takeIf { it > -1 }
 				?.let { libraryId ->
@@ -122,7 +120,7 @@ open class MainApplication : Application() {
 				}
 		}, IntentFilter(StorageReadPermissionsRequestedBroadcaster.readPermissionsNeeded))
 
-		messageBus.registerReceiver({ _, intent ->
+		messageBus.registerReceiver({ intent ->
 			intent.getIntExtra(StorageReadPermissionsRequestedBroadcaster.readPermissionsLibraryId, -1)
 				.takeIf { it > -1 }
 				?.let { libraryId ->
@@ -148,12 +146,11 @@ open class MainApplication : Application() {
 
 		val connectionDependentReceiverRegistrations = listOf(
 			UpdatePlayStatsOnCompleteRegistration(),
-			PlaybackFileStartedScrobblerRegistration(),
-			PlaybackFileStoppedScrobblerRegistration(),
-			PebbleFileChangedNotificationRegistration())
+			PlaybackFileStartedScrobblerRegistration(this),
+			PlaybackFileStoppedScrobblerRegistration(this))
 
 		messageBus.registerReceiver(
-			SessionConnectionRegistrationsMaintainer(messageBus, connectionDependentReceiverRegistrations),
+			SessionConnectionRegistrationsMaintainer(this, messageBus, connectionDependentReceiverRegistrations),
 			IntentFilter(SelectedConnection.buildSessionBroadcast))
 
 		LiveNowPlayingLookup.initializeInstance(this)

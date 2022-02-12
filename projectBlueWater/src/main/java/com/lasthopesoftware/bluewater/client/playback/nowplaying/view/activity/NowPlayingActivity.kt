@@ -145,7 +145,7 @@ class NowPlayingActivity :
 	private lateinit var bottomSheetBehavior: BottomSheetBehavior<View>
 
 	private val onConnectionLostListener =
-		ReceiveBroadcastEvents { _, _ -> WaitForConnectionDialog.show(this) }
+		ReceiveBroadcastEvents { WaitForConnectionDialog.show(this) }
 
 	private val binding by lazy {
 		val binding = DataBindingUtil.setContentView<ActivityViewNowPlayingBinding>(this, R.layout.activity_view_now_playing)

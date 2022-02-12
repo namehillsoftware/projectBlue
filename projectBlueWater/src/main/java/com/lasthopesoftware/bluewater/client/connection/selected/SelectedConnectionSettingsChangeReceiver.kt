@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.connection.selected
 
-import android.content.Context
 import android.content.Intent
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.connection.settings.changes.ObservableConnectionSettingsLibraryStorage
@@ -12,7 +11,7 @@ class SelectedConnectionSettingsChangeReceiver(
 	private val selectedLibraryIdProvider: ProvideSelectedLibraryId,
 	private val sendMessages: SendMessages
 ) : ReceiveBroadcastEvents {
-	override fun onReceive(context: Context, intent: Intent) {
+	override fun onReceive(intent: Intent) {
 		val updatedLibraryId =
 			intent.getIntExtra(ObservableConnectionSettingsLibraryStorage.updatedConnectionSettingsLibraryId, -1)
 

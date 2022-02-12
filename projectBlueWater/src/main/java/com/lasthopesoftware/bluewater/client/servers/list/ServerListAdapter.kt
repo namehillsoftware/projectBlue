@@ -67,7 +67,7 @@ class ServerListAdapter(private val activity: Activity, private val browserLibra
 
 			broadcastReceiver?.run { messageBus.value.unregisterReceiver(this) }
 			messageBus.value.registerReceiver(
-				ReceiveBroadcastEvents { _, intent ->
+				ReceiveBroadcastEvents { intent ->
 					textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(library.id == intent.getIntExtra(
 						BrowserLibrarySelection.chosenLibraryId, -1)))
 				}.apply { broadcastReceiver = this },

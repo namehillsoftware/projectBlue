@@ -12,11 +12,11 @@ import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 /**
  * Created by david on 3/19/17.
  */
-class SessionConnectionRegistrationsMaintainer(private val messageRegistrar: RegisterForMessages, private val connectionDependentReceiverRegistrations: Collection<IConnectionDependentReceiverRegistration>) : ReceiveBroadcastEvents, AutoCloseable, ImmediateResponse<List<ReceiveBroadcastEvents>, Unit> {
+class SessionConnectionRegistrationsMaintainer(private val context: Context, private val messageRegistrar: RegisterForMessages, private val connectionDependentReceiverRegistrations: Collection<IConnectionDependentReceiverRegistration>) : ReceiveBroadcastEvents, AutoCloseable, ImmediateResponse<List<ReceiveBroadcastEvents>, Unit> {
 	private var registrationPromise = Promise(emptyList<ReceiveBroadcastEvents>())
 
 	@Synchronized
-	override fun onReceive(context: Context, intent: Intent) {
+	override fun onReceive(intent: Intent) {
 		val buildSessionStatus = intent.getIntExtra(SelectedConnection.buildSessionBroadcastStatus, -1)
 		if (buildSessionStatus != SelectedConnection.BuildingSessionConnectionStatus.BuildingSessionComplete) return
 

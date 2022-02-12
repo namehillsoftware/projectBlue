@@ -40,7 +40,7 @@ class MessageBus(private val localBroadcastManager: LocalBroadcastManager): Send
 
 	private class DelegatedBroadcastReceiver(private val broadcastReceiver: ReceiveBroadcastEvents) : BroadcastReceiver() {
 		override fun onReceive(context: Context?, intent: Intent?) {
-			if (context != null && intent != null) broadcastReceiver.onReceive(context, intent)
+			if (intent != null) broadcastReceiver.onReceive(intent)
 		}
 	}
 }

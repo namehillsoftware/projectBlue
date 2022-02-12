@@ -140,7 +140,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 		}
 	}
 
-	private val connectionSettingsUpdatedReceiver = ReceiveBroadcastEvents { _, _ -> finishAffinity() }
+	private val connectionSettingsUpdatedReceiver = ReceiveBroadcastEvents { finishAffinity() }
 
 	private lateinit var nowPlayingFloatingActionButton: NowPlayingFloatingActionButton
 	private var viewAnimator: ViewAnimator? = null

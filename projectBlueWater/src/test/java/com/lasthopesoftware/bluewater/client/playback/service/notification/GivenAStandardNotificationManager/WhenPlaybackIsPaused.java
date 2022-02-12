@@ -12,8 +12,6 @@ import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Intent;
 
-import androidx.test.core.app.ApplicationProvider;
-
 import com.lasthopesoftware.AndroidContext;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService;
@@ -53,10 +51,7 @@ public class WhenPlaybackIsPaused extends AndroidContext {
 				notificationContentBuilder,
 				() -> new Promise<>(newFakeBuilder(new Notification()))));
 
-		playbackNotificationRouter
-			.onReceive(
-				ApplicationProvider.getApplicationContext(),
-				new Intent(PlaylistEvents.onPlaylistPause));
+		playbackNotificationRouter.onReceive(new Intent(PlaylistEvents.onPlaylistPause));
 	}
 
 	@Test

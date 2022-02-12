@@ -33,7 +33,7 @@ class WhenHandlingTheConnectionSettingsChange : AndroidContext() {
 			mockSelectedLibraryIdentifierProvider,
 			messageBus
 		)
-		selectedConnectionSettingsChangeReceiver.onReceive(mockk(), connectionSettingsUpdatedIntent)
+		selectedConnectionSettingsChangeReceiver.onReceive(connectionSettingsUpdatedIntent)
 	}
 
 	@Test

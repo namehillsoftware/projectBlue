@@ -47,7 +47,7 @@ class NowPlayingCoverArtViewModel(
 	val unexpectedError = unexpectedErrorState.asStateFlow()
 
 	init {
-		onPlaybackChangedReceiver = ReceiveBroadcastEvents { _, _ -> setView() }
+		onPlaybackChangedReceiver = ReceiveBroadcastEvents { setView() }
 
 		val playingFileChangedFilter = IntentFilter().apply {
 			addAction(PlaylistEvents.onPlaylistTrackChange)

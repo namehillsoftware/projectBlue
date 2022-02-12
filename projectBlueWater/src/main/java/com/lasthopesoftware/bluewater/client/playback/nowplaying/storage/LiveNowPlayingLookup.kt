@@ -68,7 +68,7 @@ class LiveNowPlayingLookup private constructor(
 			?.then { np -> np?.apply { filePosition = trackedPosition ?: filePosition } }
 			.keepPromise()
 
-	override fun onReceive(context: Context, intent: Intent) {
+	override fun onReceive(intent: Intent) {
 		when (intent.action) {
 			BrowserLibrarySelection.libraryChosenEvent -> intent
 				.getIntExtra(BrowserLibrarySelection.chosenLibraryId, -1)

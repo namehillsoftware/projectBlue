@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.fragment
 
-import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
@@ -75,7 +74,7 @@ class ActiveFileDownloadsFragment : Fragment() {
 
 						onFileDownloadedReceiver?.run { messageBus.value.unregisterReceiver(this)	}
 						messageBus.value.registerReceiver(
-							ReceiveBroadcastEvents { _, intent ->
+							ReceiveBroadcastEvents { intent ->
 								val storedFileId = intent.getIntExtra(StoredFileSynchronization.storedFileEventKey, -1)
 								localStoredFiles.remove(storedFileId)
 								activeFileDownloadsAdapter.updateListEventually(localStoredFiles.values.toList())
@@ -85,7 +84,7 @@ class ActiveFileDownloadsFragment : Fragment() {
 						onFileQueuedReceiver?.run { messageBus.value.unregisterReceiver(this) }
 						messageBus.value.registerReceiver(
 							object : ReceiveBroadcastEvents {
-								override fun onReceive(context: Context, intent: Intent) {
+								override fun onReceive(intent: Intent) {
 									val storedFileId = intent.getIntExtra(StoredFileSynchronization.storedFileEventKey, -1)
 									if (storedFileId == -1) return
 									if (localStoredFiles.containsKey(storedFileId)) return
@@ -121,12 +120,12 @@ class ActiveFileDownloadsFragment : Fragment() {
 		onSyncStartedReceiver?.run { messageBus.value.unregisterReceiver(this) }
 
 		messageBus.value.registerReceiver(
-			ReceiveBroadcastEvents { _, _ -> toggleSyncButton.text = stopSyncLabel }.apply { onSyncStartedReceiver = this },
+			ReceiveBroadcastEvents { toggleSyncButton.text = stopSyncLabel }.apply { onSyncStartedReceiver = this },
 			IntentFilter(StoredFileSynchronization.onSyncStartEvent))
 
 		onSyncStoppedReceiver?.run { messageBus.value.unregisterReceiver(this) }
 		messageBus.value.registerReceiver(
-			ReceiveBroadcastEvents { _, _ -> toggleSyncButton.text = startSyncLabel }.apply { onSyncStoppedReceiver = this },
+			ReceiveBroadcastEvents { toggleSyncButton.text = startSyncLabel }.apply { onSyncStoppedReceiver = this },
 			IntentFilter(StoredFileSynchronization.onSyncStopEvent))
 
 		toggleSyncButton.setOnClickListener { v ->

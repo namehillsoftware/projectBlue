@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.GivenAStandardNotificationManager.AndPlaybackHasStarted.AndTheFileHasChanged
 
 import android.content.Intent
-import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
 import com.lasthopesoftware.bluewater.client.playback.service.notification.NotifyOfPlaybackEvents
@@ -18,9 +17,7 @@ class WhenPlaybackIsInterrupted : AndroidContext() {
 
 	override fun before() {
 		PlaybackNotificationRouter(playbackEventsNotifier)
-			.onReceive(
-				ApplicationProvider.getApplicationContext(),
-				Intent(PlaylistEvents.onPlaylistInterrupted))
+			.onReceive(Intent(PlaylistEvents.onPlaylistInterrupted))
 	}
 
 	@Test

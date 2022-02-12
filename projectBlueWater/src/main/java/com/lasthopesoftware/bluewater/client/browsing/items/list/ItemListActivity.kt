@@ -95,7 +95,7 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer {
 		intentFilter.addAction(MenuNotifications.launchingActivity)
 		intentFilter.addAction(MenuNotifications.launchingActivityHalted)
 		messageBus.registerReceiver(
-			{ _, intent ->
+			{ intent ->
 				val isLaunching = intent.action == MenuNotifications.launchingActivity
 
 				itemListView.visibility = ViewUtils.getVisibility(!isLaunching)

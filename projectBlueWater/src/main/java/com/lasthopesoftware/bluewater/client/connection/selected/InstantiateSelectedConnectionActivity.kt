@@ -38,7 +38,7 @@ class InstantiateSelectedConnectionActivity : Activity() {
 	private val handler by lazy { Handler(mainLooper) }
 
 	private val buildSessionConnectionReceiver =
-		ReceiveBroadcastEvents { _, intent -> handleBuildStatusChange(intent.getIntExtra(SelectedConnection.buildSessionBroadcastStatus, -1)) }
+		ReceiveBroadcastEvents { intent -> handleBuildStatusChange(intent.getIntExtra(SelectedConnection.buildSessionBroadcastStatus, -1)) }
 
 	private val lazyPromisedSessionConnection = lazy { getInstance(this).promiseSessionConnection() }
 

@@ -88,17 +88,17 @@ class NowPlayingViewModel(
 	val unexpectedError = unexpectedErrorState.asStateFlow()
 
 	init {
-		onPlaybackStartedReceiver = ReceiveBroadcastEvents { _, _ -> togglePlaying(true) }
-		onPlaybackStoppedReceiver = ReceiveBroadcastEvents { _, _ -> togglePlaying(false) }
-		onPlaylistChangedReceiver = ReceiveBroadcastEvents { _, _ -> updateViewFromRepository() }
+		onPlaybackStartedReceiver = ReceiveBroadcastEvents { togglePlaying(true) }
+		onPlaybackStoppedReceiver = ReceiveBroadcastEvents { togglePlaying(false) }
+		onPlaylistChangedReceiver = ReceiveBroadcastEvents { updateViewFromRepository() }
 
-		onPlaybackChangedReceiver = ReceiveBroadcastEvents { _, _ ->
+		onPlaybackChangedReceiver = ReceiveBroadcastEvents {
 			updateViewFromRepository()
 			showNowPlayingControls()
 		}
 
 		onTrackPositionChanged =
-			ReceiveBroadcastEvents { _, intent ->
+			ReceiveBroadcastEvents { intent ->
 				val fileDuration = intent.getLongExtra(TrackPositionBroadcaster.TrackPositionChangedParameters.fileDuration, -1)
 				if (fileDuration > -1) setTrackDuration(fileDuration)
 				val filePosition = intent.getLongExtra(TrackPositionBroadcaster.TrackPositionChangedParameters.filePosition, -1)

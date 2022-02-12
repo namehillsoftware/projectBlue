@@ -44,7 +44,7 @@ class NowPlayingFloatingActionButton private constructor(context: Context) : Flo
 						val messageBus = MessageBus(LocalBroadcastManager.getInstance(context))
 						messageBus.registerReceiver(object : ReceiveBroadcastEvents {
 							@Synchronized
-							override fun onReceive(context: Context, intent: Intent) {
+							override fun onReceive(intent: Intent) {
 								isNowPlayingFileSet = true
 								visibility = ViewUtils.getVisibility(true)
 								messageBus.unregisterReceiver(this)

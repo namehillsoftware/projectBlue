@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.playstats
 
-import android.content.Context
 import android.content.Intent
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.playstats.UpdatePlayStatsOnPlaybackCompleteReceiver
@@ -15,7 +14,7 @@ class UpdatePlayStatsOnPlaybackCompleteReceiver(private val playstatsUpdateSelec
 		private val logger = LoggerFactory.getLogger(UpdatePlayStatsOnPlaybackCompleteReceiver::class.java)
 	}
 
-    override fun onReceive(context: Context, intent: Intent) {
+    override fun onReceive(intent: Intent) {
         val fileKey = intent.getIntExtra(PlaylistEvents.PlaybackFileParameters.fileKey, -1)
         if (fileKey < 0) return
 

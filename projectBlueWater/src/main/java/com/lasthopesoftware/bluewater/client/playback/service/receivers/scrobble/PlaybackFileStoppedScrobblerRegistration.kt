@@ -8,25 +8,22 @@ import com.lasthopesoftware.bluewater.client.connection.receivers.IConnectionDep
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
 import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
 
-class PlaybackFileStoppedScrobblerRegistration : IConnectionDependentReceiverRegistration {
-    override fun registerWithConnectionProvider(connectionProvider: IConnectionProvider): ReceiveBroadcastEvents {
-        return PlaybackFileStoppedScrobbleDroidProxy(ScrobbleIntentProvider.getInstance())
-    }
+class PlaybackFileStoppedScrobblerRegistration(private val context: Context) : IConnectionDependentReceiverRegistration {
+    override fun registerWithConnectionProvider(connectionProvider: IConnectionProvider): ReceiveBroadcastEvents =
+		PlaybackFileStoppedScrobbleDroidProxy(ScrobbleIntentProvider.getInstance())
 
-    override fun forIntents(): Collection<IntentFilter> {
-        return intents
-    }
+    override fun forIntents(): Collection<IntentFilter> = intents
 
-    private class PlaybackFileStoppedScrobbleDroidProxy(private val scrobbleIntentProvider: ScrobbleIntentProvider) :
+    private inner class PlaybackFileStoppedScrobbleDroidProxy(private val scrobbleIntentProvider: ScrobbleIntentProvider) :
         ReceiveBroadcastEvents {
-        override fun onReceive(context: Context, intent: Intent) {
+        override fun onReceive(intent: Intent) {
             context.sendBroadcast(scrobbleIntentProvider.provideScrobbleIntent(false))
         }
     }
 
     companion object {
         private val intents by lazy {
-			listOf(
+			setOf(
 				IntentFilter(PlaylistEvents.onPlaylistTrackComplete),
 				IntentFilter(PlaylistEvents.onPlaylistStop),
 				IntentFilter(PlaylistEvents.onPlaylistPause)
