@@ -1,8 +1,5 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.list
 
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
 import android.os.Handler
@@ -70,13 +67,11 @@ class ItemListFragment : Fragment() {
 			intentFilter.addAction(MenuNotifications.launchingActivity)
 			intentFilter.addAction(MenuNotifications.launchingActivityHalted)
 			registerReceiver(
-				object : BroadcastReceiver() {
-					override fun onReceive(context: Context?, intent: Intent?) {
-						val isLaunching = intent?.action != MenuNotifications.launchingActivity
+				{ _, intent ->
+					val isLaunching = intent.action != MenuNotifications.launchingActivity
 
-						recyclerView?.visibility = ViewUtils.getVisibility(!isLaunching)
-						progressBar?.visibility = ViewUtils.getVisibility(isLaunching)
-					}
+					recyclerView?.visibility = ViewUtils.getVisibility(!isLaunching)
+					progressBar?.visibility = ViewUtils.getVisibility(isLaunching)
 				},
 				intentFilter
 			)

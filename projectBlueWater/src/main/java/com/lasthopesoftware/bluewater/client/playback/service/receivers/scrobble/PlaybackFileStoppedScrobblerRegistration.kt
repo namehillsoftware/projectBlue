@@ -1,47 +1,36 @@
-package com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble;
+package com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble
 
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.receivers.IConnectionDependentReceiverRegistration
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
+import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
 
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.Intent;
-import android.content.IntentFilter;
+class PlaybackFileStoppedScrobblerRegistration : IConnectionDependentReceiverRegistration {
+    override fun registerWithConnectionProvider(connectionProvider: IConnectionProvider): ReceiveBroadcastEvents {
+        return PlaybackFileStoppedScrobbleDroidProxy(ScrobbleIntentProvider.getInstance())
+    }
 
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider;
-import com.lasthopesoftware.bluewater.client.connection.receivers.IConnectionDependentReceiverRegistration;
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
+    override fun forIntents(): Collection<IntentFilter> {
+        return intents
+    }
 
-import java.util.Arrays;
-import java.util.Collection;
+    private class PlaybackFileStoppedScrobbleDroidProxy(private val scrobbleIntentProvider: ScrobbleIntentProvider) :
+        ReceiveBroadcastEvents {
+        override fun onReceive(context: Context, intent: Intent) {
+            context.sendBroadcast(scrobbleIntentProvider.provideScrobbleIntent(false))
+        }
+    }
 
-public class PlaybackFileStoppedScrobblerRegistration implements IConnectionDependentReceiverRegistration {
-
-	private static final Collection<IntentFilter> intents =
-		Arrays.asList(
-			new IntentFilter(PlaylistEvents.onPlaylistTrackComplete),
-			new IntentFilter(PlaylistEvents.onPlaylistStop),
-			new IntentFilter(PlaylistEvents.onPlaylistPause));
-
-	@Override
-	public BroadcastReceiver registerWithConnectionProvider(IConnectionProvider connectionProvider) {
-		return new PlaybackFileStoppedScrobbleDroidProxy(ScrobbleIntentProvider.getInstance());
-	}
-
-	@Override
-	public Collection<IntentFilter> forIntents() {
-		return intents;
-	}
-
-	private static class PlaybackFileStoppedScrobbleDroidProxy extends BroadcastReceiver {
-
-		private final ScrobbleIntentProvider scrobbleIntentProvider;
-
-		public PlaybackFileStoppedScrobbleDroidProxy(ScrobbleIntentProvider scrobbleIntentProvider) {
-			this.scrobbleIntentProvider = scrobbleIntentProvider;
+    companion object {
+        private val intents by lazy {
+			listOf(
+				IntentFilter(PlaylistEvents.onPlaylistTrackComplete),
+				IntentFilter(PlaylistEvents.onPlaylistStop),
+				IntentFilter(PlaylistEvents.onPlaylistPause)
+			)
 		}
-
-		@Override
-		public void onReceive(Context context, Intent intent) {
-			context.sendBroadcast(scrobbleIntentProvider.provideScrobbleIntent(false));
-		}
-	}
+    }
 }

@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.storage
 
-import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
@@ -17,6 +16,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.Playl
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
+import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.namehillsoftware.handoff.promises.Promise
 
@@ -24,7 +24,7 @@ class LiveNowPlayingLookup private constructor(
 	selectedLibraryIdentifierProvider: ProvideSelectedLibraryId,
 	private val libraryProvider: ILibraryProvider,
 	private val libraryStorage: ILibraryStorage
-) : BroadcastReceiver(), GetNowPlayingState {
+) : ReceiveBroadcastEvents, GetNowPlayingState {
 
 	companion object {
 		private lateinit var instance: LiveNowPlayingLookup
@@ -68,8 +68,8 @@ class LiveNowPlayingLookup private constructor(
 			?.then { np -> np?.apply { filePosition = trackedPosition ?: filePosition } }
 			.keepPromise()
 
-	override fun onReceive(context: Context?, intent: Intent?) {
-		when (intent?.action) {
+	override fun onReceive(context: Context, intent: Intent) {
+		when (intent.action) {
 			BrowserLibrarySelection.libraryChosenEvent -> intent
 				.getIntExtra(BrowserLibrarySelection.chosenLibraryId, -1)
 				.takeIf { it > -1 }

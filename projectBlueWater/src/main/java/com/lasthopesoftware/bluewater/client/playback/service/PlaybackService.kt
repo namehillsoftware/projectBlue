@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.client.playback.service
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
-import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
@@ -98,6 +97,7 @@ import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.MediaSession.MediaSessionService
 import com.lasthopesoftware.bluewater.shared.android.audiofocus.AudioFocusManagement
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
+import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
 import com.lasthopesoftware.bluewater.shared.android.notifications.NoOpChannelActivator
 import com.lasthopesoftware.bluewater.shared.android.notifications.NotificationBuilderProducer
 import com.lasthopesoftware.bluewater.shared.android.notifications.control.NotificationsController
@@ -394,19 +394,15 @@ open class PlaybackService :
 		}
 	}
 
-	private val playbackHaltingEvent = object : BroadcastReceiver() {
-		override fun onReceive(context: Context, intent: Intent) {
+	private val playbackHaltingEvent = ReceiveBroadcastEvents { _, _ ->
 			pausePlayback()
 			stopSelf(startId)
 		}
-	}
 
-	private val buildSessionReceiver = object : BroadcastReceiver() {
-		override fun onReceive(context: Context, intent: Intent) {
+	private val buildSessionReceiver = ReceiveBroadcastEvents { _, intent ->
 			val buildStatus = intent.getIntExtra(SelectedConnection.buildSessionBroadcastStatus, -1)
 			handleBuildConnectionStatusChange(buildStatus)
 		}
-	}
 
 	private val unhandledRejectionHandler = ImmediateResponse<Throwable, Unit>(::uncaughtExceptionHandler)
 

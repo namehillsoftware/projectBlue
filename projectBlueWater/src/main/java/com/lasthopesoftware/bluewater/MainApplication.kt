@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater
 import android.annotation.SuppressLint
 import android.app.Application
 import android.app.NotificationManager
-import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
@@ -47,6 +46,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.u
 import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
+import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
 import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler
 import com.lasthopesoftware.compilation.DebugFlag
 import com.namehillsoftware.handoff.promises.Promise
@@ -87,7 +87,7 @@ open class MainApplication : Application() {
 	}
 
 	private fun registerAppBroadcastReceivers() {
-		messageBus.registerReceiver(object : BroadcastReceiver() {
+		messageBus.registerReceiver(object : ReceiveBroadcastEvents {
 			override fun onReceive(context: Context, intent: Intent) {
 				val libraryId = intent.getIntExtra(MediaFileUriProvider.mediaFileFoundFileKey, -1)
 				if (libraryId < 0) return
@@ -114,7 +114,7 @@ open class MainApplication : Application() {
 			}
 		}, IntentFilter(MediaFileUriProvider.mediaFileFoundEvent))
 
-		messageBus.registerReceiver(object : BroadcastReceiver() {
+		messageBus.registerReceiver(object : ReceiveBroadcastEvents {
 			override fun onReceive(context: Context, intent: Intent) {
 				val libraryId = intent.getIntExtra(StorageReadPermissionsRequestedBroadcaster.readPermissionsLibraryId, -1)
 				if (libraryId < 0) return
@@ -125,7 +125,7 @@ open class MainApplication : Application() {
 			}
 		}, IntentFilter(StorageReadPermissionsRequestedBroadcaster.readPermissionsNeeded))
 
-		messageBus.registerReceiver(object : BroadcastReceiver() {
+		messageBus.registerReceiver(object : ReceiveBroadcastEvents {
 			override fun onReceive(context: Context, intent: Intent) {
 				val libraryId = intent.getIntExtra(StorageWritePermissionsRequestedBroadcaster.writePermissionsLibraryId, -1)
 				if (libraryId < 0) return

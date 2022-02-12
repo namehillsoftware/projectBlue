@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.pebble
 
-import android.content.BroadcastReceiver
 import android.content.IntentFilter
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedCachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedFilePropertiesProvider
@@ -9,6 +8,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRe
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.receivers.IConnectionDependentReceiverRegistration
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
+import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
 
 class PebbleFileChangedNotificationRegistration : IConnectionDependentReceiverRegistration {
 
@@ -17,7 +17,7 @@ class PebbleFileChangedNotificationRegistration : IConnectionDependentReceiverRe
 			setOf(IntentFilter(PlaylistEvents.onPlaylistTrackChange))
 	}
 
-    override fun registerWithConnectionProvider(connectionProvider: IConnectionProvider): BroadcastReceiver {
+    override fun registerWithConnectionProvider(connectionProvider: IConnectionProvider): ReceiveBroadcastEvents {
         val filePropertiesProvider = ScopedCachedFilePropertiesProvider(
             connectionProvider,
             FilePropertyCache.getInstance(),

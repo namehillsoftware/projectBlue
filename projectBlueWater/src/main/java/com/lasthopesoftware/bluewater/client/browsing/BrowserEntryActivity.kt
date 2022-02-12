@@ -1,7 +1,5 @@
 package com.lasthopesoftware.bluewater.client.browsing
 
-import android.content.BroadcastReceiver
-import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.res.Configuration
@@ -47,6 +45,7 @@ import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
+import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils.buildStandardMenu
@@ -141,11 +140,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 		}
 	}
 
-	private val connectionSettingsUpdatedReceiver = object : BroadcastReceiver() {
-		override fun onReceive(context: Context, intent: Intent) {
-			finishAffinity()
-		}
-	}
+	private val connectionSettingsUpdatedReceiver = ReceiveBroadcastEvents { _, _ -> finishAffinity() }
 
 	private lateinit var nowPlayingFloatingActionButton: NowPlayingFloatingActionButton
 	private var viewAnimator: ViewAnimator? = null

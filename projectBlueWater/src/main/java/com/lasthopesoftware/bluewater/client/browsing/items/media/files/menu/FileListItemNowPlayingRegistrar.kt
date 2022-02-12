@@ -1,8 +1,5 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.media.files.menu
 
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
 import android.content.IntentFilter
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
 import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
@@ -39,12 +36,7 @@ class FileListItemNowPlayingRegistrar(private val messageRegistrar: RegisterForM
 		}
 	}
 
-	private inner class FileListItemNowPlayingHandler(private val receiver: ReceiveBroadcastEvents) : BroadcastReceiver(), AutoCloseable {
-
-		override fun onReceive(context: Context?, intent: Intent?) {
-			if (context != null && intent != null) receiver.onReceive(context, intent)
-		}
-
+	private inner class FileListItemNowPlayingHandler(private val receiver: ReceiveBroadcastEvents) : ReceiveBroadcastEvents by receiver, AutoCloseable {
 		override fun close() = remove(this)
 	}
 }

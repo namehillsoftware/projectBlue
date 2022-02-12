@@ -253,20 +253,20 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 				val broadcastReceiver = StoredFileBroadcastReceiver(receiveStoredFileEvent)
 				messageBus.registerReceiver(
 					broadcastReceiver,
-					receiveStoredFileEvent.acceptedEvents().fold(IntentFilter(), { i, e ->
+					receiveStoredFileEvent.acceptedEvents().fold(IntentFilter()) { i, e ->
 						i.addAction(e)
 						i
-					}))
+					})
 			}
 		}
 
 		if (!syncStartedReceiver.isInitialized()) {
 			messageBus.registerReceiver(
 				syncStartedReceiver.value,
-				syncStartedReceiver.value.acceptedEvents().fold(IntentFilter(), { i, e ->
+				syncStartedReceiver.value.acceptedEvents().fold(IntentFilter()) { i, e ->
 					i.addAction(e)
 					i
-				}))
+				})
 		}
 
 		return if (cancellationProxy.isCancelled) Unit.toPromise()

@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.fragment
 
-import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
@@ -26,15 +25,16 @@ import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronizati
 import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
+import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.namehillsoftware.handoff.promises.Promise
 import java.util.concurrent.ConcurrentHashMap
 
 class ActiveFileDownloadsFragment : Fragment() {
-	private var onSyncStartedReceiver: BroadcastReceiver? = null
-	private var onSyncStoppedReceiver: BroadcastReceiver? = null
-	private var onFileQueuedReceiver: BroadcastReceiver? = null
-	private var onFileDownloadedReceiver: BroadcastReceiver? = null
+	private var onSyncStartedReceiver: ReceiveBroadcastEvents? = null
+	private var onSyncStoppedReceiver: ReceiveBroadcastEvents? = null
+	private var onFileQueuedReceiver: ReceiveBroadcastEvents? = null
+	private var onFileDownloadedReceiver: ReceiveBroadcastEvents? = null
 	private val messageBus = lazy { MessageBus(LocalBroadcastManager.getInstance(requireContext())) }
 
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -75,18 +75,16 @@ class ActiveFileDownloadsFragment : Fragment() {
 
 						onFileDownloadedReceiver?.run { messageBus.value.unregisterReceiver(this)	}
 						messageBus.value.registerReceiver(
-							object : BroadcastReceiver() {
-								override fun onReceive(context: Context, intent: Intent) {
-									val storedFileId = intent.getIntExtra(StoredFileSynchronization.storedFileEventKey, -1)
-									localStoredFiles.remove(storedFileId)
-									activeFileDownloadsAdapter.updateListEventually(localStoredFiles.values.toList())
-								}
+							ReceiveBroadcastEvents { _, intent ->
+								val storedFileId = intent.getIntExtra(StoredFileSynchronization.storedFileEventKey, -1)
+								localStoredFiles.remove(storedFileId)
+								activeFileDownloadsAdapter.updateListEventually(localStoredFiles.values.toList())
 							}.apply { onFileDownloadedReceiver = this },
 							IntentFilter(StoredFileSynchronization.onFileDownloadedEvent))
 
 						onFileQueuedReceiver?.run { messageBus.value.unregisterReceiver(this) }
 						messageBus.value.registerReceiver(
-							object : BroadcastReceiver() {
+							object : ReceiveBroadcastEvents {
 								override fun onReceive(context: Context, intent: Intent) {
 									val storedFileId = intent.getIntExtra(StoredFileSynchronization.storedFileEventKey, -1)
 									if (storedFileId == -1) return
@@ -123,20 +121,12 @@ class ActiveFileDownloadsFragment : Fragment() {
 		onSyncStartedReceiver?.run { messageBus.value.unregisterReceiver(this) }
 
 		messageBus.value.registerReceiver(
-			object : BroadcastReceiver() {
-				override fun onReceive(context: Context, intent: Intent) {
-					toggleSyncButton.text = stopSyncLabel
-				}
-			}.apply { onSyncStartedReceiver = this },
+			ReceiveBroadcastEvents { _, _ -> toggleSyncButton.text = stopSyncLabel }.apply { onSyncStartedReceiver = this },
 			IntentFilter(StoredFileSynchronization.onSyncStartEvent))
 
 		onSyncStoppedReceiver?.run { messageBus.value.unregisterReceiver(this) }
 		messageBus.value.registerReceiver(
-			object : BroadcastReceiver() {
-				override fun onReceive(context: Context, intent: Intent) {
-					toggleSyncButton.text = startSyncLabel
-				}
-			}.apply { onSyncStoppedReceiver = this },
+			ReceiveBroadcastEvents { _, _ -> toggleSyncButton.text = startSyncLabel }.apply { onSyncStoppedReceiver = this },
 			IntentFilter(StoredFileSynchronization.onSyncStopEvent))
 
 		toggleSyncButton.setOnClickListener { v ->

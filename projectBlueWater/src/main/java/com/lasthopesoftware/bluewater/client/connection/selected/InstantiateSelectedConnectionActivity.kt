@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.connection.selected
 
 import android.app.Activity
-import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
@@ -16,6 +15,7 @@ import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnect
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
+import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.namehillsoftware.handoff.promises.Promise
@@ -37,11 +37,8 @@ class InstantiateSelectedConnectionActivity : Activity() {
 
 	private val handler by lazy { Handler(mainLooper) }
 
-	private val buildSessionConnectionReceiver = object : BroadcastReceiver() {
-		override fun onReceive(context: Context, intent: Intent) {
-			handleBuildStatusChange(intent.getIntExtra(SelectedConnection.buildSessionBroadcastStatus, -1))
-		}
-	}
+	private val buildSessionConnectionReceiver =
+		ReceiveBroadcastEvents { _, intent -> handleBuildStatusChange(intent.getIntExtra(SelectedConnection.buildSessionBroadcastStatus, -1)) }
 
 	private val lazyPromisedSessionConnection = lazy { getInstance(this).promiseSessionConnection() }
 
