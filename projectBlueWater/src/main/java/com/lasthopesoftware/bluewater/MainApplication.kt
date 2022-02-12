@@ -59,6 +59,8 @@ open class MainApplication : Application() {
 		private var isWorkManagerInitialized = false
 	}
 
+	private val libraryRepository by lazy { LibraryRepository(this) }
+	private val storedFileAccess by lazy { StoredFileAccess(this) }
 	private val notificationManagerLazy by lazy { getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager }
 	private val storageReadPermissionsRequestNotificationBuilderLazy by lazy { StorageReadPermissionsRequestNotificationBuilder(this) }
 	private val storageWritePermissionsRequestNotificationBuilderLazy by lazy { StorageWritePermissionsRequestNotificationBuilder(this) }
@@ -87,53 +89,49 @@ open class MainApplication : Application() {
 	}
 
 	private fun registerAppBroadcastReceivers() {
-		messageBus.registerReceiver(object : ReceiveBroadcastEvents {
-			override fun onReceive(context: Context, intent: Intent) {
-				val libraryId = intent.getIntExtra(MediaFileUriProvider.mediaFileFoundFileKey, -1)
-				if (libraryId < 0) return
+		messageBus.registerReceiver(ReceiveBroadcastEvents { _: Context, intent: Intent ->
+			val libraryId = intent.getIntExtra(MediaFileUriProvider.mediaFileFoundFileKey, -1)
+			if (libraryId < 0) return@ReceiveBroadcastEvents
 
-				val fileKey = intent.getIntExtra(MediaFileUriProvider.mediaFileFoundFileKey, -1)
-				if (fileKey == -1) return
+			val fileKey = intent.getIntExtra(MediaFileUriProvider.mediaFileFoundFileKey, -1)
+			if (fileKey == -1) return@ReceiveBroadcastEvents
 
-				val mediaFileId = intent.getIntExtra(MediaFileUriProvider.mediaFileFoundMediaId, -1)
-				if (mediaFileId == -1) return
+			val mediaFileId = intent.getIntExtra(MediaFileUriProvider.mediaFileFoundMediaId, -1)
+			if (mediaFileId == -1) return@ReceiveBroadcastEvents
 
-				val mediaFilePath = intent.getStringExtra(MediaFileUriProvider.mediaFileFoundPath)
-				if (mediaFilePath.isNullOrEmpty()) return
+			val mediaFilePath = intent.getStringExtra(MediaFileUriProvider.mediaFileFoundPath)
+			if (mediaFilePath.isNullOrEmpty()) return@ReceiveBroadcastEvents
 
-				LibraryRepository(context)
-					.getLibrary(LibraryId(libraryId))
-					.then { library ->
-						if (library != null) {
-							val storedFileAccess = StoredFileAccess(
-								context
-							)
-							storedFileAccess.addMediaFile(library, ServiceFile(fileKey), mediaFileId, mediaFilePath)
-						}
+			libraryRepository
+				.getLibrary(LibraryId(libraryId))
+				.then { library ->
+					if (library != null) {
+						storedFileAccess.addMediaFile(library, ServiceFile(fileKey), mediaFileId, mediaFilePath)
 					}
-			}
+				}
 		}, IntentFilter(MediaFileUriProvider.mediaFileFoundEvent))
 
-		messageBus.registerReceiver(object : ReceiveBroadcastEvents {
-			override fun onReceive(context: Context, intent: Intent) {
-				val libraryId = intent.getIntExtra(StorageReadPermissionsRequestedBroadcaster.readPermissionsLibraryId, -1)
-				if (libraryId < 0) return
-				notificationManagerLazy.notify(
-					336,
-					storageReadPermissionsRequestNotificationBuilderLazy
-						.buildReadPermissionsRequestNotification(libraryId))
-			}
+		messageBus.registerReceiver({ _, intent ->
+			intent.getIntExtra(StorageReadPermissionsRequestedBroadcaster.readPermissionsLibraryId, -1)
+				.takeIf { it > -1 }
+				?.let { libraryId ->
+					notificationManagerLazy.notify(
+						336,
+						storageReadPermissionsRequestNotificationBuilderLazy
+							.buildReadPermissionsRequestNotification(libraryId))
+				}
 		}, IntentFilter(StorageReadPermissionsRequestedBroadcaster.readPermissionsNeeded))
 
-		messageBus.registerReceiver(object : ReceiveBroadcastEvents {
-			override fun onReceive(context: Context, intent: Intent) {
-				val libraryId = intent.getIntExtra(StorageWritePermissionsRequestedBroadcaster.writePermissionsLibraryId, -1)
-				if (libraryId < 0) return
-				notificationManagerLazy.notify(
-					396,
-					storageWritePermissionsRequestNotificationBuilderLazy
-						.buildWritePermissionsRequestNotification(libraryId))
-			}
+		messageBus.registerReceiver({ _, intent ->
+			intent.getIntExtra(StorageReadPermissionsRequestedBroadcaster.readPermissionsLibraryId, -1)
+				.takeIf { it > -1 }
+				?.let { libraryId ->
+					notificationManagerLazy.notify(
+						396,
+						storageWritePermissionsRequestNotificationBuilderLazy
+							.buildWritePermissionsRequestNotification(libraryId)
+					)
+				}
 		}, IntentFilter(StorageWritePermissionsRequestedBroadcaster.writePermissionsNeeded))
 
 		messageBus.registerReceiver(
