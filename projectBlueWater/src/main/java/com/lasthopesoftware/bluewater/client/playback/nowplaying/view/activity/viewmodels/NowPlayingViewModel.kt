@@ -1,8 +1,5 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels
 
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
 import android.content.IntentFilter
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
@@ -20,6 +17,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackSer
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
+import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
 import com.lasthopesoftware.bluewater.shared.android.messages.RegisterForMessages
 import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay
 import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
@@ -47,11 +45,11 @@ class NowPlayingViewModel(
 	private val stringResources: GetStringResources,
 	private val nowPlayingDisplaySettings: StoreNowPlayingDisplaySettings,
 ) : ViewModel() {
-	private val onPlaybackStartedReceiver: BroadcastReceiver
-	private val onPlaybackStoppedReceiver: BroadcastReceiver
-	private val onPlaybackChangedReceiver: BroadcastReceiver
-	private val onPlaylistChangedReceiver: BroadcastReceiver
-	private val onTrackPositionChanged: BroadcastReceiver
+	private val onPlaybackStartedReceiver: ReceiveBroadcastEvents
+	private val onPlaybackStoppedReceiver: ReceiveBroadcastEvents
+	private val onPlaybackChangedReceiver: ReceiveBroadcastEvents
+	private val onPlaylistChangedReceiver: ReceiveBroadcastEvents
+	private val onTrackPositionChanged: ReceiveBroadcastEvents
 
 	private var cachedPromises: CachedPromises? = null
 	private var controlsShownPromise = Promise.empty<Any?>()
@@ -90,39 +88,22 @@ class NowPlayingViewModel(
 	val unexpectedError = unexpectedErrorState.asStateFlow()
 
 	init {
-		onPlaybackStartedReceiver = object : BroadcastReceiver() {
-			override fun onReceive(context: Context, intent: Intent) {
-				togglePlaying(true)
-			}
+		onPlaybackStartedReceiver = ReceiveBroadcastEvents { togglePlaying(true) }
+		onPlaybackStoppedReceiver = ReceiveBroadcastEvents { togglePlaying(false) }
+		onPlaylistChangedReceiver = ReceiveBroadcastEvents { updateViewFromRepository() }
+
+		onPlaybackChangedReceiver = ReceiveBroadcastEvents {
+			updateViewFromRepository()
+			showNowPlayingControls()
 		}
 
-		onPlaybackStoppedReceiver = object : BroadcastReceiver() {
-			override fun onReceive(context: Context, intent: Intent) {
-				togglePlaying(false)
-			}
-		}
-
-		onPlaybackChangedReceiver = object : BroadcastReceiver() {
-			override fun onReceive(context: Context?, intent: Intent?) {
-				updateViewFromRepository()
-				showNowPlayingControls()
-			}
-		}
-
-		onPlaylistChangedReceiver = object : BroadcastReceiver() {
-			override fun onReceive(context: Context, intent: Intent) {
-				updateViewFromRepository()
-			}
-		}
-
-		onTrackPositionChanged = object : BroadcastReceiver() {
-			override fun onReceive(context: Context, intent: Intent) {
+		onTrackPositionChanged =
+			ReceiveBroadcastEvents { intent ->
 				val fileDuration = intent.getLongExtra(TrackPositionBroadcaster.TrackPositionChangedParameters.fileDuration, -1)
 				if (fileDuration > -1) setTrackDuration(fileDuration)
 				val filePosition = intent.getLongExtra(TrackPositionBroadcaster.TrackPositionChangedParameters.filePosition, -1)
 				if (filePosition > -1) setTrackProgress(filePosition)
 			}
-		}
 
 		val playbackStoppedIntentFilter = IntentFilter().apply {
 			addAction(PlaylistEvents.onPlaylistPause)

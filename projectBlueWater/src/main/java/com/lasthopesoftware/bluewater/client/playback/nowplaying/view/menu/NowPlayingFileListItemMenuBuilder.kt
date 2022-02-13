@@ -54,7 +54,7 @@ class NowPlayingFileListItemMenuBuilder(private val nowPlayingRepository: Mainta
 				}, textView.context))
 
 			fileListItemNowPlayingHandler?.close()
-			fileListItemNowPlayingHandler = fileListItemNowPlayingRegistrar.registerNewHandler { _, intent ->
+			fileListItemNowPlayingHandler = fileListItemNowPlayingRegistrar.registerNewHandler { intent ->
 				val playlistPosition = intent.getIntExtra(PlaylistEvents.PlaylistParameters.playlistPosition, -1)
 				textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(position == playlistPosition))
 				viewFlipper.isSelected = position == playlistPosition

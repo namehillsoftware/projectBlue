@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.client.playback.service
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
-import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
@@ -98,6 +97,7 @@ import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.MediaSession.MediaSessionService
 import com.lasthopesoftware.bluewater.shared.android.audiofocus.AudioFocusManagement
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
+import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
 import com.lasthopesoftware.bluewater.shared.android.notifications.NoOpChannelActivator
 import com.lasthopesoftware.bluewater.shared.android.notifications.NotificationBuilderProducer
 import com.lasthopesoftware.bluewater.shared.android.notifications.control.NotificationsController
@@ -306,12 +306,11 @@ open class PlaybackService :
 	private val binder by lazy { GenericBinder(this) }
 	private val notificationManager by lazy { getSystemService(NOTIFICATION_SERVICE) as NotificationManager }
 	private val audioManager by lazy { getSystemService(AUDIO_SERVICE) as AudioManager }
-	private val localBroadcastManagerLazy = lazy { LocalBroadcastManager.getInstance(this) }
-	private val lazyMessageBus = lazy { MessageBus(localBroadcastManagerLazy.value) }
+	private val lazyMessageBus = lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
 	private val playbackBroadcaster by lazy { LocalPlaybackBroadcaster(lazyMessageBus.value) }
 	private val applicationSettings by lazy { getApplicationSettingsRepository() }
 	private val selectedLibraryIdentifierProvider by lazy { SelectedBrowserLibraryIdentifierProvider(applicationSettings) }
-	private val playbackStartedBroadcaster by lazy { PlaybackStartedBroadcaster(localBroadcastManagerLazy.value) }
+	private val playbackStartedBroadcaster by lazy { PlaybackStartedBroadcaster(lazyMessageBus.value) }
 	private val libraryRepository by lazy { LibraryRepository(this) }
 	private val playlistVolumeManager by lazy { PlaylistVolumeManager(1.0f) }
 	private val volumeLevelSettings by lazy { VolumeLevelSettings(applicationSettings) }
@@ -395,30 +394,26 @@ open class PlaybackService :
 		}
 	}
 
-	private val playbackHaltingEvent = object : BroadcastReceiver() {
-		override fun onReceive(context: Context, intent: Intent) {
+	private val playbackHaltingEvent = ReceiveBroadcastEvents {
 			pausePlayback()
 			stopSelf(startId)
 		}
-	}
 
-	private val buildSessionReceiver = object : BroadcastReceiver() {
-		override fun onReceive(context: Context, intent: Intent) {
+	private val buildSessionReceiver = ReceiveBroadcastEvents { intent ->
 			val buildStatus = intent.getIntExtra(SelectedConnection.buildSessionBroadcastStatus, -1)
 			handleBuildConnectionStatusChange(buildStatus)
 		}
-	}
 
 	private val unhandledRejectionHandler = ImmediateResponse<Throwable, Unit>(::uncaughtExceptionHandler)
 
 	private val sessionConnection: Promise<IConnectionProvider?>
 		get() {
-			localBroadcastManagerLazy.value
+			lazyMessageBus.value
 				.registerReceiver(
 					buildSessionReceiver,
 					IntentFilter(SelectedConnection.buildSessionBroadcast))
 			return SelectedConnection.getInstance(this).promiseSessionConnection().must {
-				localBroadcastManagerLazy.value.unregisterReceiver(buildSessionReceiver)
+				lazyMessageBus.value.unregisterReceiver(buildSessionReceiver)
 				lazyNotificationController.value.removeNotification(connectingNotificationId)
 			}
 		}
@@ -480,7 +475,7 @@ open class PlaybackService :
 			addAction(SelectedConnectionSettingsChangeReceiver.connectionSettingsUpdated)
 		}
 
-		localBroadcastManagerLazy.value.registerReceiver(playbackHaltingEvent,	playbackHaltingIntentFilter)
+		lazyMessageBus.value.registerReceiver(playbackHaltingEvent,	playbackHaltingIntentFilter)
 	}
 
 	override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -521,7 +516,7 @@ open class PlaybackService :
 					val fileKey = intent.getIntExtra(Bag.playlistPosition, -1)
 					return if (fileKey < 0) Unit.toPromise() else playlistFiles
 						.addFile(ServiceFile(fileKey))
-						.then { localBroadcastManagerLazy.value.sendBroadcast(Intent(PlaylistEvents.onPlaylistChange)) }
+						.then { lazyMessageBus.value.sendBroadcast(Intent(PlaylistEvents.onPlaylistChange)) }
 						.eventually(LoopedInPromise.response({
 							Toast.makeText(this, getText(R.string.lbl_song_added_to_now_playing), Toast.LENGTH_SHORT).show()
 						}, this))
@@ -533,7 +528,7 @@ open class PlaybackService :
 					return if (filePosition < -1) Unit.toPromise() else playlistFiles
 						.removeFileAtPosition(filePosition)
 						.then {
-							localBroadcastManagerLazy.value.sendBroadcast(Intent(PlaylistEvents.onPlaylistChange))
+							lazyMessageBus.value.sendBroadcast(Intent(PlaylistEvents.onPlaylistChange))
 						}
 						.unitResponse()
 				}
@@ -640,7 +635,7 @@ open class PlaybackService :
 				startNowPlayingActivity(this)
 				promiseStartedPlaylist
 			}
-			.then { localBroadcastManagerLazy.value.sendBroadcast(Intent(PlaylistEvents.onPlaylistChange)) }
+			.then { lazyMessageBus.value.sendBroadcast(Intent(PlaylistEvents.onPlaylistChange)) }
 	}
 
 	private fun resumePlayback(): Promise<Unit> {
@@ -680,7 +675,7 @@ open class PlaybackService :
 
 			val imageProvider = CachedImageProvider.getInstance(this)
 
-			remoteControlProxy?.also(localBroadcastManagerLazy.value::unregisterReceiver)
+			remoteControlProxy?.also(lazyMessageBus.value::unregisterReceiver)
 
 			val promisedMediaBroadcaster = promisedMediaSession.then { mediaSession ->
 				val broadcaster = MediaSessionBroadcaster(
@@ -690,7 +685,7 @@ open class PlaybackService :
 					mediaSession)
 				remoteControlProxy = RemoteControlProxy(broadcaster)
 					.also { rcp ->
-						localBroadcastManagerLazy
+						lazyMessageBus
 							.value
 							.registerReceiver(rcp, buildRemoteControlProxyIntentFilter(rcp))
 					}
@@ -709,7 +704,7 @@ open class PlaybackService :
 						nowPlayingNotificationBuilder = it
 					}
 					.let { builder ->
-						playbackNotificationRouter?.also(localBroadcastManagerLazy.value::unregisterReceiver)
+						playbackNotificationRouter?.also(lazyMessageBus.value::unregisterReceiver)
 						playbackStartingNotificationBuilder.then { b ->
 							b?.let { playbackStartingNotificationBuilder ->
 								PlaybackNotificationRouter(
@@ -727,7 +722,7 @@ open class PlaybackService :
 						router?.also {
 							playbackNotificationRouter = router
 
-							localBroadcastManagerLazy
+							lazyMessageBus
 								.value
 								.registerReceiver(router, buildNotificationRouterIntentFilter(router))
 						}
@@ -753,11 +748,12 @@ open class PlaybackService :
 							remoteFileUriProvider,
 							CachedFilesProvider(this, cacheConfiguration)),
 						MediaFileUriProvider(
-							this,
 							MediaQueryCursorProvider(this, cachedFileProperties),
 							arbitratorForOs,
 							selectedLibraryIdentifierProvider,
-							false),
+							false,
+							lazyMessageBus.value
+						),
 						remoteFileUriProvider)
 
 					val promisedPreparationSourceProvider = playbackHandler.value.then { ph ->
@@ -1060,13 +1056,7 @@ open class PlaybackService :
 				cache?.release()
 			}
 
-		if (!localBroadcastManagerLazy.isInitialized()) return
-
-		localBroadcastManagerLazy.value.unregisterReceiver(buildSessionReceiver)
-		localBroadcastManagerLazy.value.unregisterReceiver(playbackHaltingEvent)
-
-		remoteControlProxy?.also(localBroadcastManagerLazy.value::unregisterReceiver)
-		playbackNotificationRouter?.also(localBroadcastManagerLazy.value::unregisterReceiver)
+		if (lazyMessageBus.isInitialized()) lazyMessageBus.value.clear()
 	}
 
 	/* End Binder Code */

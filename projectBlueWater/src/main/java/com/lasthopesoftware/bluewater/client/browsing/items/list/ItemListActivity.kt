@@ -1,7 +1,5 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.list
 
-import android.content.BroadcastReceiver
-import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
@@ -97,13 +95,11 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer {
 		intentFilter.addAction(MenuNotifications.launchingActivity)
 		intentFilter.addAction(MenuNotifications.launchingActivityHalted)
 		messageBus.registerReceiver(
-			object : BroadcastReceiver() {
-				override fun onReceive(context: Context?, intent: Intent?) {
-					val isLaunching = intent?.action == MenuNotifications.launchingActivity
+			{ intent ->
+				val isLaunching = intent.action == MenuNotifications.launchingActivity
 
-					itemListView.visibility = ViewUtils.getVisibility(!isLaunching)
-					pbLoading.findView().visibility = ViewUtils.getVisibility(isLaunching)
-				}
+				itemListView.visibility = ViewUtils.getVisibility(!isLaunching)
+				pbLoading.findView().visibility = ViewUtils.getVisibility(isLaunching)
 			},
 			intentFilter
 		)

@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view
 
-import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
@@ -12,6 +11,8 @@ import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingFileProvider.Companion.fromActiveLibrary
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.NowPlayingActivity.Companion.startNowPlayingActivity
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
+import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
+import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils.getThemedDrawable
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
@@ -40,13 +41,13 @@ class NowPlayingFloatingActionButton private constructor(context: Context) : Flo
 						visibility = ViewUtils.getVisibility(isNowPlayingFileSet)
 						if (isNowPlayingFileSet) return@response
 
-						val localBroadcastManager = LocalBroadcastManager.getInstance(context)
-						localBroadcastManager.registerReceiver(object : BroadcastReceiver() {
+						val messageBus = MessageBus(LocalBroadcastManager.getInstance(context))
+						messageBus.registerReceiver(object : ReceiveBroadcastEvents {
 							@Synchronized
-							override fun onReceive(context: Context, intent: Intent) {
+							override fun onReceive(intent: Intent) {
 								isNowPlayingFileSet = true
 								visibility = ViewUtils.getVisibility(true)
-								localBroadcastManager.unregisterReceiver(this)
+								messageBus.unregisterReceiver(this)
 							}
 						}, IntentFilter(PlaylistEvents.onPlaylistStart))
 					}, context))

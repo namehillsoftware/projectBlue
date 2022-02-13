@@ -1,8 +1,5 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels
 
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
 import android.content.IntentFilter
 import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
@@ -14,6 +11,7 @@ import com.lasthopesoftware.bluewater.client.connection.selected.ProvideSelected
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
+import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
 import com.lasthopesoftware.bluewater.shared.android.messages.RegisterForMessages
 import com.lasthopesoftware.bluewater.shared.images.ProvideDefaultImage
 import com.namehillsoftware.handoff.promises.Promise
@@ -32,7 +30,7 @@ class NowPlayingCoverArtViewModel(
 	private val imageProvider: ProvideImages,
 	private val pollConnections: PollForConnections,
 ) : ViewModel() {
-	private val onPlaybackChangedReceiver: BroadcastReceiver
+	private val onPlaybackChangedReceiver: ReceiveBroadcastEvents
 
 	private var cachedPromises: CachedPromises? = null
 
@@ -49,11 +47,7 @@ class NowPlayingCoverArtViewModel(
 	val unexpectedError = unexpectedErrorState.asStateFlow()
 
 	init {
-		onPlaybackChangedReceiver = object : BroadcastReceiver() {
-			override fun onReceive(context: Context?, intent: Intent?) {
-				setView()
-			}
-		}
+		onPlaybackChangedReceiver = ReceiveBroadcastEvents { setView() }
 
 		val playingFileChangedFilter = IntentFilter().apply {
 			addAction(PlaylistEvents.onPlaylistTrackChange)

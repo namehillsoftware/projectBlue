@@ -1,6 +1,6 @@
 # project blue
 
-![project blue](design/clearstream_logo.png)
+![project blue](./design/project-blue-logo-circular.png)
 
 project blue is an alternative, open source streaming music client for [JRiver Media Center](http://jriver.com/).
 
@@ -11,9 +11,10 @@ It's features include:
 - Synchronize audio from a JRMC server to device
 - Play local files when present and metadata match
 - Updates server with now playing information
-- Interfaces with Bluetooth remote control clients and Pebble watches
+- Interfaces with Bluetooth remote control clients
 - Interfaces with apps that implement the Scrobble Droid interface (Simple Last.fm Scrobbler is my scrobbler of choice) for scrobbling to Last.fm or Libre.fm
 - Intuitive layout
+- Android Auto support (beta)
 
 Download on the [Google Play Store](https://play.google.com/store/apps/details?id=com.lasthopesoftware.bluewater)
 

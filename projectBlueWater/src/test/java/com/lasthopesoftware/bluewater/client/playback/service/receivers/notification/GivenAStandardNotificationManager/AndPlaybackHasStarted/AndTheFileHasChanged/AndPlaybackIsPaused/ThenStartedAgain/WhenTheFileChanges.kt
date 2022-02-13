@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.playback.service.receivers.notific
 
 import android.app.Notification
 import android.content.Intent
-import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
@@ -39,24 +38,23 @@ class WhenTheFileChanges : AndroidContext() {
 			notificationContentBuilder
 		) { Promise(FakeNotificationCompatBuilder.newFakeBuilder(firstNotification)) })
 
-		playbackNotificationRouter.onReceive(ApplicationProvider.getApplicationContext(), Intent(PlaylistEvents.onPlaylistStart))
+		playbackNotificationRouter.onReceive(Intent(PlaylistEvents.onPlaylistStart))
 
 		run {
 			val playlistChangeIntent = Intent(PlaylistEvents.onPlaylistTrackChange)
 			playlistChangeIntent.putExtra(PlaylistEvents.PlaybackFileParameters.fileKey, 1)
-			playbackNotificationRouter.onReceive(ApplicationProvider.getApplicationContext(), playlistChangeIntent)
+			playbackNotificationRouter.onReceive(playlistChangeIntent)
 		}
 
-		playbackNotificationRouter.onReceive(ApplicationProvider.getApplicationContext(), Intent(PlaylistEvents.onPlaylistPause))
+		playbackNotificationRouter.onReceive(Intent(PlaylistEvents.onPlaylistPause))
 
 		run {
 			val playlistChangeIntent = Intent(PlaylistEvents.onPlaylistTrackChange)
 			playlistChangeIntent.putExtra(PlaylistEvents.PlaybackFileParameters.fileKey, 2)
-			playbackNotificationRouter
-				.onReceive(ApplicationProvider.getApplicationContext(), playlistChangeIntent)
+			playbackNotificationRouter.onReceive(playlistChangeIntent)
 		}
 
-		playbackNotificationRouter.onReceive(ApplicationProvider.getApplicationContext(), Intent(PlaylistEvents.onPlaylistStart))
+		playbackNotificationRouter.onReceive(Intent(PlaylistEvents.onPlaylistStart))
 	}
 
 	@Test

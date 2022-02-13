@@ -1,9 +1,12 @@
 package com.lasthopesoftware.bluewater.client.playback.service.notification.GivenAStandardNotificationManager;
 
+import static com.lasthopesoftware.resources.notifications.FakeNotificationCompatBuilder.newFakeBuilder;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+
 import android.app.Notification;
 import android.content.Intent;
-
-import androidx.test.core.app.ApplicationProvider;
 
 import com.lasthopesoftware.AndroidContext;
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents;
@@ -15,11 +18,6 @@ import com.lasthopesoftware.bluewater.shared.android.notifications.control.Contr
 import com.namehillsoftware.handoff.promises.Promise;
 
 import org.junit.Test;
-
-import static com.lasthopesoftware.resources.notifications.FakeNotificationCompatBuilder.newFakeBuilder;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 
 public class WhenPlaybackStarts extends AndroidContext {
 	private static final Notification startedNotification = new Notification();
@@ -36,10 +34,7 @@ public class WhenPlaybackStarts extends AndroidContext {
 				notificationContentBuilder,
 				() -> new Promise<>(newFakeBuilder(startedNotification))));
 
-		playbackNotificationRouter
-			.onReceive(
-				ApplicationProvider.getApplicationContext(),
-				new Intent(PlaylistEvents.onPlaylistStart));
+		playbackNotificationRouter.onReceive(new Intent(PlaylistEvents.onPlaylistStart));
 	}
 
 	@Test

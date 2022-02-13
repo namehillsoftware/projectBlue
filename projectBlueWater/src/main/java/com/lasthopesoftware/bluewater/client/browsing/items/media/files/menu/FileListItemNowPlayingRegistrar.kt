@@ -1,8 +1,5 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.media.files.menu
 
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
 import android.content.IntentFilter
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
 import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
@@ -15,13 +12,13 @@ class FileListItemNowPlayingRegistrar(private val messageRegistrar: RegisterForM
 	}
 
 	private val syncObj = Any()
-	private val registeredHandlers = HashSet<FileListItemNowPlayingHandler>()
+	private val registeredHandlers = HashSet<ReceiveBroadcastEvents>()
 
 	fun registerNewHandler(receiver: ReceiveBroadcastEvents): AutoCloseable =
 		FileListItemNowPlayingHandler(receiver).also {
 			synchronized(syncObj) {
-				messageRegistrar.registerReceiver(it, intentFilter)
-				registeredHandlers.add(it)
+				messageRegistrar.registerReceiver(receiver, intentFilter)
+				registeredHandlers.add(receiver)
 			}
 		}
 
@@ -32,19 +29,14 @@ class FileListItemNowPlayingRegistrar(private val messageRegistrar: RegisterForM
 		}
 	}
 
-	private fun remove(handler: FileListItemNowPlayingHandler) {
+	private fun remove(receiver: ReceiveBroadcastEvents) {
 		synchronized(syncObj) {
-			messageRegistrar.unregisterReceiver(handler)
-			registeredHandlers.remove(handler)
+			messageRegistrar.unregisterReceiver(receiver)
+			registeredHandlers.remove(receiver)
 		}
 	}
 
-	private inner class FileListItemNowPlayingHandler(private val receiver: ReceiveBroadcastEvents) : BroadcastReceiver(), AutoCloseable {
-
-		override fun onReceive(context: Context?, intent: Intent?) {
-			if (context != null && intent != null) receiver.onReceive(context, intent)
-		}
-
-		override fun close() = remove(this)
+	private inner class FileListItemNowPlayingHandler(private val receiver: ReceiveBroadcastEvents) : AutoCloseable {
+		override fun close() = remove(receiver)
 	}
 }

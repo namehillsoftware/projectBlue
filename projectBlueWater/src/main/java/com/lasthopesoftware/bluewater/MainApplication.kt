@@ -3,9 +3,7 @@ package com.lasthopesoftware.bluewater
 import android.annotation.SuppressLint
 import android.app.Application
 import android.app.NotificationManager
-import android.content.BroadcastReceiver
 import android.content.Context
-import android.content.Intent
 import android.content.IntentFilter
 import android.os.Environment
 import android.os.StrictMode
@@ -39,7 +37,6 @@ import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessio
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionSettingsChangeReceiver
 import com.lasthopesoftware.bluewater.client.connection.settings.changes.ObservableConnectionSettingsLibraryStorage
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
-import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.pebble.PebbleFileChangedNotificationRegistration
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble.PlaybackFileStartedScrobblerRegistration
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble.PlaybackFileStoppedScrobblerRegistration
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
@@ -47,6 +44,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.u
 import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
+import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
 import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler
 import com.lasthopesoftware.compilation.DebugFlag
 import com.namehillsoftware.handoff.promises.Promise
@@ -59,6 +57,8 @@ open class MainApplication : Application() {
 		private var isWorkManagerInitialized = false
 	}
 
+	private val libraryRepository by lazy { LibraryRepository(this) }
+	private val storedFileAccess by lazy { StoredFileAccess(this) }
 	private val notificationManagerLazy by lazy { getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager }
 	private val storageReadPermissionsRequestNotificationBuilderLazy by lazy { StorageReadPermissionsRequestNotificationBuilder(this) }
 	private val storageWritePermissionsRequestNotificationBuilderLazy by lazy { StorageWritePermissionsRequestNotificationBuilder(this) }
@@ -87,53 +87,49 @@ open class MainApplication : Application() {
 	}
 
 	private fun registerAppBroadcastReceivers() {
-		messageBus.registerReceiver(object : BroadcastReceiver() {
-			override fun onReceive(context: Context, intent: Intent) {
-				val libraryId = intent.getIntExtra(MediaFileUriProvider.mediaFileFoundFileKey, -1)
-				if (libraryId < 0) return
+		messageBus.registerReceiver(ReceiveBroadcastEvents { intent ->
+			val libraryId = intent.getIntExtra(MediaFileUriProvider.mediaFileFoundFileKey, -1)
+			if (libraryId < 0) return@ReceiveBroadcastEvents
 
-				val fileKey = intent.getIntExtra(MediaFileUriProvider.mediaFileFoundFileKey, -1)
-				if (fileKey == -1) return
+			val fileKey = intent.getIntExtra(MediaFileUriProvider.mediaFileFoundFileKey, -1)
+			if (fileKey == -1) return@ReceiveBroadcastEvents
 
-				val mediaFileId = intent.getIntExtra(MediaFileUriProvider.mediaFileFoundMediaId, -1)
-				if (mediaFileId == -1) return
+			val mediaFileId = intent.getIntExtra(MediaFileUriProvider.mediaFileFoundMediaId, -1)
+			if (mediaFileId == -1) return@ReceiveBroadcastEvents
 
-				val mediaFilePath = intent.getStringExtra(MediaFileUriProvider.mediaFileFoundPath)
-				if (mediaFilePath.isNullOrEmpty()) return
+			val mediaFilePath = intent.getStringExtra(MediaFileUriProvider.mediaFileFoundPath)
+			if (mediaFilePath.isNullOrEmpty()) return@ReceiveBroadcastEvents
 
-				LibraryRepository(context)
-					.getLibrary(LibraryId(libraryId))
-					.then { library ->
-						if (library != null) {
-							val storedFileAccess = StoredFileAccess(
-								context
-							)
-							storedFileAccess.addMediaFile(library, ServiceFile(fileKey), mediaFileId, mediaFilePath)
-						}
+			libraryRepository
+				.getLibrary(LibraryId(libraryId))
+				.then { library ->
+					if (library != null) {
+						storedFileAccess.addMediaFile(library, ServiceFile(fileKey), mediaFileId, mediaFilePath)
 					}
-			}
+				}
 		}, IntentFilter(MediaFileUriProvider.mediaFileFoundEvent))
 
-		messageBus.registerReceiver(object : BroadcastReceiver() {
-			override fun onReceive(context: Context, intent: Intent) {
-				val libraryId = intent.getIntExtra(StorageReadPermissionsRequestedBroadcaster.readPermissionsLibraryId, -1)
-				if (libraryId < 0) return
-				notificationManagerLazy.notify(
-					336,
-					storageReadPermissionsRequestNotificationBuilderLazy
-						.buildReadPermissionsRequestNotification(libraryId))
-			}
+		messageBus.registerReceiver({ intent ->
+			intent.getIntExtra(StorageReadPermissionsRequestedBroadcaster.readPermissionsLibraryId, -1)
+				.takeIf { it > -1 }
+				?.let { libraryId ->
+					notificationManagerLazy.notify(
+						336,
+						storageReadPermissionsRequestNotificationBuilderLazy
+							.buildReadPermissionsRequestNotification(libraryId))
+				}
 		}, IntentFilter(StorageReadPermissionsRequestedBroadcaster.readPermissionsNeeded))
 
-		messageBus.registerReceiver(object : BroadcastReceiver() {
-			override fun onReceive(context: Context, intent: Intent) {
-				val libraryId = intent.getIntExtra(StorageWritePermissionsRequestedBroadcaster.writePermissionsLibraryId, -1)
-				if (libraryId < 0) return
-				notificationManagerLazy.notify(
-					396,
-					storageWritePermissionsRequestNotificationBuilderLazy
-						.buildWritePermissionsRequestNotification(libraryId))
-			}
+		messageBus.registerReceiver({ intent ->
+			intent.getIntExtra(StorageReadPermissionsRequestedBroadcaster.readPermissionsLibraryId, -1)
+				.takeIf { it > -1 }
+				?.let { libraryId ->
+					notificationManagerLazy.notify(
+						396,
+						storageWritePermissionsRequestNotificationBuilderLazy
+							.buildWritePermissionsRequestNotification(libraryId)
+					)
+				}
 		}, IntentFilter(StorageWritePermissionsRequestedBroadcaster.writePermissionsNeeded))
 
 		messageBus.registerReceiver(
@@ -150,12 +146,11 @@ open class MainApplication : Application() {
 
 		val connectionDependentReceiverRegistrations = listOf(
 			UpdatePlayStatsOnCompleteRegistration(),
-			PlaybackFileStartedScrobblerRegistration(),
-			PlaybackFileStoppedScrobblerRegistration(),
-			PebbleFileChangedNotificationRegistration())
+			PlaybackFileStartedScrobblerRegistration(this),
+			PlaybackFileStoppedScrobblerRegistration(this))
 
 		messageBus.registerReceiver(
-			SessionConnectionRegistrationsMaintainer(messageBus, connectionDependentReceiverRegistrations),
+			SessionConnectionRegistrationsMaintainer(this, messageBus, connectionDependentReceiverRegistrations),
 			IntentFilter(SelectedConnection.buildSessionBroadcast))
 
 		LiveNowPlayingLookup.initializeInstance(this)
