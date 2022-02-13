@@ -5,9 +5,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
 import android.os.Handler
-import android.view.View
 import android.view.WindowManager
-import android.widget.RatingBar.OnRatingBarChangeListener
 import android.widget.ViewAnimator
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
@@ -16,7 +14,6 @@ import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.viewpager2.adapter.FragmentStateAdapter
-import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.menu.FileListItemNowPlayingRegistrar
@@ -41,6 +38,8 @@ import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSele
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.fragments.NowPlayingBottomFragment
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.fragments.NowPlayingTopFragment
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.InMemoryNowPlayingDisplaySettings
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingCoverArtViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingViewModel
@@ -196,7 +195,7 @@ class NowPlayingActivity :
 		super.onCreate(savedInstanceState)
 
 		binding.then { binding ->
-			binding.pager.adapter =
+			binding.pager.adapter = PagerAdapter(this)
 
 			val vm = binding.vm ?: return@then
 
@@ -209,98 +208,93 @@ class NowPlayingActivity :
 				UnexpectedExceptionToaster.announce(this, it)
 			}.launchIn(lifecycleScope)
 
-			vm.nowPlayingList.onEach { l ->
-				nowPlayingListAdapter
-					.eventually { npa -> npa.updateListEventually(l) }
-			}.launchIn(lifecycleScope)
-
 			binding.coverArtVm?.unexpectedError?.filterNotNull()?.onEach {
 				UnexpectedExceptionToaster.announce(this, it)
 			}?.launchIn(lifecycleScope)
 
-			val onRatingBarChangeListener = OnRatingBarChangeListener{ _, rating, fromUser ->
-				if (fromUser) vm.updateRating(rating)
-			}
+//			val onRatingBarChangeListener = OnRatingBarChangeListener{ _, rating, fromUser ->
+//				if (fromUser) vm.updateRating(rating)
+//			}
+//
+//			val toggleListClickHandler = View.OnClickListener {
+//				with(bottomSheetBehavior) {
+//					state = when (state) {
+//						BottomSheetBehavior.STATE_COLLAPSED -> BottomSheetBehavior.STATE_EXPANDED
+//						BottomSheetBehavior.STATE_EXPANDED -> BottomSheetBehavior.STATE_COLLAPSED
+//						else -> state
+//					}
+//				}
+//			}
+//
+//			with (binding.control.topSheet) {
+//				btnPlay.setOnClickListener { v ->
+//					if (!vm.isScreenControlsVisible.value) return@setOnClickListener
+//					PlaybackService.play(v.context)
+//					vm.togglePlaying(true)
+//				}
+//
+//				btnPause.setOnClickListener { v ->
+//					if (!vm.isScreenControlsVisible.value) return@setOnClickListener
+//					PlaybackService.pause(v.context)
+//					vm.togglePlaying(false)
+//				}
+//
+//				btnNext.setOnClickListener { v ->
+//					if (vm.isScreenControlsVisible.value) PlaybackService.next(v.context)
+//				}
+//
+//				btnPrevious.setOnClickListener { v ->
+//					if (vm.isScreenControlsVisible.value) PlaybackService.previous(v.context)
+//				}
+//
+//				repeatButton.setOnClickListener { vm.toggleRepeating() }
+//
+//				isScreenKeptOnButton.setOnClickListener { vm.toggleScreenOn() }
+//
+//				rbSongRating.onRatingBarChangeListener = onRatingBarChangeListener
+//
+//				bottomSheetBehavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
+//					override fun onStateChanged(bottomSheet: View, newState: Int) {
+//						isDrawerOpened = newState == BottomSheetBehavior.STATE_EXPANDED
+//						with (nowPlayingTopSheet) {
+//							alpha = when (newState) {
+//								BottomSheetBehavior.STATE_COLLAPSED -> 1f
+//								BottomSheetBehavior.STATE_EXPANDED -> 0f
+//								else -> alpha
+//							}
+//						}
+//					}
+//
+//					override fun onSlide(bottomSheet: View, slideOffset: Float) {
+//						nowPlayingTopSheet.alpha = 1 - slideOffset
+//					}
+//				})
+//
+//				viewNowPlayingListButton.setOnClickListener(toggleListClickHandler)
+//			}
 
-			val toggleListClickHandler = View.OnClickListener {
-				with(bottomSheetBehavior) {
-					state = when (state) {
-						BottomSheetBehavior.STATE_COLLAPSED -> BottomSheetBehavior.STATE_EXPANDED
-						BottomSheetBehavior.STATE_EXPANDED -> BottomSheetBehavior.STATE_COLLAPSED
-						else -> state
-					}
-				}
-			}
-
-			with (binding.control.topSheet) {
-				btnPlay.setOnClickListener { v ->
-					if (!vm.isScreenControlsVisible.value) return@setOnClickListener
-					PlaybackService.play(v.context)
-					vm.togglePlaying(true)
-				}
-
-				btnPause.setOnClickListener { v ->
-					if (!vm.isScreenControlsVisible.value) return@setOnClickListener
-					PlaybackService.pause(v.context)
-					vm.togglePlaying(false)
-				}
-
-				btnNext.setOnClickListener { v ->
-					if (vm.isScreenControlsVisible.value) PlaybackService.next(v.context)
-				}
-
-				btnPrevious.setOnClickListener { v ->
-					if (vm.isScreenControlsVisible.value) PlaybackService.previous(v.context)
-				}
-
-				repeatButton.setOnClickListener { vm.toggleRepeating() }
-
-				isScreenKeptOnButton.setOnClickListener { vm.toggleScreenOn() }
-
-				rbSongRating.onRatingBarChangeListener = onRatingBarChangeListener
-
-				bottomSheetBehavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
-					override fun onStateChanged(bottomSheet: View, newState: Int) {
-						isDrawerOpened = newState == BottomSheetBehavior.STATE_EXPANDED
-						with (nowPlayingTopSheet) {
-							alpha = when (newState) {
-								BottomSheetBehavior.STATE_COLLAPSED -> 1f
-								BottomSheetBehavior.STATE_EXPANDED -> 0f
-								else -> alpha
-							}
-						}
-					}
-
-					override fun onSlide(bottomSheet: View, slideOffset: Float) {
-						nowPlayingTopSheet.alpha = 1 - slideOffset
-					}
-				})
-
-				viewNowPlayingListButton.setOnClickListener(toggleListClickHandler)
-			}
-
-			with (binding.control.bottomSheet) {
-				vm.nowPlayingFile.filterNotNull().onEach {
-					if (!isDrawerOpened)
-						nowPlayingListView.scrollToPosition(it.playlistPosition)
-				}.launchIn(lifecycleScope)
-
-				miniPlay.setOnClickListener { v ->
-					PlaybackService.play(v.context)
-					vm.togglePlaying(true)
-				}
-
-				miniPause.setOnClickListener { v ->
-					PlaybackService.pause(v.context)
-					vm.togglePlaying(false)
-				}
-
-				miniSongRating.onRatingBarChangeListener = onRatingBarChangeListener
-
-				closeNowPlayingList.setOnClickListener(toggleListClickHandler)
-			}
-
-			binding.control.nowPlayingContentView.setOnClickListener { vm.showNowPlayingControls() }
+//			with (binding.control.bottomSheet) {
+//				vm.nowPlayingFile.filterNotNull().onEach {
+//					if (!isDrawerOpened)
+//						nowPlayingListView.scrollToPosition(it.playlistPosition)
+//				}.launchIn(lifecycleScope)
+//
+//				miniPlay.setOnClickListener { v ->
+//					PlaybackService.play(v.context)
+//					vm.togglePlaying(true)
+//				}
+//
+//				miniPause.setOnClickListener { v ->
+//					PlaybackService.pause(v.context)
+//					vm.togglePlaying(false)
+//				}
+//
+//				miniSongRating.onRatingBarChangeListener = onRatingBarChangeListener
+//
+//				closeNowPlayingList.setOnClickListener(toggleListClickHandler)
+//			}
+//
+//			binding.control.nowPlayingContentView.setOnClickListener { vm.showNowPlayingControls() }
 		}
 
 		messageBus.value.registerReceiver(onConnectionLostListener, IntentFilter(PollConnectionService.connectionLostNotification))
@@ -316,13 +310,6 @@ class NowPlayingActivity :
 				b.coverArtVm?.initializeViewModel()
 			}
 		}, messageHandler))
-	}
-
-	override fun onRestoreInstanceState(savedInstanceState: Bundle) {
-		super.onRestoreInstanceState(savedInstanceState)
-
-		if (bottomSheetBehavior.state == BottomSheetBehavior.STATE_EXPANDED)
-			binding.then { b -> b.control.topSheet.nowPlayingTopSheet.alpha = 0f }
 	}
 
 	override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -354,10 +341,10 @@ class NowPlayingActivity :
 
 	override fun onBackPressed() {
 		if (LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator)) return
-		if (bottomSheetBehavior.state == BottomSheetBehavior.STATE_EXPANDED) {
-			bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
-			return
-		}
+//		if (bottomSheetBehavior.state == BottomSheetBehavior.STATE_EXPANDED) {
+//			bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
+//			return
+//		}
 		super.onBackPressed()
 	}
 
@@ -365,9 +352,13 @@ class NowPlayingActivity :
 		window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 	}
 
-	private inner class ScreenSlidePagerAdapter(fa: FragmentActivity) : FragmentStateAdapter(fa) {
+	private class PagerAdapter(fa: FragmentActivity) : FragmentStateAdapter(fa) {
 		override fun getItemCount(): Int = 2
 
-		override fun createFragment(position: Int): Fragment = ScreenSlidePageFragment()
+		override fun createFragment(position: Int): Fragment = when (position) {
+			0 -> NowPlayingTopFragment()
+			1 -> NowPlayingBottomFragment()
+			else -> throw IndexOutOfBoundsException()
+		}
 	}
 }

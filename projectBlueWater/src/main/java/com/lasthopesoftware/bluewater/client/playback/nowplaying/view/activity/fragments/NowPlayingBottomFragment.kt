@@ -24,12 +24,12 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.v
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
-import com.lasthopesoftware.bluewater.databinding.ControlNowPlayingTopSheetBinding
+import com.lasthopesoftware.bluewater.databinding.ControlNowPlayingBottomSheetBinding
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 import com.lasthopesoftware.resources.strings.StringResources
 
-class NowPlayingTopFragment : Fragment() {
+class NowPlayingBottomFragment : Fragment() {
 
 	private val messageBus = lazy { MessageBus(LocalBroadcastManager.getInstance(requireContext())) }
 
@@ -80,49 +80,36 @@ class NowPlayingTopFragment : Fragment() {
 	}
 
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
-		val binding = DataBindingUtil.inflate<ControlNowPlayingTopSheetBinding>(
+		val binding = DataBindingUtil.inflate<ControlNowPlayingBottomSheetBinding>(
 			inflater,
-			R.layout.control_now_playing_top_sheet,
+			R.layout.control_now_playing_bottom_sheet,
 			container,
 			true
 		)
 
 		binding.vm = nowPlayingViewModel
+		binding.lifecycleOwner = activity
 
 		with (binding) {
-			btnPlay.setOnClickListener { v ->
+			miniPlay.setOnClickListener { v ->
 				if (!nowPlayingViewModel.isScreenControlsVisible.value) return@setOnClickListener
 				PlaybackService.play(v.context)
 				nowPlayingViewModel.togglePlaying(true)
 			}
 
-			btnPause.setOnClickListener { v ->
+			miniPause.setOnClickListener { v ->
 				if (!nowPlayingViewModel.isScreenControlsVisible.value) return@setOnClickListener
 				PlaybackService.pause(v.context)
 				nowPlayingViewModel.togglePlaying(false)
 			}
 
-			btnNext.setOnClickListener { v ->
-				if (nowPlayingViewModel.isScreenControlsVisible.value) PlaybackService.next(v.context)
-			}
-
-			btnPrevious.setOnClickListener { v ->
-				if (nowPlayingViewModel.isScreenControlsVisible.value) PlaybackService.previous(v.context)
-			}
-
-			repeatButton.setOnClickListener { nowPlayingViewModel.toggleRepeating() }
-
-			isScreenKeptOnButton.setOnClickListener { nowPlayingViewModel.toggleScreenOn() }
-
-			rbSongRating.onRatingBarChangeListener = RatingBar.OnRatingBarChangeListener { _, rating, fromUser ->
+			miniSongRating.onRatingBarChangeListener = RatingBar.OnRatingBarChangeListener { _, rating, fromUser ->
 				if (fromUser) nowPlayingViewModel.updateRating(rating)
 			}
-
-			nowPlayingTopSheet.setOnClickListener { nowPlayingViewModel.showNowPlayingControls() }
 
 //			viewNowPlayingListButton.setOnClickListener(toggleListClickHandler)
 		}
 
-		return binding.nowPlayingTopSheet
+		return binding.nowPlayingBottomSheet
 	}
 }
