@@ -22,20 +22,10 @@
             android:layout_gravity="center_horizontal"
             bind:vm="@{coverArtVm}" />
 
-        <RelativeLayout
+        <androidx.viewpager2.widget.ViewPager2
+            android:id="@+id/pager"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:background="@color/overlay_dark"
-            android:fitsSystemWindows="true">
-
-            <include
-                layout="@layout/control_now_playing"
-                android:id="@+id/control"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center_horizontal"
-                bind:vm="@{vm}"/>
-        </RelativeLayout>
+            android:layout_height="match_parent" />
 
     </RelativeLayout>
 </layout>

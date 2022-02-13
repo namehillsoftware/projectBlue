@@ -11,9 +11,11 @@ import android.widget.RatingBar.OnRatingBarChangeListener
 import android.widget.ViewAnimator
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
-import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.viewpager2.adapter.FragmentStateAdapter
 import com.google.android.material.bottomsheet.BottomSheetBehavior
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler
@@ -44,7 +46,6 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.v
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.list.NowPlayingFileListAdapter
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.menu.NowPlayingFileListItemMenuBuilder
-import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.databinding.ActivityViewNowPlayingBinding
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
@@ -54,6 +55,7 @@ import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModel
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToaster
 import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.resources.strings.StringResources
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.launchIn
@@ -142,7 +144,7 @@ class NowPlayingActivity :
 
 	private val defaultImageProvider by lazy { DefaultImageProvider(this) }
 
-	private lateinit var bottomSheetBehavior: BottomSheetBehavior<View>
+//	private lateinit var bottomSheetBehavior: BottomSheetBehavior<View>
 
 	private val onConnectionLostListener =
 		ReceiveBroadcastEvents { WaitForConnectionDialog.show(this) }
@@ -150,13 +152,13 @@ class NowPlayingActivity :
 	private val binding by lazy {
 		val binding = DataBindingUtil.setContentView<ActivityViewNowPlayingBinding>(this, R.layout.activity_view_now_playing)
 		binding.lifecycleOwner = this
-		bottomSheetBehavior = BottomSheetBehavior.from(binding.control.bottomSheetHandle)
-
-		val promisedListViewSetup = nowPlayingListAdapter.eventually(LoopedInPromise.response({ a ->
-			val listView = binding.control.bottomSheet.nowPlayingListView
-			listView.adapter = a
-			listView.layoutManager = LinearLayoutManager(this)
-		}, messageHandler))
+//		bottomSheetBehavior = BottomSheetBehavior.from(binding.control.bottomSheetHandle)
+//
+//		val promisedListViewSetup = nowPlayingListAdapter.eventually(LoopedInPromise.response({ a ->
+//			val listView = binding.control.bottomSheet.nowPlayingListView
+//			listView.adapter = a
+//			listView.layoutManager = LinearLayoutManager(this)
+//		}, messageHandler))
 
 		val liveNowPlayingLookup = LiveNowPlayingLookup.getInstance()
 		binding.vm = buildViewModel {
@@ -185,7 +187,7 @@ class NowPlayingActivity :
 			)
 		}
 
-		promisedListViewSetup.then { binding }
+		binding.toPromise()
 	}
 
 	private var isDrawerOpened = false
@@ -194,6 +196,8 @@ class NowPlayingActivity :
 		super.onCreate(savedInstanceState)
 
 		binding.then { binding ->
+			binding.pager.adapter =
+
 			val vm = binding.vm ?: return@then
 
 			vm.isScreenOn.onEach {
@@ -359,5 +363,11 @@ class NowPlayingActivity :
 
 	private fun disableKeepScreenOn() {
 		window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+	}
+
+	private inner class ScreenSlidePagerAdapter(fa: FragmentActivity) : FragmentStateAdapter(fa) {
+		override fun getItemCount(): Int = 2
+
+		override fun createFragment(position: Int): Fragment = ScreenSlidePageFragment()
 	}
 }
