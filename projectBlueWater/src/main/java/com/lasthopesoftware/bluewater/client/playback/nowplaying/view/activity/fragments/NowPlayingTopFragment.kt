@@ -26,7 +26,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.databinding.ControlNowPlayingTopSheetBinding
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
-import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
+import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildActivityViewModelLazily
 import com.lasthopesoftware.resources.strings.StringResources
 
 class NowPlayingTopFragment : Fragment() {
@@ -64,7 +64,7 @@ class NowPlayingTopFragment : Fragment() {
 		}
 	}
 
-	private val nowPlayingViewModel by buildViewModelLazily {
+	private val nowPlayingViewModel by buildActivityViewModelLazily {
 		NowPlayingViewModel(
 			messageBus.value,
 			LiveNowPlayingLookup.getInstance(),
@@ -89,7 +89,7 @@ class NowPlayingTopFragment : Fragment() {
 
 		binding.vm = nowPlayingViewModel
 
-		with (binding) {
+		return with (binding) {
 			btnPlay.setOnClickListener { v ->
 				if (!nowPlayingViewModel.isScreenControlsVisible.value) return@setOnClickListener
 				PlaybackService.play(v.context)
@@ -121,8 +121,8 @@ class NowPlayingTopFragment : Fragment() {
 			nowPlayingTopSheet.setOnClickListener { nowPlayingViewModel.showNowPlayingControls() }
 
 //			viewNowPlayingListButton.setOnClickListener(toggleListClickHandler)
-		}
 
-		return binding.nowPlayingTopSheet
+			nowPlayingTopSheet
+		}
 	}
 }

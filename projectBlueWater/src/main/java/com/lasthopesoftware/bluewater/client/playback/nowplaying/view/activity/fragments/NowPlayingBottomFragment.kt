@@ -26,7 +26,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.databinding.ControlNowPlayingBottomSheetBinding
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
-import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
+import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildActivityViewModelLazily
 import com.lasthopesoftware.resources.strings.StringResources
 
 class NowPlayingBottomFragment : Fragment() {
@@ -64,7 +64,7 @@ class NowPlayingBottomFragment : Fragment() {
 		}
 	}
 
-	private val nowPlayingViewModel by buildViewModelLazily {
+	private val nowPlayingViewModel by buildActivityViewModelLazily {
 		NowPlayingViewModel(
 			messageBus.value,
 			LiveNowPlayingLookup.getInstance(),

@@ -33,6 +33,18 @@ inline fun <reified V: ViewModel> Fragment.buildViewModelLazily(noinline initial
 		}
 	)
 
+inline fun <reified V: ViewModel> Fragment.buildActivityViewModelLazily(noinline initializer: () -> V) =
+	ViewModelLazy(
+		viewModelClass = V::class,
+		storeProducer = { requireActivity().viewModelStore },
+		factoryProducer = {
+			return@ViewModelLazy object : ViewModelProvider.Factory {
+				@Suppress("UNCHECKED_CAST")
+				override fun <T : ViewModel> create(modelClass: Class<T>): T = initializer.invoke() as T
+			}
+		}
+	)
+
 @MainThread
 inline fun <reified V: ViewModel> ComponentActivity.buildViewModel(noinline initializer: () -> V): V =
 	ViewModelProvider(viewModelStore, object : ViewModelProvider.Factory {
