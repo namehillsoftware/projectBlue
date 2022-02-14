@@ -88,7 +88,7 @@ class NowPlayingTopFragment : Fragment() {
 		)
 
 		binding.vm = nowPlayingViewModel
-		binding.lifecycleOwner = activity
+		binding.lifecycleOwner = viewLifecycleOwner
 
 		return with (binding) {
 			btnPlay.setOnClickListener { v ->

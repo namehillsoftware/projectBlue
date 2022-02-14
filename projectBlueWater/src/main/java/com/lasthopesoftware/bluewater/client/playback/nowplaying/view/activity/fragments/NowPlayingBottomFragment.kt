@@ -88,7 +88,7 @@ class NowPlayingBottomFragment : Fragment() {
 		)
 
 		binding.vm = nowPlayingViewModel
-		binding.lifecycleOwner = activity
+		binding.lifecycleOwner = viewLifecycleOwner
 
 		with (binding) {
 			miniPlay.setOnClickListener { v ->
