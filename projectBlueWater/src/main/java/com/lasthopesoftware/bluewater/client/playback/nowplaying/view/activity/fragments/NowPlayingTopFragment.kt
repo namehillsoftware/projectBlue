@@ -84,7 +84,7 @@ class NowPlayingTopFragment : Fragment() {
 			inflater,
 			R.layout.control_now_playing_top_sheet,
 			container,
-			true
+			false
 		)
 
 		binding.vm = nowPlayingViewModel
