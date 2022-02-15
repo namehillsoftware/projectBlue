@@ -111,6 +111,14 @@ class NowPlayingActivity :
 	private val onConnectionLostListener =
 		ReceiveBroadcastEvents { WaitForConnectionDialog.show(this) }
 
+	private val nowPlayingViewModel by buildViewModelLazily {
+		NowPlayingViewModel(
+			messageBus.value,
+			InMemoryNowPlayingDisplaySettings,
+			PlaybackServiceController(this),
+		)
+	}
+
 	private val binding by lazy {
 		val binding = DataBindingUtil.setContentView<ActivityViewNowPlayingBinding>(this, R.layout.activity_view_now_playing)
 		binding.lifecycleOwner = this
@@ -127,7 +135,8 @@ class NowPlayingActivity :
 				PlaybackServiceController(this),
 				ConnectionPoller(this),
 				StringResources(this),
-				InMemoryNowPlayingDisplaySettings
+				nowPlayingViewModel,
+				nowPlayingViewModel
 			)
 		}
 
@@ -145,22 +154,15 @@ class NowPlayingActivity :
 		binding
 	}
 
-	private val nowPlayingViewModel by buildViewModelLazily {
-		NowPlayingViewModel(
-			messageBus.value,
-			InMemoryNowPlayingDisplaySettings
-		)
-	}
-
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
 		binding.pager.adapter = PagerAdapter(this)
 
-		binding.vm?.isScreenOn?.onEach {
+		nowPlayingViewModel.isScreenOn.onEach {
 			if (it) window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 			else disableKeepScreenOn()
-		}?.launchIn(lifecycleScope)
+		}.launchIn(lifecycleScope)
 
 		binding.vm?.unexpectedError?.filterNotNull()?.onEach {
 			UnexpectedExceptionToaster.announce(this, it)
@@ -171,7 +173,7 @@ class NowPlayingActivity :
 		}?.launchIn(lifecycleScope)
 
 		with (binding.pager) {
-			nowPlayingViewModel.isDrawerShown.onEach { isShown ->
+			nowPlayingViewModel.isDrawerShownState.onEach { isShown ->
 				setCurrentItem(if (isShown) 1 else 0, true)
 			}.launchIn(lifecycleScope)
 

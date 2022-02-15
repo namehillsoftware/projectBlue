@@ -37,6 +37,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceCon
 import com.lasthopesoftware.bluewater.databinding.ControlNowPlayingBottomSheetBinding
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
+import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildActivityViewModel
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildActivityViewModelLazily
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.resources.strings.StringResources
@@ -110,7 +111,17 @@ class NowPlayingBottomFragment : Fragment() {
 		}, requireContext()))
 	}
 
-	private val filePropertiesViewModel by buildActivityViewModelLazily {
+	private val viewModel by buildActivityViewModelLazily {
+		val playbackService = PlaybackServiceController(requireContext())
+
+		val nowPlayingViewModel = buildActivityViewModel {
+			NowPlayingViewModel(
+				messageBus.value,
+				InMemoryNowPlayingDisplaySettings,
+				playbackService,
+			)
+		}
+
 		NowPlayingFilePropertiesViewModel(
 			messageBus.value,
 			LiveNowPlayingLookup.getInstance(),
@@ -118,17 +129,11 @@ class NowPlayingBottomFragment : Fragment() {
 			lazyFilePropertiesProvider,
 			filePropertiesStorage,
 			lazySelectedConnectionAuthenticationChecker,
-			PlaybackServiceController(requireContext()),
+			playbackService,
 			ConnectionPoller(requireContext()),
 			StringResources(requireContext()),
-			InMemoryNowPlayingDisplaySettings
-		)
-	}
-
-	private val nowPlayingViewModel by buildActivityViewModelLazily {
-		NowPlayingViewModel(
-			messageBus.value,
-			InMemoryNowPlayingDisplaySettings
+			nowPlayingViewModel,
+			nowPlayingViewModel
 		)
 	}
 
@@ -140,7 +145,7 @@ class NowPlayingBottomFragment : Fragment() {
 			false
 		)
 
-		binding.vm = filePropertiesViewModel
+		binding.vm = viewModel
 		binding.lifecycleOwner = viewLifecycleOwner
 
 		nowPlayingListAdapter.eventually(LoopedInPromise.response({ a ->
@@ -148,37 +153,37 @@ class NowPlayingBottomFragment : Fragment() {
 			listView.adapter = a
 			listView.layoutManager = LinearLayoutManager(requireContext())
 
-			filePropertiesViewModel.nowPlayingList
+			viewModel.nowPlayingList
 				.onEach(a::updateListEventually)
 				.launchIn(lifecycleScope)
 		}, requireContext()))
 
 		with (binding) {
 			miniPlay.setOnClickListener { v ->
-				if (!filePropertiesViewModel.isScreenControlsVisible.value) return@setOnClickListener
+				if (!viewModel.isScreenControlsVisible.value) return@setOnClickListener
 				PlaybackService.play(v.context)
-				filePropertiesViewModel.togglePlaying(true)
+				viewModel.togglePlaying(true)
 			}
 
 			miniPause.setOnClickListener { v ->
-				if (!filePropertiesViewModel.isScreenControlsVisible.value) return@setOnClickListener
+				if (!viewModel.isScreenControlsVisible.value) return@setOnClickListener
 				PlaybackService.pause(v.context)
-				filePropertiesViewModel.togglePlaying(false)
+				viewModel.togglePlaying(false)
 			}
 
 			miniSongRating.onRatingBarChangeListener = RatingBar.OnRatingBarChangeListener { _, rating, fromUser ->
-				if (fromUser) filePropertiesViewModel.updateRating(rating)
+				if (fromUser) viewModel.updateRating(rating)
 			}
 
-			filePropertiesViewModel.nowPlayingFile
+			viewModel.nowPlayingFile
 				.filterNotNull()
 				.onEach {
-					if (!nowPlayingViewModel.isDrawerShown.value)
+					if (!viewModel.isDrawerShown)
 						nowPlayingListView.scrollToPosition(it.playlistPosition)
 				}
 				.launchIn(lifecycleScope)
 
-			closeNowPlayingList.setOnClickListener { nowPlayingViewModel.hideDrawer() }
+			closeNowPlayingList.setOnClickListener { viewModel.hideDrawer() }
 		}
 
 		return binding.nowPlayingBottomSheet

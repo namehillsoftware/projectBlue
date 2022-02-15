@@ -27,6 +27,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.databinding.ControlNowPlayingTopSheetBinding
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
+import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildActivityViewModel
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildActivityViewModelLazily
 import com.lasthopesoftware.resources.strings.StringResources
 
@@ -65,7 +66,17 @@ class NowPlayingTopFragment : Fragment() {
 		}
 	}
 
-	private val filePropertiesViewModel by buildActivityViewModelLazily {
+	private val viewModel by buildActivityViewModelLazily {
+		val playbackService = PlaybackServiceController(requireContext())
+
+		val nowPlayingViewModel = buildActivityViewModel {
+			NowPlayingViewModel(
+				messageBus.value,
+				InMemoryNowPlayingDisplaySettings,
+				playbackService,
+			)
+		}
+
 		NowPlayingFilePropertiesViewModel(
 			messageBus.value,
 			LiveNowPlayingLookup.getInstance(),
@@ -73,17 +84,11 @@ class NowPlayingTopFragment : Fragment() {
 			lazyFilePropertiesProvider,
 			filePropertiesStorage,
 			lazySelectedConnectionAuthenticationChecker,
-			PlaybackServiceController(requireContext()),
+			playbackService,
 			ConnectionPoller(requireContext()),
 			StringResources(requireContext()),
-			InMemoryNowPlayingDisplaySettings
-		)
-	}
-
-	private val nowPlayingViewModel by buildActivityViewModelLazily {
-		NowPlayingViewModel(
-			messageBus.value,
-			InMemoryNowPlayingDisplaySettings
+			nowPlayingViewModel,
+			nowPlayingViewModel
 		)
 	}
 
@@ -95,41 +100,41 @@ class NowPlayingTopFragment : Fragment() {
 			false
 		)
 
-		binding.vm = filePropertiesViewModel
+		binding.vm = viewModel
 		binding.lifecycleOwner = viewLifecycleOwner
 
 		return with (binding) {
 			btnPlay.setOnClickListener { v ->
-				if (!filePropertiesViewModel.isScreenControlsVisible.value) return@setOnClickListener
+				if (!viewModel.isScreenControlsVisible.value) return@setOnClickListener
 				PlaybackService.play(v.context)
-				filePropertiesViewModel.togglePlaying(true)
+				viewModel.togglePlaying(true)
 			}
 
 			btnPause.setOnClickListener { v ->
-				if (!filePropertiesViewModel.isScreenControlsVisible.value) return@setOnClickListener
+				if (!viewModel.isScreenControlsVisible.value) return@setOnClickListener
 				PlaybackService.pause(v.context)
-				filePropertiesViewModel.togglePlaying(false)
+				viewModel.togglePlaying(false)
 			}
 
 			btnNext.setOnClickListener { v ->
-				if (filePropertiesViewModel.isScreenControlsVisible.value) PlaybackService.next(v.context)
+				if (viewModel.isScreenControlsVisible.value) PlaybackService.next(v.context)
 			}
 
 			btnPrevious.setOnClickListener { v ->
-				if (filePropertiesViewModel.isScreenControlsVisible.value) PlaybackService.previous(v.context)
+				if (viewModel.isScreenControlsVisible.value) PlaybackService.previous(v.context)
 			}
 
-			repeatButton.setOnClickListener { filePropertiesViewModel.toggleRepeating() }
+			repeatButton.setOnClickListener { viewModel.toggleRepeating() }
 
-			isScreenKeptOnButton.setOnClickListener { filePropertiesViewModel.toggleScreenOn() }
+			isScreenKeptOnButton.setOnClickListener { viewModel.toggleScreenOn() }
 
 			rbSongRating.onRatingBarChangeListener = RatingBar.OnRatingBarChangeListener { _, rating, fromUser ->
-				if (fromUser) filePropertiesViewModel.updateRating(rating)
+				if (fromUser) viewModel.updateRating(rating)
 			}
 
-			nowPlayingTopSheet.setOnClickListener { filePropertiesViewModel.showNowPlayingControls() }
+			nowPlayingTopSheet.setOnClickListener { viewModel.showNowPlayingControls() }
 
-			viewNowPlayingListButton.setOnClickListener { nowPlayingViewModel.showDrawer() }
+			viewNowPlayingListButton.setOnClickListener { viewModel.showDrawer() }
 
 			nowPlayingTopSheet
 		}

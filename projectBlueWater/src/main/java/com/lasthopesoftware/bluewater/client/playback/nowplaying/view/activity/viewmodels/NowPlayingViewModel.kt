@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.
 
 import android.content.IntentFilter
 import androidx.lifecycle.ViewModel
+import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
 import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
 import com.lasthopesoftware.bluewater.shared.android.messages.RegisterForMessages
@@ -10,20 +11,22 @@ import kotlinx.coroutines.flow.asStateFlow
 
 class NowPlayingViewModel(
 	private val messages: RegisterForMessages,
-	private val nowPlayingDisplaySettings: StoreNowPlayingDisplaySettings
-) : ViewModel(), ControlDrawerState
+	private val nowPlayingDisplaySettings: StoreNowPlayingDisplaySettings,
+	playbackService: ControlPlaybackService,
+) : ViewModel(), ControlDrawerState, ControlScreenOnState
 {
 	private val onPlaybackStartedReceiver: ReceiveBroadcastEvents
 	private val onPlaybackStoppedReceiver: ReceiveBroadcastEvents
 
 	private var isPlayingState = false
 
-	private val isDrawerShownState = MutableStateFlow(false)
-	private val isScreenOnEnabledState = MutableStateFlow(false)
+	private val isDrawerShownInternalState = MutableStateFlow(false)
+	private val isScreenOnEnabledState = MutableStateFlow(nowPlayingDisplaySettings.isScreenOnDuringPlayback)
 	private val isScreenOnState = MutableStateFlow(false)
 
-	val isDrawerShown = isDrawerShownState.asStateFlow()
-	val isScreenOnEnabled = isScreenOnEnabledState.asStateFlow()
+	val isDrawerShownState = isDrawerShownInternalState.asStateFlow()
+	override val isDrawerShown = isDrawerShownState.value
+	override val isScreenOnEnabled = isScreenOnEnabledState.asStateFlow()
 	val isScreenOn = isScreenOnState.asStateFlow()
 
 	init {
@@ -40,6 +43,8 @@ class NowPlayingViewModel(
 			registerReceiver(onPlaybackStoppedReceiver, playbackStoppedIntentFilter)
 			registerReceiver(onPlaybackStartedReceiver, IntentFilter(PlaylistEvents.onPlaylistStart))
 		}
+
+		playbackService.promiseIsMarkedForPlay().then(::togglePlaying)
 	}
 
 	override fun onCleared() {
@@ -52,14 +57,14 @@ class NowPlayingViewModel(
 	}
 
 	override fun showDrawer() {
-		isDrawerShownState.value = true
+		isDrawerShownInternalState.value = true
 	}
 
 	override fun hideDrawer() {
-		isDrawerShownState.value = false
+		isDrawerShownInternalState.value = false
 	}
 
-	fun toggleScreenOn() {
+	override fun toggleScreenOn() {
 		isScreenOnEnabledState.value = !isScreenOnEnabledState.value
 		nowPlayingDisplaySettings.isScreenOnDuringPlayback = isScreenOnEnabledState.value
 		updateKeepScreenOnStatus()

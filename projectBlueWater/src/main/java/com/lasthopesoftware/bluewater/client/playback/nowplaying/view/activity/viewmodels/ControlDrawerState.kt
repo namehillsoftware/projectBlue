@@ -3,4 +3,5 @@ package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.
 interface ControlDrawerState {
 	fun showDrawer()
 	fun hideDrawer()
+	val isDrawerShown: Boolean
 }

@@ -43,8 +43,10 @@ class NowPlayingFilePropertiesViewModel(
 	private val playbackService: ControlPlaybackService,
 	private val pollConnections: PollForConnections,
 	private val stringResources: GetStringResources,
-	private val nowPlayingDisplaySettings: StoreNowPlayingDisplaySettings,
-) : ViewModel() {
+	private val controlDrawerState: ControlDrawerState,
+	private val controlScreenOnState: ControlScreenOnState
+) : ViewModel(), ControlDrawerState by controlDrawerState, ControlScreenOnState by controlScreenOnState
+{
 	private val onPlaybackStartedReceiver: ReceiveBroadcastEvents
 	private val onPlaybackStoppedReceiver: ReceiveBroadcastEvents
 	private val onPlaybackChangedReceiver: ReceiveBroadcastEvents
@@ -65,8 +67,6 @@ class NowPlayingFilePropertiesViewModel(
 	private val isSongRatingEnabledState = MutableStateFlow(false)
 	private val nowPlayingListState = MutableStateFlow(emptyList<PositionedFile>())
 	private val nowPlayingFileState = MutableStateFlow<PositionedFile?>(null)
-	private val isScreenOnEnabledState = MutableStateFlow(false)
-	private val isScreenOnState = MutableStateFlow(false)
 	private val isScreenControlsVisibleState = MutableStateFlow(false)
 	private val isRepeatingState = MutableStateFlow(false)
 	private val unexpectedErrorState = MutableStateFlow<Throwable?>(null)
@@ -81,8 +81,6 @@ class NowPlayingFilePropertiesViewModel(
 	val isSongRatingEnabled = isSongRatingEnabledState.asStateFlow()
 	val nowPlayingList = nowPlayingListState.asStateFlow()
 	val nowPlayingFile = nowPlayingFileState.asStateFlow()
-	val isScreenOnEnabled = isScreenOnEnabledState.asStateFlow()
-	val isScreenOn = isScreenOnState.asStateFlow()
 	val isScreenControlsVisible = isScreenControlsVisibleState.asStateFlow()
 	val isRepeating = isRepeatingState.asStateFlow()
 	val unexpectedError = unexpectedErrorState.asStateFlow()
@@ -142,20 +140,10 @@ class NowPlayingFilePropertiesViewModel(
 		updateViewFromRepository()
 
 		playbackService.promiseIsMarkedForPlay().then(::togglePlaying)
-
-		isScreenOnEnabledState.value = nowPlayingDisplaySettings.isScreenOnDuringPlayback
-		updateKeepScreenOnStatus()
 	}
 
 	fun togglePlaying(isPlaying: Boolean) {
 		isPlayingState.value = isPlaying
-		updateKeepScreenOnStatus()
-	}
-
-	fun toggleScreenOn() {
-		isScreenOnEnabledState.value = !isScreenOnEnabledState.value
-		nowPlayingDisplaySettings.isScreenOnDuringPlayback = isScreenOnEnabledState.value
-		updateKeepScreenOnStatus()
 	}
 
 	fun updateRating(rating: Float) {
@@ -293,10 +281,6 @@ class NowPlayingFilePropertiesViewModel(
 					}
 					.excuse { exception -> handleException(exception) }
 			}
-	}
-
-	private fun updateKeepScreenOnStatus() {
-		isScreenOnState.value = isPlayingState.value && isScreenOnEnabledState.value
 	}
 
 	private fun setTrackDuration(duration: Number) {

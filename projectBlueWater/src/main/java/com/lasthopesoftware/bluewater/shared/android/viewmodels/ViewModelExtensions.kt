@@ -32,6 +32,10 @@ inline fun <reified V: ViewModel> Fragment.buildActivityViewModelLazily(noinline
 	)
 
 @MainThread
+inline fun <reified V: ViewModel> Fragment.buildActivityViewModel(noinline initializer: () -> V) =
+	ViewModelProvider(requireActivity().viewModelStore, PassThroughFactory(initializer))[V::class.java]
+
+@MainThread
 inline fun <reified V: ViewModel> ComponentActivity.buildViewModel(noinline initializer: () -> V): V =
 	ViewModelProvider(viewModelStore, PassThroughFactory(initializer))[V::class.java]
 
