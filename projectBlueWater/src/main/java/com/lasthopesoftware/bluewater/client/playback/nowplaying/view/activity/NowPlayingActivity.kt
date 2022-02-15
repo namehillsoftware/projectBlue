@@ -54,7 +54,6 @@ import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModel
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToaster
 import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.resources.strings.StringResources
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.launchIn
@@ -186,7 +185,7 @@ class NowPlayingActivity :
 			)
 		}
 
-		binding.toPromise()
+		binding
 	}
 
 	private var isDrawerOpened = false
@@ -194,23 +193,20 @@ class NowPlayingActivity :
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
-		binding.then { binding ->
-			binding.pager.adapter = PagerAdapter(this)
+		binding.pager.adapter = PagerAdapter(this)
 
-			val vm = binding.vm ?: return@then
+		binding.vm?.isScreenOn?.onEach {
+			if (it) window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+			else disableKeepScreenOn()
+		}?.launchIn(lifecycleScope)
 
-			vm.isScreenOn.onEach {
-				if (it) window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-				else disableKeepScreenOn()
-			}.launchIn(lifecycleScope)
+		binding.vm?.unexpectedError?.filterNotNull()?.onEach {
+			UnexpectedExceptionToaster.announce(this, it)
+		}?.launchIn(lifecycleScope)
 
-			vm.unexpectedError.filterNotNull().onEach {
-				UnexpectedExceptionToaster.announce(this, it)
-			}.launchIn(lifecycleScope)
-
-			binding.coverArtVm?.unexpectedError?.filterNotNull()?.onEach {
-				UnexpectedExceptionToaster.announce(this, it)
-			}?.launchIn(lifecycleScope)
+		binding.coverArtVm?.unexpectedError?.filterNotNull()?.onEach {
+			UnexpectedExceptionToaster.announce(this, it)
+		}?.launchIn(lifecycleScope)
 
 //			val onRatingBarChangeListener = OnRatingBarChangeListener{ _, rating, fromUser ->
 //				if (fromUser) vm.updateRating(rating)
@@ -295,7 +291,6 @@ class NowPlayingActivity :
 //			}
 //
 //			binding.control.nowPlayingContentView.setOnClickListener { vm.showNowPlayingControls() }
-		}
 
 		messageBus.value.registerReceiver(onConnectionLostListener, IntentFilter(PollConnectionService.connectionLostNotification))
 	}
@@ -305,7 +300,7 @@ class NowPlayingActivity :
 
 		restoreSelectedConnection(this).eventually(LoopedInPromise.response({
 			connectionRestoreCode = it
-			if (it == null) binding.then { b ->
+			if (it == null) binding.also { b ->
 				b.vm?.initializeViewModel()
 				b.coverArtVm?.initializeViewModel()
 			}
@@ -313,7 +308,7 @@ class NowPlayingActivity :
 	}
 
 	override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-		if (requestCode == connectionRestoreCode) binding.then { b ->
+		if (requestCode == connectionRestoreCode) binding.also { b ->
 			b.vm?.initializeViewModel()
 			b.coverArtVm?.initializeViewModel()
 		}
@@ -341,10 +336,10 @@ class NowPlayingActivity :
 
 	override fun onBackPressed() {
 		if (LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator)) return
-//		if (bottomSheetBehavior.state == BottomSheetBehavior.STATE_EXPANDED) {
-//			bottomSheetBehavior.state = BottomSheetBehavior.STATE_COLLAPSED
-//			return
-//		}
+
+		if (binding.pager.currentItem == 1)
+			binding.pager.setCurrentItem(0, true)
+
 		super.onBackPressed()
 	}
 

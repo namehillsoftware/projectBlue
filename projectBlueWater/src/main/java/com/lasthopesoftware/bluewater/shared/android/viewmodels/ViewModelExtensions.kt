@@ -12,12 +12,7 @@ inline fun <reified V: ViewModel> ComponentActivity.buildViewModelLazily(noinlin
 	ViewModelLazy(
 		viewModelClass = V::class,
 		storeProducer = { viewModelStore },
-		factoryProducer = {
-			return@ViewModelLazy object : ViewModelProvider.Factory {
-				@Suppress("UNCHECKED_CAST")
-				override fun <T : ViewModel> create(modelClass: Class<T>): T = initializer.invoke() as T
-			}
-		}
+		factoryProducer = PassThroughFactory(initializer)
 	)
 
 @MainThread
@@ -25,29 +20,24 @@ inline fun <reified V: ViewModel> Fragment.buildViewModelLazily(noinline initial
 	ViewModelLazy(
 		viewModelClass = V::class,
 		storeProducer = { viewModelStore },
-		factoryProducer = {
-			return@ViewModelLazy object : ViewModelProvider.Factory {
-				@Suppress("UNCHECKED_CAST")
-				override fun <T : ViewModel> create(modelClass: Class<T>): T = initializer.invoke() as T
-			}
-		}
+		factoryProducer = PassThroughFactory(initializer)
 	)
 
+@MainThread
 inline fun <reified V: ViewModel> Fragment.buildActivityViewModelLazily(noinline initializer: () -> V) =
 	ViewModelLazy(
 		viewModelClass = V::class,
 		storeProducer = { requireActivity().viewModelStore },
-		factoryProducer = {
-			return@ViewModelLazy object : ViewModelProvider.Factory {
-				@Suppress("UNCHECKED_CAST")
-				override fun <T : ViewModel> create(modelClass: Class<T>): T = initializer.invoke() as T
-			}
-		}
+		factoryProducer = PassThroughFactory(initializer)
 	)
 
 @MainThread
 inline fun <reified V: ViewModel> ComponentActivity.buildViewModel(noinline initializer: () -> V): V =
-	ViewModelProvider(viewModelStore, object : ViewModelProvider.Factory {
-		@Suppress("UNCHECKED_CAST")
-		override fun <T : ViewModel> create(modelClass: Class<T>): T = initializer.invoke() as T
-	})[V::class.java]
+	ViewModelProvider(viewModelStore, PassThroughFactory(initializer))[V::class.java]
+
+class PassThroughFactory<V>(private val initializer: () -> V) : ViewModelProvider.Factory, () -> ViewModelProvider.Factory {
+	@Suppress("UNCHECKED_CAST")
+	override fun <T : ViewModel> create(modelClass: Class<T>): T = initializer() as T
+
+	override fun invoke(): ViewModelProvider.Factory = this
+}
