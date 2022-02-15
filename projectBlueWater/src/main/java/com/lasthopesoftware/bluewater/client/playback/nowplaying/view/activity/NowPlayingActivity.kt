@@ -5,7 +5,6 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
 import android.os.Handler
-import android.view.WindowManager
 import android.widget.ViewAnimator
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
@@ -151,6 +150,8 @@ class NowPlayingActivity :
 			)
 		}
 
+		binding.vm = nowPlayingViewModel
+
 		binding
 	}
 
@@ -158,11 +159,6 @@ class NowPlayingActivity :
 		super.onCreate(savedInstanceState)
 
 		binding.pager.adapter = PagerAdapter(this)
-
-		nowPlayingViewModel.isScreenOn.onEach {
-			if (it) window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-			else disableKeepScreenOn()
-		}.launchIn(lifecycleScope)
 
 		binding.filePropertiesVm?.unexpectedError?.filterNotNull()?.onEach {
 			UnexpectedExceptionToaster.announce(this, it)
@@ -212,11 +208,6 @@ class NowPlayingActivity :
 		super.onActivityResult(requestCode, resultCode, data)
 	}
 
-	override fun onStop() {
-		super.onStop()
-		disableKeepScreenOn()
-	}
-
 	override fun onDestroy() {
 		super.onDestroy()
 
@@ -240,10 +231,6 @@ class NowPlayingActivity :
 		}
 
 		super.onBackPressed()
-	}
-
-	private fun disableKeepScreenOn() {
-		window.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 	}
 
 	private class PagerAdapter(fa: FragmentActivity) : FragmentStateAdapter(fa) {
