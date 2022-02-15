@@ -124,7 +124,7 @@ class NowPlayingActivity :
 		binding.lifecycleOwner = this
 
 		val liveNowPlayingLookup = LiveNowPlayingLookup.getInstance()
-		binding.vm = buildViewModel {
+		binding.filePropertiesVm = buildViewModel {
 			NowPlayingFilePropertiesViewModel(
 				messageBus.value,
 				liveNowPlayingLookup,
@@ -164,7 +164,7 @@ class NowPlayingActivity :
 			else disableKeepScreenOn()
 		}.launchIn(lifecycleScope)
 
-		binding.vm?.unexpectedError?.filterNotNull()?.onEach {
+		binding.filePropertiesVm?.unexpectedError?.filterNotNull()?.onEach {
 			UnexpectedExceptionToaster.announce(this, it)
 		}?.launchIn(lifecycleScope)
 
@@ -198,7 +198,7 @@ class NowPlayingActivity :
 		restoreSelectedConnection(this).eventually(LoopedInPromise.response({
 			connectionRestoreCode = it
 			if (it == null) binding.also { b ->
-				b.vm?.initializeViewModel()
+				b.filePropertiesVm?.initializeViewModel()
 				b.coverArtVm?.initializeViewModel()
 			}
 		}, messageHandler))
@@ -206,7 +206,7 @@ class NowPlayingActivity :
 
 	override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
 		if (requestCode == connectionRestoreCode) binding.also { b ->
-			b.vm?.initializeViewModel()
+			b.filePropertiesVm?.initializeViewModel()
 			b.coverArtVm?.initializeViewModel()
 		}
 		super.onActivityResult(requestCode, resultCode, data)
@@ -234,8 +234,10 @@ class NowPlayingActivity :
 	override fun onBackPressed() {
 		if (LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator)) return
 
-		if (binding.pager.currentItem == 1)
+		if (binding.pager.currentItem == 1) {
 			binding.pager.setCurrentItem(0, true)
+			return
+		}
 
 		super.onBackPressed()
 	}

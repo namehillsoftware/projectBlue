@@ -68,7 +68,8 @@ private val nowPlayingViewModel by lazy {
         playbackService,
         mockk(),
         mockk(relaxed = true),
-        storeNowPlayingDisplaySettings
+        mockk(),
+		mockk()
     )
 
 	nowPlayingViewModel.initializeViewModel()
