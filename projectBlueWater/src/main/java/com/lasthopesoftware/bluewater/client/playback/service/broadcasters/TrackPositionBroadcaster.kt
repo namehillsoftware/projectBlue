@@ -26,7 +26,7 @@ class TrackPositionBroadcaster(
 							.then { progress ->
 								val trackPositionChangedIntent = Intent(trackPositionUpdate)
 								trackPositionChangedIntent.putExtra(TrackPositionChangedParameters.filePosition, progress.millis)
-								trackPositionChangedIntent.putExtra(TrackPositionChangedParameters.fileDuration, duration)
+								trackPositionChangedIntent.putExtra(TrackPositionChangedParameters.fileDuration, duration.toLong())
 								sendMessages.sendBroadcast(trackPositionChangedIntent)
 							}
 					}

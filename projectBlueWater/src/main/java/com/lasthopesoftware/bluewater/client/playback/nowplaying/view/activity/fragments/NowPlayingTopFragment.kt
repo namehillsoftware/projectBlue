@@ -100,10 +100,10 @@ class NowPlayingTopFragment : Fragment() {
 			false
 		)
 
-		binding.vm = viewModel
-		binding.lifecycleOwner = viewLifecycleOwner
-
 		with (binding) {
+			lifecycleOwner = viewLifecycleOwner
+			vm = viewModel
+
 			btnPlay.setOnClickListener { v ->
 				if (!viewModel.isScreenControlsVisible.value) return@setOnClickListener
 				PlaybackService.play(v.context)
@@ -135,6 +135,9 @@ class NowPlayingTopFragment : Fragment() {
 			nowPlayingTopSheet.setOnClickListener { viewModel.showNowPlayingControls() }
 
 			viewNowPlayingListButton.setOnClickListener { viewModel.showDrawer() }
+
+			pbNowPlaying.max = viewModel.fileDuration.value
+			pbNowPlaying.progress = viewModel.filePosition.value
 
 			return nowPlayingTopSheet
 		}

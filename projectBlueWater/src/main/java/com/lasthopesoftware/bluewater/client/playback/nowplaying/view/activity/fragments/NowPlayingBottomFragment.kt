@@ -145,20 +145,20 @@ class NowPlayingBottomFragment : Fragment() {
 			false
 		)
 
-		binding.vm = viewModel
-		binding.lifecycleOwner = viewLifecycleOwner
-
-		nowPlayingListAdapter.eventually(LoopedInPromise.response({ a ->
-			val listView = binding.nowPlayingListView
-			listView.adapter = a
-			listView.layoutManager = LinearLayoutManager(requireContext())
-
-			viewModel.nowPlayingList
-				.onEach(a::updateListEventually)
-				.launchIn(lifecycleScope)
-		}, requireContext()))
-
 		with (binding) {
+			lifecycleOwner = viewLifecycleOwner
+			vm = viewModel
+
+			nowPlayingListAdapter.eventually(LoopedInPromise.response({ a ->
+				val listView = nowPlayingListView
+				listView.adapter = a
+				listView.layoutManager = LinearLayoutManager(requireContext())
+
+				viewModel.nowPlayingList
+					.onEach(a::updateListEventually)
+					.launchIn(lifecycleScope)
+			}, requireContext()))
+
 			miniPlay.setOnClickListener { v ->
 				PlaybackService.play(v.context)
 				viewModel.togglePlaying(true)
@@ -182,6 +182,9 @@ class NowPlayingBottomFragment : Fragment() {
 				.launchIn(lifecycleScope)
 
 			closeNowPlayingList.setOnClickListener { viewModel.hideDrawer() }
+
+			miniNowPlayingBar.max = viewModel.fileDuration.value
+			miniNowPlayingBar.progress = viewModel.filePosition.value
 
 			return nowPlayingBottomSheet
 		}

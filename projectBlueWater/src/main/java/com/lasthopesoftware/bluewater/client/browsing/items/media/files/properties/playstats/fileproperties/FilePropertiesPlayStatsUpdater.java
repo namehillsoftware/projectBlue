@@ -33,7 +33,7 @@ public class FilePropertiesPlayStatsUpdater implements IPlaystatsUpdate {
 					final int duration = FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties);
 
 					final long currentTime = System.currentTimeMillis();
-					if (lastPlayedServer != null && (currentTime - duration) <= Long.valueOf(lastPlayedServer) * 1000)
+					if (lastPlayedServer != null && (currentTime - duration) <= Long.parseLong(lastPlayedServer) * 1000)
 						return Promise.empty();
 
 					final String numberPlaysString = fileProperties.get(KnownFileProperties.NUMBER_PLAYS);
