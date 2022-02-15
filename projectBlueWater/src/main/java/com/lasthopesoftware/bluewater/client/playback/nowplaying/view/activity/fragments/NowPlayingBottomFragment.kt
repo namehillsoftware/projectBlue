@@ -160,13 +160,11 @@ class NowPlayingBottomFragment : Fragment() {
 
 		with (binding) {
 			miniPlay.setOnClickListener { v ->
-				if (!viewModel.isScreenControlsVisible.value) return@setOnClickListener
 				PlaybackService.play(v.context)
 				viewModel.togglePlaying(true)
 			}
 
 			miniPause.setOnClickListener { v ->
-				if (!viewModel.isScreenControlsVisible.value) return@setOnClickListener
 				PlaybackService.pause(v.context)
 				viewModel.togglePlaying(false)
 			}
