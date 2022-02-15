@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.RatingBar
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
@@ -21,8 +20,8 @@ import com.lasthopesoftware.bluewater.client.connection.polling.ConnectionPoller
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.InMemoryNowPlayingDisplaySettings
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingViewModel
-import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.databinding.ControlNowPlayingTopSheetBinding
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
@@ -64,8 +63,8 @@ class NowPlayingTopFragment : Fragment() {
 		}
 	}
 
-	private val nowPlayingViewModel by buildActivityViewModelLazily {
-		NowPlayingViewModel(
+	private val filePropertiesViewModel by buildActivityViewModelLazily {
+		NowPlayingFilePropertiesViewModel(
 			messageBus.value,
 			LiveNowPlayingLookup.getInstance(),
 			selectedConnectionProvider,
@@ -79,6 +78,13 @@ class NowPlayingTopFragment : Fragment() {
 		)
 	}
 
+	private val nowPlayingViewModel by buildActivityViewModelLazily {
+		NowPlayingViewModel(
+			messageBus.value,
+			InMemoryNowPlayingDisplaySettings
+		)
+	}
+
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
 		val binding = DataBindingUtil.inflate<ControlNowPlayingTopSheetBinding>(
 			inflater,
@@ -87,41 +93,41 @@ class NowPlayingTopFragment : Fragment() {
 			false
 		)
 
-		binding.vm = nowPlayingViewModel
+		binding.vm = filePropertiesViewModel
 		binding.lifecycleOwner = viewLifecycleOwner
 
 		return with (binding) {
 			btnPlay.setOnClickListener { v ->
-				if (!nowPlayingViewModel.isScreenControlsVisible.value) return@setOnClickListener
+				if (!filePropertiesViewModel.isScreenControlsVisible.value) return@setOnClickListener
 				PlaybackService.play(v.context)
-				nowPlayingViewModel.togglePlaying(true)
+				filePropertiesViewModel.togglePlaying(true)
 			}
 
 			btnPause.setOnClickListener { v ->
-				if (!nowPlayingViewModel.isScreenControlsVisible.value) return@setOnClickListener
+				if (!filePropertiesViewModel.isScreenControlsVisible.value) return@setOnClickListener
 				PlaybackService.pause(v.context)
-				nowPlayingViewModel.togglePlaying(false)
+				filePropertiesViewModel.togglePlaying(false)
 			}
 
 			btnNext.setOnClickListener { v ->
-				if (nowPlayingViewModel.isScreenControlsVisible.value) PlaybackService.next(v.context)
+				if (filePropertiesViewModel.isScreenControlsVisible.value) PlaybackService.next(v.context)
 			}
 
 			btnPrevious.setOnClickListener { v ->
-				if (nowPlayingViewModel.isScreenControlsVisible.value) PlaybackService.previous(v.context)
+				if (filePropertiesViewModel.isScreenControlsVisible.value) PlaybackService.previous(v.context)
 			}
 
-			repeatButton.setOnClickListener { nowPlayingViewModel.toggleRepeating() }
+			repeatButton.setOnClickListener { filePropertiesViewModel.toggleRepeating() }
 
-			isScreenKeptOnButton.setOnClickListener { nowPlayingViewModel.toggleScreenOn() }
+			isScreenKeptOnButton.setOnClickListener { filePropertiesViewModel.toggleScreenOn() }
 
 			rbSongRating.onRatingBarChangeListener = RatingBar.OnRatingBarChangeListener { _, rating, fromUser ->
-				if (fromUser) nowPlayingViewModel.updateRating(rating)
+				if (fromUser) filePropertiesViewModel.updateRating(rating)
 			}
 
-			nowPlayingTopSheet.setOnClickListener { nowPlayingViewModel.showNowPlayingControls() }
+			nowPlayingTopSheet.setOnClickListener { filePropertiesViewModel.showNowPlayingControls() }
 
-//			viewNowPlayingListButton.setOnClickListener(toggleListClickHandler)
+			viewNowPlayingListButton.setOnClickListener { nowPlayingViewModel.showDrawer() }
 
 			nowPlayingTopSheet
 		}

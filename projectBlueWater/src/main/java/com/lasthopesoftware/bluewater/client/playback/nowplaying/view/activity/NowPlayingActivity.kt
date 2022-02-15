@@ -14,6 +14,7 @@ import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.viewpager2.adapter.FragmentStateAdapter
+import androidx.viewpager2.widget.ViewPager2
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.menu.FileListItemNowPlayingRegistrar
@@ -42,6 +43,7 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.f
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.fragments.NowPlayingTopFragment
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.InMemoryNowPlayingDisplaySettings
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingCoverArtViewModel
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.list.NowPlayingFileListAdapter
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.menu.NowPlayingFileListItemMenuBuilder
@@ -51,13 +53,11 @@ import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicat
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModel
+import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToaster
 import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.resources.strings.StringResources
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 
 class NowPlayingActivity :
 	AppCompatActivity(),
@@ -160,7 +160,7 @@ class NowPlayingActivity :
 
 		val liveNowPlayingLookup = LiveNowPlayingLookup.getInstance()
 		binding.vm = buildViewModel {
-			NowPlayingViewModel(
+			NowPlayingFilePropertiesViewModel(
 				messageBus.value,
 				liveNowPlayingLookup,
 				lazySelectedConnectionProvider,
@@ -188,7 +188,12 @@ class NowPlayingActivity :
 		binding
 	}
 
-	private var isDrawerOpened = false
+	private val nowPlayingViewModel by buildViewModelLazily {
+		NowPlayingViewModel(
+			messageBus.value,
+			InMemoryNowPlayingDisplaySettings
+		)
+	}
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -207,6 +212,23 @@ class NowPlayingActivity :
 		binding.coverArtVm?.unexpectedError?.filterNotNull()?.onEach {
 			UnexpectedExceptionToaster.announce(this, it)
 		}?.launchIn(lifecycleScope)
+
+		with (binding.pager) {
+			nowPlayingViewModel.isDrawerShown.onEach { isShown ->
+				setCurrentItem(if (isShown) 1 else 0, true)
+			}.launchIn(lifecycleScope)
+
+			registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
+				override fun onPageSelected(position: Int) {
+					super.onPageSelected(position)
+
+					when (position) {
+						1 -> nowPlayingViewModel.showDrawer()
+						else -> nowPlayingViewModel.hideDrawer()
+					}
+				}
+			})
+		}
 
 //			val onRatingBarChangeListener = OnRatingBarChangeListener{ _, rating, fromUser ->
 //				if (fromUser) vm.updateRating(rating)

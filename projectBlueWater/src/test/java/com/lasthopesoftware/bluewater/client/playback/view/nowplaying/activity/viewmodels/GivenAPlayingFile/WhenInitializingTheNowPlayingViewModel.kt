@@ -7,7 +7,7 @@ import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfSc
 import com.lasthopesoftware.bluewater.client.connection.selected.ProvideSelectedConnection
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.MaintainNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingViewModel
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.StoreNowPlayingDisplaySettings
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
@@ -58,7 +58,7 @@ private val nowPlayingViewModel by lazy {
 		every { isScreenOnDuringPlayback } returns true
 	}
 
-	val nowPlayingViewModel = NowPlayingViewModel(
+	val nowPlayingViewModel = NowPlayingFilePropertiesViewModel(
         mockk(relaxUnitFun = true),
         nowPlayingRepository,
         connectionProvider,

@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.RatingBar
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -28,10 +27,10 @@ import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnect
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.InMemoryNowPlayingDisplaySettings
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.list.NowPlayingFileListAdapter
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.menu.NowPlayingFileListItemMenuBuilder
-import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.databinding.ControlNowPlayingBottomSheetBinding
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
@@ -108,8 +107,8 @@ class NowPlayingBottomFragment : Fragment() {
 		}, requireContext()))
 	}
 
-	private val nowPlayingViewModel by buildActivityViewModelLazily {
-		NowPlayingViewModel(
+	private val filePropertiesViewModel by buildActivityViewModelLazily {
+		NowPlayingFilePropertiesViewModel(
 			messageBus.value,
 			LiveNowPlayingLookup.getInstance(),
 			selectedConnectionProvider,
@@ -123,6 +122,13 @@ class NowPlayingBottomFragment : Fragment() {
 		)
 	}
 
+	private val nowPlayingViewModel by buildActivityViewModelLazily {
+		NowPlayingViewModel(
+			messageBus.value,
+			InMemoryNowPlayingDisplaySettings
+		)
+	}
+
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
 		val binding = DataBindingUtil.inflate<ControlNowPlayingBottomSheetBinding>(
 			inflater,
@@ -131,7 +137,7 @@ class NowPlayingBottomFragment : Fragment() {
 			false
 		)
 
-		binding.vm = nowPlayingViewModel
+		binding.vm = filePropertiesViewModel
 		binding.lifecycleOwner = viewLifecycleOwner
 
 		nowPlayingListAdapter.eventually(LoopedInPromise.response({ a ->
@@ -139,29 +145,37 @@ class NowPlayingBottomFragment : Fragment() {
 			listView.adapter = a
 			listView.layoutManager = LinearLayoutManager(requireContext())
 
-			nowPlayingViewModel.nowPlayingList
+			filePropertiesViewModel.nowPlayingList
 				.onEach(a::updateListEventually)
 				.launchIn(lifecycleScope)
 		}, requireContext()))
 
 		with (binding) {
 			miniPlay.setOnClickListener { v ->
-				if (!nowPlayingViewModel.isScreenControlsVisible.value) return@setOnClickListener
+				if (!filePropertiesViewModel.isScreenControlsVisible.value) return@setOnClickListener
 				PlaybackService.play(v.context)
-				nowPlayingViewModel.togglePlaying(true)
+				filePropertiesViewModel.togglePlaying(true)
 			}
 
 			miniPause.setOnClickListener { v ->
-				if (!nowPlayingViewModel.isScreenControlsVisible.value) return@setOnClickListener
+				if (!filePropertiesViewModel.isScreenControlsVisible.value) return@setOnClickListener
 				PlaybackService.pause(v.context)
-				nowPlayingViewModel.togglePlaying(false)
+				filePropertiesViewModel.togglePlaying(false)
 			}
 
 			miniSongRating.onRatingBarChangeListener = RatingBar.OnRatingBarChangeListener { _, rating, fromUser ->
-				if (fromUser) nowPlayingViewModel.updateRating(rating)
+				if (fromUser) filePropertiesViewModel.updateRating(rating)
 			}
 
-//			viewNowPlayingListButton.setOnClickListener(toggleListClickHandler)
+			filePropertiesViewModel.nowPlayingFile
+				.filterNotNull()
+				.onEach {
+					if (!nowPlayingViewModel.isDrawerShown.value)
+						nowPlayingListView.scrollToPosition(it.playlistPosition)
+				}
+				.launchIn(lifecycleScope)
+
+			closeNowPlayingList.setOnClickListener { nowPlayingViewModel.hideDrawer() }
 		}
 
 		return binding.nowPlayingBottomSheet
