@@ -182,9 +182,9 @@ class NowPlayingBottomFragment : Fragment() {
 				.launchIn(lifecycleScope)
 
 			closeNowPlayingList.setOnClickListener { viewModel.hideDrawer() }
-		}
 
-		return binding.nowPlayingBottomSheet
+			return nowPlayingBottomSheet
+		}
 	}
 
 	override fun onDestroy() {
