@@ -99,7 +99,7 @@
                         android:background="?android:attr/selectableItemBackground"
                         android:contentDescription="@string/btn_hide_files"
                         android:src="@drawable/chevron_up_36dp"
-                        android:rotation="180"
+                        android:rotation="270"
                         android:alpha=".80"/>
                 </RelativeLayout>
             </RelativeLayout>

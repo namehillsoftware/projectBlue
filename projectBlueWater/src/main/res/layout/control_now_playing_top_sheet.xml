@@ -67,6 +67,7 @@
                         android:paddingEnd="@dimen/now_playing_menu_padding"
                         android:src="@drawable/chevron_up_36dp"
                         android:alpha=".80"
+                        android:rotation="90"
                         tools:ignore="RtlSymmetry" />
                 </LinearLayout>
 
