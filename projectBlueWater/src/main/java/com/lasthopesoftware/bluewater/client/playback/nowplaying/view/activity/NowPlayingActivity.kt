@@ -25,10 +25,6 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.storage.SelectedConnectionFilePropertiesStorage
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.CachedImageProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener
-import com.lasthopesoftware.bluewater.client.browsing.items.menu.handlers.ViewChangedHandler
-import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
-import com.lasthopesoftware.bluewater.client.browsing.library.access.SpecificLibraryProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.SelectedConnectionRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.authentication.ScopedConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.authentication.SelectedConnectionAuthenticationChecker
@@ -38,18 +34,14 @@ import com.lasthopesoftware.bluewater.client.connection.polling.WaitForConnectio
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity.Companion.restoreSelectedConnection
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.fragments.NowPlayingBottomFragment
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.fragments.NowPlayingTopFragment
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.InMemoryNowPlayingDisplaySettings
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingCoverArtViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingViewModel
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.list.NowPlayingFileListAdapter
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.menu.NowPlayingFileListItemMenuBuilder
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.databinding.ActivityViewNowPlayingBinding
-import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModel
@@ -80,36 +72,7 @@ class NowPlayingActivity :
 
 	private val messageBus = lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
 
-	private val selectedLibraryIdProvider by lazy { SelectedBrowserLibraryIdentifierProvider(getApplicationSettingsRepository()) }
-
-	private val nowPlayingRepository by lazy {
-		val libraryRepository = LibraryRepository(this)
-		selectedLibraryIdProvider.selectedLibraryId
-			.then { l ->
-				NowPlayingRepository(
-					SpecificLibraryProvider(l!!, libraryRepository),
-					libraryRepository
-				)
-			}
-	}
-
 	private val fileListItemNowPlayingRegistrar = lazy { FileListItemNowPlayingRegistrar(messageBus.value) }
-
-	private val nowPlayingListAdapter by lazy {
-		nowPlayingRepository.eventually(LoopedInPromise.response({ r ->
-			val nowPlayingFileListMenuBuilder = NowPlayingFileListItemMenuBuilder(
-				r,
-				fileListItemNowPlayingRegistrar.value)
-
-			nowPlayingFileListMenuBuilder.setOnViewChangedListener(
-				ViewChangedHandler()
-					.setOnViewChangedListener(this)
-					.setOnAnyMenuShown(this)
-					.setOnAllMenusHidden(this))
-
-			NowPlayingFileListAdapter(this, nowPlayingFileListMenuBuilder)
-		}, messageHandler))
-	}
 
 	private val imageProvider by lazy { CachedImageProvider.getInstance(this) }
 
@@ -145,21 +108,12 @@ class NowPlayingActivity :
 
 	private val defaultImageProvider by lazy { DefaultImageProvider(this) }
 
-//	private lateinit var bottomSheetBehavior: BottomSheetBehavior<View>
-
 	private val onConnectionLostListener =
 		ReceiveBroadcastEvents { WaitForConnectionDialog.show(this) }
 
 	private val binding by lazy {
 		val binding = DataBindingUtil.setContentView<ActivityViewNowPlayingBinding>(this, R.layout.activity_view_now_playing)
 		binding.lifecycleOwner = this
-//		bottomSheetBehavior = BottomSheetBehavior.from(binding.control.bottomSheetHandle)
-//
-//		val promisedListViewSetup = nowPlayingListAdapter.eventually(LoopedInPromise.response({ a ->
-//			val listView = binding.control.bottomSheet.nowPlayingListView
-//			listView.adapter = a
-//			listView.layoutManager = LinearLayoutManager(this)
-//		}, messageHandler))
 
 		val liveNowPlayingLookup = LiveNowPlayingLookup.getInstance()
 		binding.vm = buildViewModel {
@@ -232,90 +186,6 @@ class NowPlayingActivity :
 				}
 			})
 		}
-
-//			val onRatingBarChangeListener = OnRatingBarChangeListener{ _, rating, fromUser ->
-//				if (fromUser) vm.updateRating(rating)
-//			}
-//
-//			val toggleListClickHandler = View.OnClickListener {
-//				with(bottomSheetBehavior) {
-//					state = when (state) {
-//						BottomSheetBehavior.STATE_COLLAPSED -> BottomSheetBehavior.STATE_EXPANDED
-//						BottomSheetBehavior.STATE_EXPANDED -> BottomSheetBehavior.STATE_COLLAPSED
-//						else -> state
-//					}
-//				}
-//			}
-//
-//			with (binding.control.topSheet) {
-//				btnPlay.setOnClickListener { v ->
-//					if (!vm.isScreenControlsVisible.value) return@setOnClickListener
-//					PlaybackService.play(v.context)
-//					vm.togglePlaying(true)
-//				}
-//
-//				btnPause.setOnClickListener { v ->
-//					if (!vm.isScreenControlsVisible.value) return@setOnClickListener
-//					PlaybackService.pause(v.context)
-//					vm.togglePlaying(false)
-//				}
-//
-//				btnNext.setOnClickListener { v ->
-//					if (vm.isScreenControlsVisible.value) PlaybackService.next(v.context)
-//				}
-//
-//				btnPrevious.setOnClickListener { v ->
-//					if (vm.isScreenControlsVisible.value) PlaybackService.previous(v.context)
-//				}
-//
-//				repeatButton.setOnClickListener { vm.toggleRepeating() }
-//
-//				isScreenKeptOnButton.setOnClickListener { vm.toggleScreenOn() }
-//
-//				rbSongRating.onRatingBarChangeListener = onRatingBarChangeListener
-//
-//				bottomSheetBehavior.addBottomSheetCallback(object : BottomSheetBehavior.BottomSheetCallback() {
-//					override fun onStateChanged(bottomSheet: View, newState: Int) {
-//						isDrawerOpened = newState == BottomSheetBehavior.STATE_EXPANDED
-//						with (nowPlayingTopSheet) {
-//							alpha = when (newState) {
-//								BottomSheetBehavior.STATE_COLLAPSED -> 1f
-//								BottomSheetBehavior.STATE_EXPANDED -> 0f
-//								else -> alpha
-//							}
-//						}
-//					}
-//
-//					override fun onSlide(bottomSheet: View, slideOffset: Float) {
-//						nowPlayingTopSheet.alpha = 1 - slideOffset
-//					}
-//				})
-//
-//				viewNowPlayingListButton.setOnClickListener(toggleListClickHandler)
-//			}
-
-//			with (binding.control.bottomSheet) {
-//				vm.nowPlayingFile.filterNotNull().onEach {
-//					if (!isDrawerOpened)
-//						nowPlayingListView.scrollToPosition(it.playlistPosition)
-//				}.launchIn(lifecycleScope)
-//
-//				miniPlay.setOnClickListener { v ->
-//					PlaybackService.play(v.context)
-//					vm.togglePlaying(true)
-//				}
-//
-//				miniPause.setOnClickListener { v ->
-//					PlaybackService.pause(v.context)
-//					vm.togglePlaying(false)
-//				}
-//
-//				miniSongRating.onRatingBarChangeListener = onRatingBarChangeListener
-//
-//				closeNowPlayingList.setOnClickListener(toggleListClickHandler)
-//			}
-//
-//			binding.control.nowPlayingContentView.setOnClickListener { vm.showNowPlayingControls() }
 
 		messageBus.value.registerReceiver(onConnectionLostListener, IntentFilter(PollConnectionService.connectionLostNotification))
 	}
