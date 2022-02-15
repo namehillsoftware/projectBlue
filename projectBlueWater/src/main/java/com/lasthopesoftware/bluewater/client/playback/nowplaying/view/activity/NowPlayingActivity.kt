@@ -58,6 +58,9 @@ import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToast
 import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.resources.strings.StringResources
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 
 class NowPlayingActivity :
 	AppCompatActivity(),
