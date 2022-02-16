@@ -99,7 +99,7 @@
                         android:background="?android:attr/selectableItemBackground"
                         android:contentDescription="@string/btn_hide_files"
                         android:src="@drawable/chevron_up_36dp"
-                        android:rotation="270"
+                        android:rotation="180"
                         android:alpha=".80"/>
                 </RelativeLayout>
             </RelativeLayout>
@@ -115,11 +115,15 @@
                 android:progress="@{vm.filePosition}"
                 android:max="@{vm.fileDuration}" />
         </RelativeLayout>
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/nowPlayingListView"
+        <com.lasthopesoftware.bluewater.shared.android.view.NestedScrollableHost
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_below="@id/nowPlayingMiniControls"
-            android:background="@color/now_playing_list_color" />
+            android:layout_below="@id/nowPlayingMiniControls">
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/nowPlayingListView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@color/now_playing_list_color"/>
+        </com.lasthopesoftware.bluewater.shared.android.view.NestedScrollableHost>
     </RelativeLayout>
 </layout>

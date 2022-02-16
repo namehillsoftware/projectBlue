@@ -9,7 +9,6 @@ import android.widget.ViewAnimator
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.viewpager2.adapter.FragmentStateAdapter
@@ -158,7 +157,7 @@ class NowPlayingActivity :
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
-		binding.pager.adapter = PagerAdapter(this)
+		binding.pager.adapter = PagerAdapter()
 
 		binding.filePropertiesVm?.unexpectedError?.filterNotNull()?.onEach {
 			UnexpectedExceptionToaster.announce(this, it)
@@ -233,7 +232,7 @@ class NowPlayingActivity :
 		super.onBackPressed()
 	}
 
-	private class PagerAdapter(fa: FragmentActivity) : FragmentStateAdapter(fa) {
+	private inner class PagerAdapter : FragmentStateAdapter(this@NowPlayingActivity) {
 		override fun getItemCount(): Int = 2
 
 		override fun createFragment(position: Int): Fragment = when (position) {
