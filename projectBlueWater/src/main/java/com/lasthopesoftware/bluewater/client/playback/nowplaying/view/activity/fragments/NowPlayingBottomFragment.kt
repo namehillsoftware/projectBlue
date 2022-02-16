@@ -11,12 +11,14 @@ import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.lasthopesoftware.bluewater.R
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.menu.FileListItemNowPlayingRegistrar
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.SelectedConnectionFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.storage.ScopedFilePropertiesStorage
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.storage.SelectedConnectionFilePropertiesStorage
+import com.lasthopesoftware.bluewater.client.browsing.items.menu.handlers.ViewChangedHandler
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.SpecificLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
@@ -46,6 +48,8 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
 class NowPlayingBottomFragment : Fragment() {
+
+	private var itemListMenuChangeHandler: IItemListMenuChangeHandler? = null
 
 	private val messageBus = lazy { MessageBus(LocalBroadcastManager.getInstance(requireContext())) }
 
@@ -101,11 +105,14 @@ class NowPlayingBottomFragment : Fragment() {
 				r,
 				fileListItemNowPlayingRegistrar.value)
 
-//			nowPlayingFileListMenuBuilder.setOnViewChangedListener(
-//				ViewChangedHandler()
-//					.setOnViewChangedListener(this)
-//					.setOnAnyMenuShown(this)
-//					.setOnAllMenusHidden(this))
+			itemListMenuChangeHandler?.apply {
+				nowPlayingFileListMenuBuilder.setOnViewChangedListener(
+					ViewChangedHandler()
+						.setOnViewChangedListener(this)
+						.setOnAnyMenuShown(this)
+						.setOnAllMenusHidden(this)
+				)
+			}
 
 			NowPlayingFileListAdapter(requireContext(), nowPlayingFileListMenuBuilder)
 		}, requireContext()))
@@ -154,6 +161,8 @@ class NowPlayingBottomFragment : Fragment() {
 				listView.adapter = a
 				listView.layoutManager = LinearLayoutManager(requireContext())
 
+				listView.isNestedScrollingEnabled = true
+
 				viewModel.nowPlayingList
 					.onEach(a::updateListEventually)
 					.launchIn(lifecycleScope)
@@ -194,5 +203,9 @@ class NowPlayingBottomFragment : Fragment() {
 		if (fileListItemNowPlayingRegistrar.isInitialized()) fileListItemNowPlayingRegistrar.value.clear()
 
 		super.onDestroy()
+	}
+
+	fun setOnItemListMenuChangeHandler(itemListMenuChangeHandler: IItemListMenuChangeHandler?) {
+		this.itemListMenuChangeHandler = itemListMenuChangeHandler
 	}
 }

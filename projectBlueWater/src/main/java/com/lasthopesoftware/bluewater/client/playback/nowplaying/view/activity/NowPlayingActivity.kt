@@ -174,11 +174,12 @@ class NowPlayingActivity :
 
 			registerOnPageChangeCallback(object : ViewPager2.OnPageChangeCallback() {
 				override fun onPageSelected(position: Int) {
-					super.onPageSelected(position)
-
 					when (position) {
 						1 -> nowPlayingViewModel.showDrawer()
-						else -> nowPlayingViewModel.hideDrawer()
+						else -> {
+							nowPlayingViewModel.hideDrawer()
+							LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator)
+						}
 					}
 				}
 			})
@@ -237,7 +238,7 @@ class NowPlayingActivity :
 
 		override fun createFragment(position: Int): Fragment = when (position) {
 			0 -> NowPlayingTopFragment()
-			1 -> NowPlayingBottomFragment()
+			1 -> NowPlayingBottomFragment().apply { setOnItemListMenuChangeHandler(this@NowPlayingActivity) }
 			else -> throw IndexOutOfBoundsException()
 		}
 	}
