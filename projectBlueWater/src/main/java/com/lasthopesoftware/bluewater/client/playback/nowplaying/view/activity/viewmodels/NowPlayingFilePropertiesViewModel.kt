@@ -204,12 +204,14 @@ class NowPlayingFilePropertiesViewModel(
 			}
 	}
 
-	private fun disableViewWithMessage() {
+	private fun resetView() {
 		titleState.value = stringResources.loading
 		artistState.value = ""
 
 		isSongRatingEnabledState.value = false
 		songRatingState.value = 0F
+
+		setTrackProgress(0)
 	}
 
 	private fun handleIoException(exception: Throwable) =
@@ -241,7 +243,8 @@ class NowPlayingFilePropertiesViewModel(
 
 			val duration = FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties)
 			setTrackDuration(if (duration > 0) duration else Int.MAX_VALUE)
-			setTrackProgress(initialFilePosition)
+			if (filePositionState.value == 0)
+				setTrackProgress(initialFilePosition)
 
 			val stringRating = fileProperties[KnownFileProperties.RATING]
 			val fileRating = stringRating?.toFloatOrNull() ?: 0f
@@ -269,7 +272,7 @@ class NowPlayingFilePropertiesViewModel(
 					).also { cachedPromises = it }
 				}
 
-				disableViewWithMessage()
+				resetView()
 				currentCachedPromises
 					.promisedProperties
 					.eventually { fileProperties ->

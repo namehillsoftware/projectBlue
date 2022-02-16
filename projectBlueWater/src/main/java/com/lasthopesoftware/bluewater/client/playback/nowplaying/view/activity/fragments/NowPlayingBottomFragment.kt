@@ -31,7 +31,7 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNow
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.InMemoryNowPlayingDisplaySettings
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingViewModel
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingScreenViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.list.NowPlayingFileListAdapter
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.menu.NowPlayingFileListItemMenuBuilder
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
@@ -122,7 +122,7 @@ class NowPlayingBottomFragment : Fragment() {
 		val playbackService = PlaybackServiceController(requireContext())
 
 		val nowPlayingViewModel = buildActivityViewModel {
-			NowPlayingViewModel(
+			NowPlayingScreenViewModel(
 				messageBus.value,
 				InMemoryNowPlayingDisplaySettings,
 				playbackService,

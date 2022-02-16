@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.shared.android.messages.RegisterForMessage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-class NowPlayingViewModel(
+class NowPlayingScreenViewModel(
 	private val messages: RegisterForMessages,
 	private val nowPlayingDisplaySettings: StoreNowPlayingDisplaySettings,
 	playbackService: ControlPlaybackService,

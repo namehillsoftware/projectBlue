@@ -37,7 +37,7 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.f
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.InMemoryNowPlayingDisplaySettings
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingCoverArtViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingViewModel
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingScreenViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.databinding.ActivityViewNowPlayingBinding
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
@@ -48,9 +48,6 @@ import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToast
 import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.resources.strings.StringResources
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 
 class NowPlayingActivity :
 	AppCompatActivity(),
@@ -110,7 +107,7 @@ class NowPlayingActivity :
 		ReceiveBroadcastEvents { WaitForConnectionDialog.show(this) }
 
 	private val nowPlayingViewModel by buildViewModelLazily {
-		NowPlayingViewModel(
+		NowPlayingScreenViewModel(
 			messageBus.value,
 			InMemoryNowPlayingDisplaySettings,
 			PlaybackServiceController(this),
