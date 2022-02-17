@@ -252,7 +252,7 @@ class NowPlayingActivity :
 				translationY = position
 
 				// Adjust alpha based off of position, only taking into account when it's scrolling to top
-				alpha = (1 + position).coerceIn(0f, 1f)
+				alpha = (1 + 2 * position).coerceIn(0f, 1f)
 			}
 		}
 	}
