@@ -8,7 +8,6 @@ import com.lasthopesoftware.bluewater.client.connection.selected.ProvideSelected
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.MaintainNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.StoreNowPlayingDisplaySettings
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
@@ -52,10 +51,6 @@ private val nowPlayingViewModel by lazy {
 
 	val playbackService = mockk<ControlPlaybackService>().apply {
 		every { promiseIsMarkedForPlay() } returns true.toPromise()
-	}
-
-	val storeNowPlayingDisplaySettings = mockk<StoreNowPlayingDisplaySettings>().apply {
-		every { isScreenOnDuringPlayback } returns true
 	}
 
 	val nowPlayingViewModel = NowPlayingFilePropertiesViewModel(

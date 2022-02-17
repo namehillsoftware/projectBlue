@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
 import android.os.Handler
+import android.view.View
 import android.widget.ViewAnimator
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
@@ -168,6 +169,8 @@ class NowPlayingActivity :
 		}?.launchIn(lifecycleScope)
 
 		with (binding.pager) {
+			setPageTransformer(FadeToTopPageTransformer)
+
 			nowPlayingViewModel.isDrawerShownState.onEach { isShown ->
 				setCurrentItem(if (isShown) 1 else 0, true)
 			}.launchIn(lifecycleScope)
@@ -240,6 +243,17 @@ class NowPlayingActivity :
 			0 -> NowPlayingTopFragment()
 			1 -> NowPlayingBottomFragment().apply { setOnItemListMenuChangeHandler(this@NowPlayingActivity) }
 			else -> throw IndexOutOfBoundsException()
+		}
+	}
+
+	private object FadeToTopPageTransformer : ViewPager2.PageTransformer {
+		override fun transformPage(page: View, position: Float) {
+			with (page) {
+				translationY = position
+
+				// Adjust alpha based off of position, only taking into account when it's scrolling to top
+				alpha = (1 + position).coerceIn(0f, 1f)
+			}
 		}
 	}
 }
