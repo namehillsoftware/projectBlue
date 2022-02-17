@@ -25,9 +25,11 @@ class NowPlayingScreenViewModel(
 	private val isScreenOnState = MutableStateFlow(false)
 
 	val isDrawerShownState = isDrawerShownInternalState.asStateFlow()
-	override val isDrawerShown = isDrawerShownState.value
-	override val isScreenOnEnabled = isScreenOnEnabledState.asStateFlow()
 	val isScreenOn = isScreenOnState.asStateFlow()
+
+	override val isScreenOnEnabled = isScreenOnEnabledState.asStateFlow()
+	override val isDrawerShown
+		get() = isDrawerShownState.value
 
 	init {
 		onPlaybackStartedReceiver = ReceiveBroadcastEvents { togglePlaying(true) }

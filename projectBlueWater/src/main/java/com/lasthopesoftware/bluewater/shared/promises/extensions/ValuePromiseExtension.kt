@@ -7,11 +7,16 @@ import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import io.reactivex.Completable
 import io.reactivex.CompletableObserver
 import io.reactivex.disposables.Disposable
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executor
+
+fun <T> Promise<T>.toDeferred(): Deferred<T> = CompletableDeferred<T>().also {
+	then(it::complete, it::completeExceptionally)
+}
 
 fun Completable.toPromise(): Promise<Unit> = CompletablePromise(this)
 

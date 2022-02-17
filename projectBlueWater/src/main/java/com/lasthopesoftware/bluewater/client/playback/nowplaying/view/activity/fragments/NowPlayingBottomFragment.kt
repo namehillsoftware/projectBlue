@@ -42,6 +42,7 @@ import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildActivityViewModel
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildActivityViewModelLazily
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toDeferred
 import com.lasthopesoftware.resources.strings.StringResources
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.launchIn
@@ -164,7 +165,7 @@ class NowPlayingBottomFragment : Fragment() {
 				listView.isNestedScrollingEnabled = true
 
 				viewModel.nowPlayingList
-					.onEach(a::updateListEventually)
+					.onEach { a.updateListEventually(it).toDeferred().await() }
 					.launchIn(lifecycleScope)
 			}, requireContext()))
 
