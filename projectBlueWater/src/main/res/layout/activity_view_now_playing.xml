@@ -30,7 +30,8 @@
             android:layout_height="match_parent"
             android:orientation="vertical"
             android:background="@color/overlay_dark"
-            android:fitsSystemWindows="true"/>
+            android:fitsSystemWindows="true"
+            android:overScrollMode="never"/>
 
     </RelativeLayout>
 </layout>
