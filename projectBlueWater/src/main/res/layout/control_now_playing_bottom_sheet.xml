@@ -4,7 +4,7 @@
 
     <data>
         <import type="android.view.View"/>
-        <variable name="vm" type="com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingViewModel"/>
+        <variable name="vm" type="com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel"/>
     </data>
 
     <RelativeLayout
@@ -115,11 +115,15 @@
                 android:progress="@{vm.filePosition}"
                 android:max="@{vm.fileDuration}" />
         </RelativeLayout>
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/nowPlayingListView"
+        <com.lasthopesoftware.bluewater.shared.android.view.NestedScrollableHost
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_below="@id/nowPlayingMiniControls"
-            android:background="@color/now_playing_list_color" />
+            android:layout_below="@id/nowPlayingMiniControls">
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/nowPlayingListView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="@color/now_playing_list_color"/>
+        </com.lasthopesoftware.bluewater.shared.android.view.NestedScrollableHost>
     </RelativeLayout>
 </layout>

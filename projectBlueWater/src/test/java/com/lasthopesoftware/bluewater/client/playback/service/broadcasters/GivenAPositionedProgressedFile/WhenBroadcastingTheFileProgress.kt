@@ -22,7 +22,7 @@ class WhenBroadcastingTheFileProgress {
 			val fileProperties = FakeScopedCachedFilesPropertiesProvider()
 			fileProperties.addFilePropertiesToCache(
 				ServiceFile(880),
-				mapOf(Pair(KnownFileProperties.DURATION, "389"))
+				mapOf(Pair(KnownFileProperties.DURATION, ".389"))
 			)
 			val trackPositionBroadcaster = TrackPositionBroadcaster(messageBus, fileProperties)
 			trackPositionBroadcaster.broadcastProgress(

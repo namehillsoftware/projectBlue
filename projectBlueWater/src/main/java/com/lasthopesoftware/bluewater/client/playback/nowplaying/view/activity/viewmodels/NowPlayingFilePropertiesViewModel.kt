@@ -30,10 +30,10 @@ import org.joda.time.Duration
 import org.slf4j.LoggerFactory
 import kotlin.math.roundToInt
 
-private val logger by lazy { LoggerFactory.getLogger(NowPlayingViewModel::class.java) }
+private val logger by lazy { LoggerFactory.getLogger(NowPlayingFilePropertiesViewModel::class.java) }
 private val screenControlVisibilityTime by lazy { Duration.standardSeconds(5) }
 
-class NowPlayingViewModel(
+class NowPlayingFilePropertiesViewModel(
 	private val messages: RegisterForMessages,
 	private val nowPlayingRepository: GetNowPlayingState,
 	private val selectedConnectionProvider: ProvideSelectedConnection,
@@ -43,8 +43,10 @@ class NowPlayingViewModel(
 	private val playbackService: ControlPlaybackService,
 	private val pollConnections: PollForConnections,
 	private val stringResources: GetStringResources,
-	private val nowPlayingDisplaySettings: StoreNowPlayingDisplaySettings,
-) : ViewModel() {
+	private val controlDrawerState: ControlDrawerState,
+	private val controlScreenOnState: ControlScreenOnState
+) : ViewModel(), ControlDrawerState by controlDrawerState, ControlScreenOnState by controlScreenOnState
+{
 	private val onPlaybackStartedReceiver: ReceiveBroadcastEvents
 	private val onPlaybackStoppedReceiver: ReceiveBroadcastEvents
 	private val onPlaybackChangedReceiver: ReceiveBroadcastEvents
@@ -65,8 +67,6 @@ class NowPlayingViewModel(
 	private val isSongRatingEnabledState = MutableStateFlow(false)
 	private val nowPlayingListState = MutableStateFlow(emptyList<PositionedFile>())
 	private val nowPlayingFileState = MutableStateFlow<PositionedFile?>(null)
-	private val isScreenOnEnabledState = MutableStateFlow(false)
-	private val isScreenOnState = MutableStateFlow(false)
 	private val isScreenControlsVisibleState = MutableStateFlow(false)
 	private val isRepeatingState = MutableStateFlow(false)
 	private val unexpectedErrorState = MutableStateFlow<Throwable?>(null)
@@ -81,8 +81,6 @@ class NowPlayingViewModel(
 	val isSongRatingEnabled = isSongRatingEnabledState.asStateFlow()
 	val nowPlayingList = nowPlayingListState.asStateFlow()
 	val nowPlayingFile = nowPlayingFileState.asStateFlow()
-	val isScreenOnEnabled = isScreenOnEnabledState.asStateFlow()
-	val isScreenOn = isScreenOnState.asStateFlow()
 	val isScreenControlsVisible = isScreenControlsVisibleState.asStateFlow()
 	val isRepeating = isRepeatingState.asStateFlow()
 	val unexpectedError = unexpectedErrorState.asStateFlow()
@@ -142,20 +140,10 @@ class NowPlayingViewModel(
 		updateViewFromRepository()
 
 		playbackService.promiseIsMarkedForPlay().then(::togglePlaying)
-
-		isScreenOnEnabledState.value = nowPlayingDisplaySettings.isScreenOnDuringPlayback
-		updateKeepScreenOnStatus()
 	}
 
 	fun togglePlaying(isPlaying: Boolean) {
 		isPlayingState.value = isPlaying
-		updateKeepScreenOnStatus()
-	}
-
-	fun toggleScreenOn() {
-		isScreenOnEnabledState.value = !isScreenOnEnabledState.value
-		nowPlayingDisplaySettings.isScreenOnDuringPlayback = isScreenOnEnabledState.value
-		updateKeepScreenOnStatus()
 	}
 
 	fun updateRating(rating: Float) {
@@ -216,12 +204,14 @@ class NowPlayingViewModel(
 			}
 	}
 
-	private fun disableViewWithMessage() {
+	private fun resetView() {
 		titleState.value = stringResources.loading
 		artistState.value = ""
 
 		isSongRatingEnabledState.value = false
 		songRatingState.value = 0F
+
+		setTrackProgress(0)
 	}
 
 	private fun handleIoException(exception: Throwable) =
@@ -252,8 +242,9 @@ class NowPlayingViewModel(
 			titleState.value = fileProperties[KnownFileProperties.NAME]
 
 			val duration = FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties)
-			setTrackDuration(if (duration > 0) duration else 100)
-			setTrackProgress(initialFilePosition)
+			setTrackDuration(if (duration > 0) duration else Int.MAX_VALUE)
+			if (filePositionState.value == 0)
+				setTrackProgress(initialFilePosition)
 
 			val stringRating = fileProperties[KnownFileProperties.RATING]
 			val fileRating = stringRating?.toFloatOrNull() ?: 0f
@@ -281,7 +272,7 @@ class NowPlayingViewModel(
 					).also { cachedPromises = it }
 				}
 
-				disableViewWithMessage()
+				resetView()
 				currentCachedPromises
 					.promisedProperties
 					.eventually { fileProperties ->
@@ -293,10 +284,6 @@ class NowPlayingViewModel(
 					}
 					.excuse { exception -> handleException(exception) }
 			}
-	}
-
-	private fun updateKeepScreenOnStatus() {
-		isScreenOnState.value = isPlayingState.value && isScreenOnEnabledState.value
 	}
 
 	private fun setTrackDuration(duration: Number) {
