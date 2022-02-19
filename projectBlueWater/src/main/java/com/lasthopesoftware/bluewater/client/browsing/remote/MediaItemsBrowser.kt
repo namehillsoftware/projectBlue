@@ -37,7 +37,7 @@ class MediaItemsBrowser(
 			maybeId
 				?.let { libraryId ->
 					itemProvider
-						.promiseItems(libraryId, item.key)
+						.promiseItems(libraryId, item)
 						.eventually { items ->
 							if (items.any()) items.map(::toMediaItem).toPromise()
 							else {

@@ -26,7 +26,7 @@ class ClickItemListener(
 
 		sendMessages.sendBroadcast(Intent(MenuNotifications.launchingActivity))
 		provideItems
-			.promiseItems(libraryId, item.key)
+			.promiseItems(libraryId, item)
 			.then(
 				{ items ->
 					if (items.isNotEmpty()) {

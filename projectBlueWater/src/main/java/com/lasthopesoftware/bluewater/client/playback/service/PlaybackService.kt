@@ -858,7 +858,6 @@ open class PlaybackService :
 				Toast.makeText(this, getText(R.string.lbl_error_connecting_try_again), Toast.LENGTH_SHORT).show()
 				return
 			}
-			else -> return
 		}
 
 		lazyNotificationController.value.notifyForeground(
@@ -884,12 +883,10 @@ open class PlaybackService :
 				is IllegalStateException -> {
 					logger.error("The ExoPlayer player ended up in an illegal state, closing and restarting the player", cause)
 					closeAndRestartPlaylistManager(exception)
-					return
 				}
 				is NoSuchElementException -> {
 					logger.error("The ExoPlayer player was unable to deque data, closing and restarting the player", cause)
 					closeAndRestartPlaylistManager(exception)
-					return
 				}
 				null -> stopSelf(startId)
 				else -> uncaughtExceptionHandler(exception.cause)

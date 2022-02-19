@@ -17,16 +17,18 @@ import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.access.CachedItemProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.access.ItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.ItemStringListProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.LibraryFileStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.MenuNotifications
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
-import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
@@ -41,18 +43,24 @@ class ItemListFragment : Fragment() {
 
 	private val handler by lazy { Handler(requireContext().mainLooper) }
 
-	private val fileStringListProvider by lazy {
-		FileStringListProvider(SelectedConnectionProvider(requireContext()))
-	}
-
 	private val browserLibraryIdProvider by lazy {
 		SelectedBrowserLibraryIdentifierProvider(requireContext().getApplicationSettingsRepository())
 	}
 
-	private val lazySelectedLibraryProvider by lazy {
+	private val selectedLibraryProvider by lazy {
 		SelectedBrowserLibraryProvider(
 			browserLibraryIdProvider,
 			LibraryRepository(requireContext())
+		)
+	}
+
+	private val itemListProvider by lazy {
+		val connectionProvider = ConnectionSessionManager.get(requireContext())
+
+		ItemStringListProvider(
+			ItemProvider(connectionProvider),
+			FileListParameters.getInstance(),
+			LibraryFileStringListProvider(connectionProvider)
 		)
 	}
 
@@ -87,8 +95,7 @@ class ItemListFragment : Fragment() {
 							DemoableItemListAdapter(
 								fa,
 								messageBus.value,
-								FileListParameters.getInstance(),
-								fileStringListProvider,
+								itemListProvider,
 								itemListMenuChangeHandler,
 								StoredItemAccess(fa),
 								itemProvider,
@@ -101,8 +108,7 @@ class ItemListFragment : Fragment() {
 								ItemListAdapter(
 									context,
 									messageBus.value,
-									FileListParameters.getInstance(),
-									fileStringListProvider,
+									itemListProvider,
 									itemListMenuChangeHandler,
 									StoredItemAccess(context),
 									itemProvider,
@@ -133,7 +139,7 @@ class ItemListFragment : Fragment() {
 		recyclerView?.visibility = ViewUtils.getVisibility(false)
 		progressBar?.visibility = ViewUtils.getVisibility(true)
 
-		lazySelectedLibraryProvider
+		selectedLibraryProvider
 			.browserLibrary
 			.then { activeLibrary ->
 				if (activeLibrary == null) return@then
@@ -155,7 +161,7 @@ class ItemListFragment : Fragment() {
 
 				object : Runnable {
 					override fun run() {
-						itemProvider.promiseItems(activeLibrary.libraryId, activeLibrary.selectedView)
+						itemProvider.promiseItems(activeLibrary.libraryId, Item(activeLibrary.selectedView))
 							.eventually(onGetVisibleViewsCompleteListener)
 							.excuse(HandleViewIoException(context, this))
 							.eventuallyExcuse(response(UnexpectedExceptionToasterResponse(context), handler))
@@ -211,7 +217,7 @@ class ItemListFragment : Fragment() {
 
 		override fun run() {
 			val context = requireContext()
-			itemProvider.promiseItems(libraryId, category.key)
+			itemProvider.promiseItems(libraryId, Item(category.key))
 				.eventually { i -> i?.let(adapter::updateListEventually).keepPromise(Unit) }
 				.eventually(response({
 					progressBar?.visibility = ViewUtils.getVisibility(false)

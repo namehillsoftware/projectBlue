@@ -5,5 +5,5 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.namehillsoftware.handoff.promises.Promise
 
 interface ProvideItems {
-    fun promiseItems(libraryId: LibraryId, itemKey: Int): Promise<List<Item>>
+    fun promiseItems(libraryId: LibraryId, item: Item): Promise<List<Item>>
 }

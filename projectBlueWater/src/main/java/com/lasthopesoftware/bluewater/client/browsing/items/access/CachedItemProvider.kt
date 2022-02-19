@@ -13,12 +13,12 @@ import com.namehillsoftware.handoff.promises.Promise
 class CachedItemProvider(
 	private val inner: ProvideItems,
 	private val revisions: CheckRevisions,
-	private val functionCache: CachePromiseFunctions<Triple<LibraryId, Int, Int>, List<Item>>
+	private val functionCache: CachePromiseFunctions<Triple<LibraryId, Item, Int>, List<Item>>
 ) : ProvideItems {
 
 	companion object {
 
-		private val functionCache = LruPromiseCache<Triple<LibraryId, Int, Int>, List<Item>>(20)
+		private val functionCache = LruPromiseCache<Triple<LibraryId, Item, Int>, List<Item>>(20)
 
 		fun getInstance(context: Context): CachedItemProvider {
 			val libraryConnectionProvider = ConnectionSessionManager.get(context)
@@ -31,10 +31,10 @@ class CachedItemProvider(
 		}
 	}
 
-	override fun promiseItems(libraryId: LibraryId, itemKey: Int): Promise<List<Item>> =
+	override fun promiseItems(libraryId: LibraryId, item: Item): Promise<List<Item>> =
 		revisions
 			.promiseRevision(libraryId)
 			.eventually { revision ->
-				functionCache.getOrAdd(Triple(libraryId, itemKey, revision)) { (l, k, _) -> inner.promiseItems(l, k) }
+				functionCache.getOrAdd(Triple(libraryId, item, revision)) { (l, k, _) -> inner.promiseItems(l, k) }
 			}
 }

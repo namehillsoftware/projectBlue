@@ -51,7 +51,7 @@ class `When Getting Items` {
 			every { selectedLibraryId.selectedLibraryId } returns Promise(LibraryId(22))
 
 			val itemsProvider = mockk<ProvideItems>()
-			every { itemsProvider.promiseItems(LibraryId(22), 743) } returns Promise(emptyList())
+			every { itemsProvider.promiseItems(LibraryId(22), Item(743)) } returns Promise(emptyList())
 
 			val serviceFiles = mockk<GetMediaItemsFromServiceFiles>()
 			for (id in serviceFileIds) {

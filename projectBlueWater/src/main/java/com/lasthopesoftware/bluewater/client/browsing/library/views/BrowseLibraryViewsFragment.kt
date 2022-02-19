@@ -132,7 +132,7 @@ class BrowseLibraryViewsFragment : Fragment(R.layout.tabbed_library_items_layout
 			selectedBrowserLibrary
 				.then { it?.let { library ->
 					CachedItemProvider.getInstance(context)
-						.promiseItems(library.libraryId, library.selectedView)
+						.promiseItems(library.libraryId, Item(library.selectedView))
 						.eventually(fillVisibleViews.value)
 						.run {
 							if (savedInstanceState == null) this

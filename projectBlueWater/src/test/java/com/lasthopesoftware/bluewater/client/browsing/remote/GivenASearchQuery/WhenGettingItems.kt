@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.browsing.remote.GivenASearchQuery
 
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaMetadataCompat
+import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.ProvideFiles
@@ -46,7 +47,7 @@ class `When Getting Items` {
 			every { selectedLibraryId.selectedLibraryId } returns Promise(LibraryId(22))
 
 			val itemsProvider = mockk<ProvideItems>()
-			every { itemsProvider.promiseItems(LibraryId(22), 743) } returns Promise(emptyList())
+			every { itemsProvider.promiseItems(LibraryId(22), Item(743)) } returns Promise(emptyList())
 
 			val serviceFiles = mockk<GetMediaItemsFromServiceFiles>()
 			for (id in serviceFileIds) {

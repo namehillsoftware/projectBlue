@@ -38,13 +38,13 @@ class WhenFindingThePlaylistItem {
 
 			setupItemProviderWithItems(
 				itemProvider,
-				2,
+				Item(2),
 				3,
 				false
 			)
 			var generatedItems = setupItemProviderWithItems(
 				itemProvider,
-				16,
+				Item(16),
 				15,
 				true
 			)
@@ -53,14 +53,14 @@ class WhenFindingThePlaylistItem {
 				if (item == firstLevelChosenItem) continue
 				setupItemProviderWithItems(
 					itemProvider,
-					item.key,
+					item,
 					100,
 					true
 				)
 			}
 			generatedItems = setupItemProviderWithItems(
 				itemProvider,
-				16,
+				Item(16),
 				90,
 				true
 			)
@@ -68,11 +68,11 @@ class WhenFindingThePlaylistItem {
 			val secondLevelChosenItem = generatedItems[random.nextInt(generatedItems.size)]
 			for (item in generatedItems) {
 				if (item == secondLevelChosenItem) continue
-				every { itemProvider.promiseItems(LibraryId(3), item.key) } returns Promise(emptyList())
+				every { itemProvider.promiseItems(LibraryId(3), item) } returns Promise(emptyList())
 			}
 			val decoy = Item(random.nextInt()).setPlaylistId(random.nextInt())
 
-			every { itemProvider.promiseItems(LibraryId(3), secondLevelChosenItem.key) } returns Promise(
+			every { itemProvider.promiseItems(LibraryId(3), secondLevelChosenItem) } returns Promise(
 				listOf(
 					decoy,
 					expectedItem
@@ -83,7 +83,7 @@ class WhenFindingThePlaylistItem {
 			playlistItemFinder.promiseItem(LibraryId(3), Playlist(playlistId)).toFuture().get()
 		}
 
-		private fun setupItemProviderWithItems(itemProvider: ProvideItems, sourceItem: Int, numberOfChildren: Int, withPlaylistIds: Boolean): List<Item> {
+		private fun setupItemProviderWithItems(itemProvider: ProvideItems, sourceItem: Item, numberOfChildren: Int, withPlaylistIds: Boolean): List<Item> {
 			val items = ArrayList<Item>(numberOfChildren)
 			for (i in 0 until numberOfChildren) {
 				val newItem = Item(random.nextInt())

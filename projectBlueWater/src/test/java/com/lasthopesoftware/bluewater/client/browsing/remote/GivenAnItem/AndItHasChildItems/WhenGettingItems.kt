@@ -39,7 +39,7 @@ class `When Getting Items` {
 			every { selectedLibraryId.selectedLibraryId } returns Promise(LibraryId(22))
 
 			val itemsProvider = mockk<ProvideItems>()
-			every { itemsProvider.promiseItems(LibraryId(22), 504) } returns Promise(
+			every { itemsProvider.promiseItems(LibraryId(22), Item(504)) } returns Promise(
 				listOf(605, 842, 264, 224, 33, 412, 488, 394).map(::Item)
 			)
 
