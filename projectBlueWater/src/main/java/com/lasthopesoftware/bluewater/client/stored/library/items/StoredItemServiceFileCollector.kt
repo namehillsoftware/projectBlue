@@ -59,7 +59,7 @@ class StoredItemServiceFileCollector(
 	}
 
 	private fun promiseServiceFiles(libraryId: LibraryId, item: Item, cancellationProxy: CancellationProxy): Promise<Collection<ServiceFile>> {
-		val parameters = fileListParameters.getFileListParameters(item)
+		val parameters = fileListParameters.getFileListParameters(item.itemId)
 		val serviceFilesPromise = fileProvider.promiseFiles(libraryId, FileListParameters.Options.None, *parameters)
 		cancellationProxy.doCancel(serviceFilesPromise)
 		return serviceFilesPromise.then(forward(), ExceptionHandler(libraryId, item, storedItemAccess))

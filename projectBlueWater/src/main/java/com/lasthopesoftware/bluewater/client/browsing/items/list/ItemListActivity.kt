@@ -14,7 +14,7 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.lasthopesoftware.bluewater.R
-import com.lasthopesoftware.bluewater.client.browsing.items.Item
+import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.access.CachedItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuChangeHandler
@@ -63,7 +63,7 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer {
 
 		ItemStringListProvider(
 			ItemProvider(connectionProvider),
-			FileListParameters.getInstance(),
+			FileListParameters,
 			LibraryFileStringListProvider(connectionProvider)
 		)
 	}
@@ -139,7 +139,7 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer {
 
 		browserLibraryIdProvider.selectedLibraryId
 			.eventually { l ->
-				l?.let { itemProvider.promiseItems(l, Item(itemId)) }.keepPromise(emptyList())
+				l?.let { itemProvider.promiseItems(l, ItemId(itemId)) }.keepPromise(emptyList())
 			}
 			.eventually { items ->
 				promisedItemListAdapter.eventually { adapter ->

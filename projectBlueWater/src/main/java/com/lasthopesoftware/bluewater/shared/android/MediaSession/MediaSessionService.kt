@@ -19,7 +19,7 @@ class MediaSessionService : Service() {
 		newMediaSession.setCallback(
 			MediaSessionCallbackReceiver(
 				this,
-				FileListParameters.getInstance(),
+				FileListParameters,
 				FileStringListProvider(SelectedConnectionProvider(this))
 			)
 		)

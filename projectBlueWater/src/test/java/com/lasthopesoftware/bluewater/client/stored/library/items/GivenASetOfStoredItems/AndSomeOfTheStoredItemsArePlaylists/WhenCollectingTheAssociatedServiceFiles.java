@@ -1,7 +1,14 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.GivenASetOfStoredItems.AndSomeOfTheStoredItemsArePlaylists;
 
+import static com.annimon.stream.Stream.concat;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.annimon.stream.Stream;
-import com.lasthopesoftware.bluewater.client.browsing.items.Item;
+import com.lasthopesoftware.bluewater.client.browsing.items.ItemId;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.ProvideLibraryFiles;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters;
@@ -26,13 +33,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static com.annimon.stream.Stream.concat;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.argThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 public class WhenCollectingTheAssociatedServiceFiles {
 
 	private static Collection<ServiceFile> collectedFiles;
@@ -50,15 +50,15 @@ public class WhenCollectingTheAssociatedServiceFiles {
 			new StoredItem(1, 3, StoredItem.ItemType.ITEM),
 			new StoredItem(1, 5, StoredItem.ItemType.PLAYLIST));
 
-		final FileListParameters fileListParameters = FileListParameters.getInstance();
+		final FileListParameters fileListParameters = FileListParameters.INSTANCE;
 		final ProvideLibraryFiles fileProvider = mock(ProvideLibraryFiles.class);
 		when(fileProvider.promiseFiles(any(), any()))
 			.thenReturn(new Promise<>(Collections.emptyList()));
-		when(fileProvider.promiseFiles(new LibraryId(5), FileListParameters.Options.None, fileListParameters.getFileListParameters(new Item(1))))
+		when(fileProvider.promiseFiles(new LibraryId(5), FileListParameters.Options.None, fileListParameters.getFileListParameters(new ItemId(1))))
 			.thenReturn(new Promise<>(firstItemExpectedFiles));
-		when(fileProvider.promiseFiles(new LibraryId(5), FileListParameters.Options.None, fileListParameters.getFileListParameters(new Item(2))))
+		when(fileProvider.promiseFiles(new LibraryId(5), FileListParameters.Options.None, fileListParameters.getFileListParameters(new ItemId(2))))
 			.thenReturn(new Promise<>(secondItemExpectedFiles));
-		when(fileProvider.promiseFiles(new LibraryId(5), FileListParameters.Options.None, fileListParameters.getFileListParameters(new Item(3))))
+		when(fileProvider.promiseFiles(new LibraryId(5), FileListParameters.Options.None, fileListParameters.getFileListParameters(new ItemId(3))))
 			.thenReturn(new Promise<>(thirdItemExpectedFiles));
 		when(fileProvider.promiseFiles(new LibraryId(5), FileListParameters.Options.None, fileListParameters.getFileListParameters(new Playlist(5))))
 			.thenReturn(new Promise<>(fourthItemExpectedFiles));

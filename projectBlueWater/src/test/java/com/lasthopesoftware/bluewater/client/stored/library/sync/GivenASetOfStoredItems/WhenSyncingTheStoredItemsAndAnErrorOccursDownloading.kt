@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.stored.library.sync.GivenASetOfStoredItems
 
-import com.lasthopesoftware.bluewater.client.browsing.items.Item
+import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.ProvideLibraryFiles
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
@@ -35,9 +35,9 @@ class WhenSyncingTheStoredItemsAndAnErrorOccursDownloading {
 				)
 			)
 
-			val fileListParameters = FileListParameters.getInstance()
+			val fileListParameters = FileListParameters
 			val mockFileProvider = mockk<ProvideLibraryFiles>()
-			every { mockFileProvider.promiseFiles(LibraryId(42), FileListParameters.Options.None, *fileListParameters.getFileListParameters(Item(14))) } returns Promise(
+			every { mockFileProvider.promiseFiles(LibraryId(42), FileListParameters.Options.None, *fileListParameters.getFileListParameters(ItemId(14))) } returns Promise(
 				listOf(
 					ServiceFile(1),
 					ServiceFile(2),

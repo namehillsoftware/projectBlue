@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.GivenAnUnfoundCollectionOfServiceFiles
 
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
-import com.lasthopesoftware.bluewater.client.browsing.items.Item
+import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.ProvideLibraryFiles
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
@@ -47,20 +47,20 @@ class WhenCollectingTheAssociatedServiceFiles {
 				}
 			}
 
-			val fileListParameters = FileListParameters.getInstance()
+			val fileListParameters = FileListParameters
 			val fileProvider = mockk<ProvideLibraryFiles>()
 			every {
 				fileProvider.promiseFiles(
 					LibraryId(4),
 					FileListParameters.Options.None,
-					*fileListParameters.getFileListParameters(Item(1)))
+					*fileListParameters.getFileListParameters(ItemId(1)))
 			} returns firstItemExpectedFiles.toPromise()
 
 			every {
 				fileProvider.promiseFiles(
 					LibraryId(4),
 					FileListParameters.Options.None,
-					*fileListParameters.getFileListParameters(Item(2))
+					*fileListParameters.getFileListParameters(ItemId(2))
 				)
 			} returns Promise(FileNotFoundException())
 
@@ -68,7 +68,7 @@ class WhenCollectingTheAssociatedServiceFiles {
 				fileProvider.promiseFiles(
 					LibraryId(4),
 					FileListParameters.Options.None,
-					*fileListParameters.getFileListParameters(Item(3))
+					*fileListParameters.getFileListParameters(ItemId(3))
 				)
 			} returns thirdItemExpectedFiles.toPromise()
 

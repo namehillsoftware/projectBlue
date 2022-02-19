@@ -43,7 +43,7 @@ class WhenSyncingTheStoredItems {
 					)
 				}
 
-			val fileListParameters = FileListParameters.getInstance()
+			val fileListParameters = FileListParameters
 			val mockFileProvider = mockk<ProvideLibraryFiles>()
 				.apply {
 					every {

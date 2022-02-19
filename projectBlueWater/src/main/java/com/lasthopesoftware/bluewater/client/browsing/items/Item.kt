@@ -1,48 +1,25 @@
-package com.lasthopesoftware.bluewater.client.browsing.items;
+package com.lasthopesoftware.bluewater.client.browsing.items
 
-import androidx.annotation.Nullable;
+import com.lasthopesoftware.bluewater.client.browsing.items.playlists.Playlist
+import com.lasthopesoftware.bluewater.shared.AbstractIntKeyStringValue
 
-import com.lasthopesoftware.bluewater.client.browsing.items.playlists.Playlist;
-import com.lasthopesoftware.bluewater.shared.AbstractIntKeyStringValue;
+open class Item : AbstractIntKeyStringValue, IItem {
+    var playlistId: Int? = null
 
-
-
-public class Item extends AbstractIntKeyStringValue implements IItem {
-
-	private Integer playlistId;
-
-	public Item(int key, String value) {
-		super(key, value);
-
-	}
-	
-	public Item(int key) {
-		super();
-
-		this.setKey(key);
-	}
-	
-	public Item() {
-		super();
-	}
-
-	@Nullable public Integer getPlaylistId() {
-		return playlistId;
-	}
-
-	public Item setPlaylistId(@Nullable Integer playlistId) {
-		this.playlistId = playlistId;
-		return this;
-	}
-
-	@Override
-    public int hashCode() {
-        return getKey();
+    constructor(key: Int, value: String?) : super(key, value)
+    constructor(key: Int) : super() {
+        this.key = key
     }
 
-    @Nullable public Playlist getPlaylist() {
-		return playlistId != null
-			? new Playlist(playlistId)
-			: null;
-	}
+    constructor() : super()
+
+    override fun hashCode(): Int {
+        return key
+    }
+
+    val playlist: Playlist?
+        get() = playlistId?.let(::Playlist)
+
+	val itemId
+		get() = ItemId(key)
 }

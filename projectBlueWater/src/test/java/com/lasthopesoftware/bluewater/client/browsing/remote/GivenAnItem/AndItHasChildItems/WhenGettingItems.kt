@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.browsing.remote.GivenAnItem.AndItH
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaMetadataCompat
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
+import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -39,7 +40,7 @@ class `When Getting Items` {
 			every { selectedLibraryId.selectedLibraryId } returns Promise(LibraryId(22))
 
 			val itemsProvider = mockk<ProvideItems>()
-			every { itemsProvider.promiseItems(LibraryId(22), Item(504)) } returns Promise(
+			every { itemsProvider.promiseItems(LibraryId(22), ItemId(504)) } returns Promise(
 				listOf(605, 842, 264, 224, 33, 412, 488, 394).map(::Item)
 			)
 
@@ -51,7 +52,7 @@ class `When Getting Items` {
                 mockk(),
 			)
 			mediaItemsBrowser
-				.promiseItems(Item(504))
+				.promiseItems(ItemId(504))
 				.toFuture()
 				.get()
 		}

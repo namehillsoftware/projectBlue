@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.browsing.remote
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaDescriptionCompat
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
+import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.ProvideFiles
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
@@ -32,16 +33,16 @@ class MediaItemsBrowser(
 			)
 	}
 
-	override fun promiseItems(item: Item): Promise<Collection<MediaBrowserCompat.MediaItem>> =
+	override fun promiseItems(itemId: ItemId): Promise<Collection<MediaBrowserCompat.MediaItem>> =
 		selectedLibraryIdProvider.selectedLibraryId.eventually { maybeId ->
 			maybeId
 				?.let { libraryId ->
 					itemProvider
-						.promiseItems(libraryId, item)
+						.promiseItems(libraryId, itemId)
 						.eventually { items ->
 							if (items.any()) items.map(::toMediaItem).toPromise()
 							else {
-								val parameters = FileListParameters.getInstance().getFileListParameters(item)
+								val parameters = FileListParameters.getFileListParameters(itemId)
 								fileProvider
 									.promiseFiles(FileListParameters.Options.None, *parameters)
 									.eventually<Collection<MediaBrowserCompat.MediaItem>> { files ->
@@ -54,7 +55,7 @@ class MediaItemsBrowser(
 														MediaBrowserCompat.MediaItem(
 															MediaDescriptionCompat
 																.Builder()
-																.setMediaId(RemoteBrowserService.itemFileMediaIdPrefix + RemoteBrowserService.mediaIdDelimiter + item.key + RemoteBrowserService.mediaIdDelimiter + i)
+																.setMediaId(RemoteBrowserService.itemFileMediaIdPrefix + RemoteBrowserService.mediaIdDelimiter + itemId.id + RemoteBrowserService.mediaIdDelimiter + i)
 																.setDescription(description.description)
 																.setExtras(description.extras)
 																.setTitle(description.title)

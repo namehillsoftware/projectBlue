@@ -1,43 +1,39 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.access;
+package com.lasthopesoftware.bluewater.client.browsing.items.access
 
-import com.lasthopesoftware.bluewater.client.browsing.items.Item;
+import com.lasthopesoftware.bluewater.client.browsing.items.Item
+import org.xml.sax.Attributes
+import org.xml.sax.helpers.DefaultHandler
 
-import org.xml.sax.Attributes;
-import org.xml.sax.helpers.DefaultHandler;
+internal class ItemResponseHandler : DefaultHandler() {
+    private var currentKey = ""
+    private var currentName = ""
+    private var currentPlaylistId = ""
+    @JvmField
+	val items: MutableList<Item> = ArrayList()
+    override fun startElement(
+        uri: String,
+        localName: String,
+        qName: String,
+        attributes: Attributes
+    ) {
+        currentKey = ""
+        currentName = ""
+		currentPlaylistId = ""
+        if (!"item".equals(qName, ignoreCase = true)) return
+        currentName = attributes.getValue("Name")
+        currentPlaylistId = attributes.getValue("PlaylistID")
+    }
 
-import java.util.ArrayList;
-import java.util.List;
+    override fun characters(ch: CharArray, start: Int, length: Int) {
+        currentKey = String(ch, start, length)
+    }
 
-class ItemResponseHandler extends DefaultHandler {
+    override fun endElement(uri: String, localName: String, qName: String) {
+        if (!"item".equals(qName, ignoreCase = true)) return
+		val key = currentKey.toIntOrNull() ?: return
+        val item = Item(key, currentName)
 
-	private String currentValue;
-	private String currentKey;
-	private String currentPlaylistId;
-	
-	public final List<Item> items = new ArrayList<>();
-
-	public void startElement(String uri, String localName, String qName, Attributes attributes) {
-		currentValue = "";
-		currentKey = "";
-		
-		if (!"item".equalsIgnoreCase(qName)) return;
-
-		currentKey = attributes.getValue("Name");
-		currentPlaylistId = attributes.getValue("PlaylistID");
-	}
-	
-	public void characters(char[] ch, int start, int length) {
-		currentValue = new String(ch,start,length);
-	}
-	
-	public void endElement(String uri, String localName, String qName) {
-		if (!"item".equalsIgnoreCase(qName)) return;
-
-		final Item item = new Item(Integer.parseInt(currentValue), currentKey);
-
-		if (currentPlaylistId != null && !currentPlaylistId.isEmpty())
-			item.setPlaylistId(Integer.parseInt(currentPlaylistId));
-
-		items.add(item);
-	}
+		item.playlistId = currentPlaylistId.toIntOrNull()
+        items.add(item)
+    }
 }

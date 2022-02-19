@@ -7,7 +7,7 @@ import android.support.v4.media.MediaDescriptionCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import androidx.annotation.RequiresApi
-import com.lasthopesoftware.bluewater.client.browsing.items.Item
+import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.IFileListParameterProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListProvider
@@ -56,7 +56,7 @@ class MediaSessionCallbackReceiver(
 		val promisedFileStringList = fileStringListProvider
 			.promiseFileStringList(
 				FileListParameters.Options.None,
-				*fileListParameterProvider.getFileListParameters(Item(id))
+				*fileListParameterProvider.getFileListParameters(ItemId(id))
 			)
 
 		if (ids.size < 2) {

@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.GivenAnItem
 
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
+import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideFreshItems
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.ItemStringListProvider
@@ -20,7 +21,7 @@ private val stringList by lazy {
 	val deferredItemPromise = DeferredPromise(emptyList<Item>())
 	val itemProvider = mockk<ProvideFreshItems>().apply {
 		var itemCalls = 0
-		every { promiseItems(LibraryId(14), Item(32)) } answers {
+		every { promiseItems(LibraryId(14), ItemId(32)) } answers {
 			firstDeferredFilePromise.resolve()
 
 			itemCalls++
@@ -48,8 +49,8 @@ private val stringList by lazy {
 		}
 	}
 
-	val itemStringListProvider = ItemStringListProvider(itemProvider, FileListParameters.getInstance(), fileStringListProvider)
-	itemStringListProvider.promiseFileStringList(LibraryId(14), Item(32), FileListParameters.Options.None)
+	val itemStringListProvider = ItemStringListProvider(itemProvider, FileListParameters, fileStringListProvider)
+	itemStringListProvider.promiseFileStringList(LibraryId(14), ItemId(32), FileListParameters.Options.None)
 		.toFuture()
 		.get()
 }

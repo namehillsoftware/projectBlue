@@ -1,30 +1,22 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.GivenATypicalPlaylist;
+package com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.GivenATypicalPlaylist
 
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters;
-import com.lasthopesoftware.bluewater.client.browsing.items.playlists.Playlist;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
+import com.lasthopesoftware.bluewater.client.browsing.items.playlists.Playlist
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.Test
 
-import org.junit.BeforeClass;
-import org.junit.Test;
+class WhenGettingFileListParameters {
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-public class WhenGettingFileListParameters {
-
-	private static final String[] expectedFileListParameters = {
-		"Playlist/Files",
-		"Playlist=57",
-	};
-
-	private static String[] returnedFileListParameters;
-
-	@BeforeClass
-	public static void before() {
-		final FileListParameters fileListParameters = FileListParameters.getInstance();
-		returnedFileListParameters = fileListParameters.getFileListParameters(new Playlist(57));
+	companion object {
+		private val expectedFileListParameters = arrayOf(
+			"Playlist/Files",
+			"Playlist=57"
+		)
+		private val returnedFileListParameters by lazy { FileListParameters.getFileListParameters(Playlist(57)) }
 	}
 
-	@Test
-	public void thenTheFileListParametersAreCorrect() {
-		assertThat(returnedFileListParameters).containsOnly(expectedFileListParameters);
-	}
+    @Test
+    fun thenTheFileListParametersAreCorrect() {
+        assertThat(returnedFileListParameters).containsOnly(*expectedFileListParameters)
+    }
 }

@@ -1,49 +1,28 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters;
+package com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters
 
-import com.lasthopesoftware.bluewater.client.browsing.items.Item;
-import com.lasthopesoftware.bluewater.client.browsing.items.playlists.Playlist;
-import com.namehillsoftware.lazyj.CreateAndHold;
-import com.namehillsoftware.lazyj.Lazy;
+import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
+import com.lasthopesoftware.bluewater.client.browsing.items.playlists.Playlist
 
-import java.util.ArrayList;
-import java.util.Arrays;
+object FileListParameters : IFileListParameterProvider {
+    override fun getFileListParameters(itemId: ItemId): Array<String> = arrayOf(
+		"Browse/Files",
+		"ID=${itemId.id}",
+		"Version=2"
+	)
 
-public class FileListParameters implements IFileListParameterProvider {
+    override fun getFileListParameters(playlist: Playlist): Array<String> =
+		arrayOf("Playlist/Files", "Playlist=" + playlist.key)
 
-	private static final CreateAndHold<FileListParameters> lazyFileListParameters = new Lazy<>(FileListParameters::new);
+    enum class Options {
+        None, Shuffled
+    }
 
-	public static FileListParameters getInstance() {
-		return lazyFileListParameters.getObject();
-	}
-
-	private FileListParameters() {}
-
-	@Override
-	public String[] getFileListParameters(Item item) {
-		return new String[] {
-			"Browse/Files",
-			"ID=" + item.getKey(),
-			"Version=2"
-		};
-	}
-
-	@Override
-	public String[] getFileListParameters(Playlist playlist) {
-		return new String[] { "Playlist/Files", "Playlist=" + playlist.getKey()};
-	}
-
-	public enum Options {
-		None,
-		Shuffled
-	}
-
-	public static class Helpers {
-		public static String[] processParams(Options option, String... params) {
-			final ArrayList<String> newParams = new ArrayList<>(Arrays.asList(params));
-			newParams.add("Action=Serialize");
-			if (option == Options.Shuffled)
-				newParams.add("Shuffle=1");
-			return newParams.toArray(new String[0]);
-		}
-	}
+    object Helpers {
+        fun processParams(option: Options, vararg params: String): Array<String> {
+            val newParams = mutableListOf(*params)
+            newParams.add("Action=Serialize")
+            if (option == Options.Shuffled) newParams.add("Shuffle=1")
+            return newParams.toTypedArray()
+        }
+    }
 }

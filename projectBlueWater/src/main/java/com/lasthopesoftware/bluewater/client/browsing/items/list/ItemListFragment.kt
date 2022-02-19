@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
+import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.access.CachedItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler
@@ -59,7 +60,7 @@ class ItemListFragment : Fragment() {
 
 		ItemStringListProvider(
 			ItemProvider(connectionProvider),
-			FileListParameters.getInstance(),
+			FileListParameters,
 			LibraryFileStringListProvider(connectionProvider)
 		)
 	}
@@ -161,7 +162,7 @@ class ItemListFragment : Fragment() {
 
 				object : Runnable {
 					override fun run() {
-						itemProvider.promiseItems(activeLibrary.libraryId, Item(activeLibrary.selectedView))
+						itemProvider.promiseItems(activeLibrary.libraryId, ItemId(activeLibrary.selectedView))
 							.eventually(onGetVisibleViewsCompleteListener)
 							.excuse(HandleViewIoException(context, this))
 							.eventuallyExcuse(response(UnexpectedExceptionToasterResponse(context), handler))
@@ -217,7 +218,7 @@ class ItemListFragment : Fragment() {
 
 		override fun run() {
 			val context = requireContext()
-			itemProvider.promiseItems(libraryId, Item(category.key))
+			itemProvider.promiseItems(libraryId, ItemId(category.key))
 				.eventually { i -> i?.let(adapter::updateListEventually).keepPromise(Unit) }
 				.eventually(response({
 					progressBar?.visibility = ViewUtils.getVisibility(false)

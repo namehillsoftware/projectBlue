@@ -15,7 +15,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
-import com.lasthopesoftware.bluewater.client.browsing.items.Item
+import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.list.IItemListViewContainer
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuChangeHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.FileProvider
@@ -91,7 +91,7 @@ class FileListActivity :
 	}
 
 	override fun run() {
-		val parameters = FileListParameters.getInstance().getFileListParameters(Item(itemId))
+		val parameters = FileListParameters.getFileListParameters(ItemId(itemId))
 		fileProvider.promiseFiles(FileListParameters.Options.None, *parameters)
 			.eventually { serviceFiles ->
 				fromActiveLibrary(this)

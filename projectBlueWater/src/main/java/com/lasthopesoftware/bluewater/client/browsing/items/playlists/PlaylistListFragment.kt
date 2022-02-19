@@ -14,7 +14,7 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.lasthopesoftware.bluewater.R
-import com.lasthopesoftware.bluewater.client.browsing.items.Item
+import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.access.CachedItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.list.DemoableItemListAdapter
@@ -63,7 +63,7 @@ class PlaylistListFragment : Fragment() {
 
 		ItemStringListProvider(
 			ItemProvider(connectionProvider),
-			FileListParameters.getInstance(),
+			FileListParameters,
 			LibraryFileStringListProvider(connectionProvider)
 		)
 	}
@@ -174,7 +174,7 @@ class PlaylistListFragment : Fragment() {
 
 		override fun run() {
 			val context = requireContext()
-			itemProvider.promiseItems(library.libraryId, Item(library.selectedView))
+			itemProvider.promiseItems(library.libraryId, ItemId(library.selectedView))
 				.eventually { i -> i?.let(adapter::updateListEventually) }
 				.eventually(response({
 					progressBar?.visibility = ViewUtils.getVisibility(false)

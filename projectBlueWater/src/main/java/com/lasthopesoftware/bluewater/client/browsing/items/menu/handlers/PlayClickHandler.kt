@@ -19,7 +19,7 @@ class PlayClickHandler(
 ) : AbstractMenuClickHandler(menuContainer) {
     override fun onClick(v: View) {
 		itemStringListProvider
-			.promiseFileStringList(libraryId, item, FileListParameters.Options.None)
+			.promiseFileStringList(libraryId, item.itemId, FileListParameters.Options.None)
             .then(LaunchPlaybackFromResult(v.context))
             .excuse(OnGetFileStringListForClickErrorListener(v, this))
             .eventuallyExcuse(

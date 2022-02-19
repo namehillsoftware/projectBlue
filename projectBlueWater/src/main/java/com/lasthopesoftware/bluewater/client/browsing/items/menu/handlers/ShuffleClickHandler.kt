@@ -19,7 +19,7 @@ class ShuffleClickHandler(
 ) : AbstractMenuClickHandler(menuContainer) {
 	override fun onClick(v: View) {
 		itemStringListProvider
-			.promiseFileStringList(libraryId, item, FileListParameters.Options.Shuffled)
+			.promiseFileStringList(libraryId, item.itemId, FileListParameters.Options.Shuffled)
 			.then(LaunchPlaybackFromResult(v.context))
 			.excuse(OnGetFileStringListForClickErrorListener(v, this))
 			.eventuallyExcuse(response(UnexpectedExceptionToasterResponse(v.context), v.context))
