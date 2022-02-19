@@ -19,90 +19,61 @@
             android:layout_alignParentStart="true"
             android:layout_alignParentTop="true">
 
-            <RelativeLayout
+            <LinearLayout
                 android:id="@+id/reducedNowPlayingButtonsContainer"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_alignParentStart="true"
                 android:orientation="horizontal"
-                android:padding="2dip">
+                android:padding="2dip"
+                android:measureWithLargestChild="true">
 
-                <LinearLayout
-                    android:id="@+id/miniSongRatingContainer"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:layout_alignParentStart="true"
-                    android:gravity="center_vertical">
+                <ImageButton
+                    android:id="@+id/editNowPlayingList"
+                    android:layout_width="0dip"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="?android:attr/selectableItemBackground"
+                    android:contentDescription="@string/edit_now_playing_list"
+                    android:src="@drawable/pencil"
+                    android:alpha=".80"/>
 
-                    <RatingBar
-                        android:id="@+id/miniSongRating"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:max="5"
-                        android:stepSize="1"
-                        android:rating="@{vm.songRating}"
-                        android:isIndicator="@{!vm.isSongRatingEnabled}" />
-
-                    <TextView
-                        android:id="@+id/miniReadOnlyConnectionLabel"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center_horizontal"
-                        android:text="@string/readOnlyConnection"
-                        android:visibility="@{vm.isReadOnly ? View.VISIBLE : View.GONE}"
-                        android:textAppearance="?android:attr/textAppearanceSmall" />
-
-                </LinearLayout>
-
-                <RelativeLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_alignParentEnd="true"
-                    android:layout_centerVertical="true"
-                    android:layout_toEndOf="@id/miniSongRatingContainer">
-
-                    <ViewFlipper
-                        android:id="@+id/miniPlayPause"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_centerVertical="true"
-                        android:layout_marginEnd="20dp"
-                        android:layout_toStartOf="@id/closeNowPlayingList">
-
-                        <ImageButton
-                            android:id="@+id/miniPlay"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:background="?android:attr/selectableItemBackground"
-                            android:contentDescription="@string/btn_play"
-                            android:src="@drawable/av_play_dark"
-                            app:isVisible="@{!vm.isPlaying}" />
-
-                        <ImageButton
-                            android:id="@+id/miniPause"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:background="?android:attr/selectableItemBackground"
-                            android:contentDescription="@string/btn_pause"
-                            android:src="@drawable/av_pause_dark"
-                            app:isVisible="@{vm.isPlaying}" />
-                    </ViewFlipper>
+                <ViewFlipper
+                    android:id="@+id/miniPlayPause"
+                    android:layout_width="0dip"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1">
 
                     <ImageButton
-                        android:id="@+id/closeNowPlayingList"
+                        android:id="@+id/miniPlay"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_alignParentEnd="true"
-                        android:layout_centerVertical="true"
-                        android:layout_marginEnd="10dp"
                         android:background="?android:attr/selectableItemBackground"
-                        android:contentDescription="@string/btn_hide_files"
-                        android:src="@drawable/chevron_up_36dp"
-                        android:rotation="180"
-                        android:alpha=".80"/>
-                </RelativeLayout>
-            </RelativeLayout>
+                        android:contentDescription="@string/btn_play"
+                        android:src="@drawable/av_play_dark"
+                        app:isVisible="@{!vm.isPlaying}" />
+
+                    <ImageButton
+                        android:id="@+id/miniPause"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:background="?android:attr/selectableItemBackground"
+                        android:contentDescription="@string/btn_pause"
+                        android:src="@drawable/av_pause_dark"
+                        app:isVisible="@{vm.isPlaying}" />
+                </ViewFlipper>
+
+                <ImageButton
+                    android:id="@+id/closeNowPlayingList"
+                    android:layout_width="0dip"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="?android:attr/selectableItemBackground"
+                    android:contentDescription="@string/btn_hide_files"
+                    android:src="@drawable/chevron_up_36dp"
+                    android:rotation="180"
+                    android:alpha=".80"/>
+            </LinearLayout>
 
             <ProgressBar
                 android:id="@+id/miniNowPlayingBar"

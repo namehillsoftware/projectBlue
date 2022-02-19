@@ -4,7 +4,6 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.RatingBar
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
@@ -161,13 +160,16 @@ class NowPlayingBottomFragment : Fragment() {
 				val listView = nowPlayingListView
 				listView.adapter = a
 				listView.layoutManager = LinearLayoutManager(requireContext())
-
 				listView.isNestedScrollingEnabled = true
 
 				viewModel.nowPlayingList
 					.onEach { a.updateListEventually(it).toDeferred().await() }
 					.launchIn(lifecycleScope)
 			}, requireContext()))
+
+			editNowPlayingList.setOnClickListener {
+
+			}
 
 			miniPlay.setOnClickListener { v ->
 				PlaybackService.play(v.context)
@@ -177,10 +179,6 @@ class NowPlayingBottomFragment : Fragment() {
 			miniPause.setOnClickListener { v ->
 				PlaybackService.pause(v.context)
 				viewModel.togglePlaying(false)
-			}
-
-			miniSongRating.onRatingBarChangeListener = RatingBar.OnRatingBarChangeListener { _, rating, fromUser ->
-				if (fromUser) viewModel.updateRating(rating)
 			}
 
 			viewModel.nowPlayingFile
