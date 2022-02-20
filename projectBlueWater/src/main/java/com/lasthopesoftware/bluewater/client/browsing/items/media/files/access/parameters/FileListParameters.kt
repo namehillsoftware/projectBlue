@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters
 
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
-import com.lasthopesoftware.bluewater.client.browsing.items.playlists.Playlist
+import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
 
 object FileListParameters : IFileListParameterProvider {
     override fun getFileListParameters(itemId: ItemId): Array<String> = arrayOf(
@@ -10,8 +10,8 @@ object FileListParameters : IFileListParameterProvider {
 		"Version=2"
 	)
 
-    override fun getFileListParameters(playlist: Playlist): Array<String> =
-		arrayOf("Playlist/Files", "Playlist=" + playlist.key)
+    override fun getFileListParameters(playlistId: PlaylistId): Array<String> =
+		arrayOf("Playlist/Files", "Playlist=" + playlistId.id)
 
     enum class Options {
         None, Shuffled

@@ -1,3 +1,5 @@
 package com.lasthopesoftware.bluewater.client.browsing.items
 
-data class ItemId(override val id: Int) : KeyedIdentifier
+interface KeyedIdentifier {
+	val id: Int
+}

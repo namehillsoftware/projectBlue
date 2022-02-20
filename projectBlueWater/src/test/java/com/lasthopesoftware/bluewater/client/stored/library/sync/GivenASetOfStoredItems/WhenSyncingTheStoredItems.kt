@@ -3,9 +3,9 @@ package com.lasthopesoftware.bluewater.client.stored.library.sync.GivenASetOfSto
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.ProvideLibraryFiles
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
-import com.lasthopesoftware.bluewater.client.browsing.items.playlists.Playlist
+import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.stored.library.items.IStoredItemAccess
+import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.PruneStoredFiles
@@ -36,7 +36,7 @@ class WhenSyncingTheStoredItems {
 		}
 
 		private val librarySyncsHandler by lazy {
-			val storedItemAccessMock = mockk<IStoredItemAccess>()
+			val storedItemAccessMock = mockk<AccessStoredItems>()
 				.apply {
 					every { promiseStoredItems(LibraryId(52)) } returns Promise(
 						setOf(StoredItem(52, 14, StoredItem.ItemType.PLAYLIST))
@@ -50,7 +50,7 @@ class WhenSyncingTheStoredItems {
 						promiseFiles(
 							LibraryId(52),
 							FileListParameters.Options.None,
-							*fileListParameters.getFileListParameters(Playlist(14))
+							*fileListParameters.getFileListParameters(PlaylistId(14))
 						)
 					} returns Promise(
 						listOf(

@@ -23,7 +23,7 @@ class WhenFindingThePlaylistItem {
 
 		private val playlistId by lazy { random.nextInt() }
 
-		private val expectedItem by lazy { Item(random.nextInt()).also { it.playlistId = playlistId } }
+		private val expectedItem by lazy { Item(random.nextInt(), null, playlistId) }
 
 		private val item by lazy {
 			val libraryViews = mockk<ProvideLibraryViews>()
@@ -71,7 +71,7 @@ class WhenFindingThePlaylistItem {
 				if (item == secondLevelChosenItem) continue
 				every { itemProvider.promiseItems(LibraryId(3), item.itemId) } returns Promise(emptyList())
 			}
-			val decoy = Item(random.nextInt()).apply { playlistId = random.nextInt() }
+			val decoy = Item(random.nextInt(), null, random.nextInt())
 
 			every { itemProvider.promiseItems(LibraryId(3), secondLevelChosenItem.itemId) } returns Promise(
 				listOf(
@@ -87,8 +87,8 @@ class WhenFindingThePlaylistItem {
 		private fun setupItemProviderWithItems(itemProvider: ProvideItems, sourceItem: ItemId, numberOfChildren: Int, withPlaylistIds: Boolean): List<Item> {
 			val items = ArrayList<Item>(numberOfChildren)
 			for (i in 0 until numberOfChildren) {
-				val newItem = Item(random.nextInt())
-				if (withPlaylistIds) newItem.playlistId = random.nextInt()
+				val newItem = if (withPlaylistIds) Item(random.nextInt(), null, random.nextInt())
+				else Item(random.nextInt())
 				items.add(newItem)
 			}
 			every { itemProvider.promiseItems(LibraryId(3), sourceItem) } returns Promise(items)

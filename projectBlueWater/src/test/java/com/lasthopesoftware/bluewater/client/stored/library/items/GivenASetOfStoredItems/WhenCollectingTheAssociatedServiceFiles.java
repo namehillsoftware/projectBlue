@@ -11,7 +11,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceF
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.ProvideLibraryFiles;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters;
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
-import com.lasthopesoftware.bluewater.client.stored.library.items.IStoredItemAccess;
+import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector;
 import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
@@ -39,7 +39,7 @@ public class WhenCollectingTheAssociatedServiceFiles {
 	@BeforeClass
 	public static void before() throws InterruptedException, TimeoutException, ExecutionException {
 
-		final IStoredItemAccess storedItemAccess = mock(IStoredItemAccess.class);
+		final AccessStoredItems storedItemAccess = mock(AccessStoredItems.class);
 		when(storedItemAccess.promiseStoredItems(new LibraryId(15)))
 			.thenReturn(new Promise<>(Arrays.asList(
 				new StoredItem(1, 1, StoredItem.ItemType.ITEM),

@@ -1,15 +1,14 @@
 package com.lasthopesoftware.bluewater.client.browsing.items
 
-import com.lasthopesoftware.bluewater.client.browsing.items.playlists.Playlist
+import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
 import com.lasthopesoftware.bluewater.shared.AbstractIntKeyStringValue
 
 open class Item : AbstractIntKeyStringValue, IItem {
-    var playlistId: Int? = null
-
+	constructor(key: Int, value: String?, playlistId: Int) : super(key, value) {
+		this.playlistId = PlaylistId(playlistId)
+	}
     constructor(key: Int, value: String?) : super(key, value)
-    constructor(key: Int) : super() {
-        this.key = key
-    }
+    constructor(key: Int) : super(key, null)
 
     constructor() : super()
 
@@ -17,8 +16,8 @@ open class Item : AbstractIntKeyStringValue, IItem {
         return key
     }
 
-    val playlist: Playlist?
-        get() = playlistId?.let(::Playlist)
+    var playlistId: PlaylistId? = null
+        private set
 
 	val itemId
 		get() = ItemId(key)

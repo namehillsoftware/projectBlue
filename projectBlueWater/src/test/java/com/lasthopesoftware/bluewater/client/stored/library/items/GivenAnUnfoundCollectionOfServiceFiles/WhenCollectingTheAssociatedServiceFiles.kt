@@ -6,8 +6,8 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceF
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.ProvideLibraryFiles
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
 import com.lasthopesoftware.bluewater.client.stored.library.items.FakeStoredItemAccess
-import com.lasthopesoftware.bluewater.client.stored.library.items.IStoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
@@ -36,7 +36,7 @@ class WhenCollectingTheAssociatedServiceFiles {
 		@BeforeClass
 		@Throws(InterruptedException::class, TimeoutException::class, ExecutionException::class)
 		fun before() {
-			val storedItemAccess: IStoredItemAccess = object : FakeStoredItemAccess(
+			val storedItemAccess: AccessStoredItems = object : FakeStoredItemAccess(
 				StoredItem(4, 1, StoredItem.ItemType.ITEM),
 				StoredItem(4, 2, StoredItem.ItemType.ITEM),
 				StoredItem(4, 3, StoredItem.ItemType.ITEM)

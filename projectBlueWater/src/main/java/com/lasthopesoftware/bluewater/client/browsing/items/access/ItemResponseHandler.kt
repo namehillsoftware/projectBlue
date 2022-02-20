@@ -31,9 +31,10 @@ internal class ItemResponseHandler : DefaultHandler() {
     override fun endElement(uri: String, localName: String, qName: String) {
         if (!"item".equals(qName, ignoreCase = true)) return
 		val key = currentKey.toIntOrNull() ?: return
-        val item = Item(key, currentName)
+        val item = currentPlaylistId.toIntOrNull()
+			?.let { playlistId -> Item(key, currentName, playlistId) }
+			?: Item(key, currentName)
 
-		item.playlistId = currentPlaylistId.toIntOrNull()
-        items.add(item)
+		items.add(item)
     }
 }
