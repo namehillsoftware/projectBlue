@@ -47,7 +47,7 @@ class StoredItemServiceFileCollector(
 			promisedServiceFileLists
 				.eventually { serviceFiles ->
 					QueuedPromise(
-						MessageWriter{ serviceFiles.flatten().toSet() },
+						MessageWriter{ serviceFiles.asSequence().flatten().toSet() },
 						ThreadPools.compute
 					)
 				}

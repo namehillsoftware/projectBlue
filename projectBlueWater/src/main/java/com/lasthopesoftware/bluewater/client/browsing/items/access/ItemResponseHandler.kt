@@ -7,9 +7,10 @@ import org.xml.sax.helpers.DefaultHandler
 internal class ItemResponseHandler : DefaultHandler() {
     private var currentKey = ""
     private var currentName = ""
-    private var currentPlaylistId = ""
-    @JvmField
+    private var currentPlaylistId: String? = null
+
 	val items: MutableList<Item> = ArrayList()
+
     override fun startElement(
         uri: String,
         localName: String,
@@ -18,7 +19,7 @@ internal class ItemResponseHandler : DefaultHandler() {
     ) {
         currentKey = ""
         currentName = ""
-		currentPlaylistId = ""
+		currentPlaylistId = null
         if (!"item".equals(qName, ignoreCase = true)) return
         currentName = attributes.getValue("Name")
         currentPlaylistId = attributes.getValue("PlaylistID")
@@ -31,7 +32,7 @@ internal class ItemResponseHandler : DefaultHandler() {
     override fun endElement(uri: String, localName: String, qName: String) {
         if (!"item".equals(qName, ignoreCase = true)) return
 		val key = currentKey.toIntOrNull() ?: return
-        val item = currentPlaylistId.toIntOrNull()
+        val item = currentPlaylistId?.toIntOrNull()
 			?.let { playlistId -> Item(key, currentName, playlistId) }
 			?: Item(key, currentName)
 
