@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.GivenAnUnfoundCollectionOfServiceFiles
 
-import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
+import com.lasthopesoftware.bluewater.client.browsing.items.KeyedIdentifier
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.ProvideLibraryFiles
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
@@ -30,7 +30,7 @@ class WhenCollectingTheAssociatedServiceFiles {
 		private lateinit var collectedFiles: Collection<ServiceFile>
 		private val firstItemExpectedFiles = givenARandomCollectionOfFiles()
 		private val thirdItemExpectedFiles = givenARandomCollectionOfFiles()
-		private val syncToggledItems = HashMap<IItem, Boolean>()
+		private val syncToggledItems = HashMap<KeyedIdentifier, Boolean>()
 
 		@JvmStatic
 		@BeforeClass
@@ -41,9 +41,9 @@ class WhenCollectingTheAssociatedServiceFiles {
 				StoredItem(4, 2, StoredItem.ItemType.ITEM),
 				StoredItem(4, 3, StoredItem.ItemType.ITEM)
 			) {
-				override fun toggleSync(libraryId: LibraryId, item: IItem, enable: Boolean) {
-					syncToggledItems[item] = enable
-					super.toggleSync(libraryId, item, enable)
+				override fun toggleSync(libraryId: LibraryId, itemId: KeyedIdentifier, enable: Boolean) {
+					syncToggledItems[itemId] = enable
+					super.toggleSync(libraryId, itemId, enable)
 				}
 			}
 
@@ -98,8 +98,8 @@ class WhenCollectingTheAssociatedServiceFiles {
 
 	@Test
 	fun thenTheFileThatWasNotFoundHadSyncToggledOff() {
-		assertThat(syncToggledItems).hasEntrySatisfying(object : Condition<IItem>() {
-			override fun matches(value: IItem): Boolean = value.key == 2
+		assertThat(syncToggledItems).hasEntrySatisfying(object : Condition<KeyedIdentifier>() {
+			override fun matches(value: KeyedIdentifier): Boolean = value.id == 2
 		}, object : Condition<Boolean>() {
 			override fun matches(value: Boolean): Boolean = !value
 		})

@@ -4,6 +4,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.ProvideLibraryFiles
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
+import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.FakeStoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem
@@ -48,7 +49,7 @@ class WhenCollectingTheAssociatedServiceFiles {
 				every { promiseFiles(LibraryId(5), FileListParameters.Options.None, *fileListParameters.getFileListParameters(ItemId(1))) } returns firstItemExpectedFiles.toPromise()
 				every { promiseFiles(LibraryId(5), FileListParameters.Options.None, *fileListParameters.getFileListParameters(ItemId(2))) } returns secondItemExpectedFiles.toPromise()
 				every { promiseFiles(LibraryId(5), FileListParameters.Options.None, *fileListParameters.getFileListParameters(ItemId(3))) } returns thirdItemExpectedFiles.toPromise()
-				every { promiseFiles(LibraryId(5), FileListParameters.Options.None, *fileListParameters.getFileListParameters(ItemId(5))) } returns fourthItemExpectedFiles.toPromise()
+				every { promiseFiles(LibraryId(5), FileListParameters.Options.None, *fileListParameters.getFileListParameters(PlaylistId(5))) } returns fourthItemExpectedFiles.toPromise()
 			}
 
 			StoredItemServiceFileCollector(storedItemAccess, fileProvider, fileListParameters)
