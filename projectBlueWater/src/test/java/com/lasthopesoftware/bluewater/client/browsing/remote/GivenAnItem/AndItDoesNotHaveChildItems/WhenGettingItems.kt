@@ -5,7 +5,7 @@ import android.support.v4.media.MediaMetadataCompat
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.ProvideFiles
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.ProvideItemFiles
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -75,14 +75,15 @@ class `When Getting Items` {
 				)
 			}
 
-			val provideFiles = mockk<ProvideFiles>()
-			every { provideFiles.promiseFiles(FileListParameters.Options.None, *FileListParameters.getFileListParameters(ItemId(743))) } returns Promise(
+			val provideFiles = mockk<ProvideItemFiles>()
+			every { provideFiles.promiseFiles(LibraryId(22), ItemId(743), FileListParameters.Options.None) } returns Promise(
 				serviceFileIds.map(::ServiceFile)
 			)
 
 			val mediaItemsBrowser = MediaItemsBrowser(
 				selectedLibraryId,
 				itemsProvider,
+				mockk(),
 				provideFiles,
 				mockk(),
 				serviceFiles,

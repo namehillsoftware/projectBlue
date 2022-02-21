@@ -71,6 +71,7 @@ class `When Getting Items` {
                 selectedLibraryId,
                 mockk(),
                 provideFiles,
+				mockk(),
                 mockk(),
                 serviceFiles,
 			)

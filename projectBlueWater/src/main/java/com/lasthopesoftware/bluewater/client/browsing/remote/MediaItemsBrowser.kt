@@ -6,6 +6,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.ProvideFiles
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.ProvideItemFiles
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.SearchFileParameterProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
@@ -18,6 +19,7 @@ class MediaItemsBrowser(
 	private val selectedLibraryIdProvider: ProvideSelectedLibraryId,
 	private val itemProvider: ProvideItems,
 	private val fileProvider: ProvideFiles,
+	private val itemFileProvider: ProvideItemFiles,
 	private val libraryViews: ProvideLibraryViews,
 	private val mediaItemServiceFileLookup: GetMediaItemsFromServiceFiles,
 ) : BrowseMediaItems {
@@ -42,9 +44,8 @@ class MediaItemsBrowser(
 						.eventually { items ->
 							if (items.any()) items.map(::toMediaItem).toPromise()
 							else {
-								val parameters = FileListParameters.getFileListParameters(itemId)
-								fileProvider
-									.promiseFiles(FileListParameters.Options.None, *parameters)
+								itemFileProvider
+									.promiseFiles(libraryId, itemId, FileListParameters.Options.None)
 									.eventually<Collection<MediaBrowserCompat.MediaItem>> { files ->
 										Promise.whenAll(files.map { f -> mediaItemServiceFileLookup.promiseMediaItem(f).then { mi -> Pair(f, mi) } })
 											.then { pairs ->
