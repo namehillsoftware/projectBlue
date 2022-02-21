@@ -68,7 +68,7 @@ class WhenCollectingTheAssociatedServiceFiles {
 
 			collectedFiles = serviceFileCollector
 				.promiseServiceFilesToSync(LibraryId(10))
-				.toFuture()[1000, TimeUnit.SECONDS]
+				.toFuture()[1, TimeUnit.SECONDS]
 		}
 	}
 

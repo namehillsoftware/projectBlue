@@ -57,7 +57,7 @@ private val stringList by lazy {
 
 class WhenGettingTheStringList {
 
-	@Test fun thenTheStringListIsCorrectAfterCallingItemsAndStringListTwiceInCorrectOrder() {
+	@Test fun `then the string list is correct after calling items and string list twice in the correct order`() {
 		assertThat(stringList).isEqualTo("BfCs02")
 	}
 }
