@@ -4,9 +4,11 @@ import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
 import android.support.v4.media.session.MediaSessionCompat
+import com.lasthopesoftware.bluewater.client.browsing.items.access.ItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListProvider
-import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.ItemStringListProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.LibraryFileStringListProvider
+import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.MediaSessionCallbackReceiver
 import com.lasthopesoftware.bluewater.shared.GenericBinder
 import com.lasthopesoftware.bluewater.shared.makePendingIntentImmutable
@@ -16,11 +18,15 @@ class MediaSessionService : Service() {
 
 	private val lazyMediaSession = lazy {
 		val newMediaSession = MediaSessionCompat(this, MediaSessionConstants.mediaSessionTag)
+		val connectionProvider = ConnectionSessionManager.get(this)
 		newMediaSession.setCallback(
 			MediaSessionCallbackReceiver(
 				this,
-				FileListParameters,
-				FileStringListProvider(SelectedConnectionProvider(this))
+				ItemStringListProvider(
+					ItemProvider(connectionProvider),
+					FileListParameters,
+					LibraryFileStringListProvider(connectionProvider)
+				)
 			)
 		)
 

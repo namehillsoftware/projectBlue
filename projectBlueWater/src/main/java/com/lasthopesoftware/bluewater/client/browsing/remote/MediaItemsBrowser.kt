@@ -56,7 +56,14 @@ class MediaItemsBrowser(
 														MediaBrowserCompat.MediaItem(
 															MediaDescriptionCompat
 																.Builder()
-																.setMediaId(RemoteBrowserService.itemFileMediaIdPrefix + RemoteBrowserService.mediaIdDelimiter + itemId.id + RemoteBrowserService.mediaIdDelimiter + i)
+																.setMediaId(
+																	arrayOf(
+																		RemoteBrowserService.libraryMediaIdPrefix,
+																		libraryId.id.toString(),
+																		RemoteBrowserService.itemFileMediaIdPrefix,
+																		itemId.id.toString(),
+																		i.toString()
+																	).joinToString(RemoteBrowserService.mediaIdDelimiter.toString()))
 																.setDescription(description.description)
 																.setExtras(description.extras)
 																.setTitle(description.title)
