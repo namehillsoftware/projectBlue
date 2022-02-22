@@ -8,10 +8,9 @@ import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.access.CachedItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.FileProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.ItemFileProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.LibraryFileProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.ItemStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.LibraryFileStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.RateControlledFilePropertiesProvider
@@ -66,9 +65,10 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 
 	private val itemProvider by lazy { CachedItemProvider.getInstance(this) }
 
+	private val libraryFileStringListProvider by lazy { LibraryFileStringListProvider(ConnectionSessionManager.get(this)) }
+
 	private val fileProvider by lazy {
-		val stringListProvider = FileStringListProvider(SelectedConnectionProvider(this))
-		FileProvider(stringListProvider)
+		LibraryFileProvider(libraryFileStringListProvider)
 	}
 
 	private val itemFileProvider by lazy {
@@ -77,7 +77,7 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 			ItemStringListProvider(
 				ItemProvider(connectionProvider),
 				FileListParameters,
-				LibraryFileStringListProvider(connectionProvider)
+				libraryFileStringListProvider
 			)
 		)
 	}
