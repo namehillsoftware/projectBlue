@@ -58,8 +58,6 @@ class MediaItemsBrowser(
 																.Builder()
 																.setMediaId(
 																	arrayOf(
-																		RemoteBrowserService.libraryMediaIdPrefix,
-																		libraryId.id.toString(),
 																		RemoteBrowserService.itemFileMediaIdPrefix,
 																		itemId.id.toString(),
 																		i.toString()

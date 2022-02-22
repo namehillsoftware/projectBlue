@@ -8,8 +8,10 @@ import com.lasthopesoftware.bluewater.client.browsing.items.access.ItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.ItemStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.LibraryFileStringListProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.MediaSessionCallbackReceiver
+import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.GenericBinder
 import com.lasthopesoftware.bluewater.shared.makePendingIntentImmutable
 
@@ -22,6 +24,7 @@ class MediaSessionService : Service() {
 		newMediaSession.setCallback(
 			MediaSessionCallbackReceiver(
 				this,
+				SelectedBrowserLibraryIdentifierProvider(getApplicationSettingsRepository()),
 				ItemStringListProvider(
 					ItemProvider(connectionProvider),
 					FileListParameters,

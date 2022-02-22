@@ -47,7 +47,6 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 		private const val contentStyleGrid = 2
 		const val serviceFileMediaIdPrefix = "sf"
 		const val itemFileMediaIdPrefix = "it"
-		const val libraryMediaIdPrefix = "l"
 		private const val playlistFileMediaIdPrefix = "pl"
 		const val mediaIdDelimiter = ':'
 		private val rateLimiter by lazy { PromisingRateLimiter<Map<String, String>>(max(Runtime.getRuntime().availableProcessors() - 1, 1)) }
