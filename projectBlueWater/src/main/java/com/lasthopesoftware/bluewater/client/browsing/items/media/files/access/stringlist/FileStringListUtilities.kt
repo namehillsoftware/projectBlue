@@ -16,11 +16,11 @@ object FileStringListUtilities {
 	}
 
 	private fun parseFileStringList(fileList: String): Collection<ServiceFile> {
-		val keys = fileList.split(";")
-		if (keys.size < 2) return emptySet()
-		val offset = keys[0].toInt() + 1
+		val headerInfo = fileList.split(";", limit = 2)
+		if (headerInfo.size < 2) return emptySet()
+		val offset = headerInfo[0].toInt() + 1
 
-		return keys.asSequence()
+		return fileList.splitToSequence(";")
 			.drop(offset)
 			.filter { it.isNotEmpty() && it != "-1" }
 			.map { k -> ServiceFile(k.toInt()) }

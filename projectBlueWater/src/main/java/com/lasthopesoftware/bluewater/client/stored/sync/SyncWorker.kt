@@ -121,7 +121,8 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 		val serviceFilesCollector = StoredItemServiceFileCollector(
 			StoredItemAccess(context),
 			LibraryFileProvider(LibraryFileStringListProvider(libraryConnections)),
-			FileListParameters.getInstance())
+			FileListParameters
+        )
 
 		DelegatingStoredItemServiceFileCollector(serviceFilesCollector, cachingPolicyFactory)
 	}

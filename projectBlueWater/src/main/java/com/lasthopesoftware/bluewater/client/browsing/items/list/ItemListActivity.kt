@@ -14,16 +14,19 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.lasthopesoftware.bluewater.R
+import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.access.CachedItemProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.access.ItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuChangeHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.ItemStringListProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.LibraryFileStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.MenuNotifications
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity.Companion.restoreSelectedConnection
-import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingFloatingActionButton
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingFloatingActionButton.Companion.addNowPlayingFloatingActionButton
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
@@ -55,7 +58,15 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer {
 
 	private val browserLibraryIdProvider by lazy { SelectedBrowserLibraryIdentifierProvider(getApplicationSettingsRepository()) }
 
-	private val lazyFileStringListProvider by lazy { FileStringListProvider(SelectedConnectionProvider(this)) }
+	private val itemListProvider by lazy {
+		val connectionProvider = ConnectionSessionManager.get(this)
+
+		ItemStringListProvider(
+			ItemProvider(connectionProvider),
+			FileListParameters,
+			LibraryFileStringListProvider(connectionProvider)
+		)
+	}
 
 	private val itemProvider by lazy { CachedItemProvider.getInstance(this) }
 
@@ -70,8 +81,7 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer {
 					ItemListAdapter(
 						this,
 						messageBus,
-						FileListParameters.getInstance(),
-						lazyFileStringListProvider,
+						itemListProvider,
 						ItemListMenuChangeHandler(this),
 						storedItemAccess,
 						itemProvider,
@@ -129,7 +139,7 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer {
 
 		browserLibraryIdProvider.selectedLibraryId
 			.eventually { l ->
-				l?.let { itemProvider.promiseItems(l, itemId) }.keepPromise(emptyList())
+				l?.let { itemProvider.promiseItems(l, ItemId(itemId)) }.keepPromise(emptyList())
 			}
 			.eventually { items ->
 				promisedItemListAdapter.eventually { adapter ->

@@ -3,15 +3,15 @@ package com.lasthopesoftware.bluewater.client.browsing.library.access
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectBrowserLibrary
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
-import com.lasthopesoftware.bluewater.client.stored.library.items.IStoredItemAccess
+import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
 import com.namehillsoftware.handoff.promises.Promise
 
 class LibraryRemoval(
-	private val storedItems: IStoredItemAccess,
-	private val libraryStorage: ILibraryStorage,
-	private val selectedLibraryIdProvider: ProvideSelectedLibraryId,
-	private val libraryProvider: ILibraryProvider,
-	private val librarySelection: SelectBrowserLibrary) : RemoveLibraries {
+    private val storedItems: AccessStoredItems,
+    private val libraryStorage: ILibraryStorage,
+    private val selectedLibraryIdProvider: ProvideSelectedLibraryId,
+    private val libraryProvider: ILibraryProvider,
+    private val librarySelection: SelectBrowserLibrary) : RemoveLibraries {
 
 	override fun removeLibrary(library: Library): Promise<*> {
 		val promisedNewLibrarySelection =
