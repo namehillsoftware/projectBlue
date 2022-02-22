@@ -29,7 +29,7 @@ class `When Getting Items` {
 			serviceFileIds.indices.map { i ->
 				MediaMetadataCompat.Builder()
 					.apply {
-						putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, "it:743:$i")
+						putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, "l:22:it:743:$i")
 						putString(MediaMetadataCompat.METADATA_KEY_ARTIST, "eat")
 						putString(MediaMetadataCompat.METADATA_KEY_ALBUM, "load")
 						putString(MediaMetadataCompat.METADATA_KEY_TITLE, "combine")
