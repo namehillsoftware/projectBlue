@@ -1,13 +1,13 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.GivenAnUnfoundCollectionOfServiceFiles
 
-import com.lasthopesoftware.bluewater.client.browsing.items.IItem
-import com.lasthopesoftware.bluewater.client.browsing.items.Item
+import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
+import com.lasthopesoftware.bluewater.client.browsing.items.KeyedIdentifier
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.ProvideLibraryFiles
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
 import com.lasthopesoftware.bluewater.client.stored.library.items.FakeStoredItemAccess
-import com.lasthopesoftware.bluewater.client.stored.library.items.IStoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
@@ -30,37 +30,37 @@ class WhenCollectingTheAssociatedServiceFiles {
 		private lateinit var collectedFiles: Collection<ServiceFile>
 		private val firstItemExpectedFiles = givenARandomCollectionOfFiles()
 		private val thirdItemExpectedFiles = givenARandomCollectionOfFiles()
-		private val syncToggledItems = HashMap<IItem, Boolean>()
+		private val syncToggledItems = HashMap<KeyedIdentifier, Boolean>()
 
 		@JvmStatic
 		@BeforeClass
 		@Throws(InterruptedException::class, TimeoutException::class, ExecutionException::class)
 		fun before() {
-			val storedItemAccess: IStoredItemAccess = object : FakeStoredItemAccess(
+			val storedItemAccess: AccessStoredItems = object : FakeStoredItemAccess(
 				StoredItem(4, 1, StoredItem.ItemType.ITEM),
 				StoredItem(4, 2, StoredItem.ItemType.ITEM),
 				StoredItem(4, 3, StoredItem.ItemType.ITEM)
 			) {
-				override fun toggleSync(libraryId: LibraryId, item: IItem, enable: Boolean) {
-					syncToggledItems[item] = enable
-					super.toggleSync(libraryId, item, enable)
+				override fun toggleSync(libraryId: LibraryId, itemId: KeyedIdentifier, enable: Boolean) {
+					syncToggledItems[itemId] = enable
+					super.toggleSync(libraryId, itemId, enable)
 				}
 			}
 
-			val fileListParameters = FileListParameters.getInstance()
+			val fileListParameters = FileListParameters
 			val fileProvider = mockk<ProvideLibraryFiles>()
 			every {
 				fileProvider.promiseFiles(
 					LibraryId(4),
 					FileListParameters.Options.None,
-					*fileListParameters.getFileListParameters(Item(1)))
+					*fileListParameters.getFileListParameters(ItemId(1)))
 			} returns firstItemExpectedFiles.toPromise()
 
 			every {
 				fileProvider.promiseFiles(
 					LibraryId(4),
 					FileListParameters.Options.None,
-					*fileListParameters.getFileListParameters(Item(2))
+					*fileListParameters.getFileListParameters(ItemId(2))
 				)
 			} returns Promise(FileNotFoundException())
 
@@ -68,7 +68,7 @@ class WhenCollectingTheAssociatedServiceFiles {
 				fileProvider.promiseFiles(
 					LibraryId(4),
 					FileListParameters.Options.None,
-					*fileListParameters.getFileListParameters(Item(3))
+					*fileListParameters.getFileListParameters(ItemId(3))
 				)
 			} returns thirdItemExpectedFiles.toPromise()
 
@@ -98,8 +98,8 @@ class WhenCollectingTheAssociatedServiceFiles {
 
 	@Test
 	fun thenTheFileThatWasNotFoundHadSyncToggledOff() {
-		assertThat(syncToggledItems).hasEntrySatisfying(object : Condition<IItem>() {
-			override fun matches(value: IItem): Boolean = value.key == 2
+		assertThat(syncToggledItems).hasEntrySatisfying(object : Condition<KeyedIdentifier>() {
+			override fun matches(value: KeyedIdentifier): Boolean = value.id == 2
 		}, object : Condition<Boolean>() {
 			override fun matches(value: Boolean): Boolean = !value
 		})

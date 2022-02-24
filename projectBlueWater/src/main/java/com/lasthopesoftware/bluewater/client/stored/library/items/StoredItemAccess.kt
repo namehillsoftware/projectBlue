@@ -3,6 +3,10 @@ package com.lasthopesoftware.bluewater.client.stored.library.items
 import android.content.Context
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
+import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
+import com.lasthopesoftware.bluewater.client.browsing.items.KeyedIdentifier
+import com.lasthopesoftware.bluewater.client.browsing.items.playlists.Playlist
+import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem.ItemType
 import com.lasthopesoftware.bluewater.repository.InsertBuilder.Companion.fromTable
@@ -14,11 +18,22 @@ import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 
-class StoredItemAccess(private val context: Context) : IStoredItemAccess {
+class StoredItemAccess(private val context: Context) : AccessStoredItems {
 	override fun toggleSync(libraryId: LibraryId, item: IItem, enable: Boolean) {
 		val inferredItem = inferItem(item)
 		if (enable) enableItemSync(libraryId, inferredItem, StoredItemHelpers.getListType(inferredItem))
 		else disableItemSync(libraryId, inferredItem, StoredItemHelpers.getListType(inferredItem))
+	}
+
+	override fun toggleSync(libraryId: LibraryId, itemId: KeyedIdentifier, enable: Boolean) {
+		val type = when (itemId) {
+			is ItemId -> ItemType.ITEM
+			is PlaylistId -> ItemType.PLAYLIST
+			else -> throw IllegalArgumentException("itemId")
+		}
+
+		if (enable) enableItemSync(libraryId, itemId, type)
+		else disableItemSync(libraryId, itemId, type)
 	}
 
 	override fun isItemMarkedForSync(libraryId: LibraryId, item: IItem): Promise<Boolean> =
@@ -64,6 +79,23 @@ class StoredItemAccess(private val context: Context) : IStoredItemAccess {
 		}, ThreadPools.databaseTableExecutor<StoredItem>())
 	}
 
+	private fun enableItemSync(libraryId: LibraryId, item: KeyedIdentifier, itemType: ItemType) {
+		QueuedPromise(MessageWriter{
+			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
+				if (isItemMarkedForSync(repositoryAccessHelper, libraryId, item, itemType)) return@MessageWriter
+				repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
+					repositoryAccessHelper
+						.mapSql(storedItemInsertSql)
+						.addParameter(StoredItem.libraryIdColumnName, libraryId.id)
+						.addParameter(StoredItem.serviceIdColumnName, item.id)
+						.addParameter(StoredItem.itemTypeColumnName, itemType)
+						.execute()
+					closeableTransaction.setTransactionSuccessful()
+				}
+			}
+		}, ThreadPools.databaseTableExecutor<StoredItem>())
+	}
+
 	private fun disableItemSync(libraryId: LibraryId, item: IItem, itemType: ItemType) {
 		QueuedPromise(MessageWriter{
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
@@ -75,6 +107,26 @@ class StoredItemAccess(private val context: Context) : IStoredItemAccess {
 							AND ${StoredItem.libraryIdColumnName} = @${StoredItem.libraryIdColumnName}
 							AND ${StoredItem.itemTypeColumnName} = @${StoredItem.itemTypeColumnName}""")
 						.addParameter(StoredItem.serviceIdColumnName, item.key)
+						.addParameter(StoredItem.libraryIdColumnName, libraryId.id)
+						.addParameter(StoredItem.itemTypeColumnName, itemType)
+						.execute()
+					closeableTransaction.setTransactionSuccessful()
+				}
+			}
+		}, ThreadPools.databaseTableExecutor<StoredItem>())
+	}
+
+	private fun disableItemSync(libraryId: LibraryId, item: KeyedIdentifier, itemType: ItemType) {
+		QueuedPromise(MessageWriter{
+			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
+				repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
+					repositoryAccessHelper
+						.mapSql("""
+							DELETE FROM ${StoredItem.tableName}
+							WHERE ${StoredItem.serviceIdColumnName} = @${StoredItem.serviceIdColumnName}
+							AND ${StoredItem.libraryIdColumnName} = @${StoredItem.libraryIdColumnName}
+							AND ${StoredItem.itemTypeColumnName} = @${StoredItem.itemTypeColumnName}""")
+						.addParameter(StoredItem.serviceIdColumnName, item.id)
 						.addParameter(StoredItem.libraryIdColumnName, libraryId.id)
 						.addParameter(StoredItem.itemTypeColumnName, itemType)
 						.execute()
@@ -103,12 +155,14 @@ class StoredItemAccess(private val context: Context) : IStoredItemAccess {
 				.build()
 		}
 
-		private fun isItemMarkedForSync(helper: RepositoryAccessHelper, libraryId: LibraryId, item: IItem, itemType: ItemType): Boolean {
-			return getStoredItem(helper, libraryId, item, itemType) != null
-		}
+		private fun isItemMarkedForSync(helper: RepositoryAccessHelper, libraryId: LibraryId, item: IItem, itemType: ItemType): Boolean =
+			getStoredItem(helper, libraryId, item, itemType) != null
 
-		private fun getStoredItem(helper: RepositoryAccessHelper, libraryId: LibraryId, item: IItem, itemType: ItemType): StoredItem? {
-			return helper.mapSql("""
+		private fun isItemMarkedForSync(helper: RepositoryAccessHelper, libraryId: LibraryId, item: KeyedIdentifier, itemType: ItemType): Boolean =
+			getStoredItem(helper, libraryId, item, itemType) != null
+
+		private fun getStoredItem(helper: RepositoryAccessHelper, libraryId: LibraryId, item: IItem, itemType: ItemType): StoredItem? =
+			helper.mapSql("""
 					SELECT * FROM ${StoredItem.tableName}
 					WHERE ${StoredItem.serviceIdColumnName} = @${StoredItem.serviceIdColumnName}
 					AND ${StoredItem.libraryIdColumnName} = @${StoredItem.libraryIdColumnName}
@@ -117,12 +171,22 @@ class StoredItemAccess(private val context: Context) : IStoredItemAccess {
 				.addParameter(StoredItem.libraryIdColumnName, libraryId.id)
 				.addParameter(StoredItem.itemTypeColumnName, itemType)
 				.fetchFirst()
-		}
+
+		private fun getStoredItem(helper: RepositoryAccessHelper, libraryId: LibraryId, item: KeyedIdentifier, itemType: ItemType): StoredItem? =
+			helper.mapSql("""
+					SELECT * FROM ${StoredItem.tableName}
+					WHERE ${StoredItem.serviceIdColumnName} = @${StoredItem.serviceIdColumnName}
+					AND ${StoredItem.libraryIdColumnName} = @${StoredItem.libraryIdColumnName}
+					AND ${StoredItem.itemTypeColumnName} = @${StoredItem.itemTypeColumnName}""")
+				.addParameter(StoredItem.serviceIdColumnName, item.id)
+				.addParameter(StoredItem.libraryIdColumnName, libraryId.id)
+				.addParameter(StoredItem.itemTypeColumnName, itemType)
+				.fetchFirst()
 
 		private fun inferItem(item: IItem): IItem {
 			if (item is Item) {
-				val playlist = item.playlist
-				if (playlist != null) return playlist
+				val playlist = item.playlistId
+				if (playlist != null) return Playlist(playlist.id)
 			}
 			return item
 		}

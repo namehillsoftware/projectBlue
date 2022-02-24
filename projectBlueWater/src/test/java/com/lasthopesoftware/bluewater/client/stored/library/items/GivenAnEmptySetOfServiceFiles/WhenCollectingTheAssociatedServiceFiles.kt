@@ -1,24 +1,22 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.GivenAnEmptySetOfServiceFiles
 
-import com.lasthopesoftware.bluewater.client.browsing.items.Item
+import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.ProvideLibraryFiles
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
 import com.lasthopesoftware.bluewater.client.stored.library.items.FakeStoredItemAccess
-import com.lasthopesoftware.bluewater.client.stored.library.items.IStoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
 import com.namehillsoftware.handoff.promises.Promise
+import io.mockk.every
+import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.BeforeClass
 import org.junit.Test
-import org.mockito.Mockito.`when`
-import org.mockito.Mockito.mock
-import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeoutException
 
 class WhenCollectingTheAssociatedServiceFiles {
 
@@ -30,35 +28,37 @@ class WhenCollectingTheAssociatedServiceFiles {
 
 		@BeforeClass
 		@JvmStatic
-		@Throws(InterruptedException::class, TimeoutException::class, ExecutionException::class)
 		fun before() {
-			val storedItemAccess: IStoredItemAccess = FakeStoredItemAccess(
+			val storedItemAccess: AccessStoredItems = FakeStoredItemAccess(
 				StoredItem(1, 1, StoredItem.ItemType.ITEM),
 				StoredItem(1, 2, StoredItem.ItemType.ITEM),
 				StoredItem(1, 3, StoredItem.ItemType.ITEM))
-			val fileListParameters = FileListParameters.getInstance()
-			val fileProvider = mock(ProvideLibraryFiles::class.java)
-			`when`(
-				fileProvider.promiseFiles(
-					LibraryId(10), FileListParameters.Options.None, *fileListParameters.getFileListParameters(
-						Item(1)
+			val fileListParameters = FileListParameters
+			val fileProvider = mockk<ProvideLibraryFiles>().apply {
+				every {
+					promiseFiles(
+						LibraryId(10),
+						FileListParameters.Options.None,
+						*fileListParameters.getFileListParameters(ItemId(1))
 					)
-				)
-			).thenAnswer { Promise(firstItemExpectedFiles) }
-			`when`(
-				fileProvider.promiseFiles(
-					LibraryId(10), FileListParameters.Options.None, *fileListParameters.getFileListParameters(
-						Item(2)
+				} returns Promise(firstItemExpectedFiles)
+
+				every {
+					promiseFiles(
+						LibraryId(10),
+						FileListParameters.Options.None,
+						*fileListParameters.getFileListParameters(ItemId(2))
 					)
-				)
-			).thenAnswer { Promise(secondItemExpectedFiles) }
-			`when`(
-				fileProvider.promiseFiles(
-					LibraryId(10), FileListParameters.Options.None, *fileListParameters.getFileListParameters(
-						Item(3)
+				} returns Promise(secondItemExpectedFiles)
+
+				every {
+					promiseFiles(
+						LibraryId(10),
+						FileListParameters.Options.None,
+						*fileListParameters.getFileListParameters(ItemId(3))
 					)
-				)
-			).thenAnswer { Promise(thirdItemExpectedFiles) }
+				} returns Promise(thirdItemExpectedFiles)
+			}
 
 			val serviceFileCollector = StoredItemServiceFileCollector(
 				storedItemAccess,
@@ -68,7 +68,7 @@ class WhenCollectingTheAssociatedServiceFiles {
 
 			collectedFiles = serviceFileCollector
 				.promiseServiceFilesToSync(LibraryId(10))
-				.toFuture()[1000, TimeUnit.SECONDS]
+				.toFuture()[1, TimeUnit.SECONDS]
 		}
 	}
 

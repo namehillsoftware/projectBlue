@@ -22,7 +22,7 @@ class LibraryViewsProvider(private val libraryConnectionProvider: ProvideLibrary
 					?.then { response ->
 						response.body?.use { b ->
 							b.byteStream()
-								.use(ItemResponse::GetItems)
+								.use(ItemResponse::getItems)
 								.map { i ->
 									when (i.value) {
 										KnownViews.Playlists -> PlaylistViewItem(i.key)

@@ -19,20 +19,23 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.FileProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.LibraryFileProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.SearchFileParameterProvider
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.LibraryFileStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.menu.FileListItemMenuBuilder
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.menu.FileListItemNowPlayingRegistrar
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.handlers.ViewChangedHandler
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
-import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingFileProvider.Companion.fromActiveLibrary
+import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
 
@@ -44,9 +47,11 @@ class SearchFilesFragment : Fragment(), View.OnKeyListener, TextView.OnEditorAct
 
 	private var itemListMenuChangeHandler: IItemListMenuChangeHandler? = null
 
+	private val selectedLibraryIdProvider by lazy { SelectedBrowserLibraryIdentifierProvider(requireContext().getApplicationSettingsRepository()) }
+
 	private val fileProvider by lazy {
-		val stringListProvider = FileStringListProvider(SelectedConnectionProvider(requireContext()))
-		FileProvider(stringListProvider)
+		val stringListProvider = LibraryFileStringListProvider(ConnectionSessionManager.get(requireContext()))
+		LibraryFileProvider(stringListProvider)
 	}
 
 	private val nowPlayingRegistrar = lazy {
@@ -138,9 +143,16 @@ class SearchFilesFragment : Fragment(), View.OnKeyListener, TextView.OnEditorAct
 			if (cancellationProxy.isCancelled) return
 
 			val parameters = SearchFileParameterProvider.getFileListParameters(query)
-			fileProvider
-				.promiseFiles(FileListParameters.Options.None, *parameters)
-				.also(cancellationProxy::doCancel)
+			selectedLibraryIdProvider.selectedLibraryId
+				.eventually {
+					it
+						?.let { l ->
+							fileProvider
+								.promiseFiles(l, FileListParameters.Options.None, *parameters)
+								.also(cancellationProxy::doCancel)
+						}
+						.keepPromise(emptyList())
+				}
 				.eventually { serviceFiles ->
 					if (cancellationProxy.isCancelled) Unit.toPromise()
 					else nowPlayingFileProvider

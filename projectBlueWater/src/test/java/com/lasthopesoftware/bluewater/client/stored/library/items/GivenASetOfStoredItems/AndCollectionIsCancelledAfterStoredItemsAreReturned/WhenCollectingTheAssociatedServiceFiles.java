@@ -1,7 +1,11 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.GivenASetOfStoredItems.AndCollectionIsCancelledAfterStoredItemsAreReturned;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import com.annimon.stream.Stream;
-import com.lasthopesoftware.bluewater.client.browsing.items.Item;
+import com.lasthopesoftware.bluewater.client.browsing.items.ItemId;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.ProvideLibraryFiles;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters;
@@ -24,10 +28,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
 public class WhenCollectingTheAssociatedServiceFiles {
 
 	private static final List<ServiceFile> firstItemExpectedFiles = givenARandomCollectionOfFiles();
@@ -48,14 +48,14 @@ public class WhenCollectingTheAssociatedServiceFiles {
 			}
 		};
 
-		final FileListParameters fileListParameters = FileListParameters.getInstance();
+		final FileListParameters fileListParameters = FileListParameters.INSTANCE;
 
 		final ProvideLibraryFiles fileProvider = mock(ProvideLibraryFiles.class);
-		when(fileProvider.promiseFiles(new LibraryId(2), FileListParameters.Options.None, fileListParameters.getFileListParameters(new Item(1))))
+		when(fileProvider.promiseFiles(new LibraryId(2), FileListParameters.Options.None, fileListParameters.getFileListParameters(new ItemId(1))))
 			.thenReturn(new Promise<>(firstItemExpectedFiles));
-		when(fileProvider.promiseFiles(new LibraryId(2), FileListParameters.Options.None, fileListParameters.getFileListParameters(new Item(2))))
+		when(fileProvider.promiseFiles(new LibraryId(2), FileListParameters.Options.None, fileListParameters.getFileListParameters(new ItemId(2))))
 			.thenReturn(new Promise<>(secondItemExpectedFiles));
-		when(fileProvider.promiseFiles(new LibraryId(2), FileListParameters.Options.None, fileListParameters.getFileListParameters(new Item(3))))
+		when(fileProvider.promiseFiles(new LibraryId(2), FileListParameters.Options.None, fileListParameters.getFileListParameters(new ItemId(3))))
 			.thenReturn(new Promise<>(thirdItemExpectedFiles));
 
 		final StoredItemServiceFileCollector serviceFileCollector = new StoredItemServiceFileCollector(

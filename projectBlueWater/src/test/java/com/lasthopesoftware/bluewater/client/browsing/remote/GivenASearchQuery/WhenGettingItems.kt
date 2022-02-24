@@ -2,9 +2,10 @@ package com.lasthopesoftware.bluewater.client.browsing.remote.GivenASearchQuery
 
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaMetadataCompat
+import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.ProvideFiles
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.ProvideLibraryFiles
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.SearchFileParameterProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
@@ -46,7 +47,7 @@ class `When Getting Items` {
 			every { selectedLibraryId.selectedLibraryId } returns Promise(LibraryId(22))
 
 			val itemsProvider = mockk<ProvideItems>()
-			every { itemsProvider.promiseItems(LibraryId(22), 743) } returns Promise(emptyList())
+			every { itemsProvider.promiseItems(LibraryId(22), ItemId(743)) } returns Promise(emptyList())
 
 			val serviceFiles = mockk<GetMediaItemsFromServiceFiles>()
 			for (id in serviceFileIds) {
@@ -65,9 +66,9 @@ class `When Getting Items` {
 				)
 			}
 
-			val provideFiles = mockk<ProvideFiles>()
+			val provideFiles = mockk<ProvideLibraryFiles>()
 			val parameters = SearchFileParameterProvider.getFileListParameters("water")
-			every { provideFiles.promiseFiles(FileListParameters.Options.None, *parameters) } returns Promise(
+			every { provideFiles.promiseFiles(LibraryId(22), FileListParameters.Options.None, *parameters) } returns Promise(
 				serviceFileIds.map(::ServiceFile)
 			)
 
@@ -75,6 +76,7 @@ class `When Getting Items` {
                 selectedLibraryId,
                 itemsProvider,
                 provideFiles,
+				mockk(),
                 mockk(),
                 serviceFiles,
 			)

@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.browsing.items.access
 
 import android.content.Context
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
+import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.CheckRevisions
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
@@ -13,12 +14,12 @@ import com.namehillsoftware.handoff.promises.Promise
 class CachedItemProvider(
 	private val inner: ProvideItems,
 	private val revisions: CheckRevisions,
-	private val functionCache: CachePromiseFunctions<Triple<LibraryId, Int, Int>, List<Item>>
+	private val functionCache: CachePromiseFunctions<Triple<LibraryId, ItemId, Int>, List<Item>>
 ) : ProvideItems {
 
 	companion object {
 
-		private val functionCache = LruPromiseCache<Triple<LibraryId, Int, Int>, List<Item>>(20)
+		private val functionCache = LruPromiseCache<Triple<LibraryId, ItemId, Int>, List<Item>>(20)
 
 		fun getInstance(context: Context): CachedItemProvider {
 			val libraryConnectionProvider = ConnectionSessionManager.get(context)
@@ -31,10 +32,10 @@ class CachedItemProvider(
 		}
 	}
 
-	override fun promiseItems(libraryId: LibraryId, itemKey: Int): Promise<List<Item>> =
+	override fun promiseItems(libraryId: LibraryId, itemId: ItemId): Promise<List<Item>> =
 		revisions
 			.promiseRevision(libraryId)
 			.eventually { revision ->
-				functionCache.getOrAdd(Triple(libraryId, itemKey, revision)) { (l, k, _) -> inner.promiseItems(l, k) }
+				functionCache.getOrAdd(Triple(libraryId, itemId, revision)) { (l, k, _) -> inner.promiseItems(l, k) }
 			}
 }

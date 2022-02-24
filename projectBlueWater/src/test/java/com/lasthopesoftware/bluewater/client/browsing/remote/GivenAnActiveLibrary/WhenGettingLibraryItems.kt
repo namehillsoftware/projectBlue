@@ -47,6 +47,7 @@ class `When Getting Library Items` {
                 selectedLibraryId,
                 mockk(),
                 mockk(),
+				mockk(),
                 libraryViews,
                 mockk(),
 			)

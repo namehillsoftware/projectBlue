@@ -23,7 +23,6 @@ import io.reactivex.disposables.Disposable
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.BeforeClass
 import org.junit.Test
-import java.util.*
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
@@ -57,7 +56,8 @@ open class WhenSyncingTheStoredItems {
 				StoredItemServiceFileCollector(
 					deferredStoredItemAccess,
 					mockFileProvider,
-					FileListParameters.getInstance()),
+					FileListParameters
+                ),
 				pruneStoredFiles,
 				object : UpdateStoredFiles {
 					override fun promiseStoredFileUpdate(libraryId: LibraryId, serviceFile: ServiceFile): Promise<StoredFile?> =

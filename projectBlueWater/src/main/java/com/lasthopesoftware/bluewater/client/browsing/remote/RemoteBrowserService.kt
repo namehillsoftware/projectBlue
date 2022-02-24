@@ -4,11 +4,15 @@ import android.os.Bundle
 import android.support.v4.media.MediaBrowserCompat
 import androidx.media.MediaBrowserServiceCompat
 import com.lasthopesoftware.bluewater.R
-import com.lasthopesoftware.bluewater.client.browsing.items.Item
+import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.access.CachedItemProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.access.ItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.FileProvider
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.ItemFileProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.LibraryFileProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.ItemStringListProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.LibraryFileStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.RateControlledFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedCachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedFilePropertiesProvider
@@ -21,6 +25,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.Sel
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRevisionProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.views.access.CachedLibraryViewsProvider
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
@@ -60,9 +65,21 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 
 	private val itemProvider by lazy { CachedItemProvider.getInstance(this) }
 
+	private val libraryFileStringListProvider by lazy { LibraryFileStringListProvider(ConnectionSessionManager.get(this)) }
+
 	private val fileProvider by lazy {
-		val stringListProvider = FileStringListProvider(SelectedConnectionProvider(this))
-		FileProvider(stringListProvider)
+		LibraryFileProvider(libraryFileStringListProvider)
+	}
+
+	private val itemFileProvider by lazy {
+		val connectionProvider = ConnectionSessionManager.get(this)
+		ItemFileProvider(
+			ItemStringListProvider(
+				ItemProvider(connectionProvider),
+				FileListParameters,
+				libraryFileStringListProvider
+			)
+		)
 	}
 
 	private val filePropertiesProvider by lazy {
@@ -118,6 +135,7 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 			selectedLibraryIdProvider,
 			itemProvider,
 			fileProvider,
+			itemFileProvider,
 			libraryViewsProvider,
 			mediaItemServiceFileLookup
 		)
@@ -172,7 +190,7 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 			?.substring(3)
 			?.toIntOrNull()
 			?.let { id ->
-				mediaItemBrowser.promiseItems(Item(id)).keepPromise(emptyList())
+				mediaItemBrowser.promiseItems(ItemId(id)).keepPromise(emptyList())
 			}
 			?: mediaItemBrowser.promiseLibraryItems().keepPromise(emptyList())
 
