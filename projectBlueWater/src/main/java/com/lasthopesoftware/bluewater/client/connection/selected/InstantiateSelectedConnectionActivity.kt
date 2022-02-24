@@ -14,7 +14,7 @@ import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnect
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.Companion.getInstance
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
-import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
+import com.lasthopesoftware.bluewater.shared.android.messages.ApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
@@ -33,7 +33,7 @@ class InstantiateSelectedConnectionActivity : Activity() {
 		browseLibraryIntent
 	}
 
-	private val messageBus by lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
+	private val messageBus by lazy { ApplicationMessageBus(LocalBroadcastManager.getInstance(this)) }
 
 	private val handler by lazy { Handler(mainLooper) }
 

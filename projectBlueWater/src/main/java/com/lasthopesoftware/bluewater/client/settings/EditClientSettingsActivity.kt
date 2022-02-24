@@ -29,11 +29,10 @@ import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermission
 import com.lasthopesoftware.bluewater.permissions.write.ApplicationWritePermissionsRequirementsProvider
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
-import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
+import com.lasthopesoftware.bluewater.shared.android.messages.ApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
-import java.util.*
 
 class EditClientSettingsActivity :
 	AppCompatActivity(),
@@ -64,11 +63,11 @@ class EditClientSettingsActivity :
 		ObservableConnectionSettingsLibraryStorage(
 			LibraryRepository(this),
 			ConnectionSettingsLookup(libraryProvider),
-			MessageBus(LocalBroadcastManager.getInstance(this))
+			ApplicationMessageBus(LocalBroadcastManager.getInstance(this))
 		)
 	}
 	private val applicationSettingsRepository by lazy { getApplicationSettingsRepository() }
-	private val messageBus by lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
+	private val messageBus by lazy { ApplicationMessageBus(LocalBroadcastManager.getInstance(this)) }
 	private val settingsMenu by lazy {
 		EditClientSettingsMenu(
 			this,

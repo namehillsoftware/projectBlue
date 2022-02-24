@@ -15,7 +15,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
-import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
+import com.lasthopesoftware.bluewater.shared.android.messages.ApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.namehillsoftware.handoff.promises.Promise
@@ -39,7 +39,7 @@ class LiveNowPlayingLookup private constructor(
 				libraryRepository,
 				libraryRepository
 			).also { liveNowPlayingLookup ->
-				MessageBus(LocalBroadcastManager.getInstance(context)).registerReceiver(
+				ApplicationMessageBus(LocalBroadcastManager.getInstance(context)).registerReceiver(
 					liveNowPlayingLookup,
 					IntentFilter().apply {
 						addAction(BrowserLibrarySelection.libraryChosenEvent)

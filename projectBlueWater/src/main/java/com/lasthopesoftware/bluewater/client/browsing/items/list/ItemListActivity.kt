@@ -32,7 +32,7 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlaying
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
-import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
+import com.lasthopesoftware.bluewater.shared.android.messages.ApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils.buildStandardMenu
@@ -70,7 +70,7 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer {
 
 	private val itemProvider by lazy { CachedItemProvider.getInstance(this) }
 
-	private val messageBus by lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
+	private val messageBus by lazy { ApplicationMessageBus(LocalBroadcastManager.getInstance(this)) }
 
 	private val promisedItemListAdapter: Promise<ItemListAdapter?> by lazy {
 		browserLibraryIdProvider.selectedLibraryId

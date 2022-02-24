@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.
 import android.content.IntentFilter
 import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.ProvideImages
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
@@ -55,6 +56,8 @@ class NowPlayingCoverArtViewModel(
 		}
 
 		messages.registerReceiver(onPlaybackChangedReceiver, playingFileChangedFilter)
+
+		viewModelScope
 	}
 
 	override fun onCleared() {

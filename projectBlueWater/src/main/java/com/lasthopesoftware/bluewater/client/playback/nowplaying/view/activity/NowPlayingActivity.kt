@@ -41,7 +41,7 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.v
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingScreenViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.databinding.ActivityViewNowPlayingBinding
-import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
+import com.lasthopesoftware.bluewater.shared.android.messages.ApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModel
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
@@ -69,7 +69,7 @@ class NowPlayingActivity :
 	private var viewAnimator: ViewAnimator? = null
 	private val messageHandler by lazy { Handler(mainLooper) }
 
-	private val messageBus = lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
+	private val messageBus = lazy { ApplicationMessageBus(LocalBroadcastManager.getInstance(this)) }
 
 	private val fileListItemNowPlayingRegistrar = lazy { FileListItemNowPlayingRegistrar(messageBus.value) }
 
@@ -250,7 +250,7 @@ class NowPlayingActivity :
 		override fun transformPage(page: View, position: Float) {
 			with (page) {
 				// Adjust alpha based off of position, only taking into account when it's scrolling to top (negative position)
-				alpha = (1 + 2 * position).coerceIn(0f, 1f)
+				alpha = (1 + 3 * position).coerceIn(0f, 1f)
 			}
 		}
 	}

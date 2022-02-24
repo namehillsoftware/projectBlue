@@ -23,7 +23,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.fragment
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization
 import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
-import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
+import com.lasthopesoftware.bluewater.shared.android.messages.ApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.namehillsoftware.handoff.promises.Promise
@@ -34,7 +34,7 @@ class ActiveFileDownloadsFragment : Fragment() {
 	private var onSyncStoppedReceiver: ReceiveBroadcastEvents? = null
 	private var onFileQueuedReceiver: ReceiveBroadcastEvents? = null
 	private var onFileDownloadedReceiver: ReceiveBroadcastEvents? = null
-	private val messageBus = lazy { MessageBus(LocalBroadcastManager.getInstance(requireContext())) }
+	private val messageBus = lazy { ApplicationMessageBus(LocalBroadcastManager.getInstance(requireContext())) }
 
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
 		if (container == null) return null
