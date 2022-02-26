@@ -28,7 +28,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 import com.lasthopesoftware.bluewater.client.servers.list.ServerListAdapter
 import com.lasthopesoftware.bluewater.client.servers.list.listeners.EditServerClickListener
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
-import com.lasthopesoftware.bluewater.shared.android.messages.ApplicationMessageBus
+import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 
@@ -39,7 +39,7 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 	private val killPlaybackEngineButton = LazyViewFinder<Button>(this, R.id.killPlaybackEngine)
 	private val settingsMenu by lazy { SettingsMenu(this, AboutTitleBuilder(this)) }
 	private val applicationSettingsRepository by lazy { getApplicationSettingsRepository() }
-	private val messageBus by lazy { ApplicationMessageBus(LocalBroadcastManager.getInstance(this)) }
+	private val messageBus by lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -67,7 +67,7 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 
 		val selection = PlaybackEngineTypeSelectionPersistence(
 			applicationSettingsRepository,
-			PlaybackEngineTypeChangedBroadcaster(ApplicationMessageBus(LocalBroadcastManager.getInstance(this))))
+			PlaybackEngineTypeChangedBroadcaster(MessageBus(LocalBroadcastManager.getInstance(this))))
 
 		val selectedPlaybackEngineTypeAccess = SelectedPlaybackEngineTypeAccess(applicationSettingsRepository, DefaultPlaybackEngineLookup())
 

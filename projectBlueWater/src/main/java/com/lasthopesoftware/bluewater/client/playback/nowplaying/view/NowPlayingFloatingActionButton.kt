@@ -11,7 +11,7 @@ import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingFileProvider.Companion.fromActiveLibrary
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.NowPlayingActivity.Companion.startNowPlayingActivity
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
-import com.lasthopesoftware.bluewater.shared.android.messages.ApplicationMessageBus
+import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils.getThemedDrawable
@@ -41,7 +41,7 @@ class NowPlayingFloatingActionButton private constructor(context: Context) : Flo
 						visibility = ViewUtils.getVisibility(isNowPlayingFileSet)
 						if (isNowPlayingFileSet) return@response
 
-						val messageBus = ApplicationMessageBus(LocalBroadcastManager.getInstance(context))
+						val messageBus = MessageBus(LocalBroadcastManager.getInstance(context))
 						messageBus.registerReceiver(object : ReceiveBroadcastEvents {
 							@Synchronized
 							override fun onReceive(intent: Intent) {

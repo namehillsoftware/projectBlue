@@ -12,7 +12,7 @@ import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessio
 import com.lasthopesoftware.bluewater.client.connection.session.ManageConnectionSessions
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
-import com.lasthopesoftware.bluewater.shared.android.messages.ApplicationMessageBus
+import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.messages.SendMessages
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.namehillsoftware.handoff.promises.Promise
@@ -108,7 +108,7 @@ class SelectedConnection(
 		@JvmStatic
 		fun getInstance(context: Context): SelectedConnection =
 			SelectedConnection(
-				ApplicationMessageBus(LocalBroadcastManager.getInstance(context)),
+				MessageBus(LocalBroadcastManager.getInstance(context)),
 				SelectedBrowserLibraryIdentifierProvider(context.getApplicationSettingsRepository()),
 				ConnectionSessionManager.get(context)
 			)

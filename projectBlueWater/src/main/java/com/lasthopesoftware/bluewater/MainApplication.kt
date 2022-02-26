@@ -43,11 +43,14 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFi
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
 import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
-import com.lasthopesoftware.bluewater.shared.android.messages.ApplicationMessageBus
+import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
 import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler
 import com.lasthopesoftware.compilation.DebugFlag
 import com.namehillsoftware.handoff.promises.Promise
+import org.koin.android.ext.koin.androidContext
+import org.koin.android.ext.koin.androidLogger
+import org.koin.core.context.startKoin
 import org.slf4j.LoggerFactory
 import java.io.File
 
@@ -62,7 +65,7 @@ open class MainApplication : Application() {
 	private val notificationManagerLazy by lazy { getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager }
 	private val storageReadPermissionsRequestNotificationBuilderLazy by lazy { StorageReadPermissionsRequestNotificationBuilder(this) }
 	private val storageWritePermissionsRequestNotificationBuilderLazy by lazy { StorageWritePermissionsRequestNotificationBuilder(this) }
-	private val messageBus by lazy { ApplicationMessageBus(LocalBroadcastManager.getInstance(this)) }
+	private val messageBus by lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
 	private val applicationSettings by lazy { getApplicationSettingsRepository() }
 
 	@SuppressLint("DefaultLocale")
@@ -84,6 +87,12 @@ open class MainApplication : Application() {
 		SyncScheduler
 			.promiseIsScheduled(this)
 			.then { isScheduled -> if (!isScheduled) SyncScheduler.scheduleSync(this) }
+
+		startKoin {
+			androidLogger()
+			androidContext(this@MainApplication)
+			modules(appModule)
+		}
 	}
 
 	private fun registerAppBroadcastReceivers() {

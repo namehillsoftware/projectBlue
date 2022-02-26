@@ -16,7 +16,7 @@ import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnect
 import com.lasthopesoftware.bluewater.client.playback.service.notification.NotificationsConfiguration
 import com.lasthopesoftware.bluewater.shared.GenericBinder
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
-import com.lasthopesoftware.bluewater.shared.android.messages.ApplicationMessageBus
+import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.notifications.NoOpChannelActivator
 import com.lasthopesoftware.bluewater.shared.android.notifications.control.NotificationsController
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.NotificationChannelActivator
@@ -51,7 +51,7 @@ class PollConnectionService : Service(), MessengerOperator<IConnectionProvider> 
 	private val notificationId = 99
 	private val binder by lazy { GenericBinder(this) }
 	private val handler by lazy { Handler(mainLooper) }
-	private val messageBus by lazy { ApplicationMessageBus(LocalBroadcastManager.getInstance(this)) }
+	private val messageBus by lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
 
 	private val lazyConnectionPoller = lazy {
 		messageBus.sendBroadcast(Intent(connectionLostNotification))

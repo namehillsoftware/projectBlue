@@ -11,15 +11,24 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.menu.Fil
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.MaintainNowPlayingState
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.EditPlaylist
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.NowPlayingMessage
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.menu.listeners.FileSeekToClickListener
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.menu.listeners.RemovePlaylistFileClickListener
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
+import com.lasthopesoftware.bluewater.shared.messages.TypedMessageFeed
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
+import kotlinx.coroutines.flow.filterIsInstance
+import kotlinx.coroutines.flow.onEach
 
 
-class NowPlayingFileListItemMenuBuilder(private val nowPlayingRepository: MaintainNowPlayingState, private val fileListItemNowPlayingRegistrar: FileListItemNowPlayingRegistrar)
+class NowPlayingFileListItemMenuBuilder(
+	private val nowPlayingRepository: MaintainNowPlayingState,
+	private val fileListItemNowPlayingRegistrar: FileListItemNowPlayingRegistrar,
+	private val typedMessageFeed: TypedMessageFeed<NowPlayingMessage>
+)
 	: AbstractFileListItemMenuBuilder<NowPlayingFileListItemMenuBuilder.ViewHolder>(R.layout.layout_now_playing_file_item_menu) {
 
 	override fun newViewHolder(fileItemMenu: FileListItemContainer) = ViewHolder(fileItemMenu)
@@ -58,6 +67,10 @@ class NowPlayingFileListItemMenuBuilder(private val nowPlayingRepository: Mainta
 				val playlistPosition = intent.getIntExtra(PlaylistEvents.PlaylistParameters.playlistPosition, -1)
 				textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(position == playlistPosition))
 				viewFlipper.isSelected = position == playlistPosition
+			}
+
+			typedMessageFeed.messages.filterIsInstance<EditPlaylist>().onEach {
+
 			}
 
 			LongClickViewAnimatorListener.tryFlipToPreviousView(viewFlipper)

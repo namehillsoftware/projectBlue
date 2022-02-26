@@ -6,7 +6,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 
-class ApplicationMessageBus(private val localBroadcastManager: LocalBroadcastManager): SendMessages, RegisterForMessages {
+class MessageBus(private val localBroadcastManager: LocalBroadcastManager): SendMessages, RegisterForMessages {
 
 	private val receiverSync = Any()
 	private val receivers = HashMap<ReceiveBroadcastEvents, BroadcastReceiver>()

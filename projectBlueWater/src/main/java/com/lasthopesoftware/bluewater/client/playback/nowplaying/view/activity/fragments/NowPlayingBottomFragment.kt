@@ -28,6 +28,8 @@ import com.lasthopesoftware.bluewater.client.connection.polling.ConnectionPoller
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.EditPlaylist
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.NowPlayingMessage
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.InMemoryNowPlayingDisplaySettings
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingScreenViewModel
@@ -37,21 +39,26 @@ import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.databinding.ControlNowPlayingBottomSheetBinding
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
-import com.lasthopesoftware.bluewater.shared.android.messages.ApplicationMessageBus
+import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildActivityViewModel
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildActivityViewModelLazily
+import com.lasthopesoftware.bluewater.shared.messages.TypedMessageBus
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toDeferred
 import com.lasthopesoftware.resources.strings.StringResources
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import org.koin.android.ext.android.inject
+import org.koin.android.scope.AndroidScopeComponent
+import org.koin.androidx.scope.fragmentScope
+import org.koin.core.scope.Scope
 
-class NowPlayingBottomFragment : Fragment() {
+class NowPlayingBottomFragment : Fragment(), AndroidScopeComponent {
 
 	private var itemListMenuChangeHandler: IItemListMenuChangeHandler? = null
 
-	private val messageBus = lazy { ApplicationMessageBus(LocalBroadcastManager.getInstance(requireContext())) }
+	private val messageBus = lazy { MessageBus(LocalBroadcastManager.getInstance(requireContext())) }
 
 	private val selectedConnectionProvider by lazy { SelectedConnectionProvider(requireContext()) }
 
@@ -99,11 +106,14 @@ class NowPlayingBottomFragment : Fragment() {
 
 	private val fileListItemNowPlayingRegistrar = lazy { FileListItemNowPlayingRegistrar(messageBus.value) }
 
+	private val typedMessageBus by inject<TypedMessageBus<NowPlayingMessage>>()
+
 	private val nowPlayingListAdapter by lazy {
 		nowPlayingRepository.eventually(LoopedInPromise.response({ r ->
 			val nowPlayingFileListMenuBuilder = NowPlayingFileListItemMenuBuilder(
 				r,
-				fileListItemNowPlayingRegistrar.value)
+				fileListItemNowPlayingRegistrar.value,
+				typedMessageBus)
 
 			itemListMenuChangeHandler?.apply {
 				nowPlayingFileListMenuBuilder.setOnViewChangedListener(
@@ -144,6 +154,8 @@ class NowPlayingBottomFragment : Fragment() {
 		)
 	}
 
+	override val scope : Scope by fragmentScope()
+
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
 		val binding = DataBindingUtil.inflate<ControlNowPlayingBottomSheetBinding>(
 			inflater,
@@ -168,7 +180,7 @@ class NowPlayingBottomFragment : Fragment() {
 			}, requireContext()))
 
 			editNowPlayingList.setOnClickListener {
-
+				typedMessageBus.sendMessage(EditPlaylist)
 			}
 
 			miniPlay.setOnClickListener { v ->

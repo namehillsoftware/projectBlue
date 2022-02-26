@@ -26,13 +26,13 @@ import com.lasthopesoftware.bluewater.shared.android.messages.SendMessages
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 
 open class ItemListAdapter internal constructor(
-	context: Context,
-	private val sendMessages: SendMessages,
-	private val itemStringListProvider: ItemStringListProvider,
-	private val itemListMenuEvents: IItemListMenuChangeHandler,
-	private val storedItemAccess: StoredItemAccess,
-	private val provideItems: ProvideItems,
-	private val libraryId: LibraryId
+    context: Context,
+    private val sendMessages: SendMessages,
+    private val itemStringListProvider: ItemStringListProvider,
+    private val itemListMenuEvents: IItemListMenuChangeHandler,
+    private val storedItemAccess: StoredItemAccess,
+    private val provideItems: ProvideItems,
+    private val libraryId: LibraryId
 ) : DeferredListAdapter<Item, ItemListAdapter.ViewHolder>(context, ItemDiffer) {
 
 	private val viewChangedHandler by lazy {
