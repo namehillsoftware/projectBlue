@@ -7,6 +7,7 @@ import android.view.ViewGroup
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler
@@ -46,16 +47,12 @@ import com.lasthopesoftware.resources.strings.StringResources
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import org.koin.android.ext.android.get
-import org.koin.android.ext.android.inject
-import org.koin.android.scope.AndroidScopeComponent
-import org.koin.androidx.scope.fragmentScope
 
-class NowPlayingPlaylistFragment : Fragment(), AndroidScopeComponent {
+class NowPlayingPlaylistFragment : Fragment() {
 
 	private var itemListMenuChangeHandler: IItemListMenuChangeHandler? = null
 
-	private val messageBus = lazy { get<MessageBus>() }
+	private val messageBus by lazy { MessageBus(LocalBroadcastManager.getInstance(requireContext())) }
 
 	private val selectedConnectionProvider by lazy { SelectedConnectionProvider(requireContext()) }
 
@@ -101,9 +98,9 @@ class NowPlayingPlaylistFragment : Fragment(), AndroidScopeComponent {
 			}
 	}
 
-	private val fileListItemNowPlayingRegistrar = lazy { FileListItemNowPlayingRegistrar(messageBus.value) }
+	private val fileListItemNowPlayingRegistrar = lazy { FileListItemNowPlayingRegistrar(messageBus) }
 
-	private val typedMessageBus by inject<TypedMessageBus<NowPlayingPlaylistMessage>>()
+	private val typedMessageBus by lazy { TypedMessageBus<NowPlayingPlaylistMessage>() }
 
 	private val nowPlayingListAdapter by lazy {
 		nowPlayingRepository.eventually(LoopedInPromise.response({ r ->
@@ -130,14 +127,14 @@ class NowPlayingPlaylistFragment : Fragment(), AndroidScopeComponent {
 
 		val nowPlayingViewModel = buildActivityViewModel {
 			NowPlayingScreenViewModel(
-				messageBus.value,
+				messageBus,
 				InMemoryNowPlayingDisplaySettings,
 				playbackService,
 			)
 		}
 
 		NowPlayingFilePropertiesViewModel(
-			messageBus.value,
+			messageBus,
 			LiveNowPlayingLookup.getInstance(),
 			selectedConnectionProvider,
 			lazyFilePropertiesProvider,
@@ -150,8 +147,6 @@ class NowPlayingPlaylistFragment : Fragment(), AndroidScopeComponent {
 			nowPlayingViewModel
 		)
 	}
-
-	override val scope by fragmentScope()
 
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
 		val binding = DataBindingUtil.inflate<ControlNowPlayingPlaylistBinding>(

@@ -48,9 +48,6 @@ import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEv
 import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler
 import com.lasthopesoftware.compilation.DebugFlag
 import com.namehillsoftware.handoff.promises.Promise
-import org.koin.android.ext.koin.androidContext
-import org.koin.android.ext.koin.androidLogger
-import org.koin.core.context.startKoin
 import org.slf4j.LoggerFactory
 import java.io.File
 
@@ -87,12 +84,6 @@ open class MainApplication : Application() {
 		SyncScheduler
 			.promiseIsScheduled(this)
 			.then { isScheduled -> if (!isScheduled) SyncScheduler.scheduleSync(this) }
-
-		startKoin {
-			androidLogger()
-			androidContext(this@MainApplication)
-			modules(appModule)
-		}
 	}
 
 	private fun registerAppBroadcastReceivers() {
