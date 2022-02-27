@@ -4,4 +4,4 @@ import com.lasthopesoftware.bluewater.shared.messages.TypedMessage
 
 interface NowPlayingMessage : TypedMessage
 
-object EditPlaylist : NowPlayingMessage
+class ToggleEditPlaylist(val isEditing: Boolean) : NowPlayingMessage

@@ -27,8 +27,8 @@ import com.lasthopesoftware.bluewater.client.connection.polling.ConnectionPoller
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.EditPlaylist
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.NowPlayingMessage
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.ToggleEditPlaylist
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.InMemoryNowPlayingDisplaySettings
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingScreenViewModel
@@ -179,8 +179,10 @@ class NowPlayingBottomFragment : Fragment(), AndroidScopeComponent {
 					.launchIn(lifecycleScope)
 			}, requireContext()))
 
+			var isEditingPlaylist: Boolean
 			editNowPlayingList.setOnClickListener {
-				typedMessageBus.sendMessage(EditPlaylist)
+				isEditingPlaylist = true
+				typedMessageBus.sendMessage(ToggleEditPlaylist(isEditingPlaylist))
 			}
 
 			miniPlay.setOnClickListener { v ->
