@@ -10,11 +10,8 @@ import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.NotifyOnFlipViewAnimator
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 
-/**
- * Created by david on 4/14/15.
- */
 class FileListItemContainer(parentContext: Context) {
-	val textViewContainer: RelativeLayout
+	private val textViewContainer: RelativeLayout
 	private val textViewFinder: LazyViewFinder<TextView>
 	val viewAnimator = NotifyOnFlipViewAnimator(parentContext)
 
