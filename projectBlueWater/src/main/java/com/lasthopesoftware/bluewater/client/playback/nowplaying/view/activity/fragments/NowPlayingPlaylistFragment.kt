@@ -27,8 +27,6 @@ import com.lasthopesoftware.bluewater.client.connection.polling.ConnectionPoller
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.NowPlayingMessage
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.ToggleEditPlaylist
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.InMemoryNowPlayingDisplaySettings
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingScreenViewModel
@@ -36,7 +34,7 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.list.NowPl
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.menu.NowPlayingFileListItemMenuBuilder
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
-import com.lasthopesoftware.bluewater.databinding.ControlNowPlayingBottomSheetBinding
+import com.lasthopesoftware.bluewater.databinding.ControlNowPlayingPlaylistBinding
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildActivityViewModel
@@ -52,9 +50,8 @@ import org.koin.android.ext.android.get
 import org.koin.android.ext.android.inject
 import org.koin.android.scope.AndroidScopeComponent
 import org.koin.androidx.scope.fragmentScope
-import org.koin.core.scope.Scope
 
-class NowPlayingBottomFragment : Fragment(), AndroidScopeComponent {
+class NowPlayingPlaylistFragment : Fragment(), AndroidScopeComponent {
 
 	private var itemListMenuChangeHandler: IItemListMenuChangeHandler? = null
 
@@ -106,7 +103,7 @@ class NowPlayingBottomFragment : Fragment(), AndroidScopeComponent {
 
 	private val fileListItemNowPlayingRegistrar = lazy { FileListItemNowPlayingRegistrar(messageBus.value) }
 
-	private val typedMessageBus by inject<TypedMessageBus<NowPlayingMessage>>()
+	private val typedMessageBus by inject<TypedMessageBus<NowPlayingPlaylistMessage>>()
 
 	private val nowPlayingListAdapter by lazy {
 		nowPlayingRepository.eventually(LoopedInPromise.response({ r ->
@@ -154,12 +151,12 @@ class NowPlayingBottomFragment : Fragment(), AndroidScopeComponent {
 		)
 	}
 
-	override val scope : Scope by fragmentScope()
+	override val scope by fragmentScope()
 
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
-		val binding = DataBindingUtil.inflate<ControlNowPlayingBottomSheetBinding>(
+		val binding = DataBindingUtil.inflate<ControlNowPlayingPlaylistBinding>(
 			inflater,
-			R.layout.control_now_playing_bottom_sheet,
+			R.layout.control_now_playing_playlist,
 			container,
 			false
 		)
@@ -179,11 +176,7 @@ class NowPlayingBottomFragment : Fragment(), AndroidScopeComponent {
 					.launchIn(lifecycleScope)
 			}, requireContext()))
 
-			var isEditingPlaylist: Boolean
-			editNowPlayingList.setOnClickListener {
-				isEditingPlaylist = true
-				typedMessageBus.sendMessage(ToggleEditPlaylist(isEditingPlaylist))
-			}
+			editNowPlayingList.setOnClickListener { typedMessageBus.sendMessage(EditPlaylist) }
 
 			miniPlay.setOnClickListener { v ->
 				PlaybackService.play(v.context)
@@ -194,6 +187,8 @@ class NowPlayingBottomFragment : Fragment(), AndroidScopeComponent {
 				PlaybackService.pause(v.context)
 				viewModel.togglePlaying(false)
 			}
+
+			repeatButton.setOnClickListener { viewModel.toggleRepeating() }
 
 			viewModel.nowPlayingFile
 				.filterNotNull()

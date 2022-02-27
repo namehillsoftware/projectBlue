@@ -124,8 +124,6 @@ class NowPlayingTopFragment : Fragment() {
 				if (viewModel.isScreenControlsVisible.value) PlaybackService.previous(v.context)
 			}
 
-			repeatButton.setOnClickListener { viewModel.toggleRepeating() }
-
 			isScreenKeptOnButton.setOnClickListener { viewModel.toggleScreenOn() }
 
 			rbSongRating.onRatingBarChangeListener = RatingBar.OnRatingBarChangeListener { _, rating, fromUser ->

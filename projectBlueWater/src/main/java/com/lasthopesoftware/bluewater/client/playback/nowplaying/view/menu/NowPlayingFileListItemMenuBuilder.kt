@@ -11,8 +11,8 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.menu.Fil
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.MaintainNowPlayingState
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.NowPlayingMessage
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.ToggleEditPlaylist
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.fragments.EditPlaylist
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.fragments.NowPlayingPlaylistMessage
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.menu.listeners.FileSeekToClickListener
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.menu.listeners.RemovePlaylistFileClickListener
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
@@ -27,7 +27,7 @@ import kotlinx.coroutines.flow.onEach
 class NowPlayingFileListItemMenuBuilder(
 	private val nowPlayingRepository: MaintainNowPlayingState,
 	private val fileListItemNowPlayingRegistrar: FileListItemNowPlayingRegistrar,
-	private val typedMessageFeed: TypedMessageFeed<NowPlayingMessage>
+	private val typedMessageFeed: TypedMessageFeed<NowPlayingPlaylistMessage>
 )
 	: AbstractFileListItemMenuBuilder<NowPlayingFileListItemMenuBuilder.ViewHolder>(R.layout.layout_now_playing_file_item_menu) {
 
@@ -69,7 +69,7 @@ class NowPlayingFileListItemMenuBuilder(
 				viewFlipper.isSelected = position == playlistPosition
 			}
 
-			typedMessageFeed.receiveMessages<ToggleEditPlaylist>().onEach {
+			typedMessageFeed.receiveMessages<EditPlaylist>().onEach {
 
 			}
 
