@@ -5,6 +5,7 @@ import android.view.View
 import androidx.annotation.IdRes
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy
 import com.namehillsoftware.lazyj.CreateAndHold
+import kotlin.reflect.KProperty
 
 class LazyViewFinder<TView : View> private constructor(private val lazyViewInitializer: CreateAndHold<TView>) {
 
@@ -21,3 +22,5 @@ class LazyViewFinder<TView : View> private constructor(private val lazyViewIniti
 		override fun create(): T = view.findViewById(viewId) ?: throw MissingViewException(viewId)
 	}
 }
+
+inline operator fun <T : View> LazyViewFinder<T>.getValue(thisRef: Any?, property: KProperty<*>): T = findView()

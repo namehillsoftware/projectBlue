@@ -17,6 +17,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
+import com.lasthopesoftware.bluewater.shared.android.view.getValue
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.namehillsoftware.handoff.promises.Promise
 
@@ -30,10 +31,10 @@ class FileListItemMenuBuilder(
 	override fun newViewHolder(fileItemMenu: FileListItemContainer) = ViewHolder(fileItemMenu)
 
 	inner class ViewHolder(private val fileListItemContainer: FileListItemContainer) : RecyclerView.ViewHolder(fileListItemContainer.viewAnimator) {
-		private val viewFileDetailsButtonFinder = LazyViewFinder<ImageButton>(itemView, R.id.btnViewFileDetails)
-		private val playButtonFinder = LazyViewFinder<ImageButton>(itemView, R.id.btnPlaySong)
-		private val addButtonFinder = LazyViewFinder<ImageButton>(itemView, R.id.btnAddToPlaylist)
-		private val fileNameTextViewSetter = FileNameTextViewSetter(fileListItemContainer.findTextView())
+		private val viewFileDetailsButton by LazyViewFinder<ImageButton>(itemView, R.id.btnViewFileDetails)
+		private val playButton by LazyViewFinder<ImageButton>(itemView, R.id.btnPlaySong)
+		private val addButton by LazyViewFinder<ImageButton>(itemView, R.id.btnAddToPlaylist)
+		private val fileNameTextViewSetter = FileNameTextViewSetter(fileListItemContainer.textView)
 
 		private var fileListItemNowPlayingHandler: AutoCloseable? = null
 		private var promisedTextViewUpdate: Promise<*>? = null
@@ -42,7 +43,7 @@ class FileListItemMenuBuilder(
 			val serviceFile = positionedFile.serviceFile
 
 			promisedTextViewUpdate = fileNameTextViewSetter.promiseTextViewUpdate(serviceFile)
-			val textView = fileListItemContainer.findTextView()
+			val textView = fileListItemContainer.textView
 			textView.setTypeface(null, Typeface.NORMAL)
 			nowPlayingFileProvider.nowPlayingFile
 				.eventually(LoopedInPromise.response({ f ->
@@ -57,9 +58,9 @@ class FileListItemMenuBuilder(
 
 			val viewAnimator = fileListItemContainer.viewAnimator
 			LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator)
-			playButtonFinder.findView().setOnClickListener(FilePlayClickListener(viewAnimator, positionedFile.playlistPosition, serviceFiles))
-			viewFileDetailsButtonFinder.findView().setOnClickListener(ViewFileDetailsClickListener(viewAnimator, serviceFile))
-			addButtonFinder.findView().setOnClickListener(AddClickListener(viewAnimator, serviceFile))
+			playButton.setOnClickListener(FilePlayClickListener(viewAnimator, positionedFile.playlistPosition, serviceFiles))
+			viewFileDetailsButton.setOnClickListener(ViewFileDetailsClickListener(viewAnimator, serviceFile))
+			addButton.setOnClickListener(AddClickListener(viewAnimator, serviceFile))
 		}
 	}
 
