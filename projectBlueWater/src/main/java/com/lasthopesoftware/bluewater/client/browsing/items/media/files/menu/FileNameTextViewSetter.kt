@@ -28,13 +28,13 @@ import javax.net.ssl.SSLProtocolException
 class FileNameTextViewSetter(private val fileTextView: TextView, private val artistTextView: TextView? = null) {
 
 	companion object {
-		private val logger = LoggerFactory.getLogger(FileNameTextViewSetter::class.java)
+		private val logger by lazy { LoggerFactory.getLogger(FileNameTextViewSetter::class.java) }
 		private val timeoutDuration = Duration.standardMinutes(1)
 
 		private val rateLimiter by lazy { PromisingRateLimiter<Map<String, String>>(1) }
 	}
 
-	private val textViewUpdateSync = Any()
+	private val updateSync = Any()
 	private val handler = Handler(fileTextView.context.mainLooper)
 	private val filePropertiesProvider by lazy {
 		SelectedConnectionFilePropertiesProvider(SelectedConnectionProvider(fileTextView.context)) { c ->
@@ -58,7 +58,7 @@ class FileNameTextViewSetter(private val fileTextView: TextView, private val art
 	private var promisedState = Unit.toPromise()
 
 	@Volatile
-	private var currentlyPromisedTextViewUpdate: PromisedTextViewUpdate? = null
+	private var currentlyPromisedViewUpdate: PromisedTextViewUpdate? = null
 
 	@Synchronized
 	fun promiseTextViewUpdate(serviceFile: ServiceFile): Promise<Unit> {
@@ -70,10 +70,10 @@ class FileNameTextViewSetter(private val fileTextView: TextView, private val art
 
 	private inner class EventualTextViewUpdate(private val serviceFile: ServiceFile) : EventualAction {
 		override fun promiseAction(): Promise<*> =
-			synchronized(textViewUpdateSync) {
+			synchronized(updateSync) {
 				PromisedTextViewUpdate(serviceFile)
 					.apply {
-						currentlyPromisedTextViewUpdate = this
+						currentlyPromisedViewUpdate = this
 						beginUpdate()
 					}
 			}
@@ -166,7 +166,7 @@ class FileNameTextViewSetter(private val fileTextView: TextView, private val art
 		}
 
 		private val isNotCurrentPromise: Boolean
-			get() = synchronized(textViewUpdateSync) { currentlyPromisedTextViewUpdate !== this }
+			get() = synchronized(updateSync) { currentlyPromisedViewUpdate !== this }
 		private val isUpdateCancelled: Boolean
 			get() = cancellationProxy.isCancelled
 	}

@@ -4,7 +4,10 @@ import android.content.Context
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.*
+import android.widget.AbsListView
+import android.widget.ImageButton
+import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.details.ViewFileDetailsClickListener
@@ -52,7 +55,7 @@ class NowPlayingFileListItemMenuBuilder(
 
 		val inflater = parent.context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
 
-		val textViewContainer = inflater.inflate(R.layout.layout_now_playing_file_item, notifyOnFlipViewAnimator, false) as RelativeLayout
+		val textViewContainer = inflater.inflate(R.layout.layout_now_playing_file_item, notifyOnFlipViewAnimator, false) as LinearLayout
 		notifyOnFlipViewAnimator.addView(textViewContainer)
 
 		val fileMenu = inflater.inflate(R.layout.layout_now_playing_file_item_menu, parent, false) as LinearLayout
