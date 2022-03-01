@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.menu
 
 import android.content.Context
+import android.os.Handler
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -8,6 +9,8 @@ import android.widget.AbsListView
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.lifecycle.coroutineScope
+import androidx.lifecycle.findViewTreeLifecycleOwner
 import androidx.recyclerview.widget.RecyclerView
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.details.ViewFileDetailsClickListener
@@ -69,6 +72,8 @@ class NowPlayingFileListItemMenuBuilder(
 	inner class ViewHolder internal constructor(private val viewAnimator: NotifyOnFlipViewAnimator)
 		: RecyclerView.ViewHolder(viewAnimator) {
 
+		private val handler by lazy { Handler(viewAnimator.context.mainLooper) }
+		private val coroutineScope by lazy { viewAnimator.findViewTreeLifecycleOwner()?.lifecycle?.coroutineScope ?: MainScope() }
 		private val viewFileDetailsButton by LazyViewFinder<ImageButton>(itemView, R.id.btnViewFileDetails)
 		private val playButton by LazyViewFinder<ImageButton>(itemView, R.id.btnPlaySong)
 		private val removeButton by LazyViewFinder<ImageButton>(itemView, R.id.btnRemoveFromPlaylist)
@@ -80,6 +85,7 @@ class NowPlayingFileListItemMenuBuilder(
 		private var fileListItemNowPlayingHandler: AutoCloseable? = null
 
 		fun update(positionedFile: PositionedFile) {
+
 			val serviceFile = positionedFile.serviceFile
 
 			fileNameTextViewSetter.promiseTextViewUpdate(serviceFile)
@@ -91,7 +97,7 @@ class NowPlayingFileListItemMenuBuilder(
 				.eventually(LoopedInPromise.response({ np ->
 					textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(position == np?.playlistPosition))
 					viewAnimator.isSelected = position == np?.playlistPosition
-				}, viewAnimator.context))
+				}, handler))
 
 			fileListItemNowPlayingHandler?.close()
 			fileListItemNowPlayingHandler = fileListItemNowPlayingRegistrar.registerNewHandler { intent ->
@@ -103,11 +109,11 @@ class NowPlayingFileListItemMenuBuilder(
 			typedMessageFeed
 				.receiveMessages<EditPlaylist>()
 				.onEach { dragButton.visibility = View.VISIBLE }
-				.launchIn(MainScope())
+				.launchIn(coroutineScope)
 			typedMessageFeed
 				.receiveMessages<FinishEditPlaylist>()
 				.onEach { dragButton.visibility = View.GONE }
-				.launchIn(MainScope())
+				.launchIn(coroutineScope)
 
 			LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator)
 			playButton.setOnClickListener(FileSeekToClickListener(viewAnimator, position))
