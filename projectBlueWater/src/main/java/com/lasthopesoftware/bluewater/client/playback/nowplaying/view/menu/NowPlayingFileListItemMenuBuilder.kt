@@ -60,7 +60,7 @@ class NowPlayingFileListItemMenuBuilder(
 		val textViewContainer = inflater.inflate(R.layout.layout_now_playing_file_item, notifyOnFlipViewAnimator, false) as LinearLayout
 		notifyOnFlipViewAnimator.addView(textViewContainer)
 
-		val fileMenu = inflater.inflate(R.layout.layout_now_playing_file_item_menu, parent, false) as LinearLayout
+		val fileMenu = inflater.inflate(R.layout.layout_now_playing_file_item_menu, notifyOnFlipViewAnimator, false) as LinearLayout
 		notifyOnFlipViewAnimator.addView(fileMenu)
 
 		notifyOnFlipViewAnimator.setViewChangedListener(onViewChangedListener)
