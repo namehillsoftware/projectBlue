@@ -37,9 +37,11 @@
     </LinearLayout>
 
     <ImageButton
+        android:id="@+id/dragButton"
         android:layout_width="wrap_content"
         android:layout_height="match_parent"
         android:src="@drawable/drag"
-        android:contentDescription="@string/drag_item" />
+        android:contentDescription="@string/drag_item"
+        android:visibility="gone" />
 	
 </LinearLayout>
