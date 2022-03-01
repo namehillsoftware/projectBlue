@@ -66,7 +66,7 @@ class NowPlayingFileListItemMenuBuilder(
 		notifyOnFlipViewAnimator.setViewChangedListener(onViewChangedListener)
 		notifyOnFlipViewAnimator.setOnLongClickListener(LongClickViewAnimatorListener(notifyOnFlipViewAnimator))
 
-		val coroutineScope = notifyOnFlipViewAnimator.findViewTreeLifecycleOwner()?.lifecycle?.coroutineScope ?: MainScope()
+		val coroutineScope = parent.findViewTreeLifecycleOwner()?.lifecycle?.coroutineScope ?: MainScope()
 
 		val dragButton by LazyViewFinder<ImageButton>(notifyOnFlipViewAnimator, R.id.dragButton)
 		typedMessageFeed
