@@ -31,8 +31,7 @@ import com.lasthopesoftware.bluewater.shared.android.view.getValue
 import com.lasthopesoftware.bluewater.shared.messages.TypedMessageFeed
 import com.lasthopesoftware.bluewater.shared.messages.receiveMessages
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
@@ -76,7 +75,6 @@ class NowPlayingFileListItemMenuBuilder(
 		private val textView by LazyViewFinder<TextView>(itemView, R.id.fileName)
 		private val artistView by LazyViewFinder<TextView>(itemView, R.id.artist)
 		private val dragButton by LazyViewFinder<ImageButton>(itemView, R.id.dragButton)
-		private val coroutineScope by lazy { CoroutineScope(Dispatchers.Main) }
 		private val fileNameTextViewSetter by lazy { FileNameTextViewSetter(textView, artistView) }
 
 		private var fileListItemNowPlayingHandler: AutoCloseable? = null
@@ -105,11 +103,11 @@ class NowPlayingFileListItemMenuBuilder(
 			typedMessageFeed
 				.receiveMessages<EditPlaylist>()
 				.onEach { dragButton.visibility = View.VISIBLE }
-				.launchIn(coroutineScope)
+				.launchIn(MainScope())
 			typedMessageFeed
 				.receiveMessages<FinishEditPlaylist>()
 				.onEach { dragButton.visibility = View.GONE }
-				.launchIn(coroutineScope)
+				.launchIn(MainScope())
 
 			LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator)
 			playButton.setOnClickListener(FileSeekToClickListener(viewAnimator, position))
