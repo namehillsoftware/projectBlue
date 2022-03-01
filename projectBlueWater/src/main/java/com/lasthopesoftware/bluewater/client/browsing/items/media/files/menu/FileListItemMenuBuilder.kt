@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.media.files.menu
 
 import android.graphics.Typeface
+import android.os.Handler
 import android.view.View
 import android.widget.ImageButton
 import androidx.recyclerview.widget.RecyclerView
@@ -31,6 +32,7 @@ class FileListItemMenuBuilder(
 	override fun newViewHolder(fileItemMenu: FileListItemContainer) = ViewHolder(fileItemMenu)
 
 	inner class ViewHolder(private val fileListItemContainer: FileListItemContainer) : RecyclerView.ViewHolder(fileListItemContainer.viewAnimator) {
+		private val handler by lazy { Handler(itemView.context.mainLooper) }
 		private val viewFileDetailsButton by LazyViewFinder<ImageButton>(itemView, R.id.btnViewFileDetails)
 		private val playButton by LazyViewFinder<ImageButton>(itemView, R.id.btnPlaySong)
 		private val addButton by LazyViewFinder<ImageButton>(itemView, R.id.btnAddToPlaylist)
@@ -48,7 +50,7 @@ class FileListItemMenuBuilder(
 			nowPlayingFileProvider.nowPlayingFile
 				.eventually(LoopedInPromise.response({ f ->
 					textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(serviceFile == f))
-				}, textView.context))
+				}, handler))
 
 			fileListItemNowPlayingHandler?.close()
 			fileListItemNowPlayingHandler = fileListItemNowPlayingRegistrar.registerNewHandler { intent ->
