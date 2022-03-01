@@ -74,9 +74,10 @@ class NowPlayingFileListItemMenuBuilder(
 		private val playButton by LazyViewFinder<ImageButton>(itemView, R.id.btnPlaySong)
 		private val removeButton by LazyViewFinder<ImageButton>(itemView, R.id.btnRemoveFromPlaylist)
 		private val textView by LazyViewFinder<TextView>(itemView, R.id.fileName)
+		private val artistView by LazyViewFinder<TextView>(itemView, R.id.artist)
 		private val dragButton by LazyViewFinder<ImageButton>(itemView, R.id.dragButton)
 		private val coroutineScope by lazy { CoroutineScope(Dispatchers.Main) }
-		private val fileNameTextViewSetter by lazy { FileNameTextViewSetter(textView) }
+		private val fileNameTextViewSetter by lazy { FileNameTextViewSetter(textView, artistView) }
 
 		private var fileListItemNowPlayingHandler: AutoCloseable? = null
 
