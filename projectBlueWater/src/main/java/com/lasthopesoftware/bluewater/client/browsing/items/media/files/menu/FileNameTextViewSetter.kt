@@ -102,6 +102,7 @@ class FileNameTextViewSetter(private val fileTextView: TextView, private val art
 
 		override fun run() {
 			fileTextView.setText(R.string.lbl_loading)
+			artistTextView?.text = ""
 
 			if (isNotCurrentPromise || isUpdateCancelled) return resolve(Unit)
 
