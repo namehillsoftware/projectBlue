@@ -25,7 +25,7 @@ import java.util.*
 import java.util.concurrent.CancellationException
 import javax.net.ssl.SSLProtocolException
 
-class FileNameTextViewSetter(private val textView: TextView) {
+class FileNameTextViewSetter(private val fileTextView: TextView, private val artistTextView: TextView? = null) {
 
 	companion object {
 		private val logger = LoggerFactory.getLogger(FileNameTextViewSetter::class.java)
@@ -35,9 +35,9 @@ class FileNameTextViewSetter(private val textView: TextView) {
 	}
 
 	private val textViewUpdateSync = Any()
-	private val handler = Handler(textView.context.mainLooper)
+	private val handler = Handler(fileTextView.context.mainLooper)
 	private val filePropertiesProvider by lazy {
-		SelectedConnectionFilePropertiesProvider(SelectedConnectionProvider(textView.context)) { c ->
+		SelectedConnectionFilePropertiesProvider(SelectedConnectionProvider(fileTextView.context)) { c ->
 			val filePropertyCache = FilePropertyCache.getInstance()
 			ScopedCachedFilePropertiesProvider(
 				c,
@@ -101,7 +101,7 @@ class FileNameTextViewSetter(private val textView: TextView) {
 		}
 
 		override fun run() {
-			textView.setText(R.string.lbl_loading)
+			fileTextView.setText(R.string.lbl_loading)
 
 			if (isNotCurrentPromise || isUpdateCancelled) return resolve(Unit)
 
@@ -130,8 +130,14 @@ class FileNameTextViewSetter(private val textView: TextView) {
 
 		override fun respond(properties: Map<String, String>) {
 			if (isNotCurrentPromise || isUpdateCancelled) return
+
 			val fileName = properties[KnownFileProperties.NAME]
-			if (fileName != null) textView.text = fileName
+			if (fileName != null) fileTextView.text = fileName
+
+			if (artistTextView == null) return
+
+			val artist = properties[KnownFileProperties.ARTIST] ?: properties[KnownFileProperties.ALBUM_ARTIST]
+			if (artist != null) artistTextView.text = artist
 		}
 
 		private fun handleError(e: Throwable) {

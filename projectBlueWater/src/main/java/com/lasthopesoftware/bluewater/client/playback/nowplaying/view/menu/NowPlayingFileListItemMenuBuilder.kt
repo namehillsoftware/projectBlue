@@ -28,6 +28,9 @@ import com.lasthopesoftware.bluewater.shared.android.view.getValue
 import com.lasthopesoftware.bluewater.shared.messages.TypedMessageFeed
 import com.lasthopesoftware.bluewater.shared.messages.receiveMessages
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
 
@@ -46,13 +49,15 @@ class NowPlayingFileListItemMenuBuilder(
 	override fun newViewHolder(parent: ViewGroup): NowPlayingFileListItemMenuBuilder.ViewHolder {
 		val notifyOnFlipViewAnimator = NotifyOnFlipViewAnimator(parent.context)
 		notifyOnFlipViewAnimator.layoutParams = AbsListView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+
 		val inflater = parent.context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
+
 		val textViewContainer = inflater.inflate(R.layout.layout_now_playing_file_item, notifyOnFlipViewAnimator, false) as RelativeLayout
 		notifyOnFlipViewAnimator.addView(textViewContainer)
 
 		val fileMenu = inflater.inflate(R.layout.layout_now_playing_file_item_menu, parent, false) as LinearLayout
-
 		notifyOnFlipViewAnimator.addView(fileMenu)
+
 		notifyOnFlipViewAnimator.setViewChangedListener(onViewChangedListener)
 		notifyOnFlipViewAnimator.setOnLongClickListener(LongClickViewAnimatorListener(notifyOnFlipViewAnimator))
 
@@ -67,6 +72,7 @@ class NowPlayingFileListItemMenuBuilder(
 		private val removeButton by LazyViewFinder<ImageButton>(itemView, R.id.btnRemoveFromPlaylist)
 		private val textView by LazyViewFinder<TextView>(itemView, R.id.fileName)
 		private val dragButton by LazyViewFinder<ImageButton>(itemView, R.id.dragButton)
+		private val coroutineScope by lazy { CoroutineScope(Dispatchers.Main) }
 		private val fileNameTextViewSetter by lazy { FileNameTextViewSetter(textView) }
 
 		private var fileListItemNowPlayingHandler: AutoCloseable? = null
@@ -83,7 +89,7 @@ class NowPlayingFileListItemMenuBuilder(
 				.eventually(LoopedInPromise.response({ np ->
 					textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(position == np?.playlistPosition))
 					viewAnimator.isSelected = position == np?.playlistPosition
-				}, textView.context))
+				}, viewAnimator.context))
 
 			fileListItemNowPlayingHandler?.close()
 			fileListItemNowPlayingHandler = fileListItemNowPlayingRegistrar.registerNewHandler { intent ->
@@ -92,8 +98,14 @@ class NowPlayingFileListItemMenuBuilder(
 				viewAnimator.isSelected = position == playlistPosition
 			}
 
-			typedMessageFeed.receiveMessages<EditPlaylist>().onEach { dragButton.visibility = View.VISIBLE }
-			typedMessageFeed.receiveMessages<FinishEditPlaylist>().onEach { dragButton.visibility = View.GONE }
+			typedMessageFeed
+				.receiveMessages<EditPlaylist>()
+				.onEach { dragButton.visibility = View.VISIBLE }
+				.launchIn(coroutineScope)
+			typedMessageFeed
+				.receiveMessages<FinishEditPlaylist>()
+				.onEach { dragButton.visibility = View.GONE }
+				.launchIn(coroutineScope)
 
 			LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator)
 			playButton.setOnClickListener(FileSeekToClickListener(viewAnimator, position))
