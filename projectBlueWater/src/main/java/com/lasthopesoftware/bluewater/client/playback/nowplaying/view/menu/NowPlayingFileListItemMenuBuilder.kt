@@ -66,6 +66,18 @@ class NowPlayingFileListItemMenuBuilder(
 		notifyOnFlipViewAnimator.setViewChangedListener(onViewChangedListener)
 		notifyOnFlipViewAnimator.setOnLongClickListener(LongClickViewAnimatorListener(notifyOnFlipViewAnimator))
 
+		val coroutineScope = notifyOnFlipViewAnimator.findViewTreeLifecycleOwner()?.lifecycle?.coroutineScope ?: MainScope()
+
+		val dragButton by LazyViewFinder<ImageButton>(notifyOnFlipViewAnimator, R.id.dragButton)
+		typedMessageFeed
+			.receiveMessages<EditPlaylist>()
+			.onEach { dragButton.visibility = View.VISIBLE }
+			.launchIn(coroutineScope)
+		typedMessageFeed
+			.receiveMessages<FinishEditPlaylist>()
+			.onEach { dragButton.visibility = View.GONE }
+			.launchIn(coroutineScope)
+
 		return ViewHolder(notifyOnFlipViewAnimator)
 	}
 
@@ -73,13 +85,11 @@ class NowPlayingFileListItemMenuBuilder(
 		: RecyclerView.ViewHolder(viewAnimator) {
 
 		private val handler by lazy { Handler(viewAnimator.context.mainLooper) }
-		private val coroutineScope by lazy { viewAnimator.findViewTreeLifecycleOwner()?.lifecycle?.coroutineScope ?: MainScope() }
 		private val viewFileDetailsButton by LazyViewFinder<ImageButton>(itemView, R.id.btnViewFileDetails)
 		private val playButton by LazyViewFinder<ImageButton>(itemView, R.id.btnPlaySong)
 		private val removeButton by LazyViewFinder<ImageButton>(itemView, R.id.btnRemoveFromPlaylist)
 		private val textView by LazyViewFinder<TextView>(itemView, R.id.fileName)
 		private val artistView by LazyViewFinder<TextView>(itemView, R.id.artist)
-		private val dragButton by LazyViewFinder<ImageButton>(itemView, R.id.dragButton)
 		private val fileNameTextViewSetter by lazy { FileNameTextViewSetter(textView, artistView) }
 
 		private var fileListItemNowPlayingHandler: AutoCloseable? = null
@@ -105,15 +115,6 @@ class NowPlayingFileListItemMenuBuilder(
 				textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(position == playlistPosition))
 				viewAnimator.isSelected = position == playlistPosition
 			}
-
-			typedMessageFeed
-				.receiveMessages<EditPlaylist>()
-				.onEach { dragButton.visibility = View.VISIBLE }
-				.launchIn(coroutineScope)
-			typedMessageFeed
-				.receiveMessages<FinishEditPlaylist>()
-				.onEach { dragButton.visibility = View.GONE }
-				.launchIn(coroutineScope)
 
 			LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator)
 			playButton.setOnClickListener(FileSeekToClickListener(viewAnimator, position))
