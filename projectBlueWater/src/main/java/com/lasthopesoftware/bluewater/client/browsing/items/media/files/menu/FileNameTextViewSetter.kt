@@ -8,6 +8,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
+import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRateLimiter
 import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay.Companion.delay
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
@@ -28,7 +29,7 @@ import javax.net.ssl.SSLProtocolException
 class FileNameTextViewSetter(private val fileTextView: TextView, private val artistTextView: TextView? = null) {
 
 	companion object {
-		private val logger by lazy { LoggerFactory.getLogger(FileNameTextViewSetter::class.java) }
+		private val logger by lazy { LoggerFactory.getLogger(cls<FileNameTextViewSetter>()) }
 		private val timeoutDuration = Duration.standardMinutes(1)
 
 		private val rateLimiter by lazy { PromisingRateLimiter<Map<String, String>>(1) }

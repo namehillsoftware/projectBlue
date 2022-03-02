@@ -2,16 +2,16 @@ package com.lasthopesoftware.bluewater.client.browsing.items.media.files.propert
 
 import android.content.Intent
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.playstats.UpdatePlayStatsOnPlaybackCompleteReceiver
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.playstats.factory.PlaystatsUpdateSelector
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
 import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
+import com.lasthopesoftware.bluewater.shared.cls
 import org.slf4j.LoggerFactory
 
 class UpdatePlayStatsOnPlaybackCompleteReceiver(private val playstatsUpdateSelector: PlaystatsUpdateSelector) : ReceiveBroadcastEvents {
 
 	companion object {
-		private val logger = LoggerFactory.getLogger(UpdatePlayStatsOnPlaybackCompleteReceiver::class.java)
+		private val logger = LoggerFactory.getLogger(cls<UpdatePlayStatsOnPlaybackCompleteReceiver>())
 	}
 
     override fun onReceive(intent: Intent) {

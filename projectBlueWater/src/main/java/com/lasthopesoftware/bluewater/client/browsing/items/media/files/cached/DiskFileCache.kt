@@ -11,6 +11,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.s
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.supplier.ICacheStreamSupplier
 import com.lasthopesoftware.bluewater.repository.DatabasePromise
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
+import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.promises.Promise
@@ -154,7 +155,7 @@ class DiskFileCache(private val context: Context, private val diskCacheDirectory
 		get() = diskCacheDirectory.getDiskCacheDirectory(diskFileCacheConfiguration).usableSpace
 
 	companion object {
-		private val logger by lazy { LoggerFactory.getLogger(DiskFileCache::class.java) }
+		private val logger by lazy { LoggerFactory.getLogger(cls<DiskFileCache>()) }
 
 		private fun getTotalCachedFileCount(repositoryAccessHelper: RepositoryAccessHelper): Long {
 			return repositoryAccessHelper.mapSql("SELECT COUNT(*) FROM " + CachedFile.tableName).execute()

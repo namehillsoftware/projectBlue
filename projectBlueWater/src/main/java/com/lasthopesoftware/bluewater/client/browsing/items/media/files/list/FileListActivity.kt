@@ -40,6 +40,7 @@ import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils.buildStandardMenu
+import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
@@ -50,13 +51,13 @@ class FileListActivity :
 	Runnable {
 
 	companion object {
-		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(FileListActivity::class.java) }
+		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(cls<FileListActivity>()) }
 		private val key by lazy { magicPropertyBuilder.buildProperty("key") }
 		private val value by lazy { magicPropertyBuilder.buildProperty("value") }
 
 		@JvmStatic
 		fun startFileListActivity(context: Context, item: IItem) {
-			val fileListIntent = Intent(context, FileListActivity::class.java)
+			val fileListIntent = Intent(context, cls<FileListActivity>())
 			fileListIntent.putExtra(key, item.key)
 			fileListIntent.putExtra(value, item.value)
 			context.startActivity(fileListIntent)

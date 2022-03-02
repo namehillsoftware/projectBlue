@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.browsing.items.media.image.bytes
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
+import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
 import com.namehillsoftware.handoff.promises.Promise
 import org.slf4j.LoggerFactory
@@ -14,7 +15,7 @@ class RemoteImageAccess(private val connectionProvider: ProvideLibraryConnection
 	companion object {
 		private const val IMAGE_FORMAT = "jpg"
 
-		private val logger by lazy { LoggerFactory.getLogger(RemoteImageAccess::class.java) }
+		private val logger by lazy { LoggerFactory.getLogger(cls<RemoteImageAccess>()) }
 
 		private val emptyByteArray by lazy { ByteArray(0) }
 	}

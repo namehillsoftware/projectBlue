@@ -7,7 +7,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.media.AudioManager
-import android.media.MediaPlayer
 import android.os.Build
 import android.os.Handler
 import android.os.PowerManager
@@ -453,7 +452,7 @@ open class PlaybackService :
 	}
 
 	private fun registerListeners() {
-		wakeLock = (getSystemService(POWER_SERVICE) as PowerManager).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK or PowerManager.ON_AFTER_RELEASE, MediaPlayer::class.java.name)
+		wakeLock = (getSystemService(POWER_SERVICE) as PowerManager).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK or PowerManager.ON_AFTER_RELEASE, javaClass.name)
 		wakeLock?.acquire()
 		registerReceiver(lazyAudioBecomingNoisyReceiver.value, IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY))
 		areListenersRegistered = true

@@ -31,6 +31,7 @@ import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicat
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.MediaSession.MediaSessionService
 import com.lasthopesoftware.bluewater.shared.android.services.promiseBoundService
+import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRateLimiter
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.resources.PackageValidator
@@ -51,7 +52,7 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 		const val mediaIdDelimiter = ':'
 		private val rateLimiter by lazy { PromisingRateLimiter<Map<String, String>>(max(Runtime.getRuntime().availableProcessors() - 1, 1)) }
 
-		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(RemoteBrowserService::class.java) }
+		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(cls<RemoteBrowserService>()) }
 
 		private val root by lazy { magicPropertyBuilder.buildProperty("root") }
 		private val recentRoot by lazy { magicPropertyBuilder.buildProperty("recentRoot") }
