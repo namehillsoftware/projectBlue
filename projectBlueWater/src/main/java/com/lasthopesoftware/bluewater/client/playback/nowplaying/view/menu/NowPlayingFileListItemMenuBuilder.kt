@@ -9,8 +9,6 @@ import android.widget.AbsListView
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
-import androidx.lifecycle.coroutineScope
-import androidx.lifecycle.findViewTreeLifecycleOwner
 import androidx.recyclerview.widget.RecyclerView
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.details.ViewFileDetailsClickListener
@@ -31,18 +29,15 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.Playl
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.android.view.getValue
-import com.lasthopesoftware.bluewater.shared.messages.TypedMessageFeed
-import com.lasthopesoftware.bluewater.shared.messages.receiveMessages
+import com.lasthopesoftware.bluewater.shared.cls
+import com.lasthopesoftware.bluewater.shared.messages.RegisterForTypedMessages
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
-import kotlinx.coroutines.MainScope
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 
 
 class NowPlayingFileListItemMenuBuilder(
 	private val nowPlayingRepository: MaintainNowPlayingState,
 	private val fileListItemNowPlayingRegistrar: FileListItemNowPlayingRegistrar,
-	private val typedMessageFeed: TypedMessageFeed<NowPlayingPlaylistMessage>
+	private val typedMessagesRegistration: RegisterForTypedMessages<NowPlayingPlaylistMessage>
 ) : BuildListItemMenuViewContainers<NowPlayingFileListItemMenuBuilder.ViewHolder>
 {
 	private var onViewChangedListener: OnViewChangedListener? = null
@@ -66,17 +61,11 @@ class NowPlayingFileListItemMenuBuilder(
 		notifyOnFlipViewAnimator.setViewChangedListener(onViewChangedListener)
 		notifyOnFlipViewAnimator.setOnLongClickListener(LongClickViewAnimatorListener(notifyOnFlipViewAnimator))
 
-		val coroutineScope = parent.findViewTreeLifecycleOwner()?.lifecycle?.coroutineScope ?: MainScope()
-
 		val dragButton by LazyViewFinder<ImageButton>(notifyOnFlipViewAnimator, R.id.dragButton)
-		typedMessageFeed
-			.receiveMessages<EditPlaylist>()
-			.onEach { dragButton.visibility = View.VISIBLE }
-			.launchIn(coroutineScope)
-		typedMessageFeed
-			.receiveMessages<FinishEditPlaylist>()
-			.onEach { dragButton.visibility = View.GONE }
-			.launchIn(coroutineScope)
+		typedMessagesRegistration
+			.registerReceiver(cls<EditPlaylist>()) { dragButton.visibility = View.VISIBLE }
+		typedMessagesRegistration
+			.registerReceiver(cls<FinishEditPlaylist>()) { dragButton.visibility = View.GONE }
 
 		return ViewHolder(notifyOnFlipViewAnimator)
 	}

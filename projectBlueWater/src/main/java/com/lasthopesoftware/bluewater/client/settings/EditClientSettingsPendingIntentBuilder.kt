@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.settings
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import com.lasthopesoftware.bluewater.shared.makePendingIntentImmutable
+import com.lasthopesoftware.bluewater.shared.android.makePendingIntentImmutable
 
 class EditClientSettingsPendingIntentBuilder @JvmOverloads constructor(
     private val context: Context,

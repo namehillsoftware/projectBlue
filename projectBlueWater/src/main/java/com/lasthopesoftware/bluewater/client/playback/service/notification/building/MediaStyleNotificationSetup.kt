@@ -10,8 +10,8 @@ import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.NowPlayingActivity
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Companion.pendingKillService
 import com.lasthopesoftware.bluewater.client.playback.service.notification.NotificationsConfiguration
+import com.lasthopesoftware.bluewater.shared.android.makePendingIntentImmutable
 import com.lasthopesoftware.bluewater.shared.android.notifications.ProduceNotificationBuilders
-import com.lasthopesoftware.bluewater.shared.makePendingIntentImmutable
 
 class MediaStyleNotificationSetup(
 	private val context: Context,

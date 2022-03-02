@@ -12,8 +12,8 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.Sel
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.MediaSessionCallbackReceiver
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
-import com.lasthopesoftware.bluewater.shared.GenericBinder
-import com.lasthopesoftware.bluewater.shared.makePendingIntentImmutable
+import com.lasthopesoftware.bluewater.shared.android.makePendingIntentImmutable
+import com.lasthopesoftware.bluewater.shared.android.services.GenericBinder
 
 class MediaSessionService : Service() {
 	private val binder by lazy { GenericBinder(this) }

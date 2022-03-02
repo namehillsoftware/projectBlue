@@ -1,6 +1,7 @@
-package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.fragments
+package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.fragments.playlist
 
 import android.os.Bundle
+import android.os.Handler
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -28,6 +29,8 @@ import com.lasthopesoftware.bluewater.client.connection.polling.ConnectionPoller
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.fragments.EditPlaylist
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.fragments.NowPlayingPlaylistMessage
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.InMemoryNowPlayingDisplaySettings
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingScreenViewModel
@@ -100,7 +103,9 @@ class NowPlayingPlaylistFragment : Fragment() {
 
 	private val fileListItemNowPlayingRegistrar = lazy { FileListItemNowPlayingRegistrar(messageBus) }
 
-	private val typedMessageBus by lazy { TypedMessageBus<NowPlayingPlaylistMessage>() }
+	private val handler by lazy { Handler(requireContext().mainLooper) }
+
+	private val typedMessageBus by lazy { TypedMessageBus<NowPlayingPlaylistMessage>(handler) }
 
 	private val nowPlayingListAdapter by lazy {
 		nowPlayingRepository.eventually(LoopedInPromise.response({ r ->
