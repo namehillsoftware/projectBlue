@@ -29,8 +29,6 @@ import com.lasthopesoftware.bluewater.client.connection.polling.ConnectionPoller
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.fragments.EditPlaylist
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.fragments.NowPlayingPlaylistMessage
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.InMemoryNowPlayingDisplaySettings
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingScreenViewModel
@@ -105,14 +103,14 @@ class NowPlayingPlaylistFragment : Fragment() {
 
 	private val handler by lazy { Handler(requireContext().mainLooper) }
 
-	private val typedMessageBus by lazy { TypedMessageBus<NowPlayingPlaylistMessage>(handler) }
+	private val typedMessageBus = lazy { TypedMessageBus<NowPlayingPlaylistMessage>(handler) }
 
 	private val nowPlayingListAdapter by lazy {
 		nowPlayingRepository.eventually(LoopedInPromise.response({ r ->
 			val nowPlayingFileListMenuBuilder = NowPlayingFileListItemMenuBuilder(
 				r,
 				fileListItemNowPlayingRegistrar.value,
-				typedMessageBus)
+				typedMessageBus.value)
 
 			itemListMenuChangeHandler?.apply {
 				nowPlayingFileListMenuBuilder.setOnViewChangedListener(
@@ -176,7 +174,7 @@ class NowPlayingPlaylistFragment : Fragment() {
 					.launchIn(lifecycleScope)
 			}, requireContext()))
 
-			editNowPlayingList.setOnClickListener { typedMessageBus.sendMessage(EditPlaylist) }
+			editNowPlayingList.setOnClickListener { typedMessageBus.value.sendMessage(EditPlaylist) }
 
 			miniPlay.setOnClickListener { v ->
 				PlaybackService.play(v.context)
@@ -209,6 +207,7 @@ class NowPlayingPlaylistFragment : Fragment() {
 
 	override fun onDestroy() {
 		if (fileListItemNowPlayingRegistrar.isInitialized()) fileListItemNowPlayingRegistrar.value.clear()
+		if (typedMessageBus.isInitialized()) typedMessageBus.value.close()
 
 		super.onDestroy()
 	}

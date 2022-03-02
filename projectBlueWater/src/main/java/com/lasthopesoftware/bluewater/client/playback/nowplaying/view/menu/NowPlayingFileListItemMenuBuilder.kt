@@ -20,9 +20,9 @@ import com.lasthopesoftware.bluewater.client.browsing.items.menu.NotifyOnFlipVie
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.OnViewChangedListener
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.MaintainNowPlayingState
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.fragments.EditPlaylist
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.fragments.FinishEditPlaylist
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.fragments.NowPlayingPlaylistMessage
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.fragments.playlist.EditPlaylist
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.fragments.playlist.FinishEditPlaylist
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.fragments.playlist.NowPlayingPlaylistMessage
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.menu.listeners.FileSeekToClickListener
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.menu.listeners.RemovePlaylistFileClickListener
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
