@@ -42,7 +42,7 @@
                         android:contentDescription="@string/edit_now_playing_list"
                         android:src="@drawable/pencil"
                         android:alpha=".80"
-                        app:isVisible="@{playlistVm.isEditingPlaylistState}"/>
+                        app:isVisible="@{!playlistVm.isEditingPlaylistState}"/>
 
                     <ImageButton
                         android:id="@+id/finishEditNowPlayingList"
@@ -52,7 +52,7 @@
                         android:contentDescription="@string/finish_edit_now_playing_list"
                         android:src="@drawable/ic_remove_item_white_36dp"
                         android:alpha=".80"
-                        app:isVisible="@{!playlistVm.isEditingPlaylistState}"/>
+                        app:isVisible="@{playlistVm.isEditingPlaylistState}"/>
                 </FrameLayout>
 
                 <ImageButton
