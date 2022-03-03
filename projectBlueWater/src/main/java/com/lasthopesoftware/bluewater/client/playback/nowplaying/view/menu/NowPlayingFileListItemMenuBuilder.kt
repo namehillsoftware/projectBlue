@@ -22,6 +22,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.MaintainNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.fragments.playlist.EditPlaylist
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.fragments.playlist.FinishEditPlaylist
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.fragments.playlist.HasEditPlaylistState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.fragments.playlist.NowPlayingPlaylistMessage
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.menu.listeners.FileSeekToClickListener
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.menu.listeners.RemovePlaylistFileClickListener
@@ -37,6 +38,7 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 class NowPlayingFileListItemMenuBuilder(
 	private val nowPlayingRepository: MaintainNowPlayingState,
 	private val fileListItemNowPlayingRegistrar: FileListItemNowPlayingRegistrar,
+	private val hasEditPlaylistState: HasEditPlaylistState,
 	private val typedMessagesRegistration: RegisterForTypedMessages<NowPlayingPlaylistMessage>
 ) : BuildListItemMenuViewContainers<NowPlayingFileListItemMenuBuilder.ViewHolder>
 {
@@ -62,6 +64,7 @@ class NowPlayingFileListItemMenuBuilder(
 		notifyOnFlipViewAnimator.setOnLongClickListener(LongClickViewAnimatorListener(notifyOnFlipViewAnimator))
 
 		val dragButton by LazyViewFinder<ImageButton>(notifyOnFlipViewAnimator, R.id.dragButton)
+		dragButton.visibility = if (hasEditPlaylistState.isEditingPlaylist) View.VISIBLE else View.GONE
 		typedMessagesRegistration
 			.registerReceiver(cls<EditPlaylist>()) { dragButton.visibility = View.VISIBLE }
 		typedMessagesRegistration

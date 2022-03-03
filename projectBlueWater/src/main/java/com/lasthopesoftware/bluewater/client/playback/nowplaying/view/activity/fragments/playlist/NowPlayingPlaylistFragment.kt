@@ -151,6 +151,14 @@ class NowPlayingPlaylistFragment : Fragment() {
 		)
 	}
 
+	private val playlistViewModel by buildActivityViewModelLazily {
+		NowPlayingPlaylistViewModel(
+			messageBus,
+			LiveNowPlayingLookup.getInstance(),
+			typedMessageBus.value
+		)
+	}
+
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
 		val binding = DataBindingUtil.inflate<ControlNowPlayingPlaylistBinding>(
 			inflater,
@@ -162,6 +170,7 @@ class NowPlayingPlaylistFragment : Fragment() {
 		with (binding) {
 			lifecycleOwner = viewLifecycleOwner
 			vm = viewModel
+			playlistVm = playlistViewModel
 
 			nowPlayingListAdapter.eventually(LoopedInPromise.response({ a ->
 				val listView = nowPlayingListView
@@ -169,7 +178,7 @@ class NowPlayingPlaylistFragment : Fragment() {
 				listView.layoutManager = LinearLayoutManager(requireContext())
 				listView.isNestedScrollingEnabled = true
 
-				viewModel.nowPlayingList
+				playlistViewModel.nowPlayingList
 					.onEach { a.updateListEventually(it).toDeferred().await() }
 					.launchIn(lifecycleScope)
 			}, requireContext()))

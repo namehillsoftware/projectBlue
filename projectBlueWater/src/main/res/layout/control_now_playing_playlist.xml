@@ -5,6 +5,7 @@
     <data>
         <import type="android.view.View"/>
         <variable name="vm" type="com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel"/>
+        <variable name="playlistVm" type="com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.fragments.playlist.NowPlayingPlaylistViewModel"/>
     </data>
 
     <RelativeLayout
@@ -28,15 +29,31 @@
                 android:padding="2dip"
                 android:measureWithLargestChild="true">
 
-                <ImageButton
-                    android:id="@+id/editNowPlayingList"
+                <FrameLayout
                     android:layout_width="0dip"
                     android:layout_height="match_parent"
-                    android:layout_weight="1"
-                    android:background="?android:attr/selectableItemBackground"
-                    android:contentDescription="@string/edit_now_playing_list"
-                    android:src="@drawable/pencil"
-                    android:alpha=".80"/>
+                    android:layout_weight="1">
+
+                    <ImageButton
+                        android:id="@+id/editNowPlayingList"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="?android:attr/selectableItemBackground"
+                        android:contentDescription="@string/edit_now_playing_list"
+                        android:src="@drawable/pencil"
+                        android:alpha=".80"
+                        app:isVisible="@{playlistVm.isEditingPlaylistState}"/>
+
+                    <ImageButton
+                        android:id="@+id/finishEditNowPlayingList"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:background="?android:attr/selectableItemBackground"
+                        android:contentDescription="@string/finish_edit_now_playing_list"
+                        android:src="@drawable/ic_remove_item_white_36dp"
+                        android:alpha=".80"
+                        app:isVisible="@{!playlistVm.isEditingPlaylistState}"/>
+                </FrameLayout>
 
                 <ImageButton
                     android:id="@+id/repeatButton"

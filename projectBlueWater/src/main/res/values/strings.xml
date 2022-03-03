@@ -103,5 +103,6 @@
     <string name="readOnlyConnection">Read-only Connection</string>
     <string name="activeDownloads">Active Downloads</string>
     <string name="edit_now_playing_list">Edit Now Playing</string>
+    <string name="finish_edit_now_playing_list">Finish Editing Now Playing</string>
     <string name="drag_item">Drag Item</string>
 </resources>
