@@ -183,7 +183,8 @@ class NowPlayingPlaylistFragment : Fragment() {
 					.launchIn(lifecycleScope)
 			}, requireContext()))
 
-			editNowPlayingList.setOnClickListener { typedMessageBus.value.sendMessage(EditPlaylist) }
+			editNowPlayingList.setOnClickListener { playlistViewModel.editPlaylist() }
+			finishEditNowPlayingList.setOnClickListener { playlistViewModel.finishPlaylistEdit() }
 
 			miniPlay.setOnClickListener { v ->
 				PlaybackService.play(v.context)
