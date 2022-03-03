@@ -1,90 +1,44 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.fragments.playlist
 
 import android.os.Bundle
-import android.os.Handler
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.menu.FileListItemNowPlayingRegistrar
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedFilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.SelectedConnectionFilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertyCache
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.storage.ScopedFilePropertiesStorage
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.storage.SelectedConnectionFilePropertiesStorage
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.handlers.ViewChangedHandler
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.SpecificLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.revisions.SelectedConnectionRevisionProvider
-import com.lasthopesoftware.bluewater.client.connection.authentication.ScopedConnectionAuthenticationChecker
-import com.lasthopesoftware.bluewater.client.connection.authentication.SelectedConnectionAuthenticationChecker
-import com.lasthopesoftware.bluewater.client.connection.polling.ConnectionPoller
-import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.InMemoryNowPlayingDisplaySettings
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingScreenViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.list.NowPlayingFileListAdapter
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.menu.NowPlayingFileListItemMenuBuilder
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
-import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.databinding.ControlNowPlayingPlaylistBinding
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
-import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildActivityViewModel
-import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildActivityViewModelLazily
 import com.lasthopesoftware.bluewater.shared.messages.TypedMessageBus
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toDeferred
-import com.lasthopesoftware.resources.strings.StringResources
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import org.koin.android.ext.android.inject
+import org.koin.android.scope.AndroidScopeComponent
+import org.koin.androidx.scope.fragmentScope
+import org.koin.androidx.viewmodel.ext.android.sharedViewModel
 
-class NowPlayingPlaylistFragment : Fragment() {
+class NowPlayingPlaylistFragment : Fragment(), AndroidScopeComponent {
 
 	private var itemListMenuChangeHandler: IItemListMenuChangeHandler? = null
 
-	private val messageBus by lazy { MessageBus(LocalBroadcastManager.getInstance(requireContext())) }
-
-	private val selectedConnectionProvider by lazy { SelectedConnectionProvider(requireContext()) }
-
-	private val sessionRevisionProvider by lazy { SelectedConnectionRevisionProvider(selectedConnectionProvider) }
-
-	private val lazyFilePropertiesProvider by lazy {
-		SelectedConnectionFilePropertiesProvider(selectedConnectionProvider) { c ->
-			ScopedFilePropertiesProvider(
-				c,
-				sessionRevisionProvider,
-				FilePropertyCache.getInstance()
-			)
-		}
-	}
-
-	private val lazySelectedConnectionAuthenticationChecker by lazy {
-		SelectedConnectionAuthenticationChecker(
-			selectedConnectionProvider,
-			::ScopedConnectionAuthenticationChecker
-		)
-	}
-
-	private val filePropertiesStorage by lazy {
-		SelectedConnectionFilePropertiesStorage(selectedConnectionProvider) { c ->
-			ScopedFilePropertiesStorage(
-				c,
-				lazySelectedConnectionAuthenticationChecker,
-				sessionRevisionProvider,
-				FilePropertyCache.getInstance())
-		}
-	}
+	private val messageBus by inject<MessageBus>()
 
 	private val selectedLibraryIdProvider by lazy { SelectedBrowserLibraryIdentifierProvider(requireContext().getApplicationSettingsRepository()) }
 
@@ -101,9 +55,7 @@ class NowPlayingPlaylistFragment : Fragment() {
 
 	private val fileListItemNowPlayingRegistrar = lazy { FileListItemNowPlayingRegistrar(messageBus) }
 
-	private val handler by lazy { Handler(requireContext().mainLooper) }
-
-	private val typedMessageBus = lazy { TypedMessageBus<NowPlayingPlaylistMessage>(handler) }
+	private val typedMessageBus by inject<TypedMessageBus<NowPlayingPlaylistMessage>>()
 
 	private val nowPlayingListAdapter by lazy {
 		nowPlayingRepository.eventually(LoopedInPromise.response({ r ->
@@ -111,7 +63,7 @@ class NowPlayingPlaylistFragment : Fragment() {
 				r,
 				fileListItemNowPlayingRegistrar.value,
 				playlistViewModel,
-				typedMessageBus.value)
+				typedMessageBus)
 
 			itemListMenuChangeHandler?.apply {
 				nowPlayingFileListMenuBuilder.setOnViewChangedListener(
@@ -126,39 +78,11 @@ class NowPlayingPlaylistFragment : Fragment() {
 		}, requireContext()))
 	}
 
-	private val viewModel by buildActivityViewModelLazily {
-		val playbackService = PlaybackServiceController(requireContext())
+	private val viewModel by sharedViewModel<NowPlayingFilePropertiesViewModel>()
 
-		val nowPlayingViewModel = buildActivityViewModel {
-			NowPlayingScreenViewModel(
-				messageBus,
-				InMemoryNowPlayingDisplaySettings,
-				playbackService,
-			)
-		}
+	private val playlistViewModel by sharedViewModel<NowPlayingPlaylistViewModel>()
 
-		NowPlayingFilePropertiesViewModel(
-			messageBus,
-			LiveNowPlayingLookup.getInstance(),
-			selectedConnectionProvider,
-			lazyFilePropertiesProvider,
-			filePropertiesStorage,
-			lazySelectedConnectionAuthenticationChecker,
-			playbackService,
-			ConnectionPoller(requireContext()),
-			StringResources(requireContext()),
-			nowPlayingViewModel,
-			nowPlayingViewModel
-		)
-	}
-
-	private val playlistViewModel by buildActivityViewModelLazily {
-		NowPlayingPlaylistViewModel(
-			messageBus,
-			LiveNowPlayingLookup.getInstance(),
-			typedMessageBus.value
-		)
-	}
+	override val scope by fragmentScope()
 
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
 		val binding = DataBindingUtil.inflate<ControlNowPlayingPlaylistBinding>(
@@ -218,7 +142,6 @@ class NowPlayingPlaylistFragment : Fragment() {
 
 	override fun onDestroy() {
 		if (fileListItemNowPlayingRegistrar.isInitialized()) fileListItemNowPlayingRegistrar.value.clear()
-		if (typedMessageBus.isInitialized()) typedMessageBus.value.close()
 
 		super.onDestroy()
 	}
