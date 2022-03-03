@@ -110,6 +110,7 @@ class NowPlayingPlaylistFragment : Fragment() {
 			val nowPlayingFileListMenuBuilder = NowPlayingFileListItemMenuBuilder(
 				r,
 				fileListItemNowPlayingRegistrar.value,
+				playlistViewModel,
 				typedMessageBus.value)
 
 			itemListMenuChangeHandler?.apply {
