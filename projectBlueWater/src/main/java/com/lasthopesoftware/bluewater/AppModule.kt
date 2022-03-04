@@ -45,9 +45,7 @@ val appModule = module {
 
 	scope<NowPlayingActivity> {
 		scoped { Handler(get<Context>().mainLooper) }
-
 		scoped { MessageBus(get()) }
-
 		scoped { TypedMessageBus<NowPlayingPlaylistMessage>(get()) }
 
 		factory {
