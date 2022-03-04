@@ -57,7 +57,9 @@ import java.io.File
 open class MainApplication : Application() {
 
 	companion object {
+		private val startupSync = Any()
 		private var isWorkManagerInitialized = false
+		private var isKoinInitialized = false
 	}
 
 	private val libraryRepository by lazy { LibraryRepository(this) }
@@ -79,19 +81,25 @@ open class MainApplication : Application() {
 
 		registerAppBroadcastReceivers()
 
-		if (!isWorkManagerInitialized) {
-			WorkManager.initialize(this, Configuration.Builder().build())
-			isWorkManagerInitialized = true
-		}
+		synchronized(startupSync) {
+			if (!isWorkManagerInitialized) {
+				WorkManager.initialize(this, Configuration.Builder().build())
+				isWorkManagerInitialized = true
+			}
 
-		SyncScheduler
-			.promiseIsScheduled(this)
-			.then { isScheduled -> if (!isScheduled) SyncScheduler.scheduleSync(this) }
+			SyncScheduler
+				.promiseIsScheduled(this)
+				.then { isScheduled -> if (!isScheduled) SyncScheduler.scheduleSync(this) }
 
-		startKoin {
-			androidLogger()
-			androidContext(this@MainApplication)
-			modules(appModule)
+			if (isKoinInitialized) return
+
+			startKoin {
+				androidLogger()
+				androidContext(this@MainApplication)
+				modules(appModule)
+			}
+
+			isKoinInitialized = true
 		}
 	}
 
