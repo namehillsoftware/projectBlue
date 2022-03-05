@@ -11,38 +11,53 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
+import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.menu.FileListItemNowPlayingRegistrar
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.SelectedConnectionFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertyCache
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.storage.ScopedFilePropertiesStorage
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.storage.SelectedConnectionFilePropertiesStorage
+import com.lasthopesoftware.bluewater.client.browsing.items.media.image.CachedImageProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener
+import com.lasthopesoftware.bluewater.client.browsing.library.revisions.SelectedConnectionRevisionProvider
+import com.lasthopesoftware.bluewater.client.connection.authentication.ScopedConnectionAuthenticationChecker
+import com.lasthopesoftware.bluewater.client.connection.authentication.SelectedConnectionAuthenticationChecker
+import com.lasthopesoftware.bluewater.client.connection.polling.ConnectionPoller
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService
 import com.lasthopesoftware.bluewater.client.connection.polling.WaitForConnectionDialog
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity.Companion.restoreSelectedConnection
+import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.fragments.NowPlayingTopFragment
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.fragments.playlist.NowPlayingPlaylistFragment
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.InMemoryNowPlayingDisplaySettings
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingCoverArtViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingScreenViewModel
+import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.databinding.ActivityViewNowPlayingBinding
+import com.lasthopesoftware.bluewater.shared.android.dependencies.ActivityDependencies
+import com.lasthopesoftware.bluewater.shared.android.dependencies.ActivityDependencies.registerDependencies
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
+import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModel
+import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToaster
+import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
+import com.lasthopesoftware.resources.strings.StringResources
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import org.koin.android.ext.android.get
-import org.koin.android.ext.android.inject
-import org.koin.android.scope.AndroidScopeComponent
-import org.koin.androidx.scope.activityScope
-import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class NowPlayingActivity :
 	AppCompatActivity(),
-	IItemListMenuChangeHandler,
-	AndroidScopeComponent
+	IItemListMenuChangeHandler
 {
 	companion object {
 		fun startNowPlayingActivity(context: Context) {
@@ -54,41 +69,105 @@ class NowPlayingActivity :
 
 	private var connectionRestoreCode: Int? = null
 	private var viewAnimator: ViewAnimator? = null
+	private val messageHandler by lazy { Handler(mainLooper) }
 
-	private val messageHandler by inject<Handler>()
-	private val messageBus = lazy { get<MessageBus>() }
+	private val messageBus = lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
+
 	private val fileListItemNowPlayingRegistrar = lazy { FileListItemNowPlayingRegistrar(messageBus.value) }
+
+	private val imageProvider by lazy { CachedImageProvider.getInstance(this) }
+
+	private val lazySelectedConnectionProvider by lazy { SelectedConnectionProvider(this) }
+
+	private val lazySessionRevisionProvider by lazy { SelectedConnectionRevisionProvider(lazySelectedConnectionProvider) }
+
+	private val lazyFilePropertiesProvider by lazy {
+		SelectedConnectionFilePropertiesProvider(lazySelectedConnectionProvider) { c ->
+			ScopedFilePropertiesProvider(
+				c,
+				lazySessionRevisionProvider,
+				FilePropertyCache.getInstance()
+			)
+		}
+	}
+
+	private val lazySelectedConnectionAuthenticationChecker by lazy {
+		SelectedConnectionAuthenticationChecker(
+			lazySelectedConnectionProvider,
+			::ScopedConnectionAuthenticationChecker)
+	}
+
+	private val filePropertiesStorage by lazy {
+		SelectedConnectionFilePropertiesStorage(lazySelectedConnectionProvider) { c ->
+			ScopedFilePropertiesStorage(
+				c,
+				lazySelectedConnectionAuthenticationChecker,
+				lazySessionRevisionProvider,
+				FilePropertyCache.getInstance())
+		}
+	}
+
+	private val defaultImageProvider by lazy { DefaultImageProvider(this) }
 
 	private val onConnectionLostListener =
 		ReceiveBroadcastEvents { WaitForConnectionDialog.show(this) }
 
-	private val nowPlayingViewModel by viewModel<NowPlayingScreenViewModel>()
-
-	private val filePropertiesViewModel by viewModel<NowPlayingFilePropertiesViewModel>()
-
-	private val coverArtViewModel by viewModel<NowPlayingCoverArtViewModel>()
+	private val nowPlayingViewModel by buildViewModelLazily {
+		NowPlayingScreenViewModel(
+			messageBus.value,
+			InMemoryNowPlayingDisplaySettings,
+			PlaybackServiceController(this),
+		)
+	}
 
 	private val binding by lazy {
 		val binding = DataBindingUtil.setContentView<ActivityViewNowPlayingBinding>(this, R.layout.activity_view_now_playing)
 		binding.lifecycleOwner = this
 
-		binding.filePropertiesVm = filePropertiesViewModel
-		binding.coverArtVm = coverArtViewModel
+		val liveNowPlayingLookup = LiveNowPlayingLookup.getInstance()
+		binding.filePropertiesVm = buildViewModel {
+			NowPlayingFilePropertiesViewModel(
+				messageBus.value,
+				liveNowPlayingLookup,
+				lazySelectedConnectionProvider,
+				lazyFilePropertiesProvider,
+				filePropertiesStorage,
+				lazySelectedConnectionAuthenticationChecker,
+				PlaybackServiceController(this),
+				ConnectionPoller(this),
+				StringResources(this),
+				nowPlayingViewModel,
+				nowPlayingViewModel
+			)
+		}
+
+		binding.coverArtVm = buildViewModel {
+			NowPlayingCoverArtViewModel(
+				messageBus.value,
+				liveNowPlayingLookup,
+				lazySelectedConnectionProvider,
+				defaultImageProvider,
+				imageProvider,
+				ConnectionPoller(this),
+			)
+		}
+
 		binding.vm = nowPlayingViewModel
 
 		binding
 	}
 
-	override val scope by activityScope()
-
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
+		lifecycle.addObserver(ActivityDependencies)
+		registerDependencies { NowPlayingActivityDependencies(this) }
+
 		binding.pager.adapter = PagerAdapter()
 
-		filePropertiesViewModel.unexpectedError.filterNotNull().onEach {
+		binding.filePropertiesVm?.unexpectedError?.filterNotNull()?.onEach {
 			UnexpectedExceptionToaster.announce(this, it)
-		}.launchIn(lifecycleScope)
+		}?.launchIn(lifecycleScope)
 
 		binding.coverArtVm?.unexpectedError?.filterNotNull()?.onEach {
 			UnexpectedExceptionToaster.announce(this, it)

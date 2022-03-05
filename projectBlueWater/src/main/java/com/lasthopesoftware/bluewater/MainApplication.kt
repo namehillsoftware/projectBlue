@@ -48,18 +48,13 @@ import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEv
 import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler
 import com.lasthopesoftware.compilation.DebugFlag
 import com.namehillsoftware.handoff.promises.Promise
-import org.koin.android.ext.koin.androidContext
-import org.koin.android.ext.koin.androidLogger
-import org.koin.core.context.startKoin
 import org.slf4j.LoggerFactory
 import java.io.File
 
 open class MainApplication : Application() {
 
 	companion object {
-		private val startupSync = Any()
 		private var isWorkManagerInitialized = false
-		private var isKoinInitialized = false
 	}
 
 	private val libraryRepository by lazy { LibraryRepository(this) }
@@ -81,26 +76,14 @@ open class MainApplication : Application() {
 
 		registerAppBroadcastReceivers()
 
-		synchronized(startupSync) {
-			if (!isWorkManagerInitialized) {
-				WorkManager.initialize(this, Configuration.Builder().build())
-				isWorkManagerInitialized = true
-			}
-
-			SyncScheduler
-				.promiseIsScheduled(this)
-				.then { isScheduled -> if (!isScheduled) SyncScheduler.scheduleSync(this) }
-
-			if (isKoinInitialized) return
-
-			startKoin {
-				androidLogger()
-				androidContext(this@MainApplication)
-				modules(appModule)
-			}
-
-			isKoinInitialized = true
+		if (!isWorkManagerInitialized) {
+			WorkManager.initialize(this, Configuration.Builder().build())
+			isWorkManagerInitialized = true
 		}
+
+		SyncScheduler
+			.promiseIsScheduled(this)
+			.then { isScheduled -> if (!isScheduled) SyncScheduler.scheduleSync(this) }
 	}
 
 	private fun registerAppBroadcastReceivers() {
