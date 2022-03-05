@@ -40,7 +40,6 @@ val appModule = module {
 	factory { StringResources(get()) }
 	factory { SelectedConnectionProvider(get()) }
 	factory { PlaybackServiceController(get()) }
-	factory { ScopedRevisionProvider(get()) }
 	factory { DefaultImageProvider(get()) }
 
 	scope<NowPlayingActivity> {
@@ -52,7 +51,7 @@ val appModule = module {
 			SelectedConnectionFilePropertiesProvider(get<SelectedConnectionProvider>()) {
 				ScopedFilePropertiesProvider(
 					it,
-					get<ScopedRevisionProvider>(),
+					ScopedRevisionProvider(it),
 					get<FilePropertyCache>()
 				)
 			}
@@ -69,7 +68,7 @@ val appModule = module {
 				ScopedFilePropertiesStorage(
 					it,
 					get<SelectedConnectionAuthenticationChecker>(),
-					get<ScopedRevisionProvider>(),
+					ScopedRevisionProvider(it),
 					get<FilePropertyCache>())
 			}
 		}

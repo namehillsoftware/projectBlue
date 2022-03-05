@@ -26,8 +26,8 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.v
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingScreenViewModel
 import com.lasthopesoftware.bluewater.databinding.ActivityViewNowPlayingBinding
+import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
-import com.lasthopesoftware.bluewater.shared.android.messages.RegisterForMessages
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToaster
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import kotlinx.coroutines.flow.filterNotNull
@@ -56,7 +56,7 @@ class NowPlayingActivity :
 	private var viewAnimator: ViewAnimator? = null
 
 	private val messageHandler by inject<Handler>()
-	private val messageBus = lazy { get<RegisterForMessages>() }
+	private val messageBus = lazy { get<MessageBus>() }
 	private val fileListItemNowPlayingRegistrar = lazy { FileListItemNowPlayingRegistrar(messageBus.value) }
 
 	private val onConnectionLostListener =
