@@ -10,8 +10,7 @@ import com.lasthopesoftware.bluewater.shared.android.adapters.DeferredListAdapte
 class NowPlayingFileListAdapter(
 	context: Context,
 	private val nowPlayingFileListItemMenuBuilder: NowPlayingFileListItemMenuBuilder
-)
-	: DeferredListAdapter<PositionedFile, NowPlayingFileListItemMenuBuilder.ViewHolder>(context, PositionedFileDiffer) {
+) : DeferredListAdapter<PositionedFile, NowPlayingFileListItemMenuBuilder.ViewHolder>(context, PositionedFileDiffer) {
 
 	override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) = nowPlayingFileListItemMenuBuilder.newViewHolder(parent)
 

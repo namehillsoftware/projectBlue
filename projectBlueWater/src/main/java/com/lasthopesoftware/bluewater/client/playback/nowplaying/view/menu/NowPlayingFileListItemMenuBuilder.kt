@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.menu
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Handler
 import android.view.LayoutInflater
@@ -66,9 +65,16 @@ class NowPlayingFileListItemMenuBuilder(
 		val dragButton = notifyOnFlipViewAnimator.findViewById<ImageButton>(R.id.dragButton)
 		dragButton.visibility = if (hasEditPlaylistState.isEditingPlaylist) View.VISIBLE else View.GONE
 		typedMessagesRegistration
-			.registerReceiver { _ : EditPlaylist -> dragButton.visibility = View.VISIBLE }
+			.registerReceiver { _ : EditPlaylist ->
+				LongClickViewAnimatorListener.tryFlipToPreviousView(notifyOnFlipViewAnimator)
+				notifyOnFlipViewAnimator.isEnabled = false
+				dragButton.visibility = View.VISIBLE
+			}
 		typedMessagesRegistration
-			.registerReceiver { _ : FinishEditPlaylist -> dragButton.visibility = View.GONE }
+			.registerReceiver { _ : FinishEditPlaylist ->
+				notifyOnFlipViewAnimator.isEnabled = true
+				dragButton.visibility = View.GONE
+			}
 
 		return ViewHolder(notifyOnFlipViewAnimator)
 	}
@@ -87,7 +93,6 @@ class NowPlayingFileListItemMenuBuilder(
 
 		private var fileListItemNowPlayingHandler: AutoCloseable? = null
 
-		@SuppressLint("ClickableViewAccessibility")
 		fun update(positionedFile: PositionedFile) {
 
 			val serviceFile = positionedFile.serviceFile
