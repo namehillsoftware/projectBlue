@@ -221,6 +221,20 @@ class PlaybackEngine(
 			}
 	}
 
+	override fun moveFile(position: Int, newPosition: Int): Promise<NowPlaying?> {
+//		if (position < 0 || newPosition < 0) return nowPlayingRepository.promiseNowPlaying()
+//
+//		with (playlist) {
+//			if (position >= size || newPosition >= size) return nowPlayingRepository.promiseNowPlaying()
+//		}
+//
+//		Collections.swap(playlist, position, newPosition)
+//		updatePreparedFileQueueUsingState()
+//		return saveState()
+
+		return Promise.empty()
+	}
+
 	private fun pausePlayback(): Promise<NowPlaying> {
 		val promisedPause = activePlayer?.pause() ?: Unit.toPromise()
 

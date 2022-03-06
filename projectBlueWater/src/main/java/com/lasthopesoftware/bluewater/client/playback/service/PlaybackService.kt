@@ -232,6 +232,14 @@ open class PlaybackService :
 			context.safelyStartService(intent)
 		}
 
+		fun moveFile(context: Context, filePosition: Int, newPosition: Int) {
+			val intent = getNewSelfIntent(context, Action.moveFile).apply {
+				putExtra(Bag.filePosition, filePosition)
+				putExtra(Bag.newPosition, newPosition)
+			}
+			context.safelyStartService(intent)
+		}
+
 		fun killService(context: Context) =
 			context.safelyStartService(getNewSelfIntent(context, Action.killMusicService))
 
@@ -524,8 +532,20 @@ open class PlaybackService :
 					val playlistFiles = playlistFiles ?: return Unit.toPromise()
 
 					val filePosition = intent.getIntExtra(Bag.filePosition, -1)
-					return if (filePosition < -1) Unit.toPromise() else playlistFiles
+					return if (filePosition < 0) Unit.toPromise() else playlistFiles
 						.removeFileAtPosition(filePosition)
+						.then {
+							lazyMessageBus.value.sendBroadcast(Intent(PlaylistEvents.onPlaylistChange))
+						}
+						.unitResponse()
+				}
+				Action.moveFile -> {
+					val playlistFiles = playlistFiles ?: return Unit.toPromise()
+
+					val filePosition = intent.getIntExtra(Bag.filePosition, -1)
+					val newPosition = intent.getIntExtra(Bag.newPosition, -1)
+					return if (filePosition < 0 || newPosition < 0) Unit.toPromise()
+					else playlistFiles.moveFile(filePosition, newPosition)
 						.then {
 							lazyMessageBus.value.sendBroadcast(Intent(PlaylistEvents.onPlaylistChange))
 						}
@@ -1072,6 +1092,7 @@ open class PlaybackService :
 		val seekTo by lazy { magicPropertyBuilder.buildProperty("seekTo") }
 		val addFileToPlaylist by lazy { magicPropertyBuilder.buildProperty("addFileToPlaylist") }
 		val removeFileAtPositionFromPlaylist by lazy { magicPropertyBuilder.buildProperty("removeFileAtPositionFromPlaylist") }
+		val moveFile by lazy { magicPropertyBuilder.buildProperty("moveFile") }
 		val killMusicService by lazy { magicPropertyBuilder.buildProperty("killMusicService") }
 		val validActions by lazy {
 			setOf(
@@ -1086,7 +1107,8 @@ open class PlaybackService :
 				repeating,
 				completing,
 				addFileToPlaylist,
-				removeFileAtPositionFromPlaylist
+				removeFileAtPositionFromPlaylist,
+				moveFile
 			)
 		}
 		val playbackStartingActions by lazy { setOf(launchMusicService, play, togglePlayPause) }
@@ -1099,6 +1121,7 @@ open class PlaybackService :
 			val filePlaylist by lazy { magicPropertyBuilder.buildProperty("filePlaylist") }
 			val startPos by lazy { magicPropertyBuilder.buildProperty("startPos") }
 			val filePosition by lazy { magicPropertyBuilder.buildProperty("filePosition") }
+			val newPosition by lazy { magicPropertyBuilder.buildProperty("newPosition") }
 		}
 	}
 

@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.fragments.playlist
 
+import android.content.Context
 import android.os.Bundle
 import android.os.Handler
 import android.view.LayoutInflater
@@ -9,7 +10,9 @@ import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.menu.FileListItemNowPlayingRegistrar
@@ -27,6 +30,7 @@ import com.lasthopesoftware.bluewater.client.connection.authentication.ScopedCon
 import com.lasthopesoftware.bluewater.client.connection.authentication.SelectedConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.polling.ConnectionPoller
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.InMemoryNowPlayingDisplaySettings
@@ -48,6 +52,7 @@ import com.lasthopesoftware.resources.strings.StringResources
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+
 
 class NowPlayingPlaylistFragment : Fragment() {
 
@@ -179,8 +184,14 @@ class NowPlayingPlaylistFragment : Fragment() {
 				listView.layoutManager = LinearLayoutManager(requireContext())
 				listView.isNestedScrollingEnabled = true
 
+				val dragHelper = NowPlayingDragHelper(requireContext(), a)
+				ItemTouchHelper(dragHelper).attachToRecyclerView(listView)
+
 				playlistViewModel.nowPlayingList
-					.onEach { a.updateListEventually(it).toDeferred().await() }
+					.onEach {
+						dragHelper.listView = it
+						a.updateListEventually(it).toDeferred().await()
+					}
 					.launchIn(lifecycleScope)
 			}, requireContext()))
 
@@ -224,5 +235,46 @@ class NowPlayingPlaylistFragment : Fragment() {
 
 	fun setOnItemListMenuChangeHandler(itemListMenuChangeHandler: IItemListMenuChangeHandler?) {
 		this.itemListMenuChangeHandler = itemListMenuChangeHandler
+	}
+
+	private class NowPlayingDragHelper<ViewHolder : RecyclerView.ViewHolder?>(
+		private val context: Context,
+		private val adapter: RecyclerView.Adapter<ViewHolder>
+	) : ItemTouchHelper.SimpleCallback(
+		ItemTouchHelper.UP or ItemTouchHelper.DOWN,
+		0
+	)
+	{
+		private var dragFrom = -1
+		private var dragTo = -1
+
+		var listView: List<PositionedFile>? = null
+
+		override fun onMove(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder, target: RecyclerView.ViewHolder): Boolean {
+			// get the viewHolder's and target's positions in your adapter data, swap them
+			if (viewHolder.itemViewType != target.itemViewType) {
+				return false
+			}
+
+			val fromPosition = viewHolder.adapterPosition
+			val toPosition = target.adapterPosition
+			if (dragFrom == -1) {
+				dragFrom = fromPosition
+			}
+
+			dragTo = toPosition
+			if (dragFrom != -1 && dragTo != -1 && dragFrom != dragTo) {
+				dragTo = -1
+				dragFrom = dragTo
+			}
+
+			PlaybackService.moveFile(context, dragFrom, dragTo)
+
+			// and notify the adapter that its dataset has changed
+			adapter.notifyItemMoved(viewHolder.adapterPosition, target.adapterPosition)
+			return true
+		}
+
+		override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {}
 	}
 }
