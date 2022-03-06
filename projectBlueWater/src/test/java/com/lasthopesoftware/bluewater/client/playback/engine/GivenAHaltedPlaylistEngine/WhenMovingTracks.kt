@@ -8,8 +8,6 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
-import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
-import com.lasthopesoftware.bluewater.client.playback.file.PositionedProgressedFile
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeDeferredPlayableFilePreparationSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
@@ -19,67 +17,75 @@ import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.joda.time.Duration
-import org.junit.BeforeClass
 import org.junit.Test
 import java.util.concurrent.TimeUnit
 
-class WhenChangingTracks {
+class WhenMovingTracks {
 
 	companion object {
-		private val library = Library()
-		private var initialState: PositionedProgressedFile? = null
-		private var nextSwitchedFile: PositionedFile? = null
+		private val storedLibrary by lazy {
+			Library()
+				.setId(1)
+				.setSavedTracksString(
+					FileStringListUtilities.promiseSerializedFileStringList(
+						listOf(
+							ServiceFile(1),
+							ServiceFile(2),
+							ServiceFile(3),
+							ServiceFile(4),
+							ServiceFile(5)
+						)
+					).toFuture().get()
+				)
+				.setNowPlayingId(0)
+		}
 
-		@BeforeClass
-		@JvmStatic
-		fun before() {
+		private val updatedNowPlaying by lazy {
 			val fakePlaybackPreparerProvider = FakeDeferredPlayableFilePreparationSourceProvider()
-			library.setId(1)
-			library.setSavedTracksString(
-				FileStringListUtilities.promiseSerializedFileStringList(
-					listOf(
-						ServiceFile(1),
-						ServiceFile(2),
-						ServiceFile(3),
-						ServiceFile(4),
-						ServiceFile(5)
-					)
-				).toFuture().get()
-			)
-			library.setNowPlayingId(0)
-			val libraryProvider = mockk<ISpecificLibraryProvider>()
-			every { libraryProvider.library } returns Promise(library)
+			val libraryProvider = mockk<ISpecificLibraryProvider>().apply {
+				every { library } returns Promise(storedLibrary)
+			}
 
-			val libraryStorage = PassThroughLibraryStorage()
 			val playbackEngine = PlaybackEngine(
-				PreparedPlaybackQueueResourceManagement(
-					fakePlaybackPreparerProvider
-				) { 1 }, listOf(CompletingFileQueueProvider()),
+				PreparedPlaybackQueueResourceManagement(fakePlaybackPreparerProvider) { 1 },
+				listOf(CompletingFileQueueProvider()),
 				NowPlayingRepository(
 					libraryProvider,
-					libraryStorage
+					PassThroughLibraryStorage()
 				),
 				PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
 			)
 
-			initialState = playbackEngine.restoreFromSavedState().toFuture().get()
-			nextSwitchedFile = playbackEngine.changePosition(3, Duration.ZERO).toFuture()[1, TimeUnit.SECONDS]
+			playbackEngine.restoreFromSavedState().toFuture().get()
+			playbackEngine.moveFile(2, 0).toFuture()[1, TimeUnit.SECONDS]
 		}
 	}
 
 	@Test
-	fun `then the initial playlist position is correct`() {
-		assertThat(initialState?.playlistPosition).isEqualTo(0)
+	fun `then the playlist is updated`() {
+		assertThat(updatedNowPlaying?.playlist).isEqualTo(
+			listOf(
+				ServiceFile(3),
+				ServiceFile(1),
+				ServiceFile(2),
+				ServiceFile(4),
+				ServiceFile(5)
+			)
+		)
 	}
 
 	@Test
-	fun `then the next file change is the correct playlist position`() {
-		assertThat(nextSwitchedFile!!.playlistPosition).isEqualTo(3)
+	fun `then the playing file is correct`() {
+		assertThat(updatedNowPlaying?.playlistPosition).isEqualTo(1)
 	}
 
 	@Test
-	fun `then the saved library is at the correct playlist position`() {
-		assertThat(library.nowPlayingId).isEqualTo(3)
+	fun `then the stored library is at the correct playlist position`() {
+		assertThat(storedLibrary.nowPlayingId).isEqualTo(0)
+	}
+
+	@Test
+	fun `then the stored library has the correct playlist`() {
+		assertThat(storedLibrary.savedTracksString).isEqualTo("2;5;-1;3;1;2;4;5")
 	}
 }
