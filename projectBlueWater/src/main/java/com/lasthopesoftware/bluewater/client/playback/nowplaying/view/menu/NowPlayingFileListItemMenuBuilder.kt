@@ -92,7 +92,6 @@ class NowPlayingFileListItemMenuBuilder(
 		private val removeButton by LazyViewFinder<ImageButton>(itemView, R.id.btnRemoveFromPlaylist)
 		private val textView by LazyViewFinder<TextView>(itemView, R.id.fileName)
 		private val artistView by LazyViewFinder<TextView>(itemView, R.id.artist)
-		private val dragButton by LazyViewFinder<ImageButton>(itemView, R.id.dragButton)
 		private val fileNameTextViewSetter by lazy { FileNameTextViewSetter(textView, artistView) }
 
 		private var positionedFile: PositionedFile? = null

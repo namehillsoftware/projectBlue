@@ -187,6 +187,7 @@ class NowPlayingPlaylistFragment : Fragment() {
 				listView.adapter = a
 				listView.layoutManager = LinearLayoutManager(requireContext())
 				listView.isNestedScrollingEnabled = true
+				listView.itemAnimator?.changeDuration = 0
 
 				val dragCallback = NowPlayingDragCallback(requireContext(), a, playlistViewModel)
 				val itemTouchHelper = ItemTouchHelper(dragCallback)
