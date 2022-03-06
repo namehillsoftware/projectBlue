@@ -43,6 +43,8 @@
         android:src="@drawable/drag"
         android:background="?android:attr/selectableItemBackground"
         android:contentDescription="@string/drag_item"
+        android:paddingEnd="@dimen/now_playing_menu_padding"
+        android:paddingStart="@dimen/now_playing_menu_padding"
         android:visibility="gone"/>
 	
 </LinearLayout>
