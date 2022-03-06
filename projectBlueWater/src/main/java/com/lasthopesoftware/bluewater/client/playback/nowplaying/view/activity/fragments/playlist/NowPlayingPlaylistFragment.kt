@@ -42,6 +42,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.databinding.ControlNowPlayingPlaylistBinding
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
+import com.lasthopesoftware.bluewater.shared.android.adapters.DeferredListAdapter
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildActivityViewModel
@@ -53,6 +54,7 @@ import com.lasthopesoftware.resources.strings.StringResources
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import java.util.*
 
 
 class NowPlayingPlaylistFragment : Fragment() {
@@ -245,7 +247,7 @@ class NowPlayingPlaylistFragment : Fragment() {
 
 	private class NowPlayingDragCallback<ViewHolder : RecyclerView.ViewHolder?>(
 		private val context: Context,
-		private val adapter: RecyclerView.Adapter<ViewHolder>,
+		private val adapter: DeferredListAdapter<PositionedFile, ViewHolder>,
 		private val playlistState: HasEditPlaylistState,
 	) : ItemTouchHelper.SimpleCallback(
 		ItemTouchHelper.UP or ItemTouchHelper.DOWN,
@@ -267,13 +269,14 @@ class NowPlayingPlaylistFragment : Fragment() {
 
 			dragDestination = dragTo
 			positionedFiles?.also {
-				val oldFromFile = it[dragFrom]
-				val oldToFile = it[dragTo]
-
-				it[dragFrom] = PositionedFile(dragFrom, oldToFile.serviceFile)
-				it[dragTo] = PositionedFile(dragTo, oldFromFile.serviceFile)
-			}
-			adapter.notifyItemMoved(dragFrom, dragTo)
+//				val oldFromFile = it[dragFrom]
+//				val oldToFile = it[dragTo]
+//
+//				it[dragFrom] = PositionedFile(dragFrom, oldToFile.serviceFile)
+//				it[dragTo] = PositionedFile(dragTo, oldFromFile.serviceFile)
+				Collections.swap(it, dragFrom, dragTo)
+				adapter.notifyItemMoved(dragFrom, dragTo)
+			} ?: return false
 			return true
 		}
 
@@ -284,6 +287,8 @@ class NowPlayingPlaylistFragment : Fragment() {
 
 			val dragFrom = draggedFile?.also { draggedFile = null }?.playlistPosition ?: return
 			val dragTo = dragDestination ?: return
+
+//			adapter.notifyItemRangeChanged(dragFrom, dragTo - dragFrom)
 
 			// Commit changes
 			PlaybackService.moveFile(context, dragFrom, dragTo)
