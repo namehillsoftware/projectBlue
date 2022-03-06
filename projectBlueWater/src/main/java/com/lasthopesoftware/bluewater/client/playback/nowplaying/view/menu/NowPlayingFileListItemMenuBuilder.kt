@@ -20,18 +20,16 @@ import com.lasthopesoftware.bluewater.client.browsing.items.menu.NotifyOnFlipVie
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.OnViewChangedListener
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.MaintainNowPlayingState
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.fragments.playlist.EditPlaylist
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.fragments.playlist.FinishEditPlaylist
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.fragments.playlist.HasEditPlaylistState
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.fragments.playlist.NowPlayingPlaylistMessage
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.fragments.playlist.*
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.menu.listeners.FileSeekToClickListener
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.menu.listeners.RemovePlaylistFileClickListener
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.android.view.getValue
-import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.messages.RegisterForTypedMessages
+import com.lasthopesoftware.bluewater.shared.messages.SendTypedMessages
+import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 
 
@@ -39,7 +37,8 @@ class NowPlayingFileListItemMenuBuilder(
 	private val nowPlayingRepository: MaintainNowPlayingState,
 	private val fileListItemNowPlayingRegistrar: FileListItemNowPlayingRegistrar,
 	private val hasEditPlaylistState: HasEditPlaylistState,
-	private val typedMessagesRegistration: RegisterForTypedMessages<NowPlayingPlaylistMessage>
+	private val typedMessagesRegistration: RegisterForTypedMessages<NowPlayingPlaylistMessage>,
+	private val sendTypedMessages: SendTypedMessages<NowPlayingPlaylistMessage>
 ) : BuildListItemMenuViewContainers<NowPlayingFileListItemMenuBuilder.ViewHolder>
 {
 	private var onViewChangedListener: OnViewChangedListener? = null
@@ -63,12 +62,12 @@ class NowPlayingFileListItemMenuBuilder(
 		notifyOnFlipViewAnimator.setViewChangedListener(onViewChangedListener)
 		notifyOnFlipViewAnimator.setOnLongClickListener(LongClickViewAnimatorListener(notifyOnFlipViewAnimator))
 
-		val dragButton by LazyViewFinder<ImageButton>(notifyOnFlipViewAnimator, R.id.dragButton)
+		val dragButton = notifyOnFlipViewAnimator.findViewById<ImageButton>(R.id.dragButton)
 		dragButton.visibility = if (hasEditPlaylistState.isEditingPlaylist) View.VISIBLE else View.GONE
 		typedMessagesRegistration
-			.registerReceiver(cls<EditPlaylist>()) { dragButton.visibility = View.VISIBLE }
+			.registerReceiver { _ : EditPlaylist -> dragButton.visibility = View.VISIBLE }
 		typedMessagesRegistration
-			.registerReceiver(cls<FinishEditPlaylist>()) { dragButton.visibility = View.GONE }
+			.registerReceiver { _ : FinishEditPlaylist -> dragButton.visibility = View.GONE }
 
 		return ViewHolder(notifyOnFlipViewAnimator)
 	}
@@ -82,6 +81,7 @@ class NowPlayingFileListItemMenuBuilder(
 		private val removeButton by LazyViewFinder<ImageButton>(itemView, R.id.btnRemoveFromPlaylist)
 		private val textView by LazyViewFinder<TextView>(itemView, R.id.fileName)
 		private val artistView by LazyViewFinder<TextView>(itemView, R.id.artist)
+		private val dragButton by LazyViewFinder<ImageButton>(itemView, R.id.dragButton)
 		private val fileNameTextViewSetter by lazy { FileNameTextViewSetter(textView, artistView) }
 
 		private var fileListItemNowPlayingHandler: AutoCloseable? = null
@@ -112,6 +112,10 @@ class NowPlayingFileListItemMenuBuilder(
 			playButton.setOnClickListener(FileSeekToClickListener(viewAnimator, position))
 			viewFileDetailsButton.setOnClickListener(ViewFileDetailsClickListener(viewAnimator, serviceFile))
 			removeButton.setOnClickListener(RemovePlaylistFileClickListener(viewAnimator, position))
+			dragButton.setOnLongClickListener {
+				sendTypedMessages.sendMessage(DragItem(positionedFile))
+				true
+			}
 		}
 	}
 }

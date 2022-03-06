@@ -46,12 +46,14 @@ import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildActivityViewModel
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildActivityViewModelLazily
+import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toDeferred
 import com.lasthopesoftware.resources.strings.StringResources
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import java.util.*
 
 
 class NowPlayingPlaylistFragment : Fragment() {
@@ -116,6 +118,7 @@ class NowPlayingPlaylistFragment : Fragment() {
 				r,
 				fileListItemNowPlayingRegistrar.value,
 				playlistViewModel,
+				typedMessageBus,
 				typedMessageBus)
 
 			itemListMenuChangeHandler?.apply {
@@ -186,10 +189,11 @@ class NowPlayingPlaylistFragment : Fragment() {
 
 				val dragHelper = NowPlayingDragHelper(requireContext(), a, playlistViewModel)
 				ItemTouchHelper(dragHelper).attachToRecyclerView(listView)
+				typedMessageBus.registerReceiver(dragHelper)
 
 				playlistViewModel.nowPlayingList
 					.onEach {
-						dragHelper.listView = it
+						dragHelper.positionedFiles = it
 						a.updateListEventually(it).toDeferred().await()
 					}
 					.launchIn(lifecycleScope)
@@ -244,12 +248,11 @@ class NowPlayingPlaylistFragment : Fragment() {
 	) : ItemTouchHelper.SimpleCallback(
 		ItemTouchHelper.UP or ItemTouchHelper.DOWN,
 		0
-	)
+	), (DragItem) -> Unit
 	{
-		private var dragFrom = -1
-		private var dragTo = -1
+		private var draggedFile: PositionedFile? = null
 
-		var listView: List<PositionedFile>? = null
+		var positionedFiles: List<PositionedFile>? = null
 
 		override fun onMove(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder, target: RecyclerView.ViewHolder): Boolean {
 			// get the viewHolder's and target's positions in your adapter data, swap them
@@ -257,23 +260,23 @@ class NowPlayingPlaylistFragment : Fragment() {
 
 			if (!playlistState.isEditingPlaylist) return false
 
-			val fromPosition = viewHolder.adapterPosition
-			val toPosition = target.adapterPosition
-			if (dragFrom == -1) dragFrom = fromPosition
+			val fileToDrag = draggedFile ?: return false
 
-			dragTo = toPosition
-			if (dragFrom != -1 && dragTo != -1 && dragFrom != dragTo) {
-				dragTo = -1
-				dragFrom = dragTo
-			}
+			val dragFrom = fileToDrag.playlistPosition
+			val dragTo = target.adapterPosition
+
+			if (dragFrom == dragTo) return false
+
+			positionedFiles?.also { Collections.swap(it, dragFrom, dragTo) }
+			adapter.notifyItemMoved(viewHolder.adapterPosition, target.adapterPosition)
 
 			PlaybackService.moveFile(context, dragFrom, dragTo)
-
-			// and notify the adapter that its dataset has changed
-			adapter.notifyItemMoved(viewHolder.adapterPosition, target.adapterPosition)
 			return true
 		}
 
 		override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {}
+		override fun invoke(dragItem: DragItem) {
+			draggedFile = dragItem.positionedFile
+		}
 	}
 }
