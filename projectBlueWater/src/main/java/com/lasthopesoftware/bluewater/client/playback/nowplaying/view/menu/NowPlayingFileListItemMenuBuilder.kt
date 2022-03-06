@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.menu
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Handler
 import android.view.LayoutInflater
@@ -86,6 +87,7 @@ class NowPlayingFileListItemMenuBuilder(
 
 		private var fileListItemNowPlayingHandler: AutoCloseable? = null
 
+		@SuppressLint("ClickableViewAccessibility")
 		fun update(positionedFile: PositionedFile) {
 
 			val serviceFile = positionedFile.serviceFile
@@ -113,7 +115,8 @@ class NowPlayingFileListItemMenuBuilder(
 			viewFileDetailsButton.setOnClickListener(ViewFileDetailsClickListener(viewAnimator, serviceFile))
 			removeButton.setOnClickListener(RemovePlaylistFileClickListener(viewAnimator, position))
 			dragButton.setOnLongClickListener {
-				sendTypedMessages.sendMessage(DragItem(positionedFile))
+				sendTypedMessages.sendMessage(DragItem(positionedFile, this))
+
 				true
 			}
 		}
