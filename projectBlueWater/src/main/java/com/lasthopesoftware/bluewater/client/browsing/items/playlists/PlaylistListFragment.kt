@@ -16,7 +16,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.access.CachedItemProvider
-import com.lasthopesoftware.bluewater.client.browsing.items.access.ItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.list.DemoableItemListAdapter
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListAdapter
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler
@@ -62,10 +61,9 @@ class PlaylistListFragment : Fragment() {
 		val connectionProvider = ConnectionSessionManager.get(requireContext())
 
 		ItemStringListProvider(
-			ItemProvider(connectionProvider),
-			FileListParameters,
-			LibraryFileStringListProvider(connectionProvider)
-		)
+            FileListParameters,
+            LibraryFileStringListProvider(connectionProvider)
+        )
 	}
 
 	private val messageBus = lazy {

@@ -16,7 +16,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
-import com.lasthopesoftware.bluewater.client.browsing.items.access.ItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.list.IItemListViewContainer
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuChangeHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.ItemFileProvider
@@ -70,10 +69,9 @@ class FileListActivity :
 		val libraryConnectionProvider = ConnectionSessionManager.get(this)
 		ItemFileProvider(
 			ItemStringListProvider(
-				ItemProvider(libraryConnectionProvider),
-				FileListParameters,
-				LibraryFileStringListProvider(libraryConnectionProvider)
-			)
+                FileListParameters,
+                LibraryFileStringListProvider(libraryConnectionProvider)
+            )
 		)
 	}
 	private val fileListItemNowPlayingRegistrar = lazy { FileListItemNowPlayingRegistrar(MessageBus(LocalBroadcastManager.getInstance(this))) }

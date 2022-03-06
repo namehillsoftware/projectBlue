@@ -6,7 +6,6 @@ import androidx.media.MediaBrowserServiceCompat
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.access.CachedItemProvider
-import com.lasthopesoftware.bluewater.client.browsing.items.access.ItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.ItemFileProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.LibraryFileProvider
@@ -76,10 +75,9 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 		val connectionProvider = ConnectionSessionManager.get(this)
 		ItemFileProvider(
 			ItemStringListProvider(
-				ItemProvider(connectionProvider),
-				FileListParameters,
-				libraryFileStringListProvider
-			)
+                FileListParameters,
+                libraryFileStringListProvider
+            )
 		)
 	}
 
