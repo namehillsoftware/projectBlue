@@ -78,11 +78,13 @@ class NowPlayingFileListItemMenuBuilder(
 				dragButton.visibility = View.GONE
 			}
 
-		return ViewHolder(notifyOnFlipViewAnimator).also(fileListItemNowPlayingRegistrar::registerNewHandler)
+		return ViewHolder(notifyOnFlipViewAnimator)
+			.also(fileListItemNowPlayingRegistrar::registerNewHandler)
+			.also(dragButton::setOnLongClickListener)
 	}
 
 	inner class ViewHolder internal constructor(private val viewAnimator: NotifyOnFlipViewAnimator)
-		: RecyclerView.ViewHolder(viewAnimator), ReceiveBroadcastEvents {
+		: RecyclerView.ViewHolder(viewAnimator), ReceiveBroadcastEvents, View.OnLongClickListener {
 
 		private val handler by lazy { Handler(viewAnimator.context.mainLooper) }
 		private val viewFileDetailsButton by LazyViewFinder<ImageButton>(itemView, R.id.btnViewFileDetails)
@@ -115,10 +117,6 @@ class NowPlayingFileListItemMenuBuilder(
 			playButton.setOnClickListener(FileSeekToClickListener(viewAnimator, position))
 			viewFileDetailsButton.setOnClickListener(ViewFileDetailsClickListener(viewAnimator, serviceFile))
 			removeButton.setOnClickListener(RemovePlaylistFileClickListener(viewAnimator, position))
-			dragButton.setOnLongClickListener {
-				sendTypedMessages.sendMessage(DragItem(positionedFile, this))
-				true
-			}
 		}
 
 		override fun onReceive(intent: Intent) {
@@ -127,5 +125,13 @@ class NowPlayingFileListItemMenuBuilder(
 			textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(position == playlistPosition))
 			viewAnimator.isSelected = position == playlistPosition
 		}
+
+		override fun onLongClick(v: View?): Boolean =
+			positionedFile
+				?.let {
+					sendTypedMessages.sendMessage(DragItem(it, this))
+					true
+				}
+				?: false
 	}
 }
