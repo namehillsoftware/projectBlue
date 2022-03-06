@@ -184,7 +184,7 @@ class NowPlayingPlaylistFragment : Fragment() {
 				listView.layoutManager = LinearLayoutManager(requireContext())
 				listView.isNestedScrollingEnabled = true
 
-				val dragHelper = NowPlayingDragHelper(requireContext(), a)
+				val dragHelper = NowPlayingDragHelper(requireContext(), a, playlistViewModel)
 				ItemTouchHelper(dragHelper).attachToRecyclerView(listView)
 
 				playlistViewModel.nowPlayingList
@@ -239,7 +239,8 @@ class NowPlayingPlaylistFragment : Fragment() {
 
 	private class NowPlayingDragHelper<ViewHolder : RecyclerView.ViewHolder?>(
 		private val context: Context,
-		private val adapter: RecyclerView.Adapter<ViewHolder>
+		private val adapter: RecyclerView.Adapter<ViewHolder>,
+		private val playlistState: HasEditPlaylistState,
 	) : ItemTouchHelper.SimpleCallback(
 		ItemTouchHelper.UP or ItemTouchHelper.DOWN,
 		0
@@ -252,15 +253,13 @@ class NowPlayingPlaylistFragment : Fragment() {
 
 		override fun onMove(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder, target: RecyclerView.ViewHolder): Boolean {
 			// get the viewHolder's and target's positions in your adapter data, swap them
-			if (viewHolder.itemViewType != target.itemViewType) {
-				return false
-			}
+			if (viewHolder.itemViewType != target.itemViewType) return false
+
+			if (!playlistState.isEditingPlaylist) return false
 
 			val fromPosition = viewHolder.adapterPosition
 			val toPosition = target.adapterPosition
-			if (dragFrom == -1) {
-				dragFrom = fromPosition
-			}
+			if (dragFrom == -1) dragFrom = fromPosition
 
 			dragTo = toPosition
 			if (dragFrom != -1 && dragTo != -1 && dragFrom != dragTo) {
