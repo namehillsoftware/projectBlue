@@ -20,29 +20,28 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import java.util.concurrent.TimeUnit
 
-class WhenMovingTracks {
+class WhenMovingTracksFromAfterToBeforePlayingTrack {
 
 	companion object {
-		private val storedLibrary by lazy {
-			Library()
-				.setId(1)
-				.setSavedTracksString(
-					FileStringListUtilities.promiseSerializedFileStringList(
-						listOf(
-							ServiceFile(1),
-							ServiceFile(2),
-							ServiceFile(3),
-							ServiceFile(4),
-							ServiceFile(5)
-						)
-					).toFuture().get()
-				)
-				.setNowPlayingId(0)
-		}
-
 		private val updatedNowPlaying by lazy {
 			val fakePlaybackPreparerProvider = FakeDeferredPlayableFilePreparationSourceProvider()
 			val libraryProvider = mockk<ISpecificLibraryProvider>().apply {
+				val storedLibrary by lazy {
+					Library()
+						.setId(1)
+						.setSavedTracksString(
+							FileStringListUtilities.promiseSerializedFileStringList(
+								listOf(
+									ServiceFile(1),
+									ServiceFile(2),
+									ServiceFile(3),
+									ServiceFile(4),
+									ServiceFile(5)
+								)
+							).toFuture().get()
+						)
+						.setNowPlayingId(0)
+				}
 				every { library } returns Promise(storedLibrary)
 			}
 
@@ -77,15 +76,5 @@ class WhenMovingTracks {
 	@Test
 	fun `then the playing file is correct`() {
 		assertThat(updatedNowPlaying?.playlistPosition).isEqualTo(1)
-	}
-
-	@Test
-	fun `then the stored library is at the correct playlist position`() {
-		assertThat(storedLibrary.nowPlayingId).isEqualTo(0)
-	}
-
-	@Test
-	fun `then the stored library has the correct playlist`() {
-		assertThat(storedLibrary.savedTracksString).isEqualTo("2;5;-1;3;1;2;4;5")
 	}
 }

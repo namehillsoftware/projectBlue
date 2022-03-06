@@ -231,7 +231,11 @@ class PlaybackEngine(
 		val removedFile = playlist.removeAt(position)
 		playlist.add(newPosition, removedFile)
 
-		if (playlistPosition >= newPosition) ++playlistPosition
+		playlistPosition = when (playlistPosition) {
+			position -> newPosition
+			in newPosition until position -> playlistPosition + 1
+			else -> playlistPosition
+		}
 
 		updatePreparedFileQueueUsingState()
 		return saveState()

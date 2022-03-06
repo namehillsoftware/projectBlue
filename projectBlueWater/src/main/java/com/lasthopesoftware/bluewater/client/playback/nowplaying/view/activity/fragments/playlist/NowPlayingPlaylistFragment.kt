@@ -53,7 +53,6 @@ import com.lasthopesoftware.resources.strings.StringResources
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
-import java.util.*
 
 
 class NowPlayingPlaylistFragment : Fragment() {
@@ -195,8 +194,9 @@ class NowPlayingPlaylistFragment : Fragment() {
 
 				playlistViewModel.nowPlayingList
 					.onEach {
-						dragCallback.positionedFiles = it
-						a.updateListEventually(it).toDeferred().await()
+						val mutableList = it.toMutableList()
+						dragCallback.positionedFiles = mutableList
+						a.updateListEventually(mutableList).toDeferred().await()
 					}
 					.launchIn(lifecycleScope)
 			}, requireContext()))
@@ -254,7 +254,7 @@ class NowPlayingPlaylistFragment : Fragment() {
 	{
 		var dragDestination: Int? = null
 		var draggedFile: PositionedFile? = null
-		var positionedFiles: List<PositionedFile>? = null
+		var positionedFiles: MutableList<PositionedFile>? = null
 
 		override fun onMove(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder, target: RecyclerView.ViewHolder): Boolean {
 			if (viewHolder.itemViewType != target.itemViewType) return false
@@ -266,7 +266,13 @@ class NowPlayingPlaylistFragment : Fragment() {
 			if (dragFrom == dragTo) return false
 
 			dragDestination = dragTo
-			positionedFiles?.also { Collections.swap(it, dragFrom, dragTo) }
+			positionedFiles?.also {
+				val oldFromFile = it[dragFrom]
+				val oldToFile = it[dragTo]
+
+				it[dragFrom] = PositionedFile(dragFrom, oldToFile.serviceFile)
+				it[dragTo] = PositionedFile(dragTo, oldFromFile.serviceFile)
+			}
 			adapter.notifyItemMoved(dragFrom, dragTo)
 			return true
 		}
