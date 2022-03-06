@@ -262,9 +262,10 @@ class NowPlayingPlaylistFragment : Fragment() {
 
 			val fileToDrag = draggedFile ?: return false
 
-			val dragFrom = fileToDrag.playlistPosition
-			val dragTo = target.adapterPosition
+			val dragFrom = viewHolder.adapterPosition
+			if (dragFrom != fileToDrag.playlistPosition) return false
 
+			val dragTo = target.adapterPosition
 			if (dragFrom == dragTo) return false
 
 			positionedFiles?.also { Collections.swap(it, dragFrom, dragTo) }
