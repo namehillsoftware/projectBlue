@@ -10,6 +10,7 @@ import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -187,7 +188,7 @@ class NowPlayingPlaylistFragment : Fragment() {
 				listView.adapter = a
 				listView.layoutManager = LinearLayoutManager(requireContext())
 				listView.isNestedScrollingEnabled = true
-				listView.itemAnimator?.changeDuration = 0
+				listView.itemAnimator = InanimateChangesItemAnimator()
 
 				val dragCallback = NowPlayingDragCallback(requireContext(), a, playlistViewModel)
 				val itemTouchHelper = ItemDraggedTouchHelper(dragCallback)
@@ -299,6 +300,12 @@ class NowPlayingPlaylistFragment : Fragment() {
 	private class ItemDraggedTouchHelper(callback: Callback) : ItemTouchHelper(callback), (ItemDragged) -> Unit {
 		override fun invoke(itemDragged: ItemDragged) {
 			startDrag(itemDragged.viewHolder)
+		}
+	}
+
+	private class InanimateChangesItemAnimator : DefaultItemAnimator() {
+		override fun animateChange(oldHolder: RecyclerView.ViewHolder, newHolder: RecyclerView.ViewHolder, preInfo: ItemHolderInfo, postInfo: ItemHolderInfo): Boolean {
+			return false
 		}
 	}
 }
