@@ -170,6 +170,8 @@ class NowPlayingPlaylistFragment : Fragment() {
 		)
 	}
 
+	private val markedForCleanup = Collections.synchronizedSet(HashSet<AutoCloseable>())
+
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
 		val binding = DataBindingUtil.inflate<ControlNowPlayingPlaylistBinding>(
 			inflater,
@@ -193,8 +195,8 @@ class NowPlayingPlaylistFragment : Fragment() {
 				val dragCallback = NowPlayingDragCallback(requireContext(), a, playlistViewModel)
 				val itemTouchHelper = ItemDraggedTouchHelper(dragCallback)
 				itemTouchHelper.attachToRecyclerView(listView)
-				typedMessageBus.registerReceiver(dragCallback)
-				typedMessageBus.registerReceiver(itemTouchHelper)
+				markedForCleanup.add(typedMessageBus.registerReceiver(dragCallback))
+				markedForCleanup.add(typedMessageBus.registerReceiver(itemTouchHelper))
 
 				playlistViewModel.nowPlayingList
 					.onEach {
@@ -239,6 +241,7 @@ class NowPlayingPlaylistFragment : Fragment() {
 
 	override fun onDestroy() {
 		if (fileListItemNowPlayingRegistrar.isInitialized()) fileListItemNowPlayingRegistrar.value.clear()
+		markedForCleanup.forEach { it.close() }
 
 		super.onDestroy()
 	}

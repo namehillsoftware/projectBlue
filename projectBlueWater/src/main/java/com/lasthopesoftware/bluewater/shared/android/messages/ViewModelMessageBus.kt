@@ -28,9 +28,10 @@ class ViewModelMessageBus<ScopedMessage : TypedMessage>(
 	}
 
 	@Suppress("UNCHECKED_CAST")
-	override fun <Message : ScopedMessage> registerReceiver(messageClass: Class<Message>, receiver: (Message) -> Unit) {
+	override fun <Message : ScopedMessage> registerReceiver(messageClass: Class<Message>, receiver: (Message) -> Unit): AutoCloseable {
 		val receiverSet = receivers.getOrPut(messageClass) { ConcurrentHashMap<(Message) -> Unit, Unit>() } as ConcurrentHashMap<(Message) -> Unit, Unit>
 		receiverSet[receiver] = Unit
+		return ReceiverCloseable(messageClass, receiver)
 	}
 
 	override fun <Message : ScopedMessage> unregisterReceiver(messageClass: Class<Message>, receiver: (Message) -> Unit) {
@@ -39,6 +40,16 @@ class ViewModelMessageBus<ScopedMessage : TypedMessage>(
 
 	override fun onCleared() {
 		receivers.clear()
+	}
+
+	private inner class ReceiverCloseable<Message : ScopedMessage>(
+		private val messageClass: Class<Message>,
+		private val receiver: (Message) -> Unit)
+		: AutoCloseable
+	{
+		override fun close() {
+			unregisterReceiver(messageClass, receiver)
+		}
 	}
 }
 
