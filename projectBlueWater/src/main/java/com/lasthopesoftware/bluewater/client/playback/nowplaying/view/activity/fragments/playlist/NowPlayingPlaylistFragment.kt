@@ -310,5 +310,7 @@ class NowPlayingPlaylistFragment : Fragment() {
 		override fun animateChange(oldHolder: RecyclerView.ViewHolder, newHolder: RecyclerView.ViewHolder, preInfo: ItemHolderInfo, postInfo: ItemHolderInfo): Boolean {
 			return false
 		}
+
+		override fun animateAdd(holder: RecyclerView.ViewHolder?): Boolean = false
 	}
 }
