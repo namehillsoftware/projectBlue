@@ -307,10 +307,9 @@ class NowPlayingPlaylistFragment : Fragment() {
 	}
 
 	private class InanimateChangesItemAnimator : DefaultItemAnimator() {
-		override fun animateChange(oldHolder: RecyclerView.ViewHolder, newHolder: RecyclerView.ViewHolder, preInfo: ItemHolderInfo, postInfo: ItemHolderInfo): Boolean {
+		override fun animateAdd(holder: RecyclerView.ViewHolder?): Boolean {
+			dispatchAddFinished(holder)
 			return false
 		}
-
-		override fun animateAdd(holder: RecyclerView.ViewHolder?): Boolean = false
 	}
 }
