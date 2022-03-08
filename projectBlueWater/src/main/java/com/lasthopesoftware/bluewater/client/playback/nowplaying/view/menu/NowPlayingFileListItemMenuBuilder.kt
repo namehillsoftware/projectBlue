@@ -21,6 +21,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.menu.NotifyOnFlipVie
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.OnViewChangedListener
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.MaintainNowPlayingState
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.fragments.playlist.*
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.menu.listeners.FileSeekToClickListener
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.menu.listeners.RemovePlaylistFileClickListener
@@ -33,6 +34,7 @@ import com.lasthopesoftware.bluewater.shared.messages.RegisterForTypedMessages
 import com.lasthopesoftware.bluewater.shared.messages.SendTypedMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
+import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 
 
 class NowPlayingFileListItemMenuBuilder(
@@ -83,9 +85,14 @@ class NowPlayingFileListItemMenuBuilder(
 			.also(dragButton::setOnLongClickListener)
 	}
 
-	inner class ViewHolder internal constructor(private val viewAnimator: NotifyOnFlipViewAnimator)
-		: RecyclerView.ViewHolder(viewAnimator), ReceiveBroadcastEvents, View.OnLongClickListener {
-
+	inner class ViewHolder internal constructor(
+		private val viewAnimator: NotifyOnFlipViewAnimator
+	) :
+		RecyclerView.ViewHolder(viewAnimator),
+		ReceiveBroadcastEvents,
+		View.OnLongClickListener,
+		ImmediateResponse<NowPlaying?, Unit>
+	{
 		private val handler by lazy { Handler(viewAnimator.context.mainLooper) }
 		private val viewFileDetailsButton by LazyViewFinder<ImageButton>(itemView, R.id.btnViewFileDetails)
 		private val playButton by LazyViewFinder<ImageButton>(itemView, R.id.btnPlaySong)
@@ -107,10 +114,7 @@ class NowPlayingFileListItemMenuBuilder(
 
 			nowPlayingRepository
 				.promiseNowPlaying()
-				.eventually(LoopedInPromise.response({ np ->
-					textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(position == np?.playlistPosition))
-					viewAnimator.isSelected = position == np?.playlistPosition
-				}, handler))
+				.eventually(LoopedInPromise.response(this, handler))
 
 			LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator)
 			playButton.setOnClickListener(FileSeekToClickListener(viewAnimator, position))
@@ -132,5 +136,11 @@ class NowPlayingFileListItemMenuBuilder(
 					true
 				}
 				?: false
+
+		override fun respond(np: NowPlaying?) {
+			val position = positionedFile?.playlistPosition
+			textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(position == np?.playlistPosition))
+			viewAnimator.isSelected = position == np?.playlistPosition
+		}
 	}
 }

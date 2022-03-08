@@ -10,6 +10,7 @@ import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -169,6 +170,8 @@ class NowPlayingPlaylistFragment : Fragment() {
 		)
 	}
 
+	private val markedForCleanup = Collections.synchronizedSet(HashSet<AutoCloseable>())
+
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
 		val binding = DataBindingUtil.inflate<ControlNowPlayingPlaylistBinding>(
 			inflater,
@@ -187,13 +190,13 @@ class NowPlayingPlaylistFragment : Fragment() {
 				listView.adapter = a
 				listView.layoutManager = LinearLayoutManager(requireContext())
 				listView.isNestedScrollingEnabled = true
-				listView.itemAnimator?.changeDuration = 0
+				listView.itemAnimator = DefaultItemAnimator().apply { supportsChangeAnimations = false }
 
 				val dragCallback = NowPlayingDragCallback(requireContext(), a, playlistViewModel)
 				val itemTouchHelper = ItemDraggedTouchHelper(dragCallback)
 				itemTouchHelper.attachToRecyclerView(listView)
-				typedMessageBus.registerReceiver(dragCallback)
-				typedMessageBus.registerReceiver(itemTouchHelper)
+				markedForCleanup.add(typedMessageBus.registerReceiver(dragCallback))
+				markedForCleanup.add(typedMessageBus.registerReceiver(itemTouchHelper))
 
 				playlistViewModel.nowPlayingList
 					.onEach {
@@ -238,6 +241,7 @@ class NowPlayingPlaylistFragment : Fragment() {
 
 	override fun onDestroy() {
 		if (fileListItemNowPlayingRegistrar.isInitialized()) fileListItemNowPlayingRegistrar.value.clear()
+		markedForCleanup.forEach { it.close() }
 
 		super.onDestroy()
 	}
