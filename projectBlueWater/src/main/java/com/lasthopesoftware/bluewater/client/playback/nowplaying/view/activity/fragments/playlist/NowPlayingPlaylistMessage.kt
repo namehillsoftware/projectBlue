@@ -9,5 +9,5 @@ interface NowPlayingPlaylistMessage : TypedMessage
 object EditPlaylist : NowPlayingPlaylistMessage
 object FinishEditPlaylist : NowPlayingPlaylistMessage
 
-class DragItem(val positionedFile: PositionedFile, val viewHolder: NowPlayingFileListItemMenuBuilder.ViewHolder)
+class ItemDragged(val positionedFile: PositionedFile, val viewHolder: NowPlayingFileListItemMenuBuilder.ViewHolder)
 	: NowPlayingPlaylistMessage

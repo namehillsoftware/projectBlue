@@ -128,7 +128,7 @@ class NowPlayingFileListItemMenuBuilder(
 		override fun onLongClick(v: View?): Boolean =
 			positionedFile
 				?.let {
-					sendTypedMessages.sendMessage(DragItem(it, this))
+					sendTypedMessages.sendMessage(ItemDragged(it, this))
 					true
 				}
 				?: false

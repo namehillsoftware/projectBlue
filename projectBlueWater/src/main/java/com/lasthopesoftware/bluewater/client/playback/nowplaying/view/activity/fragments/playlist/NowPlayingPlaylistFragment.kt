@@ -190,10 +190,10 @@ class NowPlayingPlaylistFragment : Fragment() {
 				listView.itemAnimator?.changeDuration = 0
 
 				val dragCallback = NowPlayingDragCallback(requireContext(), a, playlistViewModel)
-				val itemTouchHelper = ItemTouchHelper(dragCallback)
+				val itemTouchHelper = ItemDraggedTouchHelper(dragCallback)
 				itemTouchHelper.attachToRecyclerView(listView)
 				typedMessageBus.registerReceiver(dragCallback)
-				typedMessageBus.registerReceiver { i : DragItem -> itemTouchHelper.startDrag(i.viewHolder) }
+				typedMessageBus.registerReceiver(itemTouchHelper)
 
 				playlistViewModel.nowPlayingList
 					.onEach {
@@ -253,7 +253,7 @@ class NowPlayingPlaylistFragment : Fragment() {
 	) : ItemTouchHelper.SimpleCallback(
 		ItemTouchHelper.UP or ItemTouchHelper.DOWN,
 		0
-	), (DragItem) -> Unit
+	), (ItemDragged) -> Unit
 	{
 		var dragDestination: Int? = null
 		var draggedFile: PositionedFile? = null
@@ -270,11 +270,6 @@ class NowPlayingPlaylistFragment : Fragment() {
 
 			dragDestination = dragTo
 			positionedFiles?.also {
-//				val oldFromFile = it[dragFrom]
-//				val oldToFile = it[dragTo]
-//
-//				it[dragFrom] = PositionedFile(dragFrom, oldToFile.serviceFile)
-//				it[dragTo] = PositionedFile(dragTo, oldFromFile.serviceFile)
 				Collections.swap(it, dragFrom, dragTo)
 				adapter.notifyItemMoved(dragFrom, dragTo)
 			} ?: return false
@@ -289,8 +284,6 @@ class NowPlayingPlaylistFragment : Fragment() {
 			val dragFrom = draggedFile?.also { draggedFile = null }?.playlistPosition ?: return
 			val dragTo = dragDestination ?: return
 
-//			adapter.notifyItemRangeChanged(dragFrom, dragTo - dragFrom)
-
 			// Commit changes
 			PlaybackService.moveFile(context, dragFrom, dragTo)
 		}
@@ -298,8 +291,14 @@ class NowPlayingPlaylistFragment : Fragment() {
 		override fun isLongPressDragEnabled(): Boolean = false
 
 		@Synchronized
-		override fun invoke(dragItem: DragItem) {
-			draggedFile = dragItem.positionedFile
+		override fun invoke(itemDragged: ItemDragged) {
+			draggedFile = itemDragged.positionedFile
+		}
+	}
+
+	private class ItemDraggedTouchHelper(callback: Callback) : ItemTouchHelper(callback), (ItemDragged) -> Unit {
+		override fun invoke(itemDragged: ItemDragged) {
+			startDrag(itemDragged.viewHolder)
 		}
 	}
 }

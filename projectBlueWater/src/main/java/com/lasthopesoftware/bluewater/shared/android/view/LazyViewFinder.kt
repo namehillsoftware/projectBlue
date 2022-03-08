@@ -23,4 +23,4 @@ class LazyViewFinder<TView : View> private constructor(private val lazyViewIniti
 	}
 }
 
-inline operator fun <T : View> LazyViewFinder<T>.getValue(thisRef: Any?, property: KProperty<*>): T = findView()
+operator fun <T : View> LazyViewFinder<T>.getValue(thisRef: Any?, property: KProperty<*>): T = findView()

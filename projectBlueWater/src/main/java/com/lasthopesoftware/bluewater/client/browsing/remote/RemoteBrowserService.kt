@@ -72,7 +72,6 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 	}
 
 	private val itemFileProvider by lazy {
-		val connectionProvider = ConnectionSessionManager.get(this)
 		ItemFileProvider(
 			ItemStringListProvider(
                 FileListParameters,
