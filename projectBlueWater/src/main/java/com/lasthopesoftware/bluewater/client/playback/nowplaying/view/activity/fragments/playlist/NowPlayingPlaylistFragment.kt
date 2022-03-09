@@ -48,6 +48,7 @@ import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildActivityViewModel
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildActivityViewModelLazily
+import com.lasthopesoftware.bluewater.shared.messages.ScopedMessageReceiver
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toDeferred
@@ -112,7 +113,9 @@ class NowPlayingPlaylistFragment : Fragment() {
 
 	private val handler by lazy { Handler(requireContext().mainLooper) }
 
-	private val typedMessageBus by buildActivityViewModelLazily { ViewModelMessageBus<NowPlayingPlaylistMessage>(handler) }
+	private val viewModelMessageBus by buildActivityViewModelLazily { ViewModelMessageBus<NowPlayingPlaylistMessage>(handler) }
+
+	private val scopedMessageReceiver = lazy { ScopedMessageReceiver(viewModelMessageBus) }
 
 	private val nowPlayingListAdapter by lazy {
 		nowPlayingRepository.eventually(LoopedInPromise.response({ r ->
@@ -120,8 +123,8 @@ class NowPlayingPlaylistFragment : Fragment() {
 				r,
 				fileListItemNowPlayingRegistrar.value,
 				playlistViewModel,
-				typedMessageBus,
-				typedMessageBus)
+				scopedMessageReceiver.value,
+				viewModelMessageBus)
 
 			itemListMenuChangeHandler?.apply {
 				nowPlayingFileListMenuBuilder.setOnViewChangedListener(
@@ -166,11 +169,9 @@ class NowPlayingPlaylistFragment : Fragment() {
 		NowPlayingPlaylistViewModel(
 			messageBus,
 			LiveNowPlayingLookup.getInstance(),
-			typedMessageBus
+			viewModelMessageBus
 		)
 	}
-
-	private val markedForCleanup = Collections.synchronizedSet(HashSet<AutoCloseable>())
 
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
 		val binding = DataBindingUtil.inflate<ControlNowPlayingPlaylistBinding>(
@@ -195,8 +196,8 @@ class NowPlayingPlaylistFragment : Fragment() {
 				val dragCallback = NowPlayingDragCallback(requireContext(), a, playlistViewModel)
 				val itemTouchHelper = ItemDraggedTouchHelper(dragCallback)
 				itemTouchHelper.attachToRecyclerView(listView)
-				markedForCleanup.add(typedMessageBus.registerReceiver(dragCallback))
-				markedForCleanup.add(typedMessageBus.registerReceiver(itemTouchHelper))
+				scopedMessageReceiver.value.registerReceiver(dragCallback)
+				scopedMessageReceiver.value.registerReceiver(itemTouchHelper)
 
 				playlistViewModel.nowPlayingList
 					.onEach {
@@ -241,7 +242,7 @@ class NowPlayingPlaylistFragment : Fragment() {
 
 	override fun onDestroy() {
 		if (fileListItemNowPlayingRegistrar.isInitialized()) fileListItemNowPlayingRegistrar.value.clear()
-		markedForCleanup.forEach { it.close() }
+		if (scopedMessageReceiver.isInitialized()) scopedMessageReceiver.value.close()
 
 		super.onDestroy()
 	}
