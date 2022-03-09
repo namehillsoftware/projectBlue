@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.fragments.playlist
 
+import android.content.Intent
 import android.content.IntentFilter
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
@@ -18,16 +19,14 @@ class NowPlayingPlaylistViewModel(
 ) :
 	ViewModel(),
 	ControlPlaylistEdits,
-	HasEditPlaylistState
+	HasEditPlaylistState,
+	ReceiveBroadcastEvents
 {
-	private val onPlaylistChangedReceiver: ReceiveBroadcastEvents
-
 	private val mutableEditingPlaylistState = MutableStateFlow(false)
 	private val nowPlayingListState = MutableStateFlow(emptyList<PositionedFile>())
 
 	init {
-		onPlaylistChangedReceiver = ReceiveBroadcastEvents { updateViewFromRepository() }
-		messages.registerReceiver(onPlaylistChangedReceiver, IntentFilter(PlaylistEvents.onPlaylistChange))
+		messages.registerReceiver(this, IntentFilter(PlaylistEvents.onPlaylistChange))
 		updateViewFromRepository()
 	}
 
@@ -47,8 +46,12 @@ class NowPlayingPlaylistViewModel(
 		typedMessageBus.sendMessage(FinishEditPlaylist)
 	}
 
+	override fun onReceive(intent: Intent) {
+		updateViewFromRepository()
+	}
+
 	override fun onCleared() {
-		messages.unregisterReceiver(onPlaylistChangedReceiver)
+		messages.unregisterReceiver(this)
 	}
 
 	private fun updateViewFromRepository() {

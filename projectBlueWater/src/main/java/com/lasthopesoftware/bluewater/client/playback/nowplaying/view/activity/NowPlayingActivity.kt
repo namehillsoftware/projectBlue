@@ -35,16 +35,17 @@ import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnect
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.fragments.NowPlayingTopFragment
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.fragments.playlist.NowPlayingPlaylistFragment
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.fragments.playlist.NowPlayingPlaylistMessage
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.fragments.playlist.NowPlayingPlaylistViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.InMemoryNowPlayingDisplaySettings
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingCoverArtViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingScreenViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.databinding.ActivityViewNowPlayingBinding
-import com.lasthopesoftware.bluewater.shared.android.dependencies.ActivityDependencies
-import com.lasthopesoftware.bluewater.shared.android.dependencies.ActivityDependencies.registerDependencies
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
+import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModel
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToaster
@@ -112,6 +113,8 @@ class NowPlayingActivity :
 	private val onConnectionLostListener =
 		ReceiveBroadcastEvents { WaitForConnectionDialog.show(this) }
 
+	private val viewModelMessageBus by buildViewModelLazily { ViewModelMessageBus<NowPlayingPlaylistMessage>(messageHandler) }
+
 	private val nowPlayingViewModel by buildViewModelLazily {
 		NowPlayingScreenViewModel(
 			messageBus.value,
@@ -157,11 +160,16 @@ class NowPlayingActivity :
 		binding
 	}
 
+	private val playlistViewModel by buildViewModelLazily {
+		NowPlayingPlaylistViewModel(
+			messageBus.value,
+			LiveNowPlayingLookup.getInstance(),
+			viewModelMessageBus
+		)
+	}
+
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
-
-		lifecycle.addObserver(ActivityDependencies)
-		registerDependencies { NowPlayingActivityDependencies(this) }
 
 		binding.pager.adapter = PagerAdapter()
 
@@ -232,6 +240,11 @@ class NowPlayingActivity :
 
 	override fun onBackPressed() {
 		if (LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator)) return
+
+		if (playlistViewModel.isEditingPlaylist) {
+			playlistViewModel.finishPlaylistEdit()
+			return
+		}
 
 		if (binding.pager.currentItem == 1) {
 			binding.pager.setCurrentItem(0, true)
