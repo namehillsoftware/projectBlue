@@ -23,6 +23,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
+import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.namehillsoftware.handoff.promises.Promise
@@ -31,7 +32,7 @@ import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 class BrowseLibraryViewsFragment : Fragment(R.layout.tabbed_library_items_layout), IItemListMenuChangeHandler, TabLayout.OnTabSelectedListener {
 
 	companion object {
-		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(BrowseLibraryViewsFragment::class.java) }
+		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(cls<BrowseLibraryViewsFragment>()) }
 
 		private val savedTabKey by lazy { magicPropertyBuilder.buildProperty("savedTabKey") }
 		private val savedScrollPos by lazy { magicPropertyBuilder.buildProperty("savedScrollPos") }
@@ -51,12 +52,7 @@ class BrowseLibraryViewsFragment : Fragment(R.layout.tabbed_library_items_layout
 	override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
 		super.onViewCreated(view, savedInstanceState)
 		viewPager = view.findViewById(R.id.libraryViewPager)
-	}
 
-	override fun onActivityCreated(savedInstanceState: Bundle?) {
-		super.onActivityCreated(savedInstanceState)
-
-		val view = view ?: return
 		val context = context ?: return
 
 		val tabbedLibraryViewsContainer = view.findViewById<RelativeLayout>(R.id.tabbedLibraryViewsContainer)

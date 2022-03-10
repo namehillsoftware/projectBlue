@@ -33,8 +33,10 @@ import com.lasthopesoftware.bluewater.client.connection.polling.WaitForConnectio
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity.Companion.restoreSelectedConnection
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.fragments.NowPlayingBottomFragment
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.fragments.NowPlayingTopFragment
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.fragments.playlist.NowPlayingPlaylistFragment
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.fragments.playlist.NowPlayingPlaylistMessage
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.fragments.playlist.NowPlayingPlaylistViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.InMemoryNowPlayingDisplaySettings
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingCoverArtViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
@@ -43,6 +45,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceCon
 import com.lasthopesoftware.bluewater.databinding.ActivityViewNowPlayingBinding
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
+import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModel
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToaster
@@ -110,6 +113,8 @@ class NowPlayingActivity :
 	private val onConnectionLostListener =
 		ReceiveBroadcastEvents { WaitForConnectionDialog.show(this) }
 
+	private val viewModelMessageBus by buildViewModelLazily { ViewModelMessageBus<NowPlayingPlaylistMessage>(messageHandler) }
+
 	private val nowPlayingViewModel by buildViewModelLazily {
 		NowPlayingScreenViewModel(
 			messageBus.value,
@@ -155,6 +160,14 @@ class NowPlayingActivity :
 		binding
 	}
 
+	private val playlistViewModel by buildViewModelLazily {
+		NowPlayingPlaylistViewModel(
+			messageBus.value,
+			LiveNowPlayingLookup.getInstance(),
+			viewModelMessageBus
+		)
+	}
+
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
@@ -181,6 +194,7 @@ class NowPlayingActivity :
 						1 -> nowPlayingViewModel.showDrawer()
 						else -> {
 							nowPlayingViewModel.hideDrawer()
+							playlistViewModel.finishPlaylistEdit()
 							LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator)
 						}
 					}
@@ -228,6 +242,11 @@ class NowPlayingActivity :
 	override fun onBackPressed() {
 		if (LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator)) return
 
+		if (playlistViewModel.isEditingPlaylist) {
+			playlistViewModel.finishPlaylistEdit()
+			return
+		}
+
 		if (binding.pager.currentItem == 1) {
 			binding.pager.setCurrentItem(0, true)
 			return
@@ -241,7 +260,7 @@ class NowPlayingActivity :
 
 		override fun createFragment(position: Int): Fragment = when (position) {
 			0 -> NowPlayingTopFragment()
-			1 -> NowPlayingBottomFragment().apply { setOnItemListMenuChangeHandler(this@NowPlayingActivity) }
+			1 -> NowPlayingPlaylistFragment().apply { setOnItemListMenuChangeHandler(this@NowPlayingActivity) }
 			else -> throw IndexOutOfBoundsException()
 		}
 	}
@@ -250,7 +269,7 @@ class NowPlayingActivity :
 		override fun transformPage(page: View, position: Float) {
 			with (page) {
 				// Adjust alpha based off of position, only taking into account when it's scrolling to top (negative position)
-				alpha = (1 + 2 * position).coerceIn(0f, 1f)
+				alpha = (1 + 3 * position).coerceIn(0f, 1f)
 			}
 		}
 	}

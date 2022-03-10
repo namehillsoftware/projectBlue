@@ -1,15 +1,19 @@
-package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.fragments
+package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.fragments.playlist
 
+import android.content.Context
 import android.os.Bundle
+import android.os.Handler
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.RatingBar
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import androidx.recyclerview.widget.DefaultItemAnimator
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.menu.FileListItemNowPlayingRegistrar
@@ -27,6 +31,7 @@ import com.lasthopesoftware.bluewater.client.connection.authentication.ScopedCon
 import com.lasthopesoftware.bluewater.client.connection.authentication.SelectedConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.polling.ConnectionPoller
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.InMemoryNowPlayingDisplaySettings
@@ -36,23 +41,29 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.list.NowPl
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.menu.NowPlayingFileListItemMenuBuilder
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
-import com.lasthopesoftware.bluewater.databinding.ControlNowPlayingBottomSheetBinding
+import com.lasthopesoftware.bluewater.databinding.ControlNowPlayingPlaylistBinding
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
+import com.lasthopesoftware.bluewater.shared.android.adapters.DeferredListAdapter
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
+import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildActivityViewModel
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildActivityViewModelLazily
+import com.lasthopesoftware.bluewater.shared.messages.ScopedMessageRegistration
+import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toDeferred
 import com.lasthopesoftware.resources.strings.StringResources
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import java.util.*
 
-class NowPlayingBottomFragment : Fragment() {
+
+class NowPlayingPlaylistFragment : Fragment() {
 
 	private var itemListMenuChangeHandler: IItemListMenuChangeHandler? = null
 
-	private val messageBus = lazy { MessageBus(LocalBroadcastManager.getInstance(requireContext())) }
+	private val messageBus by lazy { MessageBus(LocalBroadcastManager.getInstance(requireContext())) }
 
 	private val selectedConnectionProvider by lazy { SelectedConnectionProvider(requireContext()) }
 
@@ -98,13 +109,22 @@ class NowPlayingBottomFragment : Fragment() {
 			}
 	}
 
-	private val fileListItemNowPlayingRegistrar = lazy { FileListItemNowPlayingRegistrar(messageBus.value) }
+	private val fileListItemNowPlayingRegistrar = lazy { FileListItemNowPlayingRegistrar(messageBus) }
+
+	private val handler by lazy { Handler(requireContext().mainLooper) }
+
+	private val viewModelMessageBus by buildActivityViewModelLazily { ViewModelMessageBus<NowPlayingPlaylistMessage>(handler) }
+
+	private val scopedMessageReceiver = lazy { ScopedMessageRegistration(viewModelMessageBus) }
 
 	private val nowPlayingListAdapter by lazy {
 		nowPlayingRepository.eventually(LoopedInPromise.response({ r ->
 			val nowPlayingFileListMenuBuilder = NowPlayingFileListItemMenuBuilder(
 				r,
-				fileListItemNowPlayingRegistrar.value)
+				fileListItemNowPlayingRegistrar.value,
+				playlistViewModel,
+				scopedMessageReceiver.value,
+				viewModelMessageBus)
 
 			itemListMenuChangeHandler?.apply {
 				nowPlayingFileListMenuBuilder.setOnViewChangedListener(
@@ -124,14 +144,14 @@ class NowPlayingBottomFragment : Fragment() {
 
 		val nowPlayingViewModel = buildActivityViewModel {
 			NowPlayingScreenViewModel(
-				messageBus.value,
+				messageBus,
 				InMemoryNowPlayingDisplaySettings,
 				playbackService,
 			)
 		}
 
 		NowPlayingFilePropertiesViewModel(
-			messageBus.value,
+			messageBus,
 			LiveNowPlayingLookup.getInstance(),
 			selectedConnectionProvider,
 			lazyFilePropertiesProvider,
@@ -145,10 +165,18 @@ class NowPlayingBottomFragment : Fragment() {
 		)
 	}
 
+	private val playlistViewModel by buildActivityViewModelLazily {
+		NowPlayingPlaylistViewModel(
+			messageBus,
+			LiveNowPlayingLookup.getInstance(),
+			viewModelMessageBus
+		)
+	}
+
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
-		val binding = DataBindingUtil.inflate<ControlNowPlayingBottomSheetBinding>(
+		val binding = DataBindingUtil.inflate<ControlNowPlayingPlaylistBinding>(
 			inflater,
-			R.layout.control_now_playing_bottom_sheet,
+			R.layout.control_now_playing_playlist,
 			container,
 			false
 		)
@@ -156,18 +184,32 @@ class NowPlayingBottomFragment : Fragment() {
 		with (binding) {
 			lifecycleOwner = viewLifecycleOwner
 			vm = viewModel
+			playlistVm = playlistViewModel
 
 			nowPlayingListAdapter.eventually(LoopedInPromise.response({ a ->
 				val listView = nowPlayingListView
 				listView.adapter = a
 				listView.layoutManager = LinearLayoutManager(requireContext())
-
 				listView.isNestedScrollingEnabled = true
+				listView.itemAnimator = InanimateChangesItemAnimator()
 
-				viewModel.nowPlayingList
-					.onEach { a.updateListEventually(it).toDeferred().await() }
+				val dragCallback = NowPlayingDragCallback(requireContext(), a, playlistViewModel)
+				val itemTouchHelper = ItemDraggedTouchHelper(dragCallback)
+				itemTouchHelper.attachToRecyclerView(listView)
+				scopedMessageReceiver.value.registerReceiver(dragCallback)
+				scopedMessageReceiver.value.registerReceiver(itemTouchHelper)
+
+				playlistViewModel.nowPlayingList
+					.onEach {
+						val mutableList = it.toMutableList()
+						dragCallback.positionedFiles = mutableList
+						a.updateListEventually(mutableList).toDeferred().await()
+					}
 					.launchIn(lifecycleScope)
 			}, requireContext()))
+
+			editNowPlayingList.setOnClickListener { playlistViewModel.editPlaylist() }
+			finishEditNowPlayingList.setOnClickListener { playlistViewModel.finishPlaylistEdit() }
 
 			miniPlay.setOnClickListener { v ->
 				PlaybackService.play(v.context)
@@ -179,9 +221,7 @@ class NowPlayingBottomFragment : Fragment() {
 				viewModel.togglePlaying(false)
 			}
 
-			miniSongRating.onRatingBarChangeListener = RatingBar.OnRatingBarChangeListener { _, rating, fromUser ->
-				if (fromUser) viewModel.updateRating(rating)
-			}
+			repeatButton.setOnClickListener { viewModel.toggleRepeating() }
 
 			viewModel.nowPlayingFile
 				.filterNotNull()
@@ -202,11 +242,75 @@ class NowPlayingBottomFragment : Fragment() {
 
 	override fun onDestroy() {
 		if (fileListItemNowPlayingRegistrar.isInitialized()) fileListItemNowPlayingRegistrar.value.clear()
+		if (scopedMessageReceiver.isInitialized()) scopedMessageReceiver.value.close()
 
 		super.onDestroy()
 	}
 
 	fun setOnItemListMenuChangeHandler(itemListMenuChangeHandler: IItemListMenuChangeHandler?) {
 		this.itemListMenuChangeHandler = itemListMenuChangeHandler
+	}
+
+	private class NowPlayingDragCallback<ViewHolder : RecyclerView.ViewHolder?>(
+		private val context: Context,
+		private val adapter: DeferredListAdapter<PositionedFile, ViewHolder>,
+		private val playlistState: HasEditPlaylistState,
+	) : ItemTouchHelper.SimpleCallback(
+		ItemTouchHelper.UP or ItemTouchHelper.DOWN,
+		0
+	), (ItemDragged) -> Unit
+	{
+		var dragDestination: Int? = null
+		var draggedFile: PositionedFile? = null
+		var positionedFiles: MutableList<PositionedFile>? = null
+
+		override fun onMove(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder, target: RecyclerView.ViewHolder): Boolean {
+			if (viewHolder.itemViewType != target.itemViewType) return false
+			if (!playlistState.isEditingPlaylist) return false
+
+			val dragFrom = viewHolder.adapterPosition
+
+			val dragTo = target.adapterPosition
+			if (dragFrom == dragTo) return false
+
+			dragDestination = dragTo
+			positionedFiles?.also {
+				Collections.swap(it, dragFrom, dragTo)
+				adapter.notifyItemMoved(dragFrom, dragTo)
+			} ?: return false
+			return true
+		}
+
+		override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {}
+
+		override fun clearView(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder) {
+			super.clearView(recyclerView, viewHolder)
+
+			val dragFrom = draggedFile?.also { draggedFile = null }?.playlistPosition ?: return
+			val dragTo = dragDestination ?: return
+
+			// Commit changes
+			PlaybackService.moveFile(context, dragFrom, dragTo)
+		}
+
+		override fun isLongPressDragEnabled(): Boolean = false
+
+		@Synchronized
+		override fun invoke(itemDragged: ItemDragged) {
+			draggedFile = itemDragged.positionedFile
+		}
+	}
+
+	private class ItemDraggedTouchHelper(callback: Callback) : ItemTouchHelper(callback), (ItemDragged) -> Unit {
+		override fun invoke(itemDragged: ItemDragged) {
+			startDrag(itemDragged.viewHolder)
+		}
+	}
+
+	private class InanimateChangesItemAnimator : DefaultItemAnimator() {
+		override fun animateAdd(holder: RecyclerView.ViewHolder?): Boolean {
+			dispatchAddFinished(holder)
+			return false
+		}
 	}
 }

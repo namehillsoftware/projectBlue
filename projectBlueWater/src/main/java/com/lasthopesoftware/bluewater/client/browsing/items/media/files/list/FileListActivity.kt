@@ -16,7 +16,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
-import com.lasthopesoftware.bluewater.client.browsing.items.access.ItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.list.IItemListViewContainer
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuChangeHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.ItemFileProvider
@@ -40,6 +39,7 @@ import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils.buildStandardMenu
+import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
@@ -50,13 +50,13 @@ class FileListActivity :
 	Runnable {
 
 	companion object {
-		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(FileListActivity::class.java) }
+		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(cls<FileListActivity>()) }
 		private val key by lazy { magicPropertyBuilder.buildProperty("key") }
 		private val value by lazy { magicPropertyBuilder.buildProperty("value") }
 
 		@JvmStatic
 		fun startFileListActivity(context: Context, item: IItem) {
-			val fileListIntent = Intent(context, FileListActivity::class.java)
+			val fileListIntent = Intent(context, cls<FileListActivity>())
 			fileListIntent.putExtra(key, item.key)
 			fileListIntent.putExtra(value, item.value)
 			context.startActivity(fileListIntent)
@@ -69,10 +69,9 @@ class FileListActivity :
 		val libraryConnectionProvider = ConnectionSessionManager.get(this)
 		ItemFileProvider(
 			ItemStringListProvider(
-				ItemProvider(libraryConnectionProvider),
-				FileListParameters,
-				LibraryFileStringListProvider(libraryConnectionProvider)
-			)
+                FileListParameters,
+                LibraryFileStringListProvider(libraryConnectionProvider)
+            )
 		)
 	}
 	private val fileListItemNowPlayingRegistrar = lazy { FileListItemNowPlayingRegistrar(MessageBus(LocalBroadcastManager.getInstance(this))) }

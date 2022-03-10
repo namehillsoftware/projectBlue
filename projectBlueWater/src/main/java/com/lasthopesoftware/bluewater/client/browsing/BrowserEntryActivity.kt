@@ -156,7 +156,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 		if (!isTaskRoot) {
 			val intent = intent
 			if (Intent.ACTION_MAIN == intent.action && intent.hasCategory(Intent.CATEGORY_LAUNCHER)) {
-				val className = BrowserEntryActivity::class.java.name
+				val className = javaClass.name
 				LoggerFactory.getLogger(javaClass).info("$className is not the root.  Finishing $className instead of launching.")
 				finish()
 				return

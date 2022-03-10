@@ -7,7 +7,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.media.AudioManager
-import android.media.MediaPlayer
 import android.os.Build
 import android.os.Handler
 import android.os.PowerManager
@@ -92,10 +91,10 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.u
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.uri.StoredFileUriProvider
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.settings.volumeleveling.VolumeLevelSettings
-import com.lasthopesoftware.bluewater.shared.GenericBinder
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.MediaSession.MediaSessionService
 import com.lasthopesoftware.bluewater.shared.android.audiofocus.AudioFocusManagement
+import com.lasthopesoftware.bluewater.shared.android.makePendingIntentImmutable
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
 import com.lasthopesoftware.bluewater.shared.android.notifications.NoOpChannelActivator
@@ -103,9 +102,9 @@ import com.lasthopesoftware.bluewater.shared.android.notifications.NotificationB
 import com.lasthopesoftware.bluewater.shared.android.notifications.control.NotificationsController
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.NotificationChannelActivator
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.SharedChannelProperties
+import com.lasthopesoftware.bluewater.shared.android.services.GenericBinder
 import com.lasthopesoftware.bluewater.shared.android.services.promiseBoundService
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToaster
-import com.lasthopesoftware.bluewater.shared.makePendingIntentImmutable
 import com.lasthopesoftware.bluewater.shared.observables.toMaybeObservable
 import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay.Companion.delay
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
@@ -230,6 +229,14 @@ open class PlaybackService :
 		fun removeFileAtPositionFromPlaylist(context: Context, filePosition: Int) {
 			val intent = getNewSelfIntent(context, Action.removeFileAtPositionFromPlaylist)
 			intent.putExtra(Bag.filePosition, filePosition)
+			context.safelyStartService(intent)
+		}
+
+		fun moveFile(context: Context, filePosition: Int, newPosition: Int) {
+			val intent = getNewSelfIntent(context, Action.moveFile).apply {
+				putExtra(Bag.filePosition, filePosition)
+				putExtra(Bag.newPosition, newPosition)
+			}
 			context.safelyStartService(intent)
 		}
 
@@ -453,7 +460,7 @@ open class PlaybackService :
 	}
 
 	private fun registerListeners() {
-		wakeLock = (getSystemService(POWER_SERVICE) as PowerManager).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK or PowerManager.ON_AFTER_RELEASE, MediaPlayer::class.java.name)
+		wakeLock = (getSystemService(POWER_SERVICE) as PowerManager).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK or PowerManager.ON_AFTER_RELEASE, javaClass.name)
 		wakeLock?.acquire()
 		registerReceiver(lazyAudioBecomingNoisyReceiver.value, IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY))
 		areListenersRegistered = true
@@ -525,8 +532,20 @@ open class PlaybackService :
 					val playlistFiles = playlistFiles ?: return Unit.toPromise()
 
 					val filePosition = intent.getIntExtra(Bag.filePosition, -1)
-					return if (filePosition < -1) Unit.toPromise() else playlistFiles
+					return if (filePosition < 0) Unit.toPromise() else playlistFiles
 						.removeFileAtPosition(filePosition)
+						.then {
+							lazyMessageBus.value.sendBroadcast(Intent(PlaylistEvents.onPlaylistChange))
+						}
+						.unitResponse()
+				}
+				Action.moveFile -> {
+					val playlistFiles = playlistFiles ?: return Unit.toPromise()
+
+					val filePosition = intent.getIntExtra(Bag.filePosition, -1)
+					val newPosition = intent.getIntExtra(Bag.newPosition, -1)
+					return if (filePosition < 0 || newPosition < 0) Unit.toPromise()
+					else playlistFiles.moveFile(filePosition, newPosition)
 						.then {
 							lazyMessageBus.value.sendBroadcast(Intent(PlaylistEvents.onPlaylistChange))
 						}
@@ -1073,6 +1092,7 @@ open class PlaybackService :
 		val seekTo by lazy { magicPropertyBuilder.buildProperty("seekTo") }
 		val addFileToPlaylist by lazy { magicPropertyBuilder.buildProperty("addFileToPlaylist") }
 		val removeFileAtPositionFromPlaylist by lazy { magicPropertyBuilder.buildProperty("removeFileAtPositionFromPlaylist") }
+		val moveFile by lazy { magicPropertyBuilder.buildProperty("moveFile") }
 		val killMusicService by lazy { magicPropertyBuilder.buildProperty("killMusicService") }
 		val validActions by lazy {
 			setOf(
@@ -1087,7 +1107,8 @@ open class PlaybackService :
 				repeating,
 				completing,
 				addFileToPlaylist,
-				removeFileAtPositionFromPlaylist
+				removeFileAtPositionFromPlaylist,
+				moveFile
 			)
 		}
 		val playbackStartingActions by lazy { setOf(launchMusicService, play, togglePlayPause) }
@@ -1100,6 +1121,7 @@ open class PlaybackService :
 			val filePlaylist by lazy { magicPropertyBuilder.buildProperty("filePlaylist") }
 			val startPos by lazy { magicPropertyBuilder.buildProperty("startPos") }
 			val filePosition by lazy { magicPropertyBuilder.buildProperty("filePosition") }
+			val newPosition by lazy { magicPropertyBuilder.buildProperty("newPosition") }
 		}
 	}
 

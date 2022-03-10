@@ -65,7 +65,6 @@ class NowPlayingFilePropertiesViewModel(
 	private val titleState = MutableStateFlow<String?>(stringResources.defaultTitle)
 	private val songRatingState = MutableStateFlow(0F)
 	private val isSongRatingEnabledState = MutableStateFlow(false)
-	private val nowPlayingListState = MutableStateFlow(emptyList<PositionedFile>())
 	private val nowPlayingFileState = MutableStateFlow<PositionedFile?>(null)
 	private val isScreenControlsVisibleState = MutableStateFlow(false)
 	private val isRepeatingState = MutableStateFlow(false)
@@ -79,7 +78,6 @@ class NowPlayingFilePropertiesViewModel(
 	val title = titleState.asStateFlow()
 	val songRating = songRatingState.asStateFlow()
 	val isSongRatingEnabled = isSongRatingEnabledState.asStateFlow()
-	val nowPlayingList = nowPlayingListState.asStateFlow()
 	val nowPlayingFile = nowPlayingFileState.asStateFlow()
 	val isScreenControlsVisible = isScreenControlsVisibleState.asStateFlow()
 	val isRepeating = isRepeatingState.asStateFlow()
@@ -183,7 +181,6 @@ class NowPlayingFilePropertiesViewModel(
 	private fun updateViewFromRepository() {
 		nowPlayingRepository.promiseNowPlaying()
 			.then { np ->
-				nowPlayingListState.value = np?.playlist?.mapIndexed(::PositionedFile) ?: emptyList()
 				nowPlayingFileState.value = np?.playingFile
 				np?.playingFile?.let { positionedFile ->
 					selectedConnectionProvider

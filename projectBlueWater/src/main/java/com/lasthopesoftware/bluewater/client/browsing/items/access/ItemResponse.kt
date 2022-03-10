@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.access
 
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
+import com.lasthopesoftware.bluewater.shared.cls
 import org.slf4j.LoggerFactory
 import org.xml.sax.SAXException
 import java.io.IOException
@@ -9,7 +10,7 @@ import javax.xml.parsers.ParserConfigurationException
 import javax.xml.parsers.SAXParserFactory
 
 object ItemResponse {
-	private val logger by lazy { LoggerFactory.getLogger(ItemResponse::class.java) }
+	private val logger by lazy { LoggerFactory.getLogger(cls<ItemResponse>()) }
 
     fun getItems(inputStream: InputStream): List<Item> {
         try {

@@ -33,7 +33,6 @@ import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
-import java.util.*
 
 class EditClientSettingsActivity :
 	AppCompatActivity(),

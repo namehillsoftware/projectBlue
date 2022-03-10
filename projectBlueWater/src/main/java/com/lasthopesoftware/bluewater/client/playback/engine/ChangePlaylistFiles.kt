@@ -7,4 +7,5 @@ import com.namehillsoftware.handoff.promises.Promise
 interface ChangePlaylistFiles {
 	fun addFile(serviceFile: ServiceFile): Promise<NowPlaying?>
 	fun removeFileAtPosition(position: Int): Promise<NowPlaying?>
+	fun moveFile(position: Int, newPosition: Int): Promise<NowPlaying?>
 }

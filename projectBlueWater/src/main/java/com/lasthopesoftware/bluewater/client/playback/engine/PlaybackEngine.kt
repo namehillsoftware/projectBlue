@@ -221,6 +221,27 @@ class PlaybackEngine(
 			}
 	}
 
+	override fun moveFile(position: Int, newPosition: Int): Promise<NowPlaying?> {
+		if (position < 0 || newPosition < 0) return nowPlayingRepository.promiseNowPlaying()
+
+		with (playlist) {
+			if (position >= size || newPosition >= size) return nowPlayingRepository.promiseNowPlaying()
+		}
+
+		val removedFile = playlist.removeAt(position)
+		playlist.add(newPosition, removedFile)
+
+		playlistPosition = when (playlistPosition) {
+			position -> newPosition
+			in newPosition until position -> playlistPosition + 1
+			in position..newPosition -> playlistPosition - 1
+			else -> playlistPosition
+		}
+
+		updatePreparedFileQueueUsingState()
+		return saveState()
+	}
+
 	private fun pausePlayback(): Promise<NowPlaying> {
 		val promisedPause = activePlayer?.pause() ?: Unit.toPromise()
 

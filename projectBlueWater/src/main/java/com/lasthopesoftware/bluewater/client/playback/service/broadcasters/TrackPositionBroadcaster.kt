@@ -11,8 +11,8 @@ import io.reactivex.functions.Consumer
 import org.joda.time.Duration
 
 class TrackPositionBroadcaster(
-	private val sendMessages: SendMessages,
-	private val fileProperties: ProvideScopedFileProperties
+    private val sendMessages: SendMessages,
+    private val fileProperties: ProvideScopedFileProperties
 ) {
 
 	fun broadcastProgress(positionedProgressedFile: PositionedProgressedFile) {

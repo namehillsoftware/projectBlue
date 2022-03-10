@@ -25,8 +25,7 @@ class FakeMessageBus(private val context: Context) : SendMessages, RegisterForMe
 		}
 	}
 
-	val recordedIntents: List<Intent>
-		get() = _recordedIntents
+	val recordedIntents: List<Intent> = _recordedIntents
 
 	override fun registerReceiver(receiver: ReceiveBroadcastEvents, filter: IntentFilter) {
 		receivers.add(Pair(receiver, filter))

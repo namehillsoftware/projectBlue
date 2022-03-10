@@ -8,6 +8,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
+import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRateLimiter
 import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay.Companion.delay
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
@@ -25,19 +26,19 @@ import java.util.*
 import java.util.concurrent.CancellationException
 import javax.net.ssl.SSLProtocolException
 
-class FileNameTextViewSetter(private val textView: TextView) {
+class FileNameTextViewSetter(private val fileTextView: TextView, private val artistTextView: TextView? = null) {
 
 	companion object {
-		private val logger = LoggerFactory.getLogger(FileNameTextViewSetter::class.java)
+		private val logger by lazy { LoggerFactory.getLogger(cls<FileNameTextViewSetter>()) }
 		private val timeoutDuration = Duration.standardMinutes(1)
 
 		private val rateLimiter by lazy { PromisingRateLimiter<Map<String, String>>(1) }
 	}
 
-	private val textViewUpdateSync = Any()
-	private val handler = Handler(textView.context.mainLooper)
+	private val updateSync = Any()
+	private val handler = Handler(fileTextView.context.mainLooper)
 	private val filePropertiesProvider by lazy {
-		SelectedConnectionFilePropertiesProvider(SelectedConnectionProvider(textView.context)) { c ->
+		SelectedConnectionFilePropertiesProvider(SelectedConnectionProvider(fileTextView.context)) { c ->
 			val filePropertyCache = FilePropertyCache.getInstance()
 			ScopedCachedFilePropertiesProvider(
 				c,
@@ -58,7 +59,7 @@ class FileNameTextViewSetter(private val textView: TextView) {
 	private var promisedState = Unit.toPromise()
 
 	@Volatile
-	private var currentlyPromisedTextViewUpdate: PromisedTextViewUpdate? = null
+	private var currentlyPromisedViewUpdate: PromisedTextViewUpdate? = null
 
 	@Synchronized
 	fun promiseTextViewUpdate(serviceFile: ServiceFile): Promise<Unit> {
@@ -70,10 +71,10 @@ class FileNameTextViewSetter(private val textView: TextView) {
 
 	private inner class EventualTextViewUpdate(private val serviceFile: ServiceFile) : EventualAction {
 		override fun promiseAction(): Promise<*> =
-			synchronized(textViewUpdateSync) {
+			synchronized(updateSync) {
 				PromisedTextViewUpdate(serviceFile)
 					.apply {
-						currentlyPromisedTextViewUpdate = this
+						currentlyPromisedViewUpdate = this
 						beginUpdate()
 					}
 			}
@@ -101,7 +102,8 @@ class FileNameTextViewSetter(private val textView: TextView) {
 		}
 
 		override fun run() {
-			textView.setText(R.string.lbl_loading)
+			fileTextView.setText(R.string.lbl_loading)
+			artistTextView?.text = ""
 
 			if (isNotCurrentPromise || isUpdateCancelled) return resolve(Unit)
 
@@ -130,8 +132,11 @@ class FileNameTextViewSetter(private val textView: TextView) {
 
 		override fun respond(properties: Map<String, String>) {
 			if (isNotCurrentPromise || isUpdateCancelled) return
-			val fileName = properties[KnownFileProperties.NAME]
-			if (fileName != null) textView.text = fileName
+
+			val trackName = properties[KnownFileProperties.NAME]
+			if (trackName != null) fileTextView.text = trackName
+
+			artistTextView?.text = properties[KnownFileProperties.ARTIST] ?: "Unknown Artist"
 		}
 
 		private fun handleError(e: Throwable) {
@@ -160,7 +165,7 @@ class FileNameTextViewSetter(private val textView: TextView) {
 		}
 
 		private val isNotCurrentPromise: Boolean
-			get() = synchronized(textViewUpdateSync) { currentlyPromisedTextViewUpdate !== this }
+			get() = synchronized(updateSync) { currentlyPromisedViewUpdate !== this }
 		private val isUpdateCancelled: Boolean
 			get() = cancellationProxy.isCancelled
 	}
