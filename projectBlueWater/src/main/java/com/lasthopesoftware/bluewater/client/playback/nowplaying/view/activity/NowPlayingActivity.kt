@@ -194,6 +194,7 @@ class NowPlayingActivity :
 						1 -> nowPlayingViewModel.showDrawer()
 						else -> {
 							nowPlayingViewModel.hideDrawer()
+							playlistViewModel.finishPlaylistEdit()
 							LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator)
 						}
 					}
