@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.shared.messages
 
 import java.util.concurrent.ConcurrentHashMap
 
-class ScopedMessageReceiver<ScopedMessage : TypedMessage>(
+class ScopedMessageRegistration<ScopedMessage : TypedMessage>(
 	private val registerForTypedMessages: RegisterForTypedMessages<ScopedMessage>,
 ) :
 	RegisterForTypedMessages<ScopedMessage>,
