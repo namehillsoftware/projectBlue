@@ -234,6 +234,7 @@ class PlaybackEngine(
 		playlistPosition = when (playlistPosition) {
 			position -> newPosition
 			in newPosition until position -> playlistPosition + 1
+			in position until newPosition -> playlistPosition - 1
 			else -> playlistPosition
 		}
 
