@@ -1,13 +1,12 @@
 package com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote
 
-import android.content.BroadcastReceiver
-import android.content.Context
 import android.content.Intent
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster
+import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
 
-class RemoteControlProxy(private val remoteBroadcaster: IRemoteBroadcaster) : BroadcastReceiver() {
+class RemoteControlProxy(private val remoteBroadcaster: IRemoteBroadcaster) : ReceiveBroadcastEvents {
 	private val mappedEvents by lazy {
 		mapOf(
 			Pair(PlaylistEvents.onPlaylistTrackChange, ::onPlaylistChange),
@@ -21,7 +20,7 @@ class RemoteControlProxy(private val remoteBroadcaster: IRemoteBroadcaster) : Br
 
 	fun registerForIntents(): Set<String> = mappedEvents.keys
 
-	override fun onReceive(context: Context, intent: Intent) {
+	override fun onReceive(intent: Intent) {
 		intent.action?.let(mappedEvents::get)?.invoke(intent)
 	}
 

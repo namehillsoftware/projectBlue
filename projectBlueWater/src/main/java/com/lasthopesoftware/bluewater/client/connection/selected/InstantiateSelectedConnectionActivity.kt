@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.connection.selected
 
 import android.app.Activity
-import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
@@ -15,6 +14,8 @@ import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnect
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.Companion.getInstance
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
+import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
+import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.namehillsoftware.handoff.promises.Promise
@@ -32,15 +33,12 @@ class InstantiateSelectedConnectionActivity : Activity() {
 		browseLibraryIntent
 	}
 
-	private val localBroadcastManager by lazy { LocalBroadcastManager.getInstance(this) }
+	private val messageBus by lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
 
 	private val handler by lazy { Handler(mainLooper) }
 
-	private val buildSessionConnectionReceiver = object : BroadcastReceiver() {
-		override fun onReceive(context: Context, intent: Intent) {
-			handleBuildStatusChange(intent.getIntExtra(SelectedConnection.buildSessionBroadcastStatus, -1))
-		}
-	}
+	private val buildSessionConnectionReceiver =
+		ReceiveBroadcastEvents { intent -> handleBuildStatusChange(intent.getIntExtra(SelectedConnection.buildSessionBroadcastStatus, -1)) }
 
 	private val lazyPromisedSessionConnection = lazy { getInstance(this).promiseSessionConnection() }
 
@@ -52,7 +50,7 @@ class InstantiateSelectedConnectionActivity : Activity() {
 		lblConnectionStatus.findView().setText(R.string.lbl_connecting)
 		cancelButton.findView().setOnClickListener { cancel() }
 
-		localBroadcastManager.registerReceiver(buildSessionConnectionReceiver, IntentFilter(
+		messageBus.registerReceiver(buildSessionConnectionReceiver, IntentFilter(
 			SelectedConnection.buildSessionBroadcast
 		))
 
@@ -69,7 +67,7 @@ class InstantiateSelectedConnectionActivity : Activity() {
 			}, handler), LoopedInPromise.response({
 				launchActivityDelayed(selectServerIntent)
 			}, handler))
-			.must { localBroadcastManager.unregisterReceiver(buildSessionConnectionReceiver) }
+			.must { messageBus.unregisterReceiver(buildSessionConnectionReceiver) }
 	}
 
 	override fun onBackPressed() {

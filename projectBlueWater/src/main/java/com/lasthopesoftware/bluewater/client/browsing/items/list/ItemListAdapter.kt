@@ -14,8 +14,7 @@ import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.IFileListParameterProvider
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.ItemStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener.Companion.tryFlipToPreviousView
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.NotifyOnFlipViewAnimator
@@ -27,14 +26,13 @@ import com.lasthopesoftware.bluewater.shared.android.messages.SendMessages
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 
 open class ItemListAdapter internal constructor(
-	context: Context,
-	private val sendMessages: SendMessages,
-	private val fileListParameterProvider: IFileListParameterProvider,
-	private val fileStringListProvider: FileStringListProvider,
-	private val itemListMenuEvents: IItemListMenuChangeHandler,
-	private val storedItemAccess: StoredItemAccess,
-	private val provideItems: ProvideItems,
-	private val libraryId: LibraryId
+    context: Context,
+    private val sendMessages: SendMessages,
+    private val itemStringListProvider: ItemStringListProvider,
+    private val itemListMenuEvents: IItemListMenuChangeHandler,
+    private val storedItemAccess: StoredItemAccess,
+    private val provideItems: ProvideItems,
+    private val libraryId: LibraryId
 ) : DeferredListAdapter<Item, ItemListAdapter.ViewHolder>(context, ItemDiffer) {
 
 	private val viewChangedHandler by lazy {
@@ -86,21 +84,11 @@ open class ItemListAdapter internal constructor(
 
 			textView.findView().text = item.value
 			shuffleButton.findView().setOnClickListener(
-				ShuffleClickHandler(
-					viewFlipper,
-					fileListParameterProvider,
-					fileStringListProvider,
-					item
-				)
+				ShuffleClickHandler(viewFlipper, itemStringListProvider, libraryId, item)
 			)
 
 			playButton.findView().setOnClickListener(
-				PlayClickHandler(
-					viewFlipper,
-					fileListParameterProvider,
-					fileStringListProvider,
-					item
-				)
+				PlayClickHandler(viewFlipper, itemStringListProvider, libraryId, item)
 			)
 
 			viewButton.findView().setOnClickListener(ViewFilesClickHandler(viewFlipper, item))

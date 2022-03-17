@@ -22,9 +22,7 @@ class WhenReceivingTheChange : AndroidContext() {
 			53)
 
 		val connectionSettingsChangeReceiver = ConnectionSessionSettingsChangeReceiver(connectionSessions)
-		connectionSettingsChangeReceiver.onReceive(
-			mockk(),
-			connectionSettingsUpdatedIntent)
+		connectionSettingsChangeReceiver.onReceive(connectionSettingsUpdatedIntent)
 	}
 
 	@Test

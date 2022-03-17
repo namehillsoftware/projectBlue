@@ -5,10 +5,10 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.CheckFor
 import com.namehillsoftware.handoff.promises.Promise;
 
 public class StoredItemsChecker implements CheckIfAnyStoredItemsExist {
-	private final IStoredItemAccess storedItemAccess;
+	private final AccessStoredItems storedItemAccess;
 	private final CheckForAnyStoredFiles checkForAnyStoredFiles;
 
-	public StoredItemsChecker(IStoredItemAccess storedItemAccess, CheckForAnyStoredFiles checkForAnyStoredFiles) {
+	public StoredItemsChecker(AccessStoredItems storedItemAccess, CheckForAnyStoredFiles checkForAnyStoredFiles) {
 		this.storedItemAccess = storedItemAccess;
 		this.checkForAnyStoredFiles = checkForAnyStoredFiles;
 	}

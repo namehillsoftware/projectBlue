@@ -8,6 +8,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.list.Fil
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.MenuNotifications
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.android.messages.SendMessages
+import com.lasthopesoftware.bluewater.shared.cls
 import org.slf4j.LoggerFactory
 
 class ClickItemListener(
@@ -18,7 +19,7 @@ class ClickItemListener(
 ) : View.OnClickListener {
 
 	companion object {
-		private val logger by lazy { LoggerFactory.getLogger(ClickItemListener::class.java) }
+		private val logger by lazy { LoggerFactory.getLogger(cls<ClickItemListener>()) }
 	}
 
 	override fun onClick(view: View?) {
@@ -26,11 +27,11 @@ class ClickItemListener(
 
 		sendMessages.sendBroadcast(Intent(MenuNotifications.launchingActivity))
 		provideItems
-			.promiseItems(libraryId, item.key)
+			.promiseItems(libraryId, item.itemId)
 			.then(
 				{ items ->
 					if (items.isNotEmpty()) {
-						val itemListIntent = Intent(context, ItemListActivity::class.java)
+						val itemListIntent = Intent(context, cls<ItemListActivity>())
 						itemListIntent.putExtra(ItemListActivity.KEY, item.key)
 						itemListIntent.putExtra(ItemListActivity.VALUE, item.value)
 						context.startActivity(itemListIntent)

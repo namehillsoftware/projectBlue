@@ -1,32 +1,29 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri
 
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.provider.MediaStore
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.uri.IFileUriProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.uri.ProvideFileUrisForLibrary
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.IMediaQueryCursorProvider
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
 import com.lasthopesoftware.bluewater.shared.IoCommon
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
+import com.lasthopesoftware.bluewater.shared.android.messages.SendMessages
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.storage.read.permissions.IStorageReadPermissionArbitratorForOs
 import com.namehillsoftware.handoff.promises.Promise
 import org.slf4j.LoggerFactory
 import java.io.File
 
-class MediaFileUriProvider
-(
-    private val context: Context,
-    private val mediaQueryCursorProvider: IMediaQueryCursorProvider,
-    private val externalStorageReadPermissionsArbitrator: IStorageReadPermissionArbitratorForOs,
-    private val libraryIdentifierProvider: ProvideSelectedLibraryId,
-    private val isSilent: Boolean
+class MediaFileUriProvider(
+	private val mediaQueryCursorProvider: IMediaQueryCursorProvider,
+	private val externalStorageReadPermissionsArbitrator: IStorageReadPermissionArbitratorForOs,
+	private val libraryIdentifierProvider: ProvideSelectedLibraryId,
+	private val isSilent: Boolean,
+	private val sendMessages: SendMessages
 ) : IFileUriProvider, ProvideFileUrisForLibrary {
     override fun promiseFileUri(serviceFile: ServiceFile): Promise<Uri?> =
 		libraryIdentifierProvider.selectedLibraryId.eventually {
@@ -40,10 +37,10 @@ class MediaFileUriProvider
 				cursor?.use {
 					if (!cursor.moveToFirst()) return@then null
 					val fileUriString =
-						cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Images.Media.DATA))
+						cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Audio.Media.DATA))
 					if (fileUriString == null || fileUriString.isEmpty()) return@then null
 
-					// The serviceFile object will produce a properly escaped ServiceFile URI, as opposed to what is stored in the DB
+					// The file object will produce a properly escaped file URI, as opposed to what is stored in the DB
 					val systemFile = File(
 						fileUriString.replaceFirst(IoCommon.FileUriScheme + "://", "")
 					)
@@ -61,7 +58,7 @@ class MediaFileUriProvider
 						}
 						broadcastIntent.putExtra(mediaFileFoundFileKey, serviceFile.key)
 						broadcastIntent.putExtra(mediaFileFoundLibraryId, libraryId.id)
-						LocalBroadcastManager.getInstance(context).sendBroadcast(broadcastIntent)
+						sendMessages.sendBroadcast(broadcastIntent)
 					}
 					logger.info("Returning serviceFile URI from local disk.")
 					Uri.fromFile(systemFile)

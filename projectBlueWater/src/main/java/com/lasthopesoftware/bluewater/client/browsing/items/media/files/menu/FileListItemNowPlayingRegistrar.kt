@@ -1,39 +1,42 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.media.files.menu
 
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
 import android.content.IntentFilter
-import android.view.View
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
 import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
+import com.lasthopesoftware.bluewater.shared.android.messages.RegisterForMessages
 
-class FileListItemNowPlayingRegistrar(private val localBroadcastManager: LocalBroadcastManager) {
-	fun registerNewHandler(fileListItem: FileListItemContainer, receiver: ReceiveBroadcastEvents): AutoCloseable {
-		val fileListItemNowPlayingHandler = FileListItemNowPlayingHandler(fileListItem, receiver)
-		localBroadcastManager.registerReceiver(fileListItemNowPlayingHandler, IntentFilter(PlaylistEvents.onPlaylistTrackChange))
-		fileListItem.textViewContainer.addOnAttachStateChangeListener(fileListItemNowPlayingHandler)
-		return fileListItemNowPlayingHandler
+class FileListItemNowPlayingRegistrar(private val messageRegistrar: RegisterForMessages) {
+
+	companion object {
+		private val intentFilter = IntentFilter(PlaylistEvents.onPlaylistTrackChange)
 	}
 
-	private class FileListItemNowPlayingHandler(fileListItem: FileListItemContainer, private val receiver: ReceiveBroadcastEvents) : BroadcastReceiver(), View.OnAttachStateChangeListener, AutoCloseable {
-		private val fileTextViewContainer = fileListItem.textViewContainer
-		private val localBroadcastManager = LocalBroadcastManager.getInstance(fileTextViewContainer.context)
+	private val syncObj = Any()
+	private val registeredHandlers = HashSet<ReceiveBroadcastEvents>()
 
-		override fun onReceive(context: Context?, intent: Intent?) {
-			if (context != null && intent != null) receiver.onReceive(context, intent)
+	fun registerNewHandler(receiver: ReceiveBroadcastEvents): AutoCloseable =
+		FileListItemNowPlayingHandler(receiver).also {
+			synchronized(syncObj) {
+				messageRegistrar.registerReceiver(receiver, intentFilter)
+				registeredHandlers.add(receiver)
+			}
 		}
 
-		override fun close() {
-			localBroadcastManager.unregisterReceiver(this)
-			fileTextViewContainer.removeOnAttachStateChangeListener(this)
+	fun clear() {
+		synchronized(syncObj) {
+			registeredHandlers.forEach(messageRegistrar::unregisterReceiver)
+			registeredHandlers.clear()
 		}
+	}
 
-		override fun onViewDetachedFromWindow(v: View) {
-			localBroadcastManager.unregisterReceiver(this)
+	private fun remove(receiver: ReceiveBroadcastEvents) {
+		synchronized(syncObj) {
+			messageRegistrar.unregisterReceiver(receiver)
+			registeredHandlers.remove(receiver)
 		}
+	}
 
-		override fun onViewAttachedToWindow(v: View) {}
+	private inner class FileListItemNowPlayingHandler(private val receiver: ReceiveBroadcastEvents) : AutoCloseable {
+		override fun close() = remove(receiver)
 	}
 }

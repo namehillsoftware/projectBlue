@@ -6,11 +6,11 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.s
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.namehillsoftware.handoff.promises.Promise
 
-class LibraryFileProvider(private val fileStringListProvider: LibraryFileStringListProvider) : AbstractFileResponder(), ProvideLibraryFiles {
+class LibraryFileProvider(private val fileStringListProvider: LibraryFileStringListProvider) : ProvideLibraryFiles {
 	override fun promiseFiles(libraryId: LibraryId, option: FileListParameters.Options, vararg params: String): Promise<List<ServiceFile>> {
 		return fileStringListProvider
 			.promiseFileStringList(libraryId, option, *params)
-			.eventually(this)
-			.then(this)
+			.eventually(FileResponses)
+			.then(FileResponses)
 	}
 }

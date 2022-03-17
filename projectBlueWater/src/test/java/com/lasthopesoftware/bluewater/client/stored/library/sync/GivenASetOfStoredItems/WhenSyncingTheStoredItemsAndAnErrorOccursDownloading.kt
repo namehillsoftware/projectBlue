@@ -1,11 +1,11 @@
 package com.lasthopesoftware.bluewater.client.stored.library.sync.GivenASetOfStoredItems
 
-import com.lasthopesoftware.bluewater.client.browsing.items.Item
+import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.ProvideLibraryFiles
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.stored.library.items.IStoredItemAccess
+import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.AccessStoredFiles
@@ -28,16 +28,16 @@ import java.io.IOException
 class WhenSyncingTheStoredItemsAndAnErrorOccursDownloading {
 	companion object {
 		private val storedFileJobResults by lazy {
-			val storedItemAccessMock = mockk<IStoredItemAccess>()
+			val storedItemAccessMock = mockk<AccessStoredItems>()
 			every { storedItemAccessMock.promiseStoredItems(LibraryId(42)) } returns Promise(
 				setOf(
 					StoredItem(1, 14, StoredItem.ItemType.ITEM)
 				)
 			)
 
-			val fileListParameters = FileListParameters.getInstance()
+			val fileListParameters = FileListParameters
 			val mockFileProvider = mockk<ProvideLibraryFiles>()
-			every { mockFileProvider.promiseFiles(LibraryId(42), FileListParameters.Options.None, *fileListParameters.getFileListParameters(Item(14))) } returns Promise(
+			every { mockFileProvider.promiseFiles(LibraryId(42), FileListParameters.Options.None, *fileListParameters.getFileListParameters(ItemId(14))) } returns Promise(
 				listOf(
 					ServiceFile(1),
 					ServiceFile(2),

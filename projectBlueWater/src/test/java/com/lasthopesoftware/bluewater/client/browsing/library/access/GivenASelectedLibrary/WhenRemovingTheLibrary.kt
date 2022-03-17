@@ -7,8 +7,8 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.Pro
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectBrowserLibrary
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
 import com.lasthopesoftware.bluewater.client.stored.library.items.FakeStoredItemAccess
-import com.lasthopesoftware.bluewater.client.stored.library.items.IStoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
 import com.namehillsoftware.handoff.promises.Promise
@@ -28,7 +28,7 @@ class WhenRemovingTheLibrary {
         fun before() {
             val library = Library()
             library.setId(14)
-            val fakeStoredItemAccess: IStoredItemAccess = FakeStoredItemAccess(
+            val fakeStoredItemAccess: AccessStoredItems = FakeStoredItemAccess(
                 StoredItem(14, 1, StoredItem.ItemType.ITEM),
                 StoredItem(1, 3, StoredItem.ItemType.ITEM),
                 StoredItem(5, 2, StoredItem.ItemType.ITEM),

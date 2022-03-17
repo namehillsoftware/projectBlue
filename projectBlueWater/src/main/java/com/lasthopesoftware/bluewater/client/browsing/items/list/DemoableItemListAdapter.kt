@@ -7,8 +7,7 @@ import android.widget.ViewAnimator
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.IFileListParameterProvider
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.ItemStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
@@ -21,12 +20,10 @@ import tourguide.tourguide.Pointer
 import tourguide.tourguide.ToolTip
 import tourguide.tourguide.TourGuide
 
-class DemoableItemListAdapter
-(
+class DemoableItemListAdapter(
 	private val activity: Activity,
 	sendMessages: SendMessages,
-	fileListParameterProvider: IFileListParameterProvider,
-	fileStringListProvider: FileStringListProvider,
+	itemStringListProvider: ItemStringListProvider,
 	itemListMenuEvents: IItemListMenuChangeHandler,
 	storedItemAccess: StoredItemAccess,
 	provideItems: ProvideItems,
@@ -35,8 +32,7 @@ class DemoableItemListAdapter
 ) : ItemListAdapter(
 	activity,
 	sendMessages,
-	fileListParameterProvider,
-	fileStringListProvider,
+	itemStringListProvider,
 	itemListMenuEvents,
 	storedItemAccess,
 	provideItems,

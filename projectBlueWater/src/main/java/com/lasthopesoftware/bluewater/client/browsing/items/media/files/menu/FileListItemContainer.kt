@@ -10,13 +10,13 @@ import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.NotifyOnFlipViewAnimator
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 
-/**
- * Created by david on 4/14/15.
- */
 class FileListItemContainer(parentContext: Context) {
-	val textViewContainer: RelativeLayout
+	private val textViewContainer: RelativeLayout
 	private val textViewFinder: LazyViewFinder<TextView>
+
 	val viewAnimator = NotifyOnFlipViewAnimator(parentContext)
+	val textView
+		get() = textViewFinder.findView()
 
 	init {
 		viewAnimator.layoutParams = AbsListView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
@@ -24,9 +24,5 @@ class FileListItemContainer(parentContext: Context) {
 		textViewContainer = inflater.inflate(R.layout.layout_standard_text, viewAnimator, false) as RelativeLayout
 		textViewFinder = LazyViewFinder(textViewContainer, R.id.tvStandard)
 		viewAnimator.addView(textViewContainer)
-	}
-
-	fun findTextView(): TextView {
-		return textViewFinder.findView()
 	}
 }

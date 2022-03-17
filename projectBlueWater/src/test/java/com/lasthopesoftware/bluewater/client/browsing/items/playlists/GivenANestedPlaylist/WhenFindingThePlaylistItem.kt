@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.playlists.GivenANestedPlaylist
 
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
+import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.Playlist
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistItemFinder
@@ -22,7 +23,7 @@ class WhenFindingThePlaylistItem {
 
 		private val playlistId by lazy { random.nextInt() }
 
-		private val expectedItem by lazy { Item(random.nextInt()).setPlaylistId(playlistId) }
+		private val expectedItem by lazy { Item(random.nextInt(), null, playlistId) }
 
 		private val item by lazy {
 			val libraryViews = mockk<ProvideLibraryViews>()
@@ -38,13 +39,13 @@ class WhenFindingThePlaylistItem {
 
 			setupItemProviderWithItems(
 				itemProvider,
-				2,
+				ItemId(2),
 				3,
 				false
 			)
 			var generatedItems = setupItemProviderWithItems(
 				itemProvider,
-				16,
+				ItemId(16),
 				15,
 				true
 			)
@@ -53,14 +54,14 @@ class WhenFindingThePlaylistItem {
 				if (item == firstLevelChosenItem) continue
 				setupItemProviderWithItems(
 					itemProvider,
-					item.key,
+					item.itemId,
 					100,
 					true
 				)
 			}
 			generatedItems = setupItemProviderWithItems(
 				itemProvider,
-				16,
+				ItemId(16),
 				90,
 				true
 			)
@@ -68,11 +69,11 @@ class WhenFindingThePlaylistItem {
 			val secondLevelChosenItem = generatedItems[random.nextInt(generatedItems.size)]
 			for (item in generatedItems) {
 				if (item == secondLevelChosenItem) continue
-				every { itemProvider.promiseItems(LibraryId(3), item.key) } returns Promise(emptyList())
+				every { itemProvider.promiseItems(LibraryId(3), item.itemId) } returns Promise(emptyList())
 			}
-			val decoy = Item(random.nextInt()).setPlaylistId(random.nextInt())
+			val decoy = Item(random.nextInt(), null, random.nextInt())
 
-			every { itemProvider.promiseItems(LibraryId(3), secondLevelChosenItem.key) } returns Promise(
+			every { itemProvider.promiseItems(LibraryId(3), secondLevelChosenItem.itemId) } returns Promise(
 				listOf(
 					decoy,
 					expectedItem
@@ -83,11 +84,11 @@ class WhenFindingThePlaylistItem {
 			playlistItemFinder.promiseItem(LibraryId(3), Playlist(playlistId)).toFuture().get()
 		}
 
-		private fun setupItemProviderWithItems(itemProvider: ProvideItems, sourceItem: Int, numberOfChildren: Int, withPlaylistIds: Boolean): List<Item> {
+		private fun setupItemProviderWithItems(itemProvider: ProvideItems, sourceItem: ItemId, numberOfChildren: Int, withPlaylistIds: Boolean): List<Item> {
 			val items = ArrayList<Item>(numberOfChildren)
 			for (i in 0 until numberOfChildren) {
-				val newItem = Item(random.nextInt())
-				if (withPlaylistIds) newItem.playlistId = random.nextInt()
+				val newItem = if (withPlaylistIds) Item(random.nextInt(), null, random.nextInt())
+				else Item(random.nextInt())
 				items.add(newItem)
 			}
 			every { itemProvider.promiseItems(LibraryId(3), sourceItem) } returns Promise(items)

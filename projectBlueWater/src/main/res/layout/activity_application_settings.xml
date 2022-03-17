@@ -66,31 +66,6 @@
                     android:text="@string/useVolumeLevelingSetting" />
 
                 <LinearLayout
-                    android:id="@+id/notificationSettingsContainer"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_margin="10dp"
-                    android:gravity="center_horizontal"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:layout_width="fill_parent"
-                        android:layout_height="wrap_content"
-                        android:layout_marginBottom="10dp"
-                        android:text="@string/notification_settings"
-                        android:textAppearance="?android:attr/textAppearanceMedium" />
-
-                    <Button
-                        android:id="@+id/modifyNotificationSettingsButton"
-                        style="?android:attr/buttonBarButtonStyle"
-                        android:layout_width="wrap_content"
-                        android:layout_height="match_parent"
-                        android:drawableEnd="@drawable/open_external"
-                        android:text="@string/modify_notification_settings"
-                        android:textAppearance="?android:attr/textAppearanceSmall" />
-                </LinearLayout>
-
-                <LinearLayout
                     android:id="@+id/playbackEngineContainer"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"

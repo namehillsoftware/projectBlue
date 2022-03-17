@@ -7,9 +7,12 @@ import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import okhttp3.Response
 
-class LibraryFileStringListProvider(private val libraryConnections: ManageConnectionSessions) : ImmediateResponse<Response, String> {
+class LibraryFileStringListProvider(private val libraryConnections: ManageConnectionSessions) :
+	ProvideFileStringListsForParameters,
+	ImmediateResponse<Response, String>
+{
 
-	fun promiseFileStringList(libraryId: LibraryId, option: FileListParameters.Options, vararg params: String): Promise<String> {
+	override fun promiseFileStringList(libraryId: LibraryId, option: FileListParameters.Options, vararg params: String): Promise<String> {
 		return libraryConnections
 			.promiseLibraryConnection(libraryId)
 			.eventually { connection ->

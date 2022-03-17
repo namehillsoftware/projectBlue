@@ -3,8 +3,10 @@ package com.lasthopesoftware.bluewater.client.browsing.remote
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaDescriptionCompat
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
+import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.ProvideFiles
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.ProvideItemFiles
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.ProvideLibraryFiles
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.SearchFileParameterProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
@@ -16,7 +18,8 @@ import com.namehillsoftware.handoff.promises.Promise
 class MediaItemsBrowser(
 	private val selectedLibraryIdProvider: ProvideSelectedLibraryId,
 	private val itemProvider: ProvideItems,
-	private val fileProvider: ProvideFiles,
+	private val fileProvider: ProvideLibraryFiles,
+	private val itemFileProvider: ProvideItemFiles,
 	private val libraryViews: ProvideLibraryViews,
 	private val mediaItemServiceFileLookup: GetMediaItemsFromServiceFiles,
 ) : BrowseMediaItems {
@@ -32,18 +35,17 @@ class MediaItemsBrowser(
 			)
 	}
 
-	override fun promiseItems(item: Item): Promise<Collection<MediaBrowserCompat.MediaItem>> =
+	override fun promiseItems(itemId: ItemId): Promise<Collection<MediaBrowserCompat.MediaItem>> =
 		selectedLibraryIdProvider.selectedLibraryId.eventually { maybeId ->
 			maybeId
 				?.let { libraryId ->
 					itemProvider
-						.promiseItems(libraryId, item.key)
+						.promiseItems(libraryId, itemId)
 						.eventually { items ->
 							if (items.any()) items.map(::toMediaItem).toPromise()
 							else {
-								val parameters = FileListParameters.getInstance().getFileListParameters(item)
-								fileProvider
-									.promiseFiles(FileListParameters.Options.None, *parameters)
+								itemFileProvider
+									.promiseFiles(libraryId, itemId, FileListParameters.Options.None)
 									.eventually<Collection<MediaBrowserCompat.MediaItem>> { files ->
 										Promise.whenAll(files.map { f -> mediaItemServiceFileLookup.promiseMediaItem(f).then { mi -> Pair(f, mi) } })
 											.then { pairs ->
@@ -54,7 +56,12 @@ class MediaItemsBrowser(
 														MediaBrowserCompat.MediaItem(
 															MediaDescriptionCompat
 																.Builder()
-																.setMediaId(RemoteBrowserService.itemFileMediaIdPrefix + RemoteBrowserService.mediaIdDelimiter + item.key + RemoteBrowserService.mediaIdDelimiter + i)
+																.setMediaId(
+																	arrayOf(
+																		RemoteBrowserService.itemFileMediaIdPrefix,
+																		itemId.id.toString(),
+																		i.toString()
+																	).joinToString(RemoteBrowserService.mediaIdDelimiter.toString()))
 																.setDescription(description.description)
 																.setExtras(description.extras)
 																.setTitle(description.title)
@@ -81,8 +88,14 @@ class MediaItemsBrowser(
 
 	override fun promiseItems(query: String): Promise<Collection<MediaBrowserCompat.MediaItem>> {
 		val parameters = SearchFileParameterProvider.getFileListParameters(query)
-		return fileProvider
-			.promiseFiles(FileListParameters.Options.None, *parameters)
+		return selectedLibraryIdProvider.selectedLibraryId
+			.eventually { maybeId ->
+				maybeId
+					?.let { libraryId ->
+						fileProvider.promiseFiles(libraryId, FileListParameters.Options.None, *parameters)
+					}
+					.keepPromise(emptyList())
+			}
 			.eventually { files -> Promise.whenAll(files.map(mediaItemServiceFileLookup::promiseMediaItem)) }
 	}
 }

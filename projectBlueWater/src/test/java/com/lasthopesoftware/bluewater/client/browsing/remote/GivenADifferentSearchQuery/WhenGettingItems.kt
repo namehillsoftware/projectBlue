@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.browsing.remote.GivenADifferentSea
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaMetadataCompat
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.ProvideFiles
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.ProvideLibraryFiles
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.SearchFileParameterProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
@@ -61,9 +61,9 @@ class `When Getting Items` {
 				)
 			}
 
-			val provideFiles = mockk<ProvideFiles>()
+			val provideFiles = mockk<ProvideLibraryFiles>()
 			val parameters = SearchFileParameterProvider.getFileListParameters("king")
-			every { provideFiles.promiseFiles(FileListParameters.Options.None, *parameters) } returns Promise(
+			every { provideFiles.promiseFiles(LibraryId(873), FileListParameters.Options.None, *parameters) } returns Promise(
 				serviceFileIds.map(::ServiceFile)
 			)
 
@@ -71,6 +71,7 @@ class `When Getting Items` {
                 selectedLibraryId,
                 mockk(),
                 provideFiles,
+				mockk(),
                 mockk(),
                 serviceFiles,
 			)

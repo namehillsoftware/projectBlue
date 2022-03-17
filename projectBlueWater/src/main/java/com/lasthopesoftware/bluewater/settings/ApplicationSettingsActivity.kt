@@ -2,17 +2,13 @@ package com.lasthopesoftware.bluewater.settings
 
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.os.Bundle
-import android.provider.Settings
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.Button
-import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.RadioGroup
-import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -33,27 +29,17 @@ import com.lasthopesoftware.bluewater.client.servers.list.ServerListAdapter
 import com.lasthopesoftware.bluewater.client.servers.list.listeners.EditServerClickListener
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
-import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.SharedChannelProperties
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
-import com.lasthopesoftware.bluewater.tutorials.TutorialManager
-import tourguide.tourguide.Overlay
-import tourguide.tourguide.Pointer
-import tourguide.tourguide.ToolTip
-import tourguide.tourguide.TourGuide
 
 class ApplicationSettingsActivity : AppCompatActivity() {
-	private val channelConfiguration: SharedChannelProperties by lazy { SharedChannelProperties(this) }
 	private val progressBar = LazyViewFinder<ProgressBar>(this, R.id.recyclerLoadingProgress)
 	private val serverListView = LazyViewFinder<RecyclerView>(this, R.id.loadedRecyclerView)
-	private val notificationSettingsContainer = LazyViewFinder<LinearLayout>(this, R.id.notificationSettingsContainer)
-	private val modifyNotificationSettingsButton = LazyViewFinder<Button>(this, R.id.modifyNotificationSettingsButton)
 	private val addServerButton = LazyViewFinder<Button>(this, R.id.addServerButton)
 	private val killPlaybackEngineButton = LazyViewFinder<Button>(this, R.id.killPlaybackEngine)
-	private val settingsMenu = SettingsMenu(this, AboutTitleBuilder(this))
+	private val settingsMenu by lazy { SettingsMenu(this, AboutTitleBuilder(this)) }
 	private val applicationSettingsRepository by lazy { getApplicationSettingsRepository() }
 	private val messageBus by lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
-	private val tutorialManager by lazy { TutorialManager(this) }
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -110,38 +96,6 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 		addServerButton.findView().setOnClickListener(EditServerClickListener(this, -1))
 
 		updateServerList()
-
-		notificationSettingsContainer.findView().visibility = View.GONE
-		if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
-
-		notificationSettingsContainer.findView().visibility = View.VISIBLE
-
-		tutorialManager
-			.promiseWasTutorialShown(TutorialManager.KnownTutorials.adjustNotificationInApplicationSettingsTutorial)
-			.eventually(LoopedInPromise.response({ wasTutorialShown ->
-				if (wasTutorialShown) {
-					modifyNotificationSettingsButton.findView().setOnClickListener { launchNotificationSettings() }
-				} else {
-					val displayColor = getColor(R.color.project_blue_light)
-					val tourGuide = TourGuide.init(this).with(TourGuide.Technique.CLICK)
-						.setPointer(Pointer().setColor(displayColor))
-						.setToolTip(ToolTip()
-							.setTitle(getString(R.string.notification_settings_tutorial_title))
-							.setDescription(getString(R.string.notification_settings_tutorial).format(
-								getString(R.string.modify_notification_settings),
-								getString(R.string.app_name)))
-							.setBackgroundColor(displayColor))
-						.setOverlay(Overlay())
-						.playOn(modifyNotificationSettingsButton.findView())
-
-					modifyNotificationSettingsButton.findView().setOnClickListener {
-						tourGuide.cleanUp()
-						launchNotificationSettings()
-					}
-
-					tutorialManager.promiseTutorialMarked(TutorialManager.KnownTutorials.adjustNotificationInApplicationSettingsTutorial)
-				}
-			}, this))
 	}
 
 	override fun onCreateOptionsMenu(menu: Menu): Boolean = settingsMenu.buildSettingsMenu(menu)
@@ -152,14 +106,6 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 	}
 
 	override fun onOptionsItemSelected(item: MenuItem): Boolean = settingsMenu.handleSettingsMenuClicks(item)
-
-	@RequiresApi(api = Build.VERSION_CODES.O)
-	private fun launchNotificationSettings() {
-		val intent = Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
-		intent.putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
-		intent.putExtra(Settings.EXTRA_CHANNEL_ID, channelConfiguration.channelId)
-		startActivity(intent)
-	}
 
 	private fun updateServerList() {
 		serverListView.findView().visibility = View.INVISIBLE

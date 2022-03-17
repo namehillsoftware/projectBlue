@@ -48,6 +48,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieva
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.MediaFileIdProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.MediaQueryCursorProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFilePathsLookup
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFileUpdater
 import com.lasthopesoftware.bluewater.client.stored.library.sync.LibrarySyncsHandler
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncChecker
@@ -57,10 +58,10 @@ import com.lasthopesoftware.bluewater.client.stored.sync.notifications.SyncChann
 import com.lasthopesoftware.bluewater.client.stored.sync.receivers.SyncStartedReceiver
 import com.lasthopesoftware.bluewater.client.stored.sync.receivers.file.*
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
+import com.lasthopesoftware.bluewater.shared.android.makePendingIntentImmutable
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.notifications.NoOpChannelActivator
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.NotificationChannelActivator
-import com.lasthopesoftware.bluewater.shared.makePendingIntentImmutable
 import com.lasthopesoftware.bluewater.shared.policies.caching.CachingPolicyFactory
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
@@ -120,20 +121,14 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 		val serviceFilesCollector = StoredItemServiceFileCollector(
 			StoredItemAccess(context),
 			LibraryFileProvider(LibraryFileStringListProvider(libraryConnections)),
-			FileListParameters.getInstance())
+			FileListParameters
+        )
 
-		DelegatingStoredItemServiceFileCollector(
-			serviceFilesCollector,
-			cachingPolicyFactory
-		)
+		DelegatingStoredItemServiceFileCollector(serviceFilesCollector, cachingPolicyFactory)
 	}
 
 	private val storedFilesPruner by lazy {
-		StoredFilesPruner(
-			serviceFilesCollector,
-			StoredFilesCollection(context),
-			storedFileAccess
-		)
+		StoredFilesPruner(serviceFilesCollector, StoredFilesCollection(context), storedFileAccess)
 	}
 
 	private val storedFilesSynchronization by lazy {
@@ -143,23 +138,22 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 		)
 
 		val storedFileUpdater = StoredFileUpdater(
-			context,
-			MediaFileUriProvider(
-				context,
+            context,
+            MediaFileUriProvider(
 				cursorProvider,
 				readPermissionArbitratorForOs,
 				libraryIdentifierProvider,
-				true
+				true,
+				messageBus
 			),
-			MediaFileIdProvider(
-				cursorProvider,
-				readPermissionArbitratorForOs
-			),
-			StoredFileQuery(context),
-			libraryProvider,
-			fileProperties,
-			SyncDirectoryLookup(libraryProvider, PublicDirectoryLookup(context), PrivateDirectoryLookup(context), FreeSpaceLookup)
-		)
+            MediaFileIdProvider(cursorProvider, readPermissionArbitratorForOs),
+            StoredFileQuery(context),
+            libraryProvider,
+			StoredFilePathsLookup(
+				fileProperties,
+				SyncDirectoryLookup(libraryProvider, PublicDirectoryLookup(context), PrivateDirectoryLookup(context), FreeSpaceLookup)
+			)
+        )
 
 		val syncHandler = LibrarySyncsHandler(
 			serviceFilesCollector,
@@ -260,20 +254,20 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 				val broadcastReceiver = StoredFileBroadcastReceiver(receiveStoredFileEvent)
 				messageBus.registerReceiver(
 					broadcastReceiver,
-					receiveStoredFileEvent.acceptedEvents().fold(IntentFilter(), { i, e ->
+					receiveStoredFileEvent.acceptedEvents().fold(IntentFilter()) { i, e ->
 						i.addAction(e)
 						i
-					}))
+					})
 			}
 		}
 
 		if (!syncStartedReceiver.isInitialized()) {
 			messageBus.registerReceiver(
 				syncStartedReceiver.value,
-				syncStartedReceiver.value.acceptedEvents().fold(IntentFilter(), { i, e ->
+				syncStartedReceiver.value.acceptedEvents().fold(IntentFilter()) { i, e ->
 					i.addAction(e)
 					i
-				}))
+				})
 		}
 
 		return if (cancellationProxy.isCancelled) Unit.toPromise()

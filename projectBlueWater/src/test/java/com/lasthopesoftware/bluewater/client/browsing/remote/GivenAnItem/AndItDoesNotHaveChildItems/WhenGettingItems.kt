@@ -2,10 +2,10 @@ package com.lasthopesoftware.bluewater.client.browsing.remote.GivenAnItem.AndItD
 
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaMetadataCompat
-import com.lasthopesoftware.bluewater.client.browsing.items.Item
+import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.ProvideFiles
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.ProvideItemFiles
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -51,7 +51,7 @@ class `When Getting Items` {
 			every { selectedLibraryId.selectedLibraryId } returns Promise(LibraryId(22))
 
 			val itemsProvider = mockk<ProvideItems>()
-			every { itemsProvider.promiseItems(LibraryId(22), 743) } returns Promise(emptyList())
+			every { itemsProvider.promiseItems(LibraryId(22), ItemId(743)) } returns Promise(emptyList())
 
 			val serviceFiles = mockk<GetMediaItemsFromServiceFiles>()
 			for (id in serviceFileIds) {
@@ -75,21 +75,22 @@ class `When Getting Items` {
 				)
 			}
 
-			val provideFiles = mockk<ProvideFiles>()
-			every { provideFiles.promiseFiles(FileListParameters.Options.None, *FileListParameters.getInstance().getFileListParameters(Item(743))) } returns Promise(
+			val provideFiles = mockk<ProvideItemFiles>()
+			every { provideFiles.promiseFiles(LibraryId(22), ItemId(743), FileListParameters.Options.None) } returns Promise(
 				serviceFileIds.map(::ServiceFile)
 			)
 
 			val mediaItemsBrowser = MediaItemsBrowser(
 				selectedLibraryId,
 				itemsProvider,
+				mockk(),
 				provideFiles,
 				mockk(),
 				serviceFiles,
 			)
 
 			mediaItemsBrowser
-				.promiseItems(Item(743))
+				.promiseItems(ItemId(743))
 				.toFuture()
 				.get()
 		}

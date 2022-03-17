@@ -21,7 +21,9 @@ class AudioRenderersFactory(private val context: Context, private val handler: H
 					false,
 					if (DebugFlag.isDebugCompilation) handler else null,
 					if (DebugFlag.isDebugCompilation) AudioRenderingEventListener() else null,
-					DefaultAudioSink(AudioCapabilities.getCapabilities(context), emptyArray()))))
+					DefaultAudioSink.Builder()
+						.setAudioCapabilities(AudioCapabilities.getCapabilities(context))
+						.build())))
 		} catch (err: Throwable) {
 			Promise(err)
 		}

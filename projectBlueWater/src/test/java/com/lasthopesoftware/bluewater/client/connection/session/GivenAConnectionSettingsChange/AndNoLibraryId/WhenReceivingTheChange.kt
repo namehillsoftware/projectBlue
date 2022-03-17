@@ -18,9 +18,7 @@ class WhenReceivingTheChange : AndroidContext() {
 		val connectionSettingsUpdatedIntent = Intent(ObservableConnectionSettingsLibraryStorage.connectionSettingsUpdated)
 
 		val connectionSettingsChangeReceiver = ConnectionSessionSettingsChangeReceiver(connectionSessions)
-		connectionSettingsChangeReceiver.onReceive(
-			mockk(),
-			connectionSettingsUpdatedIntent)
+		connectionSettingsChangeReceiver.onReceive(connectionSettingsUpdatedIntent)
 	}
 
 	@Test

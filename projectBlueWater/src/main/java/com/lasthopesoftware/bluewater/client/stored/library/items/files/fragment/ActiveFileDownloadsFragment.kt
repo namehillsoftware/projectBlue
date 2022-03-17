@@ -1,7 +1,5 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.fragment
 
-import android.content.BroadcastReceiver
-import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
@@ -25,16 +23,18 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.fragment
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization
 import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
+import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
+import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.namehillsoftware.handoff.promises.Promise
 import java.util.concurrent.ConcurrentHashMap
 
 class ActiveFileDownloadsFragment : Fragment() {
-	private var onSyncStartedReceiver: BroadcastReceiver? = null
-	private var onSyncStoppedReceiver: BroadcastReceiver? = null
-	private var onFileQueuedReceiver: BroadcastReceiver? = null
-	private var onFileDownloadedReceiver: BroadcastReceiver? = null
-	private val localBroadcastManager = lazy { LocalBroadcastManager.getInstance(requireContext()) }
+	private var onSyncStartedReceiver: ReceiveBroadcastEvents? = null
+	private var onSyncStoppedReceiver: ReceiveBroadcastEvents? = null
+	private var onFileQueuedReceiver: ReceiveBroadcastEvents? = null
+	private var onFileDownloadedReceiver: ReceiveBroadcastEvents? = null
+	private val messageBus = lazy { MessageBus(LocalBroadcastManager.getInstance(requireContext())) }
 
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
 		if (container == null) return null
@@ -72,21 +72,19 @@ class ActiveFileDownloadsFragment : Fragment() {
 
 						activeFileDownloadsAdapter.updateListEventually(localStoredFiles.values.toList())
 
-						onFileDownloadedReceiver?.run { localBroadcastManager.value.unregisterReceiver(this)	}
-						localBroadcastManager.value.registerReceiver(
-							object : BroadcastReceiver() {
-								override fun onReceive(context: Context, intent: Intent) {
-									val storedFileId = intent.getIntExtra(StoredFileSynchronization.storedFileEventKey, -1)
-									localStoredFiles.remove(storedFileId)
-									activeFileDownloadsAdapter.updateListEventually(localStoredFiles.values.toList())
-								}
+						onFileDownloadedReceiver?.run { messageBus.value.unregisterReceiver(this)	}
+						messageBus.value.registerReceiver(
+							ReceiveBroadcastEvents { intent ->
+								val storedFileId = intent.getIntExtra(StoredFileSynchronization.storedFileEventKey, -1)
+								localStoredFiles.remove(storedFileId)
+								activeFileDownloadsAdapter.updateListEventually(localStoredFiles.values.toList())
 							}.apply { onFileDownloadedReceiver = this },
 							IntentFilter(StoredFileSynchronization.onFileDownloadedEvent))
 
-						onFileQueuedReceiver?.run { localBroadcastManager.value.unregisterReceiver(this) }
-						localBroadcastManager.value.registerReceiver(
-							object : BroadcastReceiver() {
-								override fun onReceive(context: Context, intent: Intent) {
+						onFileQueuedReceiver?.run { messageBus.value.unregisterReceiver(this) }
+						messageBus.value.registerReceiver(
+							object : ReceiveBroadcastEvents {
+								override fun onReceive(intent: Intent) {
 									val storedFileId = intent.getIntExtra(StoredFileSynchronization.storedFileEventKey, -1)
 									if (storedFileId == -1) return
 									if (localStoredFiles.containsKey(storedFileId)) return
@@ -119,23 +117,15 @@ class ActiveFileDownloadsFragment : Fragment() {
 			toggleSyncButton.isEnabled = true
 		}, context))
 
-		onSyncStartedReceiver?.run { localBroadcastManager.value.unregisterReceiver(this) }
+		onSyncStartedReceiver?.run { messageBus.value.unregisterReceiver(this) }
 
-		localBroadcastManager.value.registerReceiver(
-			object : BroadcastReceiver() {
-				override fun onReceive(context: Context, intent: Intent) {
-					toggleSyncButton.text = stopSyncLabel
-				}
-			}.apply { onSyncStartedReceiver = this },
+		messageBus.value.registerReceiver(
+			ReceiveBroadcastEvents { toggleSyncButton.text = stopSyncLabel }.apply { onSyncStartedReceiver = this },
 			IntentFilter(StoredFileSynchronization.onSyncStartEvent))
 
-		onSyncStoppedReceiver?.run { localBroadcastManager.value.unregisterReceiver(this) }
-		localBroadcastManager.value.registerReceiver(
-			object : BroadcastReceiver() {
-				override fun onReceive(context: Context, intent: Intent) {
-					toggleSyncButton.text = startSyncLabel
-				}
-			}.apply { onSyncStoppedReceiver = this },
+		onSyncStoppedReceiver?.run { messageBus.value.unregisterReceiver(this) }
+		messageBus.value.registerReceiver(
+			ReceiveBroadcastEvents { toggleSyncButton.text = startSyncLabel }.apply { onSyncStoppedReceiver = this },
 			IntentFilter(StoredFileSynchronization.onSyncStopEvent))
 
 		toggleSyncButton.setOnClickListener { v ->
@@ -149,11 +139,11 @@ class ActiveFileDownloadsFragment : Fragment() {
 
 	override fun onDestroy() {
 		super.onDestroy()
-		if (!localBroadcastManager.isInitialized()) return
+		if (!messageBus.isInitialized()) return
 
-		onSyncStartedReceiver?.also(localBroadcastManager.value::unregisterReceiver)
-		onSyncStoppedReceiver?.also(localBroadcastManager.value::unregisterReceiver)
-		onFileDownloadedReceiver?.also(localBroadcastManager.value::unregisterReceiver)
-		onFileQueuedReceiver?.also(localBroadcastManager.value::unregisterReceiver)
+		onSyncStartedReceiver?.also(messageBus.value::unregisterReceiver)
+		onSyncStoppedReceiver?.also(messageBus.value::unregisterReceiver)
+		onFileDownloadedReceiver?.also(messageBus.value::unregisterReceiver)
+		onFileQueuedReceiver?.also(messageBus.value::unregisterReceiver)
 	}
 }

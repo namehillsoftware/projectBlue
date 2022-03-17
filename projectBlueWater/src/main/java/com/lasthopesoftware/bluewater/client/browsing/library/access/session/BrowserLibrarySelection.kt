@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.messages.SendMessages
+import com.lasthopesoftware.bluewater.shared.cls
 import com.namehillsoftware.handoff.promises.Promise
 
 class BrowserLibrarySelection(
@@ -29,7 +30,7 @@ class BrowserLibrarySelection(
 		}
 
     companion object {
-		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(BrowserLibrarySelection::class.java) }
+		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(cls<BrowserLibrarySelection>()) }
 
 		val libraryChosenEvent by lazy { magicPropertyBuilder.buildProperty("libraryChosenEvent") }
 		val chosenLibraryId by lazy { magicPropertyBuilder.buildProperty("chosenLibraryId") }

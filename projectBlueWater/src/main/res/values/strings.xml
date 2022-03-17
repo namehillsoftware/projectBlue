@@ -22,6 +22,7 @@
     <string name="img_now_playing">Now Playing Album Image</string>
     <string name="img_now_playing_loading">Now Playing Album Image Loading</string>
     <string name="btn_view_files">View Files</string>
+    <string name="btn_hide_files">Hide Files</string>
     <string name="btn_shuffle_files">Shuffle</string>
     <string name="btn_repeat_playlist">Repeat Playlist</string>
     <string name="btn_play_files">Play All</string>
@@ -71,6 +72,7 @@
     <string name="lbl_sync_local_connection">Sync only on local connections</string>
     <string name="select_view_title">Select view</string>
     <string name="screen_is_off">Screen Off</string>
+    <string name="screen_is_on">Screen On</string>
     <string name="app_sync_settings">Sync Settings:</string>
     <string name="app_only_sync_on_wifi">Only sync on Wi-Fi</string>
     <string name="app_only_sync_ext_power">Only sync on external power</string>
@@ -99,5 +101,9 @@
     <string name="no">No</string>
     <string name="kill_playback">Kill Active Playback Engine</string>
     <string name="readOnlyConnection">Read-only Connection</string>
+    <string name="activeDownloads">Active Downloads</string>
+    <string name="edit_now_playing_list">Edit Now Playing</string>
+    <string name="finish_edit_now_playing_list">Finish Editing Now Playing</string>
+    <string name="drag_item">Drag Item</string>
     <string name="title_activity_test">TestActivity</string>
 </resources>

@@ -6,19 +6,18 @@ import com.lasthopesoftware.bluewater.client.stored.sync.notifications.PostSyncN
 import com.lasthopesoftware.bluewater.client.stored.sync.receivers.SyncStartedReceiver
 import io.mockk.every
 import io.mockk.mockk
-import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.BeforeClass
 import org.junit.Test
-import java.util.*
 
 class WhenReceivingTheEvent {
 
-    companion object {
-        private val notifications: MutableCollection<String?> = ArrayList()
+	companion object {
+		private val notifications: MutableCollection<String?> = ArrayList()
 
 		@JvmStatic
-        @BeforeClass
-        fun context() {
+		@BeforeClass
+		fun context() {
 			val syncNotification = mockk<PostSyncNotification>()
 			with(syncNotification) {
 				every { notify(any()) } answers {
@@ -26,16 +25,13 @@ class WhenReceivingTheEvent {
 				}
 			}
 
-            val receiver = SyncStartedReceiver(syncNotification)
-            receiver.onReceive(
-                mockk(),
-                Intent(StoredFileSynchronization.onSyncStartEvent)
-            )
-        }
-    }
+			val receiver = SyncStartedReceiver(syncNotification)
+			receiver.onReceive(Intent(StoredFileSynchronization.onSyncStartEvent))
+		}
+	}
 
 	@Test
 	fun thenNotificationsBegin() {
-		Assertions.assertThat(notifications).containsExactly(null as String?)
+		assertThat(notifications).containsExactly(null as String?)
 	}
 }

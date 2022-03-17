@@ -4,6 +4,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceF
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.IProvideCaches
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.bytes.GetRawImages
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
@@ -20,7 +21,7 @@ import java.io.*
 class DiskCacheImageAccess(private val sourceImages: GetRawImages, private val imageCacheKeys: LookupImageCacheKey, private val caches: IProvideCaches) : GetRawImages {
 
 	companion object {
-		private val logger = LoggerFactory.getLogger(DiskCacheImageAccess::class.java)
+		private val logger by lazy { LoggerFactory.getLogger(cls<DiskCacheImageAccess>()) }
 
 		fun getBytesFromFiles(file: File, cancellationToken: CancellationToken): ByteArray {
 			if (cancellationToken.isCancelled) return ByteArray(0)

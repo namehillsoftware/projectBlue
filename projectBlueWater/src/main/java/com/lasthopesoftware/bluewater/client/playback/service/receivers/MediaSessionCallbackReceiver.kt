@@ -7,19 +7,19 @@ import android.support.v4.media.MediaDescriptionCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import androidx.annotation.RequiresApi
-import com.lasthopesoftware.bluewater.client.browsing.items.Item
+import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.IFileListParameterProvider
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.ProvideFileStringListForItem
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.handlers.access.LaunchPlaybackFromResult
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.remote.RemoteBrowserService
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 
 @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 class MediaSessionCallbackReceiver(
 	private val context: Context,
-	private val fileListParameterProvider: IFileListParameterProvider,
-	private val fileStringListProvider: FileStringListProvider,
+	private val selectedLibraryId: ProvideSelectedLibraryId,
+	private val fileStringListProvider: ProvideFileStringListForItem,
 ) : MediaSessionCompat.Callback() {
 	override fun onPrepare() = PlaybackService.initialize(context)
 
@@ -51,18 +51,19 @@ class MediaSessionCallbackReceiver(
 		if (itemIdParts[0] != RemoteBrowserService.itemFileMediaIdPrefix) return
 
 		val ids = itemIdParts.drop(1).mapNotNull { id -> id.toIntOrNull() }
-		val id = ids.firstOrNull() ?: return
+		val itemId = ids.firstOrNull() ?: return
 
-		val promisedFileStringList = fileStringListProvider
-			.promiseFileStringList(
-				FileListParameters.Options.None,
-				*fileListParameterProvider.getFileListParameters(Item(id))
-			)
+		selectedLibraryId.selectedLibraryId.then {
+			it?.also { libraryId ->
+				val promisedFileStringList = fileStringListProvider
+					.promiseFileStringList(libraryId, ItemId(itemId), FileListParameters.Options.None)
 
-		if (ids.size < 2) {
-			promisedFileStringList.then(LaunchPlaybackFromResult(context))
-		} else {
-			promisedFileStringList.then { sl -> PlaybackService.launchMusicService(context, ids[1], sl) }
+				if (ids.size < 2) {
+					promisedFileStringList.then(LaunchPlaybackFromResult(context))
+				} else {
+					promisedFileStringList.then { sl -> PlaybackService.launchMusicService(context, ids[1], sl) }
+				}
+			}
 		}
 	}
 }

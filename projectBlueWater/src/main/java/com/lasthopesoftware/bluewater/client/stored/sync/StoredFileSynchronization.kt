@@ -21,11 +21,11 @@ import io.reactivex.exceptions.CompositeException
 import org.slf4j.LoggerFactory
 
 class StoredFileSynchronization(
-	private val libraryProvider: ILibraryProvider,
-	private val messenger: SendMessages,
-	private val pruneStoredFiles: PruneStoredFiles,
-	private val checkSync: CheckForSync,
-	private val syncHandler: ControlLibrarySyncs) : SynchronizeStoredFiles {
+    private val libraryProvider: ILibraryProvider,
+    private val messenger: SendMessages,
+    private val pruneStoredFiles: PruneStoredFiles,
+    private val checkSync: CheckForSync,
+    private val syncHandler: ControlLibrarySyncs) : SynchronizeStoredFiles {
 
 	companion object {
 		private val logger by lazy { LoggerFactory.getLogger(StoredFileSynchronization::class.java) }

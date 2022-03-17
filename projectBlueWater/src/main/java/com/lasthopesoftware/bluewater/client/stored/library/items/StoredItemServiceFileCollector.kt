@@ -1,12 +1,12 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items
 
-import com.lasthopesoftware.bluewater.client.browsing.items.IItem
-import com.lasthopesoftware.bluewater.client.browsing.items.Item
+import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
+import com.lasthopesoftware.bluewater.client.browsing.items.KeyedIdentifier
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.ProvideLibraryFiles
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.IFileListParameterProvider
-import com.lasthopesoftware.bluewater.client.browsing.items.playlists.Playlist
+import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem.ItemType
 import com.lasthopesoftware.bluewater.client.stored.library.sync.CollectServiceFilesForSync
@@ -23,9 +23,13 @@ import java.io.FileNotFoundException
 import java.util.concurrent.CancellationException
 
 class StoredItemServiceFileCollector(
-	private val storedItemAccess: IStoredItemAccess,
+	private val storedItemAccess: AccessStoredItems,
 	private val fileProvider: ProvideLibraryFiles,
 	private val fileListParameters: IFileListParameterProvider) : CollectServiceFilesForSync {
+
+	companion object {
+		private val logger by lazy { LoggerFactory.getLogger(StoredItemServiceFileCollector::class.java) }
+	}
 
 	override fun promiseServiceFilesToSync(libraryId: LibraryId): Promise<Collection<ServiceFile>> {
 		return CancellableProxyPromise { cancellationProxy ->
@@ -43,7 +47,7 @@ class StoredItemServiceFileCollector(
 			promisedServiceFileLists
 				.eventually { serviceFiles ->
 					QueuedPromise(
-						MessageWriter{ serviceFiles.flatten().toSet() },
+						MessageWriter{ serviceFiles.asSequence().flatten().toSet() },
 						ThreadPools.compute
 					)
 				}
@@ -52,40 +56,35 @@ class StoredItemServiceFileCollector(
 
 	private fun promiseServiceFiles(libraryId: LibraryId, storedItem: StoredItem, cancellationProxy: CancellationProxy): Promise<Collection<ServiceFile>> {
 		return when (storedItem.itemType) {
-			ItemType.ITEM -> promiseServiceFiles(libraryId, Item(storedItem.serviceId), cancellationProxy)
-			ItemType.PLAYLIST -> promiseServiceFiles(libraryId, Playlist(storedItem.serviceId), cancellationProxy)
+			ItemType.ITEM -> promiseServiceFiles(libraryId, ItemId(storedItem.serviceId), cancellationProxy)
+			ItemType.PLAYLIST -> promiseServiceFiles(libraryId, PlaylistId(storedItem.serviceId), cancellationProxy)
 			else -> Promise(emptyList())
 		}
 	}
 
-	private fun promiseServiceFiles(libraryId: LibraryId, item: Item, cancellationProxy: CancellationProxy): Promise<Collection<ServiceFile>> {
+	private fun promiseServiceFiles(libraryId: LibraryId, item: ItemId, cancellationProxy: CancellationProxy): Promise<Collection<ServiceFile>> {
 		val parameters = fileListParameters.getFileListParameters(item)
 		val serviceFilesPromise = fileProvider.promiseFiles(libraryId, FileListParameters.Options.None, *parameters)
 		cancellationProxy.doCancel(serviceFilesPromise)
 		return serviceFilesPromise.then(forward(), ExceptionHandler(libraryId, item, storedItemAccess))
 	}
 
-	private fun promiseServiceFiles(libraryId: LibraryId, playlist: Playlist, cancellationProxy: CancellationProxy): Promise<Collection<ServiceFile>> {
+	private fun promiseServiceFiles(libraryId: LibraryId, playlist: PlaylistId, cancellationProxy: CancellationProxy): Promise<Collection<ServiceFile>> {
 		val parameters = fileListParameters.getFileListParameters(playlist)
 		val serviceFilesPromise = fileProvider.promiseFiles(libraryId, FileListParameters.Options.None, *parameters)
 		cancellationProxy.doCancel(serviceFilesPromise)
 		return serviceFilesPromise.then(forward(), ExceptionHandler(libraryId, playlist, storedItemAccess))
 	}
 
-	private class ExceptionHandler(private val libraryId: LibraryId, private val item: IItem, private val storedItemAccess: IStoredItemAccess) : ImmediateResponse<Throwable, Collection<ServiceFile>> {
+	private class ExceptionHandler(private val libraryId: LibraryId, private val item: KeyedIdentifier, private val storedItemAccess: AccessStoredItems) : ImmediateResponse<Throwable, Collection<ServiceFile>> {
 
 		override fun respond(e: Throwable): List<ServiceFile> {
 			if (e is FileNotFoundException) {
-				logger.warn("The item " + item.key + " was not found, disabling sync for item")
+				logger.warn("The item " + item.id + " was not found, disabling sync for item")
 				storedItemAccess.toggleSync(libraryId, item, false)
 				return emptyList()
 			}
 			throw e
 		}
 	}
-
-	companion object {
-		private val logger = LoggerFactory.getLogger(StoredItemServiceFileCollector::class.java)
-	}
-
 }

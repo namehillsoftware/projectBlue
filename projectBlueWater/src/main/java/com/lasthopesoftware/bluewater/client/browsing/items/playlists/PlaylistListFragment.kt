@@ -1,8 +1,5 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.playlists
 
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
 import android.content.IntentFilter
 import android.os.Bundle
 import android.os.Handler
@@ -17,19 +14,21 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.lasthopesoftware.bluewater.R
+import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.access.CachedItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.list.DemoableItemListAdapter
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListAdapter
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.ItemStringListProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.LibraryFileStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.MenuNotifications
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
-import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
@@ -42,10 +41,6 @@ class PlaylistListFragment : Fragment() {
     private var itemListMenuChangeHandler: IItemListMenuChangeHandler? = null
 
 	private val handler by lazy { Handler(requireContext().mainLooper) }
-
-	private val fileStringListProvider by lazy {
-		FileStringListProvider(SelectedConnectionProvider(requireContext()))
-	}
 
 	private val tutorialManager by lazy { TutorialManager(requireContext()) }
 
@@ -62,19 +57,26 @@ class PlaylistListFragment : Fragment() {
 
 	private val itemProvider by lazy { CachedItemProvider.getInstance(requireContext()) }
 
+	private val itemListProvider by lazy {
+		val connectionProvider = ConnectionSessionManager.get(requireContext())
+
+		ItemStringListProvider(
+            FileListParameters,
+            LibraryFileStringListProvider(connectionProvider)
+        )
+	}
+
 	private val messageBus = lazy {
 		val messageBus = MessageBus(LocalBroadcastManager.getInstance(requireContext()))
 		val intentFilter = IntentFilter()
 		intentFilter.addAction(MenuNotifications.launchingActivity)
 		intentFilter.addAction(MenuNotifications.launchingActivityHalted)
 		messageBus.registerReceiver(
-			object : BroadcastReceiver() {
-				override fun onReceive(context: Context?, intent: Intent?) {
-					val isLaunching = intent?.action != MenuNotifications.launchingActivity
+			{ intent ->
+				val isLaunching = intent.action != MenuNotifications.launchingActivity
 
-					recyclerView?.visibility = ViewUtils.getVisibility(!isLaunching)
-					progressBar?.visibility = ViewUtils.getVisibility(isLaunching)
-				}
+				recyclerView?.visibility = ViewUtils.getVisibility(!isLaunching)
+				progressBar?.visibility = ViewUtils.getVisibility(isLaunching)
 			},
 			intentFilter
 		)
@@ -91,8 +93,7 @@ class PlaylistListFragment : Fragment() {
 							DemoableItemListAdapter(
 								fa,
 								messageBus.value,
-								FileListParameters.getInstance(),
-								fileStringListProvider,
+								itemListProvider,
 								itemListMenuChangeHandler,
 								StoredItemAccess(fa),
 								itemProvider,
@@ -105,8 +106,7 @@ class PlaylistListFragment : Fragment() {
 								ItemListAdapter(
 									context,
 									messageBus.value,
-									FileListParameters.getInstance(),
-									fileStringListProvider,
+									itemListProvider,
 									itemListMenuChangeHandler,
 									StoredItemAccess(context),
 									itemProvider,
@@ -172,7 +172,7 @@ class PlaylistListFragment : Fragment() {
 
 		override fun run() {
 			val context = requireContext()
-			itemProvider.promiseItems(library.libraryId, library.selectedView)
+			itemProvider.promiseItems(library.libraryId, ItemId(library.selectedView))
 				.eventually { i -> i?.let(adapter::updateListEventually) }
 				.eventually(response({
 					progressBar?.visibility = ViewUtils.getVisibility(false)
