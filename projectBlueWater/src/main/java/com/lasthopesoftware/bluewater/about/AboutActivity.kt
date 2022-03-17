@@ -26,7 +26,6 @@ import com.lasthopesoftware.resources.intents.IntentFactory
 class AboutActivity : ComponentActivity() {
 	private val aboutTitleBuilder by lazy { AboutTitleBuilder(this) }
 
-	@ExperimentalFoundationApi
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
@@ -40,7 +39,7 @@ class AboutActivity : ComponentActivity() {
 	}
 }
 
-@ExperimentalFoundationApi
+@OptIn(ExperimentalFoundationApi::class)
 @Preview
 @Composable
 fun AboutView() {

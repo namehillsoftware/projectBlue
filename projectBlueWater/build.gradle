@@ -19,7 +19,7 @@ if (!hasAndroidStorePassword()) {
 
 def isSignedExternally = { hasKeyStorePassword() && hasAndroidStorePassword() }
 
-def compose_version = '1.0.5'
+def compose_version = '1.1.1'
 
 android {
     compileSdkVersion 31
@@ -170,7 +170,7 @@ dependencies {
 	implementation "androidx.compose.ui:ui:$compose_version"
 	implementation "androidx.compose.material:material:$compose_version"
 	implementation "androidx.compose.ui:ui-tooling:$compose_version"
-	implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.4.0'
+	implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.4.1'
 	implementation "androidx.activity:activity-compose:1.4.0"
 	implementation "androidx.compose.compiler:compiler:$compose_version"
 	debugImplementation "androidx.compose.ui:ui-tooling:$compose_version"
