@@ -1,5 +1,7 @@
 package com.lasthopesoftware.bluewater.about
 
+import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -15,12 +17,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
+import androidx.core.content.res.ResourcesCompat
 import com.lasthopesoftware.bluewater.BuildConfig
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsActivityIntentBuilder
@@ -50,26 +53,42 @@ fun AboutView() {
 	ProjectBlueTheme {
 		Box(Modifier.fillMaxSize()) {
 			with (LocalContext.current) {
-				val hiddenSettingsActivityIntentBuilder = HiddenSettingsActivityIntentBuilder(IntentFactory(this))
-				Image(
-					painter = painterResource(id = R.mipmap.launcher_icon),
-					contentDescription = "Project Blue logo",
-					contentScale = ContentScale.Fit,
-					alignment = Alignment.TopCenter,
-					modifier = Modifier
-						.combinedClickable(
-							enabled = true,
-							onLongClick = {
-								startActivity(
-									hiddenSettingsActivityIntentBuilder.buildHiddenSettingsIntent()
-								)
-							},
-							onClick = {}
-						)
-						.fillMaxSize()
-						.clip(CircleShape)
-						.shadow(Dp(10f))
-				)
+				ResourcesCompat.getDrawable(
+					LocalContext.current.resources,
+					R.mipmap.launcher_icon,
+					LocalContext.current.theme
+				)?.let { drawable ->
+					val bitmap = Bitmap.createBitmap(
+						drawable.intrinsicWidth,
+						drawable.intrinsicHeight,
+						Bitmap.Config.ARGB_8888
+					)
+
+					val canvas = Canvas(bitmap)
+					drawable.setBounds(0, 0, canvas.width, canvas.height)
+					drawable.draw(canvas)
+
+					val hiddenSettingsActivityIntentBuilder = HiddenSettingsActivityIntentBuilder(IntentFactory(this))
+					Image(
+						bitmap = bitmap.asImageBitmap(),
+						contentDescription = "Project Blue logo",
+						contentScale = ContentScale.Fit,
+						alignment = Alignment.TopCenter,
+						modifier = Modifier
+							.combinedClickable(
+								enabled = true,
+								onLongClick = {
+									startActivity(
+										hiddenSettingsActivityIntentBuilder.buildHiddenSettingsIntent()
+									)
+								},
+								onClick = {}
+							)
+							.fillMaxSize()
+							.clip(CircleShape)
+							.shadow(Dp(10f))
+					)
+				}
 
 				Text(
 					getString(R.string.aboutAppText).format(
