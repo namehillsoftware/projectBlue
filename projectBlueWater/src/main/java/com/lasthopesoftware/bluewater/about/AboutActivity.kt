@@ -8,15 +8,19 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import com.lasthopesoftware.bluewater.BuildConfig
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsActivityIntentBuilder
@@ -48,19 +52,23 @@ fun AboutView() {
 			with (LocalContext.current) {
 				val hiddenSettingsActivityIntentBuilder = HiddenSettingsActivityIntentBuilder(IntentFactory(this))
 				Image(
-					painter = painterResource(id = R.drawable.project_blue_logo_circular),
+					painter = painterResource(id = R.mipmap.launcher_icon),
 					contentDescription = "Project Blue logo",
 					contentScale = ContentScale.Fit,
 					alignment = Alignment.TopCenter,
-					modifier = Modifier.combinedClickable(
-						enabled = true,
-						onLongClick = {
-							startActivity(
-								hiddenSettingsActivityIntentBuilder.buildHiddenSettingsIntent()
-							)
-						},
-						onClick = {}
-					).then(Modifier.fillMaxSize())
+					modifier = Modifier
+						.combinedClickable(
+							enabled = true,
+							onLongClick = {
+								startActivity(
+									hiddenSettingsActivityIntentBuilder.buildHiddenSettingsIntent()
+								)
+							},
+							onClick = {}
+						)
+						.fillMaxSize()
+						.clip(CircleShape)
+						.shadow(Dp(10f))
 				)
 
 				Text(
