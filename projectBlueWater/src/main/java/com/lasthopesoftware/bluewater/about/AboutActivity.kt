@@ -27,14 +27,15 @@ import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsActivityIntentBuilder
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.theme.ProjectBlueTheme
 import com.lasthopesoftware.resources.intents.IntentFactory
+import com.lasthopesoftware.resources.strings.StringResources
 
 class AboutActivity : ComponentActivity() {
-	private val aboutTitleBuilder by lazy { AboutTitleBuilder(this) }
+	private val stringResources by lazy { StringResources(this) }
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
-		title = aboutTitleBuilder.buildTitle()
+		title = stringResources.aboutTitle
 
 		setContent { ProjectBlueTheme { AboutView() } }
 	}

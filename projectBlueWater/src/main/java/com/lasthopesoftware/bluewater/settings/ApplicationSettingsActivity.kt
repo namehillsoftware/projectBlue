@@ -14,7 +14,6 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.lasthopesoftware.bluewater.R
-import com.lasthopesoftware.bluewater.about.AboutTitleBuilder
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
@@ -31,13 +30,14 @@ import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicat
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
+import com.lasthopesoftware.resources.strings.StringResources
 
 class ApplicationSettingsActivity : AppCompatActivity() {
 	private val progressBar = LazyViewFinder<ProgressBar>(this, R.id.recyclerLoadingProgress)
 	private val serverListView = LazyViewFinder<RecyclerView>(this, R.id.loadedRecyclerView)
 	private val addServerButton = LazyViewFinder<Button>(this, R.id.addServerButton)
 	private val killPlaybackEngineButton = LazyViewFinder<Button>(this, R.id.killPlaybackEngine)
-	private val settingsMenu by lazy { SettingsMenu(this, AboutTitleBuilder(this)) }
+	private val settingsMenu by lazy { SettingsMenu(this, StringResources(this)) }
 	private val applicationSettingsRepository by lazy { getApplicationSettingsRepository() }
 	private val messageBus by lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
 
