@@ -14,8 +14,10 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -45,16 +47,18 @@ fun AboutView() {
 	ProjectBlueTheme {
 		Box(Modifier.fillMaxSize().padding(Dp(10f))) {
 			with (LocalContext.current) {
+				val hapticFeedback = LocalHapticFeedback.current
 				val hiddenSettingsActivityIntentBuilder = HiddenSettingsActivityIntentBuilder(IntentFactory(this))
 				Image(
 					painter = painterResource(id = R.drawable.project_blue_logo_circular),
 					contentDescription = "Project Blue logo",
-					contentScale = ContentScale.Fit,
+					contentScale = ContentScale.FillWidth,
 					alignment = Alignment.TopCenter,
 					modifier = Modifier
 						.combinedClickable(
 							enabled = true,
 							onLongClick = {
+								hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
 								startActivity(
 									hiddenSettingsActivityIntentBuilder.buildHiddenSettingsIntent()
 								)
