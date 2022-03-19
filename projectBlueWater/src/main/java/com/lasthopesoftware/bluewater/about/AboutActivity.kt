@@ -34,11 +34,7 @@ class AboutActivity : ComponentActivity() {
 
 		title = aboutTitleBuilder.buildTitle()
 
-		setContent {
-			ProjectBlueTheme {
-				AboutView()
-			}
-		}
+		setContent { ProjectBlueTheme { AboutView() } }
 	}
 }
 
