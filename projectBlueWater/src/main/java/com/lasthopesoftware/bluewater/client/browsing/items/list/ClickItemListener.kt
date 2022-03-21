@@ -8,7 +8,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.list.Fil
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.ActivityLaunching
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.cls
-import com.lasthopesoftware.bluewater.shared.messages.SendApplicationMessages
+import com.lasthopesoftware.bluewater.shared.messages.application.SendApplicationMessages
 import org.slf4j.LoggerFactory
 
 class ClickItemListener(

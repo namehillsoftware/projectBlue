@@ -23,7 +23,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
 import com.lasthopesoftware.bluewater.shared.android.adapters.DeferredListAdapter
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
-import com.lasthopesoftware.bluewater.shared.messages.SendApplicationMessages
+import com.lasthopesoftware.bluewater.shared.messages.application.SendApplicationMessages
 
 open class ItemListAdapter internal constructor(
 	context: Context,

@@ -1,3 +1,0 @@
-package com.lasthopesoftware.bluewater.shared.messages
-
-interface RegisterForApplicationMessages : RegisterForTypedMessages<ApplicationMessage>
