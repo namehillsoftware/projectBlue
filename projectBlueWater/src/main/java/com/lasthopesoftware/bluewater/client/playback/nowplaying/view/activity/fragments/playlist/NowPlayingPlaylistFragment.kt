@@ -48,7 +48,7 @@ import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildActivityViewModel
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildActivityViewModelLazily
-import com.lasthopesoftware.bluewater.shared.messages.ScopedMessageRegistration
+import com.lasthopesoftware.bluewater.shared.messages.ScopedMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toDeferred
@@ -115,7 +115,7 @@ class NowPlayingPlaylistFragment : Fragment() {
 
 	private val viewModelMessageBus by buildActivityViewModelLazily { ViewModelMessageBus<NowPlayingPlaylistMessage>(handler) }
 
-	private val scopedMessageReceiver = lazy { ScopedMessageRegistration(viewModelMessageBus) }
+	private val scopedMessageReceiver = lazy { ScopedMessageBus(viewModelMessageBus, viewModelMessageBus) }
 
 	private val nowPlayingListAdapter by lazy {
 		nowPlayingRepository.eventually(LoopedInPromise.response({ r ->

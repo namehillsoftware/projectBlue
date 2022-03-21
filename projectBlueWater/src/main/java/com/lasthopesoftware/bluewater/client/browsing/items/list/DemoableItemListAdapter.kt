@@ -11,7 +11,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.s
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
-import com.lasthopesoftware.bluewater.shared.android.messages.SendMessages
+import com.lasthopesoftware.bluewater.shared.messages.SendApplicationMessages
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.bluewater.tutorials.ManageTutorials
 import com.lasthopesoftware.bluewater.tutorials.TutorialManager
@@ -22,7 +22,7 @@ import tourguide.tourguide.TourGuide
 
 class DemoableItemListAdapter(
 	private val activity: Activity,
-	sendMessages: SendMessages,
+	sendTypedMessages: SendApplicationMessages,
 	itemStringListProvider: ItemStringListProvider,
 	itemListMenuEvents: IItemListMenuChangeHandler,
 	storedItemAccess: StoredItemAccess,
@@ -31,7 +31,7 @@ class DemoableItemListAdapter(
 	private val manageTutorials: ManageTutorials
 ) : ItemListAdapter(
 	activity,
-	sendMessages,
+	sendTypedMessages,
 	itemStringListProvider,
 	itemListMenuEvents,
 	storedItemAccess,

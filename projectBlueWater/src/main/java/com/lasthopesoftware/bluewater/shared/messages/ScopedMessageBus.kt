@@ -2,10 +2,12 @@ package com.lasthopesoftware.bluewater.shared.messages
 
 import java.util.concurrent.ConcurrentHashMap
 
-class ScopedMessageRegistration<ScopedMessage : TypedMessage>(
+class ScopedMessageBus<ScopedMessage : TypedMessage>(
 	private val registerForTypedMessages: RegisterForTypedMessages<ScopedMessage>,
+	private val sendTypedMessages: SendTypedMessages<ScopedMessage>
 ) :
 	RegisterForTypedMessages<ScopedMessage>,
+	SendTypedMessages<ScopedMessage> by sendTypedMessages,
 	AutoCloseable
 {
 	private val receivers = ConcurrentHashMap<Class<*>, ConcurrentHashMap<*, AutoCloseable>>()
