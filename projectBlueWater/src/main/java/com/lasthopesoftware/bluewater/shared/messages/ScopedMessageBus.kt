@@ -10,33 +10,29 @@ class ScopedMessageBus<ScopedMessage : TypedMessage>(
 	SendTypedMessages<ScopedMessage> by sendTypedMessages,
 	AutoCloseable
 {
-	private val receivers = ConcurrentHashMap<Class<*>, ConcurrentHashMap<*, AutoCloseable>>()
+	private val receivers = ConcurrentHashMap<Any, AutoCloseable>()
 
-	@Suppress("UNCHECKED_CAST")
 	override fun <Message : ScopedMessage> registerReceiver(messageClass: Class<Message>, receiver: (Message) -> Unit): AutoCloseable {
 		registerForTypedMessages.registerReceiver(messageClass, receiver)
-		val receiverSet = receivers.getOrPut(messageClass) { ConcurrentHashMap<(Message) -> Unit, AutoCloseable>() } as ConcurrentHashMap<(Message) -> Unit, AutoCloseable>
-		val closeable = ReceiverCloseable(messageClass, receiver)
-		receiverSet[receiver] = closeable
+		val closeable = ReceiverCloseable(receiver)
+		receivers[receiver] = closeable
 		return closeable
 	}
 
-	override fun <Message : ScopedMessage> unregisterReceiver(messageClass: Class<Message>, receiver: (Message) -> Unit) {
-		receivers[messageClass]?.remove(receiver)
-		registerForTypedMessages.unregisterReceiver(messageClass, receiver)
+	override fun <Message : ScopedMessage> unregisterReceiver(receiver: (Message) -> Unit) {
+		receivers.remove(receiver)
+		registerForTypedMessages.unregisterReceiver(receiver)
 	}
 
 	override fun close() {
-		receivers.values.flatMap { it.values }.forEach { it.close() }
+		receivers.forEach { it.value.close() }
 	}
 
-	private inner class ReceiverCloseable<Message : ScopedMessage>(
-		private val messageClass: Class<Message>,
-		private val receiver: (Message) -> Unit
-	) : AutoCloseable
+	private inner class ReceiverCloseable<Message : ScopedMessage>(private val receiver: (Message) -> Unit)
+		: AutoCloseable
 	{
 		override fun close() {
-			unregisterReceiver(messageClass, receiver)
+			unregisterReceiver(receiver)
 		}
 	}
 }

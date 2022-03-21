@@ -21,8 +21,8 @@ class ViewModelMessageBus<ScopedMessage : TypedMessage>(
 	override fun <Message : ScopedMessage> registerReceiver(messageClass: Class<Message>, receiver: (Message) -> Unit): AutoCloseable =
 		typedMessageBus.value.registerReceiver(messageClass, receiver)
 
-	override fun <Message : ScopedMessage> unregisterReceiver(messageClass: Class<Message>, receiver: (Message) -> Unit) =
-		typedMessageBus.value.unregisterReceiver(messageClass, receiver)
+	override fun <Message : ScopedMessage> unregisterReceiver(receiver: (Message) -> Unit) =
+		typedMessageBus.value.unregisterReceiver(receiver)
 
 	override fun onCleared() {
 		if (typedMessageBus.isInitialized())
