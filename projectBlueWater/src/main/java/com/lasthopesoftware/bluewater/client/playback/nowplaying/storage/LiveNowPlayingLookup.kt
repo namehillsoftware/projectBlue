@@ -17,6 +17,9 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.Track
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
+import com.lasthopesoftware.bluewater.shared.cls
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.namehillsoftware.handoff.promises.Promise
 
@@ -24,7 +27,7 @@ class LiveNowPlayingLookup private constructor(
 	selectedLibraryIdentifierProvider: ProvideSelectedLibraryId,
 	private val libraryProvider: ILibraryProvider,
 	private val libraryStorage: ILibraryStorage
-) : ReceiveBroadcastEvents, GetNowPlayingState {
+) : ReceiveBroadcastEvents, GetNowPlayingState, (ApplicationMessage) -> Unit {
 
 	companion object {
 		private lateinit var instance: LiveNowPlayingLookup
@@ -42,11 +45,14 @@ class LiveNowPlayingLookup private constructor(
 				MessageBus(LocalBroadcastManager.getInstance(context)).registerReceiver(
 					liveNowPlayingLookup,
 					IntentFilter().apply {
-						addAction(BrowserLibrarySelection.libraryChosenEvent)
 						addAction(TrackPositionBroadcaster.trackPositionUpdate)
 						addAction(PlaylistEvents.onPlaylistTrackChange)
 					}
 				)
+
+				context.getApplicationMessageBus().registerReceiver(
+					cls<BrowserLibrarySelection.LibraryChosenMessage>(),
+					liveNowPlayingLookup)
 			}
 		}
 
@@ -70,10 +76,6 @@ class LiveNowPlayingLookup private constructor(
 
 	override fun onReceive(intent: Intent) {
 		when (intent.action) {
-			BrowserLibrarySelection.libraryChosenEvent -> intent
-				.getIntExtra(BrowserLibrarySelection.chosenLibraryId, -1)
-				.takeIf { it > -1 }
-				?.also { libraryId -> updateInner(LibraryId(libraryId)) }
 			TrackPositionBroadcaster.trackPositionUpdate -> trackedPosition = intent
 				.getLongExtra(TrackPositionBroadcaster.TrackPositionChangedParameters.filePosition, -1)
 				.takeIf { it > -1 }
@@ -86,5 +88,11 @@ class LiveNowPlayingLookup private constructor(
 			SpecificLibraryProvider(libraryId, libraryProvider),
 			libraryStorage
 		)
+	}
+
+	override fun invoke(message: ApplicationMessage) {
+		when (message) {
+			is BrowserLibrarySelection.LibraryChosenMessage -> updateInner(message.chosenLibraryId)
+		}
 	}
 }

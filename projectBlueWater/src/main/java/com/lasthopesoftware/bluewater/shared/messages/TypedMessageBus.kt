@@ -16,11 +16,8 @@ class TypedMessageBus<ScopedMessage : TypedMessage>(
 	override fun <T : ScopedMessage> sendMessage(message: T) {
 		@Suppress("UNCHECKED_CAST")
 		fun broadcastToReceivers() {
-			receivers
-				.asSequence()
-				.filter { (c, _) -> c.isInstance(message) }
-				.mapNotNull { (_, s) -> s as? ConcurrentHashMap<(T) -> Unit, Unit> }
-				.forEach { m -> m.forEach { (r, _) -> r(message) } }
+			val typedReceivers = receivers[message.javaClass] as? ConcurrentHashMap<(T) -> Unit, Unit> ?: return
+			typedReceivers.forEach { (r, _) -> r(message) }
 		}
 
 		if (Thread.currentThread() == handler.looper.thread) broadcastToReceivers()

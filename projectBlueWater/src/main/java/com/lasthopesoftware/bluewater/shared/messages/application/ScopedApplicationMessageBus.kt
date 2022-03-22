@@ -1,6 +1,13 @@
 package com.lasthopesoftware.bluewater.shared.messages.application
 
+import android.content.Context
 import com.lasthopesoftware.bluewater.shared.messages.ScopedMessageBus
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
+
+fun Context.scopedApplicationMessageBus() : ScopedApplicationMessageBus {
+	val applicationMessageBus = getApplicationMessageBus()
+	return ScopedApplicationMessageBus(applicationMessageBus, applicationMessageBus)
+}
 
 class ScopedApplicationMessageBus(
 	registerForApplicationMessages: RegisterForApplicationMessages,

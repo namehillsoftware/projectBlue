@@ -104,7 +104,10 @@ import com.lasthopesoftware.bluewater.shared.android.notifications.notificationc
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.SharedChannelProperties
 import com.lasthopesoftware.bluewater.shared.android.services.GenericBinder
 import com.lasthopesoftware.bluewater.shared.android.services.promiseBoundService
+import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToaster
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
+import com.lasthopesoftware.bluewater.shared.messages.application.scopedApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.observables.toMaybeObservable
 import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay.Companion.delay
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
@@ -314,6 +317,7 @@ open class PlaybackService :
 	private val notificationManager by lazy { getSystemService(NOTIFICATION_SERVICE) as NotificationManager }
 	private val audioManager by lazy { getSystemService(AUDIO_SERVICE) as AudioManager }
 	private val lazyMessageBus = lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
+	private val applicationMessageBus = lazy { scopedApplicationMessageBus() }
 	private val playbackBroadcaster by lazy { LocalPlaybackBroadcaster(lazyMessageBus.value) }
 	private val applicationSettings by lazy { getApplicationSettingsRepository() }
 	private val selectedLibraryIdentifierProvider by lazy { SelectedBrowserLibraryIdentifierProvider(applicationSettings) }
@@ -401,10 +405,17 @@ open class PlaybackService :
 		}
 	}
 
-	private val playbackHaltingEvent = ReceiveBroadcastEvents {
+	private val playbackHaltingEvent = object : ReceiveBroadcastEvents, (ApplicationMessage) -> Unit {
+		override fun onReceive(intent: Intent) {
 			pausePlayback()
 			stopSelf(startId)
 		}
+
+		override fun invoke(message: ApplicationMessage) {
+			pausePlayback()
+			stopSelf(startId)
+		}
+	}
 
 	private val buildSessionReceiver = ReceiveBroadcastEvents { intent ->
 			val buildStatus = intent.getIntExtra(SelectedConnection.buildSessionBroadcastStatus, -1)
@@ -483,6 +494,9 @@ open class PlaybackService :
 		}
 
 		lazyMessageBus.value.registerReceiver(playbackHaltingEvent,	playbackHaltingIntentFilter)
+		applicationMessageBus.value.registerReceiver(
+			cls<BrowserLibrarySelection.LibraryChosenMessage>(),
+			playbackHaltingEvent)
 	}
 
 	override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -1073,6 +1087,7 @@ open class PlaybackService :
 			}
 
 		if (lazyMessageBus.isInitialized()) lazyMessageBus.value.clear()
+		if (applicationMessageBus.isInitialized()) applicationMessageBus.value.close()
 	}
 
 	/* End Binder Code */
