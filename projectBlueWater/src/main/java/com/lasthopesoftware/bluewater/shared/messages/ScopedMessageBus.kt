@@ -12,8 +12,8 @@ class ScopedMessageBus<ScopedMessage : TypedMessage>(
 {
 	private val receivers = ConcurrentHashMap<Any, AutoCloseable>()
 
-	override fun <Message : ScopedMessage> registerReceiver(messageClass: Class<Message>, receiver: (Message) -> Unit): AutoCloseable {
-		registerForTypedMessages.registerReceiver(messageClass, receiver)
+	override fun <Message : ScopedMessage> registerForClass(messageClass: Class<Message>, receiver: (Message) -> Unit): AutoCloseable {
+		registerForTypedMessages.registerForClass(messageClass, receiver)
 		val closeable = ReceiverCloseable(receiver)
 		receivers[receiver] = closeable
 		return closeable

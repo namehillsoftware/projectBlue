@@ -18,8 +18,8 @@ class ViewModelMessageBus<ScopedMessage : TypedMessage>(
 
 	override fun <T : ScopedMessage> sendMessage(message: T) = typedMessageBus.value.sendMessage(message)
 
-	override fun <Message : ScopedMessage> registerReceiver(messageClass: Class<Message>, receiver: (Message) -> Unit): AutoCloseable =
-		typedMessageBus.value.registerReceiver(messageClass, receiver)
+	override fun <Message : ScopedMessage> registerForClass(messageClass: Class<Message>, receiver: (Message) -> Unit): AutoCloseable =
+		typedMessageBus.value.registerForClass(messageClass, receiver)
 
 	override fun <Message : ScopedMessage> unregisterReceiver(receiver: (Message) -> Unit) =
 		typedMessageBus.value.unregisterReceiver(receiver)

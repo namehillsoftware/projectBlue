@@ -186,7 +186,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 			connectionSettingsUpdatedReceiver,
 			connectionSettingsChangedFilter)
 
-		applicationMessageBus.value.registerReceiver(
+		applicationMessageBus.value.registerForClass(
 			cls<BrowserLibrarySelection.LibraryChosenMessage>(),
 			connectionSettingsUpdatedReceiver)
 

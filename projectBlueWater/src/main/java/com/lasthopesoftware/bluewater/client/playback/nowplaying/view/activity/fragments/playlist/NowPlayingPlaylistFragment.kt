@@ -49,6 +49,7 @@ import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBu
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildActivityViewModel
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildActivityViewModelLazily
 import com.lasthopesoftware.bluewater.shared.messages.ScopedMessageBus
+import com.lasthopesoftware.bluewater.shared.messages.application.scopedApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toDeferred
@@ -64,6 +65,8 @@ class NowPlayingPlaylistFragment : Fragment() {
 	private var itemListMenuChangeHandler: IItemListMenuChangeHandler? = null
 
 	private val messageBus by lazy { MessageBus(LocalBroadcastManager.getInstance(requireContext())) }
+
+	private val applicationMessageBus by lazy { requireContext().scopedApplicationMessageBus() }
 
 	private val selectedConnectionProvider by lazy { SelectedConnectionProvider(requireContext()) }
 
@@ -152,6 +155,7 @@ class NowPlayingPlaylistFragment : Fragment() {
 
 		NowPlayingFilePropertiesViewModel(
 			messageBus,
+			applicationMessageBus,
 			LiveNowPlayingLookup.getInstance(),
 			selectedConnectionProvider,
 			lazyFilePropertiesProvider,

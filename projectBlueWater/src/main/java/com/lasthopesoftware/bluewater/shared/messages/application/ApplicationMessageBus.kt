@@ -26,8 +26,8 @@ class ApplicationMessageBus private constructor(
 
 	override fun <T : ApplicationMessage> sendMessage(message: T) = typedMessageBus.value.sendMessage(message)
 
-	override fun <Message : ApplicationMessage> registerReceiver(messageClass: Class<Message>, receiver: (Message) -> Unit): AutoCloseable =
-		typedMessageBus.value.registerReceiver(messageClass, receiver)
+	override fun <Message : ApplicationMessage> registerForClass(messageClass: Class<Message>, receiver: (Message) -> Unit): AutoCloseable =
+		typedMessageBus.value.registerForClass(messageClass, receiver)
 
 	override fun <Message : ApplicationMessage> unregisterReceiver(receiver: (Message) -> Unit) =
 		typedMessageBus.value.unregisterReceiver(receiver)

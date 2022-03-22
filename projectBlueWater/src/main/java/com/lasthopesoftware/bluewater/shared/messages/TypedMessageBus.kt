@@ -25,7 +25,7 @@ class TypedMessageBus<ScopedMessage : TypedMessage>(
 	}
 
 	@Suppress("UNCHECKED_CAST")
-	override fun <Message : ScopedMessage> registerReceiver(messageClass: Class<Message>, receiver: (Message) -> Unit): AutoCloseable {
+	override fun <Message : ScopedMessage> registerForClass(messageClass: Class<Message>, receiver: (Message) -> Unit): AutoCloseable {
 		val receiverSet = receivers.getOrPut(messageClass) { ConcurrentHashMap<(Message) -> Unit, Unit>() } as ConcurrentHashMap<(Message) -> Unit, Unit>
 		receiverSet[receiver] = Unit
 

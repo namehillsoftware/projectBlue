@@ -493,7 +493,7 @@ open class PlaybackService :
 		}
 
 		lazyMessageBus.value.registerReceiver(playbackHaltingEvent,	playbackHaltingIntentFilter)
-		applicationMessageBus.value.registerReceiver(
+		applicationMessageBus.value.registerForClass(
 			cls<BrowserLibrarySelection.LibraryChosenMessage>(),
 			playbackHaltingEvent)
 	}
@@ -703,11 +703,15 @@ open class PlaybackService :
 				FilePropertyCache.getInstance(),
 				ScopedFilePropertiesProvider(connectionProvider, scopedRevisionProvider, FilePropertyCache.getInstance()))
 
-			trackPositionBroadcaster = TrackPositionBroadcaster(lazyMessageBus.value, cachedSessionFilePropertiesProvider)
+			trackPositionBroadcaster = TrackPositionBroadcaster(
+				applicationMessageBus.value,
+				cachedSessionFilePropertiesProvider
+			)
 
 			val imageProvider = CachedImageProvider.getInstance(this)
 
 			remoteControlProxy?.also(lazyMessageBus.value::unregisterReceiver)
+			remoteControlProxy?.also(applicationMessageBus.value::unregisterReceiver)
 
 			val promisedMediaBroadcaster = promisedMediaSession.then { mediaSession ->
 				val broadcaster = MediaSessionBroadcaster(
@@ -720,6 +724,7 @@ open class PlaybackService :
 						lazyMessageBus
 							.value
 							.registerReceiver(rcp, buildRemoteControlProxyIntentFilter(rcp))
+						rcp.typeRegistrations().forEach { applicationMessageBus.value.registerForClass(it, rcp) }
 					}
 			}
 

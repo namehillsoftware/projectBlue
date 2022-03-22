@@ -45,14 +45,20 @@ class LiveNowPlayingLookup private constructor(
 				MessageBus(LocalBroadcastManager.getInstance(context)).registerReceiver(
 					liveNowPlayingLookup,
 					IntentFilter().apply {
-						addAction(TrackPositionBroadcaster.trackPositionUpdate)
 						addAction(PlaylistEvents.onPlaylistTrackChange)
 					}
 				)
 
-				context.getApplicationMessageBus().registerReceiver(
-					cls<BrowserLibrarySelection.LibraryChosenMessage>(),
-					liveNowPlayingLookup)
+				with (context.getApplicationMessageBus()) {
+					registerForClass(
+						cls<BrowserLibrarySelection.LibraryChosenMessage>(),
+						liveNowPlayingLookup
+					)
+					registerForClass(
+						cls<TrackPositionBroadcaster.TrackPositionUpdate>(),
+						liveNowPlayingLookup
+					)
+				}
 			}
 		}
 
@@ -76,9 +82,6 @@ class LiveNowPlayingLookup private constructor(
 
 	override fun onReceive(intent: Intent) {
 		when (intent.action) {
-			TrackPositionBroadcaster.trackPositionUpdate -> trackedPosition = intent
-				.getLongExtra(TrackPositionBroadcaster.TrackPositionChangedParameters.filePosition, -1)
-				.takeIf { it > -1 }
 			PlaylistEvents.onPlaylistTrackChange -> trackedPosition =null
 		}
 	}
@@ -93,6 +96,7 @@ class LiveNowPlayingLookup private constructor(
 	override fun invoke(message: ApplicationMessage) {
 		when (message) {
 			is BrowserLibrarySelection.LibraryChosenMessage -> updateInner(message.chosenLibraryId)
+			is TrackPositionBroadcaster.TrackPositionUpdate -> trackedPosition = message.filePosition.millis
 		}
 	}
 }

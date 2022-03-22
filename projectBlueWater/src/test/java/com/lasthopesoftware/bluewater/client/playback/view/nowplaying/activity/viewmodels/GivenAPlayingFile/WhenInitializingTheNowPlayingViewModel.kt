@@ -55,6 +55,7 @@ private val nowPlayingViewModel by lazy {
 
 	val nowPlayingViewModel = NowPlayingFilePropertiesViewModel(
         mockk(relaxUnitFun = true),
+        mockk(relaxed = true, relaxUnitFun = true),
         nowPlayingRepository,
         connectionProvider,
         filePropertiesProvider,

@@ -19,8 +19,8 @@ class ScopedApplicationMessageBus(
 {
 	private val scopedMessageBus = ScopedMessageBus(registerForApplicationMessages, sendApplicationMessages)
 
-	override fun <Message : ApplicationMessage> registerReceiver(messageClass: Class<Message>, receiver: (Message) -> Unit): AutoCloseable =
-		scopedMessageBus.registerReceiver(messageClass, receiver)
+	override fun <Message : ApplicationMessage> registerForClass(messageClass: Class<Message>, receiver: (Message) -> Unit): AutoCloseable =
+		scopedMessageBus.registerForClass(messageClass, receiver)
 
 	override fun <Message : ApplicationMessage> unregisterReceiver(receiver: (Message) -> Unit) =
 		scopedMessageBus.unregisterReceiver(receiver)

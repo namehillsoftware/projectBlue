@@ -19,6 +19,8 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.Track
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
 import com.lasthopesoftware.bluewater.shared.android.messages.RegisterForMessages
+import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
+import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay
 import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
@@ -35,6 +37,7 @@ private val screenControlVisibilityTime by lazy { Duration.standardSeconds(5) }
 
 class NowPlayingFilePropertiesViewModel(
 	private val messages: RegisterForMessages,
+	private val applicationMessages: RegisterForApplicationMessages,
 	private val nowPlayingRepository: GetNowPlayingState,
 	private val selectedConnectionProvider: ProvideSelectedConnection,
 	private val fileProperties: ProvideScopedFileProperties,
@@ -51,7 +54,7 @@ class NowPlayingFilePropertiesViewModel(
 	private val onPlaybackStoppedReceiver: ReceiveBroadcastEvents
 	private val onPlaybackChangedReceiver: ReceiveBroadcastEvents
 	private val onPlaylistChangedReceiver: ReceiveBroadcastEvents
-	private val onTrackPositionChanged: ReceiveBroadcastEvents
+	private val onTrackPositionChanged: (TrackPositionBroadcaster.TrackPositionUpdate) -> Unit
 
 	private var cachedPromises: CachedPromises? = null
 	private var controlsShownPromise = Promise.empty<Any?>()
@@ -93,13 +96,10 @@ class NowPlayingFilePropertiesViewModel(
 			showNowPlayingControls()
 		}
 
-		onTrackPositionChanged =
-			ReceiveBroadcastEvents { intent ->
-				val fileDuration = intent.getLongExtra(TrackPositionBroadcaster.TrackPositionChangedParameters.fileDuration, -1)
-				if (fileDuration > -1) setTrackDuration(fileDuration)
-				val filePosition = intent.getLongExtra(TrackPositionBroadcaster.TrackPositionChangedParameters.filePosition, -1)
-				if (filePosition > -1) setTrackProgress(filePosition)
-			}
+		onTrackPositionChanged = { update ->
+			setTrackDuration(update.fileDuration.millis)
+			setTrackProgress(update.filePosition.millis)
+		}
 
 		val playbackStoppedIntentFilter = IntentFilter().apply {
 			addAction(PlaylistEvents.onPlaylistPause)
@@ -112,8 +112,9 @@ class NowPlayingFilePropertiesViewModel(
 			registerReceiver(onPlaybackStartedReceiver, IntentFilter(PlaylistEvents.onPlaylistStart))
 			registerReceiver(onPlaybackChangedReceiver, IntentFilter(PlaylistEvents.onPlaylistTrackChange))
 			registerReceiver(onPlaylistChangedReceiver, IntentFilter(PlaylistEvents.onPlaylistChange))
-			registerReceiver(onTrackPositionChanged, IntentFilter(TrackPositionBroadcaster.trackPositionUpdate))
 		}
+
+		applicationMessages.registerReceiver(onTrackPositionChanged)
 	}
 
 	override fun onCleared() {
@@ -123,8 +124,8 @@ class NowPlayingFilePropertiesViewModel(
 			unregisterReceiver(onPlaybackStartedReceiver)
 			unregisterReceiver(onPlaybackChangedReceiver)
 			unregisterReceiver(onPlaylistChangedReceiver)
-			unregisterReceiver(onTrackPositionChanged)
 		}
+		applicationMessages.unregisterReceiver(onTrackPositionChanged)
 		controlsShownPromise.cancel()
 	}
 
