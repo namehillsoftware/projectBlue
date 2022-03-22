@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.menu
 
 import android.content.Context
-import android.content.Intent
 import android.os.Handler
 import android.view.LayoutInflater
 import android.view.View
@@ -25,8 +24,7 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlay
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.fragments.playlist.*
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.menu.listeners.FileSeekToClickListener
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.menu.listeners.RemovePlaylistFileClickListener
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
-import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistTrackChange
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.android.view.getValue
@@ -89,7 +87,7 @@ class NowPlayingFileListItemMenuBuilder(
 		private val viewAnimator: NotifyOnFlipViewAnimator
 	) :
 		RecyclerView.ViewHolder(viewAnimator),
-		ReceiveBroadcastEvents,
+		(PlaylistTrackChange) -> Unit,
 		View.OnLongClickListener,
 		ImmediateResponse<NowPlaying?, Unit>
 	{
@@ -122,11 +120,10 @@ class NowPlayingFileListItemMenuBuilder(
 			removeButton.setOnClickListener(RemovePlaylistFileClickListener(viewAnimator, position))
 		}
 
-		override fun onReceive(intent: Intent) {
-			val playlistPosition = intent.getIntExtra(PlaylistEvents.PlaylistParameters.playlistPosition, -1)
+		override fun invoke(p1: PlaylistTrackChange) {
 			val position = positionedFile?.playlistPosition
-			textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(position == playlistPosition))
-			viewAnimator.isSelected = position == playlistPosition
+			textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(position == p1.positionedFile.playlistPosition))
+			viewAnimator.isSelected = position == p1.positionedFile.playlistPosition
 		}
 
 		override fun onLongClick(v: View?): Boolean =

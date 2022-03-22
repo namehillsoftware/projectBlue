@@ -112,7 +112,7 @@ class NowPlayingPlaylistFragment : Fragment() {
 			}
 	}
 
-	private val fileListItemNowPlayingRegistrar = lazy { FileListItemNowPlayingRegistrar(messageBus) }
+	private val fileListItemNowPlayingRegistrar = lazy { FileListItemNowPlayingRegistrar(applicationMessageBus) }
 
 	private val handler by lazy { Handler(requireContext().mainLooper) }
 

@@ -77,7 +77,7 @@ class NowPlayingActivity :
 
 	private val applicationMessageBus by lazy { scopedApplicationMessageBus() }
 
-	private val fileListItemNowPlayingRegistrar = lazy { FileListItemNowPlayingRegistrar(messageBus.value) }
+	private val fileListItemNowPlayingRegistrar = lazy { FileListItemNowPlayingRegistrar(applicationMessageBus) }
 
 	private val imageProvider by lazy { CachedImageProvider.getInstance(this) }
 
