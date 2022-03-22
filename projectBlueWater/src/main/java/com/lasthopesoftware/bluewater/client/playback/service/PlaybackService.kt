@@ -489,7 +489,6 @@ open class PlaybackService :
 	override fun onCreate() {
 		val playbackHaltingIntentFilter = IntentFilter().apply {
 			addAction(PlaybackEngineTypeChangedBroadcaster.playbackEngineTypeChanged)
-			addAction(BrowserLibrarySelection.libraryChosenEvent)
 			addAction(SelectedConnectionSettingsChangeReceiver.connectionSettingsUpdated)
 		}
 

@@ -31,6 +31,7 @@ import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicat
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
+import com.lasthopesoftware.bluewater.shared.messages.application.scopedApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 
@@ -67,7 +68,7 @@ class EditClientSettingsActivity :
 		)
 	}
 	private val applicationSettingsRepository by lazy { getApplicationSettingsRepository() }
-	private val messageBus by lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
+	private val applicationMessageBus by lazy { scopedApplicationMessageBus() }
 	private val settingsMenu by lazy {
 		EditClientSettingsMenu(
 			this,
@@ -79,7 +80,7 @@ class EditClientSettingsActivity :
 					libraryStorage,
 					SelectedBrowserLibraryIdentifierProvider(getApplicationSettingsRepository()),
 					libraryProvider,
-					BrowserLibrarySelection(applicationSettingsRepository, messageBus, libraryProvider))))
+					BrowserLibrarySelection(applicationSettingsRepository, applicationMessageBus, libraryProvider))))
 	}
 	private var library: Library? = null
 
@@ -196,6 +197,11 @@ class EditClientSettingsActivity :
 		txtAccessCode.findView().setText(result.accessCode)
 		txtUserName.findView().setText(result.userName)
 		txtPassword.findView().setText(result.password)
+	}
+
+	override fun onDestroy() {
+		super.onDestroy()
+		applicationMessageBus.close()
 	}
 
 	private fun saveLibraryAndFinish() {
