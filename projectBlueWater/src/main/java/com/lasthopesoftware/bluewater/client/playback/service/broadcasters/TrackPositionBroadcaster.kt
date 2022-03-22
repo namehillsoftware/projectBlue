@@ -4,7 +4,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ProvideScopedFileProperties
 import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedProgressedFile
-import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.TrackPositionUpdate
 import com.lasthopesoftware.bluewater.shared.messages.application.SendApplicationMessages
 import io.reactivex.functions.Consumer
 import org.joda.time.Duration
@@ -38,6 +38,4 @@ class TrackPositionBroadcaster(
 			}
 		}
 	}
-
-	class TrackPositionUpdate(val filePosition: Duration, val fileDuration: Duration) : ApplicationMessage
 }

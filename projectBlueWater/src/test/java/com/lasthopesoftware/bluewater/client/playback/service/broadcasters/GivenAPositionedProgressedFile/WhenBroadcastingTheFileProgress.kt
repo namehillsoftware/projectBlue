@@ -5,6 +5,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedProgressedFile
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.TrackPositionUpdate
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import org.assertj.core.api.AssertionsForClassTypes.assertThat
 import org.joda.time.Duration
@@ -29,7 +30,7 @@ class WhenBroadcastingTheFileProgress {
 				)
 			)
 
-			appMessageBus.recordedMessages.first() as? TrackPositionBroadcaster.TrackPositionUpdate
+			appMessageBus.recordedMessages.first() as? TrackPositionUpdate
 		}
 
 		private val duration by lazy {

@@ -75,6 +75,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.Local
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaybackStartedBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistTrackChange
 import com.lasthopesoftware.bluewater.client.playback.service.notification.NotificationsConfiguration
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.MediaStyleNotificationSetup
@@ -643,6 +644,7 @@ open class PlaybackService :
 					it,
 					positionedFile
 				)
+				applicationMessageBus.value.sendMessage(PlaylistTrackChange(it, positionedFile))
 			}
 		}
 	}
@@ -711,7 +713,7 @@ open class PlaybackService :
 			val imageProvider = CachedImageProvider.getInstance(this)
 
 			remoteControlProxy?.also(lazyMessageBus.value::unregisterReceiver)
-			remoteControlProxy?.also(applicationMessageBus.value::unregisterReceiver)
+			remoteControlProxy?.close()
 
 			val promisedMediaBroadcaster = promisedMediaSession.then { mediaSession ->
 				val broadcaster = MediaSessionBroadcaster(
@@ -719,12 +721,11 @@ open class PlaybackService :
 					cachedSessionFilePropertiesProvider,
 					imageProvider,
 					mediaSession)
-				remoteControlProxy = RemoteControlProxy(broadcaster)
+				remoteControlProxy = RemoteControlProxy(applicationMessageBus.value, broadcaster)
 					.also { rcp ->
 						lazyMessageBus
 							.value
 							.registerReceiver(rcp, buildRemoteControlProxyIntentFilter(rcp))
-						rcp.typeRegistrations().forEach { applicationMessageBus.value.registerForClass(it, rcp) }
 					}
 			}
 
@@ -1064,6 +1065,7 @@ open class PlaybackService :
 					it,
 					positionedFile
 				)
+				applicationMessageBus.value.sendMessage(PlaylistTrackChange(it, positionedFile))
 			}
 		}
 	}

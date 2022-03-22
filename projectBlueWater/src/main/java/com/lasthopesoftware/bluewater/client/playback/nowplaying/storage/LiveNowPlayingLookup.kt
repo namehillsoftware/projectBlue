@@ -13,7 +13,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.Pro
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.TrackPositionUpdate
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
@@ -55,7 +55,7 @@ class LiveNowPlayingLookup private constructor(
 						liveNowPlayingLookup
 					)
 					registerForClass(
-						cls<TrackPositionBroadcaster.TrackPositionUpdate>(),
+						cls<TrackPositionUpdate>(),
 						liveNowPlayingLookup
 					)
 				}
@@ -96,7 +96,7 @@ class LiveNowPlayingLookup private constructor(
 	override fun invoke(message: ApplicationMessage) {
 		when (message) {
 			is BrowserLibrarySelection.LibraryChosenMessage -> updateInner(message.chosenLibraryId)
-			is TrackPositionBroadcaster.TrackPositionUpdate -> trackedPosition = message.filePosition.millis
+			is TrackPositionUpdate -> trackedPosition = message.filePosition.millis
 		}
 	}
 }

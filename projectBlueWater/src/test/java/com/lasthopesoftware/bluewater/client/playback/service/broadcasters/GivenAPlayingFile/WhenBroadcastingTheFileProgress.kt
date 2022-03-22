@@ -4,6 +4,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile
 import com.lasthopesoftware.bluewater.client.playback.file.PlayedFile
 import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.TrackPositionUpdate
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressedPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
@@ -42,7 +43,7 @@ class WhenBroadcastingTheFileProgress {
 					.standardSeconds(2)
 					.plus(Duration.standardSeconds(30)))
 
-			appMessageBus.recordedMessages.first() as? TrackPositionBroadcaster.TrackPositionUpdate
+			appMessageBus.recordedMessages.first() as? TrackPositionUpdate
 		}
 
 		private val duration by lazy {
