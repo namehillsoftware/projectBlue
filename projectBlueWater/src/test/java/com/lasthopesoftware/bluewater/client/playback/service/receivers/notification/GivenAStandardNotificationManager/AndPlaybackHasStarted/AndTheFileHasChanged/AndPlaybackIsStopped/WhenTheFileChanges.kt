@@ -97,6 +97,6 @@ class WhenTheFileChanges : AndroidContext() {
 
 	@Test
 	fun thenTheNotificationIsNotSetToTheSecondNotification() {
-		verify { notificationManager.notify(43, secondNotification) }
+		verify(exactly = 0) { notificationManager.notify(43, secondNotification) }
 	}
 }
