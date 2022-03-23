@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.shared.messages.application
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Handler
 import com.lasthopesoftware.bluewater.shared.messages.TypedMessageBus
@@ -11,6 +12,7 @@ class ApplicationMessageBus private constructor(
 	SendApplicationMessages
 {
 	companion object {
+		@SuppressLint("StaticFieldLeak")
 		private lateinit var messageBus: ApplicationMessageBus
 
 		@Synchronized
