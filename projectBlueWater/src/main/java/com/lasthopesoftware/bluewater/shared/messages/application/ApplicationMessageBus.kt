@@ -13,6 +13,7 @@ class ApplicationMessageBus private constructor(
 	companion object {
 		private lateinit var messageBus: ApplicationMessageBus
 
+		@Synchronized
 		fun Context.getApplicationMessageBus() : ApplicationMessageBus {
 			if (Companion::messageBus.isInitialized) return messageBus
 
