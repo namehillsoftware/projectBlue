@@ -40,11 +40,14 @@ class WhenPlaybackIsInterrupted : AndroidContext() {
 			FakeNotificationCompatBuilder.newFakeBuilder(pausedNotification)
 		)
 
-		val playbackNotificationRouter = PlaybackNotificationRouter(PlaybackNotificationBroadcaster(
-			NotificationsController(service, notificationManager),
-			NotificationsConfiguration("", 43),
-			notificationContentBuilder
-		) { Promise(FakeNotificationCompatBuilder.newFakeBuilder(Notification())) })
+		val playbackNotificationRouter = PlaybackNotificationRouter(
+			PlaybackNotificationBroadcaster(
+				NotificationsController(service, notificationManager),
+				NotificationsConfiguration("", 43),
+				notificationContentBuilder
+			) { Promise(FakeNotificationCompatBuilder.newFakeBuilder(Notification())) },
+			mockk(relaxed = true)
+		)
 
 		playbackNotificationRouter.onReceive(Intent(PlaylistEvents.onPlaylistInterrupted))
 	}

@@ -639,11 +639,6 @@ open class PlaybackService :
 	override fun onPlaylistReset(positionedFile: PositionedFile) {
 		selectedLibraryIdentifierProvider.selectedLibraryId.then { l ->
 			l?.also {
-				playbackBroadcaster.sendPlaybackBroadcast(
-					PlaylistEvents.onPlaylistTrackChange,
-					it,
-					positionedFile
-				)
 				applicationMessageBus.value.sendMessage(PlaylistTrackChange(it, positionedFile))
 			}
 		}
@@ -743,6 +738,7 @@ open class PlaybackService :
 					}
 					.let { builder ->
 						playbackNotificationRouter?.also(lazyMessageBus.value::unregisterReceiver)
+						playbackNotificationRouter?.close()
 						playbackStartingNotificationBuilder.then { b ->
 							b?.let { playbackStartingNotificationBuilder ->
 								PlaybackNotificationRouter(
@@ -751,7 +747,8 @@ open class PlaybackService :
 										playbackNotificationsConfiguration,
 										builder,
 										playbackStartingNotificationBuilder
-									)
+									),
+									applicationMessageBus.value
 								)
 							}
 						}
@@ -1060,11 +1057,6 @@ open class PlaybackService :
 	private fun broadcastChangedFile(positionedFile: PositionedFile) {
 		selectedLibraryIdentifierProvider.selectedLibraryId.then { l ->
 			l?.also {
-				playbackBroadcaster.sendPlaybackBroadcast(
-					PlaylistEvents.onPlaylistTrackChange,
-					it,
-					positionedFile
-				)
 				applicationMessageBus.value.sendMessage(PlaylistTrackChange(it, positionedFile))
 			}
 		}

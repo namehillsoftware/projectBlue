@@ -13,7 +13,7 @@ class WhenRegisteringForActions {
 
 	companion object {
 		private val registeredIntents by lazy {
-			val playbackNotificationRouter = PlaybackNotificationRouter(mockk())
+			val playbackNotificationRouter = PlaybackNotificationRouter(mockk(), mockk(relaxed = true))
 			playbackNotificationRouter.registerForIntents()
 		}
 	}
@@ -21,7 +21,6 @@ class WhenRegisteringForActions {
 	@Test
 	fun thenTheRegisteredActionsAreCorrect() {
 		assertThat(registeredIntents).isSubsetOf(
-			PlaylistEvents.onPlaylistTrackChange,
 			PlaylistEvents.onPlaylistPause,
 			PlaylistEvents.onPlaylistInterrupted,
 			PlaylistEvents.onPlaylistStart,

@@ -5,8 +5,11 @@ import android.app.NotificationManager
 import android.content.Intent
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistTrackChange
 import com.lasthopesoftware.bluewater.client.playback.service.notification.NotificationsConfiguration
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.BuildNowPlayingNotificationContent
@@ -35,18 +38,18 @@ class WhenPlaybackIsPaused : AndroidContext() {
 		every { notificationContentBuilder.promiseNowPlayingNotification(ServiceFile(1), true) } returns Promise(newFakeBuilder(Notification()))
 		every { notificationContentBuilder.promiseNowPlayingNotification(ServiceFile(1), false) } returns Promise(newFakeBuilder(pausedNotification))
 
-		val playbackNotificationRouter = PlaybackNotificationRouter(PlaybackNotificationBroadcaster(
-			NotificationsController(service, notificationManager),
-			NotificationsConfiguration("", 43),
-			notificationContentBuilder
-		) { Promise(newFakeBuilder(Notification())) })
+		val playbackNotificationRouter = PlaybackNotificationRouter(
+			PlaybackNotificationBroadcaster(
+				NotificationsController(service, notificationManager),
+				NotificationsConfiguration("", 43),
+				notificationContentBuilder
+			) { Promise(newFakeBuilder(Notification())) },
+			mockk(relaxed = true)
+		)
+
 		playbackNotificationRouter.onReceive(Intent(PlaylistEvents.onPlaylistStart))
 
-		run {
-			val playlistChangeIntent = Intent(PlaylistEvents.onPlaylistTrackChange)
-			playlistChangeIntent.putExtra(PlaylistEvents.PlaybackFileParameters.fileKey, 1)
-			playbackNotificationRouter.onReceive(playlistChangeIntent)
-		}
+		playbackNotificationRouter(PlaylistTrackChange(LibraryId(4), PositionedFile(4, ServiceFile(1))))
 
 		playbackNotificationRouter.onReceive(Intent(PlaylistEvents.onPlaylistPause))
 	}

@@ -1,9 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.storage
 
 import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
@@ -12,11 +9,9 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.Bro
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistTrackChange
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.TrackPositionUpdate
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
-import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
-import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
@@ -27,7 +22,7 @@ class LiveNowPlayingLookup private constructor(
 	selectedLibraryIdentifierProvider: ProvideSelectedLibraryId,
 	private val libraryProvider: ILibraryProvider,
 	private val libraryStorage: ILibraryStorage
-) : ReceiveBroadcastEvents, GetNowPlayingState, (ApplicationMessage) -> Unit {
+) : GetNowPlayingState, (ApplicationMessage) -> Unit {
 
 	companion object {
 		private lateinit var instance: LiveNowPlayingLookup
@@ -42,13 +37,6 @@ class LiveNowPlayingLookup private constructor(
 				libraryRepository,
 				libraryRepository
 			).also { liveNowPlayingLookup ->
-				MessageBus(LocalBroadcastManager.getInstance(context)).registerReceiver(
-					liveNowPlayingLookup,
-					IntentFilter().apply {
-						addAction(PlaylistEvents.onPlaylistTrackChange)
-					}
-				)
-
 				with (context.getApplicationMessageBus()) {
 					registerForClass(
 						cls<BrowserLibrarySelection.LibraryChosenMessage>(),
@@ -56,6 +44,10 @@ class LiveNowPlayingLookup private constructor(
 					)
 					registerForClass(
 						cls<TrackPositionUpdate>(),
+						liveNowPlayingLookup
+					)
+					registerForClass(
+						cls<PlaylistTrackChange>(),
 						liveNowPlayingLookup
 					)
 				}
@@ -80,12 +72,6 @@ class LiveNowPlayingLookup private constructor(
 			?.then { np -> np?.apply { filePosition = trackedPosition ?: filePosition } }
 			.keepPromise()
 
-	override fun onReceive(intent: Intent) {
-		when (intent.action) {
-			PlaylistEvents.onPlaylistTrackChange -> trackedPosition =null
-		}
-	}
-
 	private fun updateInner(libraryId: LibraryId) {
 		inner = NowPlayingRepository(
 			SpecificLibraryProvider(libraryId, libraryProvider),
@@ -97,6 +83,7 @@ class LiveNowPlayingLookup private constructor(
 		when (message) {
 			is BrowserLibrarySelection.LibraryChosenMessage -> updateInner(message.chosenLibraryId)
 			is TrackPositionUpdate -> trackedPosition = message.filePosition.millis
+			is PlaylistTrackChange -> trackedPosition = null
 		}
 	}
 }

@@ -25,9 +25,6 @@ object PlaylistEvents {
 	@JvmField
 	val onPlaylistTrackComplete = magicPropertyBuilder.buildProperty("onPlaylistTrackComplete")
 
-	@JvmField
-	val onPlaylistTrackChange = magicPropertyBuilder.buildProperty("onPlaylistTrackChange")
-
 	val onPlaylistTrackStart by lazy { magicPropertyBuilder.buildProperty("onPlaylistTrackStart") }
 
 	object PlaybackFileParameters {

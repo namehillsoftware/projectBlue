@@ -12,95 +12,91 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.LocalPlaybackBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistTrackChange
 import com.lasthopesoftware.bluewater.client.playback.service.notification.NotificationsConfiguration
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.BuildNowPlayingNotificationContent
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.PlaybackNotificationRouter
 import com.lasthopesoftware.bluewater.shared.android.notifications.control.NotificationsController
 import com.lasthopesoftware.resources.FakeMessageBus
+import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import com.lasthopesoftware.resources.notifications.FakeNotificationCompatBuilder
 import com.namehillsoftware.handoff.promises.Promise
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.spyk
+import io.mockk.verify
 import org.junit.Test
-import org.mockito.ArgumentMatchers.*
-import org.mockito.Mockito
 import org.robolectric.Robolectric
 
 class WhenTheFileChanges : AndroidContext() {
 
 	companion object {
 		private val secondNotification = Notification()
-		private val service = lazy {
-			Mockito.spy(Robolectric.buildService(PlaybackService::class.java).get())
+		private val service by lazy {
+			spyk(Robolectric.buildService(PlaybackService::class.java).get())
 		}
-		private val notificationManager = Mockito.mock(NotificationManager::class.java)
-		private val notificationContentBuilder = Mockito.mock(BuildNowPlayingNotificationContent::class.java)
-		private val fakeMessageSender = lazy { FakeMessageBus(ApplicationProvider.getApplicationContext()) }
+		private val notificationManager = mockk<NotificationManager>(relaxUnitFun = true)
+		private val notificationContentBuilder = mockk<BuildNowPlayingNotificationContent>()
+		private val fakeMessageSender by lazy { FakeMessageBus(ApplicationProvider.getApplicationContext()) }
 	}
 
 	override fun before() {
-		val builder = Mockito.mock(NotificationCompat.Builder::class.java)
-		Mockito.`when`(builder.build())
-			.thenReturn(Notification())
-			.thenReturn(secondNotification)
-		Mockito.`when`(notificationContentBuilder.getLoadingNotification(anyBoolean()))
-			.thenReturn(FakeNotificationCompatBuilder.newFakeBuilder(Notification()))
-		Mockito.`when`(notificationContentBuilder.promiseNowPlayingNotification(any(),	anyBoolean()))
-			.thenReturn(Promise(builder))
-		Mockito.`when`(notificationContentBuilder.promiseNowPlayingNotification(argThat { a -> ServiceFile(2) == a }, anyBoolean()))
-			.thenReturn(Promise(builder))
-		val playbackNotificationRouter = PlaybackNotificationRouter(PlaybackNotificationBroadcaster(
-			NotificationsController(
-				service.value,
-				notificationManager),
-			NotificationsConfiguration("", 43),
-			notificationContentBuilder
-		) { Promise(FakeNotificationCompatBuilder.newFakeBuilder(Notification())) })
+		val builder = mockk<NotificationCompat.Builder>()
+		every { builder.build() } returns Notification() andThen secondNotification
+		every { notificationContentBuilder.getLoadingNotification(any()) } returns FakeNotificationCompatBuilder.newFakeBuilder(Notification())
+		every { notificationContentBuilder.promiseNowPlayingNotification(any(), any()) } returns Promise(builder)
+		every { notificationContentBuilder.promiseNowPlayingNotification(ServiceFile(2), any()) } returns Promise(builder)
 
-		val localPlaybackBroadcaster = LocalPlaybackBroadcaster(fakeMessageSender.value)
+		val applicationMessageBus = RecordingApplicationMessageBus()
+		val playbackNotificationRouter = PlaybackNotificationRouter(
+			PlaybackNotificationBroadcaster(
+				NotificationsController(service, notificationManager),
+				NotificationsConfiguration("", 43),
+				notificationContentBuilder
+			) { Promise(FakeNotificationCompatBuilder.newFakeBuilder(Notification())) },
+			applicationMessageBus
+		)
+
+		val localPlaybackBroadcaster = LocalPlaybackBroadcaster(fakeMessageSender)
 		fakeMessageSender
-			.value
 			.registerReceiver(
 				playbackNotificationRouter,
 				playbackNotificationRouter.registerForIntents()
-					.fold(IntentFilter(), { intentFilter: IntentFilter, action: String? ->
+					.fold(IntentFilter()) { intentFilter: IntentFilter, action: String? ->
 						intentFilter.addAction(action)
 						intentFilter
-					})
+					}
 			)
 		localPlaybackBroadcaster.sendPlaybackBroadcast(
 			PlaylistEvents.onPlaylistStart,
 			LibraryId(1),
 			PositionedFile(1, ServiceFile(1))
 		)
-		localPlaybackBroadcaster.sendPlaybackBroadcast(
-			PlaylistEvents.onPlaylistTrackChange,
-			LibraryId(1),
-			PositionedFile(1, ServiceFile(1))
-		)
+
+		applicationMessageBus.sendMessage(PlaylistTrackChange(LibraryId(1), PositionedFile(1, ServiceFile(1))))
+
 		localPlaybackBroadcaster.sendPlaybackBroadcast(
 			PlaylistEvents.onPlaylistStop,
 			LibraryId(1),
 			PositionedFile(1, ServiceFile(1))
 		)
-		localPlaybackBroadcaster.sendPlaybackBroadcast(
-			PlaylistEvents.onPlaylistTrackChange,
-			LibraryId(1),
-			PositionedFile(1, ServiceFile(2))
-		)
+
+		applicationMessageBus.sendMessage(PlaylistTrackChange(LibraryId(1), PositionedFile(1, ServiceFile(2))))
 	}
 
 	@Test
 	fun thenTheServiceIsStartedInTheForeground() {
-		Mockito.verify(service.value, Mockito.atLeastOnce()).startForeground(eq(43), any())
+		verify { service.startForeground(43, any()) }
 	}
 
 	@Test
 	fun thenTheServiceDoesNotContinueInTheBackground() {
-		Mockito.verify(service.value).stopForeground(true)
+		verify { service.stopForeground(true) }
 	}
 
 	@Test
 	fun thenTheNotificationIsNotSetToTheSecondNotification() {
-		Mockito.verify(notificationManager, Mockito.never()).notify(43, secondNotification)
+		verify { notificationManager.notify(43, secondNotification) }
 	}
 }
