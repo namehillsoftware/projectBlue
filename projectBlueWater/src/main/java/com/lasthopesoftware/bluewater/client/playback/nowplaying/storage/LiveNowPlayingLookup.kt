@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.Bro
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistTrackChange
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.TrackPositionUpdate
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
@@ -60,6 +61,7 @@ class LiveNowPlayingLookup private constructor(
 	}
 
 	private var inner: GetNowPlayingState? = null
+	private var trackedFile: PositionedFile? = null
 	private var trackedPosition: Long? = null
 
 	init {
@@ -69,21 +71,31 @@ class LiveNowPlayingLookup private constructor(
 	override fun promiseNowPlaying(): Promise<NowPlaying?> =
 		inner
 			?.promiseNowPlaying()
-			?.then { np -> np?.apply { filePosition = trackedPosition ?: filePosition } }
+			?.then { np ->
+				np?.apply {
+					if (trackedFile != playingFile) {
+						trackedPosition = null
+						trackedFile = playingFile
+					}
+					filePosition = trackedPosition ?: filePosition
+				}
+			}
 			.keepPromise()
 
 	private fun updateInner(libraryId: LibraryId) {
 		inner = NowPlayingRepository(
 			SpecificLibraryProvider(libraryId, libraryProvider),
-			libraryStorage
-		)
+			libraryStorage)
 	}
 
 	override fun invoke(message: ApplicationMessage) {
 		when (message) {
 			is BrowserLibrarySelection.LibraryChosenMessage -> updateInner(message.chosenLibraryId)
 			is TrackPositionUpdate -> trackedPosition = message.filePosition.millis
-			is PlaylistTrackChange -> trackedPosition = null
+			is PlaylistTrackChange -> {
+				trackedPosition = null
+				trackedFile = message.positionedFile
+			}
 		}
 	}
 }
