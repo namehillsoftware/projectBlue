@@ -16,7 +16,7 @@ class WhenPlaybackIsInterrupted : AndroidContext() {
 	}
 
 	override fun before() {
-		PlaybackNotificationRouter(playbackEventsNotifier)
+		PlaybackNotificationRouter(playbackEventsNotifier, mockk(relaxed = true, relaxUnitFun = true))
 			.onReceive(Intent(PlaylistEvents.onPlaylistInterrupted))
 	}
 

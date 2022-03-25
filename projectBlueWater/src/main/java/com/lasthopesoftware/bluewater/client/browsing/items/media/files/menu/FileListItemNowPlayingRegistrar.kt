@@ -1,23 +1,18 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.media.files.menu
 
-import android.content.IntentFilter
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
-import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
-import com.lasthopesoftware.bluewater.shared.android.messages.RegisterForMessages
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistTrackChange
+import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
+import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 
-class FileListItemNowPlayingRegistrar(private val messageRegistrar: RegisterForMessages) {
-
-	companion object {
-		private val intentFilter = IntentFilter(PlaylistEvents.onPlaylistTrackChange)
-	}
+class FileListItemNowPlayingRegistrar(private val messageRegistrar: RegisterForApplicationMessages) {
 
 	private val syncObj = Any()
-	private val registeredHandlers = HashSet<ReceiveBroadcastEvents>()
+	private val registeredHandlers = HashSet<(PlaylistTrackChange) -> Unit>()
 
-	fun registerNewHandler(receiver: ReceiveBroadcastEvents): AutoCloseable =
+	fun registerNewHandler(receiver: (PlaylistTrackChange) -> Unit): AutoCloseable =
 		FileListItemNowPlayingHandler(receiver).also {
 			synchronized(syncObj) {
-				messageRegistrar.registerReceiver(receiver, intentFilter)
+				messageRegistrar.registerReceiver(receiver)
 				registeredHandlers.add(receiver)
 			}
 		}
@@ -29,14 +24,14 @@ class FileListItemNowPlayingRegistrar(private val messageRegistrar: RegisterForM
 		}
 	}
 
-	private fun remove(receiver: ReceiveBroadcastEvents) {
+	private fun remove(receiver: (PlaylistTrackChange) -> Unit) {
 		synchronized(syncObj) {
 			messageRegistrar.unregisterReceiver(receiver)
 			registeredHandlers.remove(receiver)
 		}
 	}
 
-	private inner class FileListItemNowPlayingHandler(private val receiver: ReceiveBroadcastEvents) : AutoCloseable {
+	private inner class FileListItemNowPlayingHandler(private val receiver: (PlaylistTrackChange) -> Unit) : AutoCloseable {
 		override fun close() = remove(receiver)
 	}
 }

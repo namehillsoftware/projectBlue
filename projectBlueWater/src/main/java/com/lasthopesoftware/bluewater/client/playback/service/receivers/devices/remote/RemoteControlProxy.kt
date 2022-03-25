@@ -1,36 +1,55 @@
 package com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote
 
 import android.content.Intent
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistTrackChange
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.TrackPositionUpdate
 import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
+import com.lasthopesoftware.bluewater.shared.cls
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
+import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 
-class RemoteControlProxy(private val remoteBroadcaster: IRemoteBroadcaster) : ReceiveBroadcastEvents {
+class RemoteControlProxy(private val registerForApplicationMessages: RegisterForApplicationMessages, private val remoteBroadcaster: IRemoteBroadcaster) :
+	ReceiveBroadcastEvents,
+	(ApplicationMessage) -> Unit,
+	AutoCloseable
+{
 	private val mappedEvents by lazy {
 		mapOf(
-			Pair(PlaylistEvents.onPlaylistTrackChange, ::onPlaylistChange),
 			Pair(PlaylistEvents.onPlaylistPause) { remoteBroadcaster.setPaused() },
 			Pair(PlaylistEvents.onPlaylistInterrupted) { remoteBroadcaster.setPaused() },
 			Pair(PlaylistEvents.onPlaylistStart) { remoteBroadcaster.setPlaying() },
 			Pair(PlaylistEvents.onPlaylistStop) { remoteBroadcaster.setStopped() },
-			Pair(TrackPositionBroadcaster.trackPositionUpdate, ::onTrackPositionUpdate),
 		)
 	}
 
 	fun registerForIntents(): Set<String> = mappedEvents.keys
 
+	init {
+	    registerForApplicationMessages.registerForClass(cls<TrackPositionUpdate>(), this)
+	    registerForApplicationMessages.registerForClass(cls<PlaylistTrackChange>(), this)
+	}
+
 	override fun onReceive(intent: Intent) {
-		intent.action?.let(mappedEvents::get)?.invoke(intent)
+		intent.action?.let(mappedEvents::get)?.invoke()
 	}
 
-	private fun onPlaylistChange(intent: Intent) {
-		val fileKey = intent.getIntExtra(PlaylistEvents.PlaybackFileParameters.fileKey, -1)
-		if (fileKey > 0) remoteBroadcaster.updateNowPlaying(ServiceFile(fileKey))
+	override fun invoke(message: ApplicationMessage) {
+		when (message) {
+			is TrackPositionUpdate -> onTrackPositionUpdate(message)
+			is PlaylistTrackChange -> onPlaylistChange(message)
+		}
 	}
 
-	private fun onTrackPositionUpdate(intent: Intent) {
-		val trackPosition = intent.getLongExtra(TrackPositionBroadcaster.TrackPositionChangedParameters.filePosition, -1)
-		if (trackPosition >= 0) remoteBroadcaster.updateTrackPosition(trackPosition)
+	override fun close() {
+		registerForApplicationMessages.unregisterReceiver(this)
+	}
+
+	private fun onPlaylistChange(playlistTrackChange: PlaylistTrackChange) {
+		remoteBroadcaster.updateNowPlaying(playlistTrackChange.positionedFile.serviceFile)
+	}
+
+	private fun onTrackPositionUpdate(trackPositionUpdate: TrackPositionUpdate) {
+		remoteBroadcaster.updateTrackPosition(trackPositionUpdate.filePosition.millis)
 	}
 }

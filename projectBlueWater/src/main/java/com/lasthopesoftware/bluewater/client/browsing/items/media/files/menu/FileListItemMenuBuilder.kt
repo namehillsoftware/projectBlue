@@ -15,7 +15,6 @@ import com.lasthopesoftware.bluewater.client.browsing.items.menu.handlers.Abstra
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.ProvideNowPlayingFiles
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.android.view.getValue
@@ -53,9 +52,8 @@ class FileListItemMenuBuilder(
 				}, handler))
 
 			fileListItemNowPlayingHandler?.close()
-			fileListItemNowPlayingHandler = fileListItemNowPlayingRegistrar.registerNewHandler { intent ->
-				val fileKey = intent.getIntExtra(PlaylistEvents.PlaybackFileParameters.fileKey, -1)
-				textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(serviceFile.key == fileKey))
+			fileListItemNowPlayingHandler = fileListItemNowPlayingRegistrar.registerNewHandler {
+				textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(serviceFile == it.positionedFile.serviceFile))
 			}
 
 			val viewAnimator = fileListItemContainer.viewAnimator

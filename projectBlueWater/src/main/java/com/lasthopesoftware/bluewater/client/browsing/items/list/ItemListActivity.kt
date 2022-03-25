@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.list
 
 import android.content.Intent
-import android.content.IntentFilter
 import android.os.Bundle
 import android.os.Handler
 import android.view.Menu
@@ -9,7 +8,6 @@ import android.view.MenuItem
 import android.widget.ProgressBar
 import android.widget.ViewAnimator
 import androidx.appcompat.app.AppCompatActivity
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -20,8 +18,8 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.h
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.ItemStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.LibraryFileStringListProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.menu.ActivityLaunching
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener
-import com.lasthopesoftware.bluewater.client.browsing.items.menu.MenuNotifications
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity.Companion.restoreSelectedConnection
@@ -31,11 +29,12 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlaying
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
-import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils.buildStandardMenu
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
+import com.lasthopesoftware.bluewater.shared.messages.application.scopedApplicationMessageBus
+import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.namehillsoftware.handoff.promises.Promise
@@ -68,7 +67,7 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer {
 
 	private val itemProvider by lazy { CachedItemProvider.getInstance(this) }
 
-	private val messageBus by lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
+	private val messageBus by lazy { scopedApplicationMessageBus() }
 
 	private val promisedItemListAdapter: Promise<ItemListAdapter?> by lazy {
 		browserLibraryIdProvider.selectedLibraryId
@@ -99,18 +98,11 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer {
 		setSupportActionBar(findViewById(R.id.listViewToolbar))
 		supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-		val intentFilter = IntentFilter()
-		intentFilter.addAction(MenuNotifications.launchingActivity)
-		intentFilter.addAction(MenuNotifications.launchingActivityHalted)
-		messageBus.registerReceiver(
-			{ intent ->
-				val isLaunching = intent.action == MenuNotifications.launchingActivity
-
-				itemListView.visibility = ViewUtils.getVisibility(!isLaunching)
-				pbLoading.findView().visibility = ViewUtils.getVisibility(isLaunching)
-			},
-			intentFilter
-		)
+		messageBus.registerReceiver { it : ActivityLaunching ->
+			val isLaunching = it == ActivityLaunching.LAUNCHING
+			itemListView.visibility = ViewUtils.getVisibility(!isLaunching)
+			pbLoading.findView().visibility = ViewUtils.getVisibility(isLaunching)
+		}
 
 		itemId = savedInstanceState?.getInt(KEY) ?: intent.getIntExtra(KEY, 0)
 		title = intent.getStringExtra(VALUE)
@@ -180,7 +172,7 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer {
 	override fun getNowPlayingFloatingActionButton(): NowPlayingFloatingActionButton = nowPlayingFloatingActionButton
 
 	override fun onDestroy() {
-		messageBus.clear()
+		messageBus.close()
 		super.onDestroy()
 	}
 

@@ -75,6 +75,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.Local
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaybackStartedBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistTrackChange
 import com.lasthopesoftware.bluewater.client.playback.service.notification.NotificationsConfiguration
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.MediaStyleNotificationSetup
@@ -104,7 +105,10 @@ import com.lasthopesoftware.bluewater.shared.android.notifications.notificationc
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.SharedChannelProperties
 import com.lasthopesoftware.bluewater.shared.android.services.GenericBinder
 import com.lasthopesoftware.bluewater.shared.android.services.promiseBoundService
+import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToaster
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
+import com.lasthopesoftware.bluewater.shared.messages.application.scopedApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.observables.toMaybeObservable
 import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay.Companion.delay
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
@@ -314,6 +318,7 @@ open class PlaybackService :
 	private val notificationManager by lazy { getSystemService(NOTIFICATION_SERVICE) as NotificationManager }
 	private val audioManager by lazy { getSystemService(AUDIO_SERVICE) as AudioManager }
 	private val lazyMessageBus = lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
+	private val applicationMessageBus = lazy { scopedApplicationMessageBus() }
 	private val playbackBroadcaster by lazy { LocalPlaybackBroadcaster(lazyMessageBus.value) }
 	private val applicationSettings by lazy { getApplicationSettingsRepository() }
 	private val selectedLibraryIdentifierProvider by lazy { SelectedBrowserLibraryIdentifierProvider(applicationSettings) }
@@ -401,10 +406,17 @@ open class PlaybackService :
 		}
 	}
 
-	private val playbackHaltingEvent = ReceiveBroadcastEvents {
+	private val playbackHaltingEvent = object : ReceiveBroadcastEvents, (ApplicationMessage) -> Unit {
+		override fun onReceive(intent: Intent) {
 			pausePlayback()
 			stopSelf(startId)
 		}
+
+		override fun invoke(message: ApplicationMessage) {
+			pausePlayback()
+			stopSelf(startId)
+		}
+	}
 
 	private val buildSessionReceiver = ReceiveBroadcastEvents { intent ->
 			val buildStatus = intent.getIntExtra(SelectedConnection.buildSessionBroadcastStatus, -1)
@@ -478,11 +490,13 @@ open class PlaybackService :
 	override fun onCreate() {
 		val playbackHaltingIntentFilter = IntentFilter().apply {
 			addAction(PlaybackEngineTypeChangedBroadcaster.playbackEngineTypeChanged)
-			addAction(BrowserLibrarySelection.libraryChosenEvent)
 			addAction(SelectedConnectionSettingsChangeReceiver.connectionSettingsUpdated)
 		}
 
 		lazyMessageBus.value.registerReceiver(playbackHaltingEvent,	playbackHaltingIntentFilter)
+		applicationMessageBus.value.registerForClass(
+			cls<BrowserLibrarySelection.LibraryChosenMessage>(),
+			playbackHaltingEvent)
 	}
 
 	override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -625,11 +639,7 @@ open class PlaybackService :
 	override fun onPlaylistReset(positionedFile: PositionedFile) {
 		selectedLibraryIdentifierProvider.selectedLibraryId.then { l ->
 			l?.also {
-				playbackBroadcaster.sendPlaybackBroadcast(
-					PlaylistEvents.onPlaylistTrackChange,
-					it,
-					positionedFile
-				)
+				applicationMessageBus.value.sendMessage(PlaylistTrackChange(it, positionedFile))
 			}
 		}
 	}
@@ -690,11 +700,15 @@ open class PlaybackService :
 				FilePropertyCache.getInstance(),
 				ScopedFilePropertiesProvider(connectionProvider, scopedRevisionProvider, FilePropertyCache.getInstance()))
 
-			trackPositionBroadcaster = TrackPositionBroadcaster(lazyMessageBus.value, cachedSessionFilePropertiesProvider)
+			trackPositionBroadcaster = TrackPositionBroadcaster(
+				applicationMessageBus.value,
+				cachedSessionFilePropertiesProvider
+			)
 
 			val imageProvider = CachedImageProvider.getInstance(this)
 
 			remoteControlProxy?.also(lazyMessageBus.value::unregisterReceiver)
+			remoteControlProxy?.close()
 
 			val promisedMediaBroadcaster = promisedMediaSession.then { mediaSession ->
 				val broadcaster = MediaSessionBroadcaster(
@@ -702,7 +716,7 @@ open class PlaybackService :
 					cachedSessionFilePropertiesProvider,
 					imageProvider,
 					mediaSession)
-				remoteControlProxy = RemoteControlProxy(broadcaster)
+				remoteControlProxy = RemoteControlProxy(applicationMessageBus.value, broadcaster)
 					.also { rcp ->
 						lazyMessageBus
 							.value
@@ -724,6 +738,7 @@ open class PlaybackService :
 					}
 					.let { builder ->
 						playbackNotificationRouter?.also(lazyMessageBus.value::unregisterReceiver)
+						playbackNotificationRouter?.close()
 						playbackStartingNotificationBuilder.then { b ->
 							b?.let { playbackStartingNotificationBuilder ->
 								PlaybackNotificationRouter(
@@ -732,7 +747,8 @@ open class PlaybackService :
 										playbackNotificationsConfiguration,
 										builder,
 										playbackStartingNotificationBuilder
-									)
+									),
+									applicationMessageBus.value
 								)
 							}
 						}
@@ -1041,11 +1057,7 @@ open class PlaybackService :
 	private fun broadcastChangedFile(positionedFile: PositionedFile) {
 		selectedLibraryIdentifierProvider.selectedLibraryId.then { l ->
 			l?.also {
-				playbackBroadcaster.sendPlaybackBroadcast(
-					PlaylistEvents.onPlaylistTrackChange,
-					it,
-					positionedFile
-				)
+				applicationMessageBus.value.sendMessage(PlaylistTrackChange(it, positionedFile))
 			}
 		}
 	}
@@ -1073,6 +1085,7 @@ open class PlaybackService :
 			}
 
 		if (lazyMessageBus.isInitialized()) lazyMessageBus.value.clear()
+		if (applicationMessageBus.isInitialized()) applicationMessageBus.value.close()
 	}
 
 	/* End Binder Code */

@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.list
 
-import android.content.IntentFilter
 import android.os.Bundle
 import android.os.Handler
 import android.view.LayoutInflater
@@ -22,7 +21,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.h
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.ItemStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.LibraryFileStringListProvider
-import com.lasthopesoftware.bluewater.client.browsing.items.menu.MenuNotifications
+import com.lasthopesoftware.bluewater.client.browsing.items.menu.ActivityLaunching
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryProvider
@@ -34,6 +33,9 @@ import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicat
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
+import com.lasthopesoftware.bluewater.shared.messages.application.ScopedApplicationMessageBus
+import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.bluewater.tutorials.TutorialManager
@@ -68,20 +70,18 @@ class ItemListFragment : Fragment() {
 	private val tutorialManager by lazy { TutorialManager(requireContext()) }
 
 	private val messageBus = lazy {
-		MessageBus(LocalBroadcastManager.getInstance(requireContext())).apply {
+		MessageBus(LocalBroadcastManager.getInstance(requireContext()))
+	}
 
-			val intentFilter = IntentFilter()
-			intentFilter.addAction(MenuNotifications.launchingActivity)
-			intentFilter.addAction(MenuNotifications.launchingActivityHalted)
-			registerReceiver(
-				{ intent ->
-					val isLaunching = intent.action != MenuNotifications.launchingActivity
+	private val applicationMessageBus = lazy {
+		val applicationMessageBus = requireContext().getApplicationMessageBus()
+		ScopedApplicationMessageBus(applicationMessageBus, applicationMessageBus).apply {
+			registerReceiver { l: ActivityLaunching ->
+				val isLaunching = l == ActivityLaunching.LAUNCHING
 
-					recyclerView?.visibility = ViewUtils.getVisibility(!isLaunching)
-					progressBar?.visibility = ViewUtils.getVisibility(isLaunching)
-				},
-				intentFilter
-			)
+				recyclerView?.visibility = ViewUtils.getVisibility(!isLaunching)
+				progressBar?.visibility = ViewUtils.getVisibility(isLaunching)
+			}
 		}
 	}
 
@@ -93,7 +93,7 @@ class ItemListFragment : Fragment() {
 						?.let { fa ->
 							DemoableItemListAdapter(
 								fa,
-								messageBus.value,
+								applicationMessageBus.value,
 								itemListProvider,
 								itemListMenuChangeHandler,
 								StoredItemAccess(fa),
@@ -106,7 +106,7 @@ class ItemListFragment : Fragment() {
 							.let { context ->
 								ItemListAdapter(
 									context,
-									messageBus.value,
+									applicationMessageBus.value,
 									itemListProvider,
 									itemListMenuChangeHandler,
 									StoredItemAccess(context),

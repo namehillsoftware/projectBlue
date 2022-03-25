@@ -29,11 +29,14 @@ import com.lasthopesoftware.bluewater.databinding.ControlNowPlayingTopSheetBindi
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildActivityViewModel
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildActivityViewModelLazily
+import com.lasthopesoftware.bluewater.shared.messages.application.scopedApplicationMessageBus
 import com.lasthopesoftware.resources.strings.StringResources
 
 class NowPlayingTopFragment : Fragment() {
 
 	private val messageBus = lazy { MessageBus(LocalBroadcastManager.getInstance(requireContext())) }
+
+	private val applicationMessageBus by lazy { requireContext().scopedApplicationMessageBus() }
 
 	private val selectedConnectionProvider by lazy { SelectedConnectionProvider(requireContext()) }
 
@@ -79,6 +82,7 @@ class NowPlayingTopFragment : Fragment() {
 
 		NowPlayingFilePropertiesViewModel(
 			messageBus.value,
+			applicationMessageBus,
 			LiveNowPlayingLookup.getInstance(),
 			selectedConnectionProvider,
 			lazyFilePropertiesProvider,

@@ -10,10 +10,14 @@ import com.lasthopesoftware.bluewater.client.connection.polling.PollForConnectio
 import com.lasthopesoftware.bluewater.client.connection.selected.ProvideSelectedConnection
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistTrackChange
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
 import com.lasthopesoftware.bluewater.shared.android.messages.RegisterForMessages
+import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.images.ProvideDefaultImage
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
+import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.namehillsoftware.handoff.promises.Promise
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -24,12 +28,13 @@ private val logger by lazy { LoggerFactory.getLogger(NowPlayingCoverArtViewModel
 
 class NowPlayingCoverArtViewModel(
 	private val messages: RegisterForMessages,
+	private val applicationMessage: RegisterForApplicationMessages,
 	private val nowPlayingRepository: GetNowPlayingState,
 	private val selectedConnectionProvider: ProvideSelectedConnection,
 	private val defaultImageProvider: ProvideDefaultImage,
 	private val imageProvider: ProvideImages,
 	private val pollConnections: PollForConnections,
-) : ViewModel() {
+) : ViewModel(), (ApplicationMessage) -> Unit {
 	private val onPlaybackChangedReceiver: ReceiveBroadcastEvents
 
 	private var cachedPromises: CachedPromises? = null
@@ -50,16 +55,21 @@ class NowPlayingCoverArtViewModel(
 		onPlaybackChangedReceiver = ReceiveBroadcastEvents { setView() }
 
 		val playingFileChangedFilter = IntentFilter().apply {
-			addAction(PlaylistEvents.onPlaylistTrackChange)
 			addAction(PlaylistEvents.onPlaylistChange)
 		}
 
 		messages.registerReceiver(onPlaybackChangedReceiver, playingFileChangedFilter)
+		applicationMessage.registerForClass(cls<PlaylistTrackChange>(), this)
+	}
+
+	override fun invoke(p1: ApplicationMessage) {
+		setView()
 	}
 
 	override fun onCleared() {
 		cachedPromises?.close()
 		messages.unregisterReceiver(onPlaybackChangedReceiver)
+		applicationMessage.unregisterReceiver(this)
 	}
 
 	fun initializeViewModel() {

@@ -10,7 +10,9 @@ class TypedMessageBus<ScopedMessage : TypedMessage>(
 	SendTypedMessages<ScopedMessage>,
 	AutoCloseable
 {
+	private val registrationSync = Any()
 	private val receivers = ConcurrentHashMap<Class<*>, ConcurrentHashMap<*, Unit>>()
+	private val classesByReceiver = ConcurrentHashMap<(ScopedMessage) -> Unit, ConcurrentHashMap<Class<*>, Unit>>()
 
 	override fun <T : ScopedMessage> sendMessage(message: T) {
 		@Suppress("UNCHECKED_CAST")
@@ -24,27 +26,39 @@ class TypedMessageBus<ScopedMessage : TypedMessage>(
 	}
 
 	@Suppress("UNCHECKED_CAST")
-	override fun <Message : ScopedMessage> registerReceiver(messageClass: Class<Message>, receiver: (Message) -> Unit): AutoCloseable {
-		val receiverSet = receivers.getOrPut(messageClass) { ConcurrentHashMap<(Message) -> Unit, Unit>() } as ConcurrentHashMap<(Message) -> Unit, Unit>
-		receiverSet[receiver] = Unit
-		return ReceiverCloseable(messageClass, receiver)
+	override fun <Message : ScopedMessage> registerForClass(messageClass: Class<Message>, receiver: (Message) -> Unit): AutoCloseable {
+		synchronized(registrationSync) {
+			val receiverSet =
+				receivers.getOrPut(messageClass) { ConcurrentHashMap<(Message) -> Unit, Unit>() } as ConcurrentHashMap<(Message) -> Unit, Unit>
+			receiverSet[receiver] = Unit
+
+			val classesSet = classesByReceiver.getOrPut(receiver as ((ScopedMessage) -> Unit)?) { ConcurrentHashMap() }
+			classesSet[messageClass] = Unit
+
+			return ReceiverCloseable(receiver)
+		}
 	}
 
-	override fun <Message : ScopedMessage> unregisterReceiver(messageClass: Class<Message>, receiver: (Message) -> Unit) {
-		receivers[messageClass]?.remove(receiver)
+	override fun <Message : ScopedMessage> unregisterReceiver(receiver: (Message) -> Unit) {
+		synchronized(registrationSync) {
+			val classesSet = classesByReceiver.remove(receiver) ?: return
+			for (c in classesSet)
+				receivers[c.key]?.remove(receiver)
+		}
 	}
 
 	override fun close() {
-		receivers.clear()
+		synchronized(registrationSync) {
+			receivers.clear()
+			classesByReceiver.clear()
+		}
 	}
 
-	private inner class ReceiverCloseable<Message : ScopedMessage>(
-		private val messageClass: Class<Message>,
-		private val receiver: (Message) -> Unit)
+	private inner class ReceiverCloseable<Message : ScopedMessage>(private val receiver: (Message) -> Unit)
 		: AutoCloseable
 	{
 		override fun close() {
-			unregisterReceiver(messageClass, receiver)
+			unregisterReceiver(receiver)
 		}
 	}
 }

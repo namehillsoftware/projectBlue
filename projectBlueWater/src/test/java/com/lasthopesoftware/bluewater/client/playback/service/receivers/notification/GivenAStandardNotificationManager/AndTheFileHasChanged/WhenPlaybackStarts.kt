@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.GivenAStandardNotificationManager.AndPlaybackHasStarted.AndTheFileHasChanged
+package com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.GivenAStandardNotificationManager.AndTheFileHasChanged
 
 import android.app.Notification
 import android.app.NotificationManager
@@ -15,7 +15,8 @@ import com.lasthopesoftware.bluewater.client.playback.service.notification.Playb
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.BuildNowPlayingNotificationContent
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.PlaybackNotificationRouter
 import com.lasthopesoftware.bluewater.shared.android.notifications.control.NotificationsController
-import com.lasthopesoftware.resources.notifications.FakeNotificationCompatBuilder.newFakeBuilder
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.resources.notifications.FakeNotificationCompatBuilder
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -24,48 +25,38 @@ import io.mockk.verify
 import org.junit.Test
 import org.robolectric.Robolectric
 
-class WhenPlaybackIsPaused : AndroidContext() {
+class WhenPlaybackStarts : AndroidContext() {
 
 	companion object {
-		private val pausedNotification = Notification()
-		private val service by lazy { spyk(Robolectric.buildService(PlaybackService::class.java).get()) }
-		private val notificationManager = mockk<NotificationManager>(relaxed = true, relaxUnitFun = true)
-		private val notificationContentBuilder = mockk<BuildNowPlayingNotificationContent>()
+		private val loadingNotification = Notification()
+		private val startedNotification = Notification()
+		private val service by lazy {
+			spyk(Robolectric.buildService(PlaybackService::class.java).get())
+		}
+
+		private val notificationManager = mockk<NotificationManager>()
+		private val notificationContentBuilder = mockk<BuildNowPlayingNotificationContent>().apply {
+			every { promiseNowPlayingNotification(ServiceFile(1), true) } returns FakeNotificationCompatBuilder.newFakeBuilder(startedNotification).toPromise()
+			every { getLoadingNotification(any()) } returns FakeNotificationCompatBuilder.newFakeBuilder(loadingNotification)
+		}
 	}
 
-	override fun before() {
-		every { notificationContentBuilder.getLoadingNotification(any()) } returns newFakeBuilder(Notification())
-		every { notificationContentBuilder.promiseNowPlayingNotification(ServiceFile(1), true) } returns Promise(newFakeBuilder(Notification()))
-		every { notificationContentBuilder.promiseNowPlayingNotification(ServiceFile(1), false) } returns Promise(newFakeBuilder(pausedNotification))
-
+    override fun before() {
 		val playbackNotificationRouter = PlaybackNotificationRouter(
 			PlaybackNotificationBroadcaster(
 				NotificationsController(service, notificationManager),
 				NotificationsConfiguration("", 43),
 				notificationContentBuilder
-			) { Promise(newFakeBuilder(Notification())) },
-			mockk(relaxed = true)
+			) { Promise(FakeNotificationCompatBuilder.newFakeBuilder(Notification())) },
+			mockk(relaxed = true, relaxUnitFun = true)
 		)
 
-		playbackNotificationRouter.onReceive(Intent(PlaylistEvents.onPlaylistStart))
-
 		playbackNotificationRouter(PlaylistTrackChange(LibraryId(4), PositionedFile(4, ServiceFile(1))))
+        playbackNotificationRouter.onReceive(Intent(PlaylistEvents.onPlaylistStart))
+    }
 
-		playbackNotificationRouter.onReceive(Intent(PlaylistEvents.onPlaylistPause))
-	}
-
-	@Test
-	fun thenTheServiceIsInTheForeground() {
-		verify { service.startForeground(43, any()) }
-	}
-
-	@Test
-	fun thenTheServiceNeverGoesToBackground() {
-		verify(exactly = 0) { service.stopForeground(43) }
-	}
-
-	@Test
-	fun thenTheNotificationIsSetToThePausedNotification() {
-		verify { notificationManager.notify(43, pausedNotification) }
-	}
+    @Test
+    fun thenTheServiceIsStartedInTheForeground() {
+		verify { service.startForeground(43, loadingNotification) }
+    }
 }

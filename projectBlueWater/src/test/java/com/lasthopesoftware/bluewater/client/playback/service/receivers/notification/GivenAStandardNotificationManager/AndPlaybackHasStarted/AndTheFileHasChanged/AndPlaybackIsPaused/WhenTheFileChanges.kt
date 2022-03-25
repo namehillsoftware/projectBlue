@@ -5,8 +5,11 @@ import android.app.NotificationManager
 import android.content.Intent
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistTrackChange
 import com.lasthopesoftware.bluewater.client.playback.service.notification.NotificationsConfiguration
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.BuildNowPlayingNotificationContent
@@ -34,23 +37,22 @@ class WhenTheFileChanges : AndroidContext() {
 		every { notificationContentBuilder.getLoadingNotification(any()) } returns FakeNotificationCompatBuilder.newFakeBuilder(Notification())
 		every { notificationContentBuilder.promiseNowPlayingNotification(any(), any()) } returns Promise(FakeNotificationCompatBuilder.newFakeBuilder(Notification()))
 		every { notificationContentBuilder.promiseNowPlayingNotification(ServiceFile(2), false) } returns Promise(FakeNotificationCompatBuilder.newFakeBuilder(secondNotification))
-		val playbackNotificationRouter = PlaybackNotificationRouter(PlaybackNotificationBroadcaster(
-			NotificationsController(service, notificationManager),
-			NotificationsConfiguration("", 43),
-			notificationContentBuilder
-		) { Promise(FakeNotificationCompatBuilder.newFakeBuilder(Notification())) })
+		val playbackNotificationRouter = PlaybackNotificationRouter(
+			PlaybackNotificationBroadcaster(
+				NotificationsController(service, notificationManager),
+				NotificationsConfiguration("", 43),
+				notificationContentBuilder
+			) { Promise(FakeNotificationCompatBuilder.newFakeBuilder(Notification())) },
+			mockk(relaxed = true)
+		)
 
 		playbackNotificationRouter.onReceive(Intent(PlaylistEvents.onPlaylistStart))
 
-		playbackNotificationRouter.onReceive(
-			Intent(PlaylistEvents.onPlaylistTrackChange).putExtra(PlaylistEvents.PlaybackFileParameters.fileKey, 1)
-		)
+		playbackNotificationRouter(PlaylistTrackChange(LibraryId(4), PositionedFile(4, ServiceFile(1))))
 
 		playbackNotificationRouter.onReceive(Intent(PlaylistEvents.onPlaylistPause))
 
-		playbackNotificationRouter.onReceive(
-			Intent(PlaylistEvents.onPlaylistTrackChange).putExtra(PlaylistEvents.PlaybackFileParameters.fileKey, 2)
-		)
+		playbackNotificationRouter(PlaylistTrackChange(LibraryId(4), PositionedFile(4, ServiceFile(2))))
 	}
 
 	@Test
