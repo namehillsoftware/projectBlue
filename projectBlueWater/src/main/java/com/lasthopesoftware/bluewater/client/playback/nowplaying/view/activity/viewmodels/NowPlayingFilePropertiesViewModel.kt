@@ -15,6 +15,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistStart
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistTrackChange
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.TrackPositionUpdate
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
@@ -51,7 +52,7 @@ class NowPlayingFilePropertiesViewModel(
 	private val controlScreenOnState: ControlScreenOnState
 ) : ViewModel(), ControlDrawerState by controlDrawerState, ControlScreenOnState by controlScreenOnState
 {
-	private val onPlaybackStartedReceiver: ReceiveBroadcastEvents
+	private val onPlaybackStartedReceiver: (PlaylistStart) -> Unit
 	private val onPlaybackStoppedReceiver: ReceiveBroadcastEvents
 	private val onPlaybackChangedReceiver: (PlaylistTrackChange) -> Unit
 	private val onPlaylistChangedReceiver: ReceiveBroadcastEvents
@@ -88,7 +89,7 @@ class NowPlayingFilePropertiesViewModel(
 	val unexpectedError = unexpectedErrorState.asStateFlow()
 
 	init {
-		onPlaybackStartedReceiver = ReceiveBroadcastEvents { togglePlaying(true) }
+		onPlaybackStartedReceiver = { togglePlaying(true) }
 		onPlaybackStoppedReceiver = ReceiveBroadcastEvents { togglePlaying(false) }
 		onPlaylistChangedReceiver = ReceiveBroadcastEvents { updateViewFromRepository() }
 
@@ -110,25 +111,25 @@ class NowPlayingFilePropertiesViewModel(
 
 		with(messages) {
 			registerReceiver(onPlaybackStoppedReceiver, playbackStoppedIntentFilter)
-			registerReceiver(onPlaybackStartedReceiver, IntentFilter(PlaylistEvents.onPlaylistStart))
 			registerReceiver(onPlaylistChangedReceiver, IntentFilter(PlaylistEvents.onPlaylistChange))
 		}
 
 		applicationMessages.registerReceiver(onTrackPositionChanged)
 		applicationMessages.registerReceiver(onPlaybackChangedReceiver)
+		applicationMessages.registerReceiver(onPlaybackStartedReceiver)
 	}
 
 	override fun onCleared() {
 		cachedPromises?.close()
 		with(messages) {
 			unregisterReceiver(onPlaybackStoppedReceiver)
-			unregisterReceiver(onPlaybackStartedReceiver)
 			unregisterReceiver(onPlaylistChangedReceiver)
 		}
 
 		with (applicationMessages) {
 			unregisterReceiver(onTrackPositionChanged)
 			unregisterReceiver(onPlaybackChangedReceiver)
+			unregisterReceiver(onPlaybackStartedReceiver)
 		}
 		controlsShownPromise.cancel()
 	}

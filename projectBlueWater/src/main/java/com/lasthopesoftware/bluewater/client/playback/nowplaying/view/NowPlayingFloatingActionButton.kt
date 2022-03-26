@@ -1,20 +1,17 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view
 
 import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
 import android.view.ViewGroup
 import android.widget.RelativeLayout
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingFileProvider.Companion.fromActiveLibrary
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.NowPlayingActivity.Companion.startNowPlayingActivity
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
-import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
-import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistStart
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils.getThemedDrawable
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
+import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 
 class NowPlayingFloatingActionButton private constructor(context: Context) : FloatingActionButton(context) {
@@ -41,15 +38,14 @@ class NowPlayingFloatingActionButton private constructor(context: Context) : Flo
 						visibility = ViewUtils.getVisibility(isNowPlayingFileSet)
 						if (isNowPlayingFileSet) return@response
 
-						val messageBus = MessageBus(LocalBroadcastManager.getInstance(context))
-						messageBus.registerReceiver(object : ReceiveBroadcastEvents {
-							@Synchronized
-							override fun onReceive(intent: Intent) {
+						val applicationMessageBus = context.getApplicationMessageBus()
+						context.getApplicationMessageBus().registerReceiver(object : (PlaylistStart) -> Unit {
+							override fun invoke(p1: PlaylistStart) {
 								isNowPlayingFileSet = true
 								visibility = ViewUtils.getVisibility(true)
-								messageBus.unregisterReceiver(this)
+								applicationMessageBus.unregisterReceiver(this)
 							}
-						}, IntentFilter(PlaylistEvents.onPlaylistStart))
+						})
 					}, context))
 			}
 	}

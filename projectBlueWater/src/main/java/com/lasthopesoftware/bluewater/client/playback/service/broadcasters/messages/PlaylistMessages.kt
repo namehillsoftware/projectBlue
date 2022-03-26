@@ -8,3 +8,5 @@ data class PlaylistTrackChange(
 	val libraryId: LibraryId,
 	val positionedFile: PositionedFile,
 ) : ApplicationMessage
+
+object PlaylistStart : ApplicationMessage

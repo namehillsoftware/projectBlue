@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistStart
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistTrackChange
 import com.lasthopesoftware.bluewater.client.playback.service.notification.NotificationsConfiguration
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationBroadcaster
@@ -46,8 +47,7 @@ class WhenTheFileChanges : AndroidContext() {
 			mockk(relaxed = true)
 		)
 
-		playbackNotificationRouter.onReceive(Intent(PlaylistEvents.onPlaylistStart))
-
+		playbackNotificationRouter(PlaylistStart)
 		playbackNotificationRouter(PlaylistTrackChange(LibraryId(4), PositionedFile(4, ServiceFile(1))))
 
 		playbackNotificationRouter.onReceive(Intent(PlaylistEvents.onPlaylistPause))

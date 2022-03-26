@@ -75,6 +75,7 @@ class NowPlayingTopFragment : Fragment() {
 		val nowPlayingViewModel = buildActivityViewModel {
 			NowPlayingScreenViewModel(
 				messageBus.value,
+				applicationMessageBus,
 				InMemoryNowPlayingDisplaySettings,
 				playbackService,
 			)

@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.playback.service.receivers.notific
 
 import android.content.Intent
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistStart
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistTrackChange
 import com.lasthopesoftware.bluewater.client.playback.service.notification.NotifyOfPlaybackEvents
 import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
@@ -21,13 +22,13 @@ class PlaybackNotificationRouter(
 		mapOf(
 			Pair(PlaylistEvents.onPlaylistPause) { playbackNotificationBroadcaster.notifyPaused() },
 			Pair(PlaylistEvents.onPlaylistInterrupted) { playbackNotificationBroadcaster.notifyInterrupted() },
-			Pair(PlaylistEvents.onPlaylistStart) { playbackNotificationBroadcaster.notifyPlaying() },
 			Pair(PlaylistEvents.onPlaylistStop) { playbackNotificationBroadcaster.notifyStopped() },
 		)
 	}
 
 	init {
 		registerApplicationMessages.registerForClass(cls<PlaylistTrackChange>(), this)
+		registerApplicationMessages.registerForClass(cls<PlaylistStart>(), this)
 	}
 
 	fun registerForIntents(): Set<String> = mappedEvents.keys
@@ -39,6 +40,7 @@ class PlaybackNotificationRouter(
 	override fun invoke(message: ApplicationMessage) {
 		when (message) {
 			is PlaylistTrackChange -> playbackNotificationBroadcaster.notifyPlayingFileChanged(message.positionedFile.serviceFile)
+			is PlaylistStart -> playbackNotificationBroadcaster.notifyPlaying()
 		}
 	}
 

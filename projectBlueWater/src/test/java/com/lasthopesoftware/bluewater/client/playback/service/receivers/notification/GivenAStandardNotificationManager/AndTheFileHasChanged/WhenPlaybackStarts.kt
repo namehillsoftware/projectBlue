@@ -2,13 +2,12 @@ package com.lasthopesoftware.bluewater.client.playback.service.receivers.notific
 
 import android.app.Notification
 import android.app.NotificationManager
-import android.content.Intent
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistStart
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistTrackChange
 import com.lasthopesoftware.bluewater.client.playback.service.notification.NotificationsConfiguration
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationBroadcaster
@@ -52,7 +51,7 @@ class WhenPlaybackStarts : AndroidContext() {
 		)
 
 		playbackNotificationRouter(PlaylistTrackChange(LibraryId(4), PositionedFile(4, ServiceFile(1))))
-        playbackNotificationRouter.onReceive(Intent(PlaylistEvents.onPlaylistStart))
+        playbackNotificationRouter(PlaylistStart)
     }
 
     @Test

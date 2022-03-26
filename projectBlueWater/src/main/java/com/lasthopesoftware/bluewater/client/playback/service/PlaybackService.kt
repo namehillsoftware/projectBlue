@@ -322,7 +322,7 @@ open class PlaybackService :
 	private val playbackBroadcaster by lazy { LocalPlaybackBroadcaster(lazyMessageBus.value) }
 	private val applicationSettings by lazy { getApplicationSettingsRepository() }
 	private val selectedLibraryIdentifierProvider by lazy { SelectedBrowserLibraryIdentifierProvider(applicationSettings) }
-	private val playbackStartedBroadcaster by lazy { PlaybackStartedBroadcaster(lazyMessageBus.value) }
+	private val playbackStartedBroadcaster by lazy { PlaybackStartedBroadcaster(applicationMessageBus.value) }
 	private val libraryRepository by lazy { LibraryRepository(this) }
 	private val playlistVolumeManager by lazy { PlaylistVolumeManager(1.0f) }
 	private val volumeLevelSettings by lazy { VolumeLevelSettings(applicationSettings) }

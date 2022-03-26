@@ -121,6 +121,7 @@ class NowPlayingActivity :
 	private val nowPlayingViewModel by buildViewModelLazily {
 		NowPlayingScreenViewModel(
 			messageBus.value,
+			applicationMessageBus,
 			InMemoryNowPlayingDisplaySettings,
 			PlaybackServiceController(this),
 		)

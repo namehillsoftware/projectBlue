@@ -12,9 +12,6 @@ object PlaylistEvents {
 	val onPlaylistChange by lazy { magicPropertyBuilder.buildProperty("onPlaylistChange") }
 
 	@JvmField
-	val onPlaylistStart = magicPropertyBuilder.buildProperty("onPlaylistStart")
-
-	@JvmField
 	val onPlaylistStop = magicPropertyBuilder.buildProperty("onPlaylistStop")
 
 	@JvmField
