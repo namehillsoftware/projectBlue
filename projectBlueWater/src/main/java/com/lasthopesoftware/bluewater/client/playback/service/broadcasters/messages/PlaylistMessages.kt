@@ -9,4 +9,6 @@ data class PlaylistTrackChange(
 	val positionedFile: PositionedFile,
 ) : ApplicationMessage
 
-object PlaylistStart : ApplicationMessage
+object PlaybackStart : ApplicationMessage
+
+object PlaylistChanged: ApplicationMessage

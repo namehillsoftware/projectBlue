@@ -7,7 +7,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingFileProvider.Companion.fromActiveLibrary
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.NowPlayingActivity.Companion.startNowPlayingActivity
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistStart
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackStart
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils.getThemedDrawable
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
@@ -39,8 +39,8 @@ class NowPlayingFloatingActionButton private constructor(context: Context) : Flo
 						if (isNowPlayingFileSet) return@response
 
 						val applicationMessageBus = context.getApplicationMessageBus()
-						context.getApplicationMessageBus().registerReceiver(object : (PlaylistStart) -> Unit {
-							override fun invoke(p1: PlaylistStart) {
+						context.getApplicationMessageBus().registerReceiver(object : (PlaybackStart) -> Unit {
+							override fun invoke(p1: PlaybackStart) {
 								isNowPlayingFileSet = true
 								visibility = ViewUtils.getVisibility(true)
 								applicationMessageBus.unregisterReceiver(this)

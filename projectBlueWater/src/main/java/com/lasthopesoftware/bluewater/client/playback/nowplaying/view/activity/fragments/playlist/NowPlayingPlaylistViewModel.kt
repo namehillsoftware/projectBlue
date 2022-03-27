@@ -1,32 +1,30 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.fragments.playlist
 
-import android.content.Intent
-import android.content.IntentFilter
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
-import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
-import com.lasthopesoftware.bluewater.shared.android.messages.RegisterForMessages
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistChanged
 import com.lasthopesoftware.bluewater.shared.messages.SendTypedMessages
+import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
+import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 class NowPlayingPlaylistViewModel(
-	private val messages: RegisterForMessages,
+	private val applicationMessages: RegisterForApplicationMessages,
 	private val nowPlayingRepository: GetNowPlayingState,
 	private val typedMessageBus: SendTypedMessages<NowPlayingPlaylistMessage>
 ) :
 	ViewModel(),
 	ControlPlaylistEdits,
 	HasEditPlaylistState,
-	ReceiveBroadcastEvents
+	(PlaylistChanged) -> Unit
 {
 	private val mutableEditingPlaylistState = MutableStateFlow(false)
 	private val nowPlayingListState = MutableStateFlow(emptyList<PositionedFile>())
 
 	init {
-		messages.registerReceiver(this, IntentFilter(PlaylistEvents.onPlaylistChange))
+		applicationMessages.registerReceiver(this)
 		updateViewFromRepository()
 	}
 
@@ -46,12 +44,12 @@ class NowPlayingPlaylistViewModel(
 		typedMessageBus.sendMessage(FinishEditPlaylist)
 	}
 
-	override fun onReceive(intent: Intent) {
+	override fun invoke(p1: PlaylistChanged) {
 		updateViewFromRepository()
 	}
 
 	override fun onCleared() {
-		messages.unregisterReceiver(this)
+		applicationMessages.unregisterReceiver(this)
 	}
 
 	private fun updateViewFromRepository() {

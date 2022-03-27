@@ -151,7 +151,6 @@ class NowPlayingActivity :
 
 		binding.coverArtVm = buildViewModel {
 			NowPlayingCoverArtViewModel(
-				messageBus.value,
 				applicationMessageBus,
 				liveNowPlayingLookup,
 				lazySelectedConnectionProvider,

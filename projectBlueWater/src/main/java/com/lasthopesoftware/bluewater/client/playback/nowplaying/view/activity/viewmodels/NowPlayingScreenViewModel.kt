@@ -4,7 +4,7 @@ import android.content.IntentFilter
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistStart
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackStart
 import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
 import com.lasthopesoftware.bluewater.shared.android.messages.RegisterForMessages
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
@@ -19,7 +19,7 @@ class NowPlayingScreenViewModel(
 	playbackService: ControlPlaybackService,
 ) : ViewModel(), ControlDrawerState, ControlScreenOnState
 {
-	private val onPlaybackStartedReceiver: (PlaylistStart) -> Unit
+	private val onPlaybackStartedReceiver: (PlaybackStart) -> Unit
 	private val onPlaybackStoppedReceiver: ReceiveBroadcastEvents
 
 	private var isPlayingState = false
