@@ -4,13 +4,12 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
 
-data class PlaylistTrackChange(
-	val libraryId: LibraryId,
-	val positionedFile: PositionedFile,
-) : ApplicationMessage
+data class PlaylistTrackChange(val libraryId: LibraryId, val positionedFile: PositionedFile) : ApplicationMessage
 
 object PlaybackStart : ApplicationMessage
 
 object PlaylistChanged : ApplicationMessage
 
 object PlaybackPaused : ApplicationMessage
+
+object PlaybackInterrupted : ApplicationMessage

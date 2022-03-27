@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.playback.service.receivers.notific
 
 import android.content.Intent
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackInterrupted
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackPaused
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackStart
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistTrackChange
@@ -21,7 +22,6 @@ class PlaybackNotificationRouter(
 {
 	private val mappedEvents by lazy {
 		mapOf(
-			Pair(PlaylistEvents.onPlaylistInterrupted) { playbackNotificationBroadcaster.notifyInterrupted() },
 			Pair(PlaylistEvents.onPlaylistStop) { playbackNotificationBroadcaster.notifyStopped() },
 		)
 	}
@@ -30,6 +30,7 @@ class PlaybackNotificationRouter(
 		registerApplicationMessages.registerForClass(cls<PlaylistTrackChange>(), this)
 		registerApplicationMessages.registerForClass(cls<PlaybackStart>(), this)
 		registerApplicationMessages.registerForClass(cls<PlaybackPaused>(), this)
+		registerApplicationMessages.registerForClass(cls<PlaybackInterrupted>(), this)
 	}
 
 	fun registerForIntents(): Set<String> = mappedEvents.keys
@@ -43,6 +44,7 @@ class PlaybackNotificationRouter(
 			is PlaylistTrackChange -> playbackNotificationBroadcaster.notifyPlayingFileChanged(message.positionedFile.serviceFile)
 			is PlaybackStart -> playbackNotificationBroadcaster.notifyPlaying()
 			is PlaybackPaused -> playbackNotificationBroadcaster.notifyPaused()
+			is PlaybackInterrupted -> playbackNotificationBroadcaster.notifyInterrupted()
 		}
 	}
 

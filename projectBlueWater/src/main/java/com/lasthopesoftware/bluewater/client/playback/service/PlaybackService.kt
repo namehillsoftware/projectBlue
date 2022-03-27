@@ -75,6 +75,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.Local
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaybackStartedBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackInterrupted
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackPaused
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistChanged
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistTrackChange
@@ -622,7 +623,7 @@ open class PlaybackService :
 
 	override fun onPlaybackInterrupted() {
 		isMarkedForPlay = false
-		playbackBroadcaster.sendPlaybackBroadcast(PlaylistEvents.onPlaylistInterrupted)
+		applicationMessageBus.value.sendMessage(PlaybackInterrupted)
 
 		filePositionSubscription?.dispose()
 	}

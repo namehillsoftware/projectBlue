@@ -106,7 +106,6 @@ class NowPlayingFilePropertiesViewModel(
 		}
 
 		val playbackStoppedIntentFilter = IntentFilter().apply {
-			addAction(PlaylistEvents.onPlaylistInterrupted)
 			addAction(PlaylistEvents.onPlaylistStop)
 		}
 
@@ -120,6 +119,7 @@ class NowPlayingFilePropertiesViewModel(
 			registerReceiver(onPlaybackStartedReceiver)
 			registerReceiver(onPlaylistChangedReceiver)
 			registerForClass(cls<PlaybackPaused>(), onPlaybackStoppedReceiver)
+			registerForClass(cls<PlaybackInterrupted>(), onPlaybackStoppedReceiver)
 		}
 	}
 

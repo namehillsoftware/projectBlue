@@ -2,10 +2,7 @@ package com.lasthopesoftware.bluewater.client.playback.service.receivers.devices
 
 import android.content.Intent
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackPaused
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackStart
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistTrackChange
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.TrackPositionUpdate
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.*
 import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
@@ -18,7 +15,6 @@ class RemoteControlProxy(private val registerForApplicationMessages: RegisterFor
 {
 	private val mappedEvents by lazy {
 		mapOf(
-			Pair(PlaylistEvents.onPlaylistInterrupted) { remoteBroadcaster.setPaused() },
 			Pair(PlaylistEvents.onPlaylistStop) { remoteBroadcaster.setStopped() },
 		)
 	}
@@ -30,6 +26,7 @@ class RemoteControlProxy(private val registerForApplicationMessages: RegisterFor
 	    registerForApplicationMessages.registerForClass(cls<PlaylistTrackChange>(), this)
 		registerForApplicationMessages.registerForClass(cls<PlaybackStart>(), this)
 		registerForApplicationMessages.registerForClass(cls<PlaybackPaused>(), this)
+		registerForApplicationMessages.registerForClass(cls<PlaybackInterrupted>(), this)
 	}
 
 	override fun onReceive(intent: Intent) {
@@ -41,7 +38,7 @@ class RemoteControlProxy(private val registerForApplicationMessages: RegisterFor
 			is TrackPositionUpdate -> onTrackPositionUpdate(message)
 			is PlaylistTrackChange -> onPlaylistChange(message)
 			is PlaybackStart -> remoteBroadcaster.setPlaying()
-			is PlaybackPaused -> remoteBroadcaster.setPaused()
+			is PlaybackPaused, PlaybackInterrupted -> remoteBroadcaster.setPaused()
 		}
 	}
 
