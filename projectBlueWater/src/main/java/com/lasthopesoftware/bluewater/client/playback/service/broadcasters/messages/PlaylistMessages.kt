@@ -11,4 +11,6 @@ data class PlaylistTrackChange(
 
 object PlaybackStart : ApplicationMessage
 
-object PlaylistChanged: ApplicationMessage
+object PlaylistChanged : ApplicationMessage
+
+object PlaybackPaused : ApplicationMessage

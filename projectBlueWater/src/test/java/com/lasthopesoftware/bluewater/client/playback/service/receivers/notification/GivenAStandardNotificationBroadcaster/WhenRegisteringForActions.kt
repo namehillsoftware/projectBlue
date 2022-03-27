@@ -21,7 +21,6 @@ class WhenRegisteringForActions {
 	@Test
 	fun thenTheRegisteredActionsAreCorrect() {
 		assertThat(registeredIntents).isSubsetOf(
-			PlaylistEvents.onPlaylistPause,
 			PlaylistEvents.onPlaylistInterrupted,
 			PlaylistEvents.onPlaylistStop
 		)

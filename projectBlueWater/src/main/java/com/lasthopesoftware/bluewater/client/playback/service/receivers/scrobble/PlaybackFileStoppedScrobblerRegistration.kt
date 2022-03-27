@@ -26,7 +26,6 @@ class PlaybackFileStoppedScrobblerRegistration(private val context: Context) : I
 			setOf(
 				IntentFilter(PlaylistEvents.onPlaylistTrackComplete),
 				IntentFilter(PlaylistEvents.onPlaylistStop),
-				IntentFilter(PlaylistEvents.onPlaylistPause)
 			)
 		}
     }
