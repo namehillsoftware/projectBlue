@@ -1,41 +1,33 @@
 package com.lasthopesoftware.bluewater.client.stored.service.receivers.file.GivenADownloadedFile
 
-import com.annimon.stream.Stream
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.AccessStoredFiles
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.client.stored.sync.receivers.file.StoredFileMediaScannerNotifier
-import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
 import com.namehillsoftware.handoff.promises.Promise
+import io.mockk.every
+import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
 import org.junit.Test
-import org.mockito.Mockito
 import java.io.File
-import java.util.*
 
 class WhenNotifyingTheMediaScanner {
-	@Test
-	fun thenTheMediaScannerReceivesTheCorrectFile() {
-		assertThat(Stream.of(collectedFiles).map { obj: File -> obj.path }
-			.toList()).containsExactly("test")
+	companion object {
+		private val collectedFiles by lazy {
+			val storedFileAccess = mockk<AccessStoredFiles>().apply {
+				every { getStoredFile(14) } returns Promise(StoredFile().setId(14).setLibraryId(22).setPath("test"))
+			}
+
+			val files = ArrayList<File>()
+			val storedFileMediaScannerNotifier = StoredFileMediaScannerNotifier(storedFileAccess, files::add)
+			storedFileMediaScannerNotifier.receive(14).toFuture().get()
+
+			files
+		}
 	}
 
-	companion object {
-		private val collectedFiles: MutableList<File> = ArrayList()
-
-		@BeforeClass
-		@JvmStatic
-		fun before() {
-			val storedFileAccess = Mockito.mock(
-				AccessStoredFiles::class.java
-			)
-			Mockito.`when`(storedFileAccess.getStoredFile(14))
-				.thenReturn(Promise(StoredFile().setId(14).setLibraryId(22).setPath("test")))
-			val storedFileMediaScannerNotifier =
-                StoredFileMediaScannerNotifier(
-                    storedFileAccess
-                ) { e: File -> collectedFiles.add(e) }
-			FuturePromise(storedFileMediaScannerNotifier.receive(14)).get()
-		}
+	@Test
+	fun thenTheMediaScannerReceivesTheCorrectFile() {
+		assertThat(collectedFiles.map { it.path }).containsExactly("test")
 	}
 }
