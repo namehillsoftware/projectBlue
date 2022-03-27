@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.shared.messages.application
 
 import android.annotation.SuppressLint
+import android.app.Application
 import android.content.Context
 import android.os.Handler
 import com.lasthopesoftware.bluewater.shared.messages.TypedMessageBus
@@ -13,15 +14,18 @@ class ApplicationMessageBus private constructor(
 {
 	companion object {
 		@SuppressLint("StaticFieldLeak")
-		private lateinit var messageBus: ApplicationMessageBus
+		private lateinit var instance: ApplicationMessageBus
 
-		@Synchronized
-		fun Context.getApplicationMessageBus() : ApplicationMessageBus {
-			if (Companion::messageBus.isInitialized) return messageBus
+		@Synchronized fun initializeInstance(application: Application): ApplicationMessageBus {
+			if (!::instance.isInitialized)
+				instance = ApplicationMessageBus(application)
 
-			messageBus = ApplicationMessageBus(applicationContext)
-			return messageBus
+			return instance
 		}
+
+		fun getInstance() =
+			if (::instance.isInitialized) instance
+			else throw IllegalStateException("Instance should be initialized in application root")
 	}
 
 	private val typedMessageBus by lazy { TypedMessageBus<ApplicationMessage>(Handler(context.mainLooper)) }

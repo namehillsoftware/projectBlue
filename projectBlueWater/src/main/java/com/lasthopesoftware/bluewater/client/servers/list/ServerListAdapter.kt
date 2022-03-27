@@ -27,7 +27,7 @@ import com.namehillsoftware.handoff.promises.Promise
 class ServerListAdapter(private val activity: Activity, private val browserLibrarySelection: SelectBrowserLibrary)
 	: DeferredListAdapter<Library, ServerListAdapter.ViewHolder>(activity, LibraryDiffer) {
 
-	private val messageBus by lazy { activity.scopedApplicationMessageBus() }
+	private val messageBus by lazy { scopedApplicationMessageBus() }
 	private var activeLibrary: Library? = null
 
 	fun updateLibraries(libraries: Collection<Library>, activeLibrary: Library?): Promise<Unit> {

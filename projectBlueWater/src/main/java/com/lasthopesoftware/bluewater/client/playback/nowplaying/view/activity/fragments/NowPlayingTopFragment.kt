@@ -36,7 +36,7 @@ class NowPlayingTopFragment : Fragment() {
 
 	private val messageBus = lazy { MessageBus(LocalBroadcastManager.getInstance(requireContext())) }
 
-	private val applicationMessageBus by lazy { requireContext().scopedApplicationMessageBus() }
+	private val applicationMessageBus by lazy { scopedApplicationMessageBus() }
 
 	private val selectedConnectionProvider by lazy { SelectedConnectionProvider(requireContext()) }
 

@@ -33,7 +33,7 @@ import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicat
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
-import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.ScopedApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
@@ -74,7 +74,7 @@ class ItemListFragment : Fragment() {
 	}
 
 	private val applicationMessageBus = lazy {
-		val applicationMessageBus = requireContext().getApplicationMessageBus()
+		val applicationMessageBus = ApplicationMessageBus.getInstance()
 		ScopedApplicationMessageBus(applicationMessageBus, applicationMessageBus).apply {
 			registerReceiver { l: ActivityLaunching ->
 				val isLaunching = l == ActivityLaunching.LAUNCHING
