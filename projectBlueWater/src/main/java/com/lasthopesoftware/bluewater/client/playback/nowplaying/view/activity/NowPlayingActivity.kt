@@ -167,7 +167,7 @@ class NowPlayingActivity :
 
 	private val playlistViewModel by buildViewModelLazily {
 		NowPlayingPlaylistViewModel(
-			messageBus.value,
+			applicationMessageBus,
 			LiveNowPlayingLookup.getInstance(),
 			viewModelMessageBus
 		)

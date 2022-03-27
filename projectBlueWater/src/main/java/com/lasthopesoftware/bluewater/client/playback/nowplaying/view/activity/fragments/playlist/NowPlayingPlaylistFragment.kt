@@ -172,7 +172,7 @@ class NowPlayingPlaylistFragment : Fragment() {
 
 	private val playlistViewModel by buildActivityViewModelLazily {
 		NowPlayingPlaylistViewModel(
-			messageBus,
+			applicationMessageBus,
 			LiveNowPlayingLookup.getInstance(),
 			viewModelMessageBus
 		)
