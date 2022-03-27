@@ -4,18 +4,22 @@ import android.content.IntentFilter
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackStart
 import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
 import com.lasthopesoftware.bluewater.shared.android.messages.RegisterForMessages
+import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
+import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 class NowPlayingScreenViewModel(
 	private val messages: RegisterForMessages,
+	private val applicationMessages: RegisterForApplicationMessages,
 	private val nowPlayingDisplaySettings: StoreNowPlayingDisplaySettings,
 	playbackService: ControlPlaybackService,
 ) : ViewModel(), ControlDrawerState, ControlScreenOnState
 {
-	private val onPlaybackStartedReceiver: ReceiveBroadcastEvents
+	private val onPlaybackStartedReceiver: (PlaybackStart) -> Unit
 	private val onPlaybackStoppedReceiver: ReceiveBroadcastEvents
 
 	private var isPlayingState = false
@@ -32,7 +36,7 @@ class NowPlayingScreenViewModel(
 		get() = isDrawerShownState.value
 
 	init {
-		onPlaybackStartedReceiver = ReceiveBroadcastEvents { togglePlaying(true) }
+		onPlaybackStartedReceiver = { togglePlaying(true) }
 		onPlaybackStoppedReceiver = ReceiveBroadcastEvents { togglePlaying(false) }
 
 		val playbackStoppedIntentFilter = IntentFilter().apply {
@@ -43,8 +47,9 @@ class NowPlayingScreenViewModel(
 
 		with(messages) {
 			registerReceiver(onPlaybackStoppedReceiver, playbackStoppedIntentFilter)
-			registerReceiver(onPlaybackStartedReceiver, IntentFilter(PlaylistEvents.onPlaylistStart))
 		}
+
+		applicationMessages.registerReceiver(onPlaybackStartedReceiver)
 
 		playbackService.promiseIsMarkedForPlay().then(::togglePlaying)
 	}
@@ -54,8 +59,9 @@ class NowPlayingScreenViewModel(
 
 		with(messages) {
 			unregisterReceiver(onPlaybackStoppedReceiver)
-			unregisterReceiver(onPlaybackStartedReceiver)
 		}
+
+		applicationMessages.unregisterReceiver(onPlaybackStartedReceiver)
 	}
 
 	override fun showDrawer() {

@@ -148,6 +148,7 @@ class NowPlayingPlaylistFragment : Fragment() {
 		val nowPlayingViewModel = buildActivityViewModel {
 			NowPlayingScreenViewModel(
 				messageBus,
+				applicationMessageBus,
 				InMemoryNowPlayingDisplaySettings,
 				playbackService,
 			)
@@ -171,7 +172,7 @@ class NowPlayingPlaylistFragment : Fragment() {
 
 	private val playlistViewModel by buildActivityViewModelLazily {
 		NowPlayingPlaylistViewModel(
-			messageBus,
+			applicationMessageBus,
 			LiveNowPlayingLookup.getInstance(),
 			viewModelMessageBus
 		)

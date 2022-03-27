@@ -23,7 +23,6 @@ class WhenRegisteringForActions {
 		assertThat(registeredIntents).isSubsetOf(
 			PlaylistEvents.onPlaylistPause,
 			PlaylistEvents.onPlaylistInterrupted,
-			PlaylistEvents.onPlaylistStart,
 			PlaylistEvents.onPlaylistStop
 		)
 	}

@@ -121,6 +121,7 @@ class NowPlayingActivity :
 	private val nowPlayingViewModel by buildViewModelLazily {
 		NowPlayingScreenViewModel(
 			messageBus.value,
+			applicationMessageBus,
 			InMemoryNowPlayingDisplaySettings,
 			PlaybackServiceController(this),
 		)
@@ -150,7 +151,6 @@ class NowPlayingActivity :
 
 		binding.coverArtVm = buildViewModel {
 			NowPlayingCoverArtViewModel(
-				messageBus.value,
 				applicationMessageBus,
 				liveNowPlayingLookup,
 				lazySelectedConnectionProvider,
@@ -167,7 +167,7 @@ class NowPlayingActivity :
 
 	private val playlistViewModel by buildViewModelLazily {
 		NowPlayingPlaylistViewModel(
-			messageBus.value,
+			applicationMessageBus,
 			LiveNowPlayingLookup.getInstance(),
 			viewModelMessageBus
 		)

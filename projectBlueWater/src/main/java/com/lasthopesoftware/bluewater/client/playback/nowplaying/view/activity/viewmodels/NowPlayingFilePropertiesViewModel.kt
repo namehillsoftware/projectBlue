@@ -15,6 +15,8 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackStart
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistChanged
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistTrackChange
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.TrackPositionUpdate
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
@@ -51,10 +53,10 @@ class NowPlayingFilePropertiesViewModel(
 	private val controlScreenOnState: ControlScreenOnState
 ) : ViewModel(), ControlDrawerState by controlDrawerState, ControlScreenOnState by controlScreenOnState
 {
-	private val onPlaybackStartedReceiver: ReceiveBroadcastEvents
+	private val onPlaybackStartedReceiver: (PlaybackStart) -> Unit
 	private val onPlaybackStoppedReceiver: ReceiveBroadcastEvents
 	private val onPlaybackChangedReceiver: (PlaylistTrackChange) -> Unit
-	private val onPlaylistChangedReceiver: ReceiveBroadcastEvents
+	private val onPlaylistChangedReceiver: (PlaylistChanged) -> Unit
 	private val onTrackPositionChanged: (TrackPositionUpdate) -> Unit
 
 	private var cachedPromises: CachedPromises? = null
@@ -88,9 +90,9 @@ class NowPlayingFilePropertiesViewModel(
 	val unexpectedError = unexpectedErrorState.asStateFlow()
 
 	init {
-		onPlaybackStartedReceiver = ReceiveBroadcastEvents { togglePlaying(true) }
+		onPlaybackStartedReceiver = { togglePlaying(true) }
 		onPlaybackStoppedReceiver = ReceiveBroadcastEvents { togglePlaying(false) }
-		onPlaylistChangedReceiver = ReceiveBroadcastEvents { updateViewFromRepository() }
+		onPlaylistChangedReceiver = { updateViewFromRepository() }
 
 		onPlaybackChangedReceiver = {
 			updateViewFromRepository()
@@ -110,25 +112,25 @@ class NowPlayingFilePropertiesViewModel(
 
 		with(messages) {
 			registerReceiver(onPlaybackStoppedReceiver, playbackStoppedIntentFilter)
-			registerReceiver(onPlaybackStartedReceiver, IntentFilter(PlaylistEvents.onPlaylistStart))
-			registerReceiver(onPlaylistChangedReceiver, IntentFilter(PlaylistEvents.onPlaylistChange))
 		}
 
 		applicationMessages.registerReceiver(onTrackPositionChanged)
 		applicationMessages.registerReceiver(onPlaybackChangedReceiver)
+		applicationMessages.registerReceiver(onPlaybackStartedReceiver)
+		applicationMessages.registerReceiver(onPlaylistChangedReceiver)
 	}
 
 	override fun onCleared() {
 		cachedPromises?.close()
 		with(messages) {
 			unregisterReceiver(onPlaybackStoppedReceiver)
-			unregisterReceiver(onPlaybackStartedReceiver)
-			unregisterReceiver(onPlaylistChangedReceiver)
 		}
 
 		with (applicationMessages) {
 			unregisterReceiver(onTrackPositionChanged)
 			unregisterReceiver(onPlaybackChangedReceiver)
+			unregisterReceiver(onPlaybackStartedReceiver)
+			unregisterReceiver(onPlaylistChangedReceiver)
 		}
 		controlsShownPromise.cancel()
 	}

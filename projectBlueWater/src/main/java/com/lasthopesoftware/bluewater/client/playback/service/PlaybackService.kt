@@ -75,6 +75,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.Local
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaybackStartedBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistChanged
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistTrackChange
 import com.lasthopesoftware.bluewater.client.playback.service.notification.NotificationsConfiguration
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationBroadcaster
@@ -322,7 +323,7 @@ open class PlaybackService :
 	private val playbackBroadcaster by lazy { LocalPlaybackBroadcaster(lazyMessageBus.value) }
 	private val applicationSettings by lazy { getApplicationSettingsRepository() }
 	private val selectedLibraryIdentifierProvider by lazy { SelectedBrowserLibraryIdentifierProvider(applicationSettings) }
-	private val playbackStartedBroadcaster by lazy { PlaybackStartedBroadcaster(lazyMessageBus.value) }
+	private val playbackStartedBroadcaster by lazy { PlaybackStartedBroadcaster(applicationMessageBus.value) }
 	private val libraryRepository by lazy { LibraryRepository(this) }
 	private val playlistVolumeManager by lazy { PlaylistVolumeManager(1.0f) }
 	private val volumeLevelSettings by lazy { VolumeLevelSettings(applicationSettings) }
@@ -537,7 +538,7 @@ open class PlaybackService :
 					val fileKey = intent.getIntExtra(Bag.playlistPosition, -1)
 					return if (fileKey < 0) Unit.toPromise() else playlistFiles
 						.addFile(ServiceFile(fileKey))
-						.then { lazyMessageBus.value.sendBroadcast(Intent(PlaylistEvents.onPlaylistChange)) }
+						.then { applicationMessageBus.value.sendMessage(PlaylistChanged) }
 						.eventually(LoopedInPromise.response({
 							Toast.makeText(this, getText(R.string.lbl_song_added_to_now_playing), Toast.LENGTH_SHORT).show()
 						}, this))
@@ -549,7 +550,7 @@ open class PlaybackService :
 					return if (filePosition < 0) Unit.toPromise() else playlistFiles
 						.removeFileAtPosition(filePosition)
 						.then {
-							lazyMessageBus.value.sendBroadcast(Intent(PlaylistEvents.onPlaylistChange))
+							applicationMessageBus.value.sendMessage(PlaylistChanged)
 						}
 						.unitResponse()
 				}
@@ -561,7 +562,7 @@ open class PlaybackService :
 					return if (filePosition < 0 || newPosition < 0) Unit.toPromise()
 					else playlistFiles.moveFile(filePosition, newPosition)
 						.then {
-							lazyMessageBus.value.sendBroadcast(Intent(PlaylistEvents.onPlaylistChange))
+							applicationMessageBus.value.sendMessage(PlaylistChanged)
 						}
 						.unitResponse()
 				}
@@ -664,7 +665,7 @@ open class PlaybackService :
 				startNowPlayingActivity(this)
 				promiseStartedPlaylist
 			}
-			.then { lazyMessageBus.value.sendBroadcast(Intent(PlaylistEvents.onPlaylistChange)) }
+			.then { applicationMessageBus.value.sendMessage(PlaylistChanged) }
 	}
 
 	private fun resumePlayback(): Promise<Unit> {

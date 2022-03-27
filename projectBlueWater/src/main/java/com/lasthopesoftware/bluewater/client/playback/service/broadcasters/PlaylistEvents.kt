@@ -9,11 +9,6 @@ import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder.Companion.buil
 object PlaylistEvents {
 	private val magicPropertyBuilder by lazy { MagicPropertyBuilder(PlaylistEvents::class.java) }
 
-	val onPlaylistChange by lazy { magicPropertyBuilder.buildProperty("onPlaylistChange") }
-
-	@JvmField
-	val onPlaylistStart = magicPropertyBuilder.buildProperty("onPlaylistStart")
-
 	@JvmField
 	val onPlaylistStop = magicPropertyBuilder.buildProperty("onPlaylistStop")
 

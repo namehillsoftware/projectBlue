@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.playback.service.receivers.devices
 
 import android.content.Intent
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackStart
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistTrackChange
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.TrackPositionUpdate
 import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
@@ -18,7 +19,6 @@ class RemoteControlProxy(private val registerForApplicationMessages: RegisterFor
 		mapOf(
 			Pair(PlaylistEvents.onPlaylistPause) { remoteBroadcaster.setPaused() },
 			Pair(PlaylistEvents.onPlaylistInterrupted) { remoteBroadcaster.setPaused() },
-			Pair(PlaylistEvents.onPlaylistStart) { remoteBroadcaster.setPlaying() },
 			Pair(PlaylistEvents.onPlaylistStop) { remoteBroadcaster.setStopped() },
 		)
 	}
@@ -28,6 +28,7 @@ class RemoteControlProxy(private val registerForApplicationMessages: RegisterFor
 	init {
 	    registerForApplicationMessages.registerForClass(cls<TrackPositionUpdate>(), this)
 	    registerForApplicationMessages.registerForClass(cls<PlaylistTrackChange>(), this)
+		registerForApplicationMessages.registerForClass(cls<PlaybackStart>(), this)
 	}
 
 	override fun onReceive(intent: Intent) {
@@ -38,6 +39,7 @@ class RemoteControlProxy(private val registerForApplicationMessages: RegisterFor
 		when (message) {
 			is TrackPositionUpdate -> onTrackPositionUpdate(message)
 			is PlaylistTrackChange -> onPlaylistChange(message)
+			is PlaybackStart -> remoteBroadcaster.setPlaying()
 		}
 	}
 
