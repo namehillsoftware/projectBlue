@@ -77,7 +77,7 @@ class ItemListFragment : Fragment() {
 		val applicationMessageBus = ApplicationMessageBus.getInstance()
 		ScopedApplicationMessageBus(applicationMessageBus, applicationMessageBus).apply {
 			registerReceiver { l: ActivityLaunching ->
-				val isLaunching = l == ActivityLaunching.LAUNCHING
+				val isLaunching = l != ActivityLaunching.HALTED // Only show the item list view again when launching error'ed for some reason
 
 				recyclerView?.visibility = ViewUtils.getVisibility(!isLaunching)
 				progressBar?.visibility = ViewUtils.getVisibility(isLaunching)

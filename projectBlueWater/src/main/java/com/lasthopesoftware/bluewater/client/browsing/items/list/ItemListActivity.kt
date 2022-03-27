@@ -99,7 +99,7 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer {
 		supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
 		messageBus.registerReceiver { it : ActivityLaunching ->
-			val isLaunching = it == ActivityLaunching.LAUNCHING
+			val isLaunching = it != ActivityLaunching.HALTED // Only show the item list view again when launching error'ed for some reason
 			itemListView.visibility = ViewUtils.getVisibility(!isLaunching)
 			pbLoading.findView().visibility = ViewUtils.getVisibility(isLaunching)
 		}
