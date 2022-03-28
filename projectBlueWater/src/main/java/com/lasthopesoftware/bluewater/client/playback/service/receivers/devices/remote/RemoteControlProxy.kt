@@ -1,38 +1,21 @@
 package com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote
 
-import android.content.Intent
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackStart
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistTrackChange
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.TrackPositionUpdate
-import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.*
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 
 class RemoteControlProxy(private val registerForApplicationMessages: RegisterForApplicationMessages, private val remoteBroadcaster: IRemoteBroadcaster) :
-	ReceiveBroadcastEvents,
 	(ApplicationMessage) -> Unit,
 	AutoCloseable
 {
-	private val mappedEvents by lazy {
-		mapOf(
-			Pair(PlaylistEvents.onPlaylistPause) { remoteBroadcaster.setPaused() },
-			Pair(PlaylistEvents.onPlaylistInterrupted) { remoteBroadcaster.setPaused() },
-			Pair(PlaylistEvents.onPlaylistStop) { remoteBroadcaster.setStopped() },
-		)
-	}
-
-	fun registerForIntents(): Set<String> = mappedEvents.keys
-
 	init {
 	    registerForApplicationMessages.registerForClass(cls<TrackPositionUpdate>(), this)
 	    registerForApplicationMessages.registerForClass(cls<PlaylistTrackChange>(), this)
 		registerForApplicationMessages.registerForClass(cls<PlaybackStart>(), this)
-	}
-
-	override fun onReceive(intent: Intent) {
-		intent.action?.let(mappedEvents::get)?.invoke()
+		registerForApplicationMessages.registerForClass(cls<PlaybackPaused>(), this)
+		registerForApplicationMessages.registerForClass(cls<PlaybackInterrupted>(), this)
+		registerForApplicationMessages.registerForClass(cls<PlaybackStopped>(), this)
 	}
 
 	override fun invoke(message: ApplicationMessage) {
@@ -40,6 +23,8 @@ class RemoteControlProxy(private val registerForApplicationMessages: RegisterFor
 			is TrackPositionUpdate -> onTrackPositionUpdate(message)
 			is PlaylistTrackChange -> onPlaylistChange(message)
 			is PlaybackStart -> remoteBroadcaster.setPlaying()
+			is PlaybackPaused, PlaybackInterrupted -> remoteBroadcaster.setPaused()
+			is PlaybackStopped -> remoteBroadcaster.setStopped()
 		}
 	}
 

@@ -11,17 +11,18 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.receivers.IConnectionDependentReceiverRegistration
+import com.lasthopesoftware.bluewater.client.connection.receivers.RegisterReceiverForEvents
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
 import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
 
-class PlaybackFileStartedScrobblerRegistration(private val context: Context) : IConnectionDependentReceiverRegistration {
+class PlaybackFileStartedScrobblerRegistration(private val context: Context) : RegisterReceiverForEvents {
 
 	companion object {
 		private val intents by lazy { setOf(IntentFilter(PlaylistEvents.onPlaylistTrackStart)) }
 	}
 
-    override fun registerWithConnectionProvider(connectionProvider: IConnectionProvider): ReceiveBroadcastEvents {
+    override fun registerBroadcastEventsWithConnectionProvider(connectionProvider: IConnectionProvider): ReceiveBroadcastEvents {
         val filePropertiesProvider = ScopedCachedFilePropertiesProvider(
             connectionProvider,
             FilePropertyCache.getInstance(),
@@ -37,9 +38,15 @@ class PlaybackFileStartedScrobblerRegistration(private val context: Context) : I
         )
     }
 
-    override fun forIntents(): Collection<IntentFilter> = intents
+	override fun registerWithConnectionProvider(connectionProvider: IConnectionProvider): (ApplicationMessage) -> Unit {
+		TODO("Not yet implemented")
+	}
 
-    private inner class PlaybackFileChangedScrobbleDroidProxy(
+	override fun forIntents(): Collection<IntentFilter> = intents
+
+	override fun forClasses(): Collection<Class<ApplicationMessage>> = emptySet()
+
+	private inner class PlaybackFileChangedScrobbleDroidProxy(
         private val scopedCachedFilePropertiesProvider: ScopedCachedFilePropertiesProvider,
         private val scrobbleIntentProvider: ScrobbleIntentProvider
     ) : ReceiveBroadcastEvents {

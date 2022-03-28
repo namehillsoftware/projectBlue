@@ -39,7 +39,7 @@ import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils.buildStandardMenu
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
-import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 
@@ -73,7 +73,7 @@ class FileListActivity :
             )
 		)
 	}
-	private val fileListItemNowPlayingRegistrar = lazy { FileListItemNowPlayingRegistrar(getApplicationMessageBus()) }
+	private val fileListItemNowPlayingRegistrar = lazy { FileListItemNowPlayingRegistrar(ApplicationMessageBus.getInstance()) }
 	private val pbLoading = LazyViewFinder<ProgressBar>(this, R.id.recyclerLoadingProgress)
 	private val fileListView = LazyViewFinder<RecyclerView>(this, R.id.loadedRecyclerView)
 

@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels
 
-import android.content.IntentFilter
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FilePropertyHelpers
@@ -14,14 +13,10 @@ import com.lasthopesoftware.bluewater.client.connection.selected.ProvideSelected
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackStart
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistChanged
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistTrackChange
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.TrackPositionUpdate
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.*
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
-import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
-import com.lasthopesoftware.bluewater.shared.android.messages.RegisterForMessages
+import com.lasthopesoftware.bluewater.shared.cls
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay
@@ -39,7 +34,6 @@ private val logger by lazy { LoggerFactory.getLogger(NowPlayingFilePropertiesVie
 private val screenControlVisibilityTime by lazy { Duration.standardSeconds(5) }
 
 class NowPlayingFilePropertiesViewModel(
-	private val messages: RegisterForMessages,
 	private val applicationMessages: RegisterForApplicationMessages,
 	private val nowPlayingRepository: GetNowPlayingState,
 	private val selectedConnectionProvider: ProvideSelectedConnection,
@@ -54,7 +48,7 @@ class NowPlayingFilePropertiesViewModel(
 ) : ViewModel(), ControlDrawerState by controlDrawerState, ControlScreenOnState by controlScreenOnState
 {
 	private val onPlaybackStartedReceiver: (PlaybackStart) -> Unit
-	private val onPlaybackStoppedReceiver: ReceiveBroadcastEvents
+	private val onPlaybackStoppedReceiver: (ApplicationMessage) -> Unit
 	private val onPlaybackChangedReceiver: (PlaylistTrackChange) -> Unit
 	private val onPlaylistChangedReceiver: (PlaylistChanged) -> Unit
 	private val onTrackPositionChanged: (TrackPositionUpdate) -> Unit
@@ -91,7 +85,7 @@ class NowPlayingFilePropertiesViewModel(
 
 	init {
 		onPlaybackStartedReceiver = { togglePlaying(true) }
-		onPlaybackStoppedReceiver = ReceiveBroadcastEvents { togglePlaying(false) }
+		onPlaybackStoppedReceiver = { togglePlaying(false) }
 		onPlaylistChangedReceiver = { updateViewFromRepository() }
 
 		onPlaybackChangedReceiver = {
@@ -104,34 +98,28 @@ class NowPlayingFilePropertiesViewModel(
 			setTrackProgress(update.filePosition.millis)
 		}
 
-		val playbackStoppedIntentFilter = IntentFilter().apply {
-			addAction(PlaylistEvents.onPlaylistPause)
-			addAction(PlaylistEvents.onPlaylistInterrupted)
-			addAction(PlaylistEvents.onPlaylistStop)
+		with (applicationMessages) {
+			registerReceiver(onTrackPositionChanged)
+			registerReceiver(onPlaybackChangedReceiver)
+			registerReceiver(onPlaybackStartedReceiver)
+			registerReceiver(onPlaylistChangedReceiver)
+			registerForClass(cls<PlaybackPaused>(), onPlaybackStoppedReceiver)
+			registerForClass(cls<PlaybackInterrupted>(), onPlaybackStoppedReceiver)
+			registerForClass(cls<PlaybackStopped>(), onPlaybackStoppedReceiver)
 		}
-
-		with(messages) {
-			registerReceiver(onPlaybackStoppedReceiver, playbackStoppedIntentFilter)
-		}
-
-		applicationMessages.registerReceiver(onTrackPositionChanged)
-		applicationMessages.registerReceiver(onPlaybackChangedReceiver)
-		applicationMessages.registerReceiver(onPlaybackStartedReceiver)
-		applicationMessages.registerReceiver(onPlaylistChangedReceiver)
 	}
 
 	override fun onCleared() {
 		cachedPromises?.close()
-		with(messages) {
-			unregisterReceiver(onPlaybackStoppedReceiver)
-		}
 
 		with (applicationMessages) {
 			unregisterReceiver(onTrackPositionChanged)
 			unregisterReceiver(onPlaybackChangedReceiver)
 			unregisterReceiver(onPlaybackStartedReceiver)
 			unregisterReceiver(onPlaylistChangedReceiver)
+			unregisterReceiver(onPlaybackStoppedReceiver)
 		}
+
 		controlsShownPromise.cancel()
 	}
 

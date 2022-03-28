@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.storage
 
-import android.content.Context
+import android.app.Application
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
@@ -13,9 +13,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistTrackChange
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.TrackPositionUpdate
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
-import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
-import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.namehillsoftware.handoff.promises.Promise
 
@@ -29,33 +27,20 @@ class LiveNowPlayingLookup private constructor(
 		private lateinit var instance: LiveNowPlayingLookup
 
 		@Synchronized
-		fun initializeInstance(context: Context) {
-			if (::instance.isInitialized) return
+		fun initializeInstance(application: Application): LiveNowPlayingLookup {
+			if (::instance.isInitialized) return instance
 
-			val libraryRepository = LibraryRepository(context)
+			val libraryRepository = LibraryRepository(application)
 			instance = LiveNowPlayingLookup(
-				SelectedBrowserLibraryIdentifierProvider(context.getApplicationSettingsRepository()),
+				SelectedBrowserLibraryIdentifierProvider(application.getApplicationSettingsRepository()),
 				libraryRepository,
 				libraryRepository
-			).also { liveNowPlayingLookup ->
-				with (context.getApplicationMessageBus()) {
-					registerForClass(
-						cls<BrowserLibrarySelection.LibraryChosenMessage>(),
-						liveNowPlayingLookup
-					)
-					registerForClass(
-						cls<TrackPositionUpdate>(),
-						liveNowPlayingLookup
-					)
-					registerForClass(
-						cls<PlaylistTrackChange>(),
-						liveNowPlayingLookup
-					)
-				}
-			}
+			)
+
+			return instance
 		}
 
-		fun getInstance(): LiveNowPlayingLookup =
+		fun getInstance(): GetNowPlayingState =
 			if (::instance.isInitialized) instance
 			else throw IllegalStateException("Instance should be initialized in application root")
 	}

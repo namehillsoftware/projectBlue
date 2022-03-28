@@ -66,7 +66,7 @@ class NowPlayingPlaylistFragment : Fragment() {
 
 	private val messageBus by lazy { MessageBus(LocalBroadcastManager.getInstance(requireContext())) }
 
-	private val applicationMessageBus by lazy { requireContext().scopedApplicationMessageBus() }
+	private val applicationMessageBus by lazy { scopedApplicationMessageBus() }
 
 	private val selectedConnectionProvider by lazy { SelectedConnectionProvider(requireContext()) }
 
@@ -147,7 +147,6 @@ class NowPlayingPlaylistFragment : Fragment() {
 
 		val nowPlayingViewModel = buildActivityViewModel {
 			NowPlayingScreenViewModel(
-				messageBus,
 				applicationMessageBus,
 				InMemoryNowPlayingDisplaySettings,
 				playbackService,
@@ -155,19 +154,18 @@ class NowPlayingPlaylistFragment : Fragment() {
 		}
 
 		NowPlayingFilePropertiesViewModel(
-			messageBus,
-			applicationMessageBus,
-			LiveNowPlayingLookup.getInstance(),
-			selectedConnectionProvider,
-			lazyFilePropertiesProvider,
-			filePropertiesStorage,
-			lazySelectedConnectionAuthenticationChecker,
-			playbackService,
-			ConnectionPoller(requireContext()),
-			StringResources(requireContext()),
-			nowPlayingViewModel,
-			nowPlayingViewModel
-		)
+            applicationMessageBus,
+            LiveNowPlayingLookup.getInstance(),
+            selectedConnectionProvider,
+            lazyFilePropertiesProvider,
+            filePropertiesStorage,
+            lazySelectedConnectionAuthenticationChecker,
+            playbackService,
+            ConnectionPoller(requireContext()),
+            StringResources(requireContext()),
+            nowPlayingViewModel,
+            nowPlayingViewModel
+        )
 	}
 
 	private val playlistViewModel by buildActivityViewModelLazily {

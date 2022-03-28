@@ -120,7 +120,6 @@ class NowPlayingActivity :
 
 	private val nowPlayingViewModel by buildViewModelLazily {
 		NowPlayingScreenViewModel(
-			messageBus.value,
 			applicationMessageBus,
 			InMemoryNowPlayingDisplaySettings,
 			PlaybackServiceController(this),
@@ -134,19 +133,18 @@ class NowPlayingActivity :
 		val liveNowPlayingLookup = LiveNowPlayingLookup.getInstance()
 		binding.filePropertiesVm = buildViewModel {
 			NowPlayingFilePropertiesViewModel(
-				messageBus.value,
-				applicationMessageBus,
-				liveNowPlayingLookup,
-				lazySelectedConnectionProvider,
-				lazyFilePropertiesProvider,
-				filePropertiesStorage,
-				lazySelectedConnectionAuthenticationChecker,
-				PlaybackServiceController(this),
-				ConnectionPoller(this),
-				StringResources(this),
-				nowPlayingViewModel,
-				nowPlayingViewModel
-			)
+                applicationMessageBus,
+                liveNowPlayingLookup,
+                lazySelectedConnectionProvider,
+                lazyFilePropertiesProvider,
+                filePropertiesStorage,
+                lazySelectedConnectionAuthenticationChecker,
+                PlaybackServiceController(this),
+                ConnectionPoller(this),
+                StringResources(this),
+                nowPlayingViewModel,
+                nowPlayingViewModel
+            )
 		}
 
 		binding.coverArtVm = buildViewModel {

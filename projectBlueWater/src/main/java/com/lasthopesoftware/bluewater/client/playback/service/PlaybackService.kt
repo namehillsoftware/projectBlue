@@ -75,8 +75,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.Local
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaybackStartedBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistChanged
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistTrackChange
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.*
 import com.lasthopesoftware.bluewater.client.playback.service.notification.NotificationsConfiguration
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.MediaStyleNotificationSetup
@@ -294,22 +293,6 @@ open class PlaybackService :
 				.setSmallIcon(R.drawable.launcher_icon_dark)
 				.setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
 				.build()
-
-		private fun buildRemoteControlProxyIntentFilter(remoteControlProxy: RemoteControlProxy): IntentFilter {
-			val intentFilter = IntentFilter()
-			for (action in remoteControlProxy.registerForIntents()) {
-				intentFilter.addAction(action)
-			}
-			return intentFilter
-		}
-
-		private fun buildNotificationRouterIntentFilter(playbackNotificationRouter: PlaybackNotificationRouter): IntentFilter {
-			val intentFilter = IntentFilter()
-			for (action in playbackNotificationRouter.registerForIntents()) {
-				intentFilter.addAction(action)
-			}
-			return intentFilter
-		}
 	}
 
 	/* End streamer intent helpers */
@@ -614,20 +597,20 @@ open class PlaybackService :
 
 	override fun onPlaybackPaused() {
 		isMarkedForPlay = false
-		playbackBroadcaster.sendPlaybackBroadcast(PlaylistEvents.onPlaylistPause)
+		applicationMessageBus.value.sendMessage(PlaybackPaused)
 
 		filePositionSubscription?.dispose()
 	}
 
 	override fun onPlaybackInterrupted() {
 		isMarkedForPlay = false
-		playbackBroadcaster.sendPlaybackBroadcast(PlaylistEvents.onPlaylistInterrupted)
+		applicationMessageBus.value.sendMessage(PlaybackInterrupted)
 
 		filePositionSubscription?.dispose()
 	}
 
 	override fun onPlaybackCompleted() {
-		playbackBroadcaster.sendPlaybackBroadcast(PlaylistEvents.onPlaylistStop)
+		applicationMessageBus.value.sendMessage(PlaybackStopped)
 		isMarkedForPlay = false
 		stopSelf(startId)
 	}
@@ -708,7 +691,6 @@ open class PlaybackService :
 
 			val imageProvider = CachedImageProvider.getInstance(this)
 
-			remoteControlProxy?.also(lazyMessageBus.value::unregisterReceiver)
 			remoteControlProxy?.close()
 
 			val promisedMediaBroadcaster = promisedMediaSession.then { mediaSession ->
@@ -718,11 +700,6 @@ open class PlaybackService :
 					imageProvider,
 					mediaSession)
 				remoteControlProxy = RemoteControlProxy(applicationMessageBus.value, broadcaster)
-					.also { rcp ->
-						lazyMessageBus
-							.value
-							.registerReceiver(rcp, buildRemoteControlProxyIntentFilter(rcp))
-					}
 			}
 
 			val promisedMediaNotificationSetup = mediaStyleNotificationSetup.eventually { mediaStyleNotificationSetup ->
@@ -738,7 +715,6 @@ open class PlaybackService :
 						nowPlayingNotificationBuilder = it
 					}
 					.let { builder ->
-						playbackNotificationRouter?.also(lazyMessageBus.value::unregisterReceiver)
 						playbackNotificationRouter?.close()
 						playbackStartingNotificationBuilder.then { b ->
 							b?.let { playbackStartingNotificationBuilder ->
@@ -757,10 +733,6 @@ open class PlaybackService :
 					.then { router ->
 						router?.also {
 							playbackNotificationRouter = router
-
-							lazyMessageBus
-								.value
-								.registerReceiver(router, buildNotificationRouterIntentFilter(router))
 						}
 					}
 			}
