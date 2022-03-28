@@ -5,9 +5,7 @@ import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackPaused
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackStart
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistTrackChanged
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistMessages
 import com.lasthopesoftware.bluewater.client.playback.service.notification.NotificationsConfiguration
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.BuildNowPlayingNotificationContent
@@ -46,17 +44,19 @@ class WhenTheFileChanges : AndroidContext() {
 			recordingApplicationMessageBus
 		)
 
-		recordingApplicationMessageBus.sendMessage(PlaybackStart)
+		recordingApplicationMessageBus.sendMessage(PlaylistMessages.PlaybackStarted)
 
 		recordingApplicationMessageBus.sendMessage(
-			PlaylistTrackChanged(LibraryId(1), PositionedFile(3, ServiceFile(1))))
+			PlaylistMessages.TrackChanged(LibraryId(1), PositionedFile(3, ServiceFile(1)))
+		)
 
-		recordingApplicationMessageBus.sendMessage(PlaybackPaused)
+		recordingApplicationMessageBus.sendMessage(PlaylistMessages.PlaybackPaused)
 
 		recordingApplicationMessageBus.sendMessage(
-			PlaylistTrackChanged(LibraryId(1), PositionedFile(3, ServiceFile(2))))
+			PlaylistMessages.TrackChanged(LibraryId(1), PositionedFile(3, ServiceFile(2)))
+		)
 
-		recordingApplicationMessageBus.sendMessage(PlaybackStart)
+		recordingApplicationMessageBus.sendMessage(PlaylistMessages.PlaybackStarted)
 	}
 
 	@Test

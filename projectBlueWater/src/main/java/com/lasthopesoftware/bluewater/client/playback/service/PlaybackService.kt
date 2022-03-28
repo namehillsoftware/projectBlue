@@ -75,7 +75,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.Local
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaybackStartedBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.*
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistMessages
 import com.lasthopesoftware.bluewater.client.playback.service.notification.NotificationsConfiguration
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.MediaStyleNotificationSetup
@@ -521,7 +521,7 @@ open class PlaybackService :
 					val fileKey = intent.getIntExtra(Bag.playlistPosition, -1)
 					return if (fileKey < 0) Unit.toPromise() else playlistFiles
 						.addFile(ServiceFile(fileKey))
-						.then { applicationMessageBus.value.sendMessage(PlaylistChanged) }
+						.then { applicationMessageBus.value.sendMessage(PlaylistMessages.PlaylistChanged) }
 						.eventually(LoopedInPromise.response({
 							Toast.makeText(this, getText(R.string.lbl_song_added_to_now_playing), Toast.LENGTH_SHORT).show()
 						}, this))
@@ -533,7 +533,7 @@ open class PlaybackService :
 					return if (filePosition < 0) Unit.toPromise() else playlistFiles
 						.removeFileAtPosition(filePosition)
 						.then {
-							applicationMessageBus.value.sendMessage(PlaylistChanged)
+							applicationMessageBus.value.sendMessage(PlaylistMessages.PlaylistChanged)
 						}
 						.unitResponse()
 				}
@@ -545,7 +545,7 @@ open class PlaybackService :
 					return if (filePosition < 0 || newPosition < 0) Unit.toPromise()
 					else playlistFiles.moveFile(filePosition, newPosition)
 						.then {
-							applicationMessageBus.value.sendMessage(PlaylistChanged)
+							applicationMessageBus.value.sendMessage(PlaylistMessages.PlaylistChanged)
 						}
 						.unitResponse()
 				}
@@ -597,20 +597,20 @@ open class PlaybackService :
 
 	override fun onPlaybackPaused() {
 		isMarkedForPlay = false
-		applicationMessageBus.value.sendMessage(PlaybackPaused)
+		applicationMessageBus.value.sendMessage(PlaylistMessages.PlaybackPaused)
 
 		filePositionSubscription?.dispose()
 	}
 
 	override fun onPlaybackInterrupted() {
 		isMarkedForPlay = false
-		applicationMessageBus.value.sendMessage(PlaybackInterrupted)
+		applicationMessageBus.value.sendMessage(PlaylistMessages.PlaybackInterrupted)
 
 		filePositionSubscription?.dispose()
 	}
 
 	override fun onPlaybackCompleted() {
-		applicationMessageBus.value.sendMessage(PlaybackStopped)
+		applicationMessageBus.value.sendMessage(PlaylistMessages.PlaybackStopped)
 		isMarkedForPlay = false
 		stopSelf(startId)
 	}
@@ -623,7 +623,7 @@ open class PlaybackService :
 	override fun onPlaylistReset(positionedFile: PositionedFile) {
 		selectedLibraryIdentifierProvider.selectedLibraryId.then { l ->
 			l?.also {
-				applicationMessageBus.value.sendMessage(PlaylistTrackChanged(it, positionedFile))
+				applicationMessageBus.value.sendMessage(PlaylistMessages.TrackChanged(it, positionedFile))
 			}
 		}
 	}
@@ -648,7 +648,7 @@ open class PlaybackService :
 				startNowPlayingActivity(this)
 				promiseStartedPlaylist
 			}
-			.then { applicationMessageBus.value.sendMessage(PlaylistChanged) }
+			.then { applicationMessageBus.value.sendMessage(PlaylistMessages.PlaylistChanged) }
 	}
 
 	private fun resumePlayback(): Promise<Unit> {
@@ -1012,7 +1012,7 @@ open class PlaybackService :
 		promisedPlayedFile.then {
 			selectedLibraryIdentifierProvider.selectedLibraryId.then { l ->
 				l?.also {
-					applicationMessageBus.value.sendMessage(PlaylistTrackCompleted(positionedPlayingFile.serviceFile))
+					applicationMessageBus.value.sendMessage(PlaylistMessages.TrackCompleted(positionedPlayingFile.serviceFile))
 				}
 				localSubscription?.dispose()
 			}
@@ -1026,7 +1026,7 @@ open class PlaybackService :
 	private fun broadcastChangedFile(positionedFile: PositionedFile) {
 		selectedLibraryIdentifierProvider.selectedLibraryId.then { l ->
 			l?.also {
-				applicationMessageBus.value.sendMessage(PlaylistTrackChanged(it, positionedFile))
+				applicationMessageBus.value.sendMessage(PlaylistMessages.TrackChanged(it, positionedFile))
 			}
 		}
 	}

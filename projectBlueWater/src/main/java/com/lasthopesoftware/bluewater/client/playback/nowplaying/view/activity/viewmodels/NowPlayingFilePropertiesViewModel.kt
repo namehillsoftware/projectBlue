@@ -13,7 +13,8 @@ import com.lasthopesoftware.bluewater.client.connection.selected.ProvideSelected
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.*
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistMessages
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.TrackPositionUpdate
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
@@ -47,10 +48,10 @@ class NowPlayingFilePropertiesViewModel(
 	private val controlScreenOnState: ControlScreenOnState
 ) : ViewModel(), ControlDrawerState by controlDrawerState, ControlScreenOnState by controlScreenOnState
 {
-	private val onPlaybackStartedReceiver: (PlaybackStart) -> Unit
+	private val onPlaybackStartedReceiver: (PlaylistMessages.PlaybackStarted) -> Unit
 	private val onPlaybackStoppedReceiver: (ApplicationMessage) -> Unit
-	private val onPlaybackChangedReceiver: (PlaylistTrackChanged) -> Unit
-	private val onPlaylistChangedReceiver: (PlaylistChanged) -> Unit
+	private val onPlaybackChangedReceiver: (PlaylistMessages.TrackChanged) -> Unit
+	private val onPlaylistChangedReceiver: (PlaylistMessages.PlaylistChanged) -> Unit
 	private val onTrackPositionChanged: (TrackPositionUpdate) -> Unit
 
 	private var cachedPromises: CachedPromises? = null
@@ -103,9 +104,9 @@ class NowPlayingFilePropertiesViewModel(
 			registerReceiver(onPlaybackChangedReceiver)
 			registerReceiver(onPlaybackStartedReceiver)
 			registerReceiver(onPlaylistChangedReceiver)
-			registerForClass(cls<PlaybackPaused>(), onPlaybackStoppedReceiver)
-			registerForClass(cls<PlaybackInterrupted>(), onPlaybackStoppedReceiver)
-			registerForClass(cls<PlaybackStopped>(), onPlaybackStoppedReceiver)
+			registerForClass(cls<PlaylistMessages.PlaybackPaused>(), onPlaybackStoppedReceiver)
+			registerForClass(cls<PlaylistMessages.PlaybackInterrupted>(), onPlaybackStoppedReceiver)
+			registerForClass(cls<PlaylistMessages.PlaybackStopped>(), onPlaybackStoppedReceiver)
 		}
 	}
 

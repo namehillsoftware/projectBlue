@@ -8,8 +8,8 @@ import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionF
 import com.lasthopesoftware.bluewater.client.connection.polling.PollForConnections
 import com.lasthopesoftware.bluewater.client.connection.selected.ProvideSelectedConnection
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistChanged
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistTrackChanged
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistMessages.PlaylistChanged
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistMessages.TrackChanged
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.images.ProvideDefaultImage
@@ -46,7 +46,7 @@ class NowPlayingCoverArtViewModel(
 	val unexpectedError = unexpectedErrorState.asStateFlow()
 
 	init {
-		applicationMessage.registerForClass(cls<PlaylistTrackChanged>(), this)
+		applicationMessage.registerForClass(cls<TrackChanged>(), this)
 		applicationMessage.registerForClass(cls<PlaylistChanged>(), this)
 	}
 

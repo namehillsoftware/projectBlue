@@ -10,7 +10,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.Pro
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistTrackChanged
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistMessages
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.TrackPositionUpdate
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
@@ -77,7 +77,7 @@ class LiveNowPlayingLookup private constructor(
 		when (message) {
 			is BrowserLibrarySelection.LibraryChosenMessage -> updateInner(message.chosenLibraryId)
 			is TrackPositionUpdate -> trackedPosition = message.filePosition.millis
-			is PlaylistTrackChanged -> {
+			is PlaylistMessages.TrackChanged -> {
 				trackedPosition = null
 				trackedFile = message.positionedFile
 			}

@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRe
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.authentication.ScopedConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.receivers.RegisterReceiverForEvents
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistTrackCompleted
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistMessages.TrackCompleted
 import com.lasthopesoftware.bluewater.client.servers.version.ProgramVersionProvider
 import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
 import com.lasthopesoftware.bluewater.shared.cls
@@ -44,6 +44,6 @@ class UpdatePlayStatsOnCompleteRegistration : RegisterReceiverForEvents {
 	override fun forClasses(): Collection<Class<ApplicationMessage>> = classes as Collection<Class<ApplicationMessage>>
 
 	companion object {
-		private val classes = setOf<Class<*>>(cls<PlaylistTrackCompleted>())
+		private val classes = setOf<Class<*>>(cls<TrackCompleted>())
 	}
 }

@@ -2,10 +2,7 @@ package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.
 
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackInterrupted
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackPaused
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackStart
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackStopped
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistMessages
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
@@ -19,7 +16,7 @@ class NowPlayingScreenViewModel(
 	playbackService: ControlPlaybackService,
 ) : ViewModel(), ControlDrawerState, ControlScreenOnState
 {
-	private val onPlaybackStartedReceiver: (PlaybackStart) -> Unit
+	private val onPlaybackStartedReceiver: (PlaylistMessages.PlaybackStarted) -> Unit
 	private val onPlaybackStoppedReceiver: (ApplicationMessage) -> Unit
 
 	private var isPlayingState = false
@@ -41,9 +38,9 @@ class NowPlayingScreenViewModel(
 
 		with (applicationMessages) {
 			registerReceiver(onPlaybackStartedReceiver)
-			registerForClass(cls<PlaybackPaused>(), onPlaybackStoppedReceiver)
-			registerForClass(cls<PlaybackInterrupted>(), onPlaybackStoppedReceiver)
-			registerForClass(cls<PlaybackStopped>(), onPlaybackStoppedReceiver)
+			registerForClass(cls<PlaylistMessages.PlaybackPaused>(), onPlaybackStoppedReceiver)
+			registerForClass(cls<PlaylistMessages.PlaybackInterrupted>(), onPlaybackStoppedReceiver)
+			registerForClass(cls<PlaylistMessages.PlaybackStopped>(), onPlaybackStoppedReceiver)
 		}
 
 		playbackService.promiseIsMarkedForPlay().then(::togglePlaying)

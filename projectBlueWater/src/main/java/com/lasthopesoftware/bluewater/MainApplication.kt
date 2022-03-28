@@ -38,7 +38,7 @@ import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessio
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionSettingsChangeReceiver
 import com.lasthopesoftware.bluewater.client.connection.settings.changes.ObservableConnectionSettingsLibraryStorage
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistTrackChanged
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistMessages.TrackChanged
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.TrackPositionUpdate
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble.PlaybackFileStartedScrobblerRegistration
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble.PlaybackFileStoppedScrobblerRegistration
@@ -163,7 +163,7 @@ open class MainApplication : Application() {
 		with (applicationMessageBus) {
 			registerForClass(cls<BrowserLibrarySelection.LibraryChosenMessage>(), liveNowPlayingLookup)
 			registerForClass(cls<TrackPositionUpdate>(), liveNowPlayingLookup)
-			registerForClass(cls<PlaylistTrackChanged>(), liveNowPlayingLookup)
+			registerForClass(cls<TrackChanged>(), liveNowPlayingLookup)
 		}
 	}
 
