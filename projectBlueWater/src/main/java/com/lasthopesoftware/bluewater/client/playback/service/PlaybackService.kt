@@ -71,7 +71,6 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.Maintai
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.NowPlayingActivity.Companion.startNowPlayingActivity
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Action.Bag
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.LocalPlaybackBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaybackStartedBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistMessages
@@ -302,7 +301,6 @@ open class PlaybackService :
 	private val audioManager by lazy { getSystemService(AUDIO_SERVICE) as AudioManager }
 	private val lazyMessageBus = lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
 	private val applicationMessageBus = lazy { scopedApplicationMessageBus() }
-	private val playbackBroadcaster by lazy { LocalPlaybackBroadcaster(lazyMessageBus.value) }
 	private val applicationSettings by lazy { getApplicationSettingsRepository() }
 	private val selectedLibraryIdentifierProvider by lazy { SelectedBrowserLibraryIdentifierProvider(applicationSettings) }
 	private val playbackStartedBroadcaster by lazy { PlaybackStartedBroadcaster(applicationMessageBus.value) }
