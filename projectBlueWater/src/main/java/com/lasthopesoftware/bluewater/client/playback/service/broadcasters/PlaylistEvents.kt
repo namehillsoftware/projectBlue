@@ -3,14 +3,8 @@ package com.lasthopesoftware.bluewater.client.playback.service.broadcasters
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder.Companion.buildMagicPropertyName
 
-/**
- * Created by david on 2/15/17.
- */
 object PlaylistEvents {
 	private val magicPropertyBuilder by lazy { MagicPropertyBuilder(PlaylistEvents::class.java) }
-
-	@JvmField
-	val onPlaylistTrackComplete = magicPropertyBuilder.buildProperty("onPlaylistTrackComplete")
 
 	val onPlaylistTrackStart by lazy { magicPropertyBuilder.buildProperty("onPlaylistTrackStart") }
 

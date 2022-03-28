@@ -49,7 +49,7 @@ class NowPlayingFilePropertiesViewModel(
 {
 	private val onPlaybackStartedReceiver: (PlaybackStart) -> Unit
 	private val onPlaybackStoppedReceiver: (ApplicationMessage) -> Unit
-	private val onPlaybackChangedReceiver: (PlaylistTrackChange) -> Unit
+	private val onPlaybackChangedReceiver: (PlaylistTrackChanged) -> Unit
 	private val onPlaylistChangedReceiver: (PlaylistChanged) -> Unit
 	private val onTrackPositionChanged: (TrackPositionUpdate) -> Unit
 

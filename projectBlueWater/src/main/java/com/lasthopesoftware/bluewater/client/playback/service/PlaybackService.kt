@@ -623,7 +623,7 @@ open class PlaybackService :
 	override fun onPlaylistReset(positionedFile: PositionedFile) {
 		selectedLibraryIdentifierProvider.selectedLibraryId.then { l ->
 			l?.also {
-				applicationMessageBus.value.sendMessage(PlaylistTrackChange(it, positionedFile))
+				applicationMessageBus.value.sendMessage(PlaylistTrackChanged(it, positionedFile))
 			}
 		}
 	}
@@ -1012,11 +1012,7 @@ open class PlaybackService :
 		promisedPlayedFile.then {
 			selectedLibraryIdentifierProvider.selectedLibraryId.then { l ->
 				l?.also {
-					playbackBroadcaster.sendPlaybackBroadcast(
-						PlaylistEvents.onPlaylistTrackComplete,
-						it,
-						positionedPlayingFile.asPositionedFile()
-					)
+					applicationMessageBus.value.sendMessage(PlaylistTrackCompleted(positionedPlayingFile.serviceFile))
 				}
 				localSubscription?.dispose()
 			}
@@ -1030,7 +1026,7 @@ open class PlaybackService :
 	private fun broadcastChangedFile(positionedFile: PositionedFile) {
 		selectedLibraryIdentifierProvider.selectedLibraryId.then { l ->
 			l?.also {
-				applicationMessageBus.value.sendMessage(PlaylistTrackChange(it, positionedFile))
+				applicationMessageBus.value.sendMessage(PlaylistTrackChanged(it, positionedFile))
 			}
 		}
 	}

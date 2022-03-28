@@ -5,8 +5,8 @@ import android.content.Intent
 import android.content.IntentFilter
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.receivers.RegisterReceiverForEvents
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackStopped
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistTrackCompleted
 import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
@@ -18,7 +18,7 @@ class PlaybackFileStoppedScrobblerRegistration(private val context: Context) : R
 	override fun registerWithConnectionProvider(connectionProvider: IConnectionProvider): (ApplicationMessage) -> Unit =
 		PlaybackFileStoppedScrobbleDroidProxy(ScrobbleIntentProvider.getInstance())
 
-	override fun forIntents(): Collection<IntentFilter> = intents
+	override fun forIntents(): Collection<IntentFilter> = emptySet()
 
 	@Suppress("UNCHECKED_CAST")
 	override fun forClasses(): Collection<Class<ApplicationMessage>> = classes as Collection<Class<ApplicationMessage>>
@@ -35,14 +35,8 @@ class PlaybackFileStoppedScrobblerRegistration(private val context: Context) : R
 	}
 
     companion object {
-        private val intents by lazy {
-			setOf(
-				IntentFilter(PlaylistEvents.onPlaylistTrackComplete),
-			)
-		}
-
 		private val classes by lazy {
-			setOf<Class<*>>(cls<PlaybackStopped>())
+			setOf<Class<*>>(cls<PlaybackStopped>(), cls<PlaylistTrackCompleted>())
 		}
     }
 }

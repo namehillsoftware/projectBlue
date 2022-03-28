@@ -24,7 +24,7 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlay
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.fragments.playlist.*
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.menu.listeners.FileSeekToClickListener
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.menu.listeners.RemovePlaylistFileClickListener
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistTrackChange
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistTrackChanged
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.android.view.getValue
@@ -87,7 +87,7 @@ class NowPlayingFileListItemMenuBuilder(
 		private val viewAnimator: NotifyOnFlipViewAnimator
 	) :
 		RecyclerView.ViewHolder(viewAnimator),
-		(PlaylistTrackChange) -> Unit,
+		(PlaylistTrackChanged) -> Unit,
 		View.OnLongClickListener,
 		ImmediateResponse<NowPlaying?, Unit>
 	{
@@ -120,7 +120,7 @@ class NowPlayingFileListItemMenuBuilder(
 			removeButton.setOnClickListener(RemovePlaylistFileClickListener(viewAnimator, position))
 		}
 
-		override fun invoke(p1: PlaylistTrackChange) {
+		override fun invoke(p1: PlaylistTrackChanged) {
 			val position = positionedFile?.playlistPosition
 			textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(position == p1.positionedFile.playlistPosition))
 			viewAnimator.isSelected = position == p1.positionedFile.playlistPosition

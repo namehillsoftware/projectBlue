@@ -11,7 +11,7 @@ class RemoteControlProxy(private val registerForApplicationMessages: RegisterFor
 {
 	init {
 	    registerForApplicationMessages.registerForClass(cls<TrackPositionUpdate>(), this)
-	    registerForApplicationMessages.registerForClass(cls<PlaylistTrackChange>(), this)
+	    registerForApplicationMessages.registerForClass(cls<PlaylistTrackChanged>(), this)
 		registerForApplicationMessages.registerForClass(cls<PlaybackStart>(), this)
 		registerForApplicationMessages.registerForClass(cls<PlaybackPaused>(), this)
 		registerForApplicationMessages.registerForClass(cls<PlaybackInterrupted>(), this)
@@ -21,7 +21,7 @@ class RemoteControlProxy(private val registerForApplicationMessages: RegisterFor
 	override fun invoke(message: ApplicationMessage) {
 		when (message) {
 			is TrackPositionUpdate -> onTrackPositionUpdate(message)
-			is PlaylistTrackChange -> onPlaylistChange(message)
+			is PlaylistTrackChanged -> onPlaylistChange(message)
 			is PlaybackStart -> remoteBroadcaster.setPlaying()
 			is PlaybackPaused, PlaybackInterrupted -> remoteBroadcaster.setPaused()
 			is PlaybackStopped -> remoteBroadcaster.setStopped()
@@ -32,8 +32,8 @@ class RemoteControlProxy(private val registerForApplicationMessages: RegisterFor
 		registerForApplicationMessages.unregisterReceiver(this)
 	}
 
-	private fun onPlaylistChange(playlistTrackChange: PlaylistTrackChange) {
-		remoteBroadcaster.updateNowPlaying(playlistTrackChange.positionedFile.serviceFile)
+	private fun onPlaylistChange(playlistTrackChanged: PlaylistTrackChanged) {
+		remoteBroadcaster.updateNowPlaying(playlistTrackChanged.positionedFile.serviceFile)
 	}
 
 	private fun onTrackPositionUpdate(trackPositionUpdate: TrackPositionUpdate) {

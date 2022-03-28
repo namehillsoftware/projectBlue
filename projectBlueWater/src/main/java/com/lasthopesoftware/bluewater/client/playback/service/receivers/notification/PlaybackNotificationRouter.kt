@@ -14,7 +14,7 @@ class PlaybackNotificationRouter(
 	AutoCloseable
 {
 	init {
-		registerApplicationMessages.registerForClass(cls<PlaylistTrackChange>(), this)
+		registerApplicationMessages.registerForClass(cls<PlaylistTrackChanged>(), this)
 		registerApplicationMessages.registerForClass(cls<PlaybackStart>(), this)
 		registerApplicationMessages.registerForClass(cls<PlaybackPaused>(), this)
 		registerApplicationMessages.registerForClass(cls<PlaybackInterrupted>(), this)
@@ -23,7 +23,7 @@ class PlaybackNotificationRouter(
 
 	override fun invoke(message: ApplicationMessage) {
 		when (message) {
-			is PlaylistTrackChange -> playbackNotificationBroadcaster.notifyPlayingFileChanged(message.positionedFile.serviceFile)
+			is PlaylistTrackChanged -> playbackNotificationBroadcaster.notifyPlayingFileChanged(message.positionedFile.serviceFile)
 			is PlaybackStart -> playbackNotificationBroadcaster.notifyPlaying()
 			is PlaybackPaused -> playbackNotificationBroadcaster.notifyPaused()
 			is PlaybackInterrupted -> playbackNotificationBroadcaster.notifyInterrupted()
