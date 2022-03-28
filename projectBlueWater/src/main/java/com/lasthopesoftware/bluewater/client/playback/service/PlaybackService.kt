@@ -73,7 +73,6 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.N
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Action.Bag
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.LocalPlaybackBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaybackStartedBroadcaster
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistMessages
 import com.lasthopesoftware.bluewater.client.playback.service.notification.NotificationsConfiguration
@@ -991,17 +990,9 @@ open class PlaybackService :
 		if (playingFile is EmptyPlaybackHandler) return
 
 		broadcastChangedFile(positionedPlayingFile.asPositionedFile())
-		selectedLibraryIdentifierProvider.selectedLibraryId.then {
-			it?.also { l ->
-				playbackBroadcaster.sendPlaybackBroadcast(
-					PlaylistEvents.onPlaylistTrackStart,
-					l,
-					positionedPlayingFile.asPositionedFile()
-				)
-			}
-		}
-		val promisedPlayedFile = playingFile.promisePlayedFile()
+		applicationMessageBus.value.sendMessage(PlaylistMessages.TrackStarted(positionedPlayingFile.serviceFile))
 
+		val promisedPlayedFile = playingFile.promisePlayedFile()
 		val localSubscription = trackPositionBroadcaster?.run {
 			Observable.interval(1, TimeUnit.SECONDS, lazyObservationScheduler.value)
 				.flatMapMaybe { promisedPlayedFile.progress.toMaybeObservable() }

@@ -11,6 +11,8 @@ object PlaylistMessages {
 
 	data class TrackCompleted(val completedFile: ServiceFile) : ApplicationMessage
 
+	data class TrackStarted(val startedFile: ServiceFile) : ApplicationMessage
+
 	object PlaybackStarted : ApplicationMessage
 
 	object PlaylistChanged : ApplicationMessage

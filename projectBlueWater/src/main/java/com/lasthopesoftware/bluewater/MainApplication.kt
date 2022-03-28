@@ -157,7 +157,11 @@ open class MainApplication : Application() {
 			PlaybackFileStoppedScrobblerRegistration(this))
 
 		messageBus.registerReceiver(
-			SessionConnectionRegistrationsMaintainer(this, messageBus, applicationMessageBus, connectionDependentReceiverRegistrations),
+			SessionConnectionRegistrationsMaintainer(
+				this,
+				applicationMessageBus,
+				connectionDependentReceiverRegistrations
+			),
 			IntentFilter(SelectedConnection.buildSessionBroadcast))
 
 		with (applicationMessageBus) {

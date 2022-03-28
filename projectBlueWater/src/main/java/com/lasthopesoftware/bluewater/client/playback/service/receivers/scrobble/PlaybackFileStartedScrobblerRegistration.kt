@@ -1,9 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble
 
 import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FilePropertyHelpers
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedCachedFilePropertiesProvider
@@ -12,69 +9,65 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.receivers.RegisterReceiverForEvents
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
-import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistMessages
+import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
 
 class PlaybackFileStartedScrobblerRegistration(private val context: Context) : RegisterReceiverForEvents {
 
 	companion object {
-		private val intents by lazy { setOf(IntentFilter(PlaylistEvents.onPlaylistTrackStart)) }
+		private val classes by lazy { setOf<Class<*>>(cls<PlaylistMessages.TrackStarted>()) }
 	}
-
-    override fun registerBroadcastEventsWithConnectionProvider(connectionProvider: IConnectionProvider): ReceiveBroadcastEvents {
-        val filePropertiesProvider = ScopedCachedFilePropertiesProvider(
-            connectionProvider,
-            FilePropertyCache.getInstance(),
-            ScopedFilePropertiesProvider(
-                connectionProvider,
-				ScopedRevisionProvider(connectionProvider),
-                FilePropertyCache.getInstance()
-            )
-        )
-        return PlaybackFileChangedScrobbleDroidProxy(
-            filePropertiesProvider,
-            ScrobbleIntentProvider.getInstance()
-        )
-    }
 
 	override fun registerWithConnectionProvider(connectionProvider: IConnectionProvider): (ApplicationMessage) -> Unit {
-		TODO("Not yet implemented")
+		val filePropertiesProvider = ScopedCachedFilePropertiesProvider(
+			connectionProvider,
+			FilePropertyCache.getInstance(),
+			ScopedFilePropertiesProvider(
+				connectionProvider,
+				ScopedRevisionProvider(connectionProvider),
+				FilePropertyCache.getInstance()
+			)
+		)
+		return PlaybackFileChangedScrobbleDroidProxy(
+			filePropertiesProvider,
+			ScrobbleIntentProvider.getInstance()
+		)
 	}
 
-	override fun forIntents(): Collection<IntentFilter> = intents
-
-	override fun forClasses(): Collection<Class<ApplicationMessage>> = emptySet()
+	@Suppress("UNCHECKED_CAST")
+	override fun forClasses(): Collection<Class<ApplicationMessage>> = classes as Collection<Class<ApplicationMessage>>
 
 	private inner class PlaybackFileChangedScrobbleDroidProxy(
-        private val scopedCachedFilePropertiesProvider: ScopedCachedFilePropertiesProvider,
-        private val scrobbleIntentProvider: ScrobbleIntentProvider
-    ) : ReceiveBroadcastEvents {
-        override fun onReceive(intent: Intent) {
-            val fileKey = intent.getIntExtra(PlaylistEvents.PlaybackFileParameters.fileKey, -1)
-            if (fileKey < 0) return
-            scopedCachedFilePropertiesProvider
-                .promiseFileProperties(ServiceFile(fileKey))
-                .then { fileProperties ->
-                    val artist = fileProperties[KnownFileProperties.ARTIST]
-                    val name = fileProperties[KnownFileProperties.NAME]
-                    val album = fileProperties[KnownFileProperties.ALBUM]
-                    val duration =
-                        FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties).toLong()
+		private val scopedCachedFilePropertiesProvider: ScopedCachedFilePropertiesProvider,
+		private val scrobbleIntentProvider: ScrobbleIntentProvider
+	) : (ApplicationMessage) -> Unit {
 
-                    val scrobbleDroidIntent = scrobbleIntentProvider.provideScrobbleIntent(true)
-                    scrobbleDroidIntent.putExtra("artist", artist)
-                    scrobbleDroidIntent.putExtra("album", album)
-                    scrobbleDroidIntent.putExtra("track", name)
-                    scrobbleDroidIntent.putExtra("secs", (duration / 1000).toInt())
+		override fun invoke(message: ApplicationMessage) {
+			val trackStarted = message as? PlaylistMessages.TrackStarted ?: return
+
+			scopedCachedFilePropertiesProvider
+				.promiseFileProperties(trackStarted.startedFile)
+				.then { fileProperties ->
+					val artist = fileProperties[KnownFileProperties.ARTIST]
+					val name = fileProperties[KnownFileProperties.NAME]
+					val album = fileProperties[KnownFileProperties.ALBUM]
+					val duration =
+						FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties).toLong()
+
+					val scrobbleDroidIntent = scrobbleIntentProvider.provideScrobbleIntent(true)
+					scrobbleDroidIntent.putExtra("artist", artist)
+					scrobbleDroidIntent.putExtra("album", album)
+					scrobbleDroidIntent.putExtra("track", name)
+					scrobbleDroidIntent.putExtra("secs", (duration / 1000).toInt())
 
 					fileProperties[KnownFileProperties.TRACK]
 						?.takeIf { it.isNotEmpty() }
 						?.also {
 							scrobbleDroidIntent.putExtra("tracknumber", it.toInt())
 						}
-                    context.sendBroadcast(scrobbleDroidIntent)
-                }
-        }
-    }
+					context.sendBroadcast(scrobbleDroidIntent)
+				}
+		}
+	}
 }
