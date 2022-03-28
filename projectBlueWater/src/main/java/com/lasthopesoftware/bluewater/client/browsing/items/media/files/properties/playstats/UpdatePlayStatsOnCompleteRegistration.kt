@@ -8,13 +8,14 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.authentication.ScopedConnectionAuthenticationChecker
-import com.lasthopesoftware.bluewater.client.connection.receivers.IConnectionDependentReceiverRegistration
+import com.lasthopesoftware.bluewater.client.connection.receivers.RegisterReceiverForEvents
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
 import com.lasthopesoftware.bluewater.client.servers.version.ProgramVersionProvider
 import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
 
-class UpdatePlayStatsOnCompleteRegistration : IConnectionDependentReceiverRegistration {
-    override fun registerWithConnectionProvider(connectionProvider: IConnectionProvider): ReceiveBroadcastEvents {
+class UpdatePlayStatsOnCompleteRegistration : RegisterReceiverForEvents {
+    override fun registerBroadcastEventsWithConnectionProvider(connectionProvider: IConnectionProvider): ReceiveBroadcastEvents {
         val cache = FilePropertyCache.getInstance()
 		val scopedRevisionProvider = ScopedRevisionProvider(connectionProvider)
         return UpdatePlayStatsOnPlaybackCompleteReceiver(
@@ -31,11 +32,15 @@ class UpdatePlayStatsOnCompleteRegistration : IConnectionDependentReceiverRegist
         )
     }
 
-    override fun forIntents(): Collection<IntentFilter> {
-        return intents
-    }
+	override fun registerWithConnectionProvider(connectionProvider: IConnectionProvider): (ApplicationMessage) -> Unit {
+		TODO("Not yet implemented")
+	}
 
-    companion object {
+	override fun forIntents(): Collection<IntentFilter> = intents
+
+	override fun forClasses(): Collection<Class<ApplicationMessage>> = emptySet()
+
+	companion object {
         private val intents: Collection<IntentFilter> =
             setOf(IntentFilter(PlaylistEvents.onPlaylistTrackComplete))
     }

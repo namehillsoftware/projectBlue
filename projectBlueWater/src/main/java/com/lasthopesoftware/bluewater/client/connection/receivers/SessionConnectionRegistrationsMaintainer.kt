@@ -6,37 +6,68 @@ import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnect
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.Companion.getInstance
 import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
 import com.lasthopesoftware.bluewater.shared.android.messages.RegisterForMessages
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
+import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 
-/**
- * Created by david on 3/19/17.
- */
-class SessionConnectionRegistrationsMaintainer(private val context: Context, private val messageRegistrar: RegisterForMessages, private val connectionDependentReceiverRegistrations: Collection<IConnectionDependentReceiverRegistration>) : ReceiveBroadcastEvents, AutoCloseable, ImmediateResponse<List<ReceiveBroadcastEvents>, Unit> {
-	private var registrationPromise = Promise(emptyList<ReceiveBroadcastEvents>())
+class SessionConnectionRegistrationsMaintainer(
+	private val context: Context,
+	private val messageRegistrar: RegisterForMessages,
+	private val applicationMessages: RegisterForApplicationMessages,
+	private val connectionDependentReceiverRegistrations: Collection<RegisterReceiverForEvents>
+) :
+	ReceiveBroadcastEvents,
+	AutoCloseable,
+	ImmediateResponse<List<ReceiveBroadcastEvents>, Unit>,
+	(ApplicationMessage) -> Unit
+{
+	private var broadcastRegistrationPromise = Promise(emptyList<ReceiveBroadcastEvents>())
+	private var registrationPromise = Promise(emptyList<(ApplicationMessage) -> Unit>())
 
 	@Synchronized
 	override fun onReceive(intent: Intent) {
 		val buildSessionStatus = intent.getIntExtra(SelectedConnection.buildSessionBroadcastStatus, -1)
 		if (buildSessionStatus != SelectedConnection.BuildingSessionConnectionStatus.BuildingSessionComplete) return
 
-		registrationPromise = registrationPromise
+		broadcastRegistrationPromise = broadcastRegistrationPromise
 			.then(this) // remove existing registrations
 			.eventually { getInstance(context).promiseSessionConnection() }
 			.then { connectionProvider ->
 				connectionProvider ?: return@then emptyList()
 				connectionDependentReceiverRegistrations.map { registration ->
-					val receiver = registration.registerWithConnectionProvider(connectionProvider)
+					val receiver = registration.registerBroadcastEventsWithConnectionProvider(connectionProvider)
 					for (i in registration.forIntents())
 						messageRegistrar.registerReceiver(receiver, i)
 
 					receiver
 				}
 			}
+
+		registrationPromise = registrationPromise
+			.then {
+				for (receiver in it)
+					applicationMessages.unregisterReceiver(receiver)
+			}
+			.eventually { getInstance(context).promiseSessionConnection() }
+			.then { connectionProvider ->
+				connectionProvider ?: return@then emptyList()
+				connectionDependentReceiverRegistrations.map { registration ->
+					val receiver = registration.registerWithConnectionProvider(connectionProvider)
+					for (c in registration.forClasses())
+						applicationMessages.registerForClass(c, receiver)
+
+					receiver
+				}
+			}
+	}
+
+	override fun invoke(message: ApplicationMessage) {
+		TODO("Not yet implemented")
 	}
 
 	override fun close() {
-		registrationPromise.then(this)
+		broadcastRegistrationPromise.then(this)
 	}
 
 	override fun respond(registeredReceivers: List<ReceiveBroadcastEvents>) {

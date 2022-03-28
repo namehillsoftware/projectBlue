@@ -74,7 +74,6 @@ class NowPlayingTopFragment : Fragment() {
 
 		val nowPlayingViewModel = buildActivityViewModel {
 			NowPlayingScreenViewModel(
-				messageBus.value,
 				applicationMessageBus,
 				InMemoryNowPlayingDisplaySettings,
 				playbackService,
@@ -82,19 +81,18 @@ class NowPlayingTopFragment : Fragment() {
 		}
 
 		NowPlayingFilePropertiesViewModel(
-			messageBus.value,
-			applicationMessageBus,
-			LiveNowPlayingLookup.getInstance(),
-			selectedConnectionProvider,
-			lazyFilePropertiesProvider,
-			filePropertiesStorage,
-			lazySelectedConnectionAuthenticationChecker,
-			playbackService,
-			ConnectionPoller(requireContext()),
-			StringResources(requireContext()),
-			nowPlayingViewModel,
-			nowPlayingViewModel
-		)
+            applicationMessageBus,
+            LiveNowPlayingLookup.getInstance(),
+            selectedConnectionProvider,
+            lazyFilePropertiesProvider,
+            filePropertiesStorage,
+            lazySelectedConnectionAuthenticationChecker,
+            playbackService,
+            ConnectionPoller(requireContext()),
+            StringResources(requireContext()),
+            nowPlayingViewModel,
+            nowPlayingViewModel
+        )
 	}
 
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {

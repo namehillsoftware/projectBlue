@@ -10,9 +10,6 @@ object PlaylistEvents {
 	private val magicPropertyBuilder by lazy { MagicPropertyBuilder(PlaylistEvents::class.java) }
 
 	@JvmField
-	val onPlaylistStop = magicPropertyBuilder.buildProperty("onPlaylistStop")
-
-	@JvmField
 	val onPlaylistTrackComplete = magicPropertyBuilder.buildProperty("onPlaylistTrackComplete")
 
 	val onPlaylistTrackStart by lazy { magicPropertyBuilder.buildProperty("onPlaylistTrackStart") }

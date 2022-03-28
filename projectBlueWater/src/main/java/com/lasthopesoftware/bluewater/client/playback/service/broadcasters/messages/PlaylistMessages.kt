@@ -13,3 +13,5 @@ object PlaylistChanged : ApplicationMessage
 object PlaybackPaused : ApplicationMessage
 
 object PlaybackInterrupted : ApplicationMessage
+
+object PlaybackStopped : ApplicationMessage
