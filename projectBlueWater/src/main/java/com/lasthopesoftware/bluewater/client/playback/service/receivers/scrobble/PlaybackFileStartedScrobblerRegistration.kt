@@ -9,14 +9,14 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.receivers.RegisterReceiverForEvents
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistMessages
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
 
 class PlaybackFileStartedScrobblerRegistration(private val context: Context) : RegisterReceiverForEvents {
 
 	companion object {
-		private val classes by lazy { setOf<Class<*>>(cls<PlaylistMessages.TrackStarted>()) }
+		private val classes by lazy { setOf<Class<*>>(cls<PlaybackMessage.TrackStarted>()) }
 	}
 
 	override fun registerWithConnectionProvider(connectionProvider: IConnectionProvider): (ApplicationMessage) -> Unit {
@@ -44,7 +44,7 @@ class PlaybackFileStartedScrobblerRegistration(private val context: Context) : R
 	) : (ApplicationMessage) -> Unit {
 
 		override fun invoke(message: ApplicationMessage) {
-			val trackStarted = message as? PlaylistMessages.TrackStarted ?: return
+			val trackStarted = message as? PlaybackMessage.TrackStarted ?: return
 
 			scopedCachedFilePropertiesProvider
 				.promiseFileProperties(trackStarted.startedFile)

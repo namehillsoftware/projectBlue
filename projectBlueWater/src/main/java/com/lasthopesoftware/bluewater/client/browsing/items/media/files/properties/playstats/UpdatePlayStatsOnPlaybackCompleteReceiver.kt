@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.playstats
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.playstats.factory.PlaystatsUpdateSelector
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistMessages.TrackCompleted
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage.TrackCompleted
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
 import org.slf4j.LoggerFactory

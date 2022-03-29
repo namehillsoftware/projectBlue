@@ -13,11 +13,10 @@ import com.lasthopesoftware.bluewater.client.connection.selected.ProvideSelected
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistMessages
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.TrackPositionUpdate
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.cls
-import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay
@@ -48,10 +47,10 @@ class NowPlayingFilePropertiesViewModel(
 	private val controlScreenOnState: ControlScreenOnState
 ) : ViewModel(), ControlDrawerState by controlDrawerState, ControlScreenOnState by controlScreenOnState
 {
-	private val onPlaybackStartedReceiver: (PlaylistMessages.PlaybackStarted) -> Unit
-	private val onPlaybackStoppedReceiver: (ApplicationMessage) -> Unit
-	private val onPlaybackChangedReceiver: (PlaylistMessages.TrackChanged) -> Unit
-	private val onPlaylistChangedReceiver: (PlaylistMessages.PlaylistChanged) -> Unit
+	private val onPlaybackStartedReceiver: (PlaybackMessage.PlaybackStarted) -> Unit
+	private val onPlaybackStoppedReceiver: (PlaybackMessage) -> Unit
+	private val onPlaybackChangedReceiver: (PlaybackMessage.TrackChanged) -> Unit
+	private val onPlaylistChangedReceiver: (PlaybackMessage.PlaylistChanged) -> Unit
 	private val onTrackPositionChanged: (TrackPositionUpdate) -> Unit
 
 	private var cachedPromises: CachedPromises? = null
@@ -104,9 +103,9 @@ class NowPlayingFilePropertiesViewModel(
 			registerReceiver(onPlaybackChangedReceiver)
 			registerReceiver(onPlaybackStartedReceiver)
 			registerReceiver(onPlaylistChangedReceiver)
-			registerForClass(cls<PlaylistMessages.PlaybackPaused>(), onPlaybackStoppedReceiver)
-			registerForClass(cls<PlaylistMessages.PlaybackInterrupted>(), onPlaybackStoppedReceiver)
-			registerForClass(cls<PlaylistMessages.PlaybackStopped>(), onPlaybackStoppedReceiver)
+			registerForClass(cls<PlaybackMessage.PlaybackPaused>(), onPlaybackStoppedReceiver)
+			registerForClass(cls<PlaybackMessage.PlaybackInterrupted>(), onPlaybackStoppedReceiver)
+			registerForClass(cls<PlaybackMessage.PlaybackStopped>(), onPlaybackStoppedReceiver)
 		}
 	}
 

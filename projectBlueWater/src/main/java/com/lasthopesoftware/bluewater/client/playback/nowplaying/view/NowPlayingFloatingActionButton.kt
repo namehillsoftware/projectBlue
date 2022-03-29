@@ -7,7 +7,7 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingFileProvider.Companion.fromActiveLibrary
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.NowPlayingActivity.Companion.startNowPlayingActivity
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistMessages.PlaybackStarted
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage.PlaybackStarted
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils.getThemedDrawable
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus

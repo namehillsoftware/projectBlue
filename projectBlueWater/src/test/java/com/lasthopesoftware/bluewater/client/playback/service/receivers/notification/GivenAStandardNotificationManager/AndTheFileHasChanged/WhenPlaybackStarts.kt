@@ -7,7 +7,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceF
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistMessages
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage
 import com.lasthopesoftware.bluewater.client.playback.service.notification.NotificationsConfiguration
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.BuildNowPlayingNotificationContent
@@ -49,8 +49,8 @@ class WhenPlaybackStarts : AndroidContext() {
 			mockk(relaxed = true, relaxUnitFun = true)
 		)
 
-		playbackNotificationRouter(PlaylistMessages.TrackChanged(LibraryId(4), PositionedFile(4, ServiceFile(1))))
-        playbackNotificationRouter(PlaylistMessages.PlaybackStarted)
+		playbackNotificationRouter(PlaybackMessage.TrackChanged(LibraryId(4), PositionedFile(4, ServiceFile(1))))
+        playbackNotificationRouter(PlaybackMessage.PlaybackStarted)
     }
 
     @Test

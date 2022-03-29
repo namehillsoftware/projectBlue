@@ -8,7 +8,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRe
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.authentication.ScopedConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.receivers.RegisterReceiverForEvents
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistMessages.TrackCompleted
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage.TrackCompleted
 import com.lasthopesoftware.bluewater.client.servers.version.ProgramVersionProvider
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage

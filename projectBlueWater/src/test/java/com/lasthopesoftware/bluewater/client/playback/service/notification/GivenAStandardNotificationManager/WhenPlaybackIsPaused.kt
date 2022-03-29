@@ -6,7 +6,7 @@ import android.app.Service
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistMessages
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage
 import com.lasthopesoftware.bluewater.client.playback.service.notification.NotificationsConfiguration
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.BuildNowPlayingNotificationContent
@@ -48,7 +48,7 @@ class WhenPlaybackIsPaused : AndroidContext() {
 			) { Promise(FakeNotificationCompatBuilder.newFakeBuilder(Notification())) },
 			mockk(relaxed = true)
 		)
-        playbackNotificationRouter(PlaylistMessages.PlaybackPaused)
+        playbackNotificationRouter(PlaybackMessage.PlaybackPaused)
     }
 
     @Test

@@ -8,8 +8,8 @@ import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionF
 import com.lasthopesoftware.bluewater.client.connection.polling.PollForConnections
 import com.lasthopesoftware.bluewater.client.connection.selected.ProvideSelectedConnection
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistMessages.PlaylistChanged
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistMessages.TrackChanged
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage.PlaylistChanged
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage.TrackChanged
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.images.ProvideDefaultImage

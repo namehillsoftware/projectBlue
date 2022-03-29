@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.media.files.menu
 
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistMessages.TrackChanged
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage.TrackChanged
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 

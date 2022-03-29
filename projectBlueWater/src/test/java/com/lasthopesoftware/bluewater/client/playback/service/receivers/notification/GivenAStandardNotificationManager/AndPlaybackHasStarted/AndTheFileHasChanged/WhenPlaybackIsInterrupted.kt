@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.GivenAStandardNotificationManager.AndPlaybackHasStarted.AndTheFileHasChanged
 
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaylistMessages
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage
 import com.lasthopesoftware.bluewater.client.playback.service.notification.NotifyOfPlaybackEvents
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.PlaybackNotificationRouter
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
@@ -20,7 +20,7 @@ class WhenPlaybackIsInterrupted {
 			val recordingApplicationMessageBus = RecordingApplicationMessageBus()
 			PlaybackNotificationRouter(playbackEventsNotifier, recordingApplicationMessageBus)
 
-			recordingApplicationMessageBus.sendMessage(PlaylistMessages.PlaybackInterrupted)
+			recordingApplicationMessageBus.sendMessage(PlaybackMessage.PlaybackInterrupted)
 		}
 	}
 
