@@ -3,14 +3,13 @@ package com.lasthopesoftware.bluewater.client.playback.service.receivers.notific
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage
 import com.lasthopesoftware.bluewater.client.playback.service.notification.NotifyOfPlaybackEvents
 import com.lasthopesoftware.bluewater.shared.cls
-import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 
 class PlaybackNotificationRouter(
 	private val playbackNotificationBroadcaster: NotifyOfPlaybackEvents,
 	private val registerApplicationMessages: RegisterForApplicationMessages
 ) :
-	(ApplicationMessage) -> Unit,
+	(PlaybackMessage) -> Unit,
 	AutoCloseable
 {
 	init {
@@ -21,7 +20,7 @@ class PlaybackNotificationRouter(
 		registerApplicationMessages.registerForClass(cls<PlaybackMessage.PlaybackStopped>(), this)
 	}
 
-	override fun invoke(message: ApplicationMessage) {
+	override fun invoke(message: PlaybackMessage) {
 		when (message) {
 			is PlaybackMessage.TrackChanged -> playbackNotificationBroadcaster.notifyPlayingFileChanged(message.positionedFile.serviceFile)
 			is PlaybackMessage.PlaybackStarted -> playbackNotificationBroadcaster.notifyPlaying()
