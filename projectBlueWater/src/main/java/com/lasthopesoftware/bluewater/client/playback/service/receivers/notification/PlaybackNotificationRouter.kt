@@ -1,33 +1,32 @@
 package com.lasthopesoftware.bluewater.client.playback.service.receivers.notification
 
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.*
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage
 import com.lasthopesoftware.bluewater.client.playback.service.notification.NotifyOfPlaybackEvents
 import com.lasthopesoftware.bluewater.shared.cls
-import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 
 class PlaybackNotificationRouter(
 	private val playbackNotificationBroadcaster: NotifyOfPlaybackEvents,
 	private val registerApplicationMessages: RegisterForApplicationMessages
 ) :
-	(ApplicationMessage) -> Unit,
+	(PlaybackMessage) -> Unit,
 	AutoCloseable
 {
 	init {
-		registerApplicationMessages.registerForClass(cls<PlaylistTrackChange>(), this)
-		registerApplicationMessages.registerForClass(cls<PlaybackStart>(), this)
-		registerApplicationMessages.registerForClass(cls<PlaybackPaused>(), this)
-		registerApplicationMessages.registerForClass(cls<PlaybackInterrupted>(), this)
-		registerApplicationMessages.registerForClass(cls<PlaybackStopped>(), this)
+		registerApplicationMessages.registerForClass(cls<PlaybackMessage.TrackChanged>(), this)
+		registerApplicationMessages.registerForClass(cls<PlaybackMessage.PlaybackStarted>(), this)
+		registerApplicationMessages.registerForClass(cls<PlaybackMessage.PlaybackPaused>(), this)
+		registerApplicationMessages.registerForClass(cls<PlaybackMessage.PlaybackInterrupted>(), this)
+		registerApplicationMessages.registerForClass(cls<PlaybackMessage.PlaybackStopped>(), this)
 	}
 
-	override fun invoke(message: ApplicationMessage) {
+	override fun invoke(message: PlaybackMessage) {
 		when (message) {
-			is PlaylistTrackChange -> playbackNotificationBroadcaster.notifyPlayingFileChanged(message.positionedFile.serviceFile)
-			is PlaybackStart -> playbackNotificationBroadcaster.notifyPlaying()
-			is PlaybackPaused -> playbackNotificationBroadcaster.notifyPaused()
-			is PlaybackInterrupted -> playbackNotificationBroadcaster.notifyInterrupted()
-			is PlaybackStopped -> playbackNotificationBroadcaster.notifyStopped()
+			is PlaybackMessage.TrackChanged -> playbackNotificationBroadcaster.notifyPlayingFileChanged(message.positionedFile.serviceFile)
+			is PlaybackMessage.PlaybackStarted -> playbackNotificationBroadcaster.notifyPlaying()
+			is PlaybackMessage.PlaybackPaused -> playbackNotificationBroadcaster.notifyPaused()
+			is PlaybackMessage.PlaybackInterrupted -> playbackNotificationBroadcaster.notifyInterrupted()
+			is PlaybackMessage.PlaybackStopped -> playbackNotificationBroadcaster.notifyStopped()
 		}
 	}
 
