@@ -50,7 +50,7 @@ import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModel
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToaster
 import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider
-import com.lasthopesoftware.bluewater.shared.messages.application.scopedApplicationMessageBus
+import com.lasthopesoftware.bluewater.shared.messages.application.ScopedApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.resources.strings.StringResources
 import kotlinx.coroutines.flow.filterNotNull
@@ -75,7 +75,7 @@ class NowPlayingActivity :
 
 	private val messageBus = lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
 
-	private val applicationMessageBus by lazy { scopedApplicationMessageBus() }
+	private val applicationMessageBus by lazy { ScopedApplicationMessageBus() }
 
 	private val fileListItemNowPlayingRegistrar = lazy { FileListItemNowPlayingRegistrar(applicationMessageBus) }
 

@@ -2,11 +2,6 @@ package com.lasthopesoftware.bluewater.shared.messages.application
 
 import com.lasthopesoftware.bluewater.shared.messages.ScopedMessageBus
 
-fun scopedApplicationMessageBus(): ScopedApplicationMessageBus {
-	val applicationMessageBus = ApplicationMessageBus.getInstance()
-	return ScopedApplicationMessageBus(applicationMessageBus, applicationMessageBus)
-}
-
 class ScopedApplicationMessageBus(
 	registerForApplicationMessages: RegisterForApplicationMessages,
 	sendApplicationMessages: SendApplicationMessages,
@@ -15,6 +10,8 @@ class ScopedApplicationMessageBus(
 	RegisterForApplicationMessages,
 	AutoCloseable
 {
+	constructor() : this(ApplicationMessageBus.getInstance(), ApplicationMessageBus.getInstance())
+
 	private val scopedMessageBus = ScopedMessageBus(registerForApplicationMessages, sendApplicationMessages)
 
 	override fun <Message : ApplicationMessage> registerForClass(messageClass: Class<Message>, receiver: (Message) -> Unit): AutoCloseable =

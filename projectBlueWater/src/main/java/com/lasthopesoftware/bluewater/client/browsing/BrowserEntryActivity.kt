@@ -52,7 +52,7 @@ import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils.buildStandar
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
-import com.lasthopesoftware.bluewater.shared.messages.application.scopedApplicationMessageBus
+import com.lasthopesoftware.bluewater.shared.messages.application.ScopedApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import org.slf4j.LoggerFactory
@@ -84,7 +84,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 
 	private val lazyMessageBus = lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
 
-	private val applicationMessageBus = lazy { scopedApplicationMessageBus() }
+	private val applicationMessageBus = lazy { ScopedApplicationMessageBus() }
 
 	private val itemListMenuChangeHandler by lazy { ItemListMenuChangeHandler(this) }
 

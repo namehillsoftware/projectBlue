@@ -12,6 +12,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.sync.CheckForSync
 import com.lasthopesoftware.bluewater.client.stored.library.sync.ControlLibrarySyncs
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.messages.SendMessages
+import com.lasthopesoftware.bluewater.shared.messages.application.SendApplicationMessages
 import com.lasthopesoftware.bluewater.shared.observables.stream
 import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
 import com.lasthopesoftware.storage.write.exceptions.StorageCreatePathException
@@ -23,6 +24,7 @@ import org.slf4j.LoggerFactory
 class StoredFileSynchronization(
     private val libraryProvider: ILibraryProvider,
     private val messenger: SendMessages,
+	private val applicationMessages: SendApplicationMessages,
     private val pruneStoredFiles: PruneStoredFiles,
     private val checkSync: CheckForSync,
     private val syncHandler: ControlLibrarySyncs) : SynchronizeStoredFiles {
@@ -43,6 +45,7 @@ class StoredFileSynchronization(
 
 	override fun streamFileSynchronization(): Completable {
 		logger.info("Starting sync.")
+		applicationMessages.sendMessage(StoredFileMessage.SyncStarted)
 		messenger.sendBroadcast(Intent(onSyncStartEvent))
 		return CancellableProxyPromise { cp ->
 				pruneStoredFiles
@@ -59,14 +62,17 @@ class StoredFileSynchronization(
 			.flatMapCompletable({ storedFileJobStatus ->
 				when (storedFileJobStatus.storedFileJobState) {
 					StoredFileJobState.Queued -> {
+						applicationMessages.sendMessage(StoredFileMessage.FileQueued(storedFileJobStatus.storedFile.id))
 						sendStoredFileBroadcast(onFileQueuedEvent, storedFileJobStatus.storedFile)
 						Completable.complete()
 					}
 					StoredFileJobState.Downloading -> {
+						applicationMessages.sendMessage(StoredFileMessage.FileDownloading(storedFileJobStatus.storedFile.id))
 						sendStoredFileBroadcast(onFileDownloadingEvent, storedFileJobStatus.storedFile)
 						Completable.complete()
 					}
 					StoredFileJobState.Downloaded -> {
+						applicationMessages.sendMessage(StoredFileMessage.FileDownloaded(storedFileJobStatus.storedFile.id))
 						sendStoredFileBroadcast(onFileDownloadedEvent, storedFileJobStatus.storedFile)
 						Completable.complete()
 					}
@@ -82,10 +88,12 @@ class StoredFileSynchronization(
 		return when (e) {
 			is CompositeException -> e.exceptions.all { handleError(it) }
 			is StoredFileWriteException -> {
+				applicationMessages.sendMessage(StoredFileMessage.FileWriteError(e.storedFile.id))
 				sendStoredFileBroadcast(onFileWriteErrorEvent, e.storedFile)
 				return true
 			}
 			is StoredFileReadException -> {
+				applicationMessages.sendMessage(StoredFileMessage.FileReadError(e.storedFile.id))
 				sendStoredFileBroadcast(onFileReadErrorEvent, e.storedFile)
 				return true
 			}
@@ -96,6 +104,7 @@ class StoredFileSynchronization(
 	}
 
 	private fun sendStoppedSync() {
+		applicationMessages.sendMessage(StoredFileMessage.SyncStopped)
 		messenger.sendBroadcast(Intent(onSyncStopEvent))
 	}
 

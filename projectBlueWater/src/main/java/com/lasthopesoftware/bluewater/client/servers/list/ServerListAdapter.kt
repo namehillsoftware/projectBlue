@@ -20,14 +20,14 @@ import com.lasthopesoftware.bluewater.client.servers.list.listeners.SelectServer
 import com.lasthopesoftware.bluewater.shared.android.adapters.DeferredListAdapter
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
-import com.lasthopesoftware.bluewater.shared.messages.application.scopedApplicationMessageBus
+import com.lasthopesoftware.bluewater.shared.messages.application.ScopedApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.namehillsoftware.handoff.promises.Promise
 
 class ServerListAdapter(private val activity: Activity, private val browserLibrarySelection: SelectBrowserLibrary)
 	: DeferredListAdapter<Library, ServerListAdapter.ViewHolder>(activity, LibraryDiffer) {
 
-	private val messageBus by lazy { scopedApplicationMessageBus() }
+	private val messageBus by lazy { ScopedApplicationMessageBus() }
 	private var activeLibrary: Library? = null
 
 	fun updateLibraries(libraries: Collection<Library>, activeLibrary: Library?): Promise<Unit> {
