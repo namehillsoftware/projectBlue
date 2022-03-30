@@ -15,6 +15,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.sync.ControlLibraryS
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.resources.FakeMessageBus
+import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -40,6 +41,7 @@ class WhenSynchronizing : AndroidContext() {
 		)
 		private val expectedStoredFileJobs = storedFiles.filter { f -> f.serviceId != 114 }.toList()
 		private val fakeMessageSender = FakeMessageBus(ApplicationProvider.getApplicationContext())
+		private val recordingMessageBus = RecordingApplicationMessageBus()
 		private val filePruner by lazy {
 			mockk<PruneStoredFiles>()
 				.apply {
@@ -82,7 +84,13 @@ class WhenSynchronizing : AndroidContext() {
 			every { promiseIsSyncNeeded() } returns Promise(false)
 		}
 
-		val synchronization = StoredFileSynchronization(libraryProvider, fakeMessageSender, filePruner, checkSync, librarySyncHandler)
+		val synchronization = StoredFileSynchronization(
+			libraryProvider,
+			fakeMessageSender,
+			recordingMessageBus,
+			filePruner,
+			checkSync,
+			librarySyncHandler)
 		val intentFilter = IntentFilter(StoredFileSynchronization.onFileDownloadedEvent)
 		intentFilter.addAction(StoredFileSynchronization.onFileDownloadingEvent)
 		intentFilter.addAction(StoredFileSynchronization.onFileQueuedEvent)
