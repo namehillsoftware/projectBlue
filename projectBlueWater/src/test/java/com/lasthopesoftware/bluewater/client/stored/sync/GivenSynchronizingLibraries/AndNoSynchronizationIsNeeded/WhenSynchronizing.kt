@@ -12,6 +12,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.sync.ControlLibraryS
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileMessage
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization
 import com.lasthopesoftware.bluewater.shared.cls
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import com.namehillsoftware.handoff.promises.Promise
@@ -102,12 +103,8 @@ class WhenSynchronizing {
 
 	@Test
 	fun thenNoStoredFileEventsAreBroadcast() {
-		assertThat(recordingMessageBus.recordedMessages)
-			.isNotInstanceOfAny(
-				cls<StoredFileMessage.FileQueued>(),
-				cls<StoredFileMessage.FileDownloading>(),
-				cls<StoredFileMessage.FileDownloaded>()
-			)
+		assertThat(recordingMessageBus.recordedMessages.map<ApplicationMessage, Class<out ApplicationMessage>> { m -> m.javaClass })
+			.doesNotContain(cls<StoredFileMessage>())
 	}
 
 	@Test
