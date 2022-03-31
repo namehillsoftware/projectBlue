@@ -5,5 +5,5 @@ import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMes
 
 interface RegisterReceiverForEvents {
     fun registerWithConnectionProvider(connectionProvider: IConnectionProvider): (ApplicationMessage) -> Unit
-    fun forClasses(): Collection<Class<ApplicationMessage>>
+    fun forClasses(): Collection<Class<out ApplicationMessage>>
 }

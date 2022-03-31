@@ -102,11 +102,12 @@ class WhenSynchronizing {
 
 	@Test
 	fun thenNoStoredFileEventsAreBroadcast() {
-		assertThat(recordingMessageBus.recordedMessages.map { it.javaClass })
-			.doesNotContain(
+		assertThat(recordingMessageBus.recordedMessages)
+			.isNotInstanceOfAny(
 				cls<StoredFileMessage.FileQueued>(),
 				cls<StoredFileMessage.FileDownloading>(),
-				cls<StoredFileMessage.FileDownloaded>())
+				cls<StoredFileMessage.FileDownloaded>()
+			)
 	}
 
 	@Test

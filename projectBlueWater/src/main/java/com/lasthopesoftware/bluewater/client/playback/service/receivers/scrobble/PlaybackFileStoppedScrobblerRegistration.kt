@@ -11,8 +11,7 @@ class PlaybackFileStoppedScrobblerRegistration(private val context: Context) : R
 	override fun registerWithConnectionProvider(connectionProvider: IConnectionProvider): (ApplicationMessage) -> Unit =
 		PlaybackFileStoppedScrobbleDroidProxy(ScrobbleIntentProvider.getInstance())
 
-	@Suppress("UNCHECKED_CAST")
-	override fun forClasses(): Collection<Class<ApplicationMessage>> = classes as Collection<Class<ApplicationMessage>>
+	override fun forClasses(): Collection<Class<out ApplicationMessage>> = classes
 
 	private inner class PlaybackFileStoppedScrobbleDroidProxy(private val scrobbleIntentProvider: ScrobbleIntentProvider) :
 		(ApplicationMessage) -> Unit {
@@ -24,7 +23,7 @@ class PlaybackFileStoppedScrobblerRegistration(private val context: Context) : R
 
 	companion object {
 		private val classes by lazy {
-			setOf<Class<*>>(cls<PlaybackMessage.PlaybackStopped>(), cls<PlaybackMessage.TrackCompleted>())
+			setOf<Class<out ApplicationMessage>>(cls<PlaybackMessage.PlaybackStopped>(), cls<PlaybackMessage.TrackCompleted>())
 		}
 	}
 }
