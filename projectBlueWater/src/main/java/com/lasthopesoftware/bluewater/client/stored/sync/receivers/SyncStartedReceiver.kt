@@ -1,14 +1,10 @@
 package com.lasthopesoftware.bluewater.client.stored.sync.receivers
 
-import android.content.Intent
-import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization
+import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileMessage
 import com.lasthopesoftware.bluewater.client.stored.sync.notifications.PostSyncNotification
-import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
 
-class SyncStartedReceiver(private val syncNotification: PostSyncNotification) : ReceiveBroadcastEvents {
-	override fun onReceive(intent: Intent) {
+class SyncStartedReceiver(private val syncNotification: PostSyncNotification) : (StoredFileMessage.SyncStarted) -> Unit {
+	override fun invoke(p1: StoredFileMessage.SyncStarted) {
 		syncNotification.notify(null)
 	}
-
-	fun acceptedEvents(): Collection<String> = setOf(StoredFileSynchronization.onSyncStartEvent)
 }

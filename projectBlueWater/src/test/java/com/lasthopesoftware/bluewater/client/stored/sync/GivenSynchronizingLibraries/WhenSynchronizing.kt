@@ -1,8 +1,5 @@
 package com.lasthopesoftware.bluewater.client.stored.sync.GivenSynchronizingLibraries
 
-import android.content.Intent
-import androidx.test.core.app.ApplicationProvider
-import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -12,19 +9,20 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Stor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.client.stored.library.sync.CheckForSync
 import com.lasthopesoftware.bluewater.client.stored.library.sync.ControlLibrarySyncs
+import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileMessage
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
-import com.lasthopesoftware.resources.FakeMessageBus
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import io.reactivex.Observable
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.BeforeClass
 import org.junit.Test
 import java.util.*
 
-class WhenSynchronizing : AndroidContext() {
+class WhenSynchronizing {
 
 	companion object {
 		private val random = Random()
@@ -42,96 +40,98 @@ class WhenSynchronizing : AndroidContext() {
 			StoredFile().setId(random.nextInt()).setServiceId(random.nextInt()).setLibraryId(10),
 			StoredFile().setId(random.nextInt()).setServiceId(random.nextInt()).setLibraryId(10)
 		)
-		private val fakeMessageSender = FakeMessageBus(ApplicationProvider.getApplicationContext())
 		private val recordingMessageBus = RecordingApplicationMessageBus()
 		private var danglingFilesWerePruned = false
-	}
 
-	override fun before() {
-		val libraryProvider = mockk<ILibraryProvider>()
-		with(libraryProvider) {
-			every { allLibraries } returns Promise(listOf(Library().setId(4), Library().setId(10)))
-		}
-
-		val librarySyncHandler = mockk<ControlLibrarySyncs>()
-		with(librarySyncHandler) {
-			every { observeLibrarySync(any()) } answers {
-				Observable
-					.fromArray(*storedFiles)
-					.filter { f -> f.libraryId == firstArg<LibraryId>().id }
-					.flatMap { f ->
-						Observable.just(
-							StoredFileJobStatus(mockk(), f, StoredFileJobState.Queued),
-							StoredFileJobStatus(mockk(), f, StoredFileJobState.Downloading),
-							StoredFileJobStatus(mockk(), f, StoredFileJobState.Downloaded)
-						)
-					}
+		@JvmStatic
+		@BeforeClass
+		fun before() {
+			val libraryProvider = mockk<ILibraryProvider>()
+			with(libraryProvider) {
+				every { allLibraries } returns Promise(listOf(Library().setId(4), Library().setId(10)))
 			}
-		}
 
-		val filePruner = mockk<PruneStoredFiles>()
-		with(filePruner) {
-			every { pruneDanglingFiles() } answers {
-				danglingFilesWerePruned = true
-				Unit.toPromise()
+			val librarySyncHandler = mockk<ControlLibrarySyncs>()
+			with(librarySyncHandler) {
+				every { observeLibrarySync(any()) } answers {
+					Observable
+						.fromArray(*storedFiles)
+						.filter { f -> f.libraryId == firstArg<LibraryId>().id }
+						.flatMap { f ->
+							Observable.just(
+								StoredFileJobStatus(mockk(), f, StoredFileJobState.Queued),
+								StoredFileJobStatus(mockk(), f, StoredFileJobState.Downloading),
+								StoredFileJobStatus(mockk(), f, StoredFileJobState.Downloaded)
+							)
+						}
+				}
 			}
-		}
 
-		val checkSync = mockk<CheckForSync>()
-		with (checkSync) {
-			every { promiseIsSyncNeeded() } returns Promise(true)
-		}
+			val filePruner = mockk<PruneStoredFiles>()
+			with(filePruner) {
+				every { pruneDanglingFiles() } answers {
+					danglingFilesWerePruned = true
+					Unit.toPromise()
+				}
+			}
 
-		val synchronization = StoredFileSynchronization(
-			libraryProvider,
-			fakeMessageSender,
-			recordingMessageBus,
-			filePruner,
-			checkSync,
-			librarySyncHandler
-		)
-		synchronization.streamFileSynchronization().blockingAwait()
+			val checkSync = mockk<CheckForSync>()
+			with (checkSync) {
+				every { promiseIsSyncNeeded() } returns Promise(true)
+			}
+
+			val synchronization = StoredFileSynchronization(
+                libraryProvider,
+                recordingMessageBus,
+                filePruner,
+                checkSync,
+                librarySyncHandler
+            )
+			synchronization.streamFileSynchronization().blockingAwait()
+		}
 	}
 
 	@Test
 	fun thenASyncStartedEventOccurs() {
 		assertThat(
-			fakeMessageSender.recordedIntents
-				.single { i -> StoredFileSynchronization.onSyncStartEvent == i.action }).isNotNull
+			recordingMessageBus.recordedMessages
+				.filterIsInstance<StoredFileMessage.SyncStarted>()
+				.single()).isNotNull
 	}
 
 	@Test
 	fun thenTheStoredFilesAreBroadcastAsQueued() {
 		assertThat(
-			fakeMessageSender.recordedIntents
-				.filter { i -> StoredFileSynchronization.onFileQueuedEvent == i.action }
-				.map { i -> i.getIntExtra(StoredFileSynchronization.storedFileEventKey, -1) })
+			recordingMessageBus.recordedMessages
+				.filterIsInstance<StoredFileMessage.FileQueued>()
+				.map { i -> i.storedFileId })
 			.containsExactlyElementsOf(storedFiles.map { obj -> obj.id })
 	}
 
 	@Test
 	fun thenTheStoredFilesAreBroadcastAsDownloading() {
 		assertThat(
-			fakeMessageSender.recordedIntents
-				.filter { i -> StoredFileSynchronization.onFileDownloadingEvent == i.action }
-				.map { i -> i.getIntExtra(StoredFileSynchronization.storedFileEventKey, -1) })
+			recordingMessageBus.recordedMessages
+				.filterIsInstance<StoredFileMessage.FileDownloading>()
+				.map { i -> i.storedFileId })
 			.containsExactlyElementsOf(storedFiles.map { obj -> obj.id })
 	}
 
 	@Test
 	fun thenTheStoredFilesAreBroadcastAsDownloaded() {
 		assertThat(
-			fakeMessageSender.recordedIntents
-				.filter { i -> StoredFileSynchronization.onFileDownloadedEvent == i.action }
-				.map { i -> i.getIntExtra(StoredFileSynchronization.storedFileEventKey, -1) })
-			.containsExactlyElementsOf(storedFiles.map { obj -> obj.id })
+			recordingMessageBus.recordedMessages
+				.filterIsInstance<StoredFileMessage.FileDownloaded>()
+				.map { i -> i.storedFileId })
+			.containsExactlyElementsOf(storedFiles.map { it.id })
 	}
 
 	@Test
 	fun thenASyncStoppedEventOccurs() {
 		assertThat(
-			fakeMessageSender.recordedIntents.single { i: Intent -> StoredFileSynchronization.onSyncStopEvent == i.action })
-			.isNotNull
+			recordingMessageBus.recordedMessages
+				.filterIsInstance<StoredFileMessage.SyncStopped>()
+				.single()).isNotNull
 	}
 
 	@Test

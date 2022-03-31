@@ -4,7 +4,6 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.content.pm.ServiceInfo
 import android.os.Build
 import androidx.core.app.NotificationCompat
@@ -63,6 +62,7 @@ import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.notifications.NoOpChannelActivator
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.NotificationChannelActivator
 import com.lasthopesoftware.bluewater.shared.messages.application.ScopedApplicationMessageBus
+import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.policies.caching.CachingPolicyFactory
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
@@ -172,7 +172,6 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 		)
 		StoredFileSynchronization(
 			libraryProvider,
-			messageBus,
 			applicationMessageBus,
 			storedFilesPruner,
 			syncChecker,
@@ -261,12 +260,7 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 		}
 
 		if (!syncStartedReceiver.isInitialized()) {
-			messageBus.registerReceiver(
-				syncStartedReceiver.value,
-				syncStartedReceiver.value.acceptedEvents().fold(IntentFilter()) { i, e ->
-					i.addAction(e)
-					i
-				})
+			applicationMessageBus.registerReceiver(syncStartedReceiver.value)
 		}
 
 		return if (cancellationProxy.isCancelled) Unit.toPromise()
