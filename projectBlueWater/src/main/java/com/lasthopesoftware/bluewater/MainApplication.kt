@@ -51,6 +51,7 @@ import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEv
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
+import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.compilation.DebugFlag
 import com.namehillsoftware.handoff.promises.Promise
 import org.slf4j.LoggerFactory
@@ -116,16 +117,12 @@ open class MainApplication : Application() {
 				}
 		}, IntentFilter(MediaFileUriProvider.mediaFileFoundEvent))
 
-		messageBus.registerReceiver({ intent ->
-			intent.getIntExtra(StorageReadPermissionsRequestedBroadcaster.readPermissionsLibraryId, -1)
-				.takeIf { it > -1 }
-				?.let { libraryId ->
-					notificationManagerLazy.notify(
-						336,
-						storageReadPermissionsRequestNotificationBuilderLazy
-							.buildReadPermissionsRequestNotification(libraryId))
-				}
-		}, IntentFilter(StorageReadPermissionsRequestedBroadcaster.readPermissionsNeeded))
+		applicationMessageBus.registerReceiver { readPermissionsNeeded : StorageReadPermissionsRequestedBroadcaster.ReadPermissionsNeeded ->
+			notificationManagerLazy.notify(
+				336,
+				storageReadPermissionsRequestNotificationBuilderLazy
+					.buildReadPermissionsRequestNotification(readPermissionsNeeded.libraryId.id))
+		}
 
 		messageBus.registerReceiver({ intent ->
 			intent.getIntExtra(StorageReadPermissionsRequestedBroadcaster.readPermissionsLibraryId, -1)
