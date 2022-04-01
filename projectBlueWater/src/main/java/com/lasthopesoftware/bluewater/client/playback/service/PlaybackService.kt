@@ -470,13 +470,16 @@ open class PlaybackService :
 	/* Begin Event Handlers */
 	override fun onCreate() {
 		val playbackHaltingIntentFilter = IntentFilter().apply {
-			addAction(PlaybackEngineTypeChangedBroadcaster.playbackEngineTypeChanged)
 			addAction(SelectedConnectionSettingsChangeReceiver.connectionSettingsUpdated)
 		}
 
 		lazyMessageBus.value.registerReceiver(playbackHaltingEvent,	playbackHaltingIntentFilter)
 		applicationMessageBus.value.registerForClass(
 			cls<BrowserLibrarySelection.LibraryChosenMessage>(),
+			playbackHaltingEvent)
+
+		applicationMessageBus.value.registerForClass(
+			cls<PlaybackEngineTypeChangedBroadcaster.PlaybackEngineTypeChanged>(),
 			playbackHaltingEvent)
 	}
 

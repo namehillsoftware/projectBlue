@@ -10,7 +10,6 @@ import android.widget.Button
 import android.widget.ProgressBar
 import android.widget.RadioGroup
 import androidx.appcompat.app.AppCompatActivity
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.lasthopesoftware.bluewater.R
@@ -28,8 +27,8 @@ import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 import com.lasthopesoftware.bluewater.client.servers.list.ServerListAdapter
 import com.lasthopesoftware.bluewater.client.servers.list.listeners.EditServerClickListener
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
-import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.ScopedApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 
@@ -68,7 +67,7 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 
 		val selection = PlaybackEngineTypeSelectionPersistence(
 			applicationSettingsRepository,
-			PlaybackEngineTypeChangedBroadcaster(MessageBus(LocalBroadcastManager.getInstance(this))))
+			PlaybackEngineTypeChangedBroadcaster(ApplicationMessageBus.getInstance()))
 
 		val selectedPlaybackEngineTypeAccess = SelectedPlaybackEngineTypeAccess(applicationSettingsRepository, DefaultPlaybackEngineLookup())
 
