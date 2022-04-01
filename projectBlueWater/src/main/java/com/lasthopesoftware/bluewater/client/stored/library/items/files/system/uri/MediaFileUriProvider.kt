@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri
 
-import android.content.Intent
 import android.net.Uri
 import android.provider.MediaStore
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
@@ -10,8 +9,8 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.Pro
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.IMediaQueryCursorProvider
 import com.lasthopesoftware.bluewater.shared.IoCommon
-import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
-import com.lasthopesoftware.bluewater.shared.android.messages.SendMessages
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
+import com.lasthopesoftware.bluewater.shared.messages.application.SendApplicationMessages
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.storage.read.permissions.IStorageReadPermissionArbitratorForOs
 import com.namehillsoftware.handoff.promises.Promise
@@ -23,7 +22,7 @@ class MediaFileUriProvider(
 	private val externalStorageReadPermissionsArbitrator: IStorageReadPermissionArbitratorForOs,
 	private val libraryIdentifierProvider: ProvideSelectedLibraryId,
 	private val isSilent: Boolean,
-	private val sendMessages: SendMessages
+	private val sendApplicationMessages: SendApplicationMessages
 ) : IFileUriProvider, ProvideFileUrisForLibrary {
     override fun promiseFileUri(serviceFile: ServiceFile): Promise<Uri?> =
 		libraryIdentifierProvider.selectedLibraryId.eventually {
@@ -46,34 +45,37 @@ class MediaFileUriProvider(
 					)
 					if (!systemFile.exists()) return@then null
 					if (!isSilent) {
-						val broadcastIntent = Intent(mediaFileFoundEvent)
-						broadcastIntent.putExtra(mediaFileFoundPath, systemFile.path)
-						try {
-							broadcastIntent.putExtra(
-								mediaFileFoundMediaId,
-								cursor.getInt(cursor.getColumnIndexOrThrow(audioIdKey))
-							)
+
+						val mediaId = try {
+							cursor.getInt(cursor.getColumnIndexOrThrow(audioIdKey))
 						} catch (ie: IllegalArgumentException) {
 							logger.info("Illegal column name.", ie)
+							null
 						}
-						broadcastIntent.putExtra(mediaFileFoundFileKey, serviceFile.key)
-						broadcastIntent.putExtra(mediaFileFoundLibraryId, libraryId.id)
-						sendMessages.sendBroadcast(broadcastIntent)
+
+						sendApplicationMessages.sendMessage(
+							MediaFileFound(
+								libraryId,
+								mediaId,
+								serviceFile,
+								systemFile
+							)
+						)
 					}
 					logger.info("Returning serviceFile URI from local disk.")
 					Uri.fromFile(systemFile)
 				}
 			}
 
-    companion object {
-		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(MediaFileUriProvider::class.java) }
+	class MediaFileFound(
+		val libraryId: LibraryId,
+		val mediaId: Int?,
+		val serviceFile: ServiceFile,
+		val systemFile: File,
+	) : ApplicationMessage
 
-        val mediaFileFoundEvent by lazy { magicPropertyBuilder.buildProperty("mediaFileFoundEvent") }
-        val mediaFileFoundMediaId by lazy { magicPropertyBuilder.buildProperty("mediaFileFoundMediaId") }
-        val mediaFileFoundFileKey by lazy { magicPropertyBuilder.buildProperty("mediaFileFoundFileKey") }
-        val mediaFileFoundPath by lazy { magicPropertyBuilder.buildProperty("mediaFileFoundPath") }
-        val mediaFileFoundLibraryId by lazy { magicPropertyBuilder.buildProperty("mediaFileFoundLibraryId") }
-        private val audioIdKey by lazy { MediaStore.Audio.keyFor("audio_id") }
+    companion object {
+		private val audioIdKey by lazy { MediaStore.Audio.keyFor("audio_id") }
         private val logger by lazy { LoggerFactory.getLogger(MediaFileUriProvider::class.java) }
     }
 }

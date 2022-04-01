@@ -760,7 +760,7 @@ open class PlaybackService :
 							arbitratorForOs,
 							selectedLibraryIdentifierProvider,
 							false,
-							lazyMessageBus.value
+							applicationMessageBus.value
 						),
 						remoteFileUriProvider)
 

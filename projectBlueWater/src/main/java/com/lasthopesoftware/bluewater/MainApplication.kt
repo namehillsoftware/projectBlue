@@ -21,12 +21,10 @@ import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.rolling.RollingFileAppender
 import ch.qos.logback.core.rolling.TimeBasedRollingPolicy
 import ch.qos.logback.core.util.StatusPrinter
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.playstats.UpdatePlayStatsOnCompleteRegistration
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.request.read.StorageReadPermissionsRequestNotificationBuilder
 import com.lasthopesoftware.bluewater.client.browsing.library.request.read.StorageReadPermissionsRequestedBroadcaster
 import com.lasthopesoftware.bluewater.client.browsing.library.request.write.StorageWritePermissionsRequestNotificationBuilder
@@ -47,7 +45,6 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.u
 import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
-import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
@@ -95,27 +92,20 @@ open class MainApplication : Application() {
 	}
 
 	private fun registerAppBroadcastReceivers() {
-		messageBus.registerReceiver(ReceiveBroadcastEvents { intent ->
-			val libraryId = intent.getIntExtra(MediaFileUriProvider.mediaFileFoundFileKey, -1)
-			if (libraryId < 0) return@ReceiveBroadcastEvents
-
-			val fileKey = intent.getIntExtra(MediaFileUriProvider.mediaFileFoundFileKey, -1)
-			if (fileKey == -1) return@ReceiveBroadcastEvents
-
-			val mediaFileId = intent.getIntExtra(MediaFileUriProvider.mediaFileFoundMediaId, -1)
-			if (mediaFileId == -1) return@ReceiveBroadcastEvents
-
-			val mediaFilePath = intent.getStringExtra(MediaFileUriProvider.mediaFileFoundPath)
-			if (mediaFilePath.isNullOrEmpty()) return@ReceiveBroadcastEvents
-
+		applicationMessageBus.registerReceiver { mediaFileFound : MediaFileUriProvider.MediaFileFound ->
+			mediaFileFound.mediaId ?: return@registerReceiver
 			libraryRepository
-				.getLibrary(LibraryId(libraryId))
+				.getLibrary(mediaFileFound.libraryId)
 				.then { library ->
 					if (library != null) {
-						storedFileAccess.addMediaFile(library, ServiceFile(fileKey), mediaFileId, mediaFilePath)
+						storedFileAccess.addMediaFile(
+							library,
+							mediaFileFound.serviceFile,
+							mediaFileFound.mediaId,
+							mediaFileFound.systemFile.path)
 					}
 				}
-		}, IntentFilter(MediaFileUriProvider.mediaFileFoundEvent))
+		}
 
 		applicationMessageBus.registerReceiver { readPermissionsNeeded : StorageReadPermissionsRequestedBroadcaster.ReadPermissionsNeeded ->
 			notificationManagerLazy.notify(
