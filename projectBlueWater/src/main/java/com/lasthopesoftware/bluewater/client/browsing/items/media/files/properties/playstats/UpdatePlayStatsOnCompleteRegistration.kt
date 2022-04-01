@@ -32,10 +32,9 @@ class UpdatePlayStatsOnCompleteRegistration : RegisterReceiverForEvents {
 		)
 	}
 
-	@Suppress("UNCHECKED_CAST")
-	override fun forClasses(): Collection<Class<ApplicationMessage>> = classes as Collection<Class<ApplicationMessage>>
+	override fun forClasses(): Collection<Class<out ApplicationMessage>> = classes
 
 	companion object {
-		private val classes = setOf<Class<*>>(cls<TrackCompleted>())
+		private val classes = setOf<Class<out ApplicationMessage>>(cls<TrackCompleted>())
 	}
 }

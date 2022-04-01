@@ -31,7 +31,7 @@ import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicat
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
-import com.lasthopesoftware.bluewater.shared.messages.application.scopedApplicationMessageBus
+import com.lasthopesoftware.bluewater.shared.messages.application.ScopedApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 
@@ -68,7 +68,7 @@ class EditClientSettingsActivity :
 		)
 	}
 	private val applicationSettingsRepository by lazy { getApplicationSettingsRepository() }
-	private val applicationMessageBus by lazy { scopedApplicationMessageBus() }
+	private val applicationMessageBus by lazy { ScopedApplicationMessageBus() }
 	private val settingsMenu by lazy {
 		EditClientSettingsMenu(
 			this,

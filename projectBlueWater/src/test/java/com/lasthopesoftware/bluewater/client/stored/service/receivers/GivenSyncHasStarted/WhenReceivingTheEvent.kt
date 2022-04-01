@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.stored.service.receivers.GivenSyncHasStarted
 
-import android.content.Intent
-import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization
+import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileMessage
 import com.lasthopesoftware.bluewater.client.stored.sync.notifications.PostSyncNotification
 import com.lasthopesoftware.bluewater.client.stored.sync.receivers.SyncStartedReceiver
 import io.mockk.every
@@ -26,7 +25,7 @@ class WhenReceivingTheEvent {
 			}
 
 			val receiver = SyncStartedReceiver(syncNotification)
-			receiver.onReceive(Intent(StoredFileSynchronization.onSyncStartEvent))
+			receiver(StoredFileMessage.SyncStarted)
 		}
 	}
 

@@ -16,7 +16,7 @@ import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMes
 class PlaybackFileStartedScrobblerRegistration(private val context: Context) : RegisterReceiverForEvents {
 
 	companion object {
-		private val classes by lazy { setOf<Class<*>>(cls<PlaybackMessage.TrackStarted>()) }
+		private val classes by lazy { setOf<Class<out ApplicationMessage>>(cls<PlaybackMessage.TrackStarted>()) }
 	}
 
 	override fun registerWithConnectionProvider(connectionProvider: IConnectionProvider): (ApplicationMessage) -> Unit {
@@ -35,8 +35,7 @@ class PlaybackFileStartedScrobblerRegistration(private val context: Context) : R
 		)
 	}
 
-	@Suppress("UNCHECKED_CAST")
-	override fun forClasses(): Collection<Class<ApplicationMessage>> = classes as Collection<Class<ApplicationMessage>>
+	override fun forClasses(): Collection<Class<out ApplicationMessage>> = classes
 
 	private inner class PlaybackFileChangedScrobbleDroidProxy(
 		private val scopedCachedFilePropertiesProvider: ScopedCachedFilePropertiesProvider,

@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.stored.sync.GivenSynchronizingLibraries
 
-import android.content.IntentFilter
 import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
@@ -12,9 +11,11 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Stor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.client.stored.library.sync.CheckForSync
 import com.lasthopesoftware.bluewater.client.stored.library.sync.ControlLibrarySyncs
+import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileMessage
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.resources.FakeMessageBus
+import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -42,6 +43,7 @@ class WhenSynchronizationIsDisposing : AndroidContext() {
 			StoredFile().setId(random.nextInt()).setServiceId(random.nextInt()).setLibraryId(10)
 		)
 		private val fakeMessageSender = FakeMessageBus(ApplicationProvider.getApplicationContext())
+		private val recordingMessageBus = RecordingApplicationMessageBus()
 		private val filePruner by lazy {
 			mockk<PruneStoredFiles>()
 				.apply {
@@ -82,59 +84,56 @@ class WhenSynchronizationIsDisposing : AndroidContext() {
 		}
 
 		val synchronization = StoredFileSynchronization(
-			libraryProvider,
-			fakeMessageSender,
-			filePruner,
-			checkSync,
-			librarySyncHandler
-		)
+            libraryProvider,
+            recordingMessageBus,
+            filePruner,
+            checkSync,
+            librarySyncHandler
+        )
 
-		val intentFilter = IntentFilter(StoredFileSynchronization.onFileDownloadedEvent)
-		intentFilter.addAction(StoredFileSynchronization.onFileDownloadingEvent)
-		intentFilter.addAction(StoredFileSynchronization.onSyncStartEvent)
-		intentFilter.addAction(StoredFileSynchronization.onSyncStopEvent)
-		intentFilter.addAction(StoredFileSynchronization.onFileQueuedEvent)
 		synchronization.streamFileSynchronization().subscribe().dispose()
 	}
 
 	@Test
 	fun thenASyncStartedEventOccurs() {
 		assertThat(
-			fakeMessageSender.recordedIntents
-				.single { i -> StoredFileSynchronization.onSyncStartEvent == i.action }).isNotNull
+			recordingMessageBus.recordedMessages
+				.filterIsInstance<StoredFileMessage.SyncStarted>()
+				.singleOrNull()).isNotNull
 	}
 
 	@Test
 	fun thenTheStoredFilesAreBroadcastAsQueued() {
 		assertThat(
-			fakeMessageSender.recordedIntents
-				.filter { i -> StoredFileSynchronization.onFileQueuedEvent == i.action }
-				.map { i -> i.getIntExtra(StoredFileSynchronization.storedFileEventKey, -1) })
-			.containsExactlyElementsOf(storedFiles.map { obj -> obj.id })
+			recordingMessageBus.recordedMessages
+				.filterIsInstance<StoredFileMessage.FileQueued>()
+				.map { it.storedFileId })
+			.containsExactlyElementsOf(storedFiles.map { it.id })
 	}
 
 	@Test
 	fun thenTheStoredFilesAreBroadcastAsDownloading() {
 		assertThat(
-			fakeMessageSender.recordedIntents
-				.filter { i -> StoredFileSynchronization.onFileDownloadingEvent == i.action }
-				.map { i -> i.getIntExtra(StoredFileSynchronization.storedFileEventKey, -1) })
-			.containsExactlyElementsOf(storedFiles.map { obj -> obj.id })
+			recordingMessageBus.recordedMessages
+				.filterIsInstance<StoredFileMessage.FileDownloading>()
+				.map { it.storedFileId })
+			.containsExactlyElementsOf(storedFiles.map { it.id })
 	}
 
 	@Test
 	fun thenTheStoredFilesAreBroadcastAsDownloaded() {
 		assertThat(
-			fakeMessageSender.recordedIntents
-				.filter { i -> StoredFileSynchronization.onFileDownloadedEvent == i.action }
-				.map { i -> i.getIntExtra(StoredFileSynchronization.storedFileEventKey, -1) })
-			.containsExactlyElementsOf(storedFiles.map { obj -> obj.id })
+			recordingMessageBus.recordedMessages
+				.filterIsInstance<StoredFileMessage.FileDownloading>()
+				.map { it.storedFileId })
+			.containsExactlyElementsOf(storedFiles.map { it.id })
 	}
 
 	@Test
 	fun thenASyncStoppedEventOccurs() {
 		assertThat(
-			fakeMessageSender.recordedIntents
-				.single { i -> StoredFileSynchronization.onSyncStopEvent == i.action }).isNotNull
+			recordingMessageBus.recordedMessages
+				.filterIsInstance<StoredFileMessage.SyncStopped>()
+				.singleOrNull()).isNotNull
 	}
 }
