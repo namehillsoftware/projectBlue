@@ -196,7 +196,7 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 			storedFileAccess)
 		val storedFileWritePermissionsReceiver = StoredFileWritePermissionsReceiver(
 			ExternalStorageWritePermissionsArbitratorForOs(context),
-			StorageWritePermissionsRequestedBroadcaster(messageBus),
+			StorageWritePermissionsRequestedBroadcaster(applicationMessageBus),
 			storedFileAccess)
 
 		arrayOf(

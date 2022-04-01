@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.stored.sync.receivers.file
 
-import com.lasthopesoftware.bluewater.client.browsing.library.request.write.IStorageWritePermissionsRequestedBroadcaster
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.browsing.library.request.write.BroadcastWritePermissionsRequest
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.AccessStoredFiles
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileMessage
@@ -11,7 +12,7 @@ import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 
 class StoredFileWritePermissionsReceiver(
 	private val writePermissionArbitratorForOs: IStorageWritePermissionArbitratorForOs,
-	private val writePermissionsRequestedBroadcaster: IStorageWritePermissionsRequestedBroadcaster,
+	private val writePermissionsRequestedBroadcaster: BroadcastWritePermissionsRequest,
 	private val storedFileAccess: AccessStoredFiles
 ) : ReceiveStoredFileEvent, ImmediateResponse<StoredFile?, Unit> {
 	override fun receive(storedFileId: Int): Promise<Unit> =
@@ -23,7 +24,7 @@ class StoredFileWritePermissionsReceiver(
 
 	override fun respond(storedFile: StoredFile?) {
 		storedFile?.apply {
-			writePermissionsRequestedBroadcaster.sendWritePermissionsNeededBroadcast(libraryId)
+			writePermissionsRequestedBroadcaster.sendWritePermissionsNeededBroadcast(LibraryId(libraryId))
 		}
 	}
 }

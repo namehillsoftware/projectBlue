@@ -66,8 +66,8 @@ open class MainApplication : Application() {
 	private val libraryRepository by lazy { LibraryRepository(this) }
 	private val storedFileAccess by lazy { StoredFileAccess(this) }
 	private val notificationManagerLazy by lazy { getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager }
-	private val storageReadPermissionsRequestNotificationBuilderLazy by lazy { StorageReadPermissionsRequestNotificationBuilder(this) }
-	private val storageWritePermissionsRequestNotificationBuilderLazy by lazy { StorageWritePermissionsRequestNotificationBuilder(this) }
+	private val storageReadPermissionsRequestNotificationBuilder by lazy { StorageReadPermissionsRequestNotificationBuilder(this) }
+	private val storageWritePermissionsRequestNotificationBuilder by lazy { StorageWritePermissionsRequestNotificationBuilder(this) }
 	private val messageBus by lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
 	private val applicationMessageBus by lazy { ApplicationMessageBus.initializeInstance(this) }
 	private val liveNowPlayingLookup by lazy { LiveNowPlayingLookup.initializeInstance(this) }
@@ -120,21 +120,17 @@ open class MainApplication : Application() {
 		applicationMessageBus.registerReceiver { readPermissionsNeeded : StorageReadPermissionsRequestedBroadcaster.ReadPermissionsNeeded ->
 			notificationManagerLazy.notify(
 				336,
-				storageReadPermissionsRequestNotificationBuilderLazy
+				storageReadPermissionsRequestNotificationBuilder
 					.buildReadPermissionsRequestNotification(readPermissionsNeeded.libraryId.id))
 		}
 
-		messageBus.registerReceiver({ intent ->
-			intent.getIntExtra(StorageReadPermissionsRequestedBroadcaster.readPermissionsLibraryId, -1)
-				.takeIf { it > -1 }
-				?.let { libraryId ->
-					notificationManagerLazy.notify(
-						396,
-						storageWritePermissionsRequestNotificationBuilderLazy
-							.buildWritePermissionsRequestNotification(libraryId)
-					)
-				}
-		}, IntentFilter(StorageWritePermissionsRequestedBroadcaster.writePermissionsNeeded))
+		applicationMessageBus.registerReceiver { writePermissionsNeeded : StorageWritePermissionsRequestedBroadcaster.WritePermissionsNeeded ->
+			notificationManagerLazy.notify(
+				396,
+				storageWritePermissionsRequestNotificationBuilder
+					.buildWritePermissionsRequestNotification(writePermissionsNeeded.libraryId.id)
+			)
+		}
 
 		messageBus.registerReceiver(
 			ConnectionSessionSettingsChangeReceiver(ConnectionSessionManager.get(this)),
