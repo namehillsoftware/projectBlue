@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.stored.sync.GivenSynchronizingLibraries
 
-import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
@@ -14,7 +13,6 @@ import com.lasthopesoftware.bluewater.client.stored.library.sync.ControlLibraryS
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileMessage
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
-import com.lasthopesoftware.resources.FakeMessageBus
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
@@ -42,7 +40,6 @@ class WhenSynchronizationIsDisposing : AndroidContext() {
 			StoredFile().setId(random.nextInt()).setServiceId(random.nextInt()).setLibraryId(10),
 			StoredFile().setId(random.nextInt()).setServiceId(random.nextInt()).setLibraryId(10)
 		)
-		private val fakeMessageSender = FakeMessageBus(ApplicationProvider.getApplicationContext())
 		private val recordingMessageBus = RecordingApplicationMessageBus()
 		private val filePruner by lazy {
 			mockk<PruneStoredFiles>()
