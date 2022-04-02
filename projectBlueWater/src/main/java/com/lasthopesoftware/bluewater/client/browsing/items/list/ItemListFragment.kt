@@ -31,7 +31,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAcce
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
-import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.ScopedApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
@@ -68,7 +68,7 @@ class ItemListFragment : Fragment() {
 	private val tutorialManager by lazy { TutorialManager(requireContext()) }
 
 	private val applicationMessageBus = lazy {
-		val applicationMessageBus = ApplicationMessageBus.getInstance()
+		val applicationMessageBus = requireContext().getApplicationMessageBus()
 		ScopedApplicationMessageBus(applicationMessageBus, applicationMessageBus).apply {
 			registerReceiver { l: ActivityLaunching ->
 				val isLaunching = l != ActivityLaunching.HALTED // Only show the item list view again when launching error'ed for some reason

@@ -42,7 +42,7 @@ import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler
-import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.compilation.DebugFlag
 import com.namehillsoftware.handoff.promises.Promise
@@ -60,7 +60,7 @@ open class MainApplication : Application() {
 	private val notificationManagerLazy by lazy { getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager }
 	private val storageReadPermissionsRequestNotificationBuilder by lazy { StorageReadPermissionsRequestNotificationBuilder(this) }
 	private val storageWritePermissionsRequestNotificationBuilder by lazy { StorageWritePermissionsRequestNotificationBuilder(this) }
-	private val applicationMessageBus by lazy { ApplicationMessageBus.initializeInstance(this) }
+	private val applicationMessageBus by lazy { getApplicationMessageBus() }
 	private val liveNowPlayingLookup by lazy { LiveNowPlayingLookup.initializeInstance(this) }
 	private val applicationSettings by lazy { getApplicationSettingsRepository() }
 
