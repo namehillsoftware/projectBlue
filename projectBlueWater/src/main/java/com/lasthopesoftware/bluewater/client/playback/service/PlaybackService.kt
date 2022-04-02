@@ -44,11 +44,11 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.Sel
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRevisionProvider
+import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService.Companion.pollSessionConnection
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection
-import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.BuildingSessionConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionSettingsChangeReceiver
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.engine.*
@@ -107,6 +107,7 @@ import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToaster
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
 import com.lasthopesoftware.bluewater.shared.messages.application.ScopedApplicationMessageBus
+import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.observables.toMaybeObservable
 import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay.Companion.delay
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
@@ -399,21 +400,17 @@ open class PlaybackService :
 		}
 	}
 
-	private val buildSessionReceiver = ReceiveBroadcastEvents { intent ->
-			val buildStatus = intent.getIntExtra(SelectedConnection.buildSessionBroadcastStatus, -1)
-			handleBuildConnectionStatusChange(buildStatus)
+	private val buildSessionReceiver = { message : SelectedConnection.BuildSessionConnectionBroadcast ->
+			handleBuildConnectionStatusChange(message.buildingConnectionStatus)
 		}
 
 	private val unhandledRejectionHandler = ImmediateResponse<Throwable, Unit>(::uncaughtExceptionHandler)
 
 	private val sessionConnection: Promise<IConnectionProvider?>
 		get() {
-			lazyMessageBus.value
-				.registerReceiver(
-					buildSessionReceiver,
-					IntentFilter(SelectedConnection.buildSessionBroadcast))
+			applicationMessageBus.value.registerReceiver(buildSessionReceiver)
 			return SelectedConnection.getInstance(this).promiseSessionConnection().must {
-				lazyMessageBus.value.unregisterReceiver(buildSessionReceiver)
+				applicationMessageBus.value.unregisterReceiver(buildSessionReceiver)
 				lazyNotificationController.value.removeNotification(connectingNotificationId)
 			}
 		}
@@ -848,24 +845,25 @@ open class PlaybackService :
 			}
 	}
 
-	private fun handleBuildConnectionStatusChange(status: Int) {
+	private fun handleBuildConnectionStatusChange(status: BuildingConnectionStatus) {
 		val notifyBuilder = NotificationCompat.Builder(this, playbackNotificationsConfiguration.notificationChannel)
 		notifyBuilder
 			.setOngoing(false)
 			.setContentTitle(getText(R.string.title_svc_connecting_to_server))
 
 		when (status) {
-			BuildingSessionConnectionStatus.GettingLibrary -> notifyBuilder.setContentText(getText(R.string.lbl_getting_library_details))
-			BuildingSessionConnectionStatus.GettingLibraryFailed -> {
+			BuildingConnectionStatus.GettingLibrary -> notifyBuilder.setContentText(getText(R.string.lbl_getting_library_details))
+			BuildingConnectionStatus.GettingLibraryFailed -> {
 				Toast.makeText(this, getText(R.string.lbl_please_connect_to_valid_server), Toast.LENGTH_SHORT).show()
 				return
 			}
-			BuildingSessionConnectionStatus.SendingWakeSignal -> notifyBuilder.setContentText(getString(R.string.sending_wake_signal))
-			BuildingSessionConnectionStatus.BuildingConnection -> notifyBuilder.setContentText(getText(R.string.lbl_connecting_to_server_library))
-			BuildingSessionConnectionStatus.BuildingConnectionFailed -> {
+			BuildingConnectionStatus.SendingWakeSignal -> notifyBuilder.setContentText(getString(R.string.sending_wake_signal))
+			BuildingConnectionStatus.BuildingConnection -> notifyBuilder.setContentText(getText(R.string.lbl_connecting_to_server_library))
+			BuildingConnectionStatus.BuildingConnectionFailed -> {
 				Toast.makeText(this, getText(R.string.lbl_error_connecting_try_again), Toast.LENGTH_SHORT).show()
 				return
 			}
+			BuildingConnectionStatus.BuildingConnectionComplete -> notifyBuilder.setContentText(getString(R.string.lbl_connected))
 		}
 
 		lazyNotificationController.value.notifyForeground(

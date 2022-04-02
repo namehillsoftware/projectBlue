@@ -30,7 +30,6 @@ import com.lasthopesoftware.bluewater.client.browsing.library.request.read.Stora
 import com.lasthopesoftware.bluewater.client.browsing.library.request.write.StorageWritePermissionsRequestNotificationBuilder
 import com.lasthopesoftware.bluewater.client.browsing.library.request.write.StorageWritePermissionsRequestedBroadcaster
 import com.lasthopesoftware.bluewater.client.connection.receivers.SessionConnectionRegistrationsMaintainer
-import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionSettingsChangeReceiver
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionSettingsChangeReceiver
@@ -139,13 +138,11 @@ open class MainApplication : Application() {
 			PlaybackFileStartedScrobblerRegistration(this),
 			PlaybackFileStoppedScrobblerRegistration(this))
 
-		messageBus.registerReceiver(
-			SessionConnectionRegistrationsMaintainer(
-				this,
-				applicationMessageBus,
-				connectionDependentReceiverRegistrations
-			),
-			IntentFilter(SelectedConnection.buildSessionBroadcast))
+		applicationMessageBus.registerReceiver(SessionConnectionRegistrationsMaintainer(
+			this,
+			applicationMessageBus,
+			connectionDependentReceiverRegistrations
+		))
 
 		with (applicationMessageBus) {
 			registerForClass(cls<BrowserLibrarySelection.LibraryChosenMessage>(), liveNowPlayingLookup)
@@ -155,7 +152,7 @@ open class MainApplication : Application() {
 	}
 
 	private fun initializeLogging() {
-		val lc = LoggerFactory.getILoggerFactory() as LoggerContext
+		val lc = LoggerFactory.getILoggerFactory() as? LoggerContext ?: return
 		lc.reset()
 
 		// setup LogcatAppender

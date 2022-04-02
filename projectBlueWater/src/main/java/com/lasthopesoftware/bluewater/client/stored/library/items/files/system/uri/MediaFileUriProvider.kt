@@ -30,7 +30,8 @@ class MediaFileUriProvider(
 		}
 
     override fun promiseUri(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Uri?> =
-		if (!externalStorageReadPermissionsArbitrator.isReadPermissionGranted) Promise.empty() else mediaQueryCursorProvider
+		if (!externalStorageReadPermissionsArbitrator.isReadPermissionGranted) Promise.empty()
+		else mediaQueryCursorProvider
 			.getMediaQueryCursor(libraryId, serviceFile)
 			.then { cursor ->
 				cursor?.use {
