@@ -129,7 +129,8 @@ open class MainApplication : Application() {
 		messageBus.registerReceiver(
 			SelectedConnectionSettingsChangeReceiver(
 				SelectedBrowserLibraryIdentifierProvider(applicationSettings),
-				messageBus),
+				messageBus,
+				applicationMessageBus),
 			IntentFilter(ObservableConnectionSettingsLibraryStorage.connectionSettingsUpdated)
 		)
 

@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing
 
 import android.content.Intent
-import android.content.IntentFilter
 import android.content.res.Configuration
 import android.os.Bundle
 import android.os.Handler
@@ -18,7 +17,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.list.IItemListViewContainer
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuChangeHandler
@@ -44,8 +42,6 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.fragment
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
-import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
-import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils.buildStandardMenu
@@ -81,8 +77,6 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 	}
 
 	private val messageHandler by lazy { Handler(mainLooper) }
-
-	private val lazyMessageBus = lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
 
 	private val applicationMessageBus = lazy { ScopedApplicationMessageBus() }
 
@@ -145,15 +139,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 		}
 	}
 
-	private val connectionSettingsUpdatedReceiver = object : ReceiveBroadcastEvents, (ApplicationMessage) -> Unit {
-		override fun onReceive(intent: Intent) {
-			finishAffinity()
-		}
-
-		override fun invoke(p1: ApplicationMessage) {
-			finishAffinity()
-		}
-	}
+	private val connectionSettingsUpdatedReceiver : (ApplicationMessage) -> Unit = { finishAffinity() }
 
 	private lateinit var nowPlayingFloatingActionButton: NowPlayingFloatingActionButton
 	private var viewAnimator: ViewAnimator? = null
@@ -179,12 +165,10 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 		setContentView(R.layout.activity_browse_library)
 		setSupportActionBar(findViewById(R.id.browseLibraryToolbar))
 
-		val connectionSettingsChangedFilter = IntentFilter()
-		connectionSettingsChangedFilter.addAction(SelectedConnectionSettingsChangeReceiver.connectionSettingsUpdated)
-
-		lazyMessageBus.value.registerReceiver(
-			connectionSettingsUpdatedReceiver,
-			connectionSettingsChangedFilter)
+		applicationMessageBus.value.registerForClass(
+			cls<SelectedConnectionSettingsChangeReceiver.SelectedConnectionSettingsUpdated>(),
+			connectionSettingsUpdatedReceiver
+		)
 
 		applicationMessageBus.value.registerForClass(
 			cls<BrowserLibrarySelection.LibraryChosenMessage>(),
@@ -435,8 +419,6 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 	override fun getNowPlayingFloatingActionButton(): NowPlayingFloatingActionButton = nowPlayingFloatingActionButton
 
 	override fun onDestroy() {
-		if (lazyMessageBus.isInitialized())
-			lazyMessageBus.value.clear()
 		if (applicationMessageBus.isInitialized())
 			applicationMessageBus.value.close()
 

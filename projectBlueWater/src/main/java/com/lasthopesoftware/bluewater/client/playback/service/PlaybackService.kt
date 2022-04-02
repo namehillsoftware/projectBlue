@@ -95,7 +95,6 @@ import com.lasthopesoftware.bluewater.shared.android.MediaSession.MediaSessionSe
 import com.lasthopesoftware.bluewater.shared.android.audiofocus.AudioFocusManagement
 import com.lasthopesoftware.bluewater.shared.android.makePendingIntentImmutable
 import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
-import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
 import com.lasthopesoftware.bluewater.shared.android.notifications.NoOpChannelActivator
 import com.lasthopesoftware.bluewater.shared.android.notifications.NotificationBuilderProducer
 import com.lasthopesoftware.bluewater.shared.android.notifications.control.NotificationsController
@@ -388,12 +387,7 @@ open class PlaybackService :
 		}
 	}
 
-	private val playbackHaltingEvent = object : ReceiveBroadcastEvents, (ApplicationMessage) -> Unit {
-		override fun onReceive(intent: Intent) {
-			pausePlayback()
-			stopSelf(startId)
-		}
-
+	private val playbackHaltingEvent = object : (ApplicationMessage) -> Unit {
 		override fun invoke(message: ApplicationMessage) {
 			pausePlayback()
 			stopSelf(startId)
@@ -466,11 +460,10 @@ open class PlaybackService :
 
 	/* Begin Event Handlers */
 	override fun onCreate() {
-		val playbackHaltingIntentFilter = IntentFilter().apply {
-			addAction(SelectedConnectionSettingsChangeReceiver.connectionSettingsUpdated)
-		}
-
-		lazyMessageBus.value.registerReceiver(playbackHaltingEvent,	playbackHaltingIntentFilter)
+		applicationMessageBus.value.registerForClass(
+			cls<SelectedConnectionSettingsChangeReceiver.SelectedConnectionSettingsUpdated>(),
+			playbackHaltingEvent
+		)
 		applicationMessageBus.value.registerForClass(
 			cls<BrowserLibrarySelection.LibraryChosenMessage>(),
 			playbackHaltingEvent)
