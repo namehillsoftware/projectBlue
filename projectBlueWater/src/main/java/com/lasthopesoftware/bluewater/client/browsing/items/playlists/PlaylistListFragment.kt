@@ -70,7 +70,7 @@ class PlaylistListFragment : Fragment() {
 		val messageBus = requireContext().getApplicationMessageBus()
 		ScopedApplicationMessageBus(messageBus, messageBus).apply {
 			registerReceiver { l: ActivityLaunching ->
-				val isLaunching = l == ActivityLaunching.LAUNCHING
+				val isLaunching = l != ActivityLaunching.HALTED
 
 				recyclerView?.visibility = ViewUtils.getVisibility(!isLaunching)
 				progressBar?.visibility = ViewUtils.getVisibility(isLaunching)
