@@ -4,7 +4,7 @@ import android.content.Context
 import android.os.Handler
 
 class ApplicationMessageBus private constructor(
-	private val handler: Handler,
+	private val context: Context,
 	private val registrations: HaveApplicationMessageRegistrations
 ) :
 	RegisterForApplicationMessages by registrations,
@@ -12,8 +12,10 @@ class ApplicationMessageBus private constructor(
 {
 	companion object {
 		fun Context.getApplicationMessageBus() =
-			ApplicationMessageBus(Handler(mainLooper), ApplicationMessageRegistrations)
+			ApplicationMessageBus(this, ApplicationMessageRegistrations)
 	}
+
+	private val handler by lazy { Handler(context.mainLooper) }
 
 	override fun <T : ApplicationMessage> sendMessage(message: T) {
 		fun broadcastToReceivers() {
