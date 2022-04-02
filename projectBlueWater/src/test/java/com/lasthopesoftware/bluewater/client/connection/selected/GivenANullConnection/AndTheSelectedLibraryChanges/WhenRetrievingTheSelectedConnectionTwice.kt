@@ -38,7 +38,6 @@ class WhenRetrievingTheSelectedConnectionTwice {
 			SelectedConnectionReservation().use {
 				fakeSelectedLibraryProvider.selectedLibraryId = Promise(LibraryId(-1))
 				val selectedConnection = SelectedConnection(
-					mockk(relaxUnitFun = true),
 					RecordingApplicationMessageBus(),
 					fakeSelectedLibraryProvider,
 					libraryConnections

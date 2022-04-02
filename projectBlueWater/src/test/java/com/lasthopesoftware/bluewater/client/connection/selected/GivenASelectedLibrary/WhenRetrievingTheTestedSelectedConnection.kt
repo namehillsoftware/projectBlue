@@ -38,7 +38,11 @@ class WhenRetrievingTheTestedSelectedConnection {
 			every { libraryIdentifierProvider.selectedLibraryId } returns Promise(LibraryId(51))
 
 			SelectedConnectionReservation().use {
-				val sessionConnection = SelectedConnection(mockk(relaxUnitFun = true), applicationMessageBus, libraryIdentifierProvider, libraryConnections)
+				val sessionConnection = SelectedConnection(
+					applicationMessageBus,
+					libraryIdentifierProvider,
+					libraryConnections
+				)
 				val futureConnectionProvider = sessionConnection.promiseTestedSessionConnection().toFuture()
 				deferredConnectionProvider.sendProgressUpdates(
 					BuildingConnectionStatus.GettingLibrary,

@@ -40,7 +40,11 @@ class WhenRetrievingTheTestedSelectedConnectionOnBuildComplete {
 			val libraryIdentifierProvider = mockk<ProvideSelectedLibraryId>()
 			every { libraryIdentifierProvider.selectedLibraryId } returns Promise(LibraryId(2))
 			SelectedConnectionReservation().use {
-				val sessionConnection = SelectedConnection(mockk(relaxUnitFun = true), applicationMessageBus, libraryIdentifierProvider, libraryConnections)
+				val sessionConnection = SelectedConnection(
+					applicationMessageBus,
+					libraryIdentifierProvider,
+					libraryConnections
+				)
 				deferredConnectionProvider.sendProgressUpdates(BuildingConnectionStatus.GettingLibrary)
 
 				val futureConnectionProvider = sessionConnection.promiseTestedSessionConnection().toFuture()

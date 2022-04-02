@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.connection.selected
 
 import android.content.Context
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
@@ -9,8 +8,6 @@ import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.ManageConnectionSessions
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
-import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
-import com.lasthopesoftware.bluewater.shared.android.messages.SendMessages
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.SendApplicationMessages
@@ -19,7 +16,6 @@ import com.namehillsoftware.handoff.promises.Promise
 import org.slf4j.LoggerFactory
 
 class SelectedConnection(
-	private val localBroadcastManager: SendMessages,
 	private val sendApplicationMessages: SendApplicationMessages,
 	private val selectedLibraryIdentifierProvider: ProvideSelectedLibraryId,
 	private val libraryConnections: ManageConnectionSessions
@@ -77,7 +73,6 @@ class SelectedConnection(
 
 		fun getInstance(context: Context): SelectedConnection =
 			SelectedConnection(
-				MessageBus(LocalBroadcastManager.getInstance(context)),
 				ApplicationMessageBus.getInstance(),
 				SelectedBrowserLibraryIdentifierProvider(context.getApplicationSettingsRepository()),
 				ConnectionSessionManager.get(context)
