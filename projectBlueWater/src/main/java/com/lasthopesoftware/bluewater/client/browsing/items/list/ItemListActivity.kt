@@ -33,7 +33,8 @@ import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils.buildStandardMenu
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
-import com.lasthopesoftware.bluewater.shared.messages.application.ScopedApplicationMessageBus
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
+import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
@@ -67,7 +68,7 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer {
 
 	private val itemProvider by lazy { CachedItemProvider.getInstance(this) }
 
-	private val messageBus by lazy { ScopedApplicationMessageBus() }
+	private val messageBus by lazy { getApplicationMessageBus().getScopedMessageBus() }
 
 	private val promisedItemListAdapter: Promise<ItemListAdapter?> by lazy {
 		browserLibraryIdProvider.selectedLibraryId

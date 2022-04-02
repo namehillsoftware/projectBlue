@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessio
 import com.lasthopesoftware.bluewater.client.connection.session.ManageConnectionSessions
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
-import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.SendApplicationMessages
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.namehillsoftware.handoff.promises.Promise
@@ -73,7 +73,7 @@ class SelectedConnection(
 
 		fun getInstance(context: Context): SelectedConnection =
 			SelectedConnection(
-				ApplicationMessageBus.getInstance(),
+				context.getApplicationMessageBus(),
 				SelectedBrowserLibraryIdentifierProvider(context.getApplicationSettingsRepository()),
 				ConnectionSessionManager.get(context)
 			)

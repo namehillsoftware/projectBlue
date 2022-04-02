@@ -10,7 +10,7 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.N
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage.PlaybackStarted
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils.getThemedDrawable
-import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 
@@ -38,7 +38,7 @@ class NowPlayingFloatingActionButton private constructor(context: Context) : Flo
 						visibility = ViewUtils.getVisibility(isNowPlayingFileSet)
 						if (isNowPlayingFileSet) return@response
 
-						val applicationMessageBus = ApplicationMessageBus.getInstance()
+						val applicationMessageBus = context.getApplicationMessageBus()
 						applicationMessageBus.registerReceiver(object : (PlaybackStarted) -> Unit {
 							override fun invoke(p1: PlaybackStarted) {
 								isNowPlayingFileSet = true

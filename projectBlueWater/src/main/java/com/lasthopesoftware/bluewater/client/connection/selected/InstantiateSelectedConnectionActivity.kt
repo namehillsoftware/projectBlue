@@ -13,7 +13,7 @@ import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnect
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
-import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.namehillsoftware.handoff.promises.Promise
@@ -43,7 +43,7 @@ class InstantiateSelectedConnectionActivity : Activity(), (SelectedConnection.Bu
 		lblConnectionStatus.findView().setText(R.string.lbl_connecting)
 		cancelButton.findView().setOnClickListener { cancel() }
 
-		val applicationMessageBus = ApplicationMessageBus.getInstance()
+		val applicationMessageBus = getApplicationMessageBus()
 		applicationMessageBus.registerReceiver(this)
 
 		lazyPromisedSessionConnection

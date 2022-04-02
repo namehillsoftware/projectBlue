@@ -20,14 +20,13 @@ import com.lasthopesoftware.bluewater.client.servers.list.listeners.SelectServer
 import com.lasthopesoftware.bluewater.shared.android.adapters.DeferredListAdapter
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
-import com.lasthopesoftware.bluewater.shared.messages.application.ScopedApplicationMessageBus
+import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.namehillsoftware.handoff.promises.Promise
 
-class ServerListAdapter(private val activity: Activity, private val browserLibrarySelection: SelectBrowserLibrary)
+class ServerListAdapter(private val activity: Activity, private val browserLibrarySelection: SelectBrowserLibrary, private val registerForApplicationMessages: RegisterForApplicationMessages)
 	: DeferredListAdapter<Library, ServerListAdapter.ViewHolder>(activity, LibraryDiffer) {
 
-	private val messageBus by lazy { ScopedApplicationMessageBus() }
 	private var activeLibrary: Library? = null
 
 	fun updateLibraries(libraries: Collection<Library>, activeLibrary: Library?): Promise<Unit> {
@@ -63,8 +62,8 @@ class ServerListAdapter(private val activity: Activity, private val browserLibra
 			textView.text = library.accessCode
 			textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(activeLibrary != null && library.id == activeLibrary?.id))
 
-			broadcastReceiver?.run { messageBus.unregisterReceiver(this) }
-			messageBus.registerReceiver(
+			broadcastReceiver?.run { registerForApplicationMessages.unregisterReceiver(this) }
+			registerForApplicationMessages.registerReceiver(
 				{ m : BrowserLibrarySelection.LibraryChosenMessage ->
 					textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(library.id == m.chosenLibraryId.id))
 				}.also { broadcastReceiver = it })
@@ -75,7 +74,7 @@ class ServerListAdapter(private val activity: Activity, private val browserLibra
 				override fun onViewDetachedFromWindow(v: View) {
 					val broadcastReceiver = broadcastReceiver
 					if (broadcastReceiver != null)
-						messageBus.unregisterReceiver(broadcastReceiver)
+						registerForApplicationMessages.unregisterReceiver(broadcastReceiver)
 				}
 			}.apply { onAttachStateChangeListener = this })
 

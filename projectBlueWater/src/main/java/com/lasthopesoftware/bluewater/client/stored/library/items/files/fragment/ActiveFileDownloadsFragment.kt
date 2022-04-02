@@ -20,7 +20,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.fragment
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileMessage
 import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
-import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.namehillsoftware.handoff.promises.Promise
@@ -32,7 +32,7 @@ class ActiveFileDownloadsFragment : Fragment() {
 	private var onFileQueuedReceiver: ((StoredFileMessage.FileQueued) -> Unit)? = null
 	private var onFileDownloadedReceiver: ((StoredFileMessage.FileDownloaded) -> Unit)? = null
 
-	private val applicationMessageBus = lazy { ApplicationMessageBus.getInstance() }
+	private val applicationMessageBus = lazy { requireContext().getApplicationMessageBus() }
 
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
 		if (container == null) return null

@@ -22,7 +22,7 @@ import com.lasthopesoftware.bluewater.shared.android.notifications.notificationc
 import com.lasthopesoftware.bluewater.shared.android.services.GenericBinder
 import com.lasthopesoftware.bluewater.shared.android.services.promiseBoundService
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
-import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.namehillsoftware.handoff.Messenger
 import com.namehillsoftware.handoff.promises.MessengerOperator
 import com.namehillsoftware.handoff.promises.Promise
@@ -51,10 +51,9 @@ class PollConnectionService : Service(), MessengerOperator<IConnectionProvider> 
 	private val notificationId = 99
 	private val binder by lazy { GenericBinder(this) }
 	private val handler by lazy { Handler(mainLooper) }
-	private val applicationMessageBus by lazy { ApplicationMessageBus.getInstance() }
 
 	private val lazyConnectionPoller = lazy {
-		applicationMessageBus.sendMessage(ConnectionLostNotification)
+		getApplicationMessageBus().sendMessage(ConnectionLostNotification)
 		Promise(this)
 	}
 
