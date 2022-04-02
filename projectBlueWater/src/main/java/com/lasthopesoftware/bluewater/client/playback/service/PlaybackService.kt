@@ -15,7 +15,6 @@ import android.os.Process
 import android.widget.Toast
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.google.android.exoplayer2.ExoPlaybackException
 import com.google.android.exoplayer2.upstream.HttpDataSource.InvalidResponseCodeException
 import com.google.android.exoplayer2.upstream.cache.LeastRecentlyUsedCacheEvictor
@@ -94,7 +93,6 @@ import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.MediaSession.MediaSessionService
 import com.lasthopesoftware.bluewater.shared.android.audiofocus.AudioFocusManagement
 import com.lasthopesoftware.bluewater.shared.android.makePendingIntentImmutable
-import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.notifications.NoOpChannelActivator
 import com.lasthopesoftware.bluewater.shared.android.notifications.NotificationBuilderProducer
 import com.lasthopesoftware.bluewater.shared.android.notifications.control.NotificationsController
@@ -299,7 +297,6 @@ open class PlaybackService :
 	private val binder by lazy { GenericBinder(this) }
 	private val notificationManager by lazy { getSystemService(NOTIFICATION_SERVICE) as NotificationManager }
 	private val audioManager by lazy { getSystemService(AUDIO_SERVICE) as AudioManager }
-	private val lazyMessageBus = lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
 	private val applicationMessageBus = lazy { ScopedApplicationMessageBus() }
 	private val applicationSettings by lazy { getApplicationSettingsRepository() }
 	private val selectedLibraryIdentifierProvider by lazy { SelectedBrowserLibraryIdentifierProvider(applicationSettings) }
@@ -1036,7 +1033,6 @@ open class PlaybackService :
 				cache?.release()
 			}
 
-		if (lazyMessageBus.isInitialized()) lazyMessageBus.value.clear()
 		if (applicationMessageBus.isInitialized()) applicationMessageBus.value.close()
 	}
 

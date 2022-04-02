@@ -1,35 +1,21 @@
 package com.lasthopesoftware.bluewater.client.connection.selected
 
-import android.content.Intent
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.connection.settings.changes.ObservableConnectionSettingsLibraryStorage
-import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
-import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
-import com.lasthopesoftware.bluewater.shared.android.messages.SendMessages
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
 import com.lasthopesoftware.bluewater.shared.messages.application.SendApplicationMessages
 
 class SelectedConnectionSettingsChangeReceiver(
 	private val selectedLibraryIdProvider: ProvideSelectedLibraryId,
-	private val sendMessages: SendMessages,
 	private val sendApplicationMessages: SendApplicationMessages,
-) : ReceiveBroadcastEvents {
-	override fun onReceive(intent: Intent) {
-		val updatedLibraryId =
-			intent.getIntExtra(ObservableConnectionSettingsLibraryStorage.updatedConnectionSettingsLibraryId, -1)
+) : (ObservableConnectionSettingsLibraryStorage.ConnectionSettingsUpdated) -> Unit {
 
+	override fun invoke(message: ObservableConnectionSettingsLibraryStorage.ConnectionSettingsUpdated) {
 		selectedLibraryIdProvider.selectedLibraryId.then { l ->
-			if (l?.id == updatedLibraryId) {
+			if (l == message.libraryId)
 				sendApplicationMessages.sendMessage(SelectedConnectionSettingsUpdated)
-			}
 		}
 	}
 
 	object SelectedConnectionSettingsUpdated : ApplicationMessage
-
-	companion object {
-		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(SelectedConnectionSettingsChangeReceiver::class.java) }
-
-		val connectionSettingsUpdated by lazy { magicPropertyBuilder.buildProperty("connectionSettingsUpdated") }
-	}
 }

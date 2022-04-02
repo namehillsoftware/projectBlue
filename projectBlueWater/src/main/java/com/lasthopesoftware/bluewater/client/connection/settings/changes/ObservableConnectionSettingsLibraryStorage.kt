@@ -1,17 +1,18 @@
 package com.lasthopesoftware.bluewater.client.connection.settings.changes
 
-import android.content.Intent
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
-import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
-import com.lasthopesoftware.bluewater.shared.android.messages.SendMessages
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
+import com.lasthopesoftware.bluewater.shared.messages.application.SendApplicationMessages
 import com.namehillsoftware.handoff.promises.Promise
 
 class ObservableConnectionSettingsLibraryStorage(
 	private val inner: ILibraryStorage,
 	private val connectionSettingsLookup: LookupConnectionSettings,
-	private val sendMessages: SendMessages) : ILibraryStorage {
+	private val sendApplicationMessages: SendApplicationMessages
+) : ILibraryStorage {
 
 	override fun saveLibrary(library: Library): Promise<Library> {
 		val promisedOriginalConnectionSettings = connectionSettingsLookup
@@ -24,11 +25,7 @@ class ObservableConnectionSettingsLibraryStorage(
 						.lookupConnectionSettings(library.libraryId)
 						.then { updatedConnectionSettings ->
 							if (updatedConnectionSettings != originalConnectionSettings) {
-								val connectionSettingsUpdatedIntent = Intent(connectionSettingsUpdated)
-								connectionSettingsUpdatedIntent.putExtra(
-									updatedConnectionSettingsLibraryId,
-									library.libraryId.id)
-								sendMessages.sendBroadcast(connectionSettingsUpdatedIntent)
+								sendApplicationMessages.sendMessage(ConnectionSettingsUpdated(library.libraryId))
 							}
 						}
 				}
@@ -39,11 +36,5 @@ class ObservableConnectionSettingsLibraryStorage(
 
 	override fun removeLibrary(library: Library): Promise<Unit> = inner.removeLibrary(library)
 
-	companion object {
-		private val magicPropertyBuilder = MagicPropertyBuilder(ObservableConnectionSettingsLibraryStorage::class.java)
-
-		val connectionSettingsUpdated = magicPropertyBuilder.buildProperty("connectionSettingsUpdated")
-
-		val updatedConnectionSettingsLibraryId = magicPropertyBuilder.buildProperty("updatedConnectionSettingsLibraryId")
-	}
+	class ConnectionSettingsUpdated(val libraryId: LibraryId) : ApplicationMessage
 }

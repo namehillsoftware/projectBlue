@@ -4,11 +4,9 @@ import android.annotation.SuppressLint
 import android.app.Application
 import android.app.NotificationManager
 import android.content.Context
-import android.content.IntentFilter
 import android.os.Environment
 import android.os.StrictMode
 import android.os.StrictMode.VmPolicy
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.work.Configuration
 import androidx.work.WorkManager
 import ch.qos.logback.classic.AsyncAppender
@@ -33,7 +31,6 @@ import com.lasthopesoftware.bluewater.client.connection.receivers.SessionConnect
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionSettingsChangeReceiver
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionSettingsChangeReceiver
-import com.lasthopesoftware.bluewater.client.connection.settings.changes.ObservableConnectionSettingsLibraryStorage
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage.TrackChanged
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.TrackPositionUpdate
@@ -43,7 +40,6 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFi
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
 import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
-import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
@@ -64,7 +60,6 @@ open class MainApplication : Application() {
 	private val notificationManagerLazy by lazy { getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager }
 	private val storageReadPermissionsRequestNotificationBuilder by lazy { StorageReadPermissionsRequestNotificationBuilder(this) }
 	private val storageWritePermissionsRequestNotificationBuilder by lazy { StorageWritePermissionsRequestNotificationBuilder(this) }
-	private val messageBus by lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
 	private val applicationMessageBus by lazy { ApplicationMessageBus.initializeInstance(this) }
 	private val liveNowPlayingLookup by lazy { LiveNowPlayingLookup.initializeInstance(this) }
 	private val applicationSettings by lazy { getApplicationSettingsRepository() }
@@ -121,17 +116,12 @@ open class MainApplication : Application() {
 			)
 		}
 
-		messageBus.registerReceiver(
-			ConnectionSessionSettingsChangeReceiver(ConnectionSessionManager.get(this)),
-			IntentFilter(ObservableConnectionSettingsLibraryStorage.connectionSettingsUpdated)
-		)
-
-		messageBus.registerReceiver(
+		applicationMessageBus.registerReceiver(ConnectionSessionSettingsChangeReceiver(ConnectionSessionManager.get(this)))
+		applicationMessageBus.registerReceiver(
 			SelectedConnectionSettingsChangeReceiver(
 				SelectedBrowserLibraryIdentifierProvider(applicationSettings),
-				messageBus,
-				applicationMessageBus),
-			IntentFilter(ObservableConnectionSettingsLibraryStorage.connectionSettingsUpdated)
+				applicationMessageBus
+			)
 		)
 
 		val connectionDependentReceiverRegistrations = listOf(
