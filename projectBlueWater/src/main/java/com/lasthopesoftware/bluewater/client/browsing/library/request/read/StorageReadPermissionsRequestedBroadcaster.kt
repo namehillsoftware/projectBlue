@@ -1,22 +1,14 @@
 package com.lasthopesoftware.bluewater.client.browsing.library.request.read
 
-import android.content.Intent
-import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder.Companion.buildMagicPropertyName
-import com.lasthopesoftware.bluewater.shared.android.messages.SendMessages
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
+import com.lasthopesoftware.bluewater.shared.messages.application.SendApplicationMessages
 
-/**
- * Created by david on 7/3/16.
- */
-class StorageReadPermissionsRequestedBroadcaster(private val sendMessages: SendMessages) : IStorageReadPermissionsRequestedBroadcast {
+class StorageReadPermissionsRequestedBroadcaster(private val sendApplicationMessages: SendApplicationMessages) :
+	BroadcastReadPermissionsRequest {
 
-	companion object {
-		val readPermissionsNeeded by lazy { buildMagicPropertyName<StorageReadPermissionsRequestedBroadcaster>("readPermissionsNeeded") }
-		val readPermissionsLibraryId by lazy { buildMagicPropertyName<StorageReadPermissionsRequestedBroadcaster>("readPermissionsLibraryId") }
-	}
+	class ReadPermissionsNeeded(val libraryId: LibraryId) : ApplicationMessage
 
-	override fun sendReadPermissionsRequestedBroadcast(libraryId: Int) {
-		val readPermissionsNeededIntent = Intent(readPermissionsNeeded)
-		readPermissionsNeededIntent.putExtra(readPermissionsLibraryId, libraryId)
-		sendMessages.sendBroadcast(readPermissionsNeededIntent)
-	}
+	override fun sendReadPermissionsRequestedBroadcast(libraryId: LibraryId) =
+		sendApplicationMessages.sendMessage(ReadPermissionsNeeded(libraryId))
 }

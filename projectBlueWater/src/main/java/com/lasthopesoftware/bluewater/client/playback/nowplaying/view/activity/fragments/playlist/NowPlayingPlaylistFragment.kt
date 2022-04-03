@@ -9,7 +9,6 @@ import android.view.ViewGroup
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -44,11 +43,12 @@ import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceCon
 import com.lasthopesoftware.bluewater.databinding.ControlNowPlayingPlaylistBinding
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.android.adapters.DeferredListAdapter
-import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildActivityViewModel
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildActivityViewModelLazily
-import com.lasthopesoftware.bluewater.shared.messages.ScopedMessageRegistration
+import com.lasthopesoftware.bluewater.shared.messages.ScopedMessageBus
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
+import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toDeferred
@@ -63,7 +63,7 @@ class NowPlayingPlaylistFragment : Fragment() {
 
 	private var itemListMenuChangeHandler: IItemListMenuChangeHandler? = null
 
-	private val messageBus by lazy { MessageBus(LocalBroadcastManager.getInstance(requireContext())) }
+	private val applicationMessageBus by lazy { requireContext().getApplicationMessageBus().getScopedMessageBus() }
 
 	private val selectedConnectionProvider by lazy { SelectedConnectionProvider(requireContext()) }
 
@@ -109,13 +109,13 @@ class NowPlayingPlaylistFragment : Fragment() {
 			}
 	}
 
-	private val fileListItemNowPlayingRegistrar = lazy { FileListItemNowPlayingRegistrar(messageBus) }
+	private val fileListItemNowPlayingRegistrar = lazy { FileListItemNowPlayingRegistrar(applicationMessageBus) }
 
 	private val handler by lazy { Handler(requireContext().mainLooper) }
 
 	private val viewModelMessageBus by buildActivityViewModelLazily { ViewModelMessageBus<NowPlayingPlaylistMessage>(handler) }
 
-	private val scopedMessageReceiver = lazy { ScopedMessageRegistration(viewModelMessageBus) }
+	private val scopedMessageReceiver = lazy { ScopedMessageBus(viewModelMessageBus, viewModelMessageBus) }
 
 	private val nowPlayingListAdapter by lazy {
 		nowPlayingRepository.eventually(LoopedInPromise.response({ r ->
@@ -144,30 +144,30 @@ class NowPlayingPlaylistFragment : Fragment() {
 
 		val nowPlayingViewModel = buildActivityViewModel {
 			NowPlayingScreenViewModel(
-				messageBus,
+				applicationMessageBus,
 				InMemoryNowPlayingDisplaySettings,
 				playbackService,
 			)
 		}
 
 		NowPlayingFilePropertiesViewModel(
-			messageBus,
-			LiveNowPlayingLookup.getInstance(),
-			selectedConnectionProvider,
-			lazyFilePropertiesProvider,
-			filePropertiesStorage,
-			lazySelectedConnectionAuthenticationChecker,
-			playbackService,
-			ConnectionPoller(requireContext()),
-			StringResources(requireContext()),
-			nowPlayingViewModel,
-			nowPlayingViewModel
-		)
+            applicationMessageBus,
+            LiveNowPlayingLookup.getInstance(),
+            selectedConnectionProvider,
+            lazyFilePropertiesProvider,
+            filePropertiesStorage,
+            lazySelectedConnectionAuthenticationChecker,
+            playbackService,
+            ConnectionPoller(requireContext()),
+            StringResources(requireContext()),
+            nowPlayingViewModel,
+            nowPlayingViewModel
+        )
 	}
 
 	private val playlistViewModel by buildActivityViewModelLazily {
 		NowPlayingPlaylistViewModel(
-			messageBus,
+			applicationMessageBus,
 			LiveNowPlayingLookup.getInstance(),
 			viewModelMessageBus
 		)

@@ -1,34 +1,38 @@
 package com.lasthopesoftware.bluewater.client.connection.receivers
 
 import android.content.Context
-import android.content.Intent
+import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.Companion.getInstance
-import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
-import com.lasthopesoftware.bluewater.shared.android.messages.RegisterForMessages
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
+import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 
-/**
- * Created by david on 3/19/17.
- */
-class SessionConnectionRegistrationsMaintainer(private val context: Context, private val messageRegistrar: RegisterForMessages, private val connectionDependentReceiverRegistrations: Collection<IConnectionDependentReceiverRegistration>) : ReceiveBroadcastEvents, AutoCloseable, ImmediateResponse<List<ReceiveBroadcastEvents>, Unit> {
-	private var registrationPromise = Promise(emptyList<ReceiveBroadcastEvents>())
+class SessionConnectionRegistrationsMaintainer(
+	private val context: Context,
+	private val applicationMessages: RegisterForApplicationMessages,
+	private val connectionDependentReceiverRegistrations: Collection<RegisterReceiverForEvents>
+) :
+	(SelectedConnection.BuildSessionConnectionBroadcast) -> Unit,
+	AutoCloseable,
+	ImmediateResponse<List<(ApplicationMessage) -> Unit>, Unit>
+{
+	private var registrationPromise = Promise(emptyList<(ApplicationMessage) -> Unit>())
 
 	@Synchronized
-	override fun onReceive(intent: Intent) {
-		val buildSessionStatus = intent.getIntExtra(SelectedConnection.buildSessionBroadcastStatus, -1)
-		if (buildSessionStatus != SelectedConnection.BuildingSessionConnectionStatus.BuildingSessionComplete) return
+	override fun invoke(broadcast: SelectedConnection.BuildSessionConnectionBroadcast) {
+		if (broadcast.buildingConnectionStatus != BuildingConnectionStatus.BuildingConnectionComplete) return
 
 		registrationPromise = registrationPromise
-			.then(this) // remove existing registrations
+			.then(this)
 			.eventually { getInstance(context).promiseSessionConnection() }
 			.then { connectionProvider ->
 				connectionProvider ?: return@then emptyList()
 				connectionDependentReceiverRegistrations.map { registration ->
 					val receiver = registration.registerWithConnectionProvider(connectionProvider)
-					for (i in registration.forIntents())
-						messageRegistrar.registerReceiver(receiver, i)
+					for (c in registration.forClasses())
+						applicationMessages.registerForClass(c, receiver)
 
 					receiver
 				}
@@ -39,8 +43,8 @@ class SessionConnectionRegistrationsMaintainer(private val context: Context, pri
 		registrationPromise.then(this)
 	}
 
-	override fun respond(registeredReceivers: List<ReceiveBroadcastEvents>) {
+	override fun respond(registeredReceivers: List<(ApplicationMessage) -> Unit>) {
 		for (receiver in registeredReceivers)
-			messageRegistrar.unregisterReceiver(receiver)
+			applicationMessages.unregisterReceiver(receiver)
 	}
 }

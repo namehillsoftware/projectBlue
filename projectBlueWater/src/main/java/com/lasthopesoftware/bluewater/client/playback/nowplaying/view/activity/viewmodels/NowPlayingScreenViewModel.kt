@@ -1,22 +1,23 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels
 
-import android.content.IntentFilter
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
-import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
-import com.lasthopesoftware.bluewater.shared.android.messages.RegisterForMessages
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage
+import com.lasthopesoftware.bluewater.shared.cls
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
+import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
+import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 class NowPlayingScreenViewModel(
-	private val messages: RegisterForMessages,
+	private val applicationMessages: RegisterForApplicationMessages,
 	private val nowPlayingDisplaySettings: StoreNowPlayingDisplaySettings,
 	playbackService: ControlPlaybackService,
 ) : ViewModel(), ControlDrawerState, ControlScreenOnState
 {
-	private val onPlaybackStartedReceiver: ReceiveBroadcastEvents
-	private val onPlaybackStoppedReceiver: ReceiveBroadcastEvents
+	private val onPlaybackStartedReceiver: (PlaybackMessage.PlaybackStarted) -> Unit
+	private val onPlaybackStoppedReceiver: (ApplicationMessage) -> Unit
 
 	private var isPlayingState = false
 
@@ -32,18 +33,14 @@ class NowPlayingScreenViewModel(
 		get() = isDrawerShownState.value
 
 	init {
-		onPlaybackStartedReceiver = ReceiveBroadcastEvents { togglePlaying(true) }
-		onPlaybackStoppedReceiver = ReceiveBroadcastEvents { togglePlaying(false) }
+		onPlaybackStartedReceiver = { togglePlaying(true) }
+		onPlaybackStoppedReceiver = { togglePlaying(false) }
 
-		val playbackStoppedIntentFilter = IntentFilter().apply {
-			addAction(PlaylistEvents.onPlaylistPause)
-			addAction(PlaylistEvents.onPlaylistInterrupted)
-			addAction(PlaylistEvents.onPlaylistStop)
-		}
-
-		with(messages) {
-			registerReceiver(onPlaybackStoppedReceiver, playbackStoppedIntentFilter)
-			registerReceiver(onPlaybackStartedReceiver, IntentFilter(PlaylistEvents.onPlaylistStart))
+		with (applicationMessages) {
+			registerReceiver(onPlaybackStartedReceiver)
+			registerForClass(cls<PlaybackMessage.PlaybackPaused>(), onPlaybackStoppedReceiver)
+			registerForClass(cls<PlaybackMessage.PlaybackInterrupted>(), onPlaybackStoppedReceiver)
+			registerForClass(cls<PlaybackMessage.PlaybackStopped>(), onPlaybackStoppedReceiver)
 		}
 
 		playbackService.promiseIsMarkedForPlay().then(::togglePlaying)
@@ -52,9 +49,9 @@ class NowPlayingScreenViewModel(
 	override fun onCleared() {
 		super.onCleared()
 
-		with(messages) {
-			unregisterReceiver(onPlaybackStoppedReceiver)
+		with (applicationMessages) {
 			unregisterReceiver(onPlaybackStartedReceiver)
+			unregisterReceiver(onPlaybackStoppedReceiver)
 		}
 	}
 

@@ -1,11 +1,11 @@
 package com.lasthopesoftware.bluewater.client.browsing.library.events.GivenALibraryChangedBroadcast
 
-import android.content.Intent
 import android.os.Looper.getMainLooper
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.lasthopesoftware.bluewater.client.browsing.BrowserEntryActivity
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import org.assertj.core.api.AssertionsForClassTypes.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -16,12 +16,10 @@ import org.robolectric.Shadows.shadowOf
 class WhenReceivingTheBroadcast {
 
 	companion object {
-		private val activityController = lazy {
+		private val activityController by lazy {
 			val activity = Robolectric.buildActivity(BrowserEntryActivity::class.java).create()
-			val localBroadcastManager = LocalBroadcastManager.getInstance(activity.get())
-			val broadcastIntent = Intent(BrowserLibrarySelection.libraryChosenEvent)
-			broadcastIntent.putExtra(BrowserLibrarySelection.chosenLibraryId, 4)
-			localBroadcastManager.sendBroadcast(broadcastIntent)
+			activity.get().getApplicationMessageBus()
+				.sendMessage(BrowserLibrarySelection.LibraryChosenMessage(LibraryId(4)))
 			shadowOf(getMainLooper()).idle()
 			activity
 		}
@@ -29,6 +27,6 @@ class WhenReceivingTheBroadcast {
 
 	@Test
 	fun thenTheActivityIsFinished() {
-		assertThat(activityController.value.get().isFinishing).isTrue
+		assertThat(activityController.get().isFinishing).isTrue
 	}
 }

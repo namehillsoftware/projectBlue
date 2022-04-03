@@ -1,30 +1,36 @@
 package com.lasthopesoftware.bluewater.client.playback.service.receivers.notification
 
-import android.content.Intent
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage
 import com.lasthopesoftware.bluewater.client.playback.service.notification.NotifyOfPlaybackEvents
-import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
+import com.lasthopesoftware.bluewater.shared.cls
+import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 
-class PlaybackNotificationRouter(private val playbackNotificationBroadcaster: NotifyOfPlaybackEvents) : ReceiveBroadcastEvents {
-	private val mappedEvents by lazy {
-		mapOf(
-			Pair(PlaylistEvents.onPlaylistTrackChange, ::onPlaylistChange),
-			Pair(PlaylistEvents.onPlaylistPause) { playbackNotificationBroadcaster.notifyPaused() },
-			Pair(PlaylistEvents.onPlaylistInterrupted) { playbackNotificationBroadcaster.notifyInterrupted() },
-			Pair(PlaylistEvents.onPlaylistStart) { playbackNotificationBroadcaster.notifyPlaying() },
-			Pair(PlaylistEvents.onPlaylistStop) { playbackNotificationBroadcaster.notifyStopped() },
-		)
+class PlaybackNotificationRouter(
+	private val playbackNotificationBroadcaster: NotifyOfPlaybackEvents,
+	private val registerApplicationMessages: RegisterForApplicationMessages
+) :
+	(PlaybackMessage) -> Unit,
+	AutoCloseable
+{
+	init {
+		registerApplicationMessages.registerForClass(cls<PlaybackMessage.TrackChanged>(), this)
+		registerApplicationMessages.registerForClass(cls<PlaybackMessage.PlaybackStarted>(), this)
+		registerApplicationMessages.registerForClass(cls<PlaybackMessage.PlaybackPaused>(), this)
+		registerApplicationMessages.registerForClass(cls<PlaybackMessage.PlaybackInterrupted>(), this)
+		registerApplicationMessages.registerForClass(cls<PlaybackMessage.PlaybackStopped>(), this)
 	}
 
-	fun registerForIntents(): Set<String> = mappedEvents.keys
-
-	override fun onReceive(intent: Intent) {
-		intent.action?.let(mappedEvents::get)?.invoke(intent)
+	override fun invoke(message: PlaybackMessage) {
+		when (message) {
+			is PlaybackMessage.TrackChanged -> playbackNotificationBroadcaster.notifyPlayingFileChanged(message.positionedFile.serviceFile)
+			is PlaybackMessage.PlaybackStarted -> playbackNotificationBroadcaster.notifyPlaying()
+			is PlaybackMessage.PlaybackPaused -> playbackNotificationBroadcaster.notifyPaused()
+			is PlaybackMessage.PlaybackInterrupted -> playbackNotificationBroadcaster.notifyInterrupted()
+			is PlaybackMessage.PlaybackStopped -> playbackNotificationBroadcaster.notifyStopped()
+		}
 	}
 
-	private fun onPlaylistChange(intent: Intent) {
-		val fileKey = intent.getIntExtra(PlaylistEvents.PlaybackFileParameters.fileKey, -1)
-		if (fileKey >= 0) playbackNotificationBroadcaster.notifyPlayingFileChanged(ServiceFile(fileKey))
+	override fun close() {
+		registerApplicationMessages.unregisterReceiver(this)
 	}
 }

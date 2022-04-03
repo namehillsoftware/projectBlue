@@ -22,17 +22,17 @@ import com.lasthopesoftware.bluewater.client.browsing.items.menu.handlers.*
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
 import com.lasthopesoftware.bluewater.shared.android.adapters.DeferredListAdapter
-import com.lasthopesoftware.bluewater.shared.android.messages.SendMessages
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
+import com.lasthopesoftware.bluewater.shared.messages.application.SendApplicationMessages
 
 open class ItemListAdapter internal constructor(
-    context: Context,
-    private val sendMessages: SendMessages,
-    private val itemStringListProvider: ItemStringListProvider,
-    private val itemListMenuEvents: IItemListMenuChangeHandler,
-    private val storedItemAccess: StoredItemAccess,
-    private val provideItems: ProvideItems,
-    private val libraryId: LibraryId
+	context: Context,
+	private val sendMessages: SendApplicationMessages,
+	private val itemStringListProvider: ItemStringListProvider,
+	private val itemListMenuEvents: IItemListMenuChangeHandler,
+	private val storedItemAccess: StoredItemAccess,
+	private val provideItems: ProvideItems,
+	private val libraryId: LibraryId
 ) : DeferredListAdapter<Item, ItemListAdapter.ViewHolder>(context, ItemDiffer) {
 
 	private val viewChangedHandler by lazy {

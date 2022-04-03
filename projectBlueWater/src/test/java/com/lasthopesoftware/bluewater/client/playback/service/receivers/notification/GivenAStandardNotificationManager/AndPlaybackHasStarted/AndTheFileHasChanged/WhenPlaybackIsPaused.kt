@@ -2,16 +2,18 @@ package com.lasthopesoftware.bluewater.client.playback.service.receivers.notific
 
 import android.app.Notification
 import android.app.NotificationManager
-import android.content.Intent
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage
 import com.lasthopesoftware.bluewater.client.playback.service.notification.NotificationsConfiguration
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.BuildNowPlayingNotificationContent
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.PlaybackNotificationRouter
 import com.lasthopesoftware.bluewater.shared.android.notifications.control.NotificationsController
+import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import com.lasthopesoftware.resources.notifications.FakeNotificationCompatBuilder.newFakeBuilder
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
@@ -35,20 +37,26 @@ class WhenPlaybackIsPaused : AndroidContext() {
 		every { notificationContentBuilder.promiseNowPlayingNotification(ServiceFile(1), true) } returns Promise(newFakeBuilder(Notification()))
 		every { notificationContentBuilder.promiseNowPlayingNotification(ServiceFile(1), false) } returns Promise(newFakeBuilder(pausedNotification))
 
-		val playbackNotificationRouter = PlaybackNotificationRouter(PlaybackNotificationBroadcaster(
-			NotificationsController(service, notificationManager),
-			NotificationsConfiguration("", 43),
-			notificationContentBuilder
-		) { Promise(newFakeBuilder(Notification())) })
-		playbackNotificationRouter.onReceive(Intent(PlaylistEvents.onPlaylistStart))
+		val recordingApplicationMessageBus = RecordingApplicationMessageBus()
+		PlaybackNotificationRouter(
+			PlaybackNotificationBroadcaster(
+				NotificationsController(service, notificationManager),
+				NotificationsConfiguration("", 43),
+				notificationContentBuilder
+			) { Promise(newFakeBuilder(Notification())) },
+			recordingApplicationMessageBus
+		)
 
-		run {
-			val playlistChangeIntent = Intent(PlaylistEvents.onPlaylistTrackChange)
-			playlistChangeIntent.putExtra(PlaylistEvents.PlaybackFileParameters.fileKey, 1)
-			playbackNotificationRouter.onReceive(playlistChangeIntent)
-		}
+		recordingApplicationMessageBus.sendMessage(PlaybackMessage.PlaybackStarted)
 
-		playbackNotificationRouter.onReceive(Intent(PlaylistEvents.onPlaylistPause))
+		recordingApplicationMessageBus.sendMessage(
+			PlaybackMessage.TrackChanged(
+				LibraryId(4),
+				PositionedFile(4, ServiceFile(1))
+			)
+		)
+
+		recordingApplicationMessageBus.sendMessage(PlaybackMessage.PlaybackPaused)
 	}
 
 	@Test

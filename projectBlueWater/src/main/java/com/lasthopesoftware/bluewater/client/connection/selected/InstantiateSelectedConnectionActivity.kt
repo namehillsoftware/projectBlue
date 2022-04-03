@@ -3,24 +3,22 @@ package com.lasthopesoftware.bluewater.client.connection.selected
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.os.Bundle
 import android.os.Handler
 import android.widget.TextView
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.BrowserEntryActivity
-import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.BuildingSessionConnectionStatus
+import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.Companion.getInstance
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
-import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
-import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
+import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.namehillsoftware.handoff.promises.Promise
 
-class InstantiateSelectedConnectionActivity : Activity() {
+class InstantiateSelectedConnectionActivity : Activity(), (SelectedConnection.BuildSessionConnectionBroadcast) -> Unit {
 	private var isCancelled = false
 	private val lblConnectionStatus = LazyViewFinder<TextView>(this, R.id.lblConnectionStatus)
 	private val cancelButton = LazyViewFinder<TextView>(this, R.id.cancelButton)
@@ -33,12 +31,7 @@ class InstantiateSelectedConnectionActivity : Activity() {
 		browseLibraryIntent
 	}
 
-	private val messageBus by lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
-
 	private val handler by lazy { Handler(mainLooper) }
-
-	private val buildSessionConnectionReceiver =
-		ReceiveBroadcastEvents { intent -> handleBuildStatusChange(intent.getIntExtra(SelectedConnection.buildSessionBroadcastStatus, -1)) }
 
 	private val lazyPromisedSessionConnection = lazy { getInstance(this).promiseSessionConnection() }
 
@@ -50,9 +43,8 @@ class InstantiateSelectedConnectionActivity : Activity() {
 		lblConnectionStatus.findView().setText(R.string.lbl_connecting)
 		cancelButton.findView().setOnClickListener { cancel() }
 
-		messageBus.registerReceiver(buildSessionConnectionReceiver, IntentFilter(
-			SelectedConnection.buildSessionBroadcast
-		))
+		val applicationMessageBus = getApplicationMessageBus()
+		applicationMessageBus.registerReceiver(this)
 
 		lazyPromisedSessionConnection
 			.value
@@ -67,7 +59,7 @@ class InstantiateSelectedConnectionActivity : Activity() {
 			}, handler), LoopedInPromise.response({
 				launchActivityDelayed(selectServerIntent)
 			}, handler))
-			.must { messageBus.unregisterReceiver(buildSessionConnectionReceiver) }
+			.must { applicationMessageBus.unregisterReceiver(this) }
 	}
 
 	override fun onBackPressed() {
@@ -75,15 +67,18 @@ class InstantiateSelectedConnectionActivity : Activity() {
 		super.onBackPressed()
 	}
 
-	private fun handleBuildStatusChange(status: Int) {
+	override fun invoke(message: SelectedConnection.BuildSessionConnectionBroadcast) {
+		handleBuildStatusChange(message.buildingConnectionStatus)
+	}
+
+	private fun handleBuildStatusChange(status: BuildingConnectionStatus) {
 		lblConnectionStatus.findView().setText(when (status) {
-			BuildingSessionConnectionStatus.GettingLibrary -> R.string.lbl_getting_library_details
-			BuildingSessionConnectionStatus.GettingLibraryFailed -> R.string.lbl_please_connect_to_valid_server
-			BuildingSessionConnectionStatus.SendingWakeSignal -> R.string.sending_wake_signal
-			BuildingSessionConnectionStatus.BuildingConnection -> R.string.lbl_connecting_to_server_library
-			BuildingSessionConnectionStatus.BuildingConnectionFailed -> R.string.lbl_error_connecting_try_again
-			BuildingSessionConnectionStatus.BuildingSessionComplete -> R.string.lbl_connected
-			else -> R.string.lbl_connecting
+			BuildingConnectionStatus.GettingLibrary -> R.string.lbl_getting_library_details
+			BuildingConnectionStatus.GettingLibraryFailed -> R.string.lbl_please_connect_to_valid_server
+			BuildingConnectionStatus.SendingWakeSignal -> R.string.sending_wake_signal
+			BuildingConnectionStatus.BuildingConnection -> R.string.lbl_connecting_to_server_library
+			BuildingConnectionStatus.BuildingConnectionFailed -> R.string.lbl_error_connecting_try_again
+			BuildingConnectionStatus.BuildingConnectionComplete -> R.string.lbl_connected
 		})
 	}
 

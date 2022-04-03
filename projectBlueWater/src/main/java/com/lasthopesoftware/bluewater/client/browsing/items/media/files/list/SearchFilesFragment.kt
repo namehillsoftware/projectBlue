@@ -13,7 +13,6 @@ import android.widget.TextView
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -32,8 +31,8 @@ import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessio
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingFileProvider.Companion.fromActiveLibrary
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
-import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
@@ -55,8 +54,7 @@ class SearchFilesFragment : Fragment(), View.OnKeyListener, TextView.OnEditorAct
 	}
 
 	private val nowPlayingRegistrar = lazy {
-		FileListItemNowPlayingRegistrar(
-			MessageBus(LocalBroadcastManager.getInstance(requireContext())))
+		FileListItemNowPlayingRegistrar(requireContext().getApplicationMessageBus())
 	}
 
 	private val nowPlayingFileProvider by lazy { fromActiveLibrary(requireContext()) }

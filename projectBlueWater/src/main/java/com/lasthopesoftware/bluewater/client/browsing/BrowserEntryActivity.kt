@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing
 
 import android.content.Intent
-import android.content.IntentFilter
 import android.content.res.Configuration
 import android.os.Bundle
 import android.os.Handler
@@ -18,7 +17,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.list.IItemListViewContainer
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuChangeHandler
@@ -44,12 +42,14 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.fragment
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
-import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
-import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils.buildStandardMenu
+import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
+import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import org.slf4j.LoggerFactory
@@ -79,7 +79,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 
 	private val messageHandler by lazy { Handler(mainLooper) }
 
-	private val lazyMessageBus = lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
+	private val applicationMessageBus = lazy { getApplicationMessageBus().getScopedMessageBus() }
 
 	private val itemListMenuChangeHandler by lazy { ItemListMenuChangeHandler(this) }
 
@@ -140,7 +140,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 		}
 	}
 
-	private val connectionSettingsUpdatedReceiver = ReceiveBroadcastEvents { finishAffinity() }
+	private val connectionSettingsUpdatedReceiver : (ApplicationMessage) -> Unit = { finishAffinity() }
 
 	private lateinit var nowPlayingFloatingActionButton: NowPlayingFloatingActionButton
 	private var viewAnimator: ViewAnimator? = null
@@ -166,13 +166,14 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 		setContentView(R.layout.activity_browse_library)
 		setSupportActionBar(findViewById(R.id.browseLibraryToolbar))
 
-		val connectionSettingsChangedFilter = IntentFilter()
-		connectionSettingsChangedFilter.addAction(BrowserLibrarySelection.libraryChosenEvent)
-		connectionSettingsChangedFilter.addAction(SelectedConnectionSettingsChangeReceiver.connectionSettingsUpdated)
+		applicationMessageBus.value.registerForClass(
+			cls<SelectedConnectionSettingsChangeReceiver.SelectedConnectionSettingsUpdated>(),
+			connectionSettingsUpdatedReceiver
+		)
 
-		lazyMessageBus.value.registerReceiver(
-			connectionSettingsUpdatedReceiver,
-			connectionSettingsChangedFilter)
+		applicationMessageBus.value.registerForClass(
+			cls<BrowserLibrarySelection.LibraryChosenMessage>(),
+			connectionSettingsUpdatedReceiver)
 
 		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton(findViewById(R.id.browseLibraryRelativeLayout))
 
@@ -419,8 +420,9 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 	override fun getNowPlayingFloatingActionButton(): NowPlayingFloatingActionButton = nowPlayingFloatingActionButton
 
 	override fun onDestroy() {
-		if (lazyMessageBus.isInitialized())
-			lazyMessageBus.value.clear()
+		if (applicationMessageBus.isInitialized())
+			applicationMessageBus.value.close()
+
 		super.onDestroy()
 	}
 

@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.list
 
-import android.content.IntentFilter
 import android.os.Bundle
 import android.os.Handler
 import android.view.LayoutInflater
@@ -9,7 +8,6 @@ import android.view.ViewGroup
 import android.widget.ProgressBar
 import android.widget.RelativeLayout
 import androidx.fragment.app.Fragment
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -22,7 +20,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.h
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.ItemStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.LibraryFileStringListProvider
-import com.lasthopesoftware.bluewater.client.browsing.items.menu.MenuNotifications
+import com.lasthopesoftware.bluewater.client.browsing.items.menu.ActivityLaunching
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryProvider
@@ -31,9 +29,11 @@ import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
-import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
+import com.lasthopesoftware.bluewater.shared.messages.application.ScopedApplicationMessageBus
+import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.bluewater.tutorials.TutorialManager
@@ -67,21 +67,15 @@ class ItemListFragment : Fragment() {
 
 	private val tutorialManager by lazy { TutorialManager(requireContext()) }
 
-	private val messageBus = lazy {
-		MessageBus(LocalBroadcastManager.getInstance(requireContext())).apply {
+	private val applicationMessageBus = lazy {
+		val applicationMessageBus = requireContext().getApplicationMessageBus()
+		ScopedApplicationMessageBus(applicationMessageBus, applicationMessageBus).apply {
+			registerReceiver { l: ActivityLaunching ->
+				val isLaunching = l != ActivityLaunching.HALTED // Only show the item list view again when launching error'ed for some reason
 
-			val intentFilter = IntentFilter()
-			intentFilter.addAction(MenuNotifications.launchingActivity)
-			intentFilter.addAction(MenuNotifications.launchingActivityHalted)
-			registerReceiver(
-				{ intent ->
-					val isLaunching = intent.action != MenuNotifications.launchingActivity
-
-					recyclerView?.visibility = ViewUtils.getVisibility(!isLaunching)
-					progressBar?.visibility = ViewUtils.getVisibility(isLaunching)
-				},
-				intentFilter
-			)
+				recyclerView?.visibility = ViewUtils.getVisibility(!isLaunching)
+				progressBar?.visibility = ViewUtils.getVisibility(isLaunching)
+			}
 		}
 	}
 
@@ -93,7 +87,7 @@ class ItemListFragment : Fragment() {
 						?.let { fa ->
 							DemoableItemListAdapter(
 								fa,
-								messageBus.value,
+								applicationMessageBus.value,
 								itemListProvider,
 								itemListMenuChangeHandler,
 								StoredItemAccess(fa),
@@ -106,7 +100,7 @@ class ItemListFragment : Fragment() {
 							.let { context ->
 								ItemListAdapter(
 									context,
-									messageBus.value,
+									applicationMessageBus.value,
 									itemListProvider,
 									itemListMenuChangeHandler,
 									StoredItemAccess(context),
@@ -172,8 +166,8 @@ class ItemListFragment : Fragment() {
 	override fun onDestroy() {
 		super.onDestroy()
 
-		if (messageBus.isInitialized())
-			messageBus.value.clear()
+		if (applicationMessageBus.isInitialized())
+			applicationMessageBus.value.close()
 	}
 
 	private fun fillStandardItemView(libraryId: LibraryId, category: IItem) {

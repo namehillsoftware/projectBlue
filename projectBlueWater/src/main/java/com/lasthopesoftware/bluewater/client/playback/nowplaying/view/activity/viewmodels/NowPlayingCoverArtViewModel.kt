@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels
 
-import android.content.IntentFilter
 import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
@@ -9,11 +8,13 @@ import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionF
 import com.lasthopesoftware.bluewater.client.connection.polling.PollForConnections
 import com.lasthopesoftware.bluewater.client.connection.selected.ProvideSelectedConnection
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaylistEvents
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage.PlaylistChanged
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage.TrackChanged
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
-import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
-import com.lasthopesoftware.bluewater.shared.android.messages.RegisterForMessages
+import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.images.ProvideDefaultImage
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
+import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.namehillsoftware.handoff.promises.Promise
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -23,15 +24,13 @@ import java.util.concurrent.CancellationException
 private val logger by lazy { LoggerFactory.getLogger(NowPlayingCoverArtViewModel::class.java) }
 
 class NowPlayingCoverArtViewModel(
-	private val messages: RegisterForMessages,
+	private val applicationMessage: RegisterForApplicationMessages,
 	private val nowPlayingRepository: GetNowPlayingState,
 	private val selectedConnectionProvider: ProvideSelectedConnection,
 	private val defaultImageProvider: ProvideDefaultImage,
 	private val imageProvider: ProvideImages,
 	private val pollConnections: PollForConnections,
-) : ViewModel() {
-	private val onPlaybackChangedReceiver: ReceiveBroadcastEvents
-
+) : ViewModel(), (ApplicationMessage) -> Unit {
 	private var cachedPromises: CachedPromises? = null
 
 	private val promisedDefaultImage by lazy { defaultImageProvider.promiseFileBitmap() }
@@ -47,19 +46,17 @@ class NowPlayingCoverArtViewModel(
 	val unexpectedError = unexpectedErrorState.asStateFlow()
 
 	init {
-		onPlaybackChangedReceiver = ReceiveBroadcastEvents { setView() }
+		applicationMessage.registerForClass(cls<TrackChanged>(), this)
+		applicationMessage.registerForClass(cls<PlaylistChanged>(), this)
+	}
 
-		val playingFileChangedFilter = IntentFilter().apply {
-			addAction(PlaylistEvents.onPlaylistTrackChange)
-			addAction(PlaylistEvents.onPlaylistChange)
-		}
-
-		messages.registerReceiver(onPlaybackChangedReceiver, playingFileChangedFilter)
+	override fun invoke(p1: ApplicationMessage) {
+		setView()
 	}
 
 	override fun onCleared() {
 		cachedPromises?.close()
-		messages.unregisterReceiver(onPlaybackChangedReceiver)
+		applicationMessage.unregisterReceiver(this)
 	}
 
 	fun initializeViewModel() {

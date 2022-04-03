@@ -9,20 +9,20 @@ import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.Companion.getInstance
 import com.lasthopesoftware.bluewater.client.playback.service.notification.NotificationsConfiguration
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.makePendingIntentImmutable
-import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.notifications.NoOpChannelActivator
 import com.lasthopesoftware.bluewater.shared.android.notifications.control.NotificationsController
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.NotificationChannelActivator
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.SharedChannelProperties
 import com.lasthopesoftware.bluewater.shared.android.services.GenericBinder
 import com.lasthopesoftware.bluewater.shared.android.services.promiseBoundService
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.namehillsoftware.handoff.Messenger
 import com.namehillsoftware.handoff.promises.MessengerOperator
 import com.namehillsoftware.handoff.promises.Promise
@@ -42,19 +42,18 @@ class PollConnectionService : Service(), MessengerOperator<IConnectionProvider> 
 				}
 
 		private val stopWaitingForConnectionAction by lazy { MagicPropertyBuilder.buildMagicPropertyName<PollConnectionService>("stopWaitingForConnection") }
-
-		val connectionLostNotification by lazy { MagicPropertyBuilder.buildMagicPropertyName<PollConnectionService>("connectionLostNotification") }
 	}
+
+	object ConnectionLostNotification : ApplicationMessage
 
 	private var withNotification = false
 
 	private val notificationId = 99
 	private val binder by lazy { GenericBinder(this) }
 	private val handler by lazy { Handler(mainLooper) }
-	private val messageBus by lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
 
 	private val lazyConnectionPoller = lazy {
-		messageBus.sendBroadcast(Intent(connectionLostNotification))
+		getApplicationMessageBus().sendMessage(ConnectionLostNotification)
 		Promise(this)
 	}
 

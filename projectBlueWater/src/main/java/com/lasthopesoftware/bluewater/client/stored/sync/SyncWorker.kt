@@ -4,11 +4,9 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.content.pm.ServiceInfo
 import android.os.Build
 import androidx.core.app.NotificationCompat
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.work.ForegroundInfo
 import androidx.work.ListenableWorker
 import androidx.work.WorkManager
@@ -59,9 +57,11 @@ import com.lasthopesoftware.bluewater.client.stored.sync.receivers.SyncStartedRe
 import com.lasthopesoftware.bluewater.client.stored.sync.receivers.file.*
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.android.makePendingIntentImmutable
-import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.notifications.NoOpChannelActivator
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.NotificationChannelActivator
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
+import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
+import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.policies.caching.CachingPolicyFactory
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
@@ -95,7 +95,7 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 
 	private val applicationSettings by lazy { context.getApplicationSettingsRepository() }
 
-	private val messageBus by lazy { MessageBus(LocalBroadcastManager.getInstance(context)) }
+	private val applicationMessageBus by lazy { context.getApplicationMessageBus().getScopedMessageBus() }
 	private val storedFileAccess by lazy { StoredFileAccess(context) }
 	private val readPermissionArbitratorForOs by lazy { ExternalStorageReadPermissionsArbitratorForOs(context) }
 	private val libraryIdentifierProvider by lazy { SelectedBrowserLibraryIdentifierProvider(applicationSettings) }
@@ -144,7 +144,7 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 				readPermissionArbitratorForOs,
 				libraryIdentifierProvider,
 				true,
-				messageBus
+				applicationMessageBus
 			),
             MediaFileIdProvider(cursorProvider, readPermissionArbitratorForOs),
             StoredFileQuery(context),
@@ -170,7 +170,7 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 		)
 		StoredFileSynchronization(
 			libraryProvider,
-			messageBus,
+			applicationMessageBus,
 			storedFilesPruner,
 			syncChecker,
 			syncHandler
@@ -190,11 +190,11 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 			)
 		val storedFileReadPermissionsReceiver = StoredFileReadPermissionsReceiver(
 			readPermissionArbitratorForOs,
-			StorageReadPermissionsRequestedBroadcaster(messageBus),
+			StorageReadPermissionsRequestedBroadcaster(applicationMessageBus),
 			storedFileAccess)
 		val storedFileWritePermissionsReceiver = StoredFileWritePermissionsReceiver(
 			ExternalStorageWritePermissionsArbitratorForOs(context),
-			StorageWritePermissionsRequestedBroadcaster(messageBus),
+			StorageWritePermissionsRequestedBroadcaster(applicationMessageBus),
 			storedFileAccess)
 
 		arrayOf(
@@ -251,31 +251,26 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 
 		if (!lazyStoredFileEventReceivers.isInitialized()) {
 			for (receiveStoredFileEvent in lazyStoredFileEventReceivers.value.distinct()) {
-				val broadcastReceiver = StoredFileBroadcastReceiver(receiveStoredFileEvent)
-				messageBus.registerReceiver(
-					broadcastReceiver,
-					receiveStoredFileEvent.acceptedEvents().fold(IntentFilter()) { i, e ->
-						i.addAction(e)
-						i
-					})
+				val receiver = StoredFileBroadcastReceiver(receiveStoredFileEvent)
+				for (acceptedMessage in receiveStoredFileEvent.acceptedEvents())
+					applicationMessageBus.registerForClass(acceptedMessage, receiver)
 			}
 		}
 
 		if (!syncStartedReceiver.isInitialized()) {
-			messageBus.registerReceiver(
-				syncStartedReceiver.value,
-				syncStartedReceiver.value.acceptedEvents().fold(IntentFilter()) { i, e ->
-					i.addAction(e)
-					i
-				})
+			applicationMessageBus.registerReceiver(syncStartedReceiver.value)
 		}
 
-		return if (cancellationProxy.isCancelled) Unit.toPromise()
-		else storedFilesSynchronization.streamFileSynchronization()
+		return if (cancellationProxy.isCancelled) {
+			applicationMessageBus.close()
+			Unit.toPromise()
+		} else storedFilesSynchronization.streamFileSynchronization()
 			.toPromise()
 			.also(cancellationProxy::doCancel)
 			.inevitably { Promise.whenAll(promisedNotifications.keys) }
-			.must { messageBus.clear() }
+			.must {
+				applicationMessageBus.close()
+			}
 	}
 
 	override fun notify(notificationText: String?) {

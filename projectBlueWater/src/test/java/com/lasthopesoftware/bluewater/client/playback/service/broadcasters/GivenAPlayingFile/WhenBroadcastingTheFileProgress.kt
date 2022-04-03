@@ -1,29 +1,26 @@
 package com.lasthopesoftware.bluewater.client.playback.service.broadcasters.GivenAPlayingFile
 
-import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile
 import com.lasthopesoftware.bluewater.client.playback.file.PlayedFile
 import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.TrackPositionUpdate
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressedPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
-import com.lasthopesoftware.resources.FakeMessageBus
+import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.mockk
 import org.assertj.core.api.AssertionsForClassTypes.assertThat
 import org.joda.time.Duration
 import org.junit.Test
-import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
 
-@RunWith(RobolectricTestRunner::class)
 class WhenBroadcastingTheFileProgress {
 
 	companion object {
-		private val receivedIntent by lazy {
-			val messageBus = FakeMessageBus(ApplicationProvider.getApplicationContext())
-			val trackPositionBroadcaster = TrackPositionBroadcaster(messageBus, mockk())
+		private val receivedMessage by lazy {
+			val appMessageBus = RecordingApplicationMessageBus()
+			val trackPositionBroadcaster = TrackPositionBroadcaster(appMessageBus, mockk())
 			trackPositionBroadcaster.observeUpdates(object : PlayingFile {
 				override fun promisePause(): Promise<PlayableFile> {
 					return Promise.empty()
@@ -45,15 +42,16 @@ class WhenBroadcastingTheFileProgress {
 				Duration
 					.standardSeconds(2)
 					.plus(Duration.standardSeconds(30)))
-			messageBus.recordedIntents.first()
+
+			appMessageBus.recordedMessages.first() as? TrackPositionUpdate
 		}
 
 		private val duration by lazy {
-			receivedIntent.getLongExtra(TrackPositionBroadcaster.TrackPositionChangedParameters.fileDuration, -1)
+			receivedMessage?.fileDuration
 		}
 
 		private val progress by lazy {
-			receivedIntent.getLongExtra(TrackPositionBroadcaster.TrackPositionChangedParameters.filePosition, -1)
+			receivedMessage?.filePosition
 		}
 	}
 
@@ -61,11 +59,11 @@ class WhenBroadcastingTheFileProgress {
 	fun thenTheProgressIsCorrect() {
 		assertThat(progress).isEqualTo(Duration
 			.standardSeconds(2)
-			.plus(Duration.standardSeconds(30)).millis)
+			.plus(Duration.standardSeconds(30)))
 	}
 
 	@Test
 	fun thenTheDurationIsCorrect() {
-		assertThat(duration).isEqualTo(Duration.standardMinutes(3).millis)
+		assertThat(duration).isEqualTo(Duration.standardMinutes(3))
 	}
 }
