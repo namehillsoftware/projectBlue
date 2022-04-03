@@ -6,12 +6,14 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -25,7 +27,7 @@ import androidx.compose.ui.unit.Dp
 import com.lasthopesoftware.bluewater.BuildConfig
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsActivityIntentBuilder
-import com.lasthopesoftware.bluewater.shared.android.ui.theme.theme.ProjectBlueTheme
+import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
 import com.lasthopesoftware.resources.intents.IntentFactory
 import com.lasthopesoftware.resources.strings.StringResources
 
@@ -57,6 +59,8 @@ fun AboutView() {
 					alignment = Alignment.TopCenter,
 					modifier = Modifier
 						.combinedClickable(
+							interactionSource = remember { MutableInteractionSource() },
+							indication = null,
 							enabled = true,
 							onLongClick = {
 								hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)

@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.shared.android.ui.theme.theme
+package com.lasthopesoftware.bluewater.shared.android.ui.theme
 
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Shapes

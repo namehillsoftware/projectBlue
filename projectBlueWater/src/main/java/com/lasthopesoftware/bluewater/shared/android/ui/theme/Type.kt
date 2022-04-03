@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.shared.android.ui.theme.theme
+package com.lasthopesoftware.bluewater.shared.android.ui.theme
 
 import androidx.compose.material.Typography
 import androidx.compose.ui.text.TextStyle
