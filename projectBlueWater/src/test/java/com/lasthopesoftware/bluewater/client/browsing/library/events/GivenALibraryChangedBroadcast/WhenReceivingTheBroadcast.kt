@@ -5,7 +5,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.lasthopesoftware.bluewater.client.browsing.BrowserEntryActivity
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import org.assertj.core.api.AssertionsForClassTypes.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -18,7 +18,7 @@ class WhenReceivingTheBroadcast {
 	companion object {
 		private val activityController by lazy {
 			val activity = Robolectric.buildActivity(BrowserEntryActivity::class.java).create()
-			ApplicationMessageBus.getInstance()
+			activity.get().getApplicationMessageBus()
 				.sendMessage(BrowserLibrarySelection.LibraryChosenMessage(LibraryId(4)))
 			shadowOf(getMainLooper()).idle()
 			activity

@@ -8,7 +8,6 @@ import android.view.ViewGroup
 import android.widget.ProgressBar
 import android.widget.RelativeLayout
 import androidx.fragment.app.Fragment
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -30,10 +29,9 @@ import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
-import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
-import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.ScopedApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
@@ -69,12 +67,8 @@ class ItemListFragment : Fragment() {
 
 	private val tutorialManager by lazy { TutorialManager(requireContext()) }
 
-	private val messageBus = lazy {
-		MessageBus(LocalBroadcastManager.getInstance(requireContext()))
-	}
-
 	private val applicationMessageBus = lazy {
-		val applicationMessageBus = ApplicationMessageBus.getInstance()
+		val applicationMessageBus = requireContext().getApplicationMessageBus()
 		ScopedApplicationMessageBus(applicationMessageBus, applicationMessageBus).apply {
 			registerReceiver { l: ActivityLaunching ->
 				val isLaunching = l != ActivityLaunching.HALTED // Only show the item list view again when launching error'ed for some reason
@@ -172,8 +166,8 @@ class ItemListFragment : Fragment() {
 	override fun onDestroy() {
 		super.onDestroy()
 
-		if (messageBus.isInitialized())
-			messageBus.value.clear()
+		if (applicationMessageBus.isInitialized())
+			applicationMessageBus.value.close()
 	}
 
 	private fun fillStandardItemView(libraryId: LibraryId, category: IItem) {

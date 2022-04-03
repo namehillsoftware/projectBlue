@@ -24,6 +24,7 @@ class LiveNowPlayingLookup private constructor(
 ) : GetNowPlayingState, (ApplicationMessage) -> Unit {
 
 	companion object {
+		// This needs to be a singleton to ensure the track progress is as up-to-date as possible
 		private lateinit var instance: LiveNowPlayingLookup
 
 		@Synchronized

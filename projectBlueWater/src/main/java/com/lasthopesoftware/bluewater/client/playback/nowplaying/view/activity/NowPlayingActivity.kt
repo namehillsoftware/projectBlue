@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity
 
 import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
 import android.os.Bundle
 import android.os.Handler
 import android.view.View
@@ -11,7 +10,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
 import com.lasthopesoftware.bluewater.R
@@ -43,14 +41,14 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.v
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingScreenViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.databinding.ActivityViewNowPlayingBinding
-import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
-import com.lasthopesoftware.bluewater.shared.android.messages.ReceiveBroadcastEvents
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModel
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToaster
 import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider
-import com.lasthopesoftware.bluewater.shared.messages.application.ScopedApplicationMessageBus
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
+import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
+import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.resources.strings.StringResources
 import kotlinx.coroutines.flow.filterNotNull
@@ -59,6 +57,7 @@ import kotlinx.coroutines.flow.onEach
 
 class NowPlayingActivity :
 	AppCompatActivity(),
+	(PollConnectionService.ConnectionLostNotification) -> Unit,
 	IItemListMenuChangeHandler
 {
 	companion object {
@@ -73,11 +72,9 @@ class NowPlayingActivity :
 	private var viewAnimator: ViewAnimator? = null
 	private val messageHandler by lazy { Handler(mainLooper) }
 
-	private val messageBus = lazy { MessageBus(LocalBroadcastManager.getInstance(this)) }
+	private val applicationMessageBus = lazy { getApplicationMessageBus().getScopedMessageBus() }
 
-	private val applicationMessageBus by lazy { ScopedApplicationMessageBus() }
-
-	private val fileListItemNowPlayingRegistrar = lazy { FileListItemNowPlayingRegistrar(applicationMessageBus) }
+	private val fileListItemNowPlayingRegistrar = lazy { FileListItemNowPlayingRegistrar(applicationMessageBus.value) }
 
 	private val imageProvider by lazy { CachedImageProvider.getInstance(this) }
 
@@ -113,14 +110,11 @@ class NowPlayingActivity :
 
 	private val defaultImageProvider by lazy { DefaultImageProvider(this) }
 
-	private val onConnectionLostListener =
-		ReceiveBroadcastEvents { WaitForConnectionDialog.show(this) }
-
 	private val viewModelMessageBus by buildViewModelLazily { ViewModelMessageBus<NowPlayingPlaylistMessage>(messageHandler) }
 
 	private val nowPlayingViewModel by buildViewModelLazily {
 		NowPlayingScreenViewModel(
-			applicationMessageBus,
+			applicationMessageBus.value,
 			InMemoryNowPlayingDisplaySettings,
 			PlaybackServiceController(this),
 		)
@@ -133,7 +127,7 @@ class NowPlayingActivity :
 		val liveNowPlayingLookup = LiveNowPlayingLookup.getInstance()
 		binding.filePropertiesVm = buildViewModel {
 			NowPlayingFilePropertiesViewModel(
-                applicationMessageBus,
+                applicationMessageBus.value,
                 liveNowPlayingLookup,
                 lazySelectedConnectionProvider,
                 lazyFilePropertiesProvider,
@@ -149,7 +143,7 @@ class NowPlayingActivity :
 
 		binding.coverArtVm = buildViewModel {
 			NowPlayingCoverArtViewModel(
-				applicationMessageBus,
+				applicationMessageBus.value,
 				liveNowPlayingLookup,
 				lazySelectedConnectionProvider,
 				defaultImageProvider,
@@ -165,7 +159,7 @@ class NowPlayingActivity :
 
 	private val playlistViewModel by buildViewModelLazily {
 		NowPlayingPlaylistViewModel(
-			applicationMessageBus,
+			applicationMessageBus.value,
 			LiveNowPlayingLookup.getInstance(),
 			viewModelMessageBus
 		)
@@ -205,7 +199,7 @@ class NowPlayingActivity :
 			})
 		}
 
-		messageBus.value.registerReceiver(onConnectionLostListener, IntentFilter(PollConnectionService.connectionLostNotification))
+		applicationMessageBus.value.registerReceiver(this)
 	}
 
 	override fun onStart() {
@@ -232,7 +226,11 @@ class NowPlayingActivity :
 		super.onDestroy()
 
 		if (fileListItemNowPlayingRegistrar.isInitialized()) fileListItemNowPlayingRegistrar.value.clear()
-		if (messageBus.isInitialized()) messageBus.value.unregisterReceiver(onConnectionLostListener)
+		if (applicationMessageBus.isInitialized()) applicationMessageBus.value.unregisterReceiver(this)
+	}
+
+	override fun invoke(p1: PollConnectionService.ConnectionLostNotification) {
+		WaitForConnectionDialog.show(this)
 	}
 
 	override fun onAllMenusHidden() {}

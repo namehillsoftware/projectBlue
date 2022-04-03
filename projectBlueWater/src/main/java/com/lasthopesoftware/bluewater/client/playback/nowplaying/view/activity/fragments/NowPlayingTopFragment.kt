@@ -7,7 +7,6 @@ import android.view.ViewGroup
 import android.widget.RatingBar
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.SelectedConnectionFilePropertiesProvider
@@ -26,17 +25,15 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.v
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.databinding.ControlNowPlayingTopSheetBinding
-import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildActivityViewModel
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildActivityViewModelLazily
-import com.lasthopesoftware.bluewater.shared.messages.application.ScopedApplicationMessageBus
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
+import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
 import com.lasthopesoftware.resources.strings.StringResources
 
 class NowPlayingTopFragment : Fragment() {
 
-	private val messageBus = lazy { MessageBus(LocalBroadcastManager.getInstance(requireContext())) }
-
-	private val applicationMessageBus by lazy { ScopedApplicationMessageBus() }
+	private val applicationMessageBus by lazy { requireContext().getApplicationMessageBus().getScopedMessageBus() }
 
 	private val selectedConnectionProvider by lazy { SelectedConnectionProvider(requireContext()) }
 

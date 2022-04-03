@@ -10,7 +10,6 @@ import android.widget.Button
 import android.widget.ProgressBar
 import android.widget.RadioGroup
 import androidx.appcompat.app.AppCompatActivity
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.lasthopesoftware.bluewater.R
@@ -28,9 +27,9 @@ import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 import com.lasthopesoftware.bluewater.client.servers.list.ServerListAdapter
 import com.lasthopesoftware.bluewater.client.servers.list.listeners.EditServerClickListener
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
-import com.lasthopesoftware.bluewater.shared.android.messages.MessageBus
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
-import com.lasthopesoftware.bluewater.shared.messages.application.ScopedApplicationMessageBus
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
+import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 
 class ApplicationSettingsActivity : AppCompatActivity() {
@@ -40,7 +39,7 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 	private val killPlaybackEngineButton = LazyViewFinder<Button>(this, R.id.killPlaybackEngine)
 	private val settingsMenu by lazy { SettingsMenu(this, AboutTitleBuilder(this)) }
 	private val applicationSettingsRepository by lazy { getApplicationSettingsRepository() }
-	private val applicationMessageBus by lazy { ScopedApplicationMessageBus() }
+	private val applicationMessageBus by lazy { getApplicationMessageBus().getScopedMessageBus() }
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -68,7 +67,7 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 
 		val selection = PlaybackEngineTypeSelectionPersistence(
 			applicationSettingsRepository,
-			PlaybackEngineTypeChangedBroadcaster(MessageBus(LocalBroadcastManager.getInstance(this))))
+			PlaybackEngineTypeChangedBroadcaster(applicationMessageBus))
 
 		val selectedPlaybackEngineTypeAccess = SelectedPlaybackEngineTypeAccess(applicationSettingsRepository, DefaultPlaybackEngineLookup())
 
@@ -124,7 +123,8 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 
 		val adapter = ServerListAdapter(
 			this,
-			BrowserLibrarySelection(applicationSettingsRepository, applicationMessageBus, libraryProvider))
+			BrowserLibrarySelection(applicationSettingsRepository, applicationMessageBus, libraryProvider),
+			applicationMessageBus)
 
 		val serverListView = serverListView.findView()
 		serverListView.adapter = adapter

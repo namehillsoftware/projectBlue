@@ -1,9 +1,9 @@
 package com.lasthopesoftware.bluewater.client.browsing.library.events.GivenARandomBroadcast
 
-import android.content.Intent
-import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.BrowserEntryActivity
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import org.assertj.core.api.AssertionsForClassTypes.assertThat
 import org.junit.Test
 import org.robolectric.Robolectric
@@ -11,20 +11,18 @@ import org.robolectric.Robolectric
 class WhenReceivingTheBroadcast : AndroidContext() {
 
 	companion object {
-		private val activityController = lazy {
+		private val activityController by lazy {
 			Robolectric.buildActivity(BrowserEntryActivity::class.java).create().start().resume()
 		}
 	}
 
 	override fun before() {
 		System.setProperty("javax.net.ssl.trustStoreType", "JKS")
-		val localBroadcastManager = LocalBroadcastManager.getInstance(activityController.value.get())
-		val broadcastIntent = Intent("absr4")
-		localBroadcastManager.sendBroadcast(broadcastIntent)
+		activityController.get().getApplicationMessageBus().sendMessage(object : ApplicationMessage{})
 	}
 
 	@Test
 	fun thenTheActivityIsNotFinished() {
-		assertThat(activityController.value.get().isFinishing).isFalse
+		assertThat(activityController.get().isFinishing).isFalse
 	}
 }
