@@ -21,7 +21,6 @@ import ch.qos.logback.core.rolling.TimeBasedRollingPolicy
 import ch.qos.logback.core.util.StatusPrinter
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.playstats.UpdatePlayStatsOnCompleteRegistration
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.request.read.StorageReadPermissionsRequestNotificationBuilder
 import com.lasthopesoftware.bluewater.client.browsing.library.request.read.StorageReadPermissionsRequestedBroadcaster
@@ -31,16 +30,12 @@ import com.lasthopesoftware.bluewater.client.connection.receivers.SessionConnect
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionSettingsChangeReceiver
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionSettingsChangeReceiver
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage.TrackChanged
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.TrackPositionUpdate
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble.PlaybackFileStartedScrobblerRegistration
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble.PlaybackFileStoppedScrobblerRegistration
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
 import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
-import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
@@ -61,7 +56,6 @@ open class MainApplication : Application() {
 	private val storageReadPermissionsRequestNotificationBuilder by lazy { StorageReadPermissionsRequestNotificationBuilder(this) }
 	private val storageWritePermissionsRequestNotificationBuilder by lazy { StorageWritePermissionsRequestNotificationBuilder(this) }
 	private val applicationMessageBus by lazy { getApplicationMessageBus() }
-	private val liveNowPlayingLookup by lazy { LiveNowPlayingLookup.initializeInstance(this) }
 	private val applicationSettings by lazy { getApplicationSettingsRepository() }
 
 	@SuppressLint("DefaultLocale")
@@ -134,12 +128,6 @@ open class MainApplication : Application() {
 			applicationMessageBus,
 			connectionDependentReceiverRegistrations
 		))
-
-		with (applicationMessageBus) {
-			registerForClass(cls<BrowserLibrarySelection.LibraryChosenMessage>(), liveNowPlayingLookup)
-			registerForClass(cls<TrackPositionUpdate>(), liveNowPlayingLookup)
-			registerForClass(cls<TrackChanged>(), liveNowPlayingLookup)
-		}
 	}
 
 	private fun initializeLogging() {

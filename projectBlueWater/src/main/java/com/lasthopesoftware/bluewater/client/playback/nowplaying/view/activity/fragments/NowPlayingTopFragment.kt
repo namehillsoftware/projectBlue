@@ -13,6 +13,8 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.storage.ScopedFilePropertiesStorage
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.storage.SelectedConnectionFilePropertiesStorage
+import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.SelectedConnectionRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.authentication.ScopedConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.authentication.SelectedConnectionAuthenticationChecker
@@ -25,6 +27,7 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.v
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.databinding.ControlNowPlayingTopSheetBinding
+import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildActivityViewModel
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildActivityViewModelLazily
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
@@ -77,9 +80,20 @@ class NowPlayingTopFragment : Fragment() {
 			)
 		}
 
+		val liveNowPlayingLookup = buildActivityViewModel {
+			val context = requireContext()
+			val libraryRepository = LibraryRepository(context)
+			LiveNowPlayingLookup(
+				SelectedBrowserLibraryIdentifierProvider(context.getApplicationSettingsRepository()),
+				libraryRepository,
+				libraryRepository,
+				applicationMessageBus
+			)
+		}
+
 		NowPlayingFilePropertiesViewModel(
             applicationMessageBus,
-            LiveNowPlayingLookup.getInstance(),
+            liveNowPlayingLookup,
             selectedConnectionProvider,
             lazyFilePropertiesProvider,
             filePropertiesStorage,
