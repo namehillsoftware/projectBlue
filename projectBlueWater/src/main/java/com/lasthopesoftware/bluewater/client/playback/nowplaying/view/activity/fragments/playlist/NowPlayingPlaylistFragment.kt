@@ -139,17 +139,6 @@ class NowPlayingPlaylistFragment : Fragment() {
 		}, requireContext()))
 	}
 
-	private val liveNowPlayingLookup by buildActivityViewModelLazily {
-		val context = requireContext()
-		val libraryRepository = LibraryRepository(context)
-		LiveNowPlayingLookup(
-			SelectedBrowserLibraryIdentifierProvider(context.getApplicationSettingsRepository()),
-			libraryRepository,
-			libraryRepository,
-			applicationMessageBus
-		)
-	}
-
 	private val viewModel by buildActivityViewModelLazily {
 		val playbackService = PlaybackServiceController(requireContext())
 
@@ -163,7 +152,7 @@ class NowPlayingPlaylistFragment : Fragment() {
 
 		NowPlayingFilePropertiesViewModel(
             applicationMessageBus,
-            liveNowPlayingLookup,
+            LiveNowPlayingLookup.getInstance(),
             selectedConnectionProvider,
             lazyFilePropertiesProvider,
             filePropertiesStorage,
@@ -179,7 +168,7 @@ class NowPlayingPlaylistFragment : Fragment() {
 	private val playlistViewModel by buildActivityViewModelLazily {
 		NowPlayingPlaylistViewModel(
 			applicationMessageBus,
-			liveNowPlayingLookup,
+			LiveNowPlayingLookup.getInstance(),
 			viewModelMessageBus
 		)
 	}
