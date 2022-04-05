@@ -75,7 +75,6 @@ import com.lasthopesoftware.storage.write.permissions.ExternalStorageWritePermis
 import com.lasthopesoftware.storage.write.permissions.FileWritePossibleArbitrator
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
-import java.util.concurrent.ConcurrentHashMap
 
 open class SyncWorker(private val context: Context, workerParams: WorkerParameters) :
 	ListenableWorker(context, workerParams),
@@ -232,9 +231,12 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 
 	private val cancelIntent by lazy { WorkManager.getInstance(context).createCancelPendingIntent(id) }
 
-	private val promisedNotifications = ConcurrentHashMap<Promise<Unit>, Unit>()
+	private val notificationSync = Any()
 
 	private val cancellationProxy = CancellationProxy()
+
+	@Volatile
+	private var activePromisedNotification = Unit.toPromise()
 
 	final override fun startWork(): ListenableFuture<Result> {
 		val futureResult = SettableFuture.create<Result>()
@@ -264,13 +266,20 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 		return if (cancellationProxy.isCancelled) {
 			applicationMessageBus.close()
 			Unit.toPromise()
-		} else storedFilesSynchronization.streamFileSynchronization()
-			.toPromise()
-			.also(cancellationProxy::doCancel)
-			.inevitably { Promise.whenAll(promisedNotifications.keys) }
-			.must {
-				applicationMessageBus.close()
-			}
+		} else {
+			storedFilesSynchronization.streamFileSynchronization()
+				.toPromise()
+				.also(cancellationProxy::doCancel)
+				.inevitably {
+					cancellationProxy.run() // Cancel any on-going processes
+					synchronized(notificationSync) {
+						activePromisedNotification
+					}
+				}
+				.must {
+					applicationMessageBus.close()
+				}
+		}
 	}
 
 	override fun notify(notificationText: String?) {
@@ -286,11 +295,19 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 		notifyBuilder.setContentTitle(context.getText(R.string.title_sync_files))
 		notifyBuilder.setContentText(notificationText)
 		val syncNotification = notifyBuilder.build()
-		val serviceType = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC else 0
-		val promisedForegroundNotification = setForegroundAsync(ForegroundInfo(notificationId, syncNotification, serviceType))
-			.toPromise(ThreadPools.compute)
-			.unitResponse()
-		promisedNotifications.putIfAbsent(promisedForegroundNotification, Unit)
-		promisedForegroundNotification.must { promisedNotifications.remove(promisedForegroundNotification) }
+		val serviceType =
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC else 0
+
+		synchronized(notificationSync) {
+			if (cancellationProxy.isCancelled) return
+
+			activePromisedNotification = activePromisedNotification.inevitably {
+				if (cancellationProxy.isCancelled) Unit.toPromise()
+				else setForegroundAsync(ForegroundInfo(notificationId, syncNotification, serviceType))
+					.toPromise(ThreadPools.compute)
+					.also(cancellationProxy::doCancel)
+					.unitResponse()
+			}
+		}
 	}
 }
