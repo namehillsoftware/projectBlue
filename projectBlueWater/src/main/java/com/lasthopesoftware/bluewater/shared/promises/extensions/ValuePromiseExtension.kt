@@ -7,14 +7,11 @@ import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import io.reactivex.Completable
 import io.reactivex.CompletableObserver
 import io.reactivex.disposables.Disposable
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.*
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executor
 
-fun <T> Promise<T>.toDeferred(): Deferred<T> = CompletableDeferred<T>().also {
+fun <T> Promise<T>.toAsync(): Deferred<T> = CompletableDeferred<T>().also {
 	then(it::complete, it::completeExceptionally)
 }
 
@@ -89,33 +86,35 @@ private class PromisedListenableFuture<Resolution>(listenableFuture: ListenableF
 	}
 }
 
-private class PromiseJob(private val job: Job) : Promise<Unit>(), Runnable {
+private class PromiseJob(private val job: Job) : Promise<Unit>(), Runnable, CompletionHandler {
 	init {
-	    job.invokeOnCompletion { e ->
-			if (e == null) resolve(Unit)
-			else reject(e)
-		}
-
+	    job.invokeOnCompletion(this)
 		respondToCancellation(this)
 	}
 
 	override fun run() {
 		job.cancel()
 	}
+
+	override fun invoke(cause: Throwable?) {
+		if (cause == null) resolve(Unit)
+		else reject(cause)
+	}
 }
 
 @ExperimentalCoroutinesApi
-private class PromiseDeferred<T>(private val deferred: Deferred<T>): Promise<T>(), Runnable {
+private class PromiseDeferred<T>(private val deferred: Deferred<T>): Promise<T>(), Runnable, CompletionHandler {
 	init {
-	    deferred.invokeOnCompletion { e ->
-			if (e == null) resolve(deferred.getCompleted())
-			else reject(e)
-		}
-
+	    deferred.invokeOnCompletion(this)
 		respondToCancellation(this)
 	}
 
 	override fun run() {
 		deferred.cancel()
+	}
+
+	override fun invoke(cause: Throwable?) {
+		if (cause == null) resolve(deferred.getCompleted())
+		else reject(cause)
 	}
 }
