@@ -4,4 +4,5 @@ interface GetStringResources {
 	val loading: String
 	val defaultTitle: String
 	val defaultArtist: String
+    val aboutTitle: String
 }

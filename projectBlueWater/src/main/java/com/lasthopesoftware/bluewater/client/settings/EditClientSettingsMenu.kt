@@ -6,15 +6,15 @@ import android.view.Menu
 import android.view.MenuItem
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.about.AboutActivity
-import com.lasthopesoftware.bluewater.about.BuildAboutTitle
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.views.RemoveLibraryConfirmationDialogBuilder
+import com.lasthopesoftware.resources.strings.GetStringResources
 
-class EditClientSettingsMenu(private val activity: Activity, private val aboutTitleBuilder: BuildAboutTitle, private val removeLibraryConfirmationDialog: RemoveLibraryConfirmationDialogBuilder) {
+class EditClientSettingsMenu(private val activity: Activity, private val stringResources: GetStringResources, private val removeLibraryConfirmationDialog: RemoveLibraryConfirmationDialogBuilder) {
 	fun buildSettingsMenu(menu: Menu): Boolean {
 		activity.menuInflater.inflate(R.menu.menu_client_settings, menu)
 		val menuItem = menu.findItem(R.id.menuAboutApp)
-		menuItem.title = aboutTitleBuilder.buildTitle()
+		menuItem.title = stringResources.aboutTitle
 		return true
 	}
 

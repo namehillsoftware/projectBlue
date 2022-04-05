@@ -12,7 +12,6 @@ import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.lasthopesoftware.bluewater.R
-import com.lasthopesoftware.bluewater.about.AboutTitleBuilder
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRemoval
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
@@ -32,6 +31,7 @@ import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
+import com.lasthopesoftware.resources.strings.StringResources
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 
 class EditClientSettingsActivity :
@@ -71,7 +71,7 @@ class EditClientSettingsActivity :
 	private val settingsMenu by lazy {
 		EditClientSettingsMenu(
 			this,
-			AboutTitleBuilder(this),
+			StringResources(this),
 			RemoveLibraryConfirmationDialogBuilder(
 				this,
 				LibraryRemoval(

@@ -33,7 +33,6 @@
         <!-- Begin Connection intents -->
         <activity
             android:name=".client.connection.selected.InstantiateSelectedConnectionActivity"
-            android:label="@string/app_name"
             android:launchMode="singleTop"
             android:noHistory="true" />
         <activity
@@ -58,12 +57,13 @@
             android:label="@string/title_activity_about" />
         <activity
             android:name=".settings.hidden.HiddenSettingsActivity"
+            android:exported="false"
             android:label="@string/layout_settings" />
         <activity
             android:name=".client.browsing.BrowserEntryActivity"
+            android:exported="true"
             android:label="@string/app_name"
-            android:launchMode="singleTop"
-            android:exported="true">
+            android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -93,7 +93,7 @@
                 android:value="com.lasthopesoftware.bluewater.client.browsing.items.media.files.list.FileListActivity" />
         </activity>
         <activity
-            android:name="com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.NowPlayingActivity"
+            android:name=".client.playback.nowplaying.view.activity.NowPlayingActivity"
             android:label="@string/title_activity_view_now_playing"
             android:launchMode="singleTask"
             android:theme="@style/NowPlayingTheme" />
@@ -124,8 +124,8 @@
         <service
             android:name=".client.playback.service.PlaybackService"
             android:enabled="true"
-            android:foregroundServiceType="mediaPlayback"
-            android:exported="false" />
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback" />
         <service
             android:name=".client.connection.polling.PollConnectionService"
             android:enabled="true"
@@ -146,8 +146,8 @@
         <service
             android:name="androidx.work.impl.foreground.SystemForegroundService"
             android:foregroundServiceType="dataSync"
-            tools:node="merge"
-            tools:ignore="Instantiatable" />
+            tools:ignore="Instantiatable"
+            tools:node="merge" />
 
         <provider
             android:name="androidx.startup.InitializationProvider"
