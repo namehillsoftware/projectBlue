@@ -70,6 +70,6 @@ class WhenPreparing {
 
 	@Test
 	fun thenAnEmptyPlayerIsReturned() {
-		assertThat(preparedPlayer).isInstanceOf(cls<EmptyPlaybackHandler>())
+		assertThat(preparedPlayer?.playbackHandler).isInstanceOf(cls<EmptyPlaybackHandler>())
 	}
 }

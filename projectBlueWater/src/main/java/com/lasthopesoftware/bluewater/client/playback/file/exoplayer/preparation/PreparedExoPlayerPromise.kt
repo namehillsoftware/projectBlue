@@ -6,6 +6,7 @@ import com.google.android.exoplayer2.*
 import com.google.android.exoplayer2.audio.AudioRendererEventListener
 import com.google.android.exoplayer2.metadata.MetadataOutput
 import com.google.android.exoplayer2.text.TextOutput
+import com.google.android.exoplayer2.upstream.HttpDataSource
 import com.google.android.exoplayer2.video.VideoRendererEventListener
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.PromisingExoPlayer
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.ProvideExoPlayers
@@ -21,6 +22,7 @@ import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken
 import org.joda.time.Duration
 import org.slf4j.LoggerFactory
+import java.net.ProtocolException
 import java.util.concurrent.CancellationException
 
 internal class PreparedExoPlayerPromise(
@@ -147,11 +149,21 @@ internal class PreparedExoPlayerPromise(
 			return
 		}
 
-		when (error.cause) {
+		when (val cause = error.cause) {
 			is ParserException -> {
 				logger.warn("A parser exception occurred while preparing the file, skipping playback", error)
 				val emptyPlaybackHandler = EmptyPlaybackHandler(0)
 				resolve(PreparedPlayableFile(emptyPlaybackHandler, PassthroughVolumeManager(), emptyPlaybackHandler))
+			}
+			is HttpDataSource.HttpDataSourceException -> {
+				when (cause.cause) {
+					is ProtocolException -> {
+						logger.warn("A ProtocolException occurred while preparing the file, skipping playback", error)
+						val emptyPlaybackHandler = EmptyPlaybackHandler(0)
+						resolve(PreparedPlayableFile(emptyPlaybackHandler, PassthroughVolumeManager(), emptyPlaybackHandler))
+					}
+					else -> reject(error)
+				}
 			}
 			else -> reject(error)
 		}
