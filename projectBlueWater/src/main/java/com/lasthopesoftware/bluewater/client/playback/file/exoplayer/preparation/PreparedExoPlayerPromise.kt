@@ -2,12 +2,10 @@ package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparatio
 
 import android.net.Uri
 import android.os.Handler
-import com.google.android.exoplayer2.*
-import com.google.android.exoplayer2.audio.AudioRendererEventListener
-import com.google.android.exoplayer2.metadata.MetadataOutput
-import com.google.android.exoplayer2.text.TextOutput
+import com.google.android.exoplayer2.ParserException
+import com.google.android.exoplayer2.PlaybackException
+import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.upstream.HttpDataSource
-import com.google.android.exoplayer2.video.VideoRendererEventListener
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.PromisingExoPlayer
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.ProvideExoPlayers
 import com.lasthopesoftware.bluewater.client.playback.file.EmptyPlaybackHandler
@@ -34,8 +32,7 @@ internal class PreparedExoPlayerPromise(
 ) :
 	Promise<PreparedPlayableFile>(),
 	Player.Listener,
-	Runnable,
-	RenderersFactory {
+	Runnable {
 
 	companion object {
 		private val logger by lazy { LoggerFactory.getLogger(PreparedExoPlayerPromise::class.java) }
@@ -43,7 +40,6 @@ internal class PreparedExoPlayerPromise(
 
 	private val cancellationToken = CancellationToken()
 
-	private lateinit var audioRenderers: Array<Renderer>
 	private lateinit var bufferingExoPlayer: BufferingExoPlayer
 	private var exoPlayer: PromisingExoPlayer? = null
 	private var isResolved = false
@@ -118,21 +114,13 @@ internal class PreparedExoPlayerPromise(
 		resolve(
 			PreparedPlayableFile(
 				ExoPlayerPlaybackHandler(exoPlayer),
-				AudioTrackVolumeManager(exoPlayer, audioRenderers),
+				AudioTrackVolumeManager(exoPlayer),
 				bufferingExoPlayer))
 	}
 
 	override fun onPlayerError(error: PlaybackException) {
 		handleError(error)
 	}
-
-	override fun createRenderers(
-		eventHandler: Handler,
-		videoRendererEventListener: VideoRendererEventListener,
-		audioRendererEventListener: AudioRendererEventListener,
-		textRendererOutput: TextOutput,
-		metadataRendererOutput: MetadataOutput
-	): Array<Renderer> = audioRenderers
 
 	private fun handleError(error: Throwable) {
 		if (isResolved) return

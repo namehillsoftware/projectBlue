@@ -81,6 +81,15 @@ class HandlerDispatchingExoPlayer(private val innerPlayer: ExoPlayer, private va
 			},
 			handler)
 
+	override fun setVolume(volume: Float): Promise<PromisingExoPlayer> =
+		LoopedInPromise(
+			MessageWriter {
+				innerPlayer.volume = volume
+				this
+			},
+			handler
+		)
+
 	override fun addMediaItem(mediaItem: MediaItem): Promise<PromisingExoPlayer> =
 		LoopedInPromise(
 			MessageWriter {

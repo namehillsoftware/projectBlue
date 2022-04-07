@@ -34,16 +34,16 @@ class WhenPreparing {
 				},
 				mockk<ProvideExoPlayers>().apply {
 					every { promiseExoPlayer() } returns Promise(mockk<PromisingExoPlayer>().apply {
-						val player = this
+						val selfPromise = this.toPromise()
 						every { addListener(any()) } answers {
 							listener = firstArg()
-							player.toPromise()
+							selfPromise
 						}
-						every { setMediaSource(any()) } returns this.toPromise()
-						every { removeListener(any()) } returns this.toPromise()
-						every { prepare() } returns this.toPromise()
-						every { stop() } returns this.toPromise()
-						every { release() } returns this.toPromise()
+						every { setMediaSource(any()) } returns selfPromise
+						every { removeListener(any()) } returns selfPromise
+						every { prepare() } returns selfPromise
+						every { stop() } returns selfPromise
+						every { release() } returns selfPromise
 					})
 				},
 				mockk()
