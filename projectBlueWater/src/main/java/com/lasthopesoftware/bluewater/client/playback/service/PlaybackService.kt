@@ -146,7 +146,7 @@ open class PlaybackService :
 		private const val connectingNotificationId = 70
 
 		private const val numberOfDisconnects = 3
-		private val disconnectResetDuration = Duration.standardSeconds(1)
+		private val disconnectResetDuration = Duration.standardMinutes(1)
 
 		private const val numberOfErrors = 5
 		private val errorLatchResetDuration = Duration.standardSeconds(3)
@@ -863,6 +863,19 @@ open class PlaybackService :
 	}
 
 	private fun uncaughtExceptionHandler(exception: Throwable?) {
+		fun handleDisconnection() {
+			if (disconnectionLatch.trigger()) {
+				logger.error("Unable to re-connect after $numberOfDisconnects in less than $disconnectResetDuration, stopping the playback service.")
+				UnexpectedExceptionToaster.announce(this, exception)
+				stopSelf(startId)
+				return
+			}
+
+			logger.warn("Number of disconnections has not surpassed $numberOfDisconnects in less than $disconnectResetDuration. Checking for disconnections.")
+			pollSessionConnection(this, true)
+				.then(connectionRegainedListener, onPollingCancelledListener)
+		}
+
 		fun handlePlaybackEngineInitializationException(exception: PlaybackEngineInitializationException) {
 			logger.error("There was an error initializing the playback engine", exception)
 			stopSelf(startId)
@@ -934,21 +947,10 @@ open class PlaybackService :
 		}
 	}
 
-	private fun handleDisconnection() {
-		if (disconnectionLatch.trigger()) {
-			logger.error("Unable to re-connect after $numberOfDisconnects in less than $disconnectResetDuration, stopping the playback service.")
-			stopSelf(startId)
-			return
-		}
-
-		logger.warn("Number of disconnections has not surpassed $numberOfDisconnects in less than $disconnectResetDuration. Checking for disconnections.")
-		pollSessionConnection(this, true)
-			.then(connectionRegainedListener, onPollingCancelledListener)
-	}
-
 	private fun closeAndRestartPlaylistManager(error: Throwable) {
 		if (errorLatch.trigger()) {
 			logger.error("$numberOfErrors occurred within $errorLatchResetDuration, stopping the playback service. Last error: ${error.message}", error)
+			UnexpectedExceptionToaster.announce(this, error)
 			stopSelf(startId)
 			return
 		}

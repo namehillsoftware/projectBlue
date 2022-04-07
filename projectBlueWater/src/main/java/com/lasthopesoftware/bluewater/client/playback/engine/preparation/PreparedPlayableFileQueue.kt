@@ -72,9 +72,11 @@ class PreparedPlayableFileQueue(
 	override fun promiseNextPreparedPlaybackFile(preparedAt: Duration): Promise<PositionedPlayableFile>? {
 		return bufferingMediaPlayerPromises.poll()?.let {
 			currentPreparingPlaybackHandlerPromise = it
-			Promise.whenAny(
-				it.promisePositionedPreparedPlaybackFile(),
-				Promise(PositionedPreparedPlayableFile.emptyHandler(it.positionedFile)))
+			Promise
+				.whenAny(
+					it.promisePositionedPreparedPlaybackFile(),
+					Promise(PositionedPreparedPlayableFile.emptyHandler(it.positionedFile))
+				)
 				.eventually(::preparePlayableFileAgainIfNecessary)
 				.then(::toPositionedPlayableFile)
 		} ?: getNextFaultingPreparingMediaPlayerPromise(preparedAt).let {
@@ -131,20 +133,21 @@ class PreparedPlayableFileQueue(
 			if (bufferingMediaPlayerPromises.size >= configuration.maxQueueSize) return
 			val nextPreparingMediaPlayerPromise = getNextUnfaultingPreparingMediaPlayerPromise() ?: return
 			bufferingMediaPlayerPromises.offer(nextPreparingMediaPlayerPromise)
-			nextPreparingMediaPlayerPromise.promisePositionedPreparedPlaybackFile().then(::toPositionedPlayableFile)
 		} finally {
 			writeLock.unlock()
 		}
 	}
 
 	private fun toPositionedPlayableFile(positionedPreparedPlayableFile: PositionedPreparedPlayableFile): PositionedPlayableFile {
-		positionedPreparedPlayableFile.preparedPlayableFile
+		val playableFile = positionedPreparedPlayableFile.preparedPlayableFile ?: throw IllegalStateException("Should not call this method with a null preparedPlayableFile")
+
+		playableFile
 			.bufferingPlaybackFile
 			.promiseBufferedPlaybackFile()
 			.then { beginQueueingPreparingPlayers() }
 		return PositionedPlayableFile(
-			positionedPreparedPlayableFile.preparedPlayableFile.playbackHandler,
-			positionedPreparedPlayableFile.preparedPlayableFile.playableFileVolumeManager,
+			playableFile.playbackHandler,
+			playableFile.playableFileVolumeManager,
 			positionedPreparedPlayableFile.positionedFile)
 	}
 

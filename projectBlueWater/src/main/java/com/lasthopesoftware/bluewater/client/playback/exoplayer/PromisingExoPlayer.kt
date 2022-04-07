@@ -27,6 +27,8 @@ interface PromisingExoPlayer {
 
 	fun setMediaItem(mediaItem: MediaItem, resetPosition: Boolean): Promise<PromisingExoPlayer>
 
+	fun setVolume(volume: Float): Promise<PromisingExoPlayer>
+
 	fun addMediaItem(mediaItem: MediaItem): Promise<PromisingExoPlayer>
 
 	fun addMediaItem(index: Int, mediaItem: MediaItem): Promise<PromisingExoPlayer>

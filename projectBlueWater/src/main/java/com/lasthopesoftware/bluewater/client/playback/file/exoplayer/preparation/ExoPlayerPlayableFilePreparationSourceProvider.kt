@@ -5,6 +5,7 @@ import android.os.Handler
 import com.google.android.exoplayer2.DefaultLoadControl
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.uri.BestMatchUriProvider
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlayableFilePreparationSourceProvider
+import com.lasthopesoftware.bluewater.client.playback.exoplayer.ExoPlayerProvider
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.SpawnMediaSources
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.rendering.AudioRenderersFactory
 import org.joda.time.Minutes
@@ -18,13 +19,13 @@ class ExoPlayerPlayableFilePreparationSourceProvider(
 ) : IPlayableFilePreparationSourceProvider {
 
 	companion object {
-		private val maxBufferMs = lazy { Minutes.minutes(5).toStandardDuration().millis.toInt() }
-		private val loadControl = lazy {
+		private val maxBufferMs by lazy { Minutes.minutes(5).toStandardDuration().millis.toInt() }
+		private val loadControl by lazy {
 			val builder = DefaultLoadControl.Builder()
 			builder
 				.setBufferDurationsMs(
 					DefaultLoadControl.DEFAULT_MIN_BUFFER_MS,
-					maxBufferMs.value,
+					maxBufferMs,
 					DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_MS,
 					DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS)
 				.setPrioritizeTimeOverSizeThresholds(true)
@@ -32,16 +33,22 @@ class ExoPlayerPlayableFilePreparationSourceProvider(
 		}
 	}
 
-	private val renderersFactory = AudioRenderersFactory(context, eventHandler)
+	private val renderersFactory = AudioRenderersFactory(context)
+
+	private val exoPlayerProvider by lazy {
+		ExoPlayerProvider(
+			context,
+			renderersFactory,
+			loadControl,
+			playbackHandler
+		)
+	}
 
 	override fun getMaxQueueSize() = 1
 
 	override fun providePlayableFilePreparationSource() = ExoPlayerPlaybackPreparer(
-		context,
 		mediaSourceProvider,
-		loadControl.value,
-		renderersFactory,
-		playbackHandler,
+		exoPlayerProvider,
 		eventHandler,
 		bestMatchUriProvider
 	)
