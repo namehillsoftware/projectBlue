@@ -4,49 +4,21 @@ import android.content.Context
 import android.os.Handler
 import com.google.android.exoplayer2.ExoPlayer
 import com.google.android.exoplayer2.LoadControl
-import com.google.android.exoplayer2.Renderer
 import com.google.android.exoplayer2.RenderersFactory
-import com.google.android.exoplayer2.audio.AudioRendererEventListener
-import com.google.android.exoplayer2.metadata.MetadataOutput
-import com.google.android.exoplayer2.text.TextOutput
-import com.google.android.exoplayer2.video.VideoRendererEventListener
-import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.rendering.GetAudioRenderers
-import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 
 class ExoPlayerProvider(
 	private val context: Context,
-	private val renderersFactory: GetAudioRenderers,
+	private val renderersFactory: RenderersFactory,
 	private val loadControl: LoadControl,
 	private val playbackHandler: Handler,
 ) :
-	ProvideExoPlayers,
-	RenderersFactory,
-	ImmediateResponse<Array<Renderer>, PromisingExoPlayer>
+	ProvideExoPlayers
 {
-	private val promisedRenderers by lazy {
-		renderersFactory.newRenderers()
-	}
-
-	private lateinit var audioRenderers: Array<Renderer>
-
-	override fun promiseExoPlayer(): Promise<PromisingExoPlayer> = promisedRenderers.then(this)
-
-	override fun respond(renderers: Array<Renderer>): PromisingExoPlayer {
-		audioRenderers = renderers
-
-		val exoPlayerBuilder = ExoPlayer.Builder(context, this)
+	override fun getExoPlayer(): PromisingExoPlayer {
+		val exoPlayerBuilder = ExoPlayer.Builder(context, renderersFactory)
 			.setLoadControl(loadControl)
 			.setLooper(playbackHandler.looper)
 
 		return HandlerDispatchingExoPlayer(exoPlayerBuilder.build(), playbackHandler)
 	}
-
-	override fun createRenderers(
-		eventHandler: Handler,
-		videoRendererEventListener: VideoRendererEventListener,
-		audioRendererEventListener: AudioRendererEventListener,
-		textRendererOutput: TextOutput,
-		metadataRendererOutput: MetadataOutput
-	): Array<Renderer> = audioRenderers
 }

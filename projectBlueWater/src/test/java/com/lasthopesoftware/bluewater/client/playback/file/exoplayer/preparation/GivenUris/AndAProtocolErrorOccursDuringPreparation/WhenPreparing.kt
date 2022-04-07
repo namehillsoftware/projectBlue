@@ -33,7 +33,7 @@ class WhenPreparing {
 					mockk<BaseMediaSource>(relaxUnitFun = true)
 				},
 				mockk<ProvideExoPlayers>().apply {
-					every { promiseExoPlayer() } returns Promise(mockk<PromisingExoPlayer>().apply {
+					every { getExoPlayer() } returns mockk<PromisingExoPlayer>().apply {
 						val selfPromise = this.toPromise()
 						every { addListener(any()) } answers {
 							listener = firstArg()
@@ -44,7 +44,7 @@ class WhenPreparing {
 						every { prepare() } returns selfPromise
 						every { stop() } returns selfPromise
 						every { release() } returns selfPromise
-					})
+					}
 				},
 				mockk()
 			) { Promise(mockk<Uri>()) }

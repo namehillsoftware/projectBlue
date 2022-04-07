@@ -15,7 +15,6 @@ import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile
 import com.lasthopesoftware.bluewater.client.playback.volume.AudioTrackVolumeManager
 import com.lasthopesoftware.bluewater.client.playback.volume.PassthroughVolumeManager
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken
 import org.joda.time.Duration
@@ -57,13 +56,12 @@ internal class PreparedExoPlayerPromise(
 
 		if (cancellationToken.isCancelled) return
 
-		exoPlayers
-			.promiseExoPlayer()
-			.eventually {
-				exoPlayer = it
-				if (!cancellationToken.isCancelled) it.addListener(this)
-				else it.toPromise()
-			}
+		val newExoPlayer = exoPlayers.getExoPlayer()
+		if (cancellationToken.isCancelled) return
+
+		exoPlayer = newExoPlayer
+		newExoPlayer
+			.addListener(this)
 			.eventually {
 				if (cancellationToken.isCancelled) {
 					empty()

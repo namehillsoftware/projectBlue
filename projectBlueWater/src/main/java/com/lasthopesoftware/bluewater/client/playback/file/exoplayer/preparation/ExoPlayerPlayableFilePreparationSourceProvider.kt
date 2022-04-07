@@ -33,7 +33,7 @@ class ExoPlayerPlayableFilePreparationSourceProvider(
 		}
 	}
 
-	private val renderersFactory = AudioRenderersFactory(context, eventHandler)
+	private val renderersFactory = AudioRenderersFactory(context)
 
 	private val exoPlayerProvider by lazy {
 		ExoPlayerProvider(
