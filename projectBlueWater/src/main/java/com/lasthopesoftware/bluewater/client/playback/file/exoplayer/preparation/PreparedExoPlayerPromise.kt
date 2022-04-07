@@ -69,12 +69,18 @@ internal class PreparedExoPlayerPromise(
 	}
 
 	override fun respond(renderers: Array<Renderer>) {
-		audioRenderers = renderers
-		val exoPlayerBuilder = ExoPlayer.Builder(context, this)
-			.setLoadControl(loadControl)
-			.setLooper(playbackHandler.looper)
+		val newExoPlayer = try {
+			audioRenderers = renderers
+			val exoPlayerBuilder = ExoPlayer.Builder(context, this)
+				.setLoadControl(loadControl)
+				.setLooper(playbackHandler.looper)
 
-		val newExoPlayer = HandlerDispatchingExoPlayer(exoPlayerBuilder.build(), playbackHandler)
+			HandlerDispatchingExoPlayer(exoPlayerBuilder.build(), playbackHandler)
+		} catch (e: Throwable) {
+			handleError(e)
+			return
+		}
+
 		exoPlayer = newExoPlayer
 
 		if (cancellationToken.isCancelled) return
@@ -113,7 +119,7 @@ internal class PreparedExoPlayerPromise(
 		reject(CancellationException())
 	}
 
-	override fun onPlayerStateChanged(playWhenReady: Boolean, playbackState: Int) {
+	override fun onPlaybackStateChanged(playbackState: Int) {
 		if (isResolved || cancellationToken.isCancelled) return
 
 		if (playbackState != Player.STATE_READY) return

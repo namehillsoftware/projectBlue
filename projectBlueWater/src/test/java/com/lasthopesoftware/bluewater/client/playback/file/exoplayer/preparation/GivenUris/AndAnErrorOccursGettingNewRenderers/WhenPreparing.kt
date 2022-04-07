@@ -8,12 +8,12 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceF
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.ExoPlayerPlaybackPreparer
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
 import com.namehillsoftware.handoff.promises.Promise
+import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
 import org.junit.BeforeClass
 import org.junit.Test
-import org.mockito.Mockito
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
 
@@ -25,8 +25,10 @@ class WhenPreparing {
 		@BeforeClass
 		@JvmStatic
 		fun before() {
-			val loadControl = Mockito.mock(LoadControl::class.java)
-			Mockito.`when`(loadControl.allocator).thenReturn(DefaultAllocator(true, 1024))
+			val loadControl = mockk<LoadControl>().apply {
+				every { allocator } returns DefaultAllocator(true, 1024)
+			}
+
 			val preparer = ExoPlayerPlaybackPreparer(
 				mockk(relaxed = true),
 				{ mockk<BaseMediaSource>() },
