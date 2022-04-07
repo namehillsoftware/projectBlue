@@ -47,7 +47,7 @@ internal class PreparedExoPlayerPromise(
 		try {
 			initialize()
 		} catch (e: Throwable) {
-			reject(e)
+			handleError(e)
 		}
 	}
 
@@ -140,11 +140,20 @@ internal class PreparedExoPlayerPromise(
 				resolve(PreparedPlayableFile(emptyPlaybackHandler, PassthroughVolumeManager(), emptyPlaybackHandler))
 			}
 			is HttpDataSource.HttpDataSourceException -> {
-				when (cause.cause) {
+				when (val httpCause = cause.cause) {
 					is ProtocolException -> {
-						logger.warn("A ProtocolException occurred while preparing the file, skipping playback", error)
-						val emptyPlaybackHandler = EmptyPlaybackHandler(0)
-						resolve(PreparedPlayableFile(emptyPlaybackHandler, PassthroughVolumeManager(), emptyPlaybackHandler))
+						if (httpCause.message == "unexpected end of stream") {
+							logger.warn("The stream ended unexpectedly, skipping playback", error)
+							val emptyPlaybackHandler = EmptyPlaybackHandler(0)
+							resolve(
+								PreparedPlayableFile(
+									emptyPlaybackHandler,
+									PassthroughVolumeManager(),
+									emptyPlaybackHandler
+								)
+							)
+						}
+						else reject(error)
 					}
 					else -> reject(error)
 				}

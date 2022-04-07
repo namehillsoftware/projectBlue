@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.GivenUris.AndAProtocolErrorOccursDuringPreparation
+package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.GivenUris.AndAProtocolErrorOccursDuringPreparation.AndItIsDueToEndOfStream
 
 import android.net.Uri
 import com.google.android.exoplayer2.PlaybackException
@@ -9,6 +9,7 @@ import com.google.android.exoplayer2.upstream.HttpDataSource
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.PromisingExoPlayer
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.ProvideExoPlayers
+import com.lasthopesoftware.bluewater.client.playback.file.EmptyPlaybackHandler
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.ExoPlayerPlaybackPreparer
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
@@ -20,12 +21,11 @@ import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
 import org.junit.Test
 import java.net.ProtocolException
-import java.util.concurrent.ExecutionException
 
 class WhenPreparing {
 
 	companion object {
-		private val exception by lazy {
+		private val preparedPlayer by lazy {
 			var listener: Player.Listener? = null
 
 			val preparer = ExoPlayerPlaybackPreparer(
@@ -55,7 +55,7 @@ class WhenPreparing {
 				PlaybackException(
 					"oh no",
 					HttpDataSource.HttpDataSourceException(
-						ProtocolException("royalty"),
+						ProtocolException("unexpected end of stream"),
 						DataSpec(mockk()),
 						PlaybackException.ERROR_CODE_IO_UNSPECIFIED,
 						HttpDataSource.HttpDataSourceException.TYPE_OPEN
@@ -64,17 +64,12 @@ class WhenPreparing {
 				)
 			)
 
-			try {
-				futurePreparation.get()
-				null
-			} catch (e: ExecutionException) {
-				e.cause
-			}
+			futurePreparation.get()
 		}
 	}
 
 	@Test
-	fun `then the root exception is thrown`() {
-		assertThat(exception).isInstanceOf(cls<PlaybackException>())
+	fun `then an empty player is returned`() {
+		assertThat(preparedPlayer?.playbackHandler).isInstanceOf(cls<EmptyPlaybackHandler>())
 	}
 }
