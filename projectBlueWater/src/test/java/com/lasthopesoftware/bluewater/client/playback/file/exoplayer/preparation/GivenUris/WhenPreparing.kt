@@ -4,12 +4,10 @@ import android.net.Uri
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
-import androidx.test.core.app.ApplicationProvider
 import com.google.android.exoplayer2.LoadControl
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.SeekParameters
 import com.google.android.exoplayer2.Timeline
-import com.google.android.exoplayer2.audio.MediaCodecAudioRenderer
 import com.google.android.exoplayer2.source.*
 import com.google.android.exoplayer2.trackselection.ExoTrackSelection
 import com.google.android.exoplayer2.upstream.Allocator
@@ -45,18 +43,10 @@ class WhenPreparing : AndroidContext() {
 		every { loadControl.allocator } returns DefaultAllocator(true, 1024)
 
 		val preparer = ExoPlayerPlaybackPreparer(
-			ApplicationProvider.getApplicationContext(),
 			{ FakeMediaSource() },
-			loadControl,
-			{
-				val audioRenderer = mockk<MediaCodecAudioRenderer>()
-				every { audioRenderer.isReady } returns (true)
-				Promise(arrayOf(audioRenderer))
-			},
-			Handler(Looper.getMainLooper()),
-			Handler(Looper.getMainLooper()),
-			{ Promise(Uri.EMPTY) }
-		)
+			mockk(),
+			Handler(Looper.getMainLooper())
+		) { Promise(Uri.EMPTY) }
 		val promisedPreparedFile = preparer.promisePreparedPlaybackFile(
 			ServiceFile(1),
 			Duration.ZERO
