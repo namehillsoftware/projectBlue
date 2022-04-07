@@ -1,23 +1,18 @@
-package com.lasthopesoftware.bluewater.client.playback.engine.preparation;
+package com.lasthopesoftware.bluewater.client.playback.engine.preparation
 
-import androidx.annotation.NonNull;
-import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile;
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile
 
-class PositionedPreparedPlayableFile {
-	final PositionedFile positionedFile;
-	final PreparedPlayableFile preparedPlayableFile;
+internal class PositionedPreparedPlayableFile(
+    val positionedFile: PositionedFile,
+    val preparedPlayableFile: PreparedPlayableFile?
+) {
+    val isEmpty: Boolean
+        get() = preparedPlayableFile == null
 
-	PositionedPreparedPlayableFile(@NonNull PositionedFile positionedFile, PreparedPlayableFile preparedPlayableFile) {
-		this.positionedFile = positionedFile;
-		this.preparedPlayableFile = preparedPlayableFile;
-	}
-
-	boolean isEmpty() {
-		return preparedPlayableFile == null;
-	}
-
-	static PositionedPreparedPlayableFile emptyHandler(PositionedFile positionedFile) {
-		return new PositionedPreparedPlayableFile(positionedFile, null);
-	}
+    companion object {
+        fun emptyHandler(positionedFile: PositionedFile): PositionedPreparedPlayableFile {
+            return PositionedPreparedPlayableFile(positionedFile, null)
+        }
+    }
 }

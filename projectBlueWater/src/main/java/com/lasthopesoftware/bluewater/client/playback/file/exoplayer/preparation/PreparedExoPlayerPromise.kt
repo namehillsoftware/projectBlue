@@ -127,8 +127,6 @@ internal class PreparedExoPlayerPromise(
 
 		isResolved = true
 
-		logger.error("An error occurred while preparing the exo player!", error)
-
 		try {
 			exoPlayer?.stop()
 			exoPlayer?.release()
@@ -153,7 +151,10 @@ internal class PreparedExoPlayerPromise(
 					else -> reject(error)
 				}
 			}
-			else -> reject(error)
+			else -> {
+				logger.error("An error occurred while preparing the exo player!", error)
+				reject(error)
+			}
 		}
 	}
 }
