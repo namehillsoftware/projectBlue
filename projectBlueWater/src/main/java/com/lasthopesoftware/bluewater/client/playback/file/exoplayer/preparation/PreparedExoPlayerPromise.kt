@@ -138,6 +138,7 @@ internal class PreparedExoPlayerPromise(
 				logger.warn("A parser exception occurred while preparing the file, skipping playback", error)
 				val emptyPlaybackHandler = EmptyPlaybackHandler(0)
 				resolve(PreparedPlayableFile(emptyPlaybackHandler, PassthroughVolumeManager(), emptyPlaybackHandler))
+				return
 			}
 			is HttpDataSource.HttpDataSourceException -> {
 				when (val httpCause = cause.cause) {
@@ -152,16 +153,14 @@ internal class PreparedExoPlayerPromise(
 									emptyPlaybackHandler
 								)
 							)
+							return
 						}
-						else reject(error)
 					}
-					else -> reject(error)
 				}
 			}
-			else -> {
-				logger.error("An error occurred while preparing the exo player!", error)
-				reject(error)
-			}
 		}
+
+		logger.error("An error occurred while preparing the exo player!", error)
+		reject(error)
 	}
 }

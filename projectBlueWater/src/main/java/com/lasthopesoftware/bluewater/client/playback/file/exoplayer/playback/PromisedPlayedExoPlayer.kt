@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.playback
 
-import com.google.android.exoplayer2.*
+import com.google.android.exoplayer2.PlaybackException
+import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.upstream.HttpDataSource.InvalidResponseCodeException
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.PromisingExoPlayer
 import com.lasthopesoftware.bluewater.client.playback.file.PlayedFile
@@ -82,11 +83,12 @@ class PromisedPlayedExoPlayer(private val exoPlayer: PromisingExoPlayer, private
 				return
 			}
 			is ProtocolException -> {
-				val message = cause.message
-				if (message != null && message.contains("unexpected end of stream")) {
-					logger.warn("The stream ended unexpectedly, completing playback", error)
-					resolve(this)
-					return
+				when (cause.message) {
+					"unexpected end of stream", "searched too many bytes" -> {
+						logger.warn("The stream ended unexpectedly, completing playback", error)
+						resolve(this)
+						return
+					}
 				}
 			}
 			is InvalidResponseCodeException -> {
