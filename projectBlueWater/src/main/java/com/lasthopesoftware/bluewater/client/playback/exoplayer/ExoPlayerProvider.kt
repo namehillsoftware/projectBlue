@@ -25,15 +25,12 @@ class ExoPlayerProvider(
 	ImmediateResponse<Array<Renderer>, PromisingExoPlayer>
 {
 	private val promisedRenderers by lazy {
-
+		renderersFactory.newRenderers()
 	}
 
 	private lateinit var audioRenderers: Array<Renderer>
 
-	override fun promiseExoPlayer(): Promise<PromisingExoPlayer> =
-		renderersFactory
-			.newRenderers()
-			.then(this)
+	override fun promiseExoPlayer(): Promise<PromisingExoPlayer> = promisedRenderers.then(this)
 
 	override fun respond(renderers: Array<Renderer>): PromisingExoPlayer {
 		audioRenderers = renderers
