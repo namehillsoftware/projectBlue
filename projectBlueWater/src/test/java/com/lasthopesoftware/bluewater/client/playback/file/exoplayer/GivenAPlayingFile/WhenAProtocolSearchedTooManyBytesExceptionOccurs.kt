@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.GivenAPlayingFile
 
 import com.google.android.exoplayer2.ExoPlaybackException
+import com.google.android.exoplayer2.ParserException
 import com.google.android.exoplayer2.PlaybackException
 import com.google.android.exoplayer2.Player
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.PromisingExoPlayer
@@ -13,7 +14,6 @@ import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.BeforeClass
 import org.junit.Test
-import java.net.ProtocolException
 
 class WhenAProtocolSearchedTooManyBytesExceptionOccurs {
 
@@ -39,8 +39,8 @@ class WhenAProtocolSearchedTooManyBytesExceptionOccurs {
 				.eventually { obj -> obj.promisePlayedFile() }
 				.toFuture()
 			eventListener?.onPlayerError(ExoPlaybackException.createForSource(
-				ProtocolException("searched too many bytes"),
-				PlaybackException.ERROR_CODE_IO_UNSPECIFIED))
+				ParserException.createForUnsupportedContainerFeature("Searched too many bytes."),
+				PlaybackException.ERROR_CODE_UNSPECIFIED))
 
 			playedFile = promisedFuture.get()
 		}

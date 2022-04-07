@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.playback
 
+import com.google.android.exoplayer2.ParserException
 import com.google.android.exoplayer2.PlaybackException
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.upstream.HttpDataSource.InvalidResponseCodeException
@@ -84,8 +85,17 @@ class PromisedPlayedExoPlayer(private val exoPlayer: PromisingExoPlayer, private
 			}
 			is ProtocolException -> {
 				when (cause.message) {
-					"unexpected end of stream", "searched too many bytes" -> {
+					"unexpected end of stream" -> {
 						logger.warn("The stream ended unexpectedly, completing playback", error)
+						resolve(this)
+						return
+					}
+				}
+			}
+			is ParserException -> {
+				when (cause.message) {
+					"Searched too many bytes." -> {
+						logger.warn("The stream was corrupted, completing playback", error)
 						resolve(this)
 						return
 					}
