@@ -25,7 +25,7 @@ import java.util.*
 class WhenTheDataSourceIsAbruptlyClosed {
 	companion object {
 		private val bytesWritten = ByteArray(7 * 1024 * 1024)
-		private val bytes = ByteArray(7 * 1024 * 1024)
+		private val bytes by lazy { ByteArray(7 * 1024 * 1024).also { Random().nextBytes(it) } }
 		private var committedToCache = false
 
 		@BeforeClass
@@ -36,11 +36,7 @@ class WhenTheDataSourceIsAbruptlyClosed {
 					override fun promiseCachedFileOutputStream(uniqueKey: String): Promise<CacheOutputStream> {
 						return Promise<CacheOutputStream>(object : CacheOutputStream {
 							var numberOfBytesWritten = 0
-							override fun promiseWrite(
-								buffer: ByteArray,
-								offset: Int,
-								length: Int
-							): Promise<CacheOutputStream> =
+							override fun promiseWrite(buffer: ByteArray, offset: Int, length: Int): Promise<CacheOutputStream> =
 								Promise<CacheOutputStream>(this)
 
 							override fun promiseTransfer(bufferedSource: BufferedSource): Promise<CacheOutputStream> {
@@ -102,10 +98,6 @@ class WhenTheDataSourceIsAbruptlyClosed {
 				byteCount += readResult
 			} while (byteCount < 3 * 1024 * 1024)
 			diskFileCacheDataSource.close()
-		}
-
-		init {
-			Random().nextBytes(bytes)
 		}
 	}
 

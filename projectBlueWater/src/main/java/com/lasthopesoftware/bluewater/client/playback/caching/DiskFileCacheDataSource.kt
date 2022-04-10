@@ -22,7 +22,7 @@ class DiskFileCacheDataSource(
 	private val cacheStreamSupplier: ICacheStreamSupplier,
 	private val cachedFilesProvider: ICachedFilesProvider
 ) : DataSource {
-	private var buffer: Buffer? = null
+	private lateinit var buffer: Buffer
 	private lateinit var promisedOutputStream: Promise<CacheOutputStream>
 	private lateinit var currentDataSpec: DataSpec
 
@@ -41,14 +41,13 @@ class DiskFileCacheDataSource(
 			.toFuture()
 			.get()
 
-		currentDataSpec = if (cachedFile != null) dataSpec.buildUpon().setUri(cachedFile.fileName.toUri()).build() else dataSpec
-
+		currentDataSpec = cachedFile?.fileName?.toUri()?.let { dataSpec.buildUpon().setUri(it).build() } ?: dataSpec
 		return innerDataSource.open(dataSpec)
 	}
 
 	override fun read(bytes: ByteArray, offset: Int, readLength: Int): Int {
 		val result = innerDataSource.read(bytes, offset, readLength)
-		val bufferToWrite = buffer ?: return result
+		val bufferToWrite = buffer
 		if (result != C.RESULT_END_OF_INPUT) {
 			bufferToWrite.write(bytes, offset, result)
 			if (bufferToWrite.size <= maxBufferSize) return result
@@ -81,22 +80,21 @@ class DiskFileCacheDataSource(
 					})
 				promisedWrite
 			}
+			.keepPromise()
 
-		outputStream?.eventually { cachedFileOutputStream ->
+		outputStream.eventually { cachedFileOutputStream ->
 			cachedFileOutputStream
 				?.flush()
-				?.eventually(
-					{ os ->
-						os.close()
-						buffer?.close()
-						os.commitToCache()
-					}
-				) { e ->
+				?.eventually({ os ->
+					os.close()
+					bufferToWrite.close()
+					os.commitToCache()
+				}, { e ->
 					logger.warn("An error occurred flushing the output stream", e)
 					cachedFileOutputStream.close()
-					buffer?.close()
+					bufferToWrite.close()
 					Promise.empty()
-				}
+				})
 				.keepPromise()
 		}
 		return result

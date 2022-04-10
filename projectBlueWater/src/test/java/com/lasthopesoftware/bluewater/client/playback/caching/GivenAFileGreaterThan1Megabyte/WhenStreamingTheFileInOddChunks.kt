@@ -20,7 +20,6 @@ import org.junit.BeforeClass
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import java.io.IOException
 import java.util.*
 
 @RunWith(RobolectricTestRunner::class)
@@ -30,19 +29,17 @@ class WhenStreamingTheFileInOddChunks {
         private val bytes = ByteArray(7 * 1024 * 1024)
         private var cacheKey: String? = null
         private var committedToCache = false
-        @BeforeClass
-        @Throws(IOException::class)
+
+		@BeforeClass
+        @JvmStatic
         fun context() {
 			val fakeCacheStreamSupplier =
 				object : ICacheStreamSupplier {
 					override fun promiseCachedFileOutputStream(uniqueKey: String): Promise<CacheOutputStream> {
+						cacheKey = uniqueKey
 						return Promise<CacheOutputStream>(object : CacheOutputStream {
 							var numberOfBytesWritten = 0
-							override fun promiseWrite(
-								buffer: ByteArray,
-								offset: Int,
-								length: Int
-							): Promise<CacheOutputStream> =
+							override fun promiseWrite(buffer: ByteArray, offset: Int, length: Int): Promise<CacheOutputStream> =
 								Promise<CacheOutputStream>(this)
 
 							override fun promiseTransfer(bufferedSource: BufferedSource): Promise<CacheOutputStream> {
@@ -112,7 +109,7 @@ class WhenStreamingTheFileInOddChunks {
 
     @Test
     fun thenTheKeyIsCorrect() {
-        assertThat(cacheKey).isEqualToIgnoringCase("/file?ID=1")
+        assertThat(cacheKey).isEqualToIgnoringCase("/file?ID=1:0:7340032")
     }
 
     @Test
