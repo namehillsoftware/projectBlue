@@ -1,37 +1,18 @@
-package com.lasthopesoftware.bluewater.client.playback.caching;
+package com.lasthopesoftware.bluewater.client.playback.caching
 
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.configuration.IDiskFileCacheConfiguration;
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.configuration.IDiskFileCacheConfiguration
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
+import org.joda.time.Duration
 
-import org.joda.time.Duration;
+class AudioCacheConfiguration(override val library: Library) : IDiskFileCacheConfiguration {
+	override val cacheName: String = musicCacheName
 
+	override val maxSize: Long = maxFileCacheSize
 
-public class AudioCacheConfiguration implements IDiskFileCacheConfiguration {
-	private final Library library;
-	private static final String musicCacheName = "music";
-	private static final long maxFileCacheSize = 2L * 1024L * 1024L * 1024L; // ~2GB
+	override val cacheItemLifetime: Duration? = null
 
-	public AudioCacheConfiguration(Library library) {
-		this.library = library;
-	}
-
-	@Override
-	public String getCacheName() {
-		return musicCacheName;
-	}
-
-	@Override
-	public Library getLibrary() {
-		return library;
-	}
-
-	@Override
-	public long getMaxSize() {
-		return maxFileCacheSize;
-	}
-
-	@Override
-	public Duration getCacheItemLifetime() {
-		return null;
-	}
+    companion object {
+        private const val musicCacheName = "music"
+        private const val maxFileCacheSize = 1024L * 1024L * 1024L // ~1GB
+    }
 }

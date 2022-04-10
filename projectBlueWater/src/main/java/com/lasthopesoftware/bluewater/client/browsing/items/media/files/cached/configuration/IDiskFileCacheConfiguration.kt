@@ -1,12 +1,11 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.configuration;
+package com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.configuration
 
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
+import org.joda.time.Duration
 
-import org.joda.time.Duration;
-
-public interface IDiskFileCacheConfiguration {
-	String getCacheName();
-	Library getLibrary();
-	long getMaxSize();
-	Duration getCacheItemLifetime();
+interface IDiskFileCacheConfiguration {
+    val cacheName: String
+    val library: Library
+    val maxSize: Long
+    val cacheItemLifetime: Duration?
 }
