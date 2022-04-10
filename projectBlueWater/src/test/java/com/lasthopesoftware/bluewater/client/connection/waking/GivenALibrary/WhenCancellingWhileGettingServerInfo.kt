@@ -7,7 +7,7 @@ import com.lasthopesoftware.bluewater.client.connection.waking.AlarmConfiguratio
 import com.lasthopesoftware.bluewater.client.connection.waking.MachineAddress
 import com.lasthopesoftware.bluewater.client.connection.waking.PokeServer
 import com.lasthopesoftware.bluewater.client.connection.waking.ServerAlarm
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
@@ -16,7 +16,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
 import org.junit.BeforeClass
 import org.junit.Test
-import java.util.*
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.cancellation.CancellationException
@@ -56,7 +55,7 @@ class WhenCancellingWhileGettingServerInfo {
 			val awakeLibraryServer = serverAlarm.awakeLibraryServer(LibraryId(14))
 			awakeLibraryServer.cancel()
 			try {
-				awakeLibraryServer.toFuture()[5, TimeUnit.SECONDS]
+				awakeLibraryServer.toExpiringFuture()[5, TimeUnit.SECONDS]
 			} catch (ee: ExecutionException) {
 				cancellationException = ee.cause as? CancellationException ?: throw ee
 			}

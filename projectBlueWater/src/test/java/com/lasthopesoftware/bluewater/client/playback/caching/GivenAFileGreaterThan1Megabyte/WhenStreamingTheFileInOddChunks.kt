@@ -1,133 +1,122 @@
-package com.lasthopesoftware.bluewater.client.browsing.client.browsing.items.media.audio.GivenAFileGreaterThan1Megabyte;
+package com.lasthopesoftware.bluewater.client.playback.caching.GivenAFileGreaterThan1Megabyte
 
-import android.net.Uri;
+import android.net.Uri
+import com.google.android.exoplayer2.C
+import com.google.android.exoplayer2.upstream.DataSpec
+import com.google.android.exoplayer2.upstream.HttpDataSource
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.access.ICachedFilesProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.CacheOutputStream
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.supplier.ICacheStreamSupplier
+import com.lasthopesoftware.bluewater.client.playback.caching.DiskFileCacheDataSource
+import com.namehillsoftware.handoff.promises.Promise
+import io.mockk.every
+import io.mockk.mockk
+import okio.Buffer
+import okio.BufferedSource
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.Assert.assertArrayEquals
+import org.junit.BeforeClass
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+import java.io.IOException
+import java.util.*
 
-import com.google.android.exoplayer2.C;
-import com.google.android.exoplayer2.upstream.DataSpec;
-import com.google.android.exoplayer2.upstream.HttpDataSource;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.audio.DiskFileCacheDataSource;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.CacheOutputStream;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.supplier.ICacheStreamSupplier;
-import com.namehillsoftware.handoff.promises.Promise;
+@RunWith(RobolectricTestRunner::class)
+class WhenStreamingTheFileInOddChunks {
+    companion object {
+        private val bytesWritten = ByteArray(7 * 1024 * 1024)
+        private val bytes = ByteArray(7 * 1024 * 1024)
+        private var cacheKey: String? = null
+        private var committedToCache = false
+        @BeforeClass
+        @Throws(IOException::class)
+        fun context() {
+			val fakeCacheStreamSupplier =
+				object : ICacheStreamSupplier {
+					override fun promiseCachedFileOutputStream(uniqueKey: String): Promise<CacheOutputStream> {
+						return Promise<CacheOutputStream>(object : CacheOutputStream {
+							var numberOfBytesWritten = 0
+							override fun promiseWrite(
+								buffer: ByteArray,
+								offset: Int,
+								length: Int
+							): Promise<CacheOutputStream> =
+								Promise<CacheOutputStream>(this)
 
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.robolectric.RobolectricTestRunner;
+							override fun promiseTransfer(bufferedSource: BufferedSource): Promise<CacheOutputStream> {
+								while (numberOfBytesWritten < bytesWritten.size) {
+									val read = bufferedSource.read(
+										bytesWritten,
+										numberOfBytesWritten,
+										bytesWritten.size - numberOfBytesWritten
+									)
+									if (read == -1) return Promise<CacheOutputStream>(this)
+									numberOfBytesWritten += read
+								}
+								return Promise<CacheOutputStream>(this)
+							}
 
-import java.io.IOException;
-import java.util.Random;
+							override fun commitToCache(): Promise<CachedFile> {
+								committedToCache = true
+								return Promise(CachedFile())
+							}
 
-import okio.Buffer;
-import okio.BufferedSource;
+							override fun flush(): Promise<CacheOutputStream> {
+								return Promise<CacheOutputStream>(this)
+							}
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-@RunWith(RobolectricTestRunner.class)
-public class WhenStreamingTheFileInOddChunks {
-
-	private static final byte[] bytesWritten = new byte[7 * 1024 * 1024];
-	private static final byte[] bytes = new byte[7 * 1024 * 1024];
-
-	private static String cacheKey;
-	private static boolean committedToCache;
-
-	static {
-		new Random().nextBytes(bytes);
-	}
-
-	@BeforeClass
-	public static void context() throws IOException {
-		final ICacheStreamSupplier fakeCacheStreamSupplier = uniqueKey -> new Promise<>(new CacheOutputStream() {
-				{
-					cacheKey = uniqueKey;
-				}
-
-				int numberOfBytesWritten = 0;
-
-				@Override
-				public Promise<CacheOutputStream> promiseWrite(byte[] buffer, int offset, int length) {
-					return new Promise<>(this);
-				}
-
-				@Override
-				public Promise<CacheOutputStream> promiseTransfer(BufferedSource bufferedSource) {
-					try {
-						while (numberOfBytesWritten < bytesWritten.length) {
-							int read = bufferedSource.read(bytesWritten, numberOfBytesWritten, bytesWritten.length - numberOfBytesWritten);
-							if (read == -1) return new Promise<>(this);
-							numberOfBytesWritten += read;
-						}
-					} catch (IOException e) {
-						e.printStackTrace();
+							override fun close() {}
+						})
 					}
-					return new Promise<>(this);
 				}
-
-				@Override
-				public Promise<CachedFile> commitToCache() {
-					committedToCache = true;
-					return new Promise<>(new CachedFile());
+            val buffer = Buffer()
+            buffer.write(bytes)
+            val dataSource = mockk<HttpDataSource>(relaxed = true).apply {
+            	every { read(any(), any(), any()) } answers {
+            		buffer.read(arg(0), arg(1), arg(2))
 				}
-
-				@Override
-				public Promise<CacheOutputStream> flush() {
-					return new Promise<>(this);
+			}
+            val diskFileCacheDataSource = DiskFileCacheDataSource(
+                dataSource,
+                fakeCacheStreamSupplier,
+				mockk<ICachedFilesProvider>().apply {
+					every { promiseCachedFile(any()) } returns Promise.empty()
 				}
+            )
+            diskFileCacheDataSource.open(
+				DataSpec.Builder()
+					.setUri(Uri.parse("http://my-server/file?ID=1"))
+					.setPosition(0)
+					.setLength((7 * 1024 * 1024).toLong()).setKey("hi")
+					.build()
+            )
+            val random = Random()
+            var readResult: Int
+            do {
+                val bytes = ByteArray(random.nextInt(1000000))
+                readResult = diskFileCacheDataSource.read(bytes, 0, bytes.size)
+            } while (readResult != C.RESULT_END_OF_INPUT)
+        }
 
-				@Override
-				public void close() {
+        init {
+            Random().nextBytes(bytes)
+        }
+    }
 
-				}
-			});
+    @Test
+    fun thenTheEntireFileIsWritten() {
+        assertArrayEquals(bytes, bytesWritten)
+    }
 
-		final Buffer buffer = new Buffer();
-		buffer.write(bytes);
+    @Test
+    fun thenTheKeyIsCorrect() {
+        assertThat(cacheKey).isEqualToIgnoringCase("/file?ID=1")
+    }
 
-		final HttpDataSource dataSource = mock(HttpDataSource.class);
-		when(dataSource.read(any(), anyInt(), anyInt()))
-			.then(invocation -> {
-				if (buffer.exhausted()) return C.RESULT_END_OF_INPUT;
-
-				final byte[] bytes = invocation.getArgument(0);
-				final int offset = invocation.getArgument(1);
-				final int length = invocation.getArgument(2);
-				return buffer.read(bytes, offset, length);
-			});
-
-		final DiskFileCacheDataSource diskFileCacheDataSource =
-			new DiskFileCacheDataSource(
-				dataSource,
-				fakeCacheStreamSupplier);
-
-		diskFileCacheDataSource.open(new DataSpec(Uri.parse("http://my-server/file?ID=1"), 0, 7 * 1024 * 1024, "hi"));
-
-		final Random random = new Random();
-		int readResult;
-		do {
-			final byte[] bytes = new byte[random.nextInt(1000000)];
-			readResult = diskFileCacheDataSource.read(bytes, 0, bytes.length);
-		} while (readResult != C.RESULT_END_OF_INPUT);
-	}
-
-	@Test
-	public void thenTheEntireFileIsWritten() {
-		Assert.assertArrayEquals(bytes, bytesWritten);
-	}
-
-	@Test
-	public void thenTheKeyIsCorrect() {
-		assertThat(cacheKey).isEqualToIgnoringCase("/file?ID=1");
-	}
-
-	@Test
-	public void thenTheFileIsCached() {
-		assertThat(committedToCache).isTrue();
-	}
+    @Test
+    fun thenTheFileIsCached() {
+        assertThat(committedToCache).isTrue
+    }
 }

@@ -10,7 +10,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeRevisio
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTuple
 import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfScopedConnectionIsReadOnly
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import io.mockk.every
 import io.mockk.mockk
@@ -70,7 +70,7 @@ class WhenStoringTheUpdatedPlayStats {
             fileProperties = filePropertiesPlayStatsUpdater
                 .promisePlaystatsUpdate(ServiceFile(23))
                 .eventually { sessionFilePropertiesProvider.promiseFileProperties(ServiceFile(23)) }
-				.toFuture()
+				.toExpiringFuture()
 				.get()
         }
     }

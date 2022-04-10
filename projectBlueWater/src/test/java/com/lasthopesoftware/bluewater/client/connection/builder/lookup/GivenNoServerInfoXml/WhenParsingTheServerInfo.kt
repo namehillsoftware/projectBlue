@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.connection.builder.lookup.GivenNoS
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.RequestServerInfoXml
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerLookup
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -17,7 +17,7 @@ class WhenParsingTheServerInfo {
 			val serverInfoXml = mockk<RequestServerInfoXml>()
 			every { serverInfoXml.promiseServerInfoXml(any()) } returns Promise.empty()
 			val serverLookup = ServerLookup(serverInfoXml)
-			serverLookup.promiseServerInformation(LibraryId(14)).toFuture().get()
+			serverLookup.promiseServerInformation(LibraryId(14)).toExpiringFuture().get()
 		}
 	}
 

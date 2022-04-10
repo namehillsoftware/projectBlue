@@ -4,7 +4,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceF
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.playstats.playedfile.PlayedFilePlayStatsUpdater
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTuple
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import org.assertj.core.api.Assertions
 import org.junit.Test
 
@@ -21,7 +21,7 @@ class WhenSendingPlayedToServer {
 			}, "File/Played", "File=15", "FileType=Key")
 
 			val updater = PlayedFilePlayStatsUpdater(connectionProvider)
-			updater.promisePlaystatsUpdate(ServiceFile(15)).toFuture().get()
+			updater.promisePlaystatsUpdate(ServiceFile(15)).toExpiringFuture().get()
 		}
 	}
 

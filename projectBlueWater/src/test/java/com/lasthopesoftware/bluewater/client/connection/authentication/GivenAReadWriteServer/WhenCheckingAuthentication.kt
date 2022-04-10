@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.connection.authentication.GivenARe
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTuple
 import com.lasthopesoftware.bluewater.client.connection.authentication.ScopedConnectionAuthenticationChecker
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.BeforeClass
 import org.junit.Test
@@ -30,7 +30,7 @@ class WhenCheckingAuthentication {
 			}, "Authenticate")
 
 			val authenticationChecker = ScopedConnectionAuthenticationChecker(fakeConnectionProvider)
-			isReadOnly = authenticationChecker.promiseIsReadOnly().toFuture().get()
+			isReadOnly = authenticationChecker.promiseIsReadOnly().toExpiringFuture().get()
 		}
 	}
 

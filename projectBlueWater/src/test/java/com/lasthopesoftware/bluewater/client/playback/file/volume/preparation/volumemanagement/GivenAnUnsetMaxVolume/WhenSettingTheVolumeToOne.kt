@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.v
 
 import com.lasthopesoftware.bluewater.client.playback.file.NoTransformVolumeManager
 import com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.MaxFileVolumeManager
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import org.assertj.core.api.Assertions
 import org.junit.BeforeClass
 import org.junit.Test
@@ -18,13 +18,13 @@ class WhenSettingTheVolumeToOne {
 		fun before() {
 			volumeManager = NoTransformVolumeManager()
 			val maxFileVolumeManager = MaxFileVolumeManager(volumeManager!!)
-			returnedVolume = maxFileVolumeManager.setVolume(1f).toFuture().get()!!
+			returnedVolume = maxFileVolumeManager.setVolume(1f).toExpiringFuture().get()!!
 		}
 	}
 
 	@Test
 	fun thenThePlaybackHandlerVolumeIsSetToTheMaxVolume() {
-		Assertions.assertThat(volumeManager!!.volume.toFuture().get()).isEqualTo(1F)
+		Assertions.assertThat(volumeManager!!.volume.toExpiringFuture().get()).isEqualTo(1F)
 	}
 
 	@Test

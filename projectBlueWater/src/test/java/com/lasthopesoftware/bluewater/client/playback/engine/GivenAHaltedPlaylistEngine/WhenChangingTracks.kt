@@ -14,7 +14,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeDefer
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -45,7 +45,7 @@ class WhenChangingTracks {
 						ServiceFile(4),
 						ServiceFile(5)
 					)
-				).toFuture().get()
+				).toExpiringFuture().get()
 			)
 			library.setNowPlayingId(0)
 			val libraryProvider = mockk<ISpecificLibraryProvider>()
@@ -63,8 +63,8 @@ class WhenChangingTracks {
 				PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
 			)
 
-			initialState = playbackEngine.restoreFromSavedState().toFuture().get()
-			nextSwitchedFile = playbackEngine.changePosition(3, Duration.ZERO).toFuture()[1, TimeUnit.SECONDS]
+			initialState = playbackEngine.restoreFromSavedState().toExpiringFuture().get()
+			nextSwitchedFile = playbackEngine.changePosition(3, Duration.ZERO).toExpiringFuture()[1, TimeUnit.SECONDS]
 		}
 	}
 

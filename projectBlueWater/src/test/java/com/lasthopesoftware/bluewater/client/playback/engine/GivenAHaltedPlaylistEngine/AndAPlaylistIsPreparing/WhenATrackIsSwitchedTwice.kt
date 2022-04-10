@@ -11,7 +11,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeDefer
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
 import org.junit.Test
@@ -45,9 +45,9 @@ class WhenATrackIsSwitchedTwice {
 					), 0, Duration.ZERO
 				)
 			fakePlaybackPreparerProvider.deferredResolution.resolve()
-			playbackEngine.changePosition(3, Duration.ZERO).toFuture()
+			playbackEngine.changePosition(3, Duration.ZERO).toExpiringFuture()
 
-			val futurePlaylist = playbackEngine.changePosition(4, Duration.ZERO).toFuture()
+			val futurePlaylist = playbackEngine.changePosition(4, Duration.ZERO).toExpiringFuture()
 
 			fakePlaybackPreparerProvider.deferredResolution.resolve()
 

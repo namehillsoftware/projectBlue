@@ -7,7 +7,7 @@ import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessio
 import com.lasthopesoftware.bluewater.client.connection.session.PromisedConnectionsRepository
 import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import io.mockk.every
 import io.mockk.mockk
@@ -39,7 +39,7 @@ class WhenGettingTheUpdatedConnection {
 			)
 
 			val libraryId = LibraryId(2)
-			val futureConnectionProvider = connectionSessionManager.promiseLibraryConnection(libraryId).toFuture()
+			val futureConnectionProvider = connectionSessionManager.promiseLibraryConnection(libraryId).toExpiringFuture()
 
 			originalConnection = futureConnectionProvider[30, TimeUnit.SECONDS]
 
@@ -47,7 +47,7 @@ class WhenGettingTheUpdatedConnection {
 
 			isActive = connectionSessionManager.isConnectionActive(libraryId)
 
-			newConnection = connectionSessionManager.promiseLibraryConnection(libraryId).toFuture()[30, TimeUnit.SECONDS]
+			newConnection = connectionSessionManager.promiseLibraryConnection(libraryId).toExpiringFuture()[30, TimeUnit.SECONDS]
 		}
 	}
 

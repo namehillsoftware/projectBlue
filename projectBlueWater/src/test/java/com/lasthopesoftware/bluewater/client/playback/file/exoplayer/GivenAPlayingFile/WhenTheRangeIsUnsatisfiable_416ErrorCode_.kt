@@ -9,7 +9,7 @@ import com.google.android.exoplayer2.upstream.HttpDataSource.InvalidResponseCode
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.PromisingExoPlayer
 import com.lasthopesoftware.bluewater.client.playback.file.PlayedFile
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import io.mockk.every
 import io.mockk.mockk
@@ -17,7 +17,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.BeforeClass
 import org.junit.Test
 import java.io.IOException
-import java.util.*
 import java.util.concurrent.TimeUnit
 
 class WhenTheRangeIsUnsatisfiable_416ErrorCode_ {
@@ -42,7 +41,7 @@ class WhenTheRangeIsUnsatisfiable_416ErrorCode_ {
 			val exoPlayerPlaybackHandlerPlayerPlaybackHandler = ExoPlayerPlaybackHandler(mockExoPlayer)
 			val promisedFuture = exoPlayerPlaybackHandlerPlayerPlaybackHandler.promisePlayback()
 				.eventually { obj -> obj.promisePlayedFile() }
-				.toFuture()
+				.toExpiringFuture()
 
 			eventListener?.onPlayerError(ExoPlaybackException.createForSource(
 				InvalidResponseCodeException(416, "", IOException(), HashMap(), DataSpec(Uri.EMPTY), ByteArray(0)),

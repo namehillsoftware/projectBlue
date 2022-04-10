@@ -6,7 +6,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTuple
 import com.lasthopesoftware.bluewater.client.connection.FakeLibraryConnectionProvider
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 
@@ -33,7 +33,7 @@ class WhenGettingOtherImageBytes {
 			val memoryCachedImageAccess = RemoteImageAccess(
 				FakeLibraryConnectionProvider(mapOf(Pair(LibraryId(11), fakeConnectionProvider))))
 
-			memoryCachedImageAccess.promiseImageBytes(LibraryId(11), ServiceFile(583)).toFuture().get()
+			memoryCachedImageAccess.promiseImageBytes(LibraryId(11), ServiceFile(583)).toExpiringFuture().get()
 		}
 	}
 

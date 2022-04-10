@@ -4,7 +4,7 @@ import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTuple
 import com.lasthopesoftware.bluewater.client.servers.version.ProgramVersionProvider
 import com.lasthopesoftware.bluewater.client.servers.version.SemanticVersion
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import java.util.concurrent.TimeUnit
@@ -33,7 +33,7 @@ class WhenReceivingThePromisedProgramVersion {
 				)
 			}, "Alive")
 			val programVersionProvider = ProgramVersionProvider(connectionProvider)
-			programVersionProvider.promiseServerVersion().toFuture()[100, TimeUnit.MILLISECONDS]
+			programVersionProvider.promiseServerVersion().toExpiringFuture()[100, TimeUnit.MILLISECONDS]
 		}
 	}
 

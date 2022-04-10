@@ -1,14 +1,12 @@
-package com.lasthopesoftware.bluewater.shared.promises.extensions
+package com.lasthopesoftware.bluewater.shared.promises
 
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
-import org.joda.time.Duration
 import java.util.concurrent.*
 
 fun <Resolution> Promise<Resolution>.toFuture() = FuturePromise(this)
 
 class FuturePromise<Resolution>(promise: Promise<Resolution>) : Future<Resolution?> {
-	private val defaultCancellationDuration = Duration.standardSeconds(30)
 	private val cancellationProxy = CancellationProxy()
 	private val promise: Promise<Unit>
 	private var resolution: Resolution? = null
@@ -29,15 +27,10 @@ class FuturePromise<Resolution>(promise: Promise<Resolution>) : Future<Resolutio
 		return isCompleted
 	}
 
-	@Throws(InterruptedException::class, ExecutionException::class, TimeoutException::class)
 	override fun get(): Resolution? {
-		val countDownLatch = CountDownLatch(1)
-		promise.then { countDownLatch.countDown() }
-		if (countDownLatch.await(defaultCancellationDuration.millis, TimeUnit.MILLISECONDS)) return getResolution()
-		throw TimeoutException()
+		return getResolution()
 	}
 
-	@Throws(InterruptedException::class, ExecutionException::class, TimeoutException::class)
 	override fun get(timeout: Long, unit: TimeUnit): Resolution? {
 		val countDownLatch = CountDownLatch(1)
 		promise.then {	countDownLatch.countDown() }
@@ -45,7 +38,6 @@ class FuturePromise<Resolution>(promise: Promise<Resolution>) : Future<Resolutio
 		throw TimeoutException()
 	}
 
-	@Throws(ExecutionException::class)
 	private fun getResolution(): Resolution? {
 		rejection?.also { throw ExecutionException(rejection) }
 		return resolution

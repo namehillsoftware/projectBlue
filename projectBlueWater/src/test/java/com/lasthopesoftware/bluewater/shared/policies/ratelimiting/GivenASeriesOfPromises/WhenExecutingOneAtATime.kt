@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.shared.policies.ratelimiting.GivenASeries
 
 import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRateLimiter
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.BeforeClass
@@ -33,7 +33,7 @@ class WhenExecutingOneAtATime {
 
 			enqueuePromise(firstPromise)
 			enqueuePromise(secondPromise)
-			val futureThirdResult = enqueuePromise(thirdPromise).toFuture()
+			val futureThirdResult = enqueuePromise(thirdPromise).toExpiringFuture()
 			enqueuePromise(fourthPromise)
 			enqueuePromise(fifthPromise)
 			enqueuePromise(sixthPromise)

@@ -1,148 +1,117 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.media.audio;
+package com.lasthopesoftware.bluewater.client.playback.caching
 
-import android.net.Uri;
+import android.net.Uri
+import androidx.core.net.toUri
+import com.google.android.exoplayer2.C
+import com.google.android.exoplayer2.upstream.DataSource
+import com.google.android.exoplayer2.upstream.DataSpec
+import com.google.android.exoplayer2.upstream.HttpDataSource
+import com.google.android.exoplayer2.upstream.TransferListener
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.access.ICachedFilesProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.CacheOutputStream
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.supplier.ICacheStreamSupplier
+import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
+import com.lasthopesoftware.bluewater.shared.promises.toFuture
+import com.lasthopesoftware.resources.uri.PathAndQuery
+import com.namehillsoftware.handoff.promises.Promise
+import okio.Buffer
+import org.slf4j.LoggerFactory
 
-import com.google.android.exoplayer2.C;
-import com.google.android.exoplayer2.upstream.DataSource;
-import com.google.android.exoplayer2.upstream.DataSpec;
-import com.google.android.exoplayer2.upstream.HttpDataSource;
-import com.google.android.exoplayer2.upstream.TransferListener;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.CacheOutputStream;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.supplier.ICacheStreamSupplier;
-import com.lasthopesoftware.resources.uri.PathAndQuery;
-import com.namehillsoftware.handoff.promises.Promise;
+class DiskFileCacheDataSource(
+	private val innerDataSource: HttpDataSource,
+	private val cacheStreamSupplier: ICacheStreamSupplier,
+	private val cachedFilesProvider: ICachedFilesProvider
+) : DataSource {
+	private var buffer: Buffer? = null
+	private lateinit var promisedOutputStream: Promise<CacheOutputStream>
+	private lateinit var currentDataSpec: DataSpec
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+	override fun addTransferListener(transferListener: TransferListener) = innerDataSource.addTransferListener(transferListener)
 
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
+	override fun open(dataSpec: DataSpec): Long {
+		buffer = Buffer()
 
-import okio.Buffer;
+		val key = "${PathAndQuery.forUri(dataSpec.uri)}:${dataSpec.position}:${dataSpec.length}"
+		val cachedFile = cachedFilesProvider.promiseCachedFile(key)
+			.then {
+				if (it == null)
+					promisedOutputStream = cacheStreamSupplier.promiseCachedFileOutputStream(key)
+				it
+			}
+			.toFuture()
+			.get()
 
+		currentDataSpec = if (cachedFile != null) dataSpec.buildUpon().setUri(cachedFile.fileName.toUri()).build() else dataSpec
 
-public class DiskFileCacheDataSource implements DataSource {
-
-	private final static Logger logger = LoggerFactory.getLogger(DiskFileCacheDataSource.class);
-	private static final long maxBufferSize = 1024 * 1024; // 1MB
-
-	private final HttpDataSource defaultHttpDataSource;
-	private final ICacheStreamSupplier cacheStreamSupplier;
-	private Buffer buffer;
-	private Promise<CacheOutputStream> promisedOutputStream;
-
-	public DiskFileCacheDataSource(HttpDataSource defaultHttpDataSource, ICacheStreamSupplier cacheStreamSupplier) {
-		this.defaultHttpDataSource = defaultHttpDataSource;
-		this.cacheStreamSupplier = cacheStreamSupplier;
+		return innerDataSource.open(dataSpec)
 	}
 
-	@Override
-	public void addTransferListener(TransferListener transferListener) {
-
-	}
-
-	@Override
-	public long open(DataSpec dataSpec) throws IOException {
-		if (dataSpec.position == 0) {
-			buffer = new Buffer();
-			promisedOutputStream = cacheStreamSupplier.promiseCachedFileOutputStream(PathAndQuery.forUri(dataSpec.uri));
-		}
-
-		return defaultHttpDataSource.open(dataSpec);
-	}
-
-	@Override
-	public int read(byte[] bytes, int offset, int readLength) throws IOException {
-		final int result = defaultHttpDataSource.read(bytes, offset, readLength);
-
-		if (buffer == null) return result;
-
+	override fun read(bytes: ByteArray, offset: Int, readLength: Int): Int {
+		val result = innerDataSource.read(bytes, offset, readLength)
+		val bufferToWrite = buffer ?: return result
 		if (result != C.RESULT_END_OF_INPUT) {
+			bufferToWrite.write(bytes, offset, result)
+			if (bufferToWrite.size <= maxBufferSize) return result
 
-			buffer.write(bytes, offset, result);
-
-			if (buffer.size() <= maxBufferSize) return result;
-
-			final Buffer bufferToWrite = buffer;
-			buffer = new Buffer();
-
+			buffer = Buffer()
 			promisedOutputStream = promisedOutputStream
-				.eventually(cachedFileOutputStream -> {
-					final Promise<CacheOutputStream> promisedWrite =
-						cachedFileOutputStream.promiseTransfer(bufferToWrite);
-
+				.eventually { cachedFileOutputStream ->
+					val promisedWrite = cachedFileOutputStream?.promiseTransfer(bufferToWrite).keepPromise()
 					promisedWrite.then(
-						os -> {
-							bufferToWrite.close();
-							return null;
-						},
-						e -> {
-							logger.warn("An error occurred storing the audio file", e);
-							bufferToWrite.close();
-							cachedFileOutputStream.close();
-							return null;
-						});
-
-					return promisedWrite;
-				});
-
-			return result;
+						{ bufferToWrite.close() },
+						{ e ->
+							logger.warn("An error occurred storing the audio file", e)
+							bufferToWrite.close()
+							cachedFileOutputStream?.close()
+						})
+					promisedWrite
+				}
+			return result
 		}
 
-		final Promise<CacheOutputStream> outputStream = buffer.size() == 0
-			? promisedOutputStream
-			: promisedOutputStream
-				.eventually(cachedFileOutputStream -> {
-					final Promise<CacheOutputStream> promisedWrite =
-						cachedFileOutputStream.promiseTransfer(buffer);
+		val outputStream = if (bufferToWrite.size == 0L) promisedOutputStream else promisedOutputStream
+			.eventually { cachedFileOutputStream ->
+				val promisedWrite = cachedFileOutputStream?.promiseTransfer(bufferToWrite).keepPromise()
+				promisedWrite.then(
+					{ bufferToWrite.close() },
+					{ e ->
+						logger.warn("An error occurred storing the audio file", e)
+						bufferToWrite.close()
+						cachedFileOutputStream?.close()
+					})
+				promisedWrite
+			}
 
-					promisedWrite.then(
-						os -> {
-							buffer.close();
-							return null;
-						},
-						e -> {
-							logger.warn("An error occurred storing the audio file", e);
-							buffer.close();
-							cachedFileOutputStream.close();
-							return null;
-						});
-
-					return promisedWrite;
-				});
-
-		outputStream.eventually(cachedFileOutputStream ->
+		outputStream?.eventually { cachedFileOutputStream ->
 			cachedFileOutputStream
-				.flush()
-				.eventually(
-					os -> {
-						os.close();
-						buffer.close();
-						return os.commitToCache();
-					},
-					e -> {
-						logger.warn("An error occurred flushing the output stream", e);
-						cachedFileOutputStream.close();
-						buffer.close();
-						return Promise.empty();
-					}));
-
-		return result;
+				?.flush()
+				?.eventually(
+					{ os ->
+						os.close()
+						buffer?.close()
+						os.commitToCache()
+					}
+				) { e ->
+					logger.warn("An error occurred flushing the output stream", e)
+					cachedFileOutputStream.close()
+					buffer?.close()
+					Promise.empty()
+				}
+				.keepPromise()
+		}
+		return result
 	}
 
-	@Override
-	public Uri getUri() {
-		return defaultHttpDataSource.getUri();
+	override fun getUri(): Uri = currentDataSpec.uri
+
+	override fun getResponseHeaders(): Map<String, List<String>> = innerDataSource.responseHeaders
+
+	override fun close() {
+		innerDataSource.close()
 	}
 
-	@Override
-	public Map<String, List<String>> getResponseHeaders() {
-		return null;
-	}
-
-	@Override
-	public void close() throws IOException {
-		defaultHttpDataSource.close();
+	companion object {
+		private val logger by lazy { LoggerFactory.getLogger(DiskFileCacheDataSource::class.java) }
+		private const val maxBufferSize = 1024L * 1024L // 1MB
 	}
 }

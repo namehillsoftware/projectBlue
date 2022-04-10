@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.media.audio.uri;
+package com.lasthopesoftware.bluewater.client.playback.caching.uri;
 
 import android.net.Uri;
 

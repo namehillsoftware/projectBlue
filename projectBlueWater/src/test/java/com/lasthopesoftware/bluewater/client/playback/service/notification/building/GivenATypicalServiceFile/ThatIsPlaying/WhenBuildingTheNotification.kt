@@ -16,7 +16,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.image.ProvideI
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeScopedRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.FakeFileConnectionProvider
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.NowPlayingNotificationBuilder
-import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.ExpiringFuturePromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -66,7 +66,7 @@ class WhenBuildingTheNotification : AndroidContext() {
 			),
 			imageProvider
 		)
-		builder = FuturePromise(npBuilder.promiseNowPlayingNotification(ServiceFile(3), true)).get()
+		builder = ExpiringFuturePromise(npBuilder.promiseNowPlayingNotification(ServiceFile(3), true)).get()
 	}
 
 	@Test

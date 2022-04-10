@@ -1,52 +1,45 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.supplier;
+package com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.supplier
 
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.access.ICachedFilesProvider;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.configuration.IDiskFileCacheConfiguration;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.disk.IDiskCacheDirectoryProvider;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.persistence.IDiskFileCachePersistence;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.CacheOutputStream;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.CachedFileOutputStream;
-import com.namehillsoftware.handoff.promises.Promise;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.access.ICachedFilesProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.configuration.IDiskFileCacheConfiguration
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.disk.IDiskCacheDirectoryProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.persistence.IDiskFileCachePersistence
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.CacheOutputStream
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.CachedFileOutputStream
+import com.namehillsoftware.handoff.promises.Promise
+import java.io.File
 
-import java.io.File;
+class DiskFileCacheStreamSupplier(
+    private val diskCacheDirectory: IDiskCacheDirectoryProvider,
+    private val diskFileCacheConfiguration: IDiskFileCacheConfiguration,
+    private val diskFileCachePersistence: IDiskFileCachePersistence,
+    private val cachedFilesProvider: ICachedFilesProvider
+) : ICacheStreamSupplier {
+    override fun promiseCachedFileOutputStream(uniqueKey: String): Promise<CacheOutputStream> {
+        return cachedFilesProvider
+            .promiseCachedFile(uniqueKey)
+            .then { cachedFile: CachedFile? ->
+                val file = if (cachedFile != null) File(cachedFile.fileName) else generateCacheFile(
+                    uniqueKey
+                )
+                CachedFileOutputStream(uniqueKey, file, diskFileCachePersistence)
+            }
+    }
 
-public class DiskFileCacheStreamSupplier implements ICacheStreamSupplier {
-
-	private final IDiskFileCacheConfiguration diskFileCacheConfiguration;
-	private final IDiskFileCachePersistence diskFileCachePersistence;
-	private final ICachedFilesProvider cachedFilesProvider;
-	private final IDiskCacheDirectoryProvider diskCacheDirectory;
-
-	public DiskFileCacheStreamSupplier(IDiskCacheDirectoryProvider diskCacheDirectory, IDiskFileCacheConfiguration diskFileCacheConfiguration, IDiskFileCachePersistence diskFileCachePersistence, ICachedFilesProvider cachedFilesProvider) {
-		this.diskCacheDirectory = diskCacheDirectory;
-		this.diskFileCacheConfiguration = diskFileCacheConfiguration;
-		this.diskFileCachePersistence = diskFileCachePersistence;
-		this.cachedFilesProvider = cachedFilesProvider;
-	}
-
-	public Promise<CacheOutputStream> promiseCachedFileOutputStream(final String uniqueKey) {
-		return cachedFilesProvider
-			.promiseCachedFile(uniqueKey)
-			.then(cachedFile -> {
-				final File file = cachedFile != null ? new File(cachedFile.getFileName()) : generateCacheFile(uniqueKey);
-
-				return new CachedFileOutputStream(uniqueKey, file, diskFileCachePersistence);
-			});
-	}
-
-	private File generateCacheFile(String uniqueKey) {
-		final String suffix = ".cache";
-		final String uniqueKeyHashCode = String.valueOf(uniqueKey.hashCode());
-		final File diskCacheDir = diskCacheDirectory.getDiskCacheDirectory(diskFileCacheConfiguration);
-		File file = new File(diskCacheDir, uniqueKeyHashCode + suffix);
-
-		if (file.exists()) {
-			int collisionNumber = 0;
-			do {
-				file = new File(diskCacheDir, uniqueKeyHashCode + "-" + collisionNumber++ + suffix);
-			} while (file.exists());
-		}
-
-		return file;
-	}
+    private fun generateCacheFile(uniqueKey: String): File {
+        val suffix = ".cache"
+        val uniqueKeyHashCode = uniqueKey.hashCode().toString()
+        val diskCacheDir = diskCacheDirectory.getDiskCacheDirectory(
+            diskFileCacheConfiguration
+        )
+        var file = File(diskCacheDir, uniqueKeyHashCode + suffix)
+        if (file.exists()) {
+            var collisionNumber = 0
+            do {
+                file = File(diskCacheDir, uniqueKeyHashCode + "-" + collisionNumber++ + suffix)
+            } while (file.exists())
+        }
+        return file
+    }
 }

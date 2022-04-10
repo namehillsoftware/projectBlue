@@ -13,7 +13,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.stored.library.items.FakeDeferredStoredItemAccess;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.ExpiringFuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import org.junit.BeforeClass;
@@ -70,7 +70,7 @@ public class WhenCollectingTheAssociatedServiceFiles {
 		storedItemAccess.resolveStoredItems();
 
 		try {
-			new FuturePromise<>(serviceFilesPromise).get(1, TimeUnit.SECONDS);
+			new ExpiringFuturePromise<>(serviceFilesPromise).get(1, TimeUnit.SECONDS);
 		} catch (ExecutionException e) {
 			exception = e.getCause();
 		}

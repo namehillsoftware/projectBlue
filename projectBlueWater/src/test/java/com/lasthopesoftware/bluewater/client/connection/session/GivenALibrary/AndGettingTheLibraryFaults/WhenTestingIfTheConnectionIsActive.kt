@@ -7,7 +7,7 @@ import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibrary
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.PromisedConnectionsRepository
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredProgressingPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -51,7 +51,7 @@ class WhenTestingIfTheConnectionIsActive {
 			val futureConnectionProvider =
 				connectionSessionManager
 					.promiseLibraryConnection(LibraryId(2))
-					.toFuture()
+					.toExpiringFuture()
 
 			deferredConnectionProvider.sendRejection(IOException("OMG"))
 			try {

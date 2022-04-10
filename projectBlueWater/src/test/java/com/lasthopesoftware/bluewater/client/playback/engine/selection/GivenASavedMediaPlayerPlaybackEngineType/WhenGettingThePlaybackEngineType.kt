@@ -5,7 +5,7 @@ import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackE
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.SelectedPlaybackEngineTypeAccess
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
 import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
@@ -20,7 +20,7 @@ class WhenGettingThePlaybackEngineType : AndroidContext() {
 		val selectedPlaybackEngineTypeAccess = SelectedPlaybackEngineTypeAccess(applicationSettings)
 			{ Promise(PlaybackEngineType.ExoPlayer) }
 
-		playbackEngineType = selectedPlaybackEngineTypeAccess.promiseSelectedPlaybackEngineType().toFuture().get()
+		playbackEngineType = selectedPlaybackEngineTypeAccess.promiseSelectedPlaybackEngineType().toExpiringFuture().get()
     }
 
     @Test
@@ -30,7 +30,7 @@ class WhenGettingThePlaybackEngineType : AndroidContext() {
 
     @Test
     fun thenTheExoPlayerEngineIsTheSavedEngineType() {
-        assertThat(applicationSettings.promiseApplicationSettings().toFuture().get()?.playbackEngineTypeName)
+        assertThat(applicationSettings.promiseApplicationSettings().toExpiringFuture().get()?.playbackEngineTypeName)
             .isEqualTo(PlaybackEngineType.ExoPlayer.name)
     }
 

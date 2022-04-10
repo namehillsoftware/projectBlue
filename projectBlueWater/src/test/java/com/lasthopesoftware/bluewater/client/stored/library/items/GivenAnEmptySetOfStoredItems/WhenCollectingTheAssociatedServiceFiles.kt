@@ -6,7 +6,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
 import com.lasthopesoftware.bluewater.client.stored.library.items.FakeStoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import org.mockito.Mockito
@@ -24,7 +24,7 @@ class WhenCollectingTheAssociatedServiceFiles {
 				fileProvider,
 				FileListParameters
 			)
-			serviceFileCollector.promiseServiceFilesToSync(LibraryId(14)).toFuture()[1, TimeUnit.SECONDS]
+			serviceFileCollector.promiseServiceFilesToSync(LibraryId(14)).toExpiringFuture()[1, TimeUnit.SECONDS]
 		}
     }
 

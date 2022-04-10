@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.v
 
 import com.lasthopesoftware.bluewater.client.playback.file.NoTransformVolumeManager
 import com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.MaxFileVolumeManager
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import org.assertj.core.api.Assertions
 import org.junit.BeforeClass
 import org.junit.Test
@@ -17,13 +17,13 @@ class WhenSettingTheVolumeToSixtyFourPercent {
 		@BeforeClass
 		fun before() {
 			val maxFileVolumeManager = MaxFileVolumeManager(volumeManager)
-			returnedVolume = maxFileVolumeManager.setVolume(.64f).toFuture().get()!!
+			returnedVolume = maxFileVolumeManager.setVolume(.64f).toExpiringFuture().get()!!
 		}
 	}
 
 	@Test
 	fun thenThePlaybackHandlerVolumeIsSetToTheCorrectVolume() {
-		Assertions.assertThat(volumeManager.volume.toFuture().get()).isCloseTo(.64f, Assertions.offset(.00001f))
+		Assertions.assertThat(volumeManager.volume.toExpiringFuture().get()).isCloseTo(.64f, Assertions.offset(.00001f))
 	}
 
 	@Test

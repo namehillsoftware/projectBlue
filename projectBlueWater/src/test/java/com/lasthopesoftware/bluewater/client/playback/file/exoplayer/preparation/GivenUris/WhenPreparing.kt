@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.client.playback.exoplayer.ProvideExoPlayer
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.buffering.BufferingExoPlayer
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.ExoPlayerPlaybackPreparer
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
@@ -50,7 +50,7 @@ private val preparedFile by lazy {
 
 	listeners.forEach { it.onPlaybackStateChanged(Player.STATE_READY) }
 
-	promisedPreparedFile.toFuture().get()
+	promisedPreparedFile.toExpiringFuture().get()
 }
 
 class WhenPreparing {

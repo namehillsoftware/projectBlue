@@ -6,7 +6,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.changes.ObservableConnectionSettingsLibraryStorage
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import io.mockk.every
@@ -39,7 +39,7 @@ class WhenSavingTheLibrary {
 				messageBus
 			)
 
-			updatedLibrary = connectionSettingsChangeDetectionLibraryStorage.saveLibrary(Library(_id = 13)).toFuture().get()
+			updatedLibrary = connectionSettingsChangeDetectionLibraryStorage.saveLibrary(Library(_id = 13)).toExpiringFuture().get()
 		}
 	}
 

@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.views.PlaylistViewItem
 import com.lasthopesoftware.bluewater.client.browsing.library.views.StandardViewItem
 import com.lasthopesoftware.bluewater.client.browsing.library.views.access.ProvideLibraryViews
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -81,7 +81,7 @@ class WhenFindingThePlaylistItem {
 			)
 
 			val playlistItemFinder = PlaylistItemFinder(libraryViews, itemProvider)
-			playlistItemFinder.promiseItem(LibraryId(3), Playlist(playlistId)).toFuture().get()
+			playlistItemFinder.promiseItem(LibraryId(3), Playlist(playlistId)).toExpiringFuture().get()
 		}
 
 		private fun setupItemProviderWithItems(itemProvider: ProvideItems, sourceItem: ItemId, numberOfChildren: Int, withPlaylistIds: Boolean): List<Item> {

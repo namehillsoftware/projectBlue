@@ -5,7 +5,7 @@ import com.lasthopesoftware.bluewater.client.playback.engine.preparation.Prepare
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CyclicalFileQueueProvider
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.Messenger
 import com.namehillsoftware.handoff.promises.MessengerOperator
 import com.namehillsoftware.handoff.promises.Promise
@@ -38,7 +38,7 @@ class WhenTheQueueIsStarted {
 				},
                 bufferingPlaybackQueuesProvider.provideQueue(serviceFiles, startPosition)
             )
-			positionedPlaybackFile = queue.promiseNextPreparedPlaybackFile(Duration.ZERO)?.toFuture()?.get()
+			positionedPlaybackFile = queue.promiseNextPreparedPlaybackFile(Duration.ZERO)?.toExpiringFuture()?.get()
         }
     }
 

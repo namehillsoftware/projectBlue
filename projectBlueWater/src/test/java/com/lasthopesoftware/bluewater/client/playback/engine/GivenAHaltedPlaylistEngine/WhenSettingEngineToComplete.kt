@@ -19,7 +19,7 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlay
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -47,7 +47,7 @@ class WhenSettingEngineToComplete {
 						ServiceFile(4),
 						ServiceFile(5)
 					)
-				).toFuture().get()
+				).toExpiringFuture().get()
 			)
 			library.setNowPlayingId(0)
 			library.setRepeating(true)
@@ -74,8 +74,8 @@ class WhenSettingEngineToComplete {
 					repository,
 					PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
 				)
-			playbackEngine.playToCompletion().toFuture().get()
-			nowPlaying = repository.promiseNowPlaying().toFuture().get()
+			playbackEngine.playToCompletion().toExpiringFuture().get()
+			nowPlaying = repository.promiseNowPlaying().toExpiringFuture().get()
 		}
 	}
 

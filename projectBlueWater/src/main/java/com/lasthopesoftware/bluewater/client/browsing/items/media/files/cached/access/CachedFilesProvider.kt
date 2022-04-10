@@ -1,56 +1,52 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.access;
+package com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.access
 
-import android.content.Context;
-import android.database.SQLException;
+import android.content.Context
+import android.database.SQLException
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.DiskFileCache
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.configuration.IDiskFileCacheConfiguration
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile
+import com.lasthopesoftware.bluewater.repository.DatabasePromise
+import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
+import com.lasthopesoftware.bluewater.shared.cls
+import com.namehillsoftware.handoff.promises.Promise
+import org.slf4j.LoggerFactory
 
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.DiskFileCache;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.configuration.IDiskFileCacheConfiguration;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile;
-import com.lasthopesoftware.bluewater.repository.CloseableNonExclusiveTransaction;
-import com.lasthopesoftware.bluewater.repository.DatabasePromise;
-import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
-import com.namehillsoftware.handoff.promises.Promise;
+class CachedFilesProvider(
+    private val context: Context,
+    private val diskFileCacheConfiguration: IDiskFileCacheConfiguration
+) : ICachedFilesProvider {
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-public class CachedFilesProvider implements ICachedFilesProvider {
-	private final static Logger logger = LoggerFactory.getLogger(DiskFileCache.class);
-
-	private static final String cachedFileFilter =
-		" WHERE " + CachedFile.LIBRARY_ID + " = @" + CachedFile.LIBRARY_ID +
-			" AND " + CachedFile.CACHE_NAME + " = @" + CachedFile.CACHE_NAME +
-			" AND " + CachedFile.UNIQUE_KEY + " = @" + CachedFile.UNIQUE_KEY;
-
-	private final Context context;
-	private final IDiskFileCacheConfiguration diskFileCacheConfiguration;
-
-	public CachedFilesProvider(Context context, IDiskFileCacheConfiguration diskFileCacheConfiguration) {
-		this.context = context;
-		this.diskFileCacheConfiguration = diskFileCacheConfiguration;
+	companion object {
+		private val logger by lazy { LoggerFactory.getLogger(DiskFileCache::class.java) }
+		private const val cachedFileFilter =
+			" WHERE " + CachedFile.LIBRARY_ID + " = @" + CachedFile.LIBRARY_ID +
+				" AND " + CachedFile.CACHE_NAME + " = @" + CachedFile.CACHE_NAME +
+				" AND " + CachedFile.UNIQUE_KEY + " = @" + CachedFile.UNIQUE_KEY
 	}
 
-	@Override
-	public Promise<CachedFile> promiseCachedFile(String uniqueKey) {
-		return new DatabasePromise<>(() -> getCachedFile(uniqueKey));
-	}
+    override fun promiseCachedFile(uniqueKey: String): Promise<CachedFile> =
+		DatabasePromise { getCachedFile(uniqueKey) }
 
-	private CachedFile getCachedFile(final String uniqueKey) {
-		try (final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
-			try (final CloseableNonExclusiveTransaction closeableNonExclusiveTransaction = repositoryAccessHelper.beginNonExclusiveTransaction()) {
-				final CachedFile cachedFile = repositoryAccessHelper
-					.mapSql("SELECT * FROM " + CachedFile.tableName + cachedFileFilter)
-					.addParameter(CachedFile.LIBRARY_ID, diskFileCacheConfiguration.getLibrary().getId())
-					.addParameter(CachedFile.CACHE_NAME, diskFileCacheConfiguration.getCacheName())
-					.addParameter(CachedFile.UNIQUE_KEY, uniqueKey)
-					.fetchFirst(CachedFile.class);
-
-				closeableNonExclusiveTransaction.setTransactionSuccessful();
-				return cachedFile;
-			} catch (SQLException sqlException) {
-				logger.error("There was an error getting the cached file with unique key " + uniqueKey, sqlException);
-				return null;
-			}
-		}
-	}
+    private fun getCachedFile(uniqueKey: String): CachedFile? =
+        RepositoryAccessHelper(context).use { repositoryAccessHelper ->
+            try {
+                repositoryAccessHelper.beginNonExclusiveTransaction()
+                    .use { closeableNonExclusiveTransaction ->
+                        val cachedFile = repositoryAccessHelper
+                            .mapSql("SELECT * FROM " + CachedFile.tableName + cachedFileFilter)
+                            .addParameter(CachedFile.LIBRARY_ID, diskFileCacheConfiguration.library.id)
+                            .addParameter(CachedFile.CACHE_NAME, diskFileCacheConfiguration.cacheName)
+                            .addParameter(CachedFile.UNIQUE_KEY, uniqueKey)
+                            .fetchFirst(cls<CachedFile>())
+                        closeableNonExclusiveTransaction.setTransactionSuccessful()
+                        cachedFile
+                    }
+            } catch (sqlException: SQLException) {
+                logger.error(
+                    "There was an error getting the cached file with unique key $uniqueKey",
+                    sqlException
+                )
+                null
+            }
+        }
 }

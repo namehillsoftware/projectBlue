@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.connection.testing.GivenAFaultingC
 
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.testing.ConnectionTester
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import org.assertj.core.api.AssertionsForClassTypes
 import org.junit.BeforeClass
 import org.junit.Test
@@ -25,7 +25,7 @@ class WhenCheckingIfTheConnectionIsPossible {
 			val connectionTester = ConnectionTester
 			val connectionProvider = FakeConnectionProvider()
 			connectionProvider.mapResponse({ throw IOException() }, "Alive")
-			result = connectionTester.promiseIsConnectionPossible(connectionProvider).toFuture().get()!!
+			result = connectionTester.promiseIsConnectionPossible(connectionProvider).toExpiringFuture().get()!!
 		}
 	}
 }

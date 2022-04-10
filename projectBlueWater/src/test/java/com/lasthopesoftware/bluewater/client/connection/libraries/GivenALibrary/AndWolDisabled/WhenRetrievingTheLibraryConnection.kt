@@ -11,7 +11,7 @@ import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectio
 import com.lasthopesoftware.bluewater.client.connection.settings.ValidateConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
@@ -19,7 +19,6 @@ import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.BeforeClass
 import org.junit.Test
-import java.util.*
 
 class WhenRetrievingTheLibraryConnection {
 
@@ -63,7 +62,7 @@ class WhenRetrievingTheLibraryConnection {
 						progress.then(statuses::add)
 						updates(statuses::add)
 					}
-					.toFuture()
+					.toExpiringFuture()
 			deferredConnectionSettings.resolve()
 			connectionProvider = futureConnectionProvider.get()
 		}

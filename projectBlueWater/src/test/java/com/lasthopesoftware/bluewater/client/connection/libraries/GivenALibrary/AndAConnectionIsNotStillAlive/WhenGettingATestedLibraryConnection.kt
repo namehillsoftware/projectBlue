@@ -8,14 +8,13 @@ import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessio
 import com.lasthopesoftware.bluewater.client.connection.session.PromisedConnectionsRepository
 import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredProgressingPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.BeforeClass
 import org.junit.Test
-import java.util.*
 
 class WhenGettingATestedLibraryConnection {
 
@@ -52,7 +51,7 @@ class WhenGettingATestedLibraryConnection {
 						progress.then { if (it != null) statuses.add(it) }
 						updates(statuses::add)
 					}
-					.toFuture()
+					.toExpiringFuture()
 
 			firstDeferredConnectionProvider.apply {
 				sendProgressUpdates(
@@ -71,7 +70,7 @@ class WhenGettingATestedLibraryConnection {
 						progress.then { if (it != null) statuses.add(it) }
 						updates(statuses::add)
 					}
-					.toFuture()
+					.toExpiringFuture()
 
 			secondDeferredConnectionProvider.apply {
 				sendProgressUpdates(

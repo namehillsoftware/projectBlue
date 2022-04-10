@@ -8,7 +8,7 @@ import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfScopedConnectionIsReadOnly
 import com.lasthopesoftware.bluewater.client.connection.url.MediaServerUrlProvider
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
@@ -48,7 +48,7 @@ class WhenStoringFiles {
 			)
 
 			try {
-				fileStorage.promiseFileUpdate(ServiceFile(33), "myProperty", "myValue", false).toFuture().get()
+				fileStorage.promiseFileUpdate(ServiceFile(33), "myProperty", "myValue", false).toExpiringFuture().get()
 			} catch (e: ExecutionException) {
 				authenticationRequiredException = e.cause as? SecurityException
 			}

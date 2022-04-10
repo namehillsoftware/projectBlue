@@ -6,7 +6,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.NoTransformVolumeMana
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile
 import com.lasthopesoftware.bluewater.client.playback.file.fakes.FakeBufferingPlaybackHandler
 import com.lasthopesoftware.bluewater.client.playback.playlist.PlaylistPlayer
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
 import io.reactivex.Observable
 import org.assertj.core.api.Assertions.assertThat
@@ -36,8 +36,8 @@ class WhenPausingAgain {
 				.thenReturn(positionedPlaybackHandlerContainer)
 			val playlistPlayback = PlaylistPlayer(preparedPlaybackFileQueue, Duration.ZERO)
 			Observable.create(playlistPlayback).subscribe()
-			originalPlayableFile = playlistPlayback.pause().toFuture().get()
-			playableFile = playlistPlayback.pause().toFuture().get()
+			originalPlayableFile = playlistPlayback.pause().toExpiringFuture().get()
+			playableFile = playlistPlayback.pause().toExpiringFuture().get()
 		}
 	}
 

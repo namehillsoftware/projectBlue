@@ -18,7 +18,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.Co
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.Messenger
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
@@ -115,11 +115,11 @@ class WhenObservingPlayback {
 					0,
 					Duration.ZERO
 				)
-				.toFuture()
+				.toExpiringFuture()
 				.get()
 			deferredErrorPlaybackPreparer.resolve().resolve()
 			deferredErrorPlaybackPreparer.reject()
-			nowPlaying = nowPlayingRepository.promiseNowPlaying().toFuture().get()
+			nowPlaying = nowPlayingRepository.promiseNowPlaying().toExpiringFuture().get()
 		}
 	}
 }

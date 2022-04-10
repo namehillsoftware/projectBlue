@@ -4,7 +4,7 @@ import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackE
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.SelectedPlaybackEngineTypeAccess
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
 import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -28,7 +28,7 @@ class WhenGettingThePlaybackEngineType {
 				applicationSettings
 			) { Promise(PlaybackEngineType.ExoPlayer) }
 			playbackEngineType =
-				selectedPlaybackEngineTypeAccess.promiseSelectedPlaybackEngineType().toFuture().get()
+				selectedPlaybackEngineTypeAccess.promiseSelectedPlaybackEngineType().toExpiringFuture().get()
 		}
 	}
 

@@ -4,7 +4,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibrary
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.SyncLibraryProvider
-import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.ExpiringFuturePromise
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.BeforeClass
 import org.junit.Test
@@ -30,7 +30,7 @@ class WhenGettingALibraryThatSyncsOnLocalConnection {
 					Library().setId(13).setIsSyncLocalConnectionsOnly(true)
 				)
 			)
-			library = FuturePromise(syncLibraryProvider.getLibrary(LibraryId(8))).get()
+			library = ExpiringFuturePromise(syncLibraryProvider.getLibrary(LibraryId(8))).get()
 		}
 	}
 }

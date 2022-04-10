@@ -19,7 +19,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.Cy
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
@@ -43,7 +43,7 @@ class WhenRestoringEngineStateAndResumingPlayback {
 						ServiceFile(915),
 						ServiceFile(899)
 					)
-				).toFuture().get()
+				).toExpiringFuture().get()
 			)
 			library.setNowPlayingProgress(893)
 			library.setNowPlayingId(3)
@@ -75,12 +75,12 @@ class WhenRestoringEngineStateAndResumingPlayback {
 				repository,
 				PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
 			)
-			val restoredState = playbackEngine.restoreFromSavedState().toFuture().get()
+			val restoredState = playbackEngine.restoreFromSavedState().toExpiringFuture().get()
 
 			playbackEngine.setOnPlayingFileChanged { c -> positionedPlayingFile = c	}
 			val promisedResumption = playbackEngine.resume()
 			fakePlaybackPreparerProvider.deferredResolution.resolve()
-			promisedResumption.toFuture().get()
+			promisedResumption.toExpiringFuture().get()
 
 			restoredState
 		}
@@ -98,7 +98,7 @@ class WhenRestoringEngineStateAndResumingPlayback {
 
 	@Test
 	fun `then the file progress is correct`() {
-		assertThat(restoredState?.progress?.toFuture()?.get()?.millis).isEqualTo(893)
+		assertThat(restoredState?.progress?.toExpiringFuture()?.get()?.millis).isEqualTo(893)
 	}
 
 	@Test
@@ -108,7 +108,7 @@ class WhenRestoringEngineStateAndResumingPlayback {
 
 	@Test
 	fun `then the playing file progress is correct`() {
-		assertThat(positionedPlayingFile?.playingFile?.progress?.toFuture()?.get()?.millis).isEqualTo(893)
+		assertThat(positionedPlayingFile?.playingFile?.progress?.toExpiringFuture()?.get()?.millis).isEqualTo(893)
 	}
 
 	@Test

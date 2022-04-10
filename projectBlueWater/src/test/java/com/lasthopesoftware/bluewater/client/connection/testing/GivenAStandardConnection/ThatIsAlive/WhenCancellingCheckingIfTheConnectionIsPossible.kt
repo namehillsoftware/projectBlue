@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.connection.testing.GivenAStandardC
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import io.mockk.every
 import io.mockk.mockk
 import okhttp3.Protocol
@@ -53,7 +53,7 @@ class WhenCancellingCheckingIfTheConnectionIsPossible {
 			promisedTest.cancel()
 			deferredResponse.resolve()
 
-			result = promisedTest.toFuture()[5, TimeUnit.SECONDS]!!
+			result = promisedTest.toExpiringFuture()[5, TimeUnit.SECONDS]!!
 		}
 	}
 

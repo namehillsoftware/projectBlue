@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.GivenAPlay
 import com.google.android.exoplayer2.Player
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.PromisingExoPlayer
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import io.mockk.every
 import io.mockk.mockk
@@ -31,7 +31,7 @@ class WhenThePlayerWillPlayWhenReady {
 			val exoPlayerPlaybackHandler = ExoPlayerPlaybackHandler(mockExoPlayer)
 			val playbackPromise = exoPlayerPlaybackHandler.promisePlayback()
 				.eventually { it.promisePlayedFile() }
-				.toFuture()
+				.toExpiringFuture()
 			eventListener?.onPlaybackStateChanged(Player.STATE_IDLE)
 
 			try {

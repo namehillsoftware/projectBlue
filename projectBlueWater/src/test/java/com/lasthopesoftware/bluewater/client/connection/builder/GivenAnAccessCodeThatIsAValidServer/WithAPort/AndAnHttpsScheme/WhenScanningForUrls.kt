@@ -8,7 +8,7 @@ import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSetti
 import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import io.mockk.every
 import io.mockk.mockk
@@ -38,7 +38,7 @@ class WhenScanningForUrls {
 				connectionSettingsLookup,
 				OkHttpFactory
             )
-			urlProvider = urlScanner.promiseBuiltUrlProvider(LibraryId(12)).toFuture().get()
+			urlProvider = urlScanner.promiseBuiltUrlProvider(LibraryId(12)).toExpiringFuture().get()
 		}
 	}
 

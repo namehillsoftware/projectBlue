@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.stored.library.items.FakeStoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import io.mockk.every
 import io.mockk.mockk
@@ -54,7 +54,7 @@ class WhenCollectingTheAssociatedServiceFiles {
 
 			StoredItemServiceFileCollector(storedItemAccess, fileProvider, fileListParameters)
 				.promiseServiceFilesToSync(LibraryId(5))
-				.toFuture()[1, TimeUnit.SECONDS]
+				.toExpiringFuture()[1, TimeUnit.SECONDS]
 		}
 
 		private fun givenARandomCollectionOfFiles(): List<ServiceFile> {

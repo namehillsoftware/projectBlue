@@ -6,7 +6,7 @@ import com.lasthopesoftware.bluewater.client.playback.engine.AudioManagingPlayba
 import com.lasthopesoftware.bluewater.client.playback.engine.ChangePlaybackState
 import com.lasthopesoftware.bluewater.client.playback.engine.ChangePlaybackStateForSystem
 import com.lasthopesoftware.bluewater.shared.android.audiofocus.ControlAudioFocus
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
@@ -65,7 +65,7 @@ class WhenAudioFocusIsLost {
 				playbackStateForSystem,
 				audioFocus,
 				mockk(relaxed = true))
-			audioManagingPlaybackStateChanger.resume().toFuture().get()
+			audioManagingPlaybackStateChanger.resume().toExpiringFuture().get()
 			audioManagingPlaybackStateChanger.onAudioFocusChange(AudioManager.AUDIOFOCUS_LOSS)
 			audioManagingPlaybackStateChanger.onAudioFocusChange(AudioManager.AUDIOFOCUS_GAIN)
 			audioManagingPlaybackStateChanger.onAudioFocusChange(AudioManager.AUDIOFOCUS_LOSS)

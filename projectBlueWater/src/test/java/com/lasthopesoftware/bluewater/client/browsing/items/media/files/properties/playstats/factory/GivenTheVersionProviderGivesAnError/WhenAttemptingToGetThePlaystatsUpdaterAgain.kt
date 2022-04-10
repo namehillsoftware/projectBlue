@@ -11,7 +11,7 @@ import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfScopedConnectionIsReadOnly
 import com.lasthopesoftware.bluewater.client.servers.version.IProgramVersionProvider
 import com.lasthopesoftware.bluewater.client.servers.version.SemanticVersion
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
@@ -47,11 +47,11 @@ class WhenAttemptingToGetThePlaystatsUpdaterAgain {
 				programVersionProvider
 			)
 			try {
-				playstatsUpdateSelector.promisePlaystatsUpdater().toFuture().get()
+				playstatsUpdateSelector.promisePlaystatsUpdater().toExpiringFuture().get()
 			} catch (e: ExecutionException) {
 				exception = e
 			}
-			updater = playstatsUpdateSelector.promisePlaystatsUpdater().toFuture().get()
+			updater = playstatsUpdateSelector.promisePlaystatsUpdater().toExpiringFuture().get()
 		}
 	}
 

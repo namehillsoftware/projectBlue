@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
@@ -53,7 +53,7 @@ class WhenScanningForUrls {
 				OkHttpFactory
 			)
 
-			urlScanner.promiseBuiltUrlProvider(LibraryId(35)).toFuture().get()
+			urlScanner.promiseBuiltUrlProvider(LibraryId(35)).toExpiringFuture().get()
 		}
 	}
 

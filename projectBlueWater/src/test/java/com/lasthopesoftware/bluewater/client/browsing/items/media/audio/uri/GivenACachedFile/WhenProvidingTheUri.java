@@ -1,12 +1,16 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.media.audio.uri.GivenACachedFile;
 
+import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
 import android.net.Uri;
 
-import com.lasthopesoftware.bluewater.client.browsing.items.media.audio.uri.CachedAudioFileUriProvider;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.access.ICachedFilesProvider;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile;
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.uri.RemoteFileUriProvider;
+import com.lasthopesoftware.bluewater.client.playback.caching.uri.CachedAudioFileUriProvider;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import org.junit.BeforeClass;
@@ -16,10 +20,6 @@ import org.robolectric.RobolectricTestRunner;
 
 import java.io.File;
 import java.io.IOException;
-
-import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 @RunWith(RobolectricTestRunner.class)
 public class WhenProvidingTheUri {

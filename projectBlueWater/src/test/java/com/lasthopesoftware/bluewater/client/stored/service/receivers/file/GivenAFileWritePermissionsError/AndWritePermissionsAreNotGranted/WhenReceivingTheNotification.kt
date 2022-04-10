@@ -4,7 +4,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.AccessStoredFiles
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.client.stored.sync.receivers.file.StoredFileWritePermissionsReceiver
-import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.ExpiringFuturePromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -34,7 +34,7 @@ class WhenReceivingTheNotification {
 				{ e -> requestedWritePermissionLibraries.add(e) },
 				storedFileAccess
 			)
-			FuturePromise(storedFileWritePermissionsReceiver.receive(14)).get()
+			ExpiringFuturePromise(storedFileWritePermissionsReceiver.receive(14)).get()
 		}
 	}
 }

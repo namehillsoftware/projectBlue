@@ -4,7 +4,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.RequestServerInfoXml
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerDiscoveryException
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerLookup
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -33,7 +33,7 @@ class WhenParsingTheServerInfo {
 
 			val serverLookup = ServerLookup(serverInfoXml)
 			try {
-				serverLookup.promiseServerInformation(LibraryId(14)).toFuture().get()
+				serverLookup.promiseServerInformation(LibraryId(14)).toExpiringFuture().get()
 			} catch (e: ExecutionException) {
 				exception = e.cause as? ServerDiscoveryException ?: throw e
 			}

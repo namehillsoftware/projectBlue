@@ -11,7 +11,7 @@ import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnect
 import com.lasthopesoftware.bluewater.client.connection.session.ManageConnectionSessions
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredProgressingPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
@@ -47,11 +47,11 @@ class WhenRetrievingTheTestedSelectedConnectionOnBuildComplete {
 				)
 				deferredConnectionProvider.sendProgressUpdates(BuildingConnectionStatus.GettingLibrary)
 
-				val futureConnectionProvider = sessionConnection.promiseTestedSessionConnection().toFuture()
+				val futureConnectionProvider = sessionConnection.promiseTestedSessionConnection().toExpiringFuture()
 				var futureSecondConnectionProvider: Future<IConnectionProvider?>? = null
 				deferredConnectionProvider.updates {
 					if (it == BuildingConnectionStatus.BuildingConnectionComplete) {
-						futureSecondConnectionProvider = sessionConnection.promiseSessionConnection().toFuture()
+						futureSecondConnectionProvider = sessionConnection.promiseSessionConnection().toExpiringFuture()
 					}
 				}
 				deferredConnectionProvider.sendProgressUpdates(
