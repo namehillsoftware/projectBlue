@@ -23,21 +23,21 @@ class MediaSourceProvider constructor(
 ) : SpawnMediaSources {
 
 	companion object {
-		private val extractorsFactory = lazy { Mp3Extractor.FACTORY }
+		private val extractorsFactory by lazy { Mp3Extractor.FACTORY }
 	}
 
-	private val lazyFileExtractorFactory = lazy {
-		ProgressiveMediaSource.Factory(FileDataSource.Factory(), extractorsFactory.value)
+	private val lazyFileExtractorFactory by lazy {
+		ProgressiveMediaSource.Factory(FileDataSource.Factory(), extractorsFactory)
 	}
 
-	private val lazyRemoteExtractorFactory = lazy {
+	private val lazyRemoteExtractorFactory by lazy {
 		val httpDataSourceFactory = dataSourceFactoryProvider.getHttpDataSourceFactory(library)
 //		val cacheDataSourceFactory = CacheDataSource.Factory()
 //			.setCache(cache)
 //			.setUpstreamDataSourceFactory(httpDataSourceFactory)
 		val cacheDataSourceFactory = DiskFileCacheDataSource.Factory(httpDataSourceFactory, cacheStreamSupplier, cachedFilesProvider)
 
-		val factory = ProgressiveMediaSource.Factory(cacheDataSourceFactory, extractorsFactory.value)
+		val factory = ProgressiveMediaSource.Factory(cacheDataSourceFactory, extractorsFactory)
 		factory.setLoadErrorHandlingPolicy(DefaultLoadErrorHandlingPolicy(DefaultLoadErrorHandlingPolicy.DEFAULT_MIN_LOADABLE_RETRY_COUNT_PROGRESSIVE_LIVE))
 	}
 
@@ -45,6 +45,6 @@ class MediaSourceProvider constructor(
 		getFactory(uri).createMediaSource(MediaItem.Builder().setUri(uri).build())
 
 	private fun getFactory(uri: Uri): ProgressiveMediaSource.Factory =
-		if (IoCommon.FileUriScheme.equals(uri.scheme, ignoreCase = true)) lazyFileExtractorFactory.value
-		else lazyRemoteExtractorFactory.value
+		if (IoCommon.FileUriScheme.equals(uri.scheme, ignoreCase = true)) lazyFileExtractorFactory
+		else lazyRemoteExtractorFactory
 }

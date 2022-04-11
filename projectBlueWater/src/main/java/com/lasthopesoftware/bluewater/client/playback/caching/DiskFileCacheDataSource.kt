@@ -22,7 +22,7 @@ class DiskFileCacheDataSource(
 	private val cacheStreamSupplier: ICacheStreamSupplier,
 	private val cachedFilesProvider: ICachedFilesProvider
 ) : DataSource {
-	private lateinit var cacheWriter: CacheWriter
+	private var cacheWriter: CacheWriter? = null
 	private lateinit var currentDataSpec: DataSpec
 
 	override fun addTransferListener(transferListener: TransferListener) = innerDataSource.addTransferListener(transferListener)
@@ -47,8 +47,8 @@ class DiskFileCacheDataSource(
 
 	override fun read(bytes: ByteArray, offset: Int, readLength: Int): Int {
 		val result = innerDataSource.read(bytes, offset, readLength)
-		if (result != C.RESULT_END_OF_INPUT) cacheWriter.queueAndProcess(bytes, offset, result)
-		else cacheWriter.commit()
+		if (result == C.RESULT_END_OF_INPUT || result < readLength) cacheWriter?.commit()
+		else cacheWriter?.queueAndProcess(bytes, offset, result)
 		return result
 	}
 
