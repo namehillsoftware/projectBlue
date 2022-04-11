@@ -48,8 +48,16 @@ class DiskFileCacheDataSource(
 
 	override fun read(bytes: ByteArray, offset: Int, readLength: Int): Int {
 		val result = innerDataSource.read(bytes, offset, readLength)
-		if (result == C.RESULT_END_OF_INPUT || result < readLength) cacheWriter?.commit()
-		else cacheWriter?.queueAndProcess(bytes, offset, result)
+		when {
+			result == C.RESULT_END_OF_INPUT -> cacheWriter?.commit()
+			result < readLength -> {
+				cacheWriter?.apply {
+					queueAndProcess(bytes, offset, result)
+					commit()
+				}
+			}
+			else -> cacheWriter?.queueAndProcess(bytes, offset, result)
+		}
 		return result
 	}
 
@@ -67,7 +75,7 @@ class DiskFileCacheDataSource(
 		private var activePromise = Unit.toPromise()
 
 		fun queueAndProcess(bytes: ByteArray, offset: Int, length: Int) {
-			buffers.offer(Buffer().apply { write(bytes, offset, length) })
+			buffers.offer(Buffer().write(bytes, offset, length))
 
 			processQueue()
 		}
