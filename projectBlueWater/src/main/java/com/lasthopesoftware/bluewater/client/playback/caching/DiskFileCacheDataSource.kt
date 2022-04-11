@@ -86,6 +86,7 @@ class DiskFileCacheDataSource(
 									cachedOutputStream.close()
 								}
 							}
+							.then { processQueue() } // kick-off processing again, but don't wait for the result
 							.unitResponse()
 					}
 					?: Unit.toPromise()
