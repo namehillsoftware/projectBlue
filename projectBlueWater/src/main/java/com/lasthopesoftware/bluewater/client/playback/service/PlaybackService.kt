@@ -25,6 +25,9 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceF
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListUtilities
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.access.CachedFilesProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.disk.AndroidDiskCacheDirectoryProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.persistence.DiskFileAccessTimeUpdater
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.persistence.DiskFileCachePersistence
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.supplier.DiskFileCacheStreamSupplier
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.CachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedCachedFilePropertiesProvider
@@ -731,9 +734,24 @@ open class PlaybackService :
 				)
 
 			cache?.release()
-			val cacheDirectoryProvider = AndroidDiskCacheDirectoryProvider(this).getDiskCacheDirectory(cacheConfiguration)
+			val diskCachedDirectoryProvider = AndroidDiskCacheDirectoryProvider(this)
+			val cachedFilesProvider = CachedFilesProvider(this, cacheConfiguration)
+			val diskFileAccessTimeUpdater = DiskFileAccessTimeUpdater(this)
+			val cacheStreamSupplier = DiskFileCacheStreamSupplier(
+				diskCachedDirectoryProvider,
+				cacheConfiguration,
+				DiskFileCachePersistence(
+					this,
+					diskCachedDirectoryProvider,
+					cacheConfiguration,
+					cachedFilesProvider,
+					diskFileAccessTimeUpdater
+				),
+				cachedFilesProvider
+			)
+			val cacheDirectory = diskCachedDirectoryProvider.getDiskCacheDirectory(cacheConfiguration)
 			val cacheEvictor = LeastRecentlyUsedCacheEvictor(cacheConfiguration.maxSize)
-			SimpleCache(cacheDirectoryProvider, cacheEvictor)
+			SimpleCache(cacheDirectory, cacheEvictor)
 				.also { cache = it }
 				.let { simpleCache ->
 					val remoteFileUriProvider = RemoteFileUriProvider(connectionProvider, ServiceFileUriQueryParamsProvider())
@@ -763,7 +781,10 @@ open class PlaybackService :
 							MediaSourceProvider(
 								library,
 								HttpDataSourceFactoryProvider(this, connectionProvider, OkHttpFactory),
-								simpleCache),
+								simpleCache,
+								cacheStreamSupplier,
+								cachedFilesProvider
+							),
 							bestMatchUriProvider
 						)
 

@@ -91,6 +91,17 @@ class DiskFileCacheDataSource(
 		}
 	}
 
+	class Factory(
+		private val httpDataSourceFactory: HttpDataSource.Factory,
+		private val cacheStreamSupplier: ICacheStreamSupplier,
+	 	private val cachedFilesProvider: ICachedFilesProvider) : DataSource.Factory {
+		override fun createDataSource(): DataSource = DiskFileCacheDataSource(
+			httpDataSourceFactory.createDataSource(),
+			cacheStreamSupplier,
+			cachedFilesProvider
+		)
+	}
+
 	companion object {
 		private val logger by lazy { LoggerFactory.getLogger(DiskFileCacheDataSource::class.java) }
 		private const val maxBufferSize = 1024L * 1024L // 1MB
