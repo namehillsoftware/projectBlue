@@ -11,6 +11,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.a
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.CacheOutputStream
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.supplier.ICacheStreamSupplier
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.lasthopesoftware.bluewater.shared.promises.toFuture
 import com.lasthopesoftware.resources.uri.PathAndQuery
 import com.namehillsoftware.handoff.promises.Promise
@@ -48,16 +49,8 @@ class DiskFileCacheDataSource(
 
 	override fun read(bytes: ByteArray, offset: Int, readLength: Int): Int {
 		val result = innerDataSource.read(bytes, offset, readLength)
-		when {
-			result == C.RESULT_END_OF_INPUT -> cacheWriter?.commit()
-			result < readLength -> {
-				cacheWriter?.apply {
-					queueAndProcess(bytes, offset, result)
-					commit()
-				}
-			}
-			else -> cacheWriter?.queueAndProcess(bytes, offset, result)
-		}
+		if (result == C.RESULT_END_OF_INPUT) cacheWriter?.commit()
+		else cacheWriter?.queueAndProcess(bytes, offset, result)
 		return result
 	}
 
@@ -67,6 +60,7 @@ class DiskFileCacheDataSource(
 
 	override fun close() {
 		innerDataSource.close()
+		cacheWriter?.commit()
 	}
 
 	private class CacheWriter(private val cachedOutputStream: CacheOutputStream) {
@@ -92,7 +86,7 @@ class DiskFileCacheDataSource(
 									cachedOutputStream.close()
 								}
 							}
-							.eventually { processQueue() }
+							.unitResponse()
 					}
 					?: Unit.toPromise()
 			}.also { activePromise = it }
@@ -101,6 +95,7 @@ class DiskFileCacheDataSource(
 		fun commit() {
 			synchronized(activePromiseSync) {
 				activePromise
+					.eventually { processQueue() }
 					.eventually { cachedOutputStream.flush() }
 					.eventually { cachedOutputStream.commitToCache() }
 					.must { cachedOutputStream.close() }
