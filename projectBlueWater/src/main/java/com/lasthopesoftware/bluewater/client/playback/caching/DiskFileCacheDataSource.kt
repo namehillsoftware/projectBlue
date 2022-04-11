@@ -16,6 +16,7 @@ import com.lasthopesoftware.resources.uri.PathAndQuery
 import com.namehillsoftware.handoff.promises.Promise
 import okio.Buffer
 import org.slf4j.LoggerFactory
+import java.util.concurrent.ConcurrentLinkedQueue
 
 class DiskFileCacheDataSource(
 	private val innerDataSource: HttpDataSource,
@@ -61,23 +62,31 @@ class DiskFileCacheDataSource(
 	}
 
 	private class CacheWriter(private val cachedOutputStream: CacheOutputStream) {
-		private val buffer = Buffer()
+		private val buffers = ConcurrentLinkedQueue<Buffer>()
 		private val activePromiseSync = Any()
 		private var activePromise = Unit.toPromise()
 
 		fun queueAndProcess(bytes: ByteArray, offset: Int, length: Int) {
-			buffer.write(bytes, offset, length)
+			buffers.offer(Buffer().apply { write(bytes, offset, length) })
 
 			processQueue()
 		}
 
 		private fun processQueue() : Promise<Unit> = synchronized(activePromiseSync) {
 			activePromise.eventually {
-				if (buffer.exhausted()) Unit.toPromise()
-				else cachedOutputStream
-					.promiseTransfer(buffer)
-					.apply { excuse { cachedOutputStream.close() } }
-					.eventually { processQueue() }
+				buffers.poll()
+					?.let { buffer ->
+						cachedOutputStream
+							.promiseTransfer(buffer)
+							.apply {
+								excuse {
+									logger.warn("An error occurred copying the buffer, closing the output stream", it)
+									cachedOutputStream.close()
+								}
+							}
+							.eventually { processQueue() }
+					}
+					?: Unit.toPromise()
 			}.also { activePromise = it }
 		}
 
