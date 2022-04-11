@@ -10,7 +10,7 @@ import com.google.android.exoplayer2.upstream.TransferListener
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.access.ICachedFilesProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.CacheOutputStream
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.supplier.ICacheStreamSupplier
-import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.bluewater.shared.promises.toFuture
 import com.lasthopesoftware.resources.uri.PathAndQuery
 import com.namehillsoftware.handoff.promises.Promise
@@ -22,21 +22,21 @@ class DiskFileCacheDataSource(
 	private val cacheStreamSupplier: ICacheStreamSupplier,
 	private val cachedFilesProvider: ICachedFilesProvider
 ) : DataSource {
-	private lateinit var buffer: Buffer
-	private lateinit var promisedOutputStream: Promise<CacheOutputStream>
+	private lateinit var cacheWriter: CacheWriter
 	private lateinit var currentDataSpec: DataSpec
 
 	override fun addTransferListener(transferListener: TransferListener) = innerDataSource.addTransferListener(transferListener)
 
 	override fun open(dataSpec: DataSpec): Long {
-		buffer = Buffer()
-
 		val key = "${PathAndQuery.forUri(dataSpec.uri)}:${dataSpec.position}:${dataSpec.length}"
 		val cachedFile = cachedFilesProvider.promiseCachedFile(key)
-			.then {
-				if (it == null)
-					promisedOutputStream = cacheStreamSupplier.promiseCachedFileOutputStream(key)
-				it
+			.eventually {
+				it?.toPromise() ?: cacheStreamSupplier
+					.promiseCachedFileOutputStream(key)
+					.then { os ->
+						cacheWriter = CacheWriter(os)
+						it
+					}
 			}
 			.toFuture()
 			.get()
@@ -47,56 +47,8 @@ class DiskFileCacheDataSource(
 
 	override fun read(bytes: ByteArray, offset: Int, readLength: Int): Int {
 		val result = innerDataSource.read(bytes, offset, readLength)
-		val bufferToWrite = buffer
-		if (result != C.RESULT_END_OF_INPUT) {
-			bufferToWrite.write(bytes, offset, result)
-			if (bufferToWrite.size <= maxBufferSize) return result
-
-			buffer = Buffer()
-			promisedOutputStream = promisedOutputStream
-				.eventually { cachedFileOutputStream ->
-					val promisedWrite = cachedFileOutputStream?.promiseTransfer(bufferToWrite).keepPromise()
-					promisedWrite.then(
-						{ bufferToWrite.close() },
-						{ e ->
-							logger.warn("An error occurred storing the audio file", e)
-							bufferToWrite.close()
-							cachedFileOutputStream?.close()
-						})
-					promisedWrite
-				}
-			return result
-		}
-
-		val outputStream = if (bufferToWrite.size == 0L) promisedOutputStream else promisedOutputStream
-			.eventually { cachedFileOutputStream ->
-				val promisedWrite = cachedFileOutputStream?.promiseTransfer(bufferToWrite).keepPromise()
-				promisedWrite.then(
-					{ bufferToWrite.close() },
-					{ e ->
-						logger.warn("An error occurred storing the audio file", e)
-						bufferToWrite.close()
-						cachedFileOutputStream?.close()
-					})
-				promisedWrite
-			}
-			.keepPromise()
-
-		outputStream.eventually { cachedFileOutputStream ->
-			cachedFileOutputStream
-				?.flush()
-				?.eventually({ os ->
-					os.close()
-					bufferToWrite.close()
-					os.commitToCache()
-				}, { e ->
-					logger.warn("An error occurred flushing the output stream", e)
-					cachedFileOutputStream.close()
-					bufferToWrite.close()
-					Promise.empty()
-				})
-				.keepPromise()
-		}
+		if (result != C.RESULT_END_OF_INPUT) cacheWriter.queueAndProcess(bytes, offset, result)
+		else cacheWriter.commit()
 		return result
 	}
 
@@ -106,6 +58,37 @@ class DiskFileCacheDataSource(
 
 	override fun close() {
 		innerDataSource.close()
+	}
+
+	private class CacheWriter(private val cachedOutputStream: CacheOutputStream) {
+		private val buffer = Buffer()
+		private val activePromiseSync = Any()
+		private var activePromise = Unit.toPromise()
+
+		fun queueAndProcess(bytes: ByteArray, offset: Int, length: Int) {
+			buffer.write(bytes, offset, length)
+
+			processQueue()
+		}
+
+		private fun processQueue() : Promise<Unit> = synchronized(activePromiseSync) {
+			activePromise.eventually {
+				if (buffer.exhausted()) Unit.toPromise()
+				else cachedOutputStream
+					.promiseTransfer(buffer)
+					.apply { excuse { cachedOutputStream.close() } }
+					.eventually { processQueue() }
+			}.also { activePromise = it }
+		}
+
+		fun commit() {
+			synchronized(activePromiseSync) {
+				activePromise
+					.eventually { cachedOutputStream.flush() }
+					.eventually { cachedOutputStream.commitToCache() }
+					.must { cachedOutputStream.close() }
+			}
+		}
 	}
 
 	companion object {

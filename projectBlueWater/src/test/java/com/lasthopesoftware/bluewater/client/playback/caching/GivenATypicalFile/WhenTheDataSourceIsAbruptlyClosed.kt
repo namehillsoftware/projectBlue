@@ -24,7 +24,6 @@ import java.util.*
 @RunWith(RobolectricTestRunner::class)
 class WhenTheDataSourceIsAbruptlyClosed {
 	companion object {
-		private val bytesWritten = ByteArray(7 * 1024 * 1024)
 		private val bytes by lazy { ByteArray(7 * 1024 * 1024).also { Random().nextBytes(it) } }
 		private var committedToCache = false
 
@@ -36,6 +35,7 @@ class WhenTheDataSourceIsAbruptlyClosed {
 					override fun promiseCachedFileOutputStream(uniqueKey: String): Promise<CacheOutputStream> {
 						return Promise<CacheOutputStream>(object : CacheOutputStream {
 							var numberOfBytesWritten = 0
+							val bytesWritten = ByteArray(7 * 1024 * 1024)
 							override fun promiseWrite(buffer: ByteArray, offset: Int, length: Int): Promise<CacheOutputStream> =
 								Promise<CacheOutputStream>(this)
 
