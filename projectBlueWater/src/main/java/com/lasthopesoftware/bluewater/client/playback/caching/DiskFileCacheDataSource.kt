@@ -57,8 +57,10 @@ class DiskFileCacheDataSource(
 	override fun read(bytes: ByteArray, offset: Int, readLength: Int): Int =
 		inputStream?.read(bytes, offset, readLength)
 			?: innerDataSource.read(bytes, offset, readLength).also { result ->
-				if (result == C.RESULT_END_OF_INPUT) cacheWriter?.commit()?.also { cacheWriter = null }
-				else cacheWriter?.queueAndProcess(bytes, offset, result)
+				cacheWriter?.apply {
+					if (result != C.RESULT_END_OF_INPUT) queueAndProcess(bytes, offset, result)
+					else commit().also { cacheWriter = null }
+				}
 			}
 
 	override fun getUri(): Uri = currentDataSpec.uri
