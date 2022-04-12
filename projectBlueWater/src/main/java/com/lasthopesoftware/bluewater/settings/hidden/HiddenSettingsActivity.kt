@@ -4,17 +4,32 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.material.Checkbox
 import androidx.compose.material.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.tooling.preview.Preview
 
 class HiddenSettingsActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-		setContent {
+		setContent { HiddenSettings() }
+    }
+}
+
+@Preview
+@Composable
+fun HiddenSettings() {
+	Column {
+		Row {
 			Column {
-				Text("Congratulations, you've made it to the hidden settings!" +
-					" Sometimes settings show up here that aren't meant for normal usage.")
+				Checkbox(checked = false, onCheckedChange = {})
+			}
+
+			Column {
+				Text(text = "Use custom caching implementation")
 			}
 		}
-    }
+	}
 }

@@ -6,5 +6,6 @@ object ApplicationSettingsEntityInformation {
 	const val isVolumeLevelingEnabledColumn = "isVolumeLevelingEnabled"
 	const val playbackEngineTypeNameColumn = "playbackEngineTypeName"
 	const val chosenLibraryIdColumn = "chosenLibraryId"
+	const val isUsingCustomCachingColumn = "isUsingCustomCaching"
 	const val tableName = "ApplicationSettings"
 }
