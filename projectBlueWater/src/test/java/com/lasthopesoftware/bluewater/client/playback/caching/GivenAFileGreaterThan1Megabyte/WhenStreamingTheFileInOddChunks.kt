@@ -26,7 +26,7 @@ import java.util.*
 class WhenStreamingTheFileInOddChunks {
     companion object {
         private val bytesWritten = ByteArray(7 * 1024 * 1024)
-        private val bytes = ByteArray(7 * 1024 * 1024)
+        private val bytes by lazy { ByteArray(7 * 1024 * 1024).also { Random().nextBytes(it) } }
         private var cacheKey: String? = null
         private var committedToCache = false
 
@@ -79,7 +79,7 @@ class WhenStreamingTheFileInOddChunks {
 					while (bytesRead < bytesToRead) {
 						val bufferRead = buffer.read(arg(0), offset, bytesRemaining)
 						if (bufferRead == -1) {
-							bytesRead = -1
+							if (bytesRead == 0) bytesRead = -1
 							break
 						}
 						bytesRead += bufferRead
@@ -100,7 +100,8 @@ class WhenStreamingTheFileInOddChunks {
 				DataSpec.Builder()
 					.setUri(Uri.parse("http://my-server/file?ID=1"))
 					.setPosition(0)
-					.setLength((7 * 1024 * 1024).toLong()).setKey("hi")
+					.setLength((7 * 1024 * 1024).toLong())
+					.setKey("hi")
 					.build()
             )
             val random = Random()
@@ -109,10 +110,6 @@ class WhenStreamingTheFileInOddChunks {
                 val bytes = ByteArray(random.nextInt(1000000))
                 readResult = diskFileCacheDataSource.read(bytes, 0, bytes.size)
             } while (readResult != C.RESULT_END_OF_INPUT)
-        }
-
-        init {
-            Random().nextBytes(bytes)
         }
     }
 

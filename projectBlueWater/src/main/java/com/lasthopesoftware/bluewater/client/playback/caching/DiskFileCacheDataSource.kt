@@ -97,17 +97,22 @@ class DiskFileCacheDataSource(
 
 		fun commit() {
 			synchronized(activePromiseSync) {
-				activePromise
+				activePromise = activePromise
 					.eventually { processQueue() }
 					.eventually { cachedOutputStream.flush() }
 					.eventually { cachedOutputStream.commitToCache() }
 					.must { cachedOutputStream.close() }
+					.unitResponse()
 			}
 		}
 
 		fun clear() {
-			buffers.forEach { it.clear() }
-			buffers.clear()
+			synchronized(activePromiseSync) {
+				activePromise.then {
+					buffers.forEach { it.clear() }
+					buffers.clear()
+				}
+			}
 		}
 	}
 
