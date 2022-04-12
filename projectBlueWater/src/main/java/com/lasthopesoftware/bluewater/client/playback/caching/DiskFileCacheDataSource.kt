@@ -10,6 +10,7 @@ import com.google.android.exoplayer2.upstream.TransferListener
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.access.ICachedFilesProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.CacheOutputStream
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.supplier.ICacheStreamSupplier
+import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.lasthopesoftware.bluewater.shared.promises.toFuture
@@ -97,10 +98,12 @@ class DiskFileCacheDataSource(
 									clear()
 								}
 							}
-							.then { processQueue() } // kick-off processing again, but don't wait for the result
-							.unitResponse()
+							.then {
+								processQueue()  // kick-off processing again, but don't wait for the result
+								Unit
+							}
 					}
-					?: Unit.toPromise()
+					.keepPromise(Unit)
 			}.also { activePromise = it }
 		}
 
