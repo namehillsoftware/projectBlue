@@ -17,6 +17,8 @@ import com.lasthopesoftware.resources.uri.PathAndQuery
 import com.namehillsoftware.handoff.promises.Promise
 import okio.Buffer
 import org.slf4j.LoggerFactory
+import java.io.FileInputStream
+import java.io.InputStream
 import java.util.concurrent.ConcurrentLinkedQueue
 
 class DiskFileCacheDataSource(
@@ -24,19 +26,22 @@ class DiskFileCacheDataSource(
 	private val cacheStreamSupplier: ICacheStreamSupplier,
 	private val cachedFilesProvider: ICachedFilesProvider
 ) : DataSource {
+	private var inputStream: InputStream? = null
 	private var cacheWriter: CacheWriter? = null
 	private lateinit var currentDataSpec: DataSpec
 
 	override fun addTransferListener(transferListener: TransferListener) = innerDataSource.addTransferListener(transferListener)
 
 	override fun open(dataSpec: DataSpec): Long {
+		cacheWriter?.commit()
+		inputStream?.close()
+
 		val key = "${PathAndQuery.forUri(dataSpec.uri)}:${dataSpec.position}:${dataSpec.length}"
 		val cachedFile = cachedFilesProvider.promiseCachedFile(key)
 			.eventually {
 				it?.toPromise() ?: cacheStreamSupplier
 					.promiseCachedFileOutputStream(key)
 					.then { os ->
-						cacheWriter?.commit()
 						cacheWriter = CacheWriter(os)
 						it
 					}
@@ -45,15 +50,16 @@ class DiskFileCacheDataSource(
 			.get()
 
 		currentDataSpec = cachedFile?.fileName?.toUri()?.let { dataSpec.buildUpon().setUri(it).build() } ?: dataSpec
-		return innerDataSource.open(dataSpec)
+		inputStream = cachedFile?.let { FileInputStream(it.fileName) }
+		return inputStream?.available()?.toLong() ?: innerDataSource.open(dataSpec)
 	}
 
-	override fun read(bytes: ByteArray, offset: Int, readLength: Int): Int {
-		val result = innerDataSource.read(bytes, offset, readLength)
-		if (result == C.RESULT_END_OF_INPUT) cacheWriter?.commit()?.also { cacheWriter = null }
-		else cacheWriter?.queueAndProcess(bytes, offset, result)
-		return result
-	}
+	override fun read(bytes: ByteArray, offset: Int, readLength: Int): Int =
+		inputStream?.read(bytes, offset, readLength)
+			?: innerDataSource.read(bytes, offset, readLength).also { result ->
+				if (result == C.RESULT_END_OF_INPUT) cacheWriter?.commit()?.also { cacheWriter = null }
+				else cacheWriter?.queueAndProcess(bytes, offset, result)
+			}
 
 	override fun getUri(): Uri = currentDataSpec.uri
 
@@ -61,6 +67,7 @@ class DiskFileCacheDataSource(
 
 	override fun close() {
 		innerDataSource.close()
+		inputStream?.close()
 		cacheWriter?.clear()
 	}
 
@@ -129,6 +136,5 @@ class DiskFileCacheDataSource(
 
 	companion object {
 		private val logger by lazy { LoggerFactory.getLogger(DiskFileCacheDataSource::class.java) }
-		private const val maxBufferSize = 1024L * 1024L // 1MB
 	}
 }
