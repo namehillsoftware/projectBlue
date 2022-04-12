@@ -120,7 +120,7 @@ class DiskFileCacheDataSource(
 
 		fun clear() {
 			synchronized(activePromiseSync) {
-				activePromise.then {
+				activePromise.must {
 					buffers.forEach { it.clear() }
 					buffers.clear()
 				}
