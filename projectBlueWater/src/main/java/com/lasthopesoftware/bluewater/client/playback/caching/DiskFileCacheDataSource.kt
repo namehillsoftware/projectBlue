@@ -36,6 +36,7 @@ class DiskFileCacheDataSource(
 				it?.toPromise() ?: cacheStreamSupplier
 					.promiseCachedFileOutputStream(key)
 					.then { os ->
+						cacheWriter?.commit()
 						cacheWriter = CacheWriter(os)
 						it
 					}
@@ -49,7 +50,7 @@ class DiskFileCacheDataSource(
 
 	override fun read(bytes: ByteArray, offset: Int, readLength: Int): Int {
 		val result = innerDataSource.read(bytes, offset, readLength)
-		if (result == C.RESULT_END_OF_INPUT) cacheWriter?.commit()
+		if (result == C.RESULT_END_OF_INPUT) cacheWriter?.commit()?.also { cacheWriter = null }
 		else cacheWriter?.queueAndProcess(bytes, offset, result)
 		return result
 	}
@@ -60,7 +61,7 @@ class DiskFileCacheDataSource(
 
 	override fun close() {
 		innerDataSource.close()
-		cacheWriter?.commit()
+		cacheWriter?.clear()
 	}
 
 	private class CacheWriter(private val cachedOutputStream: CacheOutputStream) {
@@ -84,6 +85,7 @@ class DiskFileCacheDataSource(
 								excuse {
 									logger.warn("An error occurred copying the buffer, closing the output stream", it)
 									cachedOutputStream.close()
+									clear()
 								}
 							}
 							.then { processQueue() } // kick-off processing again, but don't wait for the result
@@ -101,6 +103,11 @@ class DiskFileCacheDataSource(
 					.eventually { cachedOutputStream.commitToCache() }
 					.must { cachedOutputStream.close() }
 			}
+		}
+
+		fun clear() {
+			buffers.forEach { it.clear() }
+			buffers.clear()
 		}
 	}
 
