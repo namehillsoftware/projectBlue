@@ -13,7 +13,6 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.s
 import com.lasthopesoftware.bluewater.shared.drainQueue
 import com.lasthopesoftware.bluewater.shared.promises.NoopResponse.Companion.ignore
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.lasthopesoftware.bluewater.shared.promises.toFuture
 import com.lasthopesoftware.resources.uri.PathAndQuery
 import com.namehillsoftware.handoff.promises.Promise
@@ -88,7 +87,7 @@ class DiskFileCacheDataSource(
 		private val activePromiseSync = Any()
 
 		@Volatile
-		private var activePromise = Unit.toPromise()
+		private var activePromise = Promise(cachedOutputStream)
 
 		@Volatile
 		private var workingBuffer = Buffer()
@@ -105,23 +104,21 @@ class DiskFileCacheDataSource(
 			processQueue().ignore()
 		}
 
-		private fun processQueue() : Promise<Unit> = synchronized(activePromiseSync) {
-			activePromise.eventually {
+		private fun processQueue() : Promise<CacheOutputStream> = synchronized(activePromiseSync) {
+			activePromise.eventually({
+				if (it == null) return@eventually Promise.empty()
+
 				val concatenatedBuffer = buffersToTransfer
 					.drainQueue()
 					.reduceOrNull { sink, source -> sink.also(source::readAll) }
 
-				if (concatenatedBuffer == null || concatenatedBuffer.exhausted()) Unit.toPromise()
-				else cachedOutputStream
-					.promiseTransfer(concatenatedBuffer)
-					.then({
-						processQueue().ignore()  // kick-off processing again, but don't wait for the result
-						Unit
-					}, {
-						logger.warn("An error occurred copying the buffer, closing the output stream", it)
-						clear()
-					})
-			}.also { activePromise = it }
+				if (concatenatedBuffer == null || concatenatedBuffer.exhausted()) it.toPromise()
+				else it.promiseTransfer(concatenatedBuffer)
+			}, {
+				logger.warn("An error occurred copying the buffer, closing the output stream", it)
+				clear()
+				Promise.empty()
+			}).also { activePromise = it }
 		}
 
 		fun commit() {
@@ -134,7 +131,7 @@ class DiskFileCacheDataSource(
 					.eventually { cachedOutputStream.flush() }
 					.eventually { cachedOutputStream.commitToCache() }
 					.must { cachedOutputStream.close() }
-					.unitResponse()
+					.then { cachedOutputStream }
 			}
 		}
 
