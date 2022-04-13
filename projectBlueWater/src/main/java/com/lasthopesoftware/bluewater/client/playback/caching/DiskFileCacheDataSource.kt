@@ -113,16 +113,13 @@ class DiskFileCacheDataSource(
 				if (concatenatedBuffer == null || concatenatedBuffer.exhausted()) Unit.toPromise()
 				else cachedOutputStream
 					.promiseTransfer(concatenatedBuffer)
-					.apply {
-						excuse {
-							logger.warn("An error occurred copying the buffer, closing the output stream", it)
-							clear()
-						}
-					}
-					.then {
+					.then({
 						processQueue().ignore()  // kick-off processing again, but don't wait for the result
 						Unit
-					}
+					}, {
+						logger.warn("An error occurred copying the buffer, closing the output stream", it)
+						clear()
+					})
 			}.also { activePromise = it }
 		}
 
