@@ -10,12 +10,14 @@ import com.google.android.exoplayer2.upstream.TransferListener
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.access.ICachedFilesProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.CacheOutputStream
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.supplier.ICacheStreamSupplier
+import com.lasthopesoftware.bluewater.shared.promises.NoopResponse.Companion.ignore
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.lasthopesoftware.bluewater.shared.promises.toFuture
 import com.lasthopesoftware.resources.uri.PathAndQuery
 import com.namehillsoftware.handoff.promises.Promise
+import okhttp3.internal.closeQuietly
 import okio.Buffer
 import org.slf4j.LoggerFactory
 import java.io.FileInputStream
@@ -82,7 +84,7 @@ class DiskFileCacheDataSource(
 		fun queueAndProcess(bytes: ByteArray, offset: Int, length: Int) {
 			buffers.offer(Buffer().write(bytes, offset, length))
 
-			processQueue()
+			processQueue().ignore()
 		}
 
 		private fun processQueue() : Promise<Unit> = synchronized(activePromiseSync) {
@@ -94,12 +96,11 @@ class DiskFileCacheDataSource(
 							.apply {
 								excuse {
 									logger.warn("An error occurred copying the buffer, closing the output stream", it)
-									cachedOutputStream.close()
 									clear()
 								}
 							}
 							.then {
-								processQueue()  // kick-off processing again, but don't wait for the result
+								processQueue().ignore()  // kick-off processing again, but don't wait for the result
 								Unit
 							}
 					}
@@ -121,6 +122,7 @@ class DiskFileCacheDataSource(
 		fun clear() {
 			synchronized(activePromiseSync) {
 				activePromise.must {
+					cachedOutputStream.closeQuietly()
 					buffers.forEach { it.clear() }
 					buffers.clear()
 				}
