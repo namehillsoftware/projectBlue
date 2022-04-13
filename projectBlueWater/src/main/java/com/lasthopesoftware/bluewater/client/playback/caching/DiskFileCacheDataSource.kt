@@ -162,6 +162,6 @@ class DiskFileCacheDataSource(
 
 	companion object {
 		private val logger by lazy { LoggerFactory.getLogger(DiskFileCacheDataSource::class.java) }
-		private val goodBufferSize = 1024L * 1024L // 1MB
+		private const val goodBufferSize = 1024L * 1024L // 1MB
 	}
 }
