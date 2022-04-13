@@ -8,7 +8,7 @@ import com.google.android.exoplayer2.source.ProgressiveMediaSource
 import com.google.android.exoplayer2.upstream.DefaultLoadErrorHandlingPolicy
 import com.google.android.exoplayer2.upstream.FileDataSource
 import com.google.android.exoplayer2.upstream.cache.Cache
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.access.ICachedFilesProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.ICache
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.supplier.ICacheStreamSupplier
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.playback.caching.DiskFileCacheDataSource
@@ -19,7 +19,7 @@ class MediaSourceProvider constructor(
 	dataSourceFactoryProvider: ProvideHttpDataSourceFactory,
 	cache: Cache,
 	private val cacheStreamSupplier: ICacheStreamSupplier,
-	private val cachedFilesProvider: ICachedFilesProvider
+	private val cachedFilesProvider: ICache
 ) : SpawnMediaSources {
 
 	companion object {

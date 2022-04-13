@@ -23,6 +23,7 @@ import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFileUriQueryParamsProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListUtilities
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.DiskFileCache
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.access.CachedFilesProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.disk.AndroidDiskCacheDirectoryProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.persistence.DiskFileAccessTimeUpdater
@@ -728,11 +729,7 @@ open class PlaybackService :
 					}
 			}
 
-			val cacheConfiguration =
-				AudioCacheConfiguration(
-					library
-				)
-
+			val cacheConfiguration = AudioCacheConfiguration(library)
 			cache?.release()
 			val diskCachedDirectoryProvider = AndroidDiskCacheDirectoryProvider(this)
 			val cachedFilesProvider = CachedFilesProvider(this, cacheConfiguration)
@@ -749,6 +746,7 @@ open class PlaybackService :
 				),
 				cachedFilesProvider
 			)
+			val audioCache = DiskFileCache(this, diskCachedDirectoryProvider, cacheConfiguration, cacheStreamSupplier, cachedFilesProvider, diskFileAccessTimeUpdater)
 			val cacheDirectory = diskCachedDirectoryProvider.getDiskCacheDirectory(cacheConfiguration)
 			val cacheEvictor = LeastRecentlyUsedCacheEvictor(cacheConfiguration.maxSize)
 			SimpleCache(cacheDirectory, cacheEvictor)
@@ -783,7 +781,7 @@ open class PlaybackService :
 								HttpDataSourceFactoryProvider(this, connectionProvider, OkHttpFactory),
 								simpleCache,
 								cacheStreamSupplier,
-								cachedFilesProvider
+								audioCache
 							),
 							bestMatchUriProvider
 						)

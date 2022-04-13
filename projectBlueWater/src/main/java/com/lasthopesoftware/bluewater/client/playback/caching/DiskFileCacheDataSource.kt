@@ -7,7 +7,7 @@ import com.google.android.exoplayer2.upstream.DataSource
 import com.google.android.exoplayer2.upstream.DataSpec
 import com.google.android.exoplayer2.upstream.HttpDataSource
 import com.google.android.exoplayer2.upstream.TransferListener
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.access.ICachedFilesProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.ICache
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.CacheOutputStream
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.supplier.ICacheStreamSupplier
 import com.lasthopesoftware.bluewater.shared.drainQueue
@@ -27,7 +27,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 class DiskFileCacheDataSource(
 	private val innerDataSource: HttpDataSource,
 	private val cacheStreamSupplier: ICacheStreamSupplier,
-	private val cachedFilesProvider: ICachedFilesProvider
+	private val cachedFilesProvider: ICache
 ) : DataSource {
 	private var inputStream: InputStream? = null
 	private var cacheWriter: CacheWriter? = null
@@ -36,8 +36,8 @@ class DiskFileCacheDataSource(
 	override fun addTransferListener(transferListener: TransferListener) = innerDataSource.addTransferListener(transferListener)
 
 	override fun open(dataSpec: DataSpec): Long {
-		cacheWriter?.commit()
-		inputStream?.close()
+		cacheWriter?.commit()?.also { cacheWriter = null }
+		inputStream?.close()?.also { inputStream = null }
 
 		val key = "${PathAndQuery.forUri(dataSpec.uri)}:${dataSpec.position}:${dataSpec.length}"
 		val cachedFile = cachedFilesProvider.promiseCachedFile(key)
@@ -52,9 +52,15 @@ class DiskFileCacheDataSource(
 			.toFuture()
 			.get()
 
-		currentDataSpec = cachedFile?.fileName?.toUri()?.let { dataSpec.buildUpon().setUri(it).build() } ?: dataSpec
-		inputStream = cachedFile?.let { FileInputStream(it.fileName) }
-		return inputStream?.available()?.toLong() ?: innerDataSource.open(dataSpec)
+		currentDataSpec = dataSpec
+		return cachedFile?.let { cf ->
+			currentDataSpec = dataSpec.buildUpon()
+				.setUri(cf.toUri())
+				.setLength(cf.length())
+				.build()
+			inputStream = FileInputStream(cf)
+			cf.length()
+		} ?: innerDataSource.open(dataSpec)
 	}
 
 	override fun read(bytes: ByteArray, offset: Int, readLength: Int): Int =
@@ -77,23 +83,34 @@ class DiskFileCacheDataSource(
 	}
 
 	private class CacheWriter(private val cachedOutputStream: CacheOutputStream) {
-		private val buffers = ConcurrentLinkedQueue<Buffer>()
+		private val buffersToTransfer = ConcurrentLinkedQueue<Buffer>()
 		private val activePromiseSync = Any()
+
+		@Volatile
 		private var activePromise = Unit.toPromise()
 
+		@Volatile
+		private var workingBuffer = Buffer()
+
+		@Synchronized
 		fun queueAndProcess(bytes: ByteArray, offset: Int, length: Int) {
-			buffers.offer(Buffer().write(bytes, offset, length))
+			workingBuffer.write(bytes, offset, length)
+			if (workingBuffer.size < goodBufferSize) return
+
+			buffersToTransfer.offer(workingBuffer)
+
+			workingBuffer = Buffer()
 
 			processQueue().ignore()
 		}
 
 		private fun processQueue() : Promise<Unit> = synchronized(activePromiseSync) {
 			activePromise.eventually {
-				val concatenatedBuffer = buffers
+				val concatenatedBuffer = buffersToTransfer
 					.drainQueue()
-					.fold(Buffer()) { sink, source -> sink.also(source::readAll) }
+					.reduceOrNull { sink, source -> sink.also(source::readAll) }
 
-				if (concatenatedBuffer.exhausted()) Unit.toPromise()
+				if (concatenatedBuffer == null || concatenatedBuffer.exhausted()) Unit.toPromise()
 				else cachedOutputStream
 					.promiseTransfer(concatenatedBuffer)
 					.apply {
@@ -111,6 +128,7 @@ class DiskFileCacheDataSource(
 
 		fun commit() {
 			synchronized(activePromiseSync) {
+				buffersToTransfer.offer(workingBuffer)
 				activePromise = activePromise
 					.eventually { processQueue() }
 					.eventually { cachedOutputStream.flush() }
@@ -124,8 +142,8 @@ class DiskFileCacheDataSource(
 			synchronized(activePromiseSync) {
 				activePromise.must {
 					cachedOutputStream.closeQuietly()
-					buffers.forEach { it.clear() }
-					buffers.clear()
+					buffersToTransfer.forEach { it.clear() }
+					buffersToTransfer.clear()
 				}
 			}
 		}
@@ -134,7 +152,7 @@ class DiskFileCacheDataSource(
 	class Factory(
 		private val httpDataSourceFactory: HttpDataSource.Factory,
 		private val cacheStreamSupplier: ICacheStreamSupplier,
-	 	private val cachedFilesProvider: ICachedFilesProvider) : DataSource.Factory {
+	 	private val cachedFilesProvider: ICache) : DataSource.Factory {
 		override fun createDataSource(): DataSource = DiskFileCacheDataSource(
 			httpDataSourceFactory.createDataSource(),
 			cacheStreamSupplier,
@@ -144,5 +162,6 @@ class DiskFileCacheDataSource(
 
 	companion object {
 		private val logger by lazy { LoggerFactory.getLogger(DiskFileCacheDataSource::class.java) }
+		private val goodBufferSize = 1024L * 1024L // 1MB
 	}
 }
