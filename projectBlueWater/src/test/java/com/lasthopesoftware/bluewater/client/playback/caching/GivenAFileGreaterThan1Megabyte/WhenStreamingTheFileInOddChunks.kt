@@ -9,6 +9,8 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.r
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.CacheOutputStream
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.supplier.ICacheStreamSupplier
 import com.lasthopesoftware.bluewater.client.playback.caching.DiskFileCacheDataSource
+import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
+import com.lasthopesoftware.bluewater.shared.promises.toFuture
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -33,6 +35,8 @@ class WhenStreamingTheFileInOddChunks {
 		@BeforeClass
         @JvmStatic
         fun context() {
+			val deferredCommit = DeferredPromise(CachedFile())
+
 			val fakeCacheStreamSupplier =
 				object : ICacheStreamSupplier {
 					override fun promiseCachedFileOutputStream(uniqueKey: String): Promise<CacheOutputStream> {
@@ -57,7 +61,8 @@ class WhenStreamingTheFileInOddChunks {
 
 							override fun commitToCache(): Promise<CachedFile> {
 								committedToCache = true
-								return Promise(CachedFile())
+								deferredCommit.resolve()
+								return deferredCommit
 							}
 
 							override fun flush(): Promise<CacheOutputStream> {
@@ -110,6 +115,8 @@ class WhenStreamingTheFileInOddChunks {
                 val bytes = ByteArray(random.nextInt(1000000))
                 readResult = diskFileCacheDataSource.read(bytes, 0, bytes.size)
             } while (readResult != C.RESULT_END_OF_INPUT)
+
+			deferredCommit.toFuture().get()
         }
     }
 
