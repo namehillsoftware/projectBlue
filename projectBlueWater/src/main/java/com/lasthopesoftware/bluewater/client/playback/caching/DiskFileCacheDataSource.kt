@@ -40,7 +40,8 @@ class DiskFileCacheDataSource(
 		inputStream?.close()?.also { inputStream = null }
 
 		val key = "${PathAndQuery.forUri(dataSpec.uri)}:${dataSpec.position}:${dataSpec.length}"
-		val cachedFile = cachedFilesProvider.promiseCachedFile(key)
+		val cachedFile = cachedFilesProvider
+			.promiseCachedFile(key)
 			.eventually {
 				it?.toPromise() ?: cacheStreamSupplier
 					.promiseCachedFileOutputStream(key)
@@ -64,7 +65,7 @@ class DiskFileCacheDataSource(
 	}
 
 	override fun read(bytes: ByteArray, offset: Int, readLength: Int): Int =
-		inputStream?.read(bytes, offset, readLength)
+		inputStream?.read(bytes, offset, readLength)?.let { if (it != 0) it else C.LENGTH_UNSET }
 			?: innerDataSource.read(bytes, offset, readLength).also { result ->
 				cacheWriter?.apply {
 					if (result != C.RESULT_END_OF_INPUT) queueAndProcess(bytes, offset, result)
@@ -141,8 +142,7 @@ class DiskFileCacheDataSource(
 			synchronized(activePromiseSync) {
 				activePromise.must {
 					cachedOutputStream.closeQuietly()
-					buffersToTransfer.forEach { it.clear() }
-					buffersToTransfer.clear()
+					buffersToTransfer.drainQueue().forEach { it.clear() }
 				}
 			}
 		}
