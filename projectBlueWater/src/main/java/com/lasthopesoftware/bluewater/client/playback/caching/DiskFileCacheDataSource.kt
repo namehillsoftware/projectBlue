@@ -114,14 +114,14 @@ class DiskFileCacheDataSource(
 					buffersToTransfer
 						.drainQueue()
 						.fold(it) { stream: CacheOutputStream?, source ->
-							stream
+							val resultStream = stream
 								?.promiseTransfer(source)
 								?.toFuture()
 								?.get()
-								?: let {
-									source.clear()
-									null
-								}
+
+							if (resultStream == null) source.clear()
+
+							resultStream
 						}
 				}, ThreadPools.io)
 			}, {
