@@ -10,7 +10,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.s
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.supplier.ICacheStreamSupplier
 import com.lasthopesoftware.bluewater.client.playback.caching.DiskFileCacheDataSource
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
-import com.lasthopesoftware.bluewater.shared.promises.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -116,7 +116,7 @@ class WhenStreamingTheFileInOddChunks {
                 readResult = diskFileCacheDataSource.read(bytes, 0, bytes.size)
             } while (readResult != C.RESULT_END_OF_INPUT)
 
-			deferredCommit.toFuture().get()
+			deferredCommit.toExpiringFuture().get()
         }
     }
 
