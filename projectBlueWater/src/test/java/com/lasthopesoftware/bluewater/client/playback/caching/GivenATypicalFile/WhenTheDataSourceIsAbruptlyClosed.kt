@@ -4,7 +4,7 @@ import android.net.Uri
 import com.google.android.exoplayer2.C
 import com.google.android.exoplayer2.upstream.DataSpec
 import com.google.android.exoplayer2.upstream.HttpDataSource
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.access.ICachedFilesProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.ICache
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.CacheOutputStream
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.supplier.ICacheStreamSupplier
@@ -90,7 +90,7 @@ class WhenTheDataSourceIsAbruptlyClosed {
 			val diskFileCacheDataSource = DiskFileCacheDataSource(
 				dataSource,
 				fakeCacheStreamSupplier,
-				mockk<ICachedFilesProvider>().apply {
+				mockk<ICache>().apply {
 					every { promiseCachedFile(any()) } returns Promise.empty()
 				}
 			)

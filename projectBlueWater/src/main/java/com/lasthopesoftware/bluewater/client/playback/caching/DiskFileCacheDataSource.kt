@@ -128,9 +128,11 @@ class DiskFileCacheDataSource(
 
 		fun commit() {
 			synchronized(activePromiseSync) {
-				buffersToTransfer.offer(workingBuffer)
 				activePromise = activePromise
-					.eventually { processQueue() }
+					.eventually {
+						buffersToTransfer.offer(workingBuffer)
+						processQueue()
+					}
 					.eventually { cachedOutputStream.flush() }
 					.eventually { cachedOutputStream.commitToCache() }
 					.must { cachedOutputStream.close() }
