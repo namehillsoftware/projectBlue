@@ -17,18 +17,11 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.google.android.exoplayer2.ExoPlaybackException
 import com.google.android.exoplayer2.upstream.HttpDataSource.InvalidResponseCodeException
-import com.google.android.exoplayer2.upstream.cache.LeastRecentlyUsedCacheEvictor
 import com.google.android.exoplayer2.upstream.cache.SimpleCache
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFileUriQueryParamsProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListUtilities
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.DiskFileCache
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.access.CachedFilesProvider
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.disk.AndroidDiskCacheDirectoryProvider
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.persistence.DiskFileAccessTimeUpdater
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.persistence.DiskFileCachePersistence
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.supplier.DiskFileCacheStreamSupplier
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.CachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedCachedFilePropertiesProvider
@@ -52,7 +45,6 @@ import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionSe
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionSettingsChangeReceiver
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
-import com.lasthopesoftware.bluewater.client.playback.caching.AudioCacheConfiguration
 import com.lasthopesoftware.bluewater.client.playback.engine.*
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
 import com.lasthopesoftware.bluewater.client.playback.engine.events.*
@@ -728,69 +720,44 @@ open class PlaybackService :
 					}
 			}
 
-			val cacheConfiguration = AudioCacheConfiguration(library)
-			cache?.release()
-			val diskCachedDirectoryProvider = AndroidDiskCacheDirectoryProvider(this)
-			val cachedFilesProvider = CachedFilesProvider(this, cacheConfiguration)
-			val diskFileAccessTimeUpdater = DiskFileAccessTimeUpdater(this)
-			val cacheStreamSupplier = DiskFileCacheStreamSupplier(
-				diskCachedDirectoryProvider,
-				cacheConfiguration,
-				DiskFileCachePersistence(
-					this,
-					diskCachedDirectoryProvider,
-					cacheConfiguration,
-					cachedFilesProvider,
-					diskFileAccessTimeUpdater
+			val remoteFileUriProvider = RemoteFileUriProvider(connectionProvider, ServiceFileUriQueryParamsProvider())
+			val bestMatchUriProvider = BestMatchUriProvider(
+				library,
+				StoredFileUriProvider(
+					selectedLibraryProvider,
+					StoredFileAccess(this),
+					arbitratorForOs),
+				MediaFileUriProvider(
+					MediaQueryCursorProvider(this, cachedFileProperties),
+					arbitratorForOs,
+					selectedLibraryIdentifierProvider,
+					false,
+					applicationMessageBus.value
 				),
-				cachedFilesProvider
-			)
-			val audioCache = DiskFileCache(this, diskCachedDirectoryProvider, cacheConfiguration, cacheStreamSupplier, cachedFilesProvider, diskFileAccessTimeUpdater)
-			val cacheDirectory = diskCachedDirectoryProvider.getDiskCacheDirectory(cacheConfiguration)
-			val cacheEvictor = LeastRecentlyUsedCacheEvictor(cacheConfiguration.maxSize)
-			SimpleCache(cacheDirectory, cacheEvictor)
-				.also { cache = it }
-				.let { simpleCache ->
-					val remoteFileUriProvider = RemoteFileUriProvider(connectionProvider, ServiceFileUriQueryParamsProvider())
-					val bestMatchUriProvider = BestMatchUriProvider(
+				remoteFileUriProvider)
+
+			val promisedPreparationSourceProvider = playbackHandler.value.then { ph ->
+				val playbackEngineBuilder = PreparedPlaybackQueueFeederBuilder(
+					this,
+					ph,
+					Handler(mainLooper),
+					MediaSourceProvider(
 						library,
-						StoredFileUriProvider(
-							selectedLibraryProvider,
-							StoredFileAccess(this),
-							arbitratorForOs),
-                        MediaFileUriProvider(
-							MediaQueryCursorProvider(this, cachedFileProperties),
-							arbitratorForOs,
-							selectedLibraryIdentifierProvider,
-							false,
-							applicationMessageBus.value
-						),
-						remoteFileUriProvider)
+						HttpDataSourceFactoryProvider(this, connectionProvider, OkHttpFactory),
+						applicationSettings,
+						this,
+					).also(playbackEngineCloseables::manage),
+					bestMatchUriProvider
+				)
 
-					val promisedPreparationSourceProvider = playbackHandler.value.then { ph ->
-						val playbackEngineBuilder = PreparedPlaybackQueueFeederBuilder(
-							this,
-							ph,
-							Handler(mainLooper),
-							MediaSourceProvider(
-								library,
-								HttpDataSourceFactoryProvider(this, connectionProvider, OkHttpFactory),
-								simpleCache,
-								cacheStreamSupplier,
-								audioCache
-							),
-							bestMatchUriProvider
-						)
+				MaxFileVolumePreparationProvider(
+					playbackEngineBuilder.build(library),
+					MaxFileVolumeProvider(volumeLevelSettings, cachedSessionFilePropertiesProvider))
+			}
 
-						MaxFileVolumePreparationProvider(
-							playbackEngineBuilder.build(library),
-							MaxFileVolumeProvider(volumeLevelSettings, cachedSessionFilePropertiesProvider))
-					}
-
-					Promise
-						.whenAll(promisedMediaBroadcaster, promisedMediaNotificationSetup.unitResponse())
-						.eventually { promisedPreparationSourceProvider }
-				}
+			Promise
+				.whenAll(promisedMediaBroadcaster, promisedMediaNotificationSetup.unitResponse())
+				.eventually { promisedPreparationSourceProvider }
 			}
 			.then { preparationSourceProvider ->
 				PreparedPlaybackQueueResourceManagement(preparationSourceProvider, preparationSourceProvider)

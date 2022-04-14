@@ -4,7 +4,7 @@ import android.net.Uri
 import com.google.android.exoplayer2.C
 import com.google.android.exoplayer2.upstream.DataSpec
 import com.google.android.exoplayer2.upstream.HttpDataSource
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.ICache
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.CacheFiles
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.CacheOutputStream
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.supplier.ICacheStreamSupplier
@@ -97,7 +97,7 @@ class WhenStreamingTheFileInOddChunks {
 			val diskFileCacheDataSource = DiskFileCacheDataSource(
 				dataSource,
 				fakeCacheStreamSupplier,
-				mockk<ICache>().apply {
+				mockk<CacheFiles>().apply {
 					every { promiseCachedFile(any()) } returns Promise.empty()
 				},
 			)

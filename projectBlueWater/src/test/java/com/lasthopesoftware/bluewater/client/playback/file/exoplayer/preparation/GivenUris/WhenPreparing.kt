@@ -24,7 +24,7 @@ private val preparedFile by lazy {
 
 	val preparer = ExoPlayerPlaybackPreparer(
 		{
-			mockk<BaseMediaSource>(relaxUnitFun = true)
+			mockk<BaseMediaSource>(relaxUnitFun = true).toPromise()
 		},
 		mockk<ProvideExoPlayers>().apply {
 			every { getExoPlayer() } returns mockk<PromisingExoPlayer>().apply {
