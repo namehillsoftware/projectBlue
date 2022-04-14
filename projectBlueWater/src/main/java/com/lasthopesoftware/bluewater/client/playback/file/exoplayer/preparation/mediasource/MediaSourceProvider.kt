@@ -66,7 +66,7 @@ class MediaSourceProvider(
 	private val audioCache by lazy { DiskFileCache(context, diskCachedDirectoryProvider, cacheConfiguration, cacheStreamSupplier, cachedFilesProvider, diskFileAccessTimeUpdater) }
 
 	private val remoteExtractorCustomCacheFactory by lazy {
-		val httpDataSourceFactory = dataSourceFactoryProvider.getHttpDataSourceFactory(library)
+		val httpDataSourceFactory = dataSourceFactoryProvider.getHttpDataSourceFactory()
 		val cacheDataSourceFactory = DiskFileCacheDataSource.Factory(httpDataSourceFactory, cacheStreamSupplier, audioCache)
 
 		val factory = ProgressiveMediaSource.Factory(cacheDataSourceFactory, extractorsFactory)
@@ -80,7 +80,7 @@ class MediaSourceProvider(
 	}
 
 	private val remoteExtractorExoPlayerCacheFactory by lazy {
-		val httpDataSourceFactory = dataSourceFactoryProvider.getHttpDataSourceFactory(library)
+		val httpDataSourceFactory = dataSourceFactoryProvider.getHttpDataSourceFactory()
 		val cacheDataSourceFactory = CacheDataSource.Factory()
 			.setCache(simpleCache.value)
 			.setUpstreamDataSourceFactory(httpDataSourceFactory)

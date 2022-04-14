@@ -5,7 +5,6 @@ import com.google.android.exoplayer2.ext.okhttp.OkHttpDataSource
 import com.google.android.exoplayer2.upstream.HttpDataSource
 import com.google.android.exoplayer2.util.Util
 import com.lasthopesoftware.bluewater.R
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.okhttp.ProvideOkHttpClients
 import com.lasthopesoftware.resources.executors.ThreadPools
@@ -24,7 +23,7 @@ class HttpDataSourceFactoryProvider(
 		}
 	}
 
-	override fun getHttpDataSourceFactory(library: Library): HttpDataSource.Factory =
+	override fun getHttpDataSourceFactory(): HttpDataSource.Factory =
 		OkHttpDataSource.Factory(
 			okHttpClients.getOkHttpClient(connectionProvider.urlProvider).newBuilder()
 				.readTimeout(45, TimeUnit.SECONDS)
