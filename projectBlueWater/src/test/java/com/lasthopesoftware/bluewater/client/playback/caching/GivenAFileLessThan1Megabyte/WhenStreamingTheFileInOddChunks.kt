@@ -105,7 +105,7 @@ class WhenStreamingTheFileInOddChunks {
 				DataSpec.Builder()
 					.setUri(Uri.parse("http://my-server/file"))
 					.setPosition(0)
-					.setLength((2 * 1024 * 1024).toLong()).setKey("1")
+					.setLength(C.LENGTH_UNSET.toLong()).setKey("1")
 					.build()
 			)
 			val random = Random()

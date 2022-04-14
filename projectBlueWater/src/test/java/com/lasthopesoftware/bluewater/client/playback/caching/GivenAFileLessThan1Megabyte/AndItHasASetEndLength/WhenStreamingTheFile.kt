@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.caching.GivenATypicalFile
+package com.lasthopesoftware.bluewater.client.playback.caching.GivenAFileLessThan1Megabyte.AndItHasASetEndLength
 
 import android.net.Uri
 import com.google.android.exoplayer2.C
@@ -9,34 +9,46 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.r
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.CacheOutputStream
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.supplier.SupplyCacheStreams
 import com.lasthopesoftware.bluewater.client.playback.caching.DiskFileCacheDataSource
+import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import okio.Buffer
 import okio.BufferedSource
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.Assert.assertArrayEquals
 import org.junit.BeforeClass
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import java.util.*
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 
 @RunWith(RobolectricTestRunner::class)
-class WhenTheDataSourceIsAbruptlyClosed {
+class WhenStreamingTheFile {
 	companion object {
-		private val bytes by lazy { ByteArray(7 * 1024 * 1024).also { Random().nextBytes(it) } }
+		private val bytesWritten = ByteArray(512 * 1024)
+		private val bytes = ByteArray(512 * 1024)
+		private val bytesRead = ByteArray(512 * 1024)
 		private var committedToCache = false
 
 		@BeforeClass
 		@JvmStatic
 		fun context() {
+			val deferredCommit = DeferredPromise(CachedFile())
+
 			val fakeCacheStreamSupplier =
 				object : SupplyCacheStreams {
 					override fun promiseCachedFileOutputStream(uniqueKey: String): Promise<CacheOutputStream> {
 						return Promise<CacheOutputStream>(object : CacheOutputStream {
 							var numberOfBytesWritten = 0
-							val bytesWritten = ByteArray(7 * 1024 * 1024)
-							override fun promiseWrite(buffer: ByteArray, offset: Int, length: Int): Promise<CacheOutputStream> =
+							override fun promiseWrite(
+								buffer: ByteArray,
+								offset: Int,
+								length: Int
+							): Promise<CacheOutputStream> =
 								Promise<CacheOutputStream>(this)
 
 							override fun promiseTransfer(bufferedSource: BufferedSource): Promise<CacheOutputStream> {
@@ -54,7 +66,8 @@ class WhenTheDataSourceIsAbruptlyClosed {
 
 							override fun commitToCache(): Promise<CachedFile> {
 								committedToCache = true
-								return Promise(CachedFile())
+								deferredCommit.resolve()
+								return deferredCommit
 							}
 
 							override fun flush(): Promise<CacheOutputStream> {
@@ -69,53 +82,65 @@ class WhenTheDataSourceIsAbruptlyClosed {
 			buffer.write(bytes)
 			val dataSource = mockk<HttpDataSource>(relaxed = true).apply {
 				every { read(any(), any(), any()) } answers {
-					var bytesRead = 0
 					val bytesToRead = arg<Int>(2)
-					var bytesRemaining = bytesToRead
-					var offset = arg<Int>(1)
+					val offset = arg<Int>(1)
+					var bytesRead = 0
 					while (bytesRead < bytesToRead) {
-						val bufferRead = buffer.read(arg(0), offset, bytesRemaining)
+						val bufferRead = buffer.read(arg(0), offset + bytesRead, bytesToRead - bytesRead)
 						if (bufferRead == -1) {
-							bytesRead = -1
+							if (bytesRead == 0) bytesRead = -1
 							break
 						}
+
 						bytesRead += bufferRead
-						offset += bufferRead
-						bytesRemaining -= bufferRead
 					}
 					bytesRead
 				}
 			}
-
 			val diskFileCacheDataSource = DiskFileCacheDataSource(
 				dataSource,
 				fakeCacheStreamSupplier,
 				mockk<CacheFiles>().apply {
 					every { promiseCachedFile(any()) } returns Promise.empty()
-				}
+				},
 			)
 			diskFileCacheDataSource.open(
 				DataSpec.Builder()
 					.setUri(Uri.parse("http://my-server/file"))
 					.setPosition(0)
-					.setLength(C.LENGTH_UNSET.toLong()).setKey("1")
+					.setLength((2 * 1024 * 1024).toLong()).setKey("1")
 					.build()
 			)
-
-			val random = Random()
-			var byteCount = 0
 			do {
-				val bytes = ByteArray(random.nextInt(1000000))
-				val readResult = diskFileCacheDataSource.read(bytes, 0, bytes.size)
-				if (readResult == C.RESULT_END_OF_INPUT) break
-				byteCount += readResult
-			} while (byteCount < 3 * 1024 * 1024)
+				val readResult = diskFileCacheDataSource.read(bytesRead, 0, bytesRead.size)
+			} while (readResult != C.RESULT_END_OF_INPUT)
 			diskFileCacheDataSource.close()
+
+			try {
+				deferredCommit.toExpiringFuture()[10, TimeUnit.SECONDS]
+			} catch (e: TimeoutException) {
+				// expected
+			}
+		}
+
+		init {
+			Random().nextBytes(bytes)
 		}
 	}
 
 	@Test
-	fun thenTheFileIsNotCached() {
+	fun `then the file is not written`() {
+		assertThat(bytesWritten).containsOnly(0)
+	}
+
+	@Test
+	fun `then the file is not cached`() {
 		assertThat(committedToCache).isFalse
 	}
+
+	@Test
+	fun `then the file is read correctly`() {
+		assertArrayEquals(bytes, bytesRead)
+	}
+
 }

@@ -103,7 +103,7 @@ class WhenStreamingTheFileInOddChunks {
 				DataSpec.Builder()
 					.setUri(Uri.parse("http://my-server/file?ID=1"))
 					.setPosition(0)
-					.setLength((7 * 1024 * 1024).toLong())
+					.setLength(C.LENGTH_UNSET.toLong())
 					.setKey("hi")
 					.build()
             )
@@ -125,7 +125,7 @@ class WhenStreamingTheFileInOddChunks {
 
     @Test
     fun thenTheKeyIsCorrect() {
-        assertThat(cacheKey).isEqualToIgnoringCase("/file?ID=1:0:7340032")
+        assertThat(cacheKey).isEqualToIgnoringCase("/file?ID=1:0:-1")
     }
 
     @Test

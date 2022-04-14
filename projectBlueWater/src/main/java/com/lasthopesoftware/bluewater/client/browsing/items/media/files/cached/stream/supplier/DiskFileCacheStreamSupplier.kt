@@ -30,9 +30,7 @@ class DiskFileCacheStreamSupplier(
     private fun generateCacheFile(uniqueKey: String): File {
         val suffix = ".cache"
         val uniqueKeyHashCode = uniqueKey.hashCode().toString()
-        val diskCacheDir = diskCacheDirectory.getDiskCacheDirectory(
-            diskFileCacheConfiguration
-        )
+        val diskCacheDir = diskCacheDirectory.getDiskCacheDirectory(diskFileCacheConfiguration)
         var file = File(diskCacheDir, uniqueKeyHashCode + suffix)
         if (file.exists()) {
             var collisionNumber = 0

@@ -42,13 +42,14 @@ class DiskFileCacheDataSource(
 		val cachedFile = cachedFiles
 			.promiseCachedFile(key)
 			.eventually {
-				it?.toPromise() ?: if (dataSpec.position == 0L) cacheStreamSupplier
-					.promiseCachedFileOutputStream(key)
-					.then { os ->
-						cacheWriter = CacheWriter(os)
-						it
-					}
-				else Promise.empty()
+				it?.toPromise()
+					?: if (with(dataSpec) { position == 0L && length == C.LENGTH_UNSET.toLong() }) cacheStreamSupplier
+						.promiseCachedFileOutputStream(key)
+						.then { os ->
+							cacheWriter = CacheWriter(os)
+							it
+						}
+					else Promise.empty()
 			}
 			.toFuture()
 			.get()
