@@ -79,7 +79,19 @@ class WhenStreamingTheFileInOddChunks {
 			buffer.write(bytes)
 			val dataSource = mockk<HttpDataSource>(relaxed = true).apply {
 				every { read(any(), any(), any()) } answers {
-					buffer.read(arg(0), arg(1), arg(2))
+					var bytesRead = 0
+					val bytesToRead = arg<Int>(2)
+					val offset = arg<Int>(1)
+					while (bytesRead < bytesToRead) {
+						val bufferRead = buffer.read(arg(0), offset + bytesRead, bytesToRead - bytesRead)
+						if (bufferRead == -1) {
+							if (bytesRead == 0) bytesRead = -1
+							break
+						}
+
+						bytesRead += bufferRead
+					}
+					bytesRead
 				}
 			}
 			val diskFileCacheDataSource = DiskFileCacheDataSource(
