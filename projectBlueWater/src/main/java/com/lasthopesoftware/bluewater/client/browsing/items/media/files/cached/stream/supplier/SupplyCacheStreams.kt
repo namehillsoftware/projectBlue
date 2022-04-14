@@ -3,6 +3,6 @@ package com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.CacheOutputStream
 import com.namehillsoftware.handoff.promises.Promise
 
-interface ICacheStreamSupplier {
+interface SupplyCacheStreams {
     fun promiseCachedFileOutputStream(uniqueKey: String): Promise<CacheOutputStream>
 }

@@ -8,7 +8,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.d
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.persistence.IDiskFileAccessTimeUpdater
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.CacheOutputStream
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.supplier.ICacheStreamSupplier
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.supplier.SupplyCacheStreams
 import com.lasthopesoftware.bluewater.repository.DatabasePromise
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
 import com.lasthopesoftware.bluewater.shared.cls
@@ -21,7 +21,7 @@ import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.IOException
 
-class DiskFileCache(private val context: Context, private val diskCacheDirectory: IDiskCacheDirectoryProvider, private val diskFileCacheConfiguration: IDiskFileCacheConfiguration, private val cacheStreamSupplier: ICacheStreamSupplier, private val cachedFilesProvider: ICachedFilesProvider, private val diskFileAccessTimeUpdater: IDiskFileAccessTimeUpdater) : CacheFiles {
+class DiskFileCache(private val context: Context, private val diskCacheDirectory: IDiskCacheDirectoryProvider, private val diskFileCacheConfiguration: IDiskFileCacheConfiguration, private val cacheStreamSupplier: SupplyCacheStreams, private val cachedFilesProvider: ICachedFilesProvider, private val diskFileAccessTimeUpdater: IDiskFileAccessTimeUpdater) : CacheFiles {
 
 	private val expirationTime = diskFileCacheConfiguration.cacheItemLifetime?.millis ?: -1
 

@@ -22,6 +22,12 @@ import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFileUriQueryParamsProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListUtilities
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.DiskFileCache
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.access.CachedFilesProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.disk.AndroidDiskCacheDirectoryProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.persistence.DiskFileAccessTimeUpdater
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.persistence.DiskFileCachePersistence
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.supplier.DiskFileCacheStreamSupplier
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.CachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedCachedFilePropertiesProvider
@@ -45,6 +51,9 @@ import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionSe
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionSettingsChangeReceiver
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
+import com.lasthopesoftware.bluewater.client.playback.caching.AudioCacheConfiguration
+import com.lasthopesoftware.bluewater.client.playback.caching.mediasource.DiskFileCacheSourceFactory
+import com.lasthopesoftware.bluewater.client.playback.caching.mediasource.SimpleCacheSourceFactory
 import com.lasthopesoftware.bluewater.client.playback.engine.*
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
 import com.lasthopesoftware.bluewater.client.playback.engine.events.*
@@ -364,6 +373,9 @@ open class PlaybackService :
 			FilePropertyCache.getInstance(),
 			fileProperties)
 	}
+
+	private val diskFileAccessTimeUpdater by lazy { DiskFileAccessTimeUpdater(this) }
+	private val diskCachedDirectoryProvider by lazy { AndroidDiskCacheDirectoryProvider(this) }
 
 	private val playbackEngineCloseables = CloseableManager()
 	private val lazyAudioBecomingNoisyReceiver = lazy { AudioBecomingNoisyReceiver() }
@@ -736,17 +748,42 @@ open class PlaybackService :
 				),
 				remoteFileUriProvider)
 
+			val cacheConfiguration = AudioCacheConfiguration(library)
+			val cachedFilesProvider = CachedFilesProvider(this, cacheConfiguration)
+			val cacheStreamSupplier by lazy {
+				DiskFileCacheStreamSupplier(
+					diskCachedDirectoryProvider,
+					cacheConfiguration,
+					DiskFileCachePersistence(
+						this,
+						diskCachedDirectoryProvider,
+						cacheConfiguration,
+						cachedFilesProvider,
+						diskFileAccessTimeUpdater
+					),
+					cachedFilesProvider
+				)
+			}
+			val audioCache = DiskFileCache(this, diskCachedDirectoryProvider, cacheConfiguration, cacheStreamSupplier, cachedFilesProvider, diskFileAccessTimeUpdater)
+			val httpDataSourceFactory = HttpDataSourceFactoryProvider(this, connectionProvider, OkHttpFactory),
 			val promisedPreparationSourceProvider = playbackHandler.value.then { ph ->
 				val playbackEngineBuilder = PreparedPlaybackQueueFeederBuilder(
 					this,
 					ph,
 					Handler(mainLooper),
 					MediaSourceProvider(
-						library,
-						HttpDataSourceFactoryProvider(this, connectionProvider, OkHttpFactory),
+						SimpleCacheSourceFactory(
+							httpDataSourceFactory,
+							diskCachedDirectoryProvider,
+							cacheConfiguration
+						).also(playbackEngineCloseables::manage),
+						DiskFileCacheSourceFactory(
+							httpDataSourceFactory,
+							cacheStreamSupplier,
+							audioCache
+						),
 						applicationSettings,
-						this,
-					).also(playbackEngineCloseables::manage),
+					),
 					bestMatchUriProvider
 				)
 

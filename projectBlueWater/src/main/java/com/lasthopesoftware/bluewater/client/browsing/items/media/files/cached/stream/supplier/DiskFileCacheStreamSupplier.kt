@@ -15,7 +15,7 @@ class DiskFileCacheStreamSupplier(
     private val diskFileCacheConfiguration: IDiskFileCacheConfiguration,
     private val diskFileCachePersistence: IDiskFileCachePersistence,
     private val cachedFilesProvider: ICachedFilesProvider
-) : ICacheStreamSupplier {
+) : SupplyCacheStreams {
     override fun promiseCachedFileOutputStream(uniqueKey: String): Promise<CacheOutputStream> {
         return cachedFilesProvider
             .promiseCachedFile(uniqueKey)

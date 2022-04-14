@@ -9,7 +9,7 @@ import com.google.android.exoplayer2.upstream.HttpDataSource
 import com.google.android.exoplayer2.upstream.TransferListener
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.CacheFiles
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.CacheOutputStream
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.supplier.ICacheStreamSupplier
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.supplier.SupplyCacheStreams
 import com.lasthopesoftware.bluewater.shared.drainQueue
 import com.lasthopesoftware.bluewater.shared.promises.NoopResponse.Companion.ignore
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
@@ -25,7 +25,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 
 class DiskFileCacheDataSource(
 	private val innerDataSource: HttpDataSource,
-	private val cacheStreamSupplier: ICacheStreamSupplier,
+	private val cacheStreamSupplier: SupplyCacheStreams,
 	private val cachedFiles: CacheFiles
 ) : DataSource {
 	private var inputStream: InputStream? = null
@@ -147,8 +147,8 @@ class DiskFileCacheDataSource(
 
 	class Factory(
 		private val httpDataSourceFactory: HttpDataSource.Factory,
-		private val cacheStreamSupplier: ICacheStreamSupplier,
-	 	private val cachedFilesProvider: CacheFiles) : DataSource.Factory {
+		private val cacheStreamSupplier: SupplyCacheStreams,
+		private val cachedFilesProvider: CacheFiles) : DataSource.Factory {
 		override fun createDataSource(): DataSource = DiskFileCacheDataSource(
 			httpDataSourceFactory.createDataSource(),
 			cacheStreamSupplier,

@@ -7,7 +7,7 @@ import com.google.android.exoplayer2.upstream.HttpDataSource
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.CacheFiles
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.CacheOutputStream
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.supplier.ICacheStreamSupplier
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.supplier.SupplyCacheStreams
 import com.lasthopesoftware.bluewater.client.playback.caching.DiskFileCacheDataSource
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -37,7 +37,7 @@ class WhenStreamingTheFileInOddChunks {
 			val deferredCommit = DeferredPromise(CachedFile())
 
 			val fakeCacheStreamSupplier =
-				object : ICacheStreamSupplier {
+				object : SupplyCacheStreams {
 					override fun promiseCachedFileOutputStream(uniqueKey: String): Promise<CacheOutputStream> {
 						return Promise<CacheOutputStream>(object : CacheOutputStream {
 							var numberOfBytesWritten = 0
