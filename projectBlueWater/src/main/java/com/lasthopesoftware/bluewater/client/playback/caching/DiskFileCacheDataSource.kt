@@ -14,11 +14,8 @@ import com.lasthopesoftware.bluewater.shared.drainQueue
 import com.lasthopesoftware.bluewater.shared.promises.NoopResponse.Companion.ignore
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.bluewater.shared.promises.toFuture
-import com.lasthopesoftware.resources.executors.ThreadPools
 import com.lasthopesoftware.resources.uri.PathAndQuery
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.queued.MessageWriter
-import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import okhttp3.internal.closeQuietly
 import okio.Buffer
 import org.slf4j.LoggerFactory
@@ -90,7 +87,7 @@ class DiskFileCacheDataSource(
 		private val activePromiseSync = Any()
 
 		@Volatile
-		private var activePromise: Promise<CacheOutputStream?> = Promise(cachedOutputStream)
+		private var activePromise = Promise(cachedOutputStream)
 
 		@Volatile
 		private var workingBuffer = Buffer()
@@ -107,23 +104,16 @@ class DiskFileCacheDataSource(
 			processQueue().ignore()
 		}
 
-		private fun processQueue() : Promise<CacheOutputStream?> = synchronized(activePromiseSync) {
+		private fun processQueue() : Promise<CacheOutputStream> = synchronized(activePromiseSync) {
 			activePromise.eventually({
-				if (it == null) Promise.empty()
-				else QueuedPromise(MessageWriter {
-					buffersToTransfer
-						.drainQueue()
-						.fold(it) { stream: CacheOutputStream?, source ->
-							val resultStream = stream
-								?.promiseTransfer(source)
-								?.toFuture()
-								?.get()
+				if (it == null) return@eventually Promise.empty()
 
-							if (resultStream == null) source.clear()
+				val concatenatedBuffer = buffersToTransfer
+					.drainQueue()
+					.reduceOrNull { sink, source -> sink.also(source::readAll) }
 
-							resultStream
-						}
-				}, ThreadPools.io)
+				if (concatenatedBuffer == null || concatenatedBuffer.exhausted()) it.toPromise()
+				else it.promiseTransfer(concatenatedBuffer)
 			}, {
 				logger.warn("An error occurred copying the buffer, closing the output stream", it)
 				clear()
