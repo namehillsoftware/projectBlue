@@ -23,7 +23,7 @@ class HttpDataSourceFactoryProvider(
 		}
 	}
 
-	override fun getHttpDataSourceFactory(): HttpDataSource.Factory =
+	private val factory by lazy {
 		OkHttpDataSource.Factory(
 			okHttpClients.getOkHttpClient(connectionProvider.urlProvider).newBuilder()
 				.readTimeout(45, TimeUnit.SECONDS)
@@ -31,4 +31,7 @@ class HttpDataSourceFactoryProvider(
 				.dispatcher(constrainedDispatcher)
 				.build())
 			.setUserAgent(Util.getUserAgent(context, context.getString(R.string.app_name)))
+	}
+
+	override fun getHttpDataSourceFactory(): HttpDataSource.Factory = factory
 }

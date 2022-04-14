@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.caching.GivenAFileLessThan1Megabyte
+package com.lasthopesoftware.bluewater.client.playback.caching.GivenAFileLessThan1Megabyte.AndItStartsAtPositionGreaterThanZero
 
 import android.net.Uri
 import com.google.android.exoplayer2.C
@@ -23,12 +23,15 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import java.util.*
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 
 @RunWith(RobolectricTestRunner::class)
-class WhenStreamingTheFileInOddChunks {
+class WhenStreamingTheFile {
 	companion object {
 		private val bytesWritten = ByteArray(512 * 1024)
 		private val bytes = ByteArray(512 * 1024)
+		private val bytesRead = ByteArray(512 * 1024)
 		private var committedToCache = false
 
 		@BeforeClass
@@ -104,19 +107,20 @@ class WhenStreamingTheFileInOddChunks {
 			diskFileCacheDataSource.open(
 				DataSpec.Builder()
 					.setUri(Uri.parse("http://my-server/file"))
-					.setPosition(0)
+					.setPosition(882)
 					.setLength((2 * 1024 * 1024).toLong()).setKey("1")
 					.build()
 			)
-			val random = Random()
-			var readResult: Int
 			do {
-				val bytes = ByteArray(random.nextInt(1000000))
-				readResult = diskFileCacheDataSource.read(bytes, 0, bytes.size)
+				val readResult = diskFileCacheDataSource.read(bytesRead, 0, bytesRead.size)
 			} while (readResult != C.RESULT_END_OF_INPUT)
 			diskFileCacheDataSource.close()
 
-			deferredCommit.toExpiringFuture().get()
+			try {
+				deferredCommit.toExpiringFuture()[10, TimeUnit.SECONDS]
+			} catch (e: TimeoutException) {
+				// expected
+			}
 		}
 
 		init {
@@ -125,12 +129,18 @@ class WhenStreamingTheFileInOddChunks {
 	}
 
 	@Test
-	fun thenTheEntireFileIsWritten() {
-		assertArrayEquals(bytes, bytesWritten)
+	fun `then the file is not written`() {
+		assertThat(bytesWritten).containsOnly(0)
 	}
 
 	@Test
-	fun thenTheFileIsCached() {
-		assertThat(committedToCache).isTrue
+	fun `then the file is not cached`() {
+		assertThat(committedToCache).isFalse
 	}
+
+	@Test
+	fun `then the file is read correctly`() {
+		assertArrayEquals(bytes, bytesRead)
+	}
+
 }
