@@ -53,7 +53,6 @@ import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnect
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionSettingsChangeReceiver
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.caching.AudioCacheConfiguration
-import com.lasthopesoftware.bluewater.client.playback.caching.uri.CachedAudioFileUriProvider
 import com.lasthopesoftware.bluewater.client.playback.engine.*
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
 import com.lasthopesoftware.bluewater.client.playback.engine.events.*
@@ -759,10 +758,7 @@ open class PlaybackService :
 							selectedLibraryProvider,
 							StoredFileAccess(this),
 							arbitratorForOs),
-						CachedAudioFileUriProvider(
-							remoteFileUriProvider,
-							CachedFilesProvider(this, cacheConfiguration)),
-						MediaFileUriProvider(
+                        MediaFileUriProvider(
 							MediaQueryCursorProvider(this, cachedFileProperties),
 							arbitratorForOs,
 							selectedLibraryIdentifierProvider,

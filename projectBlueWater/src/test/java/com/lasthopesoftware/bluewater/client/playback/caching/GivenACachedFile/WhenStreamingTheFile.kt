@@ -46,11 +46,7 @@ class WhenStreamingTheFile {
 							cacheKey = uniqueKey
 							return Promise<CacheOutputStream>(object : CacheOutputStream {
 								var numberOfBytesWritten = 0
-								override fun promiseWrite(
-									buffer: ByteArray,
-									offset: Int,
-									length: Int
-								): Promise<CacheOutputStream> =
+								override fun promiseWrite(buffer: ByteArray, offset: Int, length: Int): Promise<CacheOutputStream> =
 									Promise<CacheOutputStream>(this)
 
 								override fun promiseTransfer(bufferedSource: BufferedSource): Promise<CacheOutputStream> {
