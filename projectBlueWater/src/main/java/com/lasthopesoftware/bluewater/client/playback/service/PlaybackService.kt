@@ -765,7 +765,7 @@ open class PlaybackService :
 				)
 			}
 			val audioCache = DiskFileCache(this, diskCachedDirectoryProvider, cacheConfiguration, cacheStreamSupplier, cachedFilesProvider, diskFileAccessTimeUpdater)
-			val httpDataSourceFactory = HttpDataSourceFactoryProvider(this, connectionProvider, OkHttpFactory),
+			val httpDataSourceFactory = HttpDataSourceFactoryProvider(this, connectionProvider, OkHttpFactory)
 			val promisedPreparationSourceProvider = playbackHandler.value.then { ph ->
 				val playbackEngineBuilder = PreparedPlaybackQueueFeederBuilder(
 					this,
