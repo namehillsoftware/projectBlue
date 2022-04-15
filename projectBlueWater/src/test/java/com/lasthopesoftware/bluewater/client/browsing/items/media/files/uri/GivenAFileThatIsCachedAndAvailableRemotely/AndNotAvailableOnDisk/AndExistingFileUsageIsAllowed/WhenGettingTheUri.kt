@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.media.files.uri.GivenAFileThatIsStoredCachedAndAvailableRemotely
+package com.lasthopesoftware.bluewater.client.browsing.items.media.files.uri.GivenAFileThatIsCachedAndAvailableRemotely.AndNotAvailableOnDisk.AndExistingFileUsageIsAllowed
 
 import android.net.Uri
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
@@ -22,26 +22,26 @@ import java.io.File
 class WhenGettingTheUri {
 
 	companion object {
+		private var rejection: Throwable? = null
 		private val returnedFileUri by lazy {
 			val mockStoredFileUriProvider = mockk<StoredFileUriProvider>()
-			every { mockStoredFileUriProvider.promiseFileUri(any()) } returns Promise(Uri.fromFile(File("/a_path/to_a_file.mp3")))
+			every { mockStoredFileUriProvider.promiseFileUri(any()) } returns Promise.empty()
 
 			val cachedAudioFileUriProvider = mockk<CachedAudioFileUriProvider>()
 			every { cachedAudioFileUriProvider.promiseFileUri(ServiceFile(3)) } returns Promise(Uri.fromFile(File("/a_cached_path/to_a_file.mp3")))
 
 			val mockMediaFileUriProvider = mockk<MediaFileUriProvider>()
-			every { mockMediaFileUriProvider.promiseFileUri(any()) } returns Promise(Uri.fromFile(File("/a_media_path/to_a_file.mp3")))
-
+			every { mockMediaFileUriProvider.promiseFileUri(any()) } returns Promise.empty()
 			val mockRemoteFileUriProvider = mockk<RemoteFileUriProvider>()
 			every { mockRemoteFileUriProvider.promiseFileUri(ServiceFile(3)) } returns Promise(Uri.parse("http://remote-url/to_a_file.mp3"))
-
 			val bestMatchUriProvider = BestMatchUriProvider(
-				Library(),
+				Library().setIsUsingExistingFiles(true),
 				mockStoredFileUriProvider,
 				cachedAudioFileUriProvider,
 				mockMediaFileUriProvider,
 				mockRemoteFileUriProvider
 			)
+
 			bestMatchUriProvider
 				.promiseFileUri(ServiceFile(3))
 				.toExpiringFuture()
@@ -50,8 +50,8 @@ class WhenGettingTheUri {
 	}
 
 	@Test
-	fun thenTheStoredFileUriIsReturned() {
+	fun thenTheCachedFileUriIsReturned() {
 		assertThat(returnedFileUri.toString())
-			.isEqualTo("file:///a_path/to_a_file.mp3")
+			.isEqualTo("file:///a_cached_path/to_a_file.mp3")
 	}
 }

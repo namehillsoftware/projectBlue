@@ -155,7 +155,7 @@ class PreparedPlayableFileQueue(
 
 	private class PositionedPreparingFile(
 		override val positionedFile: PositionedFile,
-		override val preparedPlaybackFilePromise: Promise<PreparedPlayableFile>)
+		override val preparedPlaybackFilePromise: Promise<PreparedPlayableFile?>)
 		: ProvidePreparedPlaybackFile {
 
 		override fun promisePositionedPreparedPlaybackFile(): Promise<PositionedPreparedPlayableFile> =
@@ -166,7 +166,7 @@ class PreparedPlayableFileQueue(
 
 	private class PositionedUnfaultingPreparingFile(
 		override val positionedFile: PositionedFile,
-		override val preparedPlaybackFilePromise: Promise<PreparedPlayableFile>) : ProvidePreparedPlaybackFile {
+		override val preparedPlaybackFilePromise: Promise<PreparedPlayableFile?>) : ProvidePreparedPlaybackFile {
 
 		override fun promisePositionedPreparedPlaybackFile(): Promise<PositionedPreparedPlayableFile> =
 			preparedPlaybackFilePromise.then(
@@ -179,7 +179,7 @@ class PreparedPlayableFileQueue(
 
 	private interface ProvidePreparedPlaybackFile {
 		val positionedFile: PositionedFile
-		val preparedPlaybackFilePromise: Promise<PreparedPlayableFile>
+		val preparedPlaybackFilePromise: Promise<PreparedPlayableFile?>
 
 		fun promisePositionedPreparedPlaybackFile(): Promise<PositionedPreparedPlayableFile>
 	}

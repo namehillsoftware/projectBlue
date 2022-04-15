@@ -5,5 +5,5 @@ import com.namehillsoftware.handoff.promises.Promise
 import org.joda.time.Duration
 
 fun interface PlayableFilePreparationSource {
-	fun promisePreparedPlaybackFile(serviceFile: ServiceFile, preparedAt: Duration): Promise<PreparedPlayableFile>
+	fun promisePreparedPlaybackFile(serviceFile: ServiceFile, preparedAt: Duration): Promise<PreparedPlayableFile?>
 }

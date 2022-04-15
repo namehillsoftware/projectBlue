@@ -5,6 +5,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceF
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.uri.BestMatchUriProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.uri.RemoteFileUriProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
+import com.lasthopesoftware.bluewater.client.playback.caching.uri.CachedAudioFileUriProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.uri.StoredFileUriProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -26,6 +27,9 @@ class WhenGettingTheUri {
 			val mockStoredFileUriProvider = mockk<StoredFileUriProvider>()
 			every { mockStoredFileUriProvider.promiseFileUri(any()) } returns Promise.empty()
 
+			val cachedAudioFileUriProvider = mockk<CachedAudioFileUriProvider>()
+			every { cachedAudioFileUriProvider.promiseFileUri(ServiceFile(3)) } returns Promise.empty()
+
 			val mockMediaFileUriProvider = mockk<MediaFileUriProvider>()
 			every { mockMediaFileUriProvider.promiseFileUri(any()) } returns Promise(Uri.fromFile(File("/a_media_path/to_a_file.mp3")))
 
@@ -35,7 +39,8 @@ class WhenGettingTheUri {
 			val bestMatchUriProvider = BestMatchUriProvider(
 				Library(),
 				mockStoredFileUriProvider,
-                mockMediaFileUriProvider,
+				cachedAudioFileUriProvider,
+				mockMediaFileUriProvider,
 				mockRemoteFileUriProvider
 			)
 

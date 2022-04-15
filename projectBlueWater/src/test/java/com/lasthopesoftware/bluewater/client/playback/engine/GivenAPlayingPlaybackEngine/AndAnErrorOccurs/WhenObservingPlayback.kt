@@ -27,7 +27,7 @@ class WhenObservingPlayback {
 	}
 
 	private class DeferredErrorPlaybackPreparer : PlayableFilePreparationSource {
-		private var reject: Messenger<PreparedPlayableFile>? = null
+		private var reject: Messenger<PreparedPlayableFile?>? = null
 		fun resolve() {
 			if (reject != null) reject!!.sendRejection(Exception())
 		}
@@ -35,8 +35,8 @@ class WhenObservingPlayback {
 		override fun promisePreparedPlaybackFile(
 			serviceFile: ServiceFile,
 			preparedAt: Duration
-		): Promise<PreparedPlayableFile> {
-			return Promise { messenger: Messenger<PreparedPlayableFile>? -> reject = messenger }
+		): Promise<PreparedPlayableFile?> {
+			return Promise { messenger -> reject = messenger }
 		}
 	}
 

@@ -1,45 +1,44 @@
-package com.lasthopesoftware.bluewater.client.playback.file.volume.preparation;
+package com.lasthopesoftware.bluewater.client.playback.file.volume.preparation
 
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource;
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile;
-import com.lasthopesoftware.bluewater.client.playback.file.volume.ProvideMaxFileVolume;
-import com.namehillsoftware.handoff.promises.Promise;
-import com.namehillsoftware.handoff.promises.response.VoidResponse;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile
+import com.lasthopesoftware.bluewater.client.playback.file.volume.ProvideMaxFileVolume
+import com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.MaxFileVolumePreparer
+import com.namehillsoftware.handoff.promises.Promise
+import org.joda.time.Duration
+import org.slf4j.LoggerFactory
 
-import org.joda.time.Duration;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-public class MaxFileVolumePreparer implements PlayableFilePreparationSource {
-
-	private static final Logger logger = LoggerFactory.getLogger(MaxFileVolumePreparer.class);
-
-	private final PlayableFilePreparationSource playableFilePreparationSource;
-	private final ProvideMaxFileVolume provideMaxFileVolume;
-
-	public MaxFileVolumePreparer(PlayableFilePreparationSource playableFilePreparationSource, ProvideMaxFileVolume provideMaxFileVolume) {
-		this.playableFilePreparationSource = playableFilePreparationSource;
-		this.provideMaxFileVolume = provideMaxFileVolume;
-	}
-
-	@Override
-	public Promise<PreparedPlayableFile> promisePreparedPlaybackFile(ServiceFile serviceFile, Duration preparedAt) {
-		final Promise<Float> promisedMaxFileVolume = provideMaxFileVolume.promiseMaxFileVolume(serviceFile);
-
+class MaxFileVolumePreparer(
+	private val playableFilePreparationSource: PlayableFilePreparationSource,
+	private val provideMaxFileVolume: ProvideMaxFileVolume
+) : PlayableFilePreparationSource {
+	override fun promisePreparedPlaybackFile(serviceFile: ServiceFile, preparedAt: Duration): Promise<PreparedPlayableFile?> {
+		val promisedMaxFileVolume = provideMaxFileVolume.promiseMaxFileVolume(serviceFile)
 		return playableFilePreparationSource
 			.promisePreparedPlaybackFile(serviceFile, preparedAt)
-			.then(ppf -> {
-				final MaxFileVolumeManager maxFileVolumeManager = new MaxFileVolumeManager(ppf.getPlayableFileVolumeManager());
+			.then { ppf ->
+				ppf ?: return@then null
 
+				val maxFileVolumeManager = MaxFileVolumeManager(ppf.playableFileVolumeManager)
 				promisedMaxFileVolume
-					.then(new VoidResponse<>(maxFileVolumeManager::setMaxFileVolume))
-					.excuse(new VoidResponse<>(err -> logger.warn("There was an error getting the max file volume for file " + serviceFile, err)));
+					.then(maxFileVolumeManager::setMaxFileVolume)
+					.excuse { err ->
+						logger.warn(
+							"There was an error getting the max file volume for file $serviceFile",
+							err
+						)
+					}
 
-				return new PreparedPlayableFile(
-					ppf.getPlaybackHandler(),
+				PreparedPlayableFile(
+					ppf.playbackHandler,
 					maxFileVolumeManager,
-					ppf.getBufferingPlaybackFile());
-			});
+					ppf.bufferingPlaybackFile
+				)
+			}
+	}
+
+	companion object {
+		private val logger by lazy { LoggerFactory.getLogger(MaxFileVolumePreparer::class.java) }
 	}
 }

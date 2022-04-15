@@ -54,6 +54,7 @@ import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessio
 import com.lasthopesoftware.bluewater.client.playback.caching.AudioCacheConfiguration
 import com.lasthopesoftware.bluewater.client.playback.caching.mediasource.DiskFileCacheSourceFactory
 import com.lasthopesoftware.bluewater.client.playback.caching.mediasource.SimpleCacheSourceFactory
+import com.lasthopesoftware.bluewater.client.playback.caching.uri.CachedAudioFileUriProvider
 import com.lasthopesoftware.bluewater.client.playback.engine.*
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
 import com.lasthopesoftware.bluewater.client.playback.engine.events.*
@@ -732,6 +733,8 @@ open class PlaybackService :
 					}
 			}
 
+			val cacheConfiguration = AudioCacheConfiguration(library)
+			val cachedFilesProvider = CachedFilesProvider(this, cacheConfiguration)
 			val remoteFileUriProvider = RemoteFileUriProvider(connectionProvider, ServiceFileUriQueryParamsProvider())
 			val bestMatchUriProvider = BestMatchUriProvider(
 				library,
@@ -739,6 +742,7 @@ open class PlaybackService :
 					selectedLibraryProvider,
 					StoredFileAccess(this),
 					arbitratorForOs),
+				CachedAudioFileUriProvider(remoteFileUriProvider, cachedFilesProvider),
 				MediaFileUriProvider(
 					MediaQueryCursorProvider(this, cachedFileProperties),
 					arbitratorForOs,
@@ -748,8 +752,6 @@ open class PlaybackService :
 				),
 				remoteFileUriProvider)
 
-			val cacheConfiguration = AudioCacheConfiguration(library)
-			val cachedFilesProvider = CachedFilesProvider(this, cacheConfiguration)
 			val cacheStreamSupplier by lazy {
 				DiskFileCacheStreamSupplier(
 					diskCachedDirectoryProvider,

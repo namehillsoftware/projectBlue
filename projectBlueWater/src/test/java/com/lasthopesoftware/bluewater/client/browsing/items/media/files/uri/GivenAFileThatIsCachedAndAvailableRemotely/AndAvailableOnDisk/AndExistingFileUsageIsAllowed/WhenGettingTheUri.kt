@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.media.files.uri.GivenAFileThatIsStoredCachedAndAvailableRemotely
+package com.lasthopesoftware.bluewater.client.browsing.items.media.files.uri.GivenAFileThatIsCachedAndAvailableRemotely.AndAvailableOnDisk.AndExistingFileUsageIsAllowed
 
 import android.net.Uri
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
@@ -21,10 +21,10 @@ import java.io.File
 @RunWith(RobolectricTestRunner::class)
 class WhenGettingTheUri {
 
-	companion object {
-		private val returnedFileUri by lazy {
+    companion object {
+        private val returnedFileUri by lazy {
 			val mockStoredFileUriProvider = mockk<StoredFileUriProvider>()
-			every { mockStoredFileUriProvider.promiseFileUri(any()) } returns Promise(Uri.fromFile(File("/a_path/to_a_file.mp3")))
+			every { mockStoredFileUriProvider.promiseFileUri(any()) } returns Promise.empty()
 
 			val cachedAudioFileUriProvider = mockk<CachedAudioFileUriProvider>()
 			every { cachedAudioFileUriProvider.promiseFileUri(ServiceFile(3)) } returns Promise(Uri.fromFile(File("/a_cached_path/to_a_file.mp3")))
@@ -36,22 +36,23 @@ class WhenGettingTheUri {
 			every { mockRemoteFileUriProvider.promiseFileUri(ServiceFile(3)) } returns Promise(Uri.parse("http://remote-url/to_a_file.mp3"))
 
 			val bestMatchUriProvider = BestMatchUriProvider(
-				Library(),
+				Library().setIsUsingExistingFiles(true),
 				mockStoredFileUriProvider,
 				cachedAudioFileUriProvider,
 				mockMediaFileUriProvider,
 				mockRemoteFileUriProvider
 			)
+
 			bestMatchUriProvider
 				.promiseFileUri(ServiceFile(3))
 				.toExpiringFuture()
 				.get()
 		}
-	}
+    }
 
 	@Test
-	fun thenTheStoredFileUriIsReturned() {
+	fun thenTheMediaFileUriIsReturned() {
 		assertThat(returnedFileUri.toString())
-			.isEqualTo("file:///a_path/to_a_file.mp3")
+			.isEqualTo("file:///a_media_path/to_a_file.mp3")
 	}
 }

@@ -40,7 +40,7 @@ class WhenObservingPlayback {
 	}
 
 	private class DeferredErrorPlaybackPreparer : PlayableFilePreparationSource {
-		private var messenger: Messenger<PreparedPlayableFile>? = null
+		private var messenger: Messenger<PreparedPlayableFile?>? = null
 		fun resolve(): ResolvablePlaybackHandler {
 			val playbackHandler = ResolvablePlaybackHandler()
 			messenger?.sendResolution(
@@ -58,8 +58,8 @@ class WhenObservingPlayback {
 		override fun promisePreparedPlaybackFile(
 			serviceFile: ServiceFile,
 			preparedAt: Duration
-		): Promise<PreparedPlayableFile> {
-			return Promise { messenger: Messenger<PreparedPlayableFile>? ->
+		): Promise<PreparedPlayableFile?> {
+			return Promise { messenger ->
 				this.messenger = messenger
 			}
 		}

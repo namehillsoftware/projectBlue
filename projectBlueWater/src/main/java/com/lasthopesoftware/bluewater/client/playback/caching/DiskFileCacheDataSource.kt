@@ -38,7 +38,7 @@ class DiskFileCacheDataSource(
 		cacheWriter?.commit()?.also { cacheWriter = null }
 		inputStream?.close()?.also { inputStream = null }
 
-		val key = "${PathAndQuery.forUri(dataSpec.uri)}:${dataSpec.position}:${dataSpec.length}"
+		val key = PathAndQuery.forUri(dataSpec.uri)
 		val cachedFile = cachedFiles
 			.promiseCachedFile(key)
 			.eventually {
