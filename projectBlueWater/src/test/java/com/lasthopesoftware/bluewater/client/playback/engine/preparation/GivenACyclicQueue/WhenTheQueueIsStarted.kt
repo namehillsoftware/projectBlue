@@ -25,7 +25,7 @@ class WhenTheQueueIsStarted {
 		@BeforeClass
 		@JvmStatic
         fun before() {
-            val numberOfFiles = nextInt(1, 500)
+            val numberOfFiles = nextInt(2, 500)
             val serviceFiles = (0..numberOfFiles).map { ServiceFile(nextInt()) }
 
             val fileActionMap = serviceFiles.associateBy ({ it }, { MockResolveAction() })
