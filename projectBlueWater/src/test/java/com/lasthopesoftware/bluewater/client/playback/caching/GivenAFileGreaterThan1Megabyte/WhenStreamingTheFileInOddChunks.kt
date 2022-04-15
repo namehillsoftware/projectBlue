@@ -125,7 +125,7 @@ class WhenStreamingTheFileInOddChunks {
 
     @Test
     fun thenTheKeyIsCorrect() {
-        assertThat(cacheKey).isEqualToIgnoringCase("/file?ID=1:0:-1")
+        assertThat(cacheKey).isEqualToIgnoringCase("/file?ID=1")
     }
 
     @Test

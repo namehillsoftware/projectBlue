@@ -23,7 +23,7 @@ class WhenProvidingTheUri {
 			}
 
 			val cachedFilesProvider = mockk<ICachedFilesProvider>().apply {
-				every { promiseCachedFile("file?key=1") } returns Promise.empty()
+				every { promiseCachedFile("/file?key=1") } returns Promise.empty()
 			}
 
 			val cachedAudioFileUriProvider = CachedAudioFileUriProvider(

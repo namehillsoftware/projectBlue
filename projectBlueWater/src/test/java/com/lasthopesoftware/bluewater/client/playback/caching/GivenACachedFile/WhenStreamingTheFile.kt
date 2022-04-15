@@ -100,7 +100,7 @@ class WhenStreamingTheFile {
 					dataSource,
 					fakeCacheStreamSupplier,
 					mockk<CacheFiles>().apply {
-						every { promiseCachedFile("/file?ID=876:0:-1") } returns Promise(file)
+						every { promiseCachedFile("/file?ID=876") } returns Promise(file)
 					}
 				)
 

@@ -19,7 +19,6 @@ class CachedAudioFileUriProvider(
 			.eventually { uri ->
 				uri
 					?.let(PathAndQuery::forUri)
-					?.let { "$it:0:-1" }
 					?.let(cachedFilesProvider::promiseCachedFile)
 					?.then { cachedFile ->
 						cachedFile
