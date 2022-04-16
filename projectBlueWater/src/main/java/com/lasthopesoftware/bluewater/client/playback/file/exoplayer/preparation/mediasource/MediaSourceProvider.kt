@@ -7,8 +7,8 @@ import com.google.android.exoplayer2.source.MediaSource
 import com.google.android.exoplayer2.source.ProgressiveMediaSource
 import com.google.android.exoplayer2.upstream.DefaultLoadErrorHandlingPolicy
 import com.google.android.exoplayer2.upstream.FileDataSource
-import com.lasthopesoftware.bluewater.client.playback.caching.mediasource.DiskFileCacheSourceFactory
-import com.lasthopesoftware.bluewater.client.playback.caching.mediasource.SimpleCacheSourceFactory
+import com.lasthopesoftware.bluewater.client.playback.caching.datasource.DiskFileCacheSourceFactory
+import com.lasthopesoftware.bluewater.client.playback.caching.datasource.SimpleCacheSourceFactory
 import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
 import com.lasthopesoftware.bluewater.shared.IoCommon
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise

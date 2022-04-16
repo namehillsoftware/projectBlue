@@ -7,7 +7,7 @@ import com.google.android.exoplayer2.upstream.HttpDataSource
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.CacheOutputStream
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.supplier.SupplyCacheStreams
-import com.lasthopesoftware.bluewater.client.playback.caching.DiskFileCacheDataSource
+import com.lasthopesoftware.bluewater.client.playback.caching.datasource.FullyDownloadedCachedFilesDataSource
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
@@ -96,7 +96,7 @@ class WhenStreamingTheFile {
 					bytesRead
 				}
 			}
-			val diskFileCacheDataSource = DiskFileCacheDataSource(
+			val diskFileCacheDataSource = FullyDownloadedCachedFilesDataSource(
                 dataSource,
                 fakeCacheStreamSupplier,
 			)

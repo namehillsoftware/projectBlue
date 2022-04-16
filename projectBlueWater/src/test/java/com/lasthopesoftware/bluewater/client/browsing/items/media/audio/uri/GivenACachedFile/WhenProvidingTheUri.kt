@@ -2,8 +2,7 @@ package com.lasthopesoftware.bluewater.client.browsing.items.media.audio.uri.Giv
 
 import android.net.Uri
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.access.ICachedFilesProvider
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.CacheFiles
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.uri.RemoteFileUriProvider
 import com.lasthopesoftware.bluewater.client.playback.caching.uri.CachedAudioFileUriProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -29,8 +28,8 @@ class WhenProvidingTheUri {
 				every { promiseFileUri(ServiceFile(10)) } returns Promise(remoteUri)
 			}
 
-			val cachedFilesProvider = mockk<ICachedFilesProvider>().apply {
-				every { promiseCachedFile(remoteUri.path + "?" + remoteUri.query) } returns Promise(CachedFile().setFileName(file.absolutePath))
+			val cachedFilesProvider = mockk<CacheFiles>().apply {
+				every { promiseCachedFile(remoteUri.path + "?" + remoteUri.query) } returns Promise(file)
 			}
 
 			val cachedAudioFileUriProvider = CachedAudioFileUriProvider(

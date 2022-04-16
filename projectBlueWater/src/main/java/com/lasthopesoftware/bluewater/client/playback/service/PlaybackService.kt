@@ -52,8 +52,8 @@ import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnect
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionSettingsChangeReceiver
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.caching.AudioCacheConfiguration
-import com.lasthopesoftware.bluewater.client.playback.caching.mediasource.DiskFileCacheSourceFactory
-import com.lasthopesoftware.bluewater.client.playback.caching.mediasource.SimpleCacheSourceFactory
+import com.lasthopesoftware.bluewater.client.playback.caching.datasource.DiskFileCacheSourceFactory
+import com.lasthopesoftware.bluewater.client.playback.caching.datasource.SimpleCacheSourceFactory
 import com.lasthopesoftware.bluewater.client.playback.caching.uri.CachedAudioFileUriProvider
 import com.lasthopesoftware.bluewater.client.playback.engine.*
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
@@ -736,21 +736,6 @@ open class PlaybackService :
 			val cacheConfiguration = AudioCacheConfiguration(library)
 			val cachedFilesProvider = CachedFilesProvider(this, cacheConfiguration)
 			val remoteFileUriProvider = RemoteFileUriProvider(connectionProvider, ServiceFileUriQueryParamsProvider())
-			val bestMatchUriProvider = BestMatchUriProvider(
-				library,
-				StoredFileUriProvider(
-					selectedLibraryProvider,
-					StoredFileAccess(this),
-					arbitratorForOs),
-				CachedAudioFileUriProvider(remoteFileUriProvider, cachedFilesProvider),
-				MediaFileUriProvider(
-					MediaQueryCursorProvider(this, cachedFileProperties),
-					arbitratorForOs,
-					selectedLibraryIdentifierProvider,
-					false,
-					applicationMessageBus.value
-				),
-				remoteFileUriProvider)
 
 			val cacheStreamSupplier by lazy {
 				DiskFileCacheStreamSupplier(
@@ -767,6 +752,22 @@ open class PlaybackService :
 				)
 			}
 			val audioCache = DiskFileCache(this, diskCachedDirectoryProvider, cacheConfiguration, cacheStreamSupplier, cachedFilesProvider, diskFileAccessTimeUpdater)
+			val bestMatchUriProvider = BestMatchUriProvider(
+				library,
+				StoredFileUriProvider(
+					selectedLibraryProvider,
+					StoredFileAccess(this),
+					arbitratorForOs),
+				CachedAudioFileUriProvider(remoteFileUriProvider, audioCache),
+				MediaFileUriProvider(
+					MediaQueryCursorProvider(this, cachedFileProperties),
+					arbitratorForOs,
+					selectedLibraryIdentifierProvider,
+					false,
+					applicationMessageBus.value
+				),
+				remoteFileUriProvider)
+
 			val httpDataSourceFactory = HttpDataSourceFactoryProvider(this, connectionProvider, OkHttpFactory)
 			val promisedPreparationSourceProvider = playbackHandler.value.then { ph ->
 				val playbackEngineBuilder = PreparedPlaybackQueueFeederBuilder(

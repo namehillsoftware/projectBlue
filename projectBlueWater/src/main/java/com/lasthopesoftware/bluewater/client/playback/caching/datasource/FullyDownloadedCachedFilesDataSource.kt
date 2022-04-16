@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.caching
+package com.lasthopesoftware.bluewater.client.playback.caching.datasource
 
 import android.net.Uri
 import com.google.android.exoplayer2.C
@@ -19,7 +19,7 @@ import okio.Buffer
 import org.slf4j.LoggerFactory
 import java.util.concurrent.ConcurrentLinkedQueue
 
-class DiskFileCacheDataSource(
+class FullyDownloadedCachedFilesDataSource(
 	private val innerDataSource: HttpDataSource,
 	private val cacheStreamSupplier: SupplyCacheStreams
 ) : DataSource {
@@ -33,7 +33,7 @@ class DiskFileCacheDataSource(
 		val key = PathAndQuery.forUri(dataSpec.uri)
 
 		if (with(dataSpec) { position == 0L && length == C.LENGTH_UNSET.toLong() }) {
-			cacheWriter = cacheStreamSupplier.promiseCachedFileOutputStream(key).then(::CacheWriter).toFuture().get()
+			cacheWriter = cacheStreamSupplier.promiseCachedFileOutputStream(key).then(FullyDownloadedCachedFilesDataSource::CacheWriter).toFuture().get()
 		}
 
 		return innerDataSource.open(dataSpec)
@@ -127,14 +127,14 @@ class DiskFileCacheDataSource(
 		private val httpDataSourceFactory: HttpDataSource.Factory,
 		private val cacheStreamSupplier: SupplyCacheStreams
 	) : DataSource.Factory {
-		override fun createDataSource(): DataSource = DiskFileCacheDataSource(
+		override fun createDataSource(): DataSource = FullyDownloadedCachedFilesDataSource(
 			httpDataSourceFactory.createDataSource(),
 			cacheStreamSupplier
 		)
 	}
 
 	companion object {
-		private val logger by lazy { LoggerFactory.getLogger(DiskFileCacheDataSource::class.java) }
+		private val logger by lazy { LoggerFactory.getLogger(FullyDownloadedCachedFilesDataSource::class.java) }
 		private const val goodBufferSize = 1024L * 1024L // 1MB
 	}
 }

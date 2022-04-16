@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.caching.mediasource
+package com.lasthopesoftware.bluewater.client.playback.caching.datasource
 
 import com.google.android.exoplayer2.upstream.cache.CacheDataSource
 import com.google.android.exoplayer2.upstream.cache.LeastRecentlyUsedCacheEvictor
