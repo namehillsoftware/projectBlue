@@ -1,133 +1,114 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.persistence;
+package com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.persistence
 
-import android.content.Context;
-import android.database.SQLException;
+import android.content.Context
+import android.database.SQLException
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.CacheFlusherTask
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.access.ICachedFilesProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.configuration.IDiskFileCacheConfiguration
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.disk.IDiskCacheDirectoryProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.persistence.DiskFileCachePersistence
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile.*
+import com.lasthopesoftware.bluewater.repository.DatabasePromise
+import com.lasthopesoftware.bluewater.repository.InsertBuilder.Companion.fromTable
+import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
+import com.namehillsoftware.handoff.promises.Promise
+import org.slf4j.LoggerFactory
+import java.io.File
+import java.io.IOException
 
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.CacheFlusherTask;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.access.ICachedFilesProvider;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.configuration.IDiskFileCacheConfiguration;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.disk.IDiskCacheDirectoryProvider;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile;
-import com.lasthopesoftware.bluewater.repository.CloseableTransaction;
-import com.lasthopesoftware.bluewater.repository.DatabasePromise;
-import com.lasthopesoftware.bluewater.repository.InsertBuilder;
-import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
-import com.namehillsoftware.artful.Artful;
-import com.namehillsoftware.handoff.promises.Promise;
-import com.namehillsoftware.lazyj.Lazy;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.File;
-import java.io.IOException;
-
-public class DiskFileCachePersistence implements IDiskFileCachePersistence {
-	private final static Logger logger = LoggerFactory.getLogger(DiskFileCachePersistence.class);
-
-	private static final Lazy<String> cachedFileSqlInsert =
-		new Lazy<>(() ->
-			InsertBuilder
-				.fromTable(CachedFile.tableName)
-				.addColumn(CachedFile.CACHE_NAME)
-				.addColumn(CachedFile.FILE_NAME)
-				.addColumn(CachedFile.FILE_SIZE)
-				.addColumn(CachedFile.LIBRARY_ID)
-				.addColumn(CachedFile.UNIQUE_KEY)
-				.addColumn(CachedFile.CREATED_TIME)
-				.addColumn(CachedFile.LAST_ACCESSED_TIME)
-				.withReplacement()
-				.build());
-
-	private final Context context;
-	private final ICachedFilesProvider cachedFilesProvider;
-	private final IDiskFileAccessTimeUpdater diskFileAccessTimeUpdater;
-	private final IDiskCacheDirectoryProvider diskCacheDirectoryProvider;
-	private final IDiskFileCacheConfiguration diskFileCacheConfiguration;
-
-	public DiskFileCachePersistence(Context context, IDiskCacheDirectoryProvider diskCacheDirectoryProvider, IDiskFileCacheConfiguration diskFileCacheConfiguration, ICachedFilesProvider cachedFilesProvider, IDiskFileAccessTimeUpdater diskFileAccessTimeUpdater) {
-		this.context = context;
-		this.diskCacheDirectoryProvider = diskCacheDirectoryProvider;
-		this.diskFileCacheConfiguration = diskFileCacheConfiguration;
-		this.cachedFilesProvider = cachedFilesProvider;
-		this.diskFileAccessTimeUpdater = diskFileAccessTimeUpdater;
-	}
-
-	@Override
-	public Promise<CachedFile> putIntoDatabase(String uniqueKey, File file) {
-		final String canonicalFilePath;
-		try {
-			canonicalFilePath = file.getCanonicalPath();
-		} catch (IOException e) {
-			logger.error("There was an error getting the canonical path for " + file, e);
-			return Promise.empty();
+class DiskFileCachePersistence(
+	private val context: Context,
+	private val diskCacheDirectoryProvider: IDiskCacheDirectoryProvider,
+	private val diskFileCacheConfiguration: IDiskFileCacheConfiguration,
+	private val cachedFilesProvider: ICachedFilesProvider,
+	private val diskFileAccessTimeUpdater: IDiskFileAccessTimeUpdater
+) : IDiskFileCachePersistence {
+	override fun putIntoDatabase(uniqueKey: String, file: File): Promise<CachedFile> {
+		val canonicalFilePath = try {
+			file.canonicalPath
+		} catch (e: IOException) {
+			logger.error("There was an error getting the canonical path for $file", e)
+			return Promise.empty()
 		}
 
 		return cachedFilesProvider
 			.promiseCachedFile(uniqueKey)
-			.eventually(cachedFile -> {
-				if (cachedFile != null) {
-					return !cachedFile.getFileName().equals(canonicalFilePath)
-						? promiseFilePathUpdate(cachedFile).eventually(diskFileAccessTimeUpdater::promiseFileAccessedUpdate)
-						: diskFileAccessTimeUpdater.promiseFileAccessedUpdate(cachedFile);
-				}
-
-				return new DatabasePromise<>(() -> {
-					logger.info("File with unique key " + uniqueKey + " doesn't exist. Creating...");
-					try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
-						final Artful sqlInsertMapper = repositoryAccessHelper.mapSql(cachedFileSqlInsert.getObject());
-
-						sqlInsertMapper.addParameter(CachedFile.FILE_NAME, canonicalFilePath);
-
-						try (CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction()) {
-							final long currentTimeMillis = System.currentTimeMillis();
-							sqlInsertMapper
-								.addParameter(CachedFile.CACHE_NAME, diskFileCacheConfiguration.getCacheName())
-								.addParameter(CachedFile.FILE_SIZE, file.length())
-								.addParameter(CachedFile.LIBRARY_ID, diskFileCacheConfiguration.getLibrary().getId())
-								.addParameter(CachedFile.UNIQUE_KEY, uniqueKey)
-								.addParameter(CachedFile.CREATED_TIME, currentTimeMillis)
-								.addParameter(CachedFile.LAST_ACCESSED_TIME, currentTimeMillis)
-								.execute();
-
-							closeableTransaction.setTransactionSuccessful();
-						} catch (SQLException sqlException) {
-							logger.warn("There was an error inserting the cached file with the unique key " + uniqueKey, sqlException);
-							throw sqlException;
-						}
-					} finally {
-						CacheFlusherTask.promisedCacheFlushing(context, diskCacheDirectoryProvider, diskFileCacheConfiguration, diskFileCacheConfiguration.getMaxSize());
+			.eventually { cachedFile ->
+				cachedFile
+					?.let {
+						if (it.fileName != canonicalFilePath) promiseFilePathUpdate(it).eventually(diskFileAccessTimeUpdater::promiseFileAccessedUpdate)
+						else diskFileAccessTimeUpdater.promiseFileAccessedUpdate(it)
 					}
-
-					return null;
-				})
-				.eventually(v -> cachedFilesProvider.promiseCachedFile(uniqueKey));
-			});
+					?: DatabasePromise {
+						logger.info("File with unique key $uniqueKey doesn't exist. Creating...")
+						try {
+							RepositoryAccessHelper(context).use { repositoryAccessHelper ->
+								try {
+									repositoryAccessHelper.beginTransaction()
+										.use { closeableTransaction ->
+											val currentTimeMillis = System.currentTimeMillis()
+											repositoryAccessHelper.mapSql(cachedFileSqlInsert)
+												.addParameter(FILE_NAME, canonicalFilePath)
+												.addParameter(CACHE_NAME, diskFileCacheConfiguration.cacheName)
+												.addParameter(FILE_SIZE, file.length())
+												.addParameter(LIBRARY_ID, diskFileCacheConfiguration.library.id)
+												.addParameter(UNIQUE_KEY, uniqueKey)
+												.addParameter(CREATED_TIME, currentTimeMillis)
+												.addParameter(LAST_ACCESSED_TIME, currentTimeMillis)
+												.execute()
+											closeableTransaction.setTransactionSuccessful()
+										}
+								} catch (sqlException: SQLException) {
+									logger.warn("There was an error inserting the cached file with the unique key $uniqueKey", sqlException)
+									throw sqlException
+								}
+							}
+						} finally {
+							CacheFlusherTask.promisedCacheFlushing(context, diskCacheDirectoryProvider, diskFileCacheConfiguration, diskFileCacheConfiguration.maxSize)
+						}
+					}.eventually { cachedFilesProvider.promiseCachedFile(uniqueKey) }
+			}
 	}
 
-	private Promise<CachedFile> promiseFilePathUpdate(final CachedFile cachedFile) {
-		return new DatabasePromise<>(() -> {
-			final long cachedFileId = cachedFile.getId();
-			final String cachedFilePath = cachedFile.getFileName();
-
-			try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
-				try (CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction()) {
-					logger.info("Updating file name of cached file with ID " + cachedFileId + " to " + cachedFilePath);
-
+	private fun promiseFilePathUpdate(cachedFile: CachedFile): Promise<CachedFile> = DatabasePromise {
+		val cachedFileId = cachedFile.id
+		val cachedFilePath = cachedFile.fileName
+		RepositoryAccessHelper(context).use { repositoryAccessHelper ->
+			try {
+				repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
+					logger.info("Updating file name of cached file with ID $cachedFileId to $cachedFilePath")
 					repositoryAccessHelper
-						.mapSql("UPDATE " + CachedFile.tableName + " SET " + CachedFile.FILE_NAME + " = @" + CachedFile.FILE_NAME + " WHERE id = @id")
-						.addParameter(CachedFile.FILE_NAME, cachedFilePath)
+						.mapSql("UPDATE $tableName SET $FILE_NAME = @$FILE_NAME WHERE id = @id")
+						.addParameter(FILE_NAME, cachedFilePath)
 						.addParameter("id", cachedFileId)
-						.execute();
-
-					closeableTransaction.setTransactionSuccessful();
-				} catch (SQLException sqlException) {
-					logger.error("There was an error trying to update the cached file with ID " + cachedFileId, sqlException);
-					throw sqlException;
+						.execute()
+					closeableTransaction.setTransactionSuccessful()
 				}
+			} catch (sqlException: SQLException) {
+				logger.error(
+					"There was an error trying to update the cached file with ID $cachedFileId",
+					sqlException
+				)
+				throw sqlException
 			}
+		}
+		cachedFile
+	}
 
-			return cachedFile;
-		});
+	companion object {
+		private val logger by lazy { LoggerFactory.getLogger(DiskFileCachePersistence::class.java) }
+		private val cachedFileSqlInsert by lazy {
+			fromTable(tableName)
+				.addColumn(CACHE_NAME)
+				.addColumn(FILE_NAME)
+				.addColumn(FILE_SIZE)
+				.addColumn(LIBRARY_ID)
+				.addColumn(UNIQUE_KEY)
+				.addColumn(CREATED_TIME)
+				.addColumn(LAST_ACCESSED_TIME)
+				.withReplacement()
+				.build()
+		}
 	}
 }

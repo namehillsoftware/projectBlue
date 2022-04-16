@@ -41,7 +41,7 @@ class EntireFileCachedDataSource(
 
 	override fun read(bytes: ByteArray, offset: Int, readLength: Int): Int =
 		innerDataSource.read(bytes, offset, readLength).also { result ->
-			cacheWriter?.let {
+			cacheWriter?.also {
 				if (result != C.RESULT_END_OF_INPUT) it.queueAndProcess(bytes, offset, result)
 				else it.commit().also { cacheWriter = null }
 			}
