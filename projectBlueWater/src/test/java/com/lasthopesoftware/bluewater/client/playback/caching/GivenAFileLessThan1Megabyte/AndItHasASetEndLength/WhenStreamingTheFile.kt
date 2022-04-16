@@ -4,7 +4,6 @@ import android.net.Uri
 import com.google.android.exoplayer2.C
 import com.google.android.exoplayer2.upstream.DataSpec
 import com.google.android.exoplayer2.upstream.HttpDataSource
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.CacheFiles
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.CacheOutputStream
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.supplier.SupplyCacheStreams
@@ -98,11 +97,8 @@ class WhenStreamingTheFile {
 				}
 			}
 			val diskFileCacheDataSource = DiskFileCacheDataSource(
-				dataSource,
-				fakeCacheStreamSupplier,
-				mockk<CacheFiles>().apply {
-					every { promiseCachedFile(any()) } returns Promise.empty()
-				},
+                dataSource,
+                fakeCacheStreamSupplier,
 			)
 			diskFileCacheDataSource.open(
 				DataSpec.Builder()

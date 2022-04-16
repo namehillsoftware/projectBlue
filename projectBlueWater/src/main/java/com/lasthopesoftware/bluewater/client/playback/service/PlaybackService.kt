@@ -780,10 +780,9 @@ open class PlaybackService :
 							cacheConfiguration
 						).also(playbackEngineCloseables::manage),
 						DiskFileCacheSourceFactory(
-							httpDataSourceFactory,
-							cacheStreamSupplier,
-							audioCache
-						),
+                            httpDataSourceFactory,
+                            cacheStreamSupplier
+                        ),
 						applicationSettings,
 					),
 					bestMatchUriProvider
