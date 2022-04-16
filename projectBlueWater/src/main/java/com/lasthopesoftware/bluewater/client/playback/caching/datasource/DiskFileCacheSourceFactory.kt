@@ -10,7 +10,7 @@ class DiskFileCacheSourceFactory(
 
 	private val remoteExtractorCustomCacheFactory by lazy {
 		val httpDataSourceFactory = dataSourceFactoryProvider.getHttpDataSourceFactory()
-		FullyDownloadedCachedFilesDataSource.Factory(httpDataSourceFactory, cacheStreamSupplier)
+		EntireFileCachedDataSource.Factory(httpDataSourceFactory, cacheStreamSupplier)
 	}
 
 	fun getDiskFileCacheSource() = remoteExtractorCustomCacheFactory
