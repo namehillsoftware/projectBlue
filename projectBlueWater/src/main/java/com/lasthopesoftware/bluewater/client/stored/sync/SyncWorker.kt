@@ -161,7 +161,7 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 			StoredFileJobProcessor(
 				StoredFileSystemFileProducer(),
 				storedFileAccess,
-				StoredFileDownloader(ServiceFileUriQueryParamsProvider(), libraryConnections),
+				StoredFileDownloader(ServiceFileUriQueryParamsProvider, libraryConnections),
 				FileReadPossibleArbitrator(),
 				FileWritePossibleArbitrator(),
 				FileStreamWriter()

@@ -6,7 +6,7 @@ import com.google.android.exoplayer2.Player
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.PromisingExoPlayer
 import com.lasthopesoftware.bluewater.client.playback.file.PlayedFile
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import io.mockk.every
 import io.mockk.mockk
@@ -37,7 +37,7 @@ class WhenAProtocolEosExceptionOccurs {
 			val exoPlayerPlaybackHandlerPlayerPlaybackHandler = ExoPlayerPlaybackHandler(mockExoPlayer)
 			val promisedFuture = exoPlayerPlaybackHandlerPlayerPlaybackHandler.promisePlayback()
 				.eventually { obj -> obj.promisePlayedFile() }
-				.toFuture()
+				.toExpiringFuture()
 			eventListener?.onPlayerError(ExoPlaybackException.createForSource(
 				ProtocolException("unexpected end of stream"),
 				PlaybackException.ERROR_CODE_IO_UNSPECIFIED))

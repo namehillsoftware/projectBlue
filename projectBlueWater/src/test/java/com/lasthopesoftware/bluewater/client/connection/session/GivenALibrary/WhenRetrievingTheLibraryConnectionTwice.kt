@@ -14,14 +14,13 @@ import com.lasthopesoftware.bluewater.client.connection.settings.ValidateConnect
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
 import com.lasthopesoftware.bluewater.client.connection.waking.NoopServerAlarm
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.BeforeClass
 import org.junit.Test
-import java.util.*
 
 class WhenRetrievingTheLibraryConnectionTwice {
 
@@ -68,7 +67,7 @@ class WhenRetrievingTheLibraryConnectionTwice {
 						progress.then { if (it != null) statuses.add(it) }
 						updates(statuses::add)
 					}
-					.toFuture()
+					.toExpiringFuture()
 
 			deferredConnectionSettings.resolve()
 
@@ -81,7 +80,7 @@ class WhenRetrievingTheLibraryConnectionTwice {
 						progress.then { if (it != null) statuses.add(it) }
 						updates(statuses::add)
 					}
-					.toFuture()
+					.toExpiringFuture()
 
 			secondConnectionProvider = secondFutureConnectionProvider.get()
 		}

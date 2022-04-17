@@ -5,7 +5,7 @@ import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackE
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.broadcast.PlaybackEngineTypeChangedBroadcaster
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
 import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
@@ -37,7 +37,7 @@ class WhenPersistingTheSelectedPlaybackEngine {
 				PlaybackEngineTypeChangedBroadcaster(recordingApplicationMessageBus)
 			)
 				.selectPlaybackEngine(PlaybackEngineType.ExoPlayer)
-				.toFuture()[1, TimeUnit.SECONDS]
+				.toExpiringFuture()[1, TimeUnit.SECONDS]
 		}
 	}
 

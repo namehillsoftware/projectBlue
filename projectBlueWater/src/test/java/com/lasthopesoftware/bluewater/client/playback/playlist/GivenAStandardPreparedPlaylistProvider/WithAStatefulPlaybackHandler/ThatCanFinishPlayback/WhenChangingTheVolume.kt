@@ -7,7 +7,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFil
 import com.lasthopesoftware.bluewater.client.playback.file.fakes.ResolvablePlaybackHandler
 import com.lasthopesoftware.bluewater.client.playback.playlist.IPlaylistPlayer
 import com.lasthopesoftware.bluewater.client.playback.playlist.PlaylistPlayer
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
 import io.reactivex.Observable
 import org.assertj.core.api.Assertions
@@ -51,6 +51,6 @@ class WhenChangingTheVolume {
 
 	@Test
 	fun thenTheVolumeIsChanged() {
-		Assertions.assertThat(volumeManagerUnderTest.volume.toFuture().get()).isEqualTo(0.8f)
+		Assertions.assertThat(volumeManagerUnderTest.volume.toExpiringFuture().get()).isEqualTo(0.8f)
 	}
 }

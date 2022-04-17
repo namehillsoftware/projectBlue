@@ -7,7 +7,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.views.StandardViewItem
 import com.lasthopesoftware.bluewater.client.browsing.library.views.access.ProvideLibraryViews
 import com.lasthopesoftware.bluewater.client.browsing.remote.MediaItemsBrowser
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -53,7 +53,7 @@ class `When Getting Library Items` {
 			)
 			mediaItemsBrowser
 				.promiseLibraryItems()
-				.toFuture()
+				.toExpiringFuture()
 				.get()
 		}
 	}

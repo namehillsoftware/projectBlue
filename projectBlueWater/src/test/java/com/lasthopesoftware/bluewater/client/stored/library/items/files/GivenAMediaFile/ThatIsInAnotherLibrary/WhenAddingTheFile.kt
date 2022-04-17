@@ -4,7 +4,7 @@ import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import org.assertj.core.api.AssertionsForClassTypes.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -22,7 +22,7 @@ class WhenAddingTheFile {
 					14,
 					"a-test-path"
 				)
-				.toFuture()
+				.toExpiringFuture()
 				.get()
 
 			val storedFileAccess = StoredFileAccess(ApplicationProvider.getApplicationContext())
@@ -33,11 +33,11 @@ class WhenAddingTheFile {
 					14,
 					"a-test-path"
 				)
-				.toFuture()
+				.toExpiringFuture()
 				.get()
 			storedFileAccess
 				.getStoredFile(Library().setId(15), ServiceFile(3))
-				.toFuture()
+				.toExpiringFuture()
 				.get()!!
 		}
 	}

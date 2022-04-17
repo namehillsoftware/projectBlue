@@ -12,7 +12,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeDefer
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -35,7 +35,7 @@ class WhenMovingThePlayingTrack {
 							ServiceFile(4),
 							ServiceFile(5)
 						)
-					).toFuture().get()
+					).toExpiringFuture().get()
 				)
 				.setNowPlayingId(3)
 		}
@@ -56,8 +56,8 @@ class WhenMovingThePlayingTrack {
 				PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
 			)
 
-			playbackEngine.restoreFromSavedState().toFuture().get()
-			playbackEngine.moveFile(3, 1).toFuture()[1, TimeUnit.SECONDS]
+			playbackEngine.restoreFromSavedState().toExpiringFuture().get()
+			playbackEngine.moveFile(3, 1).toExpiringFuture()[1, TimeUnit.SECONDS]
 		}
 	}
 

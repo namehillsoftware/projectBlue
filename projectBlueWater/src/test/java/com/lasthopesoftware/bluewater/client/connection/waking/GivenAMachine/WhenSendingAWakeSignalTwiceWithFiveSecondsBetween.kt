@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.connection.waking.GivenAMachine
 import com.lasthopesoftware.bluewater.client.connection.SendPackets
 import com.lasthopesoftware.bluewater.client.connection.waking.MachineAddress
 import com.lasthopesoftware.bluewater.client.connection.waking.ServerWakeSignal
-import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.ExpiringFuturePromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import io.mockk.every
 import io.mockk.mockk
@@ -11,7 +11,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
 import org.junit.BeforeClass
 import org.junit.Test
-import java.util.*
 
 class WhenSendingAWakeSignalTwiceWithFiveSecondsBetween {
 
@@ -131,7 +130,7 @@ class WhenSendingAWakeSignalTwiceWithFiveSecondsBetween {
 				Unit.toPromise()
 			}
 			val serverWakeSignal = ServerWakeSignal(connectionProvider)
-			FuturePromise(
+			ExpiringFuturePromise(
 				serverWakeSignal.promiseWakeSignal(
 					MachineAddress(
 						"http://my-sleeping-beauty",

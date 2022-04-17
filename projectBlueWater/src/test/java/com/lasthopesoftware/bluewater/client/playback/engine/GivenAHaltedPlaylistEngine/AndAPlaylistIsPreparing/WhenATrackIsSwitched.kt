@@ -12,7 +12,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeDefer
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -58,7 +58,7 @@ class WhenATrackIsSwitched {
 						ServiceFile(5)
 					), 0, Duration.ZERO
 				)
-			val futurePositionedFile = playbackEngine.changePosition(3, Duration.ZERO).toFuture()
+			val futurePositionedFile = playbackEngine.changePosition(3, Duration.ZERO).toExpiringFuture()
 			fakePlaybackPreparerProvider.deferredResolution.resolve()
 			nextSwitchedFile = futurePositionedFile.get()
 		}

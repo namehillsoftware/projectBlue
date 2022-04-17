@@ -7,12 +7,11 @@ import com.lasthopesoftware.bluewater.client.connection.FakeLibraryConnectionPro
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.download.StoredFileDownloader
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
-import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.ExpiringFuturePromise
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.BeforeClass
 import org.junit.Test
 import java.io.InputStream
-import java.util.*
 
 class WhenDownloading {
     @Test
@@ -32,8 +31,8 @@ class WhenDownloading {
                     }
                 })
             val downloader =
-                StoredFileDownloader(ServiceFileUriQueryParamsProvider(), fakeConnectionProvider)
-            inputStream = FuturePromise(
+                StoredFileDownloader(ServiceFileUriQueryParamsProvider, fakeConnectionProvider)
+            inputStream = ExpiringFuturePromise(
                 downloader.promiseDownload(
                     LibraryId(2),
                     StoredFile().setServiceId(4)

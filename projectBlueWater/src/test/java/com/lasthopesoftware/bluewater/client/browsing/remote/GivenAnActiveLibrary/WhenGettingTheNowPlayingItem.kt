@@ -7,7 +7,7 @@ import com.lasthopesoftware.bluewater.client.browsing.remote.GetMediaItemsFromSe
 import com.lasthopesoftware.bluewater.client.browsing.remote.NowPlayingMediaItemLookup
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.MaintainNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
@@ -53,7 +53,7 @@ class `When Getting The Now Playing Item` {
 			)
 			mediaItemsBrowser
 				.promiseNowPlayingItem()
-				.toFuture()
+				.toExpiringFuture()
 				.get()
 		}
 	}

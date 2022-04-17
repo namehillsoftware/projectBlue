@@ -11,7 +11,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider;
 import com.lasthopesoftware.bluewater.client.connection.FakeFileConnectionProvider;
 import com.lasthopesoftware.bluewater.client.connection.FakeLibraryConnectionProvider;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.ExpiringFuturePromise;
 
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -43,7 +43,7 @@ public class WhenGettingFileProperties {
 			new LibraryRevisionProvider(fakeLibraryConnectionProvider),
 			mock(IFilePropertiesContainerRepository.class));
 
-		fileProperties = new FuturePromise<>(filePropertiesProvider.promiseFileProperties(new LibraryId(14), new ServiceFile(15))).get();
+		fileProperties = new ExpiringFuturePromise<>(filePropertiesProvider.promiseFileProperties(new LibraryId(14), new ServiceFile(15))).get();
 	}
 
 	@Test

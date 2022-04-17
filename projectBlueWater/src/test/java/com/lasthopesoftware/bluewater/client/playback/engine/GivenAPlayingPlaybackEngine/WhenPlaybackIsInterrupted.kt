@@ -13,7 +13,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.Co
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
 import org.junit.BeforeClass
@@ -63,7 +63,7 @@ class WhenPlaybackIsInterrupted {
 			playingPlaybackHandler.resolve()
 			resolveablePlaybackHandler?.setCurrentPosition(30)
 			playbackEngine?.interrupt()
-			nowPlaying = nowPlayingRepository.promiseNowPlaying().toFuture().get()
+			nowPlaying = nowPlayingRepository.promiseNowPlaying().toExpiringFuture().get()
 		}
 	}
 

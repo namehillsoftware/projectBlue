@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.connection.testing.GivenAConnectio
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTuple
 import com.lasthopesoftware.bluewater.client.connection.testing.ConnectionTester
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import org.assertj.core.api.AssertionsForClassTypes.assertThat
 import org.junit.BeforeClass
 import org.junit.Test
@@ -31,7 +31,7 @@ class WhenCheckingIfTheConnectionIsPossible {
 						).toByteArray()
 					)
 				}, "Alive")
-			result = connectionTester.promiseIsConnectionPossible(connectionProvider).toFuture().get()!!
+			result = connectionTester.promiseIsConnectionPossible(connectionProvider).toExpiringFuture().get()!!
 		}
 	}
 

@@ -8,7 +8,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.views.StandardView
 import com.lasthopesoftware.bluewater.client.browsing.library.views.ViewItem
 import com.lasthopesoftware.bluewater.client.browsing.library.views.access.SavedLibraryRecordingStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.views.access.SelectedLibraryViewProvider
-import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.ExpiringFuturePromise
 import com.namehillsoftware.handoff.promises.Promise
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.BeforeClass
@@ -42,7 +42,7 @@ class WhenGettingDefaultOrSelectedViews {
 				libraryStorage
 			)
 			selectedLibraryView =
-				FuturePromise(selectedLibraryViewProvider.promiseSelectedOrDefaultView()).get()
+				ExpiringFuturePromise(selectedLibraryViewProvider.promiseSelectedOrDefaultView()).get()
 		}
 	}
 

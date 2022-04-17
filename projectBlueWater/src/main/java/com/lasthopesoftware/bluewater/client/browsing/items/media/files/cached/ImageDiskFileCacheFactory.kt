@@ -16,12 +16,12 @@ import com.namehillsoftware.handoff.promises.Promise
 
 class ImageDiskFileCacheFactory private constructor(private val context: Context, private val libraryProvider: ILibraryProvider, private val diskCacheDirectoryProvider: IDiskCacheDirectoryProvider) : IProvideCaches {
 
-	override fun promiseCache(libraryId: LibraryId): Promise<out ICache?> =
+	override fun promiseCache(libraryId: LibraryId): Promise<out CacheFiles?> =
 		libraryProvider
 			.getLibrary(libraryId)
 			.then { library -> library?.let(::buildNewCache) }
 
-	private fun buildNewCache(library: Library): ICache {
+	private fun buildNewCache(library: Library): CacheFiles {
 		val imageCacheConfiguration = ImageCacheConfiguration(library)
 		val cachedFilesProvider = CachedFilesProvider(context, imageCacheConfiguration)
 		val diskFileAccessTimeUpdater = DiskFileAccessTimeUpdater(context)

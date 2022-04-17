@@ -3,14 +3,13 @@ package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.GivenAPlay
 import com.google.android.exoplayer2.Player
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.PromisingExoPlayer
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler
-import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.ExpiringFuturePromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import org.junit.BeforeClass
 import org.junit.Test
-import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
@@ -43,7 +42,7 @@ class WhenThePlayerWillNotPlayWhenReady {
 			val playedPromise = playbackPromise
 				.eventually { obj -> obj.promisePlayedFile() }
 			try {
-				FuturePromise(playedPromise)[1, TimeUnit.SECONDS]
+				ExpiringFuturePromise(playedPromise)[1, TimeUnit.SECONDS]
 			} catch (ignored: TimeoutException) {
 			}
 		}

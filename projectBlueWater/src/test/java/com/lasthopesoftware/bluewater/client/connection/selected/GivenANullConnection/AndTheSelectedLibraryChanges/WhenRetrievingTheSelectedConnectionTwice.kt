@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnect
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionReservation
 import com.lasthopesoftware.bluewater.client.connection.session.ManageConnectionSessions
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
-import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.ExpiringFuturePromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import com.namehillsoftware.handoff.promises.Promise
@@ -42,9 +42,9 @@ class WhenRetrievingTheSelectedConnectionTwice {
 					fakeSelectedLibraryProvider,
 					libraryConnections
 				)
-				connectionProvider = FuturePromise(selectedConnection.promiseSessionConnection()).get()
+				connectionProvider = ExpiringFuturePromise(selectedConnection.promiseSessionConnection()).get()
 				fakeSelectedLibraryProvider.selectedLibraryId = Promise(LibraryId(2))
-				connectionProvider = FuturePromise(selectedConnection.promiseSessionConnection()).get()
+				connectionProvider = ExpiringFuturePromise(selectedConnection.promiseSessionConnection()).get()
 			}
 		}
 	}

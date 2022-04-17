@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredIt
 import com.lasthopesoftware.bluewater.client.stored.library.items.FakeStoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -68,7 +68,7 @@ class WhenCollectingTheAssociatedServiceFiles {
 
 			collectedFiles = serviceFileCollector
 				.promiseServiceFilesToSync(LibraryId(10))
-				.toFuture()[1, TimeUnit.SECONDS]
+				.toExpiringFuture()[1, TimeUnit.SECONDS]
 		}
 	}
 

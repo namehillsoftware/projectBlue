@@ -4,7 +4,7 @@ import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library.ViewType
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -39,7 +39,7 @@ class WhenGettingTheLibrary {
 			libraryRepository
 				.saveLibrary(expectedLibrary)
 				.eventually { l -> libraryRepository.getLibrary(l.libraryId) }
-				.toFuture()
+				.toExpiringFuture()
 				.get()
 		}
     }

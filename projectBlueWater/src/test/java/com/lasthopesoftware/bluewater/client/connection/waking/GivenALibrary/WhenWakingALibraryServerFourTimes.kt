@@ -7,7 +7,7 @@ import com.lasthopesoftware.bluewater.client.connection.waking.AlarmConfiguratio
 import com.lasthopesoftware.bluewater.client.connection.waking.MachineAddress
 import com.lasthopesoftware.bluewater.client.connection.waking.PokeServer
 import com.lasthopesoftware.bluewater.client.connection.waking.ServerAlarm
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
@@ -16,7 +16,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
 import org.junit.BeforeClass
 import org.junit.Test
-import java.util.*
 
 class WhenWakingALibraryServerFourTimes {
 
@@ -61,7 +60,7 @@ class WhenWakingALibraryServerFourTimes {
 				pokeServer,
 				AlarmConfiguration(4, Duration.standardMinutes(1))
 			)
-			serverAlarm.awakeLibraryServer(LibraryId(14)).toFuture().get()
+			serverAlarm.awakeLibraryServer(LibraryId(14)).toExpiringFuture().get()
 		}
 	}
 

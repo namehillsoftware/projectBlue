@@ -10,7 +10,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.P
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.GetStoredFilePaths
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFileUpdater
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -46,12 +46,12 @@ class WhenUpdatingTheFile {
 				lookupStoredFilePaths
 			)
 			storedFileUpdater.promiseStoredFileUpdate(LibraryId(14), ServiceFile(4))
-				.toFuture()
+				.toExpiringFuture()
 				.get()
 
 			StoredFileQuery(ApplicationProvider.getApplicationContext())
 				.promiseStoredFile(LibraryId(14), ServiceFile(4))
-				.toFuture()
+				.toExpiringFuture()
 				.get()
 		}
 	}

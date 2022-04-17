@@ -7,7 +7,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.ProvideImages
 import com.lasthopesoftware.bluewater.client.browsing.remote.MediaItemServiceFileLookup
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -42,7 +42,7 @@ class `When Looking Up The Media Item` {
 				imageProvider
 			)
 			mediaItemServiceFileLookup.promiseMediaItem(ServiceFile(703))
-				.toFuture()
+				.toExpiringFuture()
 				.get()
 		}
 	}

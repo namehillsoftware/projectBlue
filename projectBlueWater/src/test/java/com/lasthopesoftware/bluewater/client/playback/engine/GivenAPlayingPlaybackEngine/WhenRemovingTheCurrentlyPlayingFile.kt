@@ -19,7 +19,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.Co
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -53,7 +53,7 @@ class WhenRemovingTheCurrentlyPlayingFile {
 							ServiceFile(13),
 							ServiceFile(27)
 						)
-					).toFuture().get()
+					).toExpiringFuture().get()
 			)
 			library.setNowPlayingId(5)
 			val libraryProvider = mockk<ISpecificLibraryProvider>()
@@ -77,11 +77,11 @@ class WhenRemovingTheCurrentlyPlayingFile {
 					PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
 				)
 
-			initialState = playbackEngine.restoreFromSavedState().toFuture().get()
-			playbackEngine.resume().toFuture()[1, TimeUnit.SECONDS]
+			initialState = playbackEngine.restoreFromSavedState().toExpiringFuture().get()
+			playbackEngine.resume().toExpiringFuture()[1, TimeUnit.SECONDS]
 			fakePlaybackPreparerProvider.deferredResolution.resolve()
 			playbackEngine.setOnPlayingFileChanged { c -> positionedPlayingFile = c	}
-			val futurePlaying = playbackEngine.removeFileAtPosition(5).toFuture()
+			val futurePlaying = playbackEngine.removeFileAtPosition(5).toExpiringFuture()
 			fakePlaybackPreparerProvider.deferredResolution.resolve()
 			futurePlaying[1, TimeUnit.SECONDS]
 		}

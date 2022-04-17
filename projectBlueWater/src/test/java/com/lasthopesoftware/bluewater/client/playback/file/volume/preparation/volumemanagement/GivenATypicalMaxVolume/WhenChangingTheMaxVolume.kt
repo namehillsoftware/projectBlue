@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.v
 
 import com.lasthopesoftware.bluewater.client.playback.file.NoTransformVolumeManager
 import com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.MaxFileVolumeManager
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import org.assertj.core.api.Assertions
 import org.junit.BeforeClass
 import org.junit.Test
@@ -24,6 +24,6 @@ class WhenChangingTheMaxVolume {
 
 	@Test
 	fun thenThePlaybackHandlerVolumeIsCorrectlySet() {
-		Assertions.assertThat(volumeManager!!.volume.toFuture().get()).isEqualTo(.2726f)
+		Assertions.assertThat(volumeManager!!.volume.toExpiringFuture().get()).isEqualTo(.2726f)
 	}
 }

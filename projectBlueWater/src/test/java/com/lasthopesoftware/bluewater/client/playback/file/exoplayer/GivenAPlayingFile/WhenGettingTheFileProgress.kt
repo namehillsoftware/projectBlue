@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.GivenAPlay
 
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.PromisingExoPlayer
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import org.assertj.core.api.AssertionsForClassTypes
 import org.joda.time.Duration
@@ -30,9 +30,9 @@ class WhenGettingTheFileProgress {
 			Mockito.`when`(mockMediaPlayer.getCurrentPosition()).thenReturn(75L.toPromise())
 			Mockito.`when`(mockMediaPlayer.getDuration()).thenReturn(101L.toPromise())
 			val exoPlayerPlaybackHandler = ExoPlayerPlaybackHandler(mockMediaPlayer)
-			val playback = exoPlayerPlaybackHandler.promisePlayback().toFuture().get(1, TimeUnit.SECONDS)
-			progress = playback?.promisePlayedFile()?.progress?.toFuture()?.get(1, TimeUnit.SECONDS)
-			duration = playback?.duration?.toFuture()?.get(1, TimeUnit.SECONDS)
+			val playback = exoPlayerPlaybackHandler.promisePlayback().toExpiringFuture().get(1, TimeUnit.SECONDS)
+			progress = playback?.promisePlayedFile()?.progress?.toExpiringFuture()?.get(1, TimeUnit.SECONDS)
+			duration = playback?.duration?.toExpiringFuture()?.get(1, TimeUnit.SECONDS)
 		}
 	}
 

@@ -5,7 +5,7 @@ import androidx.media.AudioFocusRequestCompat
 import androidx.media.AudioManagerCompat
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.shared.android.audiofocus.AudioFocusManagement
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import org.mockito.Mockito.*
@@ -28,7 +28,7 @@ class WhenRequestingFocus : AndroidContext() {
 		val audioFocusManagement = AudioFocusManagement(audioManager)
 		val promisedAudioFocus = audioFocusManagement.promiseAudioFocus(request)
 		val internalListener = promisedAudioFocus as AudioManager.OnAudioFocusChangeListener
-		result = promisedAudioFocus.toFuture().get()!!
+		result = promisedAudioFocus.toExpiringFuture().get()!!
 		internalListener.onAudioFocusChange(AudioManager.AUDIOFOCUS_LOSS)
 	}
 

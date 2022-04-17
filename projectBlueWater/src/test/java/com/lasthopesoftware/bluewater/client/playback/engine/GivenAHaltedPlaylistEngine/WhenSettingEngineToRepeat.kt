@@ -18,7 +18,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.Cy
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
@@ -41,7 +41,7 @@ class WhenSettingEngineToRepeat {
 						ServiceFile(4),
 						ServiceFile(5)
 					)
-				).toFuture().get()
+				).toExpiringFuture().get()
 			)
 			library.setNowPlayingId(0)
 			val libraryProvider = object : ISpecificLibraryProvider {
@@ -74,8 +74,8 @@ class WhenSettingEngineToRepeat {
 				repository,
 				PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f)))
 			playbackEngine.restoreFromSavedState()
-			playbackEngine.playRepeatedly().toFuture().get()
-			repository.promiseNowPlaying().toFuture().get()
+			playbackEngine.playRepeatedly().toExpiringFuture().get()
+			repository.promiseNowPlaying().toExpiringFuture().get()
 		}
 	}
 

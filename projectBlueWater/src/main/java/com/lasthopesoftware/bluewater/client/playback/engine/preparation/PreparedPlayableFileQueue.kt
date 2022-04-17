@@ -5,6 +5,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFil
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.IPositionedFileQueue
+import com.lasthopesoftware.bluewater.shared.drainQueue
 import com.namehillsoftware.handoff.promises.Promise
 import org.joda.time.Duration
 import org.slf4j.LoggerFactory
@@ -19,20 +20,7 @@ class PreparedPlayableFileQueue(
 	private var positionedFileQueue: IPositionedFileQueue) : SupplyQueuedPreparedFiles, Closeable {
 
 	companion object {
-		private val logger = LoggerFactory.getLogger(PreparedPlayableFileQueue::class.java)
-
-		private fun <T> Queue<T>.drainQueue(): Iterable<T> {
-			val queue = this
-			return Iterable {
-				iterator {
-					do {
-						val next = queue.poll()
-						if (next != null)
-							yield(next)
-					} while (next != null)
-				}
-			}
-		}
+		private val logger by lazy { LoggerFactory.getLogger(PreparedPlayableFileQueue::class.java) }
 	}
 
 	private val queueUpdateLock = ReentrantReadWriteLock()
@@ -167,7 +155,7 @@ class PreparedPlayableFileQueue(
 
 	private class PositionedPreparingFile(
 		override val positionedFile: PositionedFile,
-		override val preparedPlaybackFilePromise: Promise<PreparedPlayableFile>)
+		override val preparedPlaybackFilePromise: Promise<PreparedPlayableFile?>)
 		: ProvidePreparedPlaybackFile {
 
 		override fun promisePositionedPreparedPlaybackFile(): Promise<PositionedPreparedPlayableFile> =
@@ -178,7 +166,7 @@ class PreparedPlayableFileQueue(
 
 	private class PositionedUnfaultingPreparingFile(
 		override val positionedFile: PositionedFile,
-		override val preparedPlaybackFilePromise: Promise<PreparedPlayableFile>) : ProvidePreparedPlaybackFile {
+		override val preparedPlaybackFilePromise: Promise<PreparedPlayableFile?>) : ProvidePreparedPlaybackFile {
 
 		override fun promisePositionedPreparedPlaybackFile(): Promise<PositionedPreparedPlayableFile> =
 			preparedPlaybackFilePromise.then(
@@ -191,7 +179,7 @@ class PreparedPlayableFileQueue(
 
 	private interface ProvidePreparedPlaybackFile {
 		val positionedFile: PositionedFile
-		val preparedPlaybackFilePromise: Promise<PreparedPlayableFile>
+		val preparedPlaybackFilePromise: Promise<PreparedPlayableFile?>
 
 		fun promisePositionedPreparedPlaybackFile(): Promise<PositionedPreparedPlayableFile>
 	}

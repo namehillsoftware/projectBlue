@@ -7,7 +7,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.fakes.FakeBufferingPl
 import com.lasthopesoftware.bluewater.client.playback.file.fakes.FakePreparedPlayableFile
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
 import org.assertj.core.api.Assertions
 import org.joda.time.Duration
@@ -44,7 +44,7 @@ class WhenTheQueueIsStarted {
 			try {
 				returnedPlaybackHandler = queue.promiseNextPreparedPlaybackFile(Duration.ZERO)
 					?.eventually { queue.promiseNextPreparedPlaybackFile(Duration.ZERO) }
-					?.toFuture()?.get()?.playableFile
+					?.toExpiringFuture()?.get()?.playableFile
 			} catch (e: ExecutionException) {
 				error = e.cause
 			}

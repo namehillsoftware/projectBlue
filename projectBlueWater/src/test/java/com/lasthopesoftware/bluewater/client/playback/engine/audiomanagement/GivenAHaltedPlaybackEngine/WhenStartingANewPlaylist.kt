@@ -5,7 +5,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceF
 import com.lasthopesoftware.bluewater.client.playback.engine.AudioManagingPlaybackStateChanger
 import com.lasthopesoftware.bluewater.client.playback.engine.ChangePlaybackState
 import com.lasthopesoftware.bluewater.shared.android.audiofocus.ControlAudioFocus
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.mockk
@@ -52,7 +52,7 @@ class WhenStartingANewPlaylist {
 
 			audioManagingPlaybackStateChanger
 				.startPlaylist(ArrayList(), 0, Duration.ZERO)
-				.toFuture()
+				.toExpiringFuture()
 				.get(20, TimeUnit.SECONDS)
 		}
 	}

@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.connection.builder.live.GivenANetw
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.builder.BuildUrlProviders
 import com.lasthopesoftware.bluewater.client.connection.builder.live.LiveUrlProvider
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -20,7 +20,7 @@ class WhenGettingTheLiveUrl {
 			val liveUrlProvider = LiveUrlProvider(
 				{ mockk() },
 				builder)
-			liveUrlProvider.promiseLiveUrl(LibraryId(54)).toFuture().get()
+			liveUrlProvider.promiseLiveUrl(LibraryId(54)).toExpiringFuture().get()
 		}
 	}
 

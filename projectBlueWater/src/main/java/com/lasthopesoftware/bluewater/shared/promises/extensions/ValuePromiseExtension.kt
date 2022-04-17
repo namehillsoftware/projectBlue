@@ -40,7 +40,7 @@ fun <T> Promise<T>?.keepPromise(default: T): Promise<T> = this ?: default.toProm
 fun <T> Promise<T>.unitResponse(): Promise<Unit> = this.then(UnitResponse.respond())
 
 private class UnitResponse<Resolution> private constructor() : ImmediateResponse<Resolution, Unit> {
-	override fun respond(resolution: Resolution) {}
+	override fun respond(resolution: Resolution) = Unit
 
 	companion object {
 		private val singleUnitResponse by lazy { UnitResponse<Any>() }

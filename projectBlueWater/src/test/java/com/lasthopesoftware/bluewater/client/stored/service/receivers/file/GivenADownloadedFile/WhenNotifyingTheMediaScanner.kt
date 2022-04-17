@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.stored.service.receivers.file.Give
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.AccessStoredFiles
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.client.stored.sync.receivers.file.StoredFileMediaScannerNotifier
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -20,7 +20,7 @@ class WhenNotifyingTheMediaScanner {
 
 			val files = ArrayList<File>()
 			val storedFileMediaScannerNotifier = StoredFileMediaScannerNotifier(storedFileAccess, files::add)
-			storedFileMediaScannerNotifier.receive(14).toFuture().get()
+			storedFileMediaScannerNotifier.receive(14).toExpiringFuture().get()
 
 			files
 		}

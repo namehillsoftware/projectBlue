@@ -14,7 +14,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.Co
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -48,7 +48,7 @@ class WhenRemovingFilesBeforeTheCurrentlyPlayingFile {
 						ServiceFile(5)
 					)
 				)
-					.toFuture().get()
+					.toExpiringFuture().get()
 			)
 			library.setNowPlayingProgress(35)
 			library.setNowPlayingId(2)
@@ -75,13 +75,13 @@ class WhenRemovingFilesBeforeTheCurrentlyPlayingFile {
 					PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
 				)
 
-			initialState = playbackEngine.restoreFromSavedState().toFuture().get()
-			playbackEngine.resume().toFuture()[1, TimeUnit.SECONDS]
+			initialState = playbackEngine.restoreFromSavedState().toExpiringFuture().get()
+			playbackEngine.resume().toExpiringFuture()[1, TimeUnit.SECONDS]
 			val resolvablePlaybackHandler =	fakePlaybackPreparerProvider.deferredResolution.resolve()
-			playbackEngine.removeFileAtPosition(0).toFuture()[1, TimeUnit.SECONDS]
+			playbackEngine.removeFileAtPosition(0).toExpiringFuture()[1, TimeUnit.SECONDS]
 			resolvablePlaybackHandler.setCurrentPosition(92)
-			playbackEngine.pause().toFuture().get()
-			nowPlaying = repository.promiseNowPlaying().toFuture().get()
+			playbackEngine.pause().toExpiringFuture().get()
+			nowPlaying = repository.promiseNowPlaying().toExpiringFuture().get()
 		}
 	}
 
@@ -102,6 +102,6 @@ class WhenRemovingFilesBeforeTheCurrentlyPlayingFile {
 
 	@Test
 	fun `then the initial file progress is correct`() {
-		assertThat(initialState?.progress?.toFuture()?.get()?.millis).isEqualTo(35)
+		assertThat(initialState?.progress?.toExpiringFuture()?.get()?.millis).isEqualTo(35)
 	}
 }

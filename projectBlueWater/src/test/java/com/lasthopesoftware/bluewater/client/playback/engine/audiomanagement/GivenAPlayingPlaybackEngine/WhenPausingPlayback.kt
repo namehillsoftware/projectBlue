@@ -5,7 +5,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceF
 import com.lasthopesoftware.bluewater.client.playback.engine.AudioManagingPlaybackStateChanger
 import com.lasthopesoftware.bluewater.client.playback.engine.ChangePlaybackState
 import com.lasthopesoftware.bluewater.shared.android.audiofocus.ControlAudioFocus
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.mockk
@@ -50,8 +50,8 @@ class WhenPausingPlayback {
 				mockk(),
 				audioFocus,
 				mockk(relaxed = true))
-			audioManagingPlaybackStateChanger.resume().toFuture().get()
-			audioManagingPlaybackStateChanger.pause().toFuture().get()
+			audioManagingPlaybackStateChanger.resume().toExpiringFuture().get()
+			audioManagingPlaybackStateChanger.pause().toExpiringFuture().get()
 		}
 	}
 

@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems;
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemsChecker;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.CheckForAnyStoredFiles;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise;
+import com.lasthopesoftware.bluewater.shared.promises.extensions.ExpiringFuturePromise;
 import com.namehillsoftware.handoff.promises.Promise;
 
 import org.junit.BeforeClass;
@@ -36,7 +36,7 @@ public class WhenCheckingIfAnyStoredItemsOrFilesExist {
 		final StoredItemsChecker storedItemsChecker = new StoredItemsChecker(storedItemAccess, checkForAnyStoredFiles);
 
 		isAny =
-			new FuturePromise<>(storedItemsChecker.promiseIsAnyStoredItemsOrFiles(new LibraryId(10)))
+			new ExpiringFuturePromise<>(storedItemsChecker.promiseIsAnyStoredItemsOrFiles(new LibraryId(10)))
 				.get(1, TimeUnit.SECONDS);
 	}
 

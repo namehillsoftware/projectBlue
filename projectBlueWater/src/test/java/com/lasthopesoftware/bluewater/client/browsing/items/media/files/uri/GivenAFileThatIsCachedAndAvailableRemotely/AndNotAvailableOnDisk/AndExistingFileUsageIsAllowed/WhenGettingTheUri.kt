@@ -1,14 +1,14 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.media.files.uri.GivenAFileThatIsCachedAndAvailableRemotely.AndNotAvailableOnDisk.AndExistingFileUsageIsAllowed
 
 import android.net.Uri
-import com.lasthopesoftware.bluewater.client.browsing.items.media.audio.uri.CachedAudioFileUriProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.uri.BestMatchUriProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.uri.RemoteFileUriProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
+import com.lasthopesoftware.bluewater.client.playback.caching.uri.CachedAudioFileUriProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.uri.StoredFileUriProvider
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -44,7 +44,7 @@ class WhenGettingTheUri {
 
 			bestMatchUriProvider
 				.promiseFileUri(ServiceFile(3))
-				.toFuture()
+				.toExpiringFuture()
 				.get()
 		}
 	}

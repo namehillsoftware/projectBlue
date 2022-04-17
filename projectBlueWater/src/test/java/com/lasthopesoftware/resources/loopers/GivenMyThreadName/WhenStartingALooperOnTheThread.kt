@@ -2,7 +2,7 @@ package com.lasthopesoftware.resources.loopers.GivenMyThreadName
 
 import android.os.Handler
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.resources.loopers.HandlerThreadCreator.promiseNewHandlerThread
 import org.assertj.core.api.AssertionsForClassTypes.assertThat
 import org.junit.Test
@@ -15,7 +15,7 @@ class WhenStartingALooperOnTheThread {
 
 	companion object {
 		val looper = lazy {
-			val looper = promiseNewHandlerThread("MyThreadName", 3).toFuture().get()!!.looper
+			val looper = promiseNewHandlerThread("MyThreadName", 3).toExpiringFuture().get()!!.looper
 			val handler = Handler(looper)
 			val countDownLatch = CountDownLatch(1)
 			handler.post { countDownLatch.countDown() }

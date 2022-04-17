@@ -3,14 +3,13 @@ package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.GivenAPlay
 import com.google.android.exoplayer2.Player
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.PromisingExoPlayer
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import org.junit.BeforeClass
 import org.junit.Test
-import java.util.*
 import java.util.concurrent.TimeUnit
 
 class WhenThePlayerWillNotPlayWhenReady {
@@ -31,7 +30,7 @@ class WhenThePlayerWillNotPlayWhenReady {
 			}
 
 			val exoPlayerPlaybackHandler = ExoPlayerPlaybackHandler(mockExoPlayer)
-			exoPlayerPlaybackHandler.promisePlayback().toFuture()[10, TimeUnit.SECONDS]
+			exoPlayerPlaybackHandler.promisePlayback().toExpiringFuture()[10, TimeUnit.SECONDS]
 			exoPlayerPlaybackHandler.close()
 			every { mockExoPlayer.getPlayWhenReady() } returns false.toPromise()
 			eventListeners.forEach { e -> e.onPlaybackStateChanged(Player.STATE_IDLE) }

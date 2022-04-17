@@ -5,7 +5,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettingsLookup
 import com.lasthopesoftware.bluewater.client.connection.settings.MissingAccessCodeException
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import io.mockk.every
 import io.mockk.mockk
@@ -29,7 +29,7 @@ class WhenGettingConnectionSettings {
 			val connectionSettingsLookup = ConnectionSettingsLookup(libraryProvider)
 
 			try {
-				connectionSettingsLookup.lookupConnectionSettings(LibraryId(10)).toFuture().get()
+				connectionSettingsLookup.lookupConnectionSettings(LibraryId(10)).toExpiringFuture().get()
 			} catch (e: ExecutionException) {
 				exception = e.cause as? MissingAccessCodeException
 			}

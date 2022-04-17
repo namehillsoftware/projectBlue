@@ -13,7 +13,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.Co
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
 import org.junit.BeforeClass
@@ -64,10 +64,10 @@ class WhenPlaybackIsPausedAndRestarted {
 			resolveablePlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve()
 			playingPlaybackHandler.resolve()
 			resolveablePlaybackHandler?.setCurrentPosition(30)
-			playbackEngine?.pause()?.toFuture()?.get()
-			nowPlaying = nowPlayingRepository.promiseNowPlaying().toFuture().get()
-			playbackEngine?.resume()?.toFuture()?.get()
-			nowPlaying = nowPlayingRepository.promiseNowPlaying().toFuture().get()
+			playbackEngine?.pause()?.toExpiringFuture()?.get()
+			nowPlaying = nowPlayingRepository.promiseNowPlaying().toExpiringFuture().get()
+			playbackEngine?.resume()?.toExpiringFuture()?.get()
+			nowPlaying = nowPlayingRepository.promiseNowPlaying().toExpiringFuture().get()
 		}
 	}
 

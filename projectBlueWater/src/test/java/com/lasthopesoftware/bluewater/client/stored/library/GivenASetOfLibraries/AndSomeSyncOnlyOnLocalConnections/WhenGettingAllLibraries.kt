@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.stored.library.GivenASetOfLibrarie
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.stored.library.SyncLibraryProvider
-import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.ExpiringFuturePromise
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.BeforeClass
 import org.junit.Test
@@ -37,7 +37,7 @@ class WhenGettingAllLibraries {
 					Library().setId(13)
 				)
 			)
-			libraries = FuturePromise(syncLibraryProvider.allLibraries).get()
+			libraries = ExpiringFuturePromise(syncLibraryProvider.allLibraries).get()
 		}
 	}
 }

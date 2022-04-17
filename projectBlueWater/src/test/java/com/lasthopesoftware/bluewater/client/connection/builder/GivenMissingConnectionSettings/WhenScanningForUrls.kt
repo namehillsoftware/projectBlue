@@ -4,7 +4,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.builder.MissingConnectionSettingsException
 import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner
 import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -32,7 +32,7 @@ class WhenScanningForUrls {
 				mockk()
 			)
 			try {
-				urlScanner.promiseBuiltUrlProvider(LibraryId(32)).toFuture().get()
+				urlScanner.promiseBuiltUrlProvider(LibraryId(32)).toExpiringFuture().get()
 			} catch (e: ExecutionException) {
 				exception = e.cause as? MissingConnectionSettingsException ?: throw e
 			}

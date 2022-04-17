@@ -16,7 +16,6 @@ import org.joda.time.Duration
 import org.junit.BeforeClass
 import org.junit.Test
 import org.mockito.Mockito
-import java.util.*
 
 class WhenSwitchingQueuesAndGettingTheNextFile {
 
@@ -42,7 +41,7 @@ class WhenSwitchingQueuesAndGettingTheNextFile {
 					null)
 			val queue = PreparedPlayableFileQueue(
 				{ 3 },
-				{ _, _ -> Promise<PreparedPlayableFile>(FakePreparedPlayableFile(FakeBufferingPlaybackHandler())) },
+				{ _, _ -> Promise<PreparedPlayableFile?>(FakePreparedPlayableFile(FakeBufferingPlaybackHandler())) },
 				positionedFileQueue)
 			queue.promiseNextPreparedPlaybackFile(Duration.ZERO)
 			queue.promiseNextPreparedPlaybackFile(Duration.ZERO)

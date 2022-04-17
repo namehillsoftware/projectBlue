@@ -12,7 +12,7 @@ import com.lasthopesoftware.bluewater.client.connection.settings.ValidateConnect
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
 import com.lasthopesoftware.bluewater.client.connection.waking.NoopServerAlarm
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions
@@ -20,7 +20,6 @@ import org.assertj.core.api.AssertionsForClassTypes
 import org.junit.BeforeClass
 import org.junit.Test
 import java.io.IOException
-import java.util.*
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
@@ -84,7 +83,7 @@ class WhenRetrievingTheLibraryConnection {
 						progress.then(statuses::add)
 						updates(statuses::add)
 					}
-					.toFuture()
+					.toExpiringFuture()
 
 			deferredConnectionSettings.resolve()
 			deferredUrlPromise.resolve()

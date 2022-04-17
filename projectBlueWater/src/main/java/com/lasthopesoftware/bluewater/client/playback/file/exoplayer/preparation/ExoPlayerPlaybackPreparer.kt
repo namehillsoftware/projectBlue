@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.client.playback.exoplayer.ProvideExoPlayer
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.SpawnMediaSources
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile
+import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.namehillsoftware.handoff.promises.Promise
 import org.joda.time.Duration
 
@@ -17,15 +18,18 @@ class ExoPlayerPlaybackPreparer(
 	private val uriProvider: IFileUriProvider
 ) : PlayableFilePreparationSource {
 
-	override fun promisePreparedPlaybackFile(serviceFile: ServiceFile, preparedAt: Duration): Promise<PreparedPlayableFile> =
-		uriProvider.promiseFileUri(serviceFile)
+	override fun promisePreparedPlaybackFile(serviceFile: ServiceFile, preparedAt: Duration): Promise<PreparedPlayableFile?> =
+		uriProvider
+			.promiseFileUri(serviceFile)
 			.eventually { uri ->
-				PreparedExoPlayerPromise(
-					mediaSourceProvider,
-					eventHandler,
-					provideExoPlayers,
-					uri,
-					preparedAt
-				)
+				uri?.let {
+					PreparedExoPlayerPromise(
+						mediaSourceProvider,
+						eventHandler,
+						provideExoPlayers,
+						it,
+						preparedAt
+					)
+				}.keepPromise()
 			}
 }

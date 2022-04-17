@@ -8,7 +8,7 @@ import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessio
 import com.lasthopesoftware.bluewater.client.connection.session.PromisedConnectionsRepository
 import com.lasthopesoftware.bluewater.client.connection.settings.ValidateConnectionSettings
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredProgressingPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -43,7 +43,7 @@ class WhenRetrievingTheLibraryConnection {
 			val futureConnectionProvider =
 				connectionSessionManager
 					.promiseLibraryConnection(LibraryId(3))
-					.toFuture()
+					.toExpiringFuture()
 
 			isActiveBeforeGettingConnection = connectionSessionManager.isConnectionActive(LibraryId(3))
 			deferredConnectionProvider.sendResolution(expectedConnectionProvider)

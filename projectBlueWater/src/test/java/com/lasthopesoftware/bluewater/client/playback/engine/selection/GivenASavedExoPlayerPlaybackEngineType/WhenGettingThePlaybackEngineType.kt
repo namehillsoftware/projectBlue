@@ -6,7 +6,7 @@ import com.lasthopesoftware.bluewater.client.playback.engine.selection.SelectedP
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.broadcast.PlaybackEngineTypeChangedBroadcaster
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
 import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
@@ -24,7 +24,7 @@ private val playbackEngineType by lazy {
 	)
 	playbackEngineTypeSelectionPersistence.selectPlaybackEngine(PlaybackEngineType.ExoPlayer)
 	val selectedPlaybackEngineTypeAccess = SelectedPlaybackEngineTypeAccess(applicationSettings) { Promise.empty() }
-	selectedPlaybackEngineTypeAccess.promiseSelectedPlaybackEngineType().toFuture().get()
+	selectedPlaybackEngineTypeAccess.promiseSelectedPlaybackEngineType().toExpiringFuture().get()
 }
 
 class WhenGettingThePlaybackEngineType {

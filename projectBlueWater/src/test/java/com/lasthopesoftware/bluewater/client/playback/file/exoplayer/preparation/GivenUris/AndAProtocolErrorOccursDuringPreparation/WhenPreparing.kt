@@ -11,7 +11,7 @@ import com.lasthopesoftware.bluewater.client.playback.exoplayer.PromisingExoPlay
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.ProvideExoPlayers
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.ExoPlayerPlaybackPreparer
 import com.lasthopesoftware.bluewater.shared.cls
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
@@ -30,7 +30,7 @@ class WhenPreparing {
 
 			val preparer = ExoPlayerPlaybackPreparer(
 				{
-					mockk<BaseMediaSource>(relaxUnitFun = true)
+					mockk<BaseMediaSource>(relaxUnitFun = true).toPromise()
 				},
 				mockk<ProvideExoPlayers>().apply {
 					every { getExoPlayer() } returns mockk<PromisingExoPlayer>().apply {
@@ -49,7 +49,7 @@ class WhenPreparing {
 				mockk()
 			) { Promise(mockk<Uri>()) }
 
-			val futurePreparation = preparer.promisePreparedPlaybackFile(ServiceFile(1), Duration.ZERO).toFuture()
+			val futurePreparation = preparer.promisePreparedPlaybackFile(ServiceFile(1), Duration.ZERO).toExpiringFuture()
 
 			listener?.onPlayerError(
 				PlaybackException(

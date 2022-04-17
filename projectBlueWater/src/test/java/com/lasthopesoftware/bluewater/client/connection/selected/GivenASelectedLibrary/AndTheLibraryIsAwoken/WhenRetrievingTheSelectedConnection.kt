@@ -12,7 +12,7 @@ import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnect
 import com.lasthopesoftware.bluewater.client.connection.session.ManageConnectionSessions
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredProgressingPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.ExpiringFuturePromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
@@ -42,7 +42,7 @@ class WhenRetrievingTheSelectedConnection : AndroidContext() {
 				libraryIdentifierProvider,
 				libraryConnections
 			)
-			val futureConnectionProvider = FuturePromise(sessionConnection.promiseSessionConnection())
+			val futureConnectionProvider = ExpiringFuturePromise(sessionConnection.promiseSessionConnection())
 			deferredConnectionProvider.sendProgressUpdate(BuildingConnectionStatus.GettingLibrary)
 			deferredConnectionProvider.sendProgressUpdate(BuildingConnectionStatus.SendingWakeSignal)
 			deferredConnectionProvider.sendProgressUpdate(BuildingConnectionStatus.BuildingConnection)

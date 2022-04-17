@@ -6,7 +6,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.reposito
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFilesCollection
 import com.lasthopesoftware.bluewater.repository.InsertBuilder.Companion.fromTable
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -43,7 +43,7 @@ class WhenCollectingTheStoredFiles {
 			val storedFilesCollection =
 				StoredFilesCollection(ApplicationProvider.getApplicationContext())
 
-			storedFilesCollection.promiseAllStoredFiles(LibraryId(5)).toFuture().get()
+			storedFilesCollection.promiseAllStoredFiles(LibraryId(5)).toExpiringFuture().get()
 		}
 	}
 

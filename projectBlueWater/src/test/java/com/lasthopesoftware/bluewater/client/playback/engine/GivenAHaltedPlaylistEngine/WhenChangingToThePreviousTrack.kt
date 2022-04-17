@@ -19,7 +19,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.Co
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -48,7 +48,7 @@ class WhenChangingToThePreviousTrack {
 						ServiceFile(4),
 						ServiceFile(5)
 					)
-				).toFuture().get()
+				).toExpiringFuture().get()
 			)
 			libraryUnderTest.setNowPlayingId(4)
 
@@ -76,9 +76,9 @@ class WhenChangingToThePreviousTrack {
 					PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
 				)
 
-			playbackEngine.restoreFromSavedState().toFuture().get()
+			playbackEngine.restoreFromSavedState().toExpiringFuture().get()
 
-			nextSwitchedFile = playbackEngine.skipToPrevious().toFuture().get(1, TimeUnit.SECONDS)
+			nextSwitchedFile = playbackEngine.skipToPrevious().toExpiringFuture().get(1, TimeUnit.SECONDS)
 		}
 	}
 

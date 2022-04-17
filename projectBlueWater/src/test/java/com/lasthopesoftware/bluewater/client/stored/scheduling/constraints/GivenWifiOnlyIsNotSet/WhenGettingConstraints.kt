@@ -5,7 +5,7 @@ import androidx.work.NetworkType
 import com.lasthopesoftware.bluewater.client.stored.sync.constraints.SyncWorkerConstraints
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
 import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -24,7 +24,7 @@ class WhenGettingConstraints {
 			val applicationSettings = mockk<HoldApplicationSettings>()
 			every { applicationSettings.promiseApplicationSettings() } returns Promise(ApplicationSettings())
 			val syncWorkerConstraints = SyncWorkerConstraints(applicationSettings)
-			constraints = syncWorkerConstraints.currentConstraints.toFuture().get()
+			constraints = syncWorkerConstraints.currentConstraints.toExpiringFuture().get()
 		}
 	}
 

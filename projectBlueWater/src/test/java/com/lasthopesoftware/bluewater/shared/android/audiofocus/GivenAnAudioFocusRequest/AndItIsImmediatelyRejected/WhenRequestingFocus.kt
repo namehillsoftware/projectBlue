@@ -6,7 +6,7 @@ import androidx.media.AudioManagerCompat
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.shared.android.audiofocus.AudioFocusManagement
 import com.lasthopesoftware.bluewater.shared.android.audiofocus.UnableToGrantAudioFocusException
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import org.mockito.Mockito.*
@@ -29,7 +29,7 @@ class WhenRequestingFocus : AndroidContext() {
 
 		val audioFocusManagement = AudioFocusManagement(audioManager)
 		try {
-			audioFocusManagement.promiseAudioFocus(request).toFuture().get()!!
+			audioFocusManagement.promiseAudioFocus(request).toExpiringFuture().get()!!
 		} catch (e: ExecutionException) {
 			val cause = e.cause
 			if (cause is UnableToGrantAudioFocusException)

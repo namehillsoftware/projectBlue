@@ -7,7 +7,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.image.ImagePro
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.bytes.GetRawImages
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -26,7 +26,7 @@ class WhenGettingTheImage : AndroidContext() {
         val imageProvider = ImageProvider(
             selectedLibraryProvider,
             getRawImages)
-        bitmap = imageProvider.promiseFileBitmap(ServiceFile(34)).toFuture().get()
+        bitmap = imageProvider.promiseFileBitmap(ServiceFile(34)).toExpiringFuture().get()
     }
 
     @Test

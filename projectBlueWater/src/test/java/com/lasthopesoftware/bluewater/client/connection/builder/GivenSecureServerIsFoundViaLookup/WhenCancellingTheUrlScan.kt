@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
@@ -64,7 +64,7 @@ class WhenCancellingTheUrlScan {
 			urlScan.cancel()
 
 			try {
-				urlScan.toFuture()[5, TimeUnit.SECONDS]
+				urlScan.toExpiringFuture()[5, TimeUnit.SECONDS]
 				null
 			} catch (ee: ExecutionException) {
 				ee.cause as? CancellationException

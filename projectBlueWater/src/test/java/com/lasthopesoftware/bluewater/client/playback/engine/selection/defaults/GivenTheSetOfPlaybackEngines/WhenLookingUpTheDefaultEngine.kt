@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.playback.engine.selection.defaults
 
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineType
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.defaults.DefaultPlaybackEngineLookup
-import com.lasthopesoftware.bluewater.shared.promises.extensions.FuturePromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.ExpiringFuturePromise
 import org.assertj.core.api.AssertionsForClassTypes.assertThat
 import org.junit.BeforeClass
 import org.junit.Test
@@ -21,7 +21,7 @@ class WhenLookingUpTheDefaultEngine {
 		@JvmStatic
 		fun before() {
 			playbackEngineType =
-				FuturePromise(DefaultPlaybackEngineLookup().promiseDefaultEngineType()).get()
+				ExpiringFuturePromise(DefaultPlaybackEngineLookup().promiseDefaultEngineType()).get()
 		}
 	}
 }
