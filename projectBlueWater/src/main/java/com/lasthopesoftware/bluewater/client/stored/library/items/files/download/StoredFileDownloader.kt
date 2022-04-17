@@ -6,6 +6,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.namehillsoftware.handoff.promises.Promise
 import okhttp3.ResponseBody
 import java.io.ByteArrayInputStream
@@ -19,7 +20,7 @@ class StoredFileDownloader(private val serviceFileUriQueryParamsProvider: IServi
 				.eventually { c ->
 					c?.promiseResponse(*serviceFileUriQueryParamsProvider.getServiceFileUriQueryParams(ServiceFile(storedFile.serviceId)))
 						?.also(cp::doCancel)
-						?: Promise.empty()
+						.keepPromise()
 				}
 				.then { r ->
 					r?.body

@@ -44,7 +44,7 @@ class WhenDownloading {
 			Mockito.`when`(libraryConnections.promiseLibraryConnection(LibraryId(4)))
 				.thenReturn(ProgressingPromise(fakeConnectionProvider))
 			val downloader =
-				StoredFileDownloader(ServiceFileUriQueryParamsProvider(), libraryConnections)
+				StoredFileDownloader(ServiceFileUriQueryParamsProvider, libraryConnections)
 			inputStream = ExpiringFuturePromise(
 				downloader.promiseDownload(
 					LibraryId(4),

@@ -31,7 +31,7 @@ class WhenDownloading {
                     }
                 })
             val downloader =
-                StoredFileDownloader(ServiceFileUriQueryParamsProvider(), fakeConnectionProvider)
+                StoredFileDownloader(ServiceFileUriQueryParamsProvider, fakeConnectionProvider)
             inputStream = ExpiringFuturePromise(
                 downloader.promiseDownload(
                     LibraryId(2),

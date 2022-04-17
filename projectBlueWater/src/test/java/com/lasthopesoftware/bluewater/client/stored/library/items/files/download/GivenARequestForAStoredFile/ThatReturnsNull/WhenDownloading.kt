@@ -47,7 +47,7 @@ class WhenDownloading {
 			every { libraryConnections.promiseLibraryConnection(LibraryId(4)) } returns ProgressingPromise(fakeConnectionProvider)
 
 			val downloader =
-				StoredFileDownloader(ServiceFileUriQueryParamsProvider(), libraryConnections)
+				StoredFileDownloader(ServiceFileUriQueryParamsProvider, libraryConnections)
 			inputStream = ExpiringFuturePromise(
 				downloader.promiseDownload(
 					LibraryId(4),
