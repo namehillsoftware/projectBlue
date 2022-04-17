@@ -1,9 +1,6 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.media.audio.uri.GivenACachedFile
+package com.lasthopesoftware.bluewater.client.browsing.items.media.audio.uri.GivenACachedFile.AndTheCustomCacheIsDisabled
 
-import android.net.Uri
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.CacheFiles
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.uri.RemoteFileUriProvider
 import com.lasthopesoftware.bluewater.client.playback.caching.uri.CachedAudioFileUriProvider
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
 import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
@@ -15,33 +12,19 @@ import org.assertj.core.api.AssertionsForClassTypes.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import java.io.File
 
 @RunWith(RobolectricTestRunner::class)
 class WhenProvidingTheUri {
 	companion object {
-		private val file by lazy {
-			File.createTempFile("temp", ".txt").apply { deleteOnExit() }
-		}
-
 		private val cachedFileUri by lazy {
-			val remoteUri = Uri.parse("http://a-url/file?key=1")
-			val remoteFileUriProvider = mockk<RemoteFileUriProvider>().apply {
-				every { promiseFileUri(ServiceFile(10)) } returns Promise(remoteUri)
-			}
-
-			val cachedFilesProvider = mockk<CacheFiles>().apply {
-				every { promiseCachedFile(remoteUri.path + "?" + remoteUri.query) } returns Promise(file)
-			}
-
 			val applicationSettings = mockk<HoldApplicationSettings>().apply {
-				every { promiseApplicationSettings() } returns Promise(ApplicationSettings(isUsingCustomCaching = true))
+				every { promiseApplicationSettings() } returns Promise(ApplicationSettings())
 			}
 
 			val cachedAudioFileUriProvider = CachedAudioFileUriProvider(
 				applicationSettings,
-				remoteFileUriProvider,
-				cachedFilesProvider
+				mockk(),
+				mockk()
 			)
 
 			cachedAudioFileUriProvider
@@ -52,8 +35,7 @@ class WhenProvidingTheUri {
 	}
 
 	@Test
-	fun thenTheUriIsThePathToTheFile() {
-		assertThat(cachedFileUri.toString())
-			.isEqualTo(Uri.fromFile(file).toString())
+	fun `then the uri is not provided`() {
+		assertThat(cachedFileUri).isNull()
 	}
 }

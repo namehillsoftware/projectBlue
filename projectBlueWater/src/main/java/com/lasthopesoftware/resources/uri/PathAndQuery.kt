@@ -1,9 +1,11 @@
-package com.lasthopesoftware.resources.uri;
+package com.lasthopesoftware.resources.uri
 
-import android.net.Uri;
+import android.net.Uri
 
-public class PathAndQuery {
-	public static String forUri(Uri uri) {
-		return uri.getPath() + "?" + uri.getQuery();
-	}
+object PathAndQuery {
+	fun Uri.pathAndQuery() = forUri(this)
+
+    fun forUri(uri: Uri): String {
+        return uri.path + "?" + uri.query
+    }
 }

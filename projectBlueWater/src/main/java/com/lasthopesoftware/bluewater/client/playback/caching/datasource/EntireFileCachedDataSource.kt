@@ -12,7 +12,7 @@ import com.lasthopesoftware.bluewater.shared.drainQueue
 import com.lasthopesoftware.bluewater.shared.promises.NoopResponse.Companion.ignore
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.bluewater.shared.promises.toFuture
-import com.lasthopesoftware.resources.uri.PathAndQuery
+import com.lasthopesoftware.resources.uri.PathAndQuery.pathAndQuery
 import com.namehillsoftware.handoff.promises.Promise
 import okhttp3.internal.closeQuietly
 import okio.Buffer
@@ -31,7 +31,7 @@ class EntireFileCachedDataSource(
 		if (with(dataSpec) { position == 0L && length == C.LENGTH_UNSET.toLong() }) {
 			cacheWriter?.clear()
 
-			val key = PathAndQuery.forUri(dataSpec.uri)
+			val key = dataSpec.uri.pathAndQuery()
 			cacheWriter = cacheStreamSupplier.promiseCachedFileOutputStream(key).then(EntireFileCachedDataSource::CacheWriter).toFuture().get()
 		}
 
