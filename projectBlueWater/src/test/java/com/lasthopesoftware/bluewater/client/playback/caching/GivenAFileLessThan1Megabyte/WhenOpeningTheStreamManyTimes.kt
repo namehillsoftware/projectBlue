@@ -8,8 +8,6 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.r
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.CacheOutputStream
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.supplier.SupplyCacheStreams
 import com.lasthopesoftware.bluewater.client.playback.caching.datasource.EntireFileCachedDataSource
-import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -24,17 +22,15 @@ import org.robolectric.RobolectricTestRunner
 import java.util.*
 
 @RunWith(RobolectricTestRunner::class)
-class WhenStreamingTheFileInOddChunks {
+class WhenOpeningTheStreamManyTimes {
 	companion object {
 		private val bytesWritten = ByteArray(512 * 1024)
 		private val bytes by lazy { ByteArray(512 * 1024).also { Random().nextBytes(it) } }
-		private var committedToCache = false
+		private val committedOutputStreams = ArrayList<CacheOutputStream>()
 
 		@BeforeClass
 		@JvmStatic
 		fun context() {
-			val deferredCommit = DeferredPromise(CachedFile())
-
 			val fakeCacheStreamSupplier =
 				object : SupplyCacheStreams {
 					override fun promiseCachedFileOutputStream(uniqueKey: String): Promise<CacheOutputStream> {
@@ -61,9 +57,8 @@ class WhenStreamingTheFileInOddChunks {
 							}
 
 							override fun commitToCache(): Promise<CachedFile> {
-								committedToCache = true
-								deferredCommit.resolve()
-								return deferredCommit
+								committedOutputStreams.add(this)
+								return Promise(CachedFile())
 							}
 
 							override fun flush(): Promise<CacheOutputStream> {
@@ -74,9 +69,16 @@ class WhenStreamingTheFileInOddChunks {
 						})
 					}
 				}
-			val buffer = Buffer()
-			buffer.write(bytes)
+
 			val dataSource = mockk<HttpDataSource>(relaxed = true).apply {
+				val buffer = Buffer()
+
+				every { open(any()) } answers {
+					buffer.clear()
+					buffer.write(bytes)
+					bytes.size.toLong()
+				}
+
 				every { read(any(), any(), any()) } answers {
 					val bytesToRead = arg<Int>(2)
 					val offset = arg<Int>(1)
@@ -93,26 +95,29 @@ class WhenStreamingTheFileInOddChunks {
 					bytesRead
 				}
 			}
+
 			val diskFileCacheDataSource = EntireFileCachedDataSource(
 				dataSource,
 				fakeCacheStreamSupplier,
 			)
-			diskFileCacheDataSource.open(
-				DataSpec.Builder()
-					.setUri(Uri.parse("http://my-server/file"))
-					.setPosition(0)
-					.setLength(C.LENGTH_UNSET.toLong()).setKey("1")
-					.build()
-			)
-			val random = Random()
-			var readResult: Int
-			do {
-				val bytes = ByteArray(random.nextInt(1000000))
-				readResult = diskFileCacheDataSource.read(bytes, 0, bytes.size)
-			} while (readResult != C.RESULT_END_OF_INPUT)
-			diskFileCacheDataSource.close()
 
-			deferredCommit.toExpiringFuture().get()
+			val dataSpec = DataSpec.Builder()
+				.setUri(Uri.parse("http://my-server/file"))
+				.setPosition(0)
+				.setLength(C.LENGTH_UNSET.toLong()).setKey("1")
+				.build()
+
+			diskFileCacheDataSource.open(dataSpec)
+			diskFileCacheDataSource.read(ByteArray(1024), 0, 1024)
+
+			diskFileCacheDataSource.open(dataSpec)
+
+			do {
+				val bytes = ByteArray(1024)
+				val readResult = diskFileCacheDataSource.read(bytes, 0, bytes.size)
+			} while (readResult != C.RESULT_END_OF_INPUT)
+
+			diskFileCacheDataSource.close()
 		}
 	}
 
@@ -122,7 +127,7 @@ class WhenStreamingTheFileInOddChunks {
 	}
 
 	@Test
-	fun thenTheFileIsCached() {
-		assertThat(committedToCache).isTrue
+	fun `then the file is cached once`() {
+		assertThat(committedOutputStreams).hasSize(1)
 	}
 }

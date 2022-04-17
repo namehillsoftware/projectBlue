@@ -28,11 +28,10 @@ class EntireFileCachedDataSource(
 	override fun addTransferListener(transferListener: TransferListener) = innerDataSource.addTransferListener(transferListener)
 
 	override fun open(dataSpec: DataSpec): Long {
-		cacheWriter?.commit()?.also { cacheWriter = null }
-
-		val key = PathAndQuery.forUri(dataSpec.uri)
-
 		if (with(dataSpec) { position == 0L && length == C.LENGTH_UNSET.toLong() }) {
+			cacheWriter?.clear()
+
+			val key = PathAndQuery.forUri(dataSpec.uri)
 			cacheWriter = cacheStreamSupplier.promiseCachedFileOutputStream(key).then(EntireFileCachedDataSource::CacheWriter).toFuture().get()
 		}
 
