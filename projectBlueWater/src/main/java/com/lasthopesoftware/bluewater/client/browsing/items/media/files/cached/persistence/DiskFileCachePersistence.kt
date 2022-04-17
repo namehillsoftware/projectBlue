@@ -37,8 +37,8 @@ class DiskFileCachePersistence(
 			.eventually { cachedFile ->
 				cachedFile
 					?.let {
-						if (it.fileName != canonicalFilePath) promiseFilePathUpdate(it).eventually(diskFileAccessTimeUpdater::promiseFileAccessedUpdate)
-						else diskFileAccessTimeUpdater.promiseFileAccessedUpdate(it)
+						if (it.fileName == canonicalFilePath) diskFileAccessTimeUpdater.promiseFileAccessedUpdate(it)
+						else promiseFilePathUpdate(it).eventually(diskFileAccessTimeUpdater::promiseFileAccessedUpdate)
 					}
 					?: DatabasePromise {
 						logger.info("File with unique key $uniqueKey doesn't exist. Creating...")

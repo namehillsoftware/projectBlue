@@ -1,14 +1,11 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.media.files;
+package com.lasthopesoftware.bluewater.client.browsing.items.media.files
 
-public final class ServiceFileUriQueryParamsProvider implements IServiceFileUriQueryParamsProvider {
-
-	@Override
-	public String[] getServiceFileUriQueryParams(ServiceFile serviceFile) {
-		return new String[]{
-			"File/GetFile",
-			"File=" + Integer.toString(serviceFile.getKey()),
-			"Quality=medium",
-			"Conversion=Android",
-			"Playback=0"};
-	}
+object ServiceFileUriQueryParamsProvider : IServiceFileUriQueryParamsProvider {
+	override fun getServiceFileUriQueryParams(serviceFile: ServiceFile): Array<String> = arrayOf(
+		"File/GetFile",
+		"File=" + serviceFile.key,
+		"Quality=medium",
+		"Conversion=Android",
+		"Playback=0"
+	)
 }

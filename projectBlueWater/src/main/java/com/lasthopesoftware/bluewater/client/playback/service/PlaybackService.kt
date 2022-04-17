@@ -735,7 +735,7 @@ open class PlaybackService :
 
 			val cacheConfiguration = AudioCacheConfiguration(library)
 			val cachedFilesProvider = CachedFilesProvider(this, cacheConfiguration)
-			val remoteFileUriProvider = RemoteFileUriProvider(connectionProvider, ServiceFileUriQueryParamsProvider())
+			val remoteFileUriProvider = RemoteFileUriProvider(connectionProvider, ServiceFileUriQueryParamsProvider)
 
 			val cacheStreamSupplier by lazy {
 				DiskFileCacheStreamSupplier(
