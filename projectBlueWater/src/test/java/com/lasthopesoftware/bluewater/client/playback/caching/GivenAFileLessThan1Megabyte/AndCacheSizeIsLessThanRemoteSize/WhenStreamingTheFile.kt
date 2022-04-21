@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.caching.GivenAFileLessThan1Megabyte
+package com.lasthopesoftware.bluewater.client.playback.caching.GivenAFileLessThan1Megabyte.AndCacheSizeIsLessThanRemoteSize
 
 import android.net.Uri
 import com.google.android.exoplayer2.C
@@ -8,6 +8,8 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.r
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.CacheOutputStream
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.supplier.SupplyCacheStreams
 import com.lasthopesoftware.bluewater.client.playback.caching.datasource.EntireFileCachedDataSource
+import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -20,17 +22,23 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import java.util.*
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 
 @RunWith(RobolectricTestRunner::class)
-class WhenOpeningTheStreamManyTimes {
+class WhenStreamingTheFile {
 	companion object {
-		private val bytesWritten = ByteArray(512 * 1024)
-		private val bytes by lazy { ByteArray(512 * 1024).also { Random().nextBytes(it) } }
-		private val committedOutputStreams = ArrayList<CacheOutputStream>()
+		private const val fileSize = 512 * 1024
+		private val bytesWritten = ByteArray(fileSize)
+		private val bytes = ByteArray(fileSize)
+		private val bytesRead = ByteArray(fileSize)
+		private var committedToCache = false
 
 		@BeforeClass
 		@JvmStatic
 		fun context() {
+			val deferredCommit = DeferredPromise(CachedFile())
+
 			val fakeCacheStreamSupplier =
 				object : SupplyCacheStreams {
 					override fun promiseCachedFileOutputStream(uniqueKey: String): Promise<CacheOutputStream> {
@@ -57,8 +65,9 @@ class WhenOpeningTheStreamManyTimes {
 							}
 
 							override fun commitToCache(): Promise<CachedFile> {
-								committedOutputStreams.add(this)
-								return Promise(CachedFile())
+								committedToCache = true
+								deferredCommit.resolve()
+								return deferredCommit
 							}
 
 							override fun flush(): Promise<CacheOutputStream> {
@@ -69,15 +78,10 @@ class WhenOpeningTheStreamManyTimes {
 						})
 					}
 				}
-
+			val buffer = Buffer()
+			buffer.write(bytes)
 			val dataSource = mockk<HttpDataSource>(relaxUnitFun = true).apply {
-				val buffer = Buffer()
-
-				every { open(any()) } answers {
-					buffer.clear()
-					buffer.write(bytes)
-					bytes.size.toLong()
-				}
+				every { open(any()) } returns fileSize * 2L // expect a large file size
 
 				every { read(any(), any(), any()) } answers {
 					val bytesToRead = arg<Int>(2)
@@ -95,39 +99,47 @@ class WhenOpeningTheStreamManyTimes {
 					bytesRead
 				}
 			}
-
 			val diskFileCacheDataSource = EntireFileCachedDataSource(
-				dataSource,
-				fakeCacheStreamSupplier,
+                dataSource,
+                fakeCacheStreamSupplier,
 			)
-
-			val dataSpec = DataSpec.Builder()
-				.setUri(Uri.parse("http://my-server/file"))
-				.setPosition(0)
-				.setLength(C.LENGTH_UNSET.toLong()).setKey("1")
-				.build()
-
-			diskFileCacheDataSource.open(dataSpec)
-			diskFileCacheDataSource.read(ByteArray(1024), 0, 1024)
-
-			diskFileCacheDataSource.open(dataSpec)
-
+			diskFileCacheDataSource.open(
+				DataSpec.Builder()
+					.setUri(Uri.parse("http://my-server/file"))
+					.setPosition(0)
+					.setLength(C.LENGTH_UNSET.toLong()).setKey("1")
+					.build()
+			)
 			do {
-				val bytes = ByteArray(1024)
-				val readResult = diskFileCacheDataSource.read(bytes, 0, bytes.size)
+				val readResult = diskFileCacheDataSource.read(bytesRead, 0, bytesRead.size)
 			} while (readResult != C.RESULT_END_OF_INPUT)
-
 			diskFileCacheDataSource.close()
+
+			try {
+				deferredCommit.toExpiringFuture()[10, TimeUnit.SECONDS]
+			} catch (e: TimeoutException) {
+				// expected
+			}
+		}
+
+		init {
+			Random().nextBytes(bytes)
 		}
 	}
 
 	@Test
-	fun thenTheEntireFileIsWritten() {
-		assertArrayEquals(bytes, bytesWritten)
+	fun `then the file is not written`() {
+		assertThat(bytesWritten).containsOnly(0)
 	}
 
 	@Test
-	fun `then the file is cached once`() {
-		assertThat(committedOutputStreams).hasSize(1)
+	fun `then the file is not cached`() {
+		assertThat(committedToCache).isFalse
 	}
+
+	@Test
+	fun `then the file is read correctly`() {
+		assertArrayEquals(bytes, bytesRead)
+	}
+
 }
