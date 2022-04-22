@@ -4,10 +4,7 @@ import android.net.Uri
 import com.google.android.exoplayer2.C
 import com.google.android.exoplayer2.upstream.DataSpec
 import com.google.android.exoplayer2.upstream.HttpDataSource
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile
 import com.lasthopesoftware.bluewater.client.playback.caching.datasource.EntireFileCachedDataSource
-import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import io.mockk.every
 import io.mockk.mockk
 import okio.Buffer
@@ -18,23 +15,19 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import java.util.*
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeoutException
 
 @RunWith(RobolectricTestRunner::class)
 class WhenStreamingTheFile {
 	companion object {
 		private const val fileSize = 512 * 1024
 		private val bytesWritten = ByteArray(fileSize)
-		private val bytes = ByteArray(fileSize)
+		private val bytes by lazy { ByteArray(fileSize).also { Random().nextBytes(it) } }
 		private val bytesRead = ByteArray(fileSize)
 		private var committedToCache = false
 
 		@BeforeClass
 		@JvmStatic
 		fun context() {
-			val deferredCommit = DeferredPromise(CachedFile())
-
 			val buffer = Buffer()
 			buffer.write(bytes)
 			val dataSource = mockk<HttpDataSource>(relaxUnitFun = true).apply {
@@ -71,16 +64,6 @@ class WhenStreamingTheFile {
 				val readResult = diskFileCacheDataSource.read(bytesRead, 0, bytesRead.size)
 			} while (readResult != C.RESULT_END_OF_INPUT)
 			diskFileCacheDataSource.close()
-
-			try {
-				deferredCommit.toExpiringFuture()[10, TimeUnit.SECONDS]
-			} catch (e: TimeoutException) {
-				// expected
-			}
-		}
-
-		init {
-			Random().nextBytes(bytes)
 		}
 	}
 
