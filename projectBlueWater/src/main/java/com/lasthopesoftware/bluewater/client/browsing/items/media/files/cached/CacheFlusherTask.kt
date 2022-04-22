@@ -62,7 +62,7 @@ class CacheFlusherTask  /*
 					try {
 						FileUtils.deleteDirectory(fileInCacheDir)
 					} catch (e: IOException) {
-						logger.warn("The cached file `${fileInCacheDir.path}` could not be deleted.", e)
+						logger.warn("The cache directory `${fileInCacheDir.path}` could not be deleted.", e)
 					}
 					continue
 				}
