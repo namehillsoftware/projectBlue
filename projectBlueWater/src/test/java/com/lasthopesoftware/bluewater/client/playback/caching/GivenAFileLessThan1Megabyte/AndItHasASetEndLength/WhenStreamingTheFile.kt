@@ -79,7 +79,9 @@ class WhenStreamingTheFile {
 				}
 			val buffer = Buffer()
 			buffer.write(bytes)
-			val dataSource = mockk<HttpDataSource>(relaxed = true).apply {
+			val dataSource = mockk<HttpDataSource>(relaxUnitFun = true).apply {
+				every { open(any()) } returns bytes.size.toLong()
+
 				every { read(any(), any(), any()) } answers {
 					val bytesToRead = arg<Int>(2)
 					val offset = arg<Int>(1)

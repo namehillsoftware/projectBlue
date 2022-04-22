@@ -1,20 +1,16 @@
-package com.lasthopesoftware.bluewater.client.playback.caching.GivenAFileLessThan1Megabyte.AndItStartsAtPositionGreaterThanZero
+package com.lasthopesoftware.bluewater.client.playback.caching.GivenARemoteFileWithUnsetLength
 
 import android.net.Uri
 import com.google.android.exoplayer2.C
 import com.google.android.exoplayer2.upstream.DataSpec
 import com.google.android.exoplayer2.upstream.HttpDataSource
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.CacheOutputStream
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.supplier.SupplyCacheStreams
 import com.lasthopesoftware.bluewater.client.playback.caching.datasource.EntireFileCachedDataSource
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
-import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import okio.Buffer
-import okio.BufferedSource
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Assert.assertArrayEquals
 import org.junit.BeforeClass
@@ -28,9 +24,10 @@ import java.util.concurrent.TimeoutException
 @RunWith(RobolectricTestRunner::class)
 class WhenStreamingTheFile {
 	companion object {
-		private val bytesWritten = ByteArray(512 * 1024)
-		private val bytes = ByteArray(512 * 1024)
-		private val bytesRead = ByteArray(512 * 1024)
+		private const val fileSize = 512 * 1024
+		private val bytesWritten = ByteArray(fileSize)
+		private val bytes = ByteArray(fileSize)
+		private val bytesRead = ByteArray(fileSize)
 		private var committedToCache = false
 
 		@BeforeClass
@@ -38,49 +35,10 @@ class WhenStreamingTheFile {
 		fun context() {
 			val deferredCommit = DeferredPromise(CachedFile())
 
-			val fakeCacheStreamSupplier =
-				object : SupplyCacheStreams {
-					override fun promiseCachedFileOutputStream(uniqueKey: String): Promise<CacheOutputStream> {
-						return Promise<CacheOutputStream>(object : CacheOutputStream {
-							var numberOfBytesWritten = 0
-							override fun promiseWrite(
-								buffer: ByteArray,
-								offset: Int,
-								length: Int
-							): Promise<CacheOutputStream> =
-								Promise<CacheOutputStream>(this)
-
-							override fun promiseTransfer(bufferedSource: BufferedSource): Promise<CacheOutputStream> {
-								while (numberOfBytesWritten < bytesWritten.size) {
-									val read = bufferedSource.read(
-										bytesWritten,
-										numberOfBytesWritten,
-										bytesWritten.size - numberOfBytesWritten
-									)
-									if (read == -1) return Promise<CacheOutputStream>(this)
-									numberOfBytesWritten += read
-								}
-								return Promise<CacheOutputStream>(this)
-							}
-
-							override fun commitToCache(): Promise<CachedFile> {
-								committedToCache = true
-								deferredCommit.resolve()
-								return deferredCommit
-							}
-
-							override fun flush(): Promise<CacheOutputStream> {
-								return Promise<CacheOutputStream>(this)
-							}
-
-							override fun close() {}
-						})
-					}
-				}
 			val buffer = Buffer()
 			buffer.write(bytes)
 			val dataSource = mockk<HttpDataSource>(relaxUnitFun = true).apply {
-				every { open(any()) } returns bytes.size.toLong()
+				every { open(any()) } returns C.LENGTH_UNSET.toLong()
 
 				every { read(any(), any(), any()) } answers {
 					val bytesToRead = arg<Int>(2)
@@ -100,13 +58,13 @@ class WhenStreamingTheFile {
 			}
 			val diskFileCacheDataSource = EntireFileCachedDataSource(
                 dataSource,
-                fakeCacheStreamSupplier,
+                mockk(), // Use a strict stream supplier mock to ensure a cache is never opened
 			)
 			diskFileCacheDataSource.open(
 				DataSpec.Builder()
 					.setUri(Uri.parse("http://my-server/file"))
-					.setPosition(882)
-					.setLength((2 * 1024 * 1024).toLong()).setKey("1")
+					.setPosition(0)
+					.setLength(C.LENGTH_UNSET.toLong()).setKey("1")
 					.build()
 			)
 			do {
