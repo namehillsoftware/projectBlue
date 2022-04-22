@@ -55,7 +55,7 @@ class CacheFlusherTask  /*
                 try {
                     if (getCachedFileByFilename(repositoryAccessHelper, fileInCacheDir.canonicalPath) != null) continue
                 } catch (e: IOException) {
-                    logger.warn("Issue getting canonical serviceFile path.")
+                    logger.warn("Issue getting canonical file path.", e)
                 }
 
 				if (fileInCacheDir.isDirectory) {
