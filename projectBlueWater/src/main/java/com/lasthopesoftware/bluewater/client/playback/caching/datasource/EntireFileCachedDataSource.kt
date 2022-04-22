@@ -10,6 +10,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.s
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.supplier.SupplyCacheStreams
 import com.lasthopesoftware.bluewater.shared.drainQueue
 import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRateLimiter
+import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.lasthopesoftware.bluewater.shared.promises.toFuture
@@ -39,12 +40,11 @@ class EntireFileCachedDataSource(
 		downloadBytes = 0
 
 		val openedFileSize = innerDataSource.open(dataSpec)
-
-		if (!with(dataSpec) { position == 0L && length == C.LENGTH_UNSET.toLong() }) return openedFileSize
 		if (openedFileSize == C.LENGTH_UNSET.toLong()) return openedFileSize
 
-		expectedFileSize = openedFileSize
+		if (dataSpec.run { position != 0L || length != C.LENGTH_UNSET.toLong() }) return openedFileSize
 
+		expectedFileSize = openedFileSize
 
 		val key = dataSpec.uri.pathAndQuery()
 
@@ -118,23 +118,20 @@ class EntireFileCachedDataSource(
 
 		private fun processQueue() : Promise<Unit> =
 			rateLimiter.limit {
-				if (isFaulted) return@limit Unit.toPromise()
-
-				val concatenatedBuffer = buffersToTransfer
-					.drainQueue()
+				if (isFaulted) Unit.toPromise()
+				else buffersToTransfer.drainQueue()
 					.reduceOrNull { sink, source -> sink.also(source::readAll) }
-
-				if (concatenatedBuffer == null || concatenatedBuffer.exhausted()) Unit.toPromise()
-				else cachedOutputStream
-					.promiseTransfer(concatenatedBuffer)
-					.apply {
+					?.takeUnless { it.exhausted() }
+					?.let(cachedOutputStream::promiseTransfer)
+					?.apply {
 						excuse {
 							isFaulted = true
 							logger.warn("An error occurred copying the buffer, closing the output stream", it)
 							clear()
 						}
 					}
-					.unitResponse()
+					?.unitResponse()
+					.keepPromise(Unit)
 			}.also { activePromise = it }
 
 		fun commit() {
