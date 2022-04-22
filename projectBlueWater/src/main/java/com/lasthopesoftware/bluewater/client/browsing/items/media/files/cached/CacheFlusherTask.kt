@@ -1,149 +1,141 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached;
+package com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached
 
-import android.content.Context;
-
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.configuration.IDiskFileCacheConfiguration;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.disk.IDiskCacheDirectoryProvider;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile;
-import com.lasthopesoftware.bluewater.repository.DatabasePromise;
-import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
-import com.namehillsoftware.handoff.promises.Promise;
-import com.namehillsoftware.handoff.promises.queued.MessageWriter;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.io.File;
-import java.io.IOException;
+import android.content.Context
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.CacheFlusherTask
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.configuration.IDiskFileCacheConfiguration
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.disk.IDiskCacheDirectoryProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile
+import com.lasthopesoftware.bluewater.repository.DatabasePromise
+import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
+import com.namehillsoftware.handoff.promises.Promise
+import com.namehillsoftware.handoff.promises.queued.MessageWriter
+import org.apache.commons.io.FileUtils
+import org.slf4j.LoggerFactory
+import java.io.File
+import java.io.IOException
 
 /**
  * Flush a given cache until it reaches the given target size
  * @author david
- *
  */
-public class CacheFlusherTask implements MessageWriter<Void> {
-
-	private final static Logger logger = LoggerFactory.getLogger(CacheFlusherTask.class);
-
-	private final Context context;
-	private final IDiskCacheDirectoryProvider diskCacheDirectory;
-	private final IDiskFileCacheConfiguration diskFileCacheConfiguration;
-	private final long targetSize;
-
-	public static Promise<?> promisedCacheFlushing(final Context context, final IDiskCacheDirectoryProvider diskCacheDirectory, final IDiskFileCacheConfiguration diskFileCacheConfiguration, final long targetSize) {
-		return new DatabasePromise<>(new CacheFlusherTask(context, diskCacheDirectory, diskFileCacheConfiguration, targetSize));
-	}
-
-	/*
+class CacheFlusherTask  /*
 	 * Flush a given cache until it reaches the given target size
-	 */
-	private CacheFlusherTask(final Context context, final IDiskCacheDirectoryProvider diskCacheDirectory, final IDiskFileCacheConfiguration diskFileCacheConfiguration, final long targetSize) {
-		this.context = context;
-		this.diskCacheDirectory = diskCacheDirectory;
-		this.diskFileCacheConfiguration = diskFileCacheConfiguration;
-		this.targetSize = targetSize;
-	}
+	 */ private constructor(
+    private val context: Context,
+    private val diskCacheDirectory: IDiskCacheDirectoryProvider,
+    private val diskFileCacheConfiguration: IDiskFileCacheConfiguration,
+    private val targetSize: Long
+) : MessageWriter<Unit> {
+    override fun prepareMessage() {
+        flushCache()
+    }
 
-	@Override
-	public Void prepareMessage() {
-		flushCache();
-		return null;
-	}
+    private fun flushCache() {
+        RepositoryAccessHelper(context).use { repositoryAccessHelper ->
+            if (getCachedFileSizeFromDatabase(repositoryAccessHelper) <= targetSize) return
+            do {
+                val cachedFile = getOldestCachedFile(repositoryAccessHelper)
+                if (cachedFile != null) deleteCachedFile(repositoryAccessHelper, cachedFile)
+            } while (getCachedFileSizeFromDatabase(repositoryAccessHelper) > targetSize)
 
-	private void flushCache() {
-		try (final RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
-			if (getCachedFileSizeFromDatabase(repositoryAccessHelper) <= targetSize) return;
+            // Remove any files in the cache dir but not in the database
+            val cacheDir = diskCacheDirectory.getDiskCacheDirectory(diskFileCacheConfiguration)
 
-			do {
-				final CachedFile cachedFile = getOldestCachedFile(repositoryAccessHelper);
-				if (cachedFile != null)
-					deleteCachedFile(repositoryAccessHelper, cachedFile);
-			} while (getCachedFileSizeFromDatabase(repositoryAccessHelper) > targetSize);
+            if (cacheDir == null || !cacheDir.exists()) return
 
-			// Remove any files in the cache dir but not in the database
-			final File cacheDir = diskCacheDirectory.getDiskCacheDirectory(diskFileCacheConfiguration);
+			val filesInCacheDir = cacheDir.listFiles()
 
-			if (cacheDir == null || !cacheDir.exists()) return;
+            // If the # of files in the cache dir is equal to the database size, then
+            // hypothetically (and good enough for our purposes), they are in sync and we don't need
+            // to do additional processing
+            if (filesInCacheDir == null || filesInCacheDir.size.toLong() == getCachedFileCount(repositoryAccessHelper)) return
 
-			final File[] filesInCacheDir = cacheDir.listFiles();
+            // Remove all files that aren't tracked in the database
+            for (fileInCacheDir in filesInCacheDir) {
+                try {
+                    if (getCachedFileByFilename(repositoryAccessHelper, fileInCacheDir.canonicalPath) != null) continue
+                } catch (e: IOException) {
+                    logger.warn("Issue getting canonical serviceFile path.")
+                }
 
-			// If the # of files in the cache dir is equal to the database size, then
-			// hypothetically (and good enough for our purposes), they are in sync and we don't need
-			// to do additional processing
-			if (filesInCacheDir == null || filesInCacheDir.length == getCachedFileCount(repositoryAccessHelper))
-				return;
-
-			// Remove all files that aren't tracked in the database
-			for (final File fileInCacheDir : filesInCacheDir) {
-				try {
-					if (getCachedFileByFilename(repositoryAccessHelper, fileInCacheDir.getCanonicalPath()) != null)
-						continue;
-				} catch (IOException e) {
-					logger.warn("Issue getting canonical serviceFile path.");
+				if (fileInCacheDir.isDirectory) {
+					try {
+						FileUtils.deleteDirectory(fileInCacheDir)
+					} catch (e: IOException) {
+						logger.warn("The cached file `${fileInCacheDir.path}` could not be deleted.", e)
+					}
+					continue
 				}
 
-				if (!fileInCacheDir.delete())
-					logger.warn("The cached file `" + fileInCacheDir.getPath() + "` could not be deleted.");
-			}
-		}
-	}
+                if (fileInCacheDir.delete()) continue
 
-	private long getCachedFileSizeFromDatabase(final RepositoryAccessHelper repositoryAccessHelper) {
-		return repositoryAccessHelper
-				.mapSql("SELECT SUM(" + CachedFile.FILE_SIZE + ") FROM " + CachedFile.tableName + " WHERE " + CachedFile.CACHE_NAME + " = @" + CachedFile.CACHE_NAME)
-				.addParameter(CachedFile.CACHE_NAME, diskFileCacheConfiguration.getCacheName())
-				.execute();
-	}
+				logger.warn("The cached file `${fileInCacheDir.path}` could not be deleted.")
+            }
+        }
+    }
 
-//	private final long getCacheSizeBetweenTimes(final Dao<CachedFile, Integer> cachedFileAccess, final long startTime, final long endTime) {
-//		try {
-//
-//			final PreparedQuery<CachedFile> preparedQuery =
-//					cachedFileAccess.queryBuilder()
-//						.selectRaw("SUM(" + CachedFile.FILE_SIZE + ")")
-//						.where()
-//						.eq(CachedFile.CACHE_NAME, new SelectArg())
-//						.and()
-//						.between(CachedFile.CREATED_TIME, new SelectArg(), new SelectArg())
-//						.prepare();
-//
-//			return cachedFileAccess.queryRawValue(preparedQuery.getStatement(), cacheName, String.valueOf(startTime), String.valueOf(endTime));
-//		} catch (SQLException e) {
-//			logger.excuse("Error getting serviceFile size", e);
-//			return -1;
-//		}
-//	}
+    private fun getCachedFileSizeFromDatabase(repositoryAccessHelper: RepositoryAccessHelper): Long =
+		repositoryAccessHelper
+			.mapSql("SELECT SUM(" + CachedFile.FILE_SIZE + ") FROM " + CachedFile.tableName + " WHERE " + CachedFile.CACHE_NAME + " = @" + CachedFile.CACHE_NAME)
+			.addParameter(CachedFile.CACHE_NAME, diskFileCacheConfiguration.cacheName)
+			.execute()
 
-	private CachedFile getOldestCachedFile(final RepositoryAccessHelper repositoryAccessHelper) {
-		return repositoryAccessHelper
-				.mapSql("SELECT * FROM " + CachedFile.tableName + " WHERE " + CachedFile.CACHE_NAME + " = @" + CachedFile.CACHE_NAME + " ORDER BY " + CachedFile.LAST_ACCESSED_TIME + " ASC")
-				.addParameter(CachedFile.CACHE_NAME, diskFileCacheConfiguration.getCacheName())
-				.fetchFirst(CachedFile.class);
-	}
+    //	private final long getCacheSizeBetweenTimes(final Dao<CachedFile, Integer> cachedFileAccess, final long startTime, final long endTime) {
+    //		try {
+    //
+    //			final PreparedQuery<CachedFile> preparedQuery =
+    //					cachedFileAccess.queryBuilder()
+    //						.selectRaw("SUM(" + CachedFile.FILE_SIZE + ")")
+    //						.where()
+    //						.eq(CachedFile.CACHE_NAME, new SelectArg())
+    //						.and()
+    //						.between(CachedFile.CREATED_TIME, new SelectArg(), new SelectArg())
+    //						.prepare();
+    //
+    //			return cachedFileAccess.queryRawValue(preparedQuery.getStatement(), cacheName, String.valueOf(startTime), String.valueOf(endTime));
+    //		} catch (SQLException e) {
+    //			logger.excuse("Error getting serviceFile size", e);
+    //			return -1;
+    //		}
+    //	}
+    private fun getOldestCachedFile(repositoryAccessHelper: RepositoryAccessHelper): CachedFile? =
+		repositoryAccessHelper
+			.mapSql("SELECT * FROM " + CachedFile.tableName + " WHERE " + CachedFile.CACHE_NAME + " = @" + CachedFile.CACHE_NAME + " ORDER BY " + CachedFile.LAST_ACCESSED_TIME + " ASC")
+			.addParameter(CachedFile.CACHE_NAME, diskFileCacheConfiguration.cacheName)
+			.fetchFirst(CachedFile::class.java)
 
-	private long getCachedFileCount(final RepositoryAccessHelper repositoryAccessHelper) {
-		return repositoryAccessHelper
-				.mapSql("SELECT COUNT(*) FROM " + CachedFile.tableName + " WHERE " + CachedFile.CACHE_NAME + " = @" + CachedFile.CACHE_NAME)
-				.addParameter(CachedFile.CACHE_NAME, diskFileCacheConfiguration.getCacheName())
-				.execute();
-	}
+    private fun getCachedFileCount(repositoryAccessHelper: RepositoryAccessHelper): Long = repositoryAccessHelper
+		.mapSql("SELECT COUNT(*) FROM " + CachedFile.tableName + " WHERE " + CachedFile.CACHE_NAME + " = @" + CachedFile.CACHE_NAME)
+		.addParameter(CachedFile.CACHE_NAME, diskFileCacheConfiguration.cacheName)
+		.execute()
 
-	private static CachedFile getCachedFileByFilename(final RepositoryAccessHelper repositoryAccessHelper, final String fileName) {
+    companion object {
+        private val logger by lazy { LoggerFactory.getLogger(CacheFlusherTask::class.java) }
 
-		return repositoryAccessHelper
+        fun promisedCacheFlushing(context: Context, diskCacheDirectory: IDiskCacheDirectoryProvider, diskFileCacheConfiguration: IDiskFileCacheConfiguration, targetSize: Long): Promise<*> =
+			DatabasePromise(
+				CacheFlusherTask(
+					context,
+					diskCacheDirectory,
+					diskFileCacheConfiguration,
+					targetSize
+				)
+			)
+
+        private fun getCachedFileByFilename(repositoryAccessHelper: RepositoryAccessHelper, fileName: String): CachedFile? =
+			repositoryAccessHelper
 				.mapSql("SELECT * FROM " + CachedFile.tableName + " WHERE " + CachedFile.FILE_NAME + " = @" + CachedFile.FILE_NAME)
 				.addParameter(CachedFile.FILE_NAME, fileName)
-				.fetchFirst(CachedFile.class);
+				.fetchFirst(CachedFile::class.java)
 
-	}
+        private fun deleteCachedFile(repositoryAccessHelper: RepositoryAccessHelper, cachedFile: CachedFile): Boolean {
+            val fileToDelete = File(cachedFile.fileName)
 
-	private static boolean deleteCachedFile(final RepositoryAccessHelper repositoryAccessHelper, final CachedFile cachedFile) {
-		final File fileToDelete = new File(cachedFile.getFileName());
-
-		return (fileToDelete.exists() && fileToDelete.delete())
-			& repositoryAccessHelper
-				.mapSql("DELETE FROM " + CachedFile.tableName + " WHERE id = @id")
-				.addParameter("id", cachedFile.getId())
-				.execute() > 0;
-	}
+            return ((fileToDelete.exists() && fileToDelete.delete())
+                    and (repositoryAccessHelper
+                .mapSql("DELETE FROM " + CachedFile.tableName + " WHERE id = @id")
+                .addParameter("id", cachedFile.id)
+                .execute() > 0))
+        }
+    }
 }
