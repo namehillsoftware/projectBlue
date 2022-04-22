@@ -5,6 +5,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.C
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.configuration.IDiskFileCacheConfiguration
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.disk.IDiskCacheDirectoryProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile.*
 import com.lasthopesoftware.bluewater.repository.DatabasePromise
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
 import com.namehillsoftware.handoff.promises.Promise
@@ -76,8 +77,8 @@ class CacheFlusherTask  /*
 
     private fun getCachedFileSizeFromDatabase(repositoryAccessHelper: RepositoryAccessHelper): Long =
 		repositoryAccessHelper
-			.mapSql("SELECT SUM(" + CachedFile.FILE_SIZE + ") FROM " + CachedFile.tableName + " WHERE " + CachedFile.CACHE_NAME + " = @" + CachedFile.CACHE_NAME)
-			.addParameter(CachedFile.CACHE_NAME, diskFileCacheConfiguration.cacheName)
+			.mapSql("SELECT SUM(" + CachedFile.FILE_SIZE + ") FROM " + tableName + " WHERE " + CACHE_NAME + " = @" + CACHE_NAME)
+			.addParameter(CACHE_NAME, diskFileCacheConfiguration.cacheName)
 			.execute()
 
     //	private final long getCacheSizeBetweenTimes(final Dao<CachedFile, Integer> cachedFileAccess, final long startTime, final long endTime) {
@@ -100,13 +101,13 @@ class CacheFlusherTask  /*
     //	}
     private fun getOldestCachedFile(repositoryAccessHelper: RepositoryAccessHelper): CachedFile? =
 		repositoryAccessHelper
-			.mapSql("SELECT * FROM " + CachedFile.tableName + " WHERE " + CachedFile.CACHE_NAME + " = @" + CachedFile.CACHE_NAME + " ORDER BY " + CachedFile.LAST_ACCESSED_TIME + " ASC")
-			.addParameter(CachedFile.CACHE_NAME, diskFileCacheConfiguration.cacheName)
+			.mapSql("SELECT * FROM $tableName WHERE $CACHE_NAME = @$CACHE_NAME ORDER BY $LAST_ACCESSED_TIME ASC")
+			.addParameter(CACHE_NAME, diskFileCacheConfiguration.cacheName)
 			.fetchFirst(CachedFile::class.java)
 
     private fun getCachedFileCount(repositoryAccessHelper: RepositoryAccessHelper): Long = repositoryAccessHelper
-		.mapSql("SELECT COUNT(*) FROM " + CachedFile.tableName + " WHERE " + CachedFile.CACHE_NAME + " = @" + CachedFile.CACHE_NAME)
-		.addParameter(CachedFile.CACHE_NAME, diskFileCacheConfiguration.cacheName)
+		.mapSql("SELECT COUNT(*) FROM $tableName WHERE $CACHE_NAME = @$CACHE_NAME")
+		.addParameter(CACHE_NAME, diskFileCacheConfiguration.cacheName)
 		.execute()
 
     companion object {
@@ -124,8 +125,8 @@ class CacheFlusherTask  /*
 
         private fun getCachedFileByFilename(repositoryAccessHelper: RepositoryAccessHelper, fileName: String): CachedFile? =
 			repositoryAccessHelper
-				.mapSql("SELECT * FROM " + CachedFile.tableName + " WHERE " + CachedFile.FILE_NAME + " = @" + CachedFile.FILE_NAME)
-				.addParameter(CachedFile.FILE_NAME, fileName)
+				.mapSql("SELECT * FROM $tableName WHERE $FILE_NAME = @$FILE_NAME")
+				.addParameter(FILE_NAME, fileName)
 				.fetchFirst(CachedFile::class.java)
 
         private fun deleteCachedFile(repositoryAccessHelper: RepositoryAccessHelper, cachedFile: CachedFile): Boolean {
@@ -133,7 +134,7 @@ class CacheFlusherTask  /*
 
             return ((fileToDelete.exists() && fileToDelete.delete())
                     and (repositoryAccessHelper
-                .mapSql("DELETE FROM " + CachedFile.tableName + " WHERE id = @id")
+                .mapSql("DELETE FROM $tableName WHERE id = @id")
                 .addParameter("id", cachedFile.id)
                 .execute() > 0))
         }
