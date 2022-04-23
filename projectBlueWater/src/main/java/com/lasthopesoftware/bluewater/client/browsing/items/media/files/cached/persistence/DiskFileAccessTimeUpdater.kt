@@ -2,16 +2,15 @@ package com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.
 
 import android.content.Context
 import android.database.SQLException
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.persistence.DiskFileAccessTimeUpdater
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile
-import com.lasthopesoftware.bluewater.repository.DatabaseTablePromise
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
+import com.lasthopesoftware.resources.executors.ThreadPools.promiseTableMessage
 import com.namehillsoftware.handoff.promises.Promise
 import org.slf4j.LoggerFactory
 import java.util.*
 
 class DiskFileAccessTimeUpdater(private val context: Context) : IDiskFileAccessTimeUpdater {
-	override fun promiseFileAccessedUpdate(cachedFile: CachedFile): Promise<CachedFile> = DatabaseTablePromise<CachedFile, CachedFile> {
+	override fun promiseFileAccessedUpdate(cachedFile: CachedFile): Promise<CachedFile> = promiseTableMessage<CachedFile, CachedFile> {
 		doFileAccessedUpdate(cachedFile.id)
 		cachedFile
 	}

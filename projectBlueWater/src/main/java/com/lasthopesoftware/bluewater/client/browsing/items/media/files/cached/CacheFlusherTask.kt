@@ -9,8 +9,8 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.r
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile.Companion.FILE_SIZE
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile.Companion.LAST_ACCESSED_TIME
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile.Companion.tableName
-import com.lasthopesoftware.bluewater.repository.DatabaseTablePromise
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
+import com.lasthopesoftware.resources.executors.ThreadPools.promiseTableMessage
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import org.apache.commons.io.FileUtils
@@ -117,14 +117,14 @@ class CacheFlusherTask  /*
         private val logger by lazy { LoggerFactory.getLogger(CacheFlusherTask::class.java) }
 
         fun promisedCacheFlushing(context: Context, diskCacheDirectory: IDiskCacheDirectoryProvider, diskFileCacheConfiguration: IDiskFileCacheConfiguration, targetSize: Long): Promise<*> =
-			DatabaseTablePromise<Unit, CachedFile>(
+			promiseTableMessage<Unit, CachedFile> {
 				CacheFlusherTask(
 					context,
 					diskCacheDirectory,
 					diskFileCacheConfiguration,
 					targetSize
 				)
-			)
+			}
 
         private fun getCachedFileByFilename(repositoryAccessHelper: RepositoryAccessHelper, fileName: String): CachedFile? =
 			repositoryAccessHelper

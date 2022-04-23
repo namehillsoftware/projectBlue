@@ -16,9 +16,9 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.r
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile.Companion.UNIQUE_KEY
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile.Companion.tableName
 import com.lasthopesoftware.bluewater.repository.DatabasePromise
-import com.lasthopesoftware.bluewater.repository.DatabaseTablePromise
 import com.lasthopesoftware.bluewater.repository.InsertBuilder.Companion.fromTable
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
+import com.lasthopesoftware.resources.executors.ThreadPools.promiseTableMessage
 import com.namehillsoftware.handoff.promises.Promise
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -47,7 +47,7 @@ class DiskFileCachePersistence(
 						if (it.fileName == canonicalFilePath) diskFileAccessTimeUpdater.promiseFileAccessedUpdate(it)
 						else promiseFilePathUpdate(it).eventually(diskFileAccessTimeUpdater::promiseFileAccessedUpdate)
 					}
-					?: DatabaseTablePromise<Unit, CachedFile> {
+					?: promiseTableMessage<Unit, CachedFile> {
 						logger.info("File with unique key $uniqueKey doesn't exist. Creating...")
 						try {
 							RepositoryAccessHelper(context).use { repositoryAccessHelper ->
