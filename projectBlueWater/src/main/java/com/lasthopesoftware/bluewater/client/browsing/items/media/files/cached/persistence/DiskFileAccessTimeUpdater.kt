@@ -1,54 +1,42 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.persistence;
+package com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.persistence
 
-import android.content.Context;
-import android.database.SQLException;
+import android.content.Context
+import android.database.SQLException
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.persistence.DiskFileAccessTimeUpdater
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile
+import com.lasthopesoftware.bluewater.repository.DatabaseTablePromise
+import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
+import com.namehillsoftware.handoff.promises.Promise
+import org.slf4j.LoggerFactory
+import java.util.*
 
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile;
-import com.lasthopesoftware.bluewater.repository.CloseableTransaction;
-import com.lasthopesoftware.bluewater.repository.DatabasePromise;
-import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper;
-import com.namehillsoftware.handoff.promises.Promise;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.util.Date;
-
-public class DiskFileAccessTimeUpdater implements IDiskFileAccessTimeUpdater {
-	private final static Logger logger = LoggerFactory.getLogger(DiskFileAccessTimeUpdater.class);
-
-	private final Context context;
-
-	public DiskFileAccessTimeUpdater(Context context) {
-		this.context = context;
+class DiskFileAccessTimeUpdater(private val context: Context) : IDiskFileAccessTimeUpdater {
+	override fun promiseFileAccessedUpdate(cachedFile: CachedFile): Promise<CachedFile> = DatabaseTablePromise<CachedFile, CachedFile> {
+		doFileAccessedUpdate(cachedFile.id)
+		cachedFile
 	}
 
-	@Override
-	public Promise<CachedFile> promiseFileAccessedUpdate(CachedFile cachedFile) {
-		return new DatabasePromise<>(() -> {
-			doFileAccessedUpdate(cachedFile.getId());
-			return cachedFile;
-		});
-	}
-
-	private void doFileAccessedUpdate(final long cachedFileId) {
-		final long updateTime = System.currentTimeMillis();
-
-		logger.info("Updating accessed time on cached file with ID " + cachedFileId + " to " + new Date(updateTime));
-
-		try (RepositoryAccessHelper repositoryAccessHelper = new RepositoryAccessHelper(context)) {
-			try (CloseableTransaction closeableTransaction = repositoryAccessHelper.beginTransaction()) {
-				repositoryAccessHelper
-					.mapSql("UPDATE " + CachedFile.tableName + " SET " + CachedFile.LAST_ACCESSED_TIME + " = @" + CachedFile.LAST_ACCESSED_TIME + " WHERE id = @id")
-					.addParameter(CachedFile.LAST_ACCESSED_TIME, updateTime)
-					.addParameter("id", cachedFileId)
-					.execute();
-
-				closeableTransaction.setTransactionSuccessful();
-			} catch (SQLException sqlException) {
-				logger.error("There was an error trying to update the cached file with ID " + cachedFileId, sqlException);
-				throw sqlException;
+	private fun doFileAccessedUpdate(cachedFileId: Long) {
+		val updateTime = System.currentTimeMillis()
+		logger.info("Updating accessed time on cached file with ID $cachedFileId to " + Date(updateTime))
+		RepositoryAccessHelper(context).use { repositoryAccessHelper ->
+			try {
+				repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
+					repositoryAccessHelper
+						.mapSql("UPDATE " + CachedFile.tableName + " SET " + CachedFile.LAST_ACCESSED_TIME + " = @" + CachedFile.LAST_ACCESSED_TIME + " WHERE id = @id")
+						.addParameter(CachedFile.LAST_ACCESSED_TIME, updateTime)
+						.addParameter("id", cachedFileId)
+						.execute()
+					closeableTransaction.setTransactionSuccessful()
+				}
+			} catch (sqlException: SQLException) {
+				logger.error("There was an error trying to update the cached file with ID $cachedFileId", sqlException)
+				throw sqlException
 			}
 		}
+	}
+
+	companion object {
+		private val logger by lazy { LoggerFactory.getLogger(DiskFileAccessTimeUpdater::class.java) }
 	}
 }

@@ -1,12 +1,15 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached
 
 import android.content.Context
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.CacheFlusherTask
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.configuration.IDiskFileCacheConfiguration
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.disk.IDiskCacheDirectoryProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile.*
-import com.lasthopesoftware.bluewater.repository.DatabasePromise
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile.Companion.CACHE_NAME
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile.Companion.FILE_NAME
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile.Companion.FILE_SIZE
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile.Companion.LAST_ACCESSED_TIME
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile.Companion.tableName
+import com.lasthopesoftware.bluewater.repository.DatabaseTablePromise
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.MessageWriter
@@ -77,7 +80,7 @@ class CacheFlusherTask  /*
 
     private fun getCachedFileSizeFromDatabase(repositoryAccessHelper: RepositoryAccessHelper): Long =
 		repositoryAccessHelper
-			.mapSql("SELECT SUM(" + CachedFile.FILE_SIZE + ") FROM " + tableName + " WHERE " + CACHE_NAME + " = @" + CACHE_NAME)
+			.mapSql("SELECT SUM($FILE_SIZE) FROM $tableName WHERE $CACHE_NAME = @$CACHE_NAME")
 			.addParameter(CACHE_NAME, diskFileCacheConfiguration.cacheName)
 			.execute()
 
@@ -114,7 +117,7 @@ class CacheFlusherTask  /*
         private val logger by lazy { LoggerFactory.getLogger(CacheFlusherTask::class.java) }
 
         fun promisedCacheFlushing(context: Context, diskCacheDirectory: IDiskCacheDirectoryProvider, diskFileCacheConfiguration: IDiskFileCacheConfiguration, targetSize: Long): Promise<*> =
-			DatabasePromise(
+			DatabaseTablePromise<Unit, CachedFile>(
 				CacheFlusherTask(
 					context,
 					diskCacheDirectory,
@@ -129,14 +132,11 @@ class CacheFlusherTask  /*
 				.addParameter(FILE_NAME, fileName)
 				.fetchFirst(CachedFile::class.java)
 
-        private fun deleteCachedFile(repositoryAccessHelper: RepositoryAccessHelper, cachedFile: CachedFile): Boolean {
-            val fileToDelete = File(cachedFile.fileName)
-
-            return ((fileToDelete.exists() && fileToDelete.delete())
-                    and (repositoryAccessHelper
-                .mapSql("DELETE FROM $tableName WHERE id = @id")
-                .addParameter("id", cachedFile.id)
-                .execute() > 0))
-        }
+        private fun deleteCachedFile(repositoryAccessHelper: RepositoryAccessHelper, cachedFile: CachedFile): Boolean =
+			((cachedFile.fileName?.let { File(it) }?.let { it.exists() && it.delete() } ?: false)
+					and (repositoryAccessHelper
+				.mapSql("DELETE FROM $tableName WHERE id = @id")
+				.addParameter("id", cachedFile.id)
+				.execute() > 0))
     }
 }

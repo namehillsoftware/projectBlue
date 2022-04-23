@@ -30,7 +30,7 @@ object ThreadPools {
 	private val databaseThreadCache = HashMap<Class<*>, Executor>()
 
 	fun <T> databaseTableExecutor(cls: Class<T>) = databaseThreadCache[cls] ?: synchronized(databaseThreadCacheSync) {
-		databaseThreadCache.getOrPut(cls, { MoreExecutors.newSequentialExecutor(io) })
+		databaseThreadCache.getOrPut(cls) { MoreExecutors.newSequentialExecutor(io) }
 	}
 
 	inline fun <reified T> databaseTableExecutor() = databaseTableExecutor(T::class.java)
