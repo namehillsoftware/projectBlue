@@ -10,10 +10,8 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.s
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.supplier.SupplyCacheStreams
 import com.lasthopesoftware.bluewater.shared.drainQueue
 import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRateLimiter
-import com.lasthopesoftware.bluewater.shared.promises.NoopResponse.Companion.noOpResponse
+import com.lasthopesoftware.bluewater.shared.promises.ForwardedResponse.Companion.forward
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.lasthopesoftware.resources.uri.PathAndQuery.pathAndQuery
 import com.namehillsoftware.handoff.promises.Promise
 import okhttp3.internal.closeQuietly
@@ -32,7 +30,7 @@ class EntireFileCachedDataSource(
 
 	private var expectedFileSize = C.LENGTH_UNSET.toLong()
 	private var downloadBytes = 0L
-	private var promisedCacheWriter: Promise<CacheWriter>? = null
+	private var cacheWriter: CacheWriter? = null
 
 	override fun addTransferListener(transferListener: TransferListener) = innerDataSource.addTransferListener(transferListener)
 
@@ -48,12 +46,11 @@ class EntireFileCachedDataSource(
 
 		val key = dataSpec.uri.pathAndQuery()
 
-		promisedCacheWriter?.then({ it.clear() }, noOpResponse())
-		promisedCacheWriter = cacheStreamSupplier.promiseCachedFileOutputStream(key).then(::CacheWriter).apply {
-			excuse {
-				logger.warn("There was an error opening the cache output stream for key $key", it)
-			}
-		}
+		cacheWriter?.clear()
+		cacheWriter = CacheWriter(cacheStreamSupplier.promiseCachedFileOutputStream(key).then(forward()) {
+			logger.warn("There was an error opening the cache output stream for key $key", it)
+			null
+		})
 
 		return openedFileSize
 	}
@@ -61,19 +58,19 @@ class EntireFileCachedDataSource(
 	override fun read(bytes: ByteArray, offset: Int, readLength: Int): Int {
 		val result = innerDataSource.read(bytes, offset, readLength)
 
-		val promisedWriter = promisedCacheWriter ?: return result
+		val writer = cacheWriter ?: return result
 
 		if (result == C.RESULT_END_OF_INPUT && downloadBytes != expectedFileSize) {
-			promisedWriter.then({ it.clear() }, noOpResponse())
+			writer.clear()
 			return result
 		}
 
-		if (result > 0) promisedWriter.then({ it.queueAndProcess(bytes, offset, result) }, noOpResponse())
+		if (result > 0) writer.queueAndProcess(bytes, offset, result)
 
 		downloadBytes += result.coerceAtLeast(0).toLong()
 		if (downloadBytes == expectedFileSize) {
-			promisedWriter.then({ it.commit() }, noOpResponse())
-			promisedCacheWriter = null
+			writer.commit()
+			cacheWriter = null
 		}
 
 		return result
@@ -85,10 +82,10 @@ class EntireFileCachedDataSource(
 
 	override fun close() {
 		innerDataSource.close()
-		promisedCacheWriter?.then({ it.clear() }, noOpResponse())
+		cacheWriter?.clear()
 	}
 
-	private class CacheWriter(private val cachedOutputStream: CacheOutputStream) {
+	private class CacheWriter(private val promisedOutputStream: Promise<CacheOutputStream?>) {
 		companion object {
 			private const val goodBufferSize = 2 * 1024L * 1024L // 2MB
 		}
@@ -96,18 +93,20 @@ class EntireFileCachedDataSource(
 		private val buffersToTransfer = ConcurrentLinkedQueue<Buffer>()
 		private val activePromiseSync = Any()
 		private val bufferSync = Any()
-		private val rateLimiter = PromisingRateLimiter<Unit>(1)
+		private val rateLimiter = PromisingRateLimiter<CacheOutputStream?>(1)
 
 		@Volatile
 		private var isFaulted = false
 
 		@Volatile
-		private var activePromise = Unit.toPromise()
+		private var activePromise: Promise<CacheOutputStream?> = promisedOutputStream.then { it }
 
 		@Volatile
 		private var workingBuffer = Buffer()
 
 		fun queueAndProcess(bytes: ByteArray, offset: Int, length: Int) {
+			if (isFaulted) return
+
 			synchronized(bufferSync) {
 				workingBuffer.write(bytes, offset, length)
 				if (workingBuffer.size < goodBufferSize) return
@@ -122,13 +121,15 @@ class EntireFileCachedDataSource(
 			}
 		}
 
-		private fun processQueue() : Promise<Unit> =
-			rateLimiter.limit {
-				if (isFaulted) Unit.toPromise()
+		private fun processQueue() : Promise<CacheOutputStream?> = rateLimiter.limit {
+			promisedOutputStream.eventually { outputStream ->
+				if (outputStream == null) isFaulted = true
+
+				if (outputStream == null || isFaulted) Promise.empty<CacheOutputStream?>()
 				else buffersToTransfer.drainQueue()
 					.reduceOrNull { sink, source -> sink.also(source::readAll) }
 					?.takeUnless { it.exhausted() }
-					?.let(cachedOutputStream::promiseTransfer)
+					?.let(outputStream::promiseTransfer)
 					?.apply {
 						excuse {
 							isFaulted = true
@@ -136,11 +137,16 @@ class EntireFileCachedDataSource(
 							clear()
 						}
 					}
-					?.unitResponse()
-					.keepPromise(Unit)
-			}.also { activePromise = it }
+					.keepPromise(outputStream)
+			}
+		}
 
 		fun commit() {
+			if (isFaulted) {
+				clear()
+				return
+			}
+
 			synchronized(activePromiseSync) {
 				activePromise = activePromise
 					.eventually {
@@ -150,18 +156,18 @@ class EntireFileCachedDataSource(
 
 						processQueue()
 					}
-					.eventually { cachedOutputStream.flush() }
-					.eventually { cachedOutputStream.commitToCache() }
-					.must { cachedOutputStream.close() }
-					.then { cachedOutputStream }
+					.eventually { it?.flush().keepPromise() }
+					.eventually { os -> os?.commitToCache()?.must { os.close() }?.then { os }.keepPromise() }
 			}
 		}
 
 		fun clear() {
 			synchronized(activePromiseSync) {
 				activePromise.must {
-					cachedOutputStream.closeQuietly()
-					buffersToTransfer.drainQueue().forEach { it.clear() }
+					promisedOutputStream.then {	os ->
+						os?.closeQuietly()
+						buffersToTransfer.drainQueue().forEach { it.clear() }
+					}
 				}
 			}
 		}
