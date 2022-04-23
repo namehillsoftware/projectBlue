@@ -6,12 +6,19 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.C
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.access.ICachedFilesProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.configuration.IDiskFileCacheConfiguration
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.disk.IDiskCacheDirectoryProvider
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.persistence.DiskFileCachePersistence
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile.*
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile.Companion.CACHE_NAME
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile.Companion.CREATED_TIME
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile.Companion.FILE_NAME
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile.Companion.FILE_SIZE
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile.Companion.LAST_ACCESSED_TIME
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile.Companion.LIBRARY_ID
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile.Companion.UNIQUE_KEY
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile.Companion.tableName
 import com.lasthopesoftware.bluewater.repository.DatabasePromise
 import com.lasthopesoftware.bluewater.repository.InsertBuilder.Companion.fromTable
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
+import com.lasthopesoftware.resources.executors.ThreadPools.promiseTableMessage
 import com.namehillsoftware.handoff.promises.Promise
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -40,7 +47,7 @@ class DiskFileCachePersistence(
 						if (it.fileName == canonicalFilePath) diskFileAccessTimeUpdater.promiseFileAccessedUpdate(it)
 						else promiseFilePathUpdate(it).eventually(diskFileAccessTimeUpdater::promiseFileAccessedUpdate)
 					}
-					?: DatabasePromise {
+					?: promiseTableMessage<Unit, CachedFile> {
 						logger.info("File with unique key $uniqueKey doesn't exist. Creating...")
 						try {
 							RepositoryAccessHelper(context).use { repositoryAccessHelper ->

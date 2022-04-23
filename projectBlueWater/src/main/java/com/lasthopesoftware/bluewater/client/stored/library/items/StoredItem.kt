@@ -2,11 +2,12 @@ package com.lasthopesoftware.bluewater.client.stored.library.items
 
 import android.database.sqlite.SQLiteDatabase
 import androidx.annotation.Keep
+import com.lasthopesoftware.bluewater.repository.Entity
 import com.lasthopesoftware.bluewater.repository.IEntityCreator
 import com.lasthopesoftware.bluewater.repository.IEntityUpdater
 
 @Keep
-class StoredItem : IEntityCreator, IEntityUpdater {
+class StoredItem : Entity, IEntityCreator, IEntityUpdater {
 	var id = 0
 	var libraryId = 0
 

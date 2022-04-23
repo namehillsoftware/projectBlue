@@ -10,10 +10,10 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.s
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.supplier.SupplyCacheStreams
 import com.lasthopesoftware.bluewater.shared.drainQueue
 import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRateLimiter
+import com.lasthopesoftware.bluewater.shared.promises.NoopResponse.Companion.noOpResponse
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
-import com.lasthopesoftware.bluewater.shared.promises.toFuture
 import com.lasthopesoftware.resources.uri.PathAndQuery.pathAndQuery
 import com.namehillsoftware.handoff.promises.Promise
 import okhttp3.internal.closeQuietly
@@ -32,7 +32,7 @@ class EntireFileCachedDataSource(
 
 	private var expectedFileSize = C.LENGTH_UNSET.toLong()
 	private var downloadBytes = 0L
-	private var cacheWriter: CacheWriter? = null
+	private var promisedCacheWriter: Promise<CacheWriter>? = null
 
 	override fun addTransferListener(transferListener: TransferListener) = innerDataSource.addTransferListener(transferListener)
 
@@ -48,8 +48,12 @@ class EntireFileCachedDataSource(
 
 		val key = dataSpec.uri.pathAndQuery()
 
-		cacheWriter?.clear()
-		cacheWriter = cacheStreamSupplier.promiseCachedFileOutputStream(key).then(EntireFileCachedDataSource::CacheWriter).toFuture().get()
+		promisedCacheWriter?.then({ it.clear() }, noOpResponse())
+		promisedCacheWriter = cacheStreamSupplier.promiseCachedFileOutputStream(key).then(::CacheWriter).apply {
+			excuse {
+				logger.warn("There was an error opening the cache output stream for key $key", it)
+			}
+		}
 
 		return openedFileSize
 	}
@@ -57,18 +61,20 @@ class EntireFileCachedDataSource(
 	override fun read(bytes: ByteArray, offset: Int, readLength: Int): Int {
 		val result = innerDataSource.read(bytes, offset, readLength)
 
-		val writer = cacheWriter ?: return result
+		val promisedWriter = promisedCacheWriter ?: return result
 
 		if (result == C.RESULT_END_OF_INPUT && downloadBytes != expectedFileSize) {
-			writer.clear()
+			promisedWriter.then({ it.clear() }, noOpResponse())
 			return result
 		}
 
-		if (result > 0) writer.queueAndProcess(bytes, offset, result)
+		if (result > 0) promisedWriter.then({ it.queueAndProcess(bytes, offset, result) }, noOpResponse())
 
 		downloadBytes += result.coerceAtLeast(0).toLong()
-		if (downloadBytes == expectedFileSize)
-			writer.commit().also { cacheWriter = null }
+		if (downloadBytes == expectedFileSize) {
+			promisedWriter.then({ it.commit() }, noOpResponse())
+			promisedCacheWriter = null
+		}
 
 		return result
 	}
@@ -79,7 +85,7 @@ class EntireFileCachedDataSource(
 
 	override fun close() {
 		innerDataSource.close()
-		cacheWriter?.clear()
+		promisedCacheWriter?.then({ it.clear() }, noOpResponse())
 	}
 
 	private class CacheWriter(private val cachedOutputStream: CacheOutputStream) {

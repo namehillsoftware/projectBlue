@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.library.access
 
 import android.content.Context
-import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository.SaveLibraryWriter
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityInformation
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityInformation.tableName

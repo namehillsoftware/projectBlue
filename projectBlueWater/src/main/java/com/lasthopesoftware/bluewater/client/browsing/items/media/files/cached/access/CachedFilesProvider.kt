@@ -5,9 +5,9 @@ import android.database.SQLException
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.DiskFileCache
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.configuration.IDiskFileCacheConfiguration
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile
-import com.lasthopesoftware.bluewater.repository.DatabasePromise
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
 import com.lasthopesoftware.bluewater.shared.cls
+import com.lasthopesoftware.resources.executors.ThreadPools.promiseTableMessage
 import com.namehillsoftware.handoff.promises.Promise
 import org.slf4j.LoggerFactory
 
@@ -24,8 +24,8 @@ class CachedFilesProvider(
 				" AND " + CachedFile.UNIQUE_KEY + " = @" + CachedFile.UNIQUE_KEY
 	}
 
-    override fun promiseCachedFile(uniqueKey: String): Promise<CachedFile> =
-		DatabasePromise { getCachedFile(uniqueKey) }
+    override fun promiseCachedFile(uniqueKey: String): Promise<CachedFile?> =
+		promiseTableMessage<CachedFile?, CachedFile> { getCachedFile(uniqueKey) }
 
     private fun getCachedFile(uniqueKey: String): CachedFile? =
         RepositoryAccessHelper(context).use { repositoryAccessHelper ->

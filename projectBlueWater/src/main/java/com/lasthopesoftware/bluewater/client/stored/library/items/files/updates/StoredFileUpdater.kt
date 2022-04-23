@@ -4,7 +4,6 @@ import android.content.Context
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFileEntityInformation
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.GetStoredFiles
@@ -15,10 +14,8 @@ import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
 import com.lasthopesoftware.bluewater.repository.UpdateBuilder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
-import com.lasthopesoftware.resources.executors.ThreadPools
+import com.lasthopesoftware.resources.executors.ThreadPools.promiseTableMessage
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.queued.MessageWriter
-import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import org.slf4j.LoggerFactory
 
 class StoredFileUpdater(
@@ -90,15 +87,12 @@ class StoredFileUpdater(
 			.eventually { storedFile ->
 				storedFile
 					?.toPromise()
-					?: QueuedPromise(
-						MessageWriter {
+					?: promiseTableMessage<Unit, StoredFile> {
 							RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 								logger.info("Stored file was not found for " + serviceFile.key + ", creating file")
 								repositoryAccessHelper.createStoredFile(libraryId, serviceFile)
 							}
-						},
-						ThreadPools.databaseTableExecutor<StoredFileAccess>()
-					).eventually { storedFiles.promiseStoredFile(libraryId, serviceFile) }
+						}.eventually { storedFiles.promiseStoredFile(libraryId, serviceFile) }
 			}
 			.eventually { storedFile ->
 				promisedLibrary.eventually { library ->
@@ -131,12 +125,12 @@ class StoredFileUpdater(
 			}
 			.eventually {
 				it?.let { sf ->
-					QueuedPromise(MessageWriter {
+					promiseTableMessage<StoredFile, StoredFile> {
 						RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 							repositoryAccessHelper.updateStoredFile(sf)
 							sf
 						}
-					}, ThreadPools.databaseTableExecutor<StoredFileAccess>())
+					}
 				}.keepPromise()
 			}
 	}

@@ -9,7 +9,6 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.s
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.supplier.SupplyCacheStreams
 import com.lasthopesoftware.bluewater.client.playback.caching.datasource.EntireFileCachedDataSource
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -22,62 +21,59 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import java.util.*
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeoutException
 
 @RunWith(RobolectricTestRunner::class)
 class WhenStreamingTheFile {
 	companion object {
 		private const val fileSize = 512 * 1024
-		private val bytesWritten = ByteArray(fileSize)
-		private val bytes = ByteArray(fileSize)
+		private val bytes by lazy { ByteArray(512 * 1024).also { Random().nextBytes(it) } }
 		private val bytesRead = ByteArray(fileSize)
-		private var committedToCache = false
+		private val bytesWritten = ByteArray(fileSize)
+		private var closedBeforeCommittingToCache = false
 
 		@BeforeClass
 		@JvmStatic
 		fun context() {
 			val deferredCommit = DeferredPromise(CachedFile())
 
-			val fakeCacheStreamSupplier =
-				object : SupplyCacheStreams {
-					override fun promiseCachedFileOutputStream(uniqueKey: String): Promise<CacheOutputStream> {
-						return Promise<CacheOutputStream>(object : CacheOutputStream {
-							var numberOfBytesWritten = 0
-							override fun promiseWrite(
-								buffer: ByteArray,
-								offset: Int,
-								length: Int
-							): Promise<CacheOutputStream> =
-								Promise<CacheOutputStream>(this)
+			val fakeCacheStreamSupplier = object : SupplyCacheStreams {
+				private var committedToCache = false
 
-							override fun promiseTransfer(bufferedSource: BufferedSource): Promise<CacheOutputStream> {
-								while (numberOfBytesWritten < bytesWritten.size) {
-									val read = bufferedSource.read(
-										bytesWritten,
-										numberOfBytesWritten,
-										bytesWritten.size - numberOfBytesWritten
-									)
-									if (read == -1) return Promise<CacheOutputStream>(this)
-									numberOfBytesWritten += read
-								}
-								return Promise<CacheOutputStream>(this)
+				override fun promiseCachedFileOutputStream(uniqueKey: String): Promise<CacheOutputStream> {
+					return Promise<CacheOutputStream>(object : CacheOutputStream {
+						var numberOfBytesWritten = 0
+
+						override fun promiseWrite(buffer: ByteArray, offset: Int, length: Int): Promise<CacheOutputStream> =
+							Promise<CacheOutputStream>(this)
+
+						override fun promiseTransfer(bufferedSource: BufferedSource): Promise<CacheOutputStream> {
+							while (numberOfBytesWritten < bytesWritten.size) {
+								val read = bufferedSource.read(
+									bytesWritten,
+									numberOfBytesWritten,
+									bytesWritten.size - numberOfBytesWritten
+								)
+								if (read == -1) return Promise<CacheOutputStream>(this)
+								numberOfBytesWritten += read
 							}
+							return Promise<CacheOutputStream>(this)
+						}
 
-							override fun commitToCache(): Promise<CachedFile> {
-								committedToCache = true
-								deferredCommit.resolve()
-								return deferredCommit
-							}
+						override fun commitToCache(): Promise<CachedFile> {
+							committedToCache = true
+							deferredCommit.resolve()
+							return deferredCommit
+						}
 
-							override fun flush(): Promise<CacheOutputStream> {
-								return Promise<CacheOutputStream>(this)
-							}
+						override fun flush(): Promise<CacheOutputStream> = Promise<CacheOutputStream>(this)
 
-							override fun close() {}
-						})
-					}
+						override fun close() {
+							closedBeforeCommittingToCache = !committedToCache
+						}
+					})
 				}
+			}
+
 			val buffer = Buffer()
 			buffer.write(bytes)
 			val dataSource = mockk<HttpDataSource>(relaxUnitFun = true).apply {
@@ -114,16 +110,6 @@ class WhenStreamingTheFile {
 				val readResult = diskFileCacheDataSource.read(bytesRead, 0, bytesRead.size)
 			} while (readResult != C.RESULT_END_OF_INPUT)
 			diskFileCacheDataSource.close()
-
-			try {
-				deferredCommit.toExpiringFuture()[10, TimeUnit.SECONDS]
-			} catch (e: TimeoutException) {
-				// expected
-			}
-		}
-
-		init {
-			Random().nextBytes(bytes)
 		}
 	}
 
@@ -134,7 +120,7 @@ class WhenStreamingTheFile {
 
 	@Test
 	fun `then the file is not cached`() {
-		assertThat(committedToCache).isFalse
+		assertThat(closedBeforeCommittingToCache).isTrue
 	}
 
 	@Test

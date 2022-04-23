@@ -9,11 +9,11 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.p
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.CacheOutputStream
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.supplier.SupplyCacheStreams
-import com.lasthopesoftware.bluewater.repository.DatabasePromise
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.resources.executors.ThreadPools
+import com.lasthopesoftware.resources.executors.ThreadPools.promiseTableMessage
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
@@ -119,25 +119,17 @@ class DiskFileCache(private val context: Context, private val diskCacheDirectory
 	}
 
 	private fun deleteCachedFile(cachedFileId: Long): Promise<Long> =
-		DatabasePromise {
+		promiseTableMessage<Long, CachedFile> {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				try {
 					repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
 						logger.info("Deleting cached file with id $cachedFileId")
-						if (logger.isDebugEnabled) logger.debug(
-							"Cached file count: " + getTotalCachedFileCount(
-								repositoryAccessHelper
-							)
-						)
+						if (logger.isDebugEnabled) logger.debug("Cached file count: " + getTotalCachedFileCount(repositoryAccessHelper))
 						val executionResult = repositoryAccessHelper
 							.mapSql("DELETE FROM " + CachedFile.tableName + " WHERE id = @id")
 							.addParameter("id", cachedFileId)
 							.execute()
-						if (logger.isDebugEnabled) logger.debug(
-							"Cached file count: " + getTotalCachedFileCount(
-								repositoryAccessHelper
-							)
-						)
+						if (logger.isDebugEnabled) logger.debug("Cached file count: " + getTotalCachedFileCount(repositoryAccessHelper))
 						closeableTransaction.setTransactionSuccessful()
 						executionResult
 					}

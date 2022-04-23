@@ -1,6 +1,9 @@
 package com.lasthopesoftware.resources.executors
 
 import com.google.common.util.concurrent.MoreExecutors
+import com.lasthopesoftware.bluewater.repository.Entity
+import com.namehillsoftware.handoff.promises.queued.MessageWriter
+import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import java.util.concurrent.Executor
 import java.util.concurrent.ForkJoinPool
 
@@ -29,9 +32,10 @@ object ThreadPools {
 
 	private val databaseThreadCache = HashMap<Class<*>, Executor>()
 
-	fun <T> databaseTableExecutor(cls: Class<T>) = databaseThreadCache[cls] ?: synchronized(databaseThreadCacheSync) {
-		databaseThreadCache.getOrPut(cls, { MoreExecutors.newSequentialExecutor(io) })
+	fun <T : Entity> databaseTableExecutor(cls: Class<T>) = databaseThreadCache[cls] ?: synchronized(databaseThreadCacheSync) {
+		databaseThreadCache.getOrPut(cls) { MoreExecutors.newSequentialExecutor(io) }
 	}
 
-	inline fun <reified T> databaseTableExecutor() = databaseTableExecutor(T::class.java)
+	inline fun <T, reified Table : Entity> promiseTableMessage(messageWriter: MessageWriter<T>) =
+		QueuedPromise(messageWriter, databaseTableExecutor(Table::class.java))
 }
