@@ -54,8 +54,7 @@ class ExoPlayerPlaybackHandler(private val exoPlayer: PromisingExoPlayer) :
 		return exoPlayer.setPlayWhenReady(false)
 	}
 
-	var isPlaying = false
-		private set
+	private var isPlaying = false
 
 	override fun promisePause(): Promise<PlayableFile> = pause().then { this }
 
@@ -77,6 +76,7 @@ class ExoPlayerPlaybackHandler(private val exoPlayer: PromisingExoPlayer) :
 
 	override fun onPlaybackStateChanged(playbackState: Int) {
 		if (playbackState == Player.STATE_ENDED) {
+			isPlaying = false
 			removeListener()
 			resolve(this)
 			return
