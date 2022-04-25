@@ -20,18 +20,18 @@ class WhenAnEofExceptionOccurs {
 
 	companion object {
 		private var playedFile: PlayedFile? = null
-		private var eventListener: Player.Listener? = null
 
 		@JvmStatic
 		@BeforeClass
 		fun before() {
+			val eventListeners = ArrayList<Player.Listener>()
 			val mockExoPlayer = mockk<PromisingExoPlayer>(relaxed = true)
 			every { mockExoPlayer.setPlayWhenReady(any()) } returns mockExoPlayer.toPromise()
 			every { mockExoPlayer.getPlayWhenReady() } returns true.toPromise()
 			every { mockExoPlayer.getCurrentPosition() } returns 50L.toPromise()
 			every { mockExoPlayer.getDuration() } returns 100L.toPromise()
 			every { mockExoPlayer.addListener(any()) } answers {
-				eventListener = firstArg()
+				eventListeners.add(firstArg())
 				mockExoPlayer.toPromise()
 			}
 
@@ -40,9 +40,14 @@ class WhenAnEofExceptionOccurs {
 				.eventually { obj -> obj.promisePlayedFile() }
 				.toExpiringFuture()
 
-			eventListener?.onPlayerError(ExoPlaybackException.createForSource(
-				EOFException(),
-				PlaybackException.ERROR_CODE_IO_UNSPECIFIED))
+			eventListeners.forEach {
+				it.onPlayerError(
+					ExoPlaybackException.createForSource(
+						EOFException(),
+						PlaybackException.ERROR_CODE_IO_UNSPECIFIED
+					)
+				)
+			}
 
 			playedFile = futurePlayedFile[1, TimeUnit.SECONDS]
 		}

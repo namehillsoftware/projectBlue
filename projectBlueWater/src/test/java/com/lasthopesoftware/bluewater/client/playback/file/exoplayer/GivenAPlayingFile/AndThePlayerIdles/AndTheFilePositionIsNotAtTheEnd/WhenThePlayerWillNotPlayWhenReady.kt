@@ -14,8 +14,8 @@ import java.util.concurrent.TimeUnit
 class WhenThePlayerWillNotPlayWhenReady {
 
 	companion object {
-		private var eventListener: Player.Listener? = null
 		private val playedFile by lazy {
+			val eventListeners = ArrayList<Player.Listener>()
 			val mockExoPlayer = mockk<PromisingExoPlayer>()
 			every { mockExoPlayer.getPlayWhenReady() } returns false.toPromise()
 			every { mockExoPlayer.setPlayWhenReady(any()) } returns mockExoPlayer.toPromise()
@@ -23,7 +23,7 @@ class WhenThePlayerWillNotPlayWhenReady {
 			every { mockExoPlayer.getCurrentPosition() } returns 50L.toPromise()
 			every { mockExoPlayer.getDuration() } returns 100L.toPromise()
 			every { mockExoPlayer.addListener(any()) } answers {
-				eventListener = firstArg()
+				eventListeners.add(firstArg())
 				mockExoPlayer.toPromise()
 			}
 
@@ -32,7 +32,7 @@ class WhenThePlayerWillNotPlayWhenReady {
 				.eventually { it.promisePlayedFile() }
 				.toExpiringFuture()
 
-			eventListener?.onPlaybackStateChanged(Player.STATE_IDLE)
+			eventListeners.forEach { it.onPlaybackStateChanged(Player.STATE_IDLE) }
 			playbackPromise[10, TimeUnit.SECONDS]
 		}
 	}

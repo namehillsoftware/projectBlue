@@ -24,13 +24,14 @@ class WhenAProtocolSearchedTooManyBytesExceptionOccurs {
 		@JvmStatic
 		@BeforeClass
 		fun before() {
+			val eventListeners = ArrayList<Player.Listener>()
 			val mockExoPlayer = mockk<PromisingExoPlayer>(relaxed = true)
 			every { mockExoPlayer.setPlayWhenReady(any()) } returns mockExoPlayer.toPromise()
 			every { mockExoPlayer.getPlayWhenReady() } returns true.toPromise()
 			every { mockExoPlayer.getCurrentPosition() } returns 50L.toPromise()
 			every { mockExoPlayer.getDuration() } returns 100L.toPromise()
 			every { mockExoPlayer.addListener(any()) } answers {
-				eventListener = firstArg()
+				eventListeners.add(firstArg())
 				mockExoPlayer.toPromise()
 			}
 
@@ -38,9 +39,14 @@ class WhenAProtocolSearchedTooManyBytesExceptionOccurs {
 			val promisedFuture = exoPlayerPlaybackHandlerPlayerPlaybackHandler.promisePlayback()
 				.eventually { obj -> obj.promisePlayedFile() }
 				.toExpiringFuture()
-			eventListener?.onPlayerError(ExoPlaybackException.createForSource(
-				ParserException.createForUnsupportedContainerFeature("Searched too many bytes."),
-				PlaybackException.ERROR_CODE_UNSPECIFIED))
+			eventListeners.forEach {
+				it.onPlayerError(
+					ExoPlaybackException.createForSource(
+						ParserException.createForUnsupportedContainerFeature("Searched too many bytes."),
+						PlaybackException.ERROR_CODE_UNSPECIFIED
+					)
+				)
+			}
 
 			playedFile = promisedFuture.get()
 		}

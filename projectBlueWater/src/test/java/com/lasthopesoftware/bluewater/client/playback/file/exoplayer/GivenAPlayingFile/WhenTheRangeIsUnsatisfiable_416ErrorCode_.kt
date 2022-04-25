@@ -23,18 +23,18 @@ class WhenTheRangeIsUnsatisfiable_416ErrorCode_ {
 
 	companion object {
 		private var playedFile: PlayedFile? = null
-		private var eventListener: Player.Listener? = null
 
 		@JvmStatic
 		@BeforeClass
 		fun before() {
+			val eventListeners = ArrayList<Player.Listener>()
 			val mockExoPlayer = mockk<PromisingExoPlayer>(relaxed = true)
 			every { mockExoPlayer.setPlayWhenReady(any()) } returns mockExoPlayer.toPromise()
 			every { mockExoPlayer.getPlayWhenReady() } returns true.toPromise()
 			every { mockExoPlayer.getCurrentPosition() } returns 50L.toPromise()
 			every { mockExoPlayer.getDuration() } returns 100L.toPromise()
 			every { mockExoPlayer.addListener(any()) } answers {
-				eventListener = firstArg()
+				eventListeners.add(firstArg())
 				mockExoPlayer.toPromise()
 			}
 
@@ -43,9 +43,21 @@ class WhenTheRangeIsUnsatisfiable_416ErrorCode_ {
 				.eventually { obj -> obj.promisePlayedFile() }
 				.toExpiringFuture()
 
-			eventListener?.onPlayerError(ExoPlaybackException.createForSource(
-				InvalidResponseCodeException(416, "", IOException(), HashMap(), DataSpec(Uri.EMPTY), ByteArray(0)),
-				PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS))
+			eventListeners.forEach {
+				it.onPlayerError(
+					ExoPlaybackException.createForSource(
+						InvalidResponseCodeException(
+							416,
+							"",
+							IOException(),
+							HashMap(),
+							DataSpec(Uri.EMPTY),
+							ByteArray(0)
+						),
+						PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS
+					)
+				)
+			}
 
 			playedFile = promisedFuture[1, TimeUnit.SECONDS]
 		}
