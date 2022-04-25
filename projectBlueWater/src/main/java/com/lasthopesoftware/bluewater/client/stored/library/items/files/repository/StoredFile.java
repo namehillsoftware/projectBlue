@@ -4,11 +4,12 @@ import androidx.annotation.Keep;
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
+import com.lasthopesoftware.bluewater.repository.Entity;
 
 import java.util.Objects;
 
 @Keep
-public final class StoredFile {
+public final class StoredFile implements Entity {
 
 	private int id;
 	private int libraryId;

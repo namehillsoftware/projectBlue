@@ -13,10 +13,8 @@ import com.lasthopesoftware.bluewater.repository.InsertBuilder.Companion.fromTab
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
 import com.lasthopesoftware.bluewater.repository.fetch
 import com.lasthopesoftware.bluewater.repository.fetchFirst
-import com.lasthopesoftware.resources.executors.ThreadPools
+import com.lasthopesoftware.resources.executors.ThreadPools.promiseTableMessage
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.queued.MessageWriter
-import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 
 class StoredItemAccess(private val context: Context) : AccessStoredItems {
 	override fun toggleSync(libraryId: LibraryId, item: IItem, enable: Boolean) {
@@ -37,7 +35,7 @@ class StoredItemAccess(private val context: Context) : AccessStoredItems {
 	}
 
 	override fun isItemMarkedForSync(libraryId: LibraryId, item: IItem): Promise<Boolean> =
-		QueuedPromise(MessageWriter{
+		promiseTableMessage<Boolean, StoredItem> {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				val inferredItem = inferItem(item)
 				isItemMarkedForSync(
@@ -47,10 +45,10 @@ class StoredItemAccess(private val context: Context) : AccessStoredItems {
 					StoredItemHelpers.getListType(inferredItem)
 				)
 			}
-		}, ThreadPools.databaseTableExecutor<StoredItem>())
+		}
 
 	override fun disableAllLibraryItems(libraryId: LibraryId): Promise<Unit> =
-		QueuedPromise(MessageWriter{
+		promiseTableMessage<Unit, StoredItem> {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
 					repositoryAccessHelper
@@ -60,52 +58,54 @@ class StoredItemAccess(private val context: Context) : AccessStoredItems {
 					closeableTransaction.setTransactionSuccessful()
 				}
 			}
-		}, ThreadPools.databaseTableExecutor<StoredItem>())
+		}
 
 	private fun enableItemSync(libraryId: LibraryId, item: IItem, itemType: ItemType) {
-		QueuedPromise(MessageWriter{
+		promiseTableMessage<Unit, StoredItem> {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
-				if (isItemMarkedForSync(repositoryAccessHelper, libraryId, item, itemType)) return@MessageWriter
-				repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
-					repositoryAccessHelper
-						.mapSql(storedItemInsertSql)
-						.addParameter(StoredItem.libraryIdColumnName, libraryId.id)
-						.addParameter(StoredItem.serviceIdColumnName, item.key)
-						.addParameter(StoredItem.itemTypeColumnName, itemType)
-						.execute()
-					closeableTransaction.setTransactionSuccessful()
-				}
+				if (!isItemMarkedForSync(repositoryAccessHelper, libraryId, item, itemType))
+					repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
+						repositoryAccessHelper
+							.mapSql(storedItemInsertSql)
+							.addParameter(StoredItem.libraryIdColumnName, libraryId.id)
+							.addParameter(StoredItem.serviceIdColumnName, item.key)
+							.addParameter(StoredItem.itemTypeColumnName, itemType)
+							.execute()
+						closeableTransaction.setTransactionSuccessful()
+					}
 			}
-		}, ThreadPools.databaseTableExecutor<StoredItem>())
+		}
 	}
 
 	private fun enableItemSync(libraryId: LibraryId, item: KeyedIdentifier, itemType: ItemType) {
-		QueuedPromise(MessageWriter{
+		promiseTableMessage<Unit, StoredItem> {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
-				if (isItemMarkedForSync(repositoryAccessHelper, libraryId, item, itemType)) return@MessageWriter
-				repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
-					repositoryAccessHelper
-						.mapSql(storedItemInsertSql)
-						.addParameter(StoredItem.libraryIdColumnName, libraryId.id)
-						.addParameter(StoredItem.serviceIdColumnName, item.id)
-						.addParameter(StoredItem.itemTypeColumnName, itemType)
-						.execute()
-					closeableTransaction.setTransactionSuccessful()
-				}
+				if (!isItemMarkedForSync(repositoryAccessHelper, libraryId, item, itemType))
+					repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
+						repositoryAccessHelper
+							.mapSql(storedItemInsertSql)
+							.addParameter(StoredItem.libraryIdColumnName, libraryId.id)
+							.addParameter(StoredItem.serviceIdColumnName, item.id)
+							.addParameter(StoredItem.itemTypeColumnName, itemType)
+							.execute()
+						closeableTransaction.setTransactionSuccessful()
+					}
 			}
-		}, ThreadPools.databaseTableExecutor<StoredItem>())
+		}
 	}
 
 	private fun disableItemSync(libraryId: LibraryId, item: IItem, itemType: ItemType) {
-		QueuedPromise(MessageWriter{
+		promiseTableMessage<Unit, StoredItem> {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
 					repositoryAccessHelper
-						.mapSql("""
+						.mapSql(
+							"""
 							DELETE FROM ${StoredItem.tableName}
 							WHERE ${StoredItem.serviceIdColumnName} = @${StoredItem.serviceIdColumnName}
 							AND ${StoredItem.libraryIdColumnName} = @${StoredItem.libraryIdColumnName}
-							AND ${StoredItem.itemTypeColumnName} = @${StoredItem.itemTypeColumnName}""")
+							AND ${StoredItem.itemTypeColumnName} = @${StoredItem.itemTypeColumnName}"""
+						)
 						.addParameter(StoredItem.serviceIdColumnName, item.key)
 						.addParameter(StoredItem.libraryIdColumnName, libraryId.id)
 						.addParameter(StoredItem.itemTypeColumnName, itemType)
@@ -113,19 +113,21 @@ class StoredItemAccess(private val context: Context) : AccessStoredItems {
 					closeableTransaction.setTransactionSuccessful()
 				}
 			}
-		}, ThreadPools.databaseTableExecutor<StoredItem>())
+		}
 	}
 
 	private fun disableItemSync(libraryId: LibraryId, item: KeyedIdentifier, itemType: ItemType) {
-		QueuedPromise(MessageWriter{
+		promiseTableMessage<Unit, StoredItem> {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
 					repositoryAccessHelper
-						.mapSql("""
+						.mapSql(
+							"""
 							DELETE FROM ${StoredItem.tableName}
 							WHERE ${StoredItem.serviceIdColumnName} = @${StoredItem.serviceIdColumnName}
 							AND ${StoredItem.libraryIdColumnName} = @${StoredItem.libraryIdColumnName}
-							AND ${StoredItem.itemTypeColumnName} = @${StoredItem.itemTypeColumnName}""")
+							AND ${StoredItem.itemTypeColumnName} = @${StoredItem.itemTypeColumnName}"""
+						)
 						.addParameter(StoredItem.serviceIdColumnName, item.id)
 						.addParameter(StoredItem.libraryIdColumnName, libraryId.id)
 						.addParameter(StoredItem.itemTypeColumnName, itemType)
@@ -133,18 +135,18 @@ class StoredItemAccess(private val context: Context) : AccessStoredItems {
 					closeableTransaction.setTransactionSuccessful()
 				}
 			}
-		}, ThreadPools.databaseTableExecutor<StoredItem>())
+		}
 	}
 
 	override fun promiseStoredItems(libraryId: LibraryId): Promise<Collection<StoredItem>> =
-		QueuedPromise(MessageWriter{
+		promiseTableMessage<Collection<StoredItem>, StoredItem> {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				repositoryAccessHelper
 					.mapSql("SELECT * FROM ${StoredItem.tableName} WHERE ${StoredItem.libraryIdColumnName} = @${StoredItem.libraryIdColumnName}")
 					.addParameter(StoredItem.libraryIdColumnName, libraryId.id)
 					.fetch()
 			}
-		}, ThreadPools.databaseTableExecutor<StoredItem>())
+		}
 
 	companion object {
 		private val storedItemInsertSql by lazy {

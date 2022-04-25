@@ -12,27 +12,24 @@ import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
 import com.lasthopesoftware.bluewater.repository.UpdateBuilder
 import com.lasthopesoftware.bluewater.repository.fetch
 import com.lasthopesoftware.bluewater.repository.fetchFirst
-import com.lasthopesoftware.resources.executors.ThreadPools
+import com.lasthopesoftware.resources.executors.ThreadPools.promiseTableMessage
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.queued.MessageWriter
-import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import org.slf4j.LoggerFactory
 
 class StoredFileAccess(private val context: Context) : AccessStoredFiles {
-	private val storedFileAccessExecutor by lazy { ThreadPools.databaseTableExecutor<StoredFileAccess>() }
 
 	override fun getStoredFile(storedFileId: Int): Promise<StoredFile?> =
-		QueuedPromise(MessageWriter<StoredFile> {
+		promiseTableMessage<StoredFile?, StoredFile> {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				getStoredFile(repositoryAccessHelper, storedFileId)
 			}
-		}, storedFileAccessExecutor)
+		}
 
 	override fun getStoredFile(library: Library, serviceFile: ServiceFile): Promise<StoredFile?> =
 		getStoredFileTask(library, serviceFile)
 
 	override fun promiseDanglingFiles(): Promise<Collection<StoredFile>> =
-		QueuedPromise(MessageWriter{
+		promiseTableMessage<Collection<StoredFile>, StoredFile> {
 			RepositoryAccessHelper(context).use { helper ->
 				helper
 					.mapSql(
@@ -43,10 +40,10 @@ class StoredFileAccess(private val context: Context) : AccessStoredFiles {
 					)
 					.fetch()
 			}
-		}, storedFileAccessExecutor)
+		}
 
 	private fun getStoredFileTask(library: Library, serviceFile: ServiceFile): Promise<StoredFile?> =
-		QueuedPromise(MessageWriter<StoredFile> {
+		promiseTableMessage<StoredFile?, StoredFile> {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				getStoredFile(
 					library,
@@ -54,10 +51,10 @@ class StoredFileAccess(private val context: Context) : AccessStoredFiles {
 					serviceFile
 				)
 			}
-		}, storedFileAccessExecutor)
+		}
 
 	override val downloadingStoredFiles: Promise<List<StoredFile>>
-		get() = QueuedPromise(MessageWriter {
+		get() = promiseTableMessage<List<StoredFile>, StoredFile> {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				repositoryAccessHelper
 					.mapSql(
@@ -68,17 +65,17 @@ class StoredFileAccess(private val context: Context) : AccessStoredFiles {
 					.addParameter(StoredFileEntityInformation.isDownloadCompleteColumnName, false)
 					.fetch()
 			}
-		}, storedFileAccessExecutor)
+		}
 
 	override fun markStoredFileAsDownloaded(storedFile: StoredFile): Promise<StoredFile> =
-		QueuedPromise(MessageWriter {
+		promiseTableMessage<StoredFile, StoredFile> {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
 					repositoryAccessHelper
 						.mapSql(
-						" UPDATE " + StoredFileEntityInformation.tableName +
-							" SET " + StoredFileEntityInformation.isDownloadCompleteColumnName + " = 1" +
-							" WHERE id = @id"
+							" UPDATE " + StoredFileEntityInformation.tableName +
+								" SET " + StoredFileEntityInformation.isDownloadCompleteColumnName + " = 1" +
+								" WHERE id = @id"
 						)
 						.addParameter("id", storedFile.id)
 						.execute()
@@ -86,10 +83,10 @@ class StoredFileAccess(private val context: Context) : AccessStoredFiles {
 				}
 			}
 			storedFile.setIsDownloadComplete(true)
-		}, storedFileAccessExecutor)
+		}
 
 	override fun addMediaFile(library: Library, serviceFile: ServiceFile, mediaFileId: Int, filePath: String): Promise<Unit> =
-		QueuedPromise(MessageWriter {
+		promiseTableMessage<Unit, StoredFile> {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				val storedFile = getStoredFile(library, repositoryAccessHelper, serviceFile) ?: run {
 					createStoredFile(library, repositoryAccessHelper, serviceFile)
@@ -101,7 +98,7 @@ class StoredFileAccess(private val context: Context) : AccessStoredFiles {
 				storedFile?.storedMediaId = mediaFileId
 				updateStoredFile(repositoryAccessHelper, storedFile)
 			}
-		}, storedFileAccessExecutor)
+		}
 
 	private fun getStoredFile(library: Library, helper: RepositoryAccessHelper, serviceFile: ServiceFile): StoredFile? =
 		helper
@@ -115,7 +112,7 @@ class StoredFileAccess(private val context: Context) : AccessStoredFiles {
 			.addParameter(StoredFileEntityInformation.libraryIdColumnName, library.id)
 			.fetchFirst()
 
-	private fun getStoredFile(helper: RepositoryAccessHelper, storedFileId: Int): StoredFile =
+	private fun getStoredFile(helper: RepositoryAccessHelper, storedFileId: Int): StoredFile? =
 		helper
 			.mapSql("SELECT * FROM " + StoredFileEntityInformation.tableName + " WHERE id = @id")
 			.addParameter("id", storedFileId)
@@ -133,7 +130,7 @@ class StoredFileAccess(private val context: Context) : AccessStoredFiles {
 		}
 
 	override fun deleteStoredFile(storedFile: StoredFile): Promise<Unit> =
-		QueuedPromise(MessageWriter {
+		promiseTableMessage<Unit, StoredFile> {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				try {
 					repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
@@ -147,7 +144,7 @@ class StoredFileAccess(private val context: Context) : AccessStoredFiles {
 					logger.error("There was an error deleting serviceFile " + storedFile.id, e)
 				}
 			}
-		}, storedFileAccessExecutor)
+		}
 
 	companion object {
 		private val logger by lazy { LoggerFactory.getLogger(StoredFileAccess::class.java) }

@@ -7,14 +7,12 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.reposito
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFileEntityInformation
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
 import com.lasthopesoftware.bluewater.repository.fetchFirst
-import com.lasthopesoftware.resources.executors.ThreadPools.databaseTableExecutor
+import com.lasthopesoftware.resources.executors.ThreadPools.promiseTableMessage
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.queued.MessageWriter
-import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 
 class StoredFileQuery(private val context: Context) : GetStoredFiles {
 	override fun promiseStoredFile(libraryId: LibraryId, serviceFile: ServiceFile): Promise<StoredFile> =
-		QueuedPromise(MessageWriter {
+		promiseTableMessage<StoredFile, StoredFile> {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				repositoryAccessHelper
 					.mapSql(
@@ -27,6 +25,6 @@ class StoredFileQuery(private val context: Context) : GetStoredFiles {
 					.addParameter(StoredFileEntityInformation.libraryIdColumnName, libraryId.id)
 					.fetchFirst()
 			}
-		}, databaseTableExecutor<StoredFile>())
+		}
 
 }

@@ -16,6 +16,10 @@ class CachedFileOutputStream(
     private val file: File,
     private val diskFileCachePersistence: IDiskFileCachePersistence
 ) : CacheOutputStream {
+
+	@Volatile
+	private var isClosed = false
+
     private val lazyFileOutputStream = lazy { FileOutputStream(file) }
 
     override fun promiseWrite(
@@ -44,11 +48,12 @@ class CachedFileOutputStream(
         }, ThreadPools.io)
     }
 
-    override fun commitToCache(): Promise<CachedFile> {
-        return diskFileCachePersistence.putIntoDatabase(uniqueKey, file)
-    }
+    override fun commitToCache(): Promise<CachedFile> =
+		if (!isClosed) diskFileCachePersistence.putIntoDatabase(uniqueKey, file)
+		else Promise.empty()
 
     override fun close() {
+		isClosed = true
         if (lazyFileOutputStream.isInitialized()) lazyFileOutputStream.value.close()
     }
 }
