@@ -16,7 +16,7 @@ import java.io.IOException
 class BufferingExoPlayer(handler: Handler, private val mediaSource: MediaSource, private val exoPlayer: PromisingExoPlayer) : Promise<IBufferingPlaybackFile>(), IBufferingPlaybackFile, MediaSourceEventListener, Player.Listener {
 
 	companion object {
-		private val logger = LoggerFactory.getLogger(BufferingExoPlayer::class.java)
+		private val logger by lazy { LoggerFactory.getLogger(BufferingExoPlayer::class.java) }
 	}
 
 	init {
