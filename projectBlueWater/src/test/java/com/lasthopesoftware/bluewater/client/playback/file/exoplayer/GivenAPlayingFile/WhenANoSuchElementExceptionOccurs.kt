@@ -21,12 +21,13 @@ class WhenANoSuchElementExceptionOccurs {
 
 	companion object {
 		private var exoPlayerException: ExoPlayerException? = null
-		private var eventListener: Player.Listener? = null
 		private var playedFile: PlayedFile? = null
 
 		@JvmStatic
 		@BeforeClass
 		fun before() {
+			val eventListeners = ArrayList<Player.Listener>()
+
 			val mockExoPlayer = mockk<PromisingExoPlayer>()
 			every { mockExoPlayer.setPlayWhenReady(any()) } returns mockExoPlayer.toPromise()
 			every { mockExoPlayer.getPlayWhenReady() } returns true.toPromise()
@@ -34,7 +35,7 @@ class WhenANoSuchElementExceptionOccurs {
 			every { mockExoPlayer.getDuration() } returns 100L.toPromise()
 			every { mockExoPlayer.removeListener(any()) } returns mockExoPlayer.toPromise()
 			every { mockExoPlayer.addListener(any()) } answers {
-				eventListener = firstArg()
+				eventListeners.add(firstArg())
 				mockExoPlayer.toPromise()
 			}
 
@@ -42,7 +43,7 @@ class WhenANoSuchElementExceptionOccurs {
 			val promisedFuture = exoPlayerPlaybackHandlerPlayerPlaybackHandler.promisePlayback()
 				.eventually { it.promisePlayedFile() }
 				.toExpiringFuture()
-			eventListener?.onPlayerError(ExoPlaybackException.createForUnexpected(NoSuchElementException(), ERROR_CODE_UNSPECIFIED))
+			eventListeners.forEach { it.onPlayerError(ExoPlaybackException.createForUnexpected(NoSuchElementException(), ERROR_CODE_UNSPECIFIED)) }
 			try {
 				playedFile = promisedFuture[1, TimeUnit.SECONDS]
 			} catch (e: ExecutionException) {
