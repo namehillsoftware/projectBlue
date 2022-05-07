@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.media.files.details
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.view.MenuItem
@@ -7,13 +8,13 @@ import android.view.ViewGroup
 import android.widget.RelativeLayout
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
@@ -25,17 +26,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.max
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.lifecycleScope
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.CachedImageProvider
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
@@ -50,12 +51,7 @@ import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToast
 import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toAsync
-import kotlinx.coroutines.flow.filterNotNull
-import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
-import me.onebone.toolbar.rememberCollapsingToolbarScaffoldState
-import kotlin.math.min
 
 class FileDetailsActivity : ComponentActivity() {
 
@@ -82,18 +78,6 @@ class FileDetailsActivity : ComponentActivity() {
 
 		val fileKey = intent.getIntExtra(fileKey, -1)
 
-		vm.coverArt.filterNotNull().onEach {
-//			imgFileThumbnailBuilder.setImageBitmap(it)
-//			binding.pbLoadingFileThumbnail.visibility = View.INVISIBLE
-//			imgFileThumbnailBuilder.visibility = View.VISIBLE
-		}.launchIn(lifecycleScope)
-
-		vm.fileProperties.onEach {
-//			binding.lvFileDetails.adapter = FileDetailsAdapter(this, R.id.linFileDetailsRow, it)
-		}.launchIn(lifecycleScope)
-
-		vm.fileName.onEach { title = it }.launchIn(lifecycleScope)
-
 		setView(ServiceFile(fileKey))
 
 //		NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton(findViewById(R.id.viewFileDetailsRelativeLayout))
@@ -106,7 +90,6 @@ class FileDetailsActivity : ComponentActivity() {
 		}
 
 		vm.loadFile(serviceFile)
-//			.then { binding.tvFileName.postDelayed({ binding.tvFileName.isSelected = true }, trackNameMarqueeDelay) }
 			.excuse(HandleViewIoException(this) { setView(serviceFile) })
 			.eventuallyExcuse(LoopedInPromise.response(UnexpectedExceptionToasterResponse(this), this))
 			.then { finish() }
@@ -147,20 +130,12 @@ class FileDetailsActivity : ComponentActivity() {
 	}
 }
 
-@Composable
 @Preview
+@Composable
+@OptIn(ExperimentalFoundationApi::class)
 fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class) viewModel: FileDetailsViewModel) {
-	val emptyBitmap = remember { ImageBitmap(1, 1) }
-	val state = rememberCollapsingToolbarScaffoldState()
-	val scrollState = rememberLazyListState()
-	val scrollOffset = min(
-		1f,
-		1 - (scrollState.firstVisibleItemScrollOffset / 600f + scrollState.firstVisibleItemIndex)
-	)
-	val imageSize by animateDpAsState(targetValue = max(0.dp, 300.dp * scrollOffset))
-
-	val coverArtBitmaps = remember { viewModel.coverArt.map { a -> a?.asImageBitmap() ?: emptyBitmap } }
-	val coverArtState by coverArtBitmaps.collectAsState(emptyBitmap)
+	val coverArtBitmaps = remember { viewModel.coverArt.map { a -> a?.asImageBitmap() } }
+	val coverArtState by coverArtBitmaps.collectAsState(null)
 
 	val defaultMediaStylePalette = MediaStylePalette(
 		Color.White,
@@ -169,123 +144,112 @@ fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class) viewMod
 		MaterialTheme.colors.surface
 	)
 
-	val paletteProvider = MediaStylePaletteProvider(LocalContext.current)
+	val activity = LocalContext.current as? Activity ?: return
+
+	val paletteProvider = MediaStylePaletteProvider(activity)
 	val coverArtColors = remember {
 		viewModel.coverArt
-			.map { a -> a?.let {
-					if (it.width > 0 && it.height > 0) paletteProvider.promisePalette(it).toAsync().await()
-					else null
-				}
+			.map { a -> a
+					?.takeIf { it.width > 0 && it.height > 0 }
+					?.let(paletteProvider::promisePalette)
+					?.toAsync()
+					?.await()
+					?: defaultMediaStylePalette
 			}
-			.map { p -> p ?: defaultMediaStylePalette }
 	}
 	val coverArtColorState by coverArtColors.collectAsState(defaultMediaStylePalette)
+	val systemUiController = rememberSystemUiController()
+	systemUiController.setStatusBarColor(coverArtColorState.actionBarColor)
 
 	val artist by viewModel.artist.collectAsState()
-	val fileName by viewModel.fileName.collectAsState()
+	val fileName by viewModel.fileName.collectAsState("Loading...")
 	val fileProperties by viewModel.fileProperties.collectAsState()
 
-	Column {
-		Row(modifier = Modifier.background(coverArtColorState.backgroundColor)) {
-			Column(modifier = Modifier.padding(4.dp)) {
-				Image(
-					bitmap = coverArtState,
-					contentDescription = null,
-					contentScale = ContentScale.FillHeight,
-					alignment = Alignment.Center,
-					modifier = Modifier
-						.graphicsLayer { alpha = state.toolbarState.progress }
-						.height(imageSize)
-						.padding(10.dp)
-						.fillMaxWidth()
-						.clip(RoundedCornerShape(4.dp)),
-				)
-
-				Row {
-					Text(
-						text = fileName,
-						color = coverArtColorState.primaryTextColor,
-						fontSize = 24.sp,
-					)
-				}
-
-				Row {
-					Text(
-						text = artist,
-						color = coverArtColorState.primaryTextColor,
-						fontSize = 16.sp,
-					)
+	Box(modifier = Modifier
+		.fillMaxSize()
+		.background(coverArtColorState.backgroundColor)) {
+		LazyColumn(
+			modifier = Modifier
+				.padding(4.dp)
+				.fillMaxSize(),
+		) {
+			item {
+				Box(modifier = Modifier.fillParentMaxWidth()) {
+					Box(modifier = Modifier
+						.height(300.dp)
+						.padding(
+							top = 40.dp,
+							start = 40.dp,
+							end = 40.dp,
+							bottom = 10.dp
+						)
+						.align(Alignment.Center)
+					) {
+							coverArtState
+								?.let {
+									Image(
+										bitmap = it,
+										contentDescription = null,
+										contentScale = ContentScale.FillHeight,
+										modifier = Modifier
+											.fillParentMaxHeight()
+											.clip(RoundedCornerShape(5.dp)),
+									)
+								}
+					}
 				}
 			}
-		}
-		LazyColumn(modifier = Modifier.fillMaxSize(), state = scrollState) {
+
+			stickyHeader {
+				Column(
+					modifier = Modifier
+						.background(coverArtColorState.backgroundColor)
+						.fillParentMaxWidth()
+				) {
+					Row {
+						Text(
+							text = fileName,
+							color = coverArtColorState.primaryTextColor,
+							fontSize = 24.sp,
+						)
+					}
+
+					Row {
+						Text(
+							text = artist,
+							color = coverArtColorState.primaryTextColor,
+							fontSize = 16.sp,
+						)
+					}
+				}
+			}
+
 			items(fileProperties) {
-				Row(modifier = Modifier.padding(4.dp)) {
+				Row {
 					Text(
 						text = it.key,
+						color = coverArtColorState.primaryTextColor,
 						modifier = Modifier.weight(1f)
 					)
 					Text(
 						text = it.value,
+						color = coverArtColorState.primaryTextColor,
 						modifier = Modifier.weight(2f)
 					)
 				}
 			}
 		}
-	}
 
-//	CollapsingToolbarScaffold(
-//		state = state,
-//		toolbar = {
-//			Image(
-//				bitmap = coverArtState,
-//				contentDescription = null,
-//				contentScale = ContentScale.FillHeight,
-//				alignment = Alignment.Center,
-//				modifier = Modifier
-//					.graphicsLayer { alpha = state.toolbarState.progress }
-//					.parallax()
-//					.height(300.dp)
-//					.padding(10.dp)
-//					.fillMaxWidth()
-//					.clip(RoundedCornerShape(4.dp)),
-//			)
-//
-//			Column(modifier = Modifier.padding(4.dp)) {
-//				Row {
-//					Text(
-//						text = fileName,
-//						color = coverArtColorState.primaryTextColor,
-//						fontSize = 24.sp,
-//					)
-//				}
-//
-//				Row {
-//					Text(
-//						text = artist,
-//						color = coverArtColorState.primaryTextColor,
-//						fontSize = 16.sp,
-//					)
-//				}
-//			}
-//		},
-//		scrollStrategy = ScrollStrategy.ExitUntilCollapsed,
-//		modifier = Modifier.fillMaxSize(),
-//		toolbarModifier = Modifier.background(coverArtColorState.backgroundColor)
-//	) {
-//		LazyColumn(modifier = Modifier.fillMaxSize()) {
-//			items(fileProperties) {
-//				Row(modifier = Modifier.padding(4.dp)) {
-//					Text(
-//						text = it.key,
-//						modifier = Modifier.weight(1f)
-//					)
-//					Text(
-//						text = it.value,
-//						modifier = Modifier.weight(2f)
-//					)
-//				}
-//			}
-//		}
-//	}
+		Image(
+			painter = painterResource(id = R.drawable.ic_remove_item_white_36dp),
+			contentDescription = "Close",
+			colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
+			modifier = Modifier
+				.align(Alignment.TopEnd)
+				.padding(8.dp)
+				.clickable {
+					activity.finish()
+				},
+		)
+	}
 }

@@ -11,8 +11,10 @@
         <item name="colorControlNormal">@color/custom_transparent_white</item>
         <item name="android:textColorPrimary">@color/white</item>
         <item name="android:textColor">@color/white</item>
-        <item name="android:editTextColor">@color/white</item>
+        <item name="editTextColor">@color/white</item>
         <item name="android:windowActionBarOverlay">true</item>
+        <item name="android:windowTranslucentStatus">true</item>
+        <item name="android:windowTranslucentNavigation">true</item>
 
     </style>
 </resources>

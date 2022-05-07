@@ -13,6 +13,7 @@ import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.math.max
 import kotlin.math.roundToInt
 
 class ScaledImageProvider(private val inner: ProvideImages, private val context: Context) : ProvideImages {
@@ -20,11 +21,12 @@ class ScaledImageProvider(private val inner: ProvideImages, private val context:
 		val windowManager = context.getSystemService(Context.WINDOW_SERVICE) as WindowManager
 		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
 			val metrics = windowManager.maximumWindowMetrics
-			maxOf(metrics.bounds.width(), metrics.bounds.height()).toDouble()
+			max(metrics.bounds.width(), metrics.bounds.height()).toDouble()
 		} else {
 			val displayMetrics = DisplayMetrics()
+			@Suppress("DEPRECATION")
 			windowManager.defaultDisplay.getRealMetrics(displayMetrics)
-			maxOf(displayMetrics.widthPixels, displayMetrics.heightPixels).toDouble()
+			max(displayMetrics.widthPixels, displayMetrics.heightPixels).toDouble()
 		}
 	}
 

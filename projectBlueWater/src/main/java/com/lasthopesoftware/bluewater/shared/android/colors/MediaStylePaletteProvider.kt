@@ -336,7 +336,7 @@ class MediaStylePaletteProvider(private val context: Context) {
 			ComposeColor(primaryTextColor),
 			ComposeColor(secondaryTextColor),
 			ComposeColor(backgroundColor),
-			ComposeColor(NotificationColorUtil.resolveActionBarColor(context, backgroundColor))
+			ComposeColor(NotificationColorUtil.resolveActionBarColor(backgroundColor))
 		)
 	}
 

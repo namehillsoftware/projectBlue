@@ -12,7 +12,6 @@ import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRe
 import com.lasthopesoftware.bluewater.client.connection.selected.ProvideSelectedConnection
 import com.lasthopesoftware.bluewater.shared.images.ProvideDefaultImage
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -43,6 +42,11 @@ class FileDetailsViewModel
 	private val mutableFileProperties = MutableStateFlow(emptyList<Map.Entry<String, String>>())
 	private val mutableIsLoadingFileDetails = MutableStateFlow(false)
 	private val mutableCoverArt = MutableStateFlow<Bitmap?>(null)
+	private val promisedSetDefaultCoverArt = defaultImageProvider.promiseFileBitmap()
+		.then {
+			mutableCoverArt.value = it
+			it
+		}
 
 	val fileName = mutableFileName.asStateFlow()
 	val artist = mutableArtist.asStateFlow()
@@ -71,12 +75,12 @@ class FileDetailsViewModel
 					.keepPromise()
 			}
 
-		val bitmapSetPromise = imageProvider
-			.promiseFileBitmap(serviceFile)
-			.eventually { bitmap ->
-				bitmap?.toPromise() ?: defaultImageProvider.promiseFileBitmap()
+		val bitmapSetPromise = promisedSetDefaultCoverArt // Ensure default cover art is first set before apply cover art from file properties
+			.eventually { default ->
+				imageProvider
+					.promiseFileBitmap(serviceFile)
+					.then { bitmap -> mutableCoverArt.value = bitmap ?: default }
 			}
-			.then { mutableCoverArt.value = it }
 
 		return Promise.whenAll(filePropertiesSetPromise, bitmapSetPromise).then { this }
 	}
