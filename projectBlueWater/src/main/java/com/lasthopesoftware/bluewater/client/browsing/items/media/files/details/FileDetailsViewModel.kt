@@ -19,7 +19,7 @@ import kotlinx.coroutines.flow.asStateFlow
 class FileDetailsViewModel
 (
 	private val selectedConnectionProvider: ProvideSelectedConnection,
-	private val defaultImageProvider: ProvideDefaultImage,
+	defaultImageProvider: ProvideDefaultImage,
 	private val imageProvider: ProvideImages,
 )
 	: ViewModel() {
@@ -40,21 +40,24 @@ class FileDetailsViewModel
 	private val mutableFileName = MutableStateFlow("")
 	private val mutableArtist = MutableStateFlow("")
 	private val mutableFileProperties = MutableStateFlow(emptyList<Map.Entry<String, String>>())
-	private val mutableIsLoadingFileDetails = MutableStateFlow(false)
+	private val mutableIsLoading = MutableStateFlow(false)
 	private val mutableCoverArt = MutableStateFlow<Bitmap?>(null)
 	private val promisedSetDefaultCoverArt = defaultImageProvider.promiseFileBitmap()
 		.then {
 			mutableCoverArt.value = it
 			it
 		}
+	private val mutableRating = MutableStateFlow(0f)
 
 	val fileName = mutableFileName.asStateFlow()
 	val artist = mutableArtist.asStateFlow()
 	val fileProperties = mutableFileProperties.asStateFlow()
-	val isLoadingFileDetails = mutableIsLoadingFileDetails.asStateFlow()
+	val isLoading = mutableIsLoading.asStateFlow()
 	val coverArt = mutableCoverArt.asStateFlow()
+	val rating = mutableRating.asStateFlow()
 
 	fun loadFile(serviceFile: ServiceFile): Promise<FileDetailsViewModel> {
+		mutableIsLoading.value = true
 		val filePropertiesSetPromise = selectedConnectionProvider
 			.promiseSessionConnection()
 			.eventually { connectionProvider ->
@@ -65,12 +68,11 @@ class FileDetailsViewModel
 					?.then { fileProperties ->
 						fileProperties[KnownFileProperties.NAME]?.also { mutableFileName.value = it }
 						fileProperties[KnownFileProperties.ARTIST]?.also { mutableArtist.value = it }
+						fileProperties[KnownFileProperties.RATING]?.toFloatOrNull()?.also { mutableRating.value = it }
 
 						mutableFileProperties.value = fileProperties.entries
 							.filterNot { e -> propertiesToSkip.contains(e.key) }
 							.sortedBy { e -> e.key }
-
-						mutableIsLoadingFileDetails.value = false
 					}
 					.keepPromise()
 			}
@@ -82,6 +84,10 @@ class FileDetailsViewModel
 					.then { bitmap -> mutableCoverArt.value = bitmap ?: default }
 			}
 
-		return Promise.whenAll(filePropertiesSetPromise, bitmapSetPromise).then { this }
+		return Promise.whenAll(filePropertiesSetPromise, bitmapSetPromise)
+			.then {
+				mutableIsLoading.value = false
+				this
+			}
 	}
 }

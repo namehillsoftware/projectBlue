@@ -122,6 +122,7 @@ android {
 	composeOptions {
 		kotlinCompilerExtensionVersion compose_version
 	}
+	namespace 'com.lasthopesoftware.bluewater'
 }
 
 def getGeneratedVersionCode() {
@@ -166,7 +167,6 @@ dependencies {
 	implementation "com.google.android.exoplayer:extension-okhttp:${exoplayer_version}"
 	implementation 'com.squareup.okio:okio:2.10.0'
 	implementation 'com.squareup.okhttp3:okhttp:4.9.2'
-	implementation 'me.onebone:toolbar-compose:2.3.3'
 	implementation 'com.github.namehillsoftware:artful:0.3.0'
 	implementation "androidx.compose.ui:ui:$compose_version"
 	implementation "androidx.compose.material:material:$compose_version"

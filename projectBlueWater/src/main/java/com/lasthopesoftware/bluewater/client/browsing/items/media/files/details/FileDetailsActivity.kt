@@ -4,18 +4,15 @@ import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.view.MenuItem
-import android.view.ViewGroup
-import android.widget.RelativeLayout
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.GenericShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
@@ -25,12 +22,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.*
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.dp
@@ -52,6 +49,8 @@ import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toAsync
 import kotlinx.coroutines.flow.map
+import kotlin.math.cos
+import kotlin.math.sin
 
 class FileDetailsActivity : ComponentActivity() {
 
@@ -121,21 +120,14 @@ class FileDetailsActivity : ComponentActivity() {
 		val fileKey by lazy { MagicPropertyBuilder.buildMagicPropertyName<FileDetailsActivity>("FILE_KEY") }
 
 		private const val trackNameMarqueeDelay = 1500L
-
-		private val imgFileThumbnailLayoutParams by lazy {
-			val layoutParams = RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
-			layoutParams.addRule(RelativeLayout.CENTER_IN_PARENT)
-			layoutParams
-		}
 	}
 }
 
 @Preview
 @Composable
 @OptIn(ExperimentalFoundationApi::class)
-fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class) viewModel: FileDetailsViewModel) {
-	val coverArtBitmaps = remember { viewModel.coverArt.map { a -> a?.asImageBitmap() } }
-	val coverArtState by coverArtBitmaps.collectAsState(null)
+private fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class) viewModel: FileDetailsViewModel) {
+	val activity = LocalContext.current as? Activity ?: return
 
 	val defaultMediaStylePalette = MediaStylePalette(
 		Color.White,
@@ -143,8 +135,6 @@ fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class) viewMod
 		MaterialTheme.colors.background,
 		MaterialTheme.colors.surface
 	)
-
-	val activity = LocalContext.current as? Activity ?: return
 
 	val paletteProvider = MediaStylePaletteProvider(activity)
 	val coverArtColors = remember {
@@ -161,30 +151,43 @@ fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class) viewMod
 	val systemUiController = rememberSystemUiController()
 	systemUiController.setStatusBarColor(coverArtColorState.actionBarColor)
 
-	val artist by viewModel.artist.collectAsState()
-	val fileName by viewModel.fileName.collectAsState("Loading...")
-	val fileProperties by viewModel.fileProperties.collectAsState()
+	val isLoading by viewModel.isLoading.collectAsState()
 
 	Box(modifier = Modifier
 		.fillMaxSize()
 		.background(coverArtColorState.backgroundColor)) {
-		LazyColumn(
-			modifier = Modifier
-				.padding(4.dp)
-				.fillMaxSize(),
-		) {
-			item {
-				Box(modifier = Modifier.fillParentMaxWidth()) {
-					Box(modifier = Modifier
-						.height(300.dp)
-						.padding(
-							top = 40.dp,
-							start = 40.dp,
-							end = 40.dp,
-							bottom = 10.dp
-						)
-						.align(Alignment.Center)
-					) {
+
+		if (isLoading) {
+			CircularProgressIndicator(
+				color = coverArtColorState.primaryTextColor,
+				modifier = Modifier.align(Alignment.Center))
+		} else {
+			val coverArtBitmaps = remember { viewModel.coverArt.map { a -> a?.asImageBitmap() } }
+			val coverArtState by coverArtBitmaps.collectAsState(null)
+
+			val artist by viewModel.artist.collectAsState()
+			val fileName by viewModel.fileName.collectAsState("Loading...")
+			val fileProperties by viewModel.fileProperties.collectAsState()
+			val rating by viewModel.rating.collectAsState()
+
+			val viewPadding = 4.dp
+
+			LazyColumn(modifier = Modifier.fillMaxSize(),) {
+				item {
+					Column(modifier = Modifier
+						.fillParentMaxWidth()
+						.padding(viewPadding)) {
+						Box(
+							modifier = Modifier
+								.height(300.dp)
+								.padding(
+									top = 40.dp,
+									start = 40.dp,
+									end = 40.dp,
+									bottom = 10.dp
+								)
+								.align(Alignment.CenterHorizontally)
+						) {
 							coverArtState
 								?.let {
 									Image(
@@ -196,46 +199,63 @@ fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class) viewMod
 											.clip(RoundedCornerShape(5.dp)),
 									)
 								}
-					}
-				}
-			}
+						}
 
-			stickyHeader {
-				Column(
-					modifier = Modifier
-						.background(coverArtColorState.backgroundColor)
-						.fillParentMaxWidth()
-				) {
-					Row {
-						Text(
-							text = fileName,
-							color = coverArtColorState.primaryTextColor,
-							fontSize = 24.sp,
-						)
-					}
-
-					Row {
-						Text(
-							text = artist,
-							color = coverArtColorState.primaryTextColor,
-							fontSize = 16.sp,
+						RatingBar(
+							rating = rating,
+							color = coverArtColorState.secondaryTextColor,
+							backgroundColor = coverArtColorState.primaryTextColor,
+							modifier = Modifier
+								.fillMaxWidth()
+								.height(36.dp)
 						)
 					}
 				}
-			}
 
-			items(fileProperties) {
-				Row {
-					Text(
-						text = it.key,
-						color = coverArtColorState.primaryTextColor,
-						modifier = Modifier.weight(1f)
-					)
-					Text(
-						text = it.value,
-						color = coverArtColorState.primaryTextColor,
-						modifier = Modifier.weight(2f)
-					)
+				stickyHeader {
+					Column(
+						modifier = Modifier
+							.padding(start = viewPadding, top = viewPadding, bottom = viewPadding, end = 40.dp + viewPadding)
+							.fillParentMaxWidth()
+					) {
+						Row {
+							Text(
+								text = fileName,
+								color = coverArtColorState.primaryTextColor,
+								fontSize = 24.sp,
+								maxLines = 1,
+								overflow = TextOverflow.Ellipsis,
+							)
+						}
+
+						Row {
+							Text(
+								text = artist,
+								color = coverArtColorState.primaryTextColor,
+								fontSize = 16.sp,
+								maxLines = 1,
+								overflow = TextOverflow.Ellipsis,
+							)
+						}
+					}
+				}
+
+				items(fileProperties) {
+					val itemPadding = 2.dp
+
+					Row {
+						Text(
+							text = it.key,
+							color = coverArtColorState.primaryTextColor,
+							modifier = Modifier.weight(1f).padding(start = viewPadding, top = itemPadding, end = itemPadding, bottom = itemPadding),
+						)
+
+						Text(
+							text = it.value,
+							color = coverArtColorState.primaryTextColor,
+							modifier = Modifier.weight(2f).padding(start = itemPadding, top = itemPadding, end = viewPadding, bottom = itemPadding),
+						)
+					}
 				}
 			}
 		}
@@ -246,10 +266,113 @@ fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class) viewMod
 			colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
 			modifier = Modifier
 				.align(Alignment.TopEnd)
-				.padding(8.dp)
+				.padding(top = 12.dp, start = 8.dp, end = 8.dp, bottom = 8.dp)
 				.clickable {
 					activity.finish()
 				},
+		)
+	}
+}
+
+@Composable
+fun RatingBar(
+	rating: Float,
+	modifier: Modifier = Modifier,
+	color: Color = Color.Yellow,
+	backgroundColor: Color = Color.Gray,
+) {
+	Row(modifier = modifier.wrapContentSize()) {
+		(1..5).forEach { step ->
+			val stepRating = when {
+				rating > step -> 1f
+				step.rem(rating) < 1 -> rating - (step - 1f)
+				else -> 0f
+			}
+			RatingStar(stepRating, color, backgroundColor)
+		}
+	}
+}
+
+@Composable
+private fun RatingStar(
+	rating: Float,
+	ratingColor: Color = Color.Yellow,
+	backgroundColor: Color = Color.Gray
+) {
+	BoxWithConstraints(modifier = Modifier.padding(horizontal = 2.dp)) {
+		BoxWithConstraints(
+			modifier = Modifier
+				.fillMaxHeight()
+				.aspectRatio(1f)
+				.clip(starShape)
+				.border(width = 1.dp, color = backgroundColor, shape = starShape)
+		) {
+			Canvas(modifier = Modifier.size(maxHeight)) {
+//			drawRect(
+//				brush = SolidColor(backgroundColor),
+//				size = Size(
+//					height = size.height * 1.4f,
+//					width = size.width * 1.4f
+//				),
+//				topLeft = Offset(
+//					x = -(size.width * 0.1f),
+//					y = -(size.height * 0.1f)
+//				)
+//			)
+				if (rating > 0) {
+					drawRect(
+						brush = SolidColor(ratingColor),
+						size = Size(
+							height = size.height * 1.1f,
+							width = size.width * rating
+						)
+					)
+				}
+			}
+		}
+	}
+}
+
+private val starShape = GenericShape { size, _ ->
+	addPath(starPath(size.height))
+}
+
+private val starPath = { size: Float ->
+	Path().apply {
+		val outerRadius: Float = size / 1.8f
+		val innerRadius: Double = outerRadius / 2.5
+		var rot: Double = Math.PI / 2 * 3
+		val cx: Float = size / 2
+		val cy: Float = size / 20 * 11
+		val step = Math.PI / 5
+
+		moveTo(cx, cy - outerRadius)
+		repeat(5) {
+			var x = (cx + cos(rot) * outerRadius).toFloat()
+			var y = (cy + sin(rot) * outerRadius).toFloat()
+			lineTo(x, y)
+			rot += step
+
+			x = (cx + cos(rot) * innerRadius).toFloat()
+			y = (cy + sin(rot) * innerRadius).toFloat()
+			lineTo(x, y)
+			rot += step
+		}
+		close()
+	}
+}
+
+@Preview
+@Composable
+fun RatingBarPreview() {
+	Column(
+		Modifier
+			.fillMaxSize()
+			.background(Color.White)
+	) {
+		RatingBar(
+			3.8f,
+			modifier = Modifier.height(20.dp)
 		)
 	}
 }
