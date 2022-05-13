@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.browsing.items.media.files.details
 
 import android.app.Activity
 import android.content.Intent
+import android.content.res.Configuration
 import android.os.Bundle
 import android.view.MenuItem
 import androidx.activity.ComponentActivity
@@ -25,6 +26,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -78,8 +80,6 @@ class FileDetailsActivity : ComponentActivity() {
 		val fileKey = intent.getIntExtra(fileKey, -1)
 
 		setView(ServiceFile(fileKey))
-
-//		NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton(findViewById(R.id.viewFileDetailsRelativeLayout))
 	}
 
 	private fun setView(serviceFile: ServiceFile) {
@@ -130,10 +130,10 @@ private fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class)
 	val activity = LocalContext.current as? Activity ?: return
 
 	val defaultMediaStylePalette = MediaStylePalette(
-		Color.White,
-		MaterialTheme.colors.primaryVariant,
-		MaterialTheme.colors.background,
-		MaterialTheme.colors.surface
+		MaterialTheme.colors.onPrimary,
+		MaterialTheme.colors.secondary,
+		MaterialTheme.colors.primary,
+		MaterialTheme.colors.secondary
 	)
 
 	val paletteProvider = MediaStylePaletteProvider(activity)
@@ -151,113 +151,208 @@ private fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class)
 	val systemUiController = rememberSystemUiController()
 	systemUiController.setStatusBarColor(coverArtColorState.actionBarColor)
 
+	val viewPadding = 4.dp
+
+	@Composable
+	fun filePropertyHeader(modifier: Modifier) {
+		val artist by viewModel.artist.collectAsState()
+		val fileName by viewModel.fileName.collectAsState("Loading...")
+
+		Column(modifier = modifier) {
+			Row {
+				Text(
+					text = fileName,
+					color = coverArtColorState.primaryTextColor,
+					fontSize = 24.sp,
+					maxLines = 1,
+					overflow = TextOverflow.Ellipsis,
+				)
+			}
+
+			Row {
+				Text(
+					text = artist,
+					color = coverArtColorState.primaryTextColor,
+					fontSize = 16.sp,
+					maxLines = 1,
+					overflow = TextOverflow.Ellipsis,
+				)
+			}
+		}
+	}
+
+	@Composable
+	fun filePropertyRow(property: Map.Entry<String, String>) {
+		val itemPadding = 2.dp
+
+		Row {
+			Text(
+				text = property.key,
+				color = coverArtColorState.primaryTextColor,
+				modifier = Modifier
+					.weight(1f)
+					.padding(start = viewPadding, top = itemPadding, end = itemPadding, bottom = itemPadding),
+			)
+
+			Text(
+				text = property.value,
+				color = coverArtColorState.primaryTextColor,
+				modifier = Modifier
+					.weight(2f)
+					.padding(start = itemPadding, top = itemPadding, end = viewPadding, bottom = itemPadding),
+			)
+		}
+	}
+
+	@Composable
+	fun fileDetailsPortrait() {
+		val coverArtBitmaps = remember { viewModel.coverArt.map { a -> a?.asImageBitmap() } }
+		val coverArtState by coverArtBitmaps.collectAsState(null)
+
+		val rating by viewModel.rating.collectAsState()
+
+		val fileProperties by viewModel.fileProperties.collectAsState()
+
+		LazyColumn(modifier = Modifier.fillMaxSize()) {
+			item {
+				Column(modifier = Modifier
+					.fillParentMaxWidth()
+					.padding(viewPadding)) {
+					Box(
+						modifier = Modifier
+							.height(300.dp)
+							.padding(
+								top = 40.dp,
+								start = 40.dp,
+								end = 40.dp,
+								bottom = 10.dp
+							)
+							.align(Alignment.CenterHorizontally)
+					) {
+						coverArtState
+							?.let {
+								Image(
+									bitmap = it,
+									contentDescription = null,
+									contentScale = ContentScale.FillHeight,
+									modifier = Modifier
+										.fillParentMaxHeight()
+										.clip(RoundedCornerShape(5.dp)),
+								)
+							}
+					}
+
+					RatingBar(
+						rating = rating,
+						color = coverArtColorState.secondaryTextColor,
+						backgroundColor = coverArtColorState.primaryTextColor,
+						modifier = Modifier
+							.fillMaxWidth()
+							.height(36.dp)
+					)
+				}
+			}
+
+			stickyHeader {
+				filePropertyHeader(
+					modifier = Modifier
+						.background(coverArtColorState.backgroundColor)
+						.padding(
+							start = viewPadding,
+							top = viewPadding,
+							bottom = viewPadding,
+							end = 40.dp + viewPadding
+						)
+						.fillParentMaxWidth()
+				)
+			}
+
+			items(fileProperties) {
+				filePropertyRow(it)
+			}
+		}
+	}
+
+	@Composable
+	fun fileDetailsLandscape() {
+		val coverArtBitmaps = remember { viewModel.coverArt.map { a -> a?.asImageBitmap() } }
+		val coverArtState by coverArtBitmaps.collectAsState(null)
+
+		val rating by viewModel.rating.collectAsState()
+
+		val fileProperties by viewModel.fileProperties.collectAsState()
+
+		Row(modifier = Modifier.fillMaxSize()) {
+			Column(modifier = Modifier
+				.fillMaxHeight()
+				.width(380.dp)
+				.padding(viewPadding)) {
+				Box(
+					modifier = Modifier
+						.width(300.dp)
+						.weight(1.0f)
+						.padding(bottom = 10.dp)
+						.align(Alignment.CenterHorizontally)
+				) {
+					coverArtState
+						?.let {
+							Image(
+								bitmap = it,
+								contentDescription = null,
+								contentScale = ContentScale.FillWidth,
+								modifier = Modifier
+									.fillMaxWidth()
+									.clip(RoundedCornerShape(5.dp))
+									.align(Alignment.Center),
+							)
+						}
+				}
+
+				RatingBar(
+					rating = rating,
+					color = coverArtColorState.secondaryTextColor,
+					backgroundColor = coverArtColorState.primaryTextColor,
+					modifier = Modifier
+						.fillMaxWidth()
+						.height(36.dp)
+						.align(Alignment.CenterHorizontally)
+				)
+			}
+
+			LazyColumn(modifier = Modifier.fillMaxWidth()) {
+				stickyHeader {
+					filePropertyHeader(
+						modifier = Modifier
+							.background(coverArtColorState.backgroundColor)
+							.padding(
+								start = viewPadding,
+								top = viewPadding,
+								bottom = viewPadding,
+								end = 40.dp + viewPadding
+							)
+							.fillParentMaxWidth()
+					)
+				}
+
+				items(fileProperties) {
+					filePropertyRow(property = it)
+				}
+			}
+		}
+	}
+
 	val isLoading by viewModel.isLoading.collectAsState()
 
 	Box(modifier = Modifier
 		.fillMaxSize()
 		.background(coverArtColorState.backgroundColor)) {
 
-		if (isLoading) {
-			CircularProgressIndicator(
+		when {
+			isLoading -> CircularProgressIndicator(
 				color = coverArtColorState.primaryTextColor,
 				modifier = Modifier.align(Alignment.Center))
-		} else {
-			val coverArtBitmaps = remember { viewModel.coverArt.map { a -> a?.asImageBitmap() } }
-			val coverArtState by coverArtBitmaps.collectAsState(null)
-
-			val artist by viewModel.artist.collectAsState()
-			val fileName by viewModel.fileName.collectAsState("Loading...")
-			val fileProperties by viewModel.fileProperties.collectAsState()
-			val rating by viewModel.rating.collectAsState()
-
-			val viewPadding = 4.dp
-
-			LazyColumn(modifier = Modifier.fillMaxSize(),) {
-				item {
-					Column(modifier = Modifier
-						.fillParentMaxWidth()
-						.padding(viewPadding)) {
-						Box(
-							modifier = Modifier
-								.height(300.dp)
-								.padding(
-									top = 40.dp,
-									start = 40.dp,
-									end = 40.dp,
-									bottom = 10.dp
-								)
-								.align(Alignment.CenterHorizontally)
-						) {
-							coverArtState
-								?.let {
-									Image(
-										bitmap = it,
-										contentDescription = null,
-										contentScale = ContentScale.FillHeight,
-										modifier = Modifier
-											.fillParentMaxHeight()
-											.clip(RoundedCornerShape(5.dp)),
-									)
-								}
-						}
-
-						RatingBar(
-							rating = rating,
-							color = coverArtColorState.secondaryTextColor,
-							backgroundColor = coverArtColorState.primaryTextColor,
-							modifier = Modifier
-								.fillMaxWidth()
-								.height(36.dp)
-						)
-					}
-				}
-
-				stickyHeader {
-					Column(
-						modifier = Modifier
-							.padding(start = viewPadding, top = viewPadding, bottom = viewPadding, end = 40.dp + viewPadding)
-							.fillParentMaxWidth()
-					) {
-						Row {
-							Text(
-								text = fileName,
-								color = coverArtColorState.primaryTextColor,
-								fontSize = 24.sp,
-								maxLines = 1,
-								overflow = TextOverflow.Ellipsis,
-							)
-						}
-
-						Row {
-							Text(
-								text = artist,
-								color = coverArtColorState.primaryTextColor,
-								fontSize = 16.sp,
-								maxLines = 1,
-								overflow = TextOverflow.Ellipsis,
-							)
-						}
-					}
-				}
-
-				items(fileProperties) {
-					val itemPadding = 2.dp
-
-					Row {
-						Text(
-							text = it.key,
-							color = coverArtColorState.primaryTextColor,
-							modifier = Modifier.weight(1f).padding(start = viewPadding, top = itemPadding, end = itemPadding, bottom = itemPadding),
-						)
-
-						Text(
-							text = it.value,
-							color = coverArtColorState.primaryTextColor,
-							modifier = Modifier.weight(2f).padding(start = itemPadding, top = itemPadding, end = viewPadding, bottom = itemPadding),
-						)
-					}
-				}
-			}
+			LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE -> fileDetailsLandscape()
+			else -> fileDetailsPortrait()
 		}
 
 		Image(
