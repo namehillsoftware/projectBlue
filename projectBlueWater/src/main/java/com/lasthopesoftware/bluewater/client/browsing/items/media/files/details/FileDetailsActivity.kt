@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.media.files.details
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.content.res.Configuration
 import android.os.Bundle
@@ -55,6 +56,19 @@ import kotlin.math.cos
 import kotlin.math.sin
 
 class FileDetailsActivity : ComponentActivity() {
+
+	companion object {
+
+		val fileKey by lazy { MagicPropertyBuilder.buildMagicPropertyName<FileDetailsActivity>("FILE_KEY") }
+
+		private const val trackNameMarqueeDelay = 1500L
+
+		fun Context.launchFileDetailsActivity(serviceFile: ServiceFile) {
+			startActivity(Intent(this, FileDetailsActivity::class.java).apply {
+				putExtra(fileKey, serviceFile.key)
+			})
+		}
+	}
 
 	private val imageProvider by lazy { CachedImageProvider.getInstance(this) }
 
@@ -114,12 +128,6 @@ class FileDetailsActivity : ComponentActivity() {
 			return true
 		}
 		return super.onOptionsItemSelected(item)
-	}
-
-	companion object {
-		val fileKey by lazy { MagicPropertyBuilder.buildMagicPropertyName<FileDetailsActivity>("FILE_KEY") }
-
-		private const val trackNameMarqueeDelay = 1500L
 	}
 }
 
