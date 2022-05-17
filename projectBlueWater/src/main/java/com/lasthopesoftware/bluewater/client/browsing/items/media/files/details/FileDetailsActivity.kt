@@ -245,7 +245,8 @@ private fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class)
 									contentScale = ContentScale.FillHeight,
 									modifier = Modifier
 										.fillParentMaxHeight()
-										.clip(RoundedCornerShape(5.dp)),
+										.clip(RoundedCornerShape(5.dp))
+										.border(1.dp, shape = RoundedCornerShape(5.dp), color = coverArtColorState.secondaryTextColor),
 								)
 							}
 					}
@@ -293,11 +294,18 @@ private fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class)
 		Row(modifier = Modifier.fillMaxSize()) {
 			Column(modifier = Modifier
 				.fillMaxHeight()
-				.width(380.dp)
-				.padding(viewPadding)) {
+				.width(250.dp)
+				.padding(viewPadding)
+				.padding(
+					start = viewPadding,
+					end = 10.dp,
+					bottom = viewPadding,
+					top = viewPadding,
+				)
+			) {
 				Box(
 					modifier = Modifier
-						.width(300.dp)
+						.fillMaxWidth()
 						.weight(1.0f)
 						.padding(bottom = 10.dp)
 						.align(Alignment.CenterHorizontally)
@@ -311,7 +319,8 @@ private fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class)
 								modifier = Modifier
 									.fillMaxWidth()
 									.clip(RoundedCornerShape(5.dp))
-									.align(Alignment.Center),
+									.align(Alignment.Center)
+									.border(1.dp, shape = RoundedCornerShape(5.dp), color = coverArtColorState.secondaryTextColor),
 							)
 						}
 				}
@@ -322,7 +331,8 @@ private fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class)
 					backgroundColor = coverArtColorState.primaryTextColor,
 					modifier = Modifier
 						.fillMaxWidth()
-						.height(36.dp)
+						.height(46.dp)
+						.padding(bottom = 10.dp)
 						.align(Alignment.CenterHorizontally)
 				)
 			}
