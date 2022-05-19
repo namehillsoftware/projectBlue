@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.client.browsing.items.media.files.details
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.content.res.Configuration
 import android.os.Bundle
 import android.view.MenuItem
 import androidx.activity.ComponentActivity
@@ -27,7 +26,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -213,7 +211,7 @@ private fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class)
 	}
 
 	@Composable
-	fun fileDetailsPortrait() {
+	fun fileDetailsSingleColumn() {
 		val coverArtBitmaps = remember { viewModel.coverArt.map { a -> a?.asImageBitmap() } }
 		val coverArtState by coverArtBitmaps.collectAsState(null)
 
@@ -283,7 +281,7 @@ private fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class)
 	}
 
 	@Composable
-	fun fileDetailsLandscape() {
+	fun fileDetailsTwoColumn() {
 		val coverArtBitmaps = remember { viewModel.coverArt.map { a -> a?.asImageBitmap() } }
 		val coverArtState by coverArtBitmaps.collectAsState(null)
 
@@ -361,16 +359,17 @@ private fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class)
 
 	val isLoading by viewModel.isLoading.collectAsState()
 
-	Box(modifier = Modifier
+	BoxWithConstraints(modifier = Modifier
 		.fillMaxSize()
-		.background(coverArtColorState.backgroundColor)) {
+		.background(coverArtColorState.backgroundColor)
+	) {
 
 		when {
 			isLoading -> CircularProgressIndicator(
 				color = coverArtColorState.primaryTextColor,
 				modifier = Modifier.align(Alignment.Center))
-			LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE -> fileDetailsLandscape()
-			else -> fileDetailsPortrait()
+			maxWidth >= 450.dp -> fileDetailsTwoColumn()
+			else -> fileDetailsSingleColumn()
 		}
 
 		Image(
