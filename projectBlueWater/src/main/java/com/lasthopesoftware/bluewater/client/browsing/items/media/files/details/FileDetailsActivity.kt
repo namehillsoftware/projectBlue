@@ -211,11 +211,21 @@ private fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class)
 	}
 
 	@Composable
+	fun fileRating(modifier: Modifier) {
+		val rating by viewModel.rating.collectAsState()
+
+		RatingBar(
+			rating = rating,
+			color = coverArtColorState.secondaryTextColor,
+			backgroundColor = coverArtColorState.secondaryTextColor.copy(.1f),
+			modifier = modifier
+		)
+	}
+
+	@Composable
 	fun fileDetailsSingleColumn() {
 		val coverArtBitmaps = remember { viewModel.coverArt.map { a -> a?.asImageBitmap() } }
 		val coverArtState by coverArtBitmaps.collectAsState(null)
-
-		val rating by viewModel.rating.collectAsState()
 
 		val fileProperties by viewModel.fileProperties.collectAsState()
 
@@ -249,10 +259,7 @@ private fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class)
 							}
 					}
 
-					RatingBar(
-						rating = rating,
-						color = coverArtColorState.secondaryTextColor,
-						backgroundColor = coverArtColorState.primaryTextColor,
+					fileRating(
 						modifier = Modifier
 							.fillMaxWidth()
 							.height(36.dp)
@@ -284,8 +291,6 @@ private fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class)
 	fun fileDetailsTwoColumn() {
 		val coverArtBitmaps = remember { viewModel.coverArt.map { a -> a?.asImageBitmap() } }
 		val coverArtState by coverArtBitmaps.collectAsState(null)
-
-		val rating by viewModel.rating.collectAsState()
 
 		val fileProperties by viewModel.fileProperties.collectAsState()
 
@@ -323,10 +328,7 @@ private fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class)
 						}
 				}
 
-				RatingBar(
-					rating = rating,
-					color = coverArtColorState.secondaryTextColor,
-					backgroundColor = coverArtColorState.primaryTextColor,
+				fileRating(
 					modifier = Modifier
 						.fillMaxWidth()
 						.height(46.dp)
@@ -417,20 +419,17 @@ private fun RatingStar(
 				.fillMaxHeight()
 				.aspectRatio(1f)
 				.clip(starShape)
-				.border(width = 1.dp, color = backgroundColor, shape = starShape)
+				.border(width = 1.dp, color = ratingColor, shape = starShape)
 		) {
 			Canvas(modifier = Modifier.size(maxHeight)) {
-//			drawRect(
-//				brush = SolidColor(backgroundColor),
-//				size = Size(
-//					height = size.height * 1.4f,
-//					width = size.width * 1.4f
-//				),
-//				topLeft = Offset(
-//					x = -(size.width * 0.1f),
-//					y = -(size.height * 0.1f)
-//				)
-//			)
+				drawRect(
+					brush = SolidColor(backgroundColor),
+					size = Size(
+						height = size.height * 1.1f,
+						width = size.width
+					)
+				)
+
 				if (rating > 0) {
 					drawRect(
 						brush = SolidColor(ratingColor),
