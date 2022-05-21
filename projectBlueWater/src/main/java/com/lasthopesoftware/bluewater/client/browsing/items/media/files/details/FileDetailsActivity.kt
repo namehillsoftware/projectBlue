@@ -1,134 +1,109 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.media.files.details
 
+import android.app.Activity
+import android.content.Context
 import android.content.Intent
-import android.graphics.Typeface
 import android.os.Bundle
-import android.text.SpannableString
-import android.text.Spanned
-import android.text.style.StyleSpan
 import android.view.MenuItem
-import android.view.View
-import android.view.ViewGroup
-import android.widget.ListView
-import android.widget.ProgressBar
-import android.widget.RelativeLayout
-import android.widget.TextView
-import androidx.appcompat.app.AppCompatActivity
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.compose.foundation.*
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FormattedScopedFilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedFilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.CachedImageProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity.Companion.restoreSelectedConnection
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingFloatingActionButton
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
-import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
-import com.lasthopesoftware.bluewater.shared.android.view.ScaledWrapImageView
+import com.lasthopesoftware.bluewater.shared.android.colors.MediaStylePalette
+import com.lasthopesoftware.bluewater.shared.android.colors.MediaStylePaletteProvider
+import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
+import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
+import com.lasthopesoftware.bluewater.shared.android.ui.components.RatingBar
+import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
+import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
 import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toAsync
+import kotlinx.coroutines.flow.map
 
-class FileDetailsActivity : AppCompatActivity() {
+class FileDetailsActivity : ComponentActivity() {
 
-	private val lvFileDetails = LazyViewFinder<ListView>(this, R.id.lvFileDetails)
-	private val pbLoadingFileDetails = LazyViewFinder<ProgressBar>(this, R.id.pbLoadingFileDetails)
-	private val pbLoadingFileThumbnail = LazyViewFinder<ProgressBar>(this, R.id.pbLoadingFileThumbnail)
-	private val fileNameTextViewFinder = LazyViewFinder<TextView>(this, R.id.tvFileName)
-	private val artistTextViewFinder = LazyViewFinder<TextView>(this, R.id.tvArtist)
-	private val fileThumbnailContainer = LazyViewFinder<RelativeLayout>(this, R.id.rlFileThumbnailContainer)
+	companion object {
 
-	private val imgFileThumbnailBuilder by lazy {
-		val rlFileThumbnailContainer = fileThumbnailContainer.findView()
+		val fileKey by lazy { MagicPropertyBuilder.buildMagicPropertyName<FileDetailsActivity>("FILE_KEY") }
 
-		val imgFileThumbnail = ScaledWrapImageView(this)
-		imgFileThumbnail.setBackgroundResource(R.drawable.drop_shadow)
-		imgFileThumbnail.layoutParams = imgFileThumbnailLayoutParams
+		private const val trackNameMarqueeDelay = 1500L
 
-		rlFileThumbnailContainer.addView(imgFileThumbnail)
-		imgFileThumbnail
+		fun Context.launchFileDetailsActivity(serviceFile: ServiceFile) {
+			startActivity(Intent(this, FileDetailsActivity::class.java).apply {
+				putExtra(fileKey, serviceFile.key)
+			})
+		}
 	}
 
 	private val imageProvider by lazy { CachedImageProvider.getInstance(this) }
 
 	private val defaultImageProvider by lazy { DefaultImageProvider(this) }
-	private var fileKey = -1
+
+	private val vm by buildViewModelLazily {
+		FileDetailsViewModel(
+			SelectedConnectionProvider(this),
+			defaultImageProvider,
+			imageProvider
+		)
+	}
 
 	public override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
-		setContentView(R.layout.activity_view_file_details)
-		setSupportActionBar(findViewById(R.id.fileDetailsToolbar))
-		supportActionBar?.setDisplayHomeAsUpEnabled(true)
-		fileKey = intent.getIntExtra(Companion.fileKey, -1)
-		setView(fileKey)
-		NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton(findViewById(R.id.viewFileDetailsRelativeLayout))
+
+		setContent {
+			ProjectBlueTheme {
+				FileDetailsView(vm)
+			}
+		}
+
+		val fileKey = intent.getIntExtra(fileKey, -1)
+
+		setView(ServiceFile(fileKey))
 	}
 
-	private fun setView(fileKey: Int) {
-		if (fileKey < 0) {
+	private fun setView(serviceFile: ServiceFile) {
+		if (serviceFile.key < 0) {
 			finish()
 			return
 		}
 
-		lvFileDetails.findView().visibility = View.INVISIBLE
-		pbLoadingFileDetails.findView().visibility = View.VISIBLE
-		imgFileThumbnailBuilder.visibility = View.INVISIBLE
-		pbLoadingFileThumbnail.findView().visibility = View.VISIBLE
-		fileNameTextViewFinder.findView().text = getText(R.string.lbl_loading)
-		artistTextViewFinder.findView().text = getText(R.string.lbl_loading)
-
-		val selectedConnectionProvider = SelectedConnectionProvider(this)
-		selectedConnectionProvider.promiseSessionConnection()
-			.eventually { connectionProvider ->
-				connectionProvider
-					?.let { c -> ScopedFilePropertiesProvider(c,  ScopedRevisionProvider(c), FilePropertyCache.getInstance()) }
-					?.let(::FormattedScopedFilePropertiesProvider)
-					?.promiseFileProperties(ServiceFile(fileKey))
-					?.eventually(LoopedInPromise.response({ fileProperties ->
-						setFileNameFromProperties(fileProperties)
-
-						val artist = fileProperties[KnownFileProperties.ARTIST]
-						artistTextViewFinder.findView().text = artist
-
-						val filePropertyList = fileProperties.entries
-							.filter { e -> !propertiesToSkip.contains(e.key) }
-							.sortedBy { e -> e.key }
-
-						lvFileDetails.findView().adapter = FileDetailsAdapter(this, R.id.linFileDetailsRow, filePropertyList)
-						pbLoadingFileDetails.findView().visibility = View.INVISIBLE
-						lvFileDetails.findView().visibility = View.VISIBLE
-					}, this))
-					?: Unit.toPromise()
-			}
-			.excuse(HandleViewIoException(this) { setView(fileKey) })
+		vm.loadFile(serviceFile)
+			.excuse(HandleViewIoException(this) { setView(serviceFile) })
 			.eventuallyExcuse(LoopedInPromise.response(UnexpectedExceptionToasterResponse(this), this))
 			.then { finish() }
-
-		imageProvider
-			.promiseFileBitmap(ServiceFile(fileKey))
-			.eventually { bitmap ->
-				bitmap?.toPromise() ?: defaultImageProvider.promiseFileBitmap()
-			}
-			.eventually(LoopedInPromise.response({ result ->
-				imgFileThumbnailBuilder.setImageBitmap(result)
-				pbLoadingFileThumbnail.findView().visibility = View.INVISIBLE
-				imgFileThumbnailBuilder.visibility = View.VISIBLE
-			}, this))
-	}
-
-	private fun setFileNameFromProperties(fileProperties: Map<String, String>) {
-		val fileName = fileProperties[KnownFileProperties.NAME] ?: return
-		val fileNameTextView = fileNameTextViewFinder.findView()
-		fileNameTextView.text = fileName
-		fileNameTextView.postDelayed({ fileNameTextView.isSelected = true }, trackNameMarqueeDelay.toLong())
-		val spannableString = SpannableString(getString(R.string.lbl_details).format(fileName))
-		spannableString.setSpan(StyleSpan(Typeface.BOLD), 0, fileName.length, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
-		title = spannableString
 	}
 
 	override fun onNewIntent(intent: Intent) {
@@ -136,11 +111,11 @@ class FileDetailsActivity : AppCompatActivity() {
 
 		// Update the intent
 		setIntent(intent)
-		fileKey = intent.getIntExtra(Companion.fileKey, -1)
-		setView(fileKey)
+		val fileKey = intent.getIntExtra(fileKey, -1)
+		setView(ServiceFile(fileKey))
 	}
 
-	public override fun onStart() {
+	override fun onStart() {
 		super.onStart()
 		restoreSelectedConnection(this)
 	}
@@ -152,28 +127,267 @@ class FileDetailsActivity : AppCompatActivity() {
 		}
 		return super.onOptionsItemSelected(item)
 	}
+}
 
-	companion object {
-		@JvmField
-		val fileKey = MagicPropertyBuilder.buildMagicPropertyName<FileDetailsActivity>("FILE_KEY")
+@Preview
+@Composable
+@OptIn(ExperimentalFoundationApi::class)
+private fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class) viewModel: FileDetailsViewModel) {
+	val activity = LocalContext.current as? Activity ?: return
 
-		private const val trackNameMarqueeDelay = 1500
+	val defaultMediaStylePalette = MediaStylePalette(
+		MaterialTheme.colors.onPrimary,
+		MaterialTheme.colors.secondary,
+		MaterialTheme.colors.primary,
+		MaterialTheme.colors.secondary
+	)
 
-		private val propertiesToSkip = setOf(
-			KnownFileProperties.AUDIO_ANALYSIS_INFO,
-			KnownFileProperties.GET_COVER_ART_INFO,
-			KnownFileProperties.IMAGE_FILE,
-			KnownFileProperties.KEY,
-			KnownFileProperties.STACK_FILES,
-			KnownFileProperties.STACK_TOP,
-			KnownFileProperties.STACK_VIEW,
-			KnownFileProperties.WAVEFORM,
-			KnownFileProperties.LengthInPcmBlocks)
+	val paletteProvider = MediaStylePaletteProvider(activity)
+	val coverArtColors = remember {
+		viewModel.coverArt
+			.map { a -> a
+					?.takeIf { it.width > 0 && it.height > 0 }
+					?.let(paletteProvider::promisePalette)
+					?.toAsync()
+					?.await()
+					?: defaultMediaStylePalette
+			}
+	}
+	val coverArtColorState by coverArtColors.collectAsState(defaultMediaStylePalette)
+	val systemUiController = rememberSystemUiController()
+	systemUiController.setStatusBarColor(coverArtColorState.actionBarColor)
 
-		private val imgFileThumbnailLayoutParams by lazy {
-			val layoutParams = RelativeLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
-			layoutParams.addRule(RelativeLayout.CENTER_IN_PARENT)
-			layoutParams
+	val viewPadding = 4.dp
+
+	@Composable
+	fun filePropertyHeader(modifier: Modifier) {
+		val artist by viewModel.artist.collectAsState()
+		val fileName by viewModel.fileName.collectAsState("Loading...")
+
+		Column(modifier = modifier) {
+			val gradientSides = setOf(GradientSide.End)
+
+			Row {
+				MarqueeText(
+					text = fileName,
+					color = coverArtColorState.primaryTextColor,
+					gradientEdgeColor = coverArtColorState.backgroundColor,
+					fontSize = 24.sp,
+					overflow = TextOverflow.Ellipsis,
+					gradientSides = gradientSides,
+				)
+			}
+
+			Row {
+				MarqueeText(
+					text = artist,
+					color = coverArtColorState.primaryTextColor,
+					gradientEdgeColor = coverArtColorState.backgroundColor,
+					fontSize = 16.sp,
+					overflow = TextOverflow.Ellipsis,
+					gradientSides = gradientSides,
+				)
+			}
 		}
+	}
+
+	@Composable
+	fun filePropertyRow(property: Map.Entry<String, String>) {
+		val itemPadding = 2.dp
+
+		Row {
+			Text(
+				text = property.key,
+				color = coverArtColorState.primaryTextColor,
+				modifier = Modifier
+					.weight(1f)
+					.padding(start = viewPadding, top = itemPadding, end = itemPadding, bottom = itemPadding),
+			)
+
+			Text(
+				text = property.value,
+				color = coverArtColorState.primaryTextColor,
+				modifier = Modifier
+					.weight(2f)
+					.padding(start = itemPadding, top = itemPadding, end = viewPadding, bottom = itemPadding),
+			)
+		}
+	}
+
+	@Composable
+	fun fileRating(modifier: Modifier) {
+		val rating by viewModel.rating.collectAsState()
+
+		RatingBar(
+			rating = rating,
+			color = coverArtColorState.secondaryTextColor,
+			backgroundColor = coverArtColorState.secondaryTextColor.copy(.1f),
+			modifier = modifier
+		)
+	}
+
+	@Composable
+	fun fileDetailsSingleColumn() {
+		val coverArtBitmaps = remember { viewModel.coverArt.map { a -> a?.asImageBitmap() } }
+		val coverArtState by coverArtBitmaps.collectAsState(null)
+
+		val fileProperties by viewModel.fileProperties.collectAsState()
+
+		LazyColumn(modifier = Modifier.fillMaxSize()) {
+			item {
+				Column(modifier = Modifier
+					.fillParentMaxWidth()
+					.padding(viewPadding)) {
+					Box(
+						modifier = Modifier
+							.height(300.dp)
+							.padding(
+								top = 40.dp,
+								start = 40.dp,
+								end = 40.dp,
+								bottom = 10.dp
+							)
+							.align(Alignment.CenterHorizontally)
+					) {
+						coverArtState
+							?.let {
+								Image(
+									bitmap = it,
+									contentDescription = null,
+									contentScale = ContentScale.FillHeight,
+									modifier = Modifier
+										.fillParentMaxHeight()
+										.clip(RoundedCornerShape(5.dp))
+										.border(1.dp, shape = RoundedCornerShape(5.dp), color = coverArtColorState.secondaryTextColor),
+								)
+							}
+					}
+
+					fileRating(
+						modifier = Modifier
+							.fillMaxWidth()
+							.height(36.dp)
+					)
+				}
+			}
+
+			stickyHeader {
+				filePropertyHeader(
+					modifier = Modifier
+						.background(coverArtColorState.backgroundColor)
+						.padding(
+							start = viewPadding,
+							top = viewPadding,
+							bottom = viewPadding,
+							end = 40.dp + viewPadding
+						)
+						.fillParentMaxWidth()
+				)
+			}
+
+			items(fileProperties) {
+				filePropertyRow(it)
+			}
+		}
+	}
+
+	@Composable
+	fun fileDetailsTwoColumn() {
+		val coverArtBitmaps = remember { viewModel.coverArt.map { a -> a?.asImageBitmap() } }
+		val coverArtState by coverArtBitmaps.collectAsState(null)
+
+		val fileProperties by viewModel.fileProperties.collectAsState()
+
+		Row(modifier = Modifier.fillMaxSize()) {
+			Column(modifier = Modifier
+				.fillMaxHeight()
+				.width(250.dp)
+				.padding(viewPadding)
+				.padding(
+					start = viewPadding,
+					end = 10.dp,
+					bottom = viewPadding,
+					top = viewPadding,
+				)
+			) {
+				Box(
+					modifier = Modifier
+						.fillMaxWidth()
+						.weight(1.0f)
+						.padding(bottom = 10.dp)
+						.align(Alignment.CenterHorizontally)
+				) {
+					coverArtState
+						?.let {
+							Image(
+								bitmap = it,
+								contentDescription = null,
+								contentScale = ContentScale.FillWidth,
+								modifier = Modifier
+									.fillMaxWidth()
+									.clip(RoundedCornerShape(5.dp))
+									.align(Alignment.Center)
+									.border(1.dp, shape = RoundedCornerShape(5.dp), color = coverArtColorState.secondaryTextColor),
+							)
+						}
+				}
+
+				fileRating(
+					modifier = Modifier
+						.fillMaxWidth()
+						.height(46.dp)
+						.padding(bottom = 10.dp)
+						.align(Alignment.CenterHorizontally)
+				)
+			}
+
+			LazyColumn(modifier = Modifier.fillMaxWidth()) {
+				stickyHeader {
+					filePropertyHeader(
+						modifier = Modifier
+							.background(coverArtColorState.backgroundColor)
+							.padding(
+								start = viewPadding,
+								top = viewPadding,
+								bottom = viewPadding,
+								end = 40.dp + viewPadding
+							)
+							.fillParentMaxWidth()
+					)
+				}
+
+				items(fileProperties) {
+					filePropertyRow(property = it)
+				}
+			}
+		}
+	}
+
+	val isLoading by viewModel.isLoading.collectAsState()
+
+	BoxWithConstraints(modifier = Modifier
+		.fillMaxSize()
+		.background(coverArtColorState.backgroundColor)
+	) {
+
+		when {
+			isLoading -> CircularProgressIndicator(
+				color = coverArtColorState.primaryTextColor,
+				modifier = Modifier.align(Alignment.Center))
+			maxWidth >= 450.dp -> fileDetailsTwoColumn()
+			else -> fileDetailsSingleColumn()
+		}
+
+		Image(
+			painter = painterResource(id = R.drawable.ic_remove_item_white_36dp),
+			contentDescription = "Close",
+			colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
+			modifier = Modifier
+				.align(Alignment.TopEnd)
+				.padding(top = 12.dp, start = 8.dp, end = 8.dp, bottom = 8.dp)
+				.clickable {
+					activity.finish()
+				},
+		)
 	}
 }

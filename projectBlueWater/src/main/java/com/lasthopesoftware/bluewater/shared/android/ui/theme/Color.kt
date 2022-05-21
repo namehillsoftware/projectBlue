@@ -2,8 +2,14 @@ package com.lasthopesoftware.bluewater.shared.android.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val Purple200 = Color(0xFFBB86FC)
-val Purple700 = Color(0xFF3700B3)
-val Teal200 = Color(0xFF03DAC5)
-val ProjectBlueLight = Color(0xff8c9eff)
-val ProjectBlueDark = Color(0x303f9fff)
+object Light {
+	val ProjectBlue = Color(0xFF97ACEC)
+	val ProjectBlueLight = Color(0xFFCADEFF)
+	val ProjectBlueDark = Color(0xFF667DB9)
+}
+
+object Dark {
+	val ProjectBlue = Color(0xFF303F9F)
+	val ProjectBlueLight = Color(0xFF666AD1)
+	val ProjectBlueDark = Color(0xFF001970)
+}

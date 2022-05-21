@@ -12,6 +12,6 @@
         android:ellipsize="end"
         android:padding="15dip"
         android:textColor="@color/white"
-        android:background="@color/project_blue_light"/>
+        android:background="@color/project_blue_primary"/>
 
 </RelativeLayout>

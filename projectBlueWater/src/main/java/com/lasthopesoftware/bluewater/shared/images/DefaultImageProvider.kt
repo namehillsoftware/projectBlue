@@ -8,25 +8,24 @@ import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
+import kotlin.math.max
 
 class DefaultImageProvider(private val context: Context) : ProvideDefaultImage {
 	override fun promiseFileBitmap(): Promise<Bitmap> = promiseFillerBitmap(context)
 
 	companion object {
-		private lateinit var fillerBitmap: Bitmap
+		private lateinit var promisedBitmap: Promise<Bitmap>
 
+		@Synchronized
 		private fun promiseFillerBitmap(context: Context) =
-			if (::fillerBitmap.isInitialized) Promise(getBitmapCopy(fillerBitmap))
+			if (::promisedBitmap.isInitialized) promisedBitmap
 			else QueuedPromise(MessageWriter {
-				if (!::fillerBitmap.isInitialized) {
-					fillerBitmap = BitmapFactory.decodeResource(context.resources, R.drawable.wave_background)
-					val dm = context.resources.displayMetrics
-					val maxSize = dm.heightPixels.coerceAtLeast(dm.widthPixels)
-					fillerBitmap = Bitmap.createScaledBitmap(fillerBitmap, maxSize, maxSize, false)
-				}
-				getBitmapCopy(fillerBitmap)
-			}, ThreadPools.compute)
-
-		private fun getBitmapCopy(src: Bitmap): Bitmap = src.copy(src.config, false)
+				val decodedBitmap = BitmapFactory.decodeResource(context.resources, R.drawable.wave_background)
+				val dm = context.resources.displayMetrics
+				val maxSize = max(dm.heightPixels, dm.widthPixels)
+				val scaledBitmap = Bitmap.createScaledBitmap(decodedBitmap, maxSize, maxSize, false)
+				val immutableBitmap = scaledBitmap.copy(scaledBitmap.config, false)
+				immutableBitmap
+			}, ThreadPools.compute).also { promisedBitmap = it }
 	}
 }

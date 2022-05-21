@@ -99,7 +99,7 @@ class EntireFileCachedDataSource(
 		private var isFaulted = false
 
 		@Volatile
-		private var activePromise: Promise<CacheOutputStream?> = promisedOutputStream.then { it }
+		private var activePromise: Promise<CacheOutputStream?> = promisedOutputStream
 
 		@Volatile
 		private var workingBuffer = Buffer()

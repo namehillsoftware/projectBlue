@@ -54,8 +54,8 @@ class DemoableItemListAdapter(
 
 		fun showTutorial() {
 			val displayColor =
-				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)	activity.resources.getColor(R.color.project_blue_light, null)
-				else activity.resources.getColor(R.color.project_blue_light)
+				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)	activity.resources.getColor(R.color.project_blue_primary, null)
+				else activity.resources.getColor(R.color.project_blue_primary)
 
 			val tourGuide = TourGuide.init(activity).with(TourGuide.Technique.CLICK)
 				.setPointer(Pointer().setColor(displayColor))

@@ -47,44 +47,43 @@ class AboutActivity : ComponentActivity() {
 @Preview
 @Composable
 fun AboutView() {
-	ProjectBlueTheme {
-		Box(Modifier.fillMaxSize().padding(Dp(10f))) {
-			with (LocalContext.current) {
-				val hapticFeedback = LocalHapticFeedback.current
-				val hiddenSettingsActivityIntentBuilder = HiddenSettingsActivityIntentBuilder(IntentFactory(this))
-				Image(
-					painter = painterResource(id = R.drawable.project_blue_logo_circular),
-					contentDescription = "Project Blue logo",
-					contentScale = ContentScale.FillWidth,
-					alignment = Alignment.TopCenter,
-					modifier = Modifier
-						.combinedClickable(
-							interactionSource = remember { MutableInteractionSource() },
-							indication = null,
-							enabled = true,
-							onLongClick = {
-								hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-								startActivity(
-									hiddenSettingsActivityIntentBuilder.buildHiddenSettingsIntent()
-								)
-							},
-							onClick = {}
-						)
-						.fillMaxWidth()
-				)
+	Box(Modifier.fillMaxSize().padding(Dp(10f))) {
+		with (LocalContext.current) {
+			val hapticFeedback = LocalHapticFeedback.current
+			val hiddenSettingsActivityIntentBuilder = HiddenSettingsActivityIntentBuilder(IntentFactory(this))
+			Image(
+				painter = painterResource(id = R.drawable.project_blue_logo_circular),
+				contentDescription = "Project Blue logo",
+				contentScale = ContentScale.FillWidth,
+				alignment = Alignment.TopCenter,
+				modifier = Modifier
+					.combinedClickable(
+						interactionSource = remember { MutableInteractionSource() },
+						indication = null,
+						enabled = true,
+						onLongClick = {
+							hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+							startActivity(
+								hiddenSettingsActivityIntentBuilder.buildHiddenSettingsIntent()
+							)
+						},
+						onClick = {}
+					)
+					.fillMaxWidth()
+			)
 
-				Text(
-					getString(R.string.aboutAppText).format(
-						getString(R.string.app_name),
-						BuildConfig.VERSION_NAME,
-						BuildConfig.VERSION_CODE,
-						getString(R.string.company_name),
-						getString(R.string.copyright_year)
-					),
-					textAlign = TextAlign.Center,
-					modifier = Modifier.align(Alignment.BottomCenter)
-				)
-			}
+			Text(
+				getString(R.string.aboutAppText).format(
+					getString(R.string.app_name),
+					BuildConfig.VERSION_NAME,
+					BuildConfig.VERSION_CODE,
+					getString(R.string.company_name),
+					getString(R.string.copyright_year)
+				),
+				textAlign = TextAlign.Center,
+				modifier = Modifier.align(Alignment.BottomCenter)
+			)
 		}
 	}
 }
+

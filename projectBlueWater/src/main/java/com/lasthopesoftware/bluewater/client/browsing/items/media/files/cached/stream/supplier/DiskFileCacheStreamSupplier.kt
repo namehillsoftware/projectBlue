@@ -4,7 +4,6 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.a
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.configuration.IDiskFileCacheConfiguration
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.disk.IDiskCacheDirectoryProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.persistence.IDiskFileCachePersistence
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.CacheOutputStream
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.CachedFileOutputStream
 import com.namehillsoftware.handoff.promises.Promise
@@ -19,10 +18,8 @@ class DiskFileCacheStreamSupplier(
     override fun promiseCachedFileOutputStream(uniqueKey: String): Promise<CacheOutputStream> {
         return cachedFilesProvider
             .promiseCachedFile(uniqueKey)
-            .then { cachedFile: CachedFile? ->
-                val file = if (cachedFile != null) File(cachedFile.fileName) else generateCacheFile(
-                    uniqueKey
-                )
+            .then { cachedFile ->
+                val file = cachedFile?.fileName?.let(::File) ?: generateCacheFile(uniqueKey)
                 CachedFileOutputStream(uniqueKey, file, diskFileCachePersistence)
             }
     }
