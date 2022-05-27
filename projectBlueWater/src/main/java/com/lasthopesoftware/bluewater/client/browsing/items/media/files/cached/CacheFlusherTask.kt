@@ -117,14 +117,14 @@ class CacheFlusherTask  /*
         private val logger by lazy { LoggerFactory.getLogger(CacheFlusherTask::class.java) }
 
         fun promisedCacheFlushing(context: Context, diskCacheDirectory: IDiskCacheDirectoryProvider, diskFileCacheConfiguration: IDiskFileCacheConfiguration, targetSize: Long): Promise<*> =
-			promiseTableMessage<Unit, CachedFile> {
+			promiseTableMessage<Unit, CachedFile>(
 				CacheFlusherTask(
 					context,
 					diskCacheDirectory,
 					diskFileCacheConfiguration,
 					targetSize
 				)
-			}
+			)
 
         private fun getCachedFileByFilename(repositoryAccessHelper: RepositoryAccessHelper, fileName: String): CachedFile? =
 			repositoryAccessHelper
