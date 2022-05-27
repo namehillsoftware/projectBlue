@@ -92,18 +92,20 @@ object NotificationColorUtil {
 		 * [here](http://www.w3.org/TR/2008/REC-WCAG20-20081211/#contrast-ratiodef).
 		 */
 		fun calculateContrast(@ColorInt foreground: Int, @ColorInt background: Int): Double {
-			var foreground = foreground
+			var localForeground = foreground
 			if (Color.alpha(background) != 255) {
 				Log.wtf(
-					TAG, "background can not be translucent: #"
-						+ Integer.toHexString(background)
+					TAG,
+					"background can not be translucent: #" + Integer.toHexString(background)
 				)
 			}
-			if (Color.alpha(foreground) < 255) {
+
+			if (Color.alpha(localForeground) < 255) {
 				// If the foreground is translucent, composite the foreground over the background
-				foreground = compositeColors(foreground, background)
+				localForeground = compositeColors(localForeground, background)
 			}
-			val luminance1 = calculateLuminance(foreground) + 0.05
+
+			val luminance1 = calculateLuminance(localForeground) + 0.05
 			val luminance2 = calculateLuminance(background) + 0.05
 
 			// Now return the lighter luminance divided by the darker luminance
@@ -225,16 +227,13 @@ object NotificationColorUtil {
 			@FloatRange(from = 0.0, to = XYZ_WHITE_REFERENCE_Z) z: Double,
 			outLab: DoubleArray
 		) {
-			var x = x
-			var y = y
-			var z = z
 			require(outLab.size == 3) { "outLab must have a length of 3." }
-			x = pivotXyzComponent(x / XYZ_WHITE_REFERENCE_X)
-			y = pivotXyzComponent(y / XYZ_WHITE_REFERENCE_Y)
-			z = pivotXyzComponent(z / XYZ_WHITE_REFERENCE_Z)
-			outLab[0] = 0.0.coerceAtLeast(116 * y - 16)
-			outLab[1] = 500 * (x - y)
-			outLab[2] = 200 * (y - z)
+			val pivotX = pivotXyzComponent(x / XYZ_WHITE_REFERENCE_X)
+			val pivotY = pivotXyzComponent(y / XYZ_WHITE_REFERENCE_Y)
+			val pivotZ = pivotXyzComponent(z / XYZ_WHITE_REFERENCE_Z)
+			outLab[0] = 0.0.coerceAtLeast(116 * pivotY - 16)
+			outLab[1] = 500 * (pivotX - pivotY)
+			outLab[2] = 200 * (pivotY - pivotZ)
 		}
 
 		/**
@@ -584,9 +583,9 @@ object NotificationColorUtil {
 		val result = ColorUtilsFromCompat.tempDouble3Array
 		ColorUtilsFromCompat.colorToLAB(color, result)
 		if (result[0] >= 4) {
-			result[0] = Math.max(0.0, result[0] - amount)
+			result[0] = max(0.0, result[0] - amount)
 		} else {
-			result[0] = Math.min(100.0, result[0] + amount)
+			result[0] = min(100.0, result[0] + amount)
 		}
 		return ColorUtilsFromCompat.LABToColor(result[0], result[1], result[2])
 	}
