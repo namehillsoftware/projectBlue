@@ -87,7 +87,8 @@
                         android:layout_height="match_parent"
                         android:background="?android:attr/selectableItemBackground"
                         android:contentDescription="@string/btn_pause"
-                        android:src="@drawable/av_pause_dark"
+                        android:src="@drawable/av_pause"
+                        android:alpha=".8"
                         app:isVisible="@{vm.isPlaying}" />
                 </ViewFlipper>
 
