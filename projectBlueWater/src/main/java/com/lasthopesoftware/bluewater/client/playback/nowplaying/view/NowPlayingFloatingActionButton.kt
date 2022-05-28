@@ -3,13 +3,13 @@ package com.lasthopesoftware.bluewater.client.playback.nowplaying.view
 import android.content.Context
 import android.view.ViewGroup
 import android.widget.RelativeLayout
+import androidx.appcompat.content.res.AppCompatResources
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingFileProvider.Companion.fromActiveLibrary
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.NowPlayingActivity.Companion.startNowPlayingActivity
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage.PlaybackStarted
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
-import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils.getThemedDrawable
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
@@ -18,7 +18,7 @@ class NowPlayingFloatingActionButton private constructor(context: Context) : Flo
 	private var isNowPlayingFileSet = false
 
 	init {
-		setImageDrawable(context.getThemedDrawable(R.drawable.av_play_dark))
+		setImageDrawable(AppCompatResources.getDrawable(context, R.drawable.av_play))
 		initializeNowPlayingFloatingActionButton()
 	}
 
