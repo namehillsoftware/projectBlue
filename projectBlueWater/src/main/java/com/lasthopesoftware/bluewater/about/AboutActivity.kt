@@ -50,7 +50,7 @@ fun AboutView() {
 	BoxWithConstraints(modifier = Modifier
 		.fillMaxSize()
 		.padding(Dp(10f))) {
-		if (maxWidth < 500.dp) AboutViewVertical()
+		if (maxWidth < maxHeight) AboutViewVertical()
 		else AboutViewHorizontal()
 	}
 }
@@ -59,8 +59,7 @@ fun AboutView() {
 @OptIn(ExperimentalFoundationApi::class)
 fun AboutViewVertical() {
 	Column(
-		Modifier
-			.fillMaxSize()) {
+		Modifier.fillMaxSize()) {
 		with (LocalContext.current) {
 			val hapticFeedback = LocalHapticFeedback.current
 			val hiddenSettingsActivityIntentBuilder = HiddenSettingsActivityIntentBuilder(IntentFactory(this))

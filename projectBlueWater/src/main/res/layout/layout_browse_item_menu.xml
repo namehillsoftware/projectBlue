@@ -36,7 +36,9 @@
         android:layout_height="match_parent"
         android:layout_weight="1"
         android:contentDescription="@string/btn_sync_item"
-        android:src="@drawable/ic_sync_off" />
+        android:src="@drawable/ic_sync"
+		android:tint="@color/gray_clickable"
+		android:alpha=".6"/>
 
     <ImageButton
         android:id="@+id/btnShuffle"
