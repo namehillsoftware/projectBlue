@@ -11,19 +11,21 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.BuildConfig
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsActivityIntentBuilder
@@ -44,19 +46,22 @@ class AboutActivity : ComponentActivity() {
 }
 
 @OptIn(ExperimentalFoundationApi::class)
-@Preview
 @Composable
 fun AboutView() {
-	Box(Modifier.fillMaxSize().padding(Dp(10f))) {
+	Box(
+		Modifier
+			.fillMaxSize()
+			.padding(Dp(10f))) {
 		with (LocalContext.current) {
 			val hapticFeedback = LocalHapticFeedback.current
 			val hiddenSettingsActivityIntentBuilder = HiddenSettingsActivityIntentBuilder(IntentFactory(this))
 			Image(
-				painter = painterResource(id = R.drawable.project_blue_logo_circular),
+				painter = painterResource(id = R.drawable.project_blue_logo),
 				contentDescription = "Project Blue logo",
-				contentScale = ContentScale.FillWidth,
+				contentScale = ContentScale.Fit,
 				alignment = Alignment.TopCenter,
 				modifier = Modifier
+					.shadow(elevation = 20.dp, shape = CircleShape)
 					.combinedClickable(
 						interactionSource = remember { MutableInteractionSource() },
 						indication = null,
@@ -69,7 +74,7 @@ fun AboutView() {
 						},
 						onClick = {}
 					)
-					.fillMaxWidth()
+					.fillMaxWidth(),
 			)
 
 			Text(
