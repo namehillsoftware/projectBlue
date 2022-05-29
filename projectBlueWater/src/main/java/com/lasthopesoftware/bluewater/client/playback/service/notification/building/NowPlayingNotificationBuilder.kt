@@ -79,7 +79,7 @@ class NowPlayingNotificationBuilder(
 		builder
 			.addAction(
 				NotificationCompat.Action(
-					R.drawable.av_rewind,
+					R.drawable.av_previous,
 					context.getString(R.string.btn_previous),
 					pendingPreviousIntent(context)
 				)
@@ -97,7 +97,7 @@ class NowPlayingNotificationBuilder(
 			)
 			.addAction(
 				NotificationCompat.Action(
-					R.drawable.av_fast_forward,
+					R.drawable.av_next,
 					context.getString(R.string.btn_next),
 					pendingNextIntent(context)
 				)
