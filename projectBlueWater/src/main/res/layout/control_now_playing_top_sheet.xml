@@ -14,183 +14,182 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <RelativeLayout
-                android:id="@+id/nowPlayingHeaderContainer"
+        <RelativeLayout
+            android:id="@+id/nowPlayingHeaderContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentTop="true">
+
+            <LinearLayout
+                android:id="@+id/menuControlsLinearLayout"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_centerInParent="true"
+                android:layout_marginTop="10dp"
+                android:measureWithLargestChild="true"
+                android:orientation="horizontal"
+                android:visibility="@{vm.isScreenControlsVisible ? View.VISIBLE : View.GONE}">
+
+                <ImageButton
+                    android:id="@+id/isScreenKeptOnButton"
+                    android:layout_width="0dip"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_weight="1"
+                    android:alpha=".80"
+                    android:background="?android:attr/selectableItemBackground"
+                    android:contentDescription="@{vm.isScreenOnEnabled ? @string/screen_is_on : @string/screen_is_off}"
+                    android:paddingEnd="@dimen/now_playing_menu_padding"
+                    android:paddingStart="@dimen/now_playing_menu_padding"
+                    android:src="@{vm.isScreenOnEnabled ? @drawable/ic_screen_on_white_36dp : @drawable/ic_screen_off_white_36dp}"
+                    tools:ignore="RtlSymmetry" />
+
+                <ImageButton
+                    android:id="@+id/viewNowPlayingListButton"
+                    android:layout_width="0dip"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="center_horizontal"
+                    android:layout_weight="1"
+                    android:background="?android:attr/selectableItemBackground"
+                    android:contentDescription="@string/btn_view_files"
+                    android:paddingEnd="@dimen/now_playing_menu_padding"
+                    android:paddingStart="@dimen/now_playing_menu_padding"
+                    android:src="@drawable/chevron_up_36dp"
+                    android:alpha=".80" />
+            </LinearLayout>
+
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_alignParentTop="true">
+                android:layout_toStartOf="@id/menuControlsLinearLayout"
+                android:orientation="vertical">
 
-                <LinearLayout
-                    android:id="@+id/menuControlsLinearLayout"
+                <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_alignParentEnd="true"
-                    android:layout_centerInParent="true"
-                    android:layout_marginTop="10dp"
-                    android:measureWithLargestChild="true"
-                    android:orientation="horizontal"
-                    android:visibility="@{vm.isScreenControlsVisible ? View.VISIBLE : View.GONE}">
+                    android:ellipsize="marquee"
+                    android:marqueeRepeatLimit="1"
+                    android:singleLine="true"
+                    android:text="@{vm.title}"
+                    android:textAppearance="?android:attr/textAppearanceLarge"
+                    android:textColor="@color/white" />
 
-                    <ImageButton
-                        android:id="@+id/isScreenKeptOnButton"
-                        android:layout_width="0dip"
-                        android:layout_height="match_parent"
-                        android:layout_gravity="center_horizontal"
-                        android:layout_weight="1"
-                        android:alpha=".80"
-                        android:background="?android:attr/selectableItemBackground"
-                        android:contentDescription="@{vm.isScreenOnEnabled ? @string/screen_is_on : @string/screen_is_off}"
-                        android:paddingEnd="@dimen/now_playing_menu_padding"
-                        android:paddingStart="@dimen/now_playing_menu_padding"
-                        android:src="@{vm.isScreenOnEnabled ? @drawable/ic_screen_on_white_36dp : @drawable/ic_screen_off_white_36dp}"
-                        tools:ignore="RtlSymmetry" />
-
-                    <ImageButton
-                        android:id="@+id/viewNowPlayingListButton"
-                        android:layout_width="0dip"
-                        android:layout_height="match_parent"
-                        android:layout_gravity="center_horizontal"
-                        android:layout_weight="1"
-                        android:background="?android:attr/selectableItemBackground"
-                        android:contentDescription="@string/btn_view_files"
-                        android:paddingEnd="@dimen/now_playing_menu_padding"
-                        android:paddingStart="@dimen/now_playing_menu_padding"
-                        android:src="@drawable/chevron_up_36dp"
-                        android:alpha=".80" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_toStartOf="@id/menuControlsLinearLayout"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:ellipsize="marquee"
-                        android:marqueeRepeatLimit="1"
-                        android:singleLine="true"
-                        android:text="@{vm.title}"
-                        android:textAppearance="?android:attr/textAppearanceLarge"
-                        android:textColor="@color/white" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:ellipsize="marquee"
-                        android:marqueeRepeatLimit="marquee_forever"
-                        android:singleLine="true"
-                        android:text="@{vm.artist}"
-                        android:textAppearance="?android:attr/textAppearanceSmall"
-                        android:textColor="@color/white" />
-                </LinearLayout>
-            </RelativeLayout>
-
-            <RelativeLayout
-                android:id="@+id/nowPlayingControlsContainer"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_alignParentStart="true"
-                android:layout_alignParentBottom="true">
-
-                <LinearLayout
-                    android:id="@+id/songRatingLinearLayout"
+                <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_centerHorizontal="true"
-                    app:isVisible="@{vm.isScreenControlsVisible}"
-                    android:orientation="vertical">
-
-                    <RatingBar
-                        android:id="@+id/rbSongRating"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:max="5"
-                        android:stepSize="1"
-                        android:rating="@{vm.songRating}"
-                        android:isIndicator="@{!vm.isSongRatingEnabled}" />
-
-                    <TextView
-                        android:id="@+id/readOnlyConnectionLabel"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center_horizontal"
-                        android:text="@string/readOnlyConnection"
-                        android:visibility="@{vm.isReadOnly ? View.VISIBLE : View.GONE}"
-                        android:textAppearance="?android:attr/textAppearanceSmall" />
-
-                </LinearLayout>
-
-                <ProgressBar
-                    android:id="@+id/pbNowPlaying"
-                    style="?android:attr/progressBarStyleHorizontal"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@+id/songRatingLinearLayout"
-                    android:layout_alignParentStart="true"
-                    android:layout_marginBottom="20dp"
-                    android:indeterminate="false"
-                    android:progress="@{vm.filePosition}"
-                    android:max="@{vm.fileDuration}" />
-
-                <LinearLayout
-                    android:id="@+id/llNpButtons"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_below="@+id/pbNowPlaying"
-                    android:layout_alignParentStart="true"
-                    android:orientation="horizontal"
-                    android:paddingLeft="2dip"
-                    android:paddingRight="2dip"
-                    android:layout_marginBottom="20dp"
-                    app:isVisible="@{vm.isScreenControlsVisible}"
-                    >
-
-                    <ImageButton
-                        android:id="@+id/btnPrevious"
-                        android:layout_width="0dip"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:background="?android:attr/selectableItemBackground"
-                        android:contentDescription="@string/btn_previous"
-                        android:src="@drawable/av_previous_dark" />
-
-                    <ViewFlipper
-                        android:id="@+id/vfPlayPause"
-                        android:layout_width="0dip"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1">
-
-                        <ImageButton
-                            android:id="@+id/btnPlay"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:background="?android:attr/selectableItemBackground"
-                            android:contentDescription="@string/btn_play"
-                            android:src="@drawable/av_play_dark"
-                            app:isVisible="@{!vm.isPlaying}" />
-
-                        <ImageButton
-                            android:id="@+id/btnPause"
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:background="?android:attr/selectableItemBackground"
-                            android:contentDescription="@string/btn_pause"
-                            android:src="@drawable/av_pause_dark"
-                            android:alpha=".8"
-                            app:isVisible="@{vm.isPlaying}" />
-                    </ViewFlipper>
-
-                    <ImageButton
-                        android:id="@+id/btnNext"
-                        android:layout_width="0dip"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:background="?android:attr/selectableItemBackground"
-                        android:contentDescription="@string/btn_next"
-                        android:src="@drawable/av_next_dark" />
-                </LinearLayout>
-            </RelativeLayout>
+                    android:ellipsize="marquee"
+                    android:marqueeRepeatLimit="marquee_forever"
+                    android:singleLine="true"
+                    android:text="@{vm.artist}"
+                    android:textAppearance="?android:attr/textAppearanceSmall"
+                    android:textColor="@color/white" />
+            </LinearLayout>
         </RelativeLayout>
+
+        <RelativeLayout
+            android:id="@+id/nowPlayingControlsContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentStart="true"
+            android:layout_alignParentBottom="true">
+
+            <LinearLayout
+                android:id="@+id/songRatingLinearLayout"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerHorizontal="true"
+                app:isVisible="@{vm.isScreenControlsVisible}"
+                android:orientation="vertical">
+
+                <RatingBar
+                    android:id="@+id/rbSongRating"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:max="5"
+                    android:stepSize="1"
+                    android:rating="@{vm.songRating}"
+                    android:isIndicator="@{!vm.isSongRatingEnabled}" />
+
+                <TextView
+                    android:id="@+id/readOnlyConnectionLabel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:text="@string/readOnlyConnection"
+                    android:visibility="@{vm.isReadOnly ? View.VISIBLE : View.GONE}"
+                    android:textAppearance="?android:attr/textAppearanceSmall" />
+
+            </LinearLayout>
+
+            <ProgressBar
+                android:id="@+id/pbNowPlaying"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/songRatingLinearLayout"
+                android:layout_alignParentStart="true"
+                android:layout_marginBottom="20dp"
+                android:indeterminate="false"
+                android:progress="@{vm.filePosition}"
+                android:max="@{vm.fileDuration}" />
+
+            <LinearLayout
+                android:id="@+id/llNpButtons"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/pbNowPlaying"
+                android:layout_alignParentStart="true"
+                android:orientation="horizontal"
+                android:paddingLeft="2dip"
+                android:paddingRight="2dip"
+                android:layout_marginBottom="20dp"
+                app:isVisible="@{vm.isScreenControlsVisible}"
+                >
+
+                <ImageButton
+                    android:id="@+id/btnPrevious"
+                    android:layout_width="0dip"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="?android:attr/selectableItemBackground"
+                    android:contentDescription="@string/btn_previous"
+                    android:src="@drawable/av_previous_dark" />
+
+                <ViewFlipper
+                    android:id="@+id/vfPlayPause"
+                    android:layout_width="0dip"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1">
+
+                    <ImageButton
+                        android:id="@+id/btnPlay"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="?android:attr/selectableItemBackground"
+                        android:contentDescription="@string/btn_play"
+                        android:src="@drawable/av_play_dark"
+                        app:isVisible="@{!vm.isPlaying}" />
+
+                    <ImageButton
+                        android:id="@+id/btnPause"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:background="?android:attr/selectableItemBackground"
+                        android:contentDescription="@string/btn_pause"
+                        android:src="@drawable/av_pause_dark"
+                        app:isVisible="@{vm.isPlaying}" />
+                </ViewFlipper>
+
+                <ImageButton
+                    android:id="@+id/btnNext"
+                    android:layout_width="0dip"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:background="?android:attr/selectableItemBackground"
+                    android:contentDescription="@string/btn_next"
+                    android:src="@drawable/av_next_dark" />
+            </LinearLayout>
+        </RelativeLayout>
+    </RelativeLayout>
 </layout>

@@ -87,7 +87,6 @@
                         android:background="?android:attr/selectableItemBackground"
                         android:contentDescription="@string/btn_pause"
                         android:src="@drawable/av_pause_dark"
-                        android:alpha=".8"
                         app:isVisible="@{vm.isPlaying}" />
                 </ViewFlipper>
 
