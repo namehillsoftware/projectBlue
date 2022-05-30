@@ -118,8 +118,8 @@ class PlaylistListFragment : Fragment() {
 
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
 		layout = inflater.inflate(R.layout.asynchronous_recycler_view, container, false) as RelativeLayout
-		progressBar = layout?.findViewById(R.id.recyclerLoadingProgress)
-		recyclerView = layout?.findViewById(R.id.loadedRecyclerView)
+		progressBar = layout?.findViewById(R.id.items_loading_progress)
+		recyclerView = layout?.findViewById(R.id.loaded_recycler_view)
 		return layout
 	}
 

@@ -20,6 +20,7 @@ import com.lasthopesoftware.bluewater.client.servers.list.listeners.SelectServer
 import com.lasthopesoftware.bluewater.shared.android.adapters.DeferredListAdapter
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
+import com.lasthopesoftware.bluewater.shared.android.view.getValue
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.namehillsoftware.handoff.promises.Promise
@@ -50,17 +51,16 @@ class ServerListAdapter(private val activity: Activity, private val browserLibra
 	}
 
 	inner class ViewHolder(private val parent: RelativeLayout) : RecyclerView.ViewHolder(parent) {
-		private val textView = LazyViewFinder<TextView>(parent, R.id.tvServerItem)
-		private val btnSelectServer = LazyViewFinder<Button>(parent, R.id.btnSelectServer)
-		private val btnConfigureServer = LazyViewFinder<ImageButton>(parent, R.id.btnConfigureServer)
+		private val textView by LazyViewFinder<TextView>(parent, R.id.tvServerItem)
+		private val btnSelectServer by LazyViewFinder<Button>(parent, R.id.btnSelectServer)
+		private val btnConfigureServer by LazyViewFinder<ImageButton>(parent, R.id.btnConfigureServer)
 
 		private var broadcastReceiver: ((BrowserLibrarySelection.LibraryChosenMessage) -> Unit)? = null
 		private var onAttachStateChangeListener: View.OnAttachStateChangeListener? = null
 
 		fun update(library: Library) {
-			val textView = textView.findView()
 			textView.text = library.accessCode
-			textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(activeLibrary != null && library.id == activeLibrary?.id))
+			textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(library.id == activeLibrary?.id))
 
 			broadcastReceiver?.run { registerForApplicationMessages.unregisterReceiver(this) }
 			registerForApplicationMessages.registerReceiver(
@@ -78,8 +78,8 @@ class ServerListAdapter(private val activity: Activity, private val browserLibra
 				}
 			}.apply { onAttachStateChangeListener = this })
 
-			btnSelectServer.findView().setOnClickListener(SelectServerOnClickListener(library, browserLibrarySelection))
-			btnConfigureServer.findView().setOnClickListener(EditServerClickListener(activity, library.id))
+			btnSelectServer.setOnClickListener(SelectServerOnClickListener(library, browserLibrarySelection))
+			btnConfigureServer.setOnClickListener(EditServerClickListener(activity, library.id))
 		}
 	}
 

@@ -53,7 +53,7 @@ class InstantiateSelectedConnectionActivity : Activity(), (SelectedConnection.Bu
 			.value
 			.eventually(LoopedInPromise.response({ c ->
 				when {
-					isCancelled -> {}
+					isCancelled -> Unit
 					c == null -> launchActivityDelayed(selectServerIntent)
 					intent?.action == START_ACTIVITY_FOR_RETURN -> finishForResultDelayed()
 					else -> launchActivityDelayed(browseLibraryIntent)

@@ -21,7 +21,7 @@ import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.list.IItemListViewContainer
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuChangeHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.list.SearchFilesFragment
-import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener
+import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener.Companion.tryFlipToPreviousView
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistListFragment
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
@@ -278,7 +278,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 	private fun updateLibraryView(selectedView: ViewItem, items: Collection<ViewItem>) {
 		if (isStopped) return
 
-		LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator)
+		viewAnimator?.tryFlipToPreviousView()
 
 		selectViewsListView.findView().adapter = SelectViewAdapter(this, items, selectedView.key)
 		selectViewsListView.findView().onItemClickListener = getOnSelectViewClickListener(items)
@@ -403,7 +403,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 	}
 
 	override fun onBackPressed() {
-		if (LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator)) return
+		if (viewAnimator?.tryFlipToPreviousView() == true) return
 		super.onBackPressed()
 	}
 

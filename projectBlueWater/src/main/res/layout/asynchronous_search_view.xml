@@ -1,6 +1,6 @@
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/asynchronousRecyclerViewContainer"
+    android:id="@+id/search_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical">
@@ -32,20 +32,12 @@
         </EditText>
     </LinearLayout>
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/loadedRecyclerView"
+    <include
+        android:id="@+id/results_container"
+        layout="@layout/asynchronous_recycler_view"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:scrollbars="vertical"
-        android:layout_below="@id/searchContainer" />
-
-    <ProgressBar
-        android:id="@+id/recyclerLoadingProgress"
-        style="?android:attr/progressBarStyleLarge"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        android:visibility="invisible"
-        android:layout_below="@id/searchContainer" />
+        android:layout_height="match_parent"
+        android:layout_below="@id/searchContainer"
+    />
 
 </RelativeLayout>

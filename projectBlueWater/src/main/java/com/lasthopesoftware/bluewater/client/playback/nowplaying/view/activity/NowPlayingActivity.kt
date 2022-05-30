@@ -21,7 +21,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.storage.ScopedFilePropertiesStorage
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.storage.SelectedConnectionFilePropertiesStorage
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.CachedImageProvider
-import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener
+import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener.Companion.tryFlipToPreviousView
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.SelectedConnectionRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.authentication.ScopedConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.authentication.SelectedConnectionAuthenticationChecker
@@ -192,7 +192,7 @@ class NowPlayingActivity :
 						else -> {
 							nowPlayingViewModel.hideDrawer()
 							playlistViewModel.finishPlaylistEdit()
-							LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator)
+							viewAnimator?.tryFlipToPreviousView()
 						}
 					}
 				}
@@ -232,7 +232,7 @@ class NowPlayingActivity :
 	}
 
 	override fun onBackPressed() {
-		if (LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator)) return
+		if (viewAnimator?.tryFlipToPreviousView() == true) return
 
 		if (playlistViewModel.isEditingPlaylist) {
 			playlistViewModel.finishPlaylistEdit()

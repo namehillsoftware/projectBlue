@@ -77,7 +77,7 @@ open class ItemListAdapter internal constructor(
 		private var onSyncButtonLayoutChangeListener: View.OnLayoutChangeListener? = null
 
 		fun update(item: Item) {
-			tryFlipToPreviousView(viewFlipper)
+			viewFlipper.tryFlipToPreviousView()
 
 			listItemLayout.setOnLongClickListener(LongClickViewAnimatorListener(viewFlipper))
 			listItemLayout.setOnClickListener(ClickItemListener(libraryId, item, provideItems, sendMessages))

@@ -79,17 +79,15 @@ android {
 			signingConfig (isSignedExternally() ? signingConfigs.release : signingConfig)
         }
     }
+
     packagingOptions {
         resources {
             excludes += ['META-INF/LICENSE.txt', 'META-INF/NOTICE.txt', 'META-INF/INDEX.LIST']
-		resources {
-			excludes += '/META-INF/{AL2.0,LGPL2.1}'
+			resources {
+				excludes += '/META-INF/{AL2.0,LGPL2.1}'
+			}
 		}
-	}
-
-
     }
-
 
     defaultConfig {
 
@@ -123,6 +121,12 @@ android {
 		kotlinCompilerExtensionVersion compose_version
 	}
 	namespace 'com.lasthopesoftware.bluewater'
+}
+
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+	kotlinOptions {
+		freeCompilerArgs += "-opt-in=kotlin.RequiresOptIn"
+	}
 }
 
 def getGeneratedVersionCode() {

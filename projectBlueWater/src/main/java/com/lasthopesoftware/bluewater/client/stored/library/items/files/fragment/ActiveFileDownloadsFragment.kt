@@ -38,8 +38,8 @@ class ActiveFileDownloadsFragment : Fragment() {
 		if (container == null) return null
 
 		val viewFilesLayout = inflater.inflate(R.layout.layout_downloads, container, false) as RelativeLayout
-		val progressBar = viewFilesLayout.findViewById<ProgressBar>(R.id.recyclerLoadingProgress)
-		val listView = viewFilesLayout.findViewById<RecyclerView>(R.id.loadedRecyclerView)
+		val progressBar = viewFilesLayout.findViewById<ProgressBar>(R.id.items_loading_progress)
+		val listView = viewFilesLayout.findViewById<RecyclerView>(R.id.loaded_recycler_view)
 		listView.visibility = View.INVISIBLE
 		progressBar.visibility = View.VISIBLE
 

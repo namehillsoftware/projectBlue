@@ -16,6 +16,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.menu.Fil
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.menu.FileNameTextViewSetter
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.BuildListItemMenuViewContainers
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener
+import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener.Companion.tryFlipToPreviousView
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.NotifyOnFlipViewAnimator
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.OnViewChangedListener
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
@@ -68,7 +69,7 @@ class NowPlayingFileListItemMenuBuilder(
 		dragButton.visibility = if (hasEditPlaylistState.isEditingPlaylist) View.VISIBLE else View.GONE
 		typedMessagesRegistration
 			.registerReceiver { _ : EditPlaylist ->
-				LongClickViewAnimatorListener.tryFlipToPreviousView(notifyOnFlipViewAnimator)
+				notifyOnFlipViewAnimator.tryFlipToPreviousView()
 				notifyOnFlipViewAnimator.isEnabled = false
 				dragButton.visibility = View.VISIBLE
 			}
@@ -114,7 +115,7 @@ class NowPlayingFileListItemMenuBuilder(
 				.promiseNowPlaying()
 				.eventually(LoopedInPromise.response(this, handler))
 
-			LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator)
+			viewAnimator.tryFlipToPreviousView()
 			playButton.setOnClickListener(FileSeekToClickListener(viewAnimator, position))
 			viewFileDetailsButton.setOnClickListener(ViewFileDetailsClickListener(viewAnimator, serviceFile))
 			removeButton.setOnClickListener(RemovePlaylistFileClickListener(viewAnimator, position))

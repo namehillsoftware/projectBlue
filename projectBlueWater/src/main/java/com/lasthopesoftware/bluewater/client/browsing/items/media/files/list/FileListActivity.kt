@@ -24,7 +24,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.s
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.LibraryFileStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.menu.FileListItemMenuBuilder
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.menu.FileListItemNowPlayingRegistrar
-import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener
+import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener.Companion.tryFlipToPreviousView
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.handlers.ViewChangedHandler
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
@@ -78,8 +78,8 @@ class FileListActivity :
 		)
 	}
 	private val fileListItemNowPlayingRegistrar = lazy { FileListItemNowPlayingRegistrar(getApplicationMessageBus()) }
-	private val pbLoading by LazyViewFinder<ProgressBar>(this, R.id.recyclerLoadingProgress)
-	private val fileListView by LazyViewFinder<RecyclerView>(this, R.id.loadedRecyclerView)
+	private val pbLoading by LazyViewFinder<ProgressBar>(this, R.id.items_loading_progress)
+	private val fileListView by LazyViewFinder<RecyclerView>(this, R.id.loaded_recycler_view)
 
 	private lateinit var nowPlayingFloatingActionButton: NowPlayingFloatingActionButton
 
@@ -100,7 +100,7 @@ class FileListActivity :
 		if (itemId == 0) itemId = this.intent.getIntExtra(key, 1)
 
 		title = intent.getStringExtra(value)
-		nowPlayingFloatingActionButton = addNowPlayingFloatingActionButton(findViewById(R.id.asynchronousRecyclerViewContainer))
+		nowPlayingFloatingActionButton = addNowPlayingFloatingActionButton(findViewById(R.id.list_container))
 	}
 
 	override fun onStart() {
@@ -163,7 +163,7 @@ class FileListActivity :
 		ViewUtils.handleNavMenuClicks(this, item) || super.onOptionsItemSelected(item)
 
 	override fun onBackPressed() {
-		if (LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator)) return
+		if (viewAnimator?.tryFlipToPreviousView() == true) return
 		super.onBackPressed()
 	}
 

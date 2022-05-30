@@ -67,8 +67,8 @@ class SearchFilesFragment : Fragment(), View.OnKeyListener, TextView.OnEditorAct
 
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View =
 		(inflater.inflate(R.layout.asynchronous_search_view, container, false) as RelativeLayout).apply {
-			progressBar = findViewById(R.id.recyclerLoadingProgress)
-			recyclerView = findViewById(R.id.loadedRecyclerView)
+			progressBar = findViewById(R.id.items_loading_progress)
+			recyclerView = findViewById(R.id.loaded_recycler_view)
 			searchPrompt = findViewById<EditText?>(R.id.searchPrompt)?.apply {
 				this@SearchFilesFragment
 					.also(::setOnEditorActionListener)
