@@ -77,8 +77,7 @@
                         android:layout_height="match_parent"
                         android:background="?android:attr/selectableItemBackground"
                         android:contentDescription="@string/btn_play"
-                        android:src="@drawable/av_play"
-                        android:alpha=".8"
+                        android:src="@drawable/av_play_dark"
                         app:isVisible="@{!vm.isPlaying}" />
 
                     <ImageButton
@@ -87,7 +86,7 @@
                         android:layout_height="match_parent"
                         android:background="?android:attr/selectableItemBackground"
                         android:contentDescription="@string/btn_pause"
-                        android:src="@drawable/av_pause"
+                        android:src="@drawable/av_pause_dark"
                         android:alpha=".8"
                         app:isVisible="@{vm.isPlaying}" />
                 </ViewFlipper>

@@ -38,7 +38,6 @@
 	    android:layout_height="match_parent"
 	    android:layout_weight="1"
 	    android:contentDescription="@string/btn_play_files"
-		android:src="@drawable/av_play"
-		android:alpha=".8" />
+		android:src="@drawable/av_play_dark" />
 	
 </LinearLayout>
