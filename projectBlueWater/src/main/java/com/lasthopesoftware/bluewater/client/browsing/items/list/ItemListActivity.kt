@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.list
 
-import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.view.Menu
@@ -112,15 +111,7 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer {
 
 	public override fun onStart() {
 		super.onStart()
-		restoreSelectedConnection(this).eventually(response({
-			connectionRestoreCode = it
-			if (it == null) hydrateItems()
-		}, handler))
-	}
-
-	override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-		if (requestCode == connectionRestoreCode) hydrateItems()
-		super.onActivityResult(requestCode, resultCode, data)
+		restoreSelectedConnection(this).eventually(response({ hydrateItems() }, handler))
 	}
 
 	private fun hydrateItems() {
@@ -178,10 +169,9 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer {
 	}
 
 	companion object {
-		private val magicPropertyBuilder = MagicPropertyBuilder(ItemListActivity::class.java)
-		@JvmField
-		val KEY = magicPropertyBuilder.buildProperty("key")
-		@JvmField
-		val VALUE = magicPropertyBuilder.buildProperty("value")
+		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(ItemListActivity::class.java) }
+
+		val KEY by lazy { magicPropertyBuilder.buildProperty("key") }
+		val VALUE by lazy { magicPropertyBuilder.buildProperty("value") }
 	}
 }

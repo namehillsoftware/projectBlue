@@ -4,7 +4,6 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.view.MenuItem
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.*
@@ -59,8 +58,6 @@ class FileDetailsActivity : ComponentActivity() {
 
 		val fileKey by lazy { MagicPropertyBuilder.buildMagicPropertyName<FileDetailsActivity>("FILE_KEY") }
 
-		private const val trackNameMarqueeDelay = 1500L
-
 		fun Context.launchFileDetailsActivity(serviceFile: ServiceFile) {
 			startActivity(Intent(this, FileDetailsActivity::class.java).apply {
 				putExtra(fileKey, serviceFile.key)
@@ -89,9 +86,10 @@ class FileDetailsActivity : ComponentActivity() {
 			}
 		}
 
-		val fileKey = intent.getIntExtra(fileKey, -1)
-
-		setView(ServiceFile(fileKey))
+		restoreSelectedConnection(this).eventually(LoopedInPromise.response({
+			val fileKey = intent.getIntExtra(fileKey, -1)
+			setView(ServiceFile(fileKey))
+		}, this))
 	}
 
 	private fun setView(serviceFile: ServiceFile) {
@@ -104,28 +102,6 @@ class FileDetailsActivity : ComponentActivity() {
 			.excuse(HandleViewIoException(this) { setView(serviceFile) })
 			.eventuallyExcuse(LoopedInPromise.response(UnexpectedExceptionToasterResponse(this), this))
 			.then { finish() }
-	}
-
-	override fun onNewIntent(intent: Intent) {
-		super.onNewIntent(intent)
-
-		// Update the intent
-		setIntent(intent)
-		val fileKey = intent.getIntExtra(fileKey, -1)
-		setView(ServiceFile(fileKey))
-	}
-
-	override fun onStart() {
-		super.onStart()
-		restoreSelectedConnection(this)
-	}
-
-	override fun onOptionsItemSelected(item: MenuItem): Boolean {
-		if (item.itemId == android.R.id.home) {
-			finish()
-			return true
-		}
-		return super.onOptionsItemSelected(item)
 	}
 }
 

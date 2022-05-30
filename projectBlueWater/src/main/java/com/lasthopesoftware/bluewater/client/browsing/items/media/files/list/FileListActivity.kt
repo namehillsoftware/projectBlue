@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.browsing.items.media.files.list
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -37,6 +38,7 @@ import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils.buildStandardMenu
+import com.lasthopesoftware.bluewater.shared.android.view.getValue
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
@@ -62,6 +64,8 @@ class FileListActivity :
 		}
 	}
 
+	private val handler by lazy { Handler(mainLooper) }
+
 	private val selectedLibraryIdProvider by lazy { SelectedBrowserLibraryIdentifierProvider(getApplicationSettingsRepository()) }
 
 	private val fileProvider by lazy {
@@ -74,8 +78,8 @@ class FileListActivity :
 		)
 	}
 	private val fileListItemNowPlayingRegistrar = lazy { FileListItemNowPlayingRegistrar(getApplicationMessageBus()) }
-	private val pbLoading = LazyViewFinder<ProgressBar>(this, R.id.recyclerLoadingProgress)
-	private val fileListView = LazyViewFinder<RecyclerView>(this, R.id.loadedRecyclerView)
+	private val pbLoading by LazyViewFinder<ProgressBar>(this, R.id.recyclerLoadingProgress)
+	private val fileListView by LazyViewFinder<RecyclerView>(this, R.id.loadedRecyclerView)
 
 	private lateinit var nowPlayingFloatingActionButton: NowPlayingFloatingActionButton
 
@@ -89,16 +93,19 @@ class FileListActivity :
 		setSupportActionBar(findViewById(R.id.listViewToolbar))
 		supportActionBar?.setDisplayHomeAsUpEnabled(true)
 
-		fileListView.findView().visibility = View.INVISIBLE
-		pbLoading.findView().visibility = View.VISIBLE
+		fileListView.visibility = View.INVISIBLE
+		pbLoading.visibility = View.VISIBLE
 
 		if (savedInstanceState != null) itemId = savedInstanceState.getInt(key)
 		if (itemId == 0) itemId = this.intent.getIntExtra(key, 1)
 
 		title = intent.getStringExtra(value)
 		nowPlayingFloatingActionButton = addNowPlayingFloatingActionButton(findViewById(R.id.asynchronousRecyclerViewContainer))
+	}
 
-		run()
+	override fun onStart() {
+		super.onStart()
+		restoreSelectedConnection(this).eventually(LoopedInPromise.response({ run() }, handler))
 	}
 
 	override fun run() {
@@ -125,25 +132,19 @@ class FileListActivity :
 								)
 							}
 
-							val fileListView = fileListView.findView()
 							fileListView.adapter = FileListAdapter(serviceFiles, fileListItemMenuBuilder)
 							val layoutManager = LinearLayoutManager(this)
 							fileListView.layoutManager = layoutManager
 							fileListView.addItemDecoration(DividerItemDecoration(this, layoutManager.orientation))
 							fileListView.visibility = View.VISIBLE
 
-							pbLoading.findView().visibility = View.INVISIBLE
+							pbLoading.visibility = View.INVISIBLE
 						}
-					}, this))
+					}, handler))
 			}
 			.excuse(HandleViewIoException(this, this))
-			.eventuallyExcuse(LoopedInPromise.response(UnexpectedExceptionToasterResponse(this), this))
+			.eventuallyExcuse(LoopedInPromise.response(UnexpectedExceptionToasterResponse(this), handler))
 			.then { finish() }
-	}
-
-	override fun onStart() {
-		super.onStart()
-		restoreSelectedConnection(this)
 	}
 
 	override fun onSaveInstanceState(savedInstanceState: Bundle) {

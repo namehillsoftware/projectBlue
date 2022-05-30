@@ -206,20 +206,11 @@ class NowPlayingActivity :
 		super.onStart()
 
 		restoreSelectedConnection(this).eventually(LoopedInPromise.response({
-			connectionRestoreCode = it
-			if (it == null) binding.also { b ->
+			binding.also { b ->
 				b.filePropertiesVm?.initializeViewModel()
 				b.coverArtVm?.initializeViewModel()
 			}
 		}, messageHandler))
-	}
-
-	override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-		if (requestCode == connectionRestoreCode) binding.also { b ->
-			b.filePropertiesVm?.initializeViewModel()
-			b.coverArtVm?.initializeViewModel()
-		}
-		super.onActivityResult(requestCode, resultCode, data)
 	}
 
 	override fun onDestroy() {

@@ -195,15 +195,9 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 
 	override fun onStart() {
 		super.onStart()
-		InstantiateSelectedConnectionActivity.restoreSelectedConnection(this).eventually(response({
-			connectionRestoreCode = it
-			if (it == null) startLibrary()
-		}, messageHandler))
-	}
-
-	override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-		if (requestCode == connectionRestoreCode) startLibrary()
-		super.onActivityResult(requestCode, resultCode, data)
+		InstantiateSelectedConnectionActivity
+			.restoreSelectedConnection(this)
+			.eventually(response({ startLibrary() }, messageHandler))
 	}
 
 	override fun onNewIntent(intent: Intent) {
