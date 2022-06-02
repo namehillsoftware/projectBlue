@@ -1,5 +1,5 @@
-<vector android:height="36dp"
-    android:width="36dp"
+<vector android:height="@dimen/playback_control_size"
+    android:width="@dimen/playback_control_size"
     android:viewportHeight="24" android:viewportWidth="24"
     xmlns:android="http://schemas.android.com/apk/res/android">
     <path
