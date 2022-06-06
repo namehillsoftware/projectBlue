@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <color name="white">#FFFFFF</color>
     <color name="black">#000000</color>
     <color name="overlay_dark">#66000000</color>
     <color name="ics_gray">#858585</color>
@@ -11,7 +10,6 @@
     <color name="project_blue_light">#CADEFF</color>
     <color name="project_blue_dark">#667DB9</color>
     <color name="project_blue_on_dark_surface">@color/White</color>
-    <color name="custom_transparent_white">#CCFFFFFF</color>
     <color name="now_playing_list_color">#4F000000</color>
     <color name="selection_background_color_light">#FEBB20</color>
 

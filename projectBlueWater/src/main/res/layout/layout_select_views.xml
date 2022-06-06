@@ -11,7 +11,7 @@
         android:textAppearance="?android:attr/textAppearanceMedium"
         android:ellipsize="end"
         android:padding="15dip"
-        android:textColor="@color/white"
+        android:textColor="@android:color/white"
         android:background="@color/project_blue_primary"/>
 
 </RelativeLayout>

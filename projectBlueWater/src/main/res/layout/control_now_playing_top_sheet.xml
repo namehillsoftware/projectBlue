@@ -73,7 +73,7 @@
                     android:singleLine="true"
                     android:text="@{vm.title}"
                     android:textAppearance="?android:attr/textAppearanceLarge"
-                    android:textColor="@color/white" />
+                    android:textColor="@android:color/white" />
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -83,7 +83,7 @@
                     android:singleLine="true"
                     android:text="@{vm.artist}"
                     android:textAppearance="?android:attr/textAppearanceSmall"
-                    android:textColor="@color/white" />
+                    android:textColor="@android:color/white" />
             </LinearLayout>
         </RelativeLayout>
 
