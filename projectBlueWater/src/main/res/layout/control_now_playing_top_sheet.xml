@@ -154,7 +154,7 @@
                     android:layout_weight="1"
                     android:background="?android:attr/selectableItemBackground"
                     android:contentDescription="@string/btn_previous"
-                    android:src="@drawable/av_previous_dark" />
+                    android:src="@drawable/av_previous_white" />
 
                 <ViewFlipper
                     android:id="@+id/vfPlayPause"
@@ -168,7 +168,7 @@
                         android:layout_height="wrap_content"
                         android:background="?android:attr/selectableItemBackground"
                         android:contentDescription="@string/btn_play"
-                        android:src="@drawable/av_play_dark"
+                        android:src="@drawable/av_play_white"
                         app:isVisible="@{!vm.isPlaying}" />
 
                     <ImageButton
@@ -177,7 +177,7 @@
                         android:layout_height="wrap_content"
                         android:background="?android:attr/selectableItemBackground"
                         android:contentDescription="@string/btn_pause"
-                        android:src="@drawable/av_pause_dark"
+                        android:src="@drawable/av_pause_white"
                         app:isVisible="@{vm.isPlaying}" />
                 </ViewFlipper>
 
@@ -188,7 +188,7 @@
                     android:layout_weight="1"
                     android:background="?android:attr/selectableItemBackground"
                     android:contentDescription="@string/btn_next"
-                    android:src="@drawable/av_next_dark" />
+                    android:src="@drawable/av_next_white" />
             </LinearLayout>
         </RelativeLayout>
     </RelativeLayout>

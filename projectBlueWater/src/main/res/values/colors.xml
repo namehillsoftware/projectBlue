@@ -6,6 +6,7 @@
     <color name="ics_gray">#858585</color>
     <color name="faint_gray">#22000000</color>
     <color name="gray_clickable">#333333</color>
+    <color name="transparent_gray_clickable">#99333333</color>
     <color name="project_blue_primary">#97ACEC</color>
     <color name="project_blue_light">#CADEFF</color>
     <color name="project_blue_dark">#667DB9</color>

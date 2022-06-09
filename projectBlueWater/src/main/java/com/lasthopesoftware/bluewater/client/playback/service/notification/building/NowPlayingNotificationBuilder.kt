@@ -79,25 +79,25 @@ class NowPlayingNotificationBuilder(
 		builder
 			.addAction(
 				NotificationCompat.Action(
-					R.drawable.av_previous_dark,
+					R.drawable.av_previous_white,
 					context.getString(R.string.btn_previous),
 					pendingPreviousIntent(context)
 				)
 			)
 			.addAction(
 				if (isPlaying) NotificationCompat.Action(
-					R.drawable.av_pause_dark,
+					R.drawable.av_pause_white,
 					context.getString(R.string.btn_pause),
 					pendingPauseIntent(context)
 				) else NotificationCompat.Action(
-					R.drawable.av_play_dark,
+					R.drawable.av_play_white,
 					context.getString(R.string.btn_play),
 					pendingPlayingIntent(context)
 				)
 			)
 			.addAction(
 				NotificationCompat.Action(
-					R.drawable.av_next_dark,
+					R.drawable.av_next_white,
 					context.getString(R.string.btn_next),
 					pendingNextIntent(context)
 				)

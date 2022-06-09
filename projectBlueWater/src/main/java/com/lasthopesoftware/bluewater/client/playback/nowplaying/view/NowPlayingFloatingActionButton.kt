@@ -18,7 +18,7 @@ class NowPlayingFloatingActionButton private constructor(context: Context) : Flo
 	private var isNowPlayingFileSet = false
 
 	init {
-		setImageDrawable(AppCompatResources.getDrawable(context, R.drawable.av_play_dark))
+		setImageDrawable(AppCompatResources.getDrawable(context, R.drawable.av_play_white))
 		initializeNowPlayingFloatingActionButton()
 	}
 
