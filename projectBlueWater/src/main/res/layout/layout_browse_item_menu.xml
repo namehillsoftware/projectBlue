@@ -36,7 +36,7 @@
         android:layout_height="match_parent"
         android:layout_weight="1"
         android:contentDescription="@string/btn_sync_item"
-        android:src="@drawable/ic_sync"
+        android:src="@drawable/ic_sync_white"
 		android:tint="@color/gray_clickable"
 		android:alpha=".6"/>
 
