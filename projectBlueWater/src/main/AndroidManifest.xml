@@ -22,10 +22,6 @@
         tools:targetApi="m">
 
         <meta-data
-            android:name="com.google.android.gms.car.application"
-            android:resource="@xml/automotive_app_desc"/>
-
-        <meta-data
             android:name="android.app.default_searchable"
             android:value=".client.library.items.media.files.list.SearchFilesActivity" />
 
