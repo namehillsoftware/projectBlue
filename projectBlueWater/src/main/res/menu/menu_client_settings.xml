@@ -5,7 +5,7 @@
         android:title="@string/title_activity_about"
         android:orderInCategory="100"
         app:showAsAction="ifRoom"
-        android:icon="@drawable/ic_help" />
+        android:icon="@drawable/ic_help_white" />
 
     <item android:id="@+id/menuRemoveServer"
         android:title="@string/removeServer"

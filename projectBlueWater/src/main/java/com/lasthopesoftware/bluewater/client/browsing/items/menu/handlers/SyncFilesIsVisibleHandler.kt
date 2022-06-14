@@ -2,12 +2,12 @@ package com.lasthopesoftware.bluewater.client.browsing.items.menu.handlers
 
 import android.view.View
 import android.widget.ImageButton
+import androidx.core.content.ContextCompat
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.NotifyOnFlipViewAnimator
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
-import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils.getThemedDrawable
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
 
 class SyncFilesIsVisibleHandler(
@@ -26,21 +26,27 @@ class SyncFilesIsVisibleHandler(
 					{ isSynced ->
 						if (!v.isShown) return@response
 
-						syncButton.setImageDrawable(
-							v.context.getThemedDrawable(
-								if (isSynced) R.drawable.ic_sync_on else R.drawable.ic_sync_off
+						with (syncButton) {
+							alpha = if (isSynced) .9f else .6f
+							setColorFilter(
+								ContextCompat.getColor(
+									context,
+									if (isSynced) R.color.project_blue_primary else R.color.gray_clickable
+								),
+								android.graphics.PorterDuff.Mode.SRC_IN
 							)
-						)
 
-						syncButton.setOnClickListener(
-							SyncFilesClickHandler(
-								notifyOnFlipViewAnimator,
-								libraryId,
-								item,
-								isSynced
+							setOnClickListener(
+								SyncFilesClickHandler(
+									notifyOnFlipViewAnimator,
+									libraryId,
+									item,
+									isSynced
+								)
 							)
-						)
-						syncButton.isEnabled = true
+
+							isEnabled = true
+						}
 					}, v.context
 				)
 			)

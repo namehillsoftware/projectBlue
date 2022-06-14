@@ -41,7 +41,7 @@ class MediaStyleNotificationSetup(
 			.setContentIntent(pendingNowPlayingIntent)
 			.setDeleteIntent(pendingKillService(context))
 			.setShowWhen(false)
-			.setSmallIcon(R.drawable.launcher_icon_dark)
+			.setSmallIcon(R.drawable.now_playing_status_icon_white)
 			.setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
 	}
 }

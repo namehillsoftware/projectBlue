@@ -27,7 +27,7 @@
 	    android:layout_height="match_parent"
 	    android:layout_weight="1"
 	    android:contentDescription="@string/btn_view_files"
-	    android:src="@drawable/ic_menu_gray_36dp" />
+	    android:src="@drawable/ic_menu_36dp" />
 
     <ImageButton
         android:id="@+id/btnSyncItem"
@@ -36,7 +36,9 @@
         android:layout_height="match_parent"
         android:layout_weight="1"
         android:contentDescription="@string/btn_sync_item"
-        android:src="@drawable/ic_sync_off" />
+        android:src="@drawable/ic_sync_white"
+		android:tint="@color/gray_clickable"
+		android:alpha=".6"/>
 
     <ImageButton
         android:id="@+id/btnShuffle"

@@ -2,7 +2,8 @@ package com.lasthopesoftware.bluewater.shared.images
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
+import androidx.appcompat.content.res.AppCompatResources
+import androidx.core.graphics.drawable.toBitmap
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.promises.Promise
@@ -20,10 +21,12 @@ class DefaultImageProvider(private val context: Context) : ProvideDefaultImage {
 		private fun promiseFillerBitmap(context: Context) =
 			if (::promisedBitmap.isInitialized) promisedBitmap
 			else QueuedPromise(MessageWriter {
-				val decodedBitmap = BitmapFactory.decodeResource(context.resources, R.drawable.wave_background)
 				val dm = context.resources.displayMetrics
 				val maxSize = max(dm.heightPixels, dm.widthPixels)
-				val scaledBitmap = Bitmap.createScaledBitmap(decodedBitmap, maxSize, maxSize, false)
+				val scaledBitmap = AppCompatResources.getDrawable(context, R.drawable.wave_background)
+					?.toBitmap(maxSize, maxSize)
+					?: Bitmap.createBitmap(maxSize, maxSize, Bitmap.Config.ARGB_8888)
+
 				val immutableBitmap = scaledBitmap.copy(scaledBitmap.config, false)
 				immutableBitmap
 			}, ThreadPools.compute).also { promisedBitmap = it }
