@@ -285,7 +285,7 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 	override fun notify(notificationText: String?) {
 		val notifyBuilder = NotificationCompat.Builder(context, activeNotificationChannelId)
 		notifyBuilder
-			.setSmallIcon(R.drawable.ic_water_outline_white)
+			.setSmallIcon(R.drawable.ic_water_white)
 			.setContentIntent(showDownloadsIntent)
 			.addAction(0, context.getString(R.string.stop_sync_button), cancelIntent)
 			.setOngoing(true)
