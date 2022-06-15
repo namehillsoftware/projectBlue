@@ -132,7 +132,6 @@
                     style="?android:attr/progressBarStyleHorizontal"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="10dp"
                     android:indeterminate="false"
                     android:progress="@{vm.filePosition}"
                     android:max="@{vm.fileDuration}" />
@@ -144,6 +143,8 @@
                     android:orientation="horizontal"
                     android:paddingLeft="2dip"
                     android:paddingRight="2dip"
+                    android:paddingTop="10dp"
+                    android:paddingBottom="10dp"
                     android:layout_gravity="center"
                     app:isVisible="@{vm.isScreenControlsVisible}"
                     >
