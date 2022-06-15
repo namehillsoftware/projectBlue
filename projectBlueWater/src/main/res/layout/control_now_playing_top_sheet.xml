@@ -87,18 +87,19 @@
             </LinearLayout>
         </RelativeLayout>
 
-        <RelativeLayout
+        <LinearLayout
             android:id="@+id/nowPlayingControlsContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_alignParentStart="true"
-            android:layout_alignParentBottom="true">
+            android:layout_alignParentBottom="true"
+            android:orientation="vertical">
 
             <LinearLayout
                 android:id="@+id/songRatingLinearLayout"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_centerHorizontal="true"
+                android:layout_gravity="center_horizontal"
                 app:isVisible="@{vm.isScreenControlsVisible}"
                 android:orientation="vertical">
 
@@ -119,77 +120,78 @@
                     android:text="@string/readOnlyConnection"
                     android:visibility="@{vm.isReadOnly ? View.VISIBLE : View.GONE}"
                     android:textAppearance="?android:attr/textAppearanceSmall" />
-
             </LinearLayout>
-
-            <ProgressBar
-                android:id="@+id/pbNowPlaying"
-                style="?android:attr/progressBarStyleHorizontal"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_below="@+id/songRatingLinearLayout"
-                android:layout_alignParentStart="true"
-                android:layout_marginBottom="20dp"
-                android:indeterminate="false"
-                android:progress="@{vm.filePosition}"
-                android:max="@{vm.fileDuration}" />
 
             <LinearLayout
-                android:id="@+id/llNpButtons"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_below="@+id/pbNowPlaying"
-                android:layout_alignParentStart="true"
-                android:orientation="horizontal"
-                android:paddingLeft="2dip"
-                android:paddingRight="2dip"
-                android:layout_marginBottom="20dp"
-                app:isVisible="@{vm.isScreenControlsVisible}"
-                >
-
-                <ImageButton
-                    android:id="@+id/btnPrevious"
-                    android:layout_width="0dip"
+                android:layout_height="56dp"
+                android:orientation="vertical"
+                android:layout_gravity="center">
+                <ProgressBar
+                    android:id="@+id/pbNowPlaying"
+                    style="?android:attr/progressBarStyleHorizontal"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:background="?android:attr/selectableItemBackground"
-                    android:contentDescription="@string/btn_previous"
-                    android:src="@drawable/av_previous_white" />
+                    android:layout_marginBottom="20dp"
+                    android:indeterminate="false"
+                    android:progress="@{vm.filePosition}"
+                    android:max="@{vm.fileDuration}" />
 
-                <ViewFlipper
-                    android:id="@+id/vfPlayPause"
-                    android:layout_width="0dip"
+                <LinearLayout
+                    android:id="@+id/llNpButtons"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1">
+                    android:orientation="horizontal"
+                    android:paddingLeft="2dip"
+                    android:paddingRight="2dip"
+                    android:layout_marginBottom="20dp"
+                    app:isVisible="@{vm.isScreenControlsVisible}"
+                    >
 
                     <ImageButton
-                        android:id="@+id/btnPlay"
-                        android:layout_width="match_parent"
+                        android:id="@+id/btnPrevious"
+                        android:layout_width="0dip"
                         android:layout_height="wrap_content"
+                        android:layout_weight="1"
                         android:background="?android:attr/selectableItemBackground"
-                        android:contentDescription="@string/btn_play"
-                        android:src="@drawable/av_play_white"
-                        app:isVisible="@{!vm.isPlaying}" />
+                        android:contentDescription="@string/btn_previous"
+                        android:src="@drawable/av_previous_white" />
+
+                    <ViewFlipper
+                        android:id="@+id/vfPlayPause"
+                        android:layout_width="0dip"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1">
+
+                        <ImageButton
+                            android:id="@+id/btnPlay"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="?android:attr/selectableItemBackground"
+                            android:contentDescription="@string/btn_play"
+                            android:src="@drawable/av_play_white"
+                            app:isVisible="@{!vm.isPlaying}" />
+
+                        <ImageButton
+                            android:id="@+id/btnPause"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:background="?android:attr/selectableItemBackground"
+                            android:contentDescription="@string/btn_pause"
+                            android:src="@drawable/av_pause_white"
+                            app:isVisible="@{vm.isPlaying}" />
+                    </ViewFlipper>
 
                     <ImageButton
-                        android:id="@+id/btnPause"
-                        android:layout_width="match_parent"
+                        android:id="@+id/btnNext"
+                        android:layout_width="0dip"
                         android:layout_height="wrap_content"
+                        android:layout_weight="1"
                         android:background="?android:attr/selectableItemBackground"
-                        android:contentDescription="@string/btn_pause"
-                        android:src="@drawable/av_pause_white"
-                        app:isVisible="@{vm.isPlaying}" />
-                </ViewFlipper>
-
-                <ImageButton
-                    android:id="@+id/btnNext"
-                    android:layout_width="0dip"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:background="?android:attr/selectableItemBackground"
-                    android:contentDescription="@string/btn_next"
-                    android:src="@drawable/av_next_white" />
+                        android:contentDescription="@string/btn_next"
+                        android:src="@drawable/av_next_white" />
+                </LinearLayout>
             </LinearLayout>
-        </RelativeLayout>
+        </LinearLayout>
     </RelativeLayout>
 </layout>
