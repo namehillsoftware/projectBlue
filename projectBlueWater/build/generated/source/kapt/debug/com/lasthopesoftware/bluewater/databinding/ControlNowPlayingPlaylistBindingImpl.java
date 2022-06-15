@@ -175,9 +175,9 @@ public class ControlNowPlayingPlaylistBindingImpl extends ControlNowPlayingPlayl
             dirtyFlags = mDirtyFlags;
             mDirtyFlags = 0;
         }
+        android.graphics.drawable.Drawable vmIsRepeatingRepeatButtonAndroidDrawableAvRepeatWhiteRepeatButtonAndroidDrawableAvNoRepeatWhite = null;
         java.lang.Boolean vmIsRepeatingGetValue = null;
         java.lang.Integer vmFilePositionGetValue = null;
-        android.graphics.drawable.Drawable vmIsRepeatingRepeatButtonAndroidDrawableAvRepeatDarkRepeatButtonAndroidDrawableAvNoRepeatDark = null;
         com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel vm = mVm;
         kotlinx.coroutines.flow.StateFlow<java.lang.Boolean> vmIsPlaying = null;
         kotlinx.coroutines.flow.StateFlow<java.lang.Integer> vmFileDuration = null;
@@ -272,8 +272,8 @@ public class ControlNowPlayingPlaylistBindingImpl extends ControlNowPlayingPlayl
                 }
 
 
-                    // read androidx.databinding.ViewDataBinding.safeUnbox(vm.isRepeating.getValue()) ? @android:drawable/av_repeat_dark : @android:drawable/av_no_repeat_dark
-                    vmIsRepeatingRepeatButtonAndroidDrawableAvRepeatDarkRepeatButtonAndroidDrawableAvNoRepeatDark = ((androidxDatabindingViewDataBindingSafeUnboxVmIsRepeatingGetValue) ? (androidx.appcompat.content.res.AppCompatResources.getDrawable(repeatButton.getContext(), R.drawable.av_repeat_white)) : (androidx.appcompat.content.res.AppCompatResources.getDrawable(repeatButton.getContext(), R.drawable.av_no_repeat_white)));
+                    // read androidx.databinding.ViewDataBinding.safeUnbox(vm.isRepeating.getValue()) ? @android:drawable/av_repeat_white : @android:drawable/av_no_repeat_white
+                    vmIsRepeatingRepeatButtonAndroidDrawableAvRepeatWhiteRepeatButtonAndroidDrawableAvNoRepeatWhite = ((androidxDatabindingViewDataBindingSafeUnboxVmIsRepeatingGetValue) ? (androidx.appcompat.content.res.AppCompatResources.getDrawable(repeatButton.getContext(), R.drawable.av_repeat_white)) : (androidx.appcompat.content.res.AppCompatResources.getDrawable(repeatButton.getContext(), R.drawable.av_no_repeat_white)));
             }
             if ((dirtyFlags & 0xa8L) != 0) {
 
@@ -348,7 +348,7 @@ public class ControlNowPlayingPlaylistBindingImpl extends ControlNowPlayingPlayl
         if ((dirtyFlags & 0xa4L) != 0) {
             // api target 1
 
-            androidx.databinding.adapters.ImageViewBindingAdapter.setImageDrawable(this.repeatButton, vmIsRepeatingRepeatButtonAndroidDrawableAvRepeatDarkRepeatButtonAndroidDrawableAvNoRepeatDark);
+            androidx.databinding.adapters.ImageViewBindingAdapter.setImageDrawable(this.repeatButton, vmIsRepeatingRepeatButtonAndroidDrawableAvRepeatWhiteRepeatButtonAndroidDrawableAvNoRepeatWhite);
         }
     }
     // Listener Stub Implementations
@@ -364,8 +364,8 @@ public class ControlNowPlayingPlaylistBindingImpl extends ControlNowPlayingPlayl
         flag 5 (0x6L): vm
         flag 6 (0x7L): playlistVm
         flag 7 (0x8L): null
-        flag 8 (0x9L): androidx.databinding.ViewDataBinding.safeUnbox(vm.isRepeating.getValue()) ? @android:drawable/av_repeat_dark : @android:drawable/av_no_repeat_dark
-        flag 9 (0xaL): androidx.databinding.ViewDataBinding.safeUnbox(vm.isRepeating.getValue()) ? @android:drawable/av_repeat_dark : @android:drawable/av_no_repeat_dark
+        flag 8 (0x9L): androidx.databinding.ViewDataBinding.safeUnbox(vm.isRepeating.getValue()) ? @android:drawable/av_repeat_white : @android:drawable/av_no_repeat_white
+        flag 9 (0xaL): androidx.databinding.ViewDataBinding.safeUnbox(vm.isRepeating.getValue()) ? @android:drawable/av_repeat_white : @android:drawable/av_no_repeat_white
     flag mapping end*/
     //end
 }
