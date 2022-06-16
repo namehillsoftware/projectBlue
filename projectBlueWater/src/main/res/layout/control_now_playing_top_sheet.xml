@@ -87,18 +87,19 @@
             </LinearLayout>
         </RelativeLayout>
 
-        <RelativeLayout
+        <LinearLayout
             android:id="@+id/nowPlayingControlsContainer"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_alignParentStart="true"
-            android:layout_alignParentBottom="true">
+            android:layout_alignParentBottom="true"
+            android:orientation="vertical">
 
             <LinearLayout
                 android:id="@+id/songRatingLinearLayout"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_centerHorizontal="true"
+                android:layout_gravity="center_horizontal"
                 app:isVisible="@{vm.isScreenControlsVisible}"
                 android:orientation="vertical">
 
@@ -119,7 +120,6 @@
                     android:text="@string/readOnlyConnection"
                     android:visibility="@{vm.isReadOnly ? View.VISIBLE : View.GONE}"
                     android:textAppearance="?android:attr/textAppearanceSmall" />
-
             </LinearLayout>
 
             <ProgressBar
@@ -127,45 +127,42 @@
                 style="?android:attr/progressBarStyleHorizontal"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_below="@+id/songRatingLinearLayout"
-                android:layout_alignParentStart="true"
-                android:layout_marginBottom="20dp"
                 android:indeterminate="false"
-                android:progress="@{vm.filePosition}"
-                android:max="@{vm.fileDuration}" />
+                android:max="@{vm.fileDuration}"
+                android:progress="@{vm.filePosition}" />
 
             <LinearLayout
                 android:id="@+id/llNpButtons"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_below="@+id/pbNowPlaying"
-                android:layout_alignParentStart="true"
+                android:layout_height="64dp"
                 android:orientation="horizontal"
                 android:paddingLeft="2dip"
                 android:paddingRight="2dip"
-                android:layout_marginBottom="20dp"
+                android:measureWithLargestChild="true"
                 app:isVisible="@{vm.isScreenControlsVisible}"
                 >
 
                 <ImageButton
                     android:id="@+id/btnPrevious"
                     android:layout_width="0dip"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:layout_weight="1"
+                    android:layout_gravity="center"
                     android:background="?android:attr/selectableItemBackground"
                     android:contentDescription="@string/btn_previous"
                     android:src="@drawable/av_previous_white" />
 
-                <ViewFlipper
+                <FrameLayout
                     android:id="@+id/vfPlayPause"
                     android:layout_width="0dip"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1">
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:layout_gravity="center">
 
                     <ImageButton
                         android:id="@+id/btnPlay"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        android:layout_height="match_parent"
                         android:background="?android:attr/selectableItemBackground"
                         android:contentDescription="@string/btn_play"
                         android:src="@drawable/av_play_white"
@@ -174,22 +171,23 @@
                     <ImageButton
                         android:id="@+id/btnPause"
                         android:layout_width="match_parent"
-                        android:layout_height="wrap_content"
+                        android:layout_height="match_parent"
                         android:background="?android:attr/selectableItemBackground"
                         android:contentDescription="@string/btn_pause"
                         android:src="@drawable/av_pause_white"
                         app:isVisible="@{vm.isPlaying}" />
-                </ViewFlipper>
+                </FrameLayout>
 
                 <ImageButton
                     android:id="@+id/btnNext"
                     android:layout_width="0dip"
-                    android:layout_height="wrap_content"
+                    android:layout_height="match_parent"
                     android:layout_weight="1"
+                    android:layout_gravity="center"
                     android:background="?android:attr/selectableItemBackground"
                     android:contentDescription="@string/btn_next"
                     android:src="@drawable/av_next_white" />
             </LinearLayout>
-        </RelativeLayout>
+        </LinearLayout>
     </RelativeLayout>
 </layout>
