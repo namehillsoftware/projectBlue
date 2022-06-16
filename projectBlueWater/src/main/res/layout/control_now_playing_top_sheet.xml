@@ -122,19 +122,21 @@
                     android:textAppearance="?android:attr/textAppearanceSmall" />
             </LinearLayout>
 
-            <LinearLayout
+            <RelativeLayout
                 android:layout_width="match_parent"
                 android:layout_height="72dp"
                 android:orientation="vertical"
                 android:layout_gravity="center">
+
                 <ProgressBar
                     android:id="@+id/pbNowPlaying"
                     style="?android:attr/progressBarStyleHorizontal"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:layout_alignParentTop="true"
                     android:indeterminate="false"
-                    android:progress="@{vm.filePosition}"
-                    android:max="@{vm.fileDuration}" />
+                    android:max="@{vm.fileDuration}"
+                    android:progress="@{vm.filePosition}" />
 
                 <LinearLayout
                     android:id="@+id/llNpButtons"
@@ -145,20 +147,21 @@
                     android:paddingRight="2dip"
                     android:paddingTop="10dp"
                     android:paddingBottom="10dp"
-                    android:layout_gravity="center"
+                    android:layout_below="@id/pbNowPlaying"
+                    android:measureWithLargestChild="true"
                     app:isVisible="@{vm.isScreenControlsVisible}"
                     >
 
                     <ImageButton
                         android:id="@+id/btnPrevious"
                         android:layout_width="0dip"
-                        android:layout_height="wrap_content"
+                        android:layout_height="match_parent"
                         android:layout_weight="1"
                         android:background="?android:attr/selectableItemBackground"
                         android:contentDescription="@string/btn_previous"
                         android:src="@drawable/av_previous_white" />
 
-                    <ViewFlipper
+                    <FrameLayout
                         android:id="@+id/vfPlayPause"
                         android:layout_width="0dip"
                         android:layout_height="wrap_content"
@@ -167,7 +170,7 @@
                         <ImageButton
                             android:id="@+id/btnPlay"
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
+                            android:layout_height="match_parent"
                             android:background="?android:attr/selectableItemBackground"
                             android:contentDescription="@string/btn_play"
                             android:src="@drawable/av_play_white"
@@ -176,23 +179,23 @@
                         <ImageButton
                             android:id="@+id/btnPause"
                             android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
+                            android:layout_height="match_parent"
                             android:background="?android:attr/selectableItemBackground"
                             android:contentDescription="@string/btn_pause"
                             android:src="@drawable/av_pause_white"
                             app:isVisible="@{vm.isPlaying}" />
-                    </ViewFlipper>
+                    </FrameLayout>
 
                     <ImageButton
                         android:id="@+id/btnNext"
                         android:layout_width="0dip"
-                        android:layout_height="wrap_content"
+                        android:layout_height="match_parent"
                         android:layout_weight="1"
                         android:background="?android:attr/selectableItemBackground"
                         android:contentDescription="@string/btn_next"
                         android:src="@drawable/av_next_white" />
                 </LinearLayout>
-            </LinearLayout>
+            </RelativeLayout>
         </LinearLayout>
     </RelativeLayout>
 </layout>

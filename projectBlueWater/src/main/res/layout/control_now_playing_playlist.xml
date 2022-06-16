@@ -41,21 +41,21 @@
                         android:id="@+id/editNowPlayingList"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
+                        android:alpha=".80"
                         android:background="?android:attr/selectableItemBackground"
                         android:contentDescription="@string/edit_now_playing_list"
                         android:src="@drawable/pencil"
-                        android:alpha=".80"
-                        app:isVisible="@{!playlistVm.isEditingPlaylistState}"/>
+                        app:isVisible="@{!playlistVm.isEditingPlaylistState}" />
 
                     <ImageButton
                         android:id="@+id/finishEditNowPlayingList"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
+                        android:alpha=".80"
                         android:background="?android:attr/selectableItemBackground"
                         android:contentDescription="@string/finish_edit_now_playing_list"
                         android:src="@drawable/ic_remove_item_white_36dp"
-                        android:alpha=".80"
-                        app:isVisible="@{playlistVm.isEditingPlaylistState}"/>
+                        app:isVisible="@{playlistVm.isEditingPlaylistState}" />
                 </FrameLayout>
 
                 <ImageButton
@@ -66,7 +66,7 @@
                     android:layout_weight="1"
                     android:background="?android:attr/selectableItemBackground"
                     android:contentDescription="@string/btn_repeat_playlist"
-                    android:src="@{vm.isRepeating ? @drawable/av_repeat_white : @drawable/av_no_repeat_white}"  />
+                    android:src="@{vm.isRepeating ? @drawable/av_repeat_white : @drawable/av_no_repeat_white}" />
 
                 <ViewFlipper
                     android:id="@+id/miniPlayPause"
@@ -98,11 +98,11 @@
                     android:layout_width="0dip"
                     android:layout_height="match_parent"
                     android:layout_weight="1"
+                    android:alpha=".80"
                     android:background="?android:attr/selectableItemBackground"
                     android:contentDescription="@string/btn_hide_files"
-                    android:src="@drawable/chevron_up_white_36dp"
                     android:rotation="180"
-                    android:alpha=".80"/>
+                    android:src="@drawable/chevron_up_white_36dp" />
             </LinearLayout>
 
             <ProgressBar
@@ -113,8 +113,8 @@
                 android:layout_below="@+id/reducedNowPlayingButtonsContainer"
                 android:layout_alignParentStart="true"
                 android:indeterminate="false"
-                android:progress="@{vm.filePosition}"
-                android:max="@{vm.fileDuration}" />
+                android:max="@{vm.fileDuration}"
+                android:progress="@{vm.filePosition}" />
         </RelativeLayout>
         <com.lasthopesoftware.bluewater.shared.android.view.NestedScrollableHost
             android:layout_width="match_parent"
