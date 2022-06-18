@@ -7,6 +7,9 @@ import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEnt
 
 class ApplicationSettingsUpdater(private val applicationSettingsMigrator: ApplicationSettingsMigrator) : IEntityUpdater {
 	override fun onUpdate(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
+		if (oldVersion < 11)
+			db.execSQL("UPDATE `$tableName` SET `$isUsingCustomCachingColumn` = 1")
+
 		if (oldVersion < 10)
 			db.execSQL("ALTER TABLE `$tableName` add column `$isUsingCustomCachingColumn` SMALLINT;")
 
