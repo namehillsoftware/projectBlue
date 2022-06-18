@@ -40,7 +40,7 @@ class ApplicationSettingsMigrator(private val context: Context) {
 			`$isVolumeLevelingEnabledColumn` SMALLINT ,
 			`$playbackEngineTypeNameColumn` VARCHAR ,
 			`$chosenLibraryIdColumn` INTEGER DEFAULT -1 NOT NULL,
-			`$isUsingCustomCachingColumn` SMALLINT )""")
+			`$isUsingCustomCachingColumn` SMALLINT DEFAULT 1 )""")
 
 		val insertQuery = InsertBuilder.fromTable(tableName)
 			.addColumn(isSyncOnWifiOnlyColumn)
