@@ -31,6 +31,7 @@ import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessio
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingFileProvider.Companion.fromActiveLibrary
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
+import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
@@ -68,6 +69,7 @@ class SearchFilesFragment : Fragment(), View.OnKeyListener, TextView.OnEditorAct
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View =
 		(inflater.inflate(R.layout.asynchronous_search_view, container, false) as RelativeLayout).apply {
 			progressBar = findViewById(R.id.items_loading_progress)
+			progressBar?.visibility = ViewUtils.getVisibility(false)
 			recyclerView = findViewById(R.id.loaded_recycler_view)
 			searchPrompt = findViewById<EditText?>(R.id.searchPrompt)?.apply {
 				this@SearchFilesFragment
