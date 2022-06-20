@@ -1,44 +1,15 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.media.files;
+package com.lasthopesoftware.bluewater.client.browsing.items.media.files
 
-import androidx.annotation.NonNull;
+import com.lasthopesoftware.bluewater.shared.IIntKey
 
-import com.lasthopesoftware.bluewater.shared.IIntKey;
+class ServiceFile(override var key: Int = 0) : IIntKey<ServiceFile> {
 
-public final class ServiceFile implements IIntKey<ServiceFile> {
+	override operator fun compareTo(other: ServiceFile): Int = key - other.key
 
-	private int key;
+    override fun hashCode(): Int = key
 
-	public ServiceFile(int key) {
-		this.setKey(key);
-	}
-	
-	@Override
-	public int getKey() {
-		return key;
-	}
+    override fun equals(other: Any?): Boolean =
+		if (other is ServiceFile) compareTo(other) == 0 else super.equals(other)
 
-	@Override
-	public void setKey(int key) {
-		this.key = key;
-	}
-
-	@Override
-	public int compareTo(@NonNull ServiceFile another) {
-		return getKey() - another.getKey();
-	}
-
-	@Override
-	public int hashCode() {
-		return key;
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		return obj instanceof ServiceFile ? compareTo((ServiceFile)obj) == 0 : super.equals(obj);
-	}
-
-	@Override
-	public String toString() {
-		return "key: " + key;
-	}
+    override fun toString(): String = "key: $key"
 }
