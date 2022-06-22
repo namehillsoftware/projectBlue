@@ -68,7 +68,6 @@ class NowPlayingActivity :
 		}
 	}
 
-	private var connectionRestoreCode: Int? = null
 	private var viewAnimator: ViewAnimator? = null
 	private val messageHandler by lazy { Handler(mainLooper) }
 

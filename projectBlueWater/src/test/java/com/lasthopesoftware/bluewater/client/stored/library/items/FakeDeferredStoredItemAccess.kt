@@ -22,7 +22,7 @@ abstract class FakeDeferredStoredItemAccess : AccessStoredItems {
 	}
 
 	override fun toggleSync(libraryId: LibraryId, item: IItem, enable: Boolean) {}
-	override fun toggleSync(libraryId: LibraryId, itemId: KeyedIdentifier, enable: Boolean) {}
+	override fun toggleSync(libraryId: LibraryId, itemId: KeyedIdentifier, enable: Boolean) = Unit.toPromise()
 	override fun isItemMarkedForSync(libraryId: LibraryId, item: IItem): Promise<Boolean> {
 		return Promise(false)
 	}

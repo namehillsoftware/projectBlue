@@ -1,5 +1,8 @@
 package com.lasthopesoftware.bluewater.shared.promises.extensions
 
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
+import androidx.compose.runtime.produceState
 import com.google.common.util.concurrent.ListenableFuture
 import com.lasthopesoftware.bluewater.shared.promises.ForwardedResponse.Companion.forward
 import com.namehillsoftware.handoff.promises.Promise
@@ -10,9 +13,18 @@ import io.reactivex.disposables.Disposable
 import kotlinx.coroutines.*
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executor
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 
-fun <T> Promise<T>.toAsync(): Deferred<T> = CompletableDeferred<T>().also {
-	then(it::complete, it::completeExceptionally)
+@Composable
+fun <T> Promise<T>.toState(initialValue: T): State<T> = produceState(initialValue) {
+	value = suspend()
+}
+
+suspend fun <T> Promise<T>.suspend(): T = suspendCancellableCoroutine { d ->
+	d.invokeOnCancellation { cancel() }
+
+	then(d::resume, d::resumeWithException)
 }
 
 fun Completable.toPromise(): Promise<Unit> = CompletablePromise(this)

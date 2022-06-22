@@ -49,7 +49,7 @@ import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLa
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
 import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toAsync
+import com.lasthopesoftware.bluewater.shared.promises.extensions.suspend
 import kotlinx.coroutines.flow.map
 
 class FileDetailsActivity : ComponentActivity() {
@@ -124,8 +124,7 @@ private fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class)
 			.map { a -> a
 					?.takeIf { it.width > 0 && it.height > 0 }
 					?.let(paletteProvider::promisePalette)
-					?.toAsync()
-					?.await()
+					?.suspend()
 					?: defaultMediaStylePalette
 			}
 	}

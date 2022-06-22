@@ -18,7 +18,7 @@ import androidx.lifecycle.viewModelScope
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toAsync
+import com.lasthopesoftware.bluewater.shared.promises.extensions.suspend
 import com.namehillsoftware.handoff.promises.Promise
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.drop
@@ -67,7 +67,7 @@ class HiddenSettingsViewModel(private val applicationSettingsRepository: HoldApp
 			.promiseApplicationSettings()
 			.then { settings ->
 				isUsingCustomCaching.value = settings.isUsingCustomCaching
-				isUsingCustomCaching.drop(1).onEach { saveSettings().toAsync().await() }.launchIn(viewModelScope)
+				isUsingCustomCaching.drop(1).onEach { saveSettings().suspend() }.launchIn(viewModelScope)
 			}
 	}
 

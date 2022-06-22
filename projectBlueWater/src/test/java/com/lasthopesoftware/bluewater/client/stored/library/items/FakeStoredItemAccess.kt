@@ -25,7 +25,7 @@ open class FakeStoredItemAccess(vararg initialStoredItems: StoredItem) : AccessS
 		) else inMemoryStoredItems.removeAll(findMatchingItems(item))
 	}
 
-	override fun toggleSync(libraryId: LibraryId, itemId: KeyedIdentifier, enable: Boolean) {
+	override fun toggleSync(libraryId: LibraryId, itemId: KeyedIdentifier, enable: Boolean): Promise<Unit> {
 		val type = when (itemId) {
 			is PlaylistId -> StoredItem.ItemType.PLAYLIST
 			else -> StoredItem.ItemType.ITEM
@@ -33,6 +33,8 @@ open class FakeStoredItemAccess(vararg initialStoredItems: StoredItem) : AccessS
 
 		if (enable) inMemoryStoredItems.add(StoredItem(libraryId.id, itemId.id, type))
 		else inMemoryStoredItems.removeAll(findMatchingItems(itemId, type))
+
+		return Unit.toPromise()
 	}
 
 	override fun isItemMarkedForSync(libraryId: LibraryId, item: IItem): Promise<Boolean> {

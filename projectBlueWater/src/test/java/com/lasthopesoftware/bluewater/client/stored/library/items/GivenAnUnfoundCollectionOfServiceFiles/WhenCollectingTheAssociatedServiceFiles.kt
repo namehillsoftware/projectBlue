@@ -21,8 +21,6 @@ import org.junit.BeforeClass
 import org.junit.Test
 import java.io.FileNotFoundException
 import java.util.*
-import java.util.concurrent.ExecutionException
-import java.util.concurrent.TimeoutException
 
 class WhenCollectingTheAssociatedServiceFiles {
 
@@ -34,16 +32,15 @@ class WhenCollectingTheAssociatedServiceFiles {
 
 		@JvmStatic
 		@BeforeClass
-		@Throws(InterruptedException::class, TimeoutException::class, ExecutionException::class)
 		fun before() {
 			val storedItemAccess: AccessStoredItems = object : FakeStoredItemAccess(
 				StoredItem(4, 1, StoredItem.ItemType.ITEM),
 				StoredItem(4, 2, StoredItem.ItemType.ITEM),
 				StoredItem(4, 3, StoredItem.ItemType.ITEM)
 			) {
-				override fun toggleSync(libraryId: LibraryId, itemId: KeyedIdentifier, enable: Boolean) {
+				override fun toggleSync(libraryId: LibraryId, itemId: KeyedIdentifier, enable: Boolean): Promise<Unit> {
 					syncToggledItems[itemId] = enable
-					super.toggleSync(libraryId, itemId, enable)
+					return super.toggleSync(libraryId, itemId, enable)
 				}
 			}
 

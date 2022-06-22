@@ -23,14 +23,14 @@ class StoredItemAccess(private val context: Context) : AccessStoredItems {
 		else disableItemSync(libraryId, inferredItem, StoredItemHelpers.getListType(inferredItem))
 	}
 
-	override fun toggleSync(libraryId: LibraryId, itemId: KeyedIdentifier, enable: Boolean) {
+	override fun toggleSync(libraryId: LibraryId, itemId: KeyedIdentifier, enable: Boolean): Promise<Unit> {
 		val type = when (itemId) {
 			is ItemId -> ItemType.ITEM
 			is PlaylistId -> ItemType.PLAYLIST
 			else -> throw IllegalArgumentException("itemId")
 		}
 
-		if (enable) enableItemSync(libraryId, itemId, type)
+		return if (enable) enableItemSync(libraryId, itemId, type)
 		else disableItemSync(libraryId, itemId, type)
 	}
 
@@ -77,7 +77,7 @@ class StoredItemAccess(private val context: Context) : AccessStoredItems {
 		}
 	}
 
-	private fun enableItemSync(libraryId: LibraryId, item: KeyedIdentifier, itemType: ItemType) {
+	private fun enableItemSync(libraryId: LibraryId, item: KeyedIdentifier, itemType: ItemType) =
 		promiseTableMessage<Unit, StoredItem> {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				if (!isItemMarkedForSync(repositoryAccessHelper, libraryId, item, itemType))
@@ -92,9 +92,8 @@ class StoredItemAccess(private val context: Context) : AccessStoredItems {
 					}
 			}
 		}
-	}
 
-	private fun disableItemSync(libraryId: LibraryId, item: IItem, itemType: ItemType) {
+	private fun disableItemSync(libraryId: LibraryId, item: IItem, itemType: ItemType) =
 		promiseTableMessage<Unit, StoredItem> {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
@@ -114,9 +113,8 @@ class StoredItemAccess(private val context: Context) : AccessStoredItems {
 				}
 			}
 		}
-	}
 
-	private fun disableItemSync(libraryId: LibraryId, item: KeyedIdentifier, itemType: ItemType) {
+	private fun disableItemSync(libraryId: LibraryId, item: KeyedIdentifier, itemType: ItemType) =
 		promiseTableMessage<Unit, StoredItem> {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
@@ -136,7 +134,6 @@ class StoredItemAccess(private val context: Context) : AccessStoredItems {
 				}
 			}
 		}
-	}
 
 	override fun promiseStoredItems(libraryId: LibraryId): Promise<Collection<StoredItem>> =
 		promiseTableMessage<Collection<StoredItem>, StoredItem> {

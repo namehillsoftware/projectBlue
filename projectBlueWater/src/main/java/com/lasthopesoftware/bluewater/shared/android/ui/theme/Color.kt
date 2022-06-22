@@ -6,6 +6,7 @@ object Light {
 	val ProjectBlue = Color(0xFF97ACEC)
 	val ProjectBlueLight = Color(0xFFCADEFF)
 	val ProjectBlueDark = Color(0xFF667DB9)
+	val GrayClickable = Color(0xFF333333)
 }
 
 object Dark {

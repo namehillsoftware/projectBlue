@@ -34,7 +34,7 @@ import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLa
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toAsync
+import com.lasthopesoftware.bluewater.shared.promises.extensions.suspend
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
@@ -108,7 +108,7 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer, Runnable {
 			recyclerView.addItemDecoration(DividerItemDecoration(this, layoutManager.orientation))
 
 			viewModel.items.onEach {
-				adapter.updateListEventually(it).toAsync().await()
+				adapter.updateListEventually(it).suspend()
 			}.launchIn(lifecycleScope)
 		}, handler))
 	}

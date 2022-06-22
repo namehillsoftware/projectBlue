@@ -7,8 +7,8 @@ import com.namehillsoftware.handoff.promises.Promise
 
 interface AccessStoredItems {
 	fun toggleSync(libraryId: LibraryId, item: IItem, enable: Boolean)
-	fun toggleSync(libraryId: LibraryId, itemId: KeyedIdentifier, enable: Boolean)
-	fun isItemMarkedForSync(libraryId: LibraryId, item: IItem): Promise<Boolean>
+	fun toggleSync(libraryId: LibraryId, itemId: KeyedIdentifier, enable: Boolean): Promise<Unit>
+    fun isItemMarkedForSync(libraryId: LibraryId, item: IItem): Promise<Boolean>
 	fun promiseStoredItems(libraryId: LibraryId): Promise<Collection<StoredItem>>
 	fun disableAllLibraryItems(libraryId: LibraryId): Promise<Unit>
 }

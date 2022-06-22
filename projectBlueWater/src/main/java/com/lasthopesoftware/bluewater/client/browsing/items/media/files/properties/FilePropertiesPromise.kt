@@ -16,7 +16,6 @@ import okhttp3.Response
 import xmlwise.Xmlwise
 import java.io.IOException
 import java.util.*
-import kotlin.collections.HashMap
 
 internal class FilePropertiesPromise(
 	private val connectionProvider: IConnectionProvider,
@@ -56,7 +55,7 @@ internal class FilePropertiesPromise(
 				?.use { body -> Xmlwise.createXml(body.string()) }
 				?.let { xml ->
 					val parent = xml[0]
-					parent.associateTo(HashMap(), { el -> Pair(el.getAttribute("Name"), el.value) })
+					parent.associateTo(HashMap()) { el -> Pair(el.getAttribute("Name"), el.value) }
 				}
 				?.also { properties ->
 					filePropertiesContainerProvider.putFilePropertiesContainer(
