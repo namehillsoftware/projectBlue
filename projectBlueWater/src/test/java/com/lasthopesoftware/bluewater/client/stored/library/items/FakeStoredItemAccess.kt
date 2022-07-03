@@ -15,7 +15,7 @@ open class FakeStoredItemAccess(vararg initialStoredItems: StoredItem) : AccessS
 		inMemoryStoredItems.addAll(listOf(*initialStoredItems))
 	}
 
-	override fun toggleSync(libraryId: LibraryId, item: IItem, enable: Boolean) {
+	override fun toggleSync(libraryId: LibraryId, item: IItem, enable: Boolean): Promise<Unit> {
 		if (enable) inMemoryStoredItems.add(
 			StoredItem(
 				libraryId.id,
@@ -23,6 +23,7 @@ open class FakeStoredItemAccess(vararg initialStoredItems: StoredItem) : AccessS
 				StoredItemHelpers.getListType(item)
 			)
 		) else inMemoryStoredItems.removeAll(findMatchingItems(item))
+		return Unit.toPromise()
 	}
 
 	override fun toggleSync(libraryId: LibraryId, itemId: KeyedIdentifier, enable: Boolean): Promise<Unit> {

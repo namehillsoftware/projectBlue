@@ -24,6 +24,7 @@ import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSele
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingFloatingActionButton
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingFloatingActionButton.Companion.addNowPlayingFloatingActionButton
+import com.lasthopesoftware.bluewater.client.stored.library.items.StateChangeBroadcastingStoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
 import com.lasthopesoftware.bluewater.databinding.LayoutListViewBinding
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
@@ -55,7 +56,7 @@ class ItemListActivity : AppCompatActivity(), IItemListViewContainer, Runnable {
 		browserLibraryIdProvider.selectedLibraryId
 			.then {
 				it?.let { l ->
-					val storedItemAccess = StoredItemAccess(this)
+					val storedItemAccess = StateChangeBroadcastingStoredItemAccess(StoredItemAccess(this), messageBus)
 
 					ItemListAdapter(
 						this,

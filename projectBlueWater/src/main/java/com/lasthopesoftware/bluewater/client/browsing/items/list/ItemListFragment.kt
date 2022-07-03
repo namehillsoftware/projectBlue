@@ -27,6 +27,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.Sel
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
+import com.lasthopesoftware.bluewater.client.stored.library.items.StateChangeBroadcastingStoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
@@ -103,7 +104,7 @@ class ItemListFragment : Fragment() {
 									applicationMessageBus.value,
 									itemListProvider,
 									itemListMenuChangeHandler,
-									StoredItemAccess(context),
+									StateChangeBroadcastingStoredItemAccess(StoredItemAccess(context), applicationMessageBus.value),
 									itemProvider,
 									libraryId,
 								)

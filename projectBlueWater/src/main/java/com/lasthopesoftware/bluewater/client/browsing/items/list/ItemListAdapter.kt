@@ -20,7 +20,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAn
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.NotifyOnFlipViewAnimator
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.handlers.*
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
+import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
 import com.lasthopesoftware.bluewater.shared.android.adapters.DeferredListAdapter
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.messages.application.SendApplicationMessages
@@ -30,7 +30,7 @@ open class ItemListAdapter internal constructor(
 	private val sendMessages: SendApplicationMessages,
 	private val itemStringListProvider: ItemStringListProvider,
 	private val itemListMenuEvents: IItemListMenuChangeHandler,
-	private val storedItemAccess: StoredItemAccess,
+	private val storedItemAccess: AccessStoredItems,
 	private val provideItems: ProvideItems,
 	private val libraryId: LibraryId
 ) : DeferredListAdapter<Item, ItemListAdapter.ViewHolder>(context, ItemDiffer) {

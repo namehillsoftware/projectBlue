@@ -17,9 +17,9 @@ import com.lasthopesoftware.resources.executors.ThreadPools.promiseTableMessage
 import com.namehillsoftware.handoff.promises.Promise
 
 class StoredItemAccess(private val context: Context) : AccessStoredItems {
-	override fun toggleSync(libraryId: LibraryId, item: IItem, enable: Boolean) {
+	override fun toggleSync(libraryId: LibraryId, item: IItem, enable: Boolean): Promise<Unit> {
 		val inferredItem = inferItem(item)
-		if (enable) enableItemSync(libraryId, inferredItem, StoredItemHelpers.getListType(inferredItem))
+		return if (enable) enableItemSync(libraryId, inferredItem, StoredItemHelpers.getListType(inferredItem))
 		else disableItemSync(libraryId, inferredItem, StoredItemHelpers.getListType(inferredItem))
 	}
 
@@ -60,7 +60,7 @@ class StoredItemAccess(private val context: Context) : AccessStoredItems {
 			}
 		}
 
-	private fun enableItemSync(libraryId: LibraryId, item: IItem, itemType: ItemType) {
+	private fun enableItemSync(libraryId: LibraryId, item: IItem, itemType: ItemType) =
 		promiseTableMessage<Unit, StoredItem> {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				if (!isItemMarkedForSync(repositoryAccessHelper, libraryId, item, itemType))
@@ -75,7 +75,6 @@ class StoredItemAccess(private val context: Context) : AccessStoredItems {
 					}
 			}
 		}
-	}
 
 	private fun enableItemSync(libraryId: LibraryId, item: KeyedIdentifier, itemType: ItemType) =
 		promiseTableMessage<Unit, StoredItem> {

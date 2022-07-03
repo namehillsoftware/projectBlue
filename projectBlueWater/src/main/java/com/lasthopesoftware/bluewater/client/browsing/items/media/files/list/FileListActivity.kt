@@ -52,6 +52,7 @@ import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnect
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingFileProvider.Companion.fromActiveLibrary
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.NowPlayingActivity
+import com.lasthopesoftware.bluewater.client.stored.library.items.StateChangeBroadcastingStoredItemAccess
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.client.stored.library.items.StateChangeBroadcastingStoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess

@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.stored.service.receivers.GivenSyncHasStarted
 
-import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileMessage
+import com.lasthopesoftware.bluewater.client.stored.sync.SyncStateMessage
 import com.lasthopesoftware.bluewater.client.stored.sync.notifications.PostSyncNotification
 import com.lasthopesoftware.bluewater.client.stored.sync.receivers.SyncStartedReceiver
 import io.mockk.every
@@ -25,7 +25,7 @@ class WhenReceivingTheEvent {
 			}
 
 			val receiver = SyncStartedReceiver(syncNotification)
-			receiver(StoredFileMessage.SyncStarted)
+			receiver(SyncStateMessage.SyncStarted)
 		}
 	}
 

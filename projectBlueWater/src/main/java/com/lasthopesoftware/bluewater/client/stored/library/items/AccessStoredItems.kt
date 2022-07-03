@@ -6,7 +6,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.namehillsoftware.handoff.promises.Promise
 
 interface AccessStoredItems {
-	fun toggleSync(libraryId: LibraryId, item: IItem, enable: Boolean)
+	fun toggleSync(libraryId: LibraryId, item: IItem, enable: Boolean): Promise<Unit>
 	fun toggleSync(libraryId: LibraryId, itemId: KeyedIdentifier, enable: Boolean): Promise<Unit>
     fun isItemMarkedForSync(libraryId: LibraryId, item: IItem): Promise<Boolean>
 	fun promiseStoredItems(libraryId: LibraryId): Promise<Collection<StoredItem>>
