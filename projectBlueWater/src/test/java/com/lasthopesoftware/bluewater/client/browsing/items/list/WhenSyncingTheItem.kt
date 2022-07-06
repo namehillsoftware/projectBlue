@@ -1,14 +1,10 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.media.files.list.GivenAnItem
+package com.lasthopesoftware.bluewater.client.browsing.items.list
 
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.ProvideItemFiles
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.list.FileListViewModel
+import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.ProvideNowPlayingFiles
 import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
@@ -23,17 +19,13 @@ private val viewModel by lazy {
 		every { selectedLibraryId } returns LibraryId(163).toPromise()
 	}
 
-	val itemProvider = mockk<ProvideItemFiles>().apply {
-		every { promiseFiles(LibraryId(163), ItemId(826), FileListParameters.Options.None) } returns listOf(
-			ServiceFile(471),
-			ServiceFile(469),
-			ServiceFile(102),
-			ServiceFile(890),
+	val itemProvider = mockk<ProvideItems>().apply {
+		every { promiseItems(LibraryId(163), ItemId(826)) } returns listOf(
+			Item(471),
+			Item(469),
+			Item(102),
+			Item(890),
 		).toPromise()
-	}
-
-	val nowPlayingFileProvider = mockk<ProvideNowPlayingFiles>().apply {
-		every { nowPlayingFile } returns ServiceFile(319).toPromise()
 	}
 
 	val storedItemAccess = mockk<AccessStoredItems>().apply {
@@ -45,10 +37,12 @@ private val viewModel by lazy {
 		every { isItemMarkedForSync(LibraryId(163), Item(826, "moderate")) } answers { isItemMarkedForSync.toPromise() }
 	}
 
-	FileListViewModel(
+	ItemListViewModel(
         selectedLibraryIdProvider,
         itemProvider,
+		mockk(relaxed = true, relaxUnitFun = true),
 		storedItemAccess,
+        mockk(),
         mockk(),
 	)
 }
@@ -58,7 +52,7 @@ class WhenSyncingTheItem {
 		@BeforeClass
 		@JvmStatic
 		fun act() {
-			viewModel.loadItem(Item(826, "moderate")).toExpiringFuture().get()
+			viewModel.loadItems(Item(826, "moderate"))
 			viewModel.toggleSync().toExpiringFuture().get()
 		}
 	}

@@ -10,6 +10,8 @@ interface ControlPlaybackService {
 
 	fun pause()
 
+	fun startPlaylist(fileStringList: String, position: Int = 0)
+
 	fun startPlaylist(serviceFiles: List<ServiceFile>, position: Int = 0)
 
 	fun addToPlaylist(serviceFile: ServiceFile)

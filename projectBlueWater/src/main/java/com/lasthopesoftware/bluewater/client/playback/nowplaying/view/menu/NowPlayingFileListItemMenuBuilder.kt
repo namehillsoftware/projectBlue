@@ -116,6 +116,7 @@ class NowPlayingFileListItemMenuBuilder(
 				.eventually(LoopedInPromise.response(this, handler))
 
 			viewAnimator.tryFlipToPreviousView()
+			viewAnimator.setOnClickListener(ViewFileDetailsClickListener(viewAnimator, serviceFile))
 			playButton.setOnClickListener(FileSeekToClickListener(viewAnimator, position))
 			viewFileDetailsButton.setOnClickListener(ViewFileDetailsClickListener(viewAnimator, serviceFile))
 			removeButton.setOnClickListener(RemovePlaylistFileClickListener(viewAnimator, position))

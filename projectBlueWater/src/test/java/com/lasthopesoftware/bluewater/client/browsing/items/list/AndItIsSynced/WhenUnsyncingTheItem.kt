@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.media.files.list.GivenAnItem
+package com.lasthopesoftware.bluewater.client.browsing.items.list.AndItIsSynced
 
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
@@ -8,7 +8,6 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.p
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.list.FileListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.ProvideNowPlayingFiles
 import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
@@ -20,11 +19,11 @@ import org.junit.Test
 
 private val viewModel by lazy {
 	val selectedLibraryIdProvider = mockk<ProvideSelectedLibraryId>().apply {
-		every { selectedLibraryId } returns LibraryId(163).toPromise()
+		every { selectedLibraryId } returns LibraryId(707).toPromise()
 	}
 
 	val itemProvider = mockk<ProvideItemFiles>().apply {
-		every { promiseFiles(LibraryId(163), ItemId(826), FileListParameters.Options.None) } returns listOf(
+		every { promiseFiles(LibraryId(707), ItemId(501), FileListParameters.Options.None) } returns listOf(
 			ServiceFile(471),
 			ServiceFile(469),
 			ServiceFile(102),
@@ -32,17 +31,13 @@ private val viewModel by lazy {
 		).toPromise()
 	}
 
-	val nowPlayingFileProvider = mockk<ProvideNowPlayingFiles>().apply {
-		every { nowPlayingFile } returns ServiceFile(319).toPromise()
-	}
-
 	val storedItemAccess = mockk<AccessStoredItems>().apply {
-		var isItemMarkedForSync = false
-		every { toggleSync(LibraryId(163), ItemId(826), true) } answers {
-			isItemMarkedForSync = true
+		var isItemMarkedForSync = true
+		every { toggleSync(LibraryId(707), ItemId(501), false) } answers {
+			isItemMarkedForSync = false
 			Unit.toPromise()
 		}
-		every { isItemMarkedForSync(LibraryId(163), Item(826, "moderate")) } answers { isItemMarkedForSync.toPromise() }
+		every { isItemMarkedForSync(LibraryId(707), Item(501, "observe")) } answers { isItemMarkedForSync.toPromise() }
 	}
 
 	FileListViewModel(
@@ -58,13 +53,13 @@ class WhenSyncingTheItem {
 		@BeforeClass
 		@JvmStatic
 		fun act() {
-			viewModel.loadItem(Item(826, "moderate")).toExpiringFuture().get()
+			viewModel.loadItem(Item(501, "observe")).toExpiringFuture().get()
 			viewModel.toggleSync().toExpiringFuture().get()
 		}
 	}
 
 	@Test
-	fun `then item is synced`() {
-		assertThat(viewModel.isSynced.value).isTrue
+	fun `then item is not synced`() {
+		assertThat(viewModel.isSynced.value).isFalse
 	}
 }

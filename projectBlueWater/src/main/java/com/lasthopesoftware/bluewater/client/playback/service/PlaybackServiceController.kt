@@ -12,10 +12,14 @@ class PlaybackServiceController(private val context: Context) : ControlPlaybackS
 
 	override fun pause() = PlaybackService.pause(context)
 
+	override fun startPlaylist(fileStringList: String, position: Int) {
+		PlaybackService.launchMusicService(context, position, fileStringList)
+	}
+
 	override fun startPlaylist(serviceFiles: List<ServiceFile>, position: Int) {
 		FileStringListUtilities
 			.promiseSerializedFileStringList(serviceFiles)
-			.then { PlaybackService.launchMusicService(context, position, it) }
+			.then { startPlaylist(it, position) }
 	}
 
 	override fun addToPlaylist(serviceFile: ServiceFile) {

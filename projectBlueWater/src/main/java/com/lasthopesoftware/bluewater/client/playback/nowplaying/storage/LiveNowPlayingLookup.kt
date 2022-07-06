@@ -16,12 +16,14 @@ import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicat
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.namehillsoftware.handoff.promises.Promise
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 class LiveNowPlayingLookup private constructor(
 	selectedLibraryIdentifierProvider: ProvideSelectedLibraryId,
 	private val libraryProvider: ILibraryProvider,
 	private val libraryStorage: ILibraryStorage
-) : GetNowPlayingState, (ApplicationMessage) -> Unit {
+) : GetNowPlayingState, ObserveNowPlaying, (ApplicationMessage) -> Unit {
 
 	companion object {
 		// This needs to be a singleton to ensure the track progress is as up-to-date as possible
@@ -41,14 +43,18 @@ class LiveNowPlayingLookup private constructor(
 			return instance
 		}
 
-		fun getInstance(): GetNowPlayingState =
+		fun getInstance(): LiveNowPlayingLookup =
 			if (::instance.isInitialized) instance
 			else throw IllegalStateException("Instance should be initialized in application root")
 	}
 
+	private val sharedNowPlayingFlow = MutableStateFlow<PositionedFile?>(null)
+
 	private var inner: GetNowPlayingState? = null
 	private var trackedFile: PositionedFile? = null
 	private var trackedPosition: Long? = null
+
+	override val nowPlayingState = sharedNowPlayingFlow.asStateFlow()
 
 	init {
 		selectedLibraryIdentifierProvider.selectedLibraryId.then { it?.also(::updateInner) }
@@ -62,6 +68,7 @@ class LiveNowPlayingLookup private constructor(
 					if (trackedFile != playingFile) {
 						trackedPosition = null
 						trackedFile = playingFile
+						playingFile?.apply(sharedNowPlayingFlow::tryEmit)
 					}
 					filePosition = trackedPosition ?: filePosition
 				}
@@ -81,6 +88,7 @@ class LiveNowPlayingLookup private constructor(
 			is PlaybackMessage.TrackChanged -> {
 				trackedPosition = null
 				trackedFile = message.positionedFile
+				sharedNowPlayingFlow.tryEmit(message.positionedFile)
 			}
 		}
 	}

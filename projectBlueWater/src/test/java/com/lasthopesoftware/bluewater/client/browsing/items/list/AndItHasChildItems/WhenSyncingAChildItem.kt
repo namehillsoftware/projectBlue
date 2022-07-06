@@ -1,0 +1,77 @@
+package com.lasthopesoftware.bluewater.client.browsing.items.list.AndItHasChildItems
+
+import com.lasthopesoftware.bluewater.client.browsing.items.Item
+import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
+import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
+import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
+import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import io.mockk.every
+import io.mockk.mockk
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.BeforeClass
+import org.junit.Test
+
+private const val libraryId = 374
+private const val itemId = 208
+private const val itemValue = "reply"
+
+private var playedFileList = ""
+
+private val viewModel by lazy {
+	val selectedLibraryIdProvider = mockk<ProvideSelectedLibraryId>().apply {
+		every { selectedLibraryId } returns LibraryId(libraryId).toPromise()
+	}
+
+	val itemProvider = mockk<ProvideItems>().apply {
+		every { promiseItems(LibraryId(libraryId), ItemId(itemId)) } returns listOf(
+			Item(756),
+			Item(639),
+			Item(178),
+		).toPromise()
+	}
+
+	val storedItemAccess = mockk<AccessStoredItems>().apply {
+		var isItemMarkedForSync = false
+		every { toggleSync(LibraryId(libraryId), ItemId(178), true) } answers {
+			isItemMarkedForSync = true
+			Unit.toPromise()
+		}
+		every { isItemMarkedForSync(LibraryId(libraryId), Item(itemId, itemValue)) } answers { isItemMarkedForSync.toPromise() }
+	}
+
+	val controlNowPlaying = mockk<ControlPlaybackService>().apply {
+		every { startPlaylist(any<String>(), any()) } answers {
+			playedFileList = firstArg()
+		}
+	}
+
+	ItemListViewModel(
+		selectedLibraryIdProvider,
+		itemProvider,
+		mockk(relaxed = true, relaxUnitFun = true),
+		storedItemAccess,
+		mockk(),
+		mockk(),
+	)
+}
+
+class WhenSyncingAChildItem {
+	companion object {
+		@BeforeClass
+		@JvmStatic
+		fun act() {
+			viewModel.loadItems(Item(itemId, itemValue)).toExpiringFuture().get()
+			viewModel.items.value[2].toggleSync().toExpiringFuture().get()
+		}
+	}
+
+	@Test
+	fun `then the item is synced`() {
+		assertThat(viewModel.items.value[2].isSynced.value).isTrue
+	}
+}

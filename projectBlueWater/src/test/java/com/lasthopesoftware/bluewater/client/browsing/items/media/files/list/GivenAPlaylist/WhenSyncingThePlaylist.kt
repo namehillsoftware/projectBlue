@@ -47,12 +47,10 @@ private val viewModel by lazy {
 	}
 
 	FileListViewModel(
-		mockk(relaxUnitFun = true, relaxed = true),
-		selectedLibraryIdProvider,
-		itemProvider,
-		nowPlayingFileProvider,
+        selectedLibraryIdProvider,
+        itemProvider,
 		storedItemAccess,
-		mockk(),
+        mockk(),
 	)
 }
 

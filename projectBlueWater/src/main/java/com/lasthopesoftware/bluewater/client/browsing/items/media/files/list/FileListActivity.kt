@@ -50,7 +50,8 @@ import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity.Companion.restoreSelectedConnection
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingFileProvider.Companion.fromActiveLibrary
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.ObserveNowPlaying
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.NowPlayingActivity
 import com.lasthopesoftware.bluewater.client.stored.library.items.StateChangeBroadcastingStoredItemAccess
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
@@ -61,7 +62,6 @@ import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.ui.components.scrollbar
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Light
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
-import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModel
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
@@ -72,7 +72,8 @@ import com.lasthopesoftware.resources.strings.StringResources
 
 class FileListActivity :
 	AppCompatActivity(),
-	Runnable {
+	Runnable
+{
 
 	companion object {
 		private val rateLimiter by lazy { PromisingRateLimiter<Map<String, String>>(1) }
@@ -82,13 +83,12 @@ class FileListActivity :
 		private val value by lazy { magicPropertyBuilder.buildProperty("value") }
 		private val playlistIdKey by lazy { magicPropertyBuilder.buildProperty("playlistId") }
 
-		@JvmStatic
 		fun startFileListActivity(context: Context, item: IItem) {
 			if (item is Item) startFileListActivity(context, item)
 			else context.startActivity(getFileListIntent(context, item))
 		}
 
-		fun startFileListActivity(context: Context, item: Item) {
+		private fun startFileListActivity(context: Context, item: Item) {
 			val fileListIntent = getFileListIntent(context, item).apply {
 				item.playlistId?.also { putExtra(playlistIdKey, it.id) }
 			}
@@ -133,24 +133,14 @@ class FileListActivity :
 		}
 	}
 
-	private val viewModel by lazy {
-		fromActiveLibrary(this)
-			.then { nowPlayingProvider ->
-				nowPlayingProvider
-					?.let {
-						buildViewModel {
-							val applicationMessages = getApplicationMessageBus()
-							FileListViewModel(
-								applicationMessages,
-								selectedLibraryIdProvider,
-								fileProvider,
-								it,
-								StateChangeBroadcastingStoredItemAccess(StoredItemAccess(this), applicationMessages),
-								PlaybackServiceController(this),
-							)
-						}
-					}
-			}
+	private val fileListViewModel by buildViewModelLazily {
+		val applicationMessages = getApplicationMessageBus()
+		FileListViewModel(
+			selectedLibraryIdProvider,
+			fileProvider,
+			StateChangeBroadcastingStoredItemAccess(StoredItemAccess(this), applicationMessages),
+			PlaybackServiceController(this),
+		)
 	}
 
 	private val trackHeadlineViewModelProvider by buildViewModelLazily {
@@ -167,14 +157,11 @@ class FileListActivity :
 	public override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
-		viewModel
-			.then { vm ->
-				setContent {
-					ProjectBlueTheme {
-						FileListView(vm, trackHeadlineViewModelProvider)
-					}
-				}
+		setContent {
+			ProjectBlueTheme {
+				FileListView(fileListViewModel, LiveNowPlayingLookup.getInstance(), trackHeadlineViewModelProvider)
 			}
+		}
 
 		item = Item(
 			savedInstanceState?.getInt(key) ?: intent.getIntExtra(key, 1),
@@ -195,8 +182,7 @@ class FileListActivity :
 	}
 
 	override fun run() {
-		viewModel
-			.then { it.loadItem(item) }
+		fileListViewModel.loadItem(item)
 			.excuse(HandleViewIoException(this, this))
 			.eventuallyExcuse(LoopedInPromise.response(UnexpectedExceptionToasterResponse(this), handler))
 			.then { finish() }
@@ -225,20 +211,22 @@ class FileListActivity :
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun FileListView(
-	viewModel: FileListViewModel,
+	fileListViewModel: FileListViewModel,
+	observeNowPlaying: ObserveNowPlaying,
 	trackHeadlineViewModelProvider: TrackHeadlineViewModelProvider,
-
 ) {
 	val activity = LocalContext.current as? Activity ?: return
 
-	val isSynced by viewModel.isSynced.collectAsState()
+	val isSynced by fileListViewModel.isSynced.collectAsState()
 	val lazyListState = rememberLazyListState()
-	val playingFile by viewModel.playingFile.collectAsState()
+	val playingFile by observeNowPlaying.nowPlayingState.collectAsState(initial = null)
+	var isAnyMenuShown by remember { mutableStateOf(false) }
 
 	@Composable
 	fun TrackHeaderItem(position: Int, serviceFile: ServiceFile) {
 		val fileItemViewModel = remember(trackHeadlineViewModelProvider::getViewModel)
 		val isMenuShown by fileItemViewModel.isMenuShown.collectAsState()
+		isAnyMenuShown = isMenuShown
 
 		DisposableEffect(Unit) {
 			fileItemViewModel.promiseUpdate(serviceFile)
@@ -266,7 +254,7 @@ fun FileListView(
 					fontSize = MaterialTheme.typography.h6.fontSize,
 					overflow = TextOverflow.Ellipsis,
 					maxLines = 1,
-					fontWeight = if (playingFile == serviceFile) FontWeight.Bold else FontWeight.Normal,
+					fontWeight = if (playingFile?.serviceFile == serviceFile) FontWeight.Bold else FontWeight.Normal,
 					modifier = Modifier.padding(12.dp),
 				)
 			} else {
@@ -277,16 +265,12 @@ fun FileListView(
 						modifier = Modifier
 							.fillMaxWidth()
 							.weight(1f)
-							.clickable {
-								fileItemViewModel.addToNowPlaying()
-							}
+							.clickable { fileItemViewModel.addToNowPlaying() }
 					)
 
 					Image(
 						painter = painterResource(id = R.drawable.ic_menu_36dp),
 						contentDescription = stringResource(id = R.string.btn_view_files),
-						colorFilter = ColorFilter.tint(if (isSynced) MaterialTheme.colors.primary else Light.GrayClickable),
-						alpha = if (isSynced) .9f else .6f,
 						modifier = Modifier
 							.fillMaxWidth()
 							.clickable { fileItemViewModel.viewFileDetails() }
@@ -299,7 +283,7 @@ fun FileListView(
 						modifier = Modifier
 							.fillMaxWidth()
 							.weight(1f)
-							.clickable { viewModel.play(position) }
+							.clickable { fileListViewModel.play(position) }
 					)
 				}
 			}
@@ -308,7 +292,7 @@ fun FileListView(
 
 	@Composable
 	fun BoxScope.LoadedFileListView() {
-		val files by viewModel.filesFlow.collectAsState()
+		val files by fileListViewModel.filesFlow.collectAsState()
 
 		LazyColumn(
 			state = lazyListState,
@@ -324,7 +308,7 @@ fun FileListView(
 		) {
 			item {
 				Column(modifier = Modifier.padding(4.dp)) {
-					val itemValue by viewModel.itemValue.collectAsState()
+					val itemValue by fileListViewModel.itemValue.collectAsState()
 					ProvideTextStyle(MaterialTheme.typography.h4) {
 						Row(modifier = Modifier
 							.padding(top = 8.dp)
@@ -353,7 +337,7 @@ fun FileListView(
 								.fillMaxWidth()
 								.weight(1f)
 								.clickable {
-									viewModel.play()
+									fileListViewModel.play()
 								}
 						)
 
@@ -364,7 +348,7 @@ fun FileListView(
 							alpha = if (isSynced) .9f else .6f,
 							modifier = Modifier
 								.fillMaxWidth()
-								.clickable { viewModel.toggleSync() }
+								.clickable { fileListViewModel.toggleSync() }
 								.weight(1f),
 						)
 
@@ -375,7 +359,7 @@ fun FileListView(
 								.fillMaxWidth()
 								.weight(1f)
 								.clickable {
-									viewModel.playShuffled()
+									fileListViewModel.playShuffled()
 								}
 						)
 					}
@@ -390,7 +374,7 @@ fun FileListView(
 			}
 		}
 
-		if (playingFile != null) {
+		if (playingFile != null && !isAnyMenuShown) {
 			FloatingActionButton(
 				onClick = { NowPlayingActivity.startNowPlayingActivity(activity) },
 				backgroundColor = MaterialTheme.colors.primary,
@@ -421,7 +405,7 @@ fun FileListView(
 	}
 
 	Column(modifier = Modifier.fillMaxSize()) {
-		val isLoaded by viewModel.isLoaded.collectAsState()
+		val isLoaded by fileListViewModel.isLoaded.collectAsState()
 
 		TopAppBar(
 			title = { },
@@ -449,7 +433,7 @@ fun FileListView(
 								interactionSource = remember { MutableInteractionSource() },
 								indication = null,
 								onClick = {
-									viewModel.play()
+									fileListViewModel.play()
 								}
 							)
 							.padding(start = 8.dp, end = 8.dp)
@@ -465,7 +449,7 @@ fun FileListView(
 							.padding(start = 8.dp, end = 8.dp)
 							.size(24.dp)
 							.clickable {
-								viewModel.toggleSync()
+								fileListViewModel.toggleSync()
 							}
 							.alpha(headerHidingProgress),
 					)
@@ -478,7 +462,7 @@ fun FileListView(
 								interactionSource = remember { MutableInteractionSource() },
 								indication = null,
 								onClick = {
-									viewModel.playShuffled()
+									fileListViewModel.playShuffled()
 								}
 							)
 							.padding(start = 8.dp, end = 8.dp)

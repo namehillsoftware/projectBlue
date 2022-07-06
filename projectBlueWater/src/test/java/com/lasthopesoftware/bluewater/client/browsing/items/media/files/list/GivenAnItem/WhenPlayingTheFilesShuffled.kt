@@ -8,7 +8,6 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.p
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.list.FileListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.ProvideNowPlayingFiles
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -40,27 +39,21 @@ private val services by lazy {
 		every { promiseFiles(LibraryId(960), ItemId(868), FileListParameters.Options.None) } returns fileList.toPromise()
 	}
 
-	val nowPlayingFileProvider = mockk<ProvideNowPlayingFiles>().apply {
-		every { nowPlayingFile } returns ServiceFile(319).toPromise()
-	}
-
 	val storedItemAccess = mockk<AccessStoredItems>().apply {
 		every { isItemMarkedForSync(any(), any()) } returns false.toPromise()
 	}
 
 	val controlNowPlaying = mockk<ControlPlaybackService>().apply {
-		every { startPlaylist(any(), any()) } answers {
+		every { startPlaylist(any<List<ServiceFile>>(), any()) } answers {
 			playedFileList = firstArg()
 		}
 	}
 
 	val viewModel = FileListViewModel(
-		mockk(relaxUnitFun = true, relaxed = true),
-		selectedLibraryIdProvider,
-		itemProvider,
-		nowPlayingFileProvider,
+        selectedLibraryIdProvider,
+        itemProvider,
 		storedItemAccess,
-		controlNowPlaying,
+        controlNowPlaying,
 	)
 
 	viewModel
