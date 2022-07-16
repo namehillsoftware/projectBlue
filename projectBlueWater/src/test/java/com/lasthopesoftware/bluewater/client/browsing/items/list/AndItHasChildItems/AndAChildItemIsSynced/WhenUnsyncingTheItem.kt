@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.media.files.list.GivenAnItem
+package com.lasthopesoftware.bluewater.client.browsing.items.list.AndItHasChildItems.AndAChildItemIsSynced
 
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
@@ -19,11 +19,11 @@ import org.junit.Test
 
 private val viewModel by lazy {
 	val selectedLibraryIdProvider = mockk<ProvideSelectedLibraryId>().apply {
-		every { selectedLibraryId } returns LibraryId(516).toPromise()
+		every { selectedLibraryId } returns LibraryId(707).toPromise()
 	}
 
 	val itemProvider = mockk<ProvideItemFiles>().apply {
-		every { promiseFiles(LibraryId(516), ItemId(585), FileListParameters.Options.None) } returns listOf(
+		every { promiseFiles(LibraryId(707), ItemId(501), FileListParameters.Options.None) } returns listOf(
 			ServiceFile(471),
 			ServiceFile(469),
 			ServiceFile(102),
@@ -32,52 +32,34 @@ private val viewModel by lazy {
 	}
 
 	val storedItemAccess = mockk<AccessStoredItems>().apply {
-		every { isItemMarkedForSync(any(), any<Item>()) } returns false.toPromise()
+		var isItemMarkedForSync = true
+		every { toggleSync(LibraryId(707), ItemId(501), false) } answers {
+			isItemMarkedForSync = false
+			Unit.toPromise()
+		}
+		every { isItemMarkedForSync(LibraryId(707), Item(501, "observe")) } answers { isItemMarkedForSync.toPromise() }
 	}
 
 	FileListViewModel(
-		selectedLibraryIdProvider,
-		itemProvider,
+        selectedLibraryIdProvider,
+        itemProvider,
 		storedItemAccess,
-		mockk(),
+        mockk(),
 	)
 }
 
-class WhenLoadingTheFiles {
-
+class WhenSyncingTheItem {
 	companion object {
 		@BeforeClass
 		@JvmStatic
 		fun act() {
-			viewModel.loadItem(Item(585, "king")).toExpiringFuture().get()
+			viewModel.loadItem(Item(501, "observe")).toExpiringFuture().get()
+			viewModel.toggleSync().toExpiringFuture().get()
 		}
 	}
 
 	@Test
-	fun thenTheItemIsNotMarkedForSync() {
+	fun `then item is not synced`() {
 		assertThat(viewModel.isSynced.value).isFalse
-	}
-
-	@Test
-	fun thenTheItemValueIsCorrect() {
-		assertThat(viewModel.itemValue.value).isEqualTo("king")
-	}
-
-	@Test
-	fun thenIsLoadedIsTrue() {
-		assertThat(viewModel.isLoaded.value).isTrue
-	}
-
-	@Test
-	fun thenTheLoadedFilesAreCorrect() {
-		assertThat(viewModel.filesFlow.value)
-			.hasSameElementsAs(
-				listOf(
-					ServiceFile(471),
-					ServiceFile(469),
-					ServiceFile(102),
-					ServiceFile(890),
-				)
-			)
 	}
 }

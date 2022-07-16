@@ -52,7 +52,7 @@ class WhenSyncingTheItem {
 		@BeforeClass
 		@JvmStatic
 		fun act() {
-			viewModel.loadItems(Item(826, "moderate"))
+			viewModel.loadItem(Item(826, "moderate"))
 			viewModel.toggleSync().toExpiringFuture().get()
 		}
 	}

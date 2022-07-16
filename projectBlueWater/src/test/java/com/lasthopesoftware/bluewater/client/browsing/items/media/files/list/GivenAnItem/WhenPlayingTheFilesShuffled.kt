@@ -40,7 +40,7 @@ private val services by lazy {
 	}
 
 	val storedItemAccess = mockk<AccessStoredItems>().apply {
-		every { isItemMarkedForSync(any(), any()) } returns false.toPromise()
+		every { isItemMarkedForSync(any(), any<Item>()) } returns false.toPromise()
 	}
 
 	val controlNowPlaying = mockk<ControlPlaybackService>().apply {

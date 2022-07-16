@@ -17,15 +17,14 @@ abstract class FakeDeferredStoredItemAccess : AccessStoredItems {
 
 	protected abstract val storedItems: Collection<StoredItem>
 
-	override fun disableAllLibraryItems(libraryId: LibraryId): Promise<Unit> {
-		return Unit.toPromise()
-	}
+	override fun disableAllLibraryItems(libraryId: LibraryId): Promise<Unit> = Unit.toPromise()
 
+	override fun toggleSync(libraryId: LibraryId, itemId: KeyedIdentifier) = true.toPromise()
 	override fun toggleSync(libraryId: LibraryId, item: IItem, enable: Boolean) = Unit.toPromise()
 	override fun toggleSync(libraryId: LibraryId, itemId: KeyedIdentifier, enable: Boolean) = Unit.toPromise()
-	override fun isItemMarkedForSync(libraryId: LibraryId, item: IItem): Promise<Boolean> {
-		return Promise(false)
-	}
+	override fun isItemMarkedForSync(libraryId: LibraryId, item: IItem) = false.toPromise()
+
+	override fun isItemMarkedForSync(libraryId: LibraryId, itemId: KeyedIdentifier) = false.toPromise()
 
 	override fun promiseStoredItems(libraryId: LibraryId): Promise<Collection<StoredItem>> {
 		return Promise { m -> messenger = m }

@@ -1,8 +1,8 @@
-package com.lasthopesoftware.bluewater.client.browsing.items;
+package com.lasthopesoftware.bluewater.client.browsing.items
 
-import com.lasthopesoftware.bluewater.shared.IIntKeyStringValue;
+import com.lasthopesoftware.bluewater.shared.IIntKeyStringValue
 
+interface IItem : IIntKeyStringValue
 
-public interface IItem extends IIntKeyStringValue {
-
-}
+val IItem.itemId: KeyedIdentifier
+	get() = (this as? Item)?.playlistId ?: ItemId(key)

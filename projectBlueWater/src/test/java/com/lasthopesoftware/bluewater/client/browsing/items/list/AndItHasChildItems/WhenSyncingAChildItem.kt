@@ -6,7 +6,6 @@ import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
@@ -44,12 +43,6 @@ private val viewModel by lazy {
 		every { isItemMarkedForSync(LibraryId(libraryId), Item(itemId, itemValue)) } answers { isItemMarkedForSync.toPromise() }
 	}
 
-	val controlNowPlaying = mockk<ControlPlaybackService>().apply {
-		every { startPlaylist(any<String>(), any()) } answers {
-			playedFileList = firstArg()
-		}
-	}
-
 	ItemListViewModel(
 		selectedLibraryIdProvider,
 		itemProvider,
@@ -65,7 +58,7 @@ class WhenSyncingAChildItem {
 		@BeforeClass
 		@JvmStatic
 		fun act() {
-			viewModel.loadItems(Item(itemId, itemValue)).toExpiringFuture().get()
+			viewModel.loadItem(Item(itemId, itemValue)).toExpiringFuture().get()
 			viewModel.items.value[2].toggleSync().toExpiringFuture().get()
 		}
 	}

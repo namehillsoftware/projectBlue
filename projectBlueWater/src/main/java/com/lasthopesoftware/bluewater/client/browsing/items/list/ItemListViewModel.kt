@@ -5,6 +5,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
+import com.lasthopesoftware.bluewater.client.browsing.items.itemId
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.ProvideFileStringListForItem
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.ActivityLaunching
@@ -27,16 +28,18 @@ class ItemListViewModel(
 	private val storedItemAccess: AccessStoredItems,
 	private val itemStringListProvider: ProvideFileStringListForItem,
 	private val controlNowPlaying: ControlPlaybackService,
-) : ViewModel(), (ActivityLaunching) -> Unit {
+) : ViewModel() {
 
-	private var loadedItem: IItem? = null
-	private val receiver = messageBus.registerReceiver(this)
+	private val activityLaunchingReceiver = messageBus.registerReceiver { event : ActivityLaunching ->
+		mutableIsLoaded.value = event != ActivityLaunching.HALTED // Only show the item list view again when launching error'ed for some reason
+	}
 	private val mutableItems = MutableStateFlow(emptyList<ChildItemViewModel>())
 	private val mutableIsLoaded = MutableStateFlow(true)
 	private val mutableIsSynced = MutableStateFlow(false)
 	private val mutableItemValue = MutableStateFlow("")
 
-	private var loadedLibraryId: LibraryId? = null
+	var loadedItem: IItem? = null
+	var loadedLibraryId: LibraryId? = null
 
 	val itemValue = mutableItemValue.asStateFlow()
 	val isSynced = mutableIsSynced.asStateFlow()
@@ -44,15 +47,11 @@ class ItemListViewModel(
 	val items = mutableItems.asStateFlow()
 	val isLoaded = mutableIsLoaded.asStateFlow()
 
-	override fun invoke(event: ActivityLaunching) {
-		mutableIsLoaded.value = event != ActivityLaunching.HALTED // Only show the item list view again when launching error'ed for some reason
-	}
-
 	override fun onCleared() {
-		receiver.close()
+		activityLaunchingReceiver.close()
 	}
 
-	fun loadItems(item: Item): Promise<Unit> {
+	fun loadItem(item: Item): Promise<Unit> {
 		mutableIsLoaded.value = false
 		mutableItemValue.value = item.value
 		return selectedLibraryId.selectedLibraryId
@@ -95,8 +94,10 @@ class ItemListViewModel(
 
 	inner class ChildItemViewModel(val item: IItem) {
 		private val mutableIsSynced = MutableStateFlow(false)
+		private val mutableIsMenuShown = MutableStateFlow(false)
 
 		val isSynced = mutableIsSynced.asStateFlow()
+		val isMenuShown = mutableIsMenuShown.asStateFlow()
 
 		fun play() =
 			loadedLibraryId
@@ -118,13 +119,20 @@ class ItemListViewModel(
 
 		fun toggleSync(): Promise<Unit> = loadedLibraryId
 			?.let { libraryId ->
-				item.let { (it as? Item)?.playlistId ?: ItemId(it.key) }.let { key ->
-					val isSynced = !mutableIsSynced.value
-					storedItemAccess
-						.toggleSync(libraryId, key, isSynced)
-						.then { mutableIsSynced.value = isSynced }
-				}
+				storedItemAccess
+					.toggleSync(libraryId, item.itemId)
+					.then { mutableIsSynced.value = it }
 			}
 			.keepPromise(Unit)
+
+		fun showMenu() {
+			loadedLibraryId
+				?.let { libraryId ->
+					storedItemAccess
+						.isItemMarkedForSync(libraryId, item.itemId)
+						.then { mutableIsSynced.value = it }
+				}
+			mutableIsMenuShown.value = true
+		}
 	}
 }

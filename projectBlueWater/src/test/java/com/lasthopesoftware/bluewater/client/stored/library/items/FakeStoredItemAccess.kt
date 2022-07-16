@@ -2,8 +2,8 @@ package com.lasthopesoftware.bluewater.client.stored.library.items
 
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.KeyedIdentifier
-import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemHelpers.storedItemType
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 
@@ -13,6 +13,17 @@ open class FakeStoredItemAccess(vararg initialStoredItems: StoredItem) : AccessS
 
 	init {
 		inMemoryStoredItems.addAll(listOf(*initialStoredItems))
+	}
+
+	override fun toggleSync(libraryId: LibraryId, itemId: KeyedIdentifier): Promise<Boolean> {
+		val type = itemId.storedItemType
+
+		val matchingItems = findMatchingItems(itemId, type)
+		val isSynced = matchingItems.any()
+		if (isSynced) inMemoryStoredItems.removeAll(matchingItems)
+		else inMemoryStoredItems.add(StoredItem(libraryId.id, itemId.id, type))
+
+		return Promise(!isSynced)
 	}
 
 	override fun toggleSync(libraryId: LibraryId, item: IItem, enable: Boolean): Promise<Unit> {
@@ -27,10 +38,7 @@ open class FakeStoredItemAccess(vararg initialStoredItems: StoredItem) : AccessS
 	}
 
 	override fun toggleSync(libraryId: LibraryId, itemId: KeyedIdentifier, enable: Boolean): Promise<Unit> {
-		val type = when (itemId) {
-			is PlaylistId -> StoredItem.ItemType.PLAYLIST
-			else -> StoredItem.ItemType.ITEM
-		}
+		val type = itemId.storedItemType
 
 		if (enable) inMemoryStoredItems.add(StoredItem(libraryId.id, itemId.id, type))
 		else inMemoryStoredItems.removeAll(findMatchingItems(itemId, type))
@@ -40,6 +48,10 @@ open class FakeStoredItemAccess(vararg initialStoredItems: StoredItem) : AccessS
 
 	override fun isItemMarkedForSync(libraryId: LibraryId, item: IItem): Promise<Boolean> {
 		return Promise(findMatchingItems(item).isNotEmpty())
+	}
+
+	override fun isItemMarkedForSync(libraryId: LibraryId, itemId: KeyedIdentifier): Promise<Boolean> {
+		return Promise(findMatchingItems(itemId, itemId.storedItemType).any())
 	}
 
 	override fun promiseStoredItems(libraryId: LibraryId): Promise<Collection<StoredItem>> {

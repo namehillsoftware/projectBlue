@@ -119,12 +119,16 @@ class ItemListActivity : AppCompatActivity(), Runnable {
 
 	private val messageBus by lazy { getApplicationMessageBus() }
 
+	private val storedItemAccess by lazy {
+		StateChangeBroadcastingStoredItemAccess(StoredItemAccess(this), messageBus)
+	}
+
 	private val itemListViewModel by buildViewModelLazily {
 		ItemListViewModel(
 			browserLibraryIdProvider,
 			itemProvider,
 			messageBus,
-			StoredItemAccess(this),
+			storedItemAccess,
 			itemListProvider,
 			PlaybackServiceController(this),
 		)
@@ -159,11 +163,10 @@ class ItemListActivity : AppCompatActivity(), Runnable {
 	}
 
 	private val fileListViewModel by buildViewModelLazily {
-		val applicationMessages = getApplicationMessageBus()
 		FileListViewModel(
 			browserLibraryIdProvider,
 			fileProvider,
-			StateChangeBroadcastingStoredItemAccess(StoredItemAccess(this), applicationMessages),
+			storedItemAccess,
 			PlaybackServiceController(this),
 		)
 	}
@@ -212,7 +215,7 @@ class ItemListActivity : AppCompatActivity(), Runnable {
 	}
 
 	override fun run() {
-		Promise.whenAll(fileListViewModel.loadItem(item), itemListViewModel.loadItems(item))
+		Promise.whenAll(fileListViewModel.loadItem(item), itemListViewModel.loadItem(item))
 			.excuse(HandleViewIoException(this, this))
 			.eventuallyExcuse(response(UnexpectedExceptionToasterResponse(this), handler))
 			.then { finish() }
@@ -261,7 +264,7 @@ fun ItemListView(
 			.combinedClickable(
 				interactionSource = remember { MutableInteractionSource() },
 				indication = null,
-//				onLongClick = fileItemViewModel::toggleMenu,
+				onLongClick = childItemViewModel::showMenu,
 				onClickLabel = stringResource(id = R.string.btn_view_song_details),
 				onClick = { activity.startItemListActivity(childItemViewModel.item) }
 			)

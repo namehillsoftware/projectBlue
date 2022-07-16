@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.s
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
+import com.lasthopesoftware.bluewater.client.stored.library.items.FakeStoredItemAccess
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
@@ -57,7 +58,7 @@ private val viewModel by lazy {
 		selectedLibraryIdProvider,
 		itemProvider,
 		mockk(relaxed = true, relaxUnitFun = true),
-		mockk(),
+		FakeStoredItemAccess(),
 		itemStringListProvider,
 		controlNowPlaying,
 	)
@@ -68,7 +69,7 @@ class WhenPlayingAShuffledChildItem {
 		@BeforeClass
 		@JvmStatic
 		fun act() {
-			viewModel.loadItems(Item(itemId, itemValue)).toExpiringFuture().get()
+			viewModel.loadItem(Item(itemId, itemValue)).toExpiringFuture().get()
 			viewModel.items.value[4].playShuffled().toExpiringFuture().get()
 		}
 	}

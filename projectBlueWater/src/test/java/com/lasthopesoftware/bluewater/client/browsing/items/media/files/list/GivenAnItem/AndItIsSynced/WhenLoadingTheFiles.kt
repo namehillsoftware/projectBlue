@@ -32,7 +32,7 @@ private val viewModel by lazy {
 	}
 
 	val storedItemAccess = mockk<AccessStoredItems>().apply {
-		every { isItemMarkedForSync(any(), any()) } returns false.toPromise()
+		every { isItemMarkedForSync(any(), any<Item>()) } returns false.toPromise()
 		every { isItemMarkedForSync(LibraryId(516), Item(585, "king")) } returns true.toPromise()
 	}
 
