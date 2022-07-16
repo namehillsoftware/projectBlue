@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.media.files.list.GivenAServiceFile
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.list.TrackHeadlineViewModel
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.list.ReusableTrackHeadlineViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ProvideScopedFileProperties
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -35,7 +35,7 @@ private val viewModel by lazy {
 		}
 	}
 
-	TrackHeadlineViewModel(
+	ReusableTrackHeadlineViewModel(
 		filePropertiesProvider,
 		stringResource,
 		controlNowPlaying,

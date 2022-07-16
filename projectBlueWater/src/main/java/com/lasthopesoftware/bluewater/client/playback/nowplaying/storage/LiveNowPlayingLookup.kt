@@ -48,13 +48,12 @@ class LiveNowPlayingLookup private constructor(
 			else throw IllegalStateException("Instance should be initialized in application root")
 	}
 
-	private val sharedNowPlayingFlow = MutableStateFlow<PositionedFile?>(null)
+	private val mutableNowPlayingState = MutableStateFlow<PositionedFile?>(null)
 
 	private var inner: GetNowPlayingState? = null
-	private var trackedFile: PositionedFile? = null
 	private var trackedPosition: Long? = null
 
-	override val nowPlayingState = sharedNowPlayingFlow.asStateFlow()
+	override val nowPlayingState = mutableNowPlayingState.asStateFlow()
 
 	init {
 		selectedLibraryIdentifierProvider.selectedLibraryId.then { it?.also(::updateInner) }
@@ -64,12 +63,11 @@ class LiveNowPlayingLookup private constructor(
 		inner
 			?.promiseNowPlaying()
 			?.then { np ->
+				if (mutableNowPlayingState.run { compareAndSet(value, np?.playingFile) }) {
+					trackedPosition = null
+				}
+
 				np?.apply {
-					if (trackedFile != playingFile) {
-						trackedPosition = null
-						trackedFile = playingFile
-						playingFile?.apply(sharedNowPlayingFlow::tryEmit)
-					}
 					filePosition = trackedPosition ?: filePosition
 				}
 			}
@@ -78,7 +76,12 @@ class LiveNowPlayingLookup private constructor(
 	private fun updateInner(libraryId: LibraryId) {
 		inner = NowPlayingRepository(
 			SpecificLibraryProvider(libraryId, libraryProvider),
-			libraryStorage)
+			libraryStorage).apply {
+				promiseNowPlaying()
+					.then {
+						mutableNowPlayingState.value = it?.playingFile
+					}
+		}
 	}
 
 	override fun invoke(message: ApplicationMessage) {
@@ -87,8 +90,7 @@ class LiveNowPlayingLookup private constructor(
 			is TrackPositionUpdate -> trackedPosition = message.filePosition.millis
 			is PlaybackMessage.TrackChanged -> {
 				trackedPosition = null
-				trackedFile = message.positionedFile
-				sharedNowPlayingFlow.tryEmit(message.positionedFile)
+				mutableNowPlayingState.value = message.positionedFile
 			}
 		}
 	}

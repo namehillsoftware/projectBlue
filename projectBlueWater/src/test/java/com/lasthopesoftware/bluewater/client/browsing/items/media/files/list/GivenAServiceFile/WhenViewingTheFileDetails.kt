@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.browsing.items.media.files.list.Gi
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.details.LaunchFileDetails
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.list.TrackHeadlineViewModel
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.list.ReusableTrackHeadlineViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ProvideScopedFileProperties
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
@@ -35,7 +35,7 @@ private val viewModel by lazy {
 		}
 	}
 
-	TrackHeadlineViewModel(
+	ReusableTrackHeadlineViewModel(
 		filePropertiesProvider,
 		stringResource,
 		mockk(),

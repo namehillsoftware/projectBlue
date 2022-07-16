@@ -11,6 +11,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.resources.strings.FakeStringResources
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -40,6 +41,9 @@ private val viewModel by lazy {
 		selectedLibraryIdProvider,
 		itemProvider,
 		storedItemAccess,
+		mockk(),
+		mockk(),
+		FakeStringResources(),
 		mockk(),
 	)
 }
@@ -71,7 +75,7 @@ class WhenLoadingTheFiles {
 
 	@Test
 	fun thenTheLoadedFilesAreCorrect() {
-		assertThat(viewModel.filesFlow.value)
+		assertThat(viewModel.filesFlow.value.map { it.serviceFile })
 			.hasSameElementsAs(
 				listOf(
 					ServiceFile(471),

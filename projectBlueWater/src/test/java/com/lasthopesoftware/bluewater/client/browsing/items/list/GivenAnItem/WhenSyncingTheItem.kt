@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.list.AndItIsSynced
+package com.lasthopesoftware.bluewater.client.browsing.items.list.GivenAnItem
 
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
@@ -22,63 +22,44 @@ private val viewModel by lazy {
 
 	val itemProvider = mockk<ProvideItems>().apply {
 		every { promiseItems(LibraryId(163), ItemId(826)) } returns listOf(
-			Item(55),
-			Item(137),
-			Item(766),
-			Item(812),
+			Item(471),
+			Item(469),
+			Item(102),
+			Item(890),
 		).toPromise()
 	}
 
 	val storedItemAccess = mockk<AccessStoredItems>().apply {
-		every { isItemMarkedForSync(any(), any<Item>()) } returns false.toPromise()
-		every { isItemMarkedForSync(LibraryId(163), Item(826, "leaf")) } returns true.toPromise()
+		var isItemMarkedForSync = false
+		every { toggleSync(LibraryId(163), ItemId(826), true) } answers {
+			isItemMarkedForSync = true
+			Unit.toPromise()
+		}
+		every { isItemMarkedForSync(LibraryId(163), Item(826, "moderate")) } answers { isItemMarkedForSync.toPromise() }
 	}
 
 	ItemListViewModel(
-		selectedLibraryIdProvider,
-		itemProvider,
+        selectedLibraryIdProvider,
+        itemProvider,
 		mockk(relaxed = true, relaxUnitFun = true),
 		storedItemAccess,
-		mockk(),
-		mockk(),
+        mockk(),
+        mockk(),
 	)
 }
 
-class WhenLoadingTheItems {
-
+class WhenSyncingTheItem {
 	companion object {
 		@BeforeClass
 		@JvmStatic
 		fun act() {
-			viewModel.loadItem(Item(826, "leaf")).toExpiringFuture().get()
+			viewModel.loadItem(Item(826, "moderate"))
+			viewModel.toggleSync().toExpiringFuture().get()
 		}
 	}
 
 	@Test
-	fun thenTheItemIsMarkedForSync() {
+	fun `then item is synced`() {
 		assertThat(viewModel.isSynced.value).isTrue
-	}
-
-	@Test
-	fun thenTheItemValueIsCorrect() {
-		assertThat(viewModel.itemValue.value).isEqualTo("leaf")
-	}
-
-	@Test
-	fun thenIsLoadedIsTrue() {
-		assertThat(viewModel.isLoaded.value).isTrue
-	}
-
-	@Test
-	fun thenTheLoadedFilesAreCorrect() {
-		assertThat(viewModel.items.value.map { it.item })
-			.hasSameElementsAs(
-				listOf(
-					Item(55),
-					Item(137),
-					Item(766),
-					Item(812),
-				)
-			)
 	}
 }

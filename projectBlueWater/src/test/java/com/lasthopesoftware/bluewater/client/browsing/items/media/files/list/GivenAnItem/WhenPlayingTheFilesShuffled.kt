@@ -12,6 +12,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackSer
 import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.resources.strings.FakeStringResources
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -54,6 +55,9 @@ private val services by lazy {
         itemProvider,
 		storedItemAccess,
         controlNowPlaying,
+		mockk(),
+		FakeStringResources(),
+		mockk(),
 	)
 
 	viewModel

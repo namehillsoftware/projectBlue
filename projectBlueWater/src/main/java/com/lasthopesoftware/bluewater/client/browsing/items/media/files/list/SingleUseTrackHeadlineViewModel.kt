@@ -5,18 +5,16 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.details.
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ProvideScopedFileProperties
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
+import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.lasthopesoftware.resources.strings.GetStringResources
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
-import com.namehillsoftware.handoff.promises.response.EventualAction
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import org.joda.time.Duration
-import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.net.SocketException
 import java.util.*
@@ -24,71 +22,40 @@ import java.util.concurrent.CancellationException
 import javax.net.ssl.SSLProtocolException
 
 private val timeoutDuration by lazy { Duration.standardMinutes(1) }
-private val logger by lazy { LoggerFactory.getLogger(TrackHeadlineViewModel::class.java) }
+private val logger by lazyLogger<SingleUseTrackHeadlineViewModel>()
 
-class TrackHeadlineViewModel(
+class SingleUseTrackHeadlineViewModel(
+	val serviceFile: ServiceFile,
 	private val filePropertiesProvider: ProvideScopedFileProperties,
 	private val stringResources: GetStringResources,
 	private val controlPlaybackService: ControlPlaybackService,
 	private val fileDetailsLauncher: LaunchFileDetails,
-) : ViewFileItem {
-
-	private val promiseSync = Any()
-
-	@Volatile
-	private var promisedState = Unit.toPromise()
-
-	@Volatile
-	private var activeServiceFile: ServiceFile? = null
+) {
 
 	private val mutableArtist = MutableStateFlow("")
 	private val mutableTitle = MutableStateFlow(stringResources.loading)
 	private val mutableIsMenuShown = MutableStateFlow(false)
 
-	override val artist = mutableArtist.asStateFlow()
-	override val title = mutableTitle.asStateFlow()
-	override val isMenuShown = mutableIsMenuShown.asStateFlow()
+	val artist = mutableArtist.asStateFlow()
+	val title = mutableTitle.asStateFlow()
+	val isMenuShown = mutableIsMenuShown.asStateFlow()
 
-	override fun close() {
-		synchronized(promiseSync) {
-			promisedState.cancel()
-		}
+	fun close() {}
 
-		resetState()
-	}
+	fun promiseUpdate(): Promise<Unit> = PromisedTextViewUpdate(serviceFile)
 
-	override fun promiseUpdate(serviceFile: ServiceFile): Promise<Unit> {
-		synchronized(promiseSync) {
-			if (activeServiceFile == serviceFile) return promisedState
-			activeServiceFile = serviceFile
-
-			val currentPromisedState = promisedState
-			promisedState = currentPromisedState.inevitably(EventualTextViewUpdate(serviceFile))
-			currentPromisedState.cancel()
-			return promisedState
-		}
-	}
-
-	override fun toggleMenu() {
+	fun showMenu() {
 		mutableIsMenuShown.value = !mutableIsMenuShown.value
 	}
 
-	override fun addToNowPlaying() {
-		activeServiceFile?.apply(controlPlaybackService::addToPlaylist)
+	fun hideMenu(): Boolean = mutableIsMenuShown.compareAndSet(expect = true, update = false)
+
+	fun addToNowPlaying() {
+		controlPlaybackService.addToPlaylist(serviceFile)
 	}
 
-	override fun viewFileDetails() {
-		activeServiceFile?.apply(fileDetailsLauncher::launchFileDetails)
-	}
-
-	private fun resetState() {
-		mutableIsMenuShown.value = false
-		mutableTitle.value = stringResources.loading
-		mutableArtist.value = ""
-	}
-
-	private inner class EventualTextViewUpdate(private val serviceFile: ServiceFile) : EventualAction {
-		override fun promiseAction(): Promise<*> = PromisedTextViewUpdate(serviceFile)
+	fun viewFileDetails() {
+		fileDetailsLauncher.launchFileDetails(serviceFile)
 	}
 
 	private inner class PromisedTextViewUpdate(private val serviceFile: ServiceFile) :
@@ -103,9 +70,7 @@ class TrackHeadlineViewModel(
 		}
 
 		fun beginUpdate() {
-			resetState()
-
-			if (isNotCurrentServiceFile || isUpdateCancelled) return resolve(Unit)
+			if (isUpdateCancelled) return resolve(Unit)
 
 			val filePropertiesPromise = filePropertiesProvider.promiseFileProperties(serviceFile)
 			cancellationProxy.doCancel(filePropertiesPromise)
@@ -132,7 +97,7 @@ class TrackHeadlineViewModel(
 		}
 
 		override fun respond(properties: Map<String, String>) {
-			if (isNotCurrentServiceFile || isUpdateCancelled) return
+			if (isUpdateCancelled) return
 
 			mutableTitle.value = properties[KnownFileProperties.NAME] ?: stringResources.unknownTrack
 			mutableArtist.value = properties[KnownFileProperties.ARTIST] ?: stringResources.unknownArtist
@@ -163,8 +128,6 @@ class TrackHeadlineViewModel(
 			)
 		}
 
-		private val isNotCurrentServiceFile: Boolean
-			get() = activeServiceFile != serviceFile
 		private val isUpdateCancelled: Boolean
 			get() = cancellationProxy.isCancelled
 	}

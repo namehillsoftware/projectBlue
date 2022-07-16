@@ -140,6 +140,9 @@ class FileListActivity :
 			fileProvider,
 			StateChangeBroadcastingStoredItemAccess(StoredItemAccess(this), applicationMessages),
 			PlaybackServiceController(this),
+			filePropertiesProvider,
+			StringResources(this),
+			FileDetailsLauncher(this),
 		)
 	}
 
@@ -240,7 +243,7 @@ fun FileListView(
 			.combinedClickable(
 				interactionSource = remember { MutableInteractionSource() },
 				indication = null,
-				onLongClick = fileItemViewModel::toggleMenu,
+				onLongClick = fileItemViewModel::showMenu,
 				onClickLabel = stringResource(id = R.string.btn_view_song_details),
 				onClick = fileItemViewModel::viewFileDetails
 			)
@@ -367,7 +370,7 @@ fun FileListView(
 			}
 
 			itemsIndexed(files) { i, f ->
-				TrackHeaderItem(i, f)
+				TrackHeaderItem(i, f.serviceFile)
 
 				if (i < files.lastIndex)
 					Divider()

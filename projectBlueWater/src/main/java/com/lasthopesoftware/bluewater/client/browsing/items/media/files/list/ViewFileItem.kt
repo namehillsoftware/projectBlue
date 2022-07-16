@@ -10,7 +10,8 @@ interface ViewFileItem : AutoCloseable {
 	val isMenuShown: StateFlow<Boolean>
 
 	fun promiseUpdate(serviceFile: ServiceFile): Promise<Unit>
-	fun toggleMenu()
+	fun showMenu()
+	fun hideMenu(): Boolean
 	fun addToNowPlaying()
 	fun viewFileDetails()
 }

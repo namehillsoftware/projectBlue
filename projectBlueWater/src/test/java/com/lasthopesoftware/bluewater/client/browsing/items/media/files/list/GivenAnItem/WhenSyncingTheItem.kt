@@ -8,10 +8,10 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.p
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.list.FileListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.ProvideNowPlayingFiles
 import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.resources.strings.FakeStringResources
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -32,10 +32,6 @@ private val viewModel by lazy {
 		).toPromise()
 	}
 
-	val nowPlayingFileProvider = mockk<ProvideNowPlayingFiles>().apply {
-		every { nowPlayingFile } returns ServiceFile(319).toPromise()
-	}
-
 	val storedItemAccess = mockk<AccessStoredItems>().apply {
 		var isItemMarkedForSync = false
 		every { toggleSync(LibraryId(163), ItemId(826), true) } answers {
@@ -50,6 +46,9 @@ private val viewModel by lazy {
         itemProvider,
 		storedItemAccess,
         mockk(),
+		mockk(),
+		FakeStringResources(),
+		mockk(),
 	)
 }
 

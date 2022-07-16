@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.list.AndItHasChildItems
+package com.lasthopesoftware.bluewater.client.browsing.items.list.GivenAnItem.AndItIsSynced
 
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
@@ -15,32 +15,23 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.BeforeClass
 import org.junit.Test
 
-private const val libraryId = 374
-private const val itemId = 208
-private const val itemValue = "reply"
-
-private var playedFileList = ""
-
 private val viewModel by lazy {
 	val selectedLibraryIdProvider = mockk<ProvideSelectedLibraryId>().apply {
-		every { selectedLibraryId } returns LibraryId(libraryId).toPromise()
+		every { selectedLibraryId } returns LibraryId(163).toPromise()
 	}
 
 	val itemProvider = mockk<ProvideItems>().apply {
-		every { promiseItems(LibraryId(libraryId), ItemId(itemId)) } returns listOf(
-			Item(756),
-			Item(639),
-			Item(178),
+		every { promiseItems(LibraryId(163), ItemId(826)) } returns listOf(
+			Item(55),
+			Item(137),
+			Item(766),
+			Item(812),
 		).toPromise()
 	}
 
 	val storedItemAccess = mockk<AccessStoredItems>().apply {
-		var isItemMarkedForSync = false
-		every { toggleSync(LibraryId(libraryId), ItemId(178), true) } answers {
-			isItemMarkedForSync = true
-			Unit.toPromise()
-		}
-		every { isItemMarkedForSync(LibraryId(libraryId), Item(itemId, itemValue)) } answers { isItemMarkedForSync.toPromise() }
+		every { isItemMarkedForSync(any(), any<Item>()) } returns false.toPromise()
+		every { isItemMarkedForSync(LibraryId(163), Item(826, "leaf")) } returns true.toPromise()
 	}
 
 	ItemListViewModel(
@@ -53,18 +44,41 @@ private val viewModel by lazy {
 	)
 }
 
-class WhenSyncingAChildItem {
+class WhenLoadingTheItems {
+
 	companion object {
 		@BeforeClass
 		@JvmStatic
 		fun act() {
-			viewModel.loadItem(Item(itemId, itemValue)).toExpiringFuture().get()
-			viewModel.items.value[2].toggleSync().toExpiringFuture().get()
+			viewModel.loadItem(Item(826, "leaf")).toExpiringFuture().get()
 		}
 	}
 
 	@Test
-	fun `then the item is synced`() {
-		assertThat(viewModel.items.value[2].isSynced.value).isTrue
+	fun thenTheItemIsMarkedForSync() {
+		assertThat(viewModel.isSynced.value).isTrue
+	}
+
+	@Test
+	fun thenTheItemValueIsCorrect() {
+		assertThat(viewModel.itemValue.value).isEqualTo("leaf")
+	}
+
+	@Test
+	fun thenIsLoadedIsTrue() {
+		assertThat(viewModel.isLoaded.value).isTrue
+	}
+
+	@Test
+	fun thenTheLoadedFilesAreCorrect() {
+		assertThat(viewModel.items.value.map { it.item })
+			.hasSameElementsAs(
+				listOf(
+					Item(55),
+					Item(137),
+					Item(766),
+					Item(812),
+				)
+			)
 	}
 }

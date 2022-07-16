@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.list.AndItHasChildItems.AndAChildItemIsSynced
+package com.lasthopesoftware.bluewater.client.browsing.items.list.GivenAnItem.AndItIsSynced
 
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
@@ -11,6 +11,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.resources.strings.FakeStringResources
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -45,6 +46,9 @@ private val viewModel by lazy {
         itemProvider,
 		storedItemAccess,
         mockk(),
+		mockk(),
+		FakeStringResources(),
+		mockk(),
 	)
 }
 

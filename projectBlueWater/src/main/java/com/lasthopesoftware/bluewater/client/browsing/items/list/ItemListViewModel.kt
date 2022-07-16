@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.list
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
@@ -20,6 +21,8 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.namehillsoftware.handoff.promises.Promise
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 
 class ItemListViewModel(
 	private val selectedLibraryId: ProvideSelectedLibraryId,
@@ -33,23 +36,27 @@ class ItemListViewModel(
 	private val activityLaunchingReceiver = messageBus.registerReceiver { event : ActivityLaunching ->
 		mutableIsLoaded.value = event != ActivityLaunching.HALTED // Only show the item list view again when launching error'ed for some reason
 	}
+	private val shownFileMenus = HashSet<ChildItemViewModel>()
 	private val mutableItems = MutableStateFlow(emptyList<ChildItemViewModel>())
 	private val mutableIsLoaded = MutableStateFlow(true)
 	private val mutableIsSynced = MutableStateFlow(false)
 	private val mutableItemValue = MutableStateFlow("")
+	private val mutableIsAnyItemShown = MutableStateFlow(false)
 
 	var loadedItem: IItem? = null
 	var loadedLibraryId: LibraryId? = null
 
 	val itemValue = mutableItemValue.asStateFlow()
 	val isSynced = mutableIsSynced.asStateFlow()
-
 	val items = mutableItems.asStateFlow()
 	val isLoaded = mutableIsLoaded.asStateFlow()
+	val isAnyMenuShown = mutableIsAnyItemShown.asStateFlow()
 
 	override fun onCleared() {
 		activityLaunchingReceiver.close()
 	}
+
+	fun hideAnyShownMenus(): Boolean = items.value.any { it.hideMenu() }
 
 	fun loadItem(item: Item): Promise<Unit> {
 		mutableIsLoaded.value = false
@@ -62,7 +69,18 @@ class ItemListViewModel(
 						val itemUpdate = itemProvider
 							.promiseItems(it, item.itemId)
 							.then { items ->
-								mutableItems.value = items.map(::ChildItemViewModel)
+								mutableItems.value = items.map { item ->
+									ChildItemViewModel(item).apply {
+										isMenuShown
+											.onEach { isShown ->
+												if (isShown) shownFileMenus.add(this)
+												else shownFileMenus.remove(this)
+
+												mutableIsAnyItemShown.value = shownFileMenus.any()
+											}
+											.launchIn(viewModelScope)
+									}
+								}
 							}
 
 						val promisedSyncUpdate = storedItemAccess
@@ -92,7 +110,7 @@ class ItemListViewModel(
 		}
 		.keepPromise(Unit)
 
-	inner class ChildItemViewModel(val item: IItem) {
+	inner class ChildItemViewModel internal constructor(val item: IItem) {
 		private val mutableIsSynced = MutableStateFlow(false)
 		private val mutableIsMenuShown = MutableStateFlow(false)
 
@@ -134,5 +152,7 @@ class ItemListViewModel(
 				}
 			mutableIsMenuShown.value = true
 		}
+
+		fun hideMenu(): Boolean = mutableIsMenuShown.compareAndSet(expect = true, update = false)
 	}
 }

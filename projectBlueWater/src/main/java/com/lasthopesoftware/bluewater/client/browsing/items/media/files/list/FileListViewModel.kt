@@ -1,35 +1,45 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.media.files.list
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.ProvideItemFiles
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.details.LaunchFileDetails
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ProvideScopedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.resources.executors.ThreadPools
+import com.lasthopesoftware.resources.strings.GetStringResources
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 
 class FileListViewModel(
 	private val selectedLibraryId: ProvideSelectedLibraryId,
 	private val itemFileProvider: ProvideItemFiles,
 	private val storedItemAccess: AccessStoredItems,
 	private val controlPlaybackService: ControlPlaybackService,
+	private val filePropertiesProvider: ProvideScopedFileProperties,
+	private val stringResources: GetStringResources,
+	private val fileDetailsLauncher: LaunchFileDetails,
 ) : ViewModel() {
 
+	private val shownFileMenus = HashSet<SingleUseTrackHeadlineViewModel>()
 	private val mutableIsLoaded = MutableStateFlow(false)
-	private val mutableFiles = MutableStateFlow(emptyList<ServiceFile>())
+	private val mutableFiles = MutableStateFlow(emptyList<SingleUseTrackHeadlineViewModel>())
 	private val mutableItemValue = MutableStateFlow("")
 	private val mutableIsSynced = MutableStateFlow(false)
+	private val mutableIsAnyMenuShown = MutableStateFlow(false)
 
 	private var loadedItem: IItem? = null
 	private var loadedLibraryId: LibraryId? = null
@@ -38,6 +48,11 @@ class FileListViewModel(
 	val filesFlow = mutableFiles.asStateFlow()
 	val itemValue = mutableItemValue.asStateFlow()
 	val isSynced = mutableIsSynced.asStateFlow()
+	val isAnyMenuShown = mutableIsAnyMenuShown.asStateFlow()
+
+	fun hideAnyShownMenus(): Boolean = shownFileMenus.fold(false) { _, menu ->
+		menu.hideMenu()
+	}
 
 	fun loadItem(item: IItem): Promise<Unit> {
 		mutableIsLoaded.value = false
@@ -51,7 +66,24 @@ class FileListViewModel(
 						val promisedFilesUpdate = itemFileProvider
 							.promiseFiles(libraryId, ItemId(item.key), FileListParameters.Options.None)
 							.then { f ->
-								mutableFiles.value = f
+								mutableFiles.value = f.map {
+									SingleUseTrackHeadlineViewModel(
+										it,
+										filePropertiesProvider,
+										stringResources,
+										controlPlaybackService,
+										fileDetailsLauncher
+									).apply {
+										isMenuShown
+											.onEach { isShown ->
+												if (isShown) shownFileMenus.add(this)
+												else shownFileMenus.remove(this)
+
+												mutableIsAnyMenuShown.value = shownFileMenus.any()
+											}
+											.launchIn(viewModelScope)
+									}
+								}
 							}
 
 						val promisedSyncUpdate = storedItemAccess
@@ -82,10 +114,10 @@ class FileListViewModel(
 		.keepPromise(Unit)
 
 	fun play(position: Int = 0) {
-		controlPlaybackService.startPlaylist(filesFlow.value, position)
+		controlPlaybackService.startPlaylist(filesFlow.value.map { f -> f.serviceFile }, position)
 	}
 
 	fun playShuffled() = QueuedPromise(MessageWriter {
-		controlPlaybackService.startPlaylist(filesFlow.value.shuffled())
+		controlPlaybackService.startPlaylist(filesFlow.value.map { f -> f.serviceFile }.shuffled())
 	}, ThreadPools.compute)
 }

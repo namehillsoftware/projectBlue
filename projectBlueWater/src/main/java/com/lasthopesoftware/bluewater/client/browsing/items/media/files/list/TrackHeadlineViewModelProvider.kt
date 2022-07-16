@@ -24,7 +24,7 @@ class TrackHeadlineViewModelProvider(
 
 	fun getViewModel(): ViewFileItem = viewModelPool.poll()
 		?: PooledFileItemViewModel(
-			TrackHeadlineViewModel(
+			ReusableTrackHeadlineViewModel(
 				filePropertiesProvider,
 				stringResources,
 				controlPlaybackService,
