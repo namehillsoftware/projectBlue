@@ -1,8 +1,4 @@
-package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.GivenAFileThatDoesNotYetExist.AndTheFileCanBeDownloaded.AndTheDownloadFails;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.GivenAFileThatDoesNotYetExist.AndTheFileCanBeDownloaded.AndTheDownloadFails
 
 import android.os.Build;
 
@@ -10,62 +6,77 @@ import androidx.annotation.RequiresApi;
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.AccessStoredFiles;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState;
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
+import com.lasthopesoftware.resources.io.WriteFileStreams;
 import com.namehillsoftware.handoff.promises.Promise;
 
+import org.assertj.core.api.Assertions.assertThat;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
-public class WhenProcessingTheJob {
+import io.mockk.every;
+import io.mockk.mockk;
 
-	private static Throwable storedFileWriteException;
-	private static final StoredFile storedFile = new StoredFile(new LibraryId(5), 1, new ServiceFile(1), "test-path", true);
-	private static final List<StoredFileJobState> states = new ArrayList<>();
+class WhenProcessingTheJob {
 
-	@RequiresApi(api = Build.VERSION_CODES.N)
-	@BeforeClass
-	public static void before() {
-		final StoredFileJobProcessor storedFileJobProcessor = new StoredFileJobProcessor(
-			$ -> {
-				final File file = mock(File.class);
-				final File parentFile = mock(File.class);
-				when(parentFile.mkdirs()).thenReturn(true);
-				when(file.getParentFile()).thenReturn(parentFile);
+	companion object {
+		private var storedFileWriteException: Throwable? = null
+		private val storedFile = StoredFile(LibraryId(5), 1, ServiceFile(1), "test-path", true)
+		private val states: MutableList<StoredFileJobState> = ArrayList()
 
-				return file;
-			},
-			mock(AccessStoredFiles.class),
-			(libraryId, f) -> new Promise<>(new ByteArrayInputStream(new byte[0])),
-			f -> false,
-			f -> true,
-			(is, f) -> { throw new IOException(); });
-
-		storedFileJobProcessor.observeStoredFileDownload(
-			Collections.singleton(new StoredFileJob(new LibraryId(5), new ServiceFile(1), storedFile)))
-			.map(f -> f.storedFileJobState)
-			.blockingSubscribe(
-				storedFileJobState -> states.add(storedFileJobState),
-				e -> storedFileWriteException = e);
+		@RequiresApi(api = Build.VERSION_CODES.N)
+		@JvmStatic
+		@BeforeClass
+		fun before() {
+			val storedFileJobProcessor = StoredFileJobProcessor(
+				{
+					val file = mockk<File>(relaxed = true)
+					val parentFile = mockk<File>(relaxed = true).apply {
+						every { exists() } returns false
+						every { mkdirs() } returns true
+					}
+					every { file.parentFile } returns parentFile
+					file
+				},
+				mockk(),
+				{ _, _ -> Promise(ByteArrayInputStream(ByteArray(0))) },
+				{ false },
+				{ true },
+				mockk<WriteFileStreams>().apply { every { writeStreamToFile(any(), any()) } throws IOException() })
+			storedFileJobProcessor.observeStoredFileDownload(
+				setOf(
+					StoredFileJob(
+						LibraryId(5),
+						ServiceFile(1),
+						storedFile
+					)
+				)
+			)
+				.map { f -> f.storedFileJobState }
+				.blockingSubscribe(
+					{ storedFileJobState -> states.add(storedFileJobState) }
+				) { e -> storedFileWriteException = e }
+		}
 	}
 
 	@Test
-	public void thenTheStoredFileIsPutBackIntoQueuedState() {
-		assertThat(states).containsExactly(StoredFileJobState.Queued, StoredFileJobState.Downloading, StoredFileJobState.Queued);
+	fun thenTheStoredFileIsPutBackIntoQueuedState() {
+		assertThat(states).containsExactly(
+			StoredFileJobState.Queued,
+			StoredFileJobState.Downloading,
+			StoredFileJobState.Queued
+		)
 	}
 
 	@Test
-	public void thenNoExceptionIsThrown() {
-		assertThat(storedFileWriteException).isNull();
+	fun thenNoExceptionIsThrown() {
+		assertThat(storedFileWriteException).isNull()
 	}
 }
