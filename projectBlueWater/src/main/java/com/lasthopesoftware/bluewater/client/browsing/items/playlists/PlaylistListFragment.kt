@@ -14,7 +14,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.access.CachedItemProvider
-import com.lasthopesoftware.bluewater.client.browsing.items.list.DemoableItemListAdapter
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListAdapter
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
@@ -36,14 +35,11 @@ import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMes
 import com.lasthopesoftware.bluewater.shared.messages.application.ScopedApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
-import com.lasthopesoftware.bluewater.tutorials.TutorialManager
 
 class PlaylistListFragment : Fragment() {
     private var itemListMenuChangeHandler: IItemListMenuChangeHandler? = null
 
 	private val handler by lazy { Handler(requireContext().mainLooper) }
-
-	private val tutorialManager by lazy { TutorialManager(requireContext()) }
 
 	private val browserLibraryIdProvider by lazy {
 		SelectedBrowserLibraryIdentifierProvider(requireContext().getApplicationSettingsRepository())
@@ -83,31 +79,14 @@ class PlaylistListFragment : Fragment() {
 		browserLibraryIdProvider.selectedLibraryId.then {
 			it?.let { libraryId ->
 				itemListMenuChangeHandler?.let { itemListMenuChangeHandler ->
-					activity
-						?.let { fa ->
-							DemoableItemListAdapter(
-								fa,
-								applicationMessageBus.value,
-								itemListProvider,
-								itemListMenuChangeHandler,
-								StoredItemAccess(fa),
-								itemProvider,
-								libraryId,
-								tutorialManager
-							)
-						}
-						?: requireContext()
-							.let { context ->
-								ItemListAdapter(
-									context,
-									applicationMessageBus.value,
-									itemListProvider,
-									itemListMenuChangeHandler,
-									StateChangeBroadcastingStoredItemAccess(StoredItemAccess(context), applicationMessageBus.value),
-									itemProvider,
-									libraryId,
-								)
-							}
+					val context = requireContext()
+					ItemListAdapter(
+						context,
+						itemListProvider,
+						itemListMenuChangeHandler,
+						StateChangeBroadcastingStoredItemAccess(StoredItemAccess(context), applicationMessageBus.value),
+						libraryId,
+					)
 				}
 			}
 		}

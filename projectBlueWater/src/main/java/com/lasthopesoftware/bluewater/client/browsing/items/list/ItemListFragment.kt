@@ -37,7 +37,6 @@ import com.lasthopesoftware.bluewater.shared.messages.application.ScopedApplicat
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
-import com.lasthopesoftware.bluewater.tutorials.TutorialManager
 
 class ItemListFragment : Fragment() {
 	private var itemListMenuChangeHandler: IItemListMenuChangeHandler? = null
@@ -66,8 +65,6 @@ class ItemListFragment : Fragment() {
 
 	private val itemProvider by lazy { CachedItemProvider.getInstance(requireContext()) }
 
-	private val tutorialManager by lazy { TutorialManager(requireContext()) }
-
 	private val applicationMessageBus = lazy {
 		val applicationMessageBus = requireContext().getApplicationMessageBus()
 		ScopedApplicationMessageBus(applicationMessageBus, applicationMessageBus).apply {
@@ -84,31 +81,14 @@ class ItemListFragment : Fragment() {
 		browserLibraryIdProvider.selectedLibraryId.then {
 			it?.let { libraryId ->
 				itemListMenuChangeHandler?.let { itemListMenuChangeHandler ->
-					activity
-						?.let { fa ->
-							DemoableItemListAdapter(
-								fa,
-								applicationMessageBus.value,
-								itemListProvider,
-								itemListMenuChangeHandler,
-								StoredItemAccess(fa),
-								itemProvider,
-								libraryId,
-								tutorialManager
-							)
-						}
-						?: requireContext()
-							.let { context ->
-								ItemListAdapter(
-									context,
-									applicationMessageBus.value,
-									itemListProvider,
-									itemListMenuChangeHandler,
-									StateChangeBroadcastingStoredItemAccess(StoredItemAccess(context), applicationMessageBus.value),
-									itemProvider,
-									libraryId,
-								)
-							}
+					val context = requireContext()
+					ItemListAdapter(
+						context,
+						itemListProvider,
+						itemListMenuChangeHandler,
+						StateChangeBroadcastingStoredItemAccess(StoredItemAccess(context), applicationMessageBus.value),
+						libraryId,
+					)
 				}
 			}
 		}
