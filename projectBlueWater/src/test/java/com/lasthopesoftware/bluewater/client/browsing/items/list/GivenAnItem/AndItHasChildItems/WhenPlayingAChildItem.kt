@@ -60,6 +60,7 @@ private val viewModel by lazy {
 		FakeStoredItemAccess(),
 		itemStringListProvider,
 		controlNowPlaying,
+		mockk(),
 	)
 }
 

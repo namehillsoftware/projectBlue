@@ -1,5 +1,6 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.media.files.list.GivenAnUnknownServiceFile
+package com.lasthopesoftware.bluewater.client.browsing.items.media.files.list.GivenAServiceFile
 
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.list.ReusableTrackHeadlineViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ProvideScopedFileProperties
@@ -13,15 +14,20 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.BeforeClass
 import org.junit.Test
 
+private val recordingMessageBus = RecordingTypedMessageBus<ItemListMenuMessage>()
+
 private val viewModel by lazy {
 	val filePropertiesProvider = mockk<ProvideScopedFileProperties>().apply {
-		every { promiseFileProperties(any()) } returns emptyMap<String, String>().toPromise()
+		every { promiseFileProperties(ServiceFile(99)) } returns mapOf(
+			Pair("Artist", "fool"),
+			Pair("Name", "coin"),
+		).toPromise()
 	}
 
 	val stringResource = mockk<GetStringResources>().apply {
-		every { loading } returns "waiter"
-		every { unknownArtist } returns "bunch"
-		every { unknownTrack } returns "bold"
+		every { loading } returns "past"
+		every { unknownArtist } returns "next"
+		every { unknownTrack } returns "shout"
 	}
 
 	ReusableTrackHeadlineViewModel(
@@ -29,27 +35,41 @@ private val viewModel by lazy {
 		stringResource,
 		mockk(),
 		mockk(),
-		RecordingTypedMessageBus(),
+		recordingMessageBus,
 	)
 }
 
-class WhenLoadingFileDetails {
-
+class WhenShowingTheMenu {
 	companion object {
-		@JvmStatic
 		@BeforeClass
+		@JvmStatic
 		fun act() {
-			viewModel.promiseUpdate(ServiceFile(943)).toExpiringFuture().get()
+			viewModel.promiseUpdate(ServiceFile(99)).toExpiringFuture().get()
+			viewModel.showMenu()
 		}
 	}
 
 	@Test
+	fun `then a menu shown message is sent`() {
+		assertThat(
+			recordingMessageBus.recordedMessages.filterIsInstance<ItemListMenuMessage.MenuShown>()
+				.map { it.menuItem }).containsOnlyOnce(viewModel)
+	}
+
+	@Test
 	fun thenTheArtistIsCorrect() {
-		assertThat(viewModel.artist.value).isEqualTo("bunch")
+		assertThat(viewModel.artist.value)
+			.isEqualTo("fool")
 	}
 
 	@Test
 	fun thenTheTrackNameIsCorrect() {
-		assertThat(viewModel.title.value).isEqualTo("bold")
+		assertThat(viewModel.title.value)
+			.isEqualTo("coin")
+	}
+
+	@Test
+	fun `then the menu is shown`() {
+		assertThat(viewModel.isMenuShown.value).isTrue
 	}
 }

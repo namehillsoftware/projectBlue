@@ -1,10 +1,14 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.media.files.list
 
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.HiddenListItemMenu
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.details.LaunchFileDetails
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ProvideScopedFileProperties
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
+import com.lasthopesoftware.bluewater.shared.lazyLogger
+import com.lasthopesoftware.bluewater.shared.messages.SendTypedMessages
 import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.resources.executors.ThreadPools
@@ -16,7 +20,6 @@ import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import org.joda.time.Duration
-import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.net.SocketException
 import java.util.*
@@ -24,14 +27,15 @@ import java.util.concurrent.CancellationException
 import javax.net.ssl.SSLProtocolException
 
 private val timeoutDuration by lazy { Duration.standardMinutes(1) }
-private val logger by lazy { LoggerFactory.getLogger(ReusableTrackHeadlineViewModel::class.java) }
+private val logger by lazyLogger<ReusableTrackHeadlineViewModel>()
 
 class ReusableTrackHeadlineViewModel(
 	private val filePropertiesProvider: ProvideScopedFileProperties,
 	private val stringResources: GetStringResources,
 	private val controlPlaybackService: ControlPlaybackService,
 	private val fileDetailsLauncher: LaunchFileDetails,
-) : ViewFileItem {
+	private val sendItemMenuMessages: SendTypedMessages<ItemListMenuMessage>,
+) : ViewFileItem, HiddenListItemMenu {
 
 	private val promiseSync = Any()
 
@@ -49,14 +53,6 @@ class ReusableTrackHeadlineViewModel(
 	override val title = mutableTitle.asStateFlow()
 	override val isMenuShown = mutableIsMenuShown.asStateFlow()
 
-	override fun close() {
-		synchronized(promiseSync) {
-			promisedState.cancel()
-		}
-
-		resetState()
-	}
-
 	override fun promiseUpdate(serviceFile: ServiceFile): Promise<Unit> {
 		synchronized(promiseSync) {
 			if (activeServiceFile == serviceFile) return promisedState
@@ -69,24 +65,40 @@ class ReusableTrackHeadlineViewModel(
 		}
 	}
 
-	override fun showMenu() {
-		mutableIsMenuShown.value = !mutableIsMenuShown.value
-	}
+	override fun showMenu(): Boolean =
+		mutableIsMenuShown.compareAndSet(expect = false, update = true)
+			.also {
+				if (it) sendItemMenuMessages.sendMessage(ItemListMenuMessage.MenuShown(this))
+			}
 
-	override fun hideMenu(): Boolean = mutableIsMenuShown.compareAndSet(expect = true, update = false)
+	override fun hideMenu(): Boolean =
+		mutableIsMenuShown.compareAndSet(expect = true, update = false)
+			.also {
+				if (it) sendItemMenuMessages.sendMessage(ItemListMenuMessage.MenuHidden(this))
+			}
 
 	override fun addToNowPlaying() {
 		activeServiceFile?.apply(controlPlaybackService::addToPlaylist)
+		hideMenu()
 	}
 
 	override fun viewFileDetails() {
 		activeServiceFile?.apply(fileDetailsLauncher::launchFileDetails)
+		hideMenu()
+	}
+
+	override fun reset() {
+		synchronized(promiseSync) {
+			promisedState.cancel()
+		}
+
+		resetState()
 	}
 
 	private fun resetState() {
-		mutableIsMenuShown.value = false
 		mutableTitle.value = stringResources.loading
 		mutableArtist.value = ""
+		hideMenu()
 	}
 
 	private inner class EventualTextViewUpdate(private val serviceFile: ServiceFile) : EventualAction {

@@ -37,13 +37,16 @@ import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.access.CachedItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListActivity.Companion.startItemListActivity
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuViewModel
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.ItemFileProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.ItemStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.LibraryFileStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.details.FileDetailsLauncher
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.list.FileListViewModel
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.list.SingleUseTrackHeadlineViewModel
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.list.TrackHeadlineViewModelProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.RateControlledFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedCachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedFilePropertiesProvider
@@ -63,6 +66,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.StateChangeBro
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
+import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
 import com.lasthopesoftware.bluewater.shared.android.ui.components.scrollbar
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Light
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
@@ -72,7 +76,6 @@ import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToast
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRateLimiter
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
-import com.lasthopesoftware.bluewater.shared.promises.extensions.suspend
 import com.lasthopesoftware.resources.strings.StringResources
 import com.namehillsoftware.handoff.promises.Promise
 
@@ -125,6 +128,10 @@ class ItemListActivity : AppCompatActivity(), Runnable {
 		StateChangeBroadcastingStoredItemAccess(StoredItemAccess(this), messageBus)
 	}
 
+	private val menuMessageBus by buildViewModelLazily { ViewModelMessageBus<ItemListMenuMessage>(handler) }
+
+	private val itemListMenuViewModel by buildViewModelLazily { ItemListMenuViewModel(menuMessageBus) }
+
 	private val itemListViewModel by buildViewModelLazily {
 		ItemListViewModel(
 			browserLibraryIdProvider,
@@ -133,6 +140,7 @@ class ItemListActivity : AppCompatActivity(), Runnable {
 			storedItemAccess,
 			itemListProvider,
 			PlaybackServiceController(this),
+			menuMessageBus,
 		)
 	}
 
@@ -170,9 +178,16 @@ class ItemListActivity : AppCompatActivity(), Runnable {
 			fileProvider,
 			storedItemAccess,
 			PlaybackServiceController(this),
+		)
+	}
+
+	private val trackHeadlineViewModelProvider by buildViewModelLazily {
+		TrackHeadlineViewModelProvider(
 			filePropertiesProvider,
 			StringResources(this),
+			PlaybackServiceController(this),
 			FileDetailsLauncher(this),
+			menuMessageBus,
 		)
 	}
 
@@ -199,13 +214,12 @@ class ItemListActivity : AppCompatActivity(), Runnable {
 					itemListViewModel = itemListViewModel,
 					fileListViewModel = fileListViewModel,
 					nowPlayingState = LiveNowPlayingLookup.getInstance(),
+					itemListMenuViewModel = itemListMenuViewModel,
+					trackHeadlineViewModelProvider = trackHeadlineViewModelProvider,
 				)
 			}
 		}
-	}
 
-	public override fun onStart() {
-		super.onStart()
 		restoreSelectedConnection(this).eventually(response({ run() }, handler))
 	}
 
@@ -225,20 +239,8 @@ class ItemListActivity : AppCompatActivity(), Runnable {
 		}
 	}
 
-	override fun onRestoreInstanceState(savedInstanceState: Bundle) {
-		super.onRestoreInstanceState(savedInstanceState)
-
-		item = Item(savedInstanceState.getInt(key), savedInstanceState.getString(value))
-		val playlistId = savedInstanceState.getInt(playlistIdKey, -1)
-		if (playlistId != -1) {
-			item = Item(savedInstanceState.getInt(key), savedInstanceState.getString(value), playlistId)
-		}
-	}
-
 	override fun onBackPressed() {
-		if (itemListViewModel.hideAnyShownMenus()) return
-		if (fileListViewModel.hideAnyShownMenus()) return
-		super.onBackPressed()
+		if (!itemListMenuViewModel.hideAllMenus()) super.onBackPressed()
 	}
 }
 
@@ -248,6 +250,8 @@ private fun ItemListView(
 	itemListViewModel: ItemListViewModel,
 	fileListViewModel: FileListViewModel,
 	nowPlayingState: ObserveNowPlaying,
+	itemListMenuViewModel: ItemListMenuViewModel,
+	trackHeadlineViewModelProvider: TrackHeadlineViewModelProvider,
 ) {
 	val activity = LocalContext.current as? Activity ?: return
 
@@ -268,8 +272,7 @@ private fun ItemListView(
 					onLongClick = {
 						hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
 
-						itemListViewModel.hideAnyShownMenus()
-						fileListViewModel.hideAnyShownMenus()
+						itemListMenuViewModel.hideAllMenus()
 
 						childItemViewModel.showMenu()
 					},
@@ -344,11 +347,16 @@ private fun ItemListView(
 	}
 
 	@Composable
-	fun TrackHeaderItem(position: Int, fileItemViewModel: SingleUseTrackHeadlineViewModel) {
+	fun TrackHeaderItem(position: Int, serviceFile: ServiceFile) {
+		val fileItemViewModel = remember(trackHeadlineViewModelProvider::getViewModel)
 		val isMenuShown by fileItemViewModel.isMenuShown.collectAsState()
 
-		LaunchedEffect(Unit) {
-			fileItemViewModel.promiseUpdate().suspend()
+		DisposableEffect(Unit) {
+			fileItemViewModel.promiseUpdate(serviceFile)
+
+			onDispose {
+				fileItemViewModel.reset()
+			}
 		}
 
 		if (!isMenuShown) {
@@ -359,8 +367,7 @@ private fun ItemListView(
 					onLongClick = {
 						hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
 
-						itemListViewModel.hideAnyShownMenus()
-						fileListViewModel.hideAnyShownMenus()
+						itemListMenuViewModel.hideAllMenus()
 
 						fileItemViewModel.showMenu()
 					},
@@ -368,7 +375,7 @@ private fun ItemListView(
 					onClick = fileItemViewModel::viewFileDetails
 				)
 				.height(rowHeight)
-				.fillMaxSize()
+				.fillMaxSize(),
 			) {
 				val fileName by fileItemViewModel.title.collectAsState()
 
@@ -377,7 +384,7 @@ private fun ItemListView(
 					fontSize = MaterialTheme.typography.h6.fontSize,
 					overflow = TextOverflow.Ellipsis,
 					maxLines = 1,
-					fontWeight = if (playingFile?.serviceFile == fileItemViewModel.serviceFile) FontWeight.Bold else FontWeight.Normal,
+					fontWeight = if (playingFile?.serviceFile == serviceFile) FontWeight.Bold else FontWeight.Normal,
 					modifier = Modifier
 						.padding(12.dp)
 						.align(Alignment.CenterStart),
@@ -413,7 +420,10 @@ private fun ItemListView(
 					modifier = Modifier
 						.fillMaxWidth()
 						.weight(1f)
-						.clickable { fileListViewModel.play(position) }
+						.clickable {
+							fileItemViewModel.hideMenu()
+							fileListViewModel.play(position)
+						}
 						.align(Alignment.CenterVertically),
 				)
 			}
@@ -423,7 +433,7 @@ private fun ItemListView(
 	@Composable
 	fun BoxScope.LoadedItemListView() {
 		val items by itemListViewModel.items.collectAsState()
-		val files by fileListViewModel.filesFlow.collectAsState()
+		val files by fileListViewModel.files.collectAsState()
 
 		LazyColumn(
 			state = lazyListState,
@@ -492,7 +502,6 @@ private fun ItemListView(
 				}
 			}
 
-
 			if (items.any()) {
 				item {
 					Box(modifier = Modifier
@@ -546,9 +555,7 @@ private fun ItemListView(
 			}
 		}
 
-		val isAnyFileMenuShown by fileListViewModel.isAnyMenuShown.collectAsState()
-		val isAnyItemMenuShown by itemListViewModel.isAnyMenuShown.collectAsState()
-		val isAnyMenuShown = isAnyFileMenuShown || isAnyItemMenuShown
+		val isAnyMenuShown by itemListMenuViewModel.isAnyMenuShown.collectAsState()
 
 		if (playingFile != null && !isAnyMenuShown) {
 			FloatingActionButton(
@@ -572,7 +579,17 @@ private fun ItemListView(
 		val isLoaded = isItemsLoaded && isFilesLoaded
 
 		TopAppBar(
-			title = { },
+			title = {
+				Text(
+					text = itemValue,
+					color = MaterialTheme.colors.onSecondary,
+					maxLines = 1,
+					overflow = TextOverflow.Ellipsis,
+					modifier = Modifier
+						.alpha(headerHidingProgress)
+						.align(Alignment.CenterHorizontally),
+				)
+			},
 			navigationIcon = {
 				Icon(
 					Icons.Default.ArrowBack,

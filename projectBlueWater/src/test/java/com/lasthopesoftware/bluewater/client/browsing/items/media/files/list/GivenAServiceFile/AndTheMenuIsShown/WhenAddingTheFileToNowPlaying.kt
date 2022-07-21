@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.media.files.list.GivenAServiceFile
+package com.lasthopesoftware.bluewater.client.browsing.items.media.files.list.GivenAServiceFile.AndTheMenuIsShown
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.list.ReusableTrackHeadlineViewModel
@@ -6,6 +6,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.resources.RecordingTypedMessageBus
 import com.lasthopesoftware.resources.strings.GetStringResources
 import io.mockk.every
 import io.mockk.mockk
@@ -39,7 +40,8 @@ private val viewModel by lazy {
 		filePropertiesProvider,
 		stringResource,
 		controlNowPlaying,
-		mockk()
+		mockk(),
+		RecordingTypedMessageBus(),
 	)
 }
 
@@ -50,6 +52,7 @@ class WhenAddingTheFileToNowPlaying {
 		@JvmStatic
 		fun act() {
 			viewModel.promiseUpdate(ServiceFile(483)).toExpiringFuture().get()
+			viewModel.showMenu()
 			viewModel.addToNowPlaying()
 		}
 	}
@@ -67,5 +70,10 @@ class WhenAddingTheFileToNowPlaying {
 	@Test
 	fun thenTheFileIsAddedToNowPlaying() {
 		assertThat(addedFile).isEqualTo(ServiceFile(483))
+	}
+
+	@Test
+	fun `then the menu is hidden`() {
+		assertThat(viewModel.isMenuShown.value).isFalse
 	}
 }

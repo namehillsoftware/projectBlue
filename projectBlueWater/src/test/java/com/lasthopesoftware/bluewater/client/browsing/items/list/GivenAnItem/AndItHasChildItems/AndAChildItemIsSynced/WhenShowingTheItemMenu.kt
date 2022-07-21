@@ -4,12 +4,14 @@ import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.FakeStoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.resources.RecordingTypedMessageBus
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -19,6 +21,8 @@ import org.junit.Test
 private const val libraryId = 391
 private const val rootItemId = 217
 private const val childItemId = 637
+
+private val recordingMessageBus = RecordingTypedMessageBus<ItemListMenuMessage>()
 
 private val viewModel by lazy {
 	val selectedLibraryIdProvider = mockk<ProvideSelectedLibraryId>().apply {
@@ -44,6 +48,7 @@ private val viewModel by lazy {
 		storedItemAccess,
 		mockk(),
 		mockk(),
+		recordingMessageBus,
 	)
 }
 
@@ -56,6 +61,12 @@ class WhenShowingTheItemMenu {
 			viewModel.loadItem(Item(rootItemId, "leaf")).toExpiringFuture().get()
 			viewModel.items.value[3].showMenu()
 		}
+	}
+
+	@Test
+	fun `then a menu shown message is sent`() {
+		assertThat(recordingMessageBus.recordedMessages.filterIsInstance<ItemListMenuMessage.MenuShown>()
+				.map { it.menuItem }).containsOnlyOnce(viewModel.items.value[3])
 	}
 
 	@Test

@@ -45,6 +45,7 @@ private val viewModel by lazy {
 		storedItemAccess,
         mockk(),
         mockk(),
+		mockk(),
 	)
 }
 

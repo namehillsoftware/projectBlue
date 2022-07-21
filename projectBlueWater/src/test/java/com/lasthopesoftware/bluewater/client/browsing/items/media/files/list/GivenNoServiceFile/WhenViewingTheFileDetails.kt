@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.browsing.items.media.files.list.Gi
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.list.ReusableTrackHeadlineViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ProvideScopedFileProperties
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.resources.RecordingTypedMessageBus
 import com.lasthopesoftware.resources.strings.GetStringResources
 import io.mockk.every
 import io.mockk.mockk
@@ -24,7 +25,8 @@ private val viewModel by lazy {
 		filePropertiesProvider,
 		stringResource,
 		mockk(),
-		mockk()
+		mockk(),
+		RecordingTypedMessageBus(),
 	)
 }
 

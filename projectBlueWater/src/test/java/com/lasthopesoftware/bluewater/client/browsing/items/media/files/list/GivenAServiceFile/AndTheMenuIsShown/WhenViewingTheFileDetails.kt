@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.media.files.list.GivenAServiceFile
+package com.lasthopesoftware.bluewater.client.browsing.items.media.files.list.GivenAServiceFile.AndTheMenuIsShown
 
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.details.LaunchFileDetails
@@ -6,6 +6,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.list.Reu
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ProvideScopedFileProperties
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.resources.RecordingTypedMessageBus
 import com.lasthopesoftware.resources.strings.GetStringResources
 import io.mockk.every
 import io.mockk.mockk
@@ -39,7 +40,8 @@ private val viewModel by lazy {
 		filePropertiesProvider,
 		stringResource,
 		mockk(),
-		launchFileDetails
+		launchFileDetails,
+		RecordingTypedMessageBus(),
 	)
 }
 
@@ -50,6 +52,7 @@ class WhenViewingTheFileDetails {
 		@JvmStatic
 		fun act() {
 			viewModel.promiseUpdate(ServiceFile(34)).toExpiringFuture().get()
+			viewModel.showMenu()
 			viewModel.viewFileDetails()
 		}
 	}
@@ -67,5 +70,10 @@ class WhenViewingTheFileDetails {
 	@Test
 	fun thenTheLaunchedFileIsCorrect() {
 		assertThat(launchedFile).isEqualTo(ServiceFile(34))
+	}
+
+	@Test
+	fun `then the menu is hidden`() {
+		assertThat(viewModel.isMenuShown.value).isFalse
 	}
 }
