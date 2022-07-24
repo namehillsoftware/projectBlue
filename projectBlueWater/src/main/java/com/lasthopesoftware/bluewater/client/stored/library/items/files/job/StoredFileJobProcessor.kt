@@ -1,12 +1,12 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.job
 
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.io.IFileStreamWriter
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.AccessStoredFiles
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileSystemFileProducer
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.download.DownloadStoredFiles
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileJobException
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileWriteException
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
+import com.lasthopesoftware.resources.io.WriteFileStreams
 import com.lasthopesoftware.storage.read.permissions.IFileReadPossibleArbitrator
 import com.lasthopesoftware.storage.write.exceptions.StorageCreatePathException
 import com.lasthopesoftware.storage.write.permissions.IFileWritePossibleArbitrator
@@ -26,7 +26,7 @@ class StoredFileJobProcessor(
 	private val storedFiles: DownloadStoredFiles,
 	private val fileReadPossibleArbitrator: IFileReadPossibleArbitrator,
 	private val fileWritePossibleArbitrator: IFileWritePossibleArbitrator,
-	private val fileStreamWriter: IFileStreamWriter
+	private val fileStreamWriter: WriteFileStreams
 ) : ProcessStoredFileJobs
 {
 	override fun observeStoredFileDownload(jobs: Iterable<StoredFileJob>): Observable<StoredFileJobStatus> =

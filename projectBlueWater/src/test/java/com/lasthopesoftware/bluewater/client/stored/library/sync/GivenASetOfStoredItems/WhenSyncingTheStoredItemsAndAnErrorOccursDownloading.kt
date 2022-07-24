@@ -83,7 +83,7 @@ class WhenSyncingTheStoredItemsAndAnErrorOccursDownloading {
 					},
 					{ true },
 					{ true },
-					{ _, _ -> })
+					mockk(relaxUnitFun = true))
 			)
 
 			librarySyncHandler.observeLibrarySync(LibraryId(42))
