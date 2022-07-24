@@ -30,6 +30,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.R
@@ -259,6 +260,7 @@ private fun ItemListView(
 	val lazyListState = rememberLazyListState()
 	val rowHeight = 60.dp
 	val hapticFeedback = LocalHapticFeedback.current
+	val itemValue by itemListViewModel.itemValue.collectAsState()
 
 	@Composable
 	fun ChildItem(childItemViewModel: ItemListViewModel.ChildItemViewModel) {
@@ -449,7 +451,6 @@ private fun ItemListView(
 		) {
 			item {
 				Column(modifier = Modifier.padding(4.dp)) {
-					val itemValue by itemListViewModel.itemValue.collectAsState()
 					ProvideTextStyle(MaterialTheme.typography.h4) {
 						Row(modifier = Modifier
 							.padding(top = 8.dp)
@@ -578,16 +579,30 @@ private fun ItemListView(
 		val isFilesLoaded by fileListViewModel.isLoaded.collectAsState()
 		val isLoaded = isItemsLoaded && isFilesLoaded
 
+		val headerHidingProgress by derivedStateOf {
+			if (lazyListState.firstVisibleItemIndex > 0) 1f
+			else lazyListState
+				.layoutInfo
+				.visibleItemsInfo
+				.firstOrNull()
+				?.size
+				?.toFloat()
+				?.let { headerSize ->
+					1f - ((headerSize - lazyListState.firstVisibleItemScrollOffset) / headerSize)
+				}
+				?: 0f
+		}
+
 		TopAppBar(
 			title = {
 				Text(
 					text = itemValue,
-					color = MaterialTheme.colors.onSecondary,
 					maxLines = 1,
 					overflow = TextOverflow.Ellipsis,
+					textAlign = TextAlign.Center,
 					modifier = Modifier
 						.alpha(headerHidingProgress)
-						.align(Alignment.CenterHorizontally),
+						.fillMaxWidth(),
 				)
 			},
 			navigationIcon = {
@@ -605,20 +620,6 @@ private fun ItemListView(
 				)
 			},
 			actions = {
-				val headerHidingProgress by derivedStateOf {
-					if (lazyListState.firstVisibleItemIndex > 0) 1f
-					else lazyListState
-						.layoutInfo
-						.visibleItemsInfo
-						.firstOrNull()
-						?.size
-						?.toFloat()
-						?.let { headerSize ->
-							1f - ((headerSize - lazyListState.firstVisibleItemScrollOffset) / headerSize)
-						}
-						?: 0f
-				}
-
 				if (isLoaded && headerHidingProgress > 0f) {
 					Image(
 						painter = painterResource(id = R.drawable.av_play_white),
