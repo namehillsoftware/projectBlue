@@ -433,9 +433,15 @@ private fun ItemListView(
 	}
 
 	@Composable
-	fun BoxScope.LoadedItemListView() {
+	fun BoxWithConstraintsScope.LoadedItemListView() {
 		val items by itemListViewModel.items.collectAsState()
 		val files by fileListViewModel.files.collectAsState()
+
+		val knobHeight by derivedStateOf {
+			val totalItemCount = lazyListState.layoutInfo.totalItemsCount
+			if (totalItemCount > 0) maxHeight / (rowHeight * lazyListState.layoutInfo.totalItemsCount)
+			else null
+		}
 
 		LazyColumn(
 			state = lazyListState,
@@ -447,6 +453,7 @@ private fun ItemListView(
 					knobColor = MaterialTheme.colors.onSurface,
 					visibleAlpha = .4f,
 					knobCornerRadius = 1.dp,
+					fixedKnobRatio = knobHeight,
 				)
 		) {
 			item {
@@ -658,7 +665,7 @@ private fun ItemListView(
 			contentColor = MaterialTheme.colors.onSecondary,
 		)
 
-		Box(modifier = Modifier.fillMaxSize()) {
+		BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
 			if (isLoaded) LoadedItemListView()
 			else CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
 		}

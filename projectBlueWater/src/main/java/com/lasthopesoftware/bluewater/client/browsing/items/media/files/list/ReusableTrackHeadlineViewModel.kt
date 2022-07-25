@@ -55,7 +55,6 @@ class ReusableTrackHeadlineViewModel(
 
 	override fun promiseUpdate(serviceFile: ServiceFile): Promise<Unit> {
 		synchronized(promiseSync) {
-			if (activeServiceFile == serviceFile) return promisedState
 			activeServiceFile = serviceFile
 
 			val currentPromisedState = promisedState
