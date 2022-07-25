@@ -31,7 +31,7 @@ class StoredFileSynchronization(
 
 	override fun streamFileSynchronization(): Completable {
 		logger.info("Starting sync.")
-		applicationMessages.sendMessage(StoredFileMessage.SyncStarted)
+		applicationMessages.sendMessage(SyncStateMessage.SyncStarted)
 		return CancellableProxyPromise { cp ->
 				pruneStoredFiles
 					.pruneDanglingFiles()
@@ -84,6 +84,6 @@ class StoredFileSynchronization(
 	}
 
 	private fun sendStoppedSync() {
-		applicationMessages.sendMessage(StoredFileMessage.SyncStopped)
+		applicationMessages.sendMessage(SyncStateMessage.SyncStopped)
 	}
 }

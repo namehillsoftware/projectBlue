@@ -1,30 +1,25 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.GivenAQueueOfStoredFileJobs.AndTransferringErrorsOut
 
-import android.os.Build;
-
-import androidx.annotation.RequiresApi;
-
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.GivenAQueueOfStoredFileJobs.MarkedFilesStoredFileAccess;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
-import com.lasthopesoftware.resources.io.WriteFileStreams;
-import com.namehillsoftware.handoff.promises.Promise;
-
-import org.assertj.core.api.Assertions.assertThat;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
-
-import io.mockk.every;
-import io.mockk.mockk;
+import android.os.Build
+import androidx.annotation.RequiresApi
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.GivenAQueueOfStoredFileJobs.MarkedFilesStoredFileAccess
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
+import com.lasthopesoftware.resources.io.WriteFileStreams
+import com.namehillsoftware.handoff.promises.Promise
+import io.mockk.every
+import io.mockk.mockk
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.BeforeClass
+import org.junit.Test
+import java.io.ByteArrayInputStream
+import java.io.File
+import java.io.IOException
 
 class WhenProcessingTheQueue {
 	companion object {

@@ -7,13 +7,13 @@ import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.NotifyOnFlipViewAnimator
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
+import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
 
 class SyncFilesIsVisibleHandler(
 	private val notifyOnFlipViewAnimator: NotifyOnFlipViewAnimator,
 	private val syncButton: ImageButton,
-	private val storedItemAccess: StoredItemAccess,
+	private val storedItemAccess: AccessStoredItems,
 	private val libraryId: LibraryId,
 	private val item: IItem
 ) : View.OnLayoutChangeListener {

@@ -11,9 +11,9 @@ class LongClickViewAnimatorListener(private val viewAnimator: ViewAnimator) : On
 	}
 
 	companion object {
-		fun tryFlipToPreviousView(viewAnimator: ViewAnimator?): Boolean {
-			if (viewAnimator == null || viewAnimator.displayedChild == 0) return false
-			viewAnimator.showPrevious()
+		fun ViewAnimator.tryFlipToPreviousView(): Boolean {
+			if (displayedChild == 0) return false
+			showPrevious()
 			return true
 		}
 	}

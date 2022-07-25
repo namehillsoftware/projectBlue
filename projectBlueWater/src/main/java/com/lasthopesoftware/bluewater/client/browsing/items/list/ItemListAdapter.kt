@@ -12,7 +12,6 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
-import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.ItemStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener
@@ -20,18 +19,15 @@ import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAn
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.NotifyOnFlipViewAnimator
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.handlers.*
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
+import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
 import com.lasthopesoftware.bluewater.shared.android.adapters.DeferredListAdapter
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
-import com.lasthopesoftware.bluewater.shared.messages.application.SendApplicationMessages
 
 open class ItemListAdapter internal constructor(
 	context: Context,
-	private val sendMessages: SendApplicationMessages,
 	private val itemStringListProvider: ItemStringListProvider,
 	private val itemListMenuEvents: IItemListMenuChangeHandler,
-	private val storedItemAccess: StoredItemAccess,
-	private val provideItems: ProvideItems,
+	private val storedItemAccess: AccessStoredItems,
 	private val libraryId: LibraryId
 ) : DeferredListAdapter<Item, ItemListAdapter.ViewHolder>(context, ItemDiffer) {
 
@@ -77,10 +73,10 @@ open class ItemListAdapter internal constructor(
 		private var onSyncButtonLayoutChangeListener: View.OnLayoutChangeListener? = null
 
 		fun update(item: Item) {
-			tryFlipToPreviousView(viewFlipper)
+			viewFlipper.tryFlipToPreviousView()
 
 			listItemLayout.setOnLongClickListener(LongClickViewAnimatorListener(viewFlipper))
-			listItemLayout.setOnClickListener(ClickItemListener(libraryId, item, provideItems, sendMessages))
+			listItemLayout.setOnClickListener(ClickItemListener(item))
 
 			textView.findView().text = item.value
 			shuffleButton.findView().setOnClickListener(

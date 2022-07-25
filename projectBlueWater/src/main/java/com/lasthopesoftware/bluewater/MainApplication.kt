@@ -39,6 +39,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
 import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
+import com.lasthopesoftware.bluewater.client.stored.sync.receivers.SyncItemStateChangedListener
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler
@@ -140,6 +141,8 @@ open class MainApplication : Application() {
 			registerForClass(cls<TrackPositionUpdate>(), liveNowPlayingLookup)
 			registerForClass(cls<TrackChanged>(), liveNowPlayingLookup)
 		}
+
+		applicationMessageBus.registerReceiver(SyncItemStateChangedListener(this))
 	}
 
 	private fun initializeLogging() {

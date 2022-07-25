@@ -73,18 +73,8 @@
                 android:value="com.lasthopesoftware.bluewater.client.browsing.BrowserEntryActivity" />
         </activity>
         <activity
-            android:name=".client.browsing.items.media.files.list.FileListActivity"
-            android:label="@string/title_activity_file_view">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.lasthopesoftware.bluewater.client.browsing.BrowserEntryActivity" />
-        </activity>
-        <activity
             android:name=".client.browsing.items.media.files.details.FileDetailsActivity"
             android:label="@string/title_activity_file_view">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.lasthopesoftware.bluewater.client.browsing.items.media.files.list.FileListActivity" />
         </activity>
         <activity
             android:name=".client.playback.nowplaying.view.activity.NowPlayingActivity"

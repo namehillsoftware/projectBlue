@@ -21,7 +21,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.storage.ScopedFilePropertiesStorage
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.storage.SelectedConnectionFilePropertiesStorage
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.CachedImageProvider
-import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener
+import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener.Companion.tryFlipToPreviousView
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.SelectedConnectionRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.authentication.ScopedConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.authentication.SelectedConnectionAuthenticationChecker
@@ -68,7 +68,6 @@ class NowPlayingActivity :
 		}
 	}
 
-	private var connectionRestoreCode: Int? = null
 	private var viewAnimator: ViewAnimator? = null
 	private val messageHandler by lazy { Handler(mainLooper) }
 
@@ -192,7 +191,7 @@ class NowPlayingActivity :
 						else -> {
 							nowPlayingViewModel.hideDrawer()
 							playlistViewModel.finishPlaylistEdit()
-							LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator)
+							viewAnimator?.tryFlipToPreviousView()
 						}
 					}
 				}
@@ -206,20 +205,11 @@ class NowPlayingActivity :
 		super.onStart()
 
 		restoreSelectedConnection(this).eventually(LoopedInPromise.response({
-			connectionRestoreCode = it
-			if (it == null) binding.also { b ->
+			binding.also { b ->
 				b.filePropertiesVm?.initializeViewModel()
 				b.coverArtVm?.initializeViewModel()
 			}
 		}, messageHandler))
-	}
-
-	override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-		if (requestCode == connectionRestoreCode) binding.also { b ->
-			b.filePropertiesVm?.initializeViewModel()
-			b.coverArtVm?.initializeViewModel()
-		}
-		super.onActivityResult(requestCode, resultCode, data)
 	}
 
 	override fun onDestroy() {
@@ -241,7 +231,7 @@ class NowPlayingActivity :
 	}
 
 	override fun onBackPressed() {
-		if (LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator)) return
+		if (viewAnimator?.tryFlipToPreviousView() == true) return
 
 		if (playlistViewModel.isEditingPlaylist) {
 			playlistViewModel.finishPlaylistEdit()

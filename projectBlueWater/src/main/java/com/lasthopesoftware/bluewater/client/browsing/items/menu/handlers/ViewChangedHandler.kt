@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.browsing.items.menu.handlers
 import android.widget.ViewAnimator
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.OnAllMenusHidden
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.OnAnyMenuShown
-import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener
+import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener.Companion.tryFlipToPreviousView
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.OnViewChangedListener
 
 class ViewChangedHandler : OnViewChangedListener {
@@ -18,7 +18,7 @@ class ViewChangedHandler : OnViewChangedListener {
 			if (numberOfMenusShown == 0) onAnyMenuShown?.onAnyMenuShown()
 			++numberOfMenusShown
 
-			shownMenu?.also { LongClickViewAnimatorListener.tryFlipToPreviousView(it) }
+			shownMenu?.also { it.tryFlipToPreviousView() }
 			shownMenu = viewAnimator
 		} else {
 			if (shownMenu === viewAnimator) shownMenu = null

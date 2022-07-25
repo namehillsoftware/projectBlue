@@ -4,7 +4,6 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.view.MenuItem
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.*
@@ -50,7 +49,7 @@ import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLa
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
 import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toAsync
+import com.lasthopesoftware.bluewater.shared.promises.extensions.suspend
 import kotlinx.coroutines.flow.map
 
 class FileDetailsActivity : ComponentActivity() {
@@ -58,8 +57,6 @@ class FileDetailsActivity : ComponentActivity() {
 	companion object {
 
 		val fileKey by lazy { MagicPropertyBuilder.buildMagicPropertyName<FileDetailsActivity>("FILE_KEY") }
-
-		private const val trackNameMarqueeDelay = 1500L
 
 		fun Context.launchFileDetailsActivity(serviceFile: ServiceFile) {
 			startActivity(Intent(this, FileDetailsActivity::class.java).apply {
@@ -89,9 +86,10 @@ class FileDetailsActivity : ComponentActivity() {
 			}
 		}
 
-		val fileKey = intent.getIntExtra(fileKey, -1)
-
-		setView(ServiceFile(fileKey))
+		restoreSelectedConnection(this).eventually(LoopedInPromise.response({
+			val fileKey = intent.getIntExtra(fileKey, -1)
+			setView(ServiceFile(fileKey))
+		}, this))
 	}
 
 	private fun setView(serviceFile: ServiceFile) {
@@ -104,28 +102,6 @@ class FileDetailsActivity : ComponentActivity() {
 			.excuse(HandleViewIoException(this) { setView(serviceFile) })
 			.eventuallyExcuse(LoopedInPromise.response(UnexpectedExceptionToasterResponse(this), this))
 			.then { finish() }
-	}
-
-	override fun onNewIntent(intent: Intent) {
-		super.onNewIntent(intent)
-
-		// Update the intent
-		setIntent(intent)
-		val fileKey = intent.getIntExtra(fileKey, -1)
-		setView(ServiceFile(fileKey))
-	}
-
-	override fun onStart() {
-		super.onStart()
-		restoreSelectedConnection(this)
-	}
-
-	override fun onOptionsItemSelected(item: MenuItem): Boolean {
-		if (item.itemId == android.R.id.home) {
-			finish()
-			return true
-		}
-		return super.onOptionsItemSelected(item)
 	}
 }
 
@@ -148,8 +124,7 @@ private fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class)
 			.map { a -> a
 					?.takeIf { it.width > 0 && it.height > 0 }
 					?.let(paletteProvider::promisePalette)
-					?.toAsync()
-					?.await()
+					?.suspend()
 					?: defaultMediaStylePalette
 			}
 	}

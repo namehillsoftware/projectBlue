@@ -16,12 +16,14 @@ import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicat
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.namehillsoftware.handoff.promises.Promise
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 class LiveNowPlayingLookup private constructor(
 	selectedLibraryIdentifierProvider: ProvideSelectedLibraryId,
 	private val libraryProvider: ILibraryProvider,
 	private val libraryStorage: ILibraryStorage
-) : GetNowPlayingState, (ApplicationMessage) -> Unit {
+) : GetNowPlayingState, ObserveNowPlaying, (ApplicationMessage) -> Unit {
 
 	companion object {
 		// This needs to be a singleton to ensure the track progress is as up-to-date as possible
@@ -41,14 +43,17 @@ class LiveNowPlayingLookup private constructor(
 			return instance
 		}
 
-		fun getInstance(): GetNowPlayingState =
+		fun getInstance(): LiveNowPlayingLookup =
 			if (::instance.isInitialized) instance
 			else throw IllegalStateException("Instance should be initialized in application root")
 	}
 
+	private val mutableNowPlayingState = MutableStateFlow<PositionedFile?>(null)
+
 	private var inner: GetNowPlayingState? = null
-	private var trackedFile: PositionedFile? = null
 	private var trackedPosition: Long? = null
+
+	override val nowPlayingState = mutableNowPlayingState.asStateFlow()
 
 	init {
 		selectedLibraryIdentifierProvider.selectedLibraryId.then { it?.also(::updateInner) }
@@ -58,11 +63,11 @@ class LiveNowPlayingLookup private constructor(
 		inner
 			?.promiseNowPlaying()
 			?.then { np ->
+				if (mutableNowPlayingState.run { compareAndSet(value, np?.playingFile) }) {
+					trackedPosition = null
+				}
+
 				np?.apply {
-					if (trackedFile != playingFile) {
-						trackedPosition = null
-						trackedFile = playingFile
-					}
 					filePosition = trackedPosition ?: filePosition
 				}
 			}
@@ -71,7 +76,12 @@ class LiveNowPlayingLookup private constructor(
 	private fun updateInner(libraryId: LibraryId) {
 		inner = NowPlayingRepository(
 			SpecificLibraryProvider(libraryId, libraryProvider),
-			libraryStorage)
+			libraryStorage).apply {
+				promiseNowPlaying()
+					.then {
+						mutableNowPlayingState.value = it?.playingFile
+					}
+		}
 	}
 
 	override fun invoke(message: ApplicationMessage) {
@@ -80,7 +90,7 @@ class LiveNowPlayingLookup private constructor(
 			is TrackPositionUpdate -> trackedPosition = message.filePosition.millis
 			is PlaybackMessage.TrackChanged -> {
 				trackedPosition = null
-				trackedFile = message.positionedFile
+				mutableNowPlayingState.value = message.positionedFile
 			}
 		}
 	}

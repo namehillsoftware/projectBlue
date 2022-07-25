@@ -3,12 +3,11 @@ package com.lasthopesoftware.bluewater.client.stored.library.items
 import android.content.Context
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
-import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.KeyedIdentifier
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.Playlist
-import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem.ItemType
+import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemHelpers.storedItemType
 import com.lasthopesoftware.bluewater.repository.InsertBuilder.Companion.fromTable
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
 import com.lasthopesoftware.bluewater.repository.fetch
@@ -17,22 +16,35 @@ import com.lasthopesoftware.resources.executors.ThreadPools.promiseTableMessage
 import com.namehillsoftware.handoff.promises.Promise
 
 class StoredItemAccess(private val context: Context) : AccessStoredItems {
-	override fun toggleSync(libraryId: LibraryId, item: IItem, enable: Boolean) {
+	override fun toggleSync(libraryId: LibraryId, itemId: KeyedIdentifier): Promise<Boolean> =
+		isItemMarkedForSync(libraryId, itemId)
+			.eventually { isSynced ->
+				val newState = !isSynced
+				toggleSync(libraryId, itemId, newState).then { newState }
+			}
+
+	override fun toggleSync(libraryId: LibraryId, item: IItem, enable: Boolean): Promise<Unit> {
 		val inferredItem = inferItem(item)
-		if (enable) enableItemSync(libraryId, inferredItem, StoredItemHelpers.getListType(inferredItem))
+		return if (enable) enableItemSync(libraryId, inferredItem, StoredItemHelpers.getListType(inferredItem))
 		else disableItemSync(libraryId, inferredItem, StoredItemHelpers.getListType(inferredItem))
 	}
 
-	override fun toggleSync(libraryId: LibraryId, itemId: KeyedIdentifier, enable: Boolean) {
-		val type = when (itemId) {
-			is ItemId -> ItemType.ITEM
-			is PlaylistId -> ItemType.PLAYLIST
-			else -> throw IllegalArgumentException("itemId")
-		}
-
-		if (enable) enableItemSync(libraryId, itemId, type)
-		else disableItemSync(libraryId, itemId, type)
+	override fun toggleSync(libraryId: LibraryId, itemId: KeyedIdentifier, enable: Boolean): Promise<Unit> {
+		return if (enable) enableItemSync(libraryId, itemId, itemId.storedItemType)
+		else disableItemSync(libraryId, itemId, itemId.storedItemType)
 	}
+
+	override fun isItemMarkedForSync(libraryId: LibraryId, itemId: KeyedIdentifier): Promise<Boolean> =
+		promiseTableMessage<Boolean, StoredItem> {
+			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
+				isItemMarkedForSync(
+					repositoryAccessHelper,
+					libraryId,
+					itemId,
+					itemId.storedItemType,
+				)
+			}
+		}
 
 	override fun isItemMarkedForSync(libraryId: LibraryId, item: IItem): Promise<Boolean> =
 		promiseTableMessage<Boolean, StoredItem> {
@@ -60,7 +72,7 @@ class StoredItemAccess(private val context: Context) : AccessStoredItems {
 			}
 		}
 
-	private fun enableItemSync(libraryId: LibraryId, item: IItem, itemType: ItemType) {
+	private fun enableItemSync(libraryId: LibraryId, item: IItem, itemType: ItemType) =
 		promiseTableMessage<Unit, StoredItem> {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				if (!isItemMarkedForSync(repositoryAccessHelper, libraryId, item, itemType))
@@ -75,9 +87,8 @@ class StoredItemAccess(private val context: Context) : AccessStoredItems {
 					}
 			}
 		}
-	}
 
-	private fun enableItemSync(libraryId: LibraryId, item: KeyedIdentifier, itemType: ItemType) {
+	private fun enableItemSync(libraryId: LibraryId, item: KeyedIdentifier, itemType: ItemType) =
 		promiseTableMessage<Unit, StoredItem> {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				if (!isItemMarkedForSync(repositoryAccessHelper, libraryId, item, itemType))
@@ -92,9 +103,8 @@ class StoredItemAccess(private val context: Context) : AccessStoredItems {
 					}
 			}
 		}
-	}
 
-	private fun disableItemSync(libraryId: LibraryId, item: IItem, itemType: ItemType) {
+	private fun disableItemSync(libraryId: LibraryId, item: IItem, itemType: ItemType) =
 		promiseTableMessage<Unit, StoredItem> {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
@@ -114,9 +124,8 @@ class StoredItemAccess(private val context: Context) : AccessStoredItems {
 				}
 			}
 		}
-	}
 
-	private fun disableItemSync(libraryId: LibraryId, item: KeyedIdentifier, itemType: ItemType) {
+	private fun disableItemSync(libraryId: LibraryId, item: KeyedIdentifier, itemType: ItemType) =
 		promiseTableMessage<Unit, StoredItem> {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
@@ -136,7 +145,6 @@ class StoredItemAccess(private val context: Context) : AccessStoredItems {
 				}
 			}
 		}
-	}
 
 	override fun promiseStoredItems(libraryId: LibraryId): Promise<Collection<StoredItem>> =
 		promiseTableMessage<Collection<StoredItem>, StoredItem> {

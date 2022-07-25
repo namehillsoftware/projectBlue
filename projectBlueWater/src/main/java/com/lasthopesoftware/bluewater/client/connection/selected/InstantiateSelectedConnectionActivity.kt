@@ -6,6 +6,8 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.widget.TextView
+import androidx.activity.ComponentActivity
+import androidx.activity.result.ActivityResult
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.BrowserEntryActivity
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
@@ -16,6 +18,7 @@ import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.promiseActivityResult
 import com.namehillsoftware.handoff.promises.Promise
 
 class InstantiateSelectedConnectionActivity : Activity(), (SelectedConnection.BuildSessionConnectionBroadcast) -> Unit {
@@ -49,13 +52,12 @@ class InstantiateSelectedConnectionActivity : Activity(), (SelectedConnection.Bu
 		lazyPromisedSessionConnection
 			.value
 			.eventually(LoopedInPromise.response({ c ->
-				if (isCancelled) return@response
-				else if (c == null)
-					launchActivityDelayed(selectServerIntent)
-				else if (intent == null || START_ACTIVITY_FOR_RETURN != intent.action)
-					launchActivityDelayed(browseLibraryIntent)
-				else
-					finishForResultDelayed()
+				when {
+					isCancelled -> Unit
+					c == null -> launchActivityDelayed(selectServerIntent)
+					intent?.action == START_ACTIVITY_FOR_RETURN -> finishForResultDelayed()
+					else -> launchActivityDelayed(browseLibraryIntent)
+				}
 			}, handler), LoopedInPromise.response({
 				launchActivityDelayed(selectServerIntent)
 			}, handler))
@@ -100,20 +102,18 @@ class InstantiateSelectedConnectionActivity : Activity(), (SelectedConnection.Bu
 	}
 
 	companion object {
-		private const val ACTIVITY_ID = 2032
 		private val START_ACTIVITY_FOR_RETURN = MagicPropertyBuilder.buildMagicPropertyName(
 			InstantiateSelectedConnectionActivity::class.java, "START_ACTIVITY_FOR_RETURN")
 		private const val ACTIVITY_LAUNCH_DELAY = 2500L
 
-		fun restoreSelectedConnection(activity: Activity): Promise<Int?> =
-			getInstance(activity).isSessionConnectionActive().then { isActive ->
-				if (!isActive) {
-					val intent = Intent(activity, InstantiateSelectedConnectionActivity::class.java)
-					intent.action = START_ACTIVITY_FOR_RETURN
-					activity.startActivityForResult(intent, ACTIVITY_ID)
-					ACTIVITY_ID
-				}
-				else null
+		fun restoreSelectedConnection(activity: ComponentActivity): Promise<ActivityResult?> =
+			getInstance(activity).isSessionConnectionActive().eventually { isActive ->
+				if (!isActive) activity.promiseActivityResult(
+					Intent(activity, InstantiateSelectedConnectionActivity::class.java).apply {
+						action = START_ACTIVITY_FOR_RETURN
+					}
+				)
+				else Promise.empty()
 			}
 
 		fun startNewConnection(context: Context) {

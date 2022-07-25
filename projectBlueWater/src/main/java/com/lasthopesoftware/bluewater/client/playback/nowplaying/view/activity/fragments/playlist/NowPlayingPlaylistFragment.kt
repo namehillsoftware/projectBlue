@@ -51,7 +51,7 @@ import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMes
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toAsync
+import com.lasthopesoftware.bluewater.shared.promises.extensions.suspend
 import com.lasthopesoftware.resources.strings.StringResources
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.launchIn
@@ -203,7 +203,7 @@ class NowPlayingPlaylistFragment : Fragment() {
 					.onEach {
 						val mutableList = it.toMutableList()
 						dragCallback.positionedFiles = mutableList
-						a.updateListEventually(mutableList).toAsync().await()
+						a.updateListEventually(mutableList).suspend()
 					}
 					.launchIn(lifecycleScope)
 			}, requireContext()))

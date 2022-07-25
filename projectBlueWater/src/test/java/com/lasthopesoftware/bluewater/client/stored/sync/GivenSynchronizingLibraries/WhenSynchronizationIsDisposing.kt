@@ -12,6 +12,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.sync.CheckForSync
 import com.lasthopesoftware.bluewater.client.stored.library.sync.ControlLibrarySyncs
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileMessage
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronization
+import com.lasthopesoftware.bluewater.client.stored.sync.SyncStateMessage
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import com.namehillsoftware.handoff.promises.Promise
@@ -95,7 +96,7 @@ class WhenSynchronizationIsDisposing : AndroidContext() {
 	fun thenASyncStartedEventOccurs() {
 		assertThat(
 			recordingMessageBus.recordedMessages
-				.filterIsInstance<StoredFileMessage.SyncStarted>()
+				.filterIsInstance<SyncStateMessage.SyncStarted>()
 				.singleOrNull()).isNotNull
 	}
 
@@ -130,7 +131,7 @@ class WhenSynchronizationIsDisposing : AndroidContext() {
 	fun thenASyncStoppedEventOccurs() {
 		assertThat(
 			recordingMessageBus.recordedMessages
-				.filterIsInstance<StoredFileMessage.SyncStopped>()
+				.filterIsInstance<SyncStateMessage.SyncStopped>()
 				.singleOrNull()).isNotNull
 	}
 }

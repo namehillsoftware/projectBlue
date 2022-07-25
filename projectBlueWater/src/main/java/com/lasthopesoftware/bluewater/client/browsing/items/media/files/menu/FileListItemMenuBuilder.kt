@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.FilePlayClickListener
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.details.ViewFileDetailsClickListener
-import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener
+import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener.Companion.tryFlipToPreviousView
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.NotifyOnFlipViewAnimator
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.handlers.AbstractMenuClickHandler
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
@@ -27,6 +27,8 @@ class FileListItemMenuBuilder(
 	private val fileListItemNowPlayingRegistrar: FileListItemNowPlayingRegistrar
 )
 	: AbstractFileListItemMenuBuilder<FileListItemMenuBuilder.ViewHolder>(R.layout.layout_file_item_menu) {
+
+
 
 	override fun newViewHolder(fileItemMenu: FileListItemContainer) = ViewHolder(fileItemMenu)
 
@@ -57,7 +59,7 @@ class FileListItemMenuBuilder(
 			}
 
 			val viewAnimator = fileListItemContainer.viewAnimator
-			LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator)
+			viewAnimator.tryFlipToPreviousView()
 			playButton.setOnClickListener(FilePlayClickListener(viewAnimator, positionedFile.playlistPosition, serviceFiles))
 			viewFileDetailsButton.setOnClickListener(ViewFileDetailsClickListener(viewAnimator, serviceFile))
 			addButton.setOnClickListener(AddClickListener(viewAnimator, serviceFile))

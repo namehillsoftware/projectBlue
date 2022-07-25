@@ -27,6 +27,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.Sel
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
+import com.lasthopesoftware.bluewater.client.stored.library.items.StateChangeBroadcastingStoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
@@ -36,7 +37,6 @@ import com.lasthopesoftware.bluewater.shared.messages.application.ScopedApplicat
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
-import com.lasthopesoftware.bluewater.tutorials.TutorialManager
 
 class ItemListFragment : Fragment() {
 	private var itemListMenuChangeHandler: IItemListMenuChangeHandler? = null
@@ -65,8 +65,6 @@ class ItemListFragment : Fragment() {
 
 	private val itemProvider by lazy { CachedItemProvider.getInstance(requireContext()) }
 
-	private val tutorialManager by lazy { TutorialManager(requireContext()) }
-
 	private val applicationMessageBus = lazy {
 		val applicationMessageBus = requireContext().getApplicationMessageBus()
 		ScopedApplicationMessageBus(applicationMessageBus, applicationMessageBus).apply {
@@ -83,31 +81,14 @@ class ItemListFragment : Fragment() {
 		browserLibraryIdProvider.selectedLibraryId.then {
 			it?.let { libraryId ->
 				itemListMenuChangeHandler?.let { itemListMenuChangeHandler ->
-					activity
-						?.let { fa ->
-							DemoableItemListAdapter(
-								fa,
-								applicationMessageBus.value,
-								itemListProvider,
-								itemListMenuChangeHandler,
-								StoredItemAccess(fa),
-								itemProvider,
-								libraryId,
-								tutorialManager
-							)
-						}
-						?: requireContext()
-							.let { context ->
-								ItemListAdapter(
-									context,
-									applicationMessageBus.value,
-									itemListProvider,
-									itemListMenuChangeHandler,
-									StoredItemAccess(context),
-									itemProvider,
-									libraryId,
-								)
-							}
+					val context = requireContext()
+					ItemListAdapter(
+						context,
+						itemListProvider,
+						itemListMenuChangeHandler,
+						StateChangeBroadcastingStoredItemAccess(StoredItemAccess(context), applicationMessageBus.value),
+						libraryId,
+					)
 				}
 			}
 		}
@@ -119,8 +100,8 @@ class ItemListFragment : Fragment() {
 
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
 		layout = inflater.inflate(R.layout.asynchronous_recycler_view, container, false) as RelativeLayout
-		progressBar = layout?.findViewById(R.id.recyclerLoadingProgress)
-		recyclerView = layout?.findViewById(R.id.loadedRecyclerView)
+		progressBar = layout?.findViewById(R.id.items_loading_progress)
+		recyclerView = layout?.findViewById(R.id.loaded_recycler_view)
 		return layout
 	}
 

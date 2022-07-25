@@ -161,10 +161,10 @@ open class PlaybackService :
 		fun initialize(context: Context) =
 			context.safelyStartService(getNewSelfIntent(context, Action.initialize))
 
-		fun launchMusicService(context: Context, serializedFileList: String?) =
+		fun launchMusicService(context: Context, serializedFileList: String) =
 			launchMusicService(context, 0, serializedFileList)
 
-		fun launchMusicService(context: Context, filePos: Int, serializedFileList: String?) {
+		fun launchMusicService(context: Context, filePos: Int, serializedFileList: String) {
 			val svcIntent = getNewSelfIntent(context, Action.launchMusicService)
 			svcIntent.putExtra(Bag.playlistPosition, filePos)
 			svcIntent.putExtra(Bag.filePlaylist, serializedFileList)

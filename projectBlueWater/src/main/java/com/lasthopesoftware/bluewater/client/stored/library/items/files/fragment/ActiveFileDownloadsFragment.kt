@@ -19,6 +19,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFi
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.fragment.adapter.ActiveFileDownloadsAdapter
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileMessage
 import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
+import com.lasthopesoftware.bluewater.client.stored.sync.SyncStateMessage
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
@@ -27,8 +28,8 @@ import com.namehillsoftware.handoff.promises.Promise
 import java.util.concurrent.ConcurrentHashMap
 
 class ActiveFileDownloadsFragment : Fragment() {
-	private var onSyncStartedReceiver: ((StoredFileMessage.SyncStarted) -> Unit)? = null
-	private var onSyncStoppedReceiver: ((StoredFileMessage.SyncStopped) -> Unit)? = null
+	private var onSyncStartedReceiver: ((SyncStateMessage.SyncStarted) -> Unit)? = null
+	private var onSyncStoppedReceiver: ((SyncStateMessage.SyncStopped) -> Unit)? = null
 	private var onFileQueuedReceiver: ((StoredFileMessage.FileQueued) -> Unit)? = null
 	private var onFileDownloadedReceiver: ((StoredFileMessage.FileDownloaded) -> Unit)? = null
 
@@ -38,8 +39,8 @@ class ActiveFileDownloadsFragment : Fragment() {
 		if (container == null) return null
 
 		val viewFilesLayout = inflater.inflate(R.layout.layout_downloads, container, false) as RelativeLayout
-		val progressBar = viewFilesLayout.findViewById<ProgressBar>(R.id.recyclerLoadingProgress)
-		val listView = viewFilesLayout.findViewById<RecyclerView>(R.id.loadedRecyclerView)
+		val progressBar = viewFilesLayout.findViewById<ProgressBar>(R.id.items_loading_progress)
+		val listView = viewFilesLayout.findViewById<RecyclerView>(R.id.loaded_recycler_view)
 		listView.visibility = View.INVISIBLE
 		progressBar.visibility = View.VISIBLE
 
@@ -114,11 +115,11 @@ class ActiveFileDownloadsFragment : Fragment() {
 
 		onSyncStartedReceiver?.also(applicationMessageBus.value::unregisterReceiver)
 		applicationMessageBus.value
-			.registerReceiver({ _ : StoredFileMessage.SyncStarted -> toggleSyncButton.text = stopSyncLabel }.also { onSyncStartedReceiver = it })
+			.registerReceiver({ _ : SyncStateMessage.SyncStarted -> toggleSyncButton.text = stopSyncLabel }.also { onSyncStartedReceiver = it })
 
 		onSyncStoppedReceiver?.also(applicationMessageBus.value::unregisterReceiver)
 		applicationMessageBus.value
-			.registerReceiver({ _ : StoredFileMessage.SyncStopped -> toggleSyncButton.text = startSyncLabel }.also { onSyncStoppedReceiver = it })
+			.registerReceiver({ _ : SyncStateMessage.SyncStopped -> toggleSyncButton.text = startSyncLabel }.also { onSyncStoppedReceiver = it })
 
 		toggleSyncButton.setOnClickListener { v ->
 			SyncScheduler.promiseIsSyncing(v.context).then { isSyncRunning ->

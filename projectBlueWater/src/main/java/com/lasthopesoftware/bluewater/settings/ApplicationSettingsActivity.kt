@@ -27,16 +27,17 @@ import com.lasthopesoftware.bluewater.client.servers.list.ServerListAdapter
 import com.lasthopesoftware.bluewater.client.servers.list.listeners.EditServerClickListener
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
+import com.lasthopesoftware.bluewater.shared.android.view.getValue
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.resources.strings.StringResources
 
 class ApplicationSettingsActivity : AppCompatActivity() {
-	private val progressBar = LazyViewFinder<ProgressBar>(this, R.id.recyclerLoadingProgress)
-	private val serverListView = LazyViewFinder<RecyclerView>(this, R.id.loadedRecyclerView)
-	private val addServerButton = LazyViewFinder<Button>(this, R.id.addServerButton)
-	private val killPlaybackEngineButton = LazyViewFinder<Button>(this, R.id.killPlaybackEngine)
+	private val progressBar by LazyViewFinder<ProgressBar>(this, R.id.items_loading_progress)
+	private val serverListView by LazyViewFinder<RecyclerView>(this, R.id.loaded_recycler_view)
+	private val addServerButton by LazyViewFinder<Button>(this, R.id.addServerButton)
+	private val killPlaybackEngineButton by LazyViewFinder<Button>(this, R.id.killPlaybackEngine)
 	private val settingsMenu by lazy { SettingsMenu(this, StringResources(this)) }
 	private val applicationSettingsRepository by lazy { getApplicationSettingsRepository() }
 	private val applicationMessageBus by lazy { getApplicationMessageBus().getScopedMessageBus() }
@@ -91,15 +92,16 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 		playbackEngineOptions
 			.setOnCheckedChangeListener { _, checkedId -> selection.selectPlaybackEngine(PlaybackEngineType.values()[checkedId]) }
 
-		killPlaybackEngineButton.findView().setOnClickListener { PlaybackService.killService(this) }
+		killPlaybackEngineButton.setOnClickListener { PlaybackService.killService(this) }
 
-		addServerButton.findView().setOnClickListener(EditServerClickListener(this, -1))
+		addServerButton.setOnClickListener(EditServerClickListener(this, -1))
 
 		updateServerList()
 	}
 
 	override fun onCreateOptionsMenu(menu: Menu): Boolean = settingsMenu.buildSettingsMenu(menu)
 
+	@Deprecated("Deprecated in Java")
 	override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
 		super.onActivityResult(requestCode, resultCode, data)
 		updateServerList()
@@ -114,8 +116,8 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 	}
 
 	private fun updateServerList() {
-		serverListView.findView().visibility = View.INVISIBLE
-		progressBar.findView().visibility = View.VISIBLE
+		serverListView.visibility = View.INVISIBLE
+		progressBar.visibility = View.VISIBLE
 
 		val libraryProvider = LibraryRepository(this)
 		val promisedLibraries = libraryProvider.allLibraries
@@ -126,7 +128,6 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 			BrowserLibrarySelection(applicationSettingsRepository, applicationMessageBus, libraryProvider),
 			applicationMessageBus)
 
-		val serverListView = serverListView.findView()
 		serverListView.adapter = adapter
 		serverListView.layoutManager = LinearLayoutManager(this)
 
@@ -138,7 +139,7 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 
 						adapter.updateLibraries(libraries, selectedBrowserLibrary)
 
-						progressBar.findView().visibility = View.INVISIBLE
+						progressBar.visibility = View.INVISIBLE
 						serverListView.visibility = View.VISIBLE
 					}, this))
 			}

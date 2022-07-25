@@ -35,29 +35,29 @@ class CacheFlusherTask  /*
     }
 
     private fun flushCache() {
-        RepositoryAccessHelper(context).use { repositoryAccessHelper ->
-            if (getCachedFileSizeFromDatabase(repositoryAccessHelper) <= targetSize) return
-            do {
-                val cachedFile = getOldestCachedFile(repositoryAccessHelper)
-                if (cachedFile != null) deleteCachedFile(repositoryAccessHelper, cachedFile)
-            } while (getCachedFileSizeFromDatabase(repositoryAccessHelper) > targetSize)
+        RepositoryAccessHelper(context).use { repositoryAccess ->
+            fun RepositoryAccessHelper.isCacheFull() = getCachedFileSizeFromDatabase() > targetSize
+
+			if (!repositoryAccess.isCacheFull()) return
+			while (repositoryAccess.isCacheFull()) {
+                repositoryAccess.getOldestCachedFile()?.also { repositoryAccess.deleteCachedFile(it) }
+            }
 
             // Remove any files in the cache dir but not in the database
-            val cacheDir = diskCacheDirectory.getDiskCacheDirectory(diskFileCacheConfiguration)
-
-            if (cacheDir == null || !cacheDir.exists()) return
-
-			val filesInCacheDir = cacheDir.listFiles()
+			val filesInCacheDir = diskCacheDirectory
+				.getDiskCacheDirectory(diskFileCacheConfiguration)
+				?.takeIf { it.exists() }
+				?.listFiles() ?: return
 
             // If the # of files in the cache dir is equal to the database size, then
             // hypothetically (and good enough for our purposes), they are in sync and we don't need
             // to do additional processing
-            if (filesInCacheDir == null || filesInCacheDir.size.toLong() == getCachedFileCount(repositoryAccessHelper)) return
+            if (filesInCacheDir.size.toLong() == repositoryAccess.getCachedFileCount()) return
 
             // Remove all files that aren't tracked in the database
             for (fileInCacheDir in filesInCacheDir) {
                 try {
-                    if (getCachedFileByFilename(repositoryAccessHelper, fileInCacheDir.canonicalPath) != null) continue
+                    if (repositoryAccess.getCachedFileByFilename(fileInCacheDir.canonicalPath) != null) continue
                 } catch (e: IOException) {
                     logger.warn("Issue getting canonical file path.", e)
                 }
@@ -78,40 +78,20 @@ class CacheFlusherTask  /*
         }
     }
 
-    private fun getCachedFileSizeFromDatabase(repositoryAccessHelper: RepositoryAccessHelper): Long =
-		repositoryAccessHelper
-			.mapSql("SELECT SUM($FILE_SIZE) FROM $tableName WHERE $CACHE_NAME = @$CACHE_NAME")
+    private fun RepositoryAccessHelper.getCachedFileSizeFromDatabase(): Long =
+		mapSql("SELECT SUM($FILE_SIZE) FROM $tableName WHERE $CACHE_NAME = @$CACHE_NAME")
 			.addParameter(CACHE_NAME, diskFileCacheConfiguration.cacheName)
 			.execute()
 
-    //	private final long getCacheSizeBetweenTimes(final Dao<CachedFile, Integer> cachedFileAccess, final long startTime, final long endTime) {
-    //		try {
-    //
-    //			final PreparedQuery<CachedFile> preparedQuery =
-    //					cachedFileAccess.queryBuilder()
-    //						.selectRaw("SUM(" + CachedFile.FILE_SIZE + ")")
-    //						.where()
-    //						.eq(CachedFile.CACHE_NAME, new SelectArg())
-    //						.and()
-    //						.between(CachedFile.CREATED_TIME, new SelectArg(), new SelectArg())
-    //						.prepare();
-    //
-    //			return cachedFileAccess.queryRawValue(preparedQuery.getStatement(), cacheName, String.valueOf(startTime), String.valueOf(endTime));
-    //		} catch (SQLException e) {
-    //			logger.excuse("Error getting serviceFile size", e);
-    //			return -1;
-    //		}
-    //	}
-    private fun getOldestCachedFile(repositoryAccessHelper: RepositoryAccessHelper): CachedFile? =
-		repositoryAccessHelper
-			.mapSql("SELECT * FROM $tableName WHERE $CACHE_NAME = @$CACHE_NAME ORDER BY $LAST_ACCESSED_TIME ASC")
+    private fun RepositoryAccessHelper.getOldestCachedFile(): CachedFile? =
+		mapSql("SELECT * FROM $tableName WHERE $CACHE_NAME = @$CACHE_NAME ORDER BY $LAST_ACCESSED_TIME ASC")
 			.addParameter(CACHE_NAME, diskFileCacheConfiguration.cacheName)
 			.fetchFirst(CachedFile::class.java)
 
-    private fun getCachedFileCount(repositoryAccessHelper: RepositoryAccessHelper): Long = repositoryAccessHelper
-		.mapSql("SELECT COUNT(*) FROM $tableName WHERE $CACHE_NAME = @$CACHE_NAME")
-		.addParameter(CACHE_NAME, diskFileCacheConfiguration.cacheName)
-		.execute()
+    private fun RepositoryAccessHelper.getCachedFileCount(): Long =
+		mapSql("SELECT COUNT(*) FROM $tableName WHERE $CACHE_NAME = @$CACHE_NAME")
+			.addParameter(CACHE_NAME, diskFileCacheConfiguration.cacheName)
+			.execute()
 
     companion object {
         private val logger by lazy { LoggerFactory.getLogger(CacheFlusherTask::class.java) }
@@ -126,16 +106,14 @@ class CacheFlusherTask  /*
 				)
 			)
 
-        private fun getCachedFileByFilename(repositoryAccessHelper: RepositoryAccessHelper, fileName: String): CachedFile? =
-			repositoryAccessHelper
-				.mapSql("SELECT * FROM $tableName WHERE $FILE_NAME = @$FILE_NAME")
-				.addParameter(FILE_NAME, fileName)
-				.fetchFirst(CachedFile::class.java)
+        private fun RepositoryAccessHelper.getCachedFileByFilename(fileName: String): CachedFile? =
+				mapSql("SELECT * FROM $tableName WHERE $FILE_NAME = @$FILE_NAME")
+					.addParameter(FILE_NAME, fileName)
+					.fetchFirst(CachedFile::class.java)
 
-        private fun deleteCachedFile(repositoryAccessHelper: RepositoryAccessHelper, cachedFile: CachedFile): Boolean =
-			((cachedFile.fileName?.let { File(it) }?.let { it.exists() && it.delete() } ?: false)
-					and (repositoryAccessHelper
-				.mapSql("DELETE FROM $tableName WHERE id = @id")
+        private fun RepositoryAccessHelper.deleteCachedFile(cachedFile: CachedFile): Boolean =
+			((cachedFile.fileName?.let(::File)?.run { exists() && delete() } ?: false)
+					and (mapSql("DELETE FROM $tableName WHERE id = @id")
 				.addParameter("id", cachedFile.id)
 				.execute() > 0))
     }

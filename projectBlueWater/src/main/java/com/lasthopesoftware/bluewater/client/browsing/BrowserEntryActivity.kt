@@ -21,7 +21,7 @@ import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.list.IItemListViewContainer
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuChangeHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.list.SearchFilesFragment
-import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener
+import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener.Companion.tryFlipToPreviousView
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistListFragment
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
@@ -55,7 +55,6 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import org.slf4j.LoggerFactory
 
 class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnable {
-	private var connectionRestoreCode: Int? = null
 	private val browseLibraryContainerRelativeLayout = LazyViewFinder<RelativeLayout>(this, R.id.browseLibraryContainer)
 	private val selectViewsListView = LazyViewFinder<ListView>(this, R.id.lvLibraryViewSelection)
 	private val specialLibraryItemsListView = LazyViewFinder<ListView>(this, R.id.specialLibraryItemsListView)
@@ -195,15 +194,9 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 
 	override fun onStart() {
 		super.onStart()
-		InstantiateSelectedConnectionActivity.restoreSelectedConnection(this).eventually(response({
-			connectionRestoreCode = it
-			if (it == null) startLibrary()
-		}, messageHandler))
-	}
-
-	override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-		if (requestCode == connectionRestoreCode) startLibrary()
-		super.onActivityResult(requestCode, resultCode, data)
+		InstantiateSelectedConnectionActivity
+			.restoreSelectedConnection(this)
+			.eventually(response({ startLibrary() }, messageHandler))
 	}
 
 	override fun onNewIntent(intent: Intent) {
@@ -284,7 +277,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 	private fun updateLibraryView(selectedView: ViewItem, items: Collection<ViewItem>) {
 		if (isStopped) return
 
-		LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator)
+		viewAnimator?.tryFlipToPreviousView()
 
 		selectViewsListView.findView().adapter = SelectViewAdapter(this, items, selectedView.key)
 		selectViewsListView.findView().onItemClickListener = getOnSelectViewClickListener(items)
@@ -409,7 +402,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 	}
 
 	override fun onBackPressed() {
-		if (LongClickViewAnimatorListener.tryFlipToPreviousView(viewAnimator)) return
+		if (viewAnimator?.tryFlipToPreviousView() == true) return
 		super.onBackPressed()
 	}
 

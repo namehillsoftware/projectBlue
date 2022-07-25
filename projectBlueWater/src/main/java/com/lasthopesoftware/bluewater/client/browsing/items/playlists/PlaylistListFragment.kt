@@ -14,7 +14,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.access.CachedItemProvider
-import com.lasthopesoftware.bluewater.client.browsing.items.list.DemoableItemListAdapter
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListAdapter
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
@@ -27,6 +26,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.Sel
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
+import com.lasthopesoftware.bluewater.client.stored.library.items.StateChangeBroadcastingStoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
@@ -35,14 +35,11 @@ import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMes
 import com.lasthopesoftware.bluewater.shared.messages.application.ScopedApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
-import com.lasthopesoftware.bluewater.tutorials.TutorialManager
 
 class PlaylistListFragment : Fragment() {
     private var itemListMenuChangeHandler: IItemListMenuChangeHandler? = null
 
 	private val handler by lazy { Handler(requireContext().mainLooper) }
-
-	private val tutorialManager by lazy { TutorialManager(requireContext()) }
 
 	private val browserLibraryIdProvider by lazy {
 		SelectedBrowserLibraryIdentifierProvider(requireContext().getApplicationSettingsRepository())
@@ -82,31 +79,14 @@ class PlaylistListFragment : Fragment() {
 		browserLibraryIdProvider.selectedLibraryId.then {
 			it?.let { libraryId ->
 				itemListMenuChangeHandler?.let { itemListMenuChangeHandler ->
-					activity
-						?.let { fa ->
-							DemoableItemListAdapter(
-								fa,
-								applicationMessageBus.value,
-								itemListProvider,
-								itemListMenuChangeHandler,
-								StoredItemAccess(fa),
-								itemProvider,
-								libraryId,
-								tutorialManager
-							)
-						}
-						?: requireContext()
-							.let { context ->
-								ItemListAdapter(
-									context,
-									applicationMessageBus.value,
-									itemListProvider,
-									itemListMenuChangeHandler,
-									StoredItemAccess(context),
-									itemProvider,
-									libraryId,
-								)
-							}
+					val context = requireContext()
+					ItemListAdapter(
+						context,
+						itemListProvider,
+						itemListMenuChangeHandler,
+						StateChangeBroadcastingStoredItemAccess(StoredItemAccess(context), applicationMessageBus.value),
+						libraryId,
+					)
 				}
 			}
 		}
@@ -118,8 +98,8 @@ class PlaylistListFragment : Fragment() {
 
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
 		layout = inflater.inflate(R.layout.asynchronous_recycler_view, container, false) as RelativeLayout
-		progressBar = layout?.findViewById(R.id.recyclerLoadingProgress)
-		recyclerView = layout?.findViewById(R.id.loadedRecyclerView)
+		progressBar = layout?.findViewById(R.id.items_loading_progress)
+		recyclerView = layout?.findViewById(R.id.loaded_recycler_view)
 		return layout
 	}
 
