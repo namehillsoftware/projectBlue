@@ -109,7 +109,7 @@ class ItemListViewModel(
 				?.let { libraryId ->
 					itemStringListProvider
 						.promiseFileStringList(libraryId, ItemId(item.key), FileListParameters.Options.None)
-						.then { controlNowPlaying.startPlaylist(it) }
+						.then(controlNowPlaying::startPlaylist)
 				}
 				.keepPromise(Unit)
 
@@ -118,7 +118,7 @@ class ItemListViewModel(
 				?.let { libraryId ->
 					itemStringListProvider
 						.promiseFileStringList(libraryId, ItemId(item.key), FileListParameters.Options.Shuffled)
-						.then { controlNowPlaying.startPlaylist(it) }
+						.then(controlNowPlaying::startPlaylist)
 				}
 				.keepPromise(Unit)
 

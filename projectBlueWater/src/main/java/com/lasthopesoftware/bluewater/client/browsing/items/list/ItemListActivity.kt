@@ -395,7 +395,8 @@ private fun ItemListView(
 		} else {
 			Row(modifier = Modifier
 				.height(rowHeight)
-				.padding(8.dp)) {
+				.padding(8.dp)
+			) {
 				Image(
 					painter = painterResource(id = R.drawable.ic_add_item_36dp),
 					contentDescription = stringResource(id = R.string.btn_add_file),
@@ -439,7 +440,7 @@ private fun ItemListView(
 
 		val knobHeight by derivedStateOf {
 			val totalItemCount = lazyListState.layoutInfo.totalItemsCount
-			if (totalItemCount > 0) maxHeight / (rowHeight * lazyListState.layoutInfo.totalItemsCount)
+			if (totalItemCount > 0) maxHeight / (rowHeight * totalItemCount)
 			else null
 		}
 
