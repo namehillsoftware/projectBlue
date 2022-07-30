@@ -352,9 +352,9 @@ class HandlerDispatchingExoPlayer(private val innerPlayer: ExoPlayer, private va
 			MessageWriter { innerPlayer.trackSelector },
 			handler)
 
-	override fun getCurrentTracksInfo(): Promise<TracksInfo?> =
+	override fun getCurrentTracks(): Promise<Tracks?> =
 		LoopedInPromise(
-			MessageWriter { innerPlayer.currentTracksInfo },
+			MessageWriter { innerPlayer.currentTracks },
 			handler)
 
 	override fun getCurrentManifest(): Promise<Any?> =

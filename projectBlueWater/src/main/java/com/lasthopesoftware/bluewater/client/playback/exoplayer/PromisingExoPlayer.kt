@@ -105,7 +105,7 @@ interface PromisingExoPlayer {
 
 	fun getTrackSelector(): Promise<TrackSelector?>
 
-	fun getCurrentTracksInfo(): Promise<TracksInfo?>
+	fun getCurrentTracks(): Promise<Tracks?>
 
 	fun getCurrentManifest(): Promise<Any?>
 
