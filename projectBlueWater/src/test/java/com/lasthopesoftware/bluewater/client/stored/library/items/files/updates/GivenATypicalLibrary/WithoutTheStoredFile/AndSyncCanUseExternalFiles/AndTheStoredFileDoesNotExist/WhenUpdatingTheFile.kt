@@ -12,6 +12,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFileUpdater
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
+import com.namehillsoftware.lazyj.Lazy
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.AssertionsForClassTypes.assertThat
@@ -23,7 +24,7 @@ import org.robolectric.RobolectricTestRunner
 class WhenUpdatingTheFile {
 
 	companion object {
-		private val storedFile by lazy {
+		private val storedFile = Lazy {
 
 			val mediaFileUriProvider = mockk<MediaFileUriProvider>()
 			every { mediaFileUriProvider.promiseFileUri(ServiceFile(4)) } returns Promise.empty()
@@ -56,11 +57,11 @@ class WhenUpdatingTheFile {
 
 	@Test
 	fun thenTheFileIsOwnedByTheLibrary() {
-		assertThat(storedFile!!.isOwner).isTrue
+		assertThat(storedFile.`object`?.isOwner).isTrue
 	}
 
 	@Test
 	fun thenTheFilePathIsCorrect() {
-		assertThat(storedFile!!.path).isEqualTo("/my-public-drive/14/artist/album/my-filename.mp3")
+		assertThat(storedFile.`object`?.path).isEqualTo("/my-public-drive/14/artist/album/my-filename.mp3")
 	}
 }

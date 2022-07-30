@@ -2,6 +2,7 @@
 <resources>
 
     <color name="black">#000000</color>
+    <color name="white">#FFFFFF</color>
     <color name="overlay_dark">#66000000</color>
     <color name="ics_gray">#858585</color>
     <color name="faint_gray">#22000000</color>
