@@ -57,7 +57,6 @@
         <activity
             android:name=".client.browsing.BrowserEntryActivity"
             android:exported="true"
-            android:label="@string/app_name"
             android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
