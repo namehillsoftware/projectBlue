@@ -26,7 +26,9 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -91,7 +93,7 @@ class ItemListActivity : AppCompatActivity(), Runnable {
 		val playlistIdKey by lazy { magicPropertyBuilder.buildProperty("playlistId") }
 
 		fun Context.startItemListActivity(item: IItem) {
-			if (item is Item) this.startItemListActivity(item)
+			if (item is Item) startItemListActivity(item)
 			else startActivity(getItemListIntent(this, item))
 		}
 
@@ -258,7 +260,8 @@ private fun ItemListView(
 
 	val playingFile by nowPlayingState.nowPlayingState.collectAsState()
 	val lazyListState = rememberLazyListState()
-	val rowHeight = 60.dp
+	val rowHeight = dimensionResource(id = R.dimen.standard_row_height)
+	val rowFontSize = LocalDensity.current.run { dimensionResource(id = R.dimen.row_font_size).toSp() }
 	val hapticFeedback = LocalHapticFeedback.current
 	val itemValue by itemListViewModel.itemValue.collectAsState()
 
@@ -286,7 +289,7 @@ private fun ItemListView(
 			) {
 				Text(
 					text = childItemViewModel.item.value,
-					fontSize = MaterialTheme.typography.h6.fontSize,
+					fontSize = rowFontSize,
 					overflow = TextOverflow.Ellipsis,
 					maxLines = 1,
 					fontWeight = FontWeight.Normal,
@@ -383,7 +386,7 @@ private fun ItemListView(
 
 				Text(
 					text = fileName,
-					fontSize = MaterialTheme.typography.h6.fontSize,
+					fontSize = rowFontSize,
 					overflow = TextOverflow.Ellipsis,
 					maxLines = 1,
 					fontWeight = if (playingFile?.serviceFile == serviceFile) FontWeight.Bold else FontWeight.Normal,
@@ -569,7 +572,6 @@ private fun ItemListView(
 		if (playingFile != null && !isAnyMenuShown) {
 			FloatingActionButton(
 				onClick = { NowPlayingActivity.startNowPlayingActivity(activity) },
-				backgroundColor = MaterialTheme.colors.primary,
 				modifier = Modifier
 					.align(Alignment.BottomEnd)
 					.padding(16.dp)
