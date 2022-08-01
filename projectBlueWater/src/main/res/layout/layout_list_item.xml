@@ -20,8 +20,7 @@
         android:gravity="start|center_vertical"
         android:padding="@dimen/standard_text_view_padding"
         android:singleLine="true"
-        android:textSize="20sp"
-        android:textStyle="normal" />
+        android:textSize="20sp" />
 
     <ImageView
         android:id="@+id/imgListItemHasItems"

@@ -86,11 +86,10 @@ class ItemListActivity : AppCompatActivity(), Runnable {
 
 	companion object {
 		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(ItemListActivity::class.java) }
-		private val rateLimiter by lazy { PromisingRateLimiter<Map<String, String>>(2) }
 
-		val key by lazy { magicPropertyBuilder.buildProperty("key") }
-		val value by lazy { magicPropertyBuilder.buildProperty("value") }
-		val playlistIdKey by lazy { magicPropertyBuilder.buildProperty("playlistId") }
+		private val key by lazy { magicPropertyBuilder.buildProperty("key") }
+		private val value by lazy { magicPropertyBuilder.buildProperty("value") }
+		private val playlistIdKey by lazy { magicPropertyBuilder.buildProperty("playlistId") }
 
 		fun Context.startItemListActivity(item: IItem) {
 			if (item is Item) startItemListActivity(item)
@@ -109,6 +108,8 @@ class ItemListActivity : AppCompatActivity(), Runnable {
 			putExtra(value, item.value)
 		}
 	}
+
+	private val rateLimiter by lazy { PromisingRateLimiter<Map<String, String>>(2) }
 
 	private val handler by lazy { Handler(mainLooper) }
 
@@ -668,9 +669,11 @@ private fun ItemListView(
 			contentColor = MaterialTheme.colors.onSecondary,
 		)
 
-		BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-			if (isLoaded) LoadedItemListView()
-			else CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+		Surface {
+			BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+				if (isLoaded) LoadedItemListView()
+				else CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+			}
 		}
 	}
 }

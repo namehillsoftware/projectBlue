@@ -8,6 +8,7 @@ import android.widget.AbsListView
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.core.view.children
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.lasthopesoftware.bluewater.R
@@ -23,7 +24,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredIt
 import com.lasthopesoftware.bluewater.shared.android.adapters.DeferredListAdapter
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 
-open class ItemListAdapter internal constructor(
+class ItemListAdapter internal constructor(
 	context: Context,
 	private val itemStringListProvider: ItemStringListProvider,
 	private val itemListMenuEvents: IItemListMenuChangeHandler,
@@ -46,13 +47,13 @@ open class ItemListAdapter internal constructor(
 
 		viewFlipper.setViewChangedListener(viewChangedHandler)
 
-		val inflater = parent.context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater
-		val listItemLayout = inflater.inflate(R.layout.layout_list_item, parent, false) as LinearLayout
-		viewFlipper.addView(listItemLayout)
-		val itemMenu = inflater.inflate(R.layout.layout_browse_item_menu, parent, false) as LinearLayout
-		viewFlipper.addView(itemMenu)
+		val inflater = LayoutInflater.from(viewFlipper.context)
+		inflater.inflate(R.layout.layout_list_item, viewFlipper)
+		inflater.inflate(R.layout.layout_browse_item_menu, viewFlipper)
 
-		return ViewHolder(viewFlipper, listItemLayout, itemMenu)
+		val childrenLayouts = viewFlipper.children.filterIsInstance<LinearLayout>().toList()
+
+		return ViewHolder(viewFlipper, childrenLayouts[0], childrenLayouts[1])
 	}
 
 	override fun onBindViewHolder(holder: ViewHolder, position: Int) {

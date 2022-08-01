@@ -47,12 +47,14 @@ import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils.buildStandardMenu
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
+import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
-import org.slf4j.LoggerFactory
+
+private val logger by lazyLogger<BrowserEntryActivity>()
 
 class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnable {
 	private val browseLibraryContainerRelativeLayout = LazyViewFinder<RelativeLayout>(this, R.id.browseLibraryContainer)
@@ -156,7 +158,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 			val intent = intent
 			if (Intent.ACTION_MAIN == intent.action && intent.hasCategory(Intent.CATEGORY_LAUNCHER)) {
 				val className = javaClass.name
-				LoggerFactory.getLogger(javaClass).info("$className is not the root.  Finishing $className instead of launching.")
+				logger.info("$className is not the root.  Finishing $className instead of launching.")
 				finish()
 				return
 			}
@@ -164,6 +166,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 
 		setContentView(R.layout.activity_browse_library)
 		setSupportActionBar(findViewById(R.id.browseLibraryToolbar))
+		setTheme(R.style.AppTheme)
 
 		applicationMessageBus.value.registerForClass(
 			cls<SelectedConnectionSettingsChangeReceiver.SelectedConnectionSettingsUpdated>(),

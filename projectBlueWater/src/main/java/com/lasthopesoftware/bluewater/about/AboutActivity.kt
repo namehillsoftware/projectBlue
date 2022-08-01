@@ -9,6 +9,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -43,15 +44,17 @@ class AboutActivity : ComponentActivity() {
 	}
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Preview
 @Composable
 fun AboutView() {
-	BoxWithConstraints(modifier = Modifier
-		.fillMaxSize()
-		.padding(Dp(10f))) {
-		if (maxWidth < maxHeight) AboutViewVertical()
-		else AboutViewHorizontal()
+	Surface {
+		BoxWithConstraints(modifier = Modifier
+			.fillMaxSize()
+			.padding(Dp(10f))
+		) {
+			if (maxWidth < maxHeight) AboutViewVertical()
+			else AboutViewHorizontal()
+		}
 	}
 }
 
