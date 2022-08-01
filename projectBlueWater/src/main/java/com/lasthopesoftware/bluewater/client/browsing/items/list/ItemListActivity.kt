@@ -26,7 +26,9 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -84,14 +86,13 @@ class ItemListActivity : AppCompatActivity(), Runnable {
 
 	companion object {
 		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(ItemListActivity::class.java) }
-		private val rateLimiter by lazy { PromisingRateLimiter<Map<String, String>>(2) }
 
-		val key by lazy { magicPropertyBuilder.buildProperty("key") }
-		val value by lazy { magicPropertyBuilder.buildProperty("value") }
-		val playlistIdKey by lazy { magicPropertyBuilder.buildProperty("playlistId") }
+		private val key by lazy { magicPropertyBuilder.buildProperty("key") }
+		private val value by lazy { magicPropertyBuilder.buildProperty("value") }
+		private val playlistIdKey by lazy { magicPropertyBuilder.buildProperty("playlistId") }
 
 		fun Context.startItemListActivity(item: IItem) {
-			if (item is Item) this.startItemListActivity(item)
+			if (item is Item) startItemListActivity(item)
 			else startActivity(getItemListIntent(this, item))
 		}
 
@@ -107,6 +108,8 @@ class ItemListActivity : AppCompatActivity(), Runnable {
 			putExtra(value, item.value)
 		}
 	}
+
+	private val rateLimiter by lazy { PromisingRateLimiter<Map<String, String>>(2) }
 
 	private val handler by lazy { Handler(mainLooper) }
 
@@ -258,7 +261,8 @@ private fun ItemListView(
 
 	val playingFile by nowPlayingState.nowPlayingState.collectAsState()
 	val lazyListState = rememberLazyListState()
-	val rowHeight = 60.dp
+	val rowHeight = dimensionResource(id = R.dimen.standard_row_height)
+	val rowFontSize = LocalDensity.current.run { dimensionResource(id = R.dimen.row_font_size).toSp() }
 	val hapticFeedback = LocalHapticFeedback.current
 	val itemValue by itemListViewModel.itemValue.collectAsState()
 
@@ -286,7 +290,7 @@ private fun ItemListView(
 			) {
 				Text(
 					text = childItemViewModel.item.value,
-					fontSize = MaterialTheme.typography.h6.fontSize,
+					fontSize = rowFontSize,
 					overflow = TextOverflow.Ellipsis,
 					maxLines = 1,
 					fontWeight = FontWeight.Normal,
@@ -383,7 +387,7 @@ private fun ItemListView(
 
 				Text(
 					text = fileName,
-					fontSize = MaterialTheme.typography.h6.fontSize,
+					fontSize = rowFontSize,
 					overflow = TextOverflow.Ellipsis,
 					maxLines = 1,
 					fontWeight = if (playingFile?.serviceFile == serviceFile) FontWeight.Bold else FontWeight.Normal,
@@ -395,7 +399,8 @@ private fun ItemListView(
 		} else {
 			Row(modifier = Modifier
 				.height(rowHeight)
-				.padding(8.dp)) {
+				.padding(8.dp)
+			) {
 				Image(
 					painter = painterResource(id = R.drawable.ic_add_item_36dp),
 					contentDescription = stringResource(id = R.string.btn_add_file),
@@ -439,7 +444,7 @@ private fun ItemListView(
 
 		val knobHeight by derivedStateOf {
 			val totalItemCount = lazyListState.layoutInfo.totalItemsCount
-			if (totalItemCount > 0) maxHeight / (rowHeight * lazyListState.layoutInfo.totalItemsCount)
+			if (totalItemCount > 0) maxHeight / (rowHeight * totalItemCount)
 			else null
 		}
 
@@ -568,7 +573,6 @@ private fun ItemListView(
 		if (playingFile != null && !isAnyMenuShown) {
 			FloatingActionButton(
 				onClick = { NowPlayingActivity.startNowPlayingActivity(activity) },
-				backgroundColor = MaterialTheme.colors.primary,
 				modifier = Modifier
 					.align(Alignment.BottomEnd)
 					.padding(16.dp)
@@ -665,9 +669,11 @@ private fun ItemListView(
 			contentColor = MaterialTheme.colors.onSecondary,
 		)
 
-		BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-			if (isLoaded) LoadedItemListView()
-			else CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+		Surface {
+			BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+				if (isLoaded) LoadedItemListView()
+				else CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+			}
 		}
 	}
 }

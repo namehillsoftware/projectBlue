@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="AppTheme" parent="Theme.AppCompat.Light.NoActionBar">
+    <style name="AppTheme" parent="Theme.MaterialComponents.DayNight.NoActionBar">
         <item name="drawerArrowStyle">@style/DrawerArrowStyle</item>
         <!-- Main theme colors -->
         <!--   your app branding color for the app bar -->
@@ -10,17 +10,14 @@
         <item name="colorPrimaryDark">@color/project_blue_dark</item>
         <!--   theme UI controls like checkboxes and text fields -->
         <item name="colorAccent">@color/project_blue_primary</item>
-        <item name="colorControlNormal">@color/transparent_gray_clickable</item>
-        <item name="android:textColorPrimary">@color/black</item>
-        <item name="android:textColor">@color/black</item>
-        <item name="android:editTextColor">@color/black</item>
-        <item name="editTextColor">@color/black</item>
+        <item name="colorSecondary">@color/project_blue_dark</item>
+        <item name="colorOnSecondary">@android:color/white</item>
+        <item name="colorOnSurfaceVariant">?attr/colorOnSurface</item>
+        <item name="android:textColor">?attr/colorOnSurface</item>
         <item name="android:windowContentOverlay">@null</item>
-        <item name="actionBarStyle">@style/AppTheme.ActionBarStyle</item>
-        <item name="searchViewStyle">@style/SearchViewStyle</item>
     </style>
 
-    <style name="DialogTheme" parent="Theme.AppCompat.Light.Dialog">
+    <style name="AppTheme.DialogTheme" parent="AppTheme">
         <!-- Main theme colors -->
         <!--   your app branding color for the app bar -->
         <item name="colorPrimary">@color/project_blue_primary</item>
@@ -30,12 +27,14 @@
         <item name="android:textColor">@color/black</item>
     </style>
 
-    <style name="AppTheme.NoActionBar">
-        <item name="windowActionBar">false</item>
-        <item name="windowNoTitle">true</item>
+
+    <style name="AppTheme.ActionBarStyle" parent="AppTheme">
+        <item name="colorControlNormal">@android:color/white</item>
+        <item name="android:textColorPrimary">@android:color/white</item>
     </style>
 
-    <style name="AppTheme.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
-
-    <style name="AppTheme.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+    <style name="DrawerArrowStyle" parent="Widget.AppCompat.DrawerArrowToggle">
+        <item name="spinBars">true</item>
+        <item name="color">@android:color/white</item>
+    </style>
 </resources>
