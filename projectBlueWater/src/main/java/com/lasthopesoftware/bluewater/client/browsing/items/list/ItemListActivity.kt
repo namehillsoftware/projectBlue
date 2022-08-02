@@ -23,6 +23,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
@@ -456,6 +457,7 @@ private fun ItemListView(
 					lazyListState,
 					horizontal = false,
 					knobColor = MaterialTheme.colors.onSurface,
+					trackColor = Color.Transparent,
 					visibleAlpha = .4f,
 					knobCornerRadius = 1.dp,
 					fixedKnobRatio = knobHeight,
