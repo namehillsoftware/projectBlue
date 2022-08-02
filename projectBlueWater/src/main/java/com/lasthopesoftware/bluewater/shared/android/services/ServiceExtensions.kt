@@ -25,7 +25,6 @@ inline fun <reified TService : Service> Context.promiseBoundService(): Promise<C
 
 						unbindService(this)
 						reject(InvalidBindingException(c))
-						return
 					}
 
 					override fun onServiceDisconnected(name: ComponentName?) {}
