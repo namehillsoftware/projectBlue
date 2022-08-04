@@ -8,16 +8,12 @@ import com.google.android.exoplayer2.source.ProgressiveMediaSource
 import com.google.android.exoplayer2.upstream.DefaultLoadErrorHandlingPolicy
 import com.google.android.exoplayer2.upstream.FileDataSource
 import com.lasthopesoftware.bluewater.client.playback.caching.datasource.DiskFileCacheSourceFactory
-import com.lasthopesoftware.bluewater.client.playback.caching.datasource.SimpleCacheSourceFactory
-import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
 import com.lasthopesoftware.bluewater.shared.IoCommon
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 
 class MediaSourceProvider(
-	simpleCacheSourceFactory: SimpleCacheSourceFactory,
 	diskFileCacheSourceFactory: DiskFileCacheSourceFactory,
-	private val applicationSettings: HoldApplicationSettings,
 ) : SpawnMediaSources {
 
 	companion object {
@@ -25,7 +21,7 @@ class MediaSourceProvider(
 	}
 
 	private val lazyFileExtractorFactory by lazy {
-		ProgressiveMediaSource.Factory(FileDataSource.Factory(), extractorsFactory).toPromise()
+		ProgressiveMediaSource.Factory(FileDataSource.Factory(), extractorsFactory)
 	}
 
 	private val remoteExtractorCustomCacheFactory by lazy {
@@ -35,18 +31,10 @@ class MediaSourceProvider(
 		factory.setLoadErrorHandlingPolicy(DefaultLoadErrorHandlingPolicy(DefaultLoadErrorHandlingPolicy.DEFAULT_MIN_LOADABLE_RETRY_COUNT_PROGRESSIVE_LIVE))
 	}
 
-	private val remoteExtractorExoPlayerCacheFactory by lazy {
-		val factory = ProgressiveMediaSource.Factory(simpleCacheSourceFactory.getSimpleCacheFactory(), extractorsFactory)
-		factory.setLoadErrorHandlingPolicy(DefaultLoadErrorHandlingPolicy(DefaultLoadErrorHandlingPolicy.DEFAULT_MIN_LOADABLE_RETRY_COUNT_PROGRESSIVE_LIVE))
-	}
-
 	override fun promiseNewMediaSource(uri: Uri): Promise<MediaSource> =
-		getFactory(uri).then { f -> f.createMediaSource(MediaItem.Builder().setUri(uri).build()) }
+		getFactory(uri).createMediaSource(MediaItem.Builder().setUri(uri).build()).toPromise()
 
-	private fun getFactory(uri: Uri): Promise<ProgressiveMediaSource.Factory> =
+	private fun getFactory(uri: Uri) =
 		if (IoCommon.FileUriScheme.equals(uri.scheme, ignoreCase = true)) lazyFileExtractorFactory
-		else applicationSettings.promiseApplicationSettings().then { s ->
-			if (s.isUsingCustomCaching) remoteExtractorCustomCacheFactory
-			else remoteExtractorExoPlayerCacheFactory
-		}
+		else remoteExtractorCustomCacheFactory
 }

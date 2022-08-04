@@ -53,7 +53,6 @@ import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnect
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.caching.AudioCacheConfiguration
 import com.lasthopesoftware.bluewater.client.playback.caching.datasource.DiskFileCacheSourceFactory
-import com.lasthopesoftware.bluewater.client.playback.caching.datasource.SimpleCacheSourceFactory
 import com.lasthopesoftware.bluewater.client.playback.caching.uri.CachedAudioFileUriProvider
 import com.lasthopesoftware.bluewater.client.playback.engine.*
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
@@ -775,16 +774,10 @@ open class PlaybackService :
 					ph,
 					Handler(mainLooper),
 					MediaSourceProvider(
-						SimpleCacheSourceFactory(
-							httpDataSourceFactory,
-							diskCachedDirectoryProvider,
-							cacheConfiguration
-						).also(playbackEngineCloseables::manage),
 						DiskFileCacheSourceFactory(
                             httpDataSourceFactory,
                             cacheStreamSupplier
                         ),
-						applicationSettings,
 					),
 					bestMatchUriProvider
 				)
