@@ -19,10 +19,10 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -33,9 +33,10 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
@@ -89,6 +90,11 @@ import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRate
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
 import com.lasthopesoftware.resources.strings.StringResources
 import com.namehillsoftware.handoff.promises.Promise
+import me.onebone.toolbar.CollapsingToolbarScaffold
+import me.onebone.toolbar.ExperimentalToolbarApi
+import me.onebone.toolbar.ScrollStrategy
+import me.onebone.toolbar.rememberCollapsingToolbarScaffoldState
+import kotlin.math.roundToInt
 
 class ItemListActivity : AppCompatActivity(), Runnable {
 
@@ -291,7 +297,7 @@ class ItemListActivity : AppCompatActivity(), Runnable {
 	}
 }
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalToolbarApi::class)
 @Composable
 private fun ItemListView(
 	itemListViewModel: ItemListViewModel,
@@ -491,105 +497,20 @@ private fun ItemListView(
 			else null
 		}
 
-		Column(modifier = Modifier.fillMaxSize()) {
-			LazyColumn(
-				state = lazyListState,
-				modifier = Modifier
-					.weight(1.0f)
-					.scrollbar(
-						lazyListState,
-						horizontal = false,
-						knobColor = MaterialTheme.colors.onSurface,
-						trackColor = Color.Transparent,
-						visibleAlpha = .4f,
-						knobCornerRadius = 1.dp,
-						fixedKnobRatio = knobHeight,
-					)
-			) {
-				item {
-					Column(modifier = Modifier.padding(4.dp)) {
-						ProvideTextStyle(MaterialTheme.typography.h4) {
-							Row(
-								modifier = Modifier
-									.padding(top = 8.dp)
-									.height(80.dp)
-							) {
-								Text(
-									itemValue,
-									maxLines = 2,
-									overflow = TextOverflow.Ellipsis,
-								)
-							}
-						}
-
-						Row(modifier = Modifier.padding(top = 12.dp, bottom = 12.dp, start = 8.dp, end = 8.dp)) {
-							Image(
-								painter = painterResource(id = R.drawable.av_play),
-								contentDescription = stringResource(id = R.string.btn_play),
-								modifier = Modifier
-									.fillMaxWidth()
-									.weight(1f)
-									.clickable {
-										fileListViewModel.play()
-									}
-							)
-
-							val isSynced by itemListViewModel.isSynced.collectAsState()
-
-							Image(
-								painter = painterResource(id = R.drawable.ic_sync_white),
-								contentDescription = stringResource(id = R.string.btn_sync_item),
-								colorFilter = ColorFilter.tint(if (isSynced) MaterialTheme.colors.primary else Light.GrayClickable),
-								alpha = if (isSynced) .9f else .6f,
-								modifier = Modifier
-									.fillMaxWidth()
-									.clickable { itemListViewModel.toggleSync() }
-									.weight(1f),
-							)
-
-							Image(
-								painter = painterResource(id = R.drawable.av_shuffle),
-								contentDescription = stringResource(id = R.string.btn_shuffle_files),
-								modifier = Modifier
-									.fillMaxWidth()
-									.weight(1f)
-									.clickable {
-										fileListViewModel.playShuffled()
-									}
-							)
-						}
-					}
-				}
-
-				if (items.any()) {
-					item {
-						Box(
-							modifier = Modifier
-								.padding(4.dp)
-								.height(48.dp)
-						) {
-							ProvideTextStyle(MaterialTheme.typography.h5) {
-								Text(
-									text = "${items.size} items",
-									fontWeight = FontWeight.Bold,
-									modifier = Modifier
-										.padding(4.dp)
-										.align(Alignment.CenterStart)
-								)
-							}
-						}
-					}
-
-					itemsIndexed(items) { i, f ->
-						ChildItem(f)
-
-						if (i < items.lastIndex)
-							Divider()
-					}
-				}
-
-				if (!files.any()) return@LazyColumn
-
+		LazyColumn(
+			state = lazyListState,
+			modifier = Modifier
+				.scrollbar(
+					lazyListState,
+					horizontal = false,
+					knobColor = MaterialTheme.colors.onSurface,
+					trackColor = Color.Transparent,
+					visibleAlpha = .4f,
+					knobCornerRadius = 1.dp,
+					fixedKnobRatio = knobHeight,
+				)
+		) {
+			if (items.any()) {
 				item {
 					Box(
 						modifier = Modifier
@@ -598,7 +519,7 @@ private fun ItemListView(
 					) {
 						ProvideTextStyle(MaterialTheme.typography.h5) {
 							Text(
-								text = "${files.size} files",
+								text = "${items.size} items",
 								fontWeight = FontWeight.Bold,
 								modifier = Modifier
 									.padding(4.dp)
@@ -608,32 +529,194 @@ private fun ItemListView(
 					}
 				}
 
-				itemsIndexed(files) { i, f ->
-					TrackHeaderItem(i, f)
+				itemsIndexed(items) { i, f ->
+					ChildItem(f)
 
-					if (i < files.lastIndex)
+					if (i < items.lastIndex)
 						Divider()
 				}
 			}
 
-			val isAnyMenuShown by itemListMenuViewModel.isAnyMenuShown.collectAsState()
+			if (!files.any()) return@LazyColumn
 
-			if (playingFile != null && !isAnyMenuShown) {
-				BottomAppBar(backgroundColor = MaterialTheme.colors.secondary, contentPadding = PaddingValues(0.dp)) {
-					Column(
-						modifier = Modifier
-							.clickable { NowPlayingActivity.startNowPlayingActivity(activity) },
+			item {
+				Box(
+					modifier = Modifier
+						.padding(4.dp)
+						.height(48.dp)
+				) {
+					ProvideTextStyle(MaterialTheme.typography.h5) {
+						Text(
+							text = "${files.size} files",
+							fontWeight = FontWeight.Bold,
+							modifier = Modifier
+								.padding(4.dp)
+								.align(Alignment.CenterStart)
+						)
+					}
+				}
+			}
+
+			itemsIndexed(files) { i, f ->
+				TrackHeaderItem(i, f)
+
+				if (i < files.lastIndex)
+					Divider()
+			}
+		}
+	}
+
+	val systemUiController = rememberSystemUiController()
+	systemUiController.setStatusBarColor(MaterialTheme.colors.surface)
+
+	Surface {
+		val toolbarState = rememberCollapsingToolbarScaffoldState()
+		val headerHidingProgress by derivedStateOf { 1 - toolbarState.toolbarState.progress }
+
+		CollapsingToolbarScaffold(
+			enabled = true,
+			state = toolbarState,
+			toolbar = {
+				val appBarHeight = 56
+				val topPadding by derivedStateOf { (appBarHeight - 42 * headerHidingProgress).dp }
+				val expandedTitleHeight = 92
+				val expandedIconSize = 36
+				val expandedMenuVerticalPadding = 12
+				val boxHeight = expandedTitleHeight + expandedIconSize + expandedMenuVerticalPadding * 2 + appBarHeight
+				BoxWithConstraints(modifier = Modifier.height(boxHeight.dp).padding(top = topPadding)) {
+					val minimumMenuWidth = (3 * 32).dp
+					ProvideTextStyle(MaterialTheme.typography.h4) {
+						val h4Size = MaterialTheme.typography.h4.fontSize.value
+						val h6Size = MaterialTheme.typography.h6.fontSize.value
+
+						val fontSize by derivedStateOf { (h4Size - (h4Size - h6Size) * headerHidingProgress).sp }
+
+						val startPadding by derivedStateOf { (4 + 48 * headerHidingProgress).dp }
+						val endPadding by derivedStateOf { 4.dp + minimumMenuWidth * headerHidingProgress }
+						Text(
+							text = itemValue,
+							fontSize = fontSize,
+							maxLines = (2 - headerHidingProgress).roundToInt(),
+							overflow = TextOverflow.Ellipsis,
+							modifier = Modifier
+								.fillMaxWidth()
+								.padding(start = startPadding, end = endPadding),
+						)
+					}
+
+					val menuWidth by derivedStateOf { (maxWidth - (maxWidth - minimumMenuWidth) * headerHidingProgress) }
+					val expandedTopRowPadding = expandedTitleHeight + expandedMenuVerticalPadding
+					val collapsedTopRowPadding = 2
+					val topRowPadding by derivedStateOf { (expandedTopRowPadding - (expandedTopRowPadding - collapsedTopRowPadding) * headerHidingProgress).dp }
+					Row(modifier = Modifier
+						.padding(top = topRowPadding, bottom = expandedMenuVerticalPadding.dp, start = 8.dp, end = 8.dp)
+						.width(menuWidth)
+						.align(Alignment.TopEnd)
 					) {
-						Row(modifier = Modifier
-							.weight(1f)
-							.padding(16.dp)) {
-							val songTitle by nowPlayingViewModel.title.collectAsState()
+						val iconSize by derivedStateOf { (expandedIconSize - (12 * headerHidingProgress)).dp }
 
-							ProvideTextStyle(MaterialTheme.typography.subtitle1) {
-								Text(
-									text = songTitle ?: stringResource(id = R.string.lbl_loading),
-									modifier = Modifier.weight(1f)
-								)
+						Image(
+							painter = painterResource(id = R.drawable.av_play),
+							contentDescription = stringResource(id = R.string.btn_play),
+							modifier = Modifier
+								.fillMaxWidth()
+								.weight(1f)
+								.size(iconSize)
+								.clickable {
+									fileListViewModel.play()
+								}
+						)
+
+						val isSynced by itemListViewModel.isSynced.collectAsState()
+
+						Image(
+							painter = painterResource(id = R.drawable.ic_sync_white),
+							contentDescription = stringResource(id = R.string.btn_sync_item),
+							colorFilter = ColorFilter.tint(if (isSynced) MaterialTheme.colors.primary else Light.GrayClickable),
+							alpha = if (isSynced) .9f else .6f,
+							modifier = Modifier
+								.fillMaxWidth()
+								.size(iconSize)
+								.clickable { itemListViewModel.toggleSync() }
+								.weight(1f),
+						)
+
+						Image(
+							painter = painterResource(id = R.drawable.av_shuffle),
+							contentDescription = stringResource(id = R.string.btn_shuffle_files),
+							modifier = Modifier
+								.fillMaxWidth()
+								.size(iconSize)
+								.weight(1f)
+								.clickable {
+									fileListViewModel.playShuffled()
+								}
+						)
+					}
+				}
+
+				Box(modifier = Modifier.height(56.dp)) {
+					Icon(
+						Icons.Default.ArrowBack,
+						contentDescription = "",
+						tint = MaterialTheme.colors.onSurface,
+						modifier = Modifier
+							.padding(16.dp)
+							.align(Alignment.CenterStart)
+							.clickable(
+								interactionSource = remember { MutableInteractionSource() },
+								indication = null,
+								onClick = activity::finish
+							)
+					)
+				}
+			},
+			scrollStrategy = ScrollStrategy.ExitUntilCollapsed,
+			modifier = Modifier.fillMaxSize()
+		) {
+			BoxWithConstraints(modifier = Modifier.padding(bottom = 56.dp).fillMaxSize()) {
+				val isItemsLoaded by itemListViewModel.isLoaded.collectAsState()
+				val isFilesLoaded by fileListViewModel.isLoaded.collectAsState()
+				val isLoaded = isItemsLoaded && isFilesLoaded
+
+				if (isLoaded) LoadedItemListView()
+				else CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+			}
+
+			if (playingFile != null) {
+				BottomAppBar(
+					backgroundColor = MaterialTheme.colors.secondary,
+					contentPadding = PaddingValues(0.dp),
+					modifier = Modifier.align(Alignment.BottomCenter).clickable { NowPlayingActivity.startNowPlayingActivity(activity) }
+				) {
+					Column {
+						Row(
+							modifier = Modifier
+								.weight(1f)
+								.padding(start = 16.dp, end = 16.dp)
+						) {
+							Column(
+								modifier = Modifier.weight(1f).align(Alignment.CenterVertically),
+							) {
+								val songTitle by nowPlayingViewModel.title.collectAsState()
+
+								ProvideTextStyle(MaterialTheme.typography.subtitle1) {
+									Text(
+										text = songTitle ?: stringResource(id = R.string.lbl_loading),
+										maxLines = 1,
+										overflow = TextOverflow.Ellipsis,
+										fontWeight = FontWeight.Medium
+									)
+								}
+
+								val songArtist by nowPlayingViewModel.artist.collectAsState()
+								ProvideTextStyle(MaterialTheme.typography.body2) {
+									Text(
+										text = songArtist ?: stringResource(id = R.string.lbl_loading),
+										maxLines = 1,
+										overflow = TextOverflow.Ellipsis,
+									)
+								}
 							}
 
 							val isPlaying by nowPlayingViewModel.isPlaying.collectAsState()
@@ -652,7 +735,17 @@ private fun ItemListView(
 										}
 									)
 									.padding(start = 8.dp, end = 8.dp)
+									.align(Alignment.CenterVertically)
 									.size(24.dp),
+							)
+
+							Icon(
+								Icons.Default.ArrowForward,
+								contentDescription = "",
+								tint = MaterialTheme.colors.onSecondary,
+								modifier = Modifier
+									.padding(start = 8.dp, end = 8.dp)
+									.align(Alignment.CenterVertically)
 							)
 						}
 
@@ -662,105 +755,13 @@ private fun ItemListView(
 						LinearProgressIndicator(
 							progress = fileProgress,
 							color = MaterialTheme.colors.primary,
-							backgroundColor = Color.White.copy(alpha = .6f),
+							backgroundColor = MaterialTheme.colors.onPrimary.copy(alpha = .6f),
 							modifier = Modifier
 								.fillMaxWidth()
 								.padding(0.dp)
 						)
 					}
 				}
-			}
-		}
-	}
-
-	Column(modifier = Modifier.fillMaxSize()) {
-		val isItemsLoaded by itemListViewModel.isLoaded.collectAsState()
-		val isFilesLoaded by fileListViewModel.isLoaded.collectAsState()
-		val isLoaded = isItemsLoaded && isFilesLoaded
-
-		val headerHidingProgress by derivedStateOf {
-			if (lazyListState.firstVisibleItemIndex > 0) 1f
-			else lazyListState
-				.layoutInfo
-				.visibleItemsInfo
-				.firstOrNull()
-				?.size
-				?.toFloat()
-				?.let { headerSize ->
-					1f - ((headerSize - lazyListState.firstVisibleItemScrollOffset) / headerSize)
-				}
-				?: 0f
-		}
-
-		TopAppBar(
-			title = {
-				Text(
-					text = itemValue,
-					maxLines = 1,
-					overflow = TextOverflow.Ellipsis,
-					textAlign = TextAlign.Center,
-					modifier = Modifier
-						.alpha(headerHidingProgress)
-						.fillMaxWidth(),
-				)
-			},
-			navigationIcon = {
-				Icon(
-					Icons.Default.ArrowBack,
-					contentDescription = "",
-					tint = MaterialTheme.colors.onSecondary,
-					modifier = Modifier
-						.padding(16.dp)
-						.clickable(
-							interactionSource = remember { MutableInteractionSource() },
-							indication = null,
-							onClick = activity::finish
-						)
-				)
-			},
-			actions = {
-				if (isLoaded && headerHidingProgress > 0f) {
-					Image(
-						painter = painterResource(id = R.drawable.av_play_white),
-						contentDescription = stringResource(id = R.string.btn_play),
-						modifier = Modifier
-							.clickable(
-								interactionSource = remember { MutableInteractionSource() },
-								indication = null,
-								onClick = {
-									fileListViewModel.play()
-								}
-							)
-							.padding(start = 8.dp, end = 8.dp)
-							.size(24.dp)
-							.alpha(headerHidingProgress),
-					)
-
-					Image(
-						painter = painterResource(id = R.drawable.av_shuffle_white),
-						contentDescription = stringResource(id = R.string.btn_shuffle_files),
-						modifier = Modifier
-							.clickable(
-								interactionSource = remember { MutableInteractionSource() },
-								indication = null,
-								onClick = {
-									fileListViewModel.playShuffled()
-								}
-							)
-							.padding(start = 8.dp, end = 8.dp)
-							.size(24.dp)
-							.alpha(headerHidingProgress),
-					)
-				}
-			},
-			backgroundColor = MaterialTheme.colors.secondary,
-			contentColor = MaterialTheme.colors.onSecondary,
-		)
-
-		Surface {
-			BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-				if (isLoaded) LoadedItemListView()
-				else CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
 			}
 		}
 	}

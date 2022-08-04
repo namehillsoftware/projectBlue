@@ -4,6 +4,5 @@
     <color name="project_blue_primary">#303F9F</color>
     <color name="project_blue_light">#666AD1</color>
     <color name="project_blue_dark">#001970</color>
-    <color name="project_blue_on_dark_surface">#FFFFFFFF</color>
 
 </resources>
