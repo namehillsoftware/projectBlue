@@ -492,9 +492,10 @@ private fun ItemListView(
 		val files by fileListViewModel.files.collectAsState()
 
 		val knobHeight by derivedStateOf {
-			val totalItemCount = lazyListState.layoutInfo.totalItemsCount
-			if (totalItemCount > 0) maxHeight / (rowHeight * totalItemCount)
-			else null
+			lazyListState.layoutInfo.totalItemsCount
+				.takeIf { it > 0 }
+				?.let { totalItemCount -> maxHeight / (rowHeight * totalItemCount) }
+				?.takeIf { it > 0 && it < 1 }
 		}
 
 		LazyColumn(
