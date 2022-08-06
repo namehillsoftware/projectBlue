@@ -19,10 +19,10 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -33,9 +33,10 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
@@ -56,15 +57,22 @@ import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properti
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.SelectedConnectionFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertyCache
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.storage.ScopedFilePropertiesStorage
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.storage.SelectedConnectionFilePropertiesStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRevisionProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.revisions.SelectedConnectionRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
+import com.lasthopesoftware.bluewater.client.connection.authentication.ScopedConnectionAuthenticationChecker
+import com.lasthopesoftware.bluewater.client.connection.authentication.SelectedConnectionAuthenticationChecker
+import com.lasthopesoftware.bluewater.client.connection.polling.ConnectionPoller
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity.Companion.restoreSelectedConnection
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.ObserveNowPlaying
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.NowPlayingActivity
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
+import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.client.stored.library.items.StateChangeBroadcastingStoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
@@ -82,6 +90,11 @@ import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRate
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
 import com.lasthopesoftware.resources.strings.StringResources
 import com.namehillsoftware.handoff.promises.Promise
+import me.onebone.toolbar.CollapsingToolbarScaffold
+import me.onebone.toolbar.ExperimentalToolbarApi
+import me.onebone.toolbar.ScrollStrategy
+import me.onebone.toolbar.rememberCollapsingToolbarScaffoldState
+import kotlin.math.roundToInt
 
 class ItemListActivity : AppCompatActivity(), Runnable {
 
@@ -177,6 +190,25 @@ class ItemListActivity : AppCompatActivity(), Runnable {
 		}
 	}
 
+	private val selectedConnectionAuthenticationChecker by lazy {
+		SelectedConnectionAuthenticationChecker(
+			selectedConnectionProvider,
+			::ScopedConnectionAuthenticationChecker
+		)
+	}
+
+	private val sessionRevisionProvider by lazy { SelectedConnectionRevisionProvider(selectedConnectionProvider) }
+
+	private val filePropertiesStorage by lazy {
+		SelectedConnectionFilePropertiesStorage(selectedConnectionProvider) { c ->
+			ScopedFilePropertiesStorage(
+				c,
+				selectedConnectionAuthenticationChecker,
+				sessionRevisionProvider,
+				FilePropertyCache.getInstance())
+		}
+	}
+
 	private val fileListViewModel by buildViewModelLazily {
 		FileListViewModel(
 			browserLibraryIdProvider,
@@ -186,6 +218,8 @@ class ItemListActivity : AppCompatActivity(), Runnable {
 		)
 	}
 
+	private val selectedConnectionProvider by lazy { SelectedConnectionProvider(this) }
+
 	private val trackHeadlineViewModelProvider by buildViewModelLazily {
 		TrackHeadlineViewModelProvider(
 			filePropertiesProvider,
@@ -193,6 +227,20 @@ class ItemListActivity : AppCompatActivity(), Runnable {
 			PlaybackServiceController(this),
 			FileDetailsLauncher(this),
 			menuMessageBus,
+		)
+	}
+
+	private val nowPlayingFilePropertiesViewModel by buildViewModelLazily {
+		NowPlayingFilePropertiesViewModel(
+			messageBus,
+			LiveNowPlayingLookup.getInstance(),
+			selectedConnectionProvider,
+			filePropertiesProvider,
+			filePropertiesStorage,
+			selectedConnectionAuthenticationChecker,
+			PlaybackServiceController(this),
+			ConnectionPoller(this),
+			StringResources(this),
 		)
 	}
 
@@ -218,7 +266,7 @@ class ItemListActivity : AppCompatActivity(), Runnable {
 				ItemListView(
 					itemListViewModel = itemListViewModel,
 					fileListViewModel = fileListViewModel,
-					nowPlayingState = LiveNowPlayingLookup.getInstance(),
+					nowPlayingViewModel = nowPlayingFilePropertiesViewModel,
 					itemListMenuViewModel = itemListMenuViewModel,
 					trackHeadlineViewModelProvider = trackHeadlineViewModelProvider,
 				)
@@ -229,7 +277,7 @@ class ItemListActivity : AppCompatActivity(), Runnable {
 	}
 
 	override fun run() {
-		Promise.whenAll(fileListViewModel.loadItem(item), itemListViewModel.loadItem(item))
+		Promise.whenAll(fileListViewModel.loadItem(item), itemListViewModel.loadItem(item), nowPlayingFilePropertiesViewModel.initializeViewModel())
 			.excuse(HandleViewIoException(this, this))
 			.eventuallyExcuse(response(UnexpectedExceptionToasterResponse(this), handler))
 			.then { finish() }
@@ -249,18 +297,18 @@ class ItemListActivity : AppCompatActivity(), Runnable {
 	}
 }
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalToolbarApi::class)
 @Composable
 private fun ItemListView(
 	itemListViewModel: ItemListViewModel,
 	fileListViewModel: FileListViewModel,
-	nowPlayingState: ObserveNowPlaying,
+	nowPlayingViewModel: NowPlayingFilePropertiesViewModel,
 	itemListMenuViewModel: ItemListMenuViewModel,
 	trackHeadlineViewModelProvider: TrackHeadlineViewModelProvider,
 ) {
 	val activity = LocalContext.current as? Activity ?: return
 
-	val playingFile by nowPlayingState.nowPlayingState.collectAsState()
+	val playingFile by nowPlayingViewModel.nowPlayingFile.collectAsState()
 	val lazyListState = rememberLazyListState()
 	val rowHeight = dimensionResource(id = R.dimen.standard_row_height)
 	val rowFontSize = LocalDensity.current.run { dimensionResource(id = R.dimen.row_font_size).toSp() }
@@ -452,7 +500,6 @@ private fun ItemListView(
 		LazyColumn(
 			state = lazyListState,
 			modifier = Modifier
-				.fillMaxSize()
 				.scrollbar(
 					lazyListState,
 					horizontal = false,
@@ -463,65 +510,12 @@ private fun ItemListView(
 					fixedKnobRatio = knobHeight,
 				)
 		) {
-			item {
-				Column(modifier = Modifier.padding(4.dp)) {
-					ProvideTextStyle(MaterialTheme.typography.h4) {
-						Row(modifier = Modifier
-							.padding(top = 8.dp)
-							.height(80.dp)
-						) {
-							Text(
-								itemValue,
-								maxLines = 2,
-								overflow = TextOverflow.Ellipsis,
-							)
-						}
-					}
-
-					Row(modifier = Modifier.padding(top = 12.dp, bottom = 12.dp, start = 8.dp, end = 8.dp)) {
-						Image(
-							painter = painterResource(id = R.drawable.av_play),
-							contentDescription = stringResource(id = R.string.btn_play),
-							modifier = Modifier
-								.fillMaxWidth()
-								.weight(1f)
-								.clickable {
-									fileListViewModel.play()
-								}
-						)
-
-						val isSynced by itemListViewModel.isSynced.collectAsState()
-
-						Image(
-							painter = painterResource(id = R.drawable.ic_sync_white),
-							contentDescription = stringResource(id = R.string.btn_sync_item),
-							colorFilter = ColorFilter.tint(if (isSynced) MaterialTheme.colors.primary else Light.GrayClickable),
-							alpha = if (isSynced) .9f else .6f,
-							modifier = Modifier
-								.fillMaxWidth()
-								.clickable { itemListViewModel.toggleSync() }
-								.weight(1f),
-						)
-
-						Image(
-							painter = painterResource(id = R.drawable.av_shuffle),
-							contentDescription = stringResource(id = R.string.btn_shuffle_files),
-							modifier = Modifier
-								.fillMaxWidth()
-								.weight(1f)
-								.clickable {
-									fileListViewModel.playShuffled()
-								}
-						)
-					}
-				}
-			}
-
 			if (items.any()) {
 				item {
-					Box(modifier = Modifier
-						.padding(4.dp)
-						.height(48.dp)
+					Box(
+						modifier = Modifier
+							.padding(4.dp)
+							.height(48.dp)
 					) {
 						ProvideTextStyle(MaterialTheme.typography.h5) {
 							Text(
@@ -546,9 +540,10 @@ private fun ItemListView(
 			if (!files.any()) return@LazyColumn
 
 			item {
-				Box(modifier = Modifier
-					.padding(4.dp)
-					.height(48.dp)
+				Box(
+					modifier = Modifier
+						.padding(4.dp)
+						.height(48.dp)
 				) {
 					ProvideTextStyle(MaterialTheme.typography.h5) {
 						Text(
@@ -569,112 +564,204 @@ private fun ItemListView(
 					Divider()
 			}
 		}
-
-		val isAnyMenuShown by itemListMenuViewModel.isAnyMenuShown.collectAsState()
-
-		if (playingFile != null && !isAnyMenuShown) {
-			FloatingActionButton(
-				onClick = { NowPlayingActivity.startNowPlayingActivity(activity) },
-				modifier = Modifier
-					.align(Alignment.BottomEnd)
-					.padding(16.dp)
-			) {
-				Icon(
-					painterResource(id = R.drawable.av_play_white),
-					stringResource(id = R.string.title_activity_view_now_playing),
-				)
-			}
-		}
 	}
 
-	Column(modifier = Modifier.fillMaxSize()) {
-		val isItemsLoaded by itemListViewModel.isLoaded.collectAsState()
-		val isFilesLoaded by fileListViewModel.isLoaded.collectAsState()
-		val isLoaded = isItemsLoaded && isFilesLoaded
+	val systemUiController = rememberSystemUiController()
+	systemUiController.setStatusBarColor(MaterialTheme.colors.surface)
 
-		val headerHidingProgress by derivedStateOf {
-			if (lazyListState.firstVisibleItemIndex > 0) 1f
-			else lazyListState
-				.layoutInfo
-				.visibleItemsInfo
-				.firstOrNull()
-				?.size
-				?.toFloat()
-				?.let { headerSize ->
-					1f - ((headerSize - lazyListState.firstVisibleItemScrollOffset) / headerSize)
-				}
-				?: 0f
-		}
+	Surface {
+		val toolbarState = rememberCollapsingToolbarScaffoldState()
+		val headerHidingProgress by derivedStateOf { 1 - toolbarState.toolbarState.progress }
 
-		TopAppBar(
-			title = {
-				Text(
-					text = itemValue,
-					maxLines = 1,
-					overflow = TextOverflow.Ellipsis,
-					textAlign = TextAlign.Center,
-					modifier = Modifier
-						.alpha(headerHidingProgress)
-						.fillMaxWidth(),
-				)
-			},
-			navigationIcon = {
-				Icon(
-					Icons.Default.ArrowBack,
-					contentDescription = "",
-					tint = MaterialTheme.colors.onSecondary,
-					modifier = Modifier
-						.padding(16.dp)
-						.clickable(
-							interactionSource = remember { MutableInteractionSource() },
-							indication = null,
-							onClick = activity::finish
+		CollapsingToolbarScaffold(
+			enabled = true,
+			state = toolbarState,
+			toolbar = {
+				val appBarHeight = 56
+				val topPadding by derivedStateOf { (appBarHeight - 42 * headerHidingProgress).dp }
+				val expandedTitleHeight = 92
+				val expandedIconSize = 36
+				val expandedMenuVerticalPadding = 12
+				val boxHeight = expandedTitleHeight + expandedIconSize + expandedMenuVerticalPadding * 2 + appBarHeight
+				BoxWithConstraints(modifier = Modifier.height(boxHeight.dp).padding(top = topPadding)) {
+					val minimumMenuWidth = (3 * 32).dp
+					ProvideTextStyle(MaterialTheme.typography.h4) {
+						val h4Size = MaterialTheme.typography.h4.fontSize.value
+						val h6Size = MaterialTheme.typography.h6.fontSize.value
+
+						val fontSize by derivedStateOf { (h4Size - (h4Size - h6Size) * headerHidingProgress).sp }
+
+						val startPadding by derivedStateOf { (4 + 48 * headerHidingProgress).dp }
+						val endPadding by derivedStateOf { 4.dp + minimumMenuWidth * headerHidingProgress }
+						Text(
+							text = itemValue,
+							fontSize = fontSize,
+							maxLines = (2 - headerHidingProgress).roundToInt(),
+							overflow = TextOverflow.Ellipsis,
+							modifier = Modifier
+								.fillMaxWidth()
+								.padding(start = startPadding, end = endPadding),
 						)
-				)
-			},
-			actions = {
-				if (isLoaded && headerHidingProgress > 0f) {
-					Image(
-						painter = painterResource(id = R.drawable.av_play_white),
-						contentDescription = stringResource(id = R.string.btn_play),
-						modifier = Modifier
-							.clickable(
-								interactionSource = remember { MutableInteractionSource() },
-								indication = null,
-								onClick = {
+					}
+
+					val menuWidth by derivedStateOf { (maxWidth - (maxWidth - minimumMenuWidth) * headerHidingProgress) }
+					val expandedTopRowPadding = expandedTitleHeight + expandedMenuVerticalPadding
+					val collapsedTopRowPadding = 2
+					val topRowPadding by derivedStateOf { (expandedTopRowPadding - (expandedTopRowPadding - collapsedTopRowPadding) * headerHidingProgress).dp }
+					Row(modifier = Modifier
+						.padding(top = topRowPadding, bottom = expandedMenuVerticalPadding.dp, start = 8.dp, end = 8.dp)
+						.width(menuWidth)
+						.align(Alignment.TopEnd)
+					) {
+						val iconSize by derivedStateOf { (expandedIconSize - (12 * headerHidingProgress)).dp }
+
+						Image(
+							painter = painterResource(id = R.drawable.av_play),
+							contentDescription = stringResource(id = R.string.btn_play),
+							modifier = Modifier
+								.fillMaxWidth()
+								.weight(1f)
+								.size(iconSize)
+								.clickable {
 									fileListViewModel.play()
 								}
-							)
-							.padding(start = 8.dp, end = 8.dp)
-							.size(24.dp)
-							.alpha(headerHidingProgress),
-					)
+						)
 
-					Image(
-						painter = painterResource(id = R.drawable.av_shuffle_white),
-						contentDescription = stringResource(id = R.string.btn_shuffle_files),
+						val isSynced by itemListViewModel.isSynced.collectAsState()
+
+						Image(
+							painter = painterResource(id = R.drawable.ic_sync_white),
+							contentDescription = stringResource(id = R.string.btn_sync_item),
+							colorFilter = ColorFilter.tint(if (isSynced) MaterialTheme.colors.primary else Light.GrayClickable),
+							alpha = if (isSynced) .9f else .6f,
+							modifier = Modifier
+								.fillMaxWidth()
+								.size(iconSize)
+								.clickable { itemListViewModel.toggleSync() }
+								.weight(1f),
+						)
+
+						Image(
+							painter = painterResource(id = R.drawable.av_shuffle),
+							contentDescription = stringResource(id = R.string.btn_shuffle_files),
+							modifier = Modifier
+								.fillMaxWidth()
+								.size(iconSize)
+								.weight(1f)
+								.clickable {
+									fileListViewModel.playShuffled()
+								}
+						)
+					}
+				}
+
+				Box(modifier = Modifier.height(56.dp)) {
+					Icon(
+						Icons.Default.ArrowBack,
+						contentDescription = "",
+						tint = MaterialTheme.colors.onSurface,
 						modifier = Modifier
+							.padding(16.dp)
+							.align(Alignment.CenterStart)
 							.clickable(
 								interactionSource = remember { MutableInteractionSource() },
 								indication = null,
-								onClick = {
-									fileListViewModel.playShuffled()
-								}
+								onClick = activity::finish
 							)
-							.padding(start = 8.dp, end = 8.dp)
-							.size(24.dp)
-							.alpha(headerHidingProgress),
 					)
 				}
 			},
-			backgroundColor = MaterialTheme.colors.secondary,
-			contentColor = MaterialTheme.colors.onSecondary,
-		)
+			scrollStrategy = ScrollStrategy.ExitUntilCollapsed,
+			modifier = Modifier.fillMaxSize()
+		) {
+			BoxWithConstraints(modifier = Modifier.padding(bottom = 56.dp).fillMaxSize()) {
+				val isItemsLoaded by itemListViewModel.isLoaded.collectAsState()
+				val isFilesLoaded by fileListViewModel.isLoaded.collectAsState()
+				val isLoaded = isItemsLoaded && isFilesLoaded
 
-		Surface {
-			BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
 				if (isLoaded) LoadedItemListView()
 				else CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+			}
+
+			if (playingFile != null) {
+				BottomAppBar(
+					backgroundColor = MaterialTheme.colors.secondary,
+					contentPadding = PaddingValues(0.dp),
+					modifier = Modifier.align(Alignment.BottomCenter).clickable { NowPlayingActivity.startNowPlayingActivity(activity) }
+				) {
+					Column {
+						Row(
+							modifier = Modifier
+								.weight(1f)
+								.padding(start = 16.dp, end = 16.dp)
+						) {
+							Column(
+								modifier = Modifier.weight(1f).align(Alignment.CenterVertically),
+							) {
+								val songTitle by nowPlayingViewModel.title.collectAsState()
+
+								ProvideTextStyle(MaterialTheme.typography.subtitle1) {
+									Text(
+										text = songTitle ?: stringResource(id = R.string.lbl_loading),
+										maxLines = 1,
+										overflow = TextOverflow.Ellipsis,
+										fontWeight = FontWeight.Medium
+									)
+								}
+
+								val songArtist by nowPlayingViewModel.artist.collectAsState()
+								ProvideTextStyle(MaterialTheme.typography.body2) {
+									Text(
+										text = songArtist ?: stringResource(id = R.string.lbl_loading),
+										maxLines = 1,
+										overflow = TextOverflow.Ellipsis,
+									)
+								}
+							}
+
+							val isPlaying by nowPlayingViewModel.isPlaying.collectAsState()
+							Image(
+								painter = painterResource(id = if (!isPlaying) R.drawable.av_play_white else R.drawable.av_pause_white),
+								contentDescription = stringResource(id = R.string.btn_play),
+								modifier = Modifier
+									.clickable(
+										interactionSource = remember { MutableInteractionSource() },
+										indication = null,
+										onClick = {
+											if (!isPlaying) PlaybackService.play(activity)
+											else PlaybackService.pause(activity)
+
+											nowPlayingViewModel.togglePlaying(!isPlaying)
+										}
+									)
+									.padding(start = 8.dp, end = 8.dp)
+									.align(Alignment.CenterVertically)
+									.size(24.dp),
+							)
+
+							Icon(
+								Icons.Default.ArrowForward,
+								contentDescription = "",
+								tint = MaterialTheme.colors.onSecondary,
+								modifier = Modifier
+									.padding(start = 8.dp, end = 8.dp)
+									.align(Alignment.CenterVertically)
+							)
+						}
+
+						val filePosition by nowPlayingViewModel.filePosition.collectAsState()
+						val fileDuration by nowPlayingViewModel.fileDuration.collectAsState()
+						val fileProgress by derivedStateOf { filePosition / fileDuration.toFloat() }
+						LinearProgressIndicator(
+							progress = fileProgress,
+							color = MaterialTheme.colors.primary,
+							backgroundColor = MaterialTheme.colors.onPrimary.copy(alpha = .6f),
+							modifier = Modifier
+								.fillMaxWidth()
+								.padding(0.dp)
+						)
+					}
+				}
 			}
 		}
 	}

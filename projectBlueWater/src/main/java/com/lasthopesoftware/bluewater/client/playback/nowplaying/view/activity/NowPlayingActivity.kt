@@ -135,8 +135,6 @@ class NowPlayingActivity :
                 PlaybackServiceController(this),
                 ConnectionPoller(this),
                 StringResources(this),
-                nowPlayingViewModel,
-                nowPlayingViewModel
             )
 		}
 

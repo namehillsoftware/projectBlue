@@ -25,7 +25,6 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.v
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.databinding.ControlNowPlayingTopSheetBinding
-import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildActivityViewModel
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildActivityViewModelLazily
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
@@ -66,16 +65,16 @@ class NowPlayingTopFragment : Fragment() {
 		}
 	}
 
+	private val nowPlayingViewModel by buildActivityViewModelLazily {
+		NowPlayingScreenViewModel(
+			applicationMessageBus,
+			InMemoryNowPlayingDisplaySettings,
+			PlaybackServiceController(requireContext()),
+		)
+	}
+
 	private val viewModel by buildActivityViewModelLazily {
 		val playbackService = PlaybackServiceController(requireContext())
-
-		val nowPlayingViewModel = buildActivityViewModel {
-			NowPlayingScreenViewModel(
-				applicationMessageBus,
-				InMemoryNowPlayingDisplaySettings,
-				playbackService,
-			)
-		}
 
 		NowPlayingFilePropertiesViewModel(
             applicationMessageBus,
@@ -87,8 +86,6 @@ class NowPlayingTopFragment : Fragment() {
             playbackService,
             ConnectionPoller(requireContext()),
             StringResources(requireContext()),
-            nowPlayingViewModel,
-            nowPlayingViewModel
         )
 	}
 
@@ -103,6 +100,7 @@ class NowPlayingTopFragment : Fragment() {
 		with (binding) {
 			lifecycleOwner = viewLifecycleOwner
 			vm = viewModel
+			screenState = nowPlayingViewModel
 
 			btnPlay.setOnClickListener { v ->
 				if (!viewModel.isScreenControlsVisible.value) return@setOnClickListener
@@ -124,7 +122,7 @@ class NowPlayingTopFragment : Fragment() {
 				if (viewModel.isScreenControlsVisible.value) PlaybackService.previous(v.context)
 			}
 
-			isScreenKeptOnButton.setOnClickListener { viewModel.toggleScreenOn() }
+			isScreenKeptOnButton.setOnClickListener { nowPlayingViewModel.toggleScreenOn() }
 
 			rbSongRating.onRatingBarChangeListener = RatingBar.OnRatingBarChangeListener { _, rating, fromUser ->
 				if (fromUser) viewModel.updateRating(rating)
@@ -132,7 +130,7 @@ class NowPlayingTopFragment : Fragment() {
 
 			nowPlayingTopSheet.setOnClickListener { viewModel.showNowPlayingControls() }
 
-			viewNowPlayingListButton.setOnClickListener { viewModel.showDrawer() }
+			viewNowPlayingListButton.setOnClickListener { nowPlayingViewModel.showDrawer() }
 
 			pbNowPlaying.max = viewModel.fileDuration.value
 			pbNowPlaying.progress = viewModel.filePosition.value

@@ -22,6 +22,7 @@ import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay
 import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.lasthopesoftware.resources.strings.GetStringResources
 import com.namehillsoftware.handoff.promises.Promise
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -42,10 +43,8 @@ class NowPlayingFilePropertiesViewModel(
 	private val checkAuthentication: CheckIfScopedConnectionIsReadOnly,
 	private val playbackService: ControlPlaybackService,
 	private val pollConnections: PollForConnections,
-	private val stringResources: GetStringResources,
-	private val controlDrawerState: ControlDrawerState,
-	private val controlScreenOnState: ControlScreenOnState
-) : ViewModel(), ControlDrawerState by controlDrawerState, ControlScreenOnState by controlScreenOnState
+	private val stringResources: GetStringResources
+) : ViewModel()
 {
 	private val onPlaybackStartedReceiver: (PlaybackMessage.PlaybackStarted) -> Unit
 	private val onPlaybackStoppedReceiver: (PlaybackMessage) -> Unit
@@ -123,16 +122,17 @@ class NowPlayingFilePropertiesViewModel(
 		controlsShownPromise.cancel()
 	}
 
-	fun initializeViewModel() {
+	fun initializeViewModel(): Promise<Unit> {
 		togglePlaying(false)
-		nowPlayingRepository
+		val nowPlayingPromise = nowPlayingRepository
 			.promiseNowPlaying()
 			.then { np -> isRepeatingState.value = np?.isRepeating ?: false }
-			.excuse { error -> logger.warn("An error occurred initializing `NowPlayingActivity`", error) }
 
-		updateViewFromRepository()
+		val promisedViewUpdate = updateViewFromRepository()
 
-		playbackService.promiseIsMarkedForPlay().then(::togglePlaying)
+		val promisedTogglePlayingUpdate = playbackService.promiseIsMarkedForPlay().then(::togglePlaying)
+
+		return Promise.whenAll(nowPlayingPromise, promisedViewUpdate, promisedTogglePlayingUpdate).unitResponse()
 	}
 
 	fun togglePlaying(isPlaying: Boolean) {
@@ -173,7 +173,7 @@ class NowPlayingFilePropertiesViewModel(
 		}
 	}
 
-	private fun updateViewFromRepository() {
+	private fun updateViewFromRepository() =
 		nowPlayingRepository.promiseNowPlaying()
 			.then { np ->
 				nowPlayingFileState.value = np?.playingFile
@@ -193,8 +193,8 @@ class NowPlayingFilePropertiesViewModel(
 								}
 						}
 				}
+				Unit
 			}
-	}
 
 	private fun resetView() {
 		titleState.value = stringResources.loading

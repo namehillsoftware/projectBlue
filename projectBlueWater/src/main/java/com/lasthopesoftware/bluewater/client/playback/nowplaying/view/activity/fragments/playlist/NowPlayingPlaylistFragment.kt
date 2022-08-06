@@ -44,7 +44,6 @@ import com.lasthopesoftware.bluewater.databinding.ControlNowPlayingPlaylistBindi
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.android.adapters.DeferredListAdapter
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
-import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildActivityViewModel
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildActivityViewModelLazily
 import com.lasthopesoftware.bluewater.shared.messages.ScopedMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
@@ -139,16 +138,16 @@ class NowPlayingPlaylistFragment : Fragment() {
 		}, requireContext()))
 	}
 
+	private val nowPlayingViewModel by buildActivityViewModelLazily {
+		NowPlayingScreenViewModel(
+			applicationMessageBus,
+			InMemoryNowPlayingDisplaySettings,
+			PlaybackServiceController(requireContext()),
+		)
+	}
+
 	private val viewModel by buildActivityViewModelLazily {
 		val playbackService = PlaybackServiceController(requireContext())
-
-		val nowPlayingViewModel = buildActivityViewModel {
-			NowPlayingScreenViewModel(
-				applicationMessageBus,
-				InMemoryNowPlayingDisplaySettings,
-				playbackService,
-			)
-		}
 
 		NowPlayingFilePropertiesViewModel(
             applicationMessageBus,
@@ -160,8 +159,6 @@ class NowPlayingPlaylistFragment : Fragment() {
             playbackService,
             ConnectionPoller(requireContext()),
             StringResources(requireContext()),
-            nowPlayingViewModel,
-            nowPlayingViewModel
         )
 	}
 
@@ -226,12 +223,12 @@ class NowPlayingPlaylistFragment : Fragment() {
 			viewModel.nowPlayingFile
 				.filterNotNull()
 				.onEach {
-					if (!viewModel.isDrawerShown)
+					if (!nowPlayingViewModel.isDrawerShown)
 						nowPlayingListView.scrollToPosition(it.playlistPosition)
 				}
 				.launchIn(lifecycleScope)
 
-			closeNowPlayingList.setOnClickListener { viewModel.hideDrawer() }
+			closeNowPlayingList.setOnClickListener { nowPlayingViewModel.hideDrawer() }
 
 			miniNowPlayingBar.max = viewModel.fileDuration.value
 			miniNowPlayingBar.progress = viewModel.filePosition.value

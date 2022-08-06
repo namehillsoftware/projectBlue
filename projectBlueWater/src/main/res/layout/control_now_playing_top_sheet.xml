@@ -7,6 +7,7 @@
     <data>
         <import type="android.view.View"/>
         <variable name="vm" type="com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel"/>
+        <variable name="screenState" type="com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.ControlScreenOnState"/>
     </data>
 
     <RelativeLayout
@@ -39,10 +40,10 @@
                     android:layout_weight="1"
                     android:alpha=".80"
                     android:background="?android:attr/selectableItemBackground"
-                    android:contentDescription="@{vm.isScreenOnEnabled ? @string/screen_is_on : @string/screen_is_off}"
+                    android:contentDescription="@{screenState.isScreenOnEnabled ? @string/screen_is_on : @string/screen_is_off}"
                     android:paddingEnd="@dimen/now_playing_menu_padding"
                     android:paddingStart="@dimen/now_playing_menu_padding"
-                    android:src="@{vm.isScreenOnEnabled ? @drawable/ic_screen_on_white_36dp : @drawable/ic_screen_off_white_36dp}"
+                    android:src="@{screenState.isScreenOnEnabled ? @drawable/ic_screen_on_white_36dp : @drawable/ic_screen_off_white_36dp}"
                     tools:ignore="RtlSymmetry" />
 
                 <ImageButton
