@@ -504,7 +504,7 @@ private fun ItemListView(
 		val knobHeight by derivedStateOf {
 			lazyListState.layoutInfo.totalItemsCount
 				.takeIf { it > 0 }
-				?.let { totalItemCount -> maxHeight / (rowHeight * totalItemCount) }
+				?.let { maxHeight / (rowHeight * it) }
 				?.takeIf { it > 0 && it < 1 }
 		}
 
