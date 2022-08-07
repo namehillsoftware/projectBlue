@@ -7,33 +7,28 @@ import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 
 object FileStringListUtilities {
-	@JvmStatic
-	fun promiseParsedFileStringList(fileList: String): Promise<Collection<ServiceFile>> {
-		return QueuedPromise(
-			MessageWriter { parseFileStringList(fileList) },
-			ThreadPools.compute
-		)
-	}
+	fun promiseParsedFileStringList(fileList: String): Promise<Collection<ServiceFile>> = QueuedPromise(
+		MessageWriter { parseFileStringList(fileList) },
+		ThreadPools.compute
+	)
 
 	private fun parseFileStringList(fileList: String): Collection<ServiceFile> {
-		val headerInfo = fileList.split(";", limit = 2)
+		val headerInfo = fileList.split(";", limit = 3)
 		if (headerInfo.size < 2) return emptySet()
 		val offset = headerInfo[0].toInt() + 1
+		val listSize = headerInfo[1].toInt()
 
 		return fileList.splitToSequence(";")
 			.drop(offset)
 			.filter { it.isNotEmpty() && it != "-1" }
 			.map { k -> ServiceFile(k.toInt()) }
-			.toList()
+			.toCollection(ArrayList(listSize))
 	}
 
-	@JvmStatic
-	fun promiseSerializedFileStringList(serviceFiles: Collection<ServiceFile>): Promise<String> {
-		return QueuedPromise(
-			MessageWriter { serializeFileStringList(serviceFiles) },
-			ThreadPools.compute
-		)
-	}
+	fun promiseSerializedFileStringList(serviceFiles: Collection<ServiceFile>): Promise<String> = QueuedPromise(
+		MessageWriter { serializeFileStringList(serviceFiles) },
+		ThreadPools.compute
+	)
 
 	private fun serializeFileStringList(serviceFiles: Collection<ServiceFile>): String {
 		val fileSize = serviceFiles.size
