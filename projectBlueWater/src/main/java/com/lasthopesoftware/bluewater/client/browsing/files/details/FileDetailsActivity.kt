@@ -25,7 +25,9 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -34,6 +36,7 @@ import androidx.compose.ui.unit.sp
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.image.CachedImageProvider
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity.Companion.restoreSelectedConnection
@@ -137,7 +140,7 @@ private fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class)
 	@Composable
 	fun filePropertyHeader(modifier: Modifier) {
 		val artist by viewModel.artist.collectAsState()
-		val fileName by viewModel.fileName.collectAsState("Loading...")
+		val fileName by viewModel.fileName.collectAsState(stringResource(id = R.string.lbl_loading))
 
 		Column(modifier = modifier) {
 			val gradientSides = setOf(GradientSide.End)
@@ -167,6 +170,18 @@ private fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class)
 	}
 
 	@Composable
+	fun fileRating(modifier: Modifier) {
+		val rating by viewModel.rating.collectAsState()
+
+		RatingBar(
+			rating = rating,
+			color = coverArtColorState.primaryTextColor,
+			backgroundColor = coverArtColorState.primaryTextColor.copy(.1f),
+			modifier = modifier
+		)
+	}
+
+	@Composable
 	fun filePropertyRow(property: Map.Entry<String, String>) {
 		val itemPadding = 2.dp
 
@@ -179,26 +194,27 @@ private fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class)
 					.padding(start = viewPadding, top = itemPadding, end = itemPadding, bottom = itemPadding),
 			)
 
-			Text(
-				text = property.value,
-				color = coverArtColorState.primaryTextColor,
-				modifier = Modifier
-					.weight(2f)
-					.padding(start = itemPadding, top = itemPadding, end = viewPadding, bottom = itemPadding),
-			)
+			when (property.key) {
+				KnownFileProperties.RATING -> {
+					fileRating(
+						modifier = Modifier
+							.weight(2f)
+							.height(20.dp)
+							.align(Alignment.CenterVertically)
+							.padding(start = itemPadding, top = itemPadding, end = viewPadding, bottom = itemPadding)
+					)
+				}
+				else -> {
+					Text(
+						text = property.value,
+						color = coverArtColorState.primaryTextColor,
+						modifier = Modifier
+							.weight(2f)
+							.padding(start = itemPadding, top = itemPadding, end = viewPadding, bottom = itemPadding),
+					)
+				}
+			}
 		}
-	}
-
-	@Composable
-	fun fileRating(modifier: Modifier) {
-		val rating by viewModel.rating.collectAsState()
-
-		RatingBar(
-			rating = rating,
-			color = coverArtColorState.secondaryTextColor,
-			backgroundColor = coverArtColorState.secondaryTextColor.copy(.1f),
-			modifier = modifier
-		)
 	}
 
 	@Composable
@@ -233,16 +249,54 @@ private fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class)
 									modifier = Modifier
 										.fillParentMaxHeight()
 										.clip(RoundedCornerShape(5.dp))
-										.border(1.dp, shape = RoundedCornerShape(5.dp), color = coverArtColorState.secondaryTextColor),
+										.border(
+											1.dp,
+											shape = RoundedCornerShape(5.dp),
+											color = coverArtColorState.secondaryTextColor
+										),
 								)
 							}
 					}
 
-					fileRating(
-						modifier = Modifier
-							.fillMaxWidth()
-							.height(36.dp)
-					)
+					Row(modifier = Modifier
+						.height(dimensionResource(id = R.dimen.standard_row_height))
+						.padding(8.dp)
+					) {
+						Image(
+							painter = painterResource(id = R.drawable.ic_add_item_white_36dp),
+							colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
+							contentDescription = stringResource(id = R.string.btn_add_file),
+							modifier = Modifier
+								.fillMaxWidth()
+								.weight(1f)
+								.clickable { viewModel.addToNowPlaying() }
+								.align(Alignment.CenterVertically),
+						)
+
+						Image(
+							painter = painterResource(id = R.drawable.ic_menu_white_36dp),
+							colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
+							contentDescription = stringResource(id = R.string.btn_view_files),
+							modifier = Modifier
+								.fillMaxWidth()
+								.clickable { viewModel.viewFileDetails() }
+								.weight(1f)
+								.align(Alignment.CenterVertically),
+						)
+
+						Image(
+							painter = painterResource(id = R.drawable.av_play_white),
+							colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
+							contentDescription = stringResource(id = R.string.btn_play),
+							modifier = Modifier
+								.fillMaxWidth()
+								.weight(1f)
+								.clickable {
+									viewModel.play()
+								}
+								.align(Alignment.CenterVertically),
+						)
+					}
 				}
 			}
 
@@ -302,7 +356,11 @@ private fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class)
 									.fillMaxWidth()
 									.clip(RoundedCornerShape(5.dp))
 									.align(Alignment.Center)
-									.border(1.dp, shape = RoundedCornerShape(5.dp), color = coverArtColorState.secondaryTextColor),
+									.border(
+										1.dp,
+										shape = RoundedCornerShape(5.dp),
+										color = coverArtColorState.secondaryTextColor
+									),
 							)
 						}
 				}

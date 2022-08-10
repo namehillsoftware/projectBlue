@@ -34,7 +34,8 @@ class FileDetailsViewModel
 			KnownFileProperties.STACK_TOP,
 			KnownFileProperties.STACK_VIEW,
 			KnownFileProperties.WAVEFORM,
-			KnownFileProperties.LengthInPcmBlocks)
+			KnownFileProperties.LengthInPcmBlocks
+		)
 	}
 
 	private val mutableFileName = MutableStateFlow("")
@@ -89,5 +90,17 @@ class FileDetailsViewModel
 				mutableIsLoading.value = false
 				this
 			}
+	}
+
+	fun addToNowPlaying() {
+		TODO("Not yet implemented")
+	}
+
+	fun viewFileDetails() {
+		TODO("Not yet implemented")
+	}
+
+	fun play() {
+		TODO("Not yet implemented")
 	}
 }

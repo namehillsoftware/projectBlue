@@ -1010,12 +1010,8 @@ open class PlaybackService :
 		}
 
 		promisedPlayedFile.then {
-			selectedLibraryIdentifierProvider.selectedLibraryId.then { l ->
-				l?.also {
-					applicationMessageBus.value.sendMessage(PlaybackMessage.TrackCompleted(positionedPlayingFile.serviceFile))
-				}
-				localSubscription?.dispose()
-			}
+			applicationMessageBus.value.sendMessage(PlaybackMessage.TrackCompleted(positionedPlayingFile.serviceFile))
+			localSubscription?.dispose()
 		}
 
 		filePositionSubscription = localSubscription
@@ -1024,9 +1020,9 @@ open class PlaybackService :
 	}
 
 	private fun broadcastChangedFile(positionedFile: PositionedFile) {
-		selectedLibraryIdentifierProvider.selectedLibraryId.then { l ->
-			l?.also {
-				applicationMessageBus.value.sendMessage(PlaybackMessage.TrackChanged(it, positionedFile))
+		selectedLibraryIdentifierProvider.selectedLibraryId.then {
+			it?.also { l ->
+				applicationMessageBus.value.sendMessage(PlaybackMessage.TrackChanged(l, positionedFile))
 			}
 		}
 	}

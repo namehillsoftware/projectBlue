@@ -16,14 +16,13 @@ import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicat
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.namehillsoftware.handoff.promises.Promise
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import java.util.concurrent.atomic.AtomicReference
 
 class LiveNowPlayingLookup private constructor(
 	selectedLibraryIdentifierProvider: ProvideSelectedLibraryId,
 	private val libraryProvider: ILibraryProvider,
 	private val libraryStorage: ILibraryStorage
-) : GetNowPlayingState, ObserveNowPlaying, (ApplicationMessage) -> Unit {
+) : GetNowPlayingState, (ApplicationMessage) -> Unit {
 
 	companion object {
 		// This needs to be a singleton to ensure the track progress is as up-to-date as possible
@@ -48,12 +47,10 @@ class LiveNowPlayingLookup private constructor(
 			else throw IllegalStateException("Instance should be initialized in application root")
 	}
 
-	private val mutableNowPlayingState = MutableStateFlow<PositionedFile?>(null)
+	private val mutableNowPlayingState = AtomicReference<PositionedFile?>(null)
 
 	private var inner: GetNowPlayingState? = null
 	private var trackedPosition: Long? = null
-
-	override val nowPlayingState = mutableNowPlayingState.asStateFlow()
 
 	init {
 		selectedLibraryIdentifierProvider.selectedLibraryId.then { it?.also(::updateInner) }
@@ -63,7 +60,7 @@ class LiveNowPlayingLookup private constructor(
 		inner
 			?.promiseNowPlaying()
 			?.then { np ->
-				if (mutableNowPlayingState.run { compareAndSet(value, np?.playingFile) }) {
+				if (mutableNowPlayingState.run { compareAndSet(get(), np?.playingFile) }) {
 					trackedPosition = null
 				}
 
@@ -79,7 +76,7 @@ class LiveNowPlayingLookup private constructor(
 			libraryStorage).apply {
 				promiseNowPlaying()
 					.then {
-						mutableNowPlayingState.value = it?.playingFile
+						mutableNowPlayingState.set(it?.playingFile)
 					}
 		}
 	}
@@ -90,7 +87,7 @@ class LiveNowPlayingLookup private constructor(
 			is TrackPositionUpdate -> trackedPosition = message.filePosition.millis
 			is PlaybackMessage.TrackChanged -> {
 				trackedPosition = null
-				mutableNowPlayingState.value = message.positionedFile
+				mutableNowPlayingState.set(message.positionedFile)
 			}
 		}
 	}
