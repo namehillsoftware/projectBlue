@@ -25,6 +25,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -196,13 +197,26 @@ private fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class)
 
 			when (property.key) {
 				KnownFileProperties.RATING -> {
-					fileRating(
-						modifier = Modifier
-							.weight(2f)
-							.height(20.dp)
-							.align(Alignment.CenterVertically)
-							.padding(start = itemPadding, top = itemPadding, end = viewPadding, bottom = itemPadding)
-					)
+					Box(modifier = Modifier
+						.weight(2f)
+						.align(Alignment.CenterVertically)
+					) {
+						val height = with (LocalDensity.current) {
+							MaterialTheme.typography.h6.fontSize.toDp()
+						}
+
+						fileRating(
+							modifier = Modifier
+								.height(height)
+								.align(Alignment.CenterStart)
+								.padding(
+									start = itemPadding,
+									top = itemPadding,
+									end = viewPadding,
+									bottom = itemPadding
+								),
+						)
+					}
 				}
 				else -> {
 					Text(
@@ -228,7 +242,8 @@ private fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class)
 			item {
 				Column(modifier = Modifier
 					.fillParentMaxWidth()
-					.padding(viewPadding)) {
+					.padding(viewPadding)
+				) {
 					Box(
 						modifier = Modifier
 							.height(300.dp)

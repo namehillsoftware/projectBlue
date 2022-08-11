@@ -48,7 +48,7 @@ class FileDetailsViewModel
 			mutableCoverArt.value = it
 			it
 		}
-	private val mutableRating = MutableStateFlow(0f)
+	private val mutableRating = MutableStateFlow(0)
 
 	val fileName = mutableFileName.asStateFlow()
 	val artist = mutableArtist.asStateFlow()
@@ -69,7 +69,7 @@ class FileDetailsViewModel
 					?.then { fileProperties ->
 						fileProperties[KnownFileProperties.NAME]?.also { mutableFileName.value = it }
 						fileProperties[KnownFileProperties.ARTIST]?.also { mutableArtist.value = it }
-						fileProperties[KnownFileProperties.RATING]?.toFloatOrNull()?.also { mutableRating.value = it }
+						fileProperties[KnownFileProperties.RATING]?.toIntOrNull()?.also { mutableRating.value = it }
 
 						mutableFileProperties.value = fileProperties.entries
 							.filterNot { e -> propertiesToSkip.contains(e.key) }
