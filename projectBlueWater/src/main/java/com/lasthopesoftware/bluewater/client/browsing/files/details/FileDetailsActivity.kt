@@ -37,8 +37,13 @@ import androidx.compose.ui.unit.sp
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FormattedScopedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.ScopedFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.SelectedConnectionFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.files.image.CachedImageProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity.Companion.restoreSelectedConnection
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
@@ -73,9 +78,22 @@ class FileDetailsActivity : ComponentActivity() {
 
 	private val defaultImageProvider by lazy { DefaultImageProvider(this) }
 
+	private val filePropertiesProvider by lazy {
+		SelectedConnectionFilePropertiesProvider(SelectedConnectionProvider(this)) { c ->
+			val filePropertyCache = FilePropertyCache.getInstance()
+			FormattedScopedFilePropertiesProvider(
+				ScopedFilePropertiesProvider(
+					c,
+					ScopedRevisionProvider(c),
+					filePropertyCache
+				),
+			)
+		}
+	}
+
 	private val vm by buildViewModelLazily {
 		FileDetailsViewModel(
-			SelectedConnectionProvider(this),
+			filePropertiesProvider,
 			defaultImageProvider,
 			imageProvider
 		)
@@ -171,6 +189,49 @@ private fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class)
 	}
 
 	@Composable
+	fun fileMenu() {
+		Row(modifier = Modifier
+			.height(dimensionResource(id = R.dimen.standard_row_height))
+			.padding(viewPadding + 8.dp)
+		) {
+			Image(
+				painter = painterResource(id = R.drawable.ic_add_item_white_36dp),
+				colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
+				contentDescription = stringResource(id = R.string.btn_add_file),
+				modifier = Modifier
+					.fillMaxWidth()
+					.weight(1f)
+					.clickable { viewModel.addToNowPlaying() }
+					.align(Alignment.CenterVertically),
+			)
+
+			Image(
+				painter = painterResource(id = R.drawable.ic_menu_white_36dp),
+				colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
+				contentDescription = stringResource(id = R.string.btn_view_files),
+				modifier = Modifier
+					.fillMaxWidth()
+					.clickable { viewModel.viewFileDetails() }
+					.weight(1f)
+					.align(Alignment.CenterVertically),
+			)
+
+			Image(
+				painter = painterResource(id = R.drawable.av_play_white),
+				colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
+				contentDescription = stringResource(id = R.string.btn_play),
+				modifier = Modifier
+					.fillMaxWidth()
+					.weight(1f)
+					.clickable {
+						viewModel.play()
+					}
+					.align(Alignment.CenterVertically),
+			)
+		}
+	}
+
+	@Composable
 	fun fileRating(modifier: Modifier) {
 		val rating by viewModel.rating.collectAsState()
 
@@ -213,7 +274,7 @@ private fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class)
 									start = itemPadding,
 									top = itemPadding,
 									end = viewPadding,
-									bottom = itemPadding
+									bottom = itemPadding,
 								),
 						)
 					}
@@ -240,78 +301,34 @@ private fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class)
 
 		LazyColumn(modifier = Modifier.fillMaxSize()) {
 			item {
-				Column(modifier = Modifier
-					.fillParentMaxWidth()
-					.padding(viewPadding)
+				Box(
+					modifier = Modifier
+						.height(300.dp)
+						.fillParentMaxWidth()
+						.padding(
+							top = viewPadding + 40.dp,
+							start = viewPadding + 40.dp,
+							end = viewPadding + 40.dp,
+							bottom = viewPadding + 10.dp
+						)
 				) {
-					Box(
-						modifier = Modifier
-							.height(300.dp)
-							.padding(
-								top = 40.dp,
-								start = 40.dp,
-								end = 40.dp,
-								bottom = 10.dp
+					coverArtState
+						?.let {
+							Image(
+								bitmap = it,
+								contentDescription = null,
+								contentScale = ContentScale.FillHeight,
+								modifier = Modifier
+									.fillParentMaxHeight()
+									.clip(RoundedCornerShape(5.dp))
+									.border(
+										1.dp,
+										shape = RoundedCornerShape(5.dp),
+										color = coverArtColorState.secondaryTextColor
+									)
+									.align(Alignment.Center),
 							)
-							.align(Alignment.CenterHorizontally)
-					) {
-						coverArtState
-							?.let {
-								Image(
-									bitmap = it,
-									contentDescription = null,
-									contentScale = ContentScale.FillHeight,
-									modifier = Modifier
-										.fillParentMaxHeight()
-										.clip(RoundedCornerShape(5.dp))
-										.border(
-											1.dp,
-											shape = RoundedCornerShape(5.dp),
-											color = coverArtColorState.secondaryTextColor
-										),
-								)
-							}
-					}
-
-					Row(modifier = Modifier
-						.height(dimensionResource(id = R.dimen.standard_row_height))
-						.padding(8.dp)
-					) {
-						Image(
-							painter = painterResource(id = R.drawable.ic_add_item_white_36dp),
-							colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
-							contentDescription = stringResource(id = R.string.btn_add_file),
-							modifier = Modifier
-								.fillMaxWidth()
-								.weight(1f)
-								.clickable { viewModel.addToNowPlaying() }
-								.align(Alignment.CenterVertically),
-						)
-
-						Image(
-							painter = painterResource(id = R.drawable.ic_menu_white_36dp),
-							colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
-							contentDescription = stringResource(id = R.string.btn_view_files),
-							modifier = Modifier
-								.fillMaxWidth()
-								.clickable { viewModel.viewFileDetails() }
-								.weight(1f)
-								.align(Alignment.CenterVertically),
-						)
-
-						Image(
-							painter = painterResource(id = R.drawable.av_play_white),
-							colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
-							contentDescription = stringResource(id = R.string.btn_play),
-							modifier = Modifier
-								.fillMaxWidth()
-								.weight(1f)
-								.clickable {
-									viewModel.play()
-								}
-								.align(Alignment.CenterVertically),
-						)
-					}
+						}
 				}
 			}
 
@@ -327,6 +344,10 @@ private fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class)
 						)
 						.fillParentMaxWidth()
 				)
+			}
+
+			item {
+				fileMenu()
 			}
 
 			items(fileProperties) {
@@ -380,13 +401,7 @@ private fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class)
 						}
 				}
 
-				fileRating(
-					modifier = Modifier
-						.fillMaxWidth()
-						.height(46.dp)
-						.padding(bottom = 10.dp)
-						.align(Alignment.CenterHorizontally)
-				)
+				fileMenu()
 			}
 
 			LazyColumn(modifier = Modifier.fillMaxWidth()) {

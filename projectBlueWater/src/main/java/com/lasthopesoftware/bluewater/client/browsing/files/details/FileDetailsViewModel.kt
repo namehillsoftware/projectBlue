@@ -16,13 +16,11 @@ import com.namehillsoftware.handoff.promises.Promise
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-class FileDetailsViewModel
-(
-	private val selectedConnectionProvider: ProvideSelectedConnection,
+class FileDetailsViewModel(
+	private val scopedFilePropertiesProvider: ProvideScopedFileProperties,
 	defaultImageProvider: ProvideDefaultImage,
 	private val imageProvider: ProvideImages,
-)
-	: ViewModel() {
+) : ViewModel() {
 
 	companion object {
 		private val propertiesToSkip = setOf(
@@ -57,26 +55,20 @@ class FileDetailsViewModel
 	val coverArt = mutableCoverArt.asStateFlow()
 	val rating = mutableRating.asStateFlow()
 
-	fun loadFile(serviceFile: ServiceFile): Promise<FileDetailsViewModel> {
+	fun loadFile(serviceFile: ServiceFile): Promise<Unit> {
 		mutableIsLoading.value = true
-		val filePropertiesSetPromise = selectedConnectionProvider
-			.promiseSessionConnection()
-			.eventually { connectionProvider ->
-				connectionProvider
-					?.let { c -> ScopedFilePropertiesProvider(c,  ScopedRevisionProvider(c), FilePropertyCache.getInstance()) }
-					?.let(::FormattedScopedFilePropertiesProvider)
-					?.promiseFileProperties(serviceFile)
-					?.then { fileProperties ->
-						fileProperties[KnownFileProperties.NAME]?.also { mutableFileName.value = it }
-						fileProperties[KnownFileProperties.ARTIST]?.also { mutableArtist.value = it }
-						fileProperties[KnownFileProperties.RATING]?.toIntOrNull()?.also { mutableRating.value = it }
+		val filePropertiesSetPromise = scopedFilePropertiesProvider
+			.promiseFileProperties(serviceFile)
+			.then { fileProperties ->
+				fileProperties[KnownFileProperties.NAME]?.also { mutableFileName.value = it }
+				fileProperties[KnownFileProperties.ARTIST]?.also { mutableArtist.value = it }
+				fileProperties[KnownFileProperties.RATING]?.toIntOrNull()?.also { mutableRating.value = it }
 
-						mutableFileProperties.value = fileProperties.entries
-							.filterNot { e -> propertiesToSkip.contains(e.key) }
-							.sortedBy { e -> e.key }
-					}
-					.keepPromise()
+				mutableFileProperties.value = fileProperties.entries
+					.filterNot { e -> propertiesToSkip.contains(e.key) }
+					.sortedBy { e -> e.key }
 			}
+			.keepPromise()
 
 		val bitmapSetPromise = promisedSetDefaultCoverArt // Ensure default cover art is first set before apply cover art from file properties
 			.eventually { default ->
@@ -85,11 +77,9 @@ class FileDetailsViewModel
 					.then { bitmap -> mutableCoverArt.value = bitmap ?: default }
 			}
 
-		return Promise.whenAll(filePropertiesSetPromise, bitmapSetPromise)
-			.then {
-				mutableIsLoading.value = false
-				this
-			}
+		return Promise
+			.whenAll(filePropertiesSetPromise, bitmapSetPromise)
+			.then { mutableIsLoading.value = false }
 	}
 
 	fun addToNowPlaying() {
