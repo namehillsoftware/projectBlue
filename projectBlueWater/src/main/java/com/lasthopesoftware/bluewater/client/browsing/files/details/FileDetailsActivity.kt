@@ -47,6 +47,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRe
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity.Companion.restoreSelectedConnection
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
+import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.colors.MediaStylePalette
 import com.lasthopesoftware.bluewater.shared.android.colors.MediaStylePaletteProvider
@@ -95,7 +96,8 @@ class FileDetailsActivity : ComponentActivity() {
 		FileDetailsViewModel(
 			filePropertiesProvider,
 			defaultImageProvider,
-			imageProvider
+			imageProvider,
+			PlaybackServiceController(this),
 		)
 	}
 
@@ -202,17 +204,6 @@ private fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class)
 					.fillMaxWidth()
 					.weight(1f)
 					.clickable { viewModel.addToNowPlaying() }
-					.align(Alignment.CenterVertically),
-			)
-
-			Image(
-				painter = painterResource(id = R.drawable.ic_menu_white_36dp),
-				colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
-				contentDescription = stringResource(id = R.string.btn_view_files),
-				modifier = Modifier
-					.fillMaxWidth()
-					.clickable { viewModel.viewFileDetails() }
-					.weight(1f)
 					.align(Alignment.CenterVertically),
 			)
 

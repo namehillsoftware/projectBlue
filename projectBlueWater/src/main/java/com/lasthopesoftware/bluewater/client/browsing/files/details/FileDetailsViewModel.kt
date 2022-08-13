@@ -4,22 +4,21 @@ import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideImages
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.FormattedScopedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.ScopedFilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
-import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRevisionProvider
-import com.lasthopesoftware.bluewater.client.connection.selected.ProvideSelectedConnection
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideScopedFileProperties
+import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.shared.images.ProvideDefaultImage
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.namehillsoftware.handoff.promises.Promise
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
+
 class FileDetailsViewModel(
 	private val scopedFilePropertiesProvider: ProvideScopedFileProperties,
 	defaultImageProvider: ProvideDefaultImage,
 	private val imageProvider: ProvideImages,
+	private val controlPlayback: ControlPlaybackService,
 ) : ViewModel() {
 
 	companion object {
@@ -35,6 +34,8 @@ class FileDetailsViewModel(
 			KnownFileProperties.LengthInPcmBlocks
 		)
 	}
+
+	private var activeServiceFile: ServiceFile? = null
 
 	private val mutableFileName = MutableStateFlow("")
 	private val mutableArtist = MutableStateFlow("")
@@ -56,6 +57,8 @@ class FileDetailsViewModel(
 	val rating = mutableRating.asStateFlow()
 
 	fun loadFile(serviceFile: ServiceFile): Promise<Unit> {
+		activeServiceFile = serviceFile
+
 		mutableIsLoading.value = true
 		val filePropertiesSetPromise = scopedFilePropertiesProvider
 			.promiseFileProperties(serviceFile)
@@ -83,11 +86,7 @@ class FileDetailsViewModel(
 	}
 
 	fun addToNowPlaying() {
-		TODO("Not yet implemented")
-	}
-
-	fun viewFileDetails() {
-		TODO("Not yet implemented")
+		activeServiceFile?.let(controlPlayback::addToPlaylist)
 	}
 
 	fun play() {
