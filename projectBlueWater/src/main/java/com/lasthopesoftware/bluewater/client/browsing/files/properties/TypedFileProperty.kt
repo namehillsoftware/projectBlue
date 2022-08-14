@@ -7,7 +7,6 @@ enum class TypedFileProperty(val descriptor: String, val type: FilePropertyType?
 	Date(KnownFileProperties.Date, FilePropertyType.Date),
 	Name(KnownFileProperties.Name, FilePropertyType.ShortFormText),
 	Track(KnownFileProperties.Track, FilePropertyType.Integer),
-	NumberPlays(KnownFileProperties.NumberPlays, FilePropertyType.Integer),
 	Rating(KnownFileProperties.Rating, FilePropertyType.Integer),
 	Lyrics(KnownFileProperties.Lyrics, FilePropertyType.LongFormText),
 	Comment(KnownFileProperties.Comment, FilePropertyType.LongFormText),

@@ -31,7 +31,17 @@ private val viewModel by lazy {
 					Pair("feast", "wind"),
 					Pair(KnownFileProperties.Name, "please"),
 					Pair(KnownFileProperties.Artist, "brown"),
-					Pair(KnownFileProperties.Genre, "subject")
+					Pair(KnownFileProperties.Genre, "subject"),
+					Pair(KnownFileProperties.Lyrics, "belief"),
+					Pair(KnownFileProperties.Comment, "pad"),
+					Pair(KnownFileProperties.Composer, "hotel"),
+					Pair(KnownFileProperties.Custom, "curl"),
+					Pair(KnownFileProperties.Publisher, "capital"),
+					Pair(KnownFileProperties.TotalDiscs, "354"),
+					Pair(KnownFileProperties.Track, "882"),
+					Pair(KnownFileProperties.AlbumArtist, "calm"),
+					Pair(KnownFileProperties.Album, "distant"),
+					Pair(KnownFileProperties.Date, "1355"),
 				)
 			)
 		},
@@ -87,12 +97,27 @@ class WhenEditingTheFileProperties {
 	@Test
 	fun `then the properties can be edited`() {
 		assertThat(editingFileProperties).containsAllEntriesOf(
-			mapOf(
-				Pair(TypedFileProperty.Rating, "2"),
-				Pair(TypedFileProperty.Name, "please"),
-				Pair(TypedFileProperty.Artist, "brown"),
-				Pair(TypedFileProperty.Genre, "subject"),
-			)
+			TypedFileProperty.values().associate {
+				Pair(
+					it,
+					when (it) {
+						TypedFileProperty.Rating -> "2"
+						TypedFileProperty.Track -> "882"
+						TypedFileProperty.Name -> "please"
+						TypedFileProperty.Artist -> "brown"
+						TypedFileProperty.Genre -> "subject"
+						TypedFileProperty.Lyrics -> "belief"
+						TypedFileProperty.Comment -> "pad"
+						TypedFileProperty.Composer -> "hotel"
+						TypedFileProperty.Custom -> "curl"
+						TypedFileProperty.Publisher -> "capital"
+						TypedFileProperty.TotalDiscs -> "354"
+						TypedFileProperty.AlbumArtist -> "calm"
+						TypedFileProperty.Album -> "distant"
+						TypedFileProperty.Date -> "1355"
+					}
+				)
+			}
 		)
 	}
 }
