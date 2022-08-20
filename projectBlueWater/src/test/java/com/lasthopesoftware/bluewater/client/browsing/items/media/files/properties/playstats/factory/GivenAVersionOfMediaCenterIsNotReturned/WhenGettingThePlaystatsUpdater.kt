@@ -16,34 +16,34 @@ import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 
 class WhenGettingThePlaystatsUpdater {
 
-	companion object {
-		private var updater: IPlaystatsUpdate? = null
+	private val playstatsUpdateSelector by lazy {
+		val fakeConnectionProvider = FakeConnectionProvider()
+		val programVersionProvider = mockk<IProgramVersionProvider>()
+		every { programVersionProvider.promiseServerVersion() } returns Promise.empty()
 
-		@BeforeClass
-		@JvmStatic
-		fun before() {
-			val fakeConnectionProvider = FakeConnectionProvider()
-			val programVersionProvider = mockk<IProgramVersionProvider>()
-			every { programVersionProvider.promiseServerVersion() } returns Promise.empty()
+		val checkConnection = mockk<CheckIfScopedConnectionIsReadOnly>()
+		every { checkConnection.promiseIsReadOnly() } returns false.toPromise()
 
-			val checkConnection = mockk<CheckIfScopedConnectionIsReadOnly>()
-			every { checkConnection.promiseIsReadOnly() } returns false.toPromise()
+		val fakeScopedRevisionProvider = FakeScopedRevisionProvider(1)
+		val fakeFilePropertiesContainer = FakeFilePropertiesContainer()
+		PlaystatsUpdateSelector(
+			fakeConnectionProvider,
+			ScopedFilePropertiesProvider(fakeConnectionProvider, fakeScopedRevisionProvider, fakeFilePropertiesContainer),
+			ScopedFilePropertiesStorage(fakeConnectionProvider, checkConnection, fakeScopedRevisionProvider, fakeFilePropertiesContainer),
+			programVersionProvider
+		)
+	}
 
-			val fakeScopedRevisionProvider = FakeScopedRevisionProvider(1)
-			val fakeFilePropertiesContainer = FakeFilePropertiesContainer()
-			val playstatsUpdateSelector = PlaystatsUpdateSelector(
-				fakeConnectionProvider,
-				ScopedFilePropertiesProvider(fakeConnectionProvider, fakeScopedRevisionProvider, fakeFilePropertiesContainer),
-				ScopedFilePropertiesStorage(fakeConnectionProvider, checkConnection, fakeScopedRevisionProvider, fakeFilePropertiesContainer),
-				programVersionProvider
-			)
-			updater = playstatsUpdateSelector.promisePlaystatsUpdater().toExpiringFuture().get()
-		}
+	private var updater: IPlaystatsUpdate? = null
+
+	@BeforeAll
+	fun act() {
+		updater = playstatsUpdateSelector.promisePlaystatsUpdater().toExpiringFuture().get()
 	}
 
 	@Test

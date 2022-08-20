@@ -14,48 +14,46 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
-
-private val viewModel by lazy {
-	val selectedLibraryIdProvider = mockk<ProvideSelectedLibraryId>().apply {
-		every { selectedLibraryId } returns LibraryId(163).toPromise()
-	}
-
-	val itemProvider = mockk<ProvideItemFiles>().apply {
-		every { promiseFiles(LibraryId(163), ItemId(826), FileListParameters.Options.None) } returns listOf(
-			ServiceFile(471),
-			ServiceFile(469),
-			ServiceFile(102),
-			ServiceFile(890),
-		).toPromise()
-	}
-
-	val storedItemAccess = mockk<AccessStoredItems>().apply {
-		var isItemMarkedForSync = false
-		every { toggleSync(LibraryId(163), ItemId(826), true) } answers {
-			isItemMarkedForSync = true
-			Unit.toPromise()
-		}
-		every { isItemMarkedForSync(LibraryId(163), Item(826, "moderate")) } answers { isItemMarkedForSync.toPromise() }
-	}
-
-	FileListViewModel(
-		selectedLibraryIdProvider,
-		itemProvider,
-		storedItemAccess,
-		mockk(),
-	)
-}
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 
 class WhenSyncingTheItem {
-	companion object {
-		@BeforeClass
-		@JvmStatic
-		fun act() {
-			viewModel.loadItem(Item(826, "moderate")).toExpiringFuture().get()
-			viewModel.toggleSync().toExpiringFuture().get()
+
+	private val viewModel by lazy {
+		val selectedLibraryIdProvider = mockk<ProvideSelectedLibraryId>().apply {
+			every { selectedLibraryId } returns LibraryId(163).toPromise()
 		}
+
+		val itemProvider = mockk<ProvideItemFiles>().apply {
+			every { promiseFiles(LibraryId(163), ItemId(826), FileListParameters.Options.None) } returns listOf(
+				ServiceFile(471),
+				ServiceFile(469),
+				ServiceFile(102),
+				ServiceFile(890),
+			).toPromise()
+		}
+
+		val storedItemAccess = mockk<AccessStoredItems>().apply {
+			var isItemMarkedForSync = false
+			every { toggleSync(LibraryId(163), ItemId(826), true) } answers {
+				isItemMarkedForSync = true
+				Unit.toPromise()
+			}
+			every { isItemMarkedForSync(LibraryId(163), Item(826, "moderate")) } answers { isItemMarkedForSync.toPromise() }
+		}
+
+		FileListViewModel(
+			selectedLibraryIdProvider,
+			itemProvider,
+			storedItemAccess,
+			mockk(),
+		)
+	}
+
+	@BeforeAll
+	fun act() {
+		viewModel.loadItem(Item(826, "moderate")).toExpiringFuture().get()
+		viewModel.toggleSync().toExpiringFuture().get()
 	}
 
 	@Test

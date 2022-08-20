@@ -9,31 +9,24 @@ import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class WhenGettingThePlaybackEngineType {
 
-	companion object {
-		private var playbackEngineType: PlaybackEngineType? = null
+	private val playbackEngineType by lazy {
+		val applicationSettings = mockk<HoldApplicationSettings>()
+		every { applicationSettings.promiseApplicationSettings() } returns Promise(ApplicationSettings())
+		every { applicationSettings.promiseUpdatedSettings(any()) } answers { Promise(firstArg<ApplicationSettings>()) }
 
-		@BeforeClass
-		@JvmStatic
-		fun before() {
-			val applicationSettings = mockk<HoldApplicationSettings>()
-			every { applicationSettings.promiseApplicationSettings() } returns Promise(ApplicationSettings())
-			every { applicationSettings.promiseUpdatedSettings(any()) } answers { Promise(firstArg<ApplicationSettings>()) }
+		val selectedPlaybackEngineTypeAccess = SelectedPlaybackEngineTypeAccess(
+			applicationSettings
+		) { Promise(PlaybackEngineType.ExoPlayer) }
 
-			val selectedPlaybackEngineTypeAccess = SelectedPlaybackEngineTypeAccess(
-				applicationSettings
-			) { Promise(PlaybackEngineType.ExoPlayer) }
-			playbackEngineType =
-				selectedPlaybackEngineTypeAccess.promiseSelectedPlaybackEngineType().toExpiringFuture().get()
-		}
+		selectedPlaybackEngineTypeAccess.promiseSelectedPlaybackEngineType().toExpiringFuture().get()
 	}
 
 	@Test
-	fun thenThePlaybackEngineTypeIsExoPlayer() {
+	fun `then the playback engine type is exo player`() {
 		assertThat(playbackEngineType).isEqualTo(PlaybackEngineType.ExoPlayer)
 	}
 }

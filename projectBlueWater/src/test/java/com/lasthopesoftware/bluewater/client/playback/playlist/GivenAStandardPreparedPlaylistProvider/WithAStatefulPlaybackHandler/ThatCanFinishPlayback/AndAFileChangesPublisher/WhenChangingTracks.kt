@@ -1,62 +1,60 @@
-package com.lasthopesoftware.bluewater.client.playback.playlist.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatCanFinishPlayback.AndAFileChangesPublisher;
+package com.lasthopesoftware.bluewater.client.playback.playlist.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatCanFinishPlayback.AndAFileChangesPublisher
 
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.playback.engine.preparation.SupplyQueuedPreparedFiles;
-import com.lasthopesoftware.bluewater.client.playback.file.NoTransformVolumeManager;
-import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile;
-import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile;
-import com.lasthopesoftware.bluewater.client.playback.file.fakes.FakeBufferingPlaybackHandler;
-import com.lasthopesoftware.bluewater.client.playback.file.fakes.ResolvablePlaybackHandler;
-import com.lasthopesoftware.bluewater.client.playback.playlist.PlaylistPlayer;
-import com.namehillsoftware.handoff.promises.Promise;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.playback.engine.preparation.SupplyQueuedPreparedFiles
+import com.lasthopesoftware.bluewater.client.playback.file.NoTransformVolumeManager
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile
+import com.lasthopesoftware.bluewater.client.playback.file.fakes.FakeBufferingPlaybackHandler
+import com.lasthopesoftware.bluewater.client.playback.file.fakes.ResolvablePlaybackHandler
+import com.lasthopesoftware.bluewater.client.playback.playlist.PlaylistPlayer
+import com.namehillsoftware.handoff.promises.Promise
+import io.mockk.every
+import io.mockk.mockk
+import io.reactivex.Observable
+import org.assertj.core.api.Assertions.assertThat
+import org.joda.time.Duration
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 
-import org.joda.time.Duration;
-import org.junit.Before;
-import org.junit.Test;
+class WhenChangingTracks {
+    private val expectedPositionedPlayableFile = PositionedPlayableFile(
+		0,
+		FakeBufferingPlaybackHandler(),
+		NoTransformVolumeManager(),
+		ServiceFile(1)
+	)
 
-import io.reactivex.Observable;
+	private var positionedPlayingFile: PositionedPlayingFile? = null
 
-import static org.assertj.core.api.Java6Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+	@BeforeAll
+    fun act() {
+        val playbackHandler = ResolvablePlaybackHandler()
+        val positionedPlaybackHandlerContainer = Promise(
+            PositionedPlayableFile(
+                0,
+                playbackHandler,
+                NoTransformVolumeManager(),
+                ServiceFile(1)
+            )
+        )
+        val secondPositionedPlaybackHandlerContainer = Promise(expectedPositionedPlayableFile)
+        val preparedPlaybackFileQueue = mockk<SupplyQueuedPreparedFiles>().apply {
+			every { promiseNextPreparedPlaybackFile(Duration.ZERO) } returnsMany listOf(
+				positionedPlaybackHandlerContainer,
+				secondPositionedPlaybackHandlerContainer,
+			)
+		}
+        val subscription = Observable
+			.create(PlaylistPlayer(preparedPlaybackFileQueue, Duration.ZERO))
+            .subscribe { this.positionedPlayingFile = it }
+        playbackHandler.resolve()
+		subscription.dispose()
+    }
 
-public class WhenChangingTracks {
-
-	private PositionedPlayingFile positionedPlayingFile;
-	private PositionedPlayableFile expectedPositionedPlayableFile;
-
-	@Before
-	public void context() {
-		final ResolvablePlaybackHandler playbackHandler = new ResolvablePlaybackHandler();
-		final FakeBufferingPlaybackHandler playbackHandlerUnderTest = new FakeBufferingPlaybackHandler();
-
-		final Promise<PositionedPlayableFile> positionedPlaybackHandlerContainer =
-			new Promise<>(new PositionedPlayableFile(
-				0,
-				playbackHandler,
-				new NoTransformVolumeManager(),
-				new ServiceFile(1)));
-
-		final Promise<PositionedPlayableFile> secondPositionedPlaybackHandlerContainer =
-			new Promise<>((this.expectedPositionedPlayableFile = new PositionedPlayableFile(
-				0,
-				playbackHandlerUnderTest,
-				new NoTransformVolumeManager(),
-				new ServiceFile(1))));
-
-		final SupplyQueuedPreparedFiles preparedPlaybackFileQueue = mock(SupplyQueuedPreparedFiles.class);
-		when(preparedPlaybackFileQueue.promiseNextPreparedPlaybackFile(Duration.ZERO))
-			.thenReturn(positionedPlaybackHandlerContainer)
-			.thenReturn(secondPositionedPlaybackHandlerContainer);
-
-		Observable.create(new PlaylistPlayer(preparedPlaybackFileQueue, Duration.ZERO)).subscribe(positionedPlayingFile -> this.positionedPlayingFile = positionedPlayingFile);
-
-		playbackHandler.resolve();
-	}
-
-	@Test
-	public void thenTheChangeCanBeObserved() {
-		assertThat(positionedPlayingFile.asPositionedFile())
-			.isEqualTo(expectedPositionedPlayableFile.asPositionedFile());
-	}
+    @Test
+    fun `then the change is observed`() {
+        assertThat(positionedPlayingFile!!.asPositionedFile())
+            .isEqualTo(expectedPositionedPlayableFile.asPositionedFile())
+    }
 }

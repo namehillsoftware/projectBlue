@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.playback.service.receivers.notific
 import android.app.Notification
 import android.app.NotificationManager
 import androidx.core.app.NotificationCompat
+import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -46,7 +47,10 @@ class WhenTheFileChanges : AndroidContext() {
 				),
 				NotificationsConfiguration("", 43),
 				notificationContentBuilder
-			) { Promise(FakeNotificationCompatBuilder.newFakeBuilder(Notification())) },
+			) { Promise(FakeNotificationCompatBuilder.newFakeBuilder(
+                ApplicationProvider.getApplicationContext(),
+                Notification()
+            )) },
 			mockk(relaxed = true)
 		)
 

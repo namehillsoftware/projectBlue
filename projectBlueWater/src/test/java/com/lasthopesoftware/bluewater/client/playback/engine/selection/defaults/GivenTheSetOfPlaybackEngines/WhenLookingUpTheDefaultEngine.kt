@@ -2,26 +2,18 @@ package com.lasthopesoftware.bluewater.client.playback.engine.selection.defaults
 
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineType
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.defaults.DefaultPlaybackEngineLookup
-import com.lasthopesoftware.bluewater.shared.promises.extensions.ExpiringFuturePromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import org.assertj.core.api.AssertionsForClassTypes.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class WhenLookingUpTheDefaultEngine {
-	@Test
-	fun thenItIsExoPlayer() {
-		assertThat(playbackEngineType)
-			.isEqualTo(PlaybackEngineType.ExoPlayer)
+	private val playbackEngineType by lazy {
+		DefaultPlaybackEngineLookup().promiseDefaultEngineType().toExpiringFuture().get()
 	}
 
-	companion object {
-		private var playbackEngineType: PlaybackEngineType? = null
-
-		@BeforeClass
-		@JvmStatic
-		fun before() {
-			playbackEngineType =
-				ExpiringFuturePromise(DefaultPlaybackEngineLookup().promiseDefaultEngineType()).get()
-		}
+	@Test
+	fun `then it is exo player`() {
+		assertThat(playbackEngineType)
+			.isEqualTo(PlaybackEngineType.ExoPlayer)
 	}
 }

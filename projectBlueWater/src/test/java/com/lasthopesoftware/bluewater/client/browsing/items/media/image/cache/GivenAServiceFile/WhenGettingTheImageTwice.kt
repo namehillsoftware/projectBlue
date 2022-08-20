@@ -12,30 +12,28 @@ import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class WhenGettingTheImageTwice {
-	companion object {
-		private val expectedImageBytes = byteArrayOf(18)
-		private val imageBytes by lazy {
-			val images = mockk<GetRawImages>()
-			every { images.promiseImageBytes(LibraryId(33), ServiceFile(5555)) } returns Promise(expectedImageBytes)
+	private val expectedImageBytes = byteArrayOf(18)
+	private val imageBytes by lazy {
+		val images = mockk<GetRawImages>()
+		every { images.promiseImageBytes(LibraryId(33), ServiceFile(5555)) } returns Promise(expectedImageBytes)
 
-			val cacheKeyLookup = mockk<LookupImageCacheKey>()
-			every { cacheKeyLookup.promiseImageCacheKey(LibraryId(33), ServiceFile(5555)) } returns "the-key".toPromise()
+		val cacheKeyLookup = mockk<LookupImageCacheKey>()
+		every { cacheKeyLookup.promiseImageCacheKey(LibraryId(33), ServiceFile(5555)) } returns "the-key".toPromise()
 
-			val memoryCachedImageAccess = MemoryCachedImageAccess(
-				images,
-				cacheKeyLookup,
-				LruPromiseCache(1)
-			)
+		val memoryCachedImageAccess = MemoryCachedImageAccess(
+			images,
+			cacheKeyLookup,
+			LruPromiseCache(1)
+		)
 
-			memoryCachedImageAccess.promiseImageBytes(LibraryId(33), ServiceFile(5555)).toExpiringFuture().get()
+		memoryCachedImageAccess.promiseImageBytes(LibraryId(33), ServiceFile(5555)).toExpiringFuture().get()
 
-			every { images.promiseImageBytes(LibraryId(33), ServiceFile(5555)) } returns Promise(byteArrayOf(8))
+		every { images.promiseImageBytes(LibraryId(33), ServiceFile(5555)) } returns Promise(byteArrayOf(8))
 
-			memoryCachedImageAccess.promiseImageBytes(LibraryId(33), ServiceFile(5555)).toExpiringFuture().get()
-		}
+		memoryCachedImageAccess.promiseImageBytes(LibraryId(33), ServiceFile(5555)).toExpiringFuture().get()
 	}
 
 	@Test

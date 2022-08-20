@@ -12,52 +12,55 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 import java.util.concurrent.TimeUnit
 
 class WhenGettingTheUpdatedConnection {
 
-	companion object {
-		private var isActive: Boolean? = null
-		private var originalConnection: IConnectionProvider? = null
-		private var newConnection: IConnectionProvider? = null
+	private val libraryId = LibraryId(2)
 
-		@JvmStatic
-		@BeforeClass
-		fun before() {
-			val connectionsTester = mockk<TestConnections>()
-			every  { connectionsTester.promiseIsConnectionPossible(any()) } returns true.toPromise()
+	private val mut by lazy {
+		val connectionsTester = mockk<TestConnections>()
+		every { connectionsTester.promiseIsConnectionPossible(any()) } returns true.toPromise()
 
-			val libraryConnectionProvider = mockk<ProvideLibraryConnections>()
-			every { libraryConnectionProvider.promiseLibraryConnection(LibraryId(2)) } answers { ProgressingPromise(mockk<IConnectionProvider>()) }
+		val libraryConnectionProvider = mockk<ProvideLibraryConnections>()
+		every { libraryConnectionProvider.promiseLibraryConnection(libraryId) } answers { ProgressingPromise(mockk<IConnectionProvider>()) }
 
-			val connectionSessionManager = ConnectionSessionManager(
-				connectionsTester,
-				libraryConnectionProvider,
-				PromisedConnectionsRepository()
-			)
+		val connectionSessionManager = ConnectionSessionManager(
+			connectionsTester,
+			libraryConnectionProvider,
+			PromisedConnectionsRepository()
+		)
 
-			val libraryId = LibraryId(2)
-			val futureConnectionProvider = connectionSessionManager.promiseLibraryConnection(libraryId).toExpiringFuture()
+		connectionSessionManager
+	}
 
-			originalConnection = futureConnectionProvider[30, TimeUnit.SECONDS]
+	private var isActive: Boolean? = null
+	private var originalConnection: IConnectionProvider? = null
+	private var newConnection: IConnectionProvider? = null
 
-			connectionSessionManager.removeConnection(libraryId)
+	@BeforeAll
+	fun act() {
+		val futureConnectionProvider = mut.promiseLibraryConnection(libraryId).toExpiringFuture()
 
-			isActive = connectionSessionManager.isConnectionActive(libraryId)
+		originalConnection = futureConnectionProvider[30, TimeUnit.SECONDS]
 
-			newConnection = connectionSessionManager.promiseLibraryConnection(libraryId).toExpiringFuture()[30, TimeUnit.SECONDS]
-		}
+		mut.removeConnection(libraryId)
+
+		isActive = mut.isConnectionActive(libraryId)
+
+		newConnection =
+			mut.promiseLibraryConnection(libraryId).toExpiringFuture()[30, TimeUnit.SECONDS]
 	}
 
 	@Test
-	fun thenTheConnectionIsNotActive() {
+	fun `then the connection is not active`() {
 		assertThat(isActive).isFalse
 	}
 
 	@Test
-	fun thenTheNewConnectionIsNotTheOriginalConnection() {
+	fun `then the new connection is not the original connection`() {
 		assertThat(newConnection).isNotEqualTo(originalConnection)
 	}
 }

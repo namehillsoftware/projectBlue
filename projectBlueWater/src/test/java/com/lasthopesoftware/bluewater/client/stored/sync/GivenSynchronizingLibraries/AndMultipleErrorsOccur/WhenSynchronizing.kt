@@ -21,94 +21,91 @@ import io.mockk.every
 import io.mockk.mockk
 import io.reactivex.Observable
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
-import java.util.*
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
+import kotlin.random.Random.Default.nextInt
 
 class WhenSynchronizing {
 
-	companion object {
-		private val random = Random()
-		private val storedFiles = arrayOf(
-			StoredFile().setId(random.nextInt()).setServiceId(1).setLibraryId(4),
-			StoredFile().setId(random.nextInt()).setServiceId(2).setLibraryId(4),
-			StoredFile().setId(random.nextInt()).setServiceId(4).setLibraryId(4),
-			StoredFile().setId(random.nextInt()).setServiceId(5).setLibraryId(4),
-			StoredFile().setId(random.nextInt()).setServiceId(7).setLibraryId(4),
-			StoredFile().setId(random.nextInt()).setServiceId(114).setLibraryId(4),
-			StoredFile().setId(random.nextInt()).setServiceId(92).setLibraryId(4)
-		)
-		private val faultingStoredFileServiceIds = listOf(7, 92)
-		private val expectedStoredFileJobs = storedFiles.filter { f -> !faultingStoredFileServiceIds.contains(f.serviceId) }
-		private val recordingMessageBus = RecordingApplicationMessageBus()
-		private val filePruner by lazy {
-			mockk<PruneStoredFiles>()
-				.apply {
-					every { pruneDanglingFiles() } returns Unit.toPromise()
-				}
-		}
+	private val storedFiles = arrayOf(
+		StoredFile().setId(nextInt()).setServiceId(1).setLibraryId(4),
+		StoredFile().setId(nextInt()).setServiceId(2).setLibraryId(4),
+		StoredFile().setId(nextInt()).setServiceId(4).setLibraryId(4),
+		StoredFile().setId(nextInt()).setServiceId(5).setLibraryId(4),
+		StoredFile().setId(nextInt()).setServiceId(7).setLibraryId(4),
+		StoredFile().setId(nextInt()).setServiceId(114).setLibraryId(4),
+		StoredFile().setId(nextInt()).setServiceId(92).setLibraryId(4)
+	)
+	private val faultingStoredFileServiceIds = listOf(7, 92)
+	private val expectedStoredFileJobs = storedFiles.filter { f -> !faultingStoredFileServiceIds.contains(f.serviceId) }
+	private val recordingMessageBus = RecordingApplicationMessageBus()
+	private val synchronization by lazy {
+		val filePruner = mockk<PruneStoredFiles>()
+			.apply {
+				every { pruneDanglingFiles() } returns Unit.toPromise()
+			}
 
-		@JvmStatic
-		@BeforeClass
-		fun before() {
-			val libraryProvider = mockk<ILibraryProvider>()
-			every { libraryProvider.allLibraries } returns Promise(listOf(Library().setId(4)))
-			val librarySyncHandler = mockk<ControlLibrarySyncs>()
-			every { librarySyncHandler.observeLibrarySync(LibraryId(4)) } returns Observable.concatArrayDelayError(
-				Observable
-					.fromArray(*storedFiles)
-					.filter { f -> f.serviceId == 92 }
-					.flatMap({ f ->
-						Observable.concat(
-							Observable.just(
-								StoredFileJobStatus(mockk(), f, StoredFileJobState.Queued),
-								StoredFileJobStatus(mockk(), f, StoredFileJobState.Downloading)
-							),
-							Observable.error(StoredFileReadException(mockk(), f))
-						)
-					}, true),
-				Observable
-					.fromArray(*storedFiles)
-					.filter { f -> !faultingStoredFileServiceIds.contains(f.serviceId) }
-					.flatMap { f ->
+		val libraryProvider = mockk<ILibraryProvider>()
+		every { libraryProvider.allLibraries } returns Promise(listOf(Library().setId(4)))
+		val librarySyncHandler = mockk<ControlLibrarySyncs>()
+		every { librarySyncHandler.observeLibrarySync(LibraryId(4)) } returns Observable.concatArrayDelayError(
+			Observable
+				.fromArray(*storedFiles)
+				.filter { f -> f.serviceId == 92 }
+				.flatMap({ f ->
+					Observable.concat(
+						Observable.just(
+							StoredFileJobStatus(mockk(), f, StoredFileJobState.Queued),
+							StoredFileJobStatus(mockk(), f, StoredFileJobState.Downloading)
+						),
+						Observable.error(StoredFileReadException(mockk(), f))
+					)
+				}, true),
+			Observable
+				.fromArray(*storedFiles)
+				.filter { f -> !faultingStoredFileServiceIds.contains(f.serviceId) }
+				.flatMap { f ->
+					Observable.just(
+						StoredFileJobStatus(mockk(), f, StoredFileJobState.Queued),
+						StoredFileJobStatus(mockk(), f, StoredFileJobState.Downloading),
+						StoredFileJobStatus(mockk(), f, StoredFileJobState.Downloaded)
+					)
+				},
+			Observable
+				.fromArray(*storedFiles)
+				.filter { f -> f.serviceId == 7 }
+				.flatMap({ f ->
+					Observable.concat(
 						Observable.just(
 							StoredFileJobStatus(mockk(), f, StoredFileJobState.Queued),
 							StoredFileJobStatus(mockk(), f, StoredFileJobState.Downloading),
-							StoredFileJobStatus(mockk(), f, StoredFileJobState.Downloaded)
-						)
-					},
-				Observable
-					.fromArray(*storedFiles)
-					.filter { f -> f.serviceId == 7 }
-					.flatMap({ f ->
-						Observable.concat(
-							Observable.just(
-								StoredFileJobStatus(mockk(), f, StoredFileJobState.Queued),
-								StoredFileJobStatus(mockk(), f, StoredFileJobState.Downloading),
-							),
-							Observable.error(StoredFileWriteException(mockk(), f))
-						)
-					}, true)
-			)
+						),
+						Observable.error(StoredFileWriteException(mockk(), f))
+					)
+				}, true)
+		)
 
-			val checkSync = mockk<CheckForSync>()
-			with (checkSync) {
-				every { promiseIsSyncNeeded() } returns Promise(true)
-			}
-
-			val synchronization = StoredFileSynchronization(
-				libraryProvider,
-				recordingMessageBus,
-				filePruner,
-				checkSync,
-				librarySyncHandler
-			)
-			synchronization.streamFileSynchronization().blockingAwait()
+		val checkSync = mockk<CheckForSync>()
+		with(checkSync) {
+			every { promiseIsSyncNeeded() } returns Promise(true)
 		}
+
+		StoredFileSynchronization(
+			libraryProvider,
+			recordingMessageBus,
+			filePruner,
+			checkSync,
+			librarySyncHandler
+		)
+	}
+
+	@BeforeAll
+	fun act() {
+		synchronization.streamFileSynchronization().blockingAwait()
 	}
 
 	@Test
-	fun thenTheStoredFilesAreBroadcastAsQueued() {
+	fun `then the stored files are broadcast as queued`() {
 		assertThat(
 			recordingMessageBus.recordedMessages
 				.filterIsInstance<StoredFileMessage.FileQueued>()
@@ -117,7 +114,7 @@ class WhenSynchronizing {
 	}
 
 	@Test
-	fun thenTheStoredFilesAreBroadcastAsDownloading() {
+	fun `then the stored files are broadcast as downloading`() {
 		assertThat(
 			recordingMessageBus.recordedMessages
 				.filterIsInstance<StoredFileMessage.FileDownloading>()
@@ -126,7 +123,7 @@ class WhenSynchronizing {
 	}
 
 	@Test
-	fun thenTheWriteErrorsIsBroadcast() {
+	fun `then the write errors is broadcast`() {
 		assertThat(
 			recordingMessageBus.recordedMessages
 				.filterIsInstance<StoredFileMessage.FileWriteError>()
@@ -135,7 +132,7 @@ class WhenSynchronizing {
 	}
 
 	@Test
-	fun thenTheReadErrorsIsBroadcast() {
+	fun `then the read errors is broadcast`() {
 		assertThat(
 			recordingMessageBus.recordedMessages
 				.filterIsInstance<StoredFileMessage.FileReadError>()
@@ -144,7 +141,7 @@ class WhenSynchronizing {
 	}
 
 	@Test
-	fun thenTheStoredFilesAreBroadcastAsDownloaded() {
+	fun `then the stored files are broadcast as downloaded`() {
 		assertThat(
 			recordingMessageBus.recordedMessages
 				.filterIsInstance<StoredFileMessage.FileDownloaded>()
@@ -156,6 +153,7 @@ class WhenSynchronizing {
 	fun thenASyncStoppedEventOccurs() {
 		assertThat(
 			recordingMessageBus.recordedMessages
-				.filterIsInstance<SyncStateMessage.SyncStopped>().singleOrNull()).isNotNull
+				.filterIsInstance<SyncStateMessage.SyncStopped>().singleOrNull()
+		).isNotNull
 	}
 }

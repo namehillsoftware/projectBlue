@@ -21,81 +21,86 @@ import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import java.io.ByteArrayInputStream
 import java.io.IOException
 
 class WhenSyncingTheStoredItemsAndAnErrorOccursDownloading {
-	companion object {
-		private val storedFileJobResults by lazy {
-			val storedItemAccessMock = mockk<AccessStoredItems>()
-			every { storedItemAccessMock.promiseStoredItems(LibraryId(42)) } returns Promise(
-				setOf(
-					StoredItem(1, 14, StoredItem.ItemType.ITEM)
+	private val storedFileJobResults by lazy {
+		val storedItemAccessMock = mockk<AccessStoredItems>()
+		every { storedItemAccessMock.promiseStoredItems(LibraryId(42)) } returns Promise(
+			setOf(
+				StoredItem(1, 14, StoredItem.ItemType.ITEM)
+			)
+		)
+
+		val fileListParameters = FileListParameters
+		val mockFileProvider = mockk<ProvideLibraryFiles>()
+		every {
+			mockFileProvider.promiseFiles(
+				LibraryId(42),
+				FileListParameters.Options.None,
+				*fileListParameters.getFileListParameters(ItemId(14))
+			)
+		} returns Promise(
+			listOf(
+				ServiceFile(1),
+				ServiceFile(2),
+				ServiceFile(4),
+				ServiceFile(10)
+			)
+		)
+
+		val storedFilesPruner = mockk<PruneStoredFiles>()
+		every { storedFilesPruner.pruneDanglingFiles() } returns Unit.toPromise()
+		every { storedFilesPruner.pruneStoredFiles(any()) } returns Unit.toPromise()
+
+		val storedFilesUpdater = mockk<UpdateStoredFiles>()
+		every { storedFilesUpdater.promiseStoredFileUpdate(any(), any()) } answers {
+			Promise(
+				StoredFile(
+					firstArg(),
+					1,
+					secondArg(),
+					"fake-file-name",
+					true
 				)
 			)
-
-			val fileListParameters = FileListParameters
-			val mockFileProvider = mockk<ProvideLibraryFiles>()
-			every { mockFileProvider.promiseFiles(LibraryId(42), FileListParameters.Options.None, *fileListParameters.getFileListParameters(ItemId(14))) } returns Promise(
-				listOf(
-					ServiceFile(1),
-					ServiceFile(2),
-					ServiceFile(4),
-					ServiceFile(10)
-				)
-			)
-
-			val storedFilesPruner = mockk<PruneStoredFiles>()
-			every { storedFilesPruner.pruneDanglingFiles() } returns Unit.toPromise()
-			every { storedFilesPruner.pruneStoredFiles(any()) } returns Unit.toPromise()
-
-			val storedFilesUpdater = mockk<UpdateStoredFiles>()
-			every { storedFilesUpdater.promiseStoredFileUpdate(any(), any()) } answers {
-				Promise(
-					StoredFile(
-						firstArg(),
-						1,
-						secondArg(),
-						"fake-file-name",
-						true
-					)
-				)
-			}
-
-			val accessStoredFiles = mockk<AccessStoredFiles>()
-			every { accessStoredFiles.markStoredFileAsDownloaded(any()) } answers { Promise(firstArg<StoredFile>()) }
-
-			val librarySyncHandler = LibrarySyncsHandler(
-				StoredItemServiceFileCollector(
-					storedItemAccessMock,
-					mockFileProvider,
-					fileListParameters
-				),
-				storedFilesPruner,
-				storedFilesUpdater,
-				StoredFileJobProcessor(
-					StoredFileSystemFileProducer(),
-					accessStoredFiles,
-					{ _, f ->
-						if (f.serviceId == 2) Promise(IOException())
-						else Promise(ByteArrayInputStream(ByteArray(0)))
-					},
-					{ true },
-					{ true },
-					mockk(relaxUnitFun = true))
-			)
-
-			librarySyncHandler.observeLibrarySync(LibraryId(42))
-				.filter { j -> j.storedFileJobState == StoredFileJobState.Downloaded }
-				.map { j -> j.storedFile }
-				.toList()
-				.blockingGet()
 		}
+
+		val accessStoredFiles = mockk<AccessStoredFiles>()
+		every { accessStoredFiles.markStoredFileAsDownloaded(any()) } answers { Promise(firstArg<StoredFile>()) }
+
+		val librarySyncHandler = LibrarySyncsHandler(
+			StoredItemServiceFileCollector(
+				storedItemAccessMock,
+				mockFileProvider,
+				fileListParameters
+			),
+			storedFilesPruner,
+			storedFilesUpdater,
+			StoredFileJobProcessor(
+				StoredFileSystemFileProducer(),
+				accessStoredFiles,
+				{ _, f ->
+					if (f.serviceId == 2) Promise(IOException())
+					else Promise(ByteArrayInputStream(ByteArray(0)))
+				},
+				{ true },
+				{ true },
+				mockk(relaxUnitFun = true)
+			)
+		)
+
+		librarySyncHandler.observeLibrarySync(LibraryId(42))
+			.filter { j -> j.storedFileJobState == StoredFileJobState.Downloaded }
+			.map { j -> j.storedFile }
+			.toList()
+			.blockingGet()
 	}
 
 	@Test
-	fun thenTheOtherFilesInTheStoredItemsAreSynced() {
+	fun `then the other files in the stored items are synced`() {
 		assertThat(storedFileJobResults.map { it.serviceId }).containsExactly(1, 4, 10)
 	}
 }

@@ -7,39 +7,36 @@ import com.lasthopesoftware.resources.strings.GetStringResources
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
-
-private val recordingMessageBus = RecordingTypedMessageBus<ItemListMenuMessage>()
-
-private val viewModel by lazy {
-	val stringResource = mockk<GetStringResources>().apply {
-		every { loading } returns "past"
-		every { unknownArtist } returns "next"
-		every { unknownTrack } returns "shout"
-	}
-
-	ReusableTrackHeadlineViewModel(
-		mockk(),
-		stringResource,
-		mockk(),
-		mockk(),
-		recordingMessageBus,
-	)
-}
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 
 class WhenHidingTheMenu {
 
-	companion object {
-		private var wasMenuShown = false
-		private var wasMenuHidden = false
+	private val recordingMessageBus = RecordingTypedMessageBus<ItemListMenuMessage>()
 
-		@BeforeClass
-		@JvmStatic
-		fun act() {
-			wasMenuShown = viewModel.showMenu()
-			wasMenuHidden = viewModel.hideMenu()
+	private val viewModel by lazy {
+		val stringResource = mockk<GetStringResources>().apply {
+			every { loading } returns "past"
+			every { unknownArtist } returns "next"
+			every { unknownTrack } returns "shout"
 		}
+
+		ReusableTrackHeadlineViewModel(
+			mockk(),
+			stringResource,
+			mockk(),
+			mockk(),
+			recordingMessageBus,
+		)
+	}
+
+	private var wasMenuShown = false
+	private var wasMenuHidden = false
+
+	@BeforeAll
+	fun act() {
+		wasMenuShown = viewModel.showMenu()
+		wasMenuHidden = viewModel.hideMenu()
 	}
 
 	@Test

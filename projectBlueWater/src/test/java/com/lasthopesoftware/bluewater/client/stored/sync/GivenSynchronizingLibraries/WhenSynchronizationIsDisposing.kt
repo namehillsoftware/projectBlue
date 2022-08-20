@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.stored.sync.GivenSynchronizingLibraries
 
-import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -20,37 +19,33 @@ import io.mockk.every
 import io.mockk.mockk
 import io.reactivex.Observable
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Test
-import java.util.*
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
+import kotlin.random.Random.Default.nextInt
 
-class WhenSynchronizationIsDisposing : AndroidContext() {
+class WhenSynchronizationIsDisposing {
 
-	companion object {
-		private val random = Random()
-		private val storedFiles = arrayOf(
-			StoredFile().setId(random.nextInt()).setServiceId(1).setLibraryId(4),
-			StoredFile().setId(random.nextInt()).setServiceId(2).setLibraryId(4),
-			StoredFile().setId(random.nextInt()).setServiceId(4).setLibraryId(4),
-			StoredFile().setId(random.nextInt()).setServiceId(5).setLibraryId(4),
-			StoredFile().setId(random.nextInt()).setServiceId(114).setLibraryId(4),
-			StoredFile().setId(random.nextInt()).setServiceId(92).setLibraryId(4),
-			StoredFile().setId(random.nextInt()).setServiceId(random.nextInt()).setLibraryId(10),
-			StoredFile().setId(random.nextInt()).setServiceId(random.nextInt()).setLibraryId(10),
-			StoredFile().setId(random.nextInt()).setServiceId(random.nextInt()).setLibraryId(10),
-			StoredFile().setId(random.nextInt()).setServiceId(random.nextInt()).setLibraryId(10),
-			StoredFile().setId(random.nextInt()).setServiceId(random.nextInt()).setLibraryId(10),
-			StoredFile().setId(random.nextInt()).setServiceId(random.nextInt()).setLibraryId(10)
-		)
-		private val recordingMessageBus = RecordingApplicationMessageBus()
-		private val filePruner by lazy {
-			mockk<PruneStoredFiles>()
-				.apply {
-					every { pruneDanglingFiles() } returns Unit.toPromise()
-				}
-		}
-	}
+	private val storedFiles = arrayOf(
+		StoredFile().setId(nextInt()).setServiceId(1).setLibraryId(4),
+		StoredFile().setId(nextInt()).setServiceId(2).setLibraryId(4),
+		StoredFile().setId(nextInt()).setServiceId(4).setLibraryId(4),
+		StoredFile().setId(nextInt()).setServiceId(5).setLibraryId(4),
+		StoredFile().setId(nextInt()).setServiceId(114).setLibraryId(4),
+		StoredFile().setId(nextInt()).setServiceId(92).setLibraryId(4),
+		StoredFile().setId(nextInt()).setServiceId(nextInt()).setLibraryId(10),
+		StoredFile().setId(nextInt()).setServiceId(nextInt()).setLibraryId(10),
+		StoredFile().setId(nextInt()).setServiceId(nextInt()).setLibraryId(10),
+		StoredFile().setId(nextInt()).setServiceId(nextInt()).setLibraryId(10),
+		StoredFile().setId(nextInt()).setServiceId(nextInt()).setLibraryId(10),
+		StoredFile().setId(nextInt()).setServiceId(nextInt()).setLibraryId(10)
+	)
+	private val recordingMessageBus = RecordingApplicationMessageBus()
+	private val synchronization by lazy {
+		val filePruner = mockk<PruneStoredFiles>()
+			.apply {
+				every { pruneDanglingFiles() } returns Unit.toPromise()
+			}
 
-	override fun before() {
 		val libraryProvider = mockk<ILibraryProvider>()
 		every { libraryProvider.allLibraries } returns Promise(
 			listOf(
@@ -81,19 +76,22 @@ class WhenSynchronizationIsDisposing : AndroidContext() {
 			every { promiseIsSyncNeeded() } returns Promise(true)
 		}
 
-		val synchronization = StoredFileSynchronization(
-            libraryProvider,
-            recordingMessageBus,
-            filePruner,
-            checkSync,
-            librarySyncHandler
-        )
+		StoredFileSynchronization(
+			libraryProvider,
+			recordingMessageBus,
+			filePruner,
+			checkSync,
+			librarySyncHandler
+		)
+	}
 
+	@BeforeAll
+	fun act() {
 		synchronization.streamFileSynchronization().subscribe().dispose()
 	}
 
 	@Test
-	fun thenASyncStartedEventOccurs() {
+	fun `then a Sync started event occurs`() {
 		assertThat(
 			recordingMessageBus.recordedMessages
 				.filterIsInstance<SyncStateMessage.SyncStarted>()
@@ -101,7 +99,7 @@ class WhenSynchronizationIsDisposing : AndroidContext() {
 	}
 
 	@Test
-	fun thenTheStoredFilesAreBroadcastAsQueued() {
+	fun `then the stored files are broadcast as queued`() {
 		assertThat(
 			recordingMessageBus.recordedMessages
 				.filterIsInstance<StoredFileMessage.FileQueued>()
@@ -110,7 +108,7 @@ class WhenSynchronizationIsDisposing : AndroidContext() {
 	}
 
 	@Test
-	fun thenTheStoredFilesAreBroadcastAsDownloading() {
+	fun `then the stored files are broadcast as downloading`() {
 		assertThat(
 			recordingMessageBus.recordedMessages
 				.filterIsInstance<StoredFileMessage.FileDownloading>()
@@ -119,7 +117,7 @@ class WhenSynchronizationIsDisposing : AndroidContext() {
 	}
 
 	@Test
-	fun thenTheStoredFilesAreBroadcastAsDownloaded() {
+	fun `then the stored files are broadcast as downloaded`() {
 		assertThat(
 			recordingMessageBus.recordedMessages
 				.filterIsInstance<StoredFileMessage.FileDownloading>()
@@ -128,7 +126,7 @@ class WhenSynchronizationIsDisposing : AndroidContext() {
 	}
 
 	@Test
-	fun thenASyncStoppedEventOccurs() {
+	fun `then a Sync stopped event occurs`() {
 		assertThat(
 			recordingMessageBus.recordedMessages
 				.filterIsInstance<SyncStateMessage.SyncStopped>()

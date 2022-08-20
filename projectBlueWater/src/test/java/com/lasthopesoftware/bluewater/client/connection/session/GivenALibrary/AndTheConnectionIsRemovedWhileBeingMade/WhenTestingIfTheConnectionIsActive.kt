@@ -13,56 +13,58 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
 
 class WhenTestingIfTheConnectionIsActive {
 
-	companion object {
-		private var cancellationException: CancellationException? = null
-		private var isActive: Boolean? = null
+	private val libraryId = LibraryId(85)
 
-		@JvmStatic
-		@BeforeClass
-		fun before() {
-			val connectionsTester = mockk<TestConnections>()
-			every  { connectionsTester.promiseIsConnectionPossible(any()) } returns true.toPromise()
+	private val mut by lazy {
+		val connectionsTester = mockk<TestConnections>()
+		every { connectionsTester.promiseIsConnectionPossible(any()) } returns true.toPromise()
 
-			val deferredConnectionProvider = DeferredProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>()
-			val libraryConnectionProvider = mockk<ProvideLibraryConnections>()
-			every { libraryConnectionProvider.promiseLibraryConnection(LibraryId(2)) } returns deferredConnectionProvider
+		val deferredConnectionProvider = DeferredProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>()
+		val libraryConnectionProvider = mockk<ProvideLibraryConnections>()
+		every { libraryConnectionProvider.promiseLibraryConnection(libraryId) } returns deferredConnectionProvider
 
-			val connectionSessionManager = ConnectionSessionManager(
-				connectionsTester,
-				libraryConnectionProvider,
-				PromisedConnectionsRepository()
-			)
+		val connectionSessionManager = ConnectionSessionManager(
+			connectionsTester,
+			libraryConnectionProvider,
+			PromisedConnectionsRepository()
+		)
 
-			val libraryId = LibraryId(2)
-			val futureConnectionProvider = connectionSessionManager.promiseLibraryConnection(libraryId).toExpiringFuture()
+		connectionSessionManager
+	}
 
-			connectionSessionManager.removeConnection(libraryId)
+	private var cancellationException: CancellationException? = null
+	private var isActive: Boolean? = null
 
-			try {
-				futureConnectionProvider[30, TimeUnit.SECONDS]
-			} catch (e: ExecutionException) {
-				cancellationException = e.cause as? CancellationException ?: throw e
-			}
+	@BeforeAll
+	fun before() {
+		val futureConnectionProvider = mut.promiseLibraryConnection(libraryId).toExpiringFuture()
 
-			isActive = connectionSessionManager.isConnectionActive(libraryId)
+		mut.removeConnection(libraryId)
+
+		try {
+			futureConnectionProvider[30, TimeUnit.SECONDS]
+		} catch (e: ExecutionException) {
+			cancellationException = e.cause as? CancellationException ?: throw e
 		}
+
+		isActive = mut.isConnectionActive(libraryId)
 	}
 
 	@Test
-	fun thenTheConnectionIsNotActive() {
+	fun `then the connection is not active`() {
 		assertThat(isActive).isFalse
 	}
 
 	@Test
-	fun thenTheConnectionProviderIsCancelled() {
+	fun `then the connection provider is cancelled`() {
 		assertThat(cancellationException).isNotNull
 	}
 }

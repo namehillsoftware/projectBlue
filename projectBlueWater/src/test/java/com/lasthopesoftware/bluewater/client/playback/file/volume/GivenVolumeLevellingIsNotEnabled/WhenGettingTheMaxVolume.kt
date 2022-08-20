@@ -9,26 +9,24 @@ import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class WhenGettingTheMaxVolume {
-	companion object {
-		private val returnedVolume by lazy {
-			val scopedCachedFilePropertiesProvider = ScopedCachedFilePropertiesProvider(
-				mockk(),
-				mockk(),
-				mockk()
-			)
-			val volumeLevelSettings = mockk<IVolumeLevelSettings>()
-			every { volumeLevelSettings.isVolumeLevellingEnabled } returns Promise(false)
-			val maxFileVolumeProvider =
-				MaxFileVolumeProvider(volumeLevelSettings, scopedCachedFilePropertiesProvider)
+	private val returnedVolume by lazy {
+		val scopedCachedFilePropertiesProvider = ScopedCachedFilePropertiesProvider(
+			mockk(),
+			mockk(),
+			mockk()
+		)
+		val volumeLevelSettings = mockk<IVolumeLevelSettings>()
+		every { volumeLevelSettings.isVolumeLevellingEnabled } returns Promise(false)
+		val maxFileVolumeProvider =
+			MaxFileVolumeProvider(volumeLevelSettings, scopedCachedFilePropertiesProvider)
 
-			maxFileVolumeProvider
-				.promiseMaxFileVolume(ServiceFile(1))
-				.toExpiringFuture()
-				.get()
-		}
+		maxFileVolumeProvider
+			.promiseMaxFileVolume(ServiceFile(1))
+			.toExpiringFuture()
+			.get()
 	}
 
 	@Test

@@ -15,54 +15,51 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import org.junit.BeforeClass
-import org.junit.Test
-
-private val fileList by lazy {
-	listOf(
-		ServiceFile(82),
-		ServiceFile(811),
-		ServiceFile(370),
-		ServiceFile(337),
-		ServiceFile(896),
-	)
-}
-
-private val services by lazy {
-	val selectedLibraryIdProvider = mockk<ProvideSelectedLibraryId>().apply {
-		every { selectedLibraryId } returns LibraryId(960).toPromise()
-	}
-
-	val itemProvider = mockk<ProvideItemFiles>().apply {
-		every { promiseFiles(LibraryId(960), ItemId(868), FileListParameters.Options.None) } returns fileList.toPromise()
-	}
-
-	val storedItemAccess = mockk<AccessStoredItems>().apply {
-		every { isItemMarkedForSync(any(), any<Item>()) } returns false.toPromise()
-	}
-
-	val controlNowPlaying = mockk<ControlPlaybackService>(relaxUnitFun = true)
-
-	val viewModel = FileListViewModel(
-		selectedLibraryIdProvider,
-		itemProvider,
-		storedItemAccess,
-		controlNowPlaying,
-	)
-
-	Pair(viewModel, controlNowPlaying)
-}
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 
 class WhenPlayingTheFiles {
 
-	companion object {
-		@BeforeClass
-		@JvmStatic
-		fun act() {
-			val (viewModel, _) = services
-			viewModel.loadItem(Item(868, "king")).toExpiringFuture().get()
-			viewModel.play()
+	private val fileList by lazy {
+		listOf(
+			ServiceFile(82),
+			ServiceFile(811),
+			ServiceFile(370),
+			ServiceFile(337),
+			ServiceFile(896),
+		)
+	}
+
+	private val services by lazy {
+		val selectedLibraryIdProvider = mockk<ProvideSelectedLibraryId>().apply {
+			every { selectedLibraryId } returns LibraryId(960).toPromise()
 		}
+
+		val itemProvider = mockk<ProvideItemFiles>().apply {
+			every { promiseFiles(LibraryId(960), ItemId(868), FileListParameters.Options.None) } returns fileList.toPromise()
+		}
+
+		val storedItemAccess = mockk<AccessStoredItems>().apply {
+			every { isItemMarkedForSync(any(), any<Item>()) } returns false.toPromise()
+		}
+
+		val controlNowPlaying = mockk<ControlPlaybackService>(relaxUnitFun = true)
+
+		val viewModel = FileListViewModel(
+			selectedLibraryIdProvider,
+			itemProvider,
+			storedItemAccess,
+			controlNowPlaying,
+		)
+
+		Pair(viewModel, controlNowPlaying)
+	}
+
+	@BeforeAll
+	fun act() {
+		val (viewModel, _) = services
+		viewModel.loadItem(Item(868, "king")).toExpiringFuture().get()
+		viewModel.play()
 	}
 
 	@Test

@@ -1,56 +1,51 @@
-package com.lasthopesoftware.bluewater.client.playback.service.notification.GivenAStandardNotificationManager;
+package com.lasthopesoftware.bluewater.client.playback.service.notification.GivenAStandardNotificationManager
 
-import android.app.Notification;
+import android.app.Notification
+import android.content.Context
+import androidx.test.core.app.ApplicationProvider
+import com.lasthopesoftware.AndroidContext
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.playback.service.notification.NotificationsConfiguration
+import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationBroadcaster
+import com.lasthopesoftware.bluewater.client.playback.service.notification.building.BuildNowPlayingNotificationContent
+import com.lasthopesoftware.bluewater.shared.android.notifications.control.ControlNotifications
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.resources.notifications.FakeNotificationCompatBuilder.Companion.newFakeBuilder
+import com.namehillsoftware.handoff.promises.Promise
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.verify
+import org.junit.Test
 
-import com.lasthopesoftware.AndroidContext;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.playback.service.notification.NotificationsConfiguration;
-import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationBroadcaster;
-import com.lasthopesoftware.bluewater.client.playback.service.notification.building.BuildNowPlayingNotificationContent;
-import com.lasthopesoftware.bluewater.shared.android.notifications.control.ControlNotifications;
-import com.namehillsoftware.handoff.promises.Promise;
+class WhenTheFileChanges : AndroidContext() {
+	companion object {
+		private val notificationController = mockk<ControlNotifications>()
+		private val notificationContentBuilder = mockk<BuildNowPlayingNotificationContent>()
+	}
 
-import org.junit.Test;
+	override fun before() {
+		val context = ApplicationProvider.getApplicationContext<Context>()
 
-import static com.lasthopesoftware.resources.notifications.FakeNotificationCompatBuilder.newFakeBuilder;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+		with(notificationContentBuilder) {
+			every { getLoadingNotification(any()) } returns newFakeBuilder(context, Notification())
+			every { promiseNowPlayingNotification(any(), any()) } returns newFakeBuilder(context, Notification()).toPromise()
+		}
 
-public class WhenTheFileChanges extends AndroidContext {
-
-	private static final ControlNotifications notificationController = mock(ControlNotifications.class);
-	private static final BuildNowPlayingNotificationContent notificationContentBuilder = mock(BuildNowPlayingNotificationContent.class);
-
-	@Override
-	public void before() {
-		when(notificationContentBuilder.getLoadingNotification(anyBoolean()))
-			.thenReturn(newFakeBuilder(new Notification()));
-
-		when(notificationContentBuilder.promiseNowPlayingNotification(any(), anyBoolean()))
-			.thenReturn(new Promise<>(newFakeBuilder(new Notification())));
-
-		final PlaybackNotificationBroadcaster playbackNotificationBroadcaster =
-			new PlaybackNotificationBroadcaster(
-				notificationController,
-				new NotificationsConfiguration("",43),
-				notificationContentBuilder,
-				() -> new Promise<>(newFakeBuilder(new Notification())));
-
-		playbackNotificationBroadcaster.notifyPlayingFileChanged(new ServiceFile(1));
+		val playbackNotificationBroadcaster = PlaybackNotificationBroadcaster(
+			notificationController,
+			NotificationsConfiguration("", 43),
+			notificationContentBuilder
+		) { Promise(newFakeBuilder(context, Notification())) }
+		playbackNotificationBroadcaster.notifyPlayingFileChanged(ServiceFile(1))
 	}
 
 	@Test
-	public void thenTheServiceHasNotStarted() {
-		verify(notificationController, never()).notifyForeground(any(), anyInt());
+	fun `then the service has not started`() {
+		verify(exactly = 0) { notificationController.notifyForeground(any(), any()) }
 	}
 
 	@Test
-	public void thenTheNotificationHasNotBeenBroadcast() {
-		verify(notificationController, never()).notifyBackground(any(), anyInt());
+	fun `then the notification has not been broadcast`() {
+		verify(exactly = 0) { notificationController.notifyBackground(any(), any()) }
 	}
 }

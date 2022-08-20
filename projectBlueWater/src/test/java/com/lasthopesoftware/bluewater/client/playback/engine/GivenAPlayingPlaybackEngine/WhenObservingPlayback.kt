@@ -14,48 +14,53 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlay
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 
 class WhenObservingPlayback {
-	@Test
-	fun thenTheFirstTrackIsBroadcast() {
-		assertThat(firstSwitchedFile!!.playlistPosition).isEqualTo(0)
+
+	private val mut by lazy {
+		val fakePlaybackPreparerProvider = FakeDeferredPlayableFilePreparationSourceProvider()
+		val library = Library()
+		library.setId(1)
+		val libraryProvider = PassThroughSpecificLibraryProvider(library)
+		val libraryStorage = PassThroughLibraryStorage()
+		val playbackEngine = PlaybackEngine(
+			PreparedPlaybackQueueResourceManagement(
+				fakePlaybackPreparerProvider
+			) { 1 }, listOf(CompletingFileQueueProvider()),
+			NowPlayingRepository(
+				libraryProvider,
+				libraryStorage
+			),
+			PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
+		)
+
+		Pair(fakePlaybackPreparerProvider, playbackEngine)
 	}
 
-	companion object {
-		private var firstSwitchedFile: PositionedPlayingFile? = null
+	private var firstSwitchedFile: PositionedPlayingFile? = null
 
-		@BeforeClass
-		@JvmStatic
-		fun context() {
-			val fakePlaybackPreparerProvider = FakeDeferredPlayableFilePreparationSourceProvider()
-			val library = Library()
-			library.setId(1)
-			val libraryProvider = PassThroughSpecificLibraryProvider(library)
-			val libraryStorage = PassThroughLibraryStorage()
-			val playbackEngine = PlaybackEngine(
-				PreparedPlaybackQueueResourceManagement(
-					fakePlaybackPreparerProvider
-				) { 1 }, listOf(CompletingFileQueueProvider()),
-                NowPlayingRepository(
-                    libraryProvider,
-                    libraryStorage
-                ),
-				PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
+	@BeforeAll
+	fun act() {
+		val (fakePlaybackPreparerProvider, playbackEngine) = mut
+
+		playbackEngine
+			.setOnPlayingFileChanged { p -> firstSwitchedFile = p }
+			.startPlaylist(
+				listOf(
+					ServiceFile(1),
+					ServiceFile(2),
+					ServiceFile(3),
+					ServiceFile(4),
+					ServiceFile(5)
+				), 0, Duration.ZERO
 			)
-			playbackEngine
-				.setOnPlayingFileChanged { p -> firstSwitchedFile = p }
-				.startPlaylist(
-					listOf(
-						ServiceFile(1),
-						ServiceFile(2),
-						ServiceFile(3),
-						ServiceFile(4),
-						ServiceFile(5)
-					), 0, Duration.ZERO
-				)
-			fakePlaybackPreparerProvider.deferredResolution.resolve()
-		}
+		fakePlaybackPreparerProvider.deferredResolution.resolve()
+	}
+
+	@Test
+	fun `then the first track is broadcast`() {
+		assertThat(firstSwitchedFile!!.playlistPosition).isEqualTo(0)
 	}
 }

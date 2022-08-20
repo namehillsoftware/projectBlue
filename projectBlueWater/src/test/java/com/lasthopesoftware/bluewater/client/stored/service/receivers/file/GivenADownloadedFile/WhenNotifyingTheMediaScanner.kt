@@ -12,18 +12,16 @@ import org.junit.Test
 import java.io.File
 
 class WhenNotifyingTheMediaScanner {
-	companion object {
-		private val collectedFiles by lazy {
-			val storedFileAccess = mockk<AccessStoredFiles>().apply {
-				every { getStoredFile(14) } returns Promise(StoredFile().setId(14).setLibraryId(22).setPath("test"))
-			}
-
-			val files = ArrayList<File>()
-			val storedFileMediaScannerNotifier = StoredFileMediaScannerNotifier(storedFileAccess, files::add)
-			storedFileMediaScannerNotifier.receive(14).toExpiringFuture().get()
-
-			files
+	private val collectedFiles by lazy {
+		val storedFileAccess = mockk<AccessStoredFiles>().apply {
+			every { getStoredFile(14) } returns Promise(StoredFile().setId(14).setLibraryId(22).setPath("test"))
 		}
+
+		val files = ArrayList<File>()
+		val storedFileMediaScannerNotifier = StoredFileMediaScannerNotifier(storedFileAccess, files::add)
+		storedFileMediaScannerNotifier.receive(14).toExpiringFuture().get()
+
+		files
 	}
 
 	@Test

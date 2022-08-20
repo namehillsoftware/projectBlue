@@ -1,18 +1,11 @@
-package com.lasthopesoftware.bluewater.client.playback.file.preparation.queues;
+package com.lasthopesoftware.bluewater.client.playback.file.preparation.queues
 
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 
-import java.util.List;
+class CompletingFileQueueProvider : IPositionedFileQueueProvider {
+	override val isRepeating: Boolean = false
 
-public class CompletingFileQueueProvider implements IPositionedFileQueueProvider {
-
-	@Override
-	public IPositionedFileQueue provideQueue(List<ServiceFile> playlist, int startingAt) {
-		return new CompletingPositionedFileQueue(QueueSplicers.getTruncatedList(playlist, startingAt));
-	}
-
-	@Override
-	public boolean isRepeating() {
-		return false;
+	override fun provideQueue(playlist: List<ServiceFile>, startingAt: Int): IPositionedFileQueue {
+		return CompletingPositionedFileQueue(QueueSplicers.getTruncatedList(playlist, startingAt))
 	}
 }

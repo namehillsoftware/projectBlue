@@ -1,52 +1,52 @@
-package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.GivenAFileThatDoesNotYetExist.AndFileWritingIsNotPossible;
+package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.GivenAFileThatDoesNotYetExist.AndFileWritingIsNotPossible
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileWriteException
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
+import com.namehillsoftware.handoff.promises.Promise
+import io.mockk.every
+import io.mockk.mockk
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.AccessStoredFiles;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileWriteException;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
-import com.lasthopesoftware.storage.write.permissions.IFileWritePossibleArbitrator;
-import com.namehillsoftware.handoff.promises.Promise;
+class WhenProcessingTheJob {
+	private var storedFileWriteException: StoredFileWriteException? = null
 
-import org.junit.BeforeClass;
-import org.junit.Test;
-
-import java.io.File;
-import java.util.Collections;
-
-public class WhenProcessingTheJob {
-
-	private static StoredFileWriteException storedFileWriteException;
-
-	@BeforeClass
-	public static void before() {
-		final StoredFile storedFile = new StoredFile(new LibraryId(1), 1, new ServiceFile(1), "test-path", true);
-		storedFile.setIsDownloadComplete(true);
-
-		final StoredFileJobProcessor storedFileJobProcessor = new StoredFileJobProcessor(
-			$ -> mock(File.class),
-			mock(AccessStoredFiles.class),
-			(libraryId, f) -> Promise.empty(),
-			f -> false,
-			mock(IFileWritePossibleArbitrator.class),
-			(is, f) -> {});
+	@BeforeAll
+	fun before() {
+		val storedFile = StoredFile(LibraryId(1), 1, ServiceFile(1), "test-path", true)
+		storedFile.setIsDownloadComplete(true)
+		val storedFileJobProcessor = StoredFileJobProcessor(
+			{
+				mockk {
+					every { parentFile } returns null
+					every { exists() } returns false
+				}
+			},
+			mockk(),
+			{ _, _ -> Promise.empty() },
+			{ false },
+			{ false },
+			mockk(relaxUnitFun = true)
+		)
 
 		try {
-			storedFileJobProcessor.observeStoredFileDownload(Collections.singleton(
-				new StoredFileJob(new LibraryId(1), new ServiceFile(1), storedFile))).blockingSubscribe();
-		} catch (Throwable e) {
-			if (e.getCause() instanceof StoredFileWriteException)
-				storedFileWriteException = (StoredFileWriteException)e.getCause();
+			storedFileJobProcessor.observeStoredFileDownload(
+				setOf(
+					StoredFileJob(LibraryId(1), ServiceFile(1), storedFile)
+				)
+			).blockingSubscribe()
+		} catch (e: Throwable) {
+			storedFileWriteException = e.cause as? StoredFileWriteException ?: throw e
 		}
 	}
 
 	@Test
-	public void thenAStoredFileWriteExceptionIsThrown() {
-		assertThat(storedFileWriteException).isNotNull();
+	fun `then a stored file write exception is thrown`() {
+		assertThat(storedFileWriteException).isNotNull
 	}
 }

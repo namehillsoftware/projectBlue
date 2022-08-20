@@ -2,7 +2,8 @@ package com.lasthopesoftware.bluewater.client.playback.service.notification.Give
 
 import android.app.Notification
 import android.app.NotificationManager
-import android.app.Service
+import android.content.Context
+import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
@@ -12,69 +13,52 @@ import com.lasthopesoftware.bluewater.client.playback.service.notification.Playb
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.BuildNowPlayingNotificationContent
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.PlaybackNotificationRouter
 import com.lasthopesoftware.bluewater.shared.android.notifications.control.NotificationsController
-import com.lasthopesoftware.resources.notifications.FakeNotificationCompatBuilder
+import com.lasthopesoftware.resources.notifications.FakeNotificationCompatBuilder.Companion.newFakeBuilder
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.lazyj.CreateAndHold
-import com.namehillsoftware.lazyj.Lazy
+import io.mockk.every
 import io.mockk.mockk
+import io.mockk.spyk
+import io.mockk.verify
 import org.junit.Test
-import org.mockito.Mockito
 import org.robolectric.Robolectric
 
 class WhenPlaybackIsPaused : AndroidContext() {
+	companion object {
+		private val pausedNotification = Notification()
+		private val service by lazy {
+			spyk(Robolectric.buildService(PlaybackService::class.java).get())
+		}
+		private val notificationManager = mockk<NotificationManager>()
+	}
+
     override fun before() {
-        Mockito.`when`(
-            notificationContentBuilder.promiseNowPlayingNotification(
-                ServiceFile(1),
-                true
-            )
-        )
-            .thenReturn(Promise(FakeNotificationCompatBuilder.newFakeBuilder(Notification())))
-        Mockito.`when`(
-            notificationContentBuilder.promiseNowPlayingNotification(
-                ServiceFile(1),
-                false
-            )
-        )
-            .thenReturn(Promise(FakeNotificationCompatBuilder.newFakeBuilder(pausedNotification)))
+		val context = ApplicationProvider.getApplicationContext<Context>()
+		val notificationContentBuilder = mockk<BuildNowPlayingNotificationContent> {
+			every { promiseNowPlayingNotification(ServiceFile(1), true) } returns Promise(newFakeBuilder(context, Notification()))
+			every { promiseNowPlayingNotification(ServiceFile(1), false) } returns Promise(newFakeBuilder(context, pausedNotification))
+		}
+
 		val playbackNotificationRouter = PlaybackNotificationRouter(
 			PlaybackNotificationBroadcaster(
 				NotificationsController(
-					service.getObject(),
+					service,
 					notificationManager
 				),
 				NotificationsConfiguration("", 43),
 				notificationContentBuilder
-			) { Promise(FakeNotificationCompatBuilder.newFakeBuilder(Notification())) },
-			mockk(relaxed = true)
+			) { Promise(newFakeBuilder(context, Notification())) },
+			mockk(relaxed = true),
 		)
         playbackNotificationRouter(PlaybackMessage.PlaybackPaused)
     }
 
     @Test
-    fun thenTheServiceContinuesInTheBackground() {
-        Mockito.verify(service.getObject()).stopForeground(false)
+    fun `then the service continues in the background`() {
+		verify { service.stopForeground(false) }
     }
 
     @Test
-    fun thenTheNotificationIsNeverSet() {
-        Mockito.verify(notificationManager, Mockito.never()).notify(43, pausedNotification)
-    }
-
-    companion object {
-        private val pausedNotification = Notification()
-        private val service: CreateAndHold<Service> = Lazy {
-            Mockito.spy(
-                Robolectric.buildService(
-                    PlaybackService::class.java
-                ).get()
-            )
-        }
-        private val notificationManager = Mockito.mock(
-            NotificationManager::class.java
-        )
-        private val notificationContentBuilder = Mockito.mock(
-            BuildNowPlayingNotificationContent::class.java
-        )
+    fun `then the notification is never set`() {
+		verify(exactly = 0) { notificationManager.notify(43, pausedNotification) }
     }
 }

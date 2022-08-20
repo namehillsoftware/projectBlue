@@ -1,25 +1,16 @@
-package com.lasthopesoftware.bluewater.client.playback.file.preparation.queues;
+package com.lasthopesoftware.bluewater.client.playback.file.preparation.queues
 
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile;
+class CyclicalFileQueueProvider : IPositionedFileQueueProvider {
 
-import java.util.List;
+	override val isRepeating: Boolean = true
 
-public class CyclicalFileQueueProvider implements IPositionedFileQueueProvider {
-	@Override
-	public IPositionedFileQueue provideQueue(List<ServiceFile> playlist, int startingAt) {
-		final List<PositionedFile> truncatedList = QueueSplicers.getTruncatedList(playlist, startingAt);
-
-		final int endingPosition = playlist.size() - truncatedList.size();
-		for (int i = 0; i < endingPosition; i++)
-			truncatedList.add(new PositionedFile(i, playlist.get(i)));
-
-		return new RepeatingPositionedFileQueue(truncatedList);
-	}
-
-	@Override
-	public boolean isRepeating() {
-		return true;
-	}
+    override fun provideQueue(playlist: List<ServiceFile>, startingAt: Int): IPositionedFileQueue {
+        val truncatedList = QueueSplicers.getTruncatedList(playlist, startingAt)
+        val endingPosition = playlist.size - truncatedList.size
+        for (i in 0 until endingPosition) truncatedList.add(PositionedFile(i, playlist[i]))
+        return RepeatingPositionedFileQueue(truncatedList)
+    }
 }

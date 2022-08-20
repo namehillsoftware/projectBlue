@@ -16,47 +16,44 @@ import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class WhenNotObservingPlayback {
 
-	companion object {
-		private val library = Library(_id = 1, _nowPlayingId = 5)
-		private val playbackEngine by lazy {
-			val fakePlaybackPreparerProvider = FakeDeferredPlayableFilePreparationSourceProvider()
+	private val library = Library(_id = 1, _nowPlayingId = 5)
+	private val playbackEngine by lazy {
+		val fakePlaybackPreparerProvider = FakeDeferredPlayableFilePreparationSourceProvider()
 
-			val libraryProvider = mockk<ISpecificLibraryProvider>()
-			every { libraryProvider.library } returns Promise(library)
+		val libraryProvider = mockk<ISpecificLibraryProvider>()
+		every { libraryProvider.library } returns Promise(library)
 
-			val libraryStorage = mockk<ILibraryStorage>()
-			every { libraryStorage.saveLibrary(any()) } returns	Promise(library)
+		val libraryStorage = mockk<ILibraryStorage>()
+		every { libraryStorage.saveLibrary(any()) } returns	Promise(library)
 
-			val playbackEngine = PlaybackEngine(
-				PreparedPlaybackQueueResourceManagement(
-					fakePlaybackPreparerProvider
-				) { 1 }, listOf(CompletingFileQueueProvider()),
-                NowPlayingRepository(
-                    libraryProvider,
-                    libraryStorage
-                ),
-				PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
+		val playbackEngine = PlaybackEngine(
+			PreparedPlaybackQueueResourceManagement(
+				fakePlaybackPreparerProvider
+			) { 1 }, listOf(CompletingFileQueueProvider()),
+			NowPlayingRepository(
+				libraryProvider,
+				libraryStorage
+			),
+			PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
+		)
+		playbackEngine
+			.startPlaylist(
+				listOf(
+					ServiceFile(1),
+					ServiceFile(2),
+					ServiceFile(3),
+					ServiceFile(4),
+					ServiceFile(5)
+				), 0, Duration.ZERO
 			)
-			playbackEngine
-				.startPlaylist(
-					listOf(
-						ServiceFile(1),
-						ServiceFile(2),
-						ServiceFile(3),
-						ServiceFile(4),
-						ServiceFile(5)
-					), 0, Duration.ZERO
-				)
-			val resolveablePlaybackHandler =
-				fakePlaybackPreparerProvider.deferredResolution.resolve()
-			fakePlaybackPreparerProvider.deferredResolution.resolve()
-			resolveablePlaybackHandler.resolve()
-			playbackEngine
-		}
+		val resolvablePlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve()
+		fakePlaybackPreparerProvider.deferredResolution.resolve()
+		resolvablePlaybackHandler.resolve()
+		playbackEngine
 	}
 
 	@Test

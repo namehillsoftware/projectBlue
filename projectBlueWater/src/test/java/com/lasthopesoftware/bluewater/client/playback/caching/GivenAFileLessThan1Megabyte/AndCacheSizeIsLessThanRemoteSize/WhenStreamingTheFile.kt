@@ -15,6 +15,7 @@ import io.mockk.mockk
 import okio.Buffer
 import okio.BufferedSource
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.AfterClass
 import org.junit.Assert.assertArrayEquals
 import org.junit.BeforeClass
 import org.junit.Test
@@ -26,9 +27,9 @@ import java.util.*
 class WhenStreamingTheFile {
 	companion object {
 		private const val fileSize = 512 * 1024
-		private val bytes by lazy { ByteArray(512 * 1024).also { Random().nextBytes(it) } }
-		private val bytesRead = ByteArray(fileSize)
-		private val bytesWritten = ByteArray(fileSize)
+		private var bytes: Lazy<ByteArray>? = lazy { ByteArray(512 * 1024).also { Random().nextBytes(it) } }
+		private var bytesRead: ByteArray? = ByteArray(fileSize)
+		private var bytesWritten: ByteArray? = ByteArray(fileSize)
 		private var closedBeforeCommittingToCache = false
 
 		@BeforeClass
@@ -47,14 +48,16 @@ class WhenStreamingTheFile {
 							Promise<CacheOutputStream>(this)
 
 						override fun promiseTransfer(bufferedSource: BufferedSource): Promise<CacheOutputStream> {
-							while (numberOfBytesWritten < bytesWritten.size) {
-								val read = bufferedSource.read(
-									bytesWritten,
-									numberOfBytesWritten,
-									bytesWritten.size - numberOfBytesWritten
-								)
-								if (read == -1) return Promise<CacheOutputStream>(this)
-								numberOfBytesWritten += read
+							bytesWritten?.also {
+								while (numberOfBytesWritten < it.size) {
+									val read = bufferedSource.read(
+										it,
+										numberOfBytesWritten,
+										it.size - numberOfBytesWritten
+									)
+									if (read == -1) return Promise<CacheOutputStream>(this)
+									numberOfBytesWritten += read
+								}
 							}
 							return Promise<CacheOutputStream>(this)
 						}
@@ -75,7 +78,7 @@ class WhenStreamingTheFile {
 			}
 
 			val buffer = Buffer()
-			buffer.write(bytes)
+			bytes?.value?.apply(buffer::write)
 			val dataSource = mockk<HttpDataSource>(relaxUnitFun = true).apply {
 				every { open(any()) } returns fileSize * 2L // expect a large file size
 
@@ -106,10 +109,20 @@ class WhenStreamingTheFile {
 					.setLength(C.LENGTH_UNSET.toLong()).setKey("1")
 					.build()
 			)
-			do {
-				val readResult = diskFileCacheDataSource.read(bytesRead, 0, bytesRead.size)
-			} while (readResult != C.RESULT_END_OF_INPUT)
+			bytesRead?.also {
+				do {
+					val readResult = diskFileCacheDataSource.read(it, 0, it.size)
+				} while (readResult != C.RESULT_END_OF_INPUT)
+			}
 			diskFileCacheDataSource.close()
+		}
+
+		@JvmStatic
+		@AfterClass
+		fun cleanup() {
+			bytesRead = null
+			bytesWritten = null
+			bytes = null
 		}
 	}
 
@@ -125,7 +138,7 @@ class WhenStreamingTheFile {
 
 	@Test
 	fun `then the file is read correctly`() {
-		assertArrayEquals(bytes, bytesRead)
+		assertArrayEquals(bytes?.value, bytesRead)
 	}
 
 }

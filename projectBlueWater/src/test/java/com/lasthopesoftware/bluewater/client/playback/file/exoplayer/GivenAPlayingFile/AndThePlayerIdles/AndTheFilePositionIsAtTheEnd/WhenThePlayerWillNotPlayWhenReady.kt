@@ -13,32 +13,30 @@ import java.util.concurrent.TimeUnit
 
 class WhenThePlayerWillNotPlayWhenReady {
 
-	companion object {
-		private val eventListeners: MutableCollection<Player.Listener> = ArrayList()
-		private val playedFile by lazy {
-			val mockExoPlayer = mockk<PromisingExoPlayer>()
-			every { mockExoPlayer.getPlayWhenReady() } returns false.toPromise()
-			every { mockExoPlayer.setPlayWhenReady(true) } returns mockExoPlayer.toPromise()
-			every { mockExoPlayer.removeListener(any()) } returns mockExoPlayer.toPromise()
-			every { mockExoPlayer.getCurrentPosition() } returns 100L.toPromise()
-			every { mockExoPlayer.getDuration() } returns 100L.toPromise()
-			every { mockExoPlayer.addListener(any()) } answers {
-				eventListeners.add(firstArg())
-				mockExoPlayer.toPromise()
-			}
-
-			val exoPlayerPlaybackHandler = ExoPlayerPlaybackHandler(mockExoPlayer)
-			val playbackPromise = exoPlayerPlaybackHandler.promisePlayback()
-				.eventually { obj -> obj.promisePlayedFile() }
-				.toExpiringFuture()
-
-			eventListeners.forEach { e -> e.onPlaybackStateChanged(Player.STATE_IDLE) }
-			playbackPromise[10, TimeUnit.SECONDS]
+	private val eventListeners: MutableCollection<Player.Listener> = ArrayList()
+	private val playedFile by lazy {
+		val mockExoPlayer = mockk<PromisingExoPlayer>()
+		every { mockExoPlayer.getPlayWhenReady() } returns false.toPromise()
+		every { mockExoPlayer.setPlayWhenReady(true) } returns mockExoPlayer.toPromise()
+		every { mockExoPlayer.removeListener(any()) } returns mockExoPlayer.toPromise()
+		every { mockExoPlayer.getCurrentPosition() } returns 100L.toPromise()
+		every { mockExoPlayer.getDuration() } returns 100L.toPromise()
+		every { mockExoPlayer.addListener(any()) } answers {
+			eventListeners.add(firstArg())
+			mockExoPlayer.toPromise()
 		}
+
+		val exoPlayerPlaybackHandler = ExoPlayerPlaybackHandler(mockExoPlayer)
+		val playbackPromise = exoPlayerPlaybackHandler.promisePlayback()
+			.eventually { obj -> obj.promisePlayedFile() }
+			.toExpiringFuture()
+
+		eventListeners.forEach { e -> e.onPlaybackStateChanged(Player.STATE_IDLE) }
+		playbackPromise[10, TimeUnit.SECONDS]
 	}
 
 	@Test
-	fun thenPlaybackCompletes() {
+	fun `then playback completes`() {
 		assertThat(playedFile).isNotNull
 	}
 }

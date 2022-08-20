@@ -15,60 +15,57 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
-
-private var playedFileList: List<ServiceFile> = emptyList()
-
-private val fileList by lazy {
-	listOf(
-		ServiceFile(82),
-		ServiceFile(811),
-		ServiceFile(370),
-		ServiceFile(337),
-		ServiceFile(896),
-	)
-}
-
-private val services by lazy {
-	val selectedLibraryIdProvider = mockk<ProvideSelectedLibraryId>().apply {
-		every { selectedLibraryId } returns LibraryId(960).toPromise()
-	}
-
-	val itemProvider = mockk<ProvideItemFiles>().apply {
-		every { promiseFiles(LibraryId(960), ItemId(868), FileListParameters.Options.None) } returns fileList.toPromise()
-	}
-
-	val storedItemAccess = mockk<AccessStoredItems>().apply {
-		every { isItemMarkedForSync(any(), any<Item>()) } returns false.toPromise()
-	}
-
-	val controlNowPlaying = mockk<ControlPlaybackService>().apply {
-		every { startPlaylist(any<List<ServiceFile>>(), any()) } answers {
-			playedFileList = firstArg()
-		}
-	}
-
-	val viewModel = FileListViewModel(
-		selectedLibraryIdProvider,
-		itemProvider,
-		storedItemAccess,
-		controlNowPlaying,
-	)
-
-	viewModel
-}
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 
 class WhenPlayingTheFilesShuffled {
 
-	companion object {
-		@BeforeClass
-		@JvmStatic
-		fun act() {
-			val viewModel = services
-			viewModel.loadItem(Item(868, "king")).toExpiringFuture().get()
-			viewModel.playShuffled().toExpiringFuture().get()
+	private var playedFileList: List<ServiceFile> = emptyList()
+
+	private val fileList by lazy {
+		listOf(
+			ServiceFile(82),
+			ServiceFile(811),
+			ServiceFile(370),
+			ServiceFile(337),
+			ServiceFile(896),
+		)
+	}
+
+	private val services by lazy {
+		val selectedLibraryIdProvider = mockk<ProvideSelectedLibraryId>().apply {
+			every { selectedLibraryId } returns LibraryId(960).toPromise()
 		}
+
+		val itemProvider = mockk<ProvideItemFiles>().apply {
+			every { promiseFiles(LibraryId(960), ItemId(868), FileListParameters.Options.None) } returns fileList.toPromise()
+		}
+
+		val storedItemAccess = mockk<AccessStoredItems>().apply {
+			every { isItemMarkedForSync(any(), any<Item>()) } returns false.toPromise()
+		}
+
+		val controlNowPlaying = mockk<ControlPlaybackService>().apply {
+			every { startPlaylist(any<List<ServiceFile>>(), any()) } answers {
+				playedFileList = firstArg()
+			}
+		}
+
+		val viewModel = FileListViewModel(
+			selectedLibraryIdProvider,
+			itemProvider,
+			storedItemAccess,
+			controlNowPlaying,
+		)
+
+		viewModel
+	}
+
+	@BeforeAll
+	fun act() {
+		val viewModel = services
+		viewModel.loadItem(Item(868, "king")).toExpiringFuture().get()
+		viewModel.playShuffled().toExpiringFuture().get()
 	}
 
 	@Test

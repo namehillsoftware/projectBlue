@@ -14,61 +14,64 @@ import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.cancellation.CancellationException
 
 class WhenCancellingWhileGettingServerInfo {
 
-	companion object {
-		private var cancellationException: CancellationException? = null
-		private val pokedMachineAddresses: MutableList<MachineAddress> = ArrayList()
-
-		@BeforeClass
-		@JvmStatic
-		fun before() {
-			val lookupServers = mockk<LookupServers>()
-			every { lookupServers.promiseServerInformation(any()) } returns Promise<ServerInfo?> { m ->
+	private val mut by lazy {
+		val lookupServers = mockk<LookupServers>().apply {
+			every { promiseServerInformation(any()) } returns Promise<ServerInfo?> { m ->
 				m.cancellationRequested {
 					m.sendRejection(CancellationException("CANCELLED!"))
 				}
 			}
+		}
 
-			val pokeServer = mockk<PokeServer>()
-			every { pokeServer.promiseWakeSignal(any(), any(), any()) } answers {
+		val pokeServer = mockk<PokeServer>().apply {
+			every { promiseWakeSignal(any(), any(), any()) } answers {
 				Unit.toPromise()
 			}
 
-			every { pokeServer.promiseWakeSignal(any(), 10, Duration.standardHours(10)) } answers {
+			every { promiseWakeSignal(any(), 10, Duration.standardHours(10)) } answers {
 				pokedMachineAddresses.add(firstArg())
 				Unit.toPromise()
 			}
+		}
 
-			val serverAlarm = ServerAlarm(
-				lookupServers,
-				pokeServer,
-				AlarmConfiguration(10, Duration.standardHours(10))
-			)
+		val serverAlarm = ServerAlarm(
+			lookupServers,
+			pokeServer,
+			AlarmConfiguration(10, Duration.standardHours(10))
+		)
 
-			val awakeLibraryServer = serverAlarm.awakeLibraryServer(LibraryId(14))
-			awakeLibraryServer.cancel()
-			try {
-				awakeLibraryServer.toExpiringFuture()[5, TimeUnit.SECONDS]
-			} catch (ee: ExecutionException) {
-				cancellationException = ee.cause as? CancellationException ?: throw ee
-			}
+		serverAlarm
+	}
+
+	private var cancellationException: CancellationException? = null
+	private val pokedMachineAddresses: MutableList<MachineAddress> = ArrayList()
+
+	@BeforeAll
+	fun act() {
+		val awakeLibraryServer = mut.awakeLibraryServer(LibraryId(14))
+		awakeLibraryServer.cancel()
+		try {
+			awakeLibraryServer.toExpiringFuture()[5, TimeUnit.SECONDS]
+		} catch (ee: ExecutionException) {
+			cancellationException = ee.cause as? CancellationException ?: throw ee
 		}
 	}
 
 	@Test
-	fun thenTheMachineIsAlertedAtAllEndpoints() {
+	fun `then the machine is alerted at all endpoints`() {
 		assertThat(pokedMachineAddresses).isEmpty()
 	}
 
 	@Test
-	fun thenGettingServerInfoIsCancelled() {
+	fun `then getting server info is cancelled`() {
 		assertThat(cancellationException?.message).isEqualTo("CANCELLED!")
 	}
 }

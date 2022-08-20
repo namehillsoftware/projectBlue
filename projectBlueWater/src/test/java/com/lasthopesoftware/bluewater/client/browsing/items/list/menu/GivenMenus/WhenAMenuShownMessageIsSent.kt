@@ -5,22 +5,19 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.h
 import com.lasthopesoftware.resources.RecordingTypedMessageBus
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
-
-private val arrangedServices by lazy {
-	val recordingMessageBus = RecordingTypedMessageBus<ItemListMenuMessage>()
-	Pair(recordingMessageBus, ItemListMenuViewModel(recordingMessageBus))
-}
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 
 class WhenAMenuShownMessageIsSent {
-	companion object {
-		@BeforeClass
-		@JvmStatic
-		fun act() {
-			val (messageBus, _) = arrangedServices
-			messageBus.sendMessage(ItemListMenuMessage.MenuShown(mockk()))
-		}
+	private val arrangedServices by lazy {
+		val recordingMessageBus = RecordingTypedMessageBus<ItemListMenuMessage>()
+		Pair(recordingMessageBus, ItemListMenuViewModel(recordingMessageBus))
+	}
+
+	@BeforeAll
+	fun act() {
+		val (messageBus, _) = arrangedServices
+		messageBus.sendMessage(ItemListMenuMessage.MenuShown(mockk()))
 	}
 
 	@Test

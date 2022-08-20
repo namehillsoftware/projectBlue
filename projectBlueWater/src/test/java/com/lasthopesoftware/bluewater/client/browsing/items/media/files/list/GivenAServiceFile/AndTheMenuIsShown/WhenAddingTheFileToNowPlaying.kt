@@ -11,50 +11,47 @@ import com.lasthopesoftware.resources.strings.GetStringResources
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
-
-private var addedFile: ServiceFile? = null
-
-private val viewModel by lazy {
-	val filePropertiesProvider = mockk<ProvideScopedFileProperties>().apply {
-		every { promiseFileProperties(ServiceFile(483)) } returns mapOf(
-			Pair("Artist", "beg"),
-			Pair("Name", "prize"),
-		).toPromise()
-	}
-
-	val stringResource = mockk<GetStringResources>().apply {
-		every { loading } returns "spirit"
-		every { unknownArtist } returns "mean"
-		every { unknownTrack } returns "business"
-	}
-
-	val controlNowPlaying = mockk<ControlPlaybackService>().apply {
-		every { addToPlaylist(ServiceFile(483)) } answers {
-			addedFile = firstArg()
-		}
-	}
-
-	ReusableTrackHeadlineViewModel(
-		filePropertiesProvider,
-		stringResource,
-		controlNowPlaying,
-		mockk(),
-		RecordingTypedMessageBus(),
-	)
-}
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 
 class WhenAddingTheFileToNowPlaying {
 
-	companion object {
-		@BeforeClass
-		@JvmStatic
-		fun act() {
-			viewModel.promiseUpdate(ServiceFile(483)).toExpiringFuture().get()
-			viewModel.showMenu()
-			viewModel.addToNowPlaying()
+	private var addedFile: ServiceFile? = null
+
+	private val viewModel by lazy {
+		val filePropertiesProvider = mockk<ProvideScopedFileProperties>().apply {
+			every { promiseFileProperties(ServiceFile(483)) } returns mapOf(
+				Pair("Artist", "beg"),
+				Pair("Name", "prize"),
+			).toPromise()
 		}
+
+		val stringResource = mockk<GetStringResources>().apply {
+			every { loading } returns "spirit"
+			every { unknownArtist } returns "mean"
+			every { unknownTrack } returns "business"
+		}
+
+		val controlNowPlaying = mockk<ControlPlaybackService>().apply {
+			every { addToPlaylist(ServiceFile(483)) } answers {
+				addedFile = firstArg()
+			}
+		}
+
+		ReusableTrackHeadlineViewModel(
+			filePropertiesProvider,
+			stringResource,
+			controlNowPlaying,
+			mockk(),
+			RecordingTypedMessageBus(),
+		)
+	}
+
+	@BeforeAll
+	fun act() {
+		viewModel.promiseUpdate(ServiceFile(483)).toExpiringFuture().get()
+		viewModel.showMenu()
+		viewModel.addToNowPlaying()
 	}
 
 	@Test

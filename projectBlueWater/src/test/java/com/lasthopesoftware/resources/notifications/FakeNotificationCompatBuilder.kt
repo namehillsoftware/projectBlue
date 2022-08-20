@@ -1,25 +1,19 @@
-package com.lasthopesoftware.resources.notifications;
+package com.lasthopesoftware.resources.notifications
 
-import android.app.Notification;
+import android.app.Notification
+import android.content.Context
+import androidx.core.app.NotificationCompat
 
-import androidx.core.app.NotificationCompat;
+class FakeNotificationCompatBuilder(context: Context, private val returnNotification: Notification) :
+    NotificationCompat.Builder(context, returnNotification) {
+    override fun build(): Notification {
+        return returnNotification
+    }
 
-public class FakeNotificationCompatBuilder extends NotificationCompat.Builder {
-	private final Notification returnNotification;
-
-	public static NotificationCompat.Builder newFakeBuilder(Notification returnNotification) {
-		return new FakeNotificationCompatBuilder(returnNotification);
-	}
-
-	@SuppressWarnings("ConstantConditions")
-	public FakeNotificationCompatBuilder(Notification returnNotification) {
-		super(null, returnNotification);
-
-		this.returnNotification = returnNotification;
-	}
-
-	@Override
-	public Notification build() {
-		return returnNotification;
-	}
+    companion object {
+        @JvmStatic
+		fun newFakeBuilder(context: Context, returnNotification: Notification): NotificationCompat.Builder {
+            return FakeNotificationCompatBuilder(context, returnNotification)
+        }
+    }
 }

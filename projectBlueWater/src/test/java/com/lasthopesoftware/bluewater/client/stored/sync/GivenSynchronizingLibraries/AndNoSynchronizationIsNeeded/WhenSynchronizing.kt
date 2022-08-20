@@ -21,103 +21,104 @@ import io.mockk.every
 import io.mockk.mockk
 import io.reactivex.Observable
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
-import java.util.*
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
+import kotlin.random.Random.Default.nextInt
 
 class WhenSynchronizing {
 
-	companion object {
-		private val random = Random()
-		private val storedFiles = arrayOf(
-			StoredFile().setId(random.nextInt()).setServiceId(1).setLibraryId(4),
-			StoredFile().setId(random.nextInt()).setServiceId(2).setLibraryId(4),
-			StoredFile().setId(random.nextInt()).setServiceId(4).setLibraryId(4),
-			StoredFile().setId(random.nextInt()).setServiceId(5).setLibraryId(4),
-			StoredFile().setId(random.nextInt()).setServiceId(114).setLibraryId(4),
-			StoredFile().setId(random.nextInt()).setServiceId(92).setLibraryId(4),
-			StoredFile().setId(random.nextInt()).setServiceId(random.nextInt()).setLibraryId(10),
-			StoredFile().setId(random.nextInt()).setServiceId(random.nextInt()).setLibraryId(10),
-			StoredFile().setId(random.nextInt()).setServiceId(random.nextInt()).setLibraryId(10),
-			StoredFile().setId(random.nextInt()).setServiceId(random.nextInt()).setLibraryId(10),
-			StoredFile().setId(random.nextInt()).setServiceId(random.nextInt()).setLibraryId(10),
-			StoredFile().setId(random.nextInt()).setServiceId(random.nextInt()).setLibraryId(10)
-		)
-		private val recordingMessageBus = RecordingApplicationMessageBus()
-		private var danglingFilesWerePruned = false
+	private val storedFiles = arrayOf(
+		StoredFile().setId(nextInt()).setServiceId(1).setLibraryId(4),
+		StoredFile().setId(nextInt()).setServiceId(2).setLibraryId(4),
+		StoredFile().setId(nextInt()).setServiceId(4).setLibraryId(4),
+		StoredFile().setId(nextInt()).setServiceId(5).setLibraryId(4),
+		StoredFile().setId(nextInt()).setServiceId(114).setLibraryId(4),
+		StoredFile().setId(nextInt()).setServiceId(92).setLibraryId(4),
+		StoredFile().setId(nextInt()).setServiceId(nextInt()).setLibraryId(10),
+		StoredFile().setId(nextInt()).setServiceId(nextInt()).setLibraryId(10),
+		StoredFile().setId(nextInt()).setServiceId(nextInt()).setLibraryId(10),
+		StoredFile().setId(nextInt()).setServiceId(nextInt()).setLibraryId(10),
+		StoredFile().setId(nextInt()).setServiceId(nextInt()).setLibraryId(10),
+		StoredFile().setId(nextInt()).setServiceId(nextInt()).setLibraryId(10)
+	)
+	private val recordingMessageBus = RecordingApplicationMessageBus()
+	private var danglingFilesWerePruned = false
+	private val synchronization by lazy {
 
-		@JvmStatic
-		@BeforeClass
-		fun before() {
-			val libraryProvider = mockk<ILibraryProvider>()
-			with(libraryProvider) {
-				every { allLibraries } returns Promise(listOf(Library().setId(4), Library().setId(10)))
-			}
-
-			val librarySyncHandler = mockk<ControlLibrarySyncs>()
-			with(librarySyncHandler) {
-				every { observeLibrarySync(any()) } answers {
-					Observable
-						.fromArray(*storedFiles)
-						.filter { f -> f.libraryId == firstArg<LibraryId>().id }
-						.flatMap { f ->
-							Observable.just(
-								StoredFileJobStatus(mockk(), f, StoredFileJobState.Queued),
-								StoredFileJobStatus(mockk(), f, StoredFileJobState.Downloading),
-								StoredFileJobStatus(mockk(), f, StoredFileJobState.Downloaded)
-							)
-						}
-				}
-			}
-
-			val filePruner = mockk<PruneStoredFiles>()
-			with(filePruner) {
-				every { pruneDanglingFiles() } answers {
-					danglingFilesWerePruned = true
-					Unit.toPromise()
-				}
-			}
-
-			val checkSync = mockk<CheckForSync>()
-			with (checkSync) {
-				every { promiseIsSyncNeeded() } returns Promise(false)
-			}
-
-			val synchronization = StoredFileSynchronization(
-                libraryProvider,
-                recordingMessageBus,
-                filePruner,
-                checkSync,
-                librarySyncHandler
-            )
-			synchronization.streamFileSynchronization().blockingAwait()
+		val libraryProvider = mockk<ILibraryProvider>()
+		with(libraryProvider) {
+			every { allLibraries } returns Promise(listOf(Library().setId(4), Library().setId(10)))
 		}
+
+		val librarySyncHandler = mockk<ControlLibrarySyncs>()
+		with(librarySyncHandler) {
+			every { observeLibrarySync(any()) } answers {
+				Observable
+					.fromArray(*storedFiles)
+					.filter { f -> f.libraryId == firstArg<LibraryId>().id }
+					.flatMap { f ->
+						Observable.just(
+							StoredFileJobStatus(mockk(), f, StoredFileJobState.Queued),
+							StoredFileJobStatus(mockk(), f, StoredFileJobState.Downloading),
+							StoredFileJobStatus(mockk(), f, StoredFileJobState.Downloaded)
+						)
+					}
+			}
+		}
+
+		val filePruner = mockk<PruneStoredFiles>()
+		with(filePruner) {
+			every { pruneDanglingFiles() } answers {
+				danglingFilesWerePruned = true
+				Unit.toPromise()
+			}
+		}
+
+		val checkSync = mockk<CheckForSync>()
+		with(checkSync) {
+			every { promiseIsSyncNeeded() } returns Promise(false)
+		}
+
+		StoredFileSynchronization(
+			libraryProvider,
+			recordingMessageBus,
+			filePruner,
+			checkSync,
+			librarySyncHandler
+		)
+	}
+
+	@BeforeAll
+	fun act() {
+		synchronization.streamFileSynchronization().blockingAwait()
 	}
 
 	@Test
-	fun thenASyncStartedEventOccurs() {
+	fun `then a Sync started event occurs`() {
 		assertThat(
 			recordingMessageBus.recordedMessages
 				.filterIsInstance<SyncStateMessage.SyncStarted>()
-				.single()).isNotNull
+				.single()
+		).isNotNull
 	}
 
 	@Test
-	fun thenNoStoredFileEventsAreBroadcast() {
+	fun `then no stored file events are broadcast`() {
 		assertThat(recordingMessageBus.recordedMessages.map<ApplicationMessage, Class<out ApplicationMessage>> { m -> m.javaClass })
 			.doesNotContain(cls<StoredFileMessage>())
 	}
 
 	@Test
-	fun thenASyncStoppedEventOccurs() {
+	fun `then a Sync stopped event occurs`() {
 		assertThat(
 			recordingMessageBus.recordedMessages
 				.filterIsInstance<SyncStateMessage.SyncStopped>()
-				.single()).isNotNull
+				.single()
+		).isNotNull
 	}
 
 	@Test
-	fun thenDanglingFilesWereStillPruned() {
+	fun `then dangling files were still pruned`() {
 		assertThat(danglingFilesWerePruned).isTrue
 	}
 }

@@ -1,24 +1,21 @@
-package com.lasthopesoftware.bluewater.client.connection.trust.GivenAMismatchedHostname.AndThereIsNoFallbackHostnameVerifier;
+package com.lasthopesoftware.bluewater.client.connection.trust.GivenAMismatchedHostname.AndThereIsNoFallbackHostnameVerifier
 
-import com.lasthopesoftware.bluewater.client.connection.trust.AdditionalHostnameVerifier;
+import com.lasthopesoftware.bluewater.client.connection.trust.AdditionalHostnameVerifier
+import org.assertj.core.api.AssertionsForClassTypes.assertThat
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 
-import org.junit.BeforeClass;
-import org.junit.Test;
+class WhenVerifyingTheHostname {
+	private var isHostnameValid = false
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-
-public class WhenVerifyingTheHostname {
-
-	private static boolean isHostnameValid;
-
-	@BeforeClass
-	public static void before() {
-		final AdditionalHostnameVerifier additionalHostnameVerifier = new AdditionalHostnameVerifier("my-test-host-name", null);
-		isHostnameValid = additionalHostnameVerifier.verify("my-other-test-host-name", null);
+	@BeforeAll
+	fun before() {
+		val additionalHostnameVerifier = AdditionalHostnameVerifier("my-test-host-name", null)
+		isHostnameValid = additionalHostnameVerifier.verify("my-other-test-host-name", null)
 	}
 
 	@Test
-	public void thenTheHostnameIsValid() {
-		assertThat(isHostnameValid).isFalse();
+	fun `then the hostname is valid`() {
+		assertThat(isHostnameValid).isFalse
 	}
 }

@@ -3,29 +3,21 @@ package com.lasthopesoftware.bluewater.client.connection.testing.GivenAFaultingC
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.testing.ConnectionTester
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
-import org.assertj.core.api.AssertionsForClassTypes
-import org.junit.BeforeClass
-import org.junit.Test
+import org.assertj.core.api.AssertionsForClassTypes.assertThat
+import org.junit.jupiter.api.Test
 import java.io.IOException
-import java.util.concurrent.ExecutionException
 
 class WhenCheckingIfTheConnectionIsPossible {
-	@Test
-	fun thenTheResultIsCorrect() {
-		AssertionsForClassTypes.assertThat(result).isFalse
+
+	private val result by lazy {
+		val connectionTester = ConnectionTester
+		val connectionProvider = FakeConnectionProvider()
+		connectionProvider.mapResponse({ throw IOException() }, "Alive")
+		connectionTester.promiseIsConnectionPossible(connectionProvider).toExpiringFuture().get()!!
 	}
 
-	companion object {
-		private var result = false
-
-		@BeforeClass
-		@JvmStatic
-		@Throws(ExecutionException::class, InterruptedException::class)
-		fun before() {
-			val connectionTester = ConnectionTester
-			val connectionProvider = FakeConnectionProvider()
-			connectionProvider.mapResponse({ throw IOException() }, "Alive")
-			result = connectionTester.promiseIsConnectionPossible(connectionProvider).toExpiringFuture().get()!!
-		}
+	@Test
+	fun `then the result is correct`() {
+		assertThat(result).isFalse
 	}
 }

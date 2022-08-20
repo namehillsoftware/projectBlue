@@ -11,50 +11,47 @@ import com.lasthopesoftware.resources.strings.GetStringResources
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
-
-private var launchedFile: ServiceFile? = null
-
-private val viewModel by lazy {
-	val filePropertiesProvider = mockk<ProvideScopedFileProperties>().apply {
-		every { promiseFileProperties(ServiceFile(34)) } returns mapOf(
-			Pair("Artist", "adopt"),
-			Pair("Name", "lovely"),
-		).toPromise()
-	}
-
-	val stringResource = mockk<GetStringResources>().apply {
-		every { loading } returns "native"
-		every { unknownArtist } returns "receive"
-		every { unknownTrack } returns "pack"
-	}
-
-	val launchFileDetails = mockk<LaunchFileDetails>().apply {
-		every { launchFileDetails(any()) } answers {
-			launchedFile = firstArg()
-		}
-	}
-
-	ReusableTrackHeadlineViewModel(
-		filePropertiesProvider,
-		stringResource,
-		mockk(),
-		launchFileDetails,
-		RecordingTypedMessageBus(),
-	)
-}
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 
 class WhenViewingTheFileDetails {
 
-	companion object {
-		@BeforeClass
-		@JvmStatic
-		fun act() {
-			viewModel.promiseUpdate(ServiceFile(34)).toExpiringFuture().get()
-			viewModel.showMenu()
-			viewModel.viewFileDetails()
+	private var launchedFile: ServiceFile? = null
+
+	private val viewModel by lazy {
+		val filePropertiesProvider = mockk<ProvideScopedFileProperties>().apply {
+			every { promiseFileProperties(ServiceFile(34)) } returns mapOf(
+				Pair("Artist", "adopt"),
+				Pair("Name", "lovely"),
+			).toPromise()
 		}
+
+		val stringResource = mockk<GetStringResources>().apply {
+			every { loading } returns "native"
+			every { unknownArtist } returns "receive"
+			every { unknownTrack } returns "pack"
+		}
+
+		val launchFileDetails = mockk<LaunchFileDetails>().apply {
+			every { launchFileDetails(any()) } answers {
+				launchedFile = firstArg()
+			}
+		}
+
+		ReusableTrackHeadlineViewModel(
+			filePropertiesProvider,
+			stringResource,
+			mockk(),
+			launchFileDetails,
+			RecordingTypedMessageBus(),
+		)
+	}
+
+	@BeforeAll
+	fun act() {
+		viewModel.promiseUpdate(ServiceFile(34)).toExpiringFuture().get()
+		viewModel.showMenu()
+		viewModel.viewFileDetails()
 	}
 
 	@Test

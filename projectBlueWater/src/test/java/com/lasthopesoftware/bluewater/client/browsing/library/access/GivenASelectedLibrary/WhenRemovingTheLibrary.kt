@@ -15,55 +15,59 @@ import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 
 class WhenRemovingTheLibrary {
 
-    companion object {
-        private var selectedLibraryId: LibraryId? = null
+	private val library by lazy {
+		val library = Library()
+		library.setId(14)
+		library
+	}
 
-		@BeforeClass
-		@JvmStatic
-        fun before() {
-            val library = Library()
-            library.setId(14)
-            val fakeStoredItemAccess: AccessStoredItems = FakeStoredItemAccess(
-                StoredItem(14, 1, StoredItem.ItemType.ITEM),
-                StoredItem(1, 3, StoredItem.ItemType.ITEM),
-                StoredItem(5, 2, StoredItem.ItemType.ITEM),
-                StoredItem(14, 5, StoredItem.ItemType.ITEM)
-            )
-            val libraryStorage = mockk<ILibraryStorage>()
-            every { libraryStorage.removeLibrary(library) } returns Promise.empty()
+	private val libraryRemoval by lazy {
+		val fakeStoredItemAccess: AccessStoredItems = FakeStoredItemAccess(
+			StoredItem(14, 1, StoredItem.ItemType.ITEM),
+			StoredItem(1, 3, StoredItem.ItemType.ITEM),
+			StoredItem(5, 2, StoredItem.ItemType.ITEM),
+			StoredItem(14, 5, StoredItem.ItemType.ITEM)
+		)
+		val libraryStorage = mockk<ILibraryStorage>()
+		every { libraryStorage.removeLibrary(library) } returns Promise.empty()
 
-			val libraryIdentifierProvider = mockk<ProvideSelectedLibraryId>()
-			every { libraryIdentifierProvider.selectedLibraryId } returns Promise(library.libraryId)
+		val libraryIdentifierProvider = mockk<ProvideSelectedLibraryId>()
+		every { libraryIdentifierProvider.selectedLibraryId } returns Promise(library.libraryId)
 
-            val libraryProvider = FakeLibraryProvider(
-                library,
-                Library().setId(4),
-                Library().setId(15)
-            )
+		val libraryProvider = FakeLibraryProvider(
+			library,
+			Library().setId(4),
+			Library().setId(15)
+		)
 
-			val selectBrowserLibrary = mockk<SelectBrowserLibrary>()
-			every { selectBrowserLibrary.selectBrowserLibrary(any()) } answers {
-				libraryProvider.getLibrary(firstArg()).then { l ->
-					selectedLibraryId = l?.libraryId
-					l
-				}
+		val selectBrowserLibrary = mockk<SelectBrowserLibrary>()
+		every { selectBrowserLibrary.selectBrowserLibrary(any()) } answers {
+			libraryProvider.getLibrary(firstArg()).then { l ->
+				selectedLibraryId = l?.libraryId
+				l
 			}
+		}
 
-            val libraryRemoval = LibraryRemoval(
-                fakeStoredItemAccess,
-                libraryStorage,
-                libraryIdentifierProvider,
-                libraryProvider,
-				selectBrowserLibrary
-			)
-			libraryRemoval.removeLibrary(library).toExpiringFuture().get()
-        }
-    }
+		LibraryRemoval(
+			fakeStoredItemAccess,
+			libraryStorage,
+			libraryIdentifierProvider,
+			libraryProvider,
+			selectBrowserLibrary
+		)
+	}
+
+	private var selectedLibraryId: LibraryId? = null
+
+	@BeforeAll
+	fun act() {
+		libraryRemoval.removeLibrary(library).toExpiringFuture().get()
+	}
 
 	@Test
 	fun thenTheFirstUnRemovedLibraryIsSelected() {

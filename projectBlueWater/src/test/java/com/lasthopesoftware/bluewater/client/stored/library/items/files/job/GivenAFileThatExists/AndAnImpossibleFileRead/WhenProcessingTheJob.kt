@@ -1,59 +1,52 @@
-package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.GivenAFileThatExists.AndAnImpossibleFileRead;
+package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.GivenAFileThatExists.AndAnImpossibleFileRead
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
+import com.namehillsoftware.handoff.promises.Promise
+import io.mockk.every
+import io.mockk.mockk
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
 
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.AccessStoredFiles;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
-import com.lasthopesoftware.storage.read.permissions.IFileReadPossibleArbitrator;
-import com.lasthopesoftware.storage.write.permissions.IFileWritePossibleArbitrator;
-import com.namehillsoftware.handoff.promises.Promise;
-
-import org.junit.BeforeClass;
-import org.junit.Test;
-
-import java.io.File;
-import java.util.Collections;
-import java.util.List;
-
-public class WhenProcessingTheJob {
-
-	private static List<StoredFileJobState> jobStates;
-
-	@BeforeClass
-	public static void before() {
-		final StoredFileJobProcessor storedFileJobProcessor = new StoredFileJobProcessor(
-			storedFile -> {
-				final File mockFile = mock(File.class);
-				when(mockFile.exists()).thenReturn(true);
-				return mockFile;
+class WhenProcessingTheJob {
+	private val jobStates by lazy {
+		val storedFileJobProcessor = StoredFileJobProcessor(
+			{
+				mockk {
+					every { exists() } returns true
+					every { parentFile } returns null
+				}
 			},
-			mock(AccessStoredFiles.class),
-			(libraryId, f) -> Promise.empty(),
-			mock(IFileReadPossibleArbitrator.class),
-			mock(IFileWritePossibleArbitrator.class),
-			(is, f) -> {});
-
-		jobStates = storedFileJobProcessor.observeStoredFileDownload(
-			Collections.singleton(new StoredFileJob(
-				new LibraryId(12),
-				new ServiceFile(1),
-				new StoredFile(new LibraryId(12), 1, new ServiceFile(1), "test-path", true))))
-			.map(j -> j.storedFileJobState)
+			mockk(),
+			{ _, _ -> Promise.empty() },
+			{ false },
+			{ false },
+			mockk(relaxUnitFun = true)
+		)
+		storedFileJobProcessor
+			.observeStoredFileDownload(
+				setOf(
+					StoredFileJob(
+						LibraryId(12),
+						ServiceFile(1),
+						StoredFile(LibraryId(12), 1, ServiceFile(1), "test-path", true)
+					)
+				)
+			)
+			.map { j -> j.storedFileJobState }
 			.toList()
-			.blockingGet();
+			.blockingGet()
 	}
 
 	@Test
-	public void thenTheFileStateIsUnreadable() {
+	fun `then the file state is unreadable`() {
 		assertThat(jobStates).containsExactly(
 			StoredFileJobState.Queued,
-			StoredFileJobState.Unreadable);
+			StoredFileJobState.Unreadable
+		)
 	}
 }

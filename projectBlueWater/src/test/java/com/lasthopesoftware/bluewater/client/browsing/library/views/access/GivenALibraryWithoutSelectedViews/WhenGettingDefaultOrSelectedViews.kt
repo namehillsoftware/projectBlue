@@ -9,10 +9,34 @@ import com.lasthopesoftware.bluewater.client.browsing.library.views.access.Selec
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ExpiringFuturePromise
 import com.namehillsoftware.handoff.promises.Promise
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 
 class WhenGettingDefaultOrSelectedViews {
+
+	private val expectedView = StandardViewItem(2, null)
+	private val libraryStorage = SavedLibraryRecordingStorage()
+	private var selectedLibraryView: ViewItem? = null
+
+	@BeforeAll
+	fun act() {
+		val selectedLibraryViewProvider = SelectedLibraryViewProvider(
+			{ Promise(Library()) },
+			{
+				Promise(
+					listOf(
+						StandardViewItem(2, null),
+						StandardViewItem(1, null),
+						StandardViewItem(14, null)
+					)
+				)
+			},
+			libraryStorage
+		)
+		selectedLibraryView =
+			ExpiringFuturePromise(selectedLibraryViewProvider.promiseSelectedOrDefaultView()).get()
+	}
+
 	@Test
 	fun thenTheSelectedViewsAreCorrect() {
 		assertThat(selectedLibraryView).isEqualTo(expectedView)
@@ -28,31 +52,5 @@ class WhenGettingDefaultOrSelectedViews {
 	fun thenTheSelectedViewTypeIsStandard() {
 		assertThat(libraryStorage.savedLibrary!!.selectedViewType)
 			.isEqualTo(ViewType.StandardServerView)
-	}
-
-	companion object {
-		private val expectedView = StandardViewItem(2, null)
-		private val libraryStorage = SavedLibraryRecordingStorage()
-		private var selectedLibraryView: ViewItem? = null
-
-		@BeforeClass
-		@JvmStatic
-		fun before() {
-			val selectedLibraryViewProvider = SelectedLibraryViewProvider(
-				{ Promise(Library()) },
-				{
-					Promise(
-						listOf(
-							StandardViewItem(2, null),
-							StandardViewItem(1, null),
-							StandardViewItem(14, null)
-						)
-					)
-				},
-				libraryStorage
-			)
-			selectedLibraryView =
-				ExpiringFuturePromise(selectedLibraryViewProvider.promiseSelectedOrDefaultView()).get()
-		}
 	}
 }

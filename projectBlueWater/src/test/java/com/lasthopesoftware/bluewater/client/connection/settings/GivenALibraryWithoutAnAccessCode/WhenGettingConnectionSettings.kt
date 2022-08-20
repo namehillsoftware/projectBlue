@@ -10,29 +10,29 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 import java.util.concurrent.ExecutionException
 
 class WhenGettingConnectionSettings {
 
-	companion object setup {
+	private val mut by lazy {
+		val libraryProvider = mockk<ILibraryProvider>()
+		every { libraryProvider.getLibrary(LibraryId(10)) } returns Library().toPromise()
 
-		private var exception: MissingAccessCodeException? = null
+		val connectionSettingsLookup = ConnectionSettingsLookup(libraryProvider)
 
-		@JvmStatic
-		@BeforeClass
-		fun context() {
-			val libraryProvider = mockk<ILibraryProvider>()
-			every { libraryProvider.getLibrary(LibraryId(10)) } returns Library().toPromise()
+		connectionSettingsLookup
+	}
 
-			val connectionSettingsLookup = ConnectionSettingsLookup(libraryProvider)
+	private var exception: MissingAccessCodeException? = null
 
-			try {
-				connectionSettingsLookup.lookupConnectionSettings(LibraryId(10)).toExpiringFuture().get()
-			} catch (e: ExecutionException) {
-				exception = e.cause as? MissingAccessCodeException
-			}
+	@BeforeAll
+	fun act() {
+		try {
+			mut.lookupConnectionSettings(LibraryId(10)).toExpiringFuture().get()
+		} catch (e: ExecutionException) {
+			exception = e.cause as? MissingAccessCodeException
 		}
 	}
 

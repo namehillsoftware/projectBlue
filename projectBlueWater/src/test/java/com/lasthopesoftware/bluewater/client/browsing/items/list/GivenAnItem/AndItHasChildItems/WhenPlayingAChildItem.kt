@@ -16,8 +16,8 @@ import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 
 private const val libraryId = 773
 private const val itemId = 107
@@ -25,53 +25,50 @@ private const val itemValue = "height"
 
 private var playedFileList = ""
 
-private val viewModel by lazy {
-	val selectedLibraryIdProvider = mockk<ProvideSelectedLibraryId>().apply {
-		every { selectedLibraryId } returns LibraryId(libraryId).toPromise()
-	}
+class WhenPlayingAChildItem {
+	private val viewModel by lazy {
+		val selectedLibraryIdProvider = mockk<ProvideSelectedLibraryId>().apply {
+			every { selectedLibraryId } returns LibraryId(libraryId).toPromise()
+		}
 
-	val itemProvider = mockk<ProvideItems>().apply {
-		every { promiseItems(LibraryId(libraryId), ItemId(itemId)) } returns listOf(
-			Item(611),
-			Item(306),
-			Item(867),
-			Item(623),
-			Item(335),
-			Item(983),
-		).toPromise()
-	}
+		val itemProvider = mockk<ProvideItems>().apply {
+			every { promiseItems(LibraryId(libraryId), ItemId(itemId)) } returns listOf(
+				Item(611),
+				Item(306),
+				Item(867),
+				Item(623),
+				Item(335),
+				Item(983),
+			).toPromise()
+		}
 
-	val itemStringListProvider = mockk<ProvideFileStringListForItem>().apply {
-		every { promiseFileStringList(LibraryId(libraryId), ItemId(867), FileListParameters.Options.None) } returns Promise(
-			"2;-1;959;191;559;815;165;"
+		val itemStringListProvider = mockk<ProvideFileStringListForItem>().apply {
+			every { promiseFileStringList(LibraryId(libraryId), ItemId(867), FileListParameters.Options.None) } returns Promise(
+				"2;-1;959;191;559;815;165;"
+			)
+		}
+
+		val controlNowPlaying = mockk<ControlPlaybackService>().apply {
+			every { startPlaylist(any<String>(), any()) } answers {
+				playedFileList = firstArg()
+			}
+		}
+
+		ItemListViewModel(
+			selectedLibraryIdProvider,
+			itemProvider,
+			mockk(relaxed = true, relaxUnitFun = true),
+			FakeStoredItemAccess(),
+			itemStringListProvider,
+			controlNowPlaying,
+			mockk(),
 		)
 	}
 
-	val controlNowPlaying = mockk<ControlPlaybackService>().apply {
-		every { startPlaylist(any<String>(), any()) } answers {
-			playedFileList = firstArg()
-		}
-	}
-
-	ItemListViewModel(
-		selectedLibraryIdProvider,
-		itemProvider,
-		mockk(relaxed = true, relaxUnitFun = true),
-		FakeStoredItemAccess(),
-		itemStringListProvider,
-		controlNowPlaying,
-		mockk(),
-	)
-}
-
-class WhenPlayingAChildItem {
-	companion object {
-		@BeforeClass
-		@JvmStatic
-		fun act() {
-			viewModel.loadItem(Item(itemId, itemValue)).toExpiringFuture().get()
-			viewModel.items.value[2].play().toExpiringFuture().get()
-		}
+	@BeforeAll
+	fun act() {
+		viewModel.loadItem(Item(itemId, itemValue)).toExpiringFuture().get()
+		viewModel.items.value[2].play().toExpiringFuture().get()
 	}
 
 	@Test

@@ -8,22 +8,21 @@ import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.AssertionsForClassTypes.assertThat
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class WhenGettingTheLiveUrl {
 
-	companion object {
-		private val urlProvider by lazy {
-			val builder = mockk<BuildUrlProviders>()
-			every { builder.promiseBuiltUrlProvider(any()) } returns Promise.empty()
+	private val urlProvider by lazy {
+		val builder = mockk<BuildUrlProviders>()
+		every { builder.promiseBuiltUrlProvider(any()) } returns Promise.empty()
 
-			val liveUrlProvider = LiveUrlProvider(
-				{ mockk() },
-				builder)
-			liveUrlProvider.promiseLiveUrl(LibraryId(54)).toExpiringFuture().get()
-		}
+		val liveUrlProvider = LiveUrlProvider(
+			{ mockk() },
+			builder
+		)
+		liveUrlProvider.promiseLiveUrl(LibraryId(54)).toExpiringFuture().get()
 	}
 
 	@Test
-	fun thenTheUrlIsCorrect() = assertThat(urlProvider).isNull()
+	fun `then the url is correct`() = assertThat(urlProvider).isNull()
 }

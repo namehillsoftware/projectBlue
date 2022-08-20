@@ -1,43 +1,27 @@
-package com.lasthopesoftware.bluewater.client.stored.library.items.files.GivenATypicalLibrary.WithStoredFiles;
+package com.lasthopesoftware.bluewater.client.stored.library.items.files.GivenATypicalLibrary.WithStoredFiles
 
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.CountStoredFiles;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFilesChecker;
-import com.namehillsoftware.handoff.promises.Promise;
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.CountStoredFiles
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFilesChecker
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import io.mockk.every
+import io.mockk.mockk
+import org.assertj.core.api.AssertionsForClassTypes.assertThat
+import org.junit.jupiter.api.Test
 
-import org.junit.BeforeClass;
-import org.junit.Test;
+class WhenCheckingForAnyStoredFiles {
+	private val isAny by lazy {
+		val countStoredFilesInLibrary = mockk<CountStoredFiles> {
+			every { promiseStoredFilesCount(any()) } returns 1L.toPromise()
+		}
 
-import java.util.concurrent.CountDownLatch;
-
-import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
-
-public class WhenCheckingForAnyStoredFiles {
-
-	private static Boolean isAny;
-
-	@BeforeClass
-	public static void before() {
-		final CountStoredFiles countStoredFilesInLibrary = mock(CountStoredFiles.class);
-		when(countStoredFilesInLibrary.promiseStoredFilesCount(any()))
-			.thenReturn(new Promise<>(1L));
-
-		final StoredFilesChecker storedFilesChecker = new StoredFilesChecker(countStoredFilesInLibrary);
-
-		final CountDownLatch countDownLatch = new CountDownLatch(1);
-		storedFilesChecker.promiseIsAnyStoredFiles(new LibraryId(5))
-			.then(any -> {
-				isAny = any;
-				countDownLatch.countDown();
-				return null;
-			});
+		val storedFilesChecker = StoredFilesChecker(countStoredFilesInLibrary)
+		storedFilesChecker.promiseIsAnyStoredFiles(LibraryId(5)).toExpiringFuture().get()
 	}
 
 	@Test
-	public void thenATrueResultIsGiven() {
-		assertThat(isAny).isTrue();
+	fun `then a true result is given`() {
+		assertThat(isAny).isTrue
 	}
 }

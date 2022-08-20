@@ -1,50 +1,31 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.GivenATypicalFile;
+package com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.GivenATypicalFile
 
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.persistence.IDiskFileCachePersistence;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.CachedFileOutputStream;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.CachedFileOutputStream
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import io.mockk.mockk
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
+import java.io.File
+import java.io.FileInputStream
+import java.util.*
 
-import org.junit.BeforeClass;
-import org.junit.Test;
+class WhenWritingTheFile {
+    private val file by lazy { File.createTempFile("ladder", ".tmp").apply { deleteOnExit() } }
+	private val bytes by lazy { ByteArray(2000000).also(Random()::nextBytes) }
+	private val bytesWritten = ByteArray(2000000)
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.util.Random;
-import java.util.concurrent.CountDownLatch;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-
-public class WhenWritingTheFile {
-
-	private static final File file = new File("test");
-	private static final byte[] bytes = new byte[2000000];
-
-	private static final byte[] bytesWritten = new byte[2000000];
-
-	static {
-		file.deleteOnExit();
-		new Random().nextBytes(bytes);
+    @BeforeAll
+    fun act() {
+        val cachedFileOutputStream = CachedFileOutputStream("unique-test", file, mockk())
+        cachedFileOutputStream.promiseWrite(bytes, 0, bytes.size).toExpiringFuture().get()
+		FileInputStream(file).use { fis ->
+			fis.read(bytesWritten, 0, bytes.size)
+		}
 	}
 
-	@BeforeClass
-	public static void before() throws InterruptedException {
-		final CachedFileOutputStream cachedFileOutputStream = new CachedFileOutputStream("unique-test", file, mock(IDiskFileCachePersistence.class));
-
-		final CountDownLatch countDownLatch = new CountDownLatch(1);
-		cachedFileOutputStream.promiseWrite(bytes, 0, bytes.length)
-			.then(w -> {
-				try (final FileInputStream fis = new FileInputStream(file)) {
-					fis.read(bytesWritten, 0, bytes.length);
-				}
-				countDownLatch.countDown();
-				return null;
-			});
-
-		countDownLatch.await();
-	}
-
-	@Test
-	public void thenTheBytesAreWrittenCorrectly() {
-		assertThat(bytesWritten).isEqualTo(bytes);
-	}
+    @Test
+    fun thenTheBytesAreWrittenCorrectly() {
+        assertThat(bytesWritten).isEqualTo(bytes)
+    }
 }

@@ -9,63 +9,55 @@ import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections
-import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class WhenScanningForUrls {
-	companion object {
-		private var urlProvider: IUrlProvider? = null
+	private val urlProvider by lazy {
+		val connectionTester = mockk<TestConnections>()
+		every { connectionTester.promiseIsConnectionPossible(any()) } returns false.toPromise()
+		every { connectionTester.promiseIsConnectionPossible(match { a -> "http://192.168.1.56:143/MCWS/v1/" == a.urlProvider.baseUrl.toString() }) } returns true.toPromise()
 
-		@BeforeClass
-		@JvmStatic
-		fun before() {
-			val connectionTester = mockk<TestConnections>()
-			every { connectionTester.promiseIsConnectionPossible(any()) } returns false.toPromise()
-			every { connectionTester.promiseIsConnectionPossible(match { a -> "http://192.168.1.56:143/MCWS/v1/" == a.urlProvider.baseUrl.toString() }) } returns true.toPromise()
-
-			val serverLookup = mockk<LookupServers>()
-			every { serverLookup.promiseServerInformation(LibraryId(17)) } returns Promise(
-				ServerInfo(
-					143,
-					null,
-					"1.2.3.4",
-					listOf(
-						"53.24.19.245",
-						"192.168.1.56"
-					), emptyList(),
-					null
-				)
+		val serverLookup = mockk<LookupServers>()
+		every { serverLookup.promiseServerInformation(LibraryId(17)) } returns Promise(
+			ServerInfo(
+				143,
+				null,
+				"1.2.3.4",
+				listOf(
+					"53.24.19.245",
+					"192.168.1.56"
+				), emptyList(),
+				null
 			)
+		)
 
-			val connectionSettingsLookup = mockk<LookupConnectionSettings>()
-			every { connectionSettingsLookup.lookupConnectionSettings(LibraryId(17)) } returns ConnectionSettings(accessCode = "gooPc").toPromise()
+		val connectionSettingsLookup = mockk<LookupConnectionSettings>()
+		every { connectionSettingsLookup.lookupConnectionSettings(LibraryId(17)) } returns ConnectionSettings(accessCode = "gooPc").toPromise()
 
-			val urlScanner = UrlScanner(
-				PassThroughBase64Encoder,
-				connectionTester,
-				serverLookup,
-				connectionSettingsLookup,
-				OkHttpFactory
-			)
+		val urlScanner = UrlScanner(
+			PassThroughBase64Encoder,
+			connectionTester,
+			serverLookup,
+			connectionSettingsLookup,
+			OkHttpFactory
+		)
 
-			urlProvider = urlScanner.promiseBuiltUrlProvider(LibraryId(17)).toExpiringFuture().get()
-		}
+		urlScanner.promiseBuiltUrlProvider(LibraryId(17)).toExpiringFuture().get()
 	}
 
 	@Test
-	fun thenTheUrlProviderIsReturned() {
+	fun `then the url provider is returned`() {
 		assertThat(urlProvider).isNotNull
 	}
 
 	@Test
-	fun thenTheBaseUrlIsCorrect() {
+	fun `then the base url is correct`() {
 		assertThat(urlProvider?.baseUrl.toString()).isEqualTo("http://192.168.1.56:143/MCWS/v1/")
 	}
 }

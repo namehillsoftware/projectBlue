@@ -1,27 +1,28 @@
-package com.lasthopesoftware.bluewater.client.browsing.library.access;
+package com.lasthopesoftware.bluewater.client.browsing.library.access
 
-import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider;
-import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTuple;
+import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTuple
 
+class FakeRevisionConnectionProvider : FakeConnectionProvider() {
+    private var syncRevision = 0
 
-public class FakeRevisionConnectionProvider extends FakeConnectionProvider {
+	fun setSyncRevision(syncRevision: Int) {
+        this.syncRevision = syncRevision
+    }
 
-	private int syncRevision;
-
-	public FakeRevisionConnectionProvider() {
-		mapResponse(
-			(params) ->
-				new FakeConnectionResponseTuple(
-					200,
-					("<Response Status=\"OK\">" +
-						"<Item Name=\"Master\">1192</Item>" +
-						"<Item Name=\"Sync\">" + syncRevision + "</Item>" +
-						"<Item Name=\"LibraryStartup\">1501430846</Item>" +
-					"</Response>").getBytes()),
-			"Library/GetRevision");
-	}
-
-	public void setSyncRevision(int syncRevision) {
-		this.syncRevision = syncRevision;
-	}
+    init {
+        mapResponse(
+            {
+                FakeConnectionResponseTuple(
+                    200,
+                    ("<Response Status=\"OK\">" +
+                            "<Item Name=\"Master\">1192</Item>" +
+                            "<Item Name=\"Sync\">" + syncRevision + "</Item>" +
+                            "<Item Name=\"LibraryStartup\">1501430846</Item>" +
+                            "</Response>").toByteArray()
+                )
+            },
+            "Library/GetRevision"
+        )
+    }
 }

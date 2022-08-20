@@ -1,14 +1,13 @@
-package com.lasthopesoftware.bluewater.client.playback.file.fakes;
+package com.lasthopesoftware.bluewater.client.playback.file.fakes
 
-import com.lasthopesoftware.bluewater.client.playback.file.NoTransformVolumeManager;
-import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile;
-import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackFile;
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile;
+import com.lasthopesoftware.bluewater.client.playback.file.NoTransformVolumeManager
+import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile
+import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackFile
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile
 
-
-public class FakePreparedPlayableFile<PlaybackHandler extends PlayableFile & IBufferingPlaybackFile> extends PreparedPlayableFile {
-
-	public FakePreparedPlayableFile(PlaybackHandler playbackHandler) {
-		super(playbackHandler, new NoTransformVolumeManager(), playbackHandler);
-	}
-}
+class FakePreparedPlayableFile<PlaybackHandler>(playbackHandler: PlaybackHandler) :
+    PreparedPlayableFile(
+        playbackHandler,
+        NoTransformVolumeManager(),
+        playbackHandler
+    ) where PlaybackHandler : PlayableFile, PlaybackHandler : IBufferingPlaybackFile

@@ -2,6 +2,8 @@ package com.lasthopesoftware.bluewater.client.playback.service.receivers.notific
 
 import android.app.Notification
 import android.app.NotificationManager
+import android.content.Context
+import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -14,7 +16,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.notification.build
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.PlaybackNotificationRouter
 import com.lasthopesoftware.bluewater.shared.android.notifications.control.NotificationsController
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
-import com.lasthopesoftware.resources.notifications.FakeNotificationCompatBuilder.newFakeBuilder
+import com.lasthopesoftware.resources.notifications.FakeNotificationCompatBuilder.Companion.newFakeBuilder
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -33,9 +35,11 @@ class WhenPlaybackIsPaused : AndroidContext() {
 	}
 
 	override fun before() {
-		every { notificationContentBuilder.getLoadingNotification(any()) } returns newFakeBuilder(Notification())
-		every { notificationContentBuilder.promiseNowPlayingNotification(ServiceFile(1), true) } returns Promise(newFakeBuilder(Notification()))
-		every { notificationContentBuilder.promiseNowPlayingNotification(ServiceFile(1), false) } returns Promise(newFakeBuilder(pausedNotification))
+		val context = ApplicationProvider.getApplicationContext<Context>()
+
+		every { notificationContentBuilder.getLoadingNotification(any()) } returns newFakeBuilder(context, Notification())
+		every { notificationContentBuilder.promiseNowPlayingNotification(ServiceFile(1), true) } returns Promise(newFakeBuilder(context, Notification()))
+		every { notificationContentBuilder.promiseNowPlayingNotification(ServiceFile(1), false) } returns Promise(newFakeBuilder(context, pausedNotification))
 
 		val recordingApplicationMessageBus = RecordingApplicationMessageBus()
 		PlaybackNotificationRouter(
@@ -43,7 +47,7 @@ class WhenPlaybackIsPaused : AndroidContext() {
 				NotificationsController(service, notificationManager),
 				NotificationsConfiguration("", 43),
 				notificationContentBuilder
-			) { Promise(newFakeBuilder(Notification())) },
+			) { Promise(newFakeBuilder(context, Notification())) },
 			recordingApplicationMessageBus
 		)
 

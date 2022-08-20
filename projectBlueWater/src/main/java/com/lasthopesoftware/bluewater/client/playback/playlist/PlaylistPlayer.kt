@@ -5,20 +5,18 @@ import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile
 import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile
+import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.namehillsoftware.handoff.promises.Promise
 import io.reactivex.ObservableEmitter
 import org.joda.time.Duration
-import org.slf4j.LoggerFactory
 import java.io.Closeable
 import java.io.IOException
 
-class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPreparedFiles, private val preparedPosition: Duration) : IPlaylistPlayer, Closeable {
+private val logger by lazyLogger<PlaylistPlayer>()
 
-	companion object {
-		private val logger = LoggerFactory.getLogger(PlaylistPlayer::class.java)
-	}
+class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPreparedFiles, private val preparedPosition: Duration) : IPlaylistPlayer, Closeable {
 
 	private val stateChangeSync = Any()
 	private var positionedPlayingFile: PositionedPlayingFile? = null

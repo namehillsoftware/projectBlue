@@ -9,56 +9,47 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.download
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ExpiringFuturePromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise
+import io.mockk.every
+import io.mockk.mockk
 import org.apache.commons.io.IOUtils
-import org.assertj.core.api.Assertions
-import org.junit.BeforeClass
-import org.junit.Test
-import org.mockito.Mockito
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
 import java.io.ByteArrayOutputStream
-import java.io.IOException
-import java.io.InputStream
 import java.util.*
 
 class WhenDownloading {
-	companion object {
-		private val responseBytes by lazy {
-			val bytes = ByteArray(400)
-			Random().nextBytes(bytes)
-			bytes
-		}
-		private var inputStream: InputStream? = null
+	private val responseBytes by lazy {
+		val bytes = ByteArray(400)
+		Random().nextBytes(bytes)
+		bytes
+	}
 
-		@BeforeClass
-		@JvmStatic
-		fun before() {
-			val fakeConnectionProvider = FakeConnectionProvider()
-			fakeConnectionProvider.mapResponse({
-				FakeConnectionResponseTuple(
-					200,
-					responseBytes
-				)
-			})
-			val libraryConnections = Mockito.mock(
-				ProvideLibraryConnections::class.java
+	private val inputStream by lazy {
+		val fakeConnectionProvider = FakeConnectionProvider()
+		fakeConnectionProvider.mapResponse({
+			FakeConnectionResponseTuple(
+				200,
+				responseBytes
 			)
-			Mockito.`when`(libraryConnections.promiseLibraryConnection(LibraryId(4)))
-				.thenReturn(ProgressingPromise(fakeConnectionProvider))
-			val downloader =
-				StoredFileDownloader(ServiceFileUriQueryParamsProvider, libraryConnections)
-			inputStream = ExpiringFuturePromise(
-				downloader.promiseDownload(
-					LibraryId(4),
-					StoredFile().setServiceId(4)
-				)
-			).get()
+		})
+		val libraryConnections = mockk<ProvideLibraryConnections> {
+			every { promiseLibraryConnection(LibraryId(4)) } returns ProgressingPromise(fakeConnectionProvider)
 		}
+
+		val downloader =
+			StoredFileDownloader(ServiceFileUriQueryParamsProvider, libraryConnections)
+		ExpiringFuturePromise(
+			downloader.promiseDownload(
+				LibraryId(4),
+				StoredFile().setServiceId(4)
+			)
+		).get()
 	}
 
 	@Test
-	@Throws(IOException::class)
-	fun thenTheInputStreamIsReturned() {
+	fun `then the input stream is returned`() {
 		val outputStream = ByteArrayOutputStream()
 		IOUtils.copy(inputStream, outputStream)
-		Assertions.assertThat(outputStream.toByteArray()).containsExactly(*responseBytes)
+		assertThat(outputStream.toByteArray()).containsExactly(*responseBytes)
 	}
 }

@@ -12,33 +12,36 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 
 class WhenScanningForUrls {
 
-	companion object {
-		private var urlProvider: IUrlProvider? = null
+	private val services by lazy {
 
-		@BeforeClass
-		@JvmStatic
-		fun before() {
-			val connectionTester = mockk<TestConnections>()
-			every { connectionTester.promiseIsConnectionPossible(any()) } returns false.toPromise()
-			every { connectionTester.promiseIsConnectionPossible(match { a -> a.urlProvider.baseUrl.toString() == "http://gooPc:3504/MCWS/v1/" }) } returns true.toPromise()
+		val connectionTester = mockk<TestConnections>()
+		every { connectionTester.promiseIsConnectionPossible(any()) } returns false.toPromise()
+		every { connectionTester.promiseIsConnectionPossible(match { a -> a.urlProvider.baseUrl.toString() == "http://gooPc:3504/MCWS/v1/" }) } returns true.toPromise()
 
-			val connectionSettingsLookup = mockk<LookupConnectionSettings>()
-			every { connectionSettingsLookup.lookupConnectionSettings(LibraryId(13)) } returns ConnectionSettings(accessCode = "http://gooPc:3504").toPromise()
+		val connectionSettingsLookup = mockk<LookupConnectionSettings>()
+		every { connectionSettingsLookup.lookupConnectionSettings(LibraryId(13)) } returns ConnectionSettings(accessCode = "http://gooPc:3504").toPromise()
 
-			val urlScanner = UrlScanner(
-				PassThroughBase64Encoder,
-				connectionTester,
-				mockk(),
-				connectionSettingsLookup,
-				mockk())
+		val urlScanner = UrlScanner(
+			PassThroughBase64Encoder,
+			connectionTester,
+			mockk(),
+			connectionSettingsLookup,
+			mockk()
+		)
 
-			urlProvider = urlScanner.promiseBuiltUrlProvider(LibraryId(13)).toExpiringFuture().get()
-		}
+		urlScanner
+	}
+
+	private var urlProvider: IUrlProvider? = null
+
+	@BeforeAll
+	fun act() {
+		urlProvider = services.promiseBuiltUrlProvider(LibraryId(13)).toExpiringFuture().get()
 	}
 
 	@Test

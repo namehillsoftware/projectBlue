@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.connection.selected.GivenASelectedLibrary.AndTheLibraryIsAwoken
 
-import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
@@ -18,18 +17,17 @@ import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Test
-import org.mockito.Mockito
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 
-class WhenRetrievingTheSelectedConnection : AndroidContext() {
+class WhenRetrievingTheSelectedConnection {
 
-	companion object {
-		private val urlProvider = Mockito.mock(IUrlProvider::class.java)
-		private val applicationMessageBus = RecordingApplicationMessageBus()
-		private var connectionProvider: IConnectionProvider? = null
-	}
+	private val urlProvider = mockk<IUrlProvider>()
+	private val applicationMessageBus = RecordingApplicationMessageBus()
+	private var connectionProvider: IConnectionProvider? = null
 
-	override fun before() {
+	@BeforeAll
+	fun act() {
 		val deferredConnectionProvider = DeferredProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>()
 		val libraryConnections = mockk<ManageConnectionSessions>()
 		every { libraryConnections.promiseLibraryConnection(LibraryId(2)) } returns deferredConnectionProvider
@@ -53,12 +51,12 @@ class WhenRetrievingTheSelectedConnection : AndroidContext() {
 	}
 
 	@Test
-	fun thenTheConnectionIsCorrect() {
+	fun `then the connection is correct`() {
 		assertThat(connectionProvider!!.urlProvider).isEqualTo(urlProvider)
 	}
 
 	@Test
-	fun thenGettingLibraryIsBroadcast() {
+	fun `then getting library is broadcast`() {
 		assertThat(
 			applicationMessageBus.recordedMessages
 				.filterIsInstance<SelectedConnection.BuildSessionConnectionBroadcast>()

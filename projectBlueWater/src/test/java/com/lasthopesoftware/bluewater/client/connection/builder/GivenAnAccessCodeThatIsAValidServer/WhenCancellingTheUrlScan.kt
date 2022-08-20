@@ -13,47 +13,45 @@ import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
 
 class WhenCancellingTheUrlScan {
 
-	companion object {
-		private val cancellationException by lazy {
-			val connectionTester = mockk<TestConnections>()
-			every { connectionTester.promiseIsConnectionPossible(match { a -> a.urlProvider.baseUrl.toString() == "http://gooPc:80/MCWS/v1/" }) } returns Promise { m ->
-				m.cancellationRequested {
-					m.sendRejection(CancellationException("Bye now!"))
-				}
+	private val cancellationException by lazy {
+		val connectionTester = mockk<TestConnections>()
+		every { connectionTester.promiseIsConnectionPossible(match { a -> a.urlProvider.baseUrl.toString() == "http://gooPc:80/MCWS/v1/" }) } returns Promise { m ->
+			m.cancellationRequested {
+				m.sendRejection(CancellationException("Bye now!"))
 			}
+		}
 
-			val connectionSettingsLookup = mockk<LookupConnectionSettings>()
-			every { connectionSettingsLookup.lookupConnectionSettings(LibraryId(14)) } returns ConnectionSettings(accessCode = "http://gooPc:80").toPromise()
+		val connectionSettingsLookup = mockk<LookupConnectionSettings>()
+		every { connectionSettingsLookup.lookupConnectionSettings(LibraryId(14)) } returns ConnectionSettings(accessCode = "http://gooPc:80").toPromise()
 
-			val urlScanner = UrlScanner(
-				PassThroughBase64Encoder,
-				connectionTester,
-				mockk(),
-				connectionSettingsLookup,
-				OkHttpFactory
-            )
+		val urlScanner = UrlScanner(
+			PassThroughBase64Encoder,
+			connectionTester,
+			mockk(),
+			connectionSettingsLookup,
+			OkHttpFactory
+		)
 
-			val promisedScan = urlScanner.promiseBuiltUrlProvider(LibraryId(14))
-			promisedScan.cancel()
+		val promisedScan = urlScanner.promiseBuiltUrlProvider(LibraryId(14))
+		promisedScan.cancel()
 
-			try {
-				promisedScan.toExpiringFuture()[5, TimeUnit.SECONDS]
-				null
-			} catch (ee: ExecutionException) {
-				ee.cause as? CancellationException
-			}
+		try {
+			promisedScan.toExpiringFuture()[5, TimeUnit.SECONDS]
+			null
+		} catch (ee: ExecutionException) {
+			ee.cause as? CancellationException
 		}
 	}
 
 	@Test
-	fun thenTheCancellationExceptionIsReturned() {
+	fun `then the cancellation exception is returned`() {
 		assertThat(cancellationException?.message).isEqualTo("Bye now!")
 	}
 }

@@ -9,32 +9,29 @@ import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 import java.util.*
 
 class WhenReceivingTheNotification {
-	@Test
-	fun thenAReadPermissionsRequestIsSent() {
-		assertThat(requestedWritePermissionLibraries).containsOnly(LibraryId(22))
+	private val requestedWritePermissionLibraries: MutableList<LibraryId> = LinkedList()
+
+	@BeforeAll
+	fun act() {
+		val storedFileAccess = mockk<AccessStoredFiles>().apply {
+			every { getStoredFile(14) } returns Promise(StoredFile().setId(14).setLibraryId(22))
+		}
+
+		val storedFileWritePermissionsReceiver = StoredFileWritePermissionsReceiver(
+			{ false },
+			{ e -> requestedWritePermissionLibraries.add(e) },
+			storedFileAccess
+		)
+		ExpiringFuturePromise(storedFileWritePermissionsReceiver.receive(14)).get()
 	}
 
-	companion object {
-		private val requestedWritePermissionLibraries: MutableList<LibraryId> = LinkedList()
-
-		@BeforeClass
-		@JvmStatic
-		fun before() {
-			val storedFileAccess = mockk<AccessStoredFiles>().apply {
-				every { getStoredFile(14) } returns Promise(StoredFile().setId(14).setLibraryId(22))
-			}
-
-			val storedFileWritePermissionsReceiver = StoredFileWritePermissionsReceiver(
-				{ false },
-				{ e -> requestedWritePermissionLibraries.add(e) },
-				storedFileAccess
-			)
-			ExpiringFuturePromise(storedFileWritePermissionsReceiver.receive(14)).get()
-		}
+	@Test
+	fun `then a read permissions request is sent`() {
+		assertThat(requestedWritePermissionLibraries).containsOnly(LibraryId(22))
 	}
 }

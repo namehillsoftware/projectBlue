@@ -8,36 +8,41 @@ import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 import java.io.IOException
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
 
 class WhenCancellingWhileGettingServerInfo {
 
-	companion object {
-		private val error by lazy {
-			val serverInfoXml = mockk<RequestServerInfoXml>()
-			every { serverInfoXml.promiseServerInfoXml(any()) } returns Promise { m ->
-				m.cancellationRequested {
-					m.sendRejection(IOException("This was no good"))
-				}
+	private val mut by lazy {
+		val serverInfoXml = mockk<RequestServerInfoXml>()
+		every { serverInfoXml.promiseServerInfoXml(any()) } returns Promise { m ->
+			m.cancellationRequested {
+				m.sendRejection(IOException("This was no good"))
 			}
+		}
 
-			val serverLookup = ServerLookup(serverInfoXml)
-			val promisedServerInfo = serverLookup.promiseServerInformation(LibraryId(10))
-			promisedServerInfo.cancel()
-			try {
-				promisedServerInfo.toExpiringFuture()[5, TimeUnit.SECONDS]
-				null
-			} catch (ee: ExecutionException) {
-				ee.cause as? IOException ?: throw ee
-			}
+		val serverLookup = ServerLookup(serverInfoXml)
+		serverLookup
+	}
+
+	private lateinit var error: IOException
+
+	@BeforeAll
+	fun act() {
+		val promisedServerInfo = mut.promiseServerInformation(LibraryId(10))
+		promisedServerInfo.cancel()
+		try {
+			promisedServerInfo.toExpiringFuture()[5, TimeUnit.SECONDS]
+		} catch (ee: ExecutionException) {
+			error = ee.cause as? IOException ?: throw ee
 		}
 	}
 
 	@Test
-	fun thenTheExceptionIsCorrect() {
-		assertThat(error?.message).isEqualTo("This was no good")
+	fun `then the exception is correct`() {
+		assertThat(error.message).isEqualTo("This was no good")
 	}
 }

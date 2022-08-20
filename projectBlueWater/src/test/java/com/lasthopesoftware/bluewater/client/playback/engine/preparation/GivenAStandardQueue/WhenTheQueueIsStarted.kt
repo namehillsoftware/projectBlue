@@ -1,74 +1,56 @@
-package com.lasthopesoftware.bluewater.client.playback.engine.preparation.GivenAStandardQueue;
+package com.lasthopesoftware.bluewater.client.playback.engine.preparation.GivenAStandardQueue
 
-import com.annimon.stream.Collectors;
-import com.annimon.stream.Stream;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue;
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile;
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider;
-import com.namehillsoftware.handoff.Messenger;
-import com.namehillsoftware.handoff.promises.MessengerOperator;
-import com.namehillsoftware.handoff.promises.Promise;
-import com.namehillsoftware.handoff.promises.response.VoidResponse;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.namehillsoftware.handoff.Messenger
+import com.namehillsoftware.handoff.promises.MessengerOperator
+import com.namehillsoftware.handoff.promises.Promise
+import io.mockk.mockk
+import org.assertj.core.api.Assertions.assertThat
+import org.joda.time.Duration
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
+import kotlin.random.Random.Default.nextInt
 
-import junit.framework.Assert;
-
-import org.joda.time.Duration;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-
-import static org.mockito.Mockito.mock;
-
-public class WhenTheQueueIsStarted {
-	private static PreparedPlayableFileQueue queue;
-	private static int startPosition;
-
-	@BeforeClass
-	public static void before() {
-		final Random random = new Random(System.currentTimeMillis());
-		final int numberOfFiles = random.nextInt(500);
-
-		final List<ServiceFile> serviceFiles =
-			Stream
-				.range(0, numberOfFiles)
-				.map(i -> new ServiceFile(random.nextInt()))
-				.collect(Collectors.toList());
-
-		Map<ServiceFile, MockResolveAction> fileActionMap =
-			Stream
-				.of(serviceFiles)
-				.collect(Collectors.toMap(file -> file, file -> new MockResolveAction()));
-
-		final CompletingFileQueueProvider bufferingPlaybackQueuesProvider
-			= new CompletingFileQueueProvider();
-
-		startPosition = random.nextInt(numberOfFiles);
-
-		queue =
-			new PreparedPlayableFileQueue(
-				() -> 1,
-				(file, preparedAt) -> {
-					final MockResolveAction mockResolveAction = fileActionMap.get(file);
-					return new Promise<>(mockResolveAction);
-				},
-				bufferingPlaybackQueuesProvider.provideQueue(serviceFiles, startPosition));
+class WhenTheQueueIsStarted {
+	private val numberOfFiles by lazy { nextInt(500) }
+	private val startPosition by lazy { nextInt(numberOfFiles) }
+	private val queue by lazy {
+		val serviceFiles = (0..numberOfFiles).map { ServiceFile(nextInt()) }
+		val fileActionMap = serviceFiles.associateWith { MockResolveAction() }
+		val bufferingPlaybackQueuesProvider = CompletingFileQueueProvider()
+		PreparedPlayableFileQueue(
+			{ 1 },
+			{ file: ServiceFile?, _: Duration? ->
+				val mockResolveAction = fileActionMap[file]
+				Promise(mockResolveAction)
+			},
+			bufferingPlaybackQueuesProvider.provideQueue(serviceFiles, startPosition)
+		)
 	}
 
-	@Test
-	public void thenTheQueueStartsAtTheCorrectPosition() {
-		queue
+	private var preparedPlayableFile: PositionedPlayableFile? = null
+
+	@BeforeAll
+    fun act() {
+		preparedPlayableFile = queue
 			.promiseNextPreparedPlaybackFile(Duration.ZERO)
-			.then(new VoidResponse<>(positionedPlaybackFile -> Assert.assertEquals(startPosition, positionedPlaybackFile.getPlaylistPosition())));
-	}
+			?.toExpiringFuture()
+			?.get()
+    }
 
-	private static class MockResolveAction implements MessengerOperator<PreparedPlayableFile> {
-		@Override
-		public void send(Messenger<PreparedPlayableFile> resolve) {
-			resolve.sendResolution(mock(PreparedPlayableFile.class));
-		}
-	}
+    @Test
+    fun `then the queue starts at the correct position`() {
+		assertThat(preparedPlayableFile?.playlistPosition).isEqualTo(startPosition)
+    }
+
+    private class MockResolveAction : MessengerOperator<PreparedPlayableFile?> {
+        override fun send(resolve: Messenger<PreparedPlayableFile?>) {
+            resolve.sendResolution(mockk(relaxed = true))
+        }
+    }
 }

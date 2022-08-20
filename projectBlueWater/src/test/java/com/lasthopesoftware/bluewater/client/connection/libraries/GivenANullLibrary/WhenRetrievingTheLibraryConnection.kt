@@ -17,54 +17,56 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 
 class WhenRetrievingTheLibraryConnection {
 
-	companion object Setup {
-		private val statuses: MutableList<BuildingConnectionStatus> = ArrayList()
-		private val urlProvider = mockk<IUrlProvider>()
-		private var connectionProvider: IConnectionProvider? = null
+	private val mut by lazy {
+		val validateConnectionSettings = mockk<ValidateConnectionSettings>()
+		every { validateConnectionSettings.isValid(any()) } returns true
 
-		@BeforeClass
-		@JvmStatic
-		fun before() {
-			val validateConnectionSettings = mockk<ValidateConnectionSettings>()
-			every { validateConnectionSettings.isValid(any()) } returns true
+		val deferredConnectionSettings = DeferredPromise(null as ConnectionSettings?)
 
-			val deferredConnectionSettings = DeferredPromise(null as ConnectionSettings?)
+		val lookupConnection = mockk<LookupConnectionSettings>()
+		every { lookupConnection.lookupConnectionSettings(LibraryId(2)) } returns deferredConnectionSettings
 
-			val lookupConnection = mockk<LookupConnectionSettings>()
-			every { lookupConnection.lookupConnectionSettings(LibraryId(2)) } returns deferredConnectionSettings
+		val liveUrlProvider = mockk<ProvideLiveUrl>()
+		every { liveUrlProvider.promiseLiveUrl(LibraryId(2)) } returns mockk<IUrlProvider>().toPromise()
 
-			val liveUrlProvider = mockk<ProvideLiveUrl>()
-			every { liveUrlProvider.promiseLiveUrl(LibraryId(2)) } returns urlProvider.toPromise()
+		val libraryConnectionProvider = LibraryConnectionProvider(
+			validateConnectionSettings,
+			lookupConnection,
+			NoopServerAlarm,
+			liveUrlProvider,
+			OkHttpFactory
+		)
 
-			val libraryConnectionProvider = LibraryConnectionProvider(
-                validateConnectionSettings,
-                lookupConnection,
-                NoopServerAlarm(),
-                liveUrlProvider,
-                OkHttpFactory
-            )
+		Pair(deferredConnectionSettings, libraryConnectionProvider)
+	}
 
-			val futureConnectionProvider =
-				libraryConnectionProvider
-					.promiseLibraryConnection(LibraryId(2))
-					.apply {
-						progress.then(statuses::add)
-						updates(statuses::add)
-					}
-					.toExpiringFuture()
+	private val statuses: MutableList<BuildingConnectionStatus> = ArrayList()
+	private var connectionProvider: IConnectionProvider? = null
 
-			deferredConnectionSettings.resolve()
-			connectionProvider = futureConnectionProvider.get()
-		}
+	@BeforeAll
+	fun before() {
+		val (deferredConnectionSettings, libraryConnectionProvider) = mut
+
+		val futureConnectionProvider =
+			libraryConnectionProvider
+				.promiseLibraryConnection(LibraryId(2))
+				.apply {
+					progress.then(statuses::add)
+					updates(statuses::add)
+				}
+				.toExpiringFuture()
+
+		deferredConnectionSettings.resolve()
+		connectionProvider = futureConnectionProvider.get()
 	}
 
 	@Test
-	fun thenGettingLibraryFailedIsBroadcast() {
+	fun `then getting library failed is broadcast`() {
 		assertThat(statuses)
 			.containsExactly(
 				BuildingConnectionStatus.GettingLibrary,
@@ -73,7 +75,7 @@ class WhenRetrievingTheLibraryConnection {
 	}
 
 	@Test
-	fun thenTheConnectionIsNull() {
+	fun `then the connection is null`() {
 		assertThat(connectionProvider).isNull()
 	}
 }

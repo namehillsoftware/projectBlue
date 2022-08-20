@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.service.notification.GivenAStandardNotificationManager
 
 import android.app.Notification
+import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage
 import com.lasthopesoftware.bluewater.client.playback.service.notification.NotificationsConfiguration
@@ -28,7 +29,10 @@ class WhenPlaybackStarts : AndroidContext() {
 				notificationController,
 				NotificationsConfiguration("", 43),
 				notificationContentBuilder
-			) { Promise(FakeNotificationCompatBuilder.newFakeBuilder(startedNotification)) },
+			) { Promise(FakeNotificationCompatBuilder.newFakeBuilder(
+                ApplicationProvider.getApplicationContext(),
+                startedNotification
+            )) },
 			mockk(relaxed = true)
 		)
 		playbackNotificationRouter(PlaybackMessage.PlaybackStarted)

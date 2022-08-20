@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.service.notification.GivenAStandardNotificationManager.AndPlaybackHasStarted.AndTheFileHasChanged.AndPlaybackIsPaused.ThenStartedAgain
 
 import android.app.Notification
+import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.playback.service.notification.NotificationsConfiguration
@@ -26,15 +27,27 @@ class WhenTheFileChanges : AndroidContext() {
 	}
 
 	override fun before() {
-		every { notificationContentBuilder.getLoadingNotification(any()) } returns FakeNotificationCompatBuilder.newFakeBuilder(loadingNotification)
-		every { notificationContentBuilder.promiseNowPlayingNotification(ServiceFile(1), any()) } returns Promise(FakeNotificationCompatBuilder.newFakeBuilder(firstNotification))
-		every { notificationContentBuilder.promiseNowPlayingNotification(ServiceFile(2), any()) } returns Promise(FakeNotificationCompatBuilder.newFakeBuilder(secondNotification))
+		every { notificationContentBuilder.getLoadingNotification(any()) } returns FakeNotificationCompatBuilder.newFakeBuilder(
+            ApplicationProvider.getApplicationContext(),
+            loadingNotification
+        )
+		every { notificationContentBuilder.promiseNowPlayingNotification(ServiceFile(1), any()) } returns Promise(FakeNotificationCompatBuilder.newFakeBuilder(
+            ApplicationProvider.getApplicationContext(),
+            firstNotification
+        ))
+		every { notificationContentBuilder.promiseNowPlayingNotification(ServiceFile(2), any()) } returns Promise(FakeNotificationCompatBuilder.newFakeBuilder(
+            ApplicationProvider.getApplicationContext(),
+            secondNotification
+        ))
 
 		val playbackNotificationBroadcaster = PlaybackNotificationBroadcaster(
 			notificationController,
 			NotificationsConfiguration("", 43),
 			notificationContentBuilder
-		) { Promise(FakeNotificationCompatBuilder.newFakeBuilder(startingNotification)) }
+		) { Promise(FakeNotificationCompatBuilder.newFakeBuilder(
+            ApplicationProvider.getApplicationContext(),
+            startingNotification
+        )) }
 
 		playbackNotificationBroadcaster.notifyPlaying()
 		playbackNotificationBroadcaster.notifyPlayingFileChanged(ServiceFile(1))

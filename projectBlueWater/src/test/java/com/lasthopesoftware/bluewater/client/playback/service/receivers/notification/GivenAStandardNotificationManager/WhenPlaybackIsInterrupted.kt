@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.playback.service.receivers.notific
 
 import android.app.Notification
 import android.app.NotificationManager
+import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
@@ -32,12 +33,21 @@ class WhenPlaybackIsInterrupted : AndroidContext() {
 	}
 
 	override fun before() {
-		every { notificationContentBuilder.getLoadingNotification(any()) } returns FakeNotificationCompatBuilder.newFakeBuilder(Notification())
+		every { notificationContentBuilder.getLoadingNotification(any()) } returns FakeNotificationCompatBuilder.newFakeBuilder(
+            ApplicationProvider.getApplicationContext(),
+            Notification()
+        )
 		every { notificationContentBuilder.promiseNowPlayingNotification(any(), any()) } returns Promise(
-			FakeNotificationCompatBuilder.newFakeBuilder(Notification())
+			FakeNotificationCompatBuilder.newFakeBuilder(
+                ApplicationProvider.getApplicationContext(),
+                Notification()
+            )
 		)
 		every { notificationContentBuilder.promiseNowPlayingNotification(ServiceFile(1), false) } returns Promise(
-			FakeNotificationCompatBuilder.newFakeBuilder(pausedNotification)
+			FakeNotificationCompatBuilder.newFakeBuilder(
+                ApplicationProvider.getApplicationContext(),
+                pausedNotification
+            )
 		)
 
 		val recordingApplicationMessageBus = RecordingApplicationMessageBus()
@@ -46,7 +56,10 @@ class WhenPlaybackIsInterrupted : AndroidContext() {
 				NotificationsController(service, notificationManager),
 				NotificationsConfiguration("", 43),
 				notificationContentBuilder
-			) { Promise(FakeNotificationCompatBuilder.newFakeBuilder(Notification())) },
+			) { Promise(FakeNotificationCompatBuilder.newFakeBuilder(
+                ApplicationProvider.getApplicationContext(),
+                Notification()
+            )) },
 			recordingApplicationMessageBus
 		)
 

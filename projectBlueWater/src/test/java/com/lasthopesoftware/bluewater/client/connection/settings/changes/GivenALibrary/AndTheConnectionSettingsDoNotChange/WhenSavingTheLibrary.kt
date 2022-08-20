@@ -12,44 +12,37 @@ import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class WhenSavingTheLibrary {
 
-	companion object {
-		private val expectedLibrary = Library()
-		private val messageBus = RecordingApplicationMessageBus()
-		private var updatedLibrary: Library? = null
+	private val expectedLibrary = Library()
+	private val messageBus = RecordingApplicationMessageBus()
+	private val updatedLibrary by lazy {
+		val libraryStorage = mockk<ILibraryStorage>()
+		every { libraryStorage.saveLibrary(any()) } returns expectedLibrary.toPromise()
 
-		@JvmStatic
-		@BeforeClass
-		fun before() {
-			val libraryStorage = mockk<ILibraryStorage>()
-			every { libraryStorage.saveLibrary(any()) } returns expectedLibrary.toPromise()
+		val connectionSettingsLookup = mockk<LookupConnectionSettings>()
+		every {
+			connectionSettingsLookup.lookupConnectionSettings(LibraryId(13))
+		} returns ConnectionSettings("codeOne").toPromise() andThen ConnectionSettings("codeOne").toPromise()
 
-			val connectionSettingsLookup = mockk<LookupConnectionSettings>()
-			every {
-				connectionSettingsLookup.lookupConnectionSettings(LibraryId(13))
-			} returns ConnectionSettings("codeOne").toPromise() andThen ConnectionSettings("codeOne").toPromise()
+		val connectionSettingsChangeDetectionLibraryStorage = ObservableConnectionSettingsLibraryStorage(
+			libraryStorage,
+			connectionSettingsLookup,
+			messageBus
+		)
 
-			val connectionSettingsChangeDetectionLibraryStorage = ObservableConnectionSettingsLibraryStorage(
-                libraryStorage,
-                connectionSettingsLookup,
-                messageBus
-            )
-
-			updatedLibrary = connectionSettingsChangeDetectionLibraryStorage.saveLibrary(Library(_id = 13)).toExpiringFuture().get()
-		}
+		connectionSettingsChangeDetectionLibraryStorage.saveLibrary(Library(_id = 13)).toExpiringFuture().get()
 	}
 
 	@Test
-	fun thenTheLibraryIsUpdated() {
+	fun `then the library is updated`() {
 		assertThat(updatedLibrary).isEqualTo(expectedLibrary)
 	}
 
 	@Test
-	fun thenNoUpdatesAreSentOnTheMessageBus() {
+	fun `then no updates are sent on the message bus`() {
 		assertThat(messageBus.recordedMessages).isEmpty()
 	}
 }

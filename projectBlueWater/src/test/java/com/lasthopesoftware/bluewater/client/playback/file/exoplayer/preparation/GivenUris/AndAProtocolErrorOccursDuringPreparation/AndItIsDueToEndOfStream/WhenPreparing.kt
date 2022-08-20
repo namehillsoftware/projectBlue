@@ -19,53 +19,51 @@ import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import java.net.ProtocolException
 
 class WhenPreparing {
 
-	companion object {
-		private val preparedPlayer by lazy {
-			var listener: Player.Listener? = null
+	private val preparedPlayer by lazy {
+		var listener: Player.Listener? = null
 
-			val preparer = ExoPlayerPlaybackPreparer(
-				{
-					mockk<BaseMediaSource>(relaxUnitFun = true).toPromise()
-				},
-				mockk<ProvideExoPlayers>().apply {
-					every { getExoPlayer() } returns mockk<PromisingExoPlayer>().apply {
-						val selfPromise = this.toPromise()
-						every { addListener(any()) } answers {
-							listener = firstArg()
-							selfPromise
-						}
-						every { setMediaSource(any()) } returns selfPromise
-						every { removeListener(any()) } returns selfPromise
-						every { prepare() } returns selfPromise
-						every { stop() } returns selfPromise
-						every { release() } returns selfPromise
+		val preparer = ExoPlayerPlaybackPreparer(
+			{
+				mockk<BaseMediaSource>(relaxUnitFun = true).toPromise()
+			},
+			mockk<ProvideExoPlayers>().apply {
+				every { getExoPlayer() } returns mockk<PromisingExoPlayer>().apply {
+					val selfPromise = this.toPromise()
+					every { addListener(any()) } answers {
+						listener = firstArg()
+						selfPromise
 					}
-				},
-				mockk()
-			) { Promise(mockk<Uri>()) }
+					every { setMediaSource(any()) } returns selfPromise
+					every { removeListener(any()) } returns selfPromise
+					every { prepare() } returns selfPromise
+					every { stop() } returns selfPromise
+					every { release() } returns selfPromise
+				}
+			},
+			mockk()
+		) { Promise(mockk<Uri>()) }
 
-			val futurePreparation = preparer.promisePreparedPlaybackFile(ServiceFile(1), Duration.ZERO).toExpiringFuture()
+		val futurePreparation = preparer.promisePreparedPlaybackFile(ServiceFile(1), Duration.ZERO).toExpiringFuture()
 
-			listener?.onPlayerError(
-				PlaybackException(
-					"oh no",
-					HttpDataSource.HttpDataSourceException(
-						ProtocolException("unexpected end of stream"),
-						DataSpec(mockk()),
-						PlaybackException.ERROR_CODE_IO_UNSPECIFIED,
-						HttpDataSource.HttpDataSourceException.TYPE_OPEN
-					),
-					PlaybackException.ERROR_CODE_UNSPECIFIED,
-				)
+		listener?.onPlayerError(
+			PlaybackException(
+				"oh no",
+				HttpDataSource.HttpDataSourceException(
+					ProtocolException("unexpected end of stream"),
+					DataSpec(mockk()),
+					PlaybackException.ERROR_CODE_IO_UNSPECIFIED,
+					HttpDataSource.HttpDataSourceException.TYPE_OPEN
+				),
+				PlaybackException.ERROR_CODE_UNSPECIFIED,
 			)
+		)
 
-			futurePreparation.get()
-		}
+		futurePreparation.get()
 	}
 
 	@Test

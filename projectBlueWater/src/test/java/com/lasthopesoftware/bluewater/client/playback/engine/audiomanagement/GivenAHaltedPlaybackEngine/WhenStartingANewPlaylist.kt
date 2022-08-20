@@ -11,17 +11,16 @@ import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 import java.util.concurrent.TimeUnit
 
 class WhenStartingANewPlaylist {
-	companion object Setup {
+	private var isStarted = false
+	private var request: AudioFocusRequestCompat? = null
 
-		private var isStarted = false
-		private var request: AudioFocusRequestCompat? = null
-
-		private val innerPlaybackState = object : ChangePlaybackState {
+	private val mut by lazy {
+		val innerPlaybackState = object : ChangePlaybackState {
 			override fun startPlaylist(playlist: List<ServiceFile>, playlistPosition: Int, filePosition: Duration): Promise<Unit> {
 				isStarted = true
 				return Unit.toPromise()
@@ -32,7 +31,7 @@ class WhenStartingANewPlaylist {
 			override fun pause(): Promise<Unit> = Unit.toPromise()
 		}
 
-		private val audioFocus = object : ControlAudioFocus {
+		val audioFocus = object : ControlAudioFocus {
 			override fun promiseAudioFocus(audioFocusRequest: AudioFocusRequestCompat): Promise<AudioFocusRequestCompat> {
 				request = audioFocusRequest
 				return audioFocusRequest.toPromise()
@@ -41,20 +40,20 @@ class WhenStartingANewPlaylist {
 			override fun abandonAudioFocus(audioFocusRequest: AudioFocusRequestCompat) {}
 		}
 
-		@JvmStatic
-		@BeforeClass
-		fun context() {
-			val audioManagingPlaybackStateChanger = AudioManagingPlaybackStateChanger(
-				innerPlaybackState,
-				mockk(),
-				audioFocus,
-				mockk(relaxed = true))
+		val audioManagingPlaybackStateChanger = AudioManagingPlaybackStateChanger(
+			innerPlaybackState,
+			mockk(),
+			audioFocus,
+			mockk(relaxed = true))
 
-			audioManagingPlaybackStateChanger
-				.startPlaylist(ArrayList(), 0, Duration.ZERO)
-				.toExpiringFuture()
-				.get(20, TimeUnit.SECONDS)
-		}
+		audioManagingPlaybackStateChanger
+	}
+
+	@BeforeAll
+	fun act() {
+		mut.startPlaylist(ArrayList(), 0, Duration.ZERO)
+			.toExpiringFuture()
+			.get(20, TimeUnit.SECONDS)
 	}
 
 	@Test

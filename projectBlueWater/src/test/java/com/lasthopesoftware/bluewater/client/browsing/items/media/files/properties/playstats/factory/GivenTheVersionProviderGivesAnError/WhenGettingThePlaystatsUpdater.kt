@@ -14,38 +14,39 @@ import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 import java.util.concurrent.ExecutionException
 
 class WhenGettingThePlaystatsUpdater {
 
-	companion object {
-		private var exception: ExecutionException? = null
+	private val playstatsUpdateSelector by lazy {
+		val fakeConnectionProvider = FakeConnectionProvider()
+		val programVersionProvider = mockk<IProgramVersionProvider>()
+		every { programVersionProvider.promiseServerVersion() } returns Promise(Exception(":("))
 
-		@BeforeClass
-		@JvmStatic
-		fun before() {
-			val fakeConnectionProvider = FakeConnectionProvider()
-			val programVersionProvider = mockk<IProgramVersionProvider>()
-			every { programVersionProvider.promiseServerVersion() } returns Promise(Exception(":("))
+		val checkConnection = mockk<CheckIfScopedConnectionIsReadOnly>()
+		every { checkConnection.promiseIsReadOnly() } returns false.toPromise()
 
-			val checkConnection = mockk<CheckIfScopedConnectionIsReadOnly>()
-			every { checkConnection.promiseIsReadOnly() } returns false.toPromise()
+		val fakeFilePropertiesContainer = FakeFilePropertiesContainer()
+		val fakeScopedRevisionProvider = FakeScopedRevisionProvider(20)
 
-			val fakeFilePropertiesContainer = FakeFilePropertiesContainer()
-			val fakeScopedRevisionProvider = FakeScopedRevisionProvider(20)
-			val playstatsUpdateSelector = PlaystatsUpdateSelector(
-				fakeConnectionProvider,
-				ScopedFilePropertiesProvider(fakeConnectionProvider, fakeScopedRevisionProvider, fakeFilePropertiesContainer),
-				ScopedFilePropertiesStorage(fakeConnectionProvider, checkConnection, fakeScopedRevisionProvider, fakeFilePropertiesContainer),
-				programVersionProvider
-			)
-			try {
-				playstatsUpdateSelector.promisePlaystatsUpdater().toExpiringFuture().get()
-			} catch (e: ExecutionException) {
-				exception = e
-			}
+		PlaystatsUpdateSelector(
+			fakeConnectionProvider,
+			ScopedFilePropertiesProvider(fakeConnectionProvider, fakeScopedRevisionProvider, fakeFilePropertiesContainer),
+			ScopedFilePropertiesStorage(fakeConnectionProvider, checkConnection, fakeScopedRevisionProvider, fakeFilePropertiesContainer),
+			programVersionProvider
+		)
+	}
+
+	private var exception: ExecutionException? = null
+
+	@BeforeAll
+	fun act() {
+		try {
+			playstatsUpdateSelector.promisePlaystatsUpdater().toExpiringFuture().get()
+		} catch (e: ExecutionException) {
+			exception = e
 		}
 	}
 

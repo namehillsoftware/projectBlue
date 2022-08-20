@@ -1,89 +1,81 @@
-package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.GivenAFileThatDoesNotYetExist.AndTheFileCanBeDownloaded.AndTheSubsriptionIsDisposedAfterItBeginsDownloading;
+package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.GivenAFileThatDoesNotYetExist.AndTheFileCanBeDownloaded.AndTheSubsriptionIsDisposedAfterItBeginsDownloading
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.AccessStoredFiles
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
+import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.verify
+import io.reactivex.Observer
+import io.reactivex.disposables.Disposable
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
+import java.io.ByteArrayInputStream
+import java.io.InputStream
 
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.AccessStoredFiles;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise;
+class WhenProcessingTheJob {
+	private val storedFile = StoredFile(LibraryId(55), 1, ServiceFile(1), "test-path", true)
+	private val storedFileAccess = mockk<AccessStoredFiles>()
+	private val states: MutableList<StoredFileJobState> = ArrayList()
 
-import org.junit.BeforeClass;
-import org.junit.Test;
-
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-
-import io.reactivex.Observer;
-import io.reactivex.disposables.Disposable;
-
-public class WhenProcessingTheJob {
-
-	private static final StoredFile storedFile = new StoredFile(new LibraryId(55), 1, new ServiceFile(1), "test-path", true);
-	private static final AccessStoredFiles storedFileAccess = mock(AccessStoredFiles.class);
-	private static final List<StoredFileJobState> states = new ArrayList<>();
-
-	@BeforeClass
-	public static void before() {
-		final DeferredPromise<InputStream> deferredPromise = new DeferredPromise<>(new ByteArrayInputStream(new byte[0]));
-
-		final StoredFileJobProcessor storedFileJobProcessor = new StoredFileJobProcessor(
-			$ -> mock(File.class),
+	@BeforeAll
+	fun before() {
+		val deferredPromise = DeferredPromise<InputStream>(ByteArrayInputStream(ByteArray(0)))
+		val storedFileJobProcessor = StoredFileJobProcessor(
+			{
+				mockk {
+					every { parentFile } returns null
+					every { exists() } returns false
+				}
+			},
 			storedFileAccess,
-			(libraryId, f) -> deferredPromise,
-			f -> false,
-			f -> true,
-			(is, f) -> {});
+			{ _, _ -> deferredPromise },
+			{ false },
+			{ true },
+			mockk(relaxUnitFun = true)
+		)
+		storedFileJobProcessor.observeStoredFileDownload(
+			setOf(
+				StoredFileJob(
+					LibraryId(55),
+					ServiceFile(1),
+					storedFile
+				)
+			)
+		)
+			.blockingSubscribe(object : Observer<StoredFileJobStatus> {
+				private lateinit var disposable: Disposable
 
-		storedFileJobProcessor.observeStoredFileDownload(Collections.singleton(new StoredFileJob(new LibraryId(55), new ServiceFile(1), storedFile)))
-			.blockingSubscribe(new Observer<StoredFileJobStatus>() {
-				private Disposable disposable;
+				override fun onSubscribe(d: Disposable) {
+					disposable = d
+				}
 
-				@Override
-					public void onSubscribe(Disposable d) {
-						this.disposable = d;
-					}
+				override fun onNext(status: StoredFileJobStatus) {
+					states.add(status.storedFileJobState)
+					if (status.storedFileJobState != StoredFileJobState.Downloading) return
+					disposable.dispose()
+					deferredPromise.resolve()
+				}
 
-					@Override
-					public void onNext(StoredFileJobStatus status) {
-						states.add(status.storedFileJobState);
-
-						if (status.storedFileJobState != StoredFileJobState.Downloading) return;
-
-						disposable.dispose();
-						deferredPromise.resolve();
-					}
-
-					@Override
-					public void onError(Throwable e) {
-
-					}
-
-					@Override
-					public void onComplete() {
-
-					}
-				});
+				override fun onError(e: Throwable) {}
+				override fun onComplete() {}
+			})
 	}
 
 	@Test
-	public void thenTheFileIsNotMarkedAsDownloaded() {
-		verify(storedFileAccess, never()).markStoredFileAsDownloaded(storedFile);
+	fun `then the file is not marked as downloaded`() {
+		verify(exactly = 0) { storedFileAccess.markStoredFileAsDownloaded(storedFile) }
 	}
 
 	@Test
-	public void thenTheJobStatesProgressCorrectly() {
-		assertThat(states).containsExactly(StoredFileJobState.Queued, StoredFileJobState.Downloading);
+	fun `then the job states progress correctly`() {
+		assertThat(states).containsExactly(StoredFileJobState.Queued, StoredFileJobState.Downloading)
 	}
 }

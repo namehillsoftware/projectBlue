@@ -1,36 +1,31 @@
-package com.lasthopesoftware.bluewater.client.connection.trust.GivenAMatchingHostname;
+package com.lasthopesoftware.bluewater.client.connection.trust.GivenAMatchingHostname
 
-import com.lasthopesoftware.bluewater.client.connection.trust.AdditionalHostnameVerifier;
+import com.lasthopesoftware.bluewater.client.connection.trust.AdditionalHostnameVerifier
+import io.mockk.mockk
+import io.mockk.verify
+import org.assertj.core.api.AssertionsForClassTypes.assertThat
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
+import javax.net.ssl.HostnameVerifier
 
-import org.junit.BeforeClass;
-import org.junit.Test;
+class WhenVerifyingTheHostname {
+	private val defaultHostnameVerifier = mockk<HostnameVerifier>()
+	private var isHostnameValid = false
 
-import javax.net.ssl.HostnameVerifier;
-
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-
-public class WhenVerifyingTheHostname {
-
-	private static final HostnameVerifier defaultHostnameVerifier = mock(HostnameVerifier.class);
-
-	private static boolean isHostnameValid;
-
-	@BeforeClass
-	public static void before() {
-		final AdditionalHostnameVerifier additionalHostnameVerifier = new AdditionalHostnameVerifier("my-test-host-name", defaultHostnameVerifier);
-		isHostnameValid = additionalHostnameVerifier.verify("my-test-host-name", null);
+	@BeforeAll
+	fun act() {
+		val additionalHostnameVerifier =
+			AdditionalHostnameVerifier("my-test-host-name", defaultHostnameVerifier)
+		isHostnameValid = additionalHostnameVerifier.verify("my-test-host-name", null)
 	}
 
 	@Test
-	public void thenTheHostnameIsValid() {
-		assertThat(isHostnameValid).isTrue();
+	fun `then the hostname is valid`() {
+		assertThat(isHostnameValid).isTrue
 	}
 
 	@Test
-	public void thenTheDefaultHostnameVerifierIsNeverAsked() {
-		verify(defaultHostnameVerifier, never()).verify("my-test-host-name", null);
+	fun `then the default hostname verifier is never asked`() {
+		verify(exactly = 0) { defaultHostnameVerifier.verify("my-test-host-name", null) }
 	}
 }

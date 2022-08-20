@@ -1,39 +1,29 @@
-package com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.GivenABasePreparationSourceProvider;
+package com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.GivenABasePreparationSourceProvider
 
-import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlayableFilePreparationSourceProvider;
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource;
-import com.lasthopesoftware.bluewater.client.playback.file.volume.ProvideMaxFileVolume;
-import com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.MaxFileVolumePreparationProvider;
+import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlayableFilePreparationSourceProvider
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource
+import com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.MaxFileVolumePreparationProvider
+import io.mockk.mockk
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
 
-import org.junit.BeforeClass;
-import org.junit.Test;
+class WhenGettingTheMaxQueueSize {
+	private val maxQueueSize by lazy {
+		val maxFileVolumePreparationProvider =
+			MaxFileVolumePreparationProvider(object : IPlayableFilePreparationSourceProvider {
+				override fun providePlayableFilePreparationSource(): PlayableFilePreparationSource {
+					return mockk()
+				}
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-
-public class WhenGettingTheMaxQueueSize {
-
-	private static int maxQueueSize;
-
-	@BeforeClass
-	public static void setup() {
-		final MaxFileVolumePreparationProvider maxFileVolumePreparationProvider = new MaxFileVolumePreparationProvider(new IPlayableFilePreparationSourceProvider() {
-			@Override
-			public PlayableFilePreparationSource providePlayableFilePreparationSource() {
-				return null;
-			}
-
-			@Override
-			public int getMaxQueueSize() {
-				return 13;
-			}
-		}, mock(ProvideMaxFileVolume.class));
-
-		maxQueueSize = maxFileVolumePreparationProvider.getMaxQueueSize();
+				override fun getMaxQueueSize(): Int {
+					return 13
+				}
+			}, mockk())
+		maxFileVolumePreparationProvider.maxQueueSize
 	}
 
 	@Test
-	public void thenTheQueueSizeIsTheBaseQueueSize() {
-		assertThat(maxQueueSize).isEqualTo(13);
+	fun `then the queue size is the base queue size`() {
+		assertThat(maxQueueSize).isEqualTo(13)
 	}
 }

@@ -21,88 +21,97 @@ import io.reactivex.Observable
 import io.reactivex.Observer
 import io.reactivex.disposables.Disposable
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
-open class WhenSyncingTheStoredItems {
+class WhenSyncingTheStoredItems {
 
+	private val storedFileJobResults = ArrayList<StoredFile>()
 
-	companion object {
-		private val storedFileJobResults = ArrayList<StoredFile>()
-
-		@JvmStatic
-		@BeforeClass
-		fun before() {
-			val deferredStoredItemAccess: FakeDeferredStoredItemAccess = object : FakeDeferredStoredItemAccess() {
-				override val storedItems: Collection<StoredItem>
-					get() = setOf(StoredItem(1, 14, StoredItem.ItemType.PLAYLIST))
-			}
-			val mockFileProvider = mockk<ProvideLibraryFiles>()
-			every { mockFileProvider.promiseFiles(LibraryId(13), FileListParameters.Options.None, "Playlist/Files", "Playlist=14") } returns
-					Promise(listOf(
-						ServiceFile(1),
-						ServiceFile(2),
-						ServiceFile(4),
-						ServiceFile(10)))
-
-			val pruneStoredFiles = mockk<PruneStoredFiles>()
-				.apply {
-					every { pruneStoredFiles(any()) } returns Unit.toPromise()
-					every { pruneDanglingFiles() } returns Unit.toPromise()
-				}
-			val librarySyncHandler = LibrarySyncsHandler(
-				StoredItemServiceFileCollector(
-					deferredStoredItemAccess,
-					mockFileProvider,
-					FileListParameters
-                ),
-				pruneStoredFiles,
-				object : UpdateStoredFiles {
-					override fun promiseStoredFileUpdate(libraryId: LibraryId, serviceFile: ServiceFile): Promise<StoredFile?> =
-						Promise(StoredFile(libraryId,1, serviceFile, "fake-file-name", true))
-				}
-			) { jobs ->
-				Observable.fromIterable(jobs).flatMap { (_, _, storedFile) ->
-					Observable.just(
-						StoredFileJobStatus(
-							mockk(),
-							storedFile,
-							StoredFileJobState.Downloading
-						),
-						StoredFileJobStatus(
-							mockk(),
-							storedFile,
-							StoredFileJobState.Downloaded
-						)
-					)
-				}
-			}
-			val syncedFiles = librarySyncHandler.observeLibrarySync(LibraryId(5)).map { j -> j.storedFile }
-			val countDownLatch = CountDownLatch(1)
-			syncedFiles.subscribe(object : Observer<StoredFile> {
-				override fun onSubscribe(d: Disposable) {
-					d.dispose()
-					countDownLatch.countDown()
-				}
-
-				override fun onNext(storedFile: StoredFile) {
-					storedFileJobResults.add(storedFile)
-				}
-
-				override fun onError(e: Throwable) {}
-				override fun onComplete() {}
-			})
-
-			deferredStoredItemAccess.resolveStoredItems()
-
-			countDownLatch.await(30, TimeUnit.SECONDS)
+	@BeforeAll
+	fun before() {
+		val deferredStoredItemAccess: FakeDeferredStoredItemAccess = object : FakeDeferredStoredItemAccess() {
+			override val storedItems: Collection<StoredItem>
+				get() = setOf(StoredItem(1, 14, StoredItem.ItemType.PLAYLIST))
 		}
+		val mockFileProvider = mockk<ProvideLibraryFiles>()
+		every {
+			mockFileProvider.promiseFiles(
+				LibraryId(13),
+				FileListParameters.Options.None,
+				"Playlist/Files",
+				"Playlist=14"
+			)
+		} returns
+			Promise(
+				listOf(
+					ServiceFile(1),
+					ServiceFile(2),
+					ServiceFile(4),
+					ServiceFile(10)
+				)
+			)
+
+		val pruneStoredFiles = mockk<PruneStoredFiles>()
+			.apply {
+				every { pruneStoredFiles(any()) } returns Unit.toPromise()
+				every { pruneDanglingFiles() } returns Unit.toPromise()
+			}
+		val librarySyncHandler = LibrarySyncsHandler(
+			StoredItemServiceFileCollector(
+				deferredStoredItemAccess,
+				mockFileProvider,
+				FileListParameters
+			),
+			pruneStoredFiles,
+			object : UpdateStoredFiles {
+				override fun promiseStoredFileUpdate(
+					libraryId: LibraryId,
+					serviceFile: ServiceFile
+				): Promise<StoredFile?> =
+					Promise(StoredFile(libraryId, 1, serviceFile, "fake-file-name", true))
+			}
+		) { jobs ->
+			Observable.fromIterable(jobs).flatMap { (_, _, storedFile) ->
+				Observable.just(
+					StoredFileJobStatus(
+						mockk(),
+						storedFile,
+						StoredFileJobState.Downloading
+					),
+					StoredFileJobStatus(
+						mockk(),
+						storedFile,
+						StoredFileJobState.Downloaded
+					)
+				)
+			}
+		}
+		val syncedFiles = librarySyncHandler.observeLibrarySync(LibraryId(5)).map { j -> j.storedFile }
+		val countDownLatch = CountDownLatch(1)
+		syncedFiles.subscribe(object : Observer<StoredFile> {
+			override fun onSubscribe(d: Disposable) {
+				d.dispose()
+				countDownLatch.countDown()
+			}
+
+			override fun onNext(storedFile: StoredFile) {
+				storedFileJobResults.add(storedFile)
+			}
+
+			override fun onError(e: Throwable) {}
+			override fun onComplete() {}
+		})
+
+		deferredStoredItemAccess.resolveStoredItems()
+
+		countDownLatch.await(30, TimeUnit.SECONDS)
 	}
 
 	@Test
-	fun thenTheFilesInTheStoredItemsAreNotSynced() {
+	fun `then the files in the stored items are not synced`() {
 		assertThat(storedFileJobResults).isEmpty()
 	}
 }

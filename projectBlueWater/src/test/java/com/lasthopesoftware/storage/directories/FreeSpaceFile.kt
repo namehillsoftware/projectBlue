@@ -1,28 +1,11 @@
-package com.lasthopesoftware.storage.directories;
+package com.lasthopesoftware.storage.directories
 
-import androidx.annotation.NonNull;
+import java.io.File
 
-import java.io.File;
+internal class FreeSpaceFile(private val pathname: String, private val freeSpace: Long) : File(
+	pathname
+) {
+	override fun getPath(): String = pathname
 
-final class FreeSpaceFile extends File {
-
-	private final String pathname;
-	private final long freeSpace;
-
-	FreeSpaceFile(@NonNull String pathname, long freeSpace) {
-		super(pathname);
-		this.pathname = pathname;
-		this.freeSpace = freeSpace;
-	}
-
-	@NonNull
-	@Override
-	public String getPath() {
-		return pathname;
-	}
-
-	@Override
-	public long getFreeSpace() {
-		return freeSpace;
-	}
+	override fun getFreeSpace(): Long = freeSpace
 }

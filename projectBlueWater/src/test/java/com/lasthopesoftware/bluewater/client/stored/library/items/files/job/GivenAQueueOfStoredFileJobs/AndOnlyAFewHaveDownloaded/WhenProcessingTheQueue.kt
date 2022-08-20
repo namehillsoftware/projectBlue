@@ -1,110 +1,137 @@
-package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.GivenAQueueOfStoredFileJobs.AndOnlyAFewHaveDownloaded;
+package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.GivenAQueueOfStoredFileJobs.AndOnlyAFewHaveDownloaded
 
-import android.os.Build;
+import android.os.Build
+import androidx.annotation.RequiresApi
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTuple
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.GivenAQueueOfStoredFileJobs.MarkedFilesStoredFileAccess
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
+import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
+import com.namehillsoftware.handoff.promises.Promise
+import io.mockk.every
+import io.mockk.mockk
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
+import java.io.ByteArrayInputStream
+import java.util.concurrent.TimeUnit
 
-import androidx.annotation.RequiresApi;
-
-import com.annimon.stream.Stream;
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
-import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider;
-import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTuple;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.GivenAQueueOfStoredFileJobs.MarkedFilesStoredFileAccess;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise;
-import com.namehillsoftware.handoff.promises.Promise;
-
-import org.junit.BeforeClass;
-import org.junit.Test;
-
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-
-import io.reactivex.Observer;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
-
-public class WhenProcessingTheQueue {
-
-	private static final Set<StoredFileJob> storedFileJobs = new HashSet<>(Arrays.asList(
-		new StoredFileJob(new LibraryId(1), new ServiceFile(1), new StoredFile().setServiceId(1).setLibraryId(1)),
-		new StoredFileJob(new LibraryId(1), new ServiceFile(2), new StoredFile().setServiceId(2).setLibraryId(1)),
-		new StoredFileJob(new LibraryId(1), new ServiceFile(4), new StoredFile().setServiceId(4).setLibraryId(1)),
-		new StoredFileJob(new LibraryId(1), new ServiceFile(5), new StoredFile().setServiceId(5).setLibraryId(1)),
-		new StoredFileJob(new LibraryId(1), new ServiceFile(7), new StoredFile().setServiceId(7).setLibraryId(1)),
-		new StoredFileJob(new LibraryId(1), new ServiceFile(114), new StoredFile().setServiceId(114).setLibraryId(1)),
-		new StoredFileJob(new LibraryId(1), new ServiceFile(92), new StoredFile().setServiceId(92).setLibraryId(1))));
-
-	private static final StoredFile[] expectedDownloadingStoredFiles = new StoredFile[] {
-		new StoredFile().setServiceId(1).setLibraryId(1),
-		new StoredFile().setServiceId(2).setLibraryId(1),
-		new StoredFile().setServiceId(4).setLibraryId(1),
-		new StoredFile().setServiceId(5).setLibraryId(1),
-		new StoredFile().setServiceId(7).setLibraryId(1),
-	};
-
-	private static final StoredFile[] expectedDownloadedStoredFiles = new StoredFile[] {
-		new StoredFile().setServiceId(1).setLibraryId(1),
-		new StoredFile().setServiceId(2).setLibraryId(1),
-		new StoredFile().setServiceId(4).setLibraryId(1),
-		new StoredFile().setServiceId(5).setLibraryId(1),
-	};
-
-	private static final MarkedFilesStoredFileAccess storedFilesAccess = new MarkedFilesStoredFileAccess();
-
-	private static List<StoredFileJobStatus> storedFileStatuses = new ArrayList<>();
+class WhenProcessingTheQueue {
+	private val storedFileJobs: Set<StoredFileJob> = setOf(
+		StoredFileJob(
+			LibraryId(1),
+			ServiceFile(1),
+			StoredFile().setServiceId(1).setLibraryId(1)
+		),
+		StoredFileJob(
+			LibraryId(1),
+			ServiceFile(2),
+			StoredFile().setServiceId(2).setLibraryId(1)
+		),
+		StoredFileJob(
+			LibraryId(1),
+			ServiceFile(4),
+			StoredFile().setServiceId(4).setLibraryId(1)
+		),
+		StoredFileJob(
+			LibraryId(1),
+			ServiceFile(5),
+			StoredFile().setServiceId(5).setLibraryId(1)
+		),
+		StoredFileJob(
+			LibraryId(1),
+			ServiceFile(7),
+			StoredFile().setServiceId(7).setLibraryId(1)
+		),
+		StoredFileJob(
+			LibraryId(1),
+			ServiceFile(114),
+			StoredFile().setServiceId(114).setLibraryId(1)
+		),
+		StoredFileJob(
+			LibraryId(1),
+			ServiceFile(92),
+			StoredFile().setServiceId(92).setLibraryId(1)
+		)
+	)
+	private val expectedDownloadingStoredFiles = arrayOf(
+		StoredFile().setServiceId(1).setLibraryId(1),
+		StoredFile().setServiceId(2).setLibraryId(1),
+		StoredFile().setServiceId(4).setLibraryId(1),
+		StoredFile().setServiceId(5).setLibraryId(1),
+		StoredFile().setServiceId(7).setLibraryId(1)
+	)
+	private val expectedDownloadedStoredFiles = arrayOf(
+		StoredFile().setServiceId(1).setLibraryId(1),
+		StoredFile().setServiceId(2).setLibraryId(1),
+		StoredFile().setServiceId(4).setLibraryId(1),
+		StoredFile().setServiceId(5).setLibraryId(1)
+	)
+	private val storedFilesAccess = MarkedFilesStoredFileAccess()
+	private var storedFileStatuses: List<StoredFileJobStatus> = ArrayList()
 
 	@RequiresApi(api = Build.VERSION_CODES.N)
-	@BeforeClass
-	public static void before() {
-		final FakeConnectionProvider fakeConnectionProvider = new FakeConnectionProvider();
-		fakeConnectionProvider.mapResponse(p -> new FakeConnectionResponseTuple(200, new byte[0]));
-
-		final StoredFileJobProcessor storedFileJobProcessor = new StoredFileJobProcessor(
-			$ -> mock(File.class),
-			storedFilesAccess,
-			(libraryId, f) -> {
-				if (Arrays.asList(expectedDownloadedStoredFiles).contains(f))
-					return new Promise<>(new ByteArrayInputStream(new byte[0]));
-
-				return new DeferredPromise<>(new ByteArrayInputStream(new byte[0]));
+	@BeforeAll
+	fun before() {
+		val fakeConnectionProvider = FakeConnectionProvider()
+		fakeConnectionProvider.mapResponse({
+			FakeConnectionResponseTuple(
+				200,
+				ByteArray(0)
+			)
+		})
+		val storedFileJobProcessor = StoredFileJobProcessor(
+			{
+				mockk {
+					every { exists() } returns false
+					every { parentFile } returns null
+				}
 			},
-			f -> false,
-			f -> true,
-			(is, f) -> {});
-
+			storedFilesAccess,
+			{ _, f ->
+				if (expectedDownloadedStoredFiles.contains(f)) Promise(ByteArrayInputStream(ByteArray(0)))
+				else DeferredPromise(ByteArrayInputStream(ByteArray(0)))
+			},
+			{ false },
+			{ true },
+			mockk(relaxUnitFun = true)
+		)
 		storedFileStatuses = storedFileJobProcessor
 			.observeStoredFileDownload(storedFileJobs)
-			.timeout(1, TimeUnit.SECONDS, Observer::onComplete)
-			.toList().blockingGet();
+			.timeout(1, TimeUnit.SECONDS) { it.onComplete() }
+			.toList().blockingGet()
 	}
 
 	@Test
-	public void thenTheFilesAreBroadcastAsQueued() {
-		assertThat(Stream.of(storedFileStatuses).filter(s -> s.storedFileJobState == StoredFileJobState.Queued)
-			.map(r -> r.storedFile).toList()).isSubsetOf(Stream.of(storedFileJobs).map(StoredFileJob::getStoredFile).toList());
+	fun `then the files are broadcast as queued`() {
+		assertThat(
+			storedFileStatuses
+				.filter { s -> s.storedFileJobState === StoredFileJobState.Queued }
+				.map { r -> r.storedFile }
+		).isSubsetOf(storedFileJobs.map(StoredFileJob::storedFile))
 	}
 
 	@Test
-	public void thenTheCorrectFilesAreBroadcastAsDownloading() {
-		assertThat(Stream.of(storedFileStatuses).filter(s -> s.storedFileJobState == StoredFileJobState.Downloading)
-			.map(r -> r.storedFile).toList()).containsOnly(expectedDownloadingStoredFiles);
+	fun `then the correct files are broadcast as downloading`() {
+		assertThat(
+			storedFileStatuses
+				.filter { s -> s.storedFileJobState === StoredFileJobState.Downloading }
+				.map { r -> r.storedFile }
+		).containsOnly(*expectedDownloadingStoredFiles)
 	}
 
 	@Test
-	public void thenTheCorrectFilesAreBroadcastAsDownloaded() {
-		assertThat(Stream.of(storedFileStatuses).filter(s -> s.storedFileJobState == StoredFileJobState.Downloaded)
-			.map(r -> r.storedFile).toList()).containsOnly(expectedDownloadedStoredFiles);
+	fun `then the correct files are broadcast as downloaded`() {
+		assertThat(
+			storedFileStatuses
+				.filter { s -> s.storedFileJobState === StoredFileJobState.Downloaded }
+				.map { r -> r.storedFile }
+		).containsOnly(*expectedDownloadedStoredFiles)
 	}
 }

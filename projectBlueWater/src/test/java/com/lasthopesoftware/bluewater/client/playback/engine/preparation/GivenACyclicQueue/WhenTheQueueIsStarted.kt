@@ -12,39 +12,40 @@ import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 import kotlin.random.Random.Default.nextInt
 
 class WhenTheQueueIsStarted {
 
-    companion object {
-		private var positionedPlaybackFile: PositionedPlayableFile? = null
-        private var startPosition = 0
+	private val mut by lazy {
+		val numberOfFiles = nextInt(2, 500)
+		val serviceFiles = (0..numberOfFiles).map { ServiceFile(nextInt()) }
 
-		@BeforeClass
-		@JvmStatic
-        fun before() {
-            val numberOfFiles = nextInt(2, 500)
-            val serviceFiles = (0..numberOfFiles).map { ServiceFile(nextInt()) }
+		val fileActionMap = serviceFiles.associateBy ({ it }, { MockResolveAction() })
+		val bufferingPlaybackQueuesProvider = CyclicalFileQueueProvider()
+		val startPosition = nextInt(1, numberOfFiles)
+		val queue = PreparedPlayableFileQueue(
+			{ 1 },
+			{ file, _ ->
+				Promise(fileActionMap[file])
+			},
+			bufferingPlaybackQueuesProvider.provideQueue(serviceFiles, startPosition)
+		)
+		Pair(startPosition, queue)
+	}
 
-            val fileActionMap = serviceFiles.associateBy ({ it }, { MockResolveAction() })
-            val bufferingPlaybackQueuesProvider = CyclicalFileQueueProvider()
-            startPosition = nextInt(1, numberOfFiles)
-            val queue = PreparedPlayableFileQueue(
-				{ 1 },
-				{ file, _ ->
-					Promise(fileActionMap[file])
-				},
-                bufferingPlaybackQueuesProvider.provideQueue(serviceFiles, startPosition)
-            )
-			positionedPlaybackFile = queue.promiseNextPreparedPlaybackFile(Duration.ZERO)?.toExpiringFuture()?.get()
-        }
-    }
+	private var positionedPlaybackFile: PositionedPlayableFile? = null
+
+	@BeforeAll
+	fun act() {
+		val (_, queue) = mut
+		positionedPlaybackFile = queue.promiseNextPreparedPlaybackFile(Duration.ZERO)?.toExpiringFuture()?.get()
+	}
 
 	@Test
-	fun thenTheQueueStartsAtTheCorrectPosition() {
-		assertThat(positionedPlaybackFile?.playlistPosition).isEqualTo(startPosition)
+	fun `then the queue starts at the correct position`() {
+		assertThat(positionedPlaybackFile?.playlistPosition).isEqualTo(mut.first)
 	}
 
 	private class MockResolveAction : MessengerOperator<PreparedPlayableFile> {

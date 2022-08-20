@@ -9,48 +9,47 @@ import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnect
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionReservation
 import com.lasthopesoftware.bluewater.client.connection.session.ManageConnectionSessions
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
-import com.lasthopesoftware.bluewater.shared.promises.extensions.ExpiringFuturePromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 
 class WhenRetrievingTheSelectedConnectionTwice {
 
-	companion object {
-		private val firstUrlProvider = mockk<IUrlProvider>()
-		private var connectionProvider: IConnectionProvider? = null
+	private val firstUrlProvider = mockk<IUrlProvider>()
+	private var connectionProvider: IConnectionProvider? = null
 
-		@JvmStatic
-		@BeforeClass
-		fun before() {
-			val libraryConnections = mockk<ManageConnectionSessions>()
-			every { libraryConnections.promiseLibraryConnection(any()) } returns ProgressingPromise(null as IConnectionProvider?)
-			every { libraryConnections.promiseLibraryConnection(LibraryId(2)) } returns ProgressingPromise(ConnectionProvider(
+	@BeforeAll
+	fun act() {
+		val libraryConnections = mockk<ManageConnectionSessions>()
+		every { libraryConnections.promiseLibraryConnection(any()) } returns ProgressingPromise(null as IConnectionProvider?)
+		every { libraryConnections.promiseLibraryConnection(LibraryId(2)) } returns ProgressingPromise(
+			ConnectionProvider(
 				firstUrlProvider, OkHttpFactory
-			))
+			)
+		)
 
-			val fakeSelectedLibraryProvider = FakeSelectedLibraryProvider()
-			SelectedConnectionReservation().use {
-				fakeSelectedLibraryProvider.selectedLibraryId = Promise(LibraryId(-1))
-				val selectedConnection = SelectedConnection(
-					RecordingApplicationMessageBus(),
-					fakeSelectedLibraryProvider,
-					libraryConnections
-				)
-				connectionProvider = ExpiringFuturePromise(selectedConnection.promiseSessionConnection()).get()
-				fakeSelectedLibraryProvider.selectedLibraryId = Promise(LibraryId(2))
-				connectionProvider = ExpiringFuturePromise(selectedConnection.promiseSessionConnection()).get()
-			}
+		val fakeSelectedLibraryProvider = FakeSelectedLibraryProvider()
+		SelectedConnectionReservation().use {
+			fakeSelectedLibraryProvider.selectedLibraryId = Promise(LibraryId(-1))
+			val selectedConnection = SelectedConnection(
+				RecordingApplicationMessageBus(),
+				fakeSelectedLibraryProvider,
+				libraryConnections
+			)
+			connectionProvider = selectedConnection.promiseSessionConnection().toExpiringFuture().get()
+			fakeSelectedLibraryProvider.selectedLibraryId = Promise(LibraryId(2))
+			connectionProvider = selectedConnection.promiseSessionConnection().toExpiringFuture().get()
 		}
 	}
 
 	@Test
-	fun thenTheConnectionIsCorrect() {
+	fun `then the connection is correct`() {
 		assertThat(connectionProvider!!.urlProvider).isEqualTo(firstUrlProvider)
 	}
 

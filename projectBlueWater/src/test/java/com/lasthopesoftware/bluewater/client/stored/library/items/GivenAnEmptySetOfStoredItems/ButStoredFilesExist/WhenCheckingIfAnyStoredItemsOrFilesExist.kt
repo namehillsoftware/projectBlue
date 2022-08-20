@@ -1,47 +1,34 @@
-package com.lasthopesoftware.bluewater.client.stored.library.items.GivenAnEmptySetOfStoredItems.ButStoredFilesExist;
+package com.lasthopesoftware.bluewater.client.stored.library.items.GivenAnEmptySetOfStoredItems.ButStoredFilesExist
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
+import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem
+import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemsChecker
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.CheckForAnyStoredFiles
+import com.lasthopesoftware.bluewater.shared.promises.extensions.ExpiringFuturePromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import io.mockk.every
+import io.mockk.mockk
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Test
+import java.util.concurrent.TimeUnit
 
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
-import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems;
-import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemsChecker;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.CheckForAnyStoredFiles;
-import com.lasthopesoftware.bluewater.shared.promises.extensions.ExpiringFuturePromise;
-import com.namehillsoftware.handoff.promises.Promise;
+class WhenCheckingIfAnyStoredItemsOrFilesExist {
+	private val isAny by lazy {
+		val storedItemAccess = mockk<AccessStoredItems> {
+			every { promiseStoredItems(LibraryId(10)) } returns emptyList<StoredItem>().toPromise()
+		}
 
-import org.junit.BeforeClass;
-import org.junit.Test;
+		val checkForAnyStoredFiles = mockk<CheckForAnyStoredFiles> {
+			every { promiseIsAnyStoredFiles(any()) } returns true.toPromise()
+		}
 
-import java.util.Collections;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-
-public class WhenCheckingIfAnyStoredItemsOrFilesExist {
-
-	private static Boolean isAny;
-
-	@BeforeClass
-	public static void before() throws InterruptedException, TimeoutException, ExecutionException {
-		final AccessStoredItems storedItemAccess = mock(AccessStoredItems.class);
-		when(storedItemAccess.promiseStoredItems(new LibraryId(10)))
-			.thenReturn(new Promise<>(Collections.emptyList()));
-		final CheckForAnyStoredFiles checkForAnyStoredFiles = mock(CheckForAnyStoredFiles.class);
-		when(checkForAnyStoredFiles.promiseIsAnyStoredFiles(any()))
-			.thenReturn(new Promise<>(true));
-
-		final StoredItemsChecker storedItemsChecker = new StoredItemsChecker(storedItemAccess, checkForAnyStoredFiles);
-
-		isAny =
-			new ExpiringFuturePromise<>(storedItemsChecker.promiseIsAnyStoredItemsOrFiles(new LibraryId(10)))
-				.get(1, TimeUnit.SECONDS);
+		val storedItemsChecker = StoredItemsChecker(storedItemAccess, checkForAnyStoredFiles)
+		ExpiringFuturePromise(storedItemsChecker.promiseIsAnyStoredItemsOrFiles(LibraryId(10)))[1, TimeUnit.SECONDS]
 	}
 
 	@Test
-	public void thenATrueResultIsReturned() {
-		assertThat(isAny).isTrue();
+	fun `then the correct result is returned`() {
+		assertThat(isAny).isTrue
 	}
 }

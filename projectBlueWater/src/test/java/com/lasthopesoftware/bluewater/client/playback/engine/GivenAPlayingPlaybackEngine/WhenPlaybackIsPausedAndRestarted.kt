@@ -16,83 +16,85 @@ import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManag
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 
 class WhenPlaybackIsPausedAndRestarted {
-	companion object {
-		private val changedFiles: MutableList<ServiceFile> = ArrayList()
-		private var playbackEngine: PlaybackEngine? = null
-		private var nowPlaying: NowPlaying? = null
-		private var resolveablePlaybackHandler: ResolvablePlaybackHandler? = null
-		private var playbackStartedCount = 0
-
-		@BeforeClass
-		@JvmStatic
-		fun before() {
-			val fakePlaybackPreparerProvider = FakeDeferredPlayableFilePreparationSourceProvider()
-			val library = Library()
-			library.setId(1)
-			val libraryProvider = PassThroughSpecificLibraryProvider(library)
-			val libraryStorage = PassThroughLibraryStorage()
-			val nowPlayingRepository =
-                NowPlayingRepository(
-                    libraryProvider,
-                    libraryStorage
-                )
-			playbackEngine = PlaybackEngine(
-				PreparedPlaybackQueueResourceManagement(
-					fakePlaybackPreparerProvider
-				) { 1 }, listOf(CompletingFileQueueProvider()),
-				nowPlayingRepository,
-				PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
+	private val mut by lazy {
+		val fakePlaybackPreparerProvider = FakeDeferredPlayableFilePreparationSourceProvider()
+		val library = Library()
+		library.setId(1)
+		val libraryProvider = PassThroughSpecificLibraryProvider(library)
+		val libraryStorage = PassThroughLibraryStorage()
+		val nowPlayingRepository =
+			NowPlayingRepository(
+				libraryProvider,
+				libraryStorage
 			)
-			playbackEngine
-				?.setOnPlaybackStarted { ++playbackStartedCount }
-				?.setOnPlayingFileChanged { f -> changedFiles.add(f.serviceFile) }
-			playbackEngine
-				?.startPlaylist(
-					listOf(
-						ServiceFile(1),
-						ServiceFile(2),
-						ServiceFile(3),
-						ServiceFile(4),
-						ServiceFile(5)
-					), 0, Duration.ZERO
-				)
-			val playingPlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve()
-			resolveablePlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve()
-			playingPlaybackHandler.resolve()
-			resolveablePlaybackHandler?.setCurrentPosition(30)
-			playbackEngine?.pause()?.toExpiringFuture()?.get()
-			nowPlaying = nowPlayingRepository.promiseNowPlaying().toExpiringFuture().get()
-			playbackEngine?.resume()?.toExpiringFuture()?.get()
-			nowPlaying = nowPlayingRepository.promiseNowPlaying().toExpiringFuture().get()
-		}
+		val playbackEngine = PlaybackEngine(
+			PreparedPlaybackQueueResourceManagement(
+				fakePlaybackPreparerProvider
+			) { 1 }, listOf(CompletingFileQueueProvider()),
+			nowPlayingRepository,
+			PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
+		)
+
+		Triple(fakePlaybackPreparerProvider, nowPlayingRepository, playbackEngine)
+	}
+
+	private val changedFiles: MutableList<ServiceFile> = ArrayList()
+	private var nowPlaying: NowPlaying? = null
+	private var resolvablePlaybackHandler: ResolvablePlaybackHandler? = null
+	private var playbackStartedCount = 0
+
+	@BeforeAll
+	fun before() {
+		val (fakePlaybackPreparerProvider, nowPlayingRepository, playbackEngine) = mut
+		playbackEngine
+			.setOnPlaybackStarted { ++playbackStartedCount }
+			.setOnPlayingFileChanged { f -> changedFiles.add(f.serviceFile) }
+		playbackEngine
+			.startPlaylist(
+				listOf(
+					ServiceFile(1),
+					ServiceFile(2),
+					ServiceFile(3),
+					ServiceFile(4),
+					ServiceFile(5)
+				), 0, Duration.ZERO
+			)
+		val playingPlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve()
+		resolvablePlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve()
+		playingPlaybackHandler.resolve()
+		resolvablePlaybackHandler?.setCurrentPosition(30)
+		playbackEngine.pause().toExpiringFuture().get()
+		nowPlaying = nowPlayingRepository.promiseNowPlaying().toExpiringFuture().get()
+		playbackEngine.resume().toExpiringFuture().get()
+		nowPlaying = nowPlayingRepository.promiseNowPlaying().toExpiringFuture().get()
 	}
 
 	@Test
-	fun thenThePlayerIsNotPlaying() {
-		assertThat(resolveablePlaybackHandler!!.isPlaying).isTrue
+	fun `then the player is not playing`() {
+		assertThat(resolvablePlaybackHandler!!.isPlaying).isTrue
 	}
 
 	@Test
-	fun thenThePlaybackStateIsNotPlaying() {
-		assertThat(playbackEngine!!.isPlaying).isTrue
+	fun `then the playback state is not playing`() {
+		assertThat(mut.third.isPlaying).isTrue
 	}
 
 	@Test
-	fun thenTheSavedFilePositionIsCorrect() {
+	fun `then the saved file position is correct`() {
 		assertThat(nowPlaying!!.filePosition).isEqualTo(30)
 	}
 
 	@Test
-	fun thenTheSavedPlaylistPositionIsCorrect() {
+	fun `then the saved playlist position is correct`() {
 		assertThat(nowPlaying!!.playlistPosition).isEqualTo(1)
 	}
 
 	@Test
-	fun thenTheChangedFilesAreCorrect() {
+	fun `then the changed files are correct`() {
 		assertThat(changedFiles).containsExactly(
 			ServiceFile(1),
 			ServiceFile(2),
@@ -101,12 +103,12 @@ class WhenPlaybackIsPausedAndRestarted {
 	}
 
 	@Test
-	fun thenPlaybackHasBeenStartedTwice() {
+	fun `then playback has been started twice`() {
 		assertThat(playbackStartedCount).isEqualTo(2)
 	}
 
 	@Test
-	fun thenTheSavedPlaylistIsCorrect() {
+	fun `then the saved playlist is correct`() {
 		assertThat(nowPlaying!!.playlist)
 			.containsExactly(
 				ServiceFile(1),

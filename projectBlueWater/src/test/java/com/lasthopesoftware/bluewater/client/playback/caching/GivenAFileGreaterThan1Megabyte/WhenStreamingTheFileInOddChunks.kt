@@ -16,6 +16,7 @@ import io.mockk.mockk
 import okio.Buffer
 import okio.BufferedSource
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.AfterClass
 import org.junit.Assert.assertArrayEquals
 import org.junit.BeforeClass
 import org.junit.Test
@@ -26,8 +27,8 @@ import java.util.*
 @RunWith(RobolectricTestRunner::class)
 class WhenStreamingTheFileInOddChunks {
     companion object {
-        private val bytesWritten = ByteArray(7 * 1024 * 1024)
-        private val bytes by lazy { ByteArray(7 * 1024 * 1024).also { Random().nextBytes(it) } }
+        private var bytesWritten: ByteArray? = ByteArray(7 * 1024 * 1024)
+        private var bytes: Lazy<ByteArray>? = lazy { ByteArray(7 * 1024 * 1024).also { Random().nextBytes(it) } }
         private var cacheKey: String? = null
         private var committedToCache = false
 
@@ -46,14 +47,16 @@ class WhenStreamingTheFileInOddChunks {
 								Promise<CacheOutputStream>(this)
 
 							override fun promiseTransfer(bufferedSource: BufferedSource): Promise<CacheOutputStream> {
-								while (numberOfBytesWritten < bytesWritten.size) {
-									val read = bufferedSource.read(
-										bytesWritten,
-										numberOfBytesWritten,
-										bytesWritten.size - numberOfBytesWritten
-									)
-									if (read == -1) return Promise<CacheOutputStream>(this)
-									numberOfBytesWritten += read
+								bytesWritten?.also {
+									while (numberOfBytesWritten < it.size) {
+										val read = bufferedSource.read(
+											it,
+											numberOfBytesWritten,
+											it.size - numberOfBytesWritten
+										)
+										if (read == -1) return Promise<CacheOutputStream>(this)
+										numberOfBytesWritten += read
+									}
 								}
 								return Promise<CacheOutputStream>(this)
 							}
@@ -73,9 +76,9 @@ class WhenStreamingTheFileInOddChunks {
 					}
 				}
             val buffer = Buffer()
-            buffer.write(bytes)
+			bytes?.value?.apply(buffer::write)
             val dataSource = mockk<HttpDataSource>(relaxUnitFun = true).apply {
-				every { open(any()) } returns bytes.size.toLong()
+				every { open(any()) } returns (bytes?.value?.size?.toLong() ?: 0L)
 
             	every { read(any(), any(), any()) } answers {
 					var bytesRead = 0
@@ -114,11 +117,18 @@ class WhenStreamingTheFileInOddChunks {
 
 			deferredCommit.toExpiringFuture().get()
         }
+
+		@JvmStatic
+		@AfterClass
+		fun cleanup() {
+			bytesWritten = null
+			bytes = null
+		}
     }
 
     @Test
     fun thenTheEntireFileIsWritten() {
-        assertArrayEquals(bytes, bytesWritten)
+        assertArrayEquals(bytes?.value, bytesWritten)
     }
 
     @Test

@@ -1,36 +1,32 @@
-package com.lasthopesoftware.bluewater.client.connection.trust.GivenAMismatchedHostname;
+package com.lasthopesoftware.bluewater.client.connection.trust.GivenAMismatchedHostname
 
-import com.lasthopesoftware.bluewater.client.connection.trust.AdditionalHostnameVerifier;
+import com.lasthopesoftware.bluewater.client.connection.trust.AdditionalHostnameVerifier
+import io.mockk.mockk
+import io.mockk.verify
+import org.assertj.core.api.AssertionsForClassTypes.assertThat
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
+import javax.net.ssl.HostnameVerifier
 
-import org.junit.BeforeClass;
-import org.junit.Test;
+class WhenVerifyingTheHostname {
+	private val defaultHostnameVerifier = mockk<HostnameVerifier>(relaxed = true)
 
-import javax.net.ssl.HostnameVerifier;
+	private var isHostnameValid = false
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-
-public class WhenVerifyingTheHostname {
-
-	private static final HostnameVerifier defaultHostnameVerifier = mock(HostnameVerifier.class);
-
-	private static boolean isHostnameValid;
-
-	@BeforeClass
-	public static void before() {
-		final AdditionalHostnameVerifier additionalHostnameVerifier = new AdditionalHostnameVerifier("my-test-host-name", defaultHostnameVerifier);
-		isHostnameValid = additionalHostnameVerifier.verify("my-other-test-host-name", null);
+	@BeforeAll
+	fun before() {
+		val additionalHostnameVerifier =
+			AdditionalHostnameVerifier("my-test-host-name", defaultHostnameVerifier)
+		isHostnameValid = additionalHostnameVerifier.verify("my-other-test-host-name", null)
 	}
 
 	@Test
-	public void thenTheHostnameIsValid() {
-		assertThat(isHostnameValid).isFalse();
+	fun thenTheHostnameIsValid() {
+		assertThat(isHostnameValid).isFalse
 	}
 
 	@Test
-	public void thenTheDefaultHostnameVerifierIsAlsoAsked() {
-		verify(defaultHostnameVerifier, atLeastOnce()).verify("my-other-test-host-name", null);
+	fun thenTheDefaultHostnameVerifierIsAlsoAsked() {
+		verify(atLeast = 1) { defaultHostnameVerifier.verify("my-other-test-host-name", null) }
 	}
 }

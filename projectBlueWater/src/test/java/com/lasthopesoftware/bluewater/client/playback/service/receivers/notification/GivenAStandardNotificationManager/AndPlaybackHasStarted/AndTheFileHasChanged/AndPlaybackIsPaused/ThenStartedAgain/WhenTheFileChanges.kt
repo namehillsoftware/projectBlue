@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.GivenAStandardNotificationManager.AndPlaybackHasStarted.AndTheFileHasChanged.AndPlaybackIsPaused.ThenStartedAgain
 
 import android.app.Notification
+import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -30,9 +31,18 @@ class WhenTheFileChanges : AndroidContext() {
 
 	override fun before() {
 		val notificationContentBuilder = mockk<BuildNowPlayingNotificationContent>()
-		every { notificationContentBuilder.getLoadingNotification(any()) } returns FakeNotificationCompatBuilder.newFakeBuilder(loadingNotification)
-		every { notificationContentBuilder.promiseNowPlayingNotification(ServiceFile(1), any()) } returns Promise(FakeNotificationCompatBuilder.newFakeBuilder(firstNotification))
-		every { notificationContentBuilder.promiseNowPlayingNotification(ServiceFile(2), any()) } returns Promise(FakeNotificationCompatBuilder.newFakeBuilder(secondNotification))
+		every { notificationContentBuilder.getLoadingNotification(any()) } returns FakeNotificationCompatBuilder.newFakeBuilder(
+            ApplicationProvider.getApplicationContext(),
+            loadingNotification
+        )
+		every { notificationContentBuilder.promiseNowPlayingNotification(ServiceFile(1), any()) } returns Promise(FakeNotificationCompatBuilder.newFakeBuilder(
+            ApplicationProvider.getApplicationContext(),
+            firstNotification
+        ))
+		every { notificationContentBuilder.promiseNowPlayingNotification(ServiceFile(2), any()) } returns Promise(FakeNotificationCompatBuilder.newFakeBuilder(
+            ApplicationProvider.getApplicationContext(),
+            secondNotification
+        ))
 
 		val recordingApplicationMessageBus = RecordingApplicationMessageBus()
 		PlaybackNotificationRouter(
@@ -40,7 +50,10 @@ class WhenTheFileChanges : AndroidContext() {
 				notificationController,
 				NotificationsConfiguration("", 43),
 				notificationContentBuilder
-			) { Promise(FakeNotificationCompatBuilder.newFakeBuilder(firstNotification)) },
+			) { Promise(FakeNotificationCompatBuilder.newFakeBuilder(
+                ApplicationProvider.getApplicationContext(),
+                firstNotification
+            )) },
 			recordingApplicationMessageBus
 		)
 

@@ -8,19 +8,17 @@ import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class WhenParsingTheServerInfo {
 
-	companion object {
-		private val serverInfo by lazy {
-			val serverInfoXml = mockk<RequestServerInfoXml>()
-			every { serverInfoXml.promiseServerInfoXml(any()) } returns Promise.empty()
-			val serverLookup = ServerLookup(serverInfoXml)
-			serverLookup.promiseServerInformation(LibraryId(14)).toExpiringFuture().get()
-		}
+	private val serverInfo by lazy {
+		val serverInfoXml = mockk<RequestServerInfoXml>()
+		every { serverInfoXml.promiseServerInfoXml(any()) } returns Promise.empty()
+		val serverLookup = ServerLookup(serverInfoXml)
+		serverLookup.promiseServerInformation(LibraryId(14)).toExpiringFuture().get()
 	}
 
 	@Test
-	fun thenNoServerInfoIsReturned() = assertThat(serverInfo).isNull()
+	fun `then no server info is returned`() = assertThat(serverInfo).isNull()
 }

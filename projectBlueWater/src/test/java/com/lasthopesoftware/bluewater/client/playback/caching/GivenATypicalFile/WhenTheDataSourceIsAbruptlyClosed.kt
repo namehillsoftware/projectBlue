@@ -14,6 +14,7 @@ import io.mockk.mockk
 import okio.Buffer
 import okio.BufferedSource
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.AfterClass
 import org.junit.BeforeClass
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -23,7 +24,7 @@ import java.util.*
 @RunWith(RobolectricTestRunner::class)
 class WhenTheDataSourceIsAbruptlyClosed {
 	companion object {
-		private val bytes by lazy { ByteArray(7 * 1024 * 1024).also { Random().nextBytes(it) } }
+		private var bytes: Lazy<ByteArray>? = lazy { ByteArray(7 * 1024 * 1024).also { Random().nextBytes(it) } }
 		private var committedToCache = false
 
 		@BeforeClass
@@ -65,7 +66,7 @@ class WhenTheDataSourceIsAbruptlyClosed {
 					}
 				}
 			val buffer = Buffer()
-			buffer.write(bytes)
+			bytes?.value?.apply(buffer::write)
 			val dataSource = mockk<HttpDataSource>(relaxed = true).apply {
 				every { read(any(), any(), any()) } answers {
 					var bytesRead = 0
@@ -107,6 +108,12 @@ class WhenTheDataSourceIsAbruptlyClosed {
 				byteCount += readResult
 			} while (byteCount < 3 * 1024 * 1024)
 			diskFileCacheDataSource.close()
+		}
+
+		@JvmStatic
+		@AfterClass
+		fun cleanup() {
+			bytes = null
 		}
 	}
 

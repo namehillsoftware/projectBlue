@@ -1,43 +1,43 @@
-package com.lasthopesoftware.bluewater.client.playback.engine.preparation.GivenAStandardQueue;
+package com.lasthopesoftware.bluewater.client.playback.engine.preparation.GivenAStandardQueue
 
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue;
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile;
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider;
-import com.namehillsoftware.handoff.promises.Promise;
+import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
+import com.namehillsoftware.handoff.Messenger
+import com.namehillsoftware.handoff.promises.Promise
+import org.assertj.core.api.Assertions.assertThat
+import org.joda.time.Duration
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 
-import org.joda.time.Duration;
-import org.junit.BeforeClass;
-import org.junit.Test;
+class WhenTheQueueIsClosed {
 
-import java.io.IOException;
-import java.util.Collections;
+	private val queue by lazy {
+		val bufferingPlaybackQueuesProvider = CompletingFileQueueProvider()
+		val cancelRecordingPromise = Promise { messenger: Messenger<PreparedPlayableFile?> ->
+			messenger.cancellationRequested {
+				isCancelled = true
+			}
+		}
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-public class WhenTheQueueIsClosed {
-
-	private static boolean isCancelled;
-
-	@BeforeClass
-	public static void before() throws IOException {
-		final CompletingFileQueueProvider bufferingPlaybackQueuesProvider = new CompletingFileQueueProvider();
-
-		final Promise<PreparedPlayableFile> cancelRecordingPromise = new Promise<>((messenger) -> messenger.cancellationRequested(() -> isCancelled = true));
-
-		final PreparedPlayableFileQueue queue =
-			new PreparedPlayableFileQueue(
-				() -> 1,
-				(file, preparedAt) -> cancelRecordingPromise,
-				bufferingPlaybackQueuesProvider.provideQueue(Collections.singletonList(new ServiceFile(1)), 0));
-
-		queue.promiseNextPreparedPlaybackFile(Duration.ZERO);
-
-		queue.close();
+		PreparedPlayableFileQueue(
+			{ 1 },
+			{ _, _ -> cancelRecordingPromise },
+			bufferingPlaybackQueuesProvider.provideQueue(listOf(ServiceFile(1)), 0)
+		)
 	}
 
-	@Test
-	public void thenThePreparedFilesAreCancelled() {
-		assertThat(isCancelled).isTrue();
-	}
+	private var isCancelled = false
+
+    @BeforeAll
+    fun before() {
+        queue.promiseNextPreparedPlaybackFile(Duration.ZERO)
+        queue.close()
+    }
+
+    @Test
+    fun `then the prepared files are cancelled`() {
+        assertThat(isCancelled).isTrue
+    }
 }

@@ -8,43 +8,35 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.ExpiringFutureP
 import com.lasthopesoftware.storage.directories.FakePrivateDirectoryLookup
 import com.lasthopesoftware.storage.directories.FakePublicDirectoryLookup
 import org.assertj.core.api.AssertionsForClassTypes.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
-import java.io.File
+import org.junit.jupiter.api.Test
 
 class WhenLookingUpTheSyncDrive {
-	@Test
-	fun thenTheDriveIsTheOneWithTheMostSpace() {
-		assertThat(file!!.path)
-			.isEqualTo("/storage/0/my-private-sd-card/14")
+	private val file by lazy {
+		val fakePrivateDirectoryLookup = FakePrivateDirectoryLookup()
+		fakePrivateDirectoryLookup.addDirectory("", 1)
+		fakePrivateDirectoryLookup.addDirectory("", 2)
+		fakePrivateDirectoryLookup.addDirectory("", 3)
+		fakePrivateDirectoryLookup.addDirectory("/storage/0/my-private-sd-card", 10)
+		val publicDrives = FakePublicDirectoryLookup()
+		publicDrives.addDirectory("fake-private-path", 12)
+		publicDrives.addDirectory("/fake-private-path", 5)
+		val fakeLibraryProvider = FakeLibraryProvider(
+			Library()
+				.setId(14)
+				.setSyncedFileLocation(Library.SyncedFileLocation.INTERNAL)
+		)
+		val syncDirectoryLookup = SyncDirectoryLookup(
+			fakeLibraryProvider,
+			publicDrives,
+			fakePrivateDirectoryLookup,
+			fakePrivateDirectoryLookup
+		)
+		ExpiringFuturePromise(syncDirectoryLookup.promiseSyncDirectory(LibraryId(14))).get()
 	}
 
-	companion object {
-		private var file: File? = null
-
-		@BeforeClass
-		@JvmStatic
-		fun before() {
-			val fakePrivateDirectoryLookup = FakePrivateDirectoryLookup()
-			fakePrivateDirectoryLookup.addDirectory("", 1)
-			fakePrivateDirectoryLookup.addDirectory("", 2)
-			fakePrivateDirectoryLookup.addDirectory("", 3)
-			fakePrivateDirectoryLookup.addDirectory("/storage/0/my-private-sd-card", 10)
-			val publicDrives = FakePublicDirectoryLookup()
-			publicDrives.addDirectory("fake-private-path", 12)
-			publicDrives.addDirectory("/fake-private-path", 5)
-			val fakeLibraryProvider = FakeLibraryProvider(
-				Library()
-					.setId(14)
-					.setSyncedFileLocation(Library.SyncedFileLocation.INTERNAL)
-			)
-			val syncDirectoryLookup = SyncDirectoryLookup(
-				fakeLibraryProvider,
-				publicDrives,
-				fakePrivateDirectoryLookup,
-				fakePrivateDirectoryLookup
-			)
-			file = ExpiringFuturePromise(syncDirectoryLookup.promiseSyncDirectory(LibraryId(14))).get()
-		}
+	@Test
+	fun `then the drive is the one with the most space`() {
+		assertThat(file!!.path)
+			.isEqualTo("/storage/0/my-private-sd-card/14")
 	}
 }
