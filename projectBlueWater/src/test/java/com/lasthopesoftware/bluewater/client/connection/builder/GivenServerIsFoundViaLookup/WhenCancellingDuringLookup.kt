@@ -14,51 +14,51 @@ import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
 
 class WhenCancellingDuringLookup {
-	companion object {
-		private val cancellationException by lazy {
-			val connectionTester = mockk<TestConnections>()
-			every { connectionTester.promiseIsConnectionPossible(any()) } returns false.toPromise()
-			every { connectionTester.promiseIsConnectionPossible(match { a ->
+	private val cancellationException by lazy {
+		val connectionTester = mockk<TestConnections>()
+		every { connectionTester.promiseIsConnectionPossible(any()) } returns false.toPromise()
+		every {
+			connectionTester.promiseIsConnectionPossible(match { a ->
 				"http://1.2.3.4:143/MCWS/v1/" == a.urlProvider.baseUrl.toString()
-			}) } returns Promise { m ->
-				m.cancellationRequested {
-					m.sendRejection(CancellationException("I'm not supposed to be cancelled"))
-				}
+			})
+		} returns Promise { m ->
+			m.cancellationRequested {
+				m.sendRejection(CancellationException("I'm not supposed to be cancelled"))
 			}
+		}
 
-			val serverLookup = mockk<LookupServers>()
-			every { serverLookup.promiseServerInformation(LibraryId(55)) } returns Promise { m ->
-				m.cancellationRequested {
-					m.sendRejection(CancellationException("Yup I'm cancelled"))
-				}
+		val serverLookup = mockk<LookupServers>()
+		every { serverLookup.promiseServerInformation(LibraryId(55)) } returns Promise { m ->
+			m.cancellationRequested {
+				m.sendRejection(CancellationException("Yup I'm cancelled"))
 			}
+		}
 
-			val connectionSettingsLookup = mockk<LookupConnectionSettings>()
-			every { connectionSettingsLookup.lookupConnectionSettings(LibraryId(55)) } returns ConnectionSettings(accessCode = "gooPc").toPromise()
+		val connectionSettingsLookup = mockk<LookupConnectionSettings>()
+		every { connectionSettingsLookup.lookupConnectionSettings(LibraryId(55)) } returns ConnectionSettings(accessCode = "gooPc").toPromise()
 
-			val urlScanner = UrlScanner(
-				PassThroughBase64Encoder,
-				connectionTester,
-				serverLookup,
-				connectionSettingsLookup,
-				OkHttpFactory
-			)
+		val urlScanner = UrlScanner(
+			PassThroughBase64Encoder,
+			connectionTester,
+			serverLookup,
+			connectionSettingsLookup,
+			OkHttpFactory
+		)
 
-			val promisedUrl = urlScanner.promiseBuiltUrlProvider(LibraryId(55))
-			promisedUrl.cancel()
+		val promisedUrl = urlScanner.promiseBuiltUrlProvider(LibraryId(55))
+		promisedUrl.cancel()
 
-			try {
-				promisedUrl.toExpiringFuture()[5, TimeUnit.SECONDS]
-				null
-			} catch (ee: ExecutionException) {
-				ee.cause as? CancellationException
-			}
+		try {
+			promisedUrl.toExpiringFuture()[5, TimeUnit.SECONDS]
+			null
+		} catch (ee: ExecutionException) {
+			ee.cause as? CancellationException
 		}
 	}
 

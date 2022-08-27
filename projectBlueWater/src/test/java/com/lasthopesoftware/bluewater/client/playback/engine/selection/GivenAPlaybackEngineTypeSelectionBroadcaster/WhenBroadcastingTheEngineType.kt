@@ -4,24 +4,21 @@ import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackE
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.broadcast.PlaybackEngineTypeChangedBroadcaster
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 
 class WhenBroadcastingTheEngineType {
 
-	companion object {
-		private val recordingApplicationMessageBus = RecordingApplicationMessageBus()
+	private val recordingApplicationMessageBus = RecordingApplicationMessageBus()
 
-		@BeforeClass
-		@JvmStatic
-		fun before() {
-			PlaybackEngineTypeChangedBroadcaster(recordingApplicationMessageBus)
-				.broadcastPlaybackEngineTypeChanged(PlaybackEngineType.ExoPlayer)
-		}
+	@BeforeAll
+	fun act() {
+		PlaybackEngineTypeChangedBroadcaster(recordingApplicationMessageBus)
+			.broadcastPlaybackEngineTypeChanged(PlaybackEngineType.ExoPlayer)
 	}
 
 	@Test
-	fun thenTheExoPlayerSelectionIsBroadcast() {
+	fun `then the exo player selection is broadcast`() {
 		assertThat(
 			recordingApplicationMessageBus.recordedMessages.filterIsInstance<PlaybackEngineTypeChangedBroadcaster.PlaybackEngineTypeChanged>()
 				.firstOrNull()

@@ -12,41 +12,36 @@ import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 
 class WhenAudioFocusIsRegained {
 
-	companion object Setup {
+	private val audioFocusRequests: MutableList<AudioFocusRequestCompat> = ArrayList()
+	private var isInterrupted = false
+	private var isAbandoned = false
 
-		private val audioFocusRequests: MutableList<AudioFocusRequestCompat> = ArrayList()
-		private var isInterrupted = false
-		private var isAbandoned = false
+	private val mut by lazy {
+		val playbackStateForSystem = mockk<ChangePlaybackStateForSystem>().apply {
+			every { interrupt() } answers {
+				isInterrupted = true
+				Unit.toPromise()
+			}
 
-		private val playbackStateForSystem by lazy {
-			mockk<ChangePlaybackStateForSystem>().apply {
-				every { interrupt() } answers {
-					isInterrupted = true
-					Unit.toPromise()
-				}
-
-				every { resume() } answers {
-					isInterrupted = false
-					Unit.toPromise()
-				}
+			every { resume() } answers {
+				isInterrupted = false
+				Unit.toPromise()
 			}
 		}
 
-		private val innerPlaybackState by lazy {
-			mockk<ChangePlaybackState>().apply {
-				every { resume() } answers {
-					isInterrupted = false
-					Unit.toPromise()
-				}
+		val innerPlaybackState = mockk<ChangePlaybackState>().apply {
+			every { resume() } answers {
+				isInterrupted = false
+				Unit.toPromise()
 			}
 		}
 
-		private val audioFocus = object : ControlAudioFocus {
+		val audioFocus = object : ControlAudioFocus {
 			override fun promiseAudioFocus(audioFocusRequest: AudioFocusRequestCompat): Promise<AudioFocusRequestCompat> {
 				audioFocusRequests.add(audioFocusRequest)
 				return audioFocusRequest.toPromise()
@@ -57,17 +52,22 @@ class WhenAudioFocusIsRegained {
 			}
 		}
 
-		@JvmStatic
-		@BeforeClass
-		fun context() {
-			val audioManagingPlaybackStateChanger = AudioManagingPlaybackStateChanger(
-				innerPlaybackState,
-				playbackStateForSystem,
-				audioFocus,
-				mockk(relaxed = true))
-			audioManagingPlaybackStateChanger.resume().toExpiringFuture().get()
-			audioManagingPlaybackStateChanger.onAudioFocusChange(AudioManager.AUDIOFOCUS_LOSS_TRANSIENT)
-			audioManagingPlaybackStateChanger.onAudioFocusChange(AudioManager.AUDIOFOCUS_GAIN)
+		val audioManagingPlaybackStateChanger = AudioManagingPlaybackStateChanger(
+			innerPlaybackState,
+			playbackStateForSystem,
+			audioFocus,
+			mockk(relaxed = true)
+		)
+
+		audioManagingPlaybackStateChanger
+	}
+
+	@BeforeAll
+	fun act() {
+		with(mut) {
+			resume().toExpiringFuture().get()
+			onAudioFocusChange(AudioManager.AUDIOFOCUS_LOSS_TRANSIENT)
+			onAudioFocusChange(AudioManager.AUDIOFOCUS_GAIN)
 		}
 	}
 

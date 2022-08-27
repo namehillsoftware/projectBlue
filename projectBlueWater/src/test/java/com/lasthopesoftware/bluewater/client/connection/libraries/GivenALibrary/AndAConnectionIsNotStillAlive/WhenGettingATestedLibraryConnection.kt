@@ -13,87 +13,87 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 
 class WhenGettingATestedLibraryConnection {
 
-	companion object {
-		private val statuses = ArrayList<BuildingConnectionStatus>()
-		private val expectedConnectionProvider = mockk<IConnectionProvider>()
-		private var connectionProvider: IConnectionProvider? = null
-		private var secondConnectionProvider: IConnectionProvider? = null
+	private val firstDeferredConnectionProvider = DeferredProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>()
+	private val secondDeferredConnectionProvider = DeferredProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>()
 
-		@BeforeClass
-		@JvmStatic
-		fun before() {
-			val testConnections = mockk<TestConnections>()
-			every { testConnections.promiseIsConnectionPossible(any()) } returns false.toPromise()
+	private val mut by lazy {
+		val testConnections = mockk<TestConnections>()
+		every { testConnections.promiseIsConnectionPossible(any()) } returns false.toPromise()
 
-			val firstDeferredConnectionProvider = DeferredProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>()
-			val secondDeferredConnectionProvider = DeferredProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>()
+		val libraryConnectionProvider = mockk<ProvideLibraryConnections>()
+		every {
+			libraryConnectionProvider.promiseLibraryConnection(LibraryId(2))
+		} returns firstDeferredConnectionProvider andThen secondDeferredConnectionProvider
 
-			val libraryConnectionProvider = mockk<ProvideLibraryConnections>()
-			every {
-				libraryConnectionProvider.promiseLibraryConnection(LibraryId(2))
-			} returns firstDeferredConnectionProvider andThen secondDeferredConnectionProvider
+		val connectionSessionManager = ConnectionSessionManager(
+			testConnections,
+			libraryConnectionProvider,
+			PromisedConnectionsRepository())
+		connectionSessionManager
+	}
 
-			val connectionSessionManager = ConnectionSessionManager(
-				testConnections,
-				libraryConnectionProvider,
-				PromisedConnectionsRepository())
+	private val statuses = ArrayList<BuildingConnectionStatus>()
+	private val expectedConnectionProvider = mockk<IConnectionProvider>()
+	private var connectionProvider: IConnectionProvider? = null
+	private var secondConnectionProvider: IConnectionProvider? = null
 
-			val libraryId = LibraryId(2)
-			val futureConnectionProvider =
-				connectionSessionManager
-					.promiseLibraryConnection(libraryId)
-					.apply {
-						progress.then { if (it != null) statuses.add(it) }
-						updates(statuses::add)
-					}
-					.toExpiringFuture()
+	@BeforeAll
+	fun act() {
+		val libraryId = LibraryId(2)
+		val futureConnectionProvider =
+			mut
+				.promiseLibraryConnection(libraryId)
+				.apply {
+					progress.then { if (it != null) statuses.add(it) }
+					updates(statuses::add)
+				}
+				.toExpiringFuture()
 
-			firstDeferredConnectionProvider.apply {
-				sendProgressUpdates(
-					BuildingConnectionStatus.GettingLibrary,
-					BuildingConnectionStatus.BuildingConnection,
-					BuildingConnectionStatus.BuildingConnectionComplete
-				)
+		firstDeferredConnectionProvider.apply {
+			sendProgressUpdates(
+				BuildingConnectionStatus.GettingLibrary,
+				BuildingConnectionStatus.BuildingConnection,
+				BuildingConnectionStatus.BuildingConnectionComplete
+			)
 
-				sendResolution(mockk())
-			}
-
-			val secondFutureConnectionProvider =
-				connectionSessionManager
-					.promiseTestedLibraryConnection(libraryId)
-					.apply {
-						progress.then { if (it != null) statuses.add(it) }
-						updates(statuses::add)
-					}
-					.toExpiringFuture()
-
-			secondDeferredConnectionProvider.apply {
-				sendProgressUpdates(
-					BuildingConnectionStatus.GettingLibrary,
-					BuildingConnectionStatus.BuildingConnection,
-					BuildingConnectionStatus.BuildingConnectionComplete
-				)
-
-				sendResolution(expectedConnectionProvider)
-			}
-
-			connectionProvider = futureConnectionProvider.get()
-			secondConnectionProvider = secondFutureConnectionProvider.get()
+			sendResolution(mockk())
 		}
+
+		val secondFutureConnectionProvider =
+			mut
+				.promiseTestedLibraryConnection(libraryId)
+				.apply {
+					progress.then { if (it != null) statuses.add(it) }
+					updates(statuses::add)
+				}
+				.toExpiringFuture()
+
+		secondDeferredConnectionProvider.apply {
+			sendProgressUpdates(
+				BuildingConnectionStatus.GettingLibrary,
+				BuildingConnectionStatus.BuildingConnection,
+				BuildingConnectionStatus.BuildingConnectionComplete
+			)
+
+			sendResolution(expectedConnectionProvider)
+		}
+
+		connectionProvider = futureConnectionProvider.get()
+		secondConnectionProvider = secondFutureConnectionProvider.get()
 	}
 
 	@Test
-	fun thenTheConnectionIsCorrect() {
+	fun `then the connection is correct`() {
 		assertThat(secondConnectionProvider).isEqualTo(expectedConnectionProvider)
 	}
 
 	@Test
-	fun thenGettingLibraryIsBroadcast() {
+	fun `then getting library is broadcast`() {
 		assertThat(statuses)
 			.containsExactly(
 				BuildingConnectionStatus.GettingLibrary,

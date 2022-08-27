@@ -9,50 +9,47 @@ import com.lasthopesoftware.bluewater.client.playback.file.fakes.FakeBufferingPl
 import com.lasthopesoftware.bluewater.client.playback.playlist.PlaylistPlayer
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
+import io.mockk.every
+import io.mockk.mockk
 import io.reactivex.Observable
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
-import org.junit.BeforeClass
-import org.junit.Test
-import org.mockito.Mockito
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 
 class WhenResumingPlayback {
 
-	companion object {
-		private var playbackHandler = FakeBufferingPlaybackHandler()
-		private var playingFile: PositionedPlayingFile? = null
+	private val playbackHandler = FakeBufferingPlaybackHandler()
+	private var playingFile: PositionedPlayingFile? = null
 
-		@JvmStatic
-		@BeforeClass
-		fun before() {
-			playbackHandler = FakeBufferingPlaybackHandler()
-			val positionedPlaybackHandlerContainer = Promise(PositionedPlayableFile(
-				0,
-				playbackHandler,
-				NoTransformVolumeManager(),
-				ServiceFile(1)))
-			val preparedPlaybackFileQueue = Mockito.mock(SupplyQueuedPreparedFiles::class.java)
-			Mockito.`when`(preparedPlaybackFileQueue.promiseNextPreparedPlaybackFile(Duration.ZERO))
-				.thenReturn(positionedPlaybackHandlerContainer)
-			val playlistPlayback = PlaylistPlayer(preparedPlaybackFileQueue, Duration.ZERO)
-			Observable.create(playlistPlayback).subscribe()
-			playlistPlayback.pause().toExpiringFuture().get()
-			playingFile = playlistPlayback.resume().toExpiringFuture().get()
+	@BeforeAll
+	fun act() {
+		val positionedPlaybackHandlerContainer = Promise(PositionedPlayableFile(
+			0,
+			playbackHandler,
+			NoTransformVolumeManager(),
+			ServiceFile(1)))
+		val preparedPlaybackFileQueue = mockk<SupplyQueuedPreparedFiles>().apply {
+			every { promiseNextPreparedPlaybackFile(Duration.ZERO) } returns positionedPlaybackHandlerContainer
 		}
+		val playlistPlayback = PlaylistPlayer(preparedPlaybackFileQueue, Duration.ZERO)
+		Observable.create(playlistPlayback).subscribe()
+		playlistPlayback.pause().toExpiringFuture().get()
+		playingFile = playlistPlayback.resume().toExpiringFuture().get()
 	}
 
 	@Test
-	fun thenPlaybackIsResumed() {
+	fun `then playback is resumed`() {
 		assertThat(playbackHandler.isPlaying).isTrue
 	}
 
 	@Test
-	fun thenThePlaylistPositionIsCorrect() {
+	fun `then the playlist position is correct`() {
 		assertThat(playingFile?.playlistPosition).isEqualTo(0)
 	}
 
 	@Test
-	fun thenThePlayingFileIsCorrect() {
+	fun `then the playing file is correct`() {
 		assertThat(playingFile?.serviceFile).isEqualTo(ServiceFile(1))
 	}
 }

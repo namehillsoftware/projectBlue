@@ -9,30 +9,28 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class WhenBuildingTheEngine {
 
-	companion object {
-		private val engine by lazy {
-			val lookupSelectedPlaybackEngineType = mockk<LookupSelectedPlaybackEngineType>().apply {
-				every { promiseSelectedPlaybackEngineType() } returns PlaybackEngineType.ExoPlayer.toPromise()
-			}
-
-			val playbackEngineBuilder = PreparedPlaybackQueueFeederBuilder(
-				mockk(),
-				mockk(),
-				mockk(),
-				mockk(),
-				mockk(),
-			)
-
-			playbackEngineBuilder.build(Library())
+	private val engine by lazy {
+		val lookupSelectedPlaybackEngineType = mockk<LookupSelectedPlaybackEngineType>().apply {
+			every { promiseSelectedPlaybackEngineType() } returns PlaybackEngineType.ExoPlayer.toPromise()
 		}
+
+		val playbackEngineBuilder = PreparedPlaybackQueueFeederBuilder(
+			mockk(),
+			mockk(),
+			mockk(),
+			mockk(),
+			mockk(),
+		)
+
+		playbackEngineBuilder.build(Library())
 	}
 
     @Test
-    fun thenAnExoPlayerEngineIsBuilt() {
+    fun `then an exo player engine is built`() {
         assertThat(engine).isInstanceOf(ExoPlayerPlayableFilePreparationSourceProvider::class.java)
     }
 }

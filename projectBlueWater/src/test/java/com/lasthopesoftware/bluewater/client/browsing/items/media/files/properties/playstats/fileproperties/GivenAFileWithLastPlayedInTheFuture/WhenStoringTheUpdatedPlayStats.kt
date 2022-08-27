@@ -17,26 +17,19 @@ import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.DateTime
 import org.joda.time.Duration
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 
 class WhenStoringTheUpdatedPlayStats {
 
-    companion object {
-        private var fileProperties: Map<String, String>? = null
-        private val lastPlayed =
-            Duration.millis(DateTime.now().plus(Duration.standardDays(10)).millis).standardSeconds
-
-        @BeforeClass
-        @JvmStatic
-        fun before() {
-            val connectionProvider = FakeRevisionConnectionProvider()
-            connectionProvider.setSyncRevision(1)
-            val duration = Duration.standardMinutes(5).millis
-            connectionProvider.mapResponse(
-                {
-					FakeConnectionResponseTuple(
-                        200, """<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+	private val services by lazy {
+		val connectionProvider = FakeRevisionConnectionProvider()
+		connectionProvider.setSyncRevision(1)
+		val duration = Duration.standardMinutes(5).millis
+		connectionProvider.mapResponse(
+			{
+				FakeConnectionResponseTuple(
+					200, """<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <MPL Version="2.0" Title="MCWS - Files - 10936" PathSeparator="\">
 <Item>
 <Field Name="Key">23</Field>
@@ -49,32 +42,41 @@ class WhenStoringTheUpdatedPlayStats {
 </Item>
 </MPL>
 """.toByteArray()
-                    )
-                },
-                "File/GetInfo", "File=23"
-            )
-            val filePropertiesContainer = FakeFilePropertiesContainer()
-			val checkScopedRevisions = ScopedRevisionProvider(connectionProvider)
-			val scopedFilePropertiesProvider = ScopedFilePropertiesProvider(
-                connectionProvider,
-				checkScopedRevisions,
-                filePropertiesContainer
-            )
-			val checkConnection = mockk<CheckIfScopedConnectionIsReadOnly>()
-			every { checkConnection.promiseIsReadOnly() } returns false.toPromise()
-            val filePropertiesPlayStatsUpdater = FilePropertiesPlayStatsUpdater(
-                scopedFilePropertiesProvider,
-                ScopedFilePropertiesStorage(connectionProvider, checkConnection, checkScopedRevisions, filePropertiesContainer)
-            )
-			fileProperties = filePropertiesPlayStatsUpdater
-                .promisePlaystatsUpdate(ServiceFile(23))
-                .eventually {
-					scopedFilePropertiesProvider.promiseFileProperties(ServiceFile(23))
-                }
-				.toExpiringFuture()
-				.get()
-        }
-    }
+				)
+			},
+			"File/GetInfo", "File=23"
+		)
+		val filePropertiesContainer = FakeFilePropertiesContainer()
+		val checkScopedRevisions = ScopedRevisionProvider(connectionProvider)
+		val scopedFilePropertiesProvider = ScopedFilePropertiesProvider(
+			connectionProvider,
+			checkScopedRevisions,
+			filePropertiesContainer
+		)
+		val checkConnection = mockk<CheckIfScopedConnectionIsReadOnly>()
+		every { checkConnection.promiseIsReadOnly() } returns false.toPromise()
+		val filePropertiesPlayStatsUpdater = FilePropertiesPlayStatsUpdater(
+			scopedFilePropertiesProvider,
+			ScopedFilePropertiesStorage(connectionProvider, checkConnection, checkScopedRevisions, filePropertiesContainer)
+		)
+		Pair(filePropertiesPlayStatsUpdater, scopedFilePropertiesProvider)
+	}
+
+	private var fileProperties: Map<String, String>? = null
+	private val lastPlayed =
+		Duration.millis(DateTime.now().plus(Duration.standardDays(10)).millis).standardSeconds
+
+	@BeforeAll
+	fun before() {
+		val (filePropertiesPlayStatsUpdater, scopedFilePropertiesProvider) = services
+		fileProperties = filePropertiesPlayStatsUpdater
+			.promisePlaystatsUpdate(ServiceFile(23))
+			.eventually {
+				scopedFilePropertiesProvider.promiseFileProperties(ServiceFile(23))
+			}
+			.toExpiringFuture()
+			.get()
+	}
 
 	@Test
 	fun thenTheLastPlayedIsNotUpdated() {

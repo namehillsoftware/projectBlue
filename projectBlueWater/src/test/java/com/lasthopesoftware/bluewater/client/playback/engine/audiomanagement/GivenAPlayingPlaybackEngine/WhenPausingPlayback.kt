@@ -11,17 +11,16 @@ import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 
 class WhenPausingPlayback {
 
-	companion object Setup {
+	private var isPaused = false
+	private var isAbandoned = false
 
-		private var isPaused = false
-		private var isAbandoned = false
-
-		private val innerPlaybackState = object : ChangePlaybackState {
+	private val mut by lazy {
+		val innerPlaybackState = object : ChangePlaybackState {
 			override fun startPlaylist(playlist: List<ServiceFile>, playlistPosition: Int, filePosition: Duration): Promise<Unit> =
 				Unit.toPromise()
 
@@ -33,7 +32,7 @@ class WhenPausingPlayback {
 			}
 		}
 
-		private val audioFocus = object : ControlAudioFocus {
+		val audioFocus = object : ControlAudioFocus {
 			override fun promiseAudioFocus(audioFocusRequest: AudioFocusRequestCompat): Promise<AudioFocusRequestCompat> =
 				audioFocusRequest.toPromise()
 
@@ -42,26 +41,30 @@ class WhenPausingPlayback {
 			}
 		}
 
-		@JvmStatic
-		@BeforeClass
-		fun context() {
-			val audioManagingPlaybackStateChanger = AudioManagingPlaybackStateChanger(
-				innerPlaybackState,
-				mockk(),
-				audioFocus,
-				mockk(relaxed = true))
-			audioManagingPlaybackStateChanger.resume().toExpiringFuture().get()
-			audioManagingPlaybackStateChanger.pause().toExpiringFuture().get()
+		val audioManagingPlaybackStateChanger = AudioManagingPlaybackStateChanger(
+			innerPlaybackState,
+			mockk(),
+			audioFocus,
+			mockk(relaxed = true))
+
+		audioManagingPlaybackStateChanger
+	}
+
+	@BeforeAll
+	fun act() {
+		with (mut) {
+			resume().toExpiringFuture().get()
+			pause().toExpiringFuture().get()
 		}
 	}
 
 	@Test
-	fun thenAudioFocusIsReleased() {
+	fun `then audio focus is released`() {
 		assertThat(isAbandoned).isTrue
 	}
 
 	@Test
-	fun thenPlaybackIsPaused() {
+	fun `then playback is paused`() {
 		assertThat(isPaused).isTrue
 	}
 }

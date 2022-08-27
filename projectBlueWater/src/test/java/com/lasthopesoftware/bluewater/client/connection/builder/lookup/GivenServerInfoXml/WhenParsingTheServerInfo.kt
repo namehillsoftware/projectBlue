@@ -8,17 +8,16 @@ import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import xmlwise.Xmlwise
 
 class WhenParsingTheServerInfo {
 
-	companion object {
-		private val serverInfo by lazy {
-			val serverInfoXml = mockk<RequestServerInfoXml>()
-			every { serverInfoXml.promiseServerInfoXml(any()) } returns Promise(
-				Xmlwise.createXml(
-					"""<?xml version="1.0" encoding="UTF-8"?>
+	private val serverInfo by lazy {
+		val serverInfoXml = mockk<RequestServerInfoXml>()
+		every { serverInfoXml.promiseServerInfoXml(any()) } returns Promise(
+			Xmlwise.createXml(
+				"""<?xml version="1.0" encoding="UTF-8"?>
 <Response Status="OK">
 <keyid>gooPc</keyid>
 <ip>108.491.23.154</ip>
@@ -30,42 +29,41 @@ class WhenParsingTheServerInfo {
 </macaddresslist>
 <https_port>52200</https_port>
 </Response>"""
-				)
 			)
-			val serverLookup = ServerLookup(serverInfoXml)
-			serverLookup.promiseServerInformation(LibraryId(10)).toExpiringFuture().get()
-		}
+		)
+		val serverLookup = ServerLookup(serverInfoXml)
+		serverLookup.promiseServerInformation(LibraryId(10)).toExpiringFuture().get()
 	}
 
 	@Test
-	fun thenTheRemoteIpIsCorrect() {
+	fun `then the remote ip is correct`() {
 		assertThat(serverInfo!!.remoteIp).isEqualTo("108.491.23.154")
 	}
 
 	@Test
-	fun thenTheLocalIpsAreCorrect() {
+	fun `then the local ips are correct`() {
 		assertThat(serverInfo!!.localIps)
 			.containsExactlyInAnyOrder("169.254.72.216", "192.168.1.50")
 	}
 
 	@Test
-	fun thenTheHttpPortIsCorrect() {
+	fun `then the http port is correct`() {
 		assertThat(serverInfo!!.httpPort).isEqualTo(52199)
 	}
 
 	@Test
-	fun thenTheHttpsPortIsCorrect() {
+	fun `then the https port is correct`() {
 		assertThat(serverInfo!!.httpsPort).isEqualTo(52200)
 	}
 
 	@Test
-	fun thenTheCertificateFingerprintIsCorrect() {
+	fun `then the certificate fingerprint is correct`() {
 		assertThat(serverInfo!!.certificateFingerprint)
 			.isEqualToIgnoringCase("746E06046B44CED35658F300DB2D08A799DEBC7E")
 	}
 
 	@Test
-	fun thenTheMacAddressesAreCorrect() {
+	fun `then the mac addresses are correct`() {
 		assertThat(serverInfo!!.macAddresses).containsExactlyInAnyOrder(
 			"5c-f3-70-8b-db-e9",
 			"16-15-f4-b9-cd-15",

@@ -5,21 +5,20 @@ import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessio
 import com.lasthopesoftware.bluewater.client.connection.session.PromisedConnectionsRepository
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 
 class WhenTestingIfTheConnectionIsActive {
 
-	companion object {
-		private var isActive = false
+	private val mut by lazy {
+		ConnectionSessionManager(mockk(), mockk(), PromisedConnectionsRepository())
+	}
 
-		@BeforeClass
-		@JvmStatic
-		fun before() {
-			val connectionSessionManager = ConnectionSessionManager(mockk(), mockk(), PromisedConnectionsRepository())
+	private var isActive = false
 
-			isActive = connectionSessionManager.isConnectionActive(LibraryId(2))
-		}
+	@BeforeAll
+	fun act() {
+		isActive = mut.isConnectionActive(LibraryId(2))
 	}
 
 	@Test

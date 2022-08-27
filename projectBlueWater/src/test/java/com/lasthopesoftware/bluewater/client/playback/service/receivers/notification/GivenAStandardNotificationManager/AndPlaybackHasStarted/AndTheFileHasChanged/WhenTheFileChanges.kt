@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.playback.service.receivers.notific
 
 import android.app.Notification
 import android.app.NotificationManager
+import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -35,9 +36,18 @@ class WhenTheFileChanges : AndroidContext() {
 
 		private val notificationManager = mockk<NotificationManager>()
 		private val notificationContentBuilder = mockk<BuildNowPlayingNotificationContent>().apply {
-			every { promiseNowPlayingNotification(any(), any()) } returns FakeNotificationCompatBuilder.newFakeBuilder(startedNotification).toPromise()
-			every { promiseNowPlayingNotification(ServiceFile(2), true) } returns FakeNotificationCompatBuilder.newFakeBuilder(nextNotification).toPromise()
-			every { getLoadingNotification(any()) } returns FakeNotificationCompatBuilder.newFakeBuilder(loadingNotification)
+			every { promiseNowPlayingNotification(any(), any()) } returns FakeNotificationCompatBuilder.newFakeBuilder(
+                ApplicationProvider.getApplicationContext(),
+                startedNotification
+            ).toPromise()
+			every { promiseNowPlayingNotification(ServiceFile(2), true) } returns FakeNotificationCompatBuilder.newFakeBuilder(
+                ApplicationProvider.getApplicationContext(),
+                nextNotification
+            ).toPromise()
+			every { getLoadingNotification(any()) } returns FakeNotificationCompatBuilder.newFakeBuilder(
+                ApplicationProvider.getApplicationContext(),
+                loadingNotification
+            )
 		}
 	}
 
@@ -47,7 +57,10 @@ class WhenTheFileChanges : AndroidContext() {
 				NotificationsController(service, notificationManager),
 				NotificationsConfiguration("", 43),
 				notificationContentBuilder
-			) { Promise(FakeNotificationCompatBuilder.newFakeBuilder(startedNotification)) },
+			) { Promise(FakeNotificationCompatBuilder.newFakeBuilder(
+                ApplicationProvider.getApplicationContext(),
+                startedNotification
+            )) },
 			mockk(relaxed = true)
 		)
 

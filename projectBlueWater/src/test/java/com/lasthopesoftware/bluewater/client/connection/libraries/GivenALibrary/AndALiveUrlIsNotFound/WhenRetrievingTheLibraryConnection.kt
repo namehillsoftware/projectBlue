@@ -16,65 +16,66 @@ import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 import java.util.concurrent.TimeUnit
 
 class WhenRetrievingTheLibraryConnection {
+
+	private val deferredConnectionSettings = DeferredPromise<ConnectionSettings?>(ConnectionSettings(accessCode = "aB5nf"))
+	private val statuses: MutableList<BuildingConnectionStatus> = ArrayList()
+
+	private val mut by lazy {
+		val validateConnectionSettings = mockk<ValidateConnectionSettings>()
+		every { validateConnectionSettings.isValid(any()) } returns true
+
+		val lookupConnection = mockk<LookupConnectionSettings>()
+		every {
+			lookupConnection.lookupConnectionSettings(LibraryId(2))
+		} returns deferredConnectionSettings
+
+		val liveUrlProvider = mockk<ProvideLiveUrl>()
+		every { liveUrlProvider.promiseLiveUrl(LibraryId(2)) } returns Promise.empty()
+
+		val libraryConnectionProvider = LibraryConnectionProvider(
+			validateConnectionSettings,
+			lookupConnection,
+			NoopServerAlarm,
+			liveUrlProvider,
+			OkHttpFactory
+		)
+
+		libraryConnectionProvider
+	}
+
+	private var connectionProvider: IConnectionProvider? = null
+
+	@BeforeAll
+	fun act() {
+		val futureConnectionProvider = mut
+				.promiseLibraryConnection(LibraryId(2))
+				.apply {
+					progress.then(statuses::add)
+					updates(statuses::add)
+				}
+				.toExpiringFuture()
+
+		deferredConnectionSettings.resolve()
+		connectionProvider = futureConnectionProvider[30, TimeUnit.SECONDS]
+	}
+
 	@Test
-	fun thenAConnectionProviderIsNotReturned() {
+	fun `then a connection provider is not returned`() {
 		assertThat(connectionProvider).isNull()
 	}
 
 	@Test
-	fun thenGettingLibraryIsBroadcast() {
+	fun `then getting library is broadcast`() {
 		assertThat(statuses)
 			.containsExactly(
 				BuildingConnectionStatus.GettingLibrary,
 				BuildingConnectionStatus.BuildingConnection,
 				BuildingConnectionStatus.BuildingConnectionFailed
 			)
-	}
-
-	companion object {
-		private val statuses: MutableList<BuildingConnectionStatus> = ArrayList()
-		private var connectionProvider: IConnectionProvider? = null
-
-		@BeforeClass
-		@JvmStatic
-		fun before() {
-			val validateConnectionSettings = mockk<ValidateConnectionSettings>()
-			every { validateConnectionSettings.isValid(any()) } returns true
-
-			val connectionSettings = ConnectionSettings(accessCode = "aB5nf")
-			val deferredConnectionSettings = DeferredPromise<ConnectionSettings?>(connectionSettings)
-
-			val lookupConnection = mockk<LookupConnectionSettings>()
-			every {
-				lookupConnection.lookupConnectionSettings(LibraryId(2))
-			} returns deferredConnectionSettings
-
-			val liveUrlProvider = mockk<ProvideLiveUrl>()
-			every { liveUrlProvider.promiseLiveUrl(LibraryId(2)) } returns Promise.empty()
-
-			val libraryConnectionProvider = LibraryConnectionProvider(
-                validateConnectionSettings,
-                lookupConnection,
-                NoopServerAlarm(),
-                liveUrlProvider,
-                OkHttpFactory
-            )
-
-			val futureConnectionProvider = libraryConnectionProvider
-					.promiseLibraryConnection(LibraryId(2))
-					.apply {
-						progress.then(statuses::add)
-						updates(statuses::add)
-					}
-					.toExpiringFuture()
-
-			deferredConnectionSettings.resolve()
-			connectionProvider = futureConnectionProvider[30, TimeUnit.SECONDS]
-		}
 	}
 }

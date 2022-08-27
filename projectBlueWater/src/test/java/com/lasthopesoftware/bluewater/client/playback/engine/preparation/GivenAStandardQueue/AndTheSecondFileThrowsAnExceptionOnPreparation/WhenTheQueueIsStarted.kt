@@ -9,55 +9,54 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableF
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
-import org.assertj.core.api.Assertions
+import io.mockk.every
+import io.mockk.mockk
+import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
-import org.junit.BeforeClass
-import org.junit.Test
-import org.mockito.Mockito
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 import java.util.concurrent.ExecutionException
 
 class WhenTheQueueIsStarted {
 
-	companion object {
-		private val expectedPlaybackHandler = FakeBufferingPlaybackHandler()
-		private var returnedPlaybackHandler: PlayableFile? = null
-		private var error: Throwable? = null
+	private val expectedPlaybackHandler = FakeBufferingPlaybackHandler()
+	private val queue by lazy {
+		val serviceFiles = (0..2).map(::ServiceFile)
 
-		@JvmStatic
-		@BeforeClass
-		fun before() {
-			val serviceFiles = intArrayOf(0, 1, 2).map { key -> ServiceFile(key) }
+		val playbackPreparer = mockk<PlayableFilePreparationSource>().apply {
+			every { promisePreparedPlaybackFile(ServiceFile(0), Duration.ZERO) } returns Promise(FakePreparedPlayableFile(FakeBufferingPlaybackHandler()))
+			every { promisePreparedPlaybackFile(ServiceFile(1), Duration.ZERO) } returns Promise(Exception())
+		}
 
-			val playbackPreparer = Mockito.mock(PlayableFilePreparationSource::class.java)
-			Mockito.`when`(playbackPreparer.promisePreparedPlaybackFile(ServiceFile(0), Duration.ZERO))
-				.thenReturn(Promise(FakePreparedPlayableFile(FakeBufferingPlaybackHandler())))
-			Mockito.`when`(playbackPreparer.promisePreparedPlaybackFile(ServiceFile(1), Duration.ZERO))
-				.thenReturn(Promise(Exception()))
+		val bufferingPlaybackQueuesProvider = CompletingFileQueueProvider()
+		val startPosition = 0
+		PreparedPlayableFileQueue(
+			{ 2 },
+			playbackPreparer,
+			bufferingPlaybackQueuesProvider.provideQueue(serviceFiles, startPosition))
+	}
 
-			val bufferingPlaybackQueuesProvider = CompletingFileQueueProvider()
-			val startPosition = 0
-			val queue = PreparedPlayableFileQueue(
-				{ 2 },
-				playbackPreparer,
-				bufferingPlaybackQueuesProvider.provideQueue(serviceFiles, startPosition))
+	private var returnedPlaybackHandler: PlayableFile? = null
+	private var error: Throwable? = null
 
-			try {
-				returnedPlaybackHandler = queue.promiseNextPreparedPlaybackFile(Duration.ZERO)
-					?.eventually { queue.promiseNextPreparedPlaybackFile(Duration.ZERO) }
-					?.toExpiringFuture()?.get()?.playableFile
-			} catch (e: ExecutionException) {
-				error = e.cause
-			}
+	@BeforeAll
+	fun act() {
+		try {
+			returnedPlaybackHandler = queue.promiseNextPreparedPlaybackFile(Duration.ZERO)
+				?.eventually { queue.promiseNextPreparedPlaybackFile(Duration.ZERO) }
+				?.toExpiringFuture()?.get()?.playableFile
+		} catch (e: ExecutionException) {
+			error = e.cause
 		}
 	}
 
 	@Test
-	fun thenTheExpectedPlaybackHandlerIsNotReturned() {
-		Assertions.assertThat(returnedPlaybackHandler).isNotEqualTo(expectedPlaybackHandler).isNull()
+	fun `then the expected playback handler is not returned`() {
+		assertThat(returnedPlaybackHandler).isNotEqualTo(expectedPlaybackHandler).isNull()
 	}
 
 	@Test
-	fun thenTheErrorIsCaught() {
-		Assertions.assertThat(error).isNotNull
+	fun `then the error is caught`() {
+		assertThat(error).isNotNull
 	}
 }

@@ -16,54 +16,54 @@ import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import java.util.concurrent.ConcurrentLinkedQueue
-
-private val preparedFile by lazy {
-	val listeners = ConcurrentLinkedQueue<Player.Listener>()
-
-	val preparer = ExoPlayerPlaybackPreparer(
-		{
-			mockk<BaseMediaSource>(relaxUnitFun = true).toPromise()
-		},
-		mockk<ProvideExoPlayers>().apply {
-			every { getExoPlayer() } returns mockk<PromisingExoPlayer>().apply {
-
-				val selfPromise = this.toPromise()
-				every { addListener(any()) } answers {
-					listeners.add(firstArg())
-					selfPromise
-				}
-				every { setMediaSource(any()) } returns selfPromise
-				every { removeListener(any()) } returns selfPromise
-				every { prepare() } returns selfPromise
-				every { stop() } returns selfPromise
-				every { release() } returns selfPromise
-			}
-		},
-		mockk()
-	) { Promise(mockk<Uri>()) }
-	val promisedPreparedFile = preparer.promisePreparedPlaybackFile(
-		ServiceFile(1),
-		Duration.ZERO
-	)
-
-	listeners.forEach { it.onPlaybackStateChanged(Player.STATE_READY) }
-
-	promisedPreparedFile.toExpiringFuture().get()
-}
 
 class WhenPreparing {
 
+	private val preparedFile by lazy {
+		val listeners = ConcurrentLinkedQueue<Player.Listener>()
+
+		val preparer = ExoPlayerPlaybackPreparer(
+			{
+				mockk<BaseMediaSource>(relaxUnitFun = true).toPromise()
+			},
+			mockk<ProvideExoPlayers>().apply {
+				every { getExoPlayer() } returns mockk<PromisingExoPlayer>().apply {
+
+					val selfPromise = this.toPromise()
+					every { addListener(any()) } answers {
+						listeners.add(firstArg())
+						selfPromise
+					}
+					every { setMediaSource(any()) } returns selfPromise
+					every { removeListener(any()) } returns selfPromise
+					every { prepare() } returns selfPromise
+					every { stop() } returns selfPromise
+					every { release() } returns selfPromise
+				}
+			},
+			mockk()
+		) { Promise(mockk<Uri>()) }
+		val promisedPreparedFile = preparer.promisePreparedPlaybackFile(
+			ServiceFile(1),
+			Duration.ZERO
+		)
+
+		listeners.forEach { it.onPlaybackStateChanged(Player.STATE_READY) }
+
+		promisedPreparedFile.toExpiringFuture().get()
+	}
+
 	@Test
-	fun thenAnExoPlayerIsReturned() {
+	fun `then an exo player is returned`() {
 		assertThat(preparedFile!!.playbackHandler).isInstanceOf(
 			ExoPlayerPlaybackHandler::class.java
 		)
 	}
 
 	@Test
-	fun thenABufferingFileIsReturned() {
+	fun `then a buffering file is returned`() {
 		assertThat(preparedFile!!.bufferingPlaybackFile).isInstanceOf(
 			BufferingExoPlayer::class.java
 		)

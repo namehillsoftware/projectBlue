@@ -10,37 +10,34 @@ import com.lasthopesoftware.resources.strings.GetStringResources
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
-
-private val viewModel by lazy {
-	val filePropertiesProvider = mockk<ProvideScopedFileProperties>().apply {
-		every { promiseFileProperties(any()) } returns emptyMap<String, String>().toPromise()
-	}
-
-	val stringResource = mockk<GetStringResources>().apply {
-		every { loading } returns "waiter"
-		every { unknownArtist } returns "bunch"
-		every { unknownTrack } returns "bold"
-	}
-
-	ReusableTrackHeadlineViewModel(
-		filePropertiesProvider,
-		stringResource,
-		mockk(),
-		mockk(),
-		RecordingTypedMessageBus(),
-	)
-}
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 
 class WhenLoadingFileDetails {
 
-	companion object {
-		@JvmStatic
-		@BeforeClass
-		fun act() {
-			viewModel.promiseUpdate(ServiceFile(943)).toExpiringFuture().get()
+	private val viewModel by lazy {
+		val filePropertiesProvider = mockk<ProvideScopedFileProperties>().apply {
+			every { promiseFileProperties(any()) } returns emptyMap<String, String>().toPromise()
 		}
+
+		val stringResource = mockk<GetStringResources>().apply {
+			every { loading } returns "waiter"
+			every { unknownArtist } returns "bunch"
+			every { unknownTrack } returns "bold"
+		}
+
+		ReusableTrackHeadlineViewModel(
+			filePropertiesProvider,
+			stringResource,
+			mockk(),
+			mockk(),
+			RecordingTypedMessageBus(),
+		)
+	}
+
+	@BeforeAll
+	fun act() {
+		viewModel.promiseUpdate(ServiceFile(943)).toExpiringFuture().get()
 	}
 
 	@Test

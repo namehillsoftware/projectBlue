@@ -17,27 +17,31 @@ class WhenCollectingTheStoredFiles {
 
 	companion object {
 		private val storedFiles by lazy {
+			val insertSql = fromTable(StoredFileEntityInformation.tableName)
+				.addColumn(StoredFileEntityInformation.serviceIdColumnName)
+				.addColumn(StoredFileEntityInformation.libraryIdColumnName)
+				.addColumn(StoredFileEntityInformation.isOwnerColumnName)
+				.build()
+
 			RepositoryAccessHelper(ApplicationProvider.getApplicationContext()).use { repositoryAccessHelper ->
-				val insertSql = fromTable(StoredFileEntityInformation.tableName)
-					.addColumn(StoredFileEntityInformation.serviceIdColumnName)
-					.addColumn(StoredFileEntityInformation.libraryIdColumnName)
-					.addColumn(StoredFileEntityInformation.isOwnerColumnName)
-					.build()
-				for (i in 1..9) {
-					repositoryAccessHelper
-						.mapSql(insertSql)
-						.addParameter(StoredFileEntityInformation.serviceIdColumnName, i)
-						.addParameter(StoredFileEntityInformation.libraryIdColumnName, 2)
-						.addParameter(StoredFileEntityInformation.isOwnerColumnName, true)
-						.execute()
-				}
-				for (i in 13..22) {
-					repositoryAccessHelper
-						.mapSql(insertSql)
-						.addParameter(StoredFileEntityInformation.serviceIdColumnName, i)
-						.addParameter(StoredFileEntityInformation.libraryIdColumnName, 5)
-						.addParameter(StoredFileEntityInformation.isOwnerColumnName, true)
-						.execute()
+				repositoryAccessHelper.beginTransaction().use {
+					for (i in 1..9) {
+						repositoryAccessHelper
+							.mapSql(insertSql)
+							.addParameter(StoredFileEntityInformation.serviceIdColumnName, i)
+							.addParameter(StoredFileEntityInformation.libraryIdColumnName, 2)
+							.addParameter(StoredFileEntityInformation.isOwnerColumnName, true)
+							.execute()
+					}
+					for (i in 13..22) {
+						repositoryAccessHelper
+							.mapSql(insertSql)
+							.addParameter(StoredFileEntityInformation.serviceIdColumnName, i)
+							.addParameter(StoredFileEntityInformation.libraryIdColumnName, 5)
+							.addParameter(StoredFileEntityInformation.isOwnerColumnName, true)
+							.execute()
+					}
+					it.setTransactionSuccessful()
 				}
 			}
 			val storedFilesCollection =
@@ -47,12 +51,12 @@ class WhenCollectingTheStoredFiles {
 		}
 	}
 
-	@Test
+	@Test(timeout = 30_000)
 	fun thenTheStoredFilesAreFromTheCorrectLibrary() {
 		assertThat(storedFiles?.map { it.libraryId }).containsOnly(5)
 	}
 
-	@Test
+	@Test(timeout = 30_000)
 	fun thenTheStoredFilesAreCorrect() {
 		assertThat(storedFiles?.map { it.serviceId }).isSubsetOf(13..23)
 	}

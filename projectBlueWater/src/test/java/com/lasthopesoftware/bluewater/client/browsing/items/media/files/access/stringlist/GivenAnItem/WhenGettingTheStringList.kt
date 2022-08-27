@@ -10,23 +10,24 @@ import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Test
-
-private val stringList by lazy {
-
-	val fileStringListProvider = mockk<ProvideFileStringListsForParameters>().apply {
-		every { promiseFileStringList(LibraryId(14), FileListParameters.Options.None, "Browse/Files", "ID=32", "Version=2") } returns Promise("BfCs02")
-	}
-
-	val itemStringListProvider = ItemStringListProvider(FileListParameters, fileStringListProvider)
-	itemStringListProvider.promiseFileStringList(LibraryId(14), ItemId(32), FileListParameters.Options.None)
-		.toExpiringFuture()
-		.get()
-}
+import org.junit.jupiter.api.Test
 
 class WhenGettingTheStringList {
 
-	@Test fun `then the string list is correct`() {
+	private val stringList by lazy {
+
+		val fileStringListProvider = mockk<ProvideFileStringListsForParameters>().apply {
+			every { promiseFileStringList(LibraryId(14), FileListParameters.Options.None, "Browse/Files", "ID=32", "Version=2") } returns Promise("BfCs02")
+		}
+
+		val itemStringListProvider = ItemStringListProvider(FileListParameters, fileStringListProvider)
+		itemStringListProvider.promiseFileStringList(LibraryId(14), ItemId(32), FileListParameters.Options.None)
+			.toExpiringFuture()
+			.get()
+	}
+
+	@Test
+	fun `then the string list is correct`() {
 		assertThat(stringList).isEqualTo("BfCs02")
 	}
 }

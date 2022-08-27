@@ -22,7 +22,6 @@ import io.mockk.spyk
 import io.mockk.verify
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
-import java.util.*
 
 class WhenBuildingTheLoadingNotification : AndroidContext() {
 
@@ -44,7 +43,7 @@ class WhenBuildingTheLoadingNotification : AndroidContext() {
 		val connectionProvider = FakeFileConnectionProvider()
 		connectionProvider.setupFile(
 			ServiceFile(3),
-			object : HashMap<String?, String?>() {
+			object : HashMap<String, String>() {
 				init {
 					put(KnownFileProperties.ARTIST, "test-artist")
 					put(KnownFileProperties.NAME, "song")

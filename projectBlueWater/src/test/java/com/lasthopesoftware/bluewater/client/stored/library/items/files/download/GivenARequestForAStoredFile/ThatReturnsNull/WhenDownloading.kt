@@ -15,45 +15,37 @@ import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Response
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
-import java.io.InputStream
+import org.junit.jupiter.api.Test
 
 class WhenDownloading {
-	@Test
-	fun thenAnEmptyInputStreamIsReturned() {
-		assertThat(inputStream!!.available()).isEqualTo(0)
+	private val inputStream by lazy {
+		val builder = Request.Builder()
+		builder.url("http://stuff/")
+		val responseBuilder = Response.Builder()
+		responseBuilder
+			.request(builder.build())
+			.protocol(Protocol.HTTP_1_1)
+			.code(202)
+			.message("Not Found")
+			.body(null)
+		val fakeConnectionProvider = mockk<IConnectionProvider>()
+		every { fakeConnectionProvider.promiseResponse(*anyVararg()) } returns responseBuilder.build().toPromise()
+
+		val libraryConnections = mockk<ProvideLibraryConnections>()
+		every { libraryConnections.promiseLibraryConnection(LibraryId(4)) } returns ProgressingPromise(fakeConnectionProvider)
+
+		val downloader =
+			StoredFileDownloader(ServiceFileUriQueryParamsProvider, libraryConnections)
+		ExpiringFuturePromise(
+			downloader.promiseDownload(
+				LibraryId(4),
+				StoredFile().setServiceId(4)
+			)
+		).get()
 	}
 
-	companion object {
-		private var inputStream: InputStream? = null
-
-		@BeforeClass
-		@JvmStatic
-		fun before() {
-			val builder = Request.Builder()
-			builder.url("http://stuff/")
-			val responseBuilder = Response.Builder()
-			responseBuilder
-				.request(builder.build())
-				.protocol(Protocol.HTTP_1_1)
-				.code(202)
-				.message("Not Found")
-				.body(null)
-			val fakeConnectionProvider = mockk<IConnectionProvider>()
-			every { fakeConnectionProvider.promiseResponse(*anyVararg()) } returns responseBuilder.build().toPromise()
-
-			val libraryConnections = mockk<ProvideLibraryConnections>()
-			every { libraryConnections.promiseLibraryConnection(LibraryId(4)) } returns ProgressingPromise(fakeConnectionProvider)
-
-			val downloader =
-				StoredFileDownloader(ServiceFileUriQueryParamsProvider, libraryConnections)
-			inputStream = ExpiringFuturePromise(
-				downloader.promiseDownload(
-					LibraryId(4),
-					StoredFile().setServiceId(4)
-				)
-			).get()
-		}
+	@Test
+	fun `then an empty input stream is returned`() {
+		assertThat(inputStream!!.available()).isEqualTo(0)
 	}
 }

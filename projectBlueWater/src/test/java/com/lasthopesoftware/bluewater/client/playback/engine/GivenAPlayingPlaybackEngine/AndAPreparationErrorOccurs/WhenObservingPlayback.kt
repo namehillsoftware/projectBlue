@@ -25,17 +25,80 @@ import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 
 class WhenObservingPlayback {
+	private val mut by lazy {
+		val deferredErrorPlaybackPreparer = DeferredErrorPlaybackPreparer()
+		val fakePlaybackPreparerProvider: IPlayableFilePreparationSourceProvider =
+			object : IPlayableFilePreparationSourceProvider {
+				override fun providePlayableFilePreparationSource(): PlayableFilePreparationSource {
+					return deferredErrorPlaybackPreparer
+				}
+
+				override fun getMaxQueueSize(): Int {
+					return 1
+				}
+			}
+
+		val libraryProvider = mockk<ISpecificLibraryProvider>().also {
+			val library = Library()
+			library.setId(1)
+			every { it.library } returns Promise(library)
+		}
+
+		val libraryStorage: ILibraryStorage = PassThroughLibraryStorage()
+		val nowPlayingRepository = NowPlayingRepository(libraryProvider, libraryStorage)
+
+		val playbackEngine = PlaybackEngine(
+			PreparedPlaybackQueueResourceManagement(
+				fakePlaybackPreparerProvider,
+				fakePlaybackPreparerProvider
+			), listOf(CompletingFileQueueProvider()),
+			nowPlayingRepository,
+			PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
+		)
+
+		Triple(deferredErrorPlaybackPreparer, nowPlayingRepository, playbackEngine)
+	}
+
+	private var error: PreparationException? = null
+	private var nowPlaying: NowPlaying? = null
+
+	@BeforeAll
+	fun act() {
+		val (deferredErrorPlaybackPreparer, nowPlayingRepository, playbackEngine) = mut
+
+		playbackEngine
+			.setOnPlaylistError { e ->
+				if (e is PreparationException) error = e
+			}
+			.startPlaylist(
+				listOf(
+					ServiceFile(1),
+					ServiceFile(2),
+					ServiceFile(3),
+					ServiceFile(4),
+					ServiceFile(5)
+				),
+				0,
+				Duration.ZERO
+			)
+			.toExpiringFuture()
+			.get()
+		deferredErrorPlaybackPreparer.resolve().resolve()
+		deferredErrorPlaybackPreparer.reject()
+		nowPlaying = nowPlayingRepository.promiseNowPlaying().toExpiringFuture().get()
+	}
+
 	@Test
-	fun thenTheErrorIsBroadcast() {
+	fun `then the error is broadcast`() {
 		assertThat(error).isNotNull
 	}
 
 	@Test
-	fun thenTheFilePositionIsSaved() {
+	fun `then the file position is saved`() {
 		assertThat(nowPlaying!!.playlistPosition).isEqualTo(1)
 	}
 
@@ -50,7 +113,6 @@ class WhenObservingPlayback {
 			)
 			return playbackHandler
 		}
-
 		fun reject() {
 			messenger?.sendRejection(Exception())
 		}
@@ -62,64 +124,6 @@ class WhenObservingPlayback {
 			return Promise { messenger ->
 				this.messenger = messenger
 			}
-		}
-	}
-
-	companion object {
-		private var error: PreparationException? = null
-		private var nowPlaying: NowPlaying? = null
-
-		@BeforeClass
-		@JvmStatic
-		fun context() {
-			val deferredErrorPlaybackPreparer = DeferredErrorPlaybackPreparer()
-			val fakePlaybackPreparerProvider: IPlayableFilePreparationSourceProvider =
-				object : IPlayableFilePreparationSourceProvider {
-					override fun providePlayableFilePreparationSource(): PlayableFilePreparationSource {
-						return deferredErrorPlaybackPreparer
-					}
-
-					override fun getMaxQueueSize(): Int {
-						return 1
-					}
-				}
-			val library = Library()
-			library.setId(1)
-			val libraryProvider = mockk<ISpecificLibraryProvider>()
-			every { libraryProvider.library } returns Promise(library)
-			val libraryStorage: ILibraryStorage = PassThroughLibraryStorage()
-			val nowPlayingRepository =
-                NowPlayingRepository(
-                    libraryProvider,
-                    libraryStorage
-                )
-			PlaybackEngine(
-				PreparedPlaybackQueueResourceManagement(
-					fakePlaybackPreparerProvider,
-					fakePlaybackPreparerProvider
-				), listOf(CompletingFileQueueProvider()),
-				nowPlayingRepository,
-				PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
-			)
-				.setOnPlaylistError { e ->
-					if (e is PreparationException) error = e
-				}
-				.startPlaylist(
-					listOf(
-						ServiceFile(1),
-						ServiceFile(2),
-						ServiceFile(3),
-						ServiceFile(4),
-						ServiceFile(5)
-					),
-					0,
-					Duration.ZERO
-				)
-				.toExpiringFuture()
-				.get()
-			deferredErrorPlaybackPreparer.resolve().resolve()
-			deferredErrorPlaybackPreparer.reject()
-			nowPlaying = nowPlayingRepository.promiseNowPlaying().toExpiringFuture().get()
 		}
 	}
 }

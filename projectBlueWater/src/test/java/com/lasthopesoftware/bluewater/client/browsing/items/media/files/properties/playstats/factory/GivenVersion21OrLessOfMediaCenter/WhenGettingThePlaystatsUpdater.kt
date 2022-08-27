@@ -16,39 +16,39 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
-import org.assertj.core.api.Assertions
-import org.junit.BeforeClass
-import org.junit.Test
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 
 class WhenGettingThePlaystatsUpdater {
 
-	companion object {
-		private var updater: IPlaystatsUpdate? = null
+	private val playstatsUpdateSelector by lazy {
+		val fakeConnectionProvider = FakeConnectionProvider()
+		val programVersionProvider = mockk<IProgramVersionProvider>()
+		every { programVersionProvider.promiseServerVersion() } returns Promise(SemanticVersion(21, 0, 0))
+		val checkConnection = mockk<CheckIfScopedConnectionIsReadOnly>()
+		every { checkConnection.promiseIsReadOnly() } returns false.toPromise()
+		val fakeFilePropertiesContainer = FakeFilePropertiesContainer()
+		val scopedRevisionProvider = FakeScopedRevisionProvider(10)
 
-		@BeforeClass
-		@JvmStatic
-		fun before() {
-			val fakeConnectionProvider = FakeConnectionProvider()
-			val programVersionProvider = mockk<IProgramVersionProvider>()
-			every { programVersionProvider.promiseServerVersion() } returns Promise(SemanticVersion(21, 0, 0))
-			val checkConnection = mockk<CheckIfScopedConnectionIsReadOnly>()
-			every { checkConnection.promiseIsReadOnly() } returns false.toPromise()
-			val fakeFilePropertiesContainer = FakeFilePropertiesContainer()
-			val scopedRevisionProvider = FakeScopedRevisionProvider(10)
-			val playstatsUpdateSelector = PlaystatsUpdateSelector(
-				fakeConnectionProvider,
-				ScopedFilePropertiesProvider(fakeConnectionProvider, scopedRevisionProvider, fakeFilePropertiesContainer),
-				ScopedFilePropertiesStorage(fakeConnectionProvider, checkConnection, scopedRevisionProvider, fakeFilePropertiesContainer),
-				programVersionProvider
-			)
+		PlaystatsUpdateSelector(
+			fakeConnectionProvider,
+			ScopedFilePropertiesProvider(fakeConnectionProvider, scopedRevisionProvider, fakeFilePropertiesContainer),
+			ScopedFilePropertiesStorage(fakeConnectionProvider, checkConnection, scopedRevisionProvider, fakeFilePropertiesContainer),
+			programVersionProvider
+		)
+	}
 
-			updater = playstatsUpdateSelector.promisePlaystatsUpdater().toExpiringFuture().get()
-		}
+	private var updater: IPlaystatsUpdate? = null
+
+	@BeforeAll
+	fun act() {
+		updater = playstatsUpdateSelector.promisePlaystatsUpdater().toExpiringFuture().get()
 	}
 
 	@Test
 	fun thenTheFilePropertiesPlaystatsUpdaterIsGiven() {
-		Assertions.assertThat(updater).isInstanceOf(
+		assertThat(updater).isInstanceOf(
 			FilePropertiesPlayStatsUpdater::class.java
 		)
 	}

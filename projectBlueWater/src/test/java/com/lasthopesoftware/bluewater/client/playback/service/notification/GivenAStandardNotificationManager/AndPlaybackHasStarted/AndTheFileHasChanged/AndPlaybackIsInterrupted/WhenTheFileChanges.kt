@@ -1,13 +1,15 @@
 package com.lasthopesoftware.bluewater.client.playback.service.notification.GivenAStandardNotificationManager.AndPlaybackHasStarted.AndTheFileHasChanged.AndPlaybackIsInterrupted
 
 import android.app.Notification
+import android.content.Context
+import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.playback.service.notification.NotificationsConfiguration
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.BuildNowPlayingNotificationContent
 import com.lasthopesoftware.bluewater.shared.android.notifications.control.ControlNotifications
-import com.lasthopesoftware.resources.notifications.FakeNotificationCompatBuilder.newFakeBuilder
+import com.lasthopesoftware.resources.notifications.FakeNotificationCompatBuilder.Companion.newFakeBuilder
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -24,15 +26,16 @@ class WhenTheFileChanges : AndroidContext() {
 	}
 
 	override fun before() {
-		every { notificationContentBuilder.getLoadingNotification(any()) } returns newFakeBuilder(Notification())
-		every { notificationContentBuilder.promiseNowPlayingNotification(ServiceFile(1), any()) } returns Promise(newFakeBuilder(firstNotification))
-		every { notificationContentBuilder.promiseNowPlayingNotification(ServiceFile(2), false) } returns Promise(newFakeBuilder(secondNotification))
+		val context = ApplicationProvider.getApplicationContext<Context>()
+		every { notificationContentBuilder.getLoadingNotification(any()) } returns newFakeBuilder(context, Notification())
+		every { notificationContentBuilder.promiseNowPlayingNotification(ServiceFile(1), any()) } returns Promise(newFakeBuilder(context, firstNotification))
+		every { notificationContentBuilder.promiseNowPlayingNotification(ServiceFile(2), false) } returns Promise(newFakeBuilder(context, secondNotification))
 
 		val playbackNotificationBroadcaster = PlaybackNotificationBroadcaster(
 			notificationController,
 			NotificationsConfiguration("", 43),
 			notificationContentBuilder
-		) { Promise(newFakeBuilder(Notification())) }
+		) { Promise(newFakeBuilder(context, Notification())) }
 
 		playbackNotificationBroadcaster.notifyPlaying()
 		playbackNotificationBroadcaster.notifyPlayingFileChanged(ServiceFile(1))

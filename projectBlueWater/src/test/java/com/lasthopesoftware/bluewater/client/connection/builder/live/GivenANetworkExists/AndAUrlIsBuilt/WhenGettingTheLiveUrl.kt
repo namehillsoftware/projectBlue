@@ -9,33 +9,28 @@ import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.AssertionsForClassTypes.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import java.net.URL
 
 class WhenGettingTheLiveUrl {
 
-    companion object {
-        private var urlProvider: IUrlProvider? = null
-        @BeforeClass
-        @JvmStatic
-        fun before() {
-			val urlProviderBuilder = mockk<BuildUrlProviders>()
-			every { urlProviderBuilder.promiseBuiltUrlProvider(any()) } answers {
-				val urlProvider = mockk<IUrlProvider>()
-				every { urlProvider.baseUrl } returns URL("http://test-url")
-				Promise(urlProvider)
-			}
+	private val urlProvider by lazy {
+		val urlProviderBuilder = mockk<BuildUrlProviders>()
+		every { urlProviderBuilder.promiseBuiltUrlProvider(any()) } answers {
+			val urlProvider = mockk<IUrlProvider>()
+			every { urlProvider.baseUrl } returns URL("http://test-url")
+			Promise(urlProvider)
+		}
 
-            val liveUrlProvider = LiveUrlProvider(
-                { mockk() },
-                urlProviderBuilder)
-            urlProvider = liveUrlProvider.promiseLiveUrl(LibraryId(10)).toExpiringFuture().get()
-        }
-    }
+		val liveUrlProvider = LiveUrlProvider(
+			{ mockk() },
+			urlProviderBuilder
+		)
+		liveUrlProvider.promiseLiveUrl(LibraryId(10)).toExpiringFuture().get()
+	}
 
 	@Test
-	fun thenTheUrlIsCorrect() {
+	fun `then the url is correct`() {
 		assertThat(urlProvider!!.baseUrl.toString()).isEqualTo("http://test-url")
 	}
 }

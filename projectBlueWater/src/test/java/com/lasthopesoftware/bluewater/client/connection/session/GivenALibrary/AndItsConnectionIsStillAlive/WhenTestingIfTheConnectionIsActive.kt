@@ -12,36 +12,36 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 import java.util.concurrent.TimeUnit
 
 class WhenTestingIfTheConnectionIsActive {
 
-	companion object {
-		private var isActive: Boolean? = null
+	private val libraryId = LibraryId(824)
 
-		@JvmStatic
-		@BeforeClass
-		fun before() {
-			val connectionsTester = mockk<TestConnections>()
-			every  { connectionsTester.promiseIsConnectionPossible(any()) } returns true.toPromise()
+	private val mut by lazy {
+		val connectionsTester = mockk<TestConnections>()
+		every  { connectionsTester.promiseIsConnectionPossible(any()) } returns true.toPromise()
 
-			val libraryConnectionProvider = mockk<ProvideLibraryConnections>()
-			every { libraryConnectionProvider.promiseLibraryConnection(LibraryId(2)) } returns ProgressingPromise(mockk<IConnectionProvider>())
+		val libraryConnectionProvider = mockk<ProvideLibraryConnections>()
+		every { libraryConnectionProvider.promiseLibraryConnection(libraryId) } returns ProgressingPromise(mockk<IConnectionProvider>())
 
-			val connectionSessionManager = ConnectionSessionManager(
-				connectionsTester,
-				libraryConnectionProvider,
-				PromisedConnectionsRepository()
-			)
+		val connectionSessionManager = ConnectionSessionManager(
+			connectionsTester,
+			libraryConnectionProvider,
+			PromisedConnectionsRepository()
+		)
 
-			val libraryId = LibraryId(2)
-			val futureConnectionProvider = connectionSessionManager.promiseLibraryConnection(libraryId).toExpiringFuture()
+		connectionSessionManager
+	}
 
-			futureConnectionProvider[30, TimeUnit.SECONDS]
-			isActive = connectionSessionManager.isConnectionActive(libraryId)
-		}
+	private var isActive: Boolean? = null
+
+	@BeforeAll
+	fun act() {
+		mut.promiseLibraryConnection(libraryId).toExpiringFuture()[30, TimeUnit.SECONDS]
+		isActive = mut.isConnectionActive(libraryId)
 	}
 
 	@Test

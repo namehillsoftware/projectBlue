@@ -18,50 +18,44 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class WhenGettingTheMaxVolume {
 
-    companion object {
-        private var returnedVolume = 0f
-        @BeforeClass
-        @JvmStatic
-        fun before() {
-            val urlProvider = mockk<IUrlProvider>()
-			every { urlProvider.baseUrl } returns EmptyUrl.url
-            val connectionProvider = mockk<IConnectionProvider>()
-            every { connectionProvider.urlProvider } returns urlProvider
+	private val returnedVolume by lazy {
+		val urlProvider = mockk<IUrlProvider>()
+		every { urlProvider.baseUrl } returns EmptyUrl.url
+		val connectionProvider = mockk<IConnectionProvider>()
+		every { connectionProvider.urlProvider } returns urlProvider
 
-            val repository = mockk<IFilePropertiesContainerRepository>()
-            every {
-				repository.getFilePropertiesContainer(UrlKeyHolder(EmptyUrl.url, ServiceFile(1)))
-            } returns FilePropertiesContainer(0, mapOf(Pair(KnownFileProperties.VolumeLevelReplayGain, "25")))
+		val repository = mockk<IFilePropertiesContainerRepository>()
+		every {
+			repository.getFilePropertiesContainer(UrlKeyHolder(EmptyUrl.url, ServiceFile(1)))
+		} returns FilePropertiesContainer(0, mapOf(Pair(KnownFileProperties.VolumeLevelReplayGain, "25")))
 
-			val scopedRevisionProvider = mockk<CheckScopedRevisions>()
-			every { scopedRevisionProvider.promiseRevision() } returns 1.toPromise()
+		val scopedRevisionProvider = mockk<CheckScopedRevisions>()
+		every { scopedRevisionProvider.promiseRevision() } returns 1.toPromise()
 
-			val scopedFilePropertiesProvider =
-                ScopedFilePropertiesProvider(connectionProvider, scopedRevisionProvider, repository)
-            val scopedCachedFilePropertiesProvider = ScopedCachedFilePropertiesProvider(
-                connectionProvider,
-                repository,
-                scopedFilePropertiesProvider
-            )
-            val volumeLevelSettings = mockk<IVolumeLevelSettings>()
-            every { volumeLevelSettings.isVolumeLevellingEnabled } returns true.toPromise()
+		val scopedFilePropertiesProvider =
+			ScopedFilePropertiesProvider(connectionProvider, scopedRevisionProvider, repository)
+		val scopedCachedFilePropertiesProvider = ScopedCachedFilePropertiesProvider(
+			connectionProvider,
+			repository,
+			scopedFilePropertiesProvider
+		)
+		val volumeLevelSettings = mockk<IVolumeLevelSettings>()
+		every { volumeLevelSettings.isVolumeLevellingEnabled } returns true.toPromise()
 
-            val maxFileVolumeProvider =
-                MaxFileVolumeProvider(volumeLevelSettings, scopedCachedFilePropertiesProvider)
-			returnedVolume = maxFileVolumeProvider
-                .promiseMaxFileVolume(ServiceFile(1))
-				.toExpiringFuture()
-				.get()!!
-        }
-    }
+		val maxFileVolumeProvider =
+			MaxFileVolumeProvider(volumeLevelSettings, scopedCachedFilePropertiesProvider)
+		maxFileVolumeProvider
+			.promiseMaxFileVolume(ServiceFile(1))
+			.toExpiringFuture()
+			.get()!!
+	}
 
 	@Test
-	fun thenTheReturnedVolumeIsOne() {
+	fun `then the returned volume is one`() {
 		assertThat(returnedVolume).isEqualTo(1f)
 	}
 }

@@ -4,25 +4,31 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionSettingsChangeReceiver
 import com.lasthopesoftware.bluewater.client.connection.session.ManageConnectionSessions
 import com.lasthopesoftware.bluewater.client.connection.settings.changes.ObservableConnectionSettingsLibraryStorage
+import io.mockk.every
 import io.mockk.mockk
-import io.mockk.verify
-import org.junit.BeforeClass
-import org.junit.Test
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 
 class WhenReceivingTheChange {
-	companion object {
-		private val connectionSessions = mockk<ManageConnectionSessions>(relaxUnitFun = true)
+	private lateinit var removedLibraryConnection: LibraryId
 
-		@JvmStatic
-		@BeforeClass
-		fun before() {
-			val connectionSettingsChangeReceiver = ConnectionSessionSettingsChangeReceiver(connectionSessions)
-			connectionSettingsChangeReceiver(ObservableConnectionSettingsLibraryStorage.ConnectionSettingsUpdated(LibraryId(53)))
+	private val mut by lazy {
+		val connectionSessions = mockk<ManageConnectionSessions>().apply {
+			every { removeConnection(any()) } answers {
+				removedLibraryConnection = firstArg()
+			}
 		}
+		ConnectionSessionSettingsChangeReceiver(connectionSessions)
+	}
+
+	@BeforeAll
+	fun act() {
+		mut(ObservableConnectionSettingsLibraryStorage.ConnectionSettingsUpdated(LibraryId(53)))
 	}
 
 	@Test
-	fun thenTheConnectionIsRemoved() {
-		verify { connectionSessions.removeConnection(LibraryId(53)) }
+	fun `then the connection is removed`() {
+		assertThat(removedLibraryConnection).isEqualTo(LibraryId(53))
 	}
 }

@@ -16,6 +16,7 @@ import com.lasthopesoftware.bluewater.tutorials.TutorialMigrator
 import com.namehillsoftware.artful.Artful
 import java.io.Closeable
 import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.concurrent.write
 
 class RepositoryAccessHelper(private val context: Context) : SQLiteOpenHelper(context, DATABASE_NAME, null, DATABASE_VERSION), Closeable {
 
@@ -31,16 +32,23 @@ class RepositoryAccessHelper(private val context: Context) : SQLiteOpenHelper(co
 	private val entityCreators by lazy { arrayOf(LibraryEntityCreator, StoredFileEntityCreator, StoredItem(), CachedFile(), ApplicationSettingsCreator(applicationSettingsMigrator), tutorialMigrator) }
 	private val entityUpdaters by lazy { arrayOf(LibraryEntityUpdater, StoredFileEntityUpdater, StoredItem(), CachedFile(), ApplicationSettingsUpdater(applicationSettingsMigrator), tutorialMigrator) }
 
-	private val sqliteDb = lazy { writableDatabase }
+	private val sqliteDb = lazy {
+		setWriteAheadLoggingEnabled(true)
+		writableDatabase
+	}
 
 	fun mapSql(sqlQuery: String): Artful = Artful(sqliteDb.value, sqlQuery)
 
 	override fun onCreate(db: SQLiteDatabase) {
-		for (entityCreator in entityCreators) entityCreator.onCreate(db)
+		databaseSynchronization.write {
+			for (entityCreator in entityCreators) entityCreator.onCreate(db)
+		}
 	}
 
 	override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-		for (entityUpdater in entityUpdaters) entityUpdater.onUpdate(db, oldVersion, newVersion)
+		databaseSynchronization.write {
+			for (entityUpdater in entityUpdaters) entityUpdater.onUpdate(db, oldVersion, newVersion)
+		}
 	}
 
 	fun beginTransaction(): CloseableTransaction = CloseableTransaction(sqliteDb.value, databaseSynchronization)

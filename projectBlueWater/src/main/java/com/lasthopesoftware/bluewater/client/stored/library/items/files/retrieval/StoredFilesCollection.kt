@@ -13,10 +13,12 @@ class StoredFilesCollection(private val context: Context) : GetAllStoredFilesInL
 	override fun promiseAllStoredFiles(libraryId: LibraryId): Promise<Collection<StoredFile>> =
 		promiseTableMessage<Collection<StoredFile>, StoredFile> {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
-				repositoryAccessHelper
-					.mapSql("SELECT * FROM " + StoredFileEntityInformation.tableName + " WHERE " + StoredFileEntityInformation.libraryIdColumnName + " = @" + StoredFileEntityInformation.libraryIdColumnName)
-					.addParameter(StoredFileEntityInformation.libraryIdColumnName, libraryId.id)
-					.fetch()
+				repositoryAccessHelper.beginNonExclusiveTransaction().use {
+					repositoryAccessHelper
+						.mapSql("SELECT * FROM " + StoredFileEntityInformation.tableName + " WHERE " + StoredFileEntityInformation.libraryIdColumnName + " = @" + StoredFileEntityInformation.libraryIdColumnName)
+						.addParameter(StoredFileEntityInformation.libraryIdColumnName, libraryId.id)
+						.fetch()
+				}
 			}
 		}
 }

@@ -8,33 +8,30 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.ExpiringFutureP
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
-import org.assertj.core.api.Assertions
-import org.junit.BeforeClass
-import org.junit.Test
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 import java.util.*
 
 class WhenReceivingTheNotification {
-    @Test
-    fun thenNoReadPermissionsRequestsAreSent() {
-        Assertions.assertThat(requestedWritePermissionLibraries).isEmpty()
-    }
+	private val requestedWritePermissionLibraries: MutableList<LibraryId> = LinkedList()
 
-    companion object {
-        private val requestedWritePermissionLibraries: MutableList<LibraryId> = LinkedList()
+	@BeforeAll
+	fun before() {
+		val storedFileAccess = mockk<AccessStoredFiles>().apply {
+			every { getStoredFile(14) } returns Promise(StoredFile().setId(14).setLibraryId(22))
+		}
 
-        @BeforeClass
-		@JvmStatic
-        fun before() {
-            val storedFileAccess = mockk<AccessStoredFiles>().apply {
-            	every { getStoredFile(14) } returns Promise(StoredFile().setId(14).setLibraryId(22))
-			}
+		val storedFileWritePermissionsReceiver = StoredFileWritePermissionsReceiver(
+			{ true },
+			{ e -> requestedWritePermissionLibraries.add(e) },
+			storedFileAccess
+		)
+		ExpiringFuturePromise(storedFileWritePermissionsReceiver.receive(14)).get()
+	}
 
-            val storedFileWritePermissionsReceiver = StoredFileWritePermissionsReceiver(
-                { true },
-				{ e -> requestedWritePermissionLibraries.add(e) },
-                storedFileAccess
-            )
-            ExpiringFuturePromise(storedFileWritePermissionsReceiver.receive(14)).get()
-        }
-    }
+	@Test
+	fun `then no read permissions requests are sent`() {
+		assertThat(requestedWritePermissionLibraries).isEmpty()
+	}
 }

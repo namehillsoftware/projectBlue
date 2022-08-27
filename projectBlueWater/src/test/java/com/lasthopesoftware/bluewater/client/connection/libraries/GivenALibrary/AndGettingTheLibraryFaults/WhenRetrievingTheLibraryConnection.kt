@@ -50,7 +50,7 @@ class WhenRetrievingTheLibraryConnection {
 			val libraryConnectionProvider = LibraryConnectionProvider(
 				validateConnectionSettings,
 				lookupConnection,
-				NoopServerAlarm(),
+				NoopServerAlarm,
 				liveUrlProvider,
 				OkHttpFactory
 			)

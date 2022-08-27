@@ -3,40 +3,37 @@ package com.lasthopesoftware.bluewater.client.browsing.library.views.access.Give
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.views.ViewItem
-import com.lasthopesoftware.bluewater.client.browsing.library.views.access.ProvideLibraryViews
 import com.lasthopesoftware.bluewater.client.browsing.library.views.access.SavedLibraryRecordingStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.views.access.SelectedLibraryViewProvider
-import com.lasthopesoftware.bluewater.shared.promises.extensions.ExpiringFuturePromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
-import org.assertj.core.api.Assertions
-import org.junit.BeforeClass
-import org.junit.Test
-import java.util.concurrent.ExecutionException
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 
 class WhenGettingDefaultOrSelectedViews {
+
+	private val libraryStorage = SavedLibraryRecordingStorage()
+	private var selectedLibraryView: Item? = null
+
+	@BeforeAll
+	fun before() {
+		val selectedLibraryViewProvider = SelectedLibraryViewProvider(
+			{ Promise(Library().setSelectedView(5)) },
+			{ Promise<Collection<ViewItem>>(emptyList()) },
+			libraryStorage
+		)
+		selectedLibraryView =
+			selectedLibraryViewProvider.promiseSelectedOrDefaultView().toExpiringFuture().get()
+	}
+
     @Test
     fun thenNoSelectedViewIsReturned() {
-        Assertions.assertThat(selectedLibraryView).isNull()
+        assertThat(selectedLibraryView).isNull()
     }
 
     @Test
     fun thenTheLibraryIsNotSaved() {
-        Assertions.assertThat(libraryStorage.savedLibrary).isNull()
-    }
-
-    companion object {
-        private val libraryStorage = SavedLibraryRecordingStorage()
-        private var selectedLibraryView: Item? = null
-        @BeforeClass
-        @Throws(ExecutionException::class, InterruptedException::class)
-        fun before() {
-            val selectedLibraryViewProvider = SelectedLibraryViewProvider(
-                { Promise(Library().setSelectedView(5)) },
-                ProvideLibraryViews { Promise<Collection<ViewItem>>(emptyList()) },
-                libraryStorage
-            )
-            selectedLibraryView =
-                ExpiringFuturePromise(selectedLibraryViewProvider.promiseSelectedOrDefaultView()).get()
-        }
+        assertThat(libraryStorage.savedLibrary).isNull()
     }
 }

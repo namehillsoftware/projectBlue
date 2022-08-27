@@ -9,35 +9,28 @@ import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.AssertionsForClassTypes.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
-import org.mockito.Mockito
+import org.junit.jupiter.api.Test
 import java.net.URL
 
 class WhenGettingTheLiveUrl {
 
-    companion object {
-        private var urlProvider: IUrlProvider? = null
+	private val urlProvider by lazy {
+		val urlProviderBuilder = mockk<BuildUrlProviders>()
+		every { urlProviderBuilder.promiseBuiltUrlProvider(LibraryId(23)) } answers {
+			val urlProvider = mockk<IUrlProvider>()
+			every { urlProvider.baseUrl } returns URL("http://test-url")
+			Promise(urlProvider)
+		}
 
-        @BeforeClass
-		@JvmStatic
-        fun before() {
-			val urlProviderBuilder = mockk<BuildUrlProviders>()
-			every { urlProviderBuilder.promiseBuiltUrlProvider(LibraryId(23)) } answers {
-				val urlProvider = mockk<IUrlProvider>()
-				Mockito.`when`(urlProvider.baseUrl).thenReturn(URL("http://test-url"))
-				Promise(urlProvider)
-			}
-
-            val liveUrlProvider = LiveUrlProvider(
-                { null },
-                urlProviderBuilder)
-            urlProvider = liveUrlProvider.promiseLiveUrl(LibraryId(23)).toExpiringFuture().get()
-        }
-    }
+		val liveUrlProvider = LiveUrlProvider(
+			{ null },
+			urlProviderBuilder
+		)
+		liveUrlProvider.promiseLiveUrl(LibraryId(23)).toExpiringFuture().get()
+	}
 
 	@Test
-	fun thenAUrlProviderIsNotReturned() {
+	fun `then a url provider is not returned`() {
 		assertThat(urlProvider).isNull()
 	}
 }

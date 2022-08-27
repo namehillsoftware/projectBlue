@@ -8,37 +8,34 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 import java.util.concurrent.TimeUnit
 
 class WhenThePlayerWillNotPlayWhenReady {
-	companion object {
-		private val eventListeners: MutableCollection<Player.Listener> = ArrayList()
-		private val mockExoPlayer = mockk<PromisingExoPlayer>(relaxed = true)
+	private val eventListeners: MutableCollection<Player.Listener> = ArrayList()
+	private val mockExoPlayer = mockk<PromisingExoPlayer>(relaxed = true)
 
-		@JvmStatic
-		@BeforeClass
-		fun before() {
-			every { mockExoPlayer.setPlayWhenReady(any()) } returns mockExoPlayer.toPromise()
-			every { mockExoPlayer.getPlayWhenReady() } returns true.toPromise()
-			every { mockExoPlayer.getCurrentPosition() } returns 50L.toPromise()
-			every { mockExoPlayer.getDuration() } returns 100L.toPromise()
-			every { mockExoPlayer.addListener(any()) } answers {
-				eventListeners.add(firstArg())
-				mockExoPlayer.toPromise()
-			}
-
-			val exoPlayerPlaybackHandler = ExoPlayerPlaybackHandler(mockExoPlayer)
-			exoPlayerPlaybackHandler.promisePlayback().toExpiringFuture()[10, TimeUnit.SECONDS]
-			exoPlayerPlaybackHandler.close()
-			every { mockExoPlayer.getPlayWhenReady() } returns false.toPromise()
-			eventListeners.forEach { e -> e.onPlaybackStateChanged(Player.STATE_IDLE) }
+	@BeforeAll
+	fun before() {
+		every { mockExoPlayer.setPlayWhenReady(any()) } returns mockExoPlayer.toPromise()
+		every { mockExoPlayer.getPlayWhenReady() } returns true.toPromise()
+		every { mockExoPlayer.getCurrentPosition() } returns 50L.toPromise()
+		every { mockExoPlayer.getDuration() } returns 100L.toPromise()
+		every { mockExoPlayer.addListener(any()) } answers {
+			eventListeners.add(firstArg())
+			mockExoPlayer.toPromise()
 		}
+
+		val exoPlayerPlaybackHandler = ExoPlayerPlaybackHandler(mockExoPlayer)
+		exoPlayerPlaybackHandler.promisePlayback().toExpiringFuture()[10, TimeUnit.SECONDS]
+		exoPlayerPlaybackHandler.close()
+		every { mockExoPlayer.getPlayWhenReady() } returns false.toPromise()
+		eventListeners.forEach { e -> e.onPlaybackStateChanged(Player.STATE_IDLE) }
 	}
 
 	@Test
-	fun thenPlaybackIsNotRestarted() {
+	fun `then playback is not restarted`() {
 		verify(exactly = 1) { mockExoPlayer.setPlayWhenReady(true) }
 	}
 }

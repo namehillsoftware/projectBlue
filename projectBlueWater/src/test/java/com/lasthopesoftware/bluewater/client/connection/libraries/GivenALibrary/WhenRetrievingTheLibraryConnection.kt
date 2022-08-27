@@ -12,58 +12,62 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFutur
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 
 class WhenRetrievingTheLibraryConnection {
 
-	companion object {
-		private var expectedConnectionProvider = mockk<IConnectionProvider>()
-		private var connectionProvider: IConnectionProvider? = null
-		private var isActiveBeforeGettingConnection = false
-		private var isActiveAfterGettingConnection = false
+	private val expectedConnectionProvider = mockk<IConnectionProvider>()
 
-		@BeforeClass
-		@JvmStatic
-		fun before() {
-			val validateConnectionSettings = mockk<ValidateConnectionSettings>()
-			every { validateConnectionSettings.isValid(any()) } returns true
+	private val mut by lazy {
+		val validateConnectionSettings = mockk<ValidateConnectionSettings>()
+		every { validateConnectionSettings.isValid(any()) } returns true
 
-			val deferredConnectionProvider = DeferredProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>()
+		val deferredConnectionProvider = DeferredProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>()
 
-			val libraryConnectionProvider = mockk<ProvideLibraryConnections>()
-			every { libraryConnectionProvider.promiseLibraryConnection(LibraryId(3)) } returns deferredConnectionProvider
+		val libraryConnectionProvider = mockk<ProvideLibraryConnections>()
+		every { libraryConnectionProvider.promiseLibraryConnection(LibraryId(3)) } returns deferredConnectionProvider
 
-			val connectionSessionManager = ConnectionSessionManager(
-				mockk(),
-				libraryConnectionProvider,
-				PromisedConnectionsRepository()
-			)
+		val connectionSessionManager = ConnectionSessionManager(
+			mockk(),
+			libraryConnectionProvider,
+			PromisedConnectionsRepository()
+		)
 
-			val futureConnectionProvider =
-				connectionSessionManager
-					.promiseLibraryConnection(LibraryId(3))
-					.toExpiringFuture()
+		Pair(deferredConnectionProvider, connectionSessionManager)
+	}
 
-			isActiveBeforeGettingConnection = connectionSessionManager.isConnectionActive(LibraryId(3))
-			deferredConnectionProvider.sendResolution(expectedConnectionProvider)
-			connectionProvider = futureConnectionProvider.get()
-			isActiveAfterGettingConnection = connectionSessionManager.isConnectionActive(LibraryId(3))
-		}
+	private var connectionProvider: IConnectionProvider? = null
+	private var isActiveBeforeGettingConnection = false
+	private var isActiveAfterGettingConnection = false
+
+	@BeforeAll
+	fun before() {
+		val (deferredConnectionProvider, connectionSessionManager) = mut
+
+		val futureConnectionProvider =
+			connectionSessionManager
+				.promiseLibraryConnection(LibraryId(3))
+				.toExpiringFuture()
+
+		isActiveBeforeGettingConnection = connectionSessionManager.isConnectionActive(LibraryId(3))
+		deferredConnectionProvider.sendResolution(expectedConnectionProvider)
+		connectionProvider = futureConnectionProvider.get()
+		isActiveAfterGettingConnection = connectionSessionManager.isConnectionActive(LibraryId(3))
 	}
 
 	@Test
-	fun thenTheConnectionIsNotActiveBeforeGettingConnection() {
+	fun `then the connection is not active before getting connection`() {
 		assertThat(isActiveBeforeGettingConnection).isFalse
 	}
 
 	@Test
-	fun thenTheConnectionIsCorrect() {
+	fun `then the connection is correct`() {
 		assertThat(connectionProvider).isEqualTo(expectedConnectionProvider)
 	}
 
 	@Test
-	fun thenTheConnectionIsActiveAfterGettingConnection() {
+	fun `then the connection is active after getting connection`() {
 		assertThat(isActiveAfterGettingConnection).isTrue
 	}
 }

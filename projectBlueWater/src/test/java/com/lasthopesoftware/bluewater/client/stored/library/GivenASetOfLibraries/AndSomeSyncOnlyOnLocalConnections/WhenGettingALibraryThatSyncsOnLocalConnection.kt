@@ -6,31 +6,24 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.stored.library.SyncLibraryProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ExpiringFuturePromise
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class WhenGettingALibraryThatSyncsOnLocalConnection {
-	@Test
-	fun thenTheLibraryIsLocalOnly() {
-		assertThat(library!!.isLocalOnly).isTrue
+	private val library by lazy {
+		val syncLibraryProvider = SyncLibraryProvider(
+			FakeLibraryProvider(
+				Library().setId(3),
+				Library().setId(4),
+				Library().setId(8).setIsSyncLocalConnectionsOnly(true),
+				Library().setId(1),
+				Library().setId(13).setIsSyncLocalConnectionsOnly(true)
+			)
+		)
+		ExpiringFuturePromise(syncLibraryProvider.getLibrary(LibraryId(8))).get()
 	}
 
-	companion object {
-		private var library: Library? = null
-
-		@BeforeClass
-		@JvmStatic
-		fun context() {
-			val syncLibraryProvider = SyncLibraryProvider(
-				FakeLibraryProvider(
-					Library().setId(3),
-					Library().setId(4),
-					Library().setId(8).setIsSyncLocalConnectionsOnly(true),
-					Library().setId(1),
-					Library().setId(13).setIsSyncLocalConnectionsOnly(true)
-				)
-			)
-			library = ExpiringFuturePromise(syncLibraryProvider.getLibrary(LibraryId(8))).get()
-		}
+	@Test
+	fun `then the library is local only`() {
+		assertThat(library!!.isLocalOnly).isTrue
 	}
 }

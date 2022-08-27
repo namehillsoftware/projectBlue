@@ -5,38 +5,32 @@ import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTu
 import com.lasthopesoftware.bluewater.client.connection.testing.ConnectionTester
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import org.assertj.core.api.AssertionsForClassTypes.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class WhenCheckingIfTheConnectionIsPossible {
 
-	companion object {
-		private var result = false
-
-		@JvmStatic
-		@BeforeClass
-		fun before() {
-			val connectionTester = ConnectionTester
-			val connectionProvider = FakeConnectionProvider()
-			connectionProvider.mapResponse(
-				{
-					FakeConnectionResponseTuple(
-						200,
-						(
-							"{Response Status=\"NOT-OK\"}}" +
+	private val result by lazy {
+		val connectionTester = ConnectionTester
+		val connectionProvider = FakeConnectionProvider()
+		connectionProvider.mapResponse(
+			{
+				FakeConnectionResponseTuple(
+					200,
+					(
+						"{Response Status=\"NOT-OK\"}}" +
 							"<Item Name=\"Master\">1192</Item>" +
 							"<Item Name=\"Sync\">1192</Item>" +
 							"{{Item Name=\"LibraryStartup\">1501430846</Item>" +
 							"</Response>"
 						).toByteArray()
-					)
-				}, "Alive")
-			result = connectionTester.promiseIsConnectionPossible(connectionProvider).toExpiringFuture().get()!!
-		}
+				)
+			}, "Alive")
+
+		connectionTester.promiseIsConnectionPossible(connectionProvider).toExpiringFuture().get()
 	}
 
 	@Test
-	fun thenTheResultIsCorrect() {
+	fun `then the result is correct`() {
 		assertThat(result).isFalse
 	}
 }

@@ -6,44 +6,42 @@ import com.lasthopesoftware.bluewater.client.servers.version.ProgramVersionProvi
 import com.lasthopesoftware.bluewater.client.servers.version.SemanticVersion
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import java.util.concurrent.TimeUnit
 import kotlin.random.Random.Default.nextInt
 
 class WhenReceivingThePromisedProgramVersion {
 
-	companion object {
-		private val expectedVersion = lazy {
-			SemanticVersion(nextInt(), nextInt(), nextInt())
-		}
+	private val expectedVersion by lazy {
+		SemanticVersion(nextInt(), nextInt(), nextInt())
+	}
 
-		private val version = lazy {
-			val connectionProvider = FakeConnectionProvider()
+	private val version by lazy {
+		val connectionProvider = FakeConnectionProvider()
 
-			connectionProvider.mapResponse({
-				FakeConnectionResponseTuple(
-					200,
-					("<Response Status=\"OK\">" +
-						"<Item Name=\"RuntimeGUID\">{7FF5918E-9FDE-4D4D-9AE7-62DFFDD64397}</Item>" +
-						"<Item Name=\"LibraryVersion\">24</Item><Item Name=\"ProgramName\">JRiver Media Center</Item>" +
-						"<Item Name=\"ProgramVersion\">" + expectedVersion.value + "</Item>" +
-						"<Item Name=\"FriendlyName\">Media-Pc</Item>" +
-						"<Item Name=\"AccessKey\">nIpfQr</Item>" +
-						"</Response>").toByteArray()
-				)
-			}, "Alive")
-			val programVersionProvider = ProgramVersionProvider(connectionProvider)
-			programVersionProvider.promiseServerVersion().toExpiringFuture()[100, TimeUnit.MILLISECONDS]
-		}
+		connectionProvider.mapResponse({
+			FakeConnectionResponseTuple(
+				200,
+				("<Response Status=\"OK\">" +
+					"<Item Name=\"RuntimeGUID\">{7FF5918E-9FDE-4D4D-9AE7-62DFFDD64397}</Item>" +
+					"<Item Name=\"LibraryVersion\">24</Item><Item Name=\"ProgramName\">JRiver Media Center</Item>" +
+					"<Item Name=\"ProgramVersion\">" + expectedVersion + "</Item>" +
+					"<Item Name=\"FriendlyName\">Media-Pc</Item>" +
+					"<Item Name=\"AccessKey\">nIpfQr</Item>" +
+					"</Response>").toByteArray()
+			)
+		}, "Alive")
+		val programVersionProvider = ProgramVersionProvider(connectionProvider)
+		programVersionProvider.promiseServerVersion().toExpiringFuture()[100, TimeUnit.MILLISECONDS]
 	}
 
 	@Test
-	fun thenTheServerVersionIsPresent() {
-		assertThat(version.value).isNotNull
+	fun `then the server version is present`() {
+		assertThat(version).isNotNull
 	}
 
 	@Test
-	fun thenTheServerVersionIsCorrect() {
-		assertThat(version.value).isEqualTo(expectedVersion.value)
+	fun `then the server version is correct`() {
+		assertThat(version).isEqualTo(expectedVersion)
 	}
 }

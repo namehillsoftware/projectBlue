@@ -17,51 +17,48 @@ import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 
 class WhenRetrievingTheTestedSelectedConnection {
 
-	companion object {
-		private val applicationMessageBus = RecordingApplicationMessageBus()
-		private val urlProvider = mockk<IUrlProvider>()
-		private var connectionProvider: IConnectionProvider? = null
+	private val applicationMessageBus = RecordingApplicationMessageBus()
+	private val urlProvider = mockk<IUrlProvider>()
+	private var connectionProvider: IConnectionProvider? = null
 
-		@JvmStatic
-		@BeforeClass
-		fun before() {
-			val deferredConnectionProvider = DeferredProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>()
-			val libraryConnections = mockk<ManageConnectionSessions>()
-			every { libraryConnections.promiseTestedLibraryConnection(LibraryId(51)) } returns deferredConnectionProvider
+	@BeforeAll
+	fun act() {
+		val deferredConnectionProvider = DeferredProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>()
+		val libraryConnections = mockk<ManageConnectionSessions>()
+		every { libraryConnections.promiseTestedLibraryConnection(LibraryId(51)) } returns deferredConnectionProvider
 
-			val libraryIdentifierProvider = mockk<ProvideSelectedLibraryId>()
-			every { libraryIdentifierProvider.selectedLibraryId } returns Promise(LibraryId(51))
+		val libraryIdentifierProvider = mockk<ProvideSelectedLibraryId>()
+		every { libraryIdentifierProvider.selectedLibraryId } returns Promise(LibraryId(51))
 
-			SelectedConnectionReservation().use {
-				val sessionConnection = SelectedConnection(
-					applicationMessageBus,
-					libraryIdentifierProvider,
-					libraryConnections
-				)
-				val futureConnectionProvider = sessionConnection.promiseTestedSessionConnection().toExpiringFuture()
-				deferredConnectionProvider.sendProgressUpdates(
-					BuildingConnectionStatus.GettingLibrary,
-					BuildingConnectionStatus.BuildingConnection,
-					BuildingConnectionStatus.BuildingConnectionComplete
-				)
-				deferredConnectionProvider.sendResolution(ConnectionProvider(urlProvider, OkHttpFactory))
-				connectionProvider = futureConnectionProvider.get()
-			}
+		SelectedConnectionReservation().use {
+			val sessionConnection = SelectedConnection(
+				applicationMessageBus,
+				libraryIdentifierProvider,
+				libraryConnections
+			)
+			val futureConnectionProvider = sessionConnection.promiseTestedSessionConnection().toExpiringFuture()
+			deferredConnectionProvider.sendProgressUpdates(
+				BuildingConnectionStatus.GettingLibrary,
+				BuildingConnectionStatus.BuildingConnection,
+				BuildingConnectionStatus.BuildingConnectionComplete
+			)
+			deferredConnectionProvider.sendResolution(ConnectionProvider(urlProvider, OkHttpFactory))
+			connectionProvider = futureConnectionProvider.get()
 		}
 	}
 
 	@Test
-	fun thenTheConnectionIsCorrect() {
+	fun `then the connection is correct`() {
 		assertThat(connectionProvider?.urlProvider).isEqualTo(urlProvider)
 	}
 
 	@Test
-	fun thenGettingLibraryIsBroadcast() {
+	fun `then getting library is broadcast`() {
 		assertThat(
 			applicationMessageBus.recordedMessages
 				.filterIsInstance<SelectedConnection.BuildSessionConnectionBroadcast>()

@@ -9,35 +9,28 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.download
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ExpiringFuturePromise
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
-import java.io.InputStream
+import org.junit.jupiter.api.Test
 
 class WhenDownloading {
-    @Test
-    fun thenAnEmptyInputStreamIsReturned() {
-        assertThat(inputStream!!.available()).isEqualTo(0)
-    }
+	private val inputStream by lazy {
+		val fakeConnectionProvider =
+			FakeLibraryConnectionProvider(object : HashMap<LibraryId, IConnectionProvider>() {
+				init {
+					put(LibraryId(2), FakeConnectionProvider())
+				}
+			})
+		val downloader =
+			StoredFileDownloader(ServiceFileUriQueryParamsProvider, fakeConnectionProvider)
+		ExpiringFuturePromise(
+			downloader.promiseDownload(
+				LibraryId(2),
+				StoredFile().setServiceId(4)
+			)
+		).get()
+	}
 
-    companion object {
-        private var inputStream: InputStream? = null
-        @BeforeClass
-		@JvmStatic
-        fun before() {
-            val fakeConnectionProvider =
-                FakeLibraryConnectionProvider(object : HashMap<LibraryId?, IConnectionProvider?>() {
-                    init {
-                        put(LibraryId(2), FakeConnectionProvider())
-                    }
-                })
-            val downloader =
-                StoredFileDownloader(ServiceFileUriQueryParamsProvider, fakeConnectionProvider)
-            inputStream = ExpiringFuturePromise(
-                downloader.promiseDownload(
-                    LibraryId(2),
-                    StoredFile().setServiceId(4)
-                )
-            ).get()
-        }
-    }
+	@Test
+	fun `then an empty input stream is returned`() {
+		assertThat(inputStream!!.available()).isEqualTo(0)
+	}
 }

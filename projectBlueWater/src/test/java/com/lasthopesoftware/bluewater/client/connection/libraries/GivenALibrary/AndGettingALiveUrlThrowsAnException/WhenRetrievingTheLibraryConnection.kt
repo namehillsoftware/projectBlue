@@ -15,85 +15,84 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import io.mockk.every
 import io.mockk.mockk
-import org.assertj.core.api.Assertions
-import org.assertj.core.api.AssertionsForClassTypes
-import org.junit.BeforeClass
-import org.junit.Test
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 import java.io.IOException
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
 class WhenRetrievingTheLibraryConnection {
-	@Test
-	fun thenAConnectionProviderIsNotReturned() {
-		AssertionsForClassTypes.assertThat(connectionProvider).isNull()
+	private val connectionSettings = ConnectionSettings(accessCode = "aB5nf")
+	private val deferredConnectionSettings = DeferredPromise<ConnectionSettings?>(connectionSettings)
+	private val deferredUrlPromise = DeferredPromise<IUrlProvider?>(IOException())
+
+	private val mut by lazy {
+		val validateConnectionSettings = mockk<ValidateConnectionSettings>()
+		every { validateConnectionSettings.isValid(connectionSettings) } returns true
+
+		val lookupConnection = mockk<LookupConnectionSettings>()
+		every {
+			lookupConnection.lookupConnectionSettings(LibraryId(2))
+		} returns deferredConnectionSettings
+
+		val liveUrlProvider = mockk<ProvideLiveUrl>()
+		every { liveUrlProvider.promiseLiveUrl(LibraryId(2)) } returns deferredUrlPromise
+
+		val libraryConnectionProvider = LibraryConnectionProvider(
+			validateConnectionSettings,
+			lookupConnection,
+			NoopServerAlarm,
+			liveUrlProvider,
+			OkHttpFactory
+		)
+
+		libraryConnectionProvider
+	}
+
+	private val statuses: MutableList<BuildingConnectionStatus> = ArrayList()
+	private var connectionProvider: IConnectionProvider? = null
+	private var exception: IOException? = null
+
+	@BeforeAll
+	fun before() {
+		val futureConnectionProvider =
+			mut.promiseLibraryConnection(LibraryId(2))
+				.apply {
+					progress.then(statuses::add)
+					updates(statuses::add)
+				}
+				.toExpiringFuture()
+
+		deferredConnectionSettings.resolve()
+		deferredUrlPromise.resolve()
+		try {
+			connectionProvider = futureConnectionProvider[30, TimeUnit.SECONDS]
+		} catch (e: ExecutionException) {
+			if (e.cause is IOException) exception = e.cause as IOException?
+		} catch (e: TimeoutException) {
+			if (e.cause is IOException) exception = e.cause as IOException?
+		}
 	}
 
 	@Test
-	fun thenAnIOExceptionIsReturned() {
-		AssertionsForClassTypes.assertThat(exception).isNotNull
+	fun `then a connection provider is not returned`() {
+		assertThat(connectionProvider).isNull()
 	}
 
 	@Test
-	fun thenGettingLibraryIsBroadcast() {
-		Assertions.assertThat(statuses)
+	fun `then an IOException is returned`() {
+		assertThat(exception).isNotNull
+	}
+
+	@Test
+	fun `then getting library is broadcast`() {
+		assertThat(statuses)
 			.containsExactly(
 				BuildingConnectionStatus.GettingLibrary,
 				BuildingConnectionStatus.BuildingConnection,
 				BuildingConnectionStatus.BuildingConnectionFailed
 			)
-	}
-
-	companion object {
-		private val statuses: MutableList<BuildingConnectionStatus> = ArrayList()
-		private var connectionProvider: IConnectionProvider? = null
-		private var exception: IOException? = null
-
-		@BeforeClass
-		@JvmStatic
-		fun before() {
-			val connectionSettings = ConnectionSettings(accessCode = "aB5nf")
-
-			val validateConnectionSettings = mockk<ValidateConnectionSettings>()
-			every { validateConnectionSettings.isValid(connectionSettings) } returns true
-
-			val deferredConnectionSettings = DeferredPromise<ConnectionSettings?>(connectionSettings)
-
-			val lookupConnection = mockk<LookupConnectionSettings>()
-			every {
-				lookupConnection.lookupConnectionSettings(LibraryId(2))
-			} returns deferredConnectionSettings
-
-			val liveUrlProvider = mockk<ProvideLiveUrl>()
-			val deferredUrlPromise = DeferredPromise<IUrlProvider?>(IOException())
-			every { liveUrlProvider.promiseLiveUrl(LibraryId(2)) } returns deferredUrlPromise
-
-			val libraryConnectionProvider = LibraryConnectionProvider(
-                validateConnectionSettings,
-                lookupConnection,
-                NoopServerAlarm(),
-                liveUrlProvider,
-                OkHttpFactory
-            )
-			val futureConnectionProvider =
-				libraryConnectionProvider
-					.promiseLibraryConnection(LibraryId(2))
-					.apply {
-						progress.then(statuses::add)
-						updates(statuses::add)
-					}
-					.toExpiringFuture()
-
-			deferredConnectionSettings.resolve()
-			deferredUrlPromise.resolve()
-			try {
-				connectionProvider = futureConnectionProvider[30, TimeUnit.SECONDS]
-			} catch (e: ExecutionException) {
-				if (e.cause is IOException) exception = e.cause as IOException?
-			} catch (e: TimeoutException) {
-				if (e.cause is IOException) exception = e.cause as IOException?
-			}
-		}
 	}
 }

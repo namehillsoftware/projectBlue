@@ -11,7 +11,6 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
-import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeDeferredPlayableFilePreparationSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CyclicalFileQueueProvider
@@ -23,49 +22,46 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class WhenRestoringEngineStateAndResumingPlayback {
-	companion object {
-		private var positionedPlayingFile: PositionedPlayingFile? = null
-		private val restoredState by lazy {
-			val fakePlaybackPreparerProvider = FakeDeferredPlayableFilePreparationSourceProvider()
-			val library = Library()
-			library.setId(598)
-			library.setNowPlayingProgress(543)
-			library.setNowPlayingId(586)
+	private val restoredState by lazy {
+		val fakePlaybackPreparerProvider = FakeDeferredPlayableFilePreparationSourceProvider()
+		val library = Library()
+		library.setId(598)
+		library.setNowPlayingProgress(543)
+		library.setNowPlayingId(586)
 
-			val libraryProvider = mockk<ISpecificLibraryProvider>()
-			every { libraryProvider.library } returns library.toPromise()
+		val libraryProvider = mockk<ISpecificLibraryProvider>()
+		every { libraryProvider.library } returns library.toPromise()
 
-			val libraryStorage = PassThroughLibraryStorage()
+		val libraryStorage = PassThroughLibraryStorage()
 
-			val filePropertiesContainerRepository = mockk<IFilePropertiesContainerRepository>()
-			every {
-				filePropertiesContainerRepository.getFilePropertiesContainer(
-					UrlKeyHolder(
-						EmptyUrl.url,
-						ServiceFile(4)
-					)
+		val filePropertiesContainerRepository = mockk<IFilePropertiesContainerRepository>()
+		every {
+			filePropertiesContainerRepository.getFilePropertiesContainer(
+				UrlKeyHolder(
+					EmptyUrl.url,
+					ServiceFile(4)
 				)
-			} returns FilePropertiesContainer(1, mapOf(Pair(KnownFileProperties.DURATION, "100")))
-
-			val repository =
-                NowPlayingRepository(
-                    libraryProvider,
-                    libraryStorage
-                )
-			val playbackEngine = PlaybackEngine(
-				PreparedPlaybackQueueResourceManagement(fakePlaybackPreparerProvider) { 1 },
-				listOf(CompletingFileQueueProvider(), CyclicalFileQueueProvider()),
-				repository,
-				PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
 			)
+		} returns FilePropertiesContainer(1, mapOf(Pair(KnownFileProperties.DURATION, "100")))
 
-			val restoredState = playbackEngine.restoreFromSavedState().toExpiringFuture().get()
+		val repository =
+			NowPlayingRepository(
+				libraryProvider,
+				libraryStorage
+			)
+		val playbackEngine = PlaybackEngine(
+			PreparedPlaybackQueueResourceManagement(fakePlaybackPreparerProvider) { 1 },
+			listOf(CompletingFileQueueProvider(), CyclicalFileQueueProvider()),
+			repository,
+			PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
+		)
 
-			restoredState
-		}
+		val restoredState = playbackEngine.restoreFromSavedState().toExpiringFuture().get()
+
+		restoredState
 	}
 
 	@Test

@@ -17,83 +17,79 @@ import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManag
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 
 class WhenPlaybackIsPausedAndPositionIsChangedAndRestarted {
-	companion object {
-		private var playbackEngine: PlaybackEngine? = null
-		private var nowPlaying: NowPlaying? = null
-		private val positionedFiles: MutableList<PositionedPlayingFile> = ArrayList()
 
-		@BeforeClass
-		@JvmStatic
-		fun before() {
-			val fakePlaybackPreparerProvider = FakeDeferredPlayableFilePreparationSourceProvider()
-			val library = Library()
-			library.setId(1)
-			val libraryProvider = PassThroughSpecificLibraryProvider(library)
-			val libraryStorage = PassThroughLibraryStorage()
-			val nowPlayingRepository =
-                NowPlayingRepository(
-                    libraryProvider,
-                    libraryStorage
-                )
-			playbackEngine =
-				PlaybackEngine(
-					PreparedPlaybackQueueResourceManagement(
-						fakePlaybackPreparerProvider
-					) { 1 }, listOf(CompletingFileQueueProvider()),
-					nowPlayingRepository,
-					PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
-				)
+	private val mut by lazy {
+		val fakePlaybackPreparerProvider = FakeDeferredPlayableFilePreparationSourceProvider()
+		val library = Library()
+		library.setId(1)
+		val libraryProvider = PassThroughSpecificLibraryProvider(library)
+		val libraryStorage = PassThroughLibraryStorage()
+		val nowPlayingRepository =
+			NowPlayingRepository(
+				libraryProvider,
+				libraryStorage
+			)
+		val playbackEngine =
+			PlaybackEngine(
+				PreparedPlaybackQueueResourceManagement(
+					fakePlaybackPreparerProvider
+				) { 1 }, listOf(CompletingFileQueueProvider()),
+				nowPlayingRepository,
+				PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
+			)
+		Triple(fakePlaybackPreparerProvider, nowPlayingRepository, playbackEngine)
+	}
 
+	private var nowPlaying: NowPlaying? = null
+	private val positionedFiles: MutableList<PositionedPlayingFile> = ArrayList()
+
+	@BeforeAll
+	fun before() {
+		val (fakePlaybackPreparerProvider, nowPlayingRepository, playbackEngine) = mut
+
+		playbackEngine
+			.setOnPlayingFileChanged { f -> positionedFiles.add(f) }
+			.startPlaylist(
+				listOf(
+					ServiceFile(1),
+					ServiceFile(2),
+					ServiceFile(3),
+					ServiceFile(4),
+					ServiceFile(5)
+				), 0, Duration.ZERO
+			)
+		val playingPlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve()
+		fakePlaybackPreparerProvider.deferredResolution.resolve()
+		playingPlaybackHandler.resolve()
+		playbackEngine.pause()
+		nowPlaying =
 			playbackEngine
-				?.setOnPlayingFileChanged { f -> positionedFiles.add(f) }
-				?.startPlaylist(
-					listOf(
-						ServiceFile(1),
-						ServiceFile(2),
-						ServiceFile(3),
-						ServiceFile(4),
-						ServiceFile(5)
-					), 0, Duration.ZERO
-				)
-			val playingPlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve()
-			fakePlaybackPreparerProvider.deferredResolution.resolve()
-			playingPlaybackHandler.resolve()
-			playbackEngine?.pause()
-			nowPlaying =
-				playbackEngine
-					?.skipToNext()
-					?.eventually { playbackEngine!!.skipToNext() }
-					?.then { playbackEngine!!.resume() }
-					?.then { fakePlaybackPreparerProvider.deferredResolution.resolve() }
-					?.eventually { nowPlayingRepository.promiseNowPlaying() }
-					?.toExpiringFuture()
-					?.get()
-		}
+				.skipToNext()
+				.eventually { playbackEngine.skipToNext() }
+				.then { playbackEngine.resume() }
+				.then { fakePlaybackPreparerProvider.deferredResolution.resolve() }
+				.eventually { nowPlayingRepository.promiseNowPlaying() }
+				.toExpiringFuture()
+				.get()
 	}
 
 	@Test
-	fun thenThePlaybackStateIsPlaying() {
-		assertThat(
-			playbackEngine!!.isPlaying
-		).isTrue
+	fun `then the playback state is playing`() {
+		assertThat(mut.third.isPlaying).isTrue
 	}
 
 	@Test
-	fun thenTheSavedPlaylistPositionIsCorrect() {
-		assertThat(
-			nowPlaying!!.playlistPosition
-		).isEqualTo(3)
+	fun `then the saved playlist position is correct`() {
+		assertThat(nowPlaying!!.playlistPosition).isEqualTo(3)
 	}
 
 	@Test
-	fun thenTheSavedPlaylistIsCorrect() {
-		assertThat(
-			nowPlaying!!.playlist
-		)
+	fun `then the saved playlist is correct`() {
+		assertThat(nowPlaying!!.playlist)
 			.containsExactly(
 				ServiceFile(1),
 				ServiceFile(2),
@@ -104,25 +100,23 @@ class WhenPlaybackIsPausedAndPositionIsChangedAndRestarted {
 	}
 
 	@Test
-	fun thenTheObservedFileIsCorrect() {
-		assertThat(
-			positionedFiles[positionedFiles.size - 1].playlistPosition
-		).isEqualTo(3)
+	fun `then the observed file is correct`() {
+		assertThat(positionedFiles.last().playlistPosition).isEqualTo(3)
 	}
 
 	@Test
-	fun thenTheFirstSkippedFileIsOnlyObservedOnce() {
+	fun `then the first skipped file is only observed once`() {
 		assertThat(
 			positionedFiles
-				.map { obj -> obj.asPositionedFile() })
+				.map { it.asPositionedFile() })
 			.containsOnlyOnce(PositionedFile(1, ServiceFile(2)))
 	}
 
 	@Test
-	fun thenTheSecondSkippedFileIsNotObserved() {
+	fun `then the second skipped file is not observed`() {
 		assertThat(
 			positionedFiles
-				.map { obj -> obj.asPositionedFile() })
+				.map { it.asPositionedFile() })
 			.doesNotContain(PositionedFile(2, ServiceFile(3)))
 	}
 }

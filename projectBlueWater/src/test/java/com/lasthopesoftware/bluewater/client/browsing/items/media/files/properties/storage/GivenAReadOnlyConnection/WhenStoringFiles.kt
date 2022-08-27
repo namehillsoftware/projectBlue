@@ -15,43 +15,44 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 import java.net.URL
 import java.util.concurrent.ExecutionException
 
 class WhenStoringFiles {
-	companion object Setup {
-		private val connectionProvider = mockk<IConnectionProvider>()
-		private val fakeFilePropertiesContainer = FakeFilePropertiesContainer()
-		private var authenticationRequiredException: SecurityException? = null
 
-		@JvmStatic
-		@BeforeClass
-		fun context() {
-			every { connectionProvider.promiseResponse(*anyVararg()) } returns Promise.empty()
+	private val connectionProvider = mockk<IConnectionProvider>()
+	private val fakeFilePropertiesContainer = FakeFilePropertiesContainer()
 
-			val urlProvider = MediaServerUrlProvider(null, URL("http://hewo"))
-			every { connectionProvider.urlProvider } returns urlProvider
+	private val fileStorage by lazy {
+		every { connectionProvider.promiseResponse(*anyVararg()) } returns Promise.empty()
 
-			val revisionChecker = mockk<CheckScopedRevisions>()
-			every { revisionChecker.promiseRevision() } returns 1.toPromise()
+		val urlProvider = MediaServerUrlProvider(null, URL("http://hewo"))
+		every { connectionProvider.urlProvider } returns urlProvider
 
-			val checkConnection = mockk<CheckIfScopedConnectionIsReadOnly>()
-			every { checkConnection.promiseIsReadOnly() } returns true.toPromise()
+		val revisionChecker = mockk<CheckScopedRevisions>()
+		every { revisionChecker.promiseRevision() } returns 1.toPromise()
 
-			val fileStorage = ScopedFilePropertiesStorage(
-				connectionProvider,
-				checkConnection,
-				revisionChecker,
-				fakeFilePropertiesContainer
-			)
+		val checkConnection = mockk<CheckIfScopedConnectionIsReadOnly>()
+		every { checkConnection.promiseIsReadOnly() } returns true.toPromise()
 
-			try {
-				fileStorage.promiseFileUpdate(ServiceFile(33), "myProperty", "myValue", false).toExpiringFuture().get()
-			} catch (e: ExecutionException) {
-				authenticationRequiredException = e.cause as? SecurityException
-			}
+		ScopedFilePropertiesStorage(
+			connectionProvider,
+			checkConnection,
+			revisionChecker,
+			fakeFilePropertiesContainer
+		)
+	}
+
+	private var authenticationRequiredException: SecurityException? = null
+
+	@BeforeAll
+	fun context() {
+		try {
+			fileStorage.promiseFileUpdate(ServiceFile(33), "myProperty", "myValue", false).toExpiringFuture().get()
+		} catch (e: ExecutionException) {
+			authenticationRequiredException = e.cause as? SecurityException
 		}
 	}
 

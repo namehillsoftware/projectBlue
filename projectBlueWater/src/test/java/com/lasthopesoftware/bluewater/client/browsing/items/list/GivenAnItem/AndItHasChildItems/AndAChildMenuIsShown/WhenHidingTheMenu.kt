@@ -14,58 +14,55 @@ import com.lasthopesoftware.resources.RecordingTypedMessageBus
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 
 private const val libraryId = 703
 private const val rootItemId = 707
 private const val childItemId = 571
 
-private val recordingMessageBus = RecordingTypedMessageBus<ItemListMenuMessage>()
-
-private val viewModel by lazy {
-	val selectedLibraryIdProvider = mockk<ProvideSelectedLibraryId>().apply {
-		every { selectedLibraryId } returns LibraryId(libraryId).toPromise()
-	}
-
-	val itemProvider = mockk<ProvideItems>().apply {
-		every { promiseItems(LibraryId(libraryId), ItemId(rootItemId)) } returns listOf(
-			Item(482),
-			Item(449),
-			Item(160),
-			Item(214),
-			Item(childItemId),
-		).toPromise()
-	}
-
-	val storedItemAccess = FakeStoredItemAccess()
-
-	val viewModel = ItemListViewModel(
-		selectedLibraryIdProvider,
-		itemProvider,
-		mockk(relaxed = true, relaxUnitFun = true),
-		storedItemAccess,
-		mockk(),
-		mockk(),
-		recordingMessageBus
-	)
-
-	viewModel.loadItem(Item(rootItemId, "leaf")).toExpiringFuture().get()
-	viewModel.items.value[4]
-}
-
 class WhenHidingTheMenu {
 
-	companion object {
-		private var didMenuShow = false
-		private var isMenuHidden = false
+	private val recordingMessageBus = RecordingTypedMessageBus<ItemListMenuMessage>()
 
-		@BeforeClass
-		@JvmStatic
-		fun act() {
-			didMenuShow = viewModel.showMenu()
-			isMenuHidden = viewModel.hideMenu()
+	private val viewModel by lazy {
+		val selectedLibraryIdProvider = mockk<ProvideSelectedLibraryId>().apply {
+			every { selectedLibraryId } returns LibraryId(libraryId).toPromise()
 		}
+
+		val itemProvider = mockk<ProvideItems>().apply {
+			every { promiseItems(LibraryId(libraryId), ItemId(rootItemId)) } returns listOf(
+				Item(482),
+				Item(449),
+				Item(160),
+				Item(214),
+				Item(childItemId),
+			).toPromise()
+		}
+
+		val storedItemAccess = FakeStoredItemAccess()
+
+		val viewModel = ItemListViewModel(
+			selectedLibraryIdProvider,
+			itemProvider,
+			mockk(relaxed = true, relaxUnitFun = true),
+			storedItemAccess,
+			mockk(),
+			mockk(),
+			recordingMessageBus
+		)
+
+		viewModel.loadItem(Item(rootItemId, "leaf")).toExpiringFuture().get()
+		viewModel.items.value[4]
+	}
+
+	private var didMenuShow = false
+	private var isMenuHidden = false
+
+	@BeforeAll
+	fun act() {
+		didMenuShow = viewModel.showMenu()
+		isMenuHidden = viewModel.hideMenu()
 	}
 
 	@Test

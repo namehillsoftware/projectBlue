@@ -11,47 +11,47 @@ import io.mockk.mockk
 import io.mockk.spyk
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
-import org.junit.BeforeClass
-import org.junit.Test
-import java.util.*
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
+import kotlin.random.Random.Default.nextInt
 
 class WhenAQueueIsCycledThroughManyTimes {
 
-	companion object {
-		private var fileActionMap: Map<ServiceFile, MockResolveAction>? = null
-		private var expectedNumberAbsolutePromises = 0
-		private var expectedCycles = 0
-		private var returnedPromiseCount = 0
+	private val mut by lazy {
+		val numberOfFiles = nextInt(500)
+		val serviceFiles = generateSequence { ServiceFile(nextInt()) }.take(numberOfFiles).toList()
+		val fileActionMap = serviceFiles.associateWith { spyk(MockResolveAction()) }
+		val bufferingPlaybackQueuesProvider = CyclicalFileQueueProvider()
+		val queue = PreparedPlayableFileQueue(
+			{ 1 },
+			{ file, _ -> Promise(fileActionMap[file]) },
+			bufferingPlaybackQueuesProvider.provideQueue(serviceFiles, 0)
+		)
 
-		@BeforeClass
-		@JvmStatic
-		fun before() {
-			val random = Random()
-			val numberOfFiles = random.nextInt(500)
-			val serviceFiles = generateSequence { ServiceFile(random.nextInt()) }.take(numberOfFiles).toList()
-			fileActionMap = serviceFiles.associateWith { spyk(MockResolveAction()) }
-			val bufferingPlaybackQueuesProvider = CyclicalFileQueueProvider()
-			val queue = PreparedPlayableFileQueue(
-				{ 1 },
-				{ file, _ -> Promise(fileActionMap!![file]) },
-				bufferingPlaybackQueuesProvider.provideQueue(serviceFiles, 0)
-			)
-			expectedCycles = random.nextInt(100)
-			expectedNumberAbsolutePromises = expectedCycles * numberOfFiles
-			for (i in 0 until expectedNumberAbsolutePromises) {
-				val positionedPlaybackFilePromise = queue.promiseNextPreparedPlaybackFile(Duration.ZERO)
-				if (positionedPlaybackFilePromise != null) ++returnedPromiseCount
-			}
+		Pair(fileActionMap, queue)
+	}
+	private val expectedCycles by lazy { nextInt(100) }
+	private val expectedNumberAbsolutePromises by lazy { expectedCycles * mut.first.size }
+	private var returnedPromiseCount = 0
+
+	@BeforeAll
+	fun act() {
+		val (_, queue) = mut
+
+		for (i in 0 until expectedNumberAbsolutePromises) {
+			val positionedPlaybackFilePromise = queue.promiseNextPreparedPlaybackFile(Duration.ZERO)
+			if (positionedPlaybackFilePromise != null) ++returnedPromiseCount
 		}
 	}
 
     @Test
-    fun thenEachFileIsPreparedTheAppropriateAmountOfTimes() {
-		assertThat(fileActionMap!!.values.map { it.preparedTimes }).allMatch { it == expectedCycles }
+    fun `then each file is prepared the appropriate amount of times`() {
+		val (fileActionMap) = mut
+		assertThat(fileActionMap.values.map { it.preparedTimes }).allMatch { it == expectedCycles }
     }
 
     @Test
-    fun thenTheCorrectNumberOfPromisesIsReturned() {
+    fun `then the correct number of promises is returned`() {
 		assertThat(returnedPromiseCount).isEqualTo(expectedNumberAbsolutePromises)
     }
 

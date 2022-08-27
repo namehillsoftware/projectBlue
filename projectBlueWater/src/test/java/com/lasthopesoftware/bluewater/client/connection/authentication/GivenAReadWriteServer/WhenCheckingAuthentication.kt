@@ -5,37 +5,37 @@ import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTu
 import com.lasthopesoftware.bluewater.client.connection.authentication.ScopedConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 
 class WhenCheckingAuthentication {
 
-	companion object setup {
-
-		private var isReadOnly: Boolean? = false
-
-		@JvmStatic
-		@BeforeClass
-		fun before() {
-			val fakeConnectionProvider = FakeConnectionProvider()
-			fakeConnectionProvider.mapResponse({
-				FakeConnectionResponseTuple(
-					200, (
-"""<Response Status="OK">
-	<Item Name="Token">B9yXQtTL</Item>
-	<Item Name="ReadOnly">0</Item>
-	<Item Name="PreLicensed">0</Item>
+	private val services by lazy {
+		val fakeConnectionProvider = FakeConnectionProvider()
+		fakeConnectionProvider.mapResponse({
+			FakeConnectionResponseTuple(
+				200, (
+					"""<Response Status="OK">
+<Item Name="Token">B9yXQtTL</Item>
+<Item Name="ReadOnly">0</Item>
+<Item Name="PreLicensed">0</Item>
 </Response>""").toByteArray()
-				)
-			}, "Authenticate")
+			)
+		}, "Authenticate")
 
-			val authenticationChecker = ScopedConnectionAuthenticationChecker(fakeConnectionProvider)
-			isReadOnly = authenticationChecker.promiseIsReadOnly().toExpiringFuture().get()
-		}
+		val authenticationChecker = ScopedConnectionAuthenticationChecker(fakeConnectionProvider)
+		authenticationChecker
+	}
+
+	private var isReadOnly: Boolean? = false
+
+	@BeforeAll
+	fun act() {
+		isReadOnly = services.promiseIsReadOnly().toExpiringFuture().get()
 	}
 
 	@Test
-	fun thenTheConnectionIsNotReadOnly() {
+	fun `then the connection is not read only`() {
 		assertThat(isReadOnly).isFalse
 	}
 }

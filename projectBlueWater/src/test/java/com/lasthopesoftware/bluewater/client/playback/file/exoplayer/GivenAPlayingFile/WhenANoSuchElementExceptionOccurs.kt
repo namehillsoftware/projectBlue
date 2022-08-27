@@ -12,57 +12,54 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.AssertionsForClassTypes.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
 
 class WhenANoSuchElementExceptionOccurs {
 
-	companion object {
-		private var exoPlayerException: ExoPlayerException? = null
-		private var playedFile: PlayedFile? = null
+	private var exoPlayerException: ExoPlayerException? = null
+	private var playedFile: PlayedFile? = null
 
-		@JvmStatic
-		@BeforeClass
-		fun before() {
-			val eventListeners = ArrayList<Player.Listener>()
+	@BeforeAll
+	fun act() {
+		val eventListeners = ArrayList<Player.Listener>()
 
-			val mockExoPlayer = mockk<PromisingExoPlayer>()
-			every { mockExoPlayer.setPlayWhenReady(any()) } returns mockExoPlayer.toPromise()
-			every { mockExoPlayer.getPlayWhenReady() } returns true.toPromise()
-			every { mockExoPlayer.getCurrentPosition() } returns 50L.toPromise()
-			every { mockExoPlayer.getDuration() } returns 100L.toPromise()
-			every { mockExoPlayer.removeListener(any()) } returns mockExoPlayer.toPromise()
-			every { mockExoPlayer.addListener(any()) } answers {
-				eventListeners.add(firstArg())
-				mockExoPlayer.toPromise()
+		val mockExoPlayer = mockk<PromisingExoPlayer>()
+		every { mockExoPlayer.setPlayWhenReady(any()) } returns mockExoPlayer.toPromise()
+		every { mockExoPlayer.getPlayWhenReady() } returns true.toPromise()
+		every { mockExoPlayer.getCurrentPosition() } returns 50L.toPromise()
+		every { mockExoPlayer.getDuration() } returns 100L.toPromise()
+		every { mockExoPlayer.removeListener(any()) } returns mockExoPlayer.toPromise()
+		every { mockExoPlayer.addListener(any()) } answers {
+			eventListeners.add(firstArg())
+			mockExoPlayer.toPromise()
+		}
+
+		val exoPlayerPlaybackHandlerPlayerPlaybackHandler = ExoPlayerPlaybackHandler(mockExoPlayer)
+		val promisedFuture = exoPlayerPlaybackHandlerPlayerPlaybackHandler.promisePlayback()
+			.eventually { it.promisePlayedFile() }
+			.toExpiringFuture()
+		eventListeners.forEach { it.onPlayerError(ExoPlaybackException.createForUnexpected(NoSuchElementException(), ERROR_CODE_UNSPECIFIED)) }
+		try {
+			playedFile = promisedFuture[1, TimeUnit.SECONDS]
+		} catch (e: ExecutionException) {
+			if (e.cause is ExoPlayerException) {
+				exoPlayerException = e.cause as ExoPlayerException?
+				return
 			}
-
-			val exoPlayerPlaybackHandlerPlayerPlaybackHandler = ExoPlayerPlaybackHandler(mockExoPlayer)
-			val promisedFuture = exoPlayerPlaybackHandlerPlayerPlaybackHandler.promisePlayback()
-				.eventually { it.promisePlayedFile() }
-				.toExpiringFuture()
-			eventListeners.forEach { it.onPlayerError(ExoPlaybackException.createForUnexpected(NoSuchElementException(), ERROR_CODE_UNSPECIFIED)) }
-			try {
-				playedFile = promisedFuture[1, TimeUnit.SECONDS]
-			} catch (e: ExecutionException) {
-				if (e.cause is ExoPlayerException) {
-					exoPlayerException = e.cause as ExoPlayerException?
-					return
-				}
-				throw e
-			}
+			throw e
 		}
 	}
 
 	@Test
-	fun thenPlaybackCompletes() {
+	fun `then playback completes`() {
 		assertThat(playedFile).isNotNull
 	}
 
 	@Test
-	fun thenNoPlaybackErrorOccurs() {
+	fun `then no playback error occurs`() {
 		assertThat(exoPlayerException).isNull()
 	}
 }

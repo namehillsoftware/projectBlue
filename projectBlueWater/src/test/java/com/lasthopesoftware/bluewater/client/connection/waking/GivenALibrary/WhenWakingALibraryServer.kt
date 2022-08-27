@@ -14,27 +14,23 @@ import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 
 class WhenWakingALibraryServer {
 
-	companion object {
-		private val expectedPokedMachineAddresses = arrayOf(
-			MachineAddress("local-address", "AB-E0-9F-24-F5"),
-			MachineAddress("local-address", "99-53-7F-2C-A1"),
-			MachineAddress("second-local-address", "AB-E0-9F-24-F5"),
-			MachineAddress("second-local-address", "99-53-7F-2C-A1"),
-			MachineAddress("remote-address", "AB-E0-9F-24-F5"),
-			MachineAddress("remote-address", "99-53-7F-2C-A1")
-		)
-		private val pokedMachineAddresses: MutableList<MachineAddress> = ArrayList()
+	private val expectedPokedMachineAddresses = arrayOf(
+		MachineAddress("local-address", "AB-E0-9F-24-F5"),
+		MachineAddress("local-address", "99-53-7F-2C-A1"),
+		MachineAddress("second-local-address", "AB-E0-9F-24-F5"),
+		MachineAddress("second-local-address", "99-53-7F-2C-A1"),
+		MachineAddress("remote-address", "AB-E0-9F-24-F5"),
+		MachineAddress("remote-address", "99-53-7F-2C-A1")
+	)
 
-		@BeforeClass
-		@JvmStatic
-		fun before() {
-			val lookupServers = mockk<LookupServers>()
-			every { lookupServers.promiseServerInformation(any()) } returns Promise<ServerInfo?>(
+	private val mut by lazy {
+		val lookupServers = mockk<LookupServers>().apply {
+			every { promiseServerInformation(any()) } returns Promise<ServerInfo?>(
 				ServerInfo(
 					5001,
 					5002,
@@ -44,29 +40,38 @@ class WhenWakingALibraryServer {
 					null
 				)
 			)
+		}
 
-			val pokeServer = mockk<PokeServer>()
-			every { pokeServer.promiseWakeSignal(any(), any(), any()) } answers {
+		val pokeServer = mockk<PokeServer>().apply {
+			every { promiseWakeSignal(any(), any(), any()) } answers {
 				Unit.toPromise()
 			}
 
-			every { pokeServer.promiseWakeSignal(any(), 10, Duration.standardHours(10)) } answers {
+			every { promiseWakeSignal(any(), 10, Duration.standardHours(10)) } answers {
 				pokedMachineAddresses.add(firstArg())
 				Unit.toPromise()
 			}
 
-			val serverAlarm = ServerAlarm(
-				lookupServers,
-				pokeServer,
-				AlarmConfiguration(10, Duration.standardHours(10))
-			)
-			serverAlarm.awakeLibraryServer(LibraryId(14)).toExpiringFuture().get()
 		}
+
+		val serverAlarm = ServerAlarm(
+			lookupServers,
+			pokeServer,
+			AlarmConfiguration(10, Duration.standardHours(10))
+		)
+
+		serverAlarm
+	}
+
+	private val pokedMachineAddresses: MutableList<MachineAddress> = ArrayList()
+
+	@BeforeAll
+	fun before() {
+		mut.awakeLibraryServer(LibraryId(14)).toExpiringFuture().get()
 	}
 
 	@Test
-	fun thenTheMachineIsAlertedAtAllEndpoints() {
-		assertThat(pokedMachineAddresses)
-			.containsExactlyInAnyOrder(*expectedPokedMachineAddresses)
+	fun `then the machine is alerted at all endpoints`() {
+		assertThat(pokedMachineAddresses).containsExactlyInAnyOrder(*expectedPokedMachineAddresses)
 	}
 }

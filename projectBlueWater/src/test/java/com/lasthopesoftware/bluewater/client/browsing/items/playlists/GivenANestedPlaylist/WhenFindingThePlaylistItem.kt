@@ -14,75 +14,12 @@ import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.AssertionsForClassTypes.assertThat
-import org.junit.Test
+import org.junit.jupiter.api.Test
 import java.util.*
 
 class WhenFindingThePlaylistItem {
 	companion object {
 		private val random = Random()
-
-		private val playlistId by lazy { random.nextInt() }
-
-		private val expectedItem by lazy { Item(random.nextInt(), null, playlistId) }
-
-		private val item by lazy {
-			val libraryViews = mockk<ProvideLibraryViews>()
-			every { libraryViews.promiseLibraryViews(LibraryId(3)) } returns Promise(
-				listOf(
-					StandardViewItem(2, "Music"),
-					PlaylistViewItem(16)
-				)
-			)
-
-			val itemProvider = mockk<ProvideItems>()
-			every { itemProvider.promiseItems(any(), any()) } returns Promise(emptyList())
-
-			setupItemProviderWithItems(
-				itemProvider,
-				ItemId(2),
-				3,
-				false
-			)
-			var generatedItems = setupItemProviderWithItems(
-				itemProvider,
-				ItemId(16),
-				15,
-				true
-			)
-			val firstLevelChosenItem = generatedItems[random.nextInt(generatedItems.size)]
-			for (item in generatedItems) {
-				if (item == firstLevelChosenItem) continue
-				setupItemProviderWithItems(
-					itemProvider,
-					item.itemId,
-					100,
-					true
-				)
-			}
-			generatedItems = setupItemProviderWithItems(
-				itemProvider,
-				ItemId(16),
-				90,
-				true
-			)
-
-			val secondLevelChosenItem = generatedItems[random.nextInt(generatedItems.size)]
-			for (item in generatedItems) {
-				if (item == secondLevelChosenItem) continue
-				every { itemProvider.promiseItems(LibraryId(3), item.itemId) } returns Promise(emptyList())
-			}
-			val decoy = Item(random.nextInt(), null, random.nextInt())
-
-			every { itemProvider.promiseItems(LibraryId(3), secondLevelChosenItem.itemId) } returns Promise(
-				listOf(
-					decoy,
-					expectedItem
-				)
-			)
-
-			val playlistItemFinder = PlaylistItemFinder(libraryViews, itemProvider)
-			playlistItemFinder.promiseItem(LibraryId(3), Playlist(playlistId)).toExpiringFuture().get()
-		}
 
 		private fun setupItemProviderWithItems(itemProvider: ProvideItems, sourceItem: ItemId, numberOfChildren: Int, withPlaylistIds: Boolean): List<Item> {
 			val items = ArrayList<Item>(numberOfChildren)
@@ -94,6 +31,69 @@ class WhenFindingThePlaylistItem {
 			every { itemProvider.promiseItems(LibraryId(3), sourceItem) } returns Promise(items)
 			return items
 		}
+	}
+
+	private val playlistId by lazy { random.nextInt() }
+
+	private val expectedItem by lazy { Item(random.nextInt(), null, playlistId) }
+
+	private val item by lazy {
+		val libraryViews = mockk<ProvideLibraryViews>()
+		every { libraryViews.promiseLibraryViews(LibraryId(3)) } returns Promise(
+			listOf(
+				StandardViewItem(2, "Music"),
+				PlaylistViewItem(16)
+			)
+		)
+
+		val itemProvider = mockk<ProvideItems>()
+		every { itemProvider.promiseItems(any(), any()) } returns Promise(emptyList())
+
+		setupItemProviderWithItems(
+			itemProvider,
+			ItemId(2),
+			3,
+			false
+		)
+		var generatedItems = setupItemProviderWithItems(
+			itemProvider,
+			ItemId(16),
+			15,
+			true
+		)
+		val firstLevelChosenItem = generatedItems[random.nextInt(generatedItems.size)]
+		for (item in generatedItems) {
+			if (item == firstLevelChosenItem) continue
+			setupItemProviderWithItems(
+				itemProvider,
+				item.itemId,
+				100,
+				true
+			)
+		}
+		generatedItems = setupItemProviderWithItems(
+			itemProvider,
+			ItemId(16),
+			90,
+			true
+		)
+
+		val secondLevelChosenItem = generatedItems[random.nextInt(generatedItems.size)]
+		for (item in generatedItems) {
+			if (item == secondLevelChosenItem) continue
+			every { itemProvider.promiseItems(LibraryId(3), item.itemId) } returns Promise(emptyList())
+		}
+		val decoy = Item(random.nextInt(), null, random.nextInt())
+
+		every { itemProvider.promiseItems(LibraryId(3), secondLevelChosenItem.itemId) } returns Promise(
+			listOf(
+				decoy,
+				expectedItem
+			)
+		)
+
+		val playlistItemFinder = PlaylistItemFinder(libraryViews, itemProvider)
+		playlistItemFinder.promiseItem(LibraryId(3), Playlist(playlistId)).toExpiringFuture().get()
 	}
 
 	@Test

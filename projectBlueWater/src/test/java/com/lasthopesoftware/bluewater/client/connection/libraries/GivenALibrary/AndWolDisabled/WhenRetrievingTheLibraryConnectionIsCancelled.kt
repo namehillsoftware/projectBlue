@@ -17,72 +17,71 @@ import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 
 class WhenRetrievingTheLibraryConnectionIsCancelled {
 
-	companion object {
-		private val urlProvider = mockk<IUrlProvider>()
-		private val statuses: MutableList<BuildingConnectionStatus> = ArrayList()
-		private var connectionProvider: IConnectionProvider? = null
-		private var isLibraryServerWoken = false
+	private val deferredConnectionSettings = DeferredPromise<ConnectionSettings?>(ConnectionSettings(accessCode = "aB5nf", isWakeOnLanEnabled = false))
 
-		@BeforeClass
-		@JvmStatic
-		fun before() {
-			val validateConnectionSettings = mockk<ValidateConnectionSettings>()
-			every { validateConnectionSettings.isValid(any()) } returns true
+	private val mut by lazy {
+		val validateConnectionSettings = mockk<ValidateConnectionSettings>()
+		every { validateConnectionSettings.isValid(any()) } returns true
 
-			val deferredConnectionSettings = DeferredPromise<ConnectionSettings?>(ConnectionSettings(accessCode = "aB5nf", isWakeOnLanEnabled = false))
+		val lookupConnection = mockk<LookupConnectionSettings>()
+		every {
+			lookupConnection.lookupConnectionSettings(LibraryId(3))
+		} returns deferredConnectionSettings
 
-			val lookupConnection = mockk<LookupConnectionSettings>()
-			every {
-				lookupConnection.lookupConnectionSettings(LibraryId(3))
-			} returns deferredConnectionSettings
+		val liveUrlProvider = mockk<ProvideLiveUrl>()
+		every { liveUrlProvider.promiseLiveUrl(LibraryId(3)) } returns Promise(mockk<IUrlProvider>())
 
-			val liveUrlProvider = mockk<ProvideLiveUrl>()
-			every { liveUrlProvider.promiseLiveUrl(LibraryId(3)) } returns Promise(urlProvider)
+		val libraryConnectionProvider = LibraryConnectionProvider(
+			validateConnectionSettings,
+			lookupConnection,
+			{
+				isLibraryServerWoken = true
+				Unit.toPromise()
+			},
+			liveUrlProvider,
+			OkHttpFactory
+		)
 
-			val libraryConnectionProvider = LibraryConnectionProvider(
-                validateConnectionSettings,
-                lookupConnection,
-                {
-                    isLibraryServerWoken = true
-                    Unit.toPromise()
-                },
-                liveUrlProvider,
-                OkHttpFactory
-            )
+		libraryConnectionProvider
+	}
 
-			val futureConnectionProvider =
-				libraryConnectionProvider
-					.promiseLibraryConnection(LibraryId(3))
-					.apply {
-						progress.then(statuses::add)
-						updates(statuses::add)
-					}
-					.toExpiringFuture()
+	private val statuses: MutableList<BuildingConnectionStatus> = ArrayList()
+	private var connectionProvider: IConnectionProvider? = null
+	private var isLibraryServerWoken = false
 
-			futureConnectionProvider.cancel(true)
+	@BeforeAll
+	fun act() {
+		val futureConnectionProvider =
+			mut.promiseLibraryConnection(LibraryId(3))
+				.apply {
+					progress.then(statuses::add)
+					updates(statuses::add)
+				}
+				.toExpiringFuture()
 
-			deferredConnectionSettings.resolve()
-			connectionProvider = futureConnectionProvider.get()
-		}
+		futureConnectionProvider.cancel(true)
+
+		deferredConnectionSettings.resolve()
+		connectionProvider = futureConnectionProvider.get()
 	}
 
 	@Test
-	fun thenTheLibraryIsNotWoken() {
+	fun `then the library is not woken`() {
 		assertThat(isLibraryServerWoken).isFalse
 	}
 
 	@Test
-	fun thenTheConnectionIsNull() {
+	fun `then the connection is null`() {
 		assertThat(connectionProvider).isNull()
 	}
 
 	@Test
-	fun thenGettingLibraryIsBroadcast() {
+	fun `then getting library is broadcast`() {
 		assertThat(statuses)
 			.containsExactly(
 				BuildingConnectionStatus.GettingLibrary,

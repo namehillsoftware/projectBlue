@@ -16,54 +16,55 @@ import io.mockk.every
 import io.mockk.mockk
 import org.apache.commons.codec.binary.Hex
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class WhenScanningForUrls {
 
-	companion object {
-		private val urlProvider by lazy {
-			val connectionTester = mockk<TestConnections>()
-			every { connectionTester.promiseIsConnectionPossible(any()) } returns false.toPromise()
-			every {
-				connectionTester.promiseIsConnectionPossible(match { a -> listOf(
+	private val urlProvider by lazy {
+		val connectionTester = mockk<TestConnections>()
+		every { connectionTester.promiseIsConnectionPossible(any()) } returns false.toPromise()
+		every {
+			connectionTester.promiseIsConnectionPossible(match { a ->
+				listOf(
 					"https://1.2.3.4:452/MCWS/v1/",
-					"http://1.2.3.4:143/MCWS/v1/").contains(a.urlProvider.baseUrl.toString()) })
-			} returns true.toPromise()
+					"http://1.2.3.4:143/MCWS/v1/"
+				).contains(a.urlProvider.baseUrl.toString())
+			})
+		} returns true.toPromise()
 
-			val serverLookup = mockk<LookupServers>()
-			every { serverLookup.promiseServerInformation(LibraryId(35)) } returns Promise(
-				ServerInfo(
-					143,
-					452,
-					"1.2.3.4",
-					emptyList(),
-					emptyList(),
-					"2386166660562C5AAA1253B2BED7C2483F9C2D45"
-				)
+		val serverLookup = mockk<LookupServers>()
+		every { serverLookup.promiseServerInformation(LibraryId(35)) } returns Promise(
+			ServerInfo(
+				143,
+				452,
+				"1.2.3.4",
+				emptyList(),
+				emptyList(),
+				"2386166660562C5AAA1253B2BED7C2483F9C2D45"
 			)
+		)
 
-			val connectionSettingsLookup = mockk<LookupConnectionSettings>()
-			every { connectionSettingsLookup.lookupConnectionSettings(LibraryId(35)) } returns ConnectionSettings(accessCode = "gooPc").toPromise()
+		val connectionSettingsLookup = mockk<LookupConnectionSettings>()
+		every { connectionSettingsLookup.lookupConnectionSettings(LibraryId(35)) } returns ConnectionSettings(accessCode = "gooPc").toPromise()
 
-			val urlScanner = UrlScanner(
-				PassThroughBase64Encoder,
-				connectionTester,
-				serverLookup,
-				connectionSettingsLookup,
-				OkHttpFactory
-			)
+		val urlScanner = UrlScanner(
+			PassThroughBase64Encoder,
+			connectionTester,
+			serverLookup,
+			connectionSettingsLookup,
+			OkHttpFactory
+		)
 
-			urlScanner.promiseBuiltUrlProvider(LibraryId(35)).toExpiringFuture().get()
-		}
+		urlScanner.promiseBuiltUrlProvider(LibraryId(35)).toExpiringFuture().get()
 	}
 
 	@Test
-	fun thenTheBaseUrlIsCorrect() {
+	fun `then the base url is correct`() {
 		assertThat(urlProvider?.baseUrl.toString()).isEqualTo("https://1.2.3.4:452/MCWS/v1/")
 	}
 
 	@Test
-	fun thenTheCertificateFingerprintIsCorrect() {
+	fun `then the certificate fingerprint is correct`() {
 		assertThat(urlProvider?.certificateFingerprint)
 			.isEqualTo(Hex.decodeHex("2386166660562C5AAA1253B2BED7C2483F9C2D45"))
 	}

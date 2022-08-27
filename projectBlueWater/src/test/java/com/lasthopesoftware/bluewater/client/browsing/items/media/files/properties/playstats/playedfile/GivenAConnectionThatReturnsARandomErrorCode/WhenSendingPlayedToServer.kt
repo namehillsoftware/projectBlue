@@ -7,35 +7,36 @@ import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTu
 import com.lasthopesoftware.bluewater.shared.exceptions.HttpResponseException
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 import java.util.*
 import java.util.concurrent.ExecutionException
 
 class WhenSendingPlayedToServer {
-	companion object {
-		private var httpResponseException: HttpResponseException? = null
-		private var expectedResponseCode = 0
 
-		@BeforeClass
-		@JvmStatic
-		fun before() {
-			val random = Random()
-			do {
-				expectedResponseCode = random.nextInt()
-			} while (expectedResponseCode < 0 || expectedResponseCode >= 200 && expectedResponseCode < 300)
-			val connectionProvider = FakeConnectionProvider()
-			connectionProvider.mapResponse({
-				FakeConnectionResponseTuple(
-					expectedResponseCode, ByteArray(0)
-				)
-			}, "File/Played", "File=15", "FileType=Key")
-			val updater = PlayedFilePlayStatsUpdater(connectionProvider)
-			try {
-				updater.promisePlaystatsUpdate(ServiceFile(15)).toExpiringFuture().get()
-			} catch (e: ExecutionException) {
-				httpResponseException = e.cause as? HttpResponseException
-			}
+	private val updater by lazy {
+		val random = Random()
+		do {
+			expectedResponseCode = random.nextInt()
+		} while (expectedResponseCode < 0 || expectedResponseCode in 200..299)
+		val connectionProvider = FakeConnectionProvider()
+		connectionProvider.mapResponse({
+			FakeConnectionResponseTuple(
+				expectedResponseCode, ByteArray(0)
+			)
+		}, "File/Played", "File=15", "FileType=Key")
+		PlayedFilePlayStatsUpdater(connectionProvider)
+	}
+
+	private var httpResponseException: HttpResponseException? = null
+	private var expectedResponseCode = 0
+
+	@BeforeAll
+	fun act() {
+		try {
+			updater.promisePlaystatsUpdate(ServiceFile(15)).toExpiringFuture().get()
+		} catch (e: ExecutionException) {
+			httpResponseException = e.cause as? HttpResponseException
 		}
 	}
 

@@ -17,19 +17,69 @@ import com.namehillsoftware.handoff.Messenger
 import com.namehillsoftware.handoff.promises.Promise
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 
 class WhenObservingPlayback {
+
+	private val mut by lazy {
+		val deferredErrorPlaybackPreparer = DeferredErrorPlaybackPreparer()
+		val fakePlaybackPreparerProvider: IPlayableFilePreparationSourceProvider =
+			object : IPlayableFilePreparationSourceProvider {
+				override fun providePlayableFilePreparationSource(): PlayableFilePreparationSource =
+					deferredErrorPlaybackPreparer
+
+				override fun getMaxQueueSize(): Int = 1
+			}
+		val library = Library()
+		library.setId(1)
+		val libraryProvider = PassThroughSpecificLibraryProvider(library)
+		val libraryStorage = PassThroughLibraryStorage()
+		val playbackEngine = PlaybackEngine(
+			PreparedPlaybackQueueResourceManagement(
+				fakePlaybackPreparerProvider,
+				fakePlaybackPreparerProvider
+			), listOf(CompletingFileQueueProvider()),
+			NowPlayingRepository(
+				libraryProvider,
+				libraryStorage
+			),
+			PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
+		)
+
+		Pair(deferredErrorPlaybackPreparer, playbackEngine)
+	}
+
+	private var error: Throwable? = null
+
+	@BeforeAll
+	fun act() {
+		val (deferredErrorPlaybackPreparer, playbackEngine) = mut
+
+		playbackEngine
+			.setOnPlaylistError { e -> error = e }
+			.startPlaylist(
+				listOf(
+					ServiceFile(1),
+					ServiceFile(2),
+					ServiceFile(3),
+					ServiceFile(4),
+					ServiceFile(5)
+				), 0, Duration.ZERO
+			)
+		deferredErrorPlaybackPreparer.resolve()
+	}
+
 	@Test
-	fun thenTheErrorIsBroadcast() {
+	fun `then the error is broadcast`() {
 		assertThat(error).isNotNull
 	}
 
 	private class DeferredErrorPlaybackPreparer : PlayableFilePreparationSource {
 		private var reject: Messenger<PreparedPlayableFile?>? = null
+
 		fun resolve() {
-			if (reject != null) reject!!.sendRejection(Exception())
+			reject?.sendRejection(Exception())
 		}
 
 		override fun promisePreparedPlaybackFile(
@@ -37,54 +87,6 @@ class WhenObservingPlayback {
 			preparedAt: Duration
 		): Promise<PreparedPlayableFile?> {
 			return Promise { messenger -> reject = messenger }
-		}
-	}
-
-	companion object {
-		private var error: Throwable? = null
-
-		@BeforeClass
-		@JvmStatic
-		fun context() {
-			val deferredErrorPlaybackPreparer = DeferredErrorPlaybackPreparer()
-			val fakePlaybackPreparerProvider: IPlayableFilePreparationSourceProvider =
-				object : IPlayableFilePreparationSourceProvider {
-					override fun providePlayableFilePreparationSource(): PlayableFilePreparationSource {
-						return deferredErrorPlaybackPreparer
-					}
-
-					override fun getMaxQueueSize(): Int {
-						return 1
-					}
-				}
-			val library = Library()
-			library.setId(1)
-			val libraryProvider = PassThroughSpecificLibraryProvider(library)
-			val libraryStorage = PassThroughLibraryStorage()
-			val playbackEngine = PlaybackEngine(
-				PreparedPlaybackQueueResourceManagement(
-					fakePlaybackPreparerProvider,
-					fakePlaybackPreparerProvider
-				), listOf(CompletingFileQueueProvider()),
-                NowPlayingRepository(
-                    libraryProvider,
-                    libraryStorage
-                ),
-				PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
-			)
-
-			playbackEngine
-				.setOnPlaylistError { e: Throwable? -> error = e }
-				.startPlaylist(
-					listOf(
-						ServiceFile(1),
-						ServiceFile(2),
-						ServiceFile(3),
-						ServiceFile(4),
-						ServiceFile(5)
-					), 0, Duration.ZERO
-				)
-			deferredErrorPlaybackPreparer.resolve()
 		}
 	}
 }

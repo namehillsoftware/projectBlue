@@ -3,30 +3,26 @@ package com.lasthopesoftware.bluewater.shared.resilience.GivenATwoSecondTwoTrigg
 import com.lasthopesoftware.bluewater.shared.resilience.TimedCountdownLatch
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 
 class WhenTriggeringTheLatchThreeSecondsLater {
 
-	companion object {
+	private var isClosed = false
 
-		private var isClosed = false
+	@BeforeAll
+	fun act() {
+		val timedLatch = TimedCountdownLatch(2, Duration.standardSeconds(2))
 
-		@JvmStatic
-		@BeforeClass
-		fun setup() {
-			val timedLatch = TimedCountdownLatch(2, Duration.standardSeconds(2))
+		isClosed = timedLatch.trigger()
 
-			isClosed = timedLatch.trigger()
+		Thread.sleep(Duration.standardSeconds(3).millis)
 
-			Thread.sleep(Duration.standardSeconds(3).millis)
-
-			isClosed = timedLatch.trigger()
-		}
+		isClosed = timedLatch.trigger()
 	}
 
 	@Test
-	fun thenTheLatchIsNotClosed() {
+	fun `then the latch is not closed`() {
 		assertThat(isClosed).isFalse
 	}
 }

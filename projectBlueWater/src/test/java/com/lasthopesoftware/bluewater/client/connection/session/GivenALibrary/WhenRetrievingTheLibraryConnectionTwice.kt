@@ -19,80 +19,84 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 
 class WhenRetrievingTheLibraryConnectionTwice {
 
-	companion object {
-		private val firstUrlProvider = mockk<IUrlProvider>()
-		private val statuses: MutableList<BuildingConnectionStatus> = ArrayList()
-		private var connectionProvider: IConnectionProvider? = null
-		private var secondConnectionProvider: IConnectionProvider? = null
+	private val firstUrlProvider = mockk<IUrlProvider>()
 
-		@BeforeClass
-		@JvmStatic
-		fun before() {
-			val validateConnectionSettings = mockk<ValidateConnectionSettings>()
-			every { validateConnectionSettings.isValid(any()) } returns true
+	private val mut by lazy {
+		val validateConnectionSettings = mockk<ValidateConnectionSettings>()
+		every { validateConnectionSettings.isValid(any()) } returns true
 
-			val deferredConnectionSettings = DeferredPromise<ConnectionSettings?>(ConnectionSettings(accessCode = "aB5nf"))
+		val deferredConnectionSettings = DeferredPromise<ConnectionSettings?>(ConnectionSettings(accessCode = "aB5nf"))
 
-			val lookupConnection = mockk<LookupConnectionSettings>()
-			every {
-				lookupConnection.lookupConnectionSettings(LibraryId(2))
-			} returns deferredConnectionSettings
+		val lookupConnection = mockk<LookupConnectionSettings>()
+		every {
+			lookupConnection.lookupConnectionSettings(LibraryId(2))
+		} returns deferredConnectionSettings
 
-			val liveUrlProvider = mockk<ProvideLiveUrl>()
-			every { liveUrlProvider.promiseLiveUrl(LibraryId(2)) } returns firstUrlProvider.toPromise()
+		val liveUrlProvider = mockk<ProvideLiveUrl>()
+		every { liveUrlProvider.promiseLiveUrl(LibraryId(2)) } returns firstUrlProvider.toPromise()
 
-			val libraryConnectionProvider = LibraryConnectionProvider(
-				validateConnectionSettings,
-				lookupConnection,
-				NoopServerAlarm(),
-				liveUrlProvider,
-				OkHttpFactory
-			)
+		val libraryConnectionProvider = LibraryConnectionProvider(
+			validateConnectionSettings,
+			lookupConnection,
+			NoopServerAlarm,
+			liveUrlProvider,
+			OkHttpFactory
+		)
 
-			val connectionSessionManager = ConnectionSessionManager(
-				mockk(),
-				libraryConnectionProvider,
-				PromisedConnectionsRepository()
-			)
+		val connectionSessionManager = ConnectionSessionManager(
+			mockk(),
+			libraryConnectionProvider,
+			PromisedConnectionsRepository()
+		)
 
-			val futureConnectionProvider =
-				connectionSessionManager
-					.promiseLibraryConnection(LibraryId(2))
-					.apply {
-						progress.then { if (it != null) statuses.add(it) }
-						updates(statuses::add)
-					}
-					.toExpiringFuture()
+		Pair(deferredConnectionSettings, connectionSessionManager)
+	}
 
-			deferredConnectionSettings.resolve()
+	private val statuses: MutableList<BuildingConnectionStatus> = ArrayList()
+	private var connectionProvider: IConnectionProvider? = null
+	private var secondConnectionProvider: IConnectionProvider? = null
 
-			connectionProvider = futureConnectionProvider.get()
+	@BeforeAll
+	fun before() {
+		val (deferredConnectionSettings, connectionSessionManager) = mut
 
-			val secondFutureConnectionProvider =
-				connectionSessionManager
-					.promiseLibraryConnection(LibraryId(2))
-					.apply {
-						progress.then { if (it != null) statuses.add(it) }
-						updates(statuses::add)
-					}
-					.toExpiringFuture()
+		val futureConnectionProvider =
+			connectionSessionManager
+				.promiseLibraryConnection(LibraryId(2))
+				.apply {
+					progress.then { if (it != null) statuses.add(it) }
+					updates(statuses::add)
+				}
+				.toExpiringFuture()
 
-			secondConnectionProvider = secondFutureConnectionProvider.get()
-		}
+		deferredConnectionSettings.resolve()
+
+		connectionProvider = futureConnectionProvider.get()
+
+		val secondFutureConnectionProvider =
+			connectionSessionManager
+				.promiseLibraryConnection(LibraryId(2))
+				.apply {
+					progress.then { if (it != null) statuses.add(it) }
+					updates(statuses::add)
+				}
+				.toExpiringFuture()
+
+		secondConnectionProvider = secondFutureConnectionProvider.get()
 	}
 
 	@Test
-	fun thenTheConnectionIsCorrect() {
+	fun `then the connection is correct`() {
 		assertThat(secondConnectionProvider).isEqualTo(connectionProvider)
 	}
 
 	@Test
-	fun thenGettingLibraryIsBroadcast() {
+	fun `then getting library is broadcast`() {
 		assertThat(statuses)
 			.containsExactly(
 				BuildingConnectionStatus.GettingLibrary,

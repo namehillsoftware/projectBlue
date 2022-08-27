@@ -6,9 +6,10 @@ import androidx.media.AudioManagerCompat
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.shared.android.audiofocus.AudioFocusManagement
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import io.mockk.every
+import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
-import org.mockito.Mockito.*
 
 class WhenRequestingFocus : AndroidContext() {
 
@@ -21,9 +22,9 @@ class WhenRequestingFocus : AndroidContext() {
 	}
 
 	override fun before() {
-		val audioManager = mock(AudioManager::class.java)
-		`when`(audioManager.requestAudioFocus(any()))
-			.thenReturn(AudioManager.AUDIOFOCUS_REQUEST_DELAYED)
+		val audioManager = mockk<AudioManager> {
+			every { requestAudioFocus(any()) } returns  AudioManager.AUDIOFOCUS_REQUEST_DELAYED
+		}
 
 		val audioFocusManagement = AudioFocusManagement(audioManager)
 		val promisedAudioFocus = audioFocusManagement.promiseAudioFocus(request)
@@ -36,12 +37,12 @@ class WhenRequestingFocus : AndroidContext() {
 	}
 
 	@Test
-	fun thenTheRequestIsGrantedUsingTheInnerListener() {
+	fun `then the request is granted using the inner listener`() {
 		assertThat(result.onAudioFocusChangeListener.toString()).isEqualTo(request.onAudioFocusChangeListener.toString())
 	}
 
 	@Test
-	fun thenOtherEventsAreForwardedCorrectly() {
+	fun `then other events are forwarded correctly`() {
 		assertThat(audioFocusEvents).containsOnly(
 			AudioManager.AUDIOFOCUS_REQUEST_DELAYED,
 			AudioManager.AUDIOFOCUS_REQUEST_GRANTED,

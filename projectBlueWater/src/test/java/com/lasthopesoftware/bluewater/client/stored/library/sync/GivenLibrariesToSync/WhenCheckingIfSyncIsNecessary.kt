@@ -13,51 +13,49 @@ import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class WhenCheckingIfSyncIsNecessary {
-	companion object {
-		private val isSyncNeeded by lazy {
-			val collector = mockk<CollectServiceFilesForSync>()
-			every { collector.promiseServiceFilesToSync(any()) } returns Promise(emptySet())
-			every { collector.promiseServiceFilesToSync(LibraryId(3)) } returns Promise(
-				listOf(
-					ServiceFile(1),
-					ServiceFile(18)
-				)
+	private val isSyncNeeded by lazy {
+		val collector = mockk<CollectServiceFilesForSync>()
+		every { collector.promiseServiceFilesToSync(any()) } returns Promise(emptySet())
+		every { collector.promiseServiceFilesToSync(LibraryId(3)) } returns Promise(
+			listOf(
+				ServiceFile(1),
+				ServiceFile(18)
 			)
-			every { collector.promiseServiceFilesToSync(LibraryId(10)) } returns Promise(
-				listOf(
-					ServiceFile(3),
-					ServiceFile(6)
-				)
+		)
+		every { collector.promiseServiceFilesToSync(LibraryId(10)) } returns Promise(
+			listOf(
+				ServiceFile(3),
+				ServiceFile(6)
 			)
+		)
 
-			val checkStoredFiles = mockk<CheckForAnyStoredFiles>()
-			with(checkStoredFiles) {
-				every { promiseIsAnyStoredFiles(any()) } returns false.toPromise()
-				every { promiseIsAnyStoredFiles(LibraryId(19)) } returns true.toPromise()
-			}
-
-			SyncChecker(
-				FakeLibraryProvider(
-					Library().setId(3),
-					Library().setId(11),
-					Library().setId(10),
-					Library().setId(14),
-					Library().setId(19),
-				),
-				collector,
-				checkStoredFiles
-			)
-				.promiseIsSyncNeeded()
-				.toExpiringFuture()
-				.get()
+		val checkStoredFiles = mockk<CheckForAnyStoredFiles>()
+		with(checkStoredFiles) {
+			every { promiseIsAnyStoredFiles(any()) } returns false.toPromise()
+			every { promiseIsAnyStoredFiles(LibraryId(19)) } returns true.toPromise()
 		}
+
+		SyncChecker(
+			FakeLibraryProvider(
+				Library().setId(3),
+				Library().setId(11),
+				Library().setId(10),
+				Library().setId(14),
+				Library().setId(19),
+			),
+			collector,
+			checkStoredFiles
+		)
+			.promiseIsSyncNeeded()
+			.toExpiringFuture()
+			.get()
 	}
 
 	@Test
-	fun thenSyncIsNeeded() {
+	fun `then sync is needed`() {
 		assertThat(isSyncNeeded).isTrue
 	}
 }

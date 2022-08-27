@@ -9,34 +9,35 @@ import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 
 class WhenHandlingTheConnectionSettingsChange {
-	companion object {
-		private val recordingApplicationMessageBus = RecordingApplicationMessageBus()
+	private val recordingApplicationMessageBus = RecordingApplicationMessageBus()
 
-		@JvmStatic
-		@BeforeClass
-		fun before() {
-			val mockSelectedLibraryIdentifierProvider = mockk<ProvideSelectedLibraryId>()
-			every { mockSelectedLibraryIdentifierProvider.selectedLibraryId } returns Promise(LibraryId(22))
+	private val mut by lazy {
+		val mockSelectedLibraryIdentifierProvider = mockk<ProvideSelectedLibraryId>()
+		every { mockSelectedLibraryIdentifierProvider.selectedLibraryId } returns Promise(LibraryId(22))
 
-			val selectedConnectionSettingsChangeReceiver = SelectedConnectionSettingsChangeReceiver(
-				mockSelectedLibraryIdentifierProvider,
-				recordingApplicationMessageBus
+		val selectedConnectionSettingsChangeReceiver = SelectedConnectionSettingsChangeReceiver(
+			mockSelectedLibraryIdentifierProvider,
+			recordingApplicationMessageBus
+		)
+
+		selectedConnectionSettingsChangeReceiver
+	}
+
+	@BeforeAll
+	fun act() {
+		mut(
+			ObservableConnectionSettingsLibraryStorage.ConnectionSettingsUpdated(
+				LibraryId(2)
 			)
-
-			selectedConnectionSettingsChangeReceiver(
-				ObservableConnectionSettingsLibraryStorage.ConnectionSettingsUpdated(
-					LibraryId(2)
-				)
-			)
-		}
+		)
 	}
 
 	@Test
-	fun thenAnUpdateIsNotSentOnTheMessageBus() {
+	fun `then an update is not sent on the message bus`() {
 		assertThat(recordingApplicationMessageBus.recordedMessages).isEmpty()
 	}
 }

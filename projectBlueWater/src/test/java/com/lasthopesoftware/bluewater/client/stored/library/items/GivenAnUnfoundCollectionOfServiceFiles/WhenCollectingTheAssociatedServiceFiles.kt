@@ -17,88 +17,87 @@ import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Condition
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 import java.io.FileNotFoundException
-import java.util.*
+import kotlin.random.Random.Default.nextInt
 
 class WhenCollectingTheAssociatedServiceFiles {
 
-	companion object {
-		private lateinit var collectedFiles: Collection<ServiceFile>
-		private val firstItemExpectedFiles = givenARandomCollectionOfFiles()
-		private val thirdItemExpectedFiles = givenARandomCollectionOfFiles()
-		private val syncToggledItems = HashMap<KeyedIdentifier, Boolean>()
-
-		@JvmStatic
-		@BeforeClass
-		fun before() {
-			val storedItemAccess: AccessStoredItems = object : FakeStoredItemAccess(
-				StoredItem(4, 1, StoredItem.ItemType.ITEM),
-				StoredItem(4, 2, StoredItem.ItemType.ITEM),
-				StoredItem(4, 3, StoredItem.ItemType.ITEM)
-			) {
-				override fun toggleSync(libraryId: LibraryId, itemId: KeyedIdentifier, enable: Boolean): Promise<Unit> {
-					syncToggledItems[itemId] = enable
-					return super.toggleSync(libraryId, itemId, enable)
-				}
+	private val firstItemExpectedFiles by lazy { givenARandomCollectionOfFiles() }
+	private val thirdItemExpectedFiles by lazy { givenARandomCollectionOfFiles() }
+	private val syncToggledItems = HashMap<KeyedIdentifier, Boolean>()
+	private val serviceFileCollector by lazy {
+		val storedItemAccess: AccessStoredItems = object : FakeStoredItemAccess(
+			StoredItem(4, 1, StoredItem.ItemType.ITEM),
+			StoredItem(4, 2, StoredItem.ItemType.ITEM),
+			StoredItem(4, 3, StoredItem.ItemType.ITEM)
+		) {
+			override fun toggleSync(libraryId: LibraryId, itemId: KeyedIdentifier, enable: Boolean): Promise<Unit> {
+				syncToggledItems[itemId] = enable
+				return super.toggleSync(libraryId, itemId, enable)
 			}
+		}
 
-			val fileListParameters = FileListParameters
-			val fileProvider = mockk<ProvideLibraryFiles>()
-			every {
-				fileProvider.promiseFiles(
-					LibraryId(4),
-					FileListParameters.Options.None,
-					*fileListParameters.getFileListParameters(ItemId(1)))
-			} returns firstItemExpectedFiles.toPromise()
-
-			every {
-				fileProvider.promiseFiles(
-					LibraryId(4),
-					FileListParameters.Options.None,
-					*fileListParameters.getFileListParameters(ItemId(2))
-				)
-			} returns Promise(FileNotFoundException())
-
-			every {
-				fileProvider.promiseFiles(
-					LibraryId(4),
-					FileListParameters.Options.None,
-					*fileListParameters.getFileListParameters(ItemId(3))
-				)
-			} returns thirdItemExpectedFiles.toPromise()
-
-			val serviceFileCollector = StoredItemServiceFileCollector(
-				storedItemAccess,
-				fileProvider,
-				fileListParameters
+		val fileListParameters = FileListParameters
+		val fileProvider = mockk<ProvideLibraryFiles>()
+		every {
+			fileProvider.promiseFiles(
+				LibraryId(4),
+				FileListParameters.Options.None,
+				*fileListParameters.getFileListParameters(ItemId(1))
 			)
+		} returns firstItemExpectedFiles.toPromise()
 
-			collectedFiles = serviceFileCollector
-				.promiseServiceFilesToSync(LibraryId(4))
-				.toExpiringFuture().get()!!
-		}
+		every {
+			fileProvider.promiseFiles(
+				LibraryId(4),
+				FileListParameters.Options.None,
+				*fileListParameters.getFileListParameters(ItemId(2))
+			)
+		} returns Promise(FileNotFoundException())
 
-		private fun givenARandomCollectionOfFiles(): List<ServiceFile> {
-			val random = Random()
-			val floor = random.nextInt(10000)
-			val ceiling = random.nextInt(10000 - floor) + floor
-			return IntRange(floor, ceiling).map { ServiceFile(it) }.toList()
-		}
+		every {
+			fileProvider.promiseFiles(
+				LibraryId(4),
+				FileListParameters.Options.None,
+				*fileListParameters.getFileListParameters(ItemId(3))
+			)
+		} returns thirdItemExpectedFiles.toPromise()
+
+		StoredItemServiceFileCollector(
+			storedItemAccess,
+			fileProvider,
+			fileListParameters
+		)
+	}
+
+	private lateinit var collectedFiles: Collection<ServiceFile>
+
+	@BeforeAll
+	fun act() {
+		collectedFiles = serviceFileCollector
+			.promiseServiceFilesToSync(LibraryId(4))
+			.toExpiringFuture().get()!!
 	}
 
 	@Test
-	fun thenOnlyTheFoundServiceFilesAreReturned() {
+	fun `then only the found service files are returned`() {
 		assertThat(collectedFiles).hasSameElementsAs(firstItemExpectedFiles.plus(thirdItemExpectedFiles).toHashSet())
 	}
 
 	@Test
-	fun thenTheFileThatWasNotFoundHadSyncToggledOff() {
+	fun `then the file that was not found had sync toggled off`() {
 		assertThat(syncToggledItems).hasEntrySatisfying(object : Condition<KeyedIdentifier>() {
 			override fun matches(value: KeyedIdentifier): Boolean = value.id == 2
 		}, object : Condition<Boolean>() {
 			override fun matches(value: Boolean): Boolean = !value
 		})
+	}
+
+	private fun givenARandomCollectionOfFiles(): List<ServiceFile> {
+		val floor = nextInt(10000)
+		val ceiling = nextInt(10000 - floor) + floor
+		return IntRange(floor, ceiling).map { ServiceFile(it) }.toList()
 	}
 }

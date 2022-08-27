@@ -8,56 +8,53 @@ import com.lasthopesoftware.bluewater.client.playback.file.fakes.FakeBufferingPl
 import com.lasthopesoftware.bluewater.client.playback.playlist.PlaylistPlayer
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
+import io.mockk.every
+import io.mockk.mockk
 import io.reactivex.Observable
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
-import org.junit.BeforeClass
-import org.junit.Test
-import org.mockito.Mockito
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 
 class WhenPausingAgain {
 
-	companion object {
-		private var originalPlayableFile: PositionedPlayableFile? = null
-		private var playbackHandler = FakeBufferingPlaybackHandler()
-		private var playableFile: PositionedPlayableFile? = null
+	private val playbackHandler = FakeBufferingPlaybackHandler()
+	private var originalPlayableFile: PositionedPlayableFile? = null
+	private var playableFile: PositionedPlayableFile? = null
 
-		@JvmStatic
-		@BeforeClass
-		fun before() {
-			playbackHandler = FakeBufferingPlaybackHandler()
-			val positionedPlaybackHandlerContainer = Promise(PositionedPlayableFile(
-				0,
-				playbackHandler,
-				NoTransformVolumeManager(),
-				ServiceFile(1)))
-			val preparedPlaybackFileQueue = Mockito.mock(SupplyQueuedPreparedFiles::class.java)
-			Mockito.`when`(preparedPlaybackFileQueue.promiseNextPreparedPlaybackFile(Duration.ZERO))
-				.thenReturn(positionedPlaybackHandlerContainer)
-			val playlistPlayback = PlaylistPlayer(preparedPlaybackFileQueue, Duration.ZERO)
-			Observable.create(playlistPlayback).subscribe()
-			originalPlayableFile = playlistPlayback.pause().toExpiringFuture().get()
-			playableFile = playlistPlayback.pause().toExpiringFuture().get()
+	@BeforeAll
+	fun before() {
+		val positionedPlaybackHandlerContainer = Promise(PositionedPlayableFile(
+			0,
+			playbackHandler,
+			NoTransformVolumeManager(),
+			ServiceFile(1)))
+		val preparedPlaybackFileQueue = mockk<SupplyQueuedPreparedFiles>().apply {
+			every { promiseNextPreparedPlaybackFile(Duration.ZERO) } returns positionedPlaybackHandlerContainer
 		}
+		val playlistPlayback = PlaylistPlayer(preparedPlaybackFileQueue, Duration.ZERO)
+		Observable.create(playlistPlayback).subscribe()
+		originalPlayableFile = playlistPlayback.pause().toExpiringFuture().get()
+		playableFile = playlistPlayback.pause().toExpiringFuture().get()
 	}
 
 	@Test
-	fun thenThePlayableFilesAreTheSameBecauseTheFunctionIsIdempotent() {
+	fun `then the playable files are the same because the function is idempotent`() {
 		assertThat(playableFile).isEqualTo(originalPlayableFile)
 	}
 
 	@Test
-	fun thenPlaybackIsStillPaused() {
+	fun `then playback is still paused`() {
 		assertThat(playbackHandler.isPlaying).isFalse
 	}
 
 	@Test
-	fun thenThePlaylistPositionIsCorrect() {
+	fun `then the playlist position is correct`() {
 		assertThat(playableFile?.playlistPosition).isEqualTo(0)
 	}
 
 	@Test
-	fun thenThePlayableFileIsCorrect() {
+	fun `then the playable file is correct`() {
 		assertThat(playableFile?.serviceFile).isEqualTo(ServiceFile(1))
 	}
 }

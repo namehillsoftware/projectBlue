@@ -6,23 +6,21 @@ import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTuple
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import org.assertj.core.api.Assertions
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class WhenSendingPlayedToServer {
 
-	companion object {
-		private val functionEnded by lazy {
-			val connectionProvider = FakeConnectionProvider()
-			connectionProvider.mapResponse({
-				FakeConnectionResponseTuple(
-					200,
-					ByteArray(0)
-				)
-			}, "File/Played", "File=15", "FileType=Key")
+	private val functionEnded by lazy {
+		val connectionProvider = FakeConnectionProvider()
+		connectionProvider.mapResponse({
+			FakeConnectionResponseTuple(
+				200,
+				ByteArray(0)
+			)
+		}, "File/Played", "File=15", "FileType=Key")
 
-			val updater = PlayedFilePlayStatsUpdater(connectionProvider)
-			updater.promisePlaystatsUpdate(ServiceFile(15)).toExpiringFuture().get()
-		}
+		val updater = PlayedFilePlayStatsUpdater(connectionProvider)
+		updater.promisePlaystatsUpdate(ServiceFile(15)).toExpiringFuture().get()
 	}
 
 	@Test

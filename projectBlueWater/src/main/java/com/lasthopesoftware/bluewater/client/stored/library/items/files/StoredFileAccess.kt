@@ -101,22 +101,26 @@ class StoredFileAccess(private val context: Context) : AccessStoredFiles {
 		}
 
 	private fun getStoredFile(library: Library, helper: RepositoryAccessHelper, serviceFile: ServiceFile): StoredFile? =
-		helper
-			.mapSql(
-				" SELECT * " +
-					" FROM " + StoredFileEntityInformation.tableName + " " +
-					" WHERE " + StoredFileEntityInformation.serviceIdColumnName + " = @" + StoredFileEntityInformation.serviceIdColumnName +
-					" AND " + StoredFileEntityInformation.libraryIdColumnName + " = @" + StoredFileEntityInformation.libraryIdColumnName
-			)
-			.addParameter(StoredFileEntityInformation.serviceIdColumnName, serviceFile.key)
-			.addParameter(StoredFileEntityInformation.libraryIdColumnName, library.id)
-			.fetchFirst()
+		helper.beginNonExclusiveTransaction().use {
+			helper
+				.mapSql(
+					" SELECT * " +
+						" FROM " + StoredFileEntityInformation.tableName + " " +
+						" WHERE " + StoredFileEntityInformation.serviceIdColumnName + " = @" + StoredFileEntityInformation.serviceIdColumnName +
+						" AND " + StoredFileEntityInformation.libraryIdColumnName + " = @" + StoredFileEntityInformation.libraryIdColumnName
+				)
+				.addParameter(StoredFileEntityInformation.serviceIdColumnName, serviceFile.key)
+				.addParameter(StoredFileEntityInformation.libraryIdColumnName, library.id)
+				.fetchFirst()
+		}
 
 	private fun getStoredFile(helper: RepositoryAccessHelper, storedFileId: Int): StoredFile? =
-		helper
-			.mapSql("SELECT * FROM " + StoredFileEntityInformation.tableName + " WHERE id = @id")
-			.addParameter("id", storedFileId)
-			.fetchFirst()
+		helper.beginNonExclusiveTransaction().use {
+			helper
+				.mapSql("SELECT * FROM " + StoredFileEntityInformation.tableName + " WHERE id = @id")
+				.addParameter("id", storedFileId)
+				.fetchFirst()
+		}
 
 	private fun createStoredFile(library: Library, repositoryAccessHelper: RepositoryAccessHelper, serviceFile: ServiceFile) =
 		repositoryAccessHelper.beginTransaction().use { closeableTransaction ->

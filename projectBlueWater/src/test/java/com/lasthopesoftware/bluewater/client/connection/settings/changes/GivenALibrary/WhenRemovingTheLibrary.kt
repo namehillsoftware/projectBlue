@@ -13,34 +13,35 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 
 class WhenRemovingTheLibrary {
 
-	companion object {
-		private val libraryToRemove = Library(_id = 14)
-		private val messageBus = RecordingApplicationMessageBus()
-		private val libraryStorage = mockk<ILibraryStorage>()
+	private val libraryToRemove = Library(_id = 14)
+	private val messageBus = RecordingApplicationMessageBus()
+	private val libraryStorage = mockk<ILibraryStorage>()
 
-		@JvmStatic
-		@BeforeClass
-		fun before() {
-			every { libraryStorage.removeLibrary(any()) } returns Unit.toPromise()
+	private val mut by lazy {
+		every { libraryStorage.removeLibrary(any()) } returns Unit.toPromise()
 
-			val connectionSettingsLookup = mockk<LookupConnectionSettings>()
-			every {
-				connectionSettingsLookup.lookupConnectionSettings(LibraryId(13))
-			} returns ConnectionSettings("codeOne").toPromise() andThen ConnectionSettings("codeOne").toPromise()
+		val connectionSettingsLookup = mockk<LookupConnectionSettings>()
+		every {
+			connectionSettingsLookup.lookupConnectionSettings(LibraryId(13))
+		} returns ConnectionSettings("codeOne").toPromise() andThen ConnectionSettings("codeOne").toPromise()
 
-			val connectionSettingsChangeDetectionLibraryStorage = ObservableConnectionSettingsLibraryStorage(
-				libraryStorage,
-				connectionSettingsLookup,
-				messageBus
-			)
+		val connectionSettingsChangeDetectionLibraryStorage = ObservableConnectionSettingsLibraryStorage(
+			libraryStorage,
+			connectionSettingsLookup,
+			messageBus
+		)
 
-			connectionSettingsChangeDetectionLibraryStorage.removeLibrary(libraryToRemove).toExpiringFuture().get()
-		}
+		connectionSettingsChangeDetectionLibraryStorage
+	}
+
+	@BeforeAll
+	fun act() {
+		mut.removeLibrary(libraryToRemove).toExpiringFuture().get()
 	}
 
 	@Test

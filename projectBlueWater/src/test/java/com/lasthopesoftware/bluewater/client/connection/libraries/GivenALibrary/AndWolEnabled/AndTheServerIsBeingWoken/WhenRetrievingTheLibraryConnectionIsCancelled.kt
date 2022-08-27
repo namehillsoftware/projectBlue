@@ -16,87 +16,89 @@ import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 import java.util.concurrent.TimeUnit
 
 class WhenRetrievingTheLibraryConnectionIsCancelled {
 
-	companion object {
-		private val urlProvider = mockk<IUrlProvider>()
-		private val statuses: MutableList<BuildingConnectionStatus> = ArrayList()
-		private var connectionProvider: IConnectionProvider? = null
-		private var isLibraryServerWakeRequested = false
-		private var isLibraryServerWakeCancelled = false
+	private val deferredConnectionSettings =
+		DeferredPromise<ConnectionSettings?>(ConnectionSettings(accessCode = "aB5nf", isWakeOnLanEnabled = true))
 
-		@BeforeClass
-		@JvmStatic
-		fun before() {
-			val validateConnectionSettings = mockk<ValidateConnectionSettings>()
-			every { validateConnectionSettings.isValid(any()) } returns true
-
-			val deferredConnectionSettings = DeferredPromise<ConnectionSettings?>(ConnectionSettings(accessCode = "aB5nf", isWakeOnLanEnabled = true))
-			val lookupConnection = mockk<LookupConnectionSettings>()
-			every {
-				lookupConnection.lookupConnectionSettings(LibraryId(3))
-			} returns deferredConnectionSettings
-
-			val liveUrlProvider = mockk<ProvideLiveUrl>()
-			every { liveUrlProvider.promiseLiveUrl(LibraryId(3)) } returns Promise(urlProvider)
-
-			val deferredLibraryWake = object : DeferredPromise<Unit>(Unit) {
-				override fun run() {
-					isLibraryServerWakeCancelled = true
-				}
-			}
-
-			val libraryConnectionProvider = LibraryConnectionProvider(
-                validateConnectionSettings,
-                lookupConnection,
-                {
-                    isLibraryServerWakeRequested = true
-					deferredLibraryWake
-                },
-                liveUrlProvider,
-                OkHttpFactory
-            )
-
-			val futureConnectionProvider =
-				libraryConnectionProvider
-					.promiseLibraryConnection(LibraryId(3))
-					.apply {
-						progress.then(statuses::add)
-						updates(statuses::add)
-					}
-					.toExpiringFuture()
-
-			deferredConnectionSettings.resolve()
-
-			futureConnectionProvider.cancel(true)
-
-			deferredLibraryWake.resolve()
-
-			connectionProvider = futureConnectionProvider[5, TimeUnit.SECONDS]
+	private val deferredLibraryWake = object : DeferredPromise<Unit>(Unit) {
+		override fun run() {
+			isLibraryServerWakeCancelled = true
 		}
 	}
 
+	private val mut by lazy {
+		val validateConnectionSettings = mockk<ValidateConnectionSettings>()
+		every { validateConnectionSettings.isValid(any()) } returns true
+
+		val lookupConnection = mockk<LookupConnectionSettings>()
+		every {
+			lookupConnection.lookupConnectionSettings(LibraryId(3))
+		} returns deferredConnectionSettings
+
+		val liveUrlProvider = mockk<ProvideLiveUrl>()
+		every { liveUrlProvider.promiseLiveUrl(LibraryId(3)) } returns Promise(mockk<IUrlProvider>())
+
+		val libraryConnectionProvider = LibraryConnectionProvider(
+			validateConnectionSettings,
+			lookupConnection,
+			{
+				isLibraryServerWakeRequested = true
+				deferredLibraryWake
+			},
+			liveUrlProvider,
+			OkHttpFactory
+		)
+
+		libraryConnectionProvider
+	}
+
+	private val statuses: MutableList<BuildingConnectionStatus> = ArrayList()
+	private var connectionProvider: IConnectionProvider? = null
+	private var isLibraryServerWakeRequested = false
+	private var isLibraryServerWakeCancelled = false
+
+	@BeforeAll
+	fun act() {
+		val futureConnectionProvider =
+			mut
+				.promiseLibraryConnection(LibraryId(3))
+				.apply {
+					progress.then(statuses::add)
+					updates(statuses::add)
+				}
+				.toExpiringFuture()
+
+		deferredConnectionSettings.resolve()
+
+		futureConnectionProvider.cancel(true)
+
+		deferredLibraryWake.resolve()
+
+		connectionProvider = futureConnectionProvider[5, TimeUnit.SECONDS]
+	}
+
 	@Test
-	fun thenTheLibraryAwakeningIsRequested() {
+	fun `then the library awakening is requested`() {
 		assertThat(isLibraryServerWakeRequested).isTrue
 	}
 
 	@Test
-	fun thenTheLibraryAwakeningIsCancelled() {
+	fun `then the library awakening is cancelled`() {
 		assertThat(isLibraryServerWakeCancelled).isTrue
 	}
 
 	@Test
-	fun thenTheConnectionIsNull() {
+	fun `then the connection is null`() {
 		assertThat(connectionProvider).isNull()
 	}
 
 	@Test
-	fun thenGettingLibraryIsBroadcast() {
+	fun `then getting library is broadcast`() {
 		assertThat(statuses)
 			.containsExactly(
 				BuildingConnectionStatus.GettingLibrary,

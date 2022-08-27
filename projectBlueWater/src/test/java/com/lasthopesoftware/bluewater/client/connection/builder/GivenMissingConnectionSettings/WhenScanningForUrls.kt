@@ -9,43 +9,45 @@ import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 import java.util.concurrent.ExecutionException
 
 class WhenScanningForUrls {
 
-	companion object {
-		private var exception: MissingConnectionSettingsException? = null
+	private val services by lazy {
+		val connectionSettingsLookup = mockk<LookupConnectionSettings>()
+		every { connectionSettingsLookup.lookupConnectionSettings(any()) } returns Promise.empty()
 
-		@BeforeClass
-		@JvmStatic
-		fun before() {
-			val connectionSettingsLookup = mockk<LookupConnectionSettings>()
-			every { connectionSettingsLookup.lookupConnectionSettings(any()) } returns Promise.empty()
+		val urlScanner = UrlScanner(
+			mockk(),
+			mockk(),
+			mockk(),
+			connectionSettingsLookup,
+			mockk()
+		)
 
-			val urlScanner = UrlScanner(
-				mockk(),
-				mockk(),
-				mockk(),
-				connectionSettingsLookup,
-				mockk()
-			)
-			try {
-				urlScanner.promiseBuiltUrlProvider(LibraryId(32)).toExpiringFuture().get()
-			} catch (e: ExecutionException) {
-				exception = e.cause as? MissingConnectionSettingsException ?: throw e
-			}
+		urlScanner
+	}
+
+	private var exception: MissingConnectionSettingsException? = null
+
+	@BeforeAll
+	fun before() {
+		try {
+			services.promiseBuiltUrlProvider(LibraryId(32)).toExpiringFuture().get()
+		} catch (e: ExecutionException) {
+			exception = e.cause as? MissingConnectionSettingsException ?: throw e
 		}
 	}
 
 	@Test
-	fun thenTheCorrectExceptionIsThrown() {
+	fun `then the correct exception is thrown`() {
 		assertThat(exception).isNotNull
 	}
 
 	@Test
-	fun thenTheExceptionMentionsTheLibrary() {
+	fun `then the exception mentions the library`() {
 		assertThat(exception?.message).isEqualTo("Connection settings were not found for ${LibraryId(32)}")
 	}
 }

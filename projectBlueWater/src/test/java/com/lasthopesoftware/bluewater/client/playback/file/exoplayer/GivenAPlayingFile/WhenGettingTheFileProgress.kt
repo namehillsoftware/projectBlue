@@ -4,45 +4,41 @@ import com.lasthopesoftware.bluewater.client.playback.exoplayer.PromisingExoPlay
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
-import org.assertj.core.api.AssertionsForClassTypes
+import io.mockk.every
+import io.mockk.mockk
+import org.assertj.core.api.AssertionsForClassTypes.assertThat
 import org.joda.time.Duration
-import org.junit.BeforeClass
-import org.junit.Test
-import org.mockito.ArgumentMatchers.anyBoolean
-import org.mockito.Mockito
-import java.util.concurrent.ExecutionException
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeoutException
 
 class WhenGettingTheFileProgress {
 
-	companion object {
-		private var progress: Duration? = null
-		private var duration: Duration? = null
+	private var progress: Duration? = null
+	private var duration: Duration? = null
 
-		@JvmStatic
-		@BeforeClass
-		@Throws(InterruptedException::class, TimeoutException::class, ExecutionException::class)
-		fun before() {
-			val mockMediaPlayer = Mockito.mock(PromisingExoPlayer::class.java)
-			Mockito.`when`(mockMediaPlayer.setPlayWhenReady(anyBoolean())).thenReturn(mockMediaPlayer.toPromise())
-			Mockito.`when`(mockMediaPlayer.getPlayWhenReady()).thenReturn(true.toPromise())
-			Mockito.`when`(mockMediaPlayer.getCurrentPosition()).thenReturn(75L.toPromise())
-			Mockito.`when`(mockMediaPlayer.getDuration()).thenReturn(101L.toPromise())
-			val exoPlayerPlaybackHandler = ExoPlayerPlaybackHandler(mockMediaPlayer)
-			val playback = exoPlayerPlaybackHandler.promisePlayback().toExpiringFuture().get(1, TimeUnit.SECONDS)
-			progress = playback?.promisePlayedFile()?.progress?.toExpiringFuture()?.get(1, TimeUnit.SECONDS)
-			duration = playback?.duration?.toExpiringFuture()?.get(1, TimeUnit.SECONDS)
+	@BeforeAll
+	fun act() {
+		val mockMediaPlayer = mockk<PromisingExoPlayer>(relaxed = true).apply {
+			every { setPlayWhenReady(any()) } returns this.toPromise()
+			every { getPlayWhenReady() } returns true.toPromise()
+			every { getCurrentPosition() } returns 75L.toPromise()
+			every { getDuration() } returns 101L.toPromise()
 		}
+
+		val exoPlayerPlaybackHandler = ExoPlayerPlaybackHandler(mockMediaPlayer)
+		val playback = exoPlayerPlaybackHandler.promisePlayback().toExpiringFuture().get(1, TimeUnit.SECONDS)
+		progress = playback?.promisePlayedFile()?.progress?.toExpiringFuture()?.get(1, TimeUnit.SECONDS)
+		duration = playback?.duration?.toExpiringFuture()?.get(1, TimeUnit.SECONDS)
 	}
 
 	@Test
-	fun thenTheFileProgressIsCorrect() {
-		AssertionsForClassTypes.assertThat(progress).isEqualTo(Duration.millis(75))
+	fun `then the file progress is correct`() {
+		assertThat(progress).isEqualTo(Duration.millis(75))
 	}
 
 	@Test
-	fun thenTheFileDurationIsCorrect() {
-		AssertionsForClassTypes.assertThat(duration).isEqualTo(Duration.millis(101))
+	fun `then the file duration is correct`() {
+		assertThat(duration).isEqualTo(Duration.millis(101))
 	}
 }

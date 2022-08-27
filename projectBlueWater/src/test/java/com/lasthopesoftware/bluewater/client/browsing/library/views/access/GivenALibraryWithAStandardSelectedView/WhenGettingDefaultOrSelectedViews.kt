@@ -8,10 +8,34 @@ import com.lasthopesoftware.bluewater.client.browsing.library.views.access.Selec
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ExpiringFuturePromise
 import com.namehillsoftware.handoff.promises.Promise
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 
 class WhenGettingDefaultOrSelectedViews {
+
+	private val libraryStorage = SavedLibraryRecordingStorage()
+	private val expectedView = StandardViewItem(5, null)
+	private var selectedLibraryView: ViewItem? = null
+
+	@BeforeAll
+	fun before() {
+		val selectedLibraryViewProvider = SelectedLibraryViewProvider(
+			{ Promise(Library().setSelectedView(5)) },
+			{
+				Promise(
+					listOf(
+						StandardViewItem(3, null),
+						StandardViewItem(5, null),
+						StandardViewItem(8, null)
+					)
+				)
+			},
+			libraryStorage
+		)
+		selectedLibraryView =
+			ExpiringFuturePromise(selectedLibraryViewProvider.promiseSelectedOrDefaultView()).get()
+	}
+
 	@Test
 	fun thenTheSelectedViewsAreCorrect() {
 		assertThat(selectedLibraryView).isEqualTo(expectedView)
@@ -20,31 +44,5 @@ class WhenGettingDefaultOrSelectedViews {
 	@Test
 	fun thenTheLibraryIsNotSaved() {
 		assertThat(libraryStorage.savedLibrary).isNull()
-	}
-
-	companion object {
-		private val libraryStorage = SavedLibraryRecordingStorage()
-		private val expectedView = StandardViewItem(5, null)
-		private var selectedLibraryView: ViewItem? = null
-
-		@BeforeClass
-		@JvmStatic
-		fun before() {
-			val selectedLibraryViewProvider = SelectedLibraryViewProvider(
-				{ Promise(Library().setSelectedView(5)) },
-				{
-					Promise(
-						listOf(
-							StandardViewItem(3, null),
-							StandardViewItem(5, null),
-							StandardViewItem(8, null)
-						)
-					)
-				},
-				libraryStorage
-			)
-			selectedLibraryView =
-				ExpiringFuturePromise(selectedLibraryViewProvider.promiseSelectedOrDefaultView()).get()
-		}
 	}
 }

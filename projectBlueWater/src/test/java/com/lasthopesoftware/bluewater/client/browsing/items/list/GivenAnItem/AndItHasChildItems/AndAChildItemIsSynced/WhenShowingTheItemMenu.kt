@@ -15,52 +15,49 @@ import com.lasthopesoftware.resources.RecordingTypedMessageBus
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 
 private const val libraryId = 391
 private const val rootItemId = 217
 private const val childItemId = 637
 
-private val recordingMessageBus = RecordingTypedMessageBus<ItemListMenuMessage>()
-
-private val viewModel by lazy {
-	val selectedLibraryIdProvider = mockk<ProvideSelectedLibraryId>().apply {
-		every { selectedLibraryId } returns LibraryId(libraryId).toPromise()
-	}
-
-	val itemProvider = mockk<ProvideItems>().apply {
-		every { promiseItems(LibraryId(libraryId), ItemId(rootItemId)) } returns listOf(
-			Item(55),
-			Item(137),
-			Item(766),
-			Item(childItemId),
-			Item(812),
-		).toPromise()
-	}
-
-	val storedItemAccess = FakeStoredItemAccess(StoredItem(libraryId, childItemId, StoredItem.ItemType.ITEM))
-
-	ItemListViewModel(
-		selectedLibraryIdProvider,
-		itemProvider,
-		mockk(relaxed = true, relaxUnitFun = true),
-		storedItemAccess,
-		mockk(),
-		mockk(),
-		recordingMessageBus,
-	)
-}
-
 class WhenShowingTheItemMenu {
 
-	companion object {
-		@BeforeClass
-		@JvmStatic
-		fun act() {
-			viewModel.loadItem(Item(rootItemId, "leaf")).toExpiringFuture().get()
-			viewModel.items.value[3].showMenu()
+	private val recordingMessageBus = RecordingTypedMessageBus<ItemListMenuMessage>()
+
+	private val viewModel by lazy {
+		val selectedLibraryIdProvider = mockk<ProvideSelectedLibraryId>().apply {
+			every { selectedLibraryId } returns LibraryId(libraryId).toPromise()
 		}
+
+		val itemProvider = mockk<ProvideItems>().apply {
+			every { promiseItems(LibraryId(libraryId), ItemId(rootItemId)) } returns listOf(
+				Item(55),
+				Item(137),
+				Item(766),
+				Item(childItemId),
+				Item(812),
+			).toPromise()
+		}
+
+		val storedItemAccess = FakeStoredItemAccess(StoredItem(libraryId, childItemId, StoredItem.ItemType.ITEM))
+
+		ItemListViewModel(
+			selectedLibraryIdProvider,
+			itemProvider,
+			mockk(relaxed = true, relaxUnitFun = true),
+			storedItemAccess,
+			mockk(),
+			mockk(),
+			recordingMessageBus,
+		)
+	}
+
+	@BeforeAll
+	fun act() {
+		viewModel.loadItem(Item(rootItemId, "leaf")).toExpiringFuture().get()
+		viewModel.items.value[3].showMenu()
 	}
 
 	@Test
