@@ -1,7 +1,7 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.media.image.GivenAServiceFile.WithoutAnImage
+package com.lasthopesoftware.bluewater.client.browsing.files.image.GivenAServiceFile
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.items.media.image.bytes.RemoteImageAccess
+import com.lasthopesoftware.bluewater.client.browsing.files.image.bytes.RemoteImageAccess
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTuple
@@ -14,12 +14,7 @@ class WhenGettingTheImageBytes {
 	private val imageBytes by lazy {
 		val fakeConnectionProvider = FakeConnectionProvider()
 		fakeConnectionProvider.mapResponse(
-			{
-				FakeConnectionResponseTuple(
-					500,
-					"<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\" ?>\r\n<Response Status=\"Failure\"/>\r\n".toByteArray()
-				)
-			},
+			{ FakeConnectionResponseTuple(200, byteArrayOf(39, 127, 8)) },
 			"File/GetImage",
 			"File=31",
 			"Type=Full",
@@ -27,6 +22,7 @@ class WhenGettingTheImageBytes {
 			"Format=jpg",
 			"FillTransparency=ffffff"
 		)
+
 		val memoryCachedImageAccess = RemoteImageAccess(
 			FakeLibraryConnectionProvider(mapOf(Pair(LibraryId(21), fakeConnectionProvider))))
 
@@ -34,7 +30,7 @@ class WhenGettingTheImageBytes {
 	}
 
 	@Test
-	fun thenTheBytesAreEmpty() {
-		assertThat(imageBytes).isEmpty()
+	fun thenTheBytesAreCorrect() {
+		assertThat(imageBytes).isEqualTo(byteArrayOf(39, 127, 8))
 	}
 }

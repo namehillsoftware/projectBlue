@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.media.image
+package com.lasthopesoftware.bluewater.client.browsing.files.image
 
 import android.graphics.Bitmap
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile

@@ -3,10 +3,10 @@ package com.lasthopesoftware.bluewater.client.browsing.remote
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaMetadataCompat
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideImages
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideScopedFileProperties
-import com.lasthopesoftware.bluewater.client.browsing.items.media.image.ProvideImages
 import com.namehillsoftware.handoff.promises.Promise
 
 class MediaItemServiceFileLookup(

@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.media.image.bytes.cache
+package com.lasthopesoftware.bluewater.client.browsing.files.image.bytes.cache
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider

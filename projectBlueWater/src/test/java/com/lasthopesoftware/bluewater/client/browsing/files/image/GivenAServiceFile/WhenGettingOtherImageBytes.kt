@@ -1,7 +1,7 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.media.image.GivenAServiceFile
+package com.lasthopesoftware.bluewater.client.browsing.files.image.GivenAServiceFile
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.items.media.image.bytes.RemoteImageAccess
+import com.lasthopesoftware.bluewater.client.browsing.files.image.bytes.RemoteImageAccess
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTuple

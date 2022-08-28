@@ -1,13 +1,13 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.media.image.bytes.cache
+package com.lasthopesoftware.bluewater.client.browsing.files.image.bytes.cache
 
 import android.content.Context
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.ImageDiskFileCacheFactory
+import com.lasthopesoftware.bluewater.client.browsing.files.image.bytes.GetRawImages
+import com.lasthopesoftware.bluewater.client.browsing.files.image.bytes.RemoteImageAccess
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
-import com.lasthopesoftware.bluewater.client.browsing.items.media.image.bytes.GetRawImages
-import com.lasthopesoftware.bluewater.client.browsing.items.media.image.bytes.RemoteImageAccess
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager

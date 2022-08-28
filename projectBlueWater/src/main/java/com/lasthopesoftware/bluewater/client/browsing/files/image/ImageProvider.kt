@@ -1,9 +1,9 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.media.image
+package com.lasthopesoftware.bluewater.client.browsing.files.image
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.items.media.image.bytes.GetRawImages
+import com.lasthopesoftware.bluewater.client.browsing.files.image.bytes.GetRawImages
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise

@@ -1,10 +1,10 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.media.image.GivenAServiceFile.WithoutAnyBytes
+package com.lasthopesoftware.bluewater.client.browsing.files.image.GivenAServiceFile.WithoutAnyBytes
 
 import android.graphics.Bitmap
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.items.media.image.ImageProvider
-import com.lasthopesoftware.bluewater.client.browsing.items.media.image.bytes.GetRawImages
+import com.lasthopesoftware.bluewater.client.browsing.files.image.ImageProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.image.bytes.GetRawImages
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture

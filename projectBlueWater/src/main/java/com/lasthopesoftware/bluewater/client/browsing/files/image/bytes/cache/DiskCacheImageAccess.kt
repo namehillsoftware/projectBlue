@@ -1,8 +1,8 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.media.image.bytes.cache
+package com.lasthopesoftware.bluewater.client.browsing.files.image.bytes.cache
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.IProvideCaches
-import com.lasthopesoftware.bluewater.client.browsing.items.media.image.bytes.GetRawImages
+import com.lasthopesoftware.bluewater.client.browsing.files.image.bytes.GetRawImages
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise

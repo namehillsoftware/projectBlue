@@ -1,16 +1,16 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.media.image
+package com.lasthopesoftware.bluewater.client.browsing.files.image
 
 import android.content.Context
 import android.graphics.Bitmap
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.ImageDiskFileCacheFactory
+import com.lasthopesoftware.bluewater.client.browsing.files.image.bytes.RemoteImageAccess
+import com.lasthopesoftware.bluewater.client.browsing.files.image.bytes.cache.DiskCacheImageAccess
+import com.lasthopesoftware.bluewater.client.browsing.files.image.bytes.cache.ImageCacheKeyLookup
+import com.lasthopesoftware.bluewater.client.browsing.files.image.bytes.cache.LookupImageCacheKey
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
-import com.lasthopesoftware.bluewater.client.browsing.items.media.image.bytes.RemoteImageAccess
-import com.lasthopesoftware.bluewater.client.browsing.items.media.image.bytes.cache.DiskCacheImageAccess
-import com.lasthopesoftware.bluewater.client.browsing.items.media.image.bytes.cache.ImageCacheKeyLookup
-import com.lasthopesoftware.bluewater.client.browsing.items.media.image.bytes.cache.LookupImageCacheKey
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.StaticLibraryIdentifierProvider
