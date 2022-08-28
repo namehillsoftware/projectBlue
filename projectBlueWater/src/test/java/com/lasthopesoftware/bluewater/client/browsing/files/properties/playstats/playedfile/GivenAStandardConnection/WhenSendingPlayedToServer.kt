@@ -5,7 +5,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTuple
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
-import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class WhenSendingPlayedToServer {
@@ -25,6 +25,6 @@ class WhenSendingPlayedToServer {
 
 	@Test
 	fun thenTheFileIsUpdated() {
-		Assertions.assertThat(functionEnded).isNull()
+		assertThat(functionEnded).isEqualTo(Unit)
 	}
 }

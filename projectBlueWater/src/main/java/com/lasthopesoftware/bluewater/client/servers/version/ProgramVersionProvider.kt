@@ -17,7 +17,7 @@ class ProgramVersionProvider(private val connectionProvider: IConnectionProvider
 						var major = 0
 						var minor = 0
 						var patch = 0
-						if (semVerParts.size > 0) major = semVerParts[0].toInt()
+						if (semVerParts.isNotEmpty()) major = semVerParts[0].toInt()
 						if (semVerParts.size > 1) minor = semVerParts[1].toInt()
 						if (semVerParts.size > 2) patch = semVerParts[2].toInt()
 						SemanticVersion(major, minor, patch)
