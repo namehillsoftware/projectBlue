@@ -6,6 +6,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideImages
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideScopedFileProperties
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.shared.images.ProvideDefaultImage
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
@@ -35,7 +36,8 @@ class FileDetailsViewModel(
 		)
 	}
 
-	private var activeServiceFile: ServiceFile? = null
+	private var activePlaylist = emptyList<ServiceFile>()
+	private var activePositionedFile: PositionedFile? = null
 
 	private val mutableFileName = MutableStateFlow("")
 	private val mutableArtist = MutableStateFlow("")
@@ -56,8 +58,39 @@ class FileDetailsViewModel(
 	val coverArt = mutableCoverArt.asStateFlow()
 	val rating = mutableRating.asStateFlow()
 
+	fun loadFromList(playlist: List<ServiceFile>, position: Int): Promise<Unit> {
+		val serviceFile = playlist[position]
+		activePositionedFile = PositionedFile(position, serviceFile)
+		activePlaylist = playlist
+
+		mutableIsLoading.value = true
+		val filePropertiesSetPromise = scopedFilePropertiesProvider
+			.promiseFileProperties(serviceFile)
+			.then { fileProperties ->
+				fileProperties[KnownFileProperties.NAME]?.also { mutableFileName.value = it }
+				fileProperties[KnownFileProperties.ARTIST]?.also { mutableArtist.value = it }
+				fileProperties[KnownFileProperties.RATING]?.toIntOrNull()?.also { mutableRating.value = it }
+
+				mutableFileProperties.value = fileProperties.entries
+					.filterNot { e -> propertiesToSkip.contains(e.key) }
+					.sortedBy { e -> e.key }
+			}
+			.keepPromise()
+
+		val bitmapSetPromise = promisedSetDefaultCoverArt // Ensure default cover art is first set before apply cover art from file properties
+			.eventually { default ->
+				imageProvider
+					.promiseFileBitmap(serviceFile)
+					.then { bitmap -> mutableCoverArt.value = bitmap ?: default }
+			}
+
+		return Promise
+			.whenAll(filePropertiesSetPromise, bitmapSetPromise)
+			.then { mutableIsLoading.value = false }
+	}
+
 	fun loadFile(serviceFile: ServiceFile): Promise<Unit> {
-		activeServiceFile = serviceFile
+		activePositionedFile = PositionedFile(0, serviceFile)
 
 		mutableIsLoading.value = true
 		val filePropertiesSetPromise = scopedFilePropertiesProvider
@@ -86,10 +119,11 @@ class FileDetailsViewModel(
 	}
 
 	fun addToNowPlaying() {
-		activeServiceFile?.let(controlPlayback::addToPlaylist)
+		activePositionedFile?.serviceFile?.let(controlPlayback::addToPlaylist)
 	}
 
 	fun play() {
-		TODO("Not yet implemented")
+		val positionedFile = activePositionedFile ?: return
+		controlPlayback.startPlaylist(activePlaylist, positionedFile.playlistPosition)
 	}
 }
