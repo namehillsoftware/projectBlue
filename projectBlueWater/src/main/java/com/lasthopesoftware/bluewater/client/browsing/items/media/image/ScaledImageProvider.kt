@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.browsing.items.media.image
 
 import android.content.Context
 import android.graphics.Bitmap
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.resources.executors.ThreadPools

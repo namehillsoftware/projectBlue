@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.GivenAnEmptySetOfStoredItems
 
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.ProvideLibraryFiles
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
+import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideLibraryFiles
+import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.FakeStoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector

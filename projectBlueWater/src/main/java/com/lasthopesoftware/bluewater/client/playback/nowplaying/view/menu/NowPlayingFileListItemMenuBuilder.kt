@@ -11,9 +11,9 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.lasthopesoftware.bluewater.R
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.details.ViewFileDetailsClickListener
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.menu.FileListItemNowPlayingRegistrar
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.menu.FileNameTextViewSetter
+import com.lasthopesoftware.bluewater.client.browsing.files.details.ViewFileDetailsClickListener
+import com.lasthopesoftware.bluewater.client.browsing.files.menu.FileListItemNowPlayingRegistrar
+import com.lasthopesoftware.bluewater.client.browsing.files.menu.FileNameTextViewSetter
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.BuildListItemMenuViewContainers
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener.Companion.tryFlipToPreviousView

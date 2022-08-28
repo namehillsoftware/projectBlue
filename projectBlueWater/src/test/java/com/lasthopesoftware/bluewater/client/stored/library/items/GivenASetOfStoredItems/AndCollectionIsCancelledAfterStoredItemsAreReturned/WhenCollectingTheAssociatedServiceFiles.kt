@@ -1,9 +1,9 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.GivenASetOfStoredItems.AndCollectionIsCancelledAfterStoredItemsAreReturned
 
+import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideLibraryFiles
+import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.ProvideLibraryFiles
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.FakeDeferredStoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem

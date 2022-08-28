@@ -1,0 +1,73 @@
+package com.lasthopesoftware.bluewater.client.browsing.files.list.GivenAServiceFile
+
+import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusableTrackHeadlineViewModel
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideScopedFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.resources.RecordingTypedMessageBus
+import com.lasthopesoftware.resources.strings.GetStringResources
+import io.mockk.every
+import io.mockk.mockk
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
+
+class WhenShowingTheMenu {
+
+	private val recordingMessageBus = RecordingTypedMessageBus<ItemListMenuMessage>()
+
+	private val viewModel by lazy {
+		val filePropertiesProvider = mockk<ProvideScopedFileProperties>().apply {
+			every { promiseFileProperties(ServiceFile(99)) } returns mapOf(
+				Pair("Artist", "fool"),
+				Pair("Name", "coin"),
+			).toPromise()
+		}
+
+		val stringResource = mockk<GetStringResources>().apply {
+			every { loading } returns "past"
+			every { unknownArtist } returns "next"
+			every { unknownTrack } returns "shout"
+		}
+
+		ReusableTrackHeadlineViewModel(
+			filePropertiesProvider,
+			stringResource,
+			mockk(),
+			mockk(),
+			recordingMessageBus,
+		)
+	}
+
+	@BeforeAll
+	fun act() {
+		viewModel.promiseUpdate(ServiceFile(99)).toExpiringFuture().get()
+		viewModel.showMenu()
+	}
+
+	@Test
+	fun `then a menu shown message is sent`() {
+		assertThat(
+			recordingMessageBus.recordedMessages.filterIsInstance<ItemListMenuMessage.MenuShown>()
+				.map { it.menuItem }).containsOnlyOnce(viewModel)
+	}
+
+	@Test
+	fun thenTheArtistIsCorrect() {
+		assertThat(viewModel.artist.value)
+			.isEqualTo("fool")
+	}
+
+	@Test
+	fun thenTheTrackNameIsCorrect() {
+		assertThat(viewModel.title.value)
+			.isEqualTo("coin")
+	}
+
+	@Test
+	fun `then the menu is shown`() {
+		assertThat(viewModel.isMenuShown.value).isTrue
+	}
+}

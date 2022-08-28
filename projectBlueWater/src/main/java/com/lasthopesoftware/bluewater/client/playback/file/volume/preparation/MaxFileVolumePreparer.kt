@@ -1,10 +1,9 @@
 package com.lasthopesoftware.bluewater.client.playback.file.volume.preparation
 
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile
 import com.lasthopesoftware.bluewater.client.playback.file.volume.ProvideMaxFileVolume
-import com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.MaxFileVolumePreparer
 import com.namehillsoftware.handoff.promises.Promise
 import org.joda.time.Duration
 import org.slf4j.LoggerFactory

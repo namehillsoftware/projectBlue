@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.engine
 
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.IStartPlayback
 import com.lasthopesoftware.bluewater.client.playback.engine.events.*
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.ManagePlaybackQueues

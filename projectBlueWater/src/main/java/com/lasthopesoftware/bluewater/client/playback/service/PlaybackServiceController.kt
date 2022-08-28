@@ -1,8 +1,8 @@
 package com.lasthopesoftware.bluewater.client.playback.service
 
 import android.content.Context
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.stringlist.FileStringListUtilities
+import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.FileStringListUtilities
 import com.namehillsoftware.handoff.promises.Promise
 
 class PlaybackServiceController(private val context: Context) : ControlPlaybackService {

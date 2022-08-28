@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.browsing.items.media.image.GivenAS
 
 import android.graphics.Bitmap
 import com.lasthopesoftware.AndroidContext
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.ImageProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.bytes.GetRawImages
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId

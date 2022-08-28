@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.browsing.items.media.image
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.media.image.bytes.GetRawImages
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
