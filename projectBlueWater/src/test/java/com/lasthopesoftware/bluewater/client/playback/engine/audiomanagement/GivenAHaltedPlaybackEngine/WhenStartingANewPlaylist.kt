@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.audiomanagement.GivenAHaltedPlaybackEngine
 
 import androidx.media.AudioFocusRequestCompat
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.playback.engine.AudioManagingPlaybackStateChanger
 import com.lasthopesoftware.bluewater.client.playback.engine.ChangePlaybackState
 import com.lasthopesoftware.bluewater.shared.android.audiofocus.ControlAudioFocus

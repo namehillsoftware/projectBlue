@@ -1,8 +1,8 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.media.audio.uri.GivenTheUriIsNotAvailable
 
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.CacheFiles
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.uri.RemoteFileUriProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.cached.CacheFiles
+import com.lasthopesoftware.bluewater.client.browsing.files.uri.RemoteFileUriProvider
 import com.lasthopesoftware.bluewater.client.playback.caching.uri.CachedAudioFileUriProvider
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
 import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings

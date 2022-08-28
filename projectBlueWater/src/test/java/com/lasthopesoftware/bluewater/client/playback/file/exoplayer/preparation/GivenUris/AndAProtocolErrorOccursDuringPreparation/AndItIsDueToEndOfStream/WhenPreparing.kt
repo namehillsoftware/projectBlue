@@ -6,7 +6,7 @@ import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.source.BaseMediaSource
 import com.google.android.exoplayer2.upstream.DataSpec
 import com.google.android.exoplayer2.upstream.HttpDataSource
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.PromisingExoPlayer
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.ProvideExoPlayers
 import com.lasthopesoftware.bluewater.client.playback.file.EmptyPlaybackHandler

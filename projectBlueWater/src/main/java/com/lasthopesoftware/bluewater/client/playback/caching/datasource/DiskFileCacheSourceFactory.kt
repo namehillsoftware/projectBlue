@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.caching.datasource
 
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.stream.supplier.SupplyCacheStreams
+import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.supplier.SupplyCacheStreams
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.ProvideHttpDataSourceFactory
 
 class DiskFileCacheSourceFactory(

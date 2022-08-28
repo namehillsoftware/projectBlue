@@ -2,10 +2,10 @@ package com.lasthopesoftware.bluewater.client.browsing.remote.GivenAServiceFile
 
 import android.graphics.BitmapFactory
 import android.support.v4.media.MediaBrowserCompat
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.FakeScopedCachedFilesPropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.KnownFileProperties
-import com.lasthopesoftware.bluewater.client.browsing.items.media.image.ProvideImages
+import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FakeScopedCachedFilesPropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideImages
 import com.lasthopesoftware.bluewater.client.browsing.remote.MediaItemServiceFileLookup
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise

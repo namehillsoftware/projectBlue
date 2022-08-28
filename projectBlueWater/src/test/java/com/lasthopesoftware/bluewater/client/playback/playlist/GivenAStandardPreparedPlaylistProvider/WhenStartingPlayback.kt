@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.playlist.GivenAStandardPreparedPlaylistProvider
 
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.SupplyQueuedPreparedFiles
 import com.lasthopesoftware.bluewater.client.playback.file.*
 import com.lasthopesoftware.bluewater.client.playback.playlist.PlaylistPlayer

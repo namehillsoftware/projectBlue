@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.browsing.remote.GivenAnActiveLibra
 
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaMetadataCompat
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.remote.GetMediaItemsFromServiceFiles
 import com.lasthopesoftware.bluewater.client.browsing.remote.NowPlayingMediaItemLookup
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.MaintainNowPlayingState

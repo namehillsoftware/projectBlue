@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.connection
 
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 
 class FakeFileConnectionProvider : FakeConnectionProvider() {
     fun setupFile(serviceFile: ServiceFile, fileProperties: Map<String, String>) {

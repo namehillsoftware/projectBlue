@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.GivenAHaltedPlaybackEngine.AndPlaybackPlaysThroughCompletion
 
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.access.PassThroughLibraryStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.access.PassThroughSpecificLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library

@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.stored.sync.receivers.file
 
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.broadcasts.IScanMediaFileBroadcaster
+import com.lasthopesoftware.bluewater.client.browsing.files.broadcasts.IScanMediaFileBroadcaster
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.AccessStoredFiles
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileMessage

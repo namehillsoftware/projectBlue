@@ -2,9 +2,9 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.files.system.
 
 import android.net.Uri
 import android.provider.MediaStore
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.uri.IFileUriProvider
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.uri.ProvideFileUrisForLibrary
+import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.uri.IFileUriProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.uri.ProvideFileUrisForLibrary
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.IMediaQueryCursorProvider

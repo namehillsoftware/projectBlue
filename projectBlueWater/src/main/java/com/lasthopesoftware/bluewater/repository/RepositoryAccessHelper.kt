@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.repository
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.repository.CachedFile
+import com.lasthopesoftware.bluewater.client.browsing.files.cached.repository.CachedFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityCreator
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityUpdater
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem

@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.service
 
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.namehillsoftware.handoff.promises.Promise
 
 interface ControlPlaybackService {

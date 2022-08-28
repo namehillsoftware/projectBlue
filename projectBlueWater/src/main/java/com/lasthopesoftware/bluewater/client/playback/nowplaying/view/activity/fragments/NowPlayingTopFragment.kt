@@ -8,11 +8,11 @@ import android.widget.RatingBar
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import com.lasthopesoftware.bluewater.R
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.ScopedFilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.SelectedConnectionFilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.repository.FilePropertyCache
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.storage.ScopedFilePropertiesStorage
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.properties.storage.SelectedConnectionFilePropertiesStorage
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.ScopedFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.SelectedConnectionFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.ScopedFilePropertiesStorage
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.SelectedConnectionFilePropertiesStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.SelectedConnectionRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.authentication.ScopedConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.authentication.SelectedConnectionAuthenticationChecker

@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparatio
 import android.content.Context
 import android.os.Handler
 import com.google.android.exoplayer2.DefaultLoadControl
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.uri.BestMatchUriProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.uri.BestMatchUriProvider
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlayableFilePreparationSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.ExoPlayerProvider
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.SpawnMediaSources

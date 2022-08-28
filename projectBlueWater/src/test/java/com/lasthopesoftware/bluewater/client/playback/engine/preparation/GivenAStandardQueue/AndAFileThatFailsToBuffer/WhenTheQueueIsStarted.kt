@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.preparation.GivenAStandardQueue.AndAFileThatFailsToBuffer
 
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue
 import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackFile
 import com.lasthopesoftware.bluewater.client.playback.file.fakes.FakeBufferingPlaybackHandler

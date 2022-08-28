@@ -2,8 +2,8 @@ package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.
 
 import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.items.media.image.ProvideImages
+import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideImages
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
 import com.lasthopesoftware.bluewater.client.connection.polling.PollForConnections
 import com.lasthopesoftware.bluewater.client.connection.selected.ProvideSelectedConnection

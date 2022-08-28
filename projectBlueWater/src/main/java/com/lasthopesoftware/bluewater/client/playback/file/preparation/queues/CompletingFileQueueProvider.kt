@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.file.preparation.queues
 
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 
 class CompletingFileQueueProvider : IPositionedFileQueueProvider {
 	override val isRepeating: Boolean = false

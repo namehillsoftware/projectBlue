@@ -1,11 +1,11 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.list.AndItHasChildItems.AndAChildItemIsSynced
 
+import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideItemFiles
+import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
+import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.ProvideItemFiles
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.list.FileListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems

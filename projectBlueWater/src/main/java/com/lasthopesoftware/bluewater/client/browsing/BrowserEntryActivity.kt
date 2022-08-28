@@ -18,9 +18,9 @@ import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import com.lasthopesoftware.bluewater.R
+import com.lasthopesoftware.bluewater.client.browsing.files.list.SearchFilesFragment
 import com.lasthopesoftware.bluewater.client.browsing.items.list.IItemListViewContainer
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuChangeHandler
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.list.SearchFilesFragment
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener.Companion.tryFlipToPreviousView
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistListFragment
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository

@@ -1,10 +1,10 @@
 package com.lasthopesoftware.bluewater.client.playback.caching.uri
 
 import android.net.Uri
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.cached.CacheFiles
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.uri.IFileUriProvider
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.uri.RemoteFileUriProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.cached.CacheFiles
+import com.lasthopesoftware.bluewater.client.browsing.files.uri.IFileUriProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.uri.RemoteFileUriProvider
 import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.resources.uri.PathAndQuery.pathAndQuery

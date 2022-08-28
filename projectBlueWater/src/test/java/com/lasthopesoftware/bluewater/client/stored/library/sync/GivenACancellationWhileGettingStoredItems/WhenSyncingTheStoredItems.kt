@@ -1,8 +1,8 @@
 package com.lasthopesoftware.bluewater.client.stored.library.sync.GivenACancellationWhileGettingStoredItems
 
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.ProvideLibraryFiles
-import com.lasthopesoftware.bluewater.client.browsing.items.media.files.access.parameters.FileListParameters
+import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideLibraryFiles
+import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.FakeDeferredStoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem
