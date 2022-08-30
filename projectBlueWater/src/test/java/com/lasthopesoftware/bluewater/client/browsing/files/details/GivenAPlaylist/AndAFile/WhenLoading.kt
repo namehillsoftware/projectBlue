@@ -1,6 +1,7 @@
-package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAServiceFile
+package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAPlaylist.AndAFile
 
 import android.graphics.BitmapFactory
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideImages
@@ -16,7 +17,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.BeforeClass
 import org.junit.Test
 import org.junit.runner.RunWith
-import org.robolectric.RobolectricTestRunner
 
 private const val serviceFileId = 161
 
@@ -47,13 +47,13 @@ private val viewModel by lazy {
 	)
 }
 
-@RunWith(RobolectricTestRunner::class)
+@RunWith(AndroidJUnit4::class)
 class WhenLoading {
 	companion object {
 		@JvmStatic
 		@BeforeClass
 		fun act() {
-			viewModel.loadFile(ServiceFile(serviceFileId)).toExpiringFuture().get()
+			viewModel.loadFromList(listOf(ServiceFile(serviceFileId)), 0).toExpiringFuture().get()
 		}
 	}
 

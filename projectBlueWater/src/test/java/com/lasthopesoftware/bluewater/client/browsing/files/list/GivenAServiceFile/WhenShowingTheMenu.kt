@@ -43,7 +43,22 @@ class WhenShowingTheMenu {
 
 	@BeforeAll
 	fun act() {
-		viewModel.promiseUpdate(ServiceFile(99)).toExpiringFuture().get()
+		viewModel.promiseUpdate(
+			listOf(
+				ServiceFile(13),
+				ServiceFile(546),
+				ServiceFile(695),
+				ServiceFile(801),
+				ServiceFile(76),
+				ServiceFile(551),
+				ServiceFile(5),
+				ServiceFile(99),
+				ServiceFile(285),
+				ServiceFile(357),
+				ServiceFile(920),
+			),
+			7,
+		).toExpiringFuture().get()
 		viewModel.showMenu()
 	}
 

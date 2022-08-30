@@ -49,7 +49,16 @@ class WhenAddingTheFileToNowPlaying {
 
 	@BeforeAll
 	fun act() {
-		viewModel.promiseUpdate(ServiceFile(483)).toExpiringFuture().get()
+		viewModel.promiseUpdate(
+			listOf(
+				ServiceFile(164),
+				ServiceFile(622),
+				ServiceFile(14),
+				ServiceFile(483),
+				ServiceFile(486),
+			),
+			3
+		).toExpiringFuture().get()
 		viewModel.showMenu()
 		viewModel.addToNowPlaying()
 	}

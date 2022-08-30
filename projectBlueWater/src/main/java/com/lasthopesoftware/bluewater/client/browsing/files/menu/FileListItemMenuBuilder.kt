@@ -28,8 +28,6 @@ class FileListItemMenuBuilder(
 )
 	: AbstractFileListItemMenuBuilder<FileListItemMenuBuilder.ViewHolder>(R.layout.layout_file_item_menu) {
 
-
-
 	override fun newViewHolder(fileItemMenu: FileListItemContainer) = ViewHolder(fileItemMenu)
 
 	inner class ViewHolder(private val fileListItemContainer: FileListItemContainer) : RecyclerView.ViewHolder(fileListItemContainer.viewAnimator) {
@@ -61,7 +59,7 @@ class FileListItemMenuBuilder(
 			val viewAnimator = fileListItemContainer.viewAnimator
 			viewAnimator.tryFlipToPreviousView()
 			playButton.setOnClickListener(FilePlayClickListener(viewAnimator, positionedFile.playlistPosition, serviceFiles))
-			viewFileDetailsButton.setOnClickListener(ViewFileDetailsClickListener(viewAnimator, serviceFile))
+			viewFileDetailsButton.setOnClickListener(ViewFileDetailsClickListener(viewAnimator, positionedFile, serviceFiles))
 			addButton.setOnClickListener(AddClickListener(viewAnimator, serviceFile))
 		}
 	}

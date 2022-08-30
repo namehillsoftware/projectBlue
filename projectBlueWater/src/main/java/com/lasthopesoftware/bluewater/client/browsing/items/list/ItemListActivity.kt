@@ -314,6 +314,7 @@ private fun ItemListView(
 	val rowFontSize = LocalDensity.current.run { dimensionResource(id = R.dimen.row_font_size).toSp() }
 	val hapticFeedback = LocalHapticFeedback.current
 	val itemValue by itemListViewModel.itemValue.collectAsState()
+	val files by fileListViewModel.files.collectAsState()
 
 	@Composable
 	fun ChildItem(childItemViewModel: ItemListViewModel.ChildItemViewModel) {
@@ -407,7 +408,7 @@ private fun ItemListView(
 		val isMenuShown by fileItemViewModel.isMenuShown.collectAsState()
 
 		DisposableEffect(Unit) {
-			fileItemViewModel.promiseUpdate(serviceFile)
+			fileItemViewModel.promiseUpdate(files, position)
 
 			onDispose {
 				fileItemViewModel.reset()
@@ -489,7 +490,6 @@ private fun ItemListView(
 	@Composable
 	fun BoxWithConstraintsScope.LoadedItemListView() {
 		val items by itemListViewModel.items.collectAsState()
-		val files by fileListViewModel.files.collectAsState()
 
 		val knobHeight by derivedStateOf {
 			lazyListState.layoutInfo.totalItemsCount

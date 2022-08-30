@@ -33,8 +33,9 @@ class WhenViewingTheFileDetails {
 		}
 
 		val launchFileDetails = mockk<LaunchFileDetails>().apply {
-			every { launchFileDetails(any()) } answers {
-				launchedFile = firstArg()
+			every { launchFileDetails(any(), any()) } answers {
+				val files = firstArg<List<ServiceFile>>()
+				launchedFile = files[lastArg()]
 			}
 		}
 
@@ -49,7 +50,22 @@ class WhenViewingTheFileDetails {
 
 	@BeforeAll
 	fun act() {
-		viewModel.promiseUpdate(ServiceFile(34)).toExpiringFuture().get()
+		viewModel.promiseUpdate(
+			listOf(
+				ServiceFile(401),
+				ServiceFile(223),
+				ServiceFile(913),
+				ServiceFile(464),
+				ServiceFile(734),
+				ServiceFile(761),
+				ServiceFile(34),
+				ServiceFile(872),
+				ServiceFile(350),
+				ServiceFile(786),
+				ServiceFile(368),
+			),
+			6
+		).toExpiringFuture().get()
 		viewModel.showMenu()
 		viewModel.viewFileDetails()
 	}

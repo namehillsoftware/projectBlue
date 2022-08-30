@@ -51,7 +51,19 @@ class WhenAddingTheFileToNowPlaying {
 		@JvmStatic
 		@BeforeClass
 		fun act() {
-			viewModel.loadFile(ServiceFile(serviceFileId)).toExpiringFuture().get()
+			viewModel.loadFromList(
+				listOf(
+					ServiceFile(291),
+					ServiceFile(312),
+					ServiceFile(783),
+					ServiceFile(380),
+					ServiceFile(serviceFileId),
+					ServiceFile(723),
+					ServiceFile(81),
+					ServiceFile(543),
+				),
+				4
+			).toExpiringFuture().get()
 			viewModel.addToNowPlaying()
 		}
 	}

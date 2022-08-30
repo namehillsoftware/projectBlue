@@ -37,12 +37,12 @@ import androidx.compose.ui.unit.sp
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.image.CachedImageProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FormattedScopedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ScopedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.SelectedConnectionFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
-import com.lasthopesoftware.bluewater.client.browsing.files.image.CachedImageProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity.Companion.restoreSelectedConnection
@@ -66,11 +66,14 @@ class FileDetailsActivity : ComponentActivity() {
 
 	companion object {
 
-		val fileKey by lazy { MagicPropertyBuilder.buildMagicPropertyName<FileDetailsActivity>("FILE_KEY") }
+		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(FileDetailsActivity::class.java) }
+		private val playlist by lazy { magicPropertyBuilder.buildProperty("playlist") }
+		private val playlistPosition by lazy { magicPropertyBuilder.buildProperty("playlistPosition") }
 
-		fun Context.launchFileDetailsActivity(serviceFile: ServiceFile) {
+		fun Context.launchFileDetailsActivity(playlist: Collection<ServiceFile>, position: Int) {
 			startActivity(Intent(this, FileDetailsActivity::class.java).apply {
-				putExtra(fileKey, serviceFile.key)
+				putExtra(playlistPosition, position)
+				putExtra(Companion.playlist, playlist.map { it.key }.toIntArray())
 			})
 		}
 	}
@@ -111,19 +114,20 @@ class FileDetailsActivity : ComponentActivity() {
 		}
 
 		restoreSelectedConnection(this).eventually(LoopedInPromise.response({
-			val fileKey = intent.getIntExtra(fileKey, -1)
-			setView(ServiceFile(fileKey))
+			val position = intent.getIntExtra(playlistPosition, -1)
+			val playlist = intent.getIntArrayExtra(playlist)?.map(::ServiceFile) ?: emptyList()
+			setView(playlist, position)
 		}, this))
 	}
 
-	private fun setView(serviceFile: ServiceFile) {
-		if (serviceFile.key < 0) {
+	private fun setView(playlist: List<ServiceFile>, position: Int) {
+		if (position < 0) {
 			finish()
 			return
 		}
 
-		vm.loadFile(serviceFile)
-			.excuse(HandleViewIoException(this) { setView(serviceFile) })
+		vm.loadFromList(playlist, position)
+			.excuse(HandleViewIoException(this) { setView(playlist, position) })
 			.eventuallyExcuse(LoopedInPromise.response(UnexpectedExceptionToasterResponse(this), this))
 			.then { finish() }
 	}

@@ -36,7 +36,7 @@ class FileDetailsViewModel(
 		)
 	}
 
-	private var activePlaylist = emptyList<ServiceFile>()
+	private var associatedPlaylist = emptyList<ServiceFile>()
 	private var activePositionedFile: PositionedFile? = null
 
 	private val mutableFileName = MutableStateFlow("")
@@ -61,36 +61,7 @@ class FileDetailsViewModel(
 	fun loadFromList(playlist: List<ServiceFile>, position: Int): Promise<Unit> {
 		val serviceFile = playlist[position]
 		activePositionedFile = PositionedFile(position, serviceFile)
-		activePlaylist = playlist
-
-		mutableIsLoading.value = true
-		val filePropertiesSetPromise = scopedFilePropertiesProvider
-			.promiseFileProperties(serviceFile)
-			.then { fileProperties ->
-				fileProperties[KnownFileProperties.NAME]?.also { mutableFileName.value = it }
-				fileProperties[KnownFileProperties.ARTIST]?.also { mutableArtist.value = it }
-				fileProperties[KnownFileProperties.RATING]?.toIntOrNull()?.also { mutableRating.value = it }
-
-				mutableFileProperties.value = fileProperties.entries
-					.filterNot { e -> propertiesToSkip.contains(e.key) }
-					.sortedBy { e -> e.key }
-			}
-			.keepPromise()
-
-		val bitmapSetPromise = promisedSetDefaultCoverArt // Ensure default cover art is first set before apply cover art from file properties
-			.eventually { default ->
-				imageProvider
-					.promiseFileBitmap(serviceFile)
-					.then { bitmap -> mutableCoverArt.value = bitmap ?: default }
-			}
-
-		return Promise
-			.whenAll(filePropertiesSetPromise, bitmapSetPromise)
-			.then { mutableIsLoading.value = false }
-	}
-
-	fun loadFile(serviceFile: ServiceFile): Promise<Unit> {
-		activePositionedFile = PositionedFile(0, serviceFile)
+		associatedPlaylist = playlist
 
 		mutableIsLoading.value = true
 		val filePropertiesSetPromise = scopedFilePropertiesProvider
@@ -124,6 +95,6 @@ class FileDetailsViewModel(
 
 	fun play() {
 		val positionedFile = activePositionedFile ?: return
-		controlPlayback.startPlaylist(activePlaylist, positionedFile.playlistPosition)
+		controlPlayback.startPlaylist(associatedPlaylist, positionedFile.playlistPosition)
 	}
 }

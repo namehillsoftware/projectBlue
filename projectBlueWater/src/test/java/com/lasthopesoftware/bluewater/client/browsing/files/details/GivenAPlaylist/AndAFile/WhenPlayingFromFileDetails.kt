@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.browsing.files.list.GivenAPlaylist.AndAFile
+package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAPlaylist.AndAFile
 
 import android.graphics.BitmapFactory
 import androidx.test.ext.junit.runners.AndroidJUnit4
