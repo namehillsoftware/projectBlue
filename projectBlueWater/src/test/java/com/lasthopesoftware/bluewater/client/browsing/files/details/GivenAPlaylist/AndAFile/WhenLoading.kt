@@ -30,6 +30,7 @@ private val viewModel by lazy {
 					 Pair("shirt", "wind"),
 					 Pair(KnownFileProperties.NAME, "holiday"),
 					 Pair(KnownFileProperties.ARTIST, "board"),
+					 Pair(KnownFileProperties.ALBUM, "virtue"),
 				 )
 			 )
 		},
@@ -66,6 +67,7 @@ class WhenLoading {
 				Pair("shirt", "wind"),
 				Pair(KnownFileProperties.NAME, "holiday"),
 				Pair(KnownFileProperties.ARTIST, "board"),
+				Pair(KnownFileProperties.ALBUM, "virtue"),
 			).entries
 		)
 	}
@@ -83,5 +85,10 @@ class WhenLoading {
 	@Test
 	fun `then the file name is correct`() {
 		assertThat(viewModel.fileName.value).isEqualTo("holiday")
+	}
+
+	@Test
+	fun `then the album is correct`() {
+		assertThat(viewModel.album.value).isEqualTo("virtue")
 	}
 }

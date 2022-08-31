@@ -38,8 +38,9 @@ class FileDetailsViewModel(
 
 	private var associatedPlaylist = emptyList<ServiceFile>()
 	private var activePositionedFile: PositionedFile? = null
-
 	private val mutableFileName = MutableStateFlow("")
+
+	private val mutableAlbum = MutableStateFlow("")
 	private val mutableArtist = MutableStateFlow("")
 	private val mutableFileProperties = MutableStateFlow(emptyList<Map.Entry<String, String>>())
 	private val mutableIsLoading = MutableStateFlow(false)
@@ -50,9 +51,10 @@ class FileDetailsViewModel(
 			it
 		}
 	private val mutableRating = MutableStateFlow(0)
-
 	val fileName = mutableFileName.asStateFlow()
+
 	val artist = mutableArtist.asStateFlow()
+	val album = mutableAlbum.asStateFlow()
 	val fileProperties = mutableFileProperties.asStateFlow()
 	val isLoading = mutableIsLoading.asStateFlow()
 	val coverArt = mutableCoverArt.asStateFlow()
@@ -69,6 +71,7 @@ class FileDetailsViewModel(
 			.then { fileProperties ->
 				fileProperties[KnownFileProperties.NAME]?.also { mutableFileName.value = it }
 				fileProperties[KnownFileProperties.ARTIST]?.also { mutableArtist.value = it }
+				fileProperties[KnownFileProperties.ALBUM]?.also { mutableAlbum.value = it }
 				fileProperties[KnownFileProperties.RATING]?.toIntOrNull()?.also { mutableRating.value = it }
 
 				mutableFileProperties.value = fileProperties.entries

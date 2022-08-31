@@ -7,17 +7,18 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.*
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,6 +33,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
@@ -61,6 +63,10 @@ import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.suspend
 import kotlinx.coroutines.flow.map
+import me.onebone.toolbar.CollapsingToolbarScaffold
+import me.onebone.toolbar.ScrollStrategy
+import me.onebone.toolbar.rememberCollapsingToolbarScaffoldState
+import kotlin.math.pow
 
 class FileDetailsActivity : ComponentActivity() {
 
@@ -162,9 +168,11 @@ private fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class)
 
 	val viewPadding = 4.dp
 
+	val artist by viewModel.artist.collectAsState()
+	val album by viewModel.album.collectAsState()
+
 	@Composable
-	fun filePropertyHeader(modifier: Modifier) {
-		val artist by viewModel.artist.collectAsState()
+	fun filePropertyHeader(modifier: Modifier, titleFontSize: TextUnit = 24.sp) {
 		val fileName by viewModel.fileName.collectAsState(stringResource(id = R.string.lbl_loading))
 
 		Column(modifier = modifier) {
@@ -175,7 +183,7 @@ private fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class)
 					text = fileName,
 					color = coverArtColorState.primaryTextColor,
 					gradientEdgeColor = coverArtColorState.backgroundColor,
-					fontSize = 24.sp,
+					fontSize = titleFontSize,
 					overflow = TextOverflow.Ellipsis,
 					gradientSides = gradientSides,
 				)
@@ -294,65 +302,148 @@ private fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class)
 
 		val fileProperties by viewModel.fileProperties.collectAsState()
 
-		LazyColumn(modifier = Modifier.fillMaxSize()) {
-			item {
+		val toolbarState = rememberCollapsingToolbarScaffoldState()
+		val headerHidingProgress by derivedStateOf { 1 - toolbarState.toolbarState.progress }
+
+		CollapsingToolbarScaffold(
+			enabled = true,
+			state = toolbarState,
+			scrollStrategy = ScrollStrategy.ExitUntilCollapsed,
+			modifier = Modifier.fillMaxSize(),
+			toolbar = {
+				val appBarHeight = 56.dp
+				val coverArtTopPadding = viewPadding + appBarHeight
+				val coverArtBottomPadding = viewPadding + 8.dp
+				val coverArtContainerHeight = 300.dp
+
+				val coverArtScrollOffset by derivedStateOf { -coverArtContainerHeight * headerHidingProgress }
 				Box(
 					modifier = Modifier
-						.height(300.dp)
-						.fillParentMaxWidth()
+						.height(coverArtContainerHeight)
 						.padding(
-							top = viewPadding + 40.dp,
+							top = coverArtTopPadding,
 							start = viewPadding + 40.dp,
 							end = viewPadding + 40.dp,
-							bottom = viewPadding + 10.dp
 						)
+						.offset(y = coverArtScrollOffset)
+						.fillMaxWidth()
 				) {
 					coverArtState
 						?.let {
 							Image(
 								bitmap = it,
-								contentDescription = null,
+								contentDescription = stringResource(id = R.string.lbl_cover_art, album, artist),
 								contentScale = ContentScale.FillHeight,
 								modifier = Modifier
-									.fillParentMaxHeight()
 									.clip(RoundedCornerShape(5.dp))
 									.border(
 										1.dp,
 										shape = RoundedCornerShape(5.dp),
 										color = coverArtColorState.secondaryTextColor
 									)
+									.fillMaxHeight()
 									.align(Alignment.Center),
 							)
 						}
 				}
-			}
 
-			stickyHeader {
-				filePropertyHeader(
+				val collapsedTopRowPadding = 8.dp
+				Box(modifier = Modifier
+					.height(appBarHeight)
+					.background(coverArtColorState.backgroundColor)
+					.fillMaxWidth()
+				) {
+					Icon(
+						Icons.Default.ArrowBack,
+						contentDescription = "",
+						tint = coverArtColorState.secondaryTextColor,
+						modifier = Modifier
+							.padding(16.dp)
+							.align(Alignment.CenterStart)
+							.clickable(
+								interactionSource = remember { MutableInteractionSource() },
+								indication = null,
+								onClick = activity::finish
+							)
+					)
+				}
+
+				val expandedTitlePadding = coverArtContainerHeight + coverArtBottomPadding
+				val expandedIconSize = 36.dp
+				val expandedMenuVerticalPadding = 12.dp
+				val titleFontSize = MaterialTheme.typography.h5.fontSize
+				val subTitleFontSize = MaterialTheme.typography.h6.fontSize
+				val guessedRowSpacing = 4.dp
+				val titleHeight = LocalDensity.current.run { titleFontSize.toDp() + subTitleFontSize.toDp() } + guessedRowSpacing * 3
+				val boxHeight = expandedTitlePadding + titleHeight + expandedIconSize + expandedMenuVerticalPadding * 2
+
+				val topTitlePadding by derivedStateOf { expandedTitlePadding * toolbarState.toolbarState.progress }
+				BoxWithConstraints(
 					modifier = Modifier
-						.background(coverArtColorState.backgroundColor)
-						.padding(
-							start = viewPadding,
-							top = viewPadding,
-							bottom = viewPadding,
-							end = 40.dp + viewPadding
+						.height(boxHeight)
+						.padding(top = topTitlePadding)
+						.fillMaxWidth()
+				) {
+					val minimumMenuWidth = (2 * 32).dp
+
+					val acceleratedProgress by derivedStateOf { 1 - toolbarState.toolbarState.progress.pow(3).coerceIn(0f, 1f) }
+
+					val startPadding by derivedStateOf { viewPadding + 48.dp * headerHidingProgress }
+					val endPadding by derivedStateOf { viewPadding + minimumMenuWidth * acceleratedProgress }
+					filePropertyHeader(
+						modifier = Modifier.padding(start = startPadding, end = endPadding),
+						titleFontSize = titleFontSize,
+					)
+
+					val menuWidth by derivedStateOf { (maxWidth - (maxWidth - minimumMenuWidth) * acceleratedProgress) }
+					val expandedTopRowPadding = titleHeight + expandedMenuVerticalPadding
+					val topRowPadding by derivedStateOf { expandedTopRowPadding - (expandedTopRowPadding - 14.dp) * headerHidingProgress }
+					Row(modifier = Modifier
+						.padding(top = topRowPadding, start = 8.dp, end = 8.dp)
+						.width(menuWidth)
+						.align(Alignment.TopEnd)
+					) {
+						val iconSize by derivedStateOf { expandedIconSize - (12 * headerHidingProgress).dp }
+
+						Image(
+							painter = painterResource(id = R.drawable.ic_add_item_white_36dp),
+							colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
+							contentDescription = stringResource(id = R.string.btn_add_file),
+							modifier = Modifier
+								.fillMaxWidth()
+								.weight(1f)
+								.size(iconSize)
+								.clickable { viewModel.addToNowPlaying() }
+								.align(Alignment.CenterVertically),
 						)
-						.fillParentMaxWidth()
-				)
-			}
 
-			item {
-				fileMenu()
+						Image(
+							painter = painterResource(id = R.drawable.av_play_white),
+							colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
+							contentDescription = stringResource(id = R.string.btn_play),
+							modifier = Modifier
+								.fillMaxWidth()
+								.weight(1f)
+								.size(iconSize)
+								.clickable {
+									viewModel.play()
+								}
+								.align(Alignment.CenterVertically),
+						)
+					}
+				}
 			}
-
-			items(fileProperties) {
-				filePropertyRow(it)
+		) {
+			LazyColumn(modifier = Modifier.fillMaxSize()) {
+				items(fileProperties) {
+					filePropertyRow(it)
+				}
 			}
 		}
 	}
 
 	@Composable
-	fun fileDetailsTwoColumn() {
+	fun BoxWithConstraintsScope.fileDetailsTwoColumn() {
 		val coverArtBitmaps = remember { viewModel.coverArt.map { a -> a?.asImageBitmap() } }
 		val coverArtState by coverArtBitmaps.collectAsState(null)
 
@@ -381,7 +472,7 @@ private fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class)
 						?.let {
 							Image(
 								bitmap = it,
-								contentDescription = null,
+								contentDescription = stringResource(id = R.string.lbl_cover_art, album, artist),
 								contentScale = ContentScale.FillWidth,
 								modifier = Modifier
 									.fillMaxWidth()
@@ -419,6 +510,18 @@ private fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class)
 				}
 			}
 		}
+
+		Image(
+			painter = painterResource(id = R.drawable.ic_remove_item_white_36dp),
+			contentDescription = "Close",
+			colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
+			modifier = Modifier
+				.align(Alignment.TopEnd)
+				.padding(top = 12.dp, start = 8.dp, end = 8.dp, bottom = 8.dp)
+				.clickable {
+					activity.finish()
+				},
+		)
 	}
 
 	val isLoading by viewModel.isLoading.collectAsState()
@@ -435,17 +538,5 @@ private fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class)
 			maxWidth >= 450.dp -> fileDetailsTwoColumn()
 			else -> fileDetailsSingleColumn()
 		}
-
-		Image(
-			painter = painterResource(id = R.drawable.ic_remove_item_white_36dp),
-			contentDescription = "Close",
-			colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
-			modifier = Modifier
-				.align(Alignment.TopEnd)
-				.padding(top = 12.dp, start = 8.dp, end = 8.dp, bottom = 8.dp)
-				.clickable {
-					activity.finish()
-				},
-		)
 	}
 }

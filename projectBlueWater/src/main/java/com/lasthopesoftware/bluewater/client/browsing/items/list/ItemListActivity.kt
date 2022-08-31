@@ -577,6 +577,8 @@ private fun ItemListView(
 		CollapsingToolbarScaffold(
 			enabled = true,
 			state = toolbarState,
+			scrollStrategy = ScrollStrategy.ExitUntilCollapsed,
+			modifier = Modifier.fillMaxSize(),
 			toolbar = {
 				val appBarHeight = 56
 				val topPadding by derivedStateOf { (appBarHeight - 42 * headerHidingProgress).dp }
@@ -656,7 +658,7 @@ private fun ItemListView(
 					}
 				}
 
-				Box(modifier = Modifier.height(56.dp)) {
+				Box(modifier = Modifier.height(appBarHeight.dp)) {
 					Icon(
 						Icons.Default.ArrowBack,
 						contentDescription = "",
@@ -672,8 +674,6 @@ private fun ItemListView(
 					)
 				}
 			},
-			scrollStrategy = ScrollStrategy.ExitUntilCollapsed,
-			modifier = Modifier.fillMaxSize()
 		) {
 			BoxWithConstraints(modifier = Modifier.padding(bottom = 56.dp).fillMaxSize()) {
 				val isItemsLoaded by itemListViewModel.isLoaded.collectAsState()
