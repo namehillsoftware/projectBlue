@@ -35,7 +35,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
@@ -79,6 +78,8 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAcce
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
+import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
+import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.scrollbar
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Light
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
@@ -94,6 +95,7 @@ import me.onebone.toolbar.CollapsingToolbarScaffold
 import me.onebone.toolbar.ExperimentalToolbarApi
 import me.onebone.toolbar.ScrollStrategy
 import me.onebone.toolbar.rememberCollapsingToolbarScaffoldState
+import kotlin.math.pow
 import kotlin.math.roundToInt
 
 class ItemListActivity : AppCompatActivity(), Runnable {
@@ -581,35 +583,45 @@ private fun ItemListView(
 			modifier = Modifier.fillMaxSize(),
 			toolbar = {
 				val appBarHeight = 56
-				val topPadding by derivedStateOf { (appBarHeight - 42 * headerHidingProgress).dp }
-				val expandedTitleHeight = 92
+				val topPadding by derivedStateOf { (appBarHeight - 46 * headerHidingProgress).dp }
+				val expandedTitleHeight = 84
 				val expandedIconSize = 36
 				val expandedMenuVerticalPadding = 12
 				val boxHeight = expandedTitleHeight + expandedIconSize + expandedMenuVerticalPadding * 2 + appBarHeight
-				BoxWithConstraints(modifier = Modifier.height(boxHeight.dp).padding(top = topPadding)) {
+				BoxWithConstraints(modifier = Modifier
+					.height(boxHeight.dp)
+					.padding(top = topPadding)) {
 					val minimumMenuWidth = (3 * 32).dp
-					ProvideTextStyle(MaterialTheme.typography.h4) {
-						val h4Size = MaterialTheme.typography.h4.fontSize.value
-						val h6Size = MaterialTheme.typography.h6.fontSize.value
-
-						val fontSize by derivedStateOf { (h4Size - (h4Size - h6Size) * headerHidingProgress).sp }
-
+					val acceleratedProgress by derivedStateOf { 1 - toolbarState.toolbarState.progress.pow(3).coerceIn(0f, 1f) }
+					ProvideTextStyle(MaterialTheme.typography.h5) {
 						val startPadding by derivedStateOf { (4 + 48 * headerHidingProgress).dp }
-						val endPadding by derivedStateOf { 4.dp + minimumMenuWidth * headerHidingProgress }
-						Text(
-							text = itemValue,
-							fontSize = fontSize,
-							maxLines = (2 - headerHidingProgress).roundToInt(),
-							overflow = TextOverflow.Ellipsis,
-							modifier = Modifier
-								.fillMaxWidth()
-								.padding(start = startPadding, end = endPadding),
-						)
+						val endPadding by derivedStateOf { 4.dp + minimumMenuWidth * acceleratedProgress }
+						val maxLines by derivedStateOf { (2 - headerHidingProgress).roundToInt() }
+						if (maxLines > 1) {
+							Text(
+								text = itemValue,
+								maxLines = maxLines,
+								overflow = TextOverflow.Ellipsis,
+								modifier = Modifier
+									.fillMaxWidth()
+									.padding(start = startPadding, end = endPadding),
+							)
+						} else {
+							MarqueeText(
+								text = itemValue,
+								overflow = TextOverflow.Ellipsis,
+								gradientSides = setOf(GradientSide.End),
+								gradientEdgeColor = MaterialTheme.colors.surface,
+								modifier = Modifier
+									.fillMaxWidth()
+									.padding(start = startPadding, end = endPadding),
+							)
+						}
 					}
 
-					val menuWidth by derivedStateOf { (maxWidth - (maxWidth - minimumMenuWidth) * headerHidingProgress) }
+					val menuWidth by derivedStateOf { (maxWidth - (maxWidth - minimumMenuWidth) * acceleratedProgress) }
 					val expandedTopRowPadding = expandedTitleHeight + expandedMenuVerticalPadding
-					val collapsedTopRowPadding = 2
+					val collapsedTopRowPadding = 6
 					val topRowPadding by derivedStateOf { (expandedTopRowPadding - (expandedTopRowPadding - collapsedTopRowPadding) * headerHidingProgress).dp }
 					Row(modifier = Modifier
 						.padding(top = topRowPadding, bottom = expandedMenuVerticalPadding.dp, start = 8.dp, end = 8.dp)
@@ -675,7 +687,9 @@ private fun ItemListView(
 				}
 			},
 		) {
-			BoxWithConstraints(modifier = Modifier.padding(bottom = 56.dp).fillMaxSize()) {
+			BoxWithConstraints(modifier = Modifier
+				.padding(bottom = 56.dp)
+				.fillMaxSize()) {
 				val isItemsLoaded by itemListViewModel.isLoaded.collectAsState()
 				val isFilesLoaded by fileListViewModel.isLoaded.collectAsState()
 				val isLoaded = isItemsLoaded && isFilesLoaded
@@ -688,7 +702,9 @@ private fun ItemListView(
 				BottomAppBar(
 					backgroundColor = MaterialTheme.colors.secondary,
 					contentPadding = PaddingValues(0.dp),
-					modifier = Modifier.align(Alignment.BottomCenter).clickable { NowPlayingActivity.startNowPlayingActivity(activity) }
+					modifier = Modifier
+						.align(Alignment.BottomCenter)
+						.clickable { NowPlayingActivity.startNowPlayingActivity(activity) }
 				) {
 					Column {
 						Row(
@@ -697,7 +713,9 @@ private fun ItemListView(
 								.padding(start = 16.dp, end = 16.dp)
 						) {
 							Column(
-								modifier = Modifier.weight(1f).align(Alignment.CenterVertically),
+								modifier = Modifier
+									.weight(1f)
+									.align(Alignment.CenterVertically),
 							) {
 								val songTitle by nowPlayingViewModel.title.collectAsState()
 
