@@ -432,6 +432,7 @@ open class PlaybackService :
 	private var cache: SimpleCache? = null
 	private var startId = 0
 	private var trackPositionBroadcaster: TrackPositionBroadcaster? = null
+	private var isDestroyed = false
 
 	private fun getNewNowPlayingRepository(): Promise<MaintainNowPlayingState?> =
 		selectedLibraryIdentifierProvider.selectedLibraryId
@@ -465,6 +466,8 @@ open class PlaybackService :
 
 	/* Begin Event Handlers */
 	override fun onCreate() {
+		guardDestroyedService()
+
 		applicationMessageBus.value.registerForClass(
 			cls<SelectedConnectionSettingsChangeReceiver.SelectedConnectionSettingsUpdated>(),
 			playbackHaltingEvent
@@ -561,6 +564,8 @@ open class PlaybackService :
 			Promise.whenAny(promisedIntentHandling, timeoutResponse).excuse(unhandledRejectionHandler)
 		}
 
+		guardDestroyedService()
+
 		this.startId = startId
 		if (intent?.action == null) {
 			stopSelf(startId)
@@ -628,6 +633,11 @@ open class PlaybackService :
 	}
 
 	override fun onBind(intent: Intent) = binder
+
+	private fun guardDestroyedService() {
+		if (isDestroyed)
+			throw UnsupportedOperationException("Cannot create PlaybackService after onDestroy is called")
+	}
 
 	private fun startNewPlaylist(playlistString: String, playlistPosition: Int): Promise<Unit> {
 		val playbackState = playbackState ?: return Unit.toPromise()
@@ -1010,12 +1020,8 @@ open class PlaybackService :
 		}
 
 		promisedPlayedFile.then {
-			selectedLibraryIdentifierProvider.selectedLibraryId.then { l ->
-				l?.also {
-					applicationMessageBus.value.sendMessage(PlaybackMessage.TrackCompleted(positionedPlayingFile.serviceFile))
-				}
-				localSubscription?.dispose()
-			}
+			applicationMessageBus.value.sendMessage(PlaybackMessage.TrackCompleted(positionedPlayingFile.serviceFile))
+			localSubscription?.dispose()
 		}
 
 		filePositionSubscription = localSubscription
@@ -1024,14 +1030,15 @@ open class PlaybackService :
 	}
 
 	private fun broadcastChangedFile(positionedFile: PositionedFile) {
-		selectedLibraryIdentifierProvider.selectedLibraryId.then { l ->
-			l?.also {
-				applicationMessageBus.value.sendMessage(PlaybackMessage.TrackChanged(it, positionedFile))
+		selectedLibraryIdentifierProvider.selectedLibraryId.then {
+			it?.also { l ->
+				applicationMessageBus.value.sendMessage(PlaybackMessage.TrackChanged(l, positionedFile))
 			}
 		}
 	}
 
 	override fun onDestroy() {
+		isDestroyed = true
 		isMarkedForPlay = false
 
 		if (lazyNotificationController.isInitialized()) lazyNotificationController.value.removeAllNotifications()

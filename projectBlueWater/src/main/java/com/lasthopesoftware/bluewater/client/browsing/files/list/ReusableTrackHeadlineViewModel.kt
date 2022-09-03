@@ -6,6 +6,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideScopedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.HiddenListItemMenu
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.messages.SendTypedMessages
@@ -43,7 +44,10 @@ class ReusableTrackHeadlineViewModel(
 	private var promisedState = Unit.toPromise()
 
 	@Volatile
-	private var activeServiceFile: ServiceFile? = null
+	private var activePositionedFile: PositionedFile? = null
+
+	@Volatile
+	private var associatedPlaylist = emptyList<ServiceFile>()
 
 	private val mutableArtist = MutableStateFlow("")
 	private val mutableTitle = MutableStateFlow(stringResources.loading)
@@ -53,9 +57,11 @@ class ReusableTrackHeadlineViewModel(
 	override val title = mutableTitle.asStateFlow()
 	override val isMenuShown = mutableIsMenuShown.asStateFlow()
 
-	override fun promiseUpdate(serviceFile: ServiceFile): Promise<Unit> {
+	override fun promiseUpdate(playlist: List<ServiceFile>, position: Int): Promise<Unit> {
 		synchronized(promiseSync) {
-			activeServiceFile = serviceFile
+			val serviceFile = playlist[position]
+			activePositionedFile = PositionedFile(position, serviceFile)
+			associatedPlaylist = playlist
 
 			val currentPromisedState = promisedState
 			promisedState = currentPromisedState.inevitably(EventualTextViewUpdate(serviceFile))
@@ -77,12 +83,14 @@ class ReusableTrackHeadlineViewModel(
 			}
 
 	override fun addToNowPlaying() {
-		activeServiceFile?.apply(controlPlaybackService::addToPlaylist)
+		activePositionedFile?.serviceFile?.apply(controlPlaybackService::addToPlaylist)
 		hideMenu()
 	}
 
 	override fun viewFileDetails() {
-		activeServiceFile?.apply(fileDetailsLauncher::launchFileDetails)
+		activePositionedFile?.apply {
+			fileDetailsLauncher.launchFileDetails(associatedPlaylist, playlistPosition)
+		}
 		hideMenu()
 	}
 
@@ -177,7 +185,7 @@ class ReusableTrackHeadlineViewModel(
 		}
 
 		private val isNotCurrentServiceFile: Boolean
-			get() = activeServiceFile != serviceFile
+			get() = activePositionedFile?.serviceFile != serviceFile
 		private val isUpdateCancelled: Boolean
 			get() = cancellationProxy.isCancelled
 	}

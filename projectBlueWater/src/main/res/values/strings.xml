@@ -108,4 +108,5 @@
     <string name="finish_edit_now_playing_list">Finish Editing Now Playing</string>
     <string name="drag_item">Drag Item</string>
     <string name="title_activity_test">TestActivity</string>
+    <string name="lbl_cover_art">Cover Art for %1$s by %2$s</string>
 </resources>

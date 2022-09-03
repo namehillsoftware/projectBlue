@@ -37,7 +37,12 @@ class WhenLoadingFileDetails {
 
 	@BeforeAll
 	fun act() {
-		viewModel.promiseUpdate(ServiceFile(943)).toExpiringFuture().get()
+		viewModel.promiseUpdate(
+			listOf(
+				ServiceFile(943)
+			),
+			0
+		).toExpiringFuture().get()
 	}
 
 	@Test

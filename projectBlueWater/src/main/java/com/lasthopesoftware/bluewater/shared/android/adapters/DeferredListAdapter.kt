@@ -21,7 +21,7 @@ abstract class DeferredListAdapter<T, ViewHolder : RecyclerView.ViewHolder?>(
 	private var currentUpdate: Promise<Unit> = Unit.toPromise()
 
 	@Synchronized
-	fun updateListEventually(list: List<T>): Promise<Unit> =
+	open fun updateListEventually(list: List<T>): Promise<Unit> =
 		currentUpdate
 			.inevitably { PromisedListUpdate(list) }
 			.apply { currentUpdate = this }

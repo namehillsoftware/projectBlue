@@ -9,7 +9,7 @@ interface ViewFileItem : HiddenListItemMenu {
 	val artist: StateFlow<String>
 	val title: StateFlow<String>
 
-	fun promiseUpdate(serviceFile: ServiceFile): Promise<Unit>
+	fun promiseUpdate(associatedPlaylist: List<ServiceFile>, position: Int): Promise<Unit>
 	fun addToNowPlaying()
 	fun viewFileDetails()
 	fun reset()

@@ -314,6 +314,7 @@ private fun ItemListView(
 	val rowFontSize = LocalDensity.current.run { dimensionResource(id = R.dimen.row_font_size).toSp() }
 	val hapticFeedback = LocalHapticFeedback.current
 	val itemValue by itemListViewModel.itemValue.collectAsState()
+	val files by fileListViewModel.files.collectAsState()
 
 	@Composable
 	fun ChildItem(childItemViewModel: ItemListViewModel.ChildItemViewModel) {
@@ -407,7 +408,7 @@ private fun ItemListView(
 		val isMenuShown by fileItemViewModel.isMenuShown.collectAsState()
 
 		DisposableEffect(Unit) {
-			fileItemViewModel.promiseUpdate(serviceFile)
+			fileItemViewModel.promiseUpdate(files, position)
 
 			onDispose {
 				fileItemViewModel.reset()
@@ -489,7 +490,6 @@ private fun ItemListView(
 	@Composable
 	fun BoxWithConstraintsScope.LoadedItemListView() {
 		val items by itemListViewModel.items.collectAsState()
-		val files by fileListViewModel.files.collectAsState()
 
 		val knobHeight by derivedStateOf {
 			lazyListState.layoutInfo.totalItemsCount
@@ -577,6 +577,8 @@ private fun ItemListView(
 		CollapsingToolbarScaffold(
 			enabled = true,
 			state = toolbarState,
+			scrollStrategy = ScrollStrategy.ExitUntilCollapsed,
+			modifier = Modifier.fillMaxSize(),
 			toolbar = {
 				val appBarHeight = 56
 				val topPadding by derivedStateOf { (appBarHeight - 42 * headerHidingProgress).dp }
@@ -656,7 +658,7 @@ private fun ItemListView(
 					}
 				}
 
-				Box(modifier = Modifier.height(56.dp)) {
+				Box(modifier = Modifier.height(appBarHeight.dp)) {
 					Icon(
 						Icons.Default.ArrowBack,
 						contentDescription = "",
@@ -672,8 +674,6 @@ private fun ItemListView(
 					)
 				}
 			},
-			scrollStrategy = ScrollStrategy.ExitUntilCollapsed,
-			modifier = Modifier.fillMaxSize()
 		) {
 			BoxWithConstraints(modifier = Modifier.padding(bottom = 56.dp).fillMaxSize()) {
 				val isItemsLoaded by itemListViewModel.isLoaded.collectAsState()

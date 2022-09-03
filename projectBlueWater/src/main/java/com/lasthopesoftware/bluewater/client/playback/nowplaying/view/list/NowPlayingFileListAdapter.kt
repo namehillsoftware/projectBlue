@@ -15,5 +15,5 @@ class NowPlayingFileListAdapter(
 	override fun onCreateViewHolder(parent: ViewGroup, viewType: Int) = nowPlayingFileListItemMenuBuilder.newViewHolder(parent)
 
 	override fun onBindViewHolder(holder: NowPlayingFileListItemMenuBuilder.ViewHolder, position: Int) =
-		holder.update(getItem(position))
+		holder.update(getItem(position), currentList.map { it.serviceFile })
 }

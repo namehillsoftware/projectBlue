@@ -11,6 +11,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.lasthopesoftware.bluewater.R
+import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.ViewFileDetailsClickListener
 import com.lasthopesoftware.bluewater.client.browsing.files.menu.FileListItemNowPlayingRegistrar
 import com.lasthopesoftware.bluewater.client.browsing.files.menu.FileNameTextViewSetter
@@ -102,7 +103,7 @@ class NowPlayingFileListItemMenuBuilder(
 
 		private var positionedFile: PositionedFile? = null
 
-		fun update(positionedFile: PositionedFile) {
+		fun update(positionedFile: PositionedFile, playlist: List<ServiceFile>) {
 			this.positionedFile = positionedFile
 
 			val serviceFile = positionedFile.serviceFile
@@ -116,9 +117,9 @@ class NowPlayingFileListItemMenuBuilder(
 				.eventually(LoopedInPromise.response(this, handler))
 
 			viewAnimator.tryFlipToPreviousView()
-			viewAnimator.setOnClickListener(ViewFileDetailsClickListener(viewAnimator, serviceFile))
+			viewAnimator.setOnClickListener(ViewFileDetailsClickListener(viewAnimator, positionedFile, playlist))
 			playButton.setOnClickListener(FileSeekToClickListener(viewAnimator, position))
-			viewFileDetailsButton.setOnClickListener(ViewFileDetailsClickListener(viewAnimator, serviceFile))
+			viewFileDetailsButton.setOnClickListener(ViewFileDetailsClickListener(viewAnimator, positionedFile, playlist))
 			removeButton.setOnClickListener(RemovePlaylistFileClickListener(viewAnimator, position))
 		}
 

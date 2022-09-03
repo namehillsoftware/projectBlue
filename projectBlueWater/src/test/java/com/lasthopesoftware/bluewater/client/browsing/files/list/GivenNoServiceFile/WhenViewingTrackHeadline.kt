@@ -10,7 +10,7 @@ import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 
-class WhenViewingTheFileDetails {
+class WhenViewingTrackHeadline {
 
 	private val viewModel by lazy {
 		val filePropertiesProvider = mockk<ProvideScopedFileProperties>().apply {

@@ -12,7 +12,7 @@ class TypedMessageBus<ScopedMessage : TypedMessage>(
 {
 	private val registrationSync = Any()
 	private val receivers = ConcurrentHashMap<Class<*>, ConcurrentHashMap<*, Unit>>()
-	private val classesByReceiver = ConcurrentHashMap<(ScopedMessage) -> Unit, ConcurrentHashMap<Class<*>, Unit>>()
+	private val classesByReceiver = HashMap<(ScopedMessage) -> Unit, ConcurrentHashMap<Class<*>, Unit>>()
 
 	override fun <T : ScopedMessage> sendMessage(message: T) {
 		@Suppress("UNCHECKED_CAST")
@@ -32,7 +32,7 @@ class TypedMessageBus<ScopedMessage : TypedMessage>(
 				receivers.getOrPut(messageClass) { ConcurrentHashMap<(Message) -> Unit, Unit>() } as ConcurrentHashMap<(Message) -> Unit, Unit>
 			receiverSet[receiver] = Unit
 
-			val classesSet = classesByReceiver.getOrPut(receiver as ((ScopedMessage) -> Unit)?) { ConcurrentHashMap() }
+			val classesSet = classesByReceiver.getOrPut(receiver as (ScopedMessage) -> Unit) { ConcurrentHashMap() }
 			classesSet[messageClass] = Unit
 
 			return ReceiverCloseable(receiver)
@@ -42,8 +42,11 @@ class TypedMessageBus<ScopedMessage : TypedMessage>(
 	override fun <Message : ScopedMessage> unregisterReceiver(receiver: (Message) -> Unit) {
 		synchronized(registrationSync) {
 			val classesSet = classesByReceiver.remove(receiver) ?: return
-			for (c in classesSet)
-				receivers[c.key]?.remove(receiver)
+			for (c in classesSet) receivers[c.key]?.apply {
+				remove(receiver)
+				if (isEmpty())
+					receivers.remove(c.key)
+			}
 		}
 	}
 
