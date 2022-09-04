@@ -347,7 +347,6 @@ private fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class)
 						}
 				}
 
-				val collapsedTopRowPadding = 8.dp
 				Box(modifier = Modifier
 					.height(appBarHeight)
 					.background(coverArtColorState.backgroundColor)
