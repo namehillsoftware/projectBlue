@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.shared.messages
 
 import android.os.Handler
+import com.lasthopesoftware.bluewater.shared.lazyLogger
 import java.util.concurrent.ConcurrentHashMap
 
 class TypedMessageBus<ScopedMessage : TypedMessage>(
@@ -10,6 +11,8 @@ class TypedMessageBus<ScopedMessage : TypedMessage>(
 	SendTypedMessages<ScopedMessage>,
 	AutoCloseable
 {
+	private val logger by lazyLogger<TypedMessageBus<ScopedMessage>>()
+
 	private val registrationSync = Any()
 	private val receivers = ConcurrentHashMap<Class<*>, ConcurrentHashMap<*, Unit>>()
 	private val classesByReceiver = HashMap<(ScopedMessage) -> Unit, ConcurrentHashMap<Class<*>, Unit>>()
@@ -18,7 +21,13 @@ class TypedMessageBus<ScopedMessage : TypedMessage>(
 		@Suppress("UNCHECKED_CAST")
 		fun broadcastToReceivers() {
 			val typedReceivers = receivers[message.javaClass] as? ConcurrentHashMap<(T) -> Unit, Unit> ?: return
-			typedReceivers.forEach { (r, _) -> r(message) }
+			typedReceivers.forEach { (r, _) ->
+				try {
+					r(message)
+				} catch (e: Exception) {
+					logger.error("An error occurred handling message $message with receiver $r.", e)
+				}
+			}
 		}
 
 		if (Thread.currentThread() == handler.looper.thread) broadcastToReceivers()
