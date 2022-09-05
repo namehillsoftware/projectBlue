@@ -4,7 +4,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FakeFilePropertiesContainer
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ScopedFilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.fileproperties.FilePropertiesPlayStatsUpdater
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.fileproperties.ScopedFilePropertiesPlayStatsUpdater
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.ScopedFilePropertiesStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeRevisionConnectionProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRevisionProvider
@@ -55,11 +55,11 @@ class WhenStoringTheUpdatedPlayStats {
 		)
 		val checkConnection = mockk<CheckIfScopedConnectionIsReadOnly>()
 		every { checkConnection.promiseIsReadOnly() } returns false.toPromise()
-		val filePropertiesPlayStatsUpdater = FilePropertiesPlayStatsUpdater(
+		val scopedFilePropertiesPlayStatsUpdater = ScopedFilePropertiesPlayStatsUpdater(
 			scopedFilePropertiesProvider,
 			ScopedFilePropertiesStorage(connectionProvider, checkConnection, checkScopedRevisions, filePropertiesContainer)
 		)
-		Pair(filePropertiesPlayStatsUpdater, scopedFilePropertiesProvider)
+		Pair(scopedFilePropertiesPlayStatsUpdater, scopedFilePropertiesProvider)
 	}
 
 	private var fileProperties: Map<String, String>? = null

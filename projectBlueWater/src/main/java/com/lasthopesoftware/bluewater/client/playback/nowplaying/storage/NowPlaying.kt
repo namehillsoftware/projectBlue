@@ -1,23 +1,29 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.storage
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 
-class NowPlaying constructor(
-	@JvmField
-	var playlist: List<ServiceFile>,
-	@JvmField
-    var playlistPosition: Int,
-	@JvmField
-    var filePosition: Long,
-	@JvmField
-    var isRepeating: Boolean
+class NowPlaying(
+	val libraryId: LibraryId,
+	val playlist: List<ServiceFile>,
+    val playlistPosition: Int,
+    val filePosition: Long,
+    val isRepeating: Boolean
 ) {
 
 	val playingFile: PositionedFile?
 		get() =
 			playlistPosition.takeIf { it > -1 && it < playlist.size }?.let { PositionedFile(it, playlist[it]) }
 
-    constructor(playlistPosition: Int, filePosition: Long, isRepeating: Boolean)
-		: this(emptyList(), playlistPosition, filePosition, isRepeating)
+	fun withFilePosition(filePosition: Long): NowPlaying = NowPlaying(
+		libraryId,
+		playlist,
+		playlistPosition,
+		filePosition,
+		isRepeating,
+	)
+
+    constructor(libraryId: LibraryId, playlistPosition: Int, filePosition: Long, isRepeating: Boolean)
+		: this(libraryId, emptyList(), playlistPosition, filePosition, isRepeating)
 }

@@ -16,7 +16,7 @@ class ScopedFilePropertiesStorage(
 	private val checkIfScopedConnectionIsReadOnly: CheckIfScopedConnectionIsReadOnly,
 	private val checkScopedRevisions: CheckScopedRevisions,
 	private val filePropertiesContainerRepository: IFilePropertiesContainerRepository
-) : UpdateFileProperties {
+) : UpdateScopedFileProperties {
 
 	override fun promiseFileUpdate(serviceFile: ServiceFile, property: String, value: String, isFormatted: Boolean): Promise<Unit> =
 		checkIfScopedConnectionIsReadOnly.promiseIsReadOnly().eventually { isReadOnly ->

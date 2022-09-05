@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.browsing.remote.GivenAnActiveLibra
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaMetadataCompat
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.remote.GetMediaItemsFromServiceFiles
 import com.lasthopesoftware.bluewater.client.browsing.remote.NowPlayingMediaItemLookup
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.MaintainNowPlayingState
@@ -37,6 +38,7 @@ class `When Getting The Now Playing Item` {
 			val nowPlaying = mockk<MaintainNowPlayingState>()
 			every { nowPlaying.promiseNowPlaying() } returns Promise(
 				NowPlaying(
+					LibraryId(861),
 					listOf(ServiceFile(89), ServiceFile(393), ServiceFile(714), ServiceFile(760)),
 					1,
 					561L,

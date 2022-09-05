@@ -2,9 +2,9 @@ package com.lasthopesoftware.bluewater.client.browsing.files.properties.playstat
 
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FakeFilePropertiesContainer
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ScopedFilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.UpdatePlaystats
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.UpdateScopedPlaystats
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.factory.PlaystatsUpdateSelector
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.playedfile.PlayedFilePlayStatsUpdater
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.playedfile.ScopedPlayedFilePlayStatsUpdater
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.ScopedFilePropertiesStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeScopedRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
@@ -44,7 +44,7 @@ class WhenAttemptingToGetThePlaystatsUpdaterAgain {
 	}
 
 	private var exception: ExecutionException? = null
-	private var updater: UpdatePlaystats? = null
+	private var updater: UpdateScopedPlaystats? = null
 
 	@BeforeAll
 	fun act() {
@@ -64,7 +64,7 @@ class WhenAttemptingToGetThePlaystatsUpdaterAgain {
 	@Test
 	fun thenThePlayedFilePlaystatsUpdaterIsGiven() {
 		assertThat(updater).isInstanceOf(
-			PlayedFilePlayStatsUpdater::class.java
+			ScopedPlayedFilePlayStatsUpdater::class.java
 		)
 	}
 }

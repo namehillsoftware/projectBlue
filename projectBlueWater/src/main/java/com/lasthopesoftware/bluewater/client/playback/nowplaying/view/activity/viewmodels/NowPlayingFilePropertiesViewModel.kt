@@ -5,7 +5,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideScopedFileProperties
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.UpdateFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.UpdateScopedFileProperties
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
 import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfScopedConnectionIsReadOnly
 import com.lasthopesoftware.bluewater.client.connection.polling.PollForConnections
@@ -28,10 +28,8 @@ import com.namehillsoftware.handoff.promises.Promise
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import org.joda.time.Duration
-import org.slf4j.LoggerFactory
 import kotlin.math.roundToInt
 
-private val logger by lazy { LoggerFactory.getLogger(NowPlayingFilePropertiesViewModel::class.java) }
 private val screenControlVisibilityTime by lazy { Duration.standardSeconds(5) }
 
 class NowPlayingFilePropertiesViewModel(
@@ -39,7 +37,7 @@ class NowPlayingFilePropertiesViewModel(
 	private val nowPlayingRepository: GetNowPlayingState,
 	private val selectedConnectionProvider: ProvideSelectedConnection,
 	private val fileProperties: ProvideScopedFileProperties,
-	private val updateFileProperties: UpdateFileProperties,
+	private val updateScopedFileProperties: UpdateScopedFileProperties,
 	private val checkAuthentication: CheckIfScopedConnectionIsReadOnly,
 	private val playbackService: ControlPlaybackService,
 	private val pollConnections: PollForConnections,
@@ -145,7 +143,7 @@ class NowPlayingFilePropertiesViewModel(
 
 		songRatingState.value = rating
 		val ratingToString = rating.roundToInt().toString()
-		updateFileProperties
+		updateScopedFileProperties
 			.promiseFileUpdate(serviceFile, KnownFileProperties.RATING, ratingToString, false)
 			.excuse(::handleIoException)
 	}

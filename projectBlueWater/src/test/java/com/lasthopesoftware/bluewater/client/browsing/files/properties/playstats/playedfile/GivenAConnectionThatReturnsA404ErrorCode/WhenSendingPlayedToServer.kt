@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.playedfile.GivenAConnectionThatReturnsA404ErrorCode
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.playedfile.PlayedFilePlayStatsUpdater
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.playedfile.ScopedPlayedFilePlayStatsUpdater
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
 import com.lasthopesoftware.bluewater.shared.exceptions.HttpResponseException
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -17,7 +17,7 @@ class WhenSendingPlayedToServer {
 	@BeforeAll
 	fun act() {
 		val connectionProvider = FakeConnectionProvider()
-		val updater = PlayedFilePlayStatsUpdater(connectionProvider)
+		val updater = ScopedPlayedFilePlayStatsUpdater(connectionProvider)
 		try {
 			updater.promisePlaystatsUpdate(ServiceFile(15)).toExpiringFuture().get()
 		} catch (e: ExecutionException) {

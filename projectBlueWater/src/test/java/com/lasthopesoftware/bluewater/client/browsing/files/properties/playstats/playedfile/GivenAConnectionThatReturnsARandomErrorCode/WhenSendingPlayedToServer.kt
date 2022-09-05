@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.playedfile.GivenAConnectionThatReturnsARandomErrorCode
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.playedfile.PlayedFilePlayStatsUpdater
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.playedfile.ScopedPlayedFilePlayStatsUpdater
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTuple
 import com.lasthopesoftware.bluewater.shared.exceptions.HttpResponseException
@@ -25,7 +25,7 @@ class WhenSendingPlayedToServer {
 				expectedResponseCode, ByteArray(0)
 			)
 		}, "File/Played", "File=15", "FileType=Key")
-		PlayedFilePlayStatsUpdater(connectionProvider)
+		ScopedPlayedFilePlayStatsUpdater(connectionProvider)
 	}
 
 	private var httpResponseException: HttpResponseException? = null

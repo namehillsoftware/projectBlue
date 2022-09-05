@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity.
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FakeScopedCachedFilesPropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfScopedConnectionIsReadOnly
 import com.lasthopesoftware.bluewater.client.connection.selected.ProvideSelectedConnection
@@ -22,6 +23,7 @@ class `When Initializing The NowPlayingViewModel` {
 		val nowPlayingRepository = mockk<MaintainNowPlayingState>().apply {
 			every { promiseNowPlaying() } returns Promise(
 				NowPlaying(
+					LibraryId(718),
 					listOf(
 						ServiceFile(815),
 						ServiceFile(449),

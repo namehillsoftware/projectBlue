@@ -64,8 +64,8 @@ class LiveNowPlayingLookup private constructor(
 					trackedPosition = null
 				}
 
-				np?.apply {
-					filePosition = trackedPosition ?: filePosition
+				np?.let {
+					trackedPosition?.let(it::withFilePosition) ?: it
 				}
 			}
 			.keepPromise()

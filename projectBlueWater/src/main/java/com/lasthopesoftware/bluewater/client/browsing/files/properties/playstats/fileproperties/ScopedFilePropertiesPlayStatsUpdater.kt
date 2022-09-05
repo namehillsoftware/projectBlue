@@ -3,21 +3,20 @@ package com.lasthopesoftware.bluewater.client.browsing.files.properties.playstat
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.parseDurationIntoMilliseconds
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.UpdatePlaystats
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.UpdateFileProperties
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideScopedFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.UpdateScopedPlaystats
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.ScopedFilePropertiesStorage
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.namehillsoftware.handoff.promises.Promise
 
-private val logger by lazyLogger<FilePropertiesPlayStatsUpdater>()
+private val logger by lazyLogger<ScopedFilePropertiesPlayStatsUpdater>()
 
-class FilePropertiesPlayStatsUpdater(
-    private val filePropertiesProvider: ProvideLibraryFileProperties,
-    private val filePropertiesStorage: UpdateFileProperties
-) : UpdatePlaystats {
-    override fun promisePlaystatsUpdate(libraryId: LibraryId, serviceFile: ServiceFile): Promise<*> =
-		filePropertiesProvider.promiseFileProperties(libraryId, serviceFile)
+class ScopedFilePropertiesPlayStatsUpdater(
+    private val filePropertiesProvider: ProvideScopedFileProperties,
+    private val scopedFilePropertiesStorage: ScopedFilePropertiesStorage
+) : UpdateScopedPlaystats {
+    override fun promisePlaystatsUpdate(serviceFile: ServiceFile): Promise<*> =
+		filePropertiesProvider.promiseFileProperties(serviceFile)
 			.eventually { fileProperties ->
 				try {
 					val lastPlayedServer = fileProperties[KnownFileProperties.LAST_PLAYED]
@@ -27,8 +26,7 @@ class FilePropertiesPlayStatsUpdater(
 
 					val numberPlaysString = fileProperties[KnownFileProperties.NUMBER_PLAYS]
 					val numberPlays = numberPlaysString?.toIntOrNull() ?: 0
-					val numberPlaysUpdate = filePropertiesStorage.promiseFileUpdate(
-						libraryId,
+					val numberPlaysUpdate = scopedFilePropertiesStorage.promiseFileUpdate(
 						serviceFile,
 						KnownFileProperties.NUMBER_PLAYS,
 						numberPlays.inc().toString(),
@@ -36,8 +34,7 @@ class FilePropertiesPlayStatsUpdater(
 					)
 
 					val newLastPlayed = (currentTime / 1000).toString()
-					val lastPlayedUpdate = filePropertiesStorage.promiseFileUpdate(
-						libraryId,
+					val lastPlayedUpdate = scopedFilePropertiesStorage.promiseFileUpdate(
 						serviceFile,
 						KnownFileProperties.LAST_PLAYED,
 						newLastPlayed,
