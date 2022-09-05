@@ -22,7 +22,6 @@ import java.io.File
 class WhenGettingTheUri {
 
 	companion object {
-		private var rejection: Throwable? = null
 		private val returnedFileUri by lazy {
 			val mockStoredFileUriProvider = mockk<StoredFileUriProvider>()
 			every { mockStoredFileUriProvider.promiseFileUri(any()) } returns Promise.empty()

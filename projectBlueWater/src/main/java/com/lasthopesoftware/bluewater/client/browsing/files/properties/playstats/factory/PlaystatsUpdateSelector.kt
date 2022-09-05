@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.factory
 
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideScopedFileProperties
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.IPlaystatsUpdate
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.UpdatePlaystats
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.fileproperties.FilePropertiesPlayStatsUpdater
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.playedfile.PlayedFilePlayStatsUpdater
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.ScopedFilePropertiesStorage
@@ -19,16 +19,16 @@ class PlaystatsUpdateSelector(
 	private val sync = Any()
 
 	@Volatile
-	private var promisedPlaystatsUpdater = Promise.empty<IPlaystatsUpdate>()
+	private var promisedPlaystatsUpdater = Promise.empty<UpdatePlaystats>()
 
-	fun promisePlaystatsUpdater(): Promise<IPlaystatsUpdate> =
+	fun promisePlaystatsUpdater(): Promise<UpdatePlaystats> =
 		synchronized(sync) {
 			promisedPlaystatsUpdater.eventually(
 				{ u -> u?.toPromise() ?: promiseNewPlaystatsUpdater() },
 				{ promiseNewPlaystatsUpdater() })
 		}
 
-	private fun promiseNewPlaystatsUpdater(): Promise<IPlaystatsUpdate> =
+	private fun promiseNewPlaystatsUpdater(): Promise<UpdatePlaystats> =
 		synchronized(sync) {
 			programVersionProvider.promiseServerVersion()
 				.then { v ->

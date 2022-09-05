@@ -9,8 +9,8 @@ import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Test
 import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 
 class WhenHandlingTheConnectionSettingsChange {
 	private val recordingApplicationMessageBus = RecordingApplicationMessageBus()

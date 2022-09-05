@@ -1,58 +1,51 @@
-package com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.fileproperties;
+package com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.fileproperties
 
-import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers;
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties;
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideScopedFileProperties;
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.IPlaystatsUpdate;
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.ScopedFilePropertiesStorage;
-import com.namehillsoftware.handoff.promises.Promise;
+import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.parseDurationIntoMilliseconds
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideScopedFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.UpdatePlaystats
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.ScopedFilePropertiesStorage
+import com.lasthopesoftware.bluewater.shared.lazyLogger
+import com.namehillsoftware.handoff.promises.Promise
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+private val logger by lazyLogger<FilePropertiesPlayStatsUpdater>()
 
-import kotlin.Unit;
-
-public class FilePropertiesPlayStatsUpdater implements IPlaystatsUpdate {
-	private static final Logger logger = LoggerFactory.getLogger(FilePropertiesPlayStatsUpdater.class);
-
-	private final ProvideScopedFileProperties filePropertiesProvider;
-	private final ScopedFilePropertiesStorage scopedFilePropertiesStorage;
-
-	public FilePropertiesPlayStatsUpdater(ProvideScopedFileProperties filePropertiesProvider, ScopedFilePropertiesStorage scopedFilePropertiesStorage) {
-		this.filePropertiesProvider = filePropertiesProvider;
-		this.scopedFilePropertiesStorage = scopedFilePropertiesStorage;
-	}
-
-	@Override
-	public Promise<?> promisePlaystatsUpdate(ServiceFile serviceFile) {
-		return filePropertiesProvider.promiseFileProperties(serviceFile)
-			.eventually(fileProperties -> {
+class FilePropertiesPlayStatsUpdater(
+    private val filePropertiesProvider: ProvideScopedFileProperties,
+    private val scopedFilePropertiesStorage: ScopedFilePropertiesStorage
+) : UpdatePlaystats {
+    override fun promisePlaystatsUpdate(serviceFile: ServiceFile): Promise<*> {
+        return filePropertiesProvider.promiseFileProperties(serviceFile)
+            .eventually { fileProperties ->
 				try {
-					final String lastPlayedServer = fileProperties.get(KnownFileProperties.LAST_PLAYED);
-					final int duration = FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties);
+					val lastPlayedServer = fileProperties[KnownFileProperties.LAST_PLAYED]
+					val duration = parseDurationIntoMilliseconds(fileProperties)
+					val currentTime = System.currentTimeMillis()
+					if (lastPlayedServer != null && currentTime - duration <= lastPlayedServer.toLong() * 1000) return@eventually Promise.empty<Collection<Unit>>()
 
-					final long currentTime = System.currentTimeMillis();
-					if (lastPlayedServer != null && (currentTime - duration) <= Long.parseLong(lastPlayedServer) * 1000)
-						return Promise.empty();
+					val numberPlaysString = fileProperties[KnownFileProperties.NUMBER_PLAYS]
+					val numberPlays = numberPlaysString?.toIntOrNull() ?: 0
+					val numberPlaysUpdate = scopedFilePropertiesStorage.promiseFileUpdate(
+						serviceFile,
+						KnownFileProperties.NUMBER_PLAYS,
+						numberPlays.inc().toString(),
+						false
+					)
 
-					final String numberPlaysString = fileProperties.get(KnownFileProperties.NUMBER_PLAYS);
+					val newLastPlayed = (currentTime / 1000).toString()
+					val lastPlayedUpdate = scopedFilePropertiesStorage.promiseFileUpdate(
+						serviceFile,
+						KnownFileProperties.LAST_PLAYED,
+						newLastPlayed,
+						false
+					)
 
-					int numberPlays = 0;
-					if (numberPlaysString != null && !numberPlaysString.isEmpty())
-						numberPlays = Integer.parseInt(numberPlaysString);
-
-					final Promise<Unit> numberPlaysUpdate = scopedFilePropertiesStorage.promiseFileUpdate(serviceFile, KnownFileProperties.NUMBER_PLAYS, String.valueOf(++numberPlays), false);
-
-					final String newLastPlayed = String.valueOf(currentTime / 1000);
-					final Promise<Unit> lastPlayedUpdate = scopedFilePropertiesStorage.promiseFileUpdate(serviceFile, KnownFileProperties.LAST_PLAYED, newLastPlayed, false);
-
-					return Promise.whenAll(numberPlaysUpdate, lastPlayedUpdate);
-				} catch (NumberFormatException ne) {
-					logger.error(ne.toString(), ne);
+					Promise.whenAll(numberPlaysUpdate, lastPlayedUpdate)
+				} catch (ne: NumberFormatException) {
+					logger.error(ne.toString(), ne)
+					Promise.empty()
 				}
-
-				return Promise.empty();
-			});
+			}
 	}
 }

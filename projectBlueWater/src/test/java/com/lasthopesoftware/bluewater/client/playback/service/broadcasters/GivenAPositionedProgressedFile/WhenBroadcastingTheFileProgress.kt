@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messa
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import org.assertj.core.api.AssertionsForClassTypes.assertThat
 import org.joda.time.Duration
-import org.junit.Test
+import org.junit.jupiter.api.Test
 
 class WhenBroadcastingTheFileProgress {
 

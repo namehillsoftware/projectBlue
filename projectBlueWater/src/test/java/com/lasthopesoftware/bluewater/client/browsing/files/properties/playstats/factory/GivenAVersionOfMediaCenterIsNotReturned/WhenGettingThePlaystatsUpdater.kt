@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.browsing.files.properties.playstat
 
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FakeFilePropertiesContainer
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ScopedFilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.IPlaystatsUpdate
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.UpdatePlaystats
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.factory.PlaystatsUpdateSelector
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.fileproperties.FilePropertiesPlayStatsUpdater
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.ScopedFilePropertiesStorage
@@ -39,7 +39,7 @@ class WhenGettingThePlaystatsUpdater {
 		)
 	}
 
-	private var updater: IPlaystatsUpdate? = null
+	private var updater: UpdatePlaystats? = null
 
 	@BeforeAll
 	fun act() {
