@@ -10,14 +10,10 @@ import com.lasthopesoftware.bluewater.client.connection.FakeLibraryConnectionPro
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
 class WhenGettingFileProperties {
-	private var fileProperties: Map<String, String>? = null
-
-    @BeforeAll
-    fun before() {
+	private val fileProperties by lazy {
         val fakeFileConnectionProvider = FakeFileConnectionProvider()
         fakeFileConnectionProvider.setupFile(
 			ServiceFile(15),
@@ -29,9 +25,10 @@ class WhenGettingFileProperties {
             LibraryRevisionProvider(fakeLibraryConnectionProvider),
             mockk(relaxed = true)
         )
-        fileProperties = filePropertiesProvider
-				.promiseFileProperties(LibraryId(14), ServiceFile(15))
-				.toExpiringFuture().get()
+        filePropertiesProvider
+			.promiseFileProperties(LibraryId(14), ServiceFile(15))
+			.toExpiringFuture()
+			.get()
     }
 
     @Test

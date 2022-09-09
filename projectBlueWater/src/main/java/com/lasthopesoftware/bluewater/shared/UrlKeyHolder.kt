@@ -2,9 +2,6 @@ package com.lasthopesoftware.bluewater.shared
 
 import java.net.URL
 
-/**
- * Created by david on 1/17/16.
- */
 class UrlKeyHolder<T>(private val url: URL, private val key: T) {
     private val  lazyHashCode = lazy {
 		var calculatedHashCode = url.hashCode()
