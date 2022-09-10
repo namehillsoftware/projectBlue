@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieva
 import com.lasthopesoftware.bluewater.repository.InsertBuilder.Companion.fromTable
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.namehillsoftware.lazyj.Lazy
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -16,7 +17,7 @@ import org.robolectric.RobolectricTestRunner
 class WhenCollectingTheStoredFiles {
 
 	companion object {
-		private val storedFiles by lazy {
+		private val storedFiles = Lazy {
 			val insertSql = fromTable(StoredFileEntityInformation.tableName)
 				.addColumn(StoredFileEntityInformation.serviceIdColumnName)
 				.addColumn(StoredFileEntityInformation.libraryIdColumnName)
@@ -53,11 +54,11 @@ class WhenCollectingTheStoredFiles {
 
 	@Test(timeout = 30_000)
 	fun thenTheStoredFilesAreFromTheCorrectLibrary() {
-		assertThat(storedFiles?.map { it.libraryId }).containsOnly(5)
+		assertThat(storedFiles.`object`?.map { it.libraryId }).containsOnly(5)
 	}
 
 	@Test(timeout = 30_000)
 	fun thenTheStoredFilesAreCorrect() {
-		assertThat(storedFiles?.map { it.serviceId }).isSubsetOf(13..23)
+		assertThat(storedFiles.`object`?.map { it.serviceId }).isSubsetOf(13..23)
 	}
 }
