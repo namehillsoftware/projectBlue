@@ -59,8 +59,6 @@ import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryR
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
 import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
-import com.lasthopesoftware.bluewater.client.connection.authentication.ScopedConnectionAuthenticationChecker
-import com.lasthopesoftware.bluewater.client.connection.authentication.SelectedConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.polling.ConnectionPoller
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity.Companion.restoreSelectedConnection
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
@@ -202,13 +200,6 @@ class ItemListActivity : AppCompatActivity(), Runnable {
 		}
 	}
 
-	private val selectedConnectionAuthenticationChecker by lazy {
-		SelectedConnectionAuthenticationChecker(
-			selectedConnectionProvider,
-			::ScopedConnectionAuthenticationChecker
-		)
-	}
-
 	private val libraryConnectionProvider by lazy { buildNewConnectionSessionManager() }
 
 	private val connectionAuthenticationChecker by lazy {
@@ -236,8 +227,6 @@ class ItemListActivity : AppCompatActivity(), Runnable {
 		)
 	}
 
-	private val selectedConnectionProvider by lazy { SelectedConnectionProvider(this) }
-
 	private val trackHeadlineViewModelProvider by buildViewModelLazily {
 		TrackHeadlineViewModelProvider(
 			scopedFilePropertiesProvider,
@@ -255,7 +244,7 @@ class ItemListActivity : AppCompatActivity(), Runnable {
 			browserLibraryIdProvider,
 			libraryFilePropertiesProvider,
 			filePropertiesStorage,
-			selectedConnectionAuthenticationChecker,
+			connectionAuthenticationChecker,
 			PlaybackServiceController(this),
 			ConnectionPoller(this),
 			StringResources(this),

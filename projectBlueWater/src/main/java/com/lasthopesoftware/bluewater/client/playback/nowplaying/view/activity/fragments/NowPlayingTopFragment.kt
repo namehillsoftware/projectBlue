@@ -8,17 +8,13 @@ import android.widget.RatingBar
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import com.lasthopesoftware.bluewater.R
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertyStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
-import com.lasthopesoftware.bluewater.client.connection.authentication.ScopedConnectionAuthenticationChecker
-import com.lasthopesoftware.bluewater.client.connection.authentication.SelectedConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.polling.ConnectionPoller
-import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.InMemoryNowPlayingDisplaySettings
@@ -47,24 +43,11 @@ class NowPlayingTopFragment : Fragment() {
 
 	private val revisionProvider by lazy { LibraryRevisionProvider(libraryConnectionProvider) }
 
-	private val selectedConnectionProvider by lazy { SelectedConnectionProvider(requireContext()) }
-
 	private val libraryFilePropertiesProvider by lazy {
-		CachedFilePropertiesProvider(
+		FilePropertiesProvider(
 			libraryConnectionProvider,
+			revisionProvider,
 			FilePropertyCache.getInstance(),
-			FilePropertiesProvider(
-				libraryConnectionProvider,
-				revisionProvider,
-				FilePropertyCache.getInstance(),
-			)
-		)
-	}
-
-	private val lazySelectedConnectionAuthenticationChecker by lazy {
-		SelectedConnectionAuthenticationChecker(
-			selectedConnectionProvider,
-			::ScopedConnectionAuthenticationChecker
 		)
 	}
 
@@ -95,7 +78,7 @@ class NowPlayingTopFragment : Fragment() {
 			browserLibraryIdProvider,
 			libraryFilePropertiesProvider,
 			filePropertiesStorage,
-			lazySelectedConnectionAuthenticationChecker,
+			connectionAuthenticationChecker,
 			playbackService,
 			ConnectionPoller(requireContext()),
 			StringResources(requireContext()),

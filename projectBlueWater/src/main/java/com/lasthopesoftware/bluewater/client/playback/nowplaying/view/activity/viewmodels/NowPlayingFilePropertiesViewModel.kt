@@ -10,7 +10,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.U
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
-import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfScopedConnectionIsReadOnly
+import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfConnectionIsReadOnly
 import com.lasthopesoftware.bluewater.client.connection.polling.PollForConnections
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
@@ -39,7 +39,7 @@ class NowPlayingFilePropertiesViewModel(
 	private val selectedLibraryId: ProvideSelectedLibraryId,
 	private val fileProperties: ProvideLibraryFileProperties,
 	private val updateFileProperties: UpdateFileProperties,
-	private val checkAuthentication: CheckIfScopedConnectionIsReadOnly,
+	private val checkAuthentication: CheckIfConnectionIsReadOnly,
 	private val playbackService: ControlPlaybackService,
 	private val pollConnections: PollForConnections,
 	private val stringResources: GetStringResources
@@ -81,7 +81,7 @@ class NowPlayingFilePropertiesViewModel(
 				cachedPromises?.close()
 				CachedPromises(
 					key,
-					checkAuthentication.promiseIsReadOnly(),
+					checkAuthentication.promiseIsReadOnly(libraryId),
 					fileProperties.promiseFileProperties(libraryId, serviceFile),
 				).also { cachedPromises = it }
 			}
@@ -257,7 +257,7 @@ class NowPlayingFilePropertiesViewModel(
 					cachedPromises?.close()
 					CachedPromises(
 						key,
-						checkAuthentication.promiseIsReadOnly(),
+						checkAuthentication.promiseIsReadOnly(libraryId),
 						fileProperties.promiseFileProperties(libraryId, serviceFile),
 					).also { cachedPromises = it }
 				}

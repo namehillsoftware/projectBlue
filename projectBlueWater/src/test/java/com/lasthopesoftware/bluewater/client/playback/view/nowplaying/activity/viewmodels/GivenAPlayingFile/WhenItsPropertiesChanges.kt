@@ -5,7 +5,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertyUpdatedMessage
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfScopedConnectionIsReadOnly
+import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfConnectionIsReadOnly
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.MaintainNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
@@ -62,11 +62,11 @@ class WhenItsPropertiesChanges {
 			)
 		}
 
-		val checkAuthentication = mockk<CheckIfScopedConnectionIsReadOnly>().apply {
-			every { promiseIsReadOnly() } returns true.toPromise()
+		val checkAuthentication = mockk<CheckIfConnectionIsReadOnly> {
+			every { promiseIsReadOnly(LibraryId(697)) } returns true.toPromise()
 		}
 
-		val playbackService = mockk<ControlPlaybackService>().apply {
+		val playbackService = mockk<ControlPlaybackService> {
 			every { promiseIsMarkedForPlay() } returns true.toPromise()
 		}
 

@@ -15,7 +15,6 @@ import androidx.viewpager2.widget.ViewPager2
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.image.CachedImageProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.menu.FileListItemNowPlayingRegistrar
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertyStorage
@@ -24,8 +23,6 @@ import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAn
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
-import com.lasthopesoftware.bluewater.client.connection.authentication.ScopedConnectionAuthenticationChecker
-import com.lasthopesoftware.bluewater.client.connection.authentication.SelectedConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.polling.ConnectionPoller
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService
 import com.lasthopesoftware.bluewater.client.connection.polling.WaitForConnectionDialog
@@ -94,21 +91,11 @@ class NowPlayingActivity :
 	private val lazySelectedConnectionProvider by lazy { SelectedConnectionProvider(this) }
 
 	private val libraryFilePropertiesProvider by lazy {
-		CachedFilePropertiesProvider(
+		FilePropertiesProvider(
 			libraryConnectionProvider,
+			revisionProvider,
 			FilePropertyCache.getInstance(),
-			FilePropertiesProvider(
-				libraryConnectionProvider,
-				revisionProvider,
-				FilePropertyCache.getInstance(),
-			)
 		)
-	}
-
-	private val lazySelectedConnectionAuthenticationChecker by lazy {
-		SelectedConnectionAuthenticationChecker(
-			lazySelectedConnectionProvider,
-			::ScopedConnectionAuthenticationChecker)
 	}
 
 	private val filePropertiesStorage by lazy {
@@ -145,7 +132,7 @@ class NowPlayingActivity :
 				browserLibraryIdProvider,
 				libraryFilePropertiesProvider,
 				filePropertiesStorage,
-				lazySelectedConnectionAuthenticationChecker,
+				connectionAuthenticationChecker,
 				PlaybackServiceController(this),
 				ConnectionPoller(this),
 				StringResources(this),
