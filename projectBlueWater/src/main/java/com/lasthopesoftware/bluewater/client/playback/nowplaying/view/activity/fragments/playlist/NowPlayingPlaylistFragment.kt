@@ -15,21 +15,22 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.menu.FileListItemNowPlayingRegistrar
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.ScopedFilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.SelectedConnectionFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.ScopedFilePropertiesStorage
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.SelectedConnectionFilePropertiesStorage
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertyStorage
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.handlers.ViewChangedHandler
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.SpecificLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.revisions.SelectedConnectionRevisionProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
+import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.authentication.ScopedConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.authentication.SelectedConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.polling.ConnectionPoller
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
@@ -64,18 +65,28 @@ class NowPlayingPlaylistFragment : Fragment() {
 
 	private val applicationMessageBus by lazy { getApplicationMessageBus().getScopedMessageBus() }
 
+	private val browserLibraryIdProvider by lazy { SelectedBrowserLibraryIdentifierProvider(requireContext().getApplicationSettingsRepository()) }
+
+	private val libraryConnectionProvider by lazy { requireContext().buildNewConnectionSessionManager() }
+
+	private val connectionAuthenticationChecker by lazy {
+		ConnectionAuthenticationChecker(libraryConnectionProvider)
+	}
+
+	private val revisionProvider by lazy { LibraryRevisionProvider(libraryConnectionProvider) }
+
 	private val selectedConnectionProvider by lazy { SelectedConnectionProvider(requireContext()) }
 
-	private val sessionRevisionProvider by lazy { SelectedConnectionRevisionProvider(selectedConnectionProvider) }
-
-	private val lazyFilePropertiesProvider by lazy {
-		SelectedConnectionFilePropertiesProvider(selectedConnectionProvider) { c ->
-			ScopedFilePropertiesProvider(
-				c,
-				sessionRevisionProvider,
-				FilePropertyCache.getInstance()
+	private val libraryFilePropertiesProvider by lazy {
+		CachedFilePropertiesProvider(
+			libraryConnectionProvider,
+			FilePropertyCache.getInstance(),
+			FilePropertiesProvider(
+				libraryConnectionProvider,
+				revisionProvider,
+				FilePropertyCache.getInstance(),
 			)
-		}
+		)
 	}
 
 	private val lazySelectedConnectionAuthenticationChecker by lazy {
@@ -86,13 +97,13 @@ class NowPlayingPlaylistFragment : Fragment() {
 	}
 
 	private val filePropertiesStorage by lazy {
-		SelectedConnectionFilePropertiesStorage(selectedConnectionProvider) { c ->
-			ScopedFilePropertiesStorage(
-				c,
-				lazySelectedConnectionAuthenticationChecker,
-				sessionRevisionProvider,
-				FilePropertyCache.getInstance())
-		}
+		FilePropertyStorage(
+			libraryConnectionProvider,
+			connectionAuthenticationChecker,
+			revisionProvider,
+			FilePropertyCache.getInstance(),
+			applicationMessageBus
+		)
 	}
 
 	private val selectedLibraryIdProvider by lazy { SelectedBrowserLibraryIdentifierProvider(requireContext().getApplicationSettingsRepository()) }
@@ -150,15 +161,15 @@ class NowPlayingPlaylistFragment : Fragment() {
 		val playbackService = PlaybackServiceController(requireContext())
 
 		NowPlayingFilePropertiesViewModel(
-            applicationMessageBus,
-            LiveNowPlayingLookup.getInstance(),
-            selectedConnectionProvider,
-            lazyFilePropertiesProvider,
-            filePropertiesStorage,
-            lazySelectedConnectionAuthenticationChecker,
-            playbackService,
-            ConnectionPoller(requireContext()),
-            StringResources(requireContext()),
+			applicationMessageBus,
+			LiveNowPlayingLookup.getInstance(),
+			browserLibraryIdProvider,
+			libraryFilePropertiesProvider,
+			filePropertiesStorage,
+			lazySelectedConnectionAuthenticationChecker,
+			playbackService,
+			ConnectionPoller(requireContext()),
+			StringResources(requireContext()),
         )
 	}
 

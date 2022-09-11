@@ -57,11 +57,11 @@ class ReusableTrackHeadlineViewModel(
 	override val title = mutableTitle.asStateFlow()
 	override val isMenuShown = mutableIsMenuShown.asStateFlow()
 
-	override fun promiseUpdate(playlist: List<ServiceFile>, position: Int): Promise<Unit> {
+	override fun promiseUpdate(associatedPlaylist: List<ServiceFile>, position: Int): Promise<Unit> {
 		synchronized(promiseSync) {
-			val serviceFile = playlist[position]
+			val serviceFile = associatedPlaylist[position]
 			activePositionedFile = PositionedFile(position, serviceFile)
-			associatedPlaylist = playlist
+			this.associatedPlaylist = associatedPlaylist
 
 			val currentPromisedState = promisedState
 			promisedState = currentPromisedState.inevitably(EventualTextViewUpdate(serviceFile))

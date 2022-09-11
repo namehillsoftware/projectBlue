@@ -1,11 +1,9 @@
 package com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity.viewmodels.GivenAPlayingFile
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.FakeScopedCachedFilesPropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FakeFilesPropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfScopedConnectionIsReadOnly
-import com.lasthopesoftware.bluewater.client.connection.selected.ProvideSelectedConnection
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.MaintainNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
@@ -38,13 +36,10 @@ class `When Initializing The NowPlayingFilePropertiesViewModel` {
 			)
 		}
 
-		val connectionProvider = mockk<ProvideSelectedConnection>().apply {
-			every { promiseSessionConnection() } returns Promise(FakeConnectionProvider())
-		}
-
-		val filePropertiesProvider = FakeScopedCachedFilesPropertiesProvider().apply {
+		val filePropertiesProvider = FakeFilesPropertiesProvider().apply {
 			addFilePropertiesToCache(
 				ServiceFile(355),
+				LibraryId(718),
 				emptyMap()
 			)
 		}
@@ -60,7 +55,9 @@ class `When Initializing The NowPlayingFilePropertiesViewModel` {
 		val nowPlayingViewModel = NowPlayingFilePropertiesViewModel(
 			mockk(relaxed = true, relaxUnitFun = true),
 			nowPlayingRepository,
-			connectionProvider,
+			mockk {
+				every { selectedLibraryId } returns Promise(LibraryId(718))
+			},
 			filePropertiesProvider,
 			mockk(),
 			checkAuthentication,

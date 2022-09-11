@@ -2,12 +2,10 @@ package com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity.
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideScopedFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertyUpdatedMessage
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfScopedConnectionIsReadOnly
-import com.lasthopesoftware.bluewater.client.connection.selected.ProvideSelectedConnection
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.MaintainNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
@@ -51,12 +49,8 @@ class WhenItsPropertiesChanges {
 			)
 		}
 
-		val connectionProvider = mockk<ProvideSelectedConnection>().apply {
-			every { promiseSessionConnection() } returns Promise(FakeConnectionProvider())
-		}
-
-		val filePropertiesProvider = mockk<ProvideScopedFileProperties> {
-			every { promiseFileProperties(playlist[playlistPosition]) } returnsMany listOf(
+		val filePropertiesProvider = mockk<ProvideLibraryFileProperties> {
+			every { promiseFileProperties(LibraryId(697), playlist[playlistPosition]) } returnsMany listOf(
 				mapOf(
 					Pair(KnownFileProperties.ARTIST, "block"),
 					Pair(KnownFileProperties.NAME, "tongue"),
@@ -81,7 +75,9 @@ class WhenItsPropertiesChanges {
 		val nowPlayingViewModel = NowPlayingFilePropertiesViewModel(
 			messageBus,
 			nowPlayingRepository,
-			connectionProvider,
+			mockk {
+				every { selectedLibraryId } returns Promise(LibraryId(697))
+			},
 			filePropertiesProvider,
 			mockk(),
 			checkAuthentication,
