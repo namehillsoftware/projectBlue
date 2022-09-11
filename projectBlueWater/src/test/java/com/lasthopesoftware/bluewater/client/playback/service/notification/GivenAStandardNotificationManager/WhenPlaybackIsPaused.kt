@@ -19,19 +19,28 @@ import io.mockk.every
 import io.mockk.mockk
 import io.mockk.spyk
 import io.mockk.verify
+import org.junit.AfterClass
 import org.junit.Test
 import org.robolectric.Robolectric
 
 class WhenPlaybackIsPaused : AndroidContext() {
 	companion object {
 		private val pausedNotification = Notification()
-		private val service by lazy {
+		private var service: Lazy<PlaybackService>? = lazy {
 			spyk(Robolectric.buildService(PlaybackService::class.java).get())
 		}
 		private val notificationManager = mockk<NotificationManager>()
+
+		@AfterClass
+		@JvmStatic
+		fun cleanup() {
+			service = null
+		}
 	}
 
     override fun before() {
+		val service = service?.value ?: return
+
 		val context = ApplicationProvider.getApplicationContext<Context>()
 		val notificationContentBuilder = mockk<BuildNowPlayingNotificationContent> {
 			every { promiseNowPlayingNotification(ServiceFile(1), true) } returns Promise(newFakeBuilder(context, Notification()))
@@ -54,7 +63,7 @@ class WhenPlaybackIsPaused : AndroidContext() {
 
     @Test
     fun `then the service continues in the background`() {
-		verify { service.stopForeground(false) }
+		verify { service?.value?.stopForeground(false) }
     }
 
     @Test

@@ -105,6 +105,7 @@ android {
 			all {
 				maxHeapSize = "2048m"
 				maxParallelForks = 2
+				systemProperty 'robolectric.sqliteMode', 'NATIVE'
 			}
 		}
 	}

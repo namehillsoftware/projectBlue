@@ -8,6 +8,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieva
 import com.lasthopesoftware.bluewater.repository.InsertBuilder.Companion.fromTable
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.resources.executors.ThreadPools.promiseTableMessage
 import com.namehillsoftware.lazyj.Lazy
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.AfterClass
@@ -26,27 +27,30 @@ class WhenCollectingTheStoredFiles {
 				.addColumn(StoredFileEntityInformation.isOwnerColumnName)
 				.build()
 
-			RepositoryAccessHelper(ApplicationProvider.getApplicationContext()).use { repositoryAccessHelper ->
-				repositoryAccessHelper.beginTransaction().use {
-					for (i in 1..9) {
-						repositoryAccessHelper
-							.mapSql(insertSql)
-							.addParameter(StoredFileEntityInformation.serviceIdColumnName, i)
-							.addParameter(StoredFileEntityInformation.libraryIdColumnName, 2)
-							.addParameter(StoredFileEntityInformation.isOwnerColumnName, true)
-							.execute()
+			promiseTableMessage<Unit, StoredFile> {
+				RepositoryAccessHelper(ApplicationProvider.getApplicationContext()).use { repositoryAccessHelper ->
+					repositoryAccessHelper.beginTransaction().use {
+						for (i in 1..9) {
+							repositoryAccessHelper
+								.mapSql(insertSql)
+								.addParameter(StoredFileEntityInformation.serviceIdColumnName, i)
+								.addParameter(StoredFileEntityInformation.libraryIdColumnName, 2)
+								.addParameter(StoredFileEntityInformation.isOwnerColumnName, true)
+								.execute()
+						}
+						for (i in 13..22) {
+							repositoryAccessHelper
+								.mapSql(insertSql)
+								.addParameter(StoredFileEntityInformation.serviceIdColumnName, i)
+								.addParameter(StoredFileEntityInformation.libraryIdColumnName, 5)
+								.addParameter(StoredFileEntityInformation.isOwnerColumnName, true)
+								.execute()
+						}
+						it.setTransactionSuccessful()
 					}
-					for (i in 13..22) {
-						repositoryAccessHelper
-							.mapSql(insertSql)
-							.addParameter(StoredFileEntityInformation.serviceIdColumnName, i)
-							.addParameter(StoredFileEntityInformation.libraryIdColumnName, 5)
-							.addParameter(StoredFileEntityInformation.isOwnerColumnName, true)
-							.execute()
-					}
-					it.setTransactionSuccessful()
 				}
-			}
+			}.toExpiringFuture().get()
+
 			val storedFilesCollection =
 				StoredFilesCollection(ApplicationProvider.getApplicationContext())
 
@@ -60,12 +64,12 @@ class WhenCollectingTheStoredFiles {
 		}
 	}
 
-	@Test(timeout = 30_000)
+	@Test
 	fun thenTheStoredFilesAreFromTheCorrectLibrary() {
 		assertThat(storedFiles?.`object`?.map { it.libraryId }).containsOnly(5)
 	}
 
-	@Test(timeout = 30_000)
+	@Test
 	fun thenTheStoredFilesAreCorrect() {
 		assertThat(storedFiles?.`object`?.map { it.serviceId }).isSubsetOf(13..23)
 	}
