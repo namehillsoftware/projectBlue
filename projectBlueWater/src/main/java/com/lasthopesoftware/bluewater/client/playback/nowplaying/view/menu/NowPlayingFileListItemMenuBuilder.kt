@@ -68,14 +68,16 @@ class NowPlayingFileListItemMenuBuilder(
 
 		val dragButton = notifyOnFlipViewAnimator.findViewById<ImageButton>(R.id.dragButton)
 		dragButton.visibility = if (hasEditPlaylistState.isEditingPlaylist) View.VISIBLE else View.GONE
+
+		val handler = Handler(parent.context.mainLooper)
 		typedMessagesRegistration
-			.registerReceiver { _ : EditPlaylist ->
+			.registerReceiver(handler) { _ : EditPlaylist ->
 				notifyOnFlipViewAnimator.tryFlipToPreviousView()
 				notifyOnFlipViewAnimator.isEnabled = false
 				dragButton.visibility = View.VISIBLE
 			}
 		typedMessagesRegistration
-			.registerReceiver { _ : FinishEditPlaylist ->
+			.registerReceiver(handler) { _ : FinishEditPlaylist ->
 				notifyOnFlipViewAnimator.isEnabled = true
 				dragButton.visibility = View.GONE
 			}

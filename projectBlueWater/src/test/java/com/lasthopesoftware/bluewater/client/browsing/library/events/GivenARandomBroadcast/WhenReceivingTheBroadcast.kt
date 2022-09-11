@@ -18,7 +18,7 @@ class WhenReceivingTheBroadcast : AndroidContext() {
 
 	override fun before() {
 		System.setProperty("javax.net.ssl.trustStoreType", "JKS")
-		activityController.get().getApplicationMessageBus().sendMessage(object : ApplicationMessage{})
+		getApplicationMessageBus().sendMessage(object : ApplicationMessage{})
 	}
 
 	@Test

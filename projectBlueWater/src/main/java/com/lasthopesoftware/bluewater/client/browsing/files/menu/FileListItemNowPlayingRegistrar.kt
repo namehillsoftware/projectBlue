@@ -1,10 +1,11 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.menu
 
+import android.os.Handler
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage.TrackChanged
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 
-class FileListItemNowPlayingRegistrar(private val messageRegistrar: RegisterForApplicationMessages) {
+class FileListItemNowPlayingRegistrar(private val handler: Handler, private val messageRegistrar: RegisterForApplicationMessages) {
 
 	private val syncObj = Any()
 	private val registeredHandlers = HashSet<(TrackChanged) -> Unit>()
@@ -12,7 +13,7 @@ class FileListItemNowPlayingRegistrar(private val messageRegistrar: RegisterForA
 	fun registerNewHandler(receiver: (TrackChanged) -> Unit): AutoCloseable =
 		FileListItemNowPlayingHandler(receiver).also {
 			synchronized(syncObj) {
-				messageRegistrar.registerReceiver(receiver)
+				messageRegistrar.registerReceiver(handler, receiver)
 				registeredHandlers.add(receiver)
 			}
 		}

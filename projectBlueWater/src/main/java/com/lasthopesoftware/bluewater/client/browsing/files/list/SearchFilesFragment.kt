@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.list
 
 import android.os.Bundle
+import android.os.Handler
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
@@ -47,6 +48,8 @@ class SearchFilesFragment : Fragment(), View.OnKeyListener, TextView.OnEditorAct
 
 	private var itemListMenuChangeHandler: IItemListMenuChangeHandler? = null
 
+	private val handler by lazy { Handler(requireContext().mainLooper) }
+
 	private val selectedLibraryIdProvider by lazy { SelectedBrowserLibraryIdentifierProvider(requireContext().getApplicationSettingsRepository()) }
 
 	private val fileProvider by lazy {
@@ -55,7 +58,7 @@ class SearchFilesFragment : Fragment(), View.OnKeyListener, TextView.OnEditorAct
 	}
 
 	private val nowPlayingRegistrar = lazy {
-		FileListItemNowPlayingRegistrar(requireContext().getApplicationMessageBus())
+		FileListItemNowPlayingRegistrar(handler, getApplicationMessageBus())
 	}
 
 	private val nowPlayingFileProvider by lazy { fromActiveLibrary(requireContext()) }

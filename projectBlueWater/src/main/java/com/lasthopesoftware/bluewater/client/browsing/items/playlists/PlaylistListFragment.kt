@@ -64,7 +64,7 @@ class PlaylistListFragment : Fragment() {
 	}
 
 	private val applicationMessageBus = lazy {
-		val messageBus = requireContext().getApplicationMessageBus()
+		val messageBus = getApplicationMessageBus()
 		ScopedApplicationMessageBus(messageBus, messageBus).apply {
 			registerReceiver { l: ActivityLaunching ->
 				val isLaunching = l != ActivityLaunching.HALTED

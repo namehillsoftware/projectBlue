@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.files.retriev
 
 import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFileEntityInformation
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFilesCollection
 import com.lasthopesoftware.bluewater.repository.InsertBuilder.Companion.fromTable
@@ -9,6 +10,7 @@ import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.lazyj.Lazy
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.AfterClass
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -17,7 +19,7 @@ import org.robolectric.RobolectricTestRunner
 class WhenCollectingTheStoredFiles {
 
 	companion object {
-		private val storedFiles = Lazy {
+		private var storedFiles: Lazy<Collection<StoredFile>?>? = Lazy {
 			val insertSql = fromTable(StoredFileEntityInformation.tableName)
 				.addColumn(StoredFileEntityInformation.serviceIdColumnName)
 				.addColumn(StoredFileEntityInformation.libraryIdColumnName)
@@ -50,15 +52,21 @@ class WhenCollectingTheStoredFiles {
 
 			storedFilesCollection.promiseAllStoredFiles(LibraryId(5)).toExpiringFuture().get()
 		}
+
+		@AfterClass
+		@JvmStatic
+		fun cleanup() {
+			storedFiles = null
+		}
 	}
 
 	@Test(timeout = 30_000)
 	fun thenTheStoredFilesAreFromTheCorrectLibrary() {
-		assertThat(storedFiles.`object`?.map { it.libraryId }).containsOnly(5)
+		assertThat(storedFiles?.`object`?.map { it.libraryId }).containsOnly(5)
 	}
 
 	@Test(timeout = 30_000)
 	fun thenTheStoredFilesAreCorrect() {
-		assertThat(storedFiles.`object`?.map { it.serviceId }).isSubsetOf(13..23)
+		assertThat(storedFiles?.`object`?.map { it.serviceId }).isSubsetOf(13..23)
 	}
 }

@@ -1,12 +1,9 @@
 package com.lasthopesoftware.bluewater.shared.messages
 
-import android.os.Handler
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import java.util.concurrent.ConcurrentHashMap
 
-class TypedMessageBus<ScopedMessage : TypedMessage>(
-	private val handler: Handler
-) :
+class TypedMessageBus<ScopedMessage : TypedMessage> :
 	RegisterForTypedMessages<ScopedMessage>,
 	SendTypedMessages<ScopedMessage>,
 	AutoCloseable
@@ -17,21 +14,16 @@ class TypedMessageBus<ScopedMessage : TypedMessage>(
 	private val receivers = ConcurrentHashMap<Class<*>, ConcurrentHashMap<*, Unit>>()
 	private val classesByReceiver = HashMap<(ScopedMessage) -> Unit, ConcurrentHashMap<Class<*>, Unit>>()
 
+	@Suppress("UNCHECKED_CAST")
 	override fun <T : ScopedMessage> sendMessage(message: T) {
-		@Suppress("UNCHECKED_CAST")
-		fun broadcastToReceivers() {
-			val typedReceivers = receivers[message.javaClass] as? ConcurrentHashMap<(T) -> Unit, Unit> ?: return
-			typedReceivers.forEach { (r, _) ->
-				try {
-					r(message)
-				} catch (e: Exception) {
-					logger.error("An error occurred handling message $message with receiver $r.", e)
-				}
+		val typedReceivers = receivers[message.javaClass] as? ConcurrentHashMap<(T) -> Unit, Unit> ?: return
+		typedReceivers.forEach { (r, _) ->
+			try {
+				r(message)
+			} catch (e: Exception) {
+				logger.error("An error occurred handling message $message with receiver $r.", e)
 			}
 		}
-
-		if (Thread.currentThread() == handler.looper.thread) broadcastToReceivers()
-		else handler.post(::broadcastToReceivers)
 	}
 
 	@Suppress("UNCHECKED_CAST")

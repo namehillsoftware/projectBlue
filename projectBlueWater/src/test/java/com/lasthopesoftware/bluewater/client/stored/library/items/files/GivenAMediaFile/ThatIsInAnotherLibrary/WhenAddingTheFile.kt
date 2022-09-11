@@ -46,26 +46,26 @@ class WhenAddingTheFile {
 
     @Test
     fun thenTheLibraryIdIsCorrect() {
-        assertThat(storedFile.`object`.libraryId).isEqualTo(15)
+        assertThat(storedFile.`object`?.libraryId).isEqualTo(15)
     }
 
     @Test
     fun thenThisLibraryDoesNotOwnTheFile() {
-        assertThat(storedFile.`object`.isOwner).isFalse
+        assertThat(storedFile.`object`?.isOwner).isFalse
     }
 
     @Test
     fun thenTheDownloadIsMarkedComplete() {
-        assertThat(storedFile.`object`.isDownloadComplete).isTrue
+        assertThat(storedFile.`object`?.isDownloadComplete).isTrue
     }
 
     @Test
     fun thenTheStoredFileHasTheCorrectMediaFileId() {
-        assertThat(storedFile.`object`.storedMediaId).isEqualTo(14)
+        assertThat(storedFile.`object`?.storedMediaId).isEqualTo(14)
     }
 
     @Test
     fun thenTheStoredFileHasTheCorrectPath() {
-        assertThat(storedFile.`object`.path).isEqualTo("a-test-path")
+        assertThat(storedFile.`object`?.path).isEqualTo("a-test-path")
     }
 }

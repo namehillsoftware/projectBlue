@@ -33,7 +33,7 @@ import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicat
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
-import com.lasthopesoftware.bluewater.shared.messages.application.ScopedApplicationMessageBus
+import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
@@ -66,9 +66,8 @@ class ItemListFragment : Fragment() {
 	private val itemProvider by lazy { CachedItemProvider.getInstance(requireContext()) }
 
 	private val applicationMessageBus = lazy {
-		val applicationMessageBus = requireContext().getApplicationMessageBus()
-		ScopedApplicationMessageBus(applicationMessageBus, applicationMessageBus).apply {
-			registerReceiver { l: ActivityLaunching ->
+		getApplicationMessageBus().getScopedMessageBus().apply {
+			registerReceiver(handler) { l: ActivityLaunching ->
 				val isLaunching = l != ActivityLaunching.HALTED // Only show the item list view again when launching error'ed for some reason
 
 				recyclerView?.visibility = ViewUtils.getVisibility(!isLaunching)

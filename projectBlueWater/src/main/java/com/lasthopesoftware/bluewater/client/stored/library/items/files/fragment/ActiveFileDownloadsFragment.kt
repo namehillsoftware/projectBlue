@@ -33,7 +33,7 @@ class ActiveFileDownloadsFragment : Fragment() {
 	private var onFileQueuedReceiver: ((StoredFileMessage.FileQueued) -> Unit)? = null
 	private var onFileDownloadedReceiver: ((StoredFileMessage.FileDownloaded) -> Unit)? = null
 
-	private val applicationMessageBus = lazy { requireContext().getApplicationMessageBus() }
+	private val applicationMessageBus = lazy { getApplicationMessageBus() }
 
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
 		if (container == null) return null

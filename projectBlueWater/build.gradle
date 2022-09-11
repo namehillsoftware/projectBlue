@@ -103,7 +103,7 @@ android {
             includeAndroidResources = true
             returnDefaultValues = true
 			all {
-				maxHeapSize = "1024m"
+				maxHeapSize = "2048m"
 				maxParallelForks = 2
 			}
 		}

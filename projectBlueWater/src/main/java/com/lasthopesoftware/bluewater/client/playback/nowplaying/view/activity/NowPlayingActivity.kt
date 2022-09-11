@@ -69,11 +69,12 @@ class NowPlayingActivity :
 	}
 
 	private var viewAnimator: ViewAnimator? = null
+
 	private val messageHandler by lazy { Handler(mainLooper) }
 
 	private val applicationMessageBus = lazy { getApplicationMessageBus().getScopedMessageBus() }
 
-	private val fileListItemNowPlayingRegistrar = lazy { FileListItemNowPlayingRegistrar(applicationMessageBus.value) }
+	private val fileListItemNowPlayingRegistrar = lazy { FileListItemNowPlayingRegistrar(messageHandler, applicationMessageBus.value) }
 
 	private val imageProvider by lazy { CachedImageProvider.getInstance(this) }
 
@@ -109,7 +110,7 @@ class NowPlayingActivity :
 
 	private val defaultImageProvider by lazy { DefaultImageProvider(this) }
 
-	private val viewModelMessageBus by buildViewModelLazily { ViewModelMessageBus<NowPlayingPlaylistMessage>(messageHandler) }
+	private val viewModelMessageBus by buildViewModelLazily { ViewModelMessageBus<NowPlayingPlaylistMessage>() }
 
 	private val nowPlayingViewModel by buildViewModelLazily {
 		NowPlayingScreenViewModel(

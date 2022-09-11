@@ -46,8 +46,7 @@ class InstantiateSelectedConnectionActivity : Activity(), (SelectedConnection.Bu
 		lblConnectionStatus.findView().setText(R.string.lbl_connecting)
 		cancelButton.findView().setOnClickListener { cancel() }
 
-		val applicationMessageBus = getApplicationMessageBus()
-		applicationMessageBus.registerReceiver(this)
+		val registration = getApplicationMessageBus().registerReceiver(handler, this)
 
 		lazyPromisedSessionConnection
 			.value
@@ -61,7 +60,7 @@ class InstantiateSelectedConnectionActivity : Activity(), (SelectedConnection.Bu
 			}, handler), LoopedInPromise.response({
 				launchActivityDelayed(selectServerIntent)
 			}, handler))
-			.must { applicationMessageBus.unregisterReceiver(this) }
+			.must(registration::close)
 	}
 
 	override fun onBackPressed() {
@@ -102,8 +101,7 @@ class InstantiateSelectedConnectionActivity : Activity(), (SelectedConnection.Bu
 	}
 
 	companion object {
-		private val START_ACTIVITY_FOR_RETURN = MagicPropertyBuilder.buildMagicPropertyName(
-			InstantiateSelectedConnectionActivity::class.java, "START_ACTIVITY_FOR_RETURN")
+		private val START_ACTIVITY_FOR_RETURN = MagicPropertyBuilder.buildMagicPropertyName<InstantiateSelectedConnectionActivity>("START_ACTIVITY_FOR_RETURN")
 		private const val ACTIVITY_LAUNCH_DELAY = 2500L
 
 		fun restoreSelectedConnection(activity: ComponentActivity): Promise<ActivityResult?> =

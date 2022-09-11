@@ -73,7 +73,7 @@ class SelectedConnection(
 
 		fun getInstance(context: Context): SelectedConnection =
 			SelectedConnection(
-				context.getApplicationMessageBus(),
+                getApplicationMessageBus(),
 				SelectedBrowserLibraryIdentifierProvider(context.getApplicationSettingsRepository()),
 				ConnectionSessionManager.get(context)
 			)

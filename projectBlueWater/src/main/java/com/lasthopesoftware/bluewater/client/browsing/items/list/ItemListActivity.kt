@@ -148,7 +148,7 @@ class ItemListActivity : AppCompatActivity(), Runnable {
 		StateChangeBroadcastingStoredItemAccess(StoredItemAccess(this), messageBus)
 	}
 
-	private val menuMessageBus by buildViewModelLazily { ViewModelMessageBus<ItemListMenuMessage>(handler) }
+	private val menuMessageBus by buildViewModelLazily { ViewModelMessageBus<ItemListMenuMessage>() }
 
 	private val itemListMenuViewModel by buildViewModelLazily { ItemListMenuViewModel(menuMessageBus) }
 
