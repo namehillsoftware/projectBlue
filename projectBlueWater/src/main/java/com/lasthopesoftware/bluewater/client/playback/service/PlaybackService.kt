@@ -581,12 +581,11 @@ open class PlaybackService :
 		synchronized(playbackEngineSync) {
 			playbackEnginePromise.then(
 				{ engine ->
-					if (engine != null) {
-						actOnIntent(intent).excuse(unhandledRejectionHandler)
-						return@then
-					}
-
-					initializeEngineAndActOnIntent(intent)
+					engine
+						?.let {
+							actOnIntent(intent).excuse(unhandledRejectionHandler)
+						}
+						?: initializeEngineAndActOnIntent(intent)
 				},
 				{ initializeEngineAndActOnIntent(intent) }
 			)

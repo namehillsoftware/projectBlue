@@ -91,12 +91,11 @@ class NowPlayingFilePropertiesViewModel(
 				.eventually { fileProperties ->
 					if (cachedPromises?.key != key) Unit.toPromise()
 					else currentCachedPromises.promisedIsReadOnly.then { isReadOnly ->
-						if (cachedPromises?.key == key) {
+						if (cachedPromises?.key == key)
 							setFileProperties(fileProperties, isReadOnly)
-						}
 					}
 				}
-				.excuse { exception -> handleException(exception) }
+				.excuse(::handleException)
 		}
 	}
 
