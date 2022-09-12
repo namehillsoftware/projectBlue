@@ -6,8 +6,10 @@ import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.*
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
-import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRevisionProvider
-import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
+import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
+import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRateLimiter
 import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay.Companion.delay
@@ -38,21 +40,23 @@ class FileNameTextViewSetter(private val fileTextView: TextView, private val art
 	private val updateSync = Any()
 	private val handler = Handler(fileTextView.context.mainLooper)
 	private val filePropertiesProvider by lazy {
-		SelectedConnectionFilePropertiesProvider(SelectedConnectionProvider(fileTextView.context)) { c ->
-			val filePropertyCache = FilePropertyCache.getInstance()
-			ScopedCachedFilePropertiesProvider(
-				c,
-				filePropertyCache,
+		val context = fileTextView.context
+		val libraryConnections = context.buildNewConnectionSessionManager()
+		SelectedLibraryFilePropertiesProvider(
+			SelectedBrowserLibraryIdentifierProvider(context.getApplicationSettingsRepository()),
+			CachedFilePropertiesProvider(
+				libraryConnections,
+				FilePropertyCache.getInstance(),
 				RateControlledFilePropertiesProvider(
-					ScopedFilePropertiesProvider(
-						c,
-						ScopedRevisionProvider(c),
-						filePropertyCache
+					FilePropertiesProvider(
+						libraryConnections,
+						LibraryRevisionProvider(libraryConnections),
+						FilePropertyCache.getInstance(),
 					),
-					rateLimiter
+					rateLimiter,
 				)
-			)
-		}
+			),
+		)
 	}
 
 	@Volatile

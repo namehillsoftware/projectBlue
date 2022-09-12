@@ -40,16 +40,17 @@ import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.image.CachedImageProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.FormattedScopedFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.ScopedFilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.SelectedConnectionFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.SelectedLibraryFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
-import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRevisionProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity.Companion.restoreSelectedConnection
-import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
+import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.colors.MediaStylePalette
 import com.lasthopesoftware.bluewater.shared.android.colors.MediaStylePaletteProvider
@@ -89,16 +90,15 @@ class FileDetailsActivity : ComponentActivity() {
 	private val defaultImageProvider by lazy { DefaultImageProvider(this) }
 
 	private val filePropertiesProvider by lazy {
-		SelectedConnectionFilePropertiesProvider(SelectedConnectionProvider(this)) { c ->
-			val filePropertyCache = FilePropertyCache.getInstance()
-			FormattedScopedFilePropertiesProvider(
-				ScopedFilePropertiesProvider(
-					c,
-					ScopedRevisionProvider(c),
-					filePropertyCache
-				),
-			)
-		}
+		val libraryConnections = buildNewConnectionSessionManager()
+		SelectedLibraryFilePropertiesProvider(
+			SelectedBrowserLibraryIdentifierProvider(getApplicationSettingsRepository()),
+			FilePropertiesProvider(
+				libraryConnections,
+				LibraryRevisionProvider(libraryConnections),
+				FilePropertyCache.getInstance(),
+			),
+		)
 	}
 
 	private val vm by buildViewModelLazily {

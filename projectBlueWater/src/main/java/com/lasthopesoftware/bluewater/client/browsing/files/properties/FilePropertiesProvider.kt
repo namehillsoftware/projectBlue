@@ -6,31 +6,33 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.CheckRevisions
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
+import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 
 class FilePropertiesProvider(private val libraryConnections: ProvideLibraryConnections, private val checkRevisions: CheckRevisions, private val filePropertiesContainerProvider: IFilePropertiesContainerRepository) : ProvideLibraryFileProperties {
 
 	companion object {
-		private val emptyProperties = lazy { Promise(emptyMap<String, String>()) }
+		private val promisedEmptyProperties by lazy { Promise(emptyMap<String, String>()) }
 	}
 
-	override fun promiseFileProperties(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Map<String, String>> {
-		val promisedRevision = checkRevisions.promiseRevision(libraryId)
+	override fun promiseFileProperties(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Map<String, String>> = CancellableProxyPromise { cp ->
+		val promisedRevision = checkRevisions.promiseRevision(libraryId).also(cp::doCancel)
 
-		return libraryConnections.promiseLibraryConnection(libraryId).eventually { connectionProvider ->
-			connectionProvider?.urlProvider?.baseUrl?.let { baseUrl ->
-				val urlKeyHolder = UrlKeyHolder(baseUrl, serviceFile)
-				val filePropertiesContainer =
-					filePropertiesContainerProvider.getFilePropertiesContainer(urlKeyHolder)
-
-				promisedRevision.eventually { revision ->
-					if (filePropertiesContainer != null && filePropertiesContainer.properties.isNotEmpty() && revision == filePropertiesContainer.revision)
-						filePropertiesContainer.properties.toPromise()
-					else
-						FilePropertiesPromise(connectionProvider, filePropertiesContainerProvider, serviceFile,	revision)
+		libraryConnections.promiseLibraryConnection(libraryId).also(cp::doCancel).eventually { connectionProvider ->
+			if (cp.isCancelled) promisedEmptyProperties
+			else connectionProvider?.urlProvider?.baseUrl
+				?.let { url ->
+					promisedRevision
+						.eventually { revision ->
+							filePropertiesContainerProvider
+								.getFilePropertiesContainer(UrlKeyHolder(url, serviceFile))
+								?.takeIf { it.properties.isNotEmpty() && revision == it.revision }
+								?.properties?.toPromise()
+								?: FilePropertiesPromise(connectionProvider, filePropertiesContainerProvider, serviceFile, revision)
+						}
 				}
-			} ?: emptyProperties.value
+				?: promisedEmptyProperties
 		}
 	}
 }

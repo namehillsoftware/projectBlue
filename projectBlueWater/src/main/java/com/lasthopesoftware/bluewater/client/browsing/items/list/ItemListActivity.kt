@@ -45,7 +45,10 @@ import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.Li
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsLauncher
 import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.list.TrackHeadlineViewModelProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.*
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.RateControlledFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.SelectedLibraryFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertyStorage
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
@@ -56,12 +59,10 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.I
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuViewModel
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
 import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.polling.ConnectionPoller
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity.Companion.restoreSelectedConnection
-import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
@@ -183,21 +184,21 @@ class ItemListActivity : AppCompatActivity(), Runnable {
 	}
 
 	private val scopedFilePropertiesProvider by lazy {
-		SelectedConnectionFilePropertiesProvider(SelectedConnectionProvider(this)) { c ->
-			val filePropertyCache = FilePropertyCache.getInstance()
-			ScopedCachedFilePropertiesProvider(
-				c,
-				filePropertyCache,
+		SelectedLibraryFilePropertiesProvider(
+			browserLibraryIdProvider,
+			CachedFilePropertiesProvider(
+				libraryConnectionProvider,
+				FilePropertyCache.getInstance(),
 				RateControlledFilePropertiesProvider(
-					ScopedFilePropertiesProvider(
-						c,
-						ScopedRevisionProvider(c),
-						filePropertyCache
+					FilePropertiesProvider(
+						libraryConnectionProvider,
+						revisionProvider,
+						FilePropertyCache.getInstance(),
 					),
-					rateLimiter
+					rateLimiter,
 				)
-			)
-		}
+			),
+		)
 	}
 
 	private val libraryConnectionProvider by lazy { buildNewConnectionSessionManager() }
