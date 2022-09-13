@@ -41,6 +41,7 @@ import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.image.CachedImageProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FormattedScopedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.SelectedLibraryFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
@@ -91,13 +92,15 @@ class FileDetailsActivity : ComponentActivity() {
 
 	private val filePropertiesProvider by lazy {
 		val libraryConnections = buildNewConnectionSessionManager()
-		SelectedLibraryFilePropertiesProvider(
-			SelectedBrowserLibraryIdentifierProvider(getApplicationSettingsRepository()),
-			FilePropertiesProvider(
-				libraryConnections,
-				LibraryRevisionProvider(libraryConnections),
-				FilePropertyCache.getInstance(),
-			),
+		FormattedScopedFilePropertiesProvider(
+			SelectedLibraryFilePropertiesProvider(
+				SelectedBrowserLibraryIdentifierProvider(getApplicationSettingsRepository()),
+				FilePropertiesProvider(
+					libraryConnections,
+					LibraryRevisionProvider(libraryConnections),
+					FilePropertyCache.getInstance(),
+				),
+			)
 		)
 	}
 
