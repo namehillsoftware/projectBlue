@@ -31,16 +31,27 @@ internal class FilePropertiesPromise(
 	private val cancellationProxy = CancellationProxy()
 	private lateinit var response: Response
 
+	private val urlKeyHolder
+		get() = connectionProvider.urlProvider.baseUrl?.let { UrlKeyHolder(it, serviceFile) }
+
 	init {
-		respondToCancellation(cancellationProxy)
-		val filePropertiesResponse = connectionProvider.promiseResponse("File/GetInfo", "File=" + serviceFile.key)
-		val promisedProperties = filePropertiesResponse.eventually(this)
+		val fileProperties = urlKeyHolder
+			?.let(filePropertiesContainerProvider::getFilePropertiesContainer)
+			?.takeIf { it.properties.isNotEmpty() && serverRevision == it.revision }
+			?.properties
 
-		// Handle cancellation errors directly in stack so that they don't become unhandled
-		promisedProperties.excuse(this)
+		if (fileProperties != null) resolve(fileProperties)
+		else {
+			respondToCancellation(cancellationProxy)
+			val filePropertiesResponse = connectionProvider.promiseResponse("File/GetInfo", "File=" + serviceFile.key)
+			val promisedProperties = filePropertiesResponse.eventually(this)
 
-		cancellationProxy.doCancel(promisedProperties)
-		cancellationProxy.doCancel(filePropertiesResponse)
+			// Handle cancellation errors directly in stack so that they don't become unhandled
+			promisedProperties.excuse(this)
+
+			cancellationProxy.doCancel(promisedProperties)
+			cancellationProxy.doCancel(filePropertiesResponse)
+		}
 	}
 
 	override fun promiseResponse(resolution: Response): Promise<Unit> {
@@ -50,7 +61,7 @@ internal class FilePropertiesPromise(
 
 	override fun prepareMessage() {
 		val result = if (cancellationProxy.isCancelled) emptyMap()
-		else connectionProvider.urlProvider.baseUrl?.let { baseUrl ->
+		else urlKeyHolder?.let { key ->
 			response.body
 				?.use { body -> Xmlwise.createXml(body.string()) }
 				?.let { xml ->
@@ -59,7 +70,7 @@ internal class FilePropertiesPromise(
 				}
 				?.also { properties ->
 					filePropertiesContainerProvider.putFilePropertiesContainer(
-						UrlKeyHolder(baseUrl, serviceFile),
+						key,
 						FilePropertiesContainer(serverRevision, properties)
 					)
 				}
