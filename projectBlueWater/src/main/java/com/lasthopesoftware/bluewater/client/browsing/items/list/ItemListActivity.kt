@@ -175,29 +175,21 @@ class ItemListActivity : AppCompatActivity(), Runnable {
 		CachedFilePropertiesProvider(
 			libraryConnectionProvider,
 			FilePropertyCache.getInstance(),
-			FilePropertiesProvider(
-				libraryConnectionProvider,
-				revisionProvider,
-				FilePropertyCache.getInstance(),
-			)
+			RateControlledFilePropertiesProvider(
+				FilePropertiesProvider(
+					libraryConnectionProvider,
+					revisionProvider,
+					FilePropertyCache.getInstance(),
+				),
+				rateLimiter,
+			),
 		)
 	}
 
 	private val scopedFilePropertiesProvider by lazy {
 		SelectedLibraryFilePropertiesProvider(
 			browserLibraryIdProvider,
-			CachedFilePropertiesProvider(
-				libraryConnectionProvider,
-				FilePropertyCache.getInstance(),
-				RateControlledFilePropertiesProvider(
-					FilePropertiesProvider(
-						libraryConnectionProvider,
-						revisionProvider,
-						FilePropertyCache.getInstance(),
-					),
-					rateLimiter,
-				)
-			),
+			libraryFilePropertiesProvider,
 		)
 	}
 
