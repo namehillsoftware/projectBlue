@@ -3,8 +3,8 @@ package com.lasthopesoftware.bluewater.client.browsing.files.properties.GivenSto
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FakeFilePropertiesContainer
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertiesContainer
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertyStorage
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertyUpdatedMessage
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.FakeLibraryConnectionProvider
@@ -105,9 +105,8 @@ class WhenUpdatingFileProperties {
 				.recordedMessages
 				.single())
 			.isEqualTo(
-				FilePropertyUpdatedMessage(
-					LibraryId(libraryId),
-					ServiceFile(serviceFileId)
+				FilePropertiesUpdatedMessage(
+					UrlKeyHolder(URL("http://test:80/MCWS/v1/"), ServiceFile(serviceFileId))
 				)
 			)
 	}

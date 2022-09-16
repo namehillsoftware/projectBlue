@@ -3,11 +3,12 @@ package com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity.
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertyUpdatedMessage
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.MaintainNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
+import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
@@ -17,6 +18,7 @@ import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
+import java.net.URL
 
 private const val libraryId = 797
 
@@ -73,6 +75,11 @@ class WhenItsPropertiesChanges {
 				every { selectedLibraryId } returns Promise(LibraryId(libraryId))
 			},
 			filePropertiesProvider,
+			mockk {
+				every { promiseUrlKey(LibraryId(libraryId), playlist[playlistPosition]) } returns Promise(
+					UrlKeyHolder(URL("http://test"), playlist[playlistPosition])
+				)
+			},
 			mockk(),
 			mockk {
 				every { promiseIsReadOnly(LibraryId(libraryId)) } returns true.toPromise()
@@ -94,7 +101,7 @@ class WhenItsPropertiesChanges {
 	fun act() {
 		val (messageBus, viewModel) = services
 		viewModel.initializeViewModel().toExpiringFuture().get()
-		messageBus.sendMessage(FilePropertyUpdatedMessage(LibraryId(libraryId), playlist[playlistPosition]))
+		messageBus.sendMessage(FilePropertiesUpdatedMessage(UrlKeyHolder(URL("http://test"), playlist[playlistPosition])))
 	}
 
 	@Test

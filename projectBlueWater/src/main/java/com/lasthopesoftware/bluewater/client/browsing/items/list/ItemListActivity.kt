@@ -61,6 +61,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.Sel
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
 import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
+import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.polling.ConnectionPoller
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity.Companion.restoreSelectedConnection
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
@@ -236,6 +237,7 @@ class ItemListActivity : AppCompatActivity(), Runnable {
 			LiveNowPlayingLookup.getInstance(),
 			browserLibraryIdProvider,
 			libraryFilePropertiesProvider,
+			UrlKeyProvider(libraryConnectionProvider),
 			filePropertiesStorage,
 			connectionAuthenticationChecker,
 			PlaybackServiceController(this),

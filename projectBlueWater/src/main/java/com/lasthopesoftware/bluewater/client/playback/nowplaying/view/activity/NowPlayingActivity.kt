@@ -23,6 +23,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAn
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
+import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.polling.ConnectionPoller
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService
 import com.lasthopesoftware.bluewater.client.connection.polling.WaitForConnectionDialog
@@ -131,6 +132,7 @@ class NowPlayingActivity :
 				liveNowPlayingLookup,
 				browserLibraryIdProvider,
 				libraryFilePropertiesProvider,
+				UrlKeyProvider(libraryConnectionProvider),
 				filePropertiesStorage,
 				connectionAuthenticationChecker,
 				PlaybackServiceController(this),

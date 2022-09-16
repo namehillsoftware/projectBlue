@@ -3,13 +3,14 @@ package com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity.
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertyUpdatedMessage
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfConnectionIsReadOnly
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.MaintainNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
+import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
@@ -19,6 +20,9 @@ import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
+import java.net.URL
+
+private const val libraryId = 697
 
 class WhenItsPropertiesChanges {
 
@@ -40,7 +44,7 @@ class WhenItsPropertiesChanges {
 		val nowPlayingRepository = mockk<MaintainNowPlayingState> {
 			every { promiseNowPlaying() } returns Promise(
 				NowPlaying(
-					LibraryId(697),
+					LibraryId(libraryId),
 					playlist,
 					playlistPosition,
 					439774,
@@ -50,7 +54,7 @@ class WhenItsPropertiesChanges {
 		}
 
 		val filePropertiesProvider = mockk<ProvideLibraryFileProperties> {
-			every { promiseFileProperties(LibraryId(697), playlist[playlistPosition]) } returnsMany listOf(
+			every { promiseFileProperties(LibraryId(libraryId), playlist[playlistPosition]) } returnsMany listOf(
 				mapOf(
 					Pair(KnownFileProperties.ARTIST, "block"),
 					Pair(KnownFileProperties.NAME, "tongue"),
@@ -63,7 +67,7 @@ class WhenItsPropertiesChanges {
 		}
 
 		val checkAuthentication = mockk<CheckIfConnectionIsReadOnly> {
-			every { promiseIsReadOnly(LibraryId(697)) } returns false.toPromise()
+			every { promiseIsReadOnly(LibraryId(libraryId)) } returns false.toPromise()
 		}
 
 		val playbackService = mockk<ControlPlaybackService> {
@@ -76,9 +80,14 @@ class WhenItsPropertiesChanges {
 			messageBus,
 			nowPlayingRepository,
 			mockk {
-				every { selectedLibraryId } returns Promise(LibraryId(697))
+				every { selectedLibraryId } returns Promise(LibraryId(libraryId))
 			},
 			filePropertiesProvider,
+			mockk {
+				every { promiseUrlKey(LibraryId(libraryId), playlist[playlistPosition]) } returns Promise(
+					UrlKeyHolder(URL("http://77Q8Tq2h/"), playlist[playlistPosition])
+				)
+			},
 			mockk(),
 			checkAuthentication,
 			playbackService,
@@ -96,7 +105,7 @@ class WhenItsPropertiesChanges {
 	fun act() {
 		val (messageBus, viewModel) = services
 		viewModel.initializeViewModel().toExpiringFuture().get()
-		messageBus.sendMessage(FilePropertyUpdatedMessage(LibraryId(697), playlist[playlistPosition]))
+		messageBus.sendMessage(FilePropertiesUpdatedMessage(UrlKeyHolder(URL("http://77Q8Tq2h/"), playlist[playlistPosition])))
 	}
 
 	@Test

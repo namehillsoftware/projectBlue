@@ -15,13 +15,16 @@ import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
+private const val libraryId = 718
+private const val serviceFileId = 388
+
 class `When Initializing The NowPlayingFilePropertiesViewModel` {
 
 	private val nowPlayingViewModel by lazy {
 		val nowPlayingRepository = mockk<MaintainNowPlayingState> {
 			every { promiseNowPlaying() } returns Promise(
 				NowPlaying(
-					LibraryId(718),
+					LibraryId(libraryId),
 					listOf(
 						ServiceFile(815),
 						ServiceFile(449),
@@ -39,13 +42,13 @@ class `When Initializing The NowPlayingFilePropertiesViewModel` {
 		val filePropertiesProvider = FakeFilesPropertiesProvider().apply {
 			addFilePropertiesToCache(
 				ServiceFile(355),
-				LibraryId(718),
+				LibraryId(libraryId),
 				emptyMap()
 			)
 		}
 
 		val checkAuthentication = mockk<CheckIfConnectionIsReadOnly> {
-			every { promiseIsReadOnly(LibraryId(718)) } returns true.toPromise()
+			every { promiseIsReadOnly(LibraryId(libraryId)) } returns true.toPromise()
 		}
 
 		val playbackService = mockk<ControlPlaybackService> {
@@ -56,9 +59,12 @@ class `When Initializing The NowPlayingFilePropertiesViewModel` {
 			mockk(relaxed = true, relaxUnitFun = true),
 			nowPlayingRepository,
 			mockk {
-				every { selectedLibraryId } returns Promise(LibraryId(718))
+				every { selectedLibraryId } returns Promise(LibraryId(libraryId))
 			},
 			filePropertiesProvider,
+			mockk {
+				every { promiseUrlKey(LibraryId(libraryId), ServiceFile(serviceFileId)) }
+			},
 			mockk(),
 			checkAuthentication,
 			playbackService,

@@ -45,14 +45,13 @@ class FilePropertyStorage(
 						logger.info("api/v1/File/SetInfo responded with a response code of ${it.code}")
 					}
 				}
-
-				sendApplicationMessages.sendMessage(FilePropertyUpdatedMessage(libraryId, serviceFile))
 			}
 
 		urlProvider.baseUrl?.also { baseUrl ->
+			val urlKeyHolder = UrlKeyHolder(baseUrl, serviceFile)
+			sendApplicationMessages.sendMessage(FilePropertiesUpdatedMessage(urlKeyHolder))
 			promisedUpdate.eventually { checkRevisions.promiseRevision(libraryId) }
 				.then { revision ->
-					val urlKeyHolder = UrlKeyHolder(baseUrl, serviceFile)
 					filePropertiesContainerRepository.getFilePropertiesContainer(urlKeyHolder)
 						?.takeIf { it.revision == revision }
 						?.updateProperty(property, value)
