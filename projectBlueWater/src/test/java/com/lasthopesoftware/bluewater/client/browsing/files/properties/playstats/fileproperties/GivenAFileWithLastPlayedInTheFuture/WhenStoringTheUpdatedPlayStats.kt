@@ -12,6 +12,7 @@ import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTu
 import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfScopedConnectionIsReadOnly
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -57,7 +58,13 @@ class WhenStoringTheUpdatedPlayStats {
 		every { checkConnection.promiseIsReadOnly() } returns false.toPromise()
 		val scopedFilePropertiesPlayStatsUpdater = ScopedFilePropertiesPlayStatsUpdater(
 			scopedFilePropertiesProvider,
-			ScopedFilePropertiesStorage(connectionProvider, checkConnection, checkScopedRevisions, filePropertiesContainer)
+			ScopedFilePropertiesStorage(
+				connectionProvider,
+				checkConnection,
+				checkScopedRevisions,
+				filePropertiesContainer,
+				RecordingApplicationMessageBus(),
+			)
 		)
 		Pair(scopedFilePropertiesPlayStatsUpdater, scopedFilePropertiesProvider)
 	}

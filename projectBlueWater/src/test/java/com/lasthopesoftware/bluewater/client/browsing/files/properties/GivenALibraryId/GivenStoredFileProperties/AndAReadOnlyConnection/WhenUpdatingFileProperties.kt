@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.browsing.files.properties.GivenStoredFileProperties.AndAReadOnlyConnection
+package com.lasthopesoftware.bluewater.client.browsing.files.properties.GivenALibraryId.GivenStoredFileProperties.AndAReadOnlyConnection
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FakeFilePropertiesContainer

@@ -1,13 +1,13 @@
-package com.lasthopesoftware.bluewater.client.browsing.files.properties.GivenStoredFileProperties.AndAWritableConnection
+package com.lasthopesoftware.bluewater.client.browsing.files.properties.GivenAWritableConnection
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FakeFilePropertiesContainer
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertiesContainer
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertyStorage
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.ScopedFilePropertiesStorage
+import com.lasthopesoftware.bluewater.client.browsing.library.revisions.CheckScopedRevisions
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.FakeLibraryConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfScopedConnectionIsReadOnly
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
@@ -19,68 +19,62 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.net.URL
 
-private const val libraryId = 446
-private const val serviceFileId = 111
+private const val serviceFileId = 782
 
 class WhenUpdatingFileProperties {
+
 	private val services by lazy {
-        val fakeFileConnectionProvider = FakeConnectionProvider()
-        val fakeLibraryConnectionProvider =
-            FakeLibraryConnectionProvider(mapOf(Pair(LibraryId(libraryId), fakeFileConnectionProvider)))
+		val fakeConnectionProvider = FakeConnectionProvider()
 		val filePropertiesContainer = FakeFilePropertiesContainer().apply {
 			putFilePropertiesContainer(
 				UrlKeyHolder(URL("http://test:80/MCWS/v1/"), ServiceFile(serviceFileId)),
-				FilePropertiesContainer(565, mapOf(Pair("package", "heighten")))
+				FilePropertiesContainer(779, mapOf(Pair("package", "heighten")))
 			)
 		}
 
+		val revisionChecker = mockk<CheckScopedRevisions>()
+		every { revisionChecker.promiseRevision() } returns 779.toPromise()
+
+		val checkConnection = mockk<CheckIfScopedConnectionIsReadOnly>()
+		every { checkConnection.promiseIsReadOnly() } returns false.toPromise()
+
 		val recordingApplicationMessageBus = RecordingApplicationMessageBus()
 
-        val filePropertiesStorage = FilePropertyStorage(
-			fakeLibraryConnectionProvider,
-			mockk {
-				every { promiseIsReadOnly(LibraryId(libraryId)) } returns false.toPromise()
-			},
-			mockk {
-				every { promiseRevision(LibraryId(libraryId)) } returns 565.toPromise()
-			},
-			filePropertiesContainer,
-			recordingApplicationMessageBus
-		)
-
 		Pair(
-			Triple(fakeFileConnectionProvider, filePropertiesContainer, recordingApplicationMessageBus),
-			filePropertiesStorage)
-    }
+			Triple(
+				fakeConnectionProvider,
+				filePropertiesContainer,
+				recordingApplicationMessageBus,
+			),
+			ScopedFilePropertiesStorage(
+				fakeConnectionProvider,
+				checkConnection,
+				revisionChecker,
+				filePropertiesContainer,
+				recordingApplicationMessageBus,
+			)
+		)
+	}
 
 	@BeforeAll
 	fun act() {
-		val (_, storage) = services
-		storage
-			.promiseFileUpdate(
-				LibraryId(libraryId),
-				ServiceFile(serviceFileId),
-				"package",
-				"model",
-				false
-			)
-			.toExpiringFuture()
-			.get()
+		val (_, fileStorage) = services
+		fileStorage.promiseFileUpdate(ServiceFile(serviceFileId), "slippery", "flood", false).toExpiringFuture().get()
 	}
 
-    @Test
-    fun `then the properties are updated in local storage`() {
-        assertThat(
+	@Test
+	fun `then the properties are updated in local storage`() {
+		assertThat(
 			services
 				.first
 				.second
 				.getFilePropertiesContainer(UrlKeyHolder(URL("http://test:80/MCWS/v1/"), ServiceFile(serviceFileId)))
-				?.properties!!["package"])
-			.isEqualTo("model")
-    }
+				?.properties!!["slippery"])
+			.isEqualTo("flood")
+	}
 
 	@Test
-	fun `then the properties are updated remotely`() {
+	fun `then the property is updated`() {
 		assertThat(
 			services
 				.first
@@ -90,8 +84,8 @@ class WhenUpdatingFileProperties {
 			.containsExactly(
 				"File/SetInfo",
 				"File=$serviceFileId",
-				"Field=package",
-				"Value=model",
+				"Field=slippery",
+				"Value=flood",
 				"formatted=0"
 			)
 	}

@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.browsing.files.properties.GivenNoStoredFileProperties
+package com.lasthopesoftware.bluewater.client.browsing.files.properties.GivenALibraryId.AndNoStoredFileProperties
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider

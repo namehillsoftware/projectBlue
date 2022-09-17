@@ -126,7 +126,7 @@ open class MainApplication : Application() {
 		)
 
 		val connectionDependentReceiverRegistrations = listOf(
-			UpdatePlayStatsOnCompleteRegistration(),
+			UpdatePlayStatsOnCompleteRegistration(applicationMessageBus),
 			PlaybackFileStartedScrobblerRegistration(this),
 			PlaybackFileStoppedScrobblerRegistration(this))
 

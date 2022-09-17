@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfScopedConnectionIsReadOnly
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.cls
+import com.lasthopesoftware.bluewater.shared.messages.application.SendApplicationMessages
 import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.namehillsoftware.handoff.promises.Promise
 import org.slf4j.LoggerFactory
@@ -15,7 +16,8 @@ class ScopedFilePropertiesStorage(
 	private val scopedConnectionProvider: IConnectionProvider,
 	private val checkIfScopedConnectionIsReadOnly: CheckIfScopedConnectionIsReadOnly,
 	private val checkScopedRevisions: CheckScopedRevisions,
-	private val filePropertiesContainerRepository: IFilePropertiesContainerRepository
+	private val filePropertiesContainerRepository: IFilePropertiesContainerRepository,
+	private val sendMessages: SendApplicationMessages
 ) : UpdateScopedFileProperties {
 
 	override fun promiseFileUpdate(serviceFile: ServiceFile, property: String, value: String, isFormatted: Boolean): Promise<Unit> =
@@ -42,9 +44,10 @@ class ScopedFilePropertiesStorage(
 			}
 
 			scopedConnectionProvider.urlProvider.baseUrl?.also { baseUrl ->
+				val urlKeyHolder = UrlKeyHolder(baseUrl, serviceFile)
+				sendMessages.sendMessage(FilePropertiesUpdatedMessage(urlKeyHolder))
 				promisedUpdate.eventually { checkScopedRevisions.promiseRevision() }
 					.then { revision ->
-						val urlKeyHolder = UrlKeyHolder(baseUrl, serviceFile)
 						filePropertiesContainerRepository.getFilePropertiesContainer(urlKeyHolder)
 							?.takeIf { it.revision == revision }
 							?.updateProperty(property, value)
