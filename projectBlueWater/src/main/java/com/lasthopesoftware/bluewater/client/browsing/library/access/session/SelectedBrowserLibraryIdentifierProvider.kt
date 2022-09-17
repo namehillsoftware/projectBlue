@@ -1,14 +1,17 @@
 package com.lasthopesoftware.bluewater.client.browsing.library.access.session
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
 import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
 import com.namehillsoftware.handoff.promises.Promise
+import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 
-/**
- * Created by david on 2/12/17.
- */
-class SelectedBrowserLibraryIdentifierProvider(private val applicationSettings: HoldApplicationSettings) : ProvideSelectedLibraryId {
+class SelectedBrowserLibraryIdentifierProvider(private val applicationSettings: HoldApplicationSettings)
+	: ProvideSelectedLibraryId, ImmediateResponse<ApplicationSettings, LibraryId?>
+{
 	override val selectedLibraryId: Promise<LibraryId?>
-		get() = applicationSettings.promiseApplicationSettings()
-				.then { s -> s.chosenLibraryId.takeIf { it > -1 }?.let(::LibraryId) }
+		get() = applicationSettings.promiseApplicationSettings().then(this)
+
+	override fun respond(settings: ApplicationSettings): LibraryId? =
+		settings.chosenLibraryId.takeIf { it > -1 }?.let(::LibraryId)
 }
