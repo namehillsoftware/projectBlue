@@ -145,16 +145,15 @@ class NowPlayingPlaylistFragment : Fragment() {
 		val playbackService = PlaybackServiceController(requireContext())
 
 		NowPlayingFilePropertiesViewModel(
-			applicationMessageBus,
-			LiveNowPlayingLookup.getInstance(),
-			browserLibraryIdProvider,
-			libraryFilePropertiesProvider,
-			UrlKeyProvider(libraryConnectionProvider),
-			filePropertiesStorage,
-			connectionAuthenticationChecker,
-			playbackService,
-			ConnectionPoller(requireContext()),
-			StringResources(requireContext()),
+            applicationMessageBus,
+            LiveNowPlayingLookup.getInstance(),
+            libraryFilePropertiesProvider,
+            UrlKeyProvider(libraryConnectionProvider),
+            filePropertiesStorage,
+            connectionAuthenticationChecker,
+            playbackService,
+            ConnectionPoller(requireContext()),
+            StringResources(requireContext()),
         )
 	}
 

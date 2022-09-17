@@ -69,26 +69,23 @@ class WhenItsPropertiesChanges {
 		val messageBus = RecordingApplicationMessageBus()
 
 		val nowPlayingViewModel = NowPlayingFilePropertiesViewModel(
-			messageBus,
-			nowPlayingRepository,
-			mockk {
-				every { selectedLibraryId } returns Promise(LibraryId(libraryId))
-			},
-			filePropertiesProvider,
-			mockk {
-				every { promiseUrlKey(LibraryId(libraryId), playlist[playlistPosition]) } returns Promise(
-					UrlKeyHolder(URL("http://test"), playlist[playlistPosition])
-				)
-			},
-			mockk(),
-			mockk {
-				every { promiseIsReadOnly(LibraryId(libraryId)) } returns true.toPromise()
-			},
-			mockk {
-				every { promiseIsMarkedForPlay() } returns false.toPromise()
-			},
-			mockk(),
-			mockk(relaxed = true),
+            messageBus,
+            nowPlayingRepository,
+            filePropertiesProvider,
+            mockk {
+                every { promiseUrlKey(LibraryId(libraryId), playlist[playlistPosition]) } returns Promise(
+                    UrlKeyHolder(URL("http://test"), playlist[playlistPosition])
+                )
+            },
+            mockk(),
+            mockk {
+                every { promiseIsReadOnly(LibraryId(libraryId)) } returns true.toPromise()
+            },
+            mockk {
+                every { promiseIsMarkedForPlay() } returns false.toPromise()
+            },
+            mockk(),
+            mockk(relaxed = true),
 		)
 
 		Pair(messageBus, nowPlayingViewModel)

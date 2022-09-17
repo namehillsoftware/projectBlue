@@ -7,7 +7,6 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.UpdateFileProperties
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
 import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfConnectionIsReadOnly
@@ -39,7 +38,6 @@ private val screenControlVisibilityTime by lazy { Duration.standardSeconds(5) }
 class NowPlayingFilePropertiesViewModel(
 	applicationMessages: RegisterForApplicationMessages,
 	private val nowPlayingRepository: GetNowPlayingState,
-	private val selectedLibraryId: ProvideSelectedLibraryId,
 	private val fileProperties: ProvideLibraryFileProperties,
 	private val provideUrlKey: ProvideUrlKey,
 	private val updateFileProperties: UpdateFileProperties,
@@ -77,35 +75,36 @@ class NowPlayingFilePropertiesViewModel(
 	}
 
 	private val onPropertiesChangedSubscription = applicationMessages.registerReceiver { message: FilePropertiesUpdatedMessage ->
-		val key = message.urlServiceKey
-		val libraryId = libraryId ?: return@registerReceiver
-		val serviceFile = serviceFile ?: return@registerReceiver
+		cachedPromises?.let { promises ->
+			val key = message.urlServiceKey
+			val libraryId = promises.libraryId
+			val serviceFile = promises.serviceFile
 
-		if (cachedPromises?.key == message.urlServiceKey) {
-			val currentCachedPromises = synchronized(cachedPromiseSync) {
-				cachedPromises?.close()
-				CachedPromises(
-					key,
-					checkAuthentication.promiseIsReadOnly(libraryId),
-					fileProperties.promiseFileProperties(libraryId, serviceFile),
-				).also { cachedPromises = it }
-			}
-
-			currentCachedPromises
-				.promisedProperties
-				.eventually { fileProperties ->
-					if (cachedPromises?.key != key) Unit.toPromise()
-					else currentCachedPromises.promisedIsReadOnly.then { isReadOnly ->
-						if (cachedPromises?.key == key)
-							setFileProperties(fileProperties, isReadOnly)
-					}
+			if (promises.key == message.urlServiceKey) {
+				val currentCachedPromises = synchronized(cachedPromiseSync) {
+					cachedPromises?.close()
+					CachedPromises(
+						key,
+						promises.libraryId,
+						promises.serviceFile,
+						checkAuthentication.promiseIsReadOnly(libraryId),
+						fileProperties.promiseFileProperties(libraryId, serviceFile),
+					).also { cachedPromises = it }
 				}
-				.excuse(::handleException)
+
+				currentCachedPromises
+					.promisedProperties
+					.eventually { fileProperties ->
+						if (cachedPromises?.key != key) Unit.toPromise()
+						else currentCachedPromises.promisedIsReadOnly.then { isReadOnly ->
+							if (cachedPromises?.key == key)
+								setFileProperties(fileProperties, isReadOnly)
+						}
+					}
+					.excuse(::handleException)
+			}
 		}
 	}
-
-	private var libraryId: LibraryId? = null
-	private var serviceFile: ServiceFile? = null
 
 	private val cachedPromiseSync = Any()
 	private val filePositionState = MutableStateFlow(0)
@@ -167,12 +166,15 @@ class NowPlayingFilePropertiesViewModel(
 	fun updateRating(rating: Float) {
 		if (!isSongRatingEnabledState.value) return
 
+		val libraryId = cachedPromises?.libraryId ?: return
+		val serviceFile = cachedPromises?.serviceFile ?: return
+
 		songRatingState.value = rating
 		val ratingToString = rating.roundToInt().toString()
 		updateFileProperties
 			.promiseFileUpdate(
-				libraryId ?: return,
-				serviceFile ?: return,
+				libraryId,
+				serviceFile,
 				KnownFileProperties.RATING,
 				ratingToString,
 				false)
@@ -207,22 +209,16 @@ class NowPlayingFilePropertiesViewModel(
 			.eventually { np ->
 				nowPlayingFileState.value = np?.playingFile
 				np?.playingFile?.let { positionedFile ->
-					selectedLibraryId
-						.selectedLibraryId
-						.eventually { libraryId ->
-							libraryId
-								?.takeIf { it == np.libraryId }
-								?.let { provideUrlKey.promiseUrlKey(libraryId, serviceFile) }
-								?.eventually { key ->
-									key
-										?.let {
-											if (cachedPromises?.key == key) filePositionState.value
-											else np.filePosition
-										}
-										?.let { filePosition ->
-											setView(libraryId, positionedFile.serviceFile, filePosition)
-										}
-										.keepPromise(Unit)
+					provideUrlKey
+						.promiseUrlKey(np.libraryId, positionedFile.serviceFile)
+						.eventually { key ->
+							key
+								?.let {
+									if (cachedPromises?.key == key) filePositionState.value
+									else np.filePosition
+								}
+								?.let { filePosition ->
+									setView(np.libraryId, positionedFile.serviceFile, filePosition)
 								}
 								.keepPromise(Unit)
 						}
@@ -272,6 +268,8 @@ class NowPlayingFilePropertiesViewModel(
 					cachedPromises?.close()
 					CachedPromises(
 						key,
+						libraryId,
+						serviceFile,
 						checkAuthentication.promiseIsReadOnly(libraryId),
 						fileProperties.promiseFileProperties(libraryId, serviceFile),
 					).also { cachedPromises = it }
@@ -291,8 +289,8 @@ class NowPlayingFilePropertiesViewModel(
 							}
 						}
 					}
+					.apply { excuse(::handleException) }
 			}
-			.excuse(::handleException)
 
 	private fun setFileProperties(fileProperties: Map<String, String>, isReadOnly: Boolean) {
 		artistState.value = fileProperties[KnownFileProperties.ARTIST]
@@ -320,6 +318,8 @@ class NowPlayingFilePropertiesViewModel(
 
 	private class CachedPromises(
 		val key: UrlKeyHolder<ServiceFile>,
+		val libraryId: LibraryId,
+		val serviceFile: ServiceFile,
 		val promisedIsReadOnly: Promise<Boolean>,
 		val promisedProperties: Promise<Map<String, String>>,
 	)

@@ -235,7 +235,6 @@ class ItemListActivity : AppCompatActivity(), Runnable {
 		NowPlayingFilePropertiesViewModel(
 			messageBus,
 			LiveNowPlayingLookup.getInstance(),
-			browserLibraryIdProvider,
 			libraryFilePropertiesProvider,
 			UrlKeyProvider(libraryConnectionProvider),
 			filePropertiesStorage,

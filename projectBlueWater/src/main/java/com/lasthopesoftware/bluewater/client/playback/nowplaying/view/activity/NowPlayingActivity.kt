@@ -128,16 +128,15 @@ class NowPlayingActivity :
 		val liveNowPlayingLookup = LiveNowPlayingLookup.getInstance()
 		binding.filePropertiesVm = buildViewModel {
 			NowPlayingFilePropertiesViewModel(
-				applicationMessageBus.value,
-				liveNowPlayingLookup,
-				browserLibraryIdProvider,
-				libraryFilePropertiesProvider,
-				UrlKeyProvider(libraryConnectionProvider),
-				filePropertiesStorage,
-				connectionAuthenticationChecker,
-				PlaybackServiceController(this),
-				ConnectionPoller(this),
-				StringResources(this),
+                applicationMessageBus.value,
+                liveNowPlayingLookup,
+                libraryFilePropertiesProvider,
+                UrlKeyProvider(libraryConnectionProvider),
+                filePropertiesStorage,
+                connectionAuthenticationChecker,
+                PlaybackServiceController(this),
+                ConnectionPoller(this),
+                StringResources(this),
             )
 		}
 
