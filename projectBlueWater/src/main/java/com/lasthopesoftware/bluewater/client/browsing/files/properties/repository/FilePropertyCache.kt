@@ -1,16 +1,14 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.properties.repository
 
-import com.github.benmanes.caffeine.cache.Caffeine
+import com.google.common.cache.CacheBuilder
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
-import com.lasthopesoftware.resources.executors.ThreadPools
 
 object FilePropertyCache : IFilePropertiesContainerRepository {
 	private const val maxSize = 500L
 
 	private val propertiesCache by lazy {
-		Caffeine.newBuilder()
-			.executor(ThreadPools.compute)
+		CacheBuilder.newBuilder()
 			.maximumSize(maxSize)
 			.build<UrlKeyHolder<ServiceFile>, ContainVersionedFileProperties>()
 	}

@@ -1,13 +1,11 @@
 package com.lasthopesoftware.bluewater.shared.policies.caching
 
-import com.github.benmanes.caffeine.cache.Caffeine
-import com.lasthopesoftware.resources.executors.ThreadPools
+import com.google.common.cache.CacheBuilder
 import org.joda.time.Duration
 import java.util.concurrent.TimeUnit
 
 class TimedExpirationPromiseCache<Input : Any, Output>(expireAfter: Duration) :
-	CaffeinePromiseCache<Input, Output>(
-		Caffeine.newBuilder()
-			.executor(ThreadPools.compute)
-			.expireAfterWrite(expireAfter.millis, TimeUnit.MILLISECONDS)
-			.build())
+	GuavaPromiseCache<Input, Output>(
+		CacheBuilder.newBuilder()
+		.expireAfterWrite(expireAfter.millis, TimeUnit.MILLISECONDS)
+		.build())
