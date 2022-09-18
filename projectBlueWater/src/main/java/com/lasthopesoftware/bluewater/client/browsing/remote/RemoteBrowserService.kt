@@ -88,12 +88,12 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 			selectedLibraryIdProvider,
 			CachedFilePropertiesProvider(
 				libraryConnectionProvider,
-				FilePropertyCache.getInstance(),
+				FilePropertyCache,
 				RateControlledFilePropertiesProvider(
 					FilePropertiesProvider(
 						libraryConnectionProvider,
 						LibraryRevisionProvider(libraryConnectionProvider),
-						FilePropertyCache.getInstance(),
+						FilePropertyCache,
 					),
 					rateLimiter,
 				)

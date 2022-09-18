@@ -16,7 +16,7 @@ import com.lasthopesoftware.bluewater.shared.messages.application.SendApplicatio
 
 class UpdatePlayStatsOnCompleteRegistration(private val messageBus: SendApplicationMessages) : RegisterReceiverForEvents {
 	override fun registerWithConnectionProvider(connectionProvider: IConnectionProvider): (ApplicationMessage) -> Unit {
-		val cache = FilePropertyCache.getInstance()
+		val cache = FilePropertyCache
 		val scopedRevisionProvider = ScopedRevisionProvider(connectionProvider)
 		return UpdatePlayStatsOnPlaybackCompleteReceiver(
 			PlaystatsUpdateSelector(

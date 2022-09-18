@@ -1,7 +1,8 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.properties.GivenALibraryId.GivenStoredFileProperties.AndAWritableConnection
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.FakeFilePropertiesContainer
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FakeFilePropertiesContainerRepository
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.OpenFilePropertiesContainer
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertiesContainer
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertyStorage
@@ -9,6 +10,8 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.FakeLibraryConnectionProvider
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
+import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
@@ -21,20 +24,34 @@ import java.net.URL
 
 private const val libraryId = 446
 private const val serviceFileId = 111
+private const val revision = 416
 
 class WhenUpdatingFileProperties {
+	private val deferredRevisionPromise = DeferredPromise(revision)
+
 	private val services by lazy {
         val fakeFileConnectionProvider = FakeConnectionProvider()
         val fakeLibraryConnectionProvider =
             FakeLibraryConnectionProvider(mapOf(Pair(LibraryId(libraryId), fakeFileConnectionProvider)))
-		val filePropertiesContainer = FakeFilePropertiesContainer().apply {
+		var isFilePropertiesContainerUpdated = false
+		val filePropertiesContainer = FakeFilePropertiesContainerRepository().apply {
 			putFilePropertiesContainer(
 				UrlKeyHolder(URL("http://test:80/MCWS/v1/"), ServiceFile(serviceFileId)),
-				FilePropertiesContainer(565, mapOf(Pair("package", "heighten")))
+				object : OpenFilePropertiesContainer(FilePropertiesContainer(revision, mapOf(Pair("package", "heighten")))) {
+					override fun updateProperty(key: String, value: String) {
+						isFilePropertiesContainerUpdated = true
+						super.updateProperty(key, value)
+					}
+				}
 			)
 		}
 
-		val recordingApplicationMessageBus = RecordingApplicationMessageBus()
+		val recordingApplicationMessageBus = object : RecordingApplicationMessageBus() {
+			override fun <T : ApplicationMessage> sendMessage(message: T) {
+				isFilePropertiesContainerUpdatedFirst = isFilePropertiesContainerUpdated
+				super.sendMessage(message)
+			}
+		}
 
         val filePropertiesStorage = FilePropertyStorage(
 			fakeLibraryConnectionProvider,
@@ -42,7 +59,7 @@ class WhenUpdatingFileProperties {
 				every { promiseIsReadOnly(LibraryId(libraryId)) } returns false.toPromise()
 			},
 			mockk {
-				every { promiseRevision(LibraryId(libraryId)) } returns 565.toPromise()
+				every { promiseRevision(LibraryId(libraryId)) } returns deferredRevisionPromise
 			},
 			filePropertiesContainer,
 			recordingApplicationMessageBus
@@ -52,6 +69,8 @@ class WhenUpdatingFileProperties {
 			Triple(fakeFileConnectionProvider, filePropertiesContainer, recordingApplicationMessageBus),
 			filePropertiesStorage)
     }
+
+	private var isFilePropertiesContainerUpdatedFirst = false
 
 	@BeforeAll
 	fun act() {
@@ -66,6 +85,12 @@ class WhenUpdatingFileProperties {
 			)
 			.toExpiringFuture()
 			.get()
+		deferredRevisionPromise.resolve()
+	}
+
+	@Test
+	fun `then the properties are updated in local storage before the message is sent`() {
+		assertThat(isFilePropertiesContainerUpdatedFirst).isTrue
 	}
 
     @Test

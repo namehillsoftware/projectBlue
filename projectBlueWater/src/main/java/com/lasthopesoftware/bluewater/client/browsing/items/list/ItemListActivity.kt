@@ -175,12 +175,12 @@ class ItemListActivity : AppCompatActivity(), Runnable {
 	private val libraryFilePropertiesProvider by lazy {
 		CachedFilePropertiesProvider(
 			libraryConnectionProvider,
-			FilePropertyCache.getInstance(),
+			FilePropertyCache,
 			RateControlledFilePropertiesProvider(
 				FilePropertiesProvider(
 					libraryConnectionProvider,
 					revisionProvider,
-					FilePropertyCache.getInstance(),
+					FilePropertyCache,
 				),
 				rateLimiter,
 			),
@@ -207,7 +207,7 @@ class ItemListActivity : AppCompatActivity(), Runnable {
 			libraryConnectionProvider,
 			connectionAuthenticationChecker,
 			revisionProvider,
-			FilePropertyCache.getInstance(),
+			FilePropertyCache,
 			messageBus
 		)
 	}

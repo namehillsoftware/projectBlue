@@ -48,7 +48,7 @@ class NowPlayingTopFragment : Fragment() {
 		FilePropertiesProvider(
 			libraryConnectionProvider,
 			revisionProvider,
-			FilePropertyCache.getInstance(),
+			FilePropertyCache,
 		)
 	}
 
@@ -57,7 +57,7 @@ class NowPlayingTopFragment : Fragment() {
 			libraryConnectionProvider,
 			connectionAuthenticationChecker,
 			revisionProvider,
-			FilePropertyCache.getInstance(),
+			FilePropertyCache,
 			applicationMessageBus
 		)
 	}

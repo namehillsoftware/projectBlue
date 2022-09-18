@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.properties.GivenALibraryId.GivenStoredFileProperties.AndAReadOnlyConnection
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.FakeFilePropertiesContainer
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FakeFilePropertiesContainerRepository
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertiesContainer
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertyStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -26,7 +26,7 @@ class WhenUpdatingFileProperties {
         val fakeFileConnectionProvider = FakeConnectionProvider()
         val fakeLibraryConnectionProvider =
             FakeLibraryConnectionProvider(mapOf(Pair(LibraryId(libraryId), fakeFileConnectionProvider)))
-		val filePropertiesContainer = FakeFilePropertiesContainer().apply {
+		val filePropertiesContainer = FakeFilePropertiesContainerRepository().apply {
 			putFilePropertiesContainer(
 				UrlKeyHolder(URL("http://test:80/MCWS/v1/"), ServiceFile(serviceFileId)),
 				FilePropertiesContainer(565, mapOf(Pair("politics", "postpone")))

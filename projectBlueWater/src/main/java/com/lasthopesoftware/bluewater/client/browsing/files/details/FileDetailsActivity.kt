@@ -98,7 +98,7 @@ class FileDetailsActivity : ComponentActivity() {
 				FilePropertiesProvider(
 					libraryConnections,
 					LibraryRevisionProvider(libraryConnections),
-					FilePropertyCache.getInstance(),
+					FilePropertyCache,
 				),
 			)
 		)

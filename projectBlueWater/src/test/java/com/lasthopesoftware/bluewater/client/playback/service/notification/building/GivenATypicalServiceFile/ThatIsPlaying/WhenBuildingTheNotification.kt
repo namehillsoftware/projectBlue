@@ -7,12 +7,12 @@ import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.FakeFilePropertiesContainer
+import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideImages
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FakeFilePropertiesContainerRepository
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ScopedCachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ScopedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.IFilePropertiesContainerRepository
-import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideImages
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeScopedRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.FakeFileConnectionProvider
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.NowPlayingNotificationBuilder
@@ -48,7 +48,7 @@ class WhenBuildingTheNotification : AndroidContext() {
 			mapOf(
 				Pair(KnownFileProperties.ARTIST, "test-artist"),
 				Pair(KnownFileProperties.NAME, "song")))
-		val containerRepository: IFilePropertiesContainerRepository = FakeFilePropertiesContainer()
+		val containerRepository: IFilePropertiesContainerRepository = FakeFilePropertiesContainerRepository()
 		val imageProvider = mockk<ProvideImages>()
 		every { imageProvider.promiseFileBitmap(any()) } returns Promise(expectedBitmap.value)
 		val npBuilder = NowPlayingNotificationBuilder(

@@ -5,7 +5,7 @@ import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApp
 import com.lasthopesoftware.bluewater.shared.messages.application.SendApplicationMessages
 import java.util.concurrent.ConcurrentHashMap
 
-class RecordingApplicationMessageBus :
+open class RecordingApplicationMessageBus :
 	RegisterForApplicationMessages,
 	SendApplicationMessages
 {
@@ -14,15 +14,11 @@ class RecordingApplicationMessageBus :
 
 	val recordedMessages = ArrayList<ApplicationMessage>()
 
+	@Suppress("UNCHECKED_CAST")
 	override fun <T : ApplicationMessage> sendMessage(message: T) {
-		@Suppress("UNCHECKED_CAST")
-		fun broadcastToReceivers() {
-			val typedReceivers = receivers[message.javaClass] as? ConcurrentHashMap<(T) -> Unit, Unit> ?: return
-			typedReceivers.forEach { (r, _) -> r(message) }
-		}
-
 		recordedMessages.add(message)
-		broadcastToReceivers()
+		val typedReceivers = receivers[message.javaClass] as? ConcurrentHashMap<(T) -> Unit, Unit> ?: return
+		typedReceivers.forEach { (r, _) -> r(message) }
 	}
 
 	@Suppress("UNCHECKED_CAST")

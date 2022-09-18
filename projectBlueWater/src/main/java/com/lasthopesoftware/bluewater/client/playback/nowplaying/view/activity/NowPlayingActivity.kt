@@ -95,7 +95,7 @@ class NowPlayingActivity :
 		FilePropertiesProvider(
 			libraryConnectionProvider,
 			revisionProvider,
-			FilePropertyCache.getInstance(),
+			FilePropertyCache,
 		)
 	}
 
@@ -104,7 +104,7 @@ class NowPlayingActivity :
 			libraryConnectionProvider,
 			connectionAuthenticationChecker,
 			revisionProvider,
-			FilePropertyCache.getInstance(),
+			FilePropertyCache,
 			applicationMessageBus.value
 		)
 	}

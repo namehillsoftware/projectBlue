@@ -364,13 +364,14 @@ open class PlaybackService :
 		FilePropertiesProvider(
 			connectionSessionManager,
 			LibraryRevisionProvider(connectionSessionManager),
-			FilePropertyCache.getInstance())
+			FilePropertyCache
+        )
 	}
 
 	private val cachedFileProperties by lazy {
 		CachedFilePropertiesProvider(
 			ConnectionSessionManager.get(this),
-			FilePropertyCache.getInstance(),
+			FilePropertyCache,
 			fileProperties)
 	}
 
@@ -685,8 +686,8 @@ open class PlaybackService :
 
 			val cachedSessionFilePropertiesProvider = ScopedCachedFilePropertiesProvider(
 				connectionProvider,
-				FilePropertyCache.getInstance(),
-				ScopedFilePropertiesProvider(connectionProvider, scopedRevisionProvider, FilePropertyCache.getInstance()))
+				FilePropertyCache,
+				ScopedFilePropertiesProvider(connectionProvider, scopedRevisionProvider, FilePropertyCache))
 
 			trackPositionBroadcaster = TrackPositionBroadcaster(
 				applicationMessageBus.value,

@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.properties.GivenAReadOnlyConnection
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.FakeFilePropertiesContainer
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FakeFilePropertiesContainerRepository
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.ScopedFilePropertiesStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.CheckScopedRevisions
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
@@ -23,7 +23,7 @@ import java.util.concurrent.ExecutionException
 class WhenUpdatingFileProperties {
 
 	private val connectionProvider = mockk<IConnectionProvider>()
-	private val fakeFilePropertiesContainer = FakeFilePropertiesContainer()
+	private val fakeFilePropertiesContainer = FakeFilePropertiesContainerRepository()
 
 	private val fileStorage by lazy {
 		every { connectionProvider.promiseResponse(*anyVararg()) } returns Promise.empty()

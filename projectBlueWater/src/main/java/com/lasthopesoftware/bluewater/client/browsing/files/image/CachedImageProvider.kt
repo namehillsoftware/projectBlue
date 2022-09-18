@@ -36,7 +36,7 @@ class CachedImageProvider(
 		fun getInstance(context: Context): CachedImageProvider {
 			val selectedLibraryIdentifierProvider = SelectedBrowserLibraryIdentifierProvider(context.getApplicationSettingsRepository())
 			val libraryConnectionProvider = ConnectionSessionManager.get(context)
-			val filePropertiesCache = FilePropertyCache.getInstance()
+			val filePropertiesCache = FilePropertyCache
 			val imageCacheKeyLookup = ImageCacheKeyLookup(
 				CachedFilePropertiesProvider(
 					libraryConnectionProvider,

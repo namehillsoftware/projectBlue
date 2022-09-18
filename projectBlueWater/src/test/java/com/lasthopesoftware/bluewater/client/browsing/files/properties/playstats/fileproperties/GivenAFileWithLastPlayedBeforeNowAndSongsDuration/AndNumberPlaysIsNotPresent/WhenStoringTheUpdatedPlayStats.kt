@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.fileproperties.GivenAFileWithLastPlayedBeforeNowAndSongsDuration.AndNumberPlaysIsNotPresent
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.FakeFilePropertiesContainer
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FakeFilePropertiesContainerRepository
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ScopedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.fileproperties.ScopedFilePropertiesPlayStatsUpdater
@@ -52,7 +52,7 @@ class WhenStoringTheUpdatedPlayStats {
 
 		val checkConnection = mockk<CheckIfScopedConnectionIsReadOnly>()
 		every { checkConnection.promiseIsReadOnly() } returns false.toPromise()
-		val filePropertiesContainer = FakeFilePropertiesContainer()
+		val filePropertiesContainer = FakeFilePropertiesContainerRepository()
 		val scopedRevisionProvider = ScopedRevisionProvider(connectionProvider)
 		val sessionFilePropertiesProvider =
 			ScopedFilePropertiesProvider(connectionProvider, scopedRevisionProvider, filePropertiesContainer)

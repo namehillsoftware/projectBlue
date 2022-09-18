@@ -46,12 +46,12 @@ class FileNameTextViewSetter(private val fileTextView: TextView, private val art
 			SelectedBrowserLibraryIdentifierProvider(context.getApplicationSettingsRepository()),
 			CachedFilePropertiesProvider(
 				libraryConnections,
-				FilePropertyCache.getInstance(),
+				FilePropertyCache,
 				RateControlledFilePropertiesProvider(
 					FilePropertiesProvider(
 						libraryConnections,
 						LibraryRevisionProvider(libraryConnections),
-						FilePropertyCache.getInstance(),
+						FilePropertyCache,
 					),
 					rateLimiter,
 				)

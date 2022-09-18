@@ -76,7 +76,7 @@ class NowPlayingPlaylistFragment : Fragment() {
 		FilePropertiesProvider(
 			libraryConnectionProvider,
 			revisionProvider,
-			FilePropertyCache.getInstance(),
+			FilePropertyCache,
 		)
 	}
 
@@ -85,7 +85,7 @@ class NowPlayingPlaylistFragment : Fragment() {
 			libraryConnectionProvider,
 			connectionAuthenticationChecker,
 			revisionProvider,
-			FilePropertyCache.getInstance(),
+			FilePropertyCache,
 			applicationMessageBus
 		)
 	}

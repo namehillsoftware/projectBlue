@@ -104,7 +104,7 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 	private val libraryProvider by lazy { DelegatingLibraryProvider(LibraryRepository(context), cachingPolicyFactory) }
 
 	private val fileProperties by lazy {
-		val filePropertyCache = FilePropertyCache.getInstance()
+		val filePropertyCache = FilePropertyCache
 		CachedFilePropertiesProvider(
 			libraryConnections,
 			filePropertyCache,

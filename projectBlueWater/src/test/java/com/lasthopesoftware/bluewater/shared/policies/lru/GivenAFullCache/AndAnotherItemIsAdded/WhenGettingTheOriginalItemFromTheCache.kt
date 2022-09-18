@@ -13,6 +13,7 @@ class WhenGettingTheOriginalItemFromTheCache {
 		val cache = LruPromiseCache<String, Any>(1)
 		cache.getOrAdd("first-key") { Promise(firstItem) }.toExpiringFuture().get()
 		cache.getOrAdd("second-key") { Promise(Any()) }.toExpiringFuture().get()
+		Thread.sleep(100)
 		cache.getOrAdd("first-key") { Promise(Any()) }.toExpiringFuture().get()
 	}
 
