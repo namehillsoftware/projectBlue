@@ -20,13 +20,12 @@ import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.access.CachedItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.SpecificLibraryProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.views.access.CachedLibraryViewsProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
-import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.MediaSession.MediaSessionService
 import com.lasthopesoftware.bluewater.shared.android.services.promiseBoundService
@@ -80,7 +79,7 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 		)
 	}
 
-	private val selectedLibraryIdProvider by lazy { SelectedBrowserLibraryIdentifierProvider(getApplicationSettingsRepository()) }
+	private val selectedLibraryIdProvider by lazy { getCachedSelectedLibraryIdProvider() }
 
 	private val filePropertiesProvider by lazy {
 		val libraryConnectionProvider = buildNewConnectionSessionManager()
@@ -112,7 +111,7 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 
 	private val nowPlayingMediaItemLookup by lazy {
 		val libraryRepository = LibraryRepository(this)
-		selectedLibraryIdProvider.selectedLibraryId
+		selectedLibraryIdProvider.promiseSelectedLibraryId()
 			.then {
 				it?.let { l ->
 					val repository =

@@ -43,7 +43,7 @@ class FileListViewModel(
 		mutableIsLoaded.value = false
 		mutableItemValue.value = item.value
 
-		return selectedLibraryId.selectedLibraryId
+		return selectedLibraryId.promiseSelectedLibraryId()
 			.eventually { libraryId ->
 				libraryId
 					?.let {

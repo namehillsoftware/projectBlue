@@ -26,11 +26,10 @@ import com.lasthopesoftware.bluewater.client.browsing.files.menu.FileListItemMen
 import com.lasthopesoftware.bluewater.client.browsing.files.menu.FileListItemNowPlayingRegistrar
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.handlers.ViewChangedHandler
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingFileProvider.Companion.fromActiveLibrary
-import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
@@ -50,7 +49,7 @@ class SearchFilesFragment : Fragment(), View.OnKeyListener, TextView.OnEditorAct
 
 	private val handler by lazy { Handler(requireContext().mainLooper) }
 
-	private val selectedLibraryIdProvider by lazy { SelectedBrowserLibraryIdentifierProvider(requireContext().getApplicationSettingsRepository()) }
+	private val selectedLibraryIdProvider by lazy { requireContext().getCachedSelectedLibraryIdProvider() }
 
 	private val fileProvider by lazy {
 		val stringListProvider = LibraryFileStringListProvider(ConnectionSessionManager.get(requireContext()))
@@ -146,7 +145,7 @@ class SearchFilesFragment : Fragment(), View.OnKeyListener, TextView.OnEditorAct
 			if (cancellationProxy.isCancelled) return
 
 			val parameters = SearchFileParameterProvider.getFileListParameters(query)
-			selectedLibraryIdProvider.selectedLibraryId
+			selectedLibraryIdProvider.promiseSelectedLibraryId()
 				.eventually {
 					it
 						?.let { l ->

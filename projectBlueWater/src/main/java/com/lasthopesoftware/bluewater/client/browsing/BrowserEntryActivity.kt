@@ -25,7 +25,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAn
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistListFragment
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library.ViewType
@@ -75,8 +75,8 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 	private val applicationSettings by lazy { getApplicationSettingsRepository() }
 
 	private val selectedBrowserLibraryProvider by lazy { SelectedBrowserLibraryProvider(
-			SelectedBrowserLibraryIdentifierProvider(applicationSettings),
-			libraryRepository)
+		getCachedSelectedLibraryIdProvider(),
+		libraryRepository)
 	}
 
 	private val messageHandler by lazy { Handler(mainLooper) }

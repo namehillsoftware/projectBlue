@@ -15,7 +15,7 @@ class LibraryRemoval(
 
 	override fun removeLibrary(library: Library): Promise<*> {
 		val promisedNewLibrarySelection =
-			selectedLibraryIdProvider.selectedLibraryId
+			selectedLibraryIdProvider.promiseSelectedLibraryId()
 				.eventually {
 					if (library.libraryId != it) Promise.empty()
 					else libraryProvider.allLibraries.eventually { libraries ->

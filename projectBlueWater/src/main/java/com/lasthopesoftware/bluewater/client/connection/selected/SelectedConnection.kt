@@ -1,13 +1,12 @@
 package com.lasthopesoftware.bluewater.client.connection.selected
 
 import android.content.Context
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.ManageConnectionSessions
-import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.SendApplicationMessages
@@ -22,7 +21,7 @@ class SelectedConnection(
 ) {
 
 	fun promiseTestedSessionConnection(): Promise<IConnectionProvider?> =
-		selectedLibraryIdentifierProvider.selectedLibraryId.eventually { selectedLibraryId ->
+		selectedLibraryIdentifierProvider.promiseSelectedLibraryId().eventually { selectedLibraryId ->
 			selectedLibraryId
 				?.let {
 					libraryConnections.promiseTestedLibraryConnection(selectedLibraryId)
@@ -39,12 +38,12 @@ class SelectedConnection(
 		}
 
 	fun isSessionConnectionActive(): Promise<Boolean> =
-		selectedLibraryIdentifierProvider.selectedLibraryId.then { id ->
+		selectedLibraryIdentifierProvider.promiseSelectedLibraryId().then { id ->
 			id?.let(libraryConnections::isConnectionActive) ?: false
 		}
 
 	fun promiseSessionConnection(): Promise<IConnectionProvider?> =
-		selectedLibraryIdentifierProvider.selectedLibraryId.eventually { selectedLibraryId ->
+		selectedLibraryIdentifierProvider.promiseSelectedLibraryId().eventually { selectedLibraryId ->
 			selectedLibraryId
 				?.let {
 					libraryConnections
@@ -74,7 +73,7 @@ class SelectedConnection(
 		fun getInstance(context: Context): SelectedConnection =
 			SelectedConnection(
                 getApplicationMessageBus(),
-				SelectedBrowserLibraryIdentifierProvider(context.getApplicationSettingsRepository()),
+				context.getCachedSelectedLibraryIdProvider(),
 				ConnectionSessionManager.get(context)
 			)
 	}

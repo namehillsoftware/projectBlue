@@ -45,13 +45,12 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.Formatted
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.SelectedLibraryFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity.Companion.restoreSelectedConnection
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
-import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.colors.MediaStylePalette
 import com.lasthopesoftware.bluewater.shared.android.colors.MediaStylePaletteProvider
@@ -94,7 +93,7 @@ class FileDetailsActivity : ComponentActivity() {
 		val libraryConnections = buildNewConnectionSessionManager()
 		FormattedScopedFilePropertiesProvider(
 			SelectedLibraryFilePropertiesProvider(
-				SelectedBrowserLibraryIdentifierProvider(getApplicationSettingsRepository()),
+				getCachedSelectedLibraryIdProvider(),
 				FilePropertiesProvider(
 					libraryConnections,
 					LibraryRevisionProvider(libraryConnections),

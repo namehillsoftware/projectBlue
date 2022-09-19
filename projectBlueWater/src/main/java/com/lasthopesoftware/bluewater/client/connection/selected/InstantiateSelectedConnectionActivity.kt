@@ -15,6 +15,7 @@ import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnect
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
+import com.lasthopesoftware.bluewater.shared.android.view.getValue
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
@@ -23,8 +24,9 @@ import com.namehillsoftware.handoff.promises.Promise
 
 class InstantiateSelectedConnectionActivity : Activity(), (SelectedConnection.BuildSessionConnectionBroadcast) -> Unit {
 	private var isCancelled = false
-	private val lblConnectionStatus = LazyViewFinder<TextView>(this, R.id.lblConnectionStatus)
-	private val cancelButton = LazyViewFinder<TextView>(this, R.id.cancelButton)
+
+	private val lblConnectionStatus by LazyViewFinder<TextView>(this, R.id.lblConnectionStatus)
+	private val cancelButton by LazyViewFinder<TextView>(this, R.id.cancelButton)
 
 	private val selectServerIntent by lazy { Intent(this, ApplicationSettingsActivity::class.java) }
 
@@ -43,8 +45,8 @@ class InstantiateSelectedConnectionActivity : Activity(), (SelectedConnection.Bu
 
 		setContentView(R.layout.layout_status)
 
-		lblConnectionStatus.findView().setText(R.string.lbl_connecting)
-		cancelButton.findView().setOnClickListener { cancel() }
+		lblConnectionStatus.setText(R.string.lbl_connecting)
+		cancelButton.setOnClickListener { cancel() }
 
 		val registration = getApplicationMessageBus().registerReceiver(handler, this)
 
@@ -73,7 +75,7 @@ class InstantiateSelectedConnectionActivity : Activity(), (SelectedConnection.Bu
 	}
 
 	private fun handleBuildStatusChange(status: BuildingConnectionStatus) {
-		lblConnectionStatus.findView().setText(when (status) {
+		lblConnectionStatus.setText(when (status) {
 			BuildingConnectionStatus.GettingLibrary -> R.string.lbl_getting_library_details
 			BuildingConnectionStatus.GettingLibraryFailed -> R.string.lbl_please_connect_to_valid_server
 			BuildingConnectionStatus.SendingWakeSignal -> R.string.sending_wake_signal

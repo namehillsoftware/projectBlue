@@ -21,14 +21,13 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListAdapter
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.ActivityLaunching
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.stored.library.items.StateChangeBroadcastingStoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
-import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
@@ -42,7 +41,7 @@ class PlaylistListFragment : Fragment() {
 	private val handler by lazy { Handler(requireContext().mainLooper) }
 
 	private val browserLibraryIdProvider by lazy {
-		SelectedBrowserLibraryIdentifierProvider(requireContext().getApplicationSettingsRepository())
+		requireContext().getCachedSelectedLibraryIdProvider()
 	}
 
 	private val promisedBrowserLibrary by lazy {
@@ -76,7 +75,7 @@ class PlaylistListFragment : Fragment() {
 	}
 
 	private val demoableItemListAdapter by lazy {
-		browserLibraryIdProvider.selectedLibraryId.then {
+		browserLibraryIdProvider.promiseSelectedLibraryId().then {
 			it?.let { libraryId ->
 				itemListMenuChangeHandler?.let { itemListMenuChangeHandler ->
 					val context = requireContext()

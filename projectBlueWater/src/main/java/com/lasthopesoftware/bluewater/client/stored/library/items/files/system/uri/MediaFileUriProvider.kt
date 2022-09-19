@@ -25,7 +25,7 @@ class MediaFileUriProvider(
 	private val sendApplicationMessages: SendApplicationMessages
 ) : IFileUriProvider, ProvideFileUrisForLibrary {
     override fun promiseFileUri(serviceFile: ServiceFile): Promise<Uri?> =
-		libraryIdentifierProvider.selectedLibraryId.eventually {
+		libraryIdentifierProvider.promiseSelectedLibraryId().eventually {
 			it?.let { promiseUri(it, serviceFile) }.keepPromise()
 		}
 

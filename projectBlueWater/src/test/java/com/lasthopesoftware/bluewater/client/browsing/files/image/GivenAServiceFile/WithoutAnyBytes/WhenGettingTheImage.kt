@@ -29,7 +29,7 @@ class WhenGettingTheImage : AndroidContext() {
 
     override fun before() {
 		val selectedLibraryProvider = mockk<ProvideSelectedLibraryId>()
-		every { selectedLibraryProvider.selectedLibraryId } returns Promise(LibraryId(2))
+		every { selectedLibraryProvider.promiseSelectedLibraryId() } returns Promise(LibraryId(2))
 
 		val getRawImages = mockk<GetRawImages>()
 		every { getRawImages.promiseImageBytes(LibraryId(2), ServiceFile(34)) } returns Promise(ByteArray(0))

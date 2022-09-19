@@ -53,7 +53,7 @@ class MediaSessionCallbackReceiver(
 		val ids = itemIdParts.drop(1).mapNotNull { id -> id.toIntOrNull() }
 		val itemId = ids.firstOrNull() ?: return
 
-		selectedLibraryId.selectedLibraryId.then {
+		selectedLibraryId.promiseSelectedLibraryId().then {
 			it?.also { libraryId ->
 				val promisedFileStringList = fileStringListProvider
 					.promiseFileStringList(libraryId, ItemId(itemId), FileListParameters.Options.None)

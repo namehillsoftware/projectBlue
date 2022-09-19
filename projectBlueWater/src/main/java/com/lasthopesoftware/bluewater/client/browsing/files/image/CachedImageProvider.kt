@@ -11,12 +11,11 @@ import com.lasthopesoftware.bluewater.client.browsing.files.image.bytes.cache.Lo
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.StaticLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
-import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.policies.caching.CachePromiseFunctions
 import com.lasthopesoftware.bluewater.shared.policies.caching.LruPromiseCache
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
@@ -34,7 +33,7 @@ class CachedImageProvider(
 		private val cache by lazy { LruPromiseCache<String, Bitmap?>(MAX_MEMORY_CACHE_SIZE) }
 
 		fun getInstance(context: Context): CachedImageProvider {
-			val selectedLibraryIdentifierProvider = SelectedBrowserLibraryIdentifierProvider(context.getApplicationSettingsRepository())
+			val selectedLibraryIdentifierProvider = context.getCachedSelectedLibraryIdProvider()
 			val libraryConnectionProvider = ConnectionSessionManager.get(context)
 			val filePropertiesCache = FilePropertyCache
 			val imageCacheKeyLookup = ImageCacheKeyLookup(
@@ -67,7 +66,7 @@ class CachedImageProvider(
 
 	override fun promiseFileBitmap(serviceFile: ServiceFile): Promise<Bitmap?> =
 		selectedLibraryIdLookup
-			.selectedLibraryId
+			.promiseSelectedLibraryId()
 			.eventually { libraryId ->
 				libraryId
 					?.let { l -> cacheKeys.promiseImageCacheKey(l, serviceFile) }

@@ -6,10 +6,9 @@ import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.*
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
-import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRateLimiter
 import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay.Companion.delay
@@ -43,7 +42,7 @@ class FileNameTextViewSetter(private val fileTextView: TextView, private val art
 		val context = fileTextView.context
 		val libraryConnections = context.buildNewConnectionSessionManager()
 		SelectedLibraryFilePropertiesProvider(
-			SelectedBrowserLibraryIdentifierProvider(context.getApplicationSettingsRepository()),
+			context.getCachedSelectedLibraryIdProvider(),
 			CachedFilePropertiesProvider(
 				libraryConnections,
 				FilePropertyCache,

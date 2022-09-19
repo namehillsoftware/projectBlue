@@ -6,11 +6,11 @@ import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplication
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 
-class SelectedBrowserLibraryIdentifierProvider(private val applicationSettings: HoldApplicationSettings)
+class SelectedLibraryIdProvider(private val applicationSettings: HoldApplicationSettings)
 	: ProvideSelectedLibraryId, ImmediateResponse<ApplicationSettings, LibraryId?>
 {
-	override val selectedLibraryId: Promise<LibraryId?>
-		get() = applicationSettings.promiseApplicationSettings().then(this)
+	override fun promiseSelectedLibraryId(): Promise<LibraryId?> =
+		applicationSettings.promiseApplicationSettings().then(this)
 
 	override fun respond(settings: ApplicationSettings): LibraryId? =
 		settings.chosenLibraryId.takeIf { it > -1 }?.let(::LibraryId)

@@ -37,7 +37,7 @@ class WhenRemovingTheLibrary {
 		every { libraryStorage.removeLibrary(library) } returns Promise.empty()
 
 		val libraryIdentifierProvider = mockk<ProvideSelectedLibraryId>()
-		every { libraryIdentifierProvider.selectedLibraryId } returns Promise(library.libraryId)
+		every { libraryIdentifierProvider.promiseSelectedLibraryId() } returns Promise(library.libraryId)
 
 		val libraryProvider = FakeLibraryProvider(
 			library,

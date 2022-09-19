@@ -22,7 +22,7 @@ import ch.qos.logback.core.util.StatusPrinter
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.UpdatePlayStatsOnCompleteRegistration
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.request.read.StorageReadPermissionsRequestNotificationBuilder
 import com.lasthopesoftware.bluewater.client.browsing.library.request.read.StorageReadPermissionsRequestedBroadcaster
 import com.lasthopesoftware.bluewater.client.browsing.library.request.write.StorageWritePermissionsRequestNotificationBuilder
@@ -120,7 +120,7 @@ open class MainApplication : Application() {
 		applicationMessageBus.registerReceiver(ConnectionSessionSettingsChangeReceiver(ConnectionSessionManager.get(this)))
 		applicationMessageBus.registerReceiver(
 			SelectedConnectionSettingsChangeReceiver(
-				SelectedBrowserLibraryIdentifierProvider(applicationSettings),
+				SelectedLibraryIdProvider(applicationSettings),
 				applicationMessageBus
 			)
 		)

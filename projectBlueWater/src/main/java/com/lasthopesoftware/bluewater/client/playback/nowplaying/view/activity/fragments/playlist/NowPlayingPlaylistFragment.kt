@@ -22,7 +22,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.h
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.handlers.ViewChangedHandler
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.SpecificLibraryProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
@@ -39,7 +39,6 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.menu.NowPl
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.databinding.ControlNowPlayingPlaylistBinding
-import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.android.adapters.DeferredListAdapter
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildActivityViewModelLazily
@@ -61,8 +60,6 @@ class NowPlayingPlaylistFragment : Fragment() {
 	private var itemListMenuChangeHandler: IItemListMenuChangeHandler? = null
 
 	private val applicationMessageBus by lazy { getApplicationMessageBus().getScopedMessageBus() }
-
-	private val browserLibraryIdProvider by lazy { SelectedBrowserLibraryIdentifierProvider(requireContext().getApplicationSettingsRepository()) }
 
 	private val libraryConnectionProvider by lazy { requireContext().buildNewConnectionSessionManager() }
 
@@ -90,11 +87,11 @@ class NowPlayingPlaylistFragment : Fragment() {
 		)
 	}
 
-	private val selectedLibraryIdProvider by lazy { SelectedBrowserLibraryIdentifierProvider(requireContext().getApplicationSettingsRepository()) }
+	private val selectedLibraryIdProvider by lazy { requireContext().getCachedSelectedLibraryIdProvider() }
 
 	private val nowPlayingRepository by lazy {
 		val libraryRepository = LibraryRepository(requireContext())
-		selectedLibraryIdProvider.selectedLibraryId
+		selectedLibraryIdProvider.promiseSelectedLibraryId()
 			.then { l ->
 				NowPlayingRepository(
 					SpecificLibraryProvider(l!!, libraryRepository),

@@ -18,7 +18,7 @@ class WhenHandlingTheConnectionSettingsChange {
 	@BeforeAll
 	fun act() {
 		val mockSelectedLibraryIdentifierProvider = mockk<ProvideSelectedLibraryId>()
-		every { mockSelectedLibraryIdentifierProvider.selectedLibraryId } returns Promise.empty()
+		every { mockSelectedLibraryIdentifierProvider.promiseSelectedLibraryId() } returns Promise.empty()
 
 		val selectedConnectionSettingsChangeReceiver = SelectedConnectionSettingsChangeReceiver(
 			mockSelectedLibraryIdentifierProvider,
