@@ -1,13 +1,33 @@
 package com.lasthopesoftware.bluewater.settings.repository.access
 
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
+import com.lasthopesoftware.bluewater.shared.promises.ResolvedPromiseBox
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 
 object PromisedApplicationSettingsCache : CachePromisedApplicationSettings {
-	@Volatile
-	private var promisedApplicationSettings: Promise<ApplicationSettings>? = null
+	private val sync = Any()
 
-	@Synchronized
+	@Volatile
+	private var promisedApplicationSettings: ResolvedPromiseBox<ApplicationSettings, Promise<ApplicationSettings>>? = null
+
+	override fun getOrSetCachedSettings(factory: () -> Promise<ApplicationSettings>): Promise<ApplicationSettings> =
+		synchronized(sync) {
+			promisedApplicationSettings
+				?.run {
+					resolvedPromise ?: originalPromise.eventually(
+						{ it.toPromise() },
+						{
+							synchronized(sync) {
+								factory().also { promisedApplicationSettings = ResolvedPromiseBox(it) }
+							}
+						})
+				}
+				?: factory().also { promisedApplicationSettings = ResolvedPromiseBox(it) }
+		}
+
 	override fun setAndGetCachedSettings(updater: (Promise<ApplicationSettings>?) -> Promise<ApplicationSettings>): Promise<ApplicationSettings> =
-		updater(promisedApplicationSettings).also { promisedApplicationSettings = it }
+		synchronized(sync) {
+			updater(promisedApplicationSettings?.originalPromise).also { promisedApplicationSettings = ResolvedPromiseBox(it) }
+		}
 }
