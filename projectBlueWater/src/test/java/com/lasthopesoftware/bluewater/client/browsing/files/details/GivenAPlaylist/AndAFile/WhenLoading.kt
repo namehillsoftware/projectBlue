@@ -7,9 +7,11 @@ import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsV
 import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideImages
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideScopedFileProperties
+import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.images.ProvideDefaultImage
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -18,6 +20,7 @@ import org.junit.AfterClass
 import org.junit.BeforeClass
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.net.URL
 
 private const val serviceFileId = 161
 
@@ -50,6 +53,10 @@ class WhenLoading {
 						.toPromise()
 				},
 				mockk(),
+				RecordingApplicationMessageBus(),
+				mockk {
+					every { promiseUrlKey(ServiceFile(serviceFileId)) } returns UrlKeyHolder(URL("http://bow"), ServiceFile(serviceFileId)).toPromise()
+				},
 			)
 		}
 

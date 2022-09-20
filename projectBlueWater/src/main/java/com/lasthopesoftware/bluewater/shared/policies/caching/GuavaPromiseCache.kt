@@ -12,12 +12,14 @@ open class GuavaPromiseCache<Input : Any, Output>(
 		cachedPromises.getIfPresent(input)?.resolvedPromise ?: buildNewIfNeeded(input, factory)
 
 	private fun buildNewIfNeeded(input: Input, factory: (Input) -> Promise<Output>): Promise<Output> {
-		var newPromise: Promise<Output>? = null
-
-		// If a new promise is built, use its result, otherwise try again
-		return cachedPromises.get(input) { ResolvedPromiseBox(factory(input).also { newPromise = it }) }.originalPromise.eventually(
-			{ newPromise ?: it.toPromise() },
-			{ newPromise ?: buildNewIfNeeded(input, factory) }
-		)
+		var factoryBuiltPromise: Promise<Output>? = null
+		return cachedPromises.get(input) { ResolvedPromiseBox(factory(input).also { factoryBuiltPromise = it }) }
+			.originalPromise
+			// If a new promise was built, use its result, otherwise try again or pass through the previous factory
+			// built result
+			.eventually(
+				{ factoryBuiltPromise ?: it.toPromise() },
+				{ factoryBuiltPromise ?: buildNewIfNeeded(input, factory) }
+			)
 	}
 }

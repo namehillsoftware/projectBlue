@@ -7,8 +7,12 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideImages
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideScopedFileProperties
+import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideScopedUrlKeyProvider
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
+import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.images.ProvideDefaultImage
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
+import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.namehillsoftware.handoff.promises.Promise
 import org.joda.time.DateTime
 import org.joda.time.Duration
@@ -73,6 +77,24 @@ class FileDetailsPreviewProvider : PreviewParameterProvider<FileDetailsViewModel
 						TODO("Not yet implemented")
 					}
 				},
-			)
-		)
+			object : RegisterForApplicationMessages {
+				override fun <Message : ApplicationMessage> registerForClass(
+					messageClass: Class<Message>,
+					receiver: (Message) -> Unit
+				): AutoCloseable {
+					TODO("Not yet implemented")
+				}
+
+				override fun <Message : ApplicationMessage> unregisterReceiver(receiver: (Message) -> Unit) {
+					TODO("Not yet implemented")
+				}
+
+			},
+			object : ProvideScopedUrlKeyProvider {
+				override fun <Key> promiseUrlKey(key: Key): Promise<UrlKeyHolder<Key>?> {
+					TODO("Not yet implemented")
+				}
+			}
+		),
+	)
 }

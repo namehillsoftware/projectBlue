@@ -6,11 +6,12 @@ import com.lasthopesoftware.bluewater.client.browsing.library.revisions.CheckSco
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfScopedConnectionIsReadOnly
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
-import com.lasthopesoftware.bluewater.shared.cls
+import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.messages.application.SendApplicationMessages
 import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.namehillsoftware.handoff.promises.Promise
-import org.slf4j.LoggerFactory
+
+private val logger by lazyLogger<ScopedFilePropertiesStorage>()
 
 class ScopedFilePropertiesStorage(
 	private val scopedConnectionProvider: IConnectionProvider,
@@ -63,8 +64,4 @@ class ScopedFilePropertiesStorage(
 
 			promisedUpdate
 		}
-
-	companion object {
-		private val logger by lazy { LoggerFactory.getLogger(cls<ScopedFilePropertiesStorage>()) }
-	}
 }

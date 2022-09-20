@@ -7,10 +7,7 @@ import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 
-/**
- * Created by david on 3/7/16.
- */
-open class ScopedCachedFilePropertiesProvider(
+class ScopedCachedFilePropertiesProvider(
     private val connectionProvider: IConnectionProvider,
     private val filePropertiesContainerRepository: IFilePropertiesContainerRepository,
     private val scopedFilePropertiesProvider: ProvideScopedFileProperties
