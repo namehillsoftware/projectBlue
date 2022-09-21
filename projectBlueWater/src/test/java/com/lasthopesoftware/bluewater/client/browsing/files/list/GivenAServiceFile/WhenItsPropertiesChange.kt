@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.browsing.files.list.GivenAServiceF
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusableTrackHeadlineViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideScopedFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -18,22 +19,29 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.net.URL
 
-class WhenShowingTheMenu {
+private const val serviceFileId = 889
+
+class WhenItsPropertiesChange {
 
 	private val recordingMessageBus = RecordingTypedMessageBus<ItemListMenuMessage>()
 
+	private val recordingApplicationMessageBus = RecordingApplicationMessageBus()
+
 	private val viewModel by lazy {
 		val filePropertiesProvider = mockk<ProvideScopedFileProperties>().apply {
-			every { promiseFileProperties(ServiceFile(99)) } returns mapOf(
-				Pair("Artist", "fool"),
-				Pair("Name", "coin"),
+			every { promiseFileProperties(ServiceFile(serviceFileId)) } returns mapOf(
+				Pair("Artist", "give"),
+				Pair("Name", "although"),
+			).toPromise() andThen mapOf(
+				Pair("Artist", "pupil"),
+				Pair("Name", "classify"),
 			).toPromise()
 		}
 
 		val stringResource = mockk<GetStringResources>().apply {
-			every { loading } returns "past"
-			every { unknownArtist } returns "next"
-			every { unknownTrack } returns "shout"
+			every { loading } returns "adoption"
+			every { unknownArtist } returns "sudden"
+			every { unknownTrack } returns "dead"
 		}
 
 		ReusableTrackHeadlineViewModel(
@@ -41,7 +49,7 @@ class WhenShowingTheMenu {
 			mockk {
 				every { promiseUrlKey(any<ServiceFile>()) } answers {
 					Promise(
-						UrlKeyHolder(URL("http://test"), firstArg())
+						UrlKeyHolder(URL("http://maybe"), firstArg())
 					)
 				}
 			},
@@ -49,7 +57,7 @@ class WhenShowingTheMenu {
 			mockk(),
 			mockk(),
 			recordingMessageBus,
-			RecordingApplicationMessageBus(),
+			recordingApplicationMessageBus,
 		)
 	}
 
@@ -59,7 +67,7 @@ class WhenShowingTheMenu {
 			listOf(
 				ServiceFile(13),
 				ServiceFile(546),
-				ServiceFile(695),
+				ServiceFile(serviceFileId),
 				ServiceFile(801),
 				ServiceFile(76),
 				ServiceFile(551),
@@ -69,32 +77,30 @@ class WhenShowingTheMenu {
 				ServiceFile(357),
 				ServiceFile(920),
 			),
-			7,
+			2,
 		).toExpiringFuture().get()
-		viewModel.showMenu()
+		recordingApplicationMessageBus.sendMessage(
+			FilePropertiesUpdatedMessage(
+				UrlKeyHolder(
+					URL("http://maybe"),
+					ServiceFile(serviceFileId)
+				)
+			)
+		)
 	}
 
 	@Test
-	fun `then a menu shown message is sent`() {
-		assertThat(
-			recordingMessageBus.recordedMessages.filterIsInstance<ItemListMenuMessage.MenuShown>()
-				.map { it.menuItem }).containsOnlyOnce(viewModel)
+	fun `then the artist is correct`() {
+		assertThat(viewModel.artist.value).isEqualTo("pupil")
 	}
 
 	@Test
-	fun thenTheArtistIsCorrect() {
-		assertThat(viewModel.artist.value)
-			.isEqualTo("fool")
+	fun `then the track name is correct`() {
+		assertThat(viewModel.title.value).isEqualTo("classify")
 	}
 
 	@Test
-	fun thenTheTrackNameIsCorrect() {
-		assertThat(viewModel.title.value)
-			.isEqualTo("coin")
-	}
-
-	@Test
-	fun `then the menu is shown`() {
-		assertThat(viewModel.isMenuShown.value).isTrue
+	fun `then the menu is not shown`() {
+		assertThat(viewModel.isMenuShown.value).isFalse
 	}
 }
