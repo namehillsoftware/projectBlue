@@ -21,11 +21,11 @@ class TrackHeadlineViewModelProvider(
 	private val receiveApplicationMessages: RegisterForApplicationMessages,
 ) : ViewModel() {
 
-	private val allViewModels = ConcurrentLinkedQueue<ViewFileItem>()
-	private val viewModelPool = ConcurrentLinkedQueue<ViewFileItem>()
+	private val allViewModels = ConcurrentLinkedQueue<PooledFileItemViewModel>()
+	private val viewModelPool = ConcurrentLinkedQueue<PooledFileItemViewModel>()
 
 	override fun onCleared() {
-		allViewModels.forEach { it.reset() }
+		allViewModels.forEach { it.close() }
 		super.onCleared()
 	}
 
@@ -42,9 +42,14 @@ class TrackHeadlineViewModelProvider(
 			)
 		).also(allViewModels::offer)
 
-	private inner class PooledFileItemViewModel(private val inner: ViewFileItem) : ViewFileItem by inner {
+	private inner class PooledFileItemViewModel(private val inner: ReusableTrackHeadlineViewModel) : ViewFileItem by inner, AutoCloseable {
 		override fun reset() {
 			inner.reset()
+			viewModelPool.offer(this)
+		}
+
+		override fun close() {
+			inner.close()
 			viewModelPool.offer(this)
 		}
 	}

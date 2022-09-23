@@ -42,14 +42,10 @@ class ReusableTrackHeadlineViewModel(
 	private val controlPlaybackService: ControlPlaybackService,
 	private val fileDetailsLauncher: LaunchFileDetails,
 	private val sendItemMenuMessages: SendTypedMessages<ItemListMenuMessage>,
-	private val receiveMessages: RegisterForApplicationMessages,
-) : ViewFileItem, HiddenListItemMenu {
+	receiveMessages: RegisterForApplicationMessages,
+) : ViewFileItem, HiddenListItemMenu, AutoCloseable, (FilePropertiesUpdatedMessage) -> Unit {
 
-	private val filePropertiesUpdatedSubscription = receiveMessages.registerReceiver { message: FilePropertiesUpdatedMessage ->
-		if (activeUrlKey == message.urlServiceKey) activePositionedFile?.playlistPosition?.also {
-			promiseUpdate(associatedPlaylist, it)
-		}
-	}
+	private val filePropertiesUpdatedSubscription = receiveMessages.registerReceiver(this)
 
 	private val promiseSync = Any()
 
@@ -85,6 +81,12 @@ class ReusableTrackHeadlineViewModel(
 			promisedState
 		}
 
+	override fun invoke(message: FilePropertiesUpdatedMessage) {
+		if (activeUrlKey == message.urlServiceKey) activePositionedFile?.playlistPosition?.also {
+			promiseUpdate(associatedPlaylist, it)
+		}
+	}
+
 	override fun showMenu(): Boolean =
 		mutableIsMenuShown.compareAndSet(expect = false, update = true)
 			.also {
@@ -107,6 +109,11 @@ class ReusableTrackHeadlineViewModel(
 			fileDetailsLauncher.launchFileDetails(associatedPlaylist, playlistPosition)
 		}
 		hideMenu()
+	}
+
+	override fun close() {
+		reset()
+		filePropertiesUpdatedSubscription.close()
 	}
 
 	override fun reset() {
