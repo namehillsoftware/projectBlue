@@ -13,13 +13,14 @@ import androidx.recyclerview.widget.RecyclerView
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.ViewFileDetailsClickListener
-import com.lasthopesoftware.bluewater.client.browsing.files.menu.FileListItemNowPlayingRegistrar
 import com.lasthopesoftware.bluewater.client.browsing.files.menu.FileNameTextViewSetter
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.BuildListItemMenuViewContainers
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener.Companion.tryFlipToPreviousView
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.NotifyOnFlipViewAnimator
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.OnViewChangedListener
+import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideScopedUrlKeyProvider
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.MaintainNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
@@ -27,11 +28,13 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.f
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.menu.listeners.FileSeekToClickListener
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.menu.listeners.RemovePlaylistFileClickListener
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage
+import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.android.view.getValue
 import com.lasthopesoftware.bluewater.shared.messages.RegisterForTypedMessages
 import com.lasthopesoftware.bluewater.shared.messages.SendTypedMessages
+import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
@@ -39,10 +42,11 @@ import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 
 class NowPlayingFileListItemMenuBuilder(
 	private val nowPlayingRepository: MaintainNowPlayingState,
-	private val fileListItemNowPlayingRegistrar: FileListItemNowPlayingRegistrar,
+	private val registerForApplicationMessages: RegisterForApplicationMessages,
 	private val hasEditPlaylistState: HasEditPlaylistState,
 	private val typedMessagesRegistration: RegisterForTypedMessages<NowPlayingPlaylistMessage>,
-	private val sendTypedMessages: SendTypedMessages<NowPlayingPlaylistMessage>
+	private val sendTypedMessages: SendTypedMessages<NowPlayingPlaylistMessage>,
+	private val scopedUrlKeyProvider: ProvideScopedUrlKeyProvider
 ) : BuildListItemMenuViewContainers<NowPlayingFileListItemMenuBuilder.ViewHolder>
 {
 	private var onViewChangedListener: OnViewChangedListener? = null
@@ -83,7 +87,6 @@ class NowPlayingFileListItemMenuBuilder(
 			}
 
 		return ViewHolder(notifyOnFlipViewAnimator)
-			.also(fileListItemNowPlayingRegistrar::registerNewHandler)
 			.also(dragButton::setOnLongClickListener)
 	}
 
@@ -91,7 +94,6 @@ class NowPlayingFileListItemMenuBuilder(
 		private val viewAnimator: NotifyOnFlipViewAnimator
 	) :
 		RecyclerView.ViewHolder(viewAnimator),
-		(PlaybackMessage.TrackChanged) -> Unit,
 		View.OnLongClickListener,
 		ImmediateResponse<NowPlaying?, Unit>
 	{
@@ -103,7 +105,25 @@ class NowPlayingFileListItemMenuBuilder(
 		private val artistView by LazyViewFinder<TextView>(itemView, R.id.artist)
 		private val fileNameTextViewSetter by lazy { FileNameTextViewSetter(textView, artistView) }
 
+		init {
+			registerForApplicationMessages.registerReceiver(handler) { message: PlaybackMessage.TrackChanged ->
+				val position = positionedFile?.playlistPosition
+				textView.setTypeface(
+					null,
+					ViewUtils.getActiveListItemTextViewStyle(position == message.positionedFile.playlistPosition)
+				)
+				viewAnimator.isSelected = position == message.positionedFile.playlistPosition
+			}
+
+			registerForApplicationMessages.registerReceiver { message: FilePropertiesUpdatedMessage ->
+				if (urlKey == message.urlServiceKey) positionedFile?.serviceFile?.also {
+					fileNameTextViewSetter.promiseTextViewUpdate(it)
+				}
+			}
+		}
+
 		private var positionedFile: PositionedFile? = null
+		private var urlKey: UrlKeyHolder<ServiceFile>? = null
 
 		fun update(positionedFile: PositionedFile, playlist: List<ServiceFile>) {
 			this.positionedFile = positionedFile
@@ -118,17 +138,15 @@ class NowPlayingFileListItemMenuBuilder(
 				.promiseNowPlaying()
 				.eventually(LoopedInPromise.response(this, handler))
 
+			scopedUrlKeyProvider
+				.promiseUrlKey(serviceFile)
+				.then { urlKey = it }
+
 			viewAnimator.tryFlipToPreviousView()
 			viewAnimator.setOnClickListener(ViewFileDetailsClickListener(viewAnimator, positionedFile, playlist))
 			playButton.setOnClickListener(FileSeekToClickListener(viewAnimator, position))
 			viewFileDetailsButton.setOnClickListener(ViewFileDetailsClickListener(viewAnimator, positionedFile, playlist))
 			removeButton.setOnClickListener(RemovePlaylistFileClickListener(viewAnimator, position))
-		}
-
-		override fun invoke(message: PlaybackMessage.TrackChanged) {
-			val position = positionedFile?.playlistPosition
-			textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(position == message.positionedFile.playlistPosition))
-			viewAnimator.isSelected = position == message.positionedFile.playlistPosition
 		}
 
 		override fun onLongClick(v: View?): Boolean =

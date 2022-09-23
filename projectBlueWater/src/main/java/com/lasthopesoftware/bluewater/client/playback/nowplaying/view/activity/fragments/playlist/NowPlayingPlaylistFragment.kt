@@ -25,6 +25,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.SpecificLib
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
+import com.lasthopesoftware.bluewater.client.connection.libraries.SelectedLibraryUrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.polling.ConnectionPoller
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
@@ -59,7 +60,7 @@ class NowPlayingPlaylistFragment : Fragment() {
 
 	private var itemListMenuChangeHandler: IItemListMenuChangeHandler? = null
 
-	private val applicationMessageBus by lazy { getApplicationMessageBus().getScopedMessageBus() }
+	private val applicationMessageBus = lazy { getApplicationMessageBus().getScopedMessageBus() }
 
 	private val libraryConnectionProvider by lazy { requireContext().buildNewConnectionSessionManager() }
 
@@ -83,11 +84,18 @@ class NowPlayingPlaylistFragment : Fragment() {
 			connectionAuthenticationChecker,
 			revisionProvider,
 			FilePropertyCache,
-			applicationMessageBus
+			applicationMessageBus.value
 		)
 	}
 
 	private val selectedLibraryIdProvider by lazy { requireContext().getCachedSelectedLibraryIdProvider() }
+
+	private val scopedUrlKeyProvider by lazy {
+		SelectedLibraryUrlKeyProvider(
+			selectedLibraryIdProvider,
+			UrlKeyProvider(libraryConnectionProvider)
+		)
+	}
 
 	private val nowPlayingRepository by lazy {
 		val libraryRepository = LibraryRepository(requireContext())
@@ -102,7 +110,7 @@ class NowPlayingPlaylistFragment : Fragment() {
 
 	private val handler by lazy { Handler(requireContext().mainLooper) }
 
-	private val fileListItemNowPlayingRegistrar = lazy { FileListItemNowPlayingRegistrar(handler, applicationMessageBus) }
+	private val fileListItemNowPlayingRegistrar = lazy { FileListItemNowPlayingRegistrar(handler, applicationMessageBus.value) }
 
 	private val viewModelMessageBus by buildActivityViewModelLazily { ViewModelMessageBus<NowPlayingPlaylistMessage>() }
 
@@ -112,10 +120,12 @@ class NowPlayingPlaylistFragment : Fragment() {
 		nowPlayingRepository.eventually(LoopedInPromise.response({ r ->
 			val nowPlayingFileListMenuBuilder = NowPlayingFileListItemMenuBuilder(
 				r,
-				fileListItemNowPlayingRegistrar.value,
+				applicationMessageBus.value,
 				playlistViewModel,
 				scopedMessageReceiver.value,
-				viewModelMessageBus)
+				viewModelMessageBus,
+				scopedUrlKeyProvider
+			)
 
 			itemListMenuChangeHandler?.apply {
 				nowPlayingFileListMenuBuilder.setOnViewChangedListener(
@@ -132,7 +142,7 @@ class NowPlayingPlaylistFragment : Fragment() {
 
 	private val nowPlayingViewModel by buildActivityViewModelLazily {
 		NowPlayingScreenViewModel(
-			applicationMessageBus,
+			applicationMessageBus.value,
 			InMemoryNowPlayingDisplaySettings,
 			PlaybackServiceController(requireContext()),
 		)
@@ -142,7 +152,7 @@ class NowPlayingPlaylistFragment : Fragment() {
 		val playbackService = PlaybackServiceController(requireContext())
 
 		NowPlayingFilePropertiesViewModel(
-            applicationMessageBus,
+            applicationMessageBus.value,
             LiveNowPlayingLookup.getInstance(),
             libraryFilePropertiesProvider,
             UrlKeyProvider(libraryConnectionProvider),
@@ -156,7 +166,7 @@ class NowPlayingPlaylistFragment : Fragment() {
 
 	private val playlistViewModel by buildActivityViewModelLazily {
 		NowPlayingPlaylistViewModel(
-			applicationMessageBus,
+			applicationMessageBus.value,
 			LiveNowPlayingLookup.getInstance(),
 			viewModelMessageBus
 		)
@@ -232,6 +242,7 @@ class NowPlayingPlaylistFragment : Fragment() {
 	override fun onDestroy() {
 		if (fileListItemNowPlayingRegistrar.isInitialized()) fileListItemNowPlayingRegistrar.value.clear()
 		if (scopedMessageReceiver.isInitialized()) scopedMessageReceiver.value.close()
+		if (applicationMessageBus.isInitialized()) applicationMessageBus.value.close()
 
 		super.onDestroy()
 	}

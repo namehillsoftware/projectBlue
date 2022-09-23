@@ -61,6 +61,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.Cac
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
 import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
+import com.lasthopesoftware.bluewater.client.connection.libraries.SelectedLibraryUrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.polling.ConnectionPoller
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity.Companion.restoreSelectedConnection
@@ -193,6 +194,13 @@ class ItemListActivity : AppCompatActivity(), Runnable {
 		)
 	}
 
+	private val scopedUrlKeyProvider by lazy {
+		SelectedLibraryUrlKeyProvider(
+			browserLibraryIdProvider,
+			UrlKeyProvider(libraryConnectionProvider),
+		)
+	}
+
 	private val libraryConnectionProvider by lazy { buildNewConnectionSessionManager() }
 
 	private val connectionAuthenticationChecker by lazy {
@@ -223,10 +231,12 @@ class ItemListActivity : AppCompatActivity(), Runnable {
 	private val trackHeadlineViewModelProvider by buildViewModelLazily {
 		TrackHeadlineViewModelProvider(
 			scopedFilePropertiesProvider,
+			scopedUrlKeyProvider,
 			StringResources(this),
 			PlaybackServiceController(this),
 			FileDetailsLauncher(this),
 			menuMessageBus,
+			messageBus,
 		)
 	}
 

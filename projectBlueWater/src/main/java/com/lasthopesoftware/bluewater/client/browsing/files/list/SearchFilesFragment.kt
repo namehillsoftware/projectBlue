@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.list
 
 import android.os.Bundle
-import android.os.Handler
 import android.view.KeyEvent
 import android.view.LayoutInflater
 import android.view.View
@@ -23,17 +22,19 @@ import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.Fi
 import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.SearchFileParameterProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.LibraryFileStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.menu.FileListItemMenuBuilder
-import com.lasthopesoftware.bluewater.client.browsing.files.menu.FileListItemNowPlayingRegistrar
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.handlers.ViewChangedHandler
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
+import com.lasthopesoftware.bluewater.client.connection.libraries.SelectedLibraryUrlKeyProvider
+import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingFileProvider.Companion.fromActiveLibrary
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
+import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
@@ -47,17 +48,24 @@ class SearchFilesFragment : Fragment(), View.OnKeyListener, TextView.OnEditorAct
 
 	private var itemListMenuChangeHandler: IItemListMenuChangeHandler? = null
 
-	private val handler by lazy { Handler(requireContext().mainLooper) }
-
 	private val selectedLibraryIdProvider by lazy { requireContext().getCachedSelectedLibraryIdProvider() }
 
+	private val libraryConnectionProvider by lazy { ConnectionSessionManager.get(requireContext()) }
+
 	private val fileProvider by lazy {
-		val stringListProvider = LibraryFileStringListProvider(ConnectionSessionManager.get(requireContext()))
+		val stringListProvider = LibraryFileStringListProvider(libraryConnectionProvider)
 		LibraryFileProvider(stringListProvider)
 	}
 
-	private val nowPlayingRegistrar = lazy {
-		FileListItemNowPlayingRegistrar(handler, getApplicationMessageBus())
+	private val scopedUrlKeyProvider by lazy {
+		SelectedLibraryUrlKeyProvider(
+			selectedLibraryIdProvider,
+			UrlKeyProvider(libraryConnectionProvider)
+		)
+	}
+
+	private val scopedMessageBus = lazy {
+		getApplicationMessageBus().getScopedMessageBus()
 	}
 
 	private val nowPlayingFileProvider by lazy { fromActiveLibrary(requireContext()) }
@@ -120,7 +128,7 @@ class SearchFilesFragment : Fragment(), View.OnKeyListener, TextView.OnEditorAct
 	override fun onDestroy() {
 		super.onDestroy()
 
-		if (nowPlayingRegistrar.isInitialized()) nowPlayingRegistrar.value.clear()
+		if (scopedMessageBus.isInitialized()) scopedMessageBus.value.close()
 	}
 
 	private fun doSearch(query: String) {
@@ -162,11 +170,12 @@ class SearchFilesFragment : Fragment(), View.OnKeyListener, TextView.OnEditorAct
 							if (cancellationProxy.isCancelled) Unit
 							else it
 								?.let { nowPlayingFileProvider ->
-									nowPlayingRegistrar.value.clear()
+									scopedMessageBus.value.close()
 									FileListItemMenuBuilder(
 										serviceFiles,
 										nowPlayingFileProvider,
-										nowPlayingRegistrar.value
+										scopedMessageBus.value,
+										scopedUrlKeyProvider,
 									)
 								}
 								?.also { fileListItemMenuBuilder ->
