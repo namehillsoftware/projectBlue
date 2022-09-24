@@ -1,16 +1,18 @@
-package com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity.viewmodels.GivenAPlayingFile
+package com.lasthopesoftware.bluewater.client.playback.view.nowplaying.activity.viewmodels.GivenAPlayingFile.AndTheRatingIsChanged
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfConnectionIsReadOnly
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.MaintainNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
+import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
@@ -22,23 +24,29 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.net.URL
 
-private const val libraryId = 697
+private const val libraryId = 681
 
-class WhenItsPropertiesChanges {
+class WhenTheServiceFileChangesConcurrently {
 
 	private val playlist = listOf(
-		ServiceFile(71),
-		ServiceFile(614),
-		ServiceFile(252),
-		ServiceFile(643),
-		ServiceFile(409),
-		ServiceFile(1000),
-		ServiceFile(188),
-		ServiceFile(118),
+		ServiceFile(738),
+		ServiceFile(441),
+		ServiceFile(595),
+		ServiceFile(285),
+		ServiceFile(833),
+		ServiceFile(78),
+		ServiceFile(819),
+		ServiceFile(386),
+		ServiceFile(989),
 	)
 
-	private val playlistPosition
-		get() = 708 % playlist.size
+	private val firstPlaylistPosition by lazy { 945 % playlist.size }
+	private val firstServiceFile by lazy { playlist[firstPlaylistPosition] }
+
+	private val secondPlaylistPosition by lazy { 116 % playlist.size }
+	private val secondServiceFile by lazy { playlist[secondPlaylistPosition] }
+
+	private val deferredFilePropertiesPromise = DeferredPromise(Unit)
 
 	private val services by lazy {
 		val nowPlayingRepository = mockk<MaintainNowPlayingState> {
@@ -46,26 +54,43 @@ class WhenItsPropertiesChanges {
 				NowPlaying(
 					LibraryId(libraryId),
 					playlist,
-					playlistPosition,
+					firstPlaylistPosition,
 					439774,
+					false
+				)
+			) andThen Promise(
+				NowPlaying(
+					LibraryId(libraryId),
+					playlist,
+					firstPlaylistPosition,
+					439774,
+					false
+				)
+			) andThen Promise(
+				NowPlaying(
+					LibraryId(libraryId),
+					playlist,
+					secondPlaylistPosition,
+					558,
 					false
 				)
 			)
 		}
 
 		val filePropertiesProvider = mockk<ProvideLibraryFileProperties> {
-			every { promiseFileProperties(LibraryId(libraryId), playlist[playlistPosition]) } returnsMany listOf(
+			every { promiseFileProperties(LibraryId(libraryId), firstServiceFile) } returns
 				mapOf(
-					Pair(KnownFileProperties.ARTIST, "block"),
-					Pair(KnownFileProperties.NAME, "tongue"),
-					Pair(KnownFileProperties.RATING, "422"),
-				).toPromise(),
+					Pair(KnownFileProperties.ARTIST, "accident"),
+					Pair(KnownFileProperties.NAME, "proposal"),
+					Pair(KnownFileProperties.RATING, "107"),
+				).toPromise()
+
+			every { promiseFileProperties(LibraryId(libraryId), secondServiceFile) } returns
 				mapOf(
-					Pair(KnownFileProperties.ARTIST, "plan"),
-					Pair(KnownFileProperties.NAME, "honor"),
-					Pair(KnownFileProperties.RATING, "82"),
-				).toPromise(),
-			)
+					Pair(KnownFileProperties.ARTIST, "offer"),
+					Pair(KnownFileProperties.NAME, "film"),
+					Pair(KnownFileProperties.RATING, "476"),
+				).toPromise()
 		}
 
 		val checkAuthentication = mockk<CheckIfConnectionIsReadOnly> {
@@ -83,11 +108,17 @@ class WhenItsPropertiesChanges {
             nowPlayingRepository,
             filePropertiesProvider,
             mockk {
-                every { promiseUrlKey(LibraryId(libraryId), playlist[playlistPosition]) } returns Promise(
-                    UrlKeyHolder(URL("http://77Q8Tq2h/"), playlist[playlistPosition])
+                every { promiseUrlKey(LibraryId(libraryId), firstServiceFile) } returns Promise(
+                    UrlKeyHolder(URL("http://77Q8Tq2h/"), firstServiceFile)
                 )
+
+				every { promiseUrlKey(LibraryId(libraryId), secondServiceFile) } returns Promise(
+					UrlKeyHolder(URL("http://77Q8Tq2h/"), secondServiceFile)
+				)
             },
-            mockk(),
+            mockk {
+				every { promiseFileUpdate(LibraryId(libraryId), firstServiceFile, KnownFileProperties.RATING, any(), any()) } returns deferredFilePropertiesPromise
+			},
             checkAuthentication,
             playbackService,
             mockk(),
@@ -104,27 +135,24 @@ class WhenItsPropertiesChanges {
 	fun act() {
 		val (messageBus, viewModel) = services
 		viewModel.initializeViewModel().toExpiringFuture().get()
-		messageBus.sendMessage(FilePropertiesUpdatedMessage(UrlKeyHolder(URL("http://77Q8Tq2h/"), playlist[playlistPosition])))
+		viewModel.updateRating(201.64f)
+		messageBus.sendMessage(PlaybackMessage.TrackChanged(LibraryId(libraryId), PositionedFile(secondPlaylistPosition, secondServiceFile)))
+		deferredFilePropertiesPromise.resolve()
 	}
 
 	@Test
 	fun `then the file position is correct`() {
-		assertThat(viewModel.filePosition.value).isEqualTo(439774)
+		assertThat(viewModel.filePosition.value).isEqualTo(558)
 	}
 
 	@Test
 	fun `then the artist is correct`() {
-		assertThat(viewModel.artist.value).isEqualTo("plan")
+		assertThat(viewModel.artist.value).isEqualTo("offer")
 	}
 
 	@Test
 	fun `then the name is correct`() {
-		assertThat(viewModel.title.value).isEqualTo("honor")
-	}
-
-	@Test
-	fun `then the rating is correct`() {
-		assertThat(viewModel.songRating.value).isEqualTo(82f)
+		assertThat(viewModel.title.value).isEqualTo("film")
 	}
 
 	@Test
@@ -135,5 +163,10 @@ class WhenItsPropertiesChanges {
 	@Test
 	fun `then playback is NOT marked as repeating`() {
 		assertThat(viewModel.isRepeating.value).isFalse
+	}
+
+	@Test
+	fun `then the rating is correct`() {
+		assertThat(viewModel.songRating.value).isEqualTo(476f)
 	}
 }

@@ -48,6 +48,8 @@ class NowPlayingFilePropertiesViewModel(
 ) : ViewModel()
 {
 
+	@Volatile
+	private var activeSongRatingUpdates = 0
 	private var cachedPromises: CachedPromises? = null
 	private var controlsShownPromise = Promise.empty<Any?>()
 
@@ -74,37 +76,7 @@ class NowPlayingFilePropertiesViewModel(
 		setTrackProgress(update.filePosition.millis)
 	}
 
-	private val onPropertiesChangedSubscription = applicationMessages.registerReceiver { message: FilePropertiesUpdatedMessage ->
-		cachedPromises?.let { promises ->
-			val key = message.urlServiceKey
-			val libraryId = promises.libraryId
-			val serviceFile = promises.serviceFile
-
-			if (promises.key == message.urlServiceKey) {
-				val currentCachedPromises = synchronized(cachedPromiseSync) {
-					cachedPromises?.close()
-					CachedPromises(
-						key,
-						promises.libraryId,
-						promises.serviceFile,
-						checkAuthentication.promiseIsReadOnly(libraryId),
-						fileProperties.promiseFileProperties(libraryId, serviceFile),
-					).also { cachedPromises = it }
-				}
-
-				currentCachedPromises
-					.promisedProperties
-					.eventually { fileProperties ->
-						if (cachedPromises?.key != key) Unit.toPromise()
-						else currentCachedPromises.promisedIsReadOnly.then { isReadOnly ->
-							if (cachedPromises?.key == key)
-								setFileProperties(fileProperties, isReadOnly)
-						}
-					}
-					.excuse(::handleException)
-			}
-		}
-	}
+	private val onPropertiesChangedSubscription = applicationMessages.registerReceiver(::handleFilePropertyUpdates)
 
 	private val cachedPromiseSync = Any()
 	private val filePositionState = MutableStateFlow(0)
@@ -170,14 +142,16 @@ class NowPlayingFilePropertiesViewModel(
 		val serviceFile = cachedPromises?.serviceFile ?: return
 
 		songRatingState.value = rating
-		val ratingToString = rating.roundToInt().toString()
+
+		activeSongRatingUpdates++
 		updateFileProperties
 			.promiseFileUpdate(
 				libraryId,
 				serviceFile,
 				KnownFileProperties.RATING,
-				ratingToString,
+				rating.roundToInt().toString(),
 				false)
+			.must { activeSongRatingUpdates = activeSongRatingUpdates.dec().coerceAtLeast(0) }
 			.excuse(::handleIoException)
 	}
 
@@ -231,6 +205,8 @@ class NowPlayingFilePropertiesViewModel(
 
 		isSongRatingEnabledState.value = false
 		songRatingState.value = 0F
+
+		activeSongRatingUpdates = 0
 
 		setTrackProgress(0)
 	}
@@ -292,6 +268,38 @@ class NowPlayingFilePropertiesViewModel(
 					.apply { excuse(::handleException) }
 			}
 
+	private fun handleFilePropertyUpdates(message: FilePropertiesUpdatedMessage) {
+		cachedPromises?.let { promises ->
+			val key = message.urlServiceKey
+			val libraryId = promises.libraryId
+			val serviceFile = promises.serviceFile
+
+			if (promises.key == message.urlServiceKey) {
+				val currentCachedPromises = synchronized(cachedPromiseSync) {
+					cachedPromises?.close()
+					CachedPromises(
+						key,
+						promises.libraryId,
+						promises.serviceFile,
+						checkAuthentication.promiseIsReadOnly(libraryId),
+						fileProperties.promiseFileProperties(libraryId, serviceFile),
+					).also { cachedPromises = it }
+				}
+
+				currentCachedPromises
+					.promisedProperties
+					.eventually { fileProperties ->
+						if (cachedPromises?.key != key) Unit.toPromise()
+						else currentCachedPromises.promisedIsReadOnly.then { isReadOnly ->
+							if (cachedPromises?.key == key)
+								setFileProperties(fileProperties, isReadOnly)
+						}
+					}
+					.excuse(::handleException)
+			}
+		}
+	}
+
 	private fun setFileProperties(fileProperties: Map<String, String>, isReadOnly: Boolean) {
 		artistState.value = fileProperties[KnownFileProperties.ARTIST]
 		titleState.value = fileProperties[KnownFileProperties.NAME]
@@ -299,11 +307,13 @@ class NowPlayingFilePropertiesViewModel(
 		val duration = FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties)
 		setTrackDuration(if (duration > 0) duration else Int.MAX_VALUE)
 
-		val stringRating = fileProperties[KnownFileProperties.RATING]
-		val fileRating = stringRating?.toFloatOrNull() ?: 0f
+		if (activeSongRatingUpdates == 0) {
+			val stringRating = fileProperties[KnownFileProperties.RATING]
+			val fileRating = stringRating?.toFloatOrNull() ?: 0f
+			songRatingState.value = fileRating
+		}
 
 		isReadOnlyState.value = isReadOnly
-		songRatingState.value = fileRating
 
 		isSongRatingEnabledState.value = true
 	}
