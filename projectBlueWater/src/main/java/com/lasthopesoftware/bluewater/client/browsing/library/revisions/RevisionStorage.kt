@@ -26,7 +26,7 @@ internal object RevisionStorage {
 								?.use { body -> body.byteStream().use(StandardRequest::fromInputStream) }
 								?.let { standardRequest -> standardRequest.items["Sync"] }
 								?.takeIf { revisionValue -> revisionValue.isNotEmpty() }!!
-								.let(Integer::valueOf)
+								.toInt()
 						}
 				}
 			}

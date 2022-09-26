@@ -46,8 +46,8 @@ class ScopedFilePropertiesStorage(
 
 			scopedConnectionProvider.urlProvider.baseUrl?.also { baseUrl ->
 				val urlKeyHolder = UrlKeyHolder(baseUrl, serviceFile)
-				promisedUpdate
-					.eventually { checkScopedRevisions.promiseRevision() }
+				checkScopedRevisions
+					.promiseRevision()
 					.then { revision ->
 						filePropertiesContainerRepository.getFilePropertiesContainer(urlKeyHolder)
 							?.takeIf { it.revision == revision }

@@ -48,7 +48,7 @@ class FilePropertyStorage(
 			}
 
 		urlProvider.baseUrl?.also { baseUrl ->
-			promisedUpdate.eventually { checkRevisions.promiseRevision(libraryId) }
+			checkRevisions.promiseRevision(libraryId)
 				.then { revision ->
 					val urlKeyHolder = UrlKeyHolder(baseUrl, serviceFile)
 					filePropertiesContainerRepository.getFilePropertiesContainer(urlKeyHolder)
