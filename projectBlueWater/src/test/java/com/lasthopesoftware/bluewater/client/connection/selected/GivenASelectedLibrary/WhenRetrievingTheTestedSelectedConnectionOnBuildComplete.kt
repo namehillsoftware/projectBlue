@@ -36,7 +36,7 @@ class WhenRetrievingTheTestedSelectedConnectionOnBuildComplete {
 		every { libraryConnections.promiseTestedLibraryConnection(LibraryId(2)) } returns deferredConnectionProvider
 
 		val libraryIdentifierProvider = mockk<ProvideSelectedLibraryId>()
-		every { libraryIdentifierProvider.selectedLibraryId } returns Promise(LibraryId(2))
+		every { libraryIdentifierProvider.promiseSelectedLibraryId() } returns Promise(LibraryId(2))
 		SelectedConnectionReservation().use {
 			val sessionConnection = SelectedConnection(
 				applicationMessageBus,

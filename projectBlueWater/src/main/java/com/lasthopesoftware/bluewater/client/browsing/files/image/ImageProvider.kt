@@ -17,7 +17,7 @@ import kotlin.coroutines.cancellation.CancellationException
 class ImageProvider(private val selectedLibraryId: ProvideSelectedLibraryId, private val rawImages: GetRawImages) : ProvideImages {
 	override fun promiseFileBitmap(serviceFile: ServiceFile): Promise<Bitmap?> =
 		CancellableProxyPromise { cp ->
-			selectedLibraryId.selectedLibraryId
+			selectedLibraryId.promiseSelectedLibraryId()
 				.eventually { libraryId ->
 					libraryId
 						?.let { l -> rawImages.promiseImageBytes(l, serviceFile).also(cp::doCancel) }

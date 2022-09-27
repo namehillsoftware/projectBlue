@@ -15,7 +15,7 @@ import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRemoval
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library.SyncedFileLocation
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -77,7 +77,7 @@ class EditClientSettingsActivity :
 				LibraryRemoval(
 					StoredItemAccess(this),
 					libraryStorage,
-					SelectedBrowserLibraryIdentifierProvider(getApplicationSettingsRepository()),
+					getCachedSelectedLibraryIdProvider(),
 					libraryProvider,
 					BrowserLibrarySelection(applicationSettingsRepository, applicationMessageBus, libraryProvider))))
 	}

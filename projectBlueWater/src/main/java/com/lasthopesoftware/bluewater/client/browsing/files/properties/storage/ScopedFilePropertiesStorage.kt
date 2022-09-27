@@ -6,17 +6,20 @@ import com.lasthopesoftware.bluewater.client.browsing.library.revisions.CheckSco
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfScopedConnectionIsReadOnly
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
-import com.lasthopesoftware.bluewater.shared.cls
+import com.lasthopesoftware.bluewater.shared.lazyLogger
+import com.lasthopesoftware.bluewater.shared.messages.application.SendApplicationMessages
 import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.namehillsoftware.handoff.promises.Promise
-import org.slf4j.LoggerFactory
+
+private val logger by lazyLogger<ScopedFilePropertiesStorage>()
 
 class ScopedFilePropertiesStorage(
 	private val scopedConnectionProvider: IConnectionProvider,
 	private val checkIfScopedConnectionIsReadOnly: CheckIfScopedConnectionIsReadOnly,
 	private val checkScopedRevisions: CheckScopedRevisions,
-	private val filePropertiesContainerRepository: IFilePropertiesContainerRepository
-) : UpdateFileProperties {
+	private val filePropertiesContainerRepository: IFilePropertiesContainerRepository,
+	private val sendMessages: SendApplicationMessages
+) : UpdateScopedFileProperties {
 
 	override fun promiseFileUpdate(serviceFile: ServiceFile, property: String, value: String, isFormatted: Boolean): Promise<Unit> =
 		checkIfScopedConnectionIsReadOnly.promiseIsReadOnly().eventually { isReadOnly ->
@@ -42,12 +45,14 @@ class ScopedFilePropertiesStorage(
 			}
 
 			scopedConnectionProvider.urlProvider.baseUrl?.also { baseUrl ->
-				promisedUpdate.eventually { checkScopedRevisions.promiseRevision() }
+				val urlKeyHolder = UrlKeyHolder(baseUrl, serviceFile)
+				checkScopedRevisions
+					.promiseRevision()
 					.then { revision ->
-						val urlKeyHolder = UrlKeyHolder(baseUrl, serviceFile)
 						filePropertiesContainerRepository.getFilePropertiesContainer(urlKeyHolder)
 							?.takeIf { it.revision == revision }
 							?.updateProperty(property, value)
+						sendMessages.sendMessage(FilePropertiesUpdatedMessage(urlKeyHolder))
 					}
 					.excuse { e ->
 						logger.warn(
@@ -59,8 +64,4 @@ class ScopedFilePropertiesStorage(
 
 			promisedUpdate
 		}
-
-	companion object {
-		private val logger by lazy { LoggerFactory.getLogger(cls<ScopedFilePropertiesStorage>()) }
-	}
 }

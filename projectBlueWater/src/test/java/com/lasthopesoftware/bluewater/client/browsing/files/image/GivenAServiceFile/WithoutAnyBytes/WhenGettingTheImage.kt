@@ -12,13 +12,24 @@ import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.AfterClass
 import org.junit.Test
 
 class WhenGettingTheImage : AndroidContext() {
 
+	companion object {
+		private var bitmap: Bitmap? = null
+
+		@AfterClass
+		@JvmStatic
+		fun cleanup() {
+			bitmap = null
+		}
+	}
+
     override fun before() {
 		val selectedLibraryProvider = mockk<ProvideSelectedLibraryId>()
-		every { selectedLibraryProvider.selectedLibraryId } returns Promise(LibraryId(2))
+		every { selectedLibraryProvider.promiseSelectedLibraryId() } returns Promise(LibraryId(2))
 
 		val getRawImages = mockk<GetRawImages>()
 		every { getRawImages.promiseImageBytes(LibraryId(2), ServiceFile(34)) } returns Promise(ByteArray(0))
@@ -32,9 +43,5 @@ class WhenGettingTheImage : AndroidContext() {
     @Test
     fun thenTheBitmapIsNull() {
         assertThat(bitmap).isNull()
-    }
-
-    companion object {
-        private var bitmap: Bitmap? = null
     }
 }

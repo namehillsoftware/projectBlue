@@ -7,7 +7,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepo
 import com.lasthopesoftware.bluewater.client.browsing.library.access.SpecificLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage
@@ -34,7 +34,7 @@ class LiveNowPlayingLookup private constructor(
 
 			val libraryRepository = LibraryRepository(application)
 			instance = LiveNowPlayingLookup(
-				SelectedBrowserLibraryIdentifierProvider(application.getApplicationSettingsRepository()),
+				SelectedLibraryIdProvider(application.getApplicationSettingsRepository()),
 				libraryRepository,
 				libraryRepository
 			)
@@ -53,7 +53,7 @@ class LiveNowPlayingLookup private constructor(
 	private var trackedPosition: Long? = null
 
 	init {
-		selectedLibraryIdentifierProvider.selectedLibraryId.then { it?.also(::updateInner) }
+		selectedLibraryIdentifierProvider.promiseSelectedLibraryId().then { it?.also(::updateInner) }
 	}
 
 	override fun promiseNowPlaying(): Promise<NowPlaying?> =
@@ -64,8 +64,8 @@ class LiveNowPlayingLookup private constructor(
 					trackedPosition = null
 				}
 
-				np?.apply {
-					filePosition = trackedPosition ?: filePosition
+				np?.let {
+					trackedPosition?.let(it::withFilePosition) ?: it
 				}
 			}
 			.keepPromise()

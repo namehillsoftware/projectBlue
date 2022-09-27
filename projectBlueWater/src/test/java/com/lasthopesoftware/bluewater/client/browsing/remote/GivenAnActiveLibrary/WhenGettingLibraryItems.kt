@@ -38,7 +38,7 @@ class `When Getting Library Items` {
 
 		private val mediaItems by lazy {
 			val selectedLibraryId = mockk<ProvideSelectedLibraryId>()
-			every { selectedLibraryId.selectedLibraryId } returns Promise(LibraryId(489))
+			every { selectedLibraryId.promiseSelectedLibraryId() } returns Promise(LibraryId(489))
 
 			val libraryViews = mockk<ProvideLibraryViews>()
 			every { libraryViews.promiseLibraryViews(LibraryId(489)) } returns Promise(viewIds.map(::StandardViewItem))

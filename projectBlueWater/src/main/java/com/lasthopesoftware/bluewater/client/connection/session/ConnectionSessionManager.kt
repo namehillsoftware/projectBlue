@@ -84,6 +84,8 @@ class ConnectionSessionManager(
 
 		private val serverWakeSignal by lazy { ServerWakeSignal(PacketSender()) }
 
+		fun Context.buildNewConnectionSessionManager(): ConnectionSessionManager = get(this)
+
 		fun get(context: Context): ConnectionSessionManager {
 			val serverLookup = ServerLookup(ServerInfoXmlRequest(LibraryRepository(context), OkHttpFactory))
 			val connectionSettingsLookup = ConnectionSettingsLookup(LibraryRepository(context))

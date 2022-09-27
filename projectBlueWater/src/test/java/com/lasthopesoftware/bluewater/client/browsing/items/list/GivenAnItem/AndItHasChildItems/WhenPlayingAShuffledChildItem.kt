@@ -29,7 +29,7 @@ class WhenPlayingAShuffledChildItem {
 
 	private val viewModel by lazy {
 		val selectedLibraryIdProvider = mockk<ProvideSelectedLibraryId>().apply {
-			every { selectedLibraryId } returns LibraryId(libraryId).toPromise()
+			every { promiseSelectedLibraryId() } returns LibraryId(libraryId).toPromise()
 		}
 
 		val itemProvider = mockk<ProvideItems>().apply {

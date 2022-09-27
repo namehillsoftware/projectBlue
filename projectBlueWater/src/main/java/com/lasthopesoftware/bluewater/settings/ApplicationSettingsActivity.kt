@@ -15,7 +15,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineType
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineTypeSelectionPersistence
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.SelectedPlaybackEngineTypeAccess
@@ -121,7 +121,7 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 
 		val libraryProvider = LibraryRepository(this)
 		val promisedLibraries = libraryProvider.allLibraries
-		val promisedSelectedLibrary = SelectedBrowserLibraryIdentifierProvider(applicationSettingsRepository).selectedLibraryId
+		val promisedSelectedLibrary = getCachedSelectedLibraryIdProvider().promiseSelectedLibraryId()
 
 		val adapter = ServerListAdapter(
 			this,

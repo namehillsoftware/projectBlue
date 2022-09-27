@@ -11,34 +11,31 @@ import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 import java.util.concurrent.TimeUnit
 
 class WhenPersistingTheSelectedPlaybackEngine {
 
-	companion object {
-		private val recordingApplicationMessageBus = RecordingApplicationMessageBus()
-		private var persistedEngineType: String? = null
+	private val recordingApplicationMessageBus = RecordingApplicationMessageBus()
+	private var persistedEngineType: String? = null
 
-		@JvmStatic
-		@BeforeClass
-		fun before() {
-			val applicationSettings = mockk<HoldApplicationSettings>()
-			every { applicationSettings.promiseApplicationSettings() } returns Promise(ApplicationSettings())
-			every { applicationSettings.promiseUpdatedSettings(any()) } answers {
-				val settings = firstArg<ApplicationSettings>()
-				persistedEngineType = settings.playbackEngineTypeName
-				Promise(settings)
-			}
-
-			PlaybackEngineTypeSelectionPersistence(
-				applicationSettings,
-				PlaybackEngineTypeChangedBroadcaster(recordingApplicationMessageBus)
-			)
-				.selectPlaybackEngine(PlaybackEngineType.ExoPlayer)
-				.toExpiringFuture()[1, TimeUnit.SECONDS]
+	@BeforeAll
+	fun before() {
+		val applicationSettings = mockk<HoldApplicationSettings>()
+		every { applicationSettings.promiseApplicationSettings() } returns Promise(ApplicationSettings())
+		every { applicationSettings.promiseUpdatedSettings(any()) } answers {
+			val settings = firstArg<ApplicationSettings>()
+			persistedEngineType = settings.playbackEngineTypeName
+			Promise(settings)
 		}
+
+		PlaybackEngineTypeSelectionPersistence(
+			applicationSettings,
+			PlaybackEngineTypeChangedBroadcaster(recordingApplicationMessageBus)
+		)
+			.selectPlaybackEngine(PlaybackEngineType.ExoPlayer)
+			.toExpiringFuture()[1, TimeUnit.SECONDS]
 	}
 
 	@Test

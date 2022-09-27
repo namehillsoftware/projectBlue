@@ -5,6 +5,8 @@ import com.lasthopesoftware.bluewater.shared.StandardRequest
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 
+private val nullConnectionProviderPromise by lazy { false.toPromise() }
+
 internal fun IConnectionProvider?.promiseIsReadOnly(): Promise<Boolean> =
 	this?.promiseResponse("Authenticate")
 			?.then { r ->
@@ -14,4 +16,4 @@ internal fun IConnectionProvider?.promiseIsReadOnly(): Promise<Boolean> =
 					?.let { ro -> ro != 0 }
 					?: false
 			}
-			?: false.toPromise()
+			?: nullConnectionProviderPromise

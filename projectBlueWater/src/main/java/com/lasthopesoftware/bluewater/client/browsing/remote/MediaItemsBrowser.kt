@@ -36,7 +36,7 @@ class MediaItemsBrowser(
 	}
 
 	override fun promiseItems(itemId: ItemId): Promise<Collection<MediaBrowserCompat.MediaItem>> =
-		selectedLibraryIdProvider.selectedLibraryId.eventually { maybeId ->
+		selectedLibraryIdProvider.promiseSelectedLibraryId().eventually { maybeId ->
 			maybeId
 				?.let { libraryId ->
 					itemProvider
@@ -80,7 +80,7 @@ class MediaItemsBrowser(
 		}
 
 	override fun promiseLibraryItems(): Promise<List<MediaBrowserCompat.MediaItem>> =
-		selectedLibraryIdProvider.selectedLibraryId.eventually { maybeId ->
+		selectedLibraryIdProvider.promiseSelectedLibraryId().eventually { maybeId ->
 			maybeId
 				?.let { libraryId -> libraryViews.promiseLibraryViews(libraryId).then { v -> v.map(::toMediaItem) } }
 				.keepPromise(emptyList())
@@ -88,7 +88,7 @@ class MediaItemsBrowser(
 
 	override fun promiseItems(query: String): Promise<Collection<MediaBrowserCompat.MediaItem>> {
 		val parameters = SearchFileParameterProvider.getFileListParameters(query)
-		return selectedLibraryIdProvider.selectedLibraryId
+		return selectedLibraryIdProvider.promiseSelectedLibraryId()
 			.eventually { maybeId ->
 				maybeId
 					?.let { libraryId ->

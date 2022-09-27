@@ -10,23 +10,22 @@ import com.lasthopesoftware.bluewater.client.browsing.files.access.LibraryFilePr
 import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.ItemStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.LibraryFileStringListProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.image.CachedImageProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.RateControlledFilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.ScopedCachedFilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.ScopedFilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.SelectedConnectionFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.SelectedLibraryFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.access.CachedItemProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.image.CachedImageProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.SpecificLibraryProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRevisionProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.views.access.CachedLibraryViewsProvider
-import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
+import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
-import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.MediaSession.MediaSessionService
 import com.lasthopesoftware.bluewater.shared.android.services.promiseBoundService
@@ -80,27 +79,28 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 		)
 	}
 
+	private val selectedLibraryIdProvider by lazy { getCachedSelectedLibraryIdProvider() }
+
 	private val filePropertiesProvider by lazy {
-		SelectedConnectionFilePropertiesProvider(SelectedConnectionProvider(this)) { c ->
-			val filePropertyCache = FilePropertyCache.getInstance()
-			ScopedCachedFilePropertiesProvider(
-				c,
-				filePropertyCache,
+		val libraryConnectionProvider = buildNewConnectionSessionManager()
+		SelectedLibraryFilePropertiesProvider(
+			selectedLibraryIdProvider,
+			CachedFilePropertiesProvider(
+				libraryConnectionProvider,
+				FilePropertyCache,
 				RateControlledFilePropertiesProvider(
-					ScopedFilePropertiesProvider(
-						c,
-						ScopedRevisionProvider(c),
-						filePropertyCache
+					FilePropertiesProvider(
+						libraryConnectionProvider,
+						LibraryRevisionProvider(libraryConnectionProvider),
+						FilePropertyCache,
 					),
-					rateLimiter
+					rateLimiter,
 				)
-			)
-		}
+			),
+		)
 	}
 
 	private val imageProvider by lazy { CachedImageProvider.getInstance(this) }
-
-	private val selectedLibraryIdProvider by lazy { SelectedBrowserLibraryIdentifierProvider(getApplicationSettingsRepository()) }
 
 	private val mediaItemServiceFileLookup by lazy {
 		MediaItemServiceFileLookup(
@@ -111,7 +111,7 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 
 	private val nowPlayingMediaItemLookup by lazy {
 		val libraryRepository = LibraryRepository(this)
-		selectedLibraryIdProvider.selectedLibraryId
+		selectedLibraryIdProvider.promiseSelectedLibraryId()
 			.then {
 				it?.let { l ->
 					val repository =

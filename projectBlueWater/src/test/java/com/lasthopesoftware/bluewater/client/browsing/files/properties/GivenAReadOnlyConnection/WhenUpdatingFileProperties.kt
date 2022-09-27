@@ -1,7 +1,7 @@
-package com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.GivenAReadOnlyConnection
+package com.lasthopesoftware.bluewater.client.browsing.files.properties.GivenAReadOnlyConnection
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.FakeFilePropertiesContainer
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FakeFilePropertiesContainerRepository
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.ScopedFilePropertiesStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.CheckScopedRevisions
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
@@ -20,10 +20,10 @@ import org.junit.jupiter.api.Test
 import java.net.URL
 import java.util.concurrent.ExecutionException
 
-class WhenStoringFiles {
+class WhenUpdatingFileProperties {
 
 	private val connectionProvider = mockk<IConnectionProvider>()
-	private val fakeFilePropertiesContainer = FakeFilePropertiesContainer()
+	private val fakeFilePropertiesContainer = FakeFilePropertiesContainerRepository()
 
 	private val fileStorage by lazy {
 		every { connectionProvider.promiseResponse(*anyVararg()) } returns Promise.empty()
@@ -41,7 +41,8 @@ class WhenStoringFiles {
 			connectionProvider,
 			checkConnection,
 			revisionChecker,
-			fakeFilePropertiesContainer
+			fakeFilePropertiesContainer,
+			mockk(),
 		)
 	}
 

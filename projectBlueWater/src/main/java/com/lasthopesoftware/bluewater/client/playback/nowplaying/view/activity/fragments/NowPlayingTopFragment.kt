@@ -8,16 +8,14 @@ import android.widget.RatingBar
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import com.lasthopesoftware.bluewater.R
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.ScopedFilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.SelectedConnectionFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.ScopedFilePropertiesStorage
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.SelectedConnectionFilePropertiesStorage
-import com.lasthopesoftware.bluewater.client.browsing.library.revisions.SelectedConnectionRevisionProvider
-import com.lasthopesoftware.bluewater.client.connection.authentication.ScopedConnectionAuthenticationChecker
-import com.lasthopesoftware.bluewater.client.connection.authentication.SelectedConnectionAuthenticationChecker
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertyStorage
+import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
+import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
+import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.polling.ConnectionPoller
-import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.InMemoryNowPlayingDisplaySettings
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
@@ -32,37 +30,32 @@ import com.lasthopesoftware.resources.strings.StringResources
 
 class NowPlayingTopFragment : Fragment() {
 
-	private val applicationMessageBus by lazy { requireContext().getApplicationMessageBus().getScopedMessageBus() }
+	private val applicationMessageBus by lazy { getApplicationMessageBus().getScopedMessageBus() }
 
-	private val selectedConnectionProvider by lazy { SelectedConnectionProvider(requireContext()) }
+	private val libraryConnectionProvider by lazy { requireContext().buildNewConnectionSessionManager() }
 
-	private val sessionRevisionProvider by lazy { SelectedConnectionRevisionProvider(selectedConnectionProvider) }
-
-	private val lazyFilePropertiesProvider by lazy {
-		SelectedConnectionFilePropertiesProvider(selectedConnectionProvider) { c ->
-			ScopedFilePropertiesProvider(
-				c,
-				sessionRevisionProvider,
-				FilePropertyCache.getInstance()
-			)
-		}
+	private val connectionAuthenticationChecker by lazy {
+		ConnectionAuthenticationChecker(libraryConnectionProvider)
 	}
 
-	private val lazySelectedConnectionAuthenticationChecker by lazy {
-		SelectedConnectionAuthenticationChecker(
-			selectedConnectionProvider,
-			::ScopedConnectionAuthenticationChecker
+	private val revisionProvider by lazy { LibraryRevisionProvider(libraryConnectionProvider) }
+
+	private val libraryFilePropertiesProvider by lazy {
+		FilePropertiesProvider(
+			libraryConnectionProvider,
+			revisionProvider,
+			FilePropertyCache,
 		)
 	}
 
 	private val filePropertiesStorage by lazy {
-		SelectedConnectionFilePropertiesStorage(selectedConnectionProvider) { c ->
-			ScopedFilePropertiesStorage(
-				c,
-				lazySelectedConnectionAuthenticationChecker,
-				sessionRevisionProvider,
-				FilePropertyCache.getInstance())
-		}
+		FilePropertyStorage(
+			libraryConnectionProvider,
+			connectionAuthenticationChecker,
+			revisionProvider,
+			FilePropertyCache,
+			applicationMessageBus
+		)
 	}
 
 	private val nowPlayingViewModel by buildActivityViewModelLazily {
@@ -79,10 +72,10 @@ class NowPlayingTopFragment : Fragment() {
 		NowPlayingFilePropertiesViewModel(
             applicationMessageBus,
             LiveNowPlayingLookup.getInstance(),
-            selectedConnectionProvider,
-            lazyFilePropertiesProvider,
+            libraryFilePropertiesProvider,
+            UrlKeyProvider(libraryConnectionProvider),
             filePropertiesStorage,
-            lazySelectedConnectionAuthenticationChecker,
+            connectionAuthenticationChecker,
             playbackService,
             ConnectionPoller(requireContext()),
             StringResources(requireContext()),

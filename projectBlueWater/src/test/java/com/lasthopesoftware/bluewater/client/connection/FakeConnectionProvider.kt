@@ -9,16 +9,23 @@ import okhttp3.Response
 import okhttp3.internal.http.RealResponseBody
 import okio.Buffer
 import java.io.IOException
-import java.util.*
 
 open class FakeConnectionProvider : IConnectionProvider {
+	private val requests = ArrayList<Array<out String>>()
+
 	private val mappedResponses = HashMap<Set<String>, (Array<out String>) -> FakeConnectionResponseTuple>()
+
+	val recordedRequests: List<Array<out String>>
+		get() = requests
+
 	fun mapResponse(response: (Array<out String>) -> FakeConnectionResponseTuple, vararg params: String) {
 		val paramsSet = setOf(*params)
 		mappedResponses[paramsSet] = response
 	}
 
 	override fun promiseResponse(vararg params: String): Promise<Response> {
+		requests.add(params)
+
 		return try {
 			Promise(getResponse(*params))
 		} catch (e: IOException) {
@@ -62,5 +69,4 @@ open class FakeConnectionProvider : IConnectionProvider {
 
 	override val urlProvider: IUrlProvider
 		get() = MediaServerUrlProvider("auth", "test", 80)
-
 }

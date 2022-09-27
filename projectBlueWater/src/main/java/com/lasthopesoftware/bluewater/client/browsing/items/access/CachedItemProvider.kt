@@ -6,7 +6,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.CheckRevisions
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
-import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
+import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
 import com.lasthopesoftware.bluewater.shared.policies.caching.CachePromiseFunctions
 import com.lasthopesoftware.bluewater.shared.policies.caching.LruPromiseCache
 import com.namehillsoftware.handoff.promises.Promise
@@ -22,7 +22,7 @@ class CachedItemProvider(
 		private val functionCache = LruPromiseCache<Triple<LibraryId, ItemId, Int>, List<Item>>(20)
 
 		fun getInstance(context: Context): CachedItemProvider {
-			val libraryConnectionProvider = ConnectionSessionManager.get(context)
+			val libraryConnectionProvider = context.buildNewConnectionSessionManager()
 
 			return CachedItemProvider(
 				ItemProvider(libraryConnectionProvider),

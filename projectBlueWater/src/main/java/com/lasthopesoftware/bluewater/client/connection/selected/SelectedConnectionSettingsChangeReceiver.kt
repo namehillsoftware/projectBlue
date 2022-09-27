@@ -11,7 +11,7 @@ class SelectedConnectionSettingsChangeReceiver(
 ) : (ObservableConnectionSettingsLibraryStorage.ConnectionSettingsUpdated) -> Unit {
 
 	override fun invoke(message: ObservableConnectionSettingsLibraryStorage.ConnectionSettingsUpdated) {
-		selectedLibraryIdProvider.selectedLibraryId.then { l ->
+		selectedLibraryIdProvider.promiseSelectedLibraryId().then { l ->
 			if (l == message.libraryId)
 				sendApplicationMessages.sendMessage(SelectedConnectionSettingsUpdated)
 		}

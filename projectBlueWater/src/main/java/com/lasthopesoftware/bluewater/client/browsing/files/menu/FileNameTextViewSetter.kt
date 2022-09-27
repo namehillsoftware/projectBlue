@@ -6,9 +6,10 @@ import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.*
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
-import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRevisionProvider
-import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
-import com.lasthopesoftware.bluewater.shared.cls
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
+import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
+import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRateLimiter
 import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay.Companion.delay
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
@@ -19,7 +20,6 @@ import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
 import com.namehillsoftware.handoff.promises.response.EventualAction
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import org.joda.time.Duration
-import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.net.SocketException
 import java.util.*
@@ -29,7 +29,7 @@ import javax.net.ssl.SSLProtocolException
 class FileNameTextViewSetter(private val fileTextView: TextView, private val artistTextView: TextView? = null) {
 
 	companion object {
-		private val logger by lazy { LoggerFactory.getLogger(cls<FileNameTextViewSetter>()) }
+		private val logger by lazyLogger<FileNameTextViewSetter>()
 		private val timeoutDuration = Duration.standardMinutes(1)
 
 		private val rateLimiter by lazy { PromisingRateLimiter<Map<String, String>>(1) }
@@ -38,21 +38,23 @@ class FileNameTextViewSetter(private val fileTextView: TextView, private val art
 	private val updateSync = Any()
 	private val handler = Handler(fileTextView.context.mainLooper)
 	private val filePropertiesProvider by lazy {
-		SelectedConnectionFilePropertiesProvider(SelectedConnectionProvider(fileTextView.context)) { c ->
-			val filePropertyCache = FilePropertyCache.getInstance()
-			ScopedCachedFilePropertiesProvider(
-				c,
-				filePropertyCache,
+		val context = fileTextView.context
+		val libraryConnections = context.buildNewConnectionSessionManager()
+		SelectedLibraryFilePropertiesProvider(
+			context.getCachedSelectedLibraryIdProvider(),
+			CachedFilePropertiesProvider(
+				libraryConnections,
+				FilePropertyCache,
 				RateControlledFilePropertiesProvider(
-					ScopedFilePropertiesProvider(
-						c,
-						ScopedRevisionProvider(c),
-						filePropertyCache
+					FilePropertiesProvider(
+						libraryConnections,
+						LibraryRevisionProvider(libraryConnections),
+						FilePropertyCache,
 					),
-					rateLimiter
+					rateLimiter,
 				)
-			)
-		}
+			),
+		)
 	}
 
 	@Volatile

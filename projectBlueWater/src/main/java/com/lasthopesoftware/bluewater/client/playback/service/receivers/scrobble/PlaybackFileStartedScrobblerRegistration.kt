@@ -22,11 +22,11 @@ class PlaybackFileStartedScrobblerRegistration(private val context: Context) : R
 	override fun registerWithConnectionProvider(connectionProvider: IConnectionProvider): (ApplicationMessage) -> Unit {
 		val filePropertiesProvider = ScopedCachedFilePropertiesProvider(
 			connectionProvider,
-			FilePropertyCache.getInstance(),
+			FilePropertyCache,
 			ScopedFilePropertiesProvider(
 				connectionProvider,
 				ScopedRevisionProvider(connectionProvider),
-				FilePropertyCache.getInstance()
+				FilePropertyCache
 			)
 		)
 		return PlaybackFileChangedScrobbleDroidProxy(

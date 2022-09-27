@@ -1,7 +1,5 @@
 package com.lasthopesoftware.bluewater.shared.messages.application.GivenApplicationMessageRegistrations.AndTheFirstIsFaulting
 
-import android.content.Context
-import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
@@ -16,7 +14,7 @@ private val receivedMessages = ArrayList<TestMessage>()
 private object TestMessage : ApplicationMessage
 
 private val registeredApplicationMessageBus by lazy {
-	ApplicationProvider.getApplicationContext<Context>().getApplicationMessageBus().getScopedMessageBus().apply {
+	getApplicationMessageBus().getScopedMessageBus().apply {
 		registerReceiver { _: TestMessage -> throw Exception("oh noes") }
 		registerReceiver(receivedMessages::add)
 	}

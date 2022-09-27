@@ -2,10 +2,10 @@ package com.lasthopesoftware.bluewater.client.browsing.files.properties.reposito
 
 import java.util.concurrent.ConcurrentHashMap
 
-class FilePropertiesContainer(val revision: Int, properties: Map<String, String>) {
-	val properties: ConcurrentHashMap<String, String> = ConcurrentHashMap(properties)
+class FilePropertiesContainer(override val revision: Int, properties: Map<String, String>) : ContainVersionedFileProperties {
+	override val properties = ConcurrentHashMap(properties)
 
-	fun updateProperty(key: String, value: String) {
+	override fun updateProperty(key: String, value: String) {
 		properties[key] = value
 	}
 }

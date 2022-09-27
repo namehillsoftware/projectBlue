@@ -1,12 +1,8 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.factory.GivenAVersionOfMediaCenterIsNotReturned
 
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.FakeFilePropertiesContainer
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.ScopedFilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.IPlaystatsUpdate
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.UpdateScopedPlaystats
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.factory.PlaystatsUpdateSelector
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.fileproperties.FilePropertiesPlayStatsUpdater
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.ScopedFilePropertiesStorage
-import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeScopedRevisionProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.fileproperties.ScopedFilePropertiesPlayStatsUpdater
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfScopedConnectionIsReadOnly
 import com.lasthopesoftware.bluewater.client.servers.version.IProgramVersionProvider
@@ -29,17 +25,15 @@ class WhenGettingThePlaystatsUpdater {
 		val checkConnection = mockk<CheckIfScopedConnectionIsReadOnly>()
 		every { checkConnection.promiseIsReadOnly() } returns false.toPromise()
 
-		val fakeScopedRevisionProvider = FakeScopedRevisionProvider(1)
-		val fakeFilePropertiesContainer = FakeFilePropertiesContainer()
 		PlaystatsUpdateSelector(
 			fakeConnectionProvider,
-			ScopedFilePropertiesProvider(fakeConnectionProvider, fakeScopedRevisionProvider, fakeFilePropertiesContainer),
-			ScopedFilePropertiesStorage(fakeConnectionProvider, checkConnection, fakeScopedRevisionProvider, fakeFilePropertiesContainer),
+			mockk(),
+			mockk(),
 			programVersionProvider
 		)
 	}
 
-	private var updater: IPlaystatsUpdate? = null
+	private var updater: UpdateScopedPlaystats? = null
 
 	@BeforeAll
 	fun act() {
@@ -48,6 +42,6 @@ class WhenGettingThePlaystatsUpdater {
 
 	@Test
 	fun thenTheFilePropertiesPlaystatsUpdaterIsGiven() {
-		assertThat(updater).isInstanceOf(FilePropertiesPlayStatsUpdater::class.java)
+		assertThat(updater).isInstanceOf(ScopedFilePropertiesPlayStatsUpdater::class.java)
 	}
 }

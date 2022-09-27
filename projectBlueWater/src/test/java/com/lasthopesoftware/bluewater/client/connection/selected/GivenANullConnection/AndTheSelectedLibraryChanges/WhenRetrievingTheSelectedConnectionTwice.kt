@@ -36,14 +36,14 @@ class WhenRetrievingTheSelectedConnectionTwice {
 
 		val fakeSelectedLibraryProvider = FakeSelectedLibraryProvider()
 		SelectedConnectionReservation().use {
-			fakeSelectedLibraryProvider.selectedLibraryId = Promise(LibraryId(-1))
+			fakeSelectedLibraryProvider.libraryId = LibraryId(-1)
 			val selectedConnection = SelectedConnection(
 				RecordingApplicationMessageBus(),
 				fakeSelectedLibraryProvider,
 				libraryConnections
 			)
 			connectionProvider = selectedConnection.promiseSessionConnection().toExpiringFuture().get()
-			fakeSelectedLibraryProvider.selectedLibraryId = Promise(LibraryId(2))
+			fakeSelectedLibraryProvider.libraryId = LibraryId(2)
 			connectionProvider = selectedConnection.promiseSessionConnection().toExpiringFuture().get()
 		}
 	}
@@ -54,6 +54,8 @@ class WhenRetrievingTheSelectedConnectionTwice {
 	}
 
 	private class FakeSelectedLibraryProvider : ProvideSelectedLibraryId {
-		override var selectedLibraryId: Promise<LibraryId?> = Promise(LibraryId(0))
+		var libraryId = LibraryId(0)
+
+        override fun promiseSelectedLibraryId(): Promise<LibraryId?> = Promise(libraryId)
 	}
 }

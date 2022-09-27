@@ -9,9 +9,17 @@ open class GuavaPromiseCache<Input : Any, Output>(
 	private val cachedPromises: Cache<Input, ResolvedPromiseBox<Output, Promise<Output>>>
 ) : CachePromiseFunctions<Input, Output> {
 	final override fun getOrAdd(input: Input, factory: (Input) -> Promise<Output>): Promise<Output> =
-		cachedPromises.getIfPresent(input)?.resolvedPromise
-			?: cachedPromises.get(input, { ResolvedPromiseBox(factory(input)) }).originalPromise.eventually(
-				{ o -> o.toPromise() },
-				{ factory(input).also { cachedPromises.put(input, ResolvedPromiseBox(it)) } }
+		cachedPromises.getIfPresent(input)?.resolvedPromise ?: buildNewIfNeeded(input, factory)
+
+	private fun buildNewIfNeeded(input: Input, factory: (Input) -> Promise<Output>): Promise<Output> {
+		var factoryBuiltPromise: Promise<Output>? = null
+		return cachedPromises.get(input) { ResolvedPromiseBox(factory(input).also { factoryBuiltPromise = it }) }
+			.originalPromise
+			// If a new promise was built, use its result, otherwise try again or pass through the previous factory
+			// built result
+			.eventually(
+				{ factoryBuiltPromise ?: it.toPromise() },
+				{ factoryBuiltPromise ?: buildNewIfNeeded(input, factory) }
 			)
+	}
 }

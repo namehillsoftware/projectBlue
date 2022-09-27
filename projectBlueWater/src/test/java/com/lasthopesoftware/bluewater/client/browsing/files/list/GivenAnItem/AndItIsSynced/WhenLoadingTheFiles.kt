@@ -20,7 +20,7 @@ import org.junit.jupiter.api.Test
 class WhenLoadingTheFiles {
 	private val viewModel by lazy {
 		val selectedLibraryIdProvider = mockk<ProvideSelectedLibraryId>().apply {
-			every { selectedLibraryId } returns LibraryId(516).toPromise()
+			every { promiseSelectedLibraryId() } returns LibraryId(516).toPromise()
 		}
 
 		val itemProvider = mockk<ProvideItemFiles>().apply {

@@ -1,10 +1,10 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.fileproperties.GivenAFileWithLastPlayedBeforeNowAndSongsDuration.AndNumberPlaysIsNotPresent
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.FakeFilePropertiesContainer
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FakeFilePropertiesContainerRepository
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ScopedFilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.fileproperties.FilePropertiesPlayStatsUpdater
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.fileproperties.ScopedFilePropertiesPlayStatsUpdater
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.ScopedFilePropertiesStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeRevisionConnectionProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRevisionProvider
@@ -12,6 +12,7 @@ import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTu
 import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfScopedConnectionIsReadOnly
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -51,13 +52,19 @@ class WhenStoringTheUpdatedPlayStats {
 
 		val checkConnection = mockk<CheckIfScopedConnectionIsReadOnly>()
 		every { checkConnection.promiseIsReadOnly() } returns false.toPromise()
-		val filePropertiesContainer = FakeFilePropertiesContainer()
+		val filePropertiesContainer = FakeFilePropertiesContainerRepository()
 		val scopedRevisionProvider = ScopedRevisionProvider(connectionProvider)
 		val sessionFilePropertiesProvider =
 			ScopedFilePropertiesProvider(connectionProvider, scopedRevisionProvider, filePropertiesContainer)
-		Pair(FilePropertiesPlayStatsUpdater(
+		Pair(ScopedFilePropertiesPlayStatsUpdater(
 			sessionFilePropertiesProvider,
-			ScopedFilePropertiesStorage(connectionProvider, checkConnection, scopedRevisionProvider, filePropertiesContainer)
+			ScopedFilePropertiesStorage(
+				connectionProvider,
+				checkConnection,
+				scopedRevisionProvider,
+				filePropertiesContainer,
+				RecordingApplicationMessageBus(),
+			)
 		), sessionFilePropertiesProvider)
 	}
 

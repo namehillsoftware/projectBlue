@@ -31,6 +31,7 @@ class NowPlayingRepository(
 					val savedTracksString = library.savedTracksString
 					if (savedTracksString == null || savedTracksString.isEmpty()) {
 						val nowPlaying = NowPlaying(
+							library.libraryId,
 							library.nowPlayingId,
 							library.nowPlayingProgress,
 							library.isRepeating
@@ -42,6 +43,7 @@ class NowPlayingRepository(
 					promiseParsedFileStringList(savedTracksString)
 						.then { files ->
 							val nowPlaying = NowPlaying(
+								library.libraryId,
 								if (files is List<*>) files as List<ServiceFile> else ArrayList(files),
 								library.nowPlayingId,
 								library.nowPlayingProgress,

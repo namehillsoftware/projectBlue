@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view
 
 import android.content.Context
+import android.os.Handler
 import android.view.ViewGroup
 import android.widget.RelativeLayout
 import androidx.appcompat.content.res.AppCompatResources
@@ -38,8 +39,8 @@ class NowPlayingFloatingActionButton private constructor(context: Context) : Flo
 						visibility = ViewUtils.getVisibility(isNowPlayingFileSet)
 						if (isNowPlayingFileSet) return@response
 
-						val applicationMessageBus = context.getApplicationMessageBus()
-						applicationMessageBus.registerReceiver(object : (PlaybackStarted) -> Unit {
+						val applicationMessageBus = getApplicationMessageBus()
+						applicationMessageBus.registerReceiver(Handler(context.mainLooper), object : (PlaybackStarted) -> Unit {
 							override fun invoke(p1: PlaybackStarted) {
 								isNowPlayingFileSet = true
 								visibility = ViewUtils.getVisibility(true)

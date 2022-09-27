@@ -39,7 +39,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.uri.RemoteFileUriPro
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.SpecificLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
@@ -304,7 +304,7 @@ open class PlaybackService :
 	private val audioManager by lazy { getSystemService(AUDIO_SERVICE) as AudioManager }
 	private val applicationMessageBus = lazy { getApplicationMessageBus().getScopedMessageBus() }
 	private val applicationSettings by lazy { getApplicationSettingsRepository() }
-	private val selectedLibraryIdentifierProvider by lazy { SelectedBrowserLibraryIdentifierProvider(applicationSettings) }
+	private val selectedLibraryIdentifierProvider by lazy { getCachedSelectedLibraryIdProvider() }
 	private val playbackStartedBroadcaster by lazy { PlaybackStartedBroadcaster(applicationMessageBus.value) }
 	private val libraryRepository by lazy { LibraryRepository(this) }
 	private val playlistVolumeManager by lazy { PlaylistVolumeManager(1.0f) }
@@ -364,13 +364,14 @@ open class PlaybackService :
 		FilePropertiesProvider(
 			connectionSessionManager,
 			LibraryRevisionProvider(connectionSessionManager),
-			FilePropertyCache.getInstance())
+			FilePropertyCache
+        )
 	}
 
 	private val cachedFileProperties by lazy {
 		CachedFilePropertiesProvider(
 			ConnectionSessionManager.get(this),
-			FilePropertyCache.getInstance(),
+			FilePropertyCache,
 			fileProperties)
 	}
 
@@ -435,7 +436,7 @@ open class PlaybackService :
 	private var isDestroyed = false
 
 	private fun getNewNowPlayingRepository(): Promise<MaintainNowPlayingState?> =
-		selectedLibraryIdentifierProvider.selectedLibraryId
+		selectedLibraryIdentifierProvider.promiseSelectedLibraryId()
 			.then { l ->
 				l?.let {
                     NowPlayingRepository(
@@ -581,12 +582,11 @@ open class PlaybackService :
 		synchronized(playbackEngineSync) {
 			playbackEnginePromise.then(
 				{ engine ->
-					if (engine != null) {
-						actOnIntent(intent).excuse(unhandledRejectionHandler)
-						return@then
-					}
-
-					initializeEngineAndActOnIntent(intent)
+					engine
+						?.let {
+							actOnIntent(intent).excuse(unhandledRejectionHandler)
+						}
+						?: initializeEngineAndActOnIntent(intent)
 				},
 				{ initializeEngineAndActOnIntent(intent) }
 			)
@@ -621,7 +621,7 @@ open class PlaybackService :
 	}
 
 	override fun onPlaylistReset(positionedFile: PositionedFile) {
-		selectedLibraryIdentifierProvider.selectedLibraryId.then { l ->
+		selectedLibraryIdentifierProvider.promiseSelectedLibraryId().then { l ->
 			l?.also {
 				applicationMessageBus.value.sendMessage(PlaybackMessage.TrackChanged(it, positionedFile))
 			}
@@ -686,8 +686,8 @@ open class PlaybackService :
 
 			val cachedSessionFilePropertiesProvider = ScopedCachedFilePropertiesProvider(
 				connectionProvider,
-				FilePropertyCache.getInstance(),
-				ScopedFilePropertiesProvider(connectionProvider, scopedRevisionProvider, FilePropertyCache.getInstance()))
+				FilePropertyCache,
+				ScopedFilePropertiesProvider(connectionProvider, scopedRevisionProvider, FilePropertyCache))
 
 			trackPositionBroadcaster = TrackPositionBroadcaster(
 				applicationMessageBus.value,
@@ -1030,7 +1030,7 @@ open class PlaybackService :
 	}
 
 	private fun broadcastChangedFile(positionedFile: PositionedFile) {
-		selectedLibraryIdentifierProvider.selectedLibraryId.then {
+		selectedLibraryIdentifierProvider.promiseSelectedLibraryId().then {
 			it?.also { l ->
 				applicationMessageBus.value.sendMessage(PlaybackMessage.TrackChanged(l, positionedFile))
 			}

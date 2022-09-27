@@ -18,8 +18,8 @@ import io.mockk.every
 import io.mockk.mockk
 import io.reactivex.Observable
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Test
 import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 import kotlin.random.Random.Default.nextInt
 
 class WhenSynchronizing {

@@ -20,7 +20,7 @@ if (!hasAndroidStorePassword()) {
 
 def isSignedExternally = { hasKeyStorePassword() && hasAndroidStorePassword() }
 
-def compose_version = '1.2.0'
+def compose_version = '1.2.1'
 
 android {
     compileSdkVersion 32
@@ -103,8 +103,9 @@ android {
             includeAndroidResources = true
             returnDefaultValues = true
 			all {
-				maxHeapSize = "1024m"
+				maxHeapSize = "2048m"
 				maxParallelForks = 2
+				systemProperty 'robolectric.sqliteMode', 'NATIVE'
 			}
 		}
 	}
@@ -118,7 +119,7 @@ android {
 	}
 
 	composeOptions {
-		kotlinCompilerExtensionVersion compose_version
+		kotlinCompilerExtensionVersion '1.3.1'
 	}
 	namespace 'com.lasthopesoftware.bluewater'
 }
@@ -156,10 +157,10 @@ dependencies {
 	implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycle_version"
 	implementation "androidx.lifecycle:lifecycle-process:$lifecycle_version"
 	implementation 'com.google.android.material:material:1.6.1'
-	implementation 'com.google.guava:guava:30.1-android'
-	implementation 'joda-time:joda-time:2.10.13'
+	implementation 'com.google.guava:guava:31.1-android'
+	implementation 'joda-time:joda-time:2.11.1'
 	implementation 'commons-io:commons-io:2.8.0'
-	implementation 'org.slf4j:slf4j-api:1.7.30'
+	implementation 'org.slf4j:slf4j-api:2.0.1'
 	implementation 'com.github.tony19:logback-android:2.0.0'
 	implementation 'com.namehillsoftware:handoff:0.19.6'
 	implementation 'io.reactivex.rxjava2:rxjava:2.2.21'
@@ -176,17 +177,17 @@ dependencies {
 	implementation 'com.google.accompanist:accompanist-systemuicontroller:0.23.1'
 	implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.5.1'
 	implementation "androidx.activity:activity-compose:1.5.1"
-	implementation "androidx.compose.compiler:compiler:$compose_version"
+	implementation "androidx.compose.compiler:compiler:1.3.1"
 	implementation "me.onebone:toolbar-compose:2.3.4"
 	debugImplementation "androidx.compose.ui:ui-tooling:$compose_version"
 	testImplementation 'androidx.test.ext:junit:1.1.3'
 	testImplementation 'junit:junit:4.13.2'
 	testImplementation "org.junit.jupiter:junit-jupiter-api:$junit5_version"
-	testImplementation 'org.assertj:assertj-core:3.22.0'
+	testImplementation 'org.assertj:assertj-core:3.23.1'
 	testImplementation 'org.robolectric:robolectric:4.7.3'
 	testImplementation 'commons-codec:commons-codec:1.15'
 	testImplementation 'androidx.test:core:1.4.0'
-	testImplementation 'io.mockk:mockk:1.12.2'
+	testImplementation 'io.mockk:mockk:1.12.8'
 	testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:$junit5_version"
 	testRuntimeOnly "org.junit.vintage:junit-vintage-engine:$junit5_version"
 	androidTestImplementation "androidx.compose.ui:ui-test-junit4:$compose_version"

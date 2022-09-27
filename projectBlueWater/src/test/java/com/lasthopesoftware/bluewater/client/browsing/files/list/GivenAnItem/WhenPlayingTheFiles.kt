@@ -32,7 +32,7 @@ class WhenPlayingTheFiles {
 
 	private val services by lazy {
 		val selectedLibraryIdProvider = mockk<ProvideSelectedLibraryId>().apply {
-			every { selectedLibraryId } returns LibraryId(960).toPromise()
+			every { promiseSelectedLibraryId() } returns LibraryId(960).toPromise()
 		}
 
 		val itemProvider = mockk<ProvideItemFiles>().apply {

@@ -13,14 +13,13 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.fragment.adapter.ActiveFileDownloadsAdapter
 import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileMessage
 import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
 import com.lasthopesoftware.bluewater.client.stored.sync.SyncStateMessage
-import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
@@ -33,7 +32,7 @@ class ActiveFileDownloadsFragment : Fragment() {
 	private var onFileQueuedReceiver: ((StoredFileMessage.FileQueued) -> Unit)? = null
 	private var onFileDownloadedReceiver: ((StoredFileMessage.FileDownloaded) -> Unit)? = null
 
-	private val applicationMessageBus = lazy { requireContext().getApplicationMessageBus() }
+	private val applicationMessageBus = lazy { getApplicationMessageBus() }
 
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
 		if (container == null) return null
@@ -52,10 +51,9 @@ class ActiveFileDownloadsFragment : Fragment() {
 
 		listView.addItemDecoration(DividerItemDecoration(context, layoutManager.orientation))
 
-		val applicationSettingsRepository = context.getApplicationSettingsRepository()
 		val libraryRepository = LibraryRepository(context)
 		val selectedBrowserLibraryProvider = SelectedBrowserLibraryProvider(
-			SelectedBrowserLibraryIdentifierProvider(applicationSettingsRepository),
+			context.getCachedSelectedLibraryIdProvider(),
 			libraryRepository)
 
 		selectedBrowserLibraryProvider

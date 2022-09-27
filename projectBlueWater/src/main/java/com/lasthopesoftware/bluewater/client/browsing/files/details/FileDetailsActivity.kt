@@ -40,15 +40,18 @@ import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.image.CachedImageProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FormattedScopedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.ScopedFilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.SelectedConnectionFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.SelectedLibraryFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
-import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRevisionProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
+import com.lasthopesoftware.bluewater.client.connection.libraries.SelectedLibraryUrlKeyProvider
+import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity.Companion.restoreSelectedConnection
-import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.colors.MediaStylePalette
@@ -60,6 +63,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
 import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.suspend
 import kotlinx.coroutines.flow.map
@@ -88,17 +92,21 @@ class FileDetailsActivity : ComponentActivity() {
 
 	private val defaultImageProvider by lazy { DefaultImageProvider(this) }
 
+	private val selectedLibraryIdProvider by lazy { getCachedSelectedLibraryIdProvider() }
+
+	private val libraryConnections by lazy { buildNewConnectionSessionManager() }
+
 	private val filePropertiesProvider by lazy {
-		SelectedConnectionFilePropertiesProvider(SelectedConnectionProvider(this)) { c ->
-			val filePropertyCache = FilePropertyCache.getInstance()
-			FormattedScopedFilePropertiesProvider(
-				ScopedFilePropertiesProvider(
-					c,
-					ScopedRevisionProvider(c),
-					filePropertyCache
+		FormattedScopedFilePropertiesProvider(
+			SelectedLibraryFilePropertiesProvider(
+				selectedLibraryIdProvider,
+				FilePropertiesProvider(
+					libraryConnections,
+					LibraryRevisionProvider(libraryConnections),
+					FilePropertyCache,
 				),
 			)
-		}
+		)
 	}
 
 	private val vm by buildViewModelLazily {
@@ -107,6 +115,8 @@ class FileDetailsActivity : ComponentActivity() {
 			defaultImageProvider,
 			imageProvider,
 			PlaybackServiceController(this),
+			ApplicationMessageBus.getApplicationMessageBus(),
+			SelectedLibraryUrlKeyProvider(selectedLibraryIdProvider, UrlKeyProvider(libraryConnections)),
 		)
 	}
 

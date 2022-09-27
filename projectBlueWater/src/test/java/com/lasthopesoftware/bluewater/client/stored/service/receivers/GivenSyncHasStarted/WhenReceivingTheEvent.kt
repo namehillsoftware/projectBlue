@@ -6,27 +6,23 @@ import com.lasthopesoftware.bluewater.client.stored.sync.receivers.SyncStartedRe
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 
 class WhenReceivingTheEvent {
 
-	companion object {
-		private val notifications: MutableCollection<String?> = ArrayList()
+	private val notifications: MutableCollection<String?> = ArrayList()
 
-		@JvmStatic
-		@BeforeClass
-		fun context() {
-			val syncNotification = mockk<PostSyncNotification>()
-			with(syncNotification) {
-				every { notify(any()) } answers {
-					notifications.add(firstArg())
-				}
+	@BeforeAll
+	fun act() {
+		val syncNotification = mockk<PostSyncNotification> {
+			every { notify(any()) } answers {
+				notifications.add(firstArg())
 			}
-
-			val receiver = SyncStartedReceiver(syncNotification)
-			receiver(SyncStateMessage.SyncStarted)
 		}
+
+		val receiver = SyncStartedReceiver(syncNotification)
+		receiver(SyncStateMessage.SyncStarted)
 	}
 
 	@Test

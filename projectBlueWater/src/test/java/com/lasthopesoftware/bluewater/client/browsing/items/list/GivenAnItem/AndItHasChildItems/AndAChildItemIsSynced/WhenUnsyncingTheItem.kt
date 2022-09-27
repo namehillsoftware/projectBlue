@@ -21,7 +21,7 @@ class WhenSyncingTheItem {
 
 	private val viewModel by lazy {
 		val selectedLibraryIdProvider = mockk<ProvideSelectedLibraryId>().apply {
-			every { selectedLibraryId } returns LibraryId(707).toPromise()
+			every { promiseSelectedLibraryId() } returns LibraryId(707).toPromise()
 		}
 
 		val itemProvider = mockk<ProvideItemFiles>().apply {

@@ -45,29 +45,28 @@ import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.Li
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsLauncher
 import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.list.TrackHeadlineViewModelProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.RateControlledFilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.ScopedCachedFilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.ScopedFilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.SelectedConnectionFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.SelectedLibraryFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.ScopedFilePropertiesStorage
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.SelectedConnectionFilePropertiesStorage
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertyStorage
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.access.CachedItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListActivity.Companion.startItemListActivity
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuViewModel
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRevisionProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.revisions.SelectedConnectionRevisionProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
-import com.lasthopesoftware.bluewater.client.connection.authentication.ScopedConnectionAuthenticationChecker
-import com.lasthopesoftware.bluewater.client.connection.authentication.SelectedConnectionAuthenticationChecker
+import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
+import com.lasthopesoftware.bluewater.client.connection.libraries.SelectedLibraryUrlKeyProvider
+import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.polling.ConnectionPoller
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity.Companion.restoreSelectedConnection
-import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
+import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.NowPlayingActivity
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
@@ -75,7 +74,6 @@ import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.client.stored.library.items.StateChangeBroadcastingStoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
-import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
 import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
@@ -138,7 +136,7 @@ class ItemListActivity : AppCompatActivity(), Runnable {
 		)
 	}
 
-	private val browserLibraryIdProvider by lazy { SelectedBrowserLibraryIdentifierProvider(getApplicationSettingsRepository()) }
+	private val browserLibraryIdProvider by lazy { getCachedSelectedLibraryIdProvider() }
 
 	private val itemProvider by lazy { CachedItemProvider.getInstance(this) }
 
@@ -148,7 +146,7 @@ class ItemListActivity : AppCompatActivity(), Runnable {
 		StateChangeBroadcastingStoredItemAccess(StoredItemAccess(this), messageBus)
 	}
 
-	private val menuMessageBus by buildViewModelLazily { ViewModelMessageBus<ItemListMenuMessage>(handler) }
+	private val menuMessageBus by buildViewModelLazily { ViewModelMessageBus<ItemListMenuMessage>() }
 
 	private val itemListMenuViewModel by buildViewModelLazily { ItemListMenuViewModel(menuMessageBus) }
 
@@ -174,41 +172,51 @@ class ItemListActivity : AppCompatActivity(), Runnable {
 		)
 	}
 
-	private val filePropertiesProvider by lazy {
-		SelectedConnectionFilePropertiesProvider(SelectedConnectionProvider(this)) { c ->
-			val filePropertyCache = FilePropertyCache.getInstance()
-			ScopedCachedFilePropertiesProvider(
-				c,
-				filePropertyCache,
-				RateControlledFilePropertiesProvider(
-					ScopedFilePropertiesProvider(
-						c,
-						ScopedRevisionProvider(c),
-						filePropertyCache
-					),
-					rateLimiter
-				)
-			)
-		}
-	}
-
-	private val selectedConnectionAuthenticationChecker by lazy {
-		SelectedConnectionAuthenticationChecker(
-			selectedConnectionProvider,
-			::ScopedConnectionAuthenticationChecker
+	private val libraryFilePropertiesProvider by lazy {
+		CachedFilePropertiesProvider(
+			libraryConnectionProvider,
+			FilePropertyCache,
+			RateControlledFilePropertiesProvider(
+				FilePropertiesProvider(
+					libraryConnectionProvider,
+					revisionProvider,
+					FilePropertyCache,
+				),
+				rateLimiter,
+			),
 		)
 	}
 
-	private val sessionRevisionProvider by lazy { SelectedConnectionRevisionProvider(selectedConnectionProvider) }
+	private val scopedFilePropertiesProvider by lazy {
+		SelectedLibraryFilePropertiesProvider(
+			browserLibraryIdProvider,
+			libraryFilePropertiesProvider,
+		)
+	}
+
+	private val scopedUrlKeyProvider by lazy {
+		SelectedLibraryUrlKeyProvider(
+			browserLibraryIdProvider,
+			UrlKeyProvider(libraryConnectionProvider),
+		)
+	}
+
+	private val libraryConnectionProvider by lazy { buildNewConnectionSessionManager() }
+
+	private val connectionAuthenticationChecker by lazy {
+		ConnectionAuthenticationChecker(libraryConnectionProvider)
+	}
+
+	private val revisionProvider by lazy { LibraryRevisionProvider(libraryConnectionProvider) }
 
 	private val filePropertiesStorage by lazy {
-		SelectedConnectionFilePropertiesStorage(selectedConnectionProvider) { c ->
-			ScopedFilePropertiesStorage(
-				c,
-				selectedConnectionAuthenticationChecker,
-				sessionRevisionProvider,
-				FilePropertyCache.getInstance())
-		}
+		FilePropertyStorage(
+			libraryConnectionProvider,
+			connectionAuthenticationChecker,
+			revisionProvider,
+			FilePropertyCache,
+			messageBus
+		)
 	}
 
 	private val fileListViewModel by buildViewModelLazily {
@@ -220,15 +228,15 @@ class ItemListActivity : AppCompatActivity(), Runnable {
 		)
 	}
 
-	private val selectedConnectionProvider by lazy { SelectedConnectionProvider(this) }
-
 	private val trackHeadlineViewModelProvider by buildViewModelLazily {
 		TrackHeadlineViewModelProvider(
-			filePropertiesProvider,
+			scopedFilePropertiesProvider,
+			scopedUrlKeyProvider,
 			StringResources(this),
 			PlaybackServiceController(this),
 			FileDetailsLauncher(this),
 			menuMessageBus,
+			messageBus,
 		)
 	}
 
@@ -236,10 +244,10 @@ class ItemListActivity : AppCompatActivity(), Runnable {
 		NowPlayingFilePropertiesViewModel(
 			messageBus,
 			LiveNowPlayingLookup.getInstance(),
-			selectedConnectionProvider,
-			filePropertiesProvider,
+			libraryFilePropertiesProvider,
+			UrlKeyProvider(libraryConnectionProvider),
 			filePropertiesStorage,
-			selectedConnectionAuthenticationChecker,
+			connectionAuthenticationChecker,
 			PlaybackServiceController(this),
 			ConnectionPoller(this),
 			StringResources(this),

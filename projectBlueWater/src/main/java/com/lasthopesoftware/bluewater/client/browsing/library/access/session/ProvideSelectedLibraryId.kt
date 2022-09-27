@@ -4,5 +4,5 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.namehillsoftware.handoff.promises.Promise
 
 interface ProvideSelectedLibraryId {
-	val selectedLibraryId: Promise<LibraryId?>
+	fun promiseSelectedLibraryId(): Promise<LibraryId?>
 }

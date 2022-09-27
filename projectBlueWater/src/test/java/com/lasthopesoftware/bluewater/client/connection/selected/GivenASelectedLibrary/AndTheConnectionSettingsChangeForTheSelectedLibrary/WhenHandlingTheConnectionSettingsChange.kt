@@ -17,7 +17,7 @@ class WhenHandlingTheConnectionSettingsChange {
 
 	private val mut by lazy {
 		val mockSelectedLibraryIdentifierProvider = mockk<ProvideSelectedLibraryId>()
-		every { mockSelectedLibraryIdentifierProvider.selectedLibraryId } returns Promise(LibraryId(4))
+		every { mockSelectedLibraryIdentifierProvider.promiseSelectedLibraryId() } returns Promise(LibraryId(4))
 
 		val selectedConnectionSettingsChangeReceiver = SelectedConnectionSettingsChangeReceiver(
 			mockSelectedLibraryIdentifierProvider,

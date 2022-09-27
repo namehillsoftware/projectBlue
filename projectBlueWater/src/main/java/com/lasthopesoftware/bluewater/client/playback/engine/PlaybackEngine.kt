@@ -308,12 +308,16 @@ class PlaybackEngine(
 			.promiseNowPlaying()
 			.eventually { np ->
 				np?.let {
-					np.playlist = playlist
-					np.playlistPosition = playlistPosition
-					np.isRepeating = isRepeating
 					fileProgress.progress.eventually {
-						np.filePosition = it.millis
-						nowPlayingRepository.updateNowPlaying(np)
+						nowPlayingRepository.updateNowPlaying(
+							NowPlaying(
+								np.libraryId,
+								playlist,
+								playlistPosition,
+								it.millis,
+								isRepeating,
+							)
+						)
 					}
 				}.keepPromise()
 			}

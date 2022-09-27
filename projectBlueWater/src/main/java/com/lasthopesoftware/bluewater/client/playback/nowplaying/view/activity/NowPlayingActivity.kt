@@ -15,21 +15,20 @@ import androidx.viewpager2.widget.ViewPager2
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.image.CachedImageProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.menu.FileListItemNowPlayingRegistrar
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.ScopedFilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.SelectedConnectionFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.ScopedFilePropertiesStorage
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.SelectedConnectionFilePropertiesStorage
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertyStorage
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener.Companion.tryFlipToPreviousView
-import com.lasthopesoftware.bluewater.client.browsing.library.revisions.SelectedConnectionRevisionProvider
-import com.lasthopesoftware.bluewater.client.connection.authentication.ScopedConnectionAuthenticationChecker
-import com.lasthopesoftware.bluewater.client.connection.authentication.SelectedConnectionAuthenticationChecker
+import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
+import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
+import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.polling.ConnectionPoller
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService
 import com.lasthopesoftware.bluewater.client.connection.polling.WaitForConnectionDialog
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity.Companion.restoreSelectedConnection
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.fragments.NowPlayingTopFragment
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.fragments.playlist.NowPlayingPlaylistFragment
@@ -69,47 +68,46 @@ class NowPlayingActivity :
 	}
 
 	private var viewAnimator: ViewAnimator? = null
+
 	private val messageHandler by lazy { Handler(mainLooper) }
 
 	private val applicationMessageBus = lazy { getApplicationMessageBus().getScopedMessageBus() }
 
-	private val fileListItemNowPlayingRegistrar = lazy { FileListItemNowPlayingRegistrar(applicationMessageBus.value) }
+	private val fileListItemNowPlayingRegistrar = lazy { FileListItemNowPlayingRegistrar(messageHandler, applicationMessageBus.value) }
 
 	private val imageProvider by lazy { CachedImageProvider.getInstance(this) }
 
-	private val lazySelectedConnectionProvider by lazy { SelectedConnectionProvider(this) }
+	private val libraryConnectionProvider by lazy { buildNewConnectionSessionManager() }
 
-	private val lazySessionRevisionProvider by lazy { SelectedConnectionRevisionProvider(lazySelectedConnectionProvider) }
-
-	private val lazyFilePropertiesProvider by lazy {
-		SelectedConnectionFilePropertiesProvider(lazySelectedConnectionProvider) { c ->
-			ScopedFilePropertiesProvider(
-				c,
-				lazySessionRevisionProvider,
-				FilePropertyCache.getInstance()
-			)
-		}
+	private val connectionAuthenticationChecker by lazy {
+		ConnectionAuthenticationChecker(libraryConnectionProvider)
 	}
 
-	private val lazySelectedConnectionAuthenticationChecker by lazy {
-		SelectedConnectionAuthenticationChecker(
-			lazySelectedConnectionProvider,
-			::ScopedConnectionAuthenticationChecker)
+	private val revisionProvider by lazy { LibraryRevisionProvider(libraryConnectionProvider) }
+
+	private val lazySelectedConnectionProvider by lazy { SelectedConnectionProvider(this) }
+
+	private val libraryFilePropertiesProvider by lazy {
+		FilePropertiesProvider(
+			libraryConnectionProvider,
+			revisionProvider,
+			FilePropertyCache,
+		)
 	}
 
 	private val filePropertiesStorage by lazy {
-		SelectedConnectionFilePropertiesStorage(lazySelectedConnectionProvider) { c ->
-			ScopedFilePropertiesStorage(
-				c,
-				lazySelectedConnectionAuthenticationChecker,
-				lazySessionRevisionProvider,
-				FilePropertyCache.getInstance())
-		}
+		FilePropertyStorage(
+			libraryConnectionProvider,
+			connectionAuthenticationChecker,
+			revisionProvider,
+			FilePropertyCache,
+			applicationMessageBus.value
+		)
 	}
 
 	private val defaultImageProvider by lazy { DefaultImageProvider(this) }
 
-	private val viewModelMessageBus by buildViewModelLazily { ViewModelMessageBus<NowPlayingPlaylistMessage>(messageHandler) }
+	private val viewModelMessageBus by buildViewModelLazily { ViewModelMessageBus<NowPlayingPlaylistMessage>() }
 
 	private val nowPlayingViewModel by buildViewModelLazily {
 		NowPlayingScreenViewModel(
@@ -128,10 +126,10 @@ class NowPlayingActivity :
 			NowPlayingFilePropertiesViewModel(
                 applicationMessageBus.value,
                 liveNowPlayingLookup,
-                lazySelectedConnectionProvider,
-                lazyFilePropertiesProvider,
+                libraryFilePropertiesProvider,
+                UrlKeyProvider(libraryConnectionProvider),
                 filePropertiesStorage,
-                lazySelectedConnectionAuthenticationChecker,
+                connectionAuthenticationChecker,
                 PlaybackServiceController(this),
                 ConnectionPoller(this),
                 StringResources(this),

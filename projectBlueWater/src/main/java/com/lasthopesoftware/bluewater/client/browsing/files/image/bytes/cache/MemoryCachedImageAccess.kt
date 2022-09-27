@@ -32,7 +32,7 @@ class MemoryCachedImageAccess
 
 		fun getInstance(context: Context): MemoryCachedImageAccess {
 			val libraryConnectionProvider = ConnectionSessionManager.get(context)
-			val filePropertiesCache = FilePropertyCache.getInstance()
+			val filePropertiesCache = FilePropertyCache
 			val imageCacheKeyLookup = ImageCacheKeyLookup(CachedFilePropertiesProvider(
 				libraryConnectionProvider,
 				filePropertiesCache,

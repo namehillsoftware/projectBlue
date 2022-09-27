@@ -7,10 +7,9 @@ import android.support.v4.media.session.MediaSessionCompat
 import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.ItemStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.LibraryFileStringListProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.MediaSessionCallbackReceiver
-import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.android.makePendingIntentImmutable
 import com.lasthopesoftware.bluewater.shared.android.services.GenericBinder
 
@@ -23,7 +22,7 @@ class MediaSessionService : Service() {
 		newMediaSession.setCallback(
 			MediaSessionCallbackReceiver(
 				this,
-				SelectedBrowserLibraryIdentifierProvider(getApplicationSettingsRepository()),
+				getCachedSelectedLibraryIdProvider(),
 				ItemStringListProvider(
 					FileListParameters,
 					LibraryFileStringListProvider(connectionProvider)

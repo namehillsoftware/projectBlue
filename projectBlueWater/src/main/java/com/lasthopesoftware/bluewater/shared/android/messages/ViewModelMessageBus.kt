@@ -1,20 +1,17 @@
 package com.lasthopesoftware.bluewater.shared.android.messages
 
-import android.os.Handler
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.shared.messages.RegisterForTypedMessages
 import com.lasthopesoftware.bluewater.shared.messages.SendTypedMessages
 import com.lasthopesoftware.bluewater.shared.messages.TypedMessage
 import com.lasthopesoftware.bluewater.shared.messages.TypedMessageBus
 
-class ViewModelMessageBus<ScopedMessage : TypedMessage>(
-	private val handler: Handler
-) :
+class ViewModelMessageBus<ScopedMessage : TypedMessage> :
 	RegisterForTypedMessages<ScopedMessage>,
 	SendTypedMessages<ScopedMessage>,
 	ViewModel()
 {
-	private val typedMessageBus = lazy { TypedMessageBus<ScopedMessage>(handler) }
+	private val typedMessageBus = lazy { TypedMessageBus<ScopedMessage>() }
 
 	override fun <T : ScopedMessage> sendMessage(message: T) = typedMessageBus.value.sendMessage(message)
 

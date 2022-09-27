@@ -18,7 +18,7 @@ class WhenReceivingTheBroadcast {
 	companion object {
 		private val activityController by lazy {
 			val activity = Robolectric.buildActivity(BrowserEntryActivity::class.java).create()
-			activity.get().getApplicationMessageBus()
+			getApplicationMessageBus()
 				.sendMessage(BrowserLibrarySelection.LibraryChosenMessage(LibraryId(4)))
 			shadowOf(getMainLooper()).idle()
 			activity

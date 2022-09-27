@@ -1,8 +1,5 @@
 package com.lasthopesoftware.bluewater.shared.messages.GivenTypedMessageRegistrations.AndTheFirstIsFaulting
 
-import android.content.Context
-import android.os.Handler
-import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.shared.messages.ScopedMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.TypedMessage
@@ -17,7 +14,7 @@ private val receivedMessages = ArrayList<TestMessage>()
 private object TestMessage : TypedMessage
 
 private val typedMessageBus by lazy {
-	val typedMessageBus = TypedMessageBus<TestMessage>(Handler(ApplicationProvider.getApplicationContext<Context>().mainLooper))
+	val typedMessageBus = TypedMessageBus<TestMessage>()
 	ScopedMessageBus(typedMessageBus, typedMessageBus).apply {
 		registerReceiver { throw Exception("sore") }
 		registerReceiver(receivedMessages::add)

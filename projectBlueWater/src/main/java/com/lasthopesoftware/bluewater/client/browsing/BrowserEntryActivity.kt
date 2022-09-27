@@ -25,7 +25,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAn
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistListFragment
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library.ViewType
@@ -51,6 +51,7 @@ import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
+import com.lasthopesoftware.bluewater.shared.messages.registerOnHandler
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 
@@ -74,8 +75,8 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 	private val applicationSettings by lazy { getApplicationSettingsRepository() }
 
 	private val selectedBrowserLibraryProvider by lazy { SelectedBrowserLibraryProvider(
-			SelectedBrowserLibraryIdentifierProvider(applicationSettings),
-			libraryRepository)
+		getCachedSelectedLibraryIdProvider(),
+		libraryRepository)
 	}
 
 	private val messageHandler by lazy { Handler(mainLooper) }
@@ -168,13 +169,15 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 		setSupportActionBar(findViewById(R.id.browseLibraryToolbar))
 		setTheme(R.style.AppTheme)
 
-		applicationMessageBus.value.registerForClass(
+		applicationMessageBus.value.registerOnHandler(
 			cls<SelectedConnectionSettingsChangeReceiver.SelectedConnectionSettingsUpdated>(),
+			messageHandler,
 			connectionSettingsUpdatedReceiver
 		)
 
-		applicationMessageBus.value.registerForClass(
+		applicationMessageBus.value.registerOnHandler(
 			cls<BrowserLibrarySelection.LibraryChosenMessage>(),
+			messageHandler,
 			connectionSettingsUpdatedReceiver)
 
 		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton(findViewById(R.id.browseLibraryRelativeLayout))

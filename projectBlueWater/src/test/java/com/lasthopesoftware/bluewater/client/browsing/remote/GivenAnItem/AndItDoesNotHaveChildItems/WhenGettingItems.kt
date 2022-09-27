@@ -48,7 +48,7 @@ class `When Getting Items` {
 
 		private val mediaItems by lazy {
 			val selectedLibraryId = mockk<ProvideSelectedLibraryId>()
-			every { selectedLibraryId.selectedLibraryId } returns Promise(LibraryId(22))
+			every { selectedLibraryId.promiseSelectedLibraryId() } returns Promise(LibraryId(22))
 
 			val itemsProvider = mockk<ProvideItems>()
 			every { itemsProvider.promiseItems(LibraryId(22), ItemId(743)) } returns Promise(emptyList())

@@ -12,10 +12,11 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messa
 import com.lasthopesoftware.bluewater.client.servers.version.ProgramVersionProvider
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
+import com.lasthopesoftware.bluewater.shared.messages.application.SendApplicationMessages
 
-class UpdatePlayStatsOnCompleteRegistration : RegisterReceiverForEvents {
+class UpdatePlayStatsOnCompleteRegistration(private val messageBus: SendApplicationMessages) : RegisterReceiverForEvents {
 	override fun registerWithConnectionProvider(connectionProvider: IConnectionProvider): (ApplicationMessage) -> Unit {
-		val cache = FilePropertyCache.getInstance()
+		val cache = FilePropertyCache
 		val scopedRevisionProvider = ScopedRevisionProvider(connectionProvider)
 		return UpdatePlayStatsOnPlaybackCompleteReceiver(
 			PlaystatsUpdateSelector(
@@ -25,7 +26,8 @@ class UpdatePlayStatsOnCompleteRegistration : RegisterReceiverForEvents {
 					connectionProvider,
 					ScopedConnectionAuthenticationChecker(connectionProvider),
 					scopedRevisionProvider,
-					cache
+					cache,
+					messageBus,
 				),
 				ProgramVersionProvider(connectionProvider)
 			)

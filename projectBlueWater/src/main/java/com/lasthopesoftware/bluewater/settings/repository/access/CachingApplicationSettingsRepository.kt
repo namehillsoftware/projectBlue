@@ -16,7 +16,7 @@ class CachingApplicationSettingsRepository
 	}
 
 	override fun promiseApplicationSettings(): Promise<ApplicationSettings> =
-		applicationSettingsCache.setAndGetCachedSettings { s -> s ?: inner.promiseApplicationSettings() }
+		applicationSettingsCache.getOrSetCachedSettings { inner.promiseApplicationSettings() }
 
 	override fun promiseUpdatedSettings(applicationSettings: ApplicationSettings): Promise<ApplicationSettings> =
 		applicationSettingsCache.setAndGetCachedSettings { promisedApplicationSettings ->

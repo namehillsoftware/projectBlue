@@ -4,12 +4,17 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.LaunchFileDetails
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideScopedFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.HiddenListItemMenu
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
+import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideScopedUrlKeyProvider
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
+import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.messages.SendTypedMessages
+import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
+import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.resources.executors.ThreadPools
@@ -32,16 +37,23 @@ private val logger by lazyLogger<ReusableTrackHeadlineViewModel>()
 
 class ReusableTrackHeadlineViewModel(
 	private val filePropertiesProvider: ProvideScopedFileProperties,
+	private val urlKeyProvider: ProvideScopedUrlKeyProvider,
 	private val stringResources: GetStringResources,
 	private val controlPlaybackService: ControlPlaybackService,
 	private val fileDetailsLauncher: LaunchFileDetails,
 	private val sendItemMenuMessages: SendTypedMessages<ItemListMenuMessage>,
-) : ViewFileItem, HiddenListItemMenu {
+	receiveMessages: RegisterForApplicationMessages,
+) : ViewFileItem, HiddenListItemMenu, AutoCloseable, (FilePropertiesUpdatedMessage) -> Unit {
+
+	private val filePropertiesUpdatedSubscription = receiveMessages.registerReceiver(this)
 
 	private val promiseSync = Any()
 
 	@Volatile
 	private var promisedState = Unit.toPromise()
+
+	@Volatile
+	private var activeUrlKey: UrlKeyHolder<ServiceFile>? = null
 
 	@Volatile
 	private var activePositionedFile: PositionedFile? = null
@@ -57,16 +69,21 @@ class ReusableTrackHeadlineViewModel(
 	override val title = mutableTitle.asStateFlow()
 	override val isMenuShown = mutableIsMenuShown.asStateFlow()
 
-	override fun promiseUpdate(playlist: List<ServiceFile>, position: Int): Promise<Unit> {
+	override fun promiseUpdate(associatedPlaylist: List<ServiceFile>, position: Int): Promise<Unit> =
 		synchronized(promiseSync) {
-			val serviceFile = playlist[position]
+			val serviceFile = associatedPlaylist[position]
 			activePositionedFile = PositionedFile(position, serviceFile)
-			associatedPlaylist = playlist
+			this.associatedPlaylist = associatedPlaylist
 
 			val currentPromisedState = promisedState
 			promisedState = currentPromisedState.inevitably(EventualTextViewUpdate(serviceFile))
 			currentPromisedState.cancel()
-			return promisedState
+			promisedState
+		}
+
+	override fun invoke(message: FilePropertiesUpdatedMessage) {
+		if (activeUrlKey == message.urlServiceKey) activePositionedFile?.playlistPosition?.also {
+			promiseUpdate(associatedPlaylist, it)
 		}
 	}
 
@@ -92,6 +109,11 @@ class ReusableTrackHeadlineViewModel(
 			fileDetailsLauncher.launchFileDetails(associatedPlaylist, playlistPosition)
 		}
 		hideMenu()
+	}
+
+	override fun close() {
+		reset()
+		filePropertiesUpdatedSubscription.close()
 	}
 
 	override fun reset() {
@@ -129,12 +151,15 @@ class ReusableTrackHeadlineViewModel(
 			if (isNotCurrentServiceFile || isUpdateCancelled) return resolve(Unit)
 
 			val filePropertiesPromise = filePropertiesProvider.promiseFileProperties(serviceFile)
+			val promisedUrlKey = urlKeyProvider
+				.promiseUrlKey(serviceFile)
+				.then { activeUrlKey = it }
 			cancellationProxy.doCancel(filePropertiesPromise)
 
 			val promisedViewSetting = filePropertiesPromise.then(this)
 
-			val delayPromise = PromiseDelay.delay<Unit>(timeoutDuration)
-			whenAny(promisedViewSetting, delayPromise)
+			val delayPromise = PromiseDelay.delay<Collection<Unit>>(timeoutDuration)
+			whenAny(whenAll(promisedViewSetting, promisedUrlKey), delayPromise)
 				.must {
 
 					// First, cancel everything to ensure the losing task doesn't continue running

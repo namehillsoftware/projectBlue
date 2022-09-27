@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.playedfile.GivenAStandardConnection
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.playedfile.PlayedFilePlayStatsUpdater
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.playedfile.ScopedPlayedFilePlayStatsUpdater
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTuple
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -19,7 +19,7 @@ class WhenSendingPlayedToServer {
 			)
 		}, "File/Played", "File=15", "FileType=Key")
 
-		val updater = PlayedFilePlayStatsUpdater(connectionProvider)
+		val updater = ScopedPlayedFilePlayStatsUpdater(connectionProvider)
 		updater.promisePlaystatsUpdate(ServiceFile(15)).toExpiringFuture().get()
 	}
 

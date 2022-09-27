@@ -17,11 +17,10 @@ import com.lasthopesoftware.bluewater.client.browsing.items.access.CachedItemPro
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener.Companion.tryFlipToPreviousView
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryIdentifierProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
-import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
@@ -102,8 +101,7 @@ class BrowseLibraryViewsFragment : Fragment(R.layout.tabbed_library_items_layout
 	private val selectedBrowserLibrary: Promise<Library?>
 		get() {
 			val context = context ?: return Promise.empty()
-			val applicationSettingsRepository = context.getApplicationSettingsRepository()
-			val selectedLibraryIdentifierProvider = SelectedBrowserLibraryIdentifierProvider(applicationSettingsRepository)
+			val selectedLibraryIdentifierProvider = context.getCachedSelectedLibraryIdProvider()
 			val selectedBrowserLibraryProvider = SelectedBrowserLibraryProvider(selectedLibraryIdentifierProvider, LibraryRepository(context))
 			return selectedBrowserLibraryProvider.browserLibrary
 		}
