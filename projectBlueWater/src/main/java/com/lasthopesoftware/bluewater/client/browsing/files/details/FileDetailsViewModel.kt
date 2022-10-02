@@ -109,6 +109,8 @@ class FileDetailsViewModel(
 		controlPlayback.startPlaylist(associatedPlaylist, positionedFile.playlistPosition)
 	}
 
+	fun updateProperty(key: String, value: String) {}
+
 	private fun loadFileProperties(serviceFile: ServiceFile): Promise<Unit> =
 		scopedFilePropertiesProvider
 			.promiseFileProperties(serviceFile)

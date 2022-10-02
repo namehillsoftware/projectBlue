@@ -12,10 +12,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.CircularProgressIndicator
-import androidx.compose.material.Icon
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.*
@@ -36,6 +33,7 @@ import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
@@ -182,7 +180,22 @@ private fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class)
 	val album by viewModel.album.collectAsState()
 
 	@Composable
+	fun textEditor(property: Map.Entry<String, String>) {
+		Dialog(onDismissRequest = { /*TODO*/ }) {
+			Column {
+				Text(text = property.key)
+
+				TextField(
+					value = property.value,
+					onValueChange = { newValue -> viewModel.updateProperty(property.key, newValue) }
+				)
+			}
+		}
+	}
+
+	@Composable
 	fun filePropertyHeader(modifier: Modifier, titleFontSize: TextUnit = 24.sp) {
+		val artist by viewModel.artist.collectAsState()
 		val fileName by viewModel.fileName.collectAsState(stringResource(id = R.string.lbl_loading))
 
 		Column(modifier = modifier) {
@@ -218,6 +231,17 @@ private fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class)
 			.height(dimensionResource(id = R.dimen.standard_row_height))
 			.padding(viewPadding + 8.dp)
 		) {
+			Image(
+				painter = painterResource(id = R.drawable.pencil),
+				colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
+				contentDescription = stringResource(id = R.string.edit_file_properties),
+				modifier = Modifier
+					.fillMaxWidth()
+					.weight(1f)
+					.clickable { viewModel.addToNowPlaying() }
+					.align(Alignment.CenterVertically),
+			)
+
 			Image(
 				painter = painterResource(id = R.drawable.ic_add_item_white_36dp),
 				colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
