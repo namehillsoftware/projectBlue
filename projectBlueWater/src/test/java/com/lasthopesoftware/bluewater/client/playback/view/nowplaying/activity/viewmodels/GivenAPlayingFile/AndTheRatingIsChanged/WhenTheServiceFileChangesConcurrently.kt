@@ -80,16 +80,16 @@ class WhenTheServiceFileChangesConcurrently {
 		val filePropertiesProvider = mockk<ProvideLibraryFileProperties> {
 			every { promiseFileProperties(LibraryId(libraryId), firstServiceFile) } returns
 				mapOf(
-					Pair(KnownFileProperties.ARTIST, "accident"),
-					Pair(KnownFileProperties.NAME, "proposal"),
-					Pair(KnownFileProperties.RATING, "107"),
+					Pair(KnownFileProperties.Artist, "accident"),
+					Pair(KnownFileProperties.Name, "proposal"),
+					Pair(KnownFileProperties.Rating, "107"),
 				).toPromise()
 
 			every { promiseFileProperties(LibraryId(libraryId), secondServiceFile) } returns
 				mapOf(
-					Pair(KnownFileProperties.ARTIST, "offer"),
-					Pair(KnownFileProperties.NAME, "film"),
-					Pair(KnownFileProperties.RATING, "476"),
+					Pair(KnownFileProperties.Artist, "offer"),
+					Pair(KnownFileProperties.Name, "film"),
+					Pair(KnownFileProperties.Rating, "476"),
 				).toPromise()
 		}
 
@@ -117,7 +117,7 @@ class WhenTheServiceFileChangesConcurrently {
 				)
             },
             mockk {
-				every { promiseFileUpdate(LibraryId(libraryId), firstServiceFile, KnownFileProperties.RATING, any(), any()) } returns deferredFilePropertiesPromise
+				every { promiseFileUpdate(LibraryId(libraryId), firstServiceFile, KnownFileProperties.Rating, any(), any()) } returns deferredFilePropertiesPromise
 			},
             checkAuthentication,
             playbackService,

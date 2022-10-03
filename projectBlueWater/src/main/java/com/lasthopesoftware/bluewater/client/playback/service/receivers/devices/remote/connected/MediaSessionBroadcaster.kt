@@ -80,9 +80,9 @@ class MediaSessionBroadcaster(
 		scopedCachedFilePropertiesProvider
 			.promiseFileProperties(serviceFile)
 			.eventually(response({ fileProperties ->
-				val artist = fileProperties[KnownFileProperties.ARTIST]
-				val name = fileProperties[KnownFileProperties.NAME]
-				val album = fileProperties[KnownFileProperties.ALBUM]
+				val artist = fileProperties[KnownFileProperties.Artist]
+				val name = fileProperties[KnownFileProperties.Name]
+				val album = fileProperties[KnownFileProperties.Album]
 				val duration =
 					FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties)
 						.toLong()
@@ -93,7 +93,7 @@ class MediaSessionBroadcaster(
 				metadataBuilder.putString(MediaMetadata.METADATA_KEY_TITLE, name)
 				metadataBuilder.putLong(MediaMetadata.METADATA_KEY_DURATION, duration)
 
-				val trackNumberString = fileProperties[KnownFileProperties.TRACK]
+				val trackNumberString = fileProperties[KnownFileProperties.Track]
 				val trackNumber = trackNumberString?.toLong()
 				if (trackNumber != null) {
 					metadataBuilder.putLong(MediaMetadata.METADATA_KEY_TRACK_NUMBER, trackNumber)

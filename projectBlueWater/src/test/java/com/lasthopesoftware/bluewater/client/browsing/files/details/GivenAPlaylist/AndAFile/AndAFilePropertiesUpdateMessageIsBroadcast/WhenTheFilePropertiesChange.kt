@@ -35,23 +35,23 @@ class WhenTheFilePropertiesChange {
 					mockk {
 						every { promiseFileProperties(ServiceFile(serviceFileId)) } returns Promise(
 							mapOf(
-								Pair(KnownFileProperties.RATING, "3"),
+								Pair(KnownFileProperties.Rating, "3"),
 								Pair("bread", "prevent"),
 								Pair("silence", "wind"),
-								Pair(KnownFileProperties.NAME, "sorry"),
-								Pair(KnownFileProperties.ARTIST, "receive"),
-								Pair(KnownFileProperties.ALBUM, "part"),
-								Pair(KnownFileProperties.STACK_VIEW, "basic"),
+								Pair(KnownFileProperties.Name, "sorry"),
+								Pair(KnownFileProperties.Artist, "receive"),
+								Pair(KnownFileProperties.Album, "part"),
+								Pair(KnownFileProperties.StackView, "basic"),
 							)
 						) andThen Promise(
 							mapOf(
-								Pair(KnownFileProperties.RATING, "7"),
+								Pair(KnownFileProperties.Rating, "7"),
 								Pair("bread", "scenery"),
 								Pair("rush", "offense"),
-								Pair(KnownFileProperties.NAME, "kiss"),
-								Pair(KnownFileProperties.ARTIST, "adoption"),
-								Pair(KnownFileProperties.ALBUM, "motherly"),
-								Pair(KnownFileProperties.STACK_TOP, "under"),
+								Pair(KnownFileProperties.Name, "kiss"),
+								Pair(KnownFileProperties.Artist, "adoption"),
+								Pair(KnownFileProperties.Album, "motherly"),
+								Pair(KnownFileProperties.StackTop, "under"),
 							)
 						)
 					},
@@ -107,12 +107,12 @@ class WhenTheFilePropertiesChange {
 	fun `then the properties are correct`() {
 		assertThat(services?.value?.second?.fileProperties?.value).hasSameElementsAs(
 			mapOf(
-				Pair(KnownFileProperties.RATING, "7"),
+				Pair(KnownFileProperties.Rating, "7"),
 				Pair("bread", "scenery"),
 				Pair("rush", "offense"),
-				Pair(KnownFileProperties.NAME, "kiss"),
-				Pair(KnownFileProperties.ARTIST, "adoption"),
-				Pair(KnownFileProperties.ALBUM, "motherly"),
+				Pair(KnownFileProperties.Name, "kiss"),
+				Pair(KnownFileProperties.Artist, "adoption"),
+				Pair(KnownFileProperties.Album, "motherly"),
 			).entries
 		)
 	}

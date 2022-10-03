@@ -29,10 +29,10 @@ class FileDetailsPreviewProvider : PreviewParameterProvider<FileDetailsViewModel
 						mapOf(
 							Pair("Key", "23"),
 							Pair("Media Type", "Audio"),
-							Pair(KnownFileProperties.LAST_PLAYED, lastPlayed.toString()),
+							Pair(KnownFileProperties.LastPlayed, lastPlayed.toString()),
 							Pair("Rating", "4"),
 							Pair("File Size", "2345088"),
-							Pair(KnownFileProperties.DURATION, duration.toString()),
+							Pair(KnownFileProperties.Duration, duration.toString()),
 						)
 					)
 				},

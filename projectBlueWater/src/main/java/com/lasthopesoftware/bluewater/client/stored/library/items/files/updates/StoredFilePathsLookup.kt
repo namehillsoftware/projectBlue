@@ -31,8 +31,8 @@ class StoredFilePathsLookup(
 						syncDir
 							?.path
 							?.let { fullPath ->
-								val artist = fileProperties[KnownFileProperties.ALBUM_ARTIST]
-									?: fileProperties[KnownFileProperties.ARTIST]
+								val artist = fileProperties[KnownFileProperties.AlbumArtist]
+									?: fileProperties[KnownFileProperties.Artist]
 								artist
 									?.let { a ->
 										FilenameUtils.concat(
@@ -43,7 +43,7 @@ class StoredFilePathsLookup(
 									?: fullPath
 							}
 							?.let { fullPath ->
-								fileProperties[KnownFileProperties.ALBUM]
+								fileProperties[KnownFileProperties.Album]
 									?.let { album ->
 										FilenameUtils.concat(
 											fullPath,
@@ -53,7 +53,7 @@ class StoredFilePathsLookup(
 									?: fullPath
 							}
 							?.let { fullPath ->
-								fileProperties[KnownFileProperties.FILENAME]
+								fileProperties[KnownFileProperties.Filename]
 									?.let { f ->
 										var lastPathIndex = f.lastIndexOf('\\')
 										if (lastPathIndex < 0) lastPathIndex = f.lastIndexOf('/')

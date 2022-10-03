@@ -6,6 +6,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideImages
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideScopedFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.TypedFileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideScopedUrlKeyProvider
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
@@ -31,14 +32,14 @@ class FileDetailsViewModel(
 
 	companion object {
 		private val propertiesToSkip = setOf(
-			KnownFileProperties.AUDIO_ANALYSIS_INFO,
-			KnownFileProperties.GET_COVER_ART_INFO,
-			KnownFileProperties.IMAGE_FILE,
-			KnownFileProperties.KEY,
-			KnownFileProperties.STACK_FILES,
-			KnownFileProperties.STACK_TOP,
-			KnownFileProperties.STACK_VIEW,
-			KnownFileProperties.WAVEFORM,
+			KnownFileProperties.AudioAnalysisInfo,
+			KnownFileProperties.GetCoverArtInfo,
+			KnownFileProperties.ImageFile,
+			KnownFileProperties.Key,
+			KnownFileProperties.StackFiles,
+			KnownFileProperties.StackTop,
+			KnownFileProperties.StackView,
+			KnownFileProperties.Waveform,
 			KnownFileProperties.LengthInPcmBlocks
 		)
 	}
@@ -63,6 +64,7 @@ class FileDetailsViewModel(
 			it
 		}
 	private val mutableRating = MutableStateFlow(0)
+	private val mutableIsEditing = MutableStateFlow(false)
 
 	val fileName = mutableFileName.asStateFlow()
 	val artist = mutableArtist.asStateFlow()
@@ -71,6 +73,7 @@ class FileDetailsViewModel(
 	val isLoading = mutableIsLoading.asStateFlow()
 	val coverArt = mutableCoverArt.asStateFlow()
 	val rating = mutableRating.asStateFlow()
+	val isEditing = mutableIsEditing.asStateFlow()
 
 	override fun onCleared() {
 		propertyUpdateRegistrations.close()
@@ -109,16 +112,23 @@ class FileDetailsViewModel(
 		controlPlayback.startPlaylist(associatedPlaylist, positionedFile.playlistPosition)
 	}
 
-	fun updateProperty(key: String, value: String) {}
+	fun updateProperty(key: TypedFileProperty, value: String) {}
+
+	fun editFileProperties(): Map<TypedFileProperty, String> {
+		mutableIsEditing.value = true
+		return fileProperties.value
+			.mapNotNull { TypedFileProperty.fromDescriptor(it.key)?.let { k -> Pair(k, it.value) } }
+			.associate { Pair(it.first, it.second) }
+	}
 
 	private fun loadFileProperties(serviceFile: ServiceFile): Promise<Unit> =
 		scopedFilePropertiesProvider
 			.promiseFileProperties(serviceFile)
 			.then { fileProperties ->
-				fileProperties[KnownFileProperties.NAME]?.also { mutableFileName.value = it }
-				fileProperties[KnownFileProperties.ARTIST]?.also { mutableArtist.value = it }
-				fileProperties[KnownFileProperties.ALBUM]?.also { mutableAlbum.value = it }
-				fileProperties[KnownFileProperties.RATING]?.toIntOrNull()?.also { mutableRating.value = it }
+				fileProperties[KnownFileProperties.Name]?.also { mutableFileName.value = it }
+				fileProperties[KnownFileProperties.Artist]?.also { mutableArtist.value = it }
+				fileProperties[KnownFileProperties.Album]?.also { mutableAlbum.value = it }
+				fileProperties[KnownFileProperties.Rating]?.toIntOrNull()?.also { mutableRating.value = it }
 
 				mutableFileProperties.value = fileProperties.entries
 					.filterNot { e -> propertiesToSkip.contains(e.key) }

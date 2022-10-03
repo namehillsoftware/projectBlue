@@ -180,8 +180,8 @@ class ReusableTrackHeadlineViewModel(
 		override fun respond(properties: Map<String, String>) {
 			if (isNotCurrentServiceFile || isUpdateCancelled) return
 
-			mutableTitle.value = properties[KnownFileProperties.NAME] ?: stringResources.unknownTrack
-			mutableArtist.value = properties[KnownFileProperties.ARTIST] ?: stringResources.unknownArtist
+			mutableTitle.value = properties[KnownFileProperties.Name] ?: stringResources.unknownTrack
+			mutableArtist.value = properties[KnownFileProperties.Artist] ?: stringResources.unknownArtist
 		}
 
 		private fun handleError(e: Throwable) {

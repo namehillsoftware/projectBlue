@@ -46,8 +46,8 @@ class WhenBuildingTheNotification : AndroidContext() {
 		connectionProvider.setupFile(
 			ServiceFile(3),
 			mapOf(
-				Pair(KnownFileProperties.ARTIST, "test-artist"),
-				Pair(KnownFileProperties.NAME, "song")))
+				Pair(KnownFileProperties.Artist, "test-artist"),
+				Pair(KnownFileProperties.Name, "song")))
 		val containerRepository: IFilePropertiesContainerRepository = FakeFilePropertiesContainerRepository()
 		val imageProvider = mockk<ProvideImages>()
 		every { imageProvider.promiseFileBitmap(any()) } returns Promise(expectedBitmap.value)

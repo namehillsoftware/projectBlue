@@ -22,10 +22,10 @@ class WhenGettingTheStoredFilePath {
 				ServiceFile(340),
 				LibraryId(550),
 				mapOf(
-					Pair(KnownFileProperties.ARTIST, "liar"),
-					Pair(KnownFileProperties.ALBUM, "whenever"),
-					Pair(KnownFileProperties.TRACK, "670"),
-					Pair(KnownFileProperties.FILENAME, "wish somebody.mp3")
+					Pair(KnownFileProperties.Artist, "liar"),
+					Pair(KnownFileProperties.Album, "whenever"),
+					Pair(KnownFileProperties.Track, "670"),
+					Pair(KnownFileProperties.Filename, "wish somebody.mp3")
 				)
 			)
 

@@ -51,22 +51,22 @@ class FormattedScopedFilePropertiesProvider(private val inner:  ProvideScopedFil
 
 		private val dateTimeProperties by lazy {
 			setOf(
-				KnownFileProperties.LAST_PLAYED,
-				KnownFileProperties.LAST_PLAYED_ALBUM,
-				KnownFileProperties.LAST_LYRICS_LOOKUP,
-				KnownFileProperties.LAST_SKIPPED,
-				KnownFileProperties.DATE_CREATED,
-				KnownFileProperties.DATE_IMPORTED,
-				KnownFileProperties.DATE_MODIFIED,
-				KnownFileProperties.DATE_TAGGED,
-				KnownFileProperties.DATE_FIRST_RATED,
-				KnownFileProperties.DATE_LAST_OPENED)
+				KnownFileProperties.LastPlayed,
+				KnownFileProperties.LastPlayedAlbum,
+				KnownFileProperties.LastLyricsLookup,
+				KnownFileProperties.LastSkipped,
+				KnownFileProperties.DateCreated,
+				KnownFileProperties.DateImported,
+				KnownFileProperties.DateModified,
+				KnownFileProperties.DateTagged,
+				KnownFileProperties.DateFirstRated,
+				KnownFileProperties.DateLastOpened)
 		}
 
 		private val defaultProperties by lazy {
 			mapOf(
-				Pair(KnownFileProperties.RATING, "0"),
-				Pair(KnownFileProperties.NUMBER_PLAYS, "0"),
+				Pair(KnownFileProperties.Rating, "0"),
+				Pair(KnownFileProperties.NumberPlays, "0"),
 			)
 		}
 
@@ -87,7 +87,7 @@ class FormattedScopedFilePropertiesProvider(private val inner:  ProvideScopedFil
 				val dateTime = DateTime((value.toDouble() * 1000).toLong())
 				dateTime.toString(dateTimeFormatter)
 			} else when (name) {
-				KnownFileProperties.DATE -> {
+				KnownFileProperties.Date -> {
 					var daysValue = value
 					val periodPos = daysValue.indexOf('.')
 					if (periodPos > -1) daysValue = daysValue.substring(0, periodPos)
@@ -97,11 +97,11 @@ class FormattedScopedFilePropertiesProvider(private val inner:  ProvideScopedFil
 						if (returnDate.monthOfYear == 1 && returnDate.dayOfMonth == 1) yearFormatter
 						else dateFormatter)
 				}
-				KnownFileProperties.FILE_SIZE -> {
+				KnownFileProperties.FileSize -> {
 					val fileSizeBytes = ceil(value.toLong().toDouble() / 1024 / 1024 * 100) / 100
 					"$fileSizeBytes MB"
 				}
-				KnownFileProperties.DURATION -> {
+				KnownFileProperties.Duration -> {
 					Duration.standardSeconds(value.toDouble().toLong()).toPeriod().toString(minutesAndSecondsFormatter)
 				}
 				else -> value

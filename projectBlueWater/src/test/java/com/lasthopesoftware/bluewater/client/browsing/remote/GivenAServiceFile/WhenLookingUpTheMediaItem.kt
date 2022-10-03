@@ -3,9 +3,9 @@ package com.lasthopesoftware.bluewater.client.browsing.remote.GivenAServiceFile
 import android.graphics.BitmapFactory
 import android.support.v4.media.MediaBrowserCompat
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideImages
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FakeScopedCachedFilesPropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
-import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideImages
 import com.lasthopesoftware.bluewater.client.browsing.remote.MediaItemServiceFileLookup
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
@@ -24,11 +24,11 @@ class `When Looking Up The Media Item` {
 			fileProperties.addFilePropertiesToCache(
 				ServiceFile(14),
 				mapOf(
-					Pair(KnownFileProperties.KEY, "14"),
-					Pair(KnownFileProperties.ARTIST, "Billy Bob"),
-					Pair(KnownFileProperties.ALBUM, "Bob's BIIIG Adventure"),
-					Pair(KnownFileProperties.NAME, "Billy Bob Jr. Jr."),
-					Pair(KnownFileProperties.DURATION, "30")
+					Pair(KnownFileProperties.Key, "14"),
+					Pair(KnownFileProperties.Artist, "Billy Bob"),
+					Pair(KnownFileProperties.Album, "Bob's BIIIG Adventure"),
+					Pair(KnownFileProperties.Name, "Billy Bob Jr. Jr."),
+					Pair(KnownFileProperties.Duration, "30")
 				)
 			)
 

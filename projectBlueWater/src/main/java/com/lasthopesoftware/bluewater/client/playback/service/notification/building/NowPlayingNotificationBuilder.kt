@@ -54,8 +54,8 @@ class NowPlayingNotificationBuilder(
 
 		return promisedFileProperties
 			.eventually { fileProperties ->
-				val artist = fileProperties[KnownFileProperties.ARTIST]
-				val name = fileProperties[KnownFileProperties.NAME]
+				val artist = fileProperties[KnownFileProperties.Artist]
+				val name = fileProperties[KnownFileProperties.Name]
 				val builder = addButtons(mediaStyleNotificationSetup.mediaStyleNotification, isPlaying)
 					.setOngoing(isPlaying)
 					.setContentTitle(name)

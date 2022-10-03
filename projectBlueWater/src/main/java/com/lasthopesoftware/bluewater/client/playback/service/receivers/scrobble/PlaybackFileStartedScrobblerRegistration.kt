@@ -48,9 +48,9 @@ class PlaybackFileStartedScrobblerRegistration(private val context: Context) : R
 			scopedCachedFilePropertiesProvider
 				.promiseFileProperties(trackStarted.startedFile)
 				.then { fileProperties ->
-					val artist = fileProperties[KnownFileProperties.ARTIST]
-					val name = fileProperties[KnownFileProperties.NAME]
-					val album = fileProperties[KnownFileProperties.ALBUM]
+					val artist = fileProperties[KnownFileProperties.Artist]
+					val name = fileProperties[KnownFileProperties.Name]
+					val album = fileProperties[KnownFileProperties.Album]
 					val duration =
 						FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties).toLong()
 
@@ -60,7 +60,7 @@ class PlaybackFileStartedScrobblerRegistration(private val context: Context) : R
 					scrobbleDroidIntent.putExtra("track", name)
 					scrobbleDroidIntent.putExtra("secs", (duration / 1000).toInt())
 
-					fileProperties[KnownFileProperties.TRACK]
+					fileProperties[KnownFileProperties.Track]
 						?.takeIf { it.isNotEmpty() }
 						?.also {
 							scrobbleDroidIntent.putExtra("tracknumber", it.toInt())

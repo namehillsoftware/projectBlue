@@ -19,16 +19,16 @@ class ScopedFilePropertiesPlayStatsUpdater(
 		filePropertiesProvider.promiseFileProperties(serviceFile)
 			.eventually { fileProperties ->
 				try {
-					val lastPlayedServer = fileProperties[KnownFileProperties.LAST_PLAYED]
+					val lastPlayedServer = fileProperties[KnownFileProperties.LastPlayed]
 					val duration = parseDurationIntoMilliseconds(fileProperties)
 					val currentTime = System.currentTimeMillis()
 					if (lastPlayedServer != null && currentTime - duration <= lastPlayedServer.toLong() * 1000) return@eventually Promise.empty<Collection<Unit>>()
 
-					val numberPlaysString = fileProperties[KnownFileProperties.NUMBER_PLAYS]
+					val numberPlaysString = fileProperties[KnownFileProperties.NumberPlays]
 					val numberPlays = numberPlaysString?.toIntOrNull() ?: 0
 					val numberPlaysUpdate = scopedFilePropertiesStorage.promiseFileUpdate(
 						serviceFile,
-						KnownFileProperties.NUMBER_PLAYS,
+						KnownFileProperties.NumberPlays,
 						numberPlays.inc().toString(),
 						false
 					)
@@ -36,7 +36,7 @@ class ScopedFilePropertiesPlayStatsUpdater(
 					val newLastPlayed = (currentTime / 1000).toString()
 					val lastPlayedUpdate = scopedFilePropertiesStorage.promiseFileUpdate(
 						serviceFile,
-						KnownFileProperties.LAST_PLAYED,
+						KnownFileProperties.LastPlayed,
 						newLastPlayed,
 						false
 					)

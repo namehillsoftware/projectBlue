@@ -32,6 +32,7 @@ import androidx.compose.ui.window.Dialog
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.TypedFileProperty
 import com.lasthopesoftware.bluewater.shared.android.colors.MediaStylePalette
 import com.lasthopesoftware.bluewater.shared.android.colors.MediaStylePaletteProvider
 import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
@@ -78,17 +79,18 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
 	val album by viewModel.album.collectAsState()
 
 	@Composable
-	fun textEditor(property: Map.Entry<String, String>) {
-        Dialog(onDismissRequest = { /*TODO*/ }) {
-            Column {
-                Text(text = property.key)
+	fun textEditor(propertyValue: Map.Entry<TypedFileProperty, String>) {
+		val (property, value) = propertyValue
+		Dialog(onDismissRequest = { /*TODO*/ }) {
+			Column {
+				Text(text = property.descriptor)
 
-                TextField(
-                    value = property.value,
-                    onValueChange = { newValue -> viewModel.updateProperty(property.key, newValue) }
-                )
-            }
-        }
+				TextField(
+					value = value,
+					onValueChange = { newValue -> viewModel.updateProperty(property, newValue) }
+				)
+			}
+		}
 	}
 
 	@Composable
@@ -198,7 +200,7 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
             )
 
             when (property.key) {
-                KnownFileProperties.RATING -> {
+                KnownFileProperties.Rating -> {
                     Box(
                         modifier = Modifier
                             .weight(2f)

@@ -45,7 +45,7 @@ class WhenRestoringEngineStateAndResumingPlayback {
 					ServiceFile(4)
 				)
 			)
-		} returns FilePropertiesContainer(1, mapOf(Pair(KnownFileProperties.DURATION, "100")))
+		} returns FilePropertiesContainer(1, mapOf(Pair(KnownFileProperties.Duration, "100")))
 
 		val repository =
 			NowPlayingRepository(

@@ -33,12 +33,12 @@ class WhenLoading {
 				mockk<ProvideScopedFileProperties>().apply {
 					every { promiseFileProperties(ServiceFile(serviceFileId)) } returns Promise(
 						mapOf(
-							Pair(KnownFileProperties.RATING, "3"),
+							Pair(KnownFileProperties.Rating, "3"),
 							Pair("too", "prevent"),
 							Pair("shirt", "wind"),
-							Pair(KnownFileProperties.NAME, "holiday"),
-							Pair(KnownFileProperties.ARTIST, "board"),
-							Pair(KnownFileProperties.ALBUM, "virtue"),
+							Pair(KnownFileProperties.Name, "holiday"),
+							Pair(KnownFileProperties.Artist, "board"),
+							Pair(KnownFileProperties.Album, "virtue"),
 						)
 					)
 				},
@@ -77,12 +77,12 @@ class WhenLoading {
 	fun `then the properties are correct`() {
 		assertThat(viewModel?.value?.fileProperties?.value).hasSameElementsAs(
 			mapOf(
-				Pair(KnownFileProperties.RATING, "3"),
+				Pair(KnownFileProperties.Rating, "3"),
 				Pair("too", "prevent"),
 				Pair("shirt", "wind"),
-				Pair(KnownFileProperties.NAME, "holiday"),
-				Pair(KnownFileProperties.ARTIST, "board"),
-				Pair(KnownFileProperties.ALBUM, "virtue"),
+				Pair(KnownFileProperties.Name, "holiday"),
+				Pair(KnownFileProperties.Artist, "board"),
+				Pair(KnownFileProperties.Album, "virtue"),
 			).entries
 		)
 	}

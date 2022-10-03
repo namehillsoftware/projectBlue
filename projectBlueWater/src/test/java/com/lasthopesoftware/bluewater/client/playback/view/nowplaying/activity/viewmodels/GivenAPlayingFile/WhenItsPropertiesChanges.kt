@@ -56,14 +56,14 @@ class WhenItsPropertiesChanges {
 		val filePropertiesProvider = mockk<ProvideLibraryFileProperties> {
 			every { promiseFileProperties(LibraryId(libraryId), playlist[playlistPosition]) } returnsMany listOf(
 				mapOf(
-					Pair(KnownFileProperties.ARTIST, "block"),
-					Pair(KnownFileProperties.NAME, "tongue"),
-					Pair(KnownFileProperties.RATING, "422"),
+					Pair(KnownFileProperties.Artist, "block"),
+					Pair(KnownFileProperties.Name, "tongue"),
+					Pair(KnownFileProperties.Rating, "422"),
 				).toPromise(),
 				mapOf(
-					Pair(KnownFileProperties.ARTIST, "plan"),
-					Pair(KnownFileProperties.NAME, "honor"),
-					Pair(KnownFileProperties.RATING, "82"),
+					Pair(KnownFileProperties.Artist, "plan"),
+					Pair(KnownFileProperties.Name, "honor"),
+					Pair(KnownFileProperties.Rating, "82"),
 				).toPromise(),
 			)
 		}
