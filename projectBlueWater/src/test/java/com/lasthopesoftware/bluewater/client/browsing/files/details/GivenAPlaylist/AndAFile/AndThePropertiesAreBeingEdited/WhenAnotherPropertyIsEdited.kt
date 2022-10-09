@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAPlaylist.AndAFile.AndTheFileIsLoaded.AndThePropertiesAreBeingEdited.AndAPropertyIsModified
+package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAPlaylist.AndAFile.AndThePropertiesAreBeingEdited
 
 import android.graphics.BitmapFactory
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -19,9 +19,9 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import java.net.URL
 
-private const val serviceFileId = 79
+private const val serviceFileId = 220
 
-private var persistedTrackNumber = ""
+private var persistedValue = ""
 
 private val viewModel by lazy {
 	FileDetailsViewModel(
@@ -40,7 +40,7 @@ private val viewModel by lazy {
 					Pair(KnownFileProperties.Custom, "curl"),
 					Pair(KnownFileProperties.Publisher, "capital"),
 					Pair(KnownFileProperties.TotalDiscs, "354"),
-					Pair(KnownFileProperties.Track, "703"),
+					Pair(KnownFileProperties.Track, "882"),
 					Pair(KnownFileProperties.AlbumArtist, "calm"),
 					Pair(KnownFileProperties.Album, "distant"),
 					Pair(KnownFileProperties.Date, "1355"),
@@ -48,8 +48,8 @@ private val viewModel by lazy {
 			)
 		},
 		mockk {
-			every { promiseFileUpdate(ServiceFile(serviceFileId), KnownFileProperties.Track, any(), false) } answers {
-				persistedTrackNumber = arg(2)
+			every { promiseFileUpdate(ServiceFile(serviceFileId), KnownFileProperties.Custom, any(), false) } answers {
+				persistedValue = arg(2)
 				Unit.toPromise()
 			}
 		},
@@ -69,19 +69,17 @@ private val viewModel by lazy {
 	)
 }
 
- @RunWith(AndroidJUnit4::class)
-class WhenCancelling {
+@RunWith(AndroidJUnit4::class)
+class WhenAnotherPropertyIsEdited {
 	companion object {
 		@JvmStatic
 		@BeforeClass
 		fun act() {
 			viewModel.loadFromList(listOf(ServiceFile(serviceFileId)), 0).toExpiringFuture().get()
 			viewModel.editFileProperties()
-			viewModel.editFileProperty(EditableFilePropertyDefinition.Track)
-			viewModel.editableFileProperty.value?.run {
-				updateValue("141")
-				cancel()
-			}
+			viewModel.editFileProperty(EditableFilePropertyDefinition.Custom)
+			viewModel.editableFileProperty.value?.updateValue("omit")
+			viewModel.editFileProperty(EditableFilePropertyDefinition.AlbumArtist)
 		}
 	}
 
@@ -91,17 +89,12 @@ class WhenCancelling {
 	}
 
 	@Test
-	fun `then the property is NOT changed`() {
-		assertThat(viewModel.fileProperties.value[KnownFileProperties.Track]).isEqualTo("703")
+	fun `then the property change is persisted`() {
+		assertThat(persistedValue).isEqualTo("omit")
 	}
 
 	@Test
-	fun `then the property change is NOT persisted`() {
-		assertThat(persistedTrackNumber).isEmpty()
-	}
-
-	@Test
-	fun `then the editable file property is null`() {
-		assertThat(viewModel.editableFileProperty.value).isNull()
+	fun `then the editable file property is NOT null`() {
+		assertThat(viewModel.editableFileProperty.value).isNotNull
 	}
 }

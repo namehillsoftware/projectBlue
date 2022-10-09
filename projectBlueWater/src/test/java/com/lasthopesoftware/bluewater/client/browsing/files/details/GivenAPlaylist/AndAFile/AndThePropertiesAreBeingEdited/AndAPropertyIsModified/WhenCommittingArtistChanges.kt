@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAPlaylist.AndAFile.AndTheFileIsLoaded.AndThePropertiesAreBeingEdited.AndAPropertyIsModified
+package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAPlaylist.AndAFile.AndThePropertiesAreBeingEdited.AndAPropertyIsModified
 
 import android.graphics.BitmapFactory
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -6,6 +6,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableFilePropertyDefinition
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideScopedFileProperties
 import com.lasthopesoftware.bluewater.client.connection.libraries.PassThroughScopedUrlKeyProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
@@ -19,20 +20,20 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import java.net.URL
 
-private const val serviceFileId = 294
-private val valueBeingEdited = EditableFilePropertyDefinition.Rating
+private const val serviceFileId = 246
+private val valueBeingEdited = EditableFilePropertyDefinition.Artist
 private var persistedValue = ""
 
 private val viewModel by lazy {
 	FileDetailsViewModel(
-		mockk {
+		mockk<ProvideScopedFileProperties>().apply {
 			every { promiseFileProperties(ServiceFile(serviceFileId)) } returns Promise(
 				mapOf(
 					Pair(KnownFileProperties.Rating, "4"),
 					Pair("awkward", "prevent"),
 					Pair("feast", "wind"),
 					Pair(KnownFileProperties.Name, "please"),
-					Pair(KnownFileProperties.Artist, "brown"),
+					Pair(KnownFileProperties.Artist, "behind"),
 					Pair(KnownFileProperties.Genre, "subject"),
 					Pair(KnownFileProperties.Lyrics, "belief"),
 					Pair(KnownFileProperties.Comment, "pad"),
@@ -70,7 +71,7 @@ private val viewModel by lazy {
 }
 
 @RunWith(AndroidJUnit4::class)
-class WhenCommittingRatingChanges {
+class WhenCommittingArtistChanges {
 	companion object {
 
 		@JvmStatic
@@ -80,7 +81,7 @@ class WhenCommittingRatingChanges {
 			viewModel.editFileProperties()
 			viewModel.editFileProperty(valueBeingEdited)
 			viewModel.editableFileProperty.value?.run {
-				updateValue("4")
+				updateValue("tailor")
 				commitChanges().toExpiringFuture().get()
 			}
 		}
@@ -92,18 +93,8 @@ class WhenCommittingRatingChanges {
 	}
 
 	@Test
-	fun `then the rating is changed`() {
-		assertThat(viewModel.rating.value).isEqualTo(4)
-	}
-
-	@Test
-	fun `then the property is changed`() {
-		assertThat(viewModel.fileProperties.value[valueBeingEdited.descriptor]).isEqualTo("4")
-	}
-
-	@Test
 	fun `then the property change is persisted`() {
-		assertThat(persistedValue).isEqualTo("4")
+		assertThat(persistedValue).isEqualTo("tailor")
 	}
 
 	@Test

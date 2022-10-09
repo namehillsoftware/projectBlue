@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAPlaylist.AndAFile.AndTheFileIsLoaded.AndThePropertiesAreBeingEdited
+package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAPlaylist.AndAFile.AndThePropertiesAreBeingEdited.AndAPropertyIsModified
 
 import android.graphics.BitmapFactory
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -19,8 +19,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import java.net.URL
 
-private const val serviceFileId = 220
-
+private const val serviceFileId = 294
+private val valueBeingEdited = EditableFilePropertyDefinition.Rating
 private var persistedValue = ""
 
 private val viewModel by lazy {
@@ -28,7 +28,7 @@ private val viewModel by lazy {
 		mockk {
 			every { promiseFileProperties(ServiceFile(serviceFileId)) } returns Promise(
 				mapOf(
-					Pair(KnownFileProperties.Rating, "2"),
+					Pair(KnownFileProperties.Rating, "4"),
 					Pair("awkward", "prevent"),
 					Pair("feast", "wind"),
 					Pair(KnownFileProperties.Name, "please"),
@@ -48,7 +48,7 @@ private val viewModel by lazy {
 			)
 		},
 		mockk {
-			every { promiseFileUpdate(ServiceFile(serviceFileId), KnownFileProperties.Custom, any(), false) } answers {
+			every { promiseFileUpdate(ServiceFile(serviceFileId), valueBeingEdited.descriptor, any(), false) } answers {
 				persistedValue = arg(2)
 				Unit.toPromise()
 			}
@@ -69,17 +69,20 @@ private val viewModel by lazy {
 	)
 }
 
- @RunWith(AndroidJUnit4::class)
-class WhenAnotherPropertyIsEdited {
+@RunWith(AndroidJUnit4::class)
+class WhenCommittingRatingChanges {
 	companion object {
+
 		@JvmStatic
 		@BeforeClass
 		fun act() {
 			viewModel.loadFromList(listOf(ServiceFile(serviceFileId)), 0).toExpiringFuture().get()
 			viewModel.editFileProperties()
-			viewModel.editFileProperty(EditableFilePropertyDefinition.Custom).toExpiringFuture().get()
-			viewModel.editableFileProperty.value?.updateValue("omit")
-			viewModel.editFileProperty(EditableFilePropertyDefinition.AlbumArtist).toExpiringFuture().get()
+			viewModel.editFileProperty(valueBeingEdited)
+			viewModel.editableFileProperty.value?.run {
+				updateValue("4")
+				commitChanges().toExpiringFuture().get()
+			}
 		}
 	}
 
@@ -89,12 +92,22 @@ class WhenAnotherPropertyIsEdited {
 	}
 
 	@Test
-	fun `then the property change is persisted`() {
-		assertThat(persistedValue).isEqualTo("omit")
+	fun `then the rating is changed`() {
+		assertThat(viewModel.rating.value).isEqualTo(4)
 	}
 
 	@Test
-	fun `then the editable file property is NOT null`() {
-		assertThat(viewModel.editableFileProperty.value).isNotNull
+	fun `then the property is changed`() {
+		assertThat(viewModel.fileProperties.value[valueBeingEdited.descriptor]).isEqualTo("4")
+	}
+
+	@Test
+	fun `then the property change is persisted`() {
+		assertThat(persistedValue).isEqualTo("4")
+	}
+
+	@Test
+	fun `then the editable file property is null`() {
+		assertThat(viewModel.editableFileProperty.value).isNull()
 	}
 }

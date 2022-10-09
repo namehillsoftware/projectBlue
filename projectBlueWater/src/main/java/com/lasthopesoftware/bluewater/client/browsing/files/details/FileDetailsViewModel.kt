@@ -71,6 +71,7 @@ class FileDetailsViewModel(
 	private val emptyEditableFileProperties = lazy { emptyMap<EditableFilePropertyDefinition, EditableFileProperty>() }
 	private var editableFileProperties = emptyEditableFileProperties
 	private val mutableEditableFileProperty = MutableStateFlow<EditableFileProperty?>(null)
+	private val mutableHighlightedProperty = MutableStateFlow<Pair<String, String>?>(null)
 
 	val fileName = mutableFileName.asStateFlow()
 	val artist = mutableArtist.asStateFlow()
@@ -81,6 +82,7 @@ class FileDetailsViewModel(
 	val rating = mutableRating.asStateFlow()
 	val isEditing = mutableIsEditing.asStateFlow()
 	val editableFileProperty = mutableEditableFileProperty.asStateFlow()
+	val highlightedProperty = mutableHighlightedProperty.asStateFlow()
 
 	override fun onCleared() {
 		propertyUpdateRegistrations.close()
@@ -117,6 +119,11 @@ class FileDetailsViewModel(
 	fun play() {
 		val positionedFile = activePositionedFile ?: return
 		controlPlayback.startPlaylist(associatedPlaylist, positionedFile.playlistPosition)
+	}
+
+	fun highlightProperty(property: String) {
+		val propertyValue = fileProperties.value[property] ?: ""
+		mutableHighlightedProperty.value = Pair(property, propertyValue)
 	}
 
 	fun editFileProperties() {

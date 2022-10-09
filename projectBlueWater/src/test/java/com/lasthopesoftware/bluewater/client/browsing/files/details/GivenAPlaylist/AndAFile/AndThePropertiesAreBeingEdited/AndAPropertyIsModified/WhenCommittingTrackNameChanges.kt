@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAPlaylist.AndAFile.AndTheFileIsLoaded.AndThePropertiesAreBeingEdited.AndAPropertyIsModified
+package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAPlaylist.AndAFile.AndThePropertiesAreBeingEdited.AndAPropertyIsModified
 
 import android.graphics.BitmapFactory
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -19,9 +19,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import java.net.URL
 
-private const val serviceFileId = 479
-private val propertyBeingEdited = EditableFilePropertyDefinition.Comment
-private val propertyEditedLate = EditableFilePropertyDefinition.Publisher
+private const val serviceFileId = 774
+private val valueBeingEdited = EditableFilePropertyDefinition.Name
 private var persistedValue = ""
 
 private val viewModel by lazy {
@@ -29,19 +28,19 @@ private val viewModel by lazy {
 		mockk {
 			every { promiseFileProperties(ServiceFile(serviceFileId)) } returns Promise(
 				mapOf(
-					Pair(KnownFileProperties.Rating, "2"),
+					Pair(KnownFileProperties.Rating, "4"),
 					Pair("awkward", "prevent"),
 					Pair("feast", "wind"),
-					Pair(KnownFileProperties.Name, "please"),
-					Pair(KnownFileProperties.Artist, "brown"),
+					Pair(KnownFileProperties.Name, "moon"),
+					Pair(KnownFileProperties.Artist, "behind"),
 					Pair(KnownFileProperties.Genre, "subject"),
 					Pair(KnownFileProperties.Lyrics, "belief"),
-					Pair(KnownFileProperties.Comment, "warn"),
+					Pair(KnownFileProperties.Comment, "pad"),
 					Pair(KnownFileProperties.Composer, "hotel"),
 					Pair(KnownFileProperties.Custom, "curl"),
-					Pair(KnownFileProperties.Publisher, "absolute"),
+					Pair(KnownFileProperties.Publisher, "capital"),
 					Pair(KnownFileProperties.TotalDiscs, "354"),
-					Pair(KnownFileProperties.Track, "703"),
+					Pair(KnownFileProperties.Track, "882"),
 					Pair(KnownFileProperties.AlbumArtist, "calm"),
 					Pair(KnownFileProperties.Album, "distant"),
 					Pair(KnownFileProperties.Date, "1355"),
@@ -49,7 +48,7 @@ private val viewModel by lazy {
 			)
 		},
 		mockk {
-			every { promiseFileUpdate(ServiceFile(serviceFileId), any(), any(), false) } answers {
+			every { promiseFileUpdate(ServiceFile(serviceFileId), valueBeingEdited.descriptor, any(), false) } answers {
 				persistedValue = arg(2)
 				Unit.toPromise()
 			}
@@ -71,37 +70,30 @@ private val viewModel by lazy {
 }
 
 @RunWith(AndroidJUnit4::class)
-class WhenSavingAndStoppingTheEdit {
+class WhenCommittingTrackNameChanges {
 	companion object {
+
 		@JvmStatic
 		@BeforeClass
 		fun act() {
 			viewModel.loadFromList(listOf(ServiceFile(serviceFileId)), 0).toExpiringFuture().get()
 			viewModel.editFileProperties()
-			viewModel.editFileProperty(propertyBeingEdited).toExpiringFuture().get()
-			viewModel.editableFileProperty.value?.updateValue("possible")
-			viewModel.saveAndStopEditing().toExpiringFuture().get()
-			viewModel.editFileProperty(propertyEditedLate)
+			viewModel.editFileProperty(valueBeingEdited)
 			viewModel.editableFileProperty.value?.run {
-				updateValue("next")
+				updateValue("black")
 				commitChanges().toExpiringFuture().get()
 			}
 		}
 	}
 
 	@Test
-	fun `then the view model is NOT editing`() {
-		assertThat(viewModel.isEditing.value).isFalse
-	}
-
-	@Test
-	fun `then the property that is edited too late is NOT changed`() {
-		assertThat(viewModel.fileProperties.value[propertyEditedLate.descriptor]).isEqualTo("absolute")
+	fun `then the view model is editing`() {
+		assertThat(viewModel.isEditing.value).isTrue
 	}
 
 	@Test
 	fun `then the property change is persisted`() {
-		assertThat(persistedValue).isEqualTo("possible")
+		assertThat(persistedValue).isEqualTo("black")
 	}
 
 	@Test
