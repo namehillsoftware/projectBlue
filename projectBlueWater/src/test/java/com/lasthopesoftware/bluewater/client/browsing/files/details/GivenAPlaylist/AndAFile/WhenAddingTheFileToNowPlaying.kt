@@ -31,6 +31,7 @@ class WhenAddingTheFileToNowPlaying {
 				mockk {
 					every { promiseFileProperties(ServiceFile(serviceFileId)) } returns Promise(emptyMap())
 				},
+				mockk(),
 				mockk {
 					every { promiseFileBitmap() } returns BitmapFactory
 						.decodeByteArray(byteArrayOf(3, 4), 0, 2)

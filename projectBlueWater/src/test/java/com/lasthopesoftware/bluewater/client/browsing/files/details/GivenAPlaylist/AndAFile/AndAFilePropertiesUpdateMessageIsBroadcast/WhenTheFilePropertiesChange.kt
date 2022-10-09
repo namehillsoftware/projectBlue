@@ -55,6 +55,7 @@ class WhenTheFilePropertiesChange {
 							)
 						)
 					},
+					mockk(),
 					mockk {
 						every { promiseFileBitmap() } returns BitmapFactory
 							.decodeByteArray(byteArrayOf(3, 4), 0, 2)
@@ -105,7 +106,7 @@ class WhenTheFilePropertiesChange {
 
 	@Test
 	fun `then the properties are correct`() {
-		assertThat(services?.value?.second?.fileProperties?.value).hasSameElementsAs(
+		assertThat(services?.value?.second?.fileProperties?.value?.entries).hasSameElementsAs(
 			mapOf(
 				Pair(KnownFileProperties.Rating, "7"),
 				Pair("bread", "scenery"),

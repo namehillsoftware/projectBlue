@@ -42,6 +42,7 @@ class WhenLoading {
 						)
 					)
 				},
+				mockk(),
 				mockk<ProvideDefaultImage>().apply {
 					every { promiseFileBitmap() } returns BitmapFactory
 						.decodeByteArray(byteArrayOf(3, 4), 0, 2)
@@ -75,7 +76,7 @@ class WhenLoading {
 
 	@Test
 	fun `then the properties are correct`() {
-		assertThat(viewModel?.value?.fileProperties?.value).hasSameElementsAs(
+		assertThat(viewModel?.value?.fileProperties?.value?.entries).hasSameElementsAs(
 			mapOf(
 				Pair(KnownFileProperties.Rating, "3"),
 				Pair("too", "prevent"),

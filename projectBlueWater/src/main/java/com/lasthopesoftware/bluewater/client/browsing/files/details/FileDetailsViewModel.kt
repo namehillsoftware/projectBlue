@@ -4,10 +4,11 @@ import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideImages
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableFilePropertyDefinition
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideScopedFileProperties
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.TypedFileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.UpdateScopedFileProperties
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideScopedUrlKeyProvider
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
@@ -16,6 +17,7 @@ import com.lasthopesoftware.bluewater.shared.images.ProvideDefaultImage
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -23,6 +25,7 @@ import kotlinx.coroutines.flow.asStateFlow
 
 class FileDetailsViewModel(
 	private val scopedFilePropertiesProvider: ProvideScopedFileProperties,
+	private val updateFileProperties: UpdateScopedFileProperties,
 	defaultImageProvider: ProvideDefaultImage,
 	private val imageProvider: ProvideImages,
 	private val controlPlayback: ControlPlaybackService,
@@ -55,7 +58,7 @@ class FileDetailsViewModel(
 	private val mutableFileName = MutableStateFlow("")
 	private val mutableAlbum = MutableStateFlow("")
 	private val mutableArtist = MutableStateFlow("")
-	private val mutableFileProperties = MutableStateFlow(emptyList<Map.Entry<String, String>>())
+	private val mutableFileProperties = MutableStateFlow(emptyMap<String, String>())
 	private val mutableIsLoading = MutableStateFlow(false)
 	private val mutableCoverArt = MutableStateFlow<Bitmap?>(null)
 	private val promisedSetDefaultCoverArt = defaultImageProvider.promiseFileBitmap()
@@ -65,6 +68,9 @@ class FileDetailsViewModel(
 		}
 	private val mutableRating = MutableStateFlow(0)
 	private val mutableIsEditing = MutableStateFlow(false)
+	private val emptyEditableFileProperties = lazy { emptyMap<EditableFilePropertyDefinition, EditableFileProperty>() }
+	private var editableFileProperties = emptyEditableFileProperties
+	private val mutableEditableFileProperty = MutableStateFlow<EditableFileProperty?>(null)
 
 	val fileName = mutableFileName.asStateFlow()
 	val artist = mutableArtist.asStateFlow()
@@ -74,6 +80,7 @@ class FileDetailsViewModel(
 	val coverArt = mutableCoverArt.asStateFlow()
 	val rating = mutableRating.asStateFlow()
 	val isEditing = mutableIsEditing.asStateFlow()
+	val editableFileProperty = mutableEditableFileProperty.asStateFlow()
 
 	override fun onCleared() {
 		propertyUpdateRegistrations.close()
@@ -112,13 +119,40 @@ class FileDetailsViewModel(
 		controlPlayback.startPlaylist(associatedPlaylist, positionedFile.playlistPosition)
 	}
 
-	fun updateProperty(key: TypedFileProperty, value: String) {}
-
-	fun editFileProperties(): Map<TypedFileProperty, String> {
+	fun editFileProperties() {
 		mutableIsEditing.value = true
-		return fileProperties.value
-			.mapNotNull { TypedFileProperty.fromDescriptor(it.key)?.let { k -> Pair(k, it.value) } }
-			.associate { Pair(it.first, it.second) }
+		editableFileProperties = lazy {
+			fileProperties.value
+				.mapNotNull {
+					EditableFilePropertyDefinition
+						.fromDescriptor(it.key)
+						?.let { k -> Pair(k, EditableFileProperty(k, it.value)) }
+				}
+				.toMap()
+		}
+	}
+
+	fun editFileProperty(property: EditableFilePropertyDefinition): Promise<Unit> {
+		return mutableEditableFileProperty.value
+			?.commitChanges()
+			.keepPromise(Unit)
+			.must { mutableEditableFileProperty.value = editableFileProperties.value[property] }
+	}
+
+	fun saveAndStopEditing(): Promise<Unit> =
+		mutableEditableFileProperty.value
+			?.commitChanges()
+			?.must(::resetBoard)
+			?: resetBoard().toPromise()
+
+	fun stopEditing() {
+		mutableEditableFileProperty.value?.cancel()
+		resetBoard()
+	}
+
+	private fun resetBoard() {
+		editableFileProperties = emptyEditableFileProperties
+		mutableIsEditing.value = false
 	}
 
 	private fun loadFileProperties(serviceFile: ServiceFile): Promise<Unit> =
@@ -132,7 +166,34 @@ class FileDetailsViewModel(
 
 				mutableFileProperties.value = fileProperties.entries
 					.filterNot { e -> propertiesToSkip.contains(e.key) }
-					.sortedBy { e -> e.key }
+					.associate { e -> Pair(e.key, e.value) }
+					.toSortedMap()
 			}
 			.keepPromise(Unit)
+
+	inner class EditableFileProperty(val property: EditableFilePropertyDefinition, currentValue: String) {
+		private val mutablePropertyValue = MutableStateFlow(currentValue)
+
+		val propertyValue = mutablePropertyValue.asStateFlow()
+
+		fun updateValue(newValue: String) {
+			mutablePropertyValue.value = newValue
+		}
+
+		fun commitChanges(): Promise<Unit> {
+			val newValue = propertyValue.value
+
+			return activePositionedFile
+				?.serviceFile
+				?.let { serviceFile ->
+					updateFileProperties.promiseFileUpdate(serviceFile, property.descriptor, newValue, false)
+				}
+				.keepPromise(Unit)
+				.must(::cancel)
+		}
+
+		fun cancel() {
+			mutableEditableFileProperty.value = null
+		}
+	}
 }

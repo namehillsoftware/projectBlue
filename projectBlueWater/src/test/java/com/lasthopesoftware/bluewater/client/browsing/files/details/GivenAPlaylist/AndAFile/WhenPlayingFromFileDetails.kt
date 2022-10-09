@@ -46,6 +46,7 @@ class WhenPlayingFromFileDetails {
 
 			FileDetailsViewModel(
 				fakeFilesPropertiesProvider,
+				mockk(),
 				mockk {
 					every { promiseFileBitmap() } returns BitmapFactory
 						.decodeByteArray(byteArrayOf(111, 112), 0, 2)
@@ -132,7 +133,7 @@ class WhenPlayingFromFileDetails {
 
 	@Test
 	fun `then the file properties are correct`() {
-		assertThat(mut?.value?.fileProperties?.value).containsExactlyInAnyOrder(
+		assertThat(mut?.value?.fileProperties?.value?.entries).containsExactlyInAnyOrder(
 			*(mapOf(
 				Pair(KnownFileProperties.Name, "toward"),
 				Pair(KnownFileProperties.Artist, "load"),

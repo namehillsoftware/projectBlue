@@ -32,7 +32,6 @@ import androidx.compose.ui.window.Dialog
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.TypedFileProperty
 import com.lasthopesoftware.bluewater.shared.android.colors.MediaStylePalette
 import com.lasthopesoftware.bluewater.shared.android.colors.MediaStylePaletteProvider
 import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
@@ -78,24 +77,39 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
 	val artist by viewModel.artist.collectAsState()
 	val album by viewModel.album.collectAsState()
 
-	@Composable
-	fun textEditor(propertyValue: Map.Entry<TypedFileProperty, String>) {
-		val (property, value) = propertyValue
-		Dialog(onDismissRequest = { /*TODO*/ }) {
-			Column {
-				Text(text = property.descriptor)
+	val maybeEditableFileProperty by viewModel.editableFileProperty.collectAsState()
+	maybeEditableFileProperty?.let { editableFileProperty ->
+		val property = editableFileProperty.property
 
-				TextField(
-					value = value,
-					onValueChange = { newValue -> viewModel.updateProperty(property, newValue) }
-				)
+		Dialog(onDismissRequest = { editableFileProperty.cancel() }) {
+			Surface {
+				Column {
+					Text(text = property.descriptor)
+
+					val propertyValueFlow = editableFileProperty.propertyValue
+					val propertyValue by propertyValueFlow.collectAsState()
+					TextField(
+						value = propertyValue,
+						singleLine = true,
+						onValueChange = editableFileProperty::updateValue
+					)
+
+					Row {
+						Button(onClick = { editableFileProperty.commitChanges() }) {
+							Text(stringResource(id = R.string.btn_save))
+						}
+
+						Button(onClick = { editableFileProperty.cancel() }) {
+							Text(stringResource(id = R.string.btn_cancel))
+						}
+					}
+				}
 			}
 		}
 	}
 
 	@Composable
 	fun filePropertyHeader(modifier: Modifier, titleFontSize: TextUnit = 24.sp) {
-		val artist by viewModel.artist.collectAsState()
 		val fileName by viewModel.fileName.collectAsState(stringResource(id = R.string.lbl_loading))
 
         Column(modifier = modifier) {
@@ -264,7 +278,7 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
 
                 val coverArtScrollOffset by derivedStateOf { -coverArtContainerHeight * headerHidingProgress }
                 Box(
-                    modifier = androidx.compose.ui.Modifier
+                    modifier = Modifier
                         .height(coverArtContainerHeight)
                         .padding(
                             top = coverArtTopPadding,
@@ -298,7 +312,7 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
                 }
 
                 Box(
-                    modifier = androidx.compose.ui.Modifier
+                    modifier = Modifier
                         .height(appBarHeight)
                         .background(coverArtColorState.backgroundColor)
                         .fillMaxWidth()
@@ -307,7 +321,7 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
                         Icons.Default.ArrowBack,
                         contentDescription = "",
                         tint = coverArtColorState.secondaryTextColor,
-                        modifier = androidx.compose.ui.Modifier
+                        modifier = Modifier
                             .padding(16.dp)
                             .align(Alignment.CenterStart)
                             .clickable(
@@ -331,7 +345,7 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
 
                 val topTitlePadding by derivedStateOf { expandedTitlePadding * toolbarState.toolbarState.progress }
                 BoxWithConstraints(
-                    modifier = androidx.compose.ui.Modifier
+                    modifier = Modifier
                         .height(boxHeight)
                         .padding(top = topTitlePadding)
                         .fillMaxWidth()
@@ -392,7 +406,8 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
             }
         ) {
             LazyColumn(modifier = Modifier.fillMaxSize()) {
-                items(fileProperties) {
+				val list = fileProperties.entries.toList()
+                items(list) {
                     filePropertyRow(it)
                 }
             }
@@ -467,7 +482,8 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
                     )
                 }
 
-                items(fileProperties) {
+				val list = fileProperties.entries.toList()
+				items(list) {
                     filePropertyRow(property = it)
                 }
             }

@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.properties
 
-enum class TypedFileProperty(val descriptor: String, val type: FilePropertyType? = null) {
+enum class EditableFilePropertyDefinition(val descriptor: String, val type: FilePropertyType? = null) {
 	Artist(KnownFileProperties.Artist, FilePropertyType.ShortFormText),
 	AlbumArtist(KnownFileProperties.AlbumArtist, FilePropertyType.ShortFormText),
 	Album(KnownFileProperties.Album, FilePropertyType.ShortFormText),
