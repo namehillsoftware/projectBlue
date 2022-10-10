@@ -178,6 +178,10 @@ class FileDetailsViewModel(
 			}
 			.keepPromise(Unit)
 
+	fun clearHighlights() {
+		mutableHighlightedProperty.value = null
+	}
+
 	inner class EditableFileProperty(val property: EditableFilePropertyDefinition, currentValue: String) {
 		private val mutablePropertyValue = MutableStateFlow(currentValue)
 
