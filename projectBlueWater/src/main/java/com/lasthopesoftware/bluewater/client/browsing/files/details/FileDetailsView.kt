@@ -78,7 +78,7 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
 	val album by viewModel.album.collectAsState()
 
 	val maybeHighlightedFileProperty by viewModel.highlightedProperty.collectAsState()
-	maybeHighlightedFileProperty?.second?.let { fileProperty ->
+	maybeHighlightedFileProperty?.let { fileProperty ->
 		val property = fileProperty.property
 
 		Dialog(onDismissRequest = viewModel::clearHighlights) {

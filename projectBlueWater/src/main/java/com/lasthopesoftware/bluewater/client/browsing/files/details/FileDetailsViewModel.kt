@@ -67,7 +67,7 @@ class FileDetailsViewModel(
 			it
 		}
 	private val mutableRating = MutableStateFlow(0)
-	private val mutableHighlightedProperty = MutableStateFlow<Pair<String, FilePropertyViewModel?>?>(null)
+	private val mutableHighlightedProperty = MutableStateFlow<FilePropertyViewModel?>(null)
 
 	val fileName = mutableFileName.asStateFlow()
 	val artist = mutableArtist.asStateFlow()
@@ -117,7 +117,7 @@ class FileDetailsViewModel(
 
 	fun highlightProperty(property: String) {
 		val propertyValue = fileProperties.value[property]
-		mutableHighlightedProperty.value = Pair(property, propertyValue)
+		mutableHighlightedProperty.value = propertyValue
 	}
 
 	private fun loadFileProperties(serviceFile: ServiceFile): Promise<Unit> =

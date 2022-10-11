@@ -86,6 +86,11 @@ class WhenHighlightingTheProperty {
 
 	@Test
 	fun `then the highlighted property is correct`() {
-		assertThat(viewModel?.value?.highlightedProperty?.value).isEqualTo(Pair(KnownFileProperties.Publisher, "lipstick"))
+		assertThat(viewModel?.value?.highlightedProperty?.value?.property).isEqualTo(KnownFileProperties.Publisher)
+	}
+
+	@Test
+	fun `then the highlighted property value is correct`() {
+		assertThat(viewModel?.value?.highlightedProperty?.value?.value?.value).isEqualTo("lipstick")
 	}
 }
