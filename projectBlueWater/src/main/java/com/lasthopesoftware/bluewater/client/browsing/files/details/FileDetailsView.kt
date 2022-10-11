@@ -14,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
@@ -39,14 +40,16 @@ import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.RatingBar
 import com.lasthopesoftware.bluewater.shared.promises.extensions.suspend
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import me.onebone.toolbar.CollapsingToolbarScaffold
+import me.onebone.toolbar.ExperimentalToolbarApi
 import me.onebone.toolbar.ScrollStrategy
 import me.onebone.toolbar.rememberCollapsingToolbarScaffoldState
 import kotlin.math.pow
 
 @Preview
 @Composable
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalToolbarApi::class)
 internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class) viewModel: FileDetailsViewModel) {
 	val activity = LocalContext.current as? Activity ?: return
 
@@ -83,8 +86,12 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
 
 		Dialog(onDismissRequest = viewModel::clearHighlights) {
 			Surface {
-				Column {
-					Text(text = property)
+				Column(
+					modifier = Modifier.padding(8.dp)
+				) {
+					ProvideTextStyle(MaterialTheme.typography.h4) {
+						Text(text = property)
+					}
 
 					val propertyValueFlow = fileProperty.value
 					val propertyValue by propertyValueFlow.collectAsState()
@@ -98,22 +105,22 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
 
 					Row {
 						if (isEditing) {
+							Button(onClick = { fileProperty.cancel() }) {
+								Text(stringResource(id = R.string.btn_cancel))
+							}
+
 							Button(onClick = { fileProperty.commitChanges() }) {
 								Text(stringResource(id = R.string.btn_save))
 							}
-
+						} else {
 							Button(onClick = { fileProperty.cancel() }) {
 								Text(stringResource(id = R.string.btn_cancel))
 							}
-						} else {
+
 							if (fileProperty.isEditable) {
 								Button(onClick = { fileProperty.edit() }) {
-									Text(stringResource(id = R.string.btn_save))
+									Text(stringResource(id = R.string.edit))
 								}
-							}
-
-							Button(onClick = { fileProperty.cancel() }) {
-								Text(stringResource(id = R.string.btn_cancel))
 							}
 						}
 					}
@@ -160,17 +167,6 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
 				.height(dimensionResource(id = R.dimen.standard_row_height))
 				.padding(viewPadding + 8.dp)
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.pencil),
-                colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
-                contentDescription = stringResource(id = R.string.edit_file_properties),
-                modifier = Modifier
-					.fillMaxWidth()
-					.weight(1f)
-					.clickable { viewModel.addToNowPlaying() }
-					.align(Alignment.CenterVertically),
-            )
-
             Image(
                 painter = painterResource(id = R.drawable.ic_add_item_white_36dp),
                 colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
@@ -260,13 +256,13 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
                         text = propertyValue,
                         color = coverArtColorState.primaryTextColor,
                         modifier = Modifier
-                            .weight(2f)
-                            .padding(
-                                start = itemPadding,
-                                top = itemPadding,
-                                end = viewPadding,
-                                bottom = itemPadding
-                            ),
+							.weight(2f)
+							.padding(
+								start = itemPadding,
+								top = itemPadding,
+								end = viewPadding,
+								bottom = itemPadding
+							),
                     )
                 }
             }
@@ -368,7 +364,7 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
                         .padding(top = topTitlePadding)
                         .fillMaxWidth()
                 ) {
-                    val minimumMenuWidth = (2 * 32).dp
+                    val minimumMenuWidth = (3 * 32).dp
 
                     val acceleratedProgress by derivedStateOf {
                         1 - toolbarState.toolbarState.progress.pow(
@@ -393,6 +389,27 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
                             .align(Alignment.TopEnd)
                     ) {
                         val iconSize by derivedStateOf { expandedIconSize - (12 * headerHidingProgress).dp }
+						val chevronRotation by derivedStateOf { 180 * headerHidingProgress }
+						val isCollapsed by derivedStateOf { headerHidingProgress == 1f }
+
+						val scope = rememberCoroutineScope()
+						Image(
+							painter = painterResource(id = R.drawable.chevron_up_white_36dp),
+							colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
+							contentDescription = stringResource(id = if (isCollapsed) R.string.expand else R.string.collapse),
+							modifier = Modifier
+								.fillMaxWidth()
+								.weight(1f)
+								.size(iconSize)
+								.rotate(chevronRotation)
+								.clickable {
+									scope.launch {
+										if (isCollapsed) toolbarState.toolbarState.expand()
+										else toolbarState.toolbarState.collapse()
+									}
+								}
+								.align(Alignment.CenterVertically),
+						)
 
                         Image(
                             painter = painterResource(id = R.drawable.ic_add_item_white_36dp),

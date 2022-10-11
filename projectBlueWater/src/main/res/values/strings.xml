@@ -107,6 +107,9 @@
     <string name="edit_now_playing_list">Edit Now Playing</string>
     <string name="finish_edit_now_playing_list">Finish Editing Now Playing</string>
     <string name="edit_file_properties">Edit File Properties</string>
+    <string name="expand">Expand</string>
+    <string name="collapse">Collapse</string>
+    <string name="edit">Edit</string>
     <string name="drag_item">Drag Item</string>
     <string name="title_activity_test">TestActivity</string>
     <string name="lbl_cover_art">Cover Art for %1$s by %2$s</string>
