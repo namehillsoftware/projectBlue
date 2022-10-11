@@ -106,15 +106,15 @@ class WhenTheFilePropertiesChange {
 
 	@Test
 	fun `then the properties are correct`() {
-		assertThat(services?.value?.second?.fileProperties?.value?.entries).hasSameElementsAs(
-			mapOf(
+		assertThat(services?.value?.second?.fileProperties?.value?.entries?.map { Pair(it.key, it.value.value.value) }).hasSameElementsAs(
+			listOf(
 				Pair(KnownFileProperties.Rating, "815"),
 				Pair("little", "more"),
 				Pair("evening", "skin"),
 				Pair(KnownFileProperties.Name, "ahead"),
 				Pair(KnownFileProperties.Artist, "moon"),
 				Pair(KnownFileProperties.Album, "number"),
-			).entries
+			)
 		)
 	}
 

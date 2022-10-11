@@ -76,15 +76,15 @@ class WhenLoading {
 
 	@Test
 	fun `then the properties are correct`() {
-		assertThat(viewModel?.value?.fileProperties?.value?.entries).hasSameElementsAs(
-			mapOf(
+		assertThat(viewModel?.value?.fileProperties?.value?.entries?.map { Pair(it.key, it.value.value.value) }).hasSameElementsAs(
+			listOf(
 				Pair(KnownFileProperties.Rating, "3"),
 				Pair("too", "prevent"),
 				Pair("shirt", "wind"),
 				Pair(KnownFileProperties.Name, "holiday"),
 				Pair(KnownFileProperties.Artist, "board"),
 				Pair(KnownFileProperties.Album, "virtue"),
-			).entries
+			)
 		)
 	}
 

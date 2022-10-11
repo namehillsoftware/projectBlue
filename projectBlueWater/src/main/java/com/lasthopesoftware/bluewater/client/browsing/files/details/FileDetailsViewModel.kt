@@ -17,7 +17,6 @@ import com.lasthopesoftware.bluewater.shared.images.ProvideDefaultImage
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -47,6 +46,7 @@ class FileDetailsViewModel(
 		)
 	}
 
+	private var activeEditingFile: FilePropertyViewModel? = null
 	private var associatedUrlKey: UrlKeyHolder<ServiceFile>? = null
 	private var associatedPlaylist = emptyList<ServiceFile>()
 	private var activePositionedFile: PositionedFile? = null
@@ -58,7 +58,7 @@ class FileDetailsViewModel(
 	private val mutableFileName = MutableStateFlow("")
 	private val mutableAlbum = MutableStateFlow("")
 	private val mutableArtist = MutableStateFlow("")
-	private val mutableFileProperties = MutableStateFlow(emptyMap<String, String>())
+	private val mutableFileProperties = MutableStateFlow(emptyMap<String, FilePropertyViewModel>())
 	private val mutableIsLoading = MutableStateFlow(false)
 	private val mutableCoverArt = MutableStateFlow<Bitmap?>(null)
 	private val promisedSetDefaultCoverArt = defaultImageProvider.promiseFileBitmap()
@@ -67,11 +67,7 @@ class FileDetailsViewModel(
 			it
 		}
 	private val mutableRating = MutableStateFlow(0)
-	private val mutableIsEditing = MutableStateFlow(false)
-	private val emptyEditableFileProperties = lazy { emptyMap<EditableFilePropertyDefinition, EditableFileProperty>() }
-	private var editableFileProperties = emptyEditableFileProperties
-	private val mutableEditableFileProperty = MutableStateFlow<EditableFileProperty?>(null)
-	private val mutableHighlightedProperty = MutableStateFlow<Pair<String, String>?>(null)
+	private val mutableHighlightedProperty = MutableStateFlow<Pair<String, FilePropertyViewModel?>?>(null)
 
 	val fileName = mutableFileName.asStateFlow()
 	val artist = mutableArtist.asStateFlow()
@@ -80,8 +76,6 @@ class FileDetailsViewModel(
 	val isLoading = mutableIsLoading.asStateFlow()
 	val coverArt = mutableCoverArt.asStateFlow()
 	val rating = mutableRating.asStateFlow()
-	val isEditing = mutableIsEditing.asStateFlow()
-	val editableFileProperty = mutableEditableFileProperty.asStateFlow()
 	val highlightedProperty = mutableHighlightedProperty.asStateFlow()
 
 	override fun onCleared() {
@@ -122,44 +116,8 @@ class FileDetailsViewModel(
 	}
 
 	fun highlightProperty(property: String) {
-		val propertyValue = fileProperties.value[property] ?: ""
+		val propertyValue = fileProperties.value[property]
 		mutableHighlightedProperty.value = Pair(property, propertyValue)
-	}
-
-	fun editFileProperties() {
-		mutableIsEditing.value = true
-		editableFileProperties = lazy {
-			fileProperties.value
-				.mapNotNull {
-					EditableFilePropertyDefinition
-						.fromDescriptor(it.key)
-						?.let { k -> Pair(k, EditableFileProperty(k, it.value)) }
-				}
-				.toMap()
-		}
-	}
-
-	fun editFileProperty(property: EditableFilePropertyDefinition): Promise<Unit> {
-		return mutableEditableFileProperty.value
-			?.commitChanges()
-			.keepPromise(Unit)
-			.must { mutableEditableFileProperty.value = editableFileProperties.value[property] }
-	}
-
-	fun saveAndStopEditing(): Promise<Unit> =
-		mutableEditableFileProperty.value
-			?.commitChanges()
-			?.must(::resetBoard)
-			?: resetBoard().toPromise()
-
-	fun stopEditing() {
-		mutableEditableFileProperty.value?.cancel()
-		resetBoard()
-	}
-
-	private fun resetBoard() {
-		editableFileProperties = emptyEditableFileProperties
-		mutableIsEditing.value = false
 	}
 
 	private fun loadFileProperties(serviceFile: ServiceFile): Promise<Unit> =
@@ -173,7 +131,7 @@ class FileDetailsViewModel(
 
 				mutableFileProperties.value = fileProperties.entries
 					.filterNot { e -> propertiesToSkip.contains(e.key) }
-					.associate { e -> Pair(e.key, e.value) }
+					.associate { e -> Pair(e.key, FilePropertyViewModel(e.key, e.value)) }
 					.toSortedMap()
 			}
 			.keepPromise(Unit)
@@ -182,29 +140,43 @@ class FileDetailsViewModel(
 		mutableHighlightedProperty.value = null
 	}
 
-	inner class EditableFileProperty(val property: EditableFilePropertyDefinition, currentValue: String) {
-		private val mutablePropertyValue = MutableStateFlow(currentValue)
+	inner class FilePropertyViewModel(
+		val property: String,
+		private val originalValue: String
+	) {
+		private val mutableValue = MutableStateFlow(originalValue)
+		private val mutableIsEditing = MutableStateFlow(false)
 
-		val propertyValue = mutablePropertyValue.asStateFlow()
+		val value = mutableValue.asStateFlow()
+		val isEditing = mutableIsEditing.asStateFlow()
+		val isEditable by lazy { EditableFilePropertyDefinition.fromDescriptor(property) != null }
+
+		fun edit() {
+			activeEditingFile?.cancel()
+			activeEditingFile = this
+			mutableIsEditing.value = isEditable
+		}
 
 		fun updateValue(newValue: String) {
-			mutablePropertyValue.value = newValue
+			mutableValue.value = newValue
 		}
 
 		fun commitChanges(): Promise<Unit> {
-			val newValue = propertyValue.value
+			val newValue = value.value
 
 			return activePositionedFile
 				?.serviceFile
 				?.let { serviceFile ->
-					updateFileProperties.promiseFileUpdate(serviceFile, property.descriptor, newValue, false)
+					updateFileProperties.promiseFileUpdate(serviceFile, property, newValue, false)
 				}
 				.keepPromise(Unit)
 				.must(::cancel)
 		}
 
 		fun cancel() {
-			mutableEditableFileProperty.value = null
+			mutableValue.value = originalValue
+			mutableIsEditing.value = false
+			mutableHighlightedProperty.value = null
 		}
 	}
 }

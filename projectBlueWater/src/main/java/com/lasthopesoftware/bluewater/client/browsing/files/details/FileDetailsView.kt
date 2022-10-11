@@ -77,30 +77,44 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
 	val artist by viewModel.artist.collectAsState()
 	val album by viewModel.album.collectAsState()
 
-	val maybeEditableFileProperty by viewModel.editableFileProperty.collectAsState()
-	maybeEditableFileProperty?.let { editableFileProperty ->
-		val property = editableFileProperty.property
+	val maybeHighlightedFileProperty by viewModel.highlightedProperty.collectAsState()
+	maybeHighlightedFileProperty?.second?.let { fileProperty ->
+		val property = fileProperty.property
 
-		Dialog(onDismissRequest = { editableFileProperty.cancel() }) {
+		Dialog(onDismissRequest = viewModel::clearHighlights) {
 			Surface {
 				Column {
-					Text(text = property.descriptor)
+					Text(text = property)
 
-					val propertyValueFlow = editableFileProperty.propertyValue
+					val propertyValueFlow = fileProperty.value
 					val propertyValue by propertyValueFlow.collectAsState()
+					val isEditing by fileProperty.isEditing.collectAsState()
 					TextField(
 						value = propertyValue,
+						enabled = isEditing,
 						singleLine = true,
-						onValueChange = editableFileProperty::updateValue
+						onValueChange = fileProperty::updateValue
 					)
 
 					Row {
-						Button(onClick = { editableFileProperty.commitChanges() }) {
-							Text(stringResource(id = R.string.btn_save))
-						}
+						if (isEditing) {
+							Button(onClick = { fileProperty.commitChanges() }) {
+								Text(stringResource(id = R.string.btn_save))
+							}
 
-						Button(onClick = { editableFileProperty.cancel() }) {
-							Text(stringResource(id = R.string.btn_cancel))
+							Button(onClick = { fileProperty.cancel() }) {
+								Text(stringResource(id = R.string.btn_cancel))
+							}
+						} else {
+							if (fileProperty.isEditable) {
+								Button(onClick = { fileProperty.edit() }) {
+									Text(stringResource(id = R.string.btn_save))
+								}
+							}
+
+							Button(onClick = { fileProperty.cancel() }) {
+								Text(stringResource(id = R.string.btn_cancel))
+							}
 						}
 					}
 				}
@@ -143,18 +157,18 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
 	fun fileMenu() {
         Row(
             modifier = Modifier
-                .height(dimensionResource(id = R.dimen.standard_row_height))
-                .padding(viewPadding + 8.dp)
+				.height(dimensionResource(id = R.dimen.standard_row_height))
+				.padding(viewPadding + 8.dp)
         ) {
             Image(
                 painter = painterResource(id = R.drawable.pencil),
                 colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
                 contentDescription = stringResource(id = R.string.edit_file_properties),
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .clickable { viewModel.addToNowPlaying() }
-                    .align(Alignment.CenterVertically),
+					.fillMaxWidth()
+					.weight(1f)
+					.clickable { viewModel.addToNowPlaying() }
+					.align(Alignment.CenterVertically),
             )
 
             Image(
@@ -162,10 +176,10 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
                 colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
                 contentDescription = stringResource(id = R.string.btn_add_file),
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .clickable { viewModel.addToNowPlaying() }
-                    .align(Alignment.CenterVertically),
+					.fillMaxWidth()
+					.weight(1f)
+					.clickable { viewModel.addToNowPlaying() }
+					.align(Alignment.CenterVertically),
             )
 
             Image(
@@ -173,12 +187,12 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
                 colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
                 contentDescription = stringResource(id = R.string.btn_play),
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f)
-                    .clickable {
-                        viewModel.play()
-                    }
-                    .align(Alignment.CenterVertically),
+					.fillMaxWidth()
+					.weight(1f)
+					.clickable {
+						viewModel.play()
+					}
+					.align(Alignment.CenterVertically),
             )
         }
 	}
@@ -196,29 +210,33 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
 	}
 
 	@Composable
-	fun filePropertyRow(property: Map.Entry<String, String>) {
+	fun filePropertyRow(property: Map.Entry<String, FileDetailsViewModel.FilePropertyViewModel>) {
 		val itemPadding = 2.dp
 
-        Row {
+        Row(
+			modifier = Modifier.clickable { viewModel.highlightProperty(property.key) }
+		) {
             Text(
                 text = property.key,
                 color = coverArtColorState.primaryTextColor,
                 modifier = Modifier
-                    .weight(1f)
-                    .padding(
-                        start = viewPadding,
-                        top = itemPadding,
-                        end = itemPadding,
-                        bottom = itemPadding
-                    ),
+					.weight(1f)
+					.padding(
+						start = viewPadding,
+						top = itemPadding,
+						end = itemPadding,
+						bottom = itemPadding
+					),
             )
+
+			val propertyValue by property.value.value.collectAsState()
 
             when (property.key) {
                 KnownFileProperties.Rating -> {
                     Box(
                         modifier = Modifier
-                            .weight(2f)
-                            .align(Alignment.CenterVertically)
+							.weight(2f)
+							.align(Alignment.CenterVertically)
                     ) {
                         val height = with(LocalDensity.current) {
                             MaterialTheme.typography.h6.fontSize.toDp()
@@ -226,20 +244,20 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
 
                         fileRating(
                             modifier = Modifier
-                                .height(height)
-                                .align(Alignment.CenterStart)
-                                .padding(
-                                    start = itemPadding,
-                                    top = itemPadding,
-                                    end = viewPadding,
-                                    bottom = itemPadding,
-                                ),
+								.height(height)
+								.align(Alignment.CenterStart)
+								.padding(
+									start = itemPadding,
+									top = itemPadding,
+									end = viewPadding,
+									bottom = itemPadding,
+								),
                         )
                     }
                 }
                 else -> {
                     Text(
-                        text = property.value,
+                        text = propertyValue,
                         color = coverArtColorState.primaryTextColor,
                         modifier = Modifier
                             .weight(2f)
