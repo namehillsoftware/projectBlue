@@ -144,12 +144,14 @@ class FileDetailsViewModel(
 		val property: String,
 		private val originalValue: String
 	) {
+		private val editableFilePropertyDefinition by lazy { EditableFilePropertyDefinition.fromDescriptor(property) }
+
 		private val mutableValue = MutableStateFlow(originalValue)
 		private val mutableIsEditing = MutableStateFlow(false)
 
 		val value = mutableValue.asStateFlow()
 		val isEditing = mutableIsEditing.asStateFlow()
-		val isEditable by lazy { EditableFilePropertyDefinition.fromDescriptor(property) != null }
+		val isEditable by lazy { editableFilePropertyDefinition != null }
 
 		fun edit() {
 			activeEditingFile?.cancel()

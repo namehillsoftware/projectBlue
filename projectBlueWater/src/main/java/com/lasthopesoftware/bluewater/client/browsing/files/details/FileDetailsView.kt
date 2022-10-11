@@ -85,42 +85,85 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
 		val property = fileProperty.property
 
 		Dialog(onDismissRequest = viewModel::clearHighlights) {
-			Surface {
-				Column(
-					modifier = Modifier.padding(8.dp)
+			Surface(
+				color = coverArtColorState.backgroundColor,
+				contentColor = coverArtColorState.primaryTextColor,
+			) {
+				Box(
+					modifier = Modifier
+						.padding(8.dp)
+						.heightIn(200.dp, 400.dp),
 				) {
-					ProvideTextStyle(MaterialTheme.typography.h4) {
-						Text(text = property)
+					Row(
+						modifier = Modifier
+							.fillMaxWidth()
+							.padding(viewPadding)
+							.align(Alignment.TopCenter)
+					) {
+						ProvideTextStyle(MaterialTheme.typography.h5) {
+							Text(
+								text = property,
+								modifier = Modifier.weight(1f).align(Alignment.CenterVertically),
+							)
+						}
+
+						Image(
+							painter = painterResource(id = R.drawable.ic_remove_item_white_36dp),
+							colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
+							contentDescription = stringResource(id = R.string.btn_cancel),
+							modifier = Modifier
+								.clickable { fileProperty.cancel() }
+								.align(Alignment.CenterVertically),
+						)
 					}
+
 
 					val propertyValueFlow = fileProperty.value
 					val propertyValue by propertyValueFlow.collectAsState()
 					val isEditing by fileProperty.isEditing.collectAsState()
-					TextField(
-						value = propertyValue,
-						enabled = isEditing,
-						singleLine = true,
-						onValueChange = fileProperty::updateValue
-					)
+					Box(
+						modifier = Modifier
+							.padding(viewPadding)
+							.align(Alignment.Center),
+						contentAlignment = Alignment.Center
+					) {
+						TextField(
+							value = propertyValue,
+							enabled = isEditing,
+							singleLine = true,
+							onValueChange = fileProperty::updateValue,
+						)
+					}
 
-					Row {
-						if (isEditing) {
-							Button(onClick = { fileProperty.cancel() }) {
-								Text(stringResource(id = R.string.btn_cancel))
+					Row(modifier = Modifier
+						.fillMaxWidth()
+						.padding(viewPadding)
+						.align(Alignment.BottomCenter)
+					) {
+						when {
+							isEditing -> {
+								Image(
+									painter = painterResource(id = R.drawable.ic_save_white_36dp),
+									colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
+									contentDescription = stringResource(id = R.string.btn_save),
+									modifier = Modifier
+										.fillMaxWidth()
+										.weight(1f)
+										.clickable { fileProperty.commitChanges() }
+										.align(Alignment.CenterVertically),
+								)
 							}
-
-							Button(onClick = { fileProperty.commitChanges() }) {
-								Text(stringResource(id = R.string.btn_save))
-							}
-						} else {
-							Button(onClick = { fileProperty.cancel() }) {
-								Text(stringResource(id = R.string.btn_cancel))
-							}
-
-							if (fileProperty.isEditable) {
-								Button(onClick = { fileProperty.edit() }) {
-									Text(stringResource(id = R.string.edit))
-								}
+							fileProperty.isEditable -> {
+								Image(
+									painter = painterResource(id = R.drawable.pencil),
+									colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
+									contentDescription = stringResource(id = R.string.edit),
+									modifier = Modifier
+										.fillMaxWidth()
+										.weight(1f)
+										.clickable { fileProperty.edit() }
+										.align(Alignment.CenterVertically),
+								)
 							}
 						}
 					}
@@ -293,14 +336,14 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
                 val coverArtScrollOffset by derivedStateOf { -coverArtContainerHeight * headerHidingProgress }
                 Box(
                     modifier = Modifier
-                        .height(coverArtContainerHeight)
-                        .padding(
-                            top = coverArtTopPadding,
-                            start = viewPadding + 40.dp,
-                            end = viewPadding + 40.dp,
-                        )
-                        .offset(y = coverArtScrollOffset)
-                        .fillMaxWidth()
+						.height(coverArtContainerHeight)
+						.padding(
+							top = coverArtTopPadding,
+							start = viewPadding + 40.dp,
+							end = viewPadding + 40.dp,
+						)
+						.offset(y = coverArtScrollOffset)
+						.fillMaxWidth()
                 ) {
                     coverArtState
                         ?.let {
@@ -313,36 +356,36 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
                                 ),
                                 contentScale = ContentScale.FillHeight,
                                 modifier = Modifier
-                                    .clip(RoundedCornerShape(5.dp))
-                                    .border(
-                                        1.dp,
-                                        shape = RoundedCornerShape(5.dp),
-                                        color = coverArtColorState.secondaryTextColor
-                                    )
-                                    .fillMaxHeight()
-                                    .align(Alignment.Center),
+									.clip(RoundedCornerShape(5.dp))
+									.border(
+										1.dp,
+										shape = RoundedCornerShape(5.dp),
+										color = coverArtColorState.secondaryTextColor
+									)
+									.fillMaxHeight()
+									.align(Alignment.Center),
                             )
                         }
                 }
 
                 Box(
                     modifier = Modifier
-                        .height(appBarHeight)
-                        .background(coverArtColorState.backgroundColor)
-                        .fillMaxWidth()
+						.height(appBarHeight)
+						.background(coverArtColorState.backgroundColor)
+						.fillMaxWidth()
                 ) {
                     Icon(
                         Icons.Default.ArrowBack,
                         contentDescription = "",
                         tint = coverArtColorState.secondaryTextColor,
                         modifier = Modifier
-                            .padding(16.dp)
-                            .align(Alignment.CenterStart)
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null,
-                                onClick = activity::finish
-                            )
+							.padding(16.dp)
+							.align(Alignment.CenterStart)
+							.clickable(
+								interactionSource = remember { MutableInteractionSource() },
+								indication = null,
+								onClick = activity::finish
+							)
                     )
                 }
 
@@ -360,9 +403,9 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
                 val topTitlePadding by derivedStateOf { expandedTitlePadding * toolbarState.toolbarState.progress }
                 BoxWithConstraints(
                     modifier = Modifier
-                        .height(boxHeight)
-                        .padding(top = topTitlePadding)
-                        .fillMaxWidth()
+						.height(boxHeight)
+						.padding(top = topTitlePadding)
+						.fillMaxWidth()
                 ) {
                     val minimumMenuWidth = (3 * 32).dp
 
@@ -382,15 +425,15 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
                     val menuWidth by derivedStateOf { (maxWidth - (maxWidth - minimumMenuWidth) * acceleratedProgress) }
                     val expandedTopRowPadding = titleHeight + expandedMenuVerticalPadding
                     val topRowPadding by derivedStateOf { expandedTopRowPadding - (expandedTopRowPadding - 14.dp) * headerHidingProgress }
-                    Row(
-                        modifier = Modifier
-                            .padding(top = topRowPadding, start = 8.dp, end = 8.dp)
-                            .width(menuWidth)
-                            .align(Alignment.TopEnd)
-                    ) {
-                        val iconSize by derivedStateOf { expandedIconSize - (12 * headerHidingProgress).dp }
+					Row(
+						modifier = Modifier
+							.padding(top = topRowPadding, start = 8.dp, end = 8.dp)
+							.width(menuWidth)
+							.align(Alignment.TopEnd)
+					) {
+						val iconSize by derivedStateOf { expandedIconSize - (12 * headerHidingProgress).dp }
 						val chevronRotation by derivedStateOf { 180 * headerHidingProgress }
-						val isCollapsed by derivedStateOf { headerHidingProgress == 1f }
+						val isCollapsed by derivedStateOf { headerHidingProgress > .98f }
 
 						val scope = rememberCoroutineScope()
 						Image(
@@ -416,11 +459,11 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
                             colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
                             contentDescription = stringResource(id = R.string.btn_add_file),
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1f)
-                                .size(iconSize)
-                                .clickable { viewModel.addToNowPlaying() }
-                                .align(Alignment.CenterVertically),
+								.fillMaxWidth()
+								.weight(1f)
+								.size(iconSize)
+								.clickable { viewModel.addToNowPlaying() }
+								.align(Alignment.CenterVertically),
                         )
 
                         Image(
@@ -428,13 +471,13 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
                             colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
                             contentDescription = stringResource(id = R.string.btn_play),
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .weight(1f)
-                                .size(iconSize)
-                                .clickable {
-                                    viewModel.play()
-                                }
-                                .align(Alignment.CenterVertically),
+								.fillMaxWidth()
+								.weight(1f)
+								.size(iconSize)
+								.clickable {
+									viewModel.play()
+								}
+								.align(Alignment.CenterVertically),
                         )
                     }
                 }
