@@ -178,7 +178,6 @@ class FileDetailsViewModel(
 		fun cancel() {
 			mutableValue.value = originalValue
 			mutableIsEditing.value = false
-			mutableHighlightedProperty.value = null
 		}
 	}
 }
