@@ -143,6 +143,7 @@ class FileDetailsViewModel(
 		val value = mutableValue.asStateFlow()
 		val isEditing = mutableIsEditing.asStateFlow()
 		val isEditable by lazy { editableFilePropertyDefinition != null }
+		val editableType by lazy { editableFilePropertyDefinition?.type }
 
 		fun highlight() {
 			mutableHighlightedProperty.value = this

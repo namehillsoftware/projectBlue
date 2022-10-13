@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAPlaylist.AndAFile.AndThePropertiesAreBeingEdited
+package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAPlaylist.AndAFile
 
 import android.graphics.BitmapFactory
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -79,13 +79,7 @@ class WhenAnotherPropertyIsEdited {
 			viewModel?.value?.apply {
 				loadFromList(listOf(ServiceFile(serviceFileId)), 0).toExpiringFuture().get()
 				fileProperties.apply {
-					value.first { it.property == KnownFileProperties.Custom }
-						.apply {
-							highlight()
-							edit()
-							updateValue("omit")
-						}
-					value.first { it.property == KnownFileProperties.AlbumArtist }.apply {
+					value.first { it.property == KnownFileProperties.Lyrics }.apply {
 						highlight()
 						edit()
 					}
@@ -101,27 +95,17 @@ class WhenAnotherPropertyIsEdited {
 	}
 
 	@Test
-	fun `then the property change is not persisted`() {
-		assertThat(persistedValue).isEmpty()
+	fun `then the property has the correct editable type`() {
+		assertThat(viewModel?.value?.fileProperties?.value?.firstOrNull { it.property == KnownFileProperties.Lyrics }?.editableType).isEqualTo(FilePropertyType.LongFormText)
 	}
 
 	@Test
-	fun `then the original property is not being edited`() {
-		assertThat(viewModel?.value?.fileProperties?.value?.firstOrNull { it.property == KnownFileProperties.Custom }?.isEditing?.value).isFalse
-	}
-
-	@Test
-	fun `then the new property is being edited`() {
-		assertThat(viewModel?.value?.fileProperties?.value?.firstOrNull { it.property == KnownFileProperties.AlbumArtist }?.isEditing?.value).isTrue
+	fun `then the property is being edited`() {
+		assertThat(viewModel?.value?.fileProperties?.value?.firstOrNull { it.property == KnownFileProperties.Lyrics }?.isEditing?.value).isTrue
 	}
 
 	@Test
 	fun `then the new property is highlighted`() {
-		assertThat(viewModel?.value?.highlightedProperty?.value).isEqualTo(viewModel?.value?.fileProperties?.value?.firstOrNull { it.property == KnownFileProperties.AlbumArtist })
-	}
-
-	@Test
-	fun `then the property has the correct editable type`() {
-		assertThat(viewModel?.value?.fileProperties?.value?.firstOrNull { it.property == KnownFileProperties.AlbumArtist }?.editableType).isEqualTo(FilePropertyType.ShortFormText)
+		assertThat(viewModel?.value?.highlightedProperty?.value).isEqualTo(viewModel?.value?.fileProperties?.value?.firstOrNull { it.property == KnownFileProperties.Lyrics })
 	}
 }

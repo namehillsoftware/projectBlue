@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.lasthopesoftware.bluewater.R
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyType
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.shared.android.colors.MediaStylePalette
 import com.lasthopesoftware.bluewater.shared.android.colors.MediaStylePaletteProvider
@@ -130,7 +131,7 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
 						TextField(
 							value = propertyValue,
 							enabled = isEditing,
-							singleLine = true,
+							singleLine = fileProperty.editableType != FilePropertyType.LongFormText,
 							onValueChange = fileProperty::updateValue,
 						)
 					}
