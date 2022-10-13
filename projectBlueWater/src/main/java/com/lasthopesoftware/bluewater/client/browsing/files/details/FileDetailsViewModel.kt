@@ -20,6 +20,7 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.namehillsoftware.handoff.promises.Promise
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import java.util.concurrent.atomic.AtomicReference
 
 
 class FileDetailsViewModel(
@@ -46,7 +47,7 @@ class FileDetailsViewModel(
 		)
 	}
 
-	private var activeEditingFile: FilePropertyViewModel? = null
+	private val activeEditingFile = AtomicReference<FilePropertyViewModel?>(null)
 	private var associatedUrlKey: UrlKeyHolder<ServiceFile>? = null
 	private var associatedPlaylist = emptyList<ServiceFile>()
 	private var activePositionedFile: PositionedFile? = null
@@ -150,8 +151,8 @@ class FileDetailsViewModel(
 		}
 
 		fun edit() {
-			activeEditingFile?.cancel()
-			activeEditingFile = this
+			activeEditingFile.get()?.cancel()
+			activeEditingFile.set(this)
 			mutableIsEditing.value = isEditable
 		}
 
@@ -175,6 +176,7 @@ class FileDetailsViewModel(
 			mutableValue.value = originalValue
 			mutableIsEditing.value = false
 			mutableHighlightedProperty.compareAndSet(this, null)
+			activeEditingFile.compareAndSet(this, null)
 		}
 	}
 }
