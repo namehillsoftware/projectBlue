@@ -92,8 +92,7 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
 			) {
 				Column(
 					modifier = Modifier
-						.padding(8.dp)
-						.heightIn(200.dp, 400.dp),
+						.padding(8.dp),
 				) {
 					Row(
 						modifier = Modifier
@@ -125,7 +124,8 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
 					Box(
 						modifier = Modifier
 							.padding(viewPadding)
-							.weight(weight = 1f, fill = false), // Use as much space as possible
+							.fillMaxWidth()
+							.heightIn(100.dp, 300.dp),
 						contentAlignment = Alignment.Center
 					) {
 						when {
@@ -137,8 +137,8 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
 									backgroundColor = coverArtColorState.primaryTextColor.copy(.1f),
 									modifier = Modifier
 										.height(TextFieldDefaults.MinHeight)
-										.align(Alignment.CenterStart),
-									onRatingSelected = { fileProperty.updateValue(it.toString()) }
+										.align(Alignment.Center),
+									onRatingSelected = if (isEditing) { { fileProperty.updateValue(it.toString()) } } else null
 								)
 							}
 							fileProperty.editableType == FilePropertyType.LongFormText -> {
@@ -554,14 +554,14 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
                                 ),
                                 contentScale = ContentScale.FillWidth,
                                 modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(5.dp))
-                                    .align(Alignment.Center)
-                                    .border(
-                                        1.dp,
-                                        shape = RoundedCornerShape(5.dp),
-                                        color = coverArtColorState.secondaryTextColor
-                                    ),
+									.fillMaxWidth()
+									.clip(RoundedCornerShape(5.dp))
+									.align(Alignment.Center)
+									.border(
+										1.dp,
+										shape = RoundedCornerShape(5.dp),
+										color = coverArtColorState.secondaryTextColor
+									),
                             )
                         }
                 }

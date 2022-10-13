@@ -26,18 +26,26 @@ fun RatingBar(
 		val padding = 1.dp
 
 		repeat(rating) { r ->
+			var starModifier = Modifier.padding(start = padding, end = padding)
+			if (onRatingSelected != null)
+				starModifier = starModifier.clickable { onRatingSelected(r + 1) }
+
 			Image(
 				painter = painterResource(id = R.drawable.ic_star_36),
 				colorFilter = ColorFilter.tint(color),
 				contentDescription = "Rating value",
 				contentScale = ContentScale.Fit,
-				modifier = Modifier.padding(start = padding, end = padding).clickable { onRatingSelected?.invoke(r + 1) },
+				modifier = starModifier,
 			)
 		}
 
 		repeat(5 - rating) { r ->
+			var starModifier = Modifier.padding(start = padding, end = padding)
+			if (onRatingSelected != null)
+				starModifier = starModifier.clickable { onRatingSelected(r + 1 + rating) }
+
 			Box(
-				modifier = Modifier.padding(start = padding, end = padding).clickable { onRatingSelected?.invoke(r + 1 + rating) },
+				modifier = starModifier,
 			) {
 				Image(
 					painter = painterResource(id = R.drawable.ic_star_36),
