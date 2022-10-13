@@ -104,7 +104,9 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
 						ProvideTextStyle(MaterialTheme.typography.h5) {
 							Text(
 								text = property,
-								modifier = Modifier.weight(1f).align(Alignment.CenterVertically),
+								modifier = Modifier
+									.weight(1f)
+									.align(Alignment.CenterVertically),
 							)
 						}
 
@@ -128,12 +130,24 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
 							.align(Alignment.Center),
 						contentAlignment = Alignment.Center
 					) {
-						TextField(
-							value = propertyValue,
-							enabled = isEditing,
-							singleLine = fileProperty.editableType != FilePropertyType.LongFormText,
-							onValueChange = fileProperty::updateValue,
-						)
+						if (fileProperty.property == KnownFileProperties.Rating) {
+							val ratingValue by derivedStateOf { propertyValue.toInt() }
+							RatingBar(
+								rating = ratingValue,
+								color = coverArtColorState.primaryTextColor,
+								backgroundColor = coverArtColorState.primaryTextColor.copy(.1f),
+								modifier = Modifier
+									.height(TextFieldDefaults.MinHeight)
+									.align(Alignment.CenterStart),
+							)
+						} else {
+							TextField(
+								value = propertyValue,
+								enabled = isEditing,
+								singleLine = fileProperty.editableType != FilePropertyType.LongFormText,
+								onValueChange = fileProperty::updateValue,
+							)
+						}
 					}
 
 					Row(modifier = Modifier
@@ -502,22 +516,22 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
         Row(modifier = Modifier.fillMaxSize()) {
             Column(
                 modifier = Modifier
-                    .fillMaxHeight()
-                    .width(250.dp)
-                    .padding(viewPadding)
-                    .padding(
-                        start = viewPadding,
-                        end = 10.dp,
-                        bottom = viewPadding,
-                        top = viewPadding,
-                    )
+					.fillMaxHeight()
+					.width(250.dp)
+					.padding(viewPadding)
+					.padding(
+						start = viewPadding,
+						end = 10.dp,
+						bottom = viewPadding,
+						top = viewPadding,
+					)
             ) {
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1.0f)
-                        .padding(bottom = 10.dp)
-                        .align(Alignment.CenterHorizontally)
+						.fillMaxWidth()
+						.weight(1.0f)
+						.padding(bottom = 10.dp)
+						.align(Alignment.CenterHorizontally)
                 ) {
                     coverArtState
                         ?.let {
@@ -530,14 +544,14 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
                                 ),
                                 contentScale = ContentScale.FillWidth,
                                 modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(5.dp))
-                                    .align(Alignment.Center)
-                                    .border(
-                                        1.dp,
-                                        shape = RoundedCornerShape(5.dp),
-                                        color = coverArtColorState.secondaryTextColor
-                                    ),
+									.fillMaxWidth()
+									.clip(RoundedCornerShape(5.dp))
+									.align(Alignment.Center)
+									.border(
+										1.dp,
+										shape = RoundedCornerShape(5.dp),
+										color = coverArtColorState.secondaryTextColor
+									),
                             )
                         }
                 }

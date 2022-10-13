@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.shared.android.ui.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -19,23 +20,24 @@ fun RatingBar(
 	modifier: Modifier = Modifier,
 	color: Color = Color.Yellow,
 	backgroundColor: Color = Color.Gray,
+	onRatingSelected: ((Int) -> Unit)? = null
 ) {
 	Row(modifier = modifier.wrapContentSize()) {
 		val padding = 1.dp
 
-		repeat(rating) {
+		repeat(rating) { r ->
 			Image(
 				painter = painterResource(id = R.drawable.ic_star_36),
 				colorFilter = ColorFilter.tint(color),
 				contentDescription = "Rating value",
 				contentScale = ContentScale.Fit,
-				modifier = Modifier.padding(start = padding, end = padding),
+				modifier = Modifier.padding(start = padding, end = padding).clickable { onRatingSelected?.invoke(r + 1) },
 			)
 		}
 
-		repeat(5 - rating) {
+		repeat(5 - rating) { r ->
 			Box(
-				modifier = Modifier.padding(start = padding, end = padding),
+				modifier = Modifier.padding(start = padding, end = padding).clickable { onRatingSelected?.invoke(r + 1 + rating) },
 			) {
 				Image(
 					painter = painterResource(id = R.drawable.ic_star_36),
