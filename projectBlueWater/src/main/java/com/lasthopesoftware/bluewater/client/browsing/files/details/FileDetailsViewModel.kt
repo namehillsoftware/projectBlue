@@ -58,7 +58,7 @@ class FileDetailsViewModel(
 	private val mutableFileName = MutableStateFlow("")
 	private val mutableAlbum = MutableStateFlow("")
 	private val mutableArtist = MutableStateFlow("")
-	private val mutableFileProperties = MutableStateFlow(emptyMap<String, FilePropertyViewModel>())
+	private val mutableFileProperties = MutableStateFlow(emptyList<FilePropertyViewModel>())
 	private val mutableIsLoading = MutableStateFlow(false)
 	private val mutableCoverArt = MutableStateFlow<Bitmap?>(null)
 	private val promisedSetDefaultCoverArt = defaultImageProvider.promiseFileBitmap()
@@ -126,8 +126,8 @@ class FileDetailsViewModel(
 
 				mutableFileProperties.value = fileProperties.entries
 					.filterNot { e -> propertiesToSkip.contains(e.key) }
-					.associate { e -> Pair(e.key, FilePropertyViewModel(e.key, e.value)) }
-					.toSortedMap()
+					.sortedBy { it.key }
+					.map { FilePropertyViewModel(it.key, it.value) }
 			}
 			.keepPromise(Unit)
 

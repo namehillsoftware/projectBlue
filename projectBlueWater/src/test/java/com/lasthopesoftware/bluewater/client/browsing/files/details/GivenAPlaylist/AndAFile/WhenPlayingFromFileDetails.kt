@@ -133,7 +133,7 @@ class WhenPlayingFromFileDetails {
 
 	@Test
 	fun `then the file properties are correct`() {
-		assertThat(mut?.value?.fileProperties?.value?.entries?.map { Pair(it.key, it.value.value.value) }).containsExactlyInAnyOrder(
+		assertThat(mut?.value?.fileProperties?.value?.map { Pair(it.property, it.value.value) }).containsExactlyInAnyOrder(
 			Pair(KnownFileProperties.Name, "toward"),
 			Pair(KnownFileProperties.Artist, "load"),
 			Pair(KnownFileProperties.Album, "square"),

@@ -79,8 +79,8 @@ class WhenCommittingTheChanges {
 		fun act() {
 			viewModel?.value?.apply {
 				loadFromList(listOf(ServiceFile(serviceFileId)), 0).toExpiringFuture().get()
-				fileProperties.value[KnownFileProperties.Track]
-					?.apply {
+				fileProperties.value.first { it.property == KnownFileProperties.Track }
+					.apply {
 						updateValue("617")
 						commitChanges().toExpiringFuture().get()
 					}
@@ -96,7 +96,7 @@ class WhenCommittingTheChanges {
 
 	@Test
 	fun `then the property is not being edited`() {
-		assertThat(viewModel?.value?.fileProperties?.value?.get(KnownFileProperties.Track)?.isEditing?.value).isFalse
+		assertThat(viewModel?.value?.fileProperties?.value?.firstOrNull { it.property == KnownFileProperties.Track }?.isEditing?.value).isFalse
 	}
 
 	@Test

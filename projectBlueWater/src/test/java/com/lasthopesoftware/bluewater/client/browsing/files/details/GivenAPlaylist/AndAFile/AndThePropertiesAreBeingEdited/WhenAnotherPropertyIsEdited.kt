@@ -78,13 +78,13 @@ class WhenAnotherPropertyIsEdited {
 			viewModel?.value?.apply {
 				loadFromList(listOf(ServiceFile(serviceFileId)), 0).toExpiringFuture().get()
 				fileProperties.apply {
-					value[KnownFileProperties.Custom]
-						?.apply {
+					value.first { it.property == KnownFileProperties.Custom }
+						.apply {
 							highlight()
 							edit()
 							updateValue("omit")
 						}
-					value[KnownFileProperties.AlbumArtist]?.apply {
+					value.first { it.property == KnownFileProperties.AlbumArtist }.apply {
 						highlight()
 						edit()
 					}
@@ -106,16 +106,16 @@ class WhenAnotherPropertyIsEdited {
 
 	@Test
 	fun `then the original property is not being edited`() {
-		assertThat(viewModel?.value?.fileProperties?.value?.get(KnownFileProperties.Custom)?.isEditing?.value).isFalse
+		assertThat(viewModel?.value?.fileProperties?.value?.firstOrNull { it.property == KnownFileProperties.Custom }?.isEditing?.value).isFalse
 	}
 
 	@Test
 	fun `then the new property is being edited`() {
-		assertThat(viewModel?.value?.fileProperties?.value?.get(KnownFileProperties.AlbumArtist)?.isEditing?.value).isTrue
+		assertThat(viewModel?.value?.fileProperties?.value?.firstOrNull { it.property == KnownFileProperties.AlbumArtist }?.isEditing?.value).isTrue
 	}
 
 	@Test
 	fun `then the new property is highlighted`() {
-		assertThat(viewModel?.value?.highlightedProperty?.value).isEqualTo(viewModel?.value?.fileProperties?.value?.get(KnownFileProperties.AlbumArtist))
+		assertThat(viewModel?.value?.highlightedProperty?.value).isEqualTo(viewModel?.value?.fileProperties?.value?.firstOrNull { it.property == KnownFileProperties.AlbumArtist })
 	}
 }

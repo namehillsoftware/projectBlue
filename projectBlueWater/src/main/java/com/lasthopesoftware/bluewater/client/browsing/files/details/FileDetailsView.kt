@@ -249,14 +249,14 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
 	}
 
 	@Composable
-	fun filePropertyRow(property: Map.Entry<String, FileDetailsViewModel.FilePropertyViewModel>) {
+	fun filePropertyRow(property: FileDetailsViewModel.FilePropertyViewModel) {
 		val itemPadding = 2.dp
 
         Row(
-			modifier = Modifier.clickable { property.value.highlight() }
+			modifier = Modifier.clickable { property.highlight() }
 		) {
             Text(
-                text = property.key,
+                text = property.property,
                 color = coverArtColorState.primaryTextColor,
                 modifier = Modifier
 					.weight(1f)
@@ -268,9 +268,9 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
 					),
             )
 
-			val propertyValue by property.value.value.collectAsState()
+			val propertyValue by property.value.collectAsState()
 
-            when (property.key) {
+            when (property.property) {
                 KnownFileProperties.Rating -> {
                     Box(
                         modifier = Modifier
@@ -484,8 +484,7 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
             }
         ) {
             LazyColumn(modifier = Modifier.fillMaxSize()) {
-				val list = fileProperties.entries.toList()
-                items(list) {
+                items(fileProperties) {
                     filePropertyRow(it)
                 }
             }
@@ -560,8 +559,7 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
                     )
                 }
 
-				val list = fileProperties.entries.toList()
-				items(list) {
+				items(fileProperties) {
                     filePropertyRow(property = it)
                 }
             }
