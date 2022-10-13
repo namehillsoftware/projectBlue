@@ -80,10 +80,14 @@ class WhenAnotherPropertyIsEdited {
 				fileProperties.apply {
 					value[KnownFileProperties.Custom]
 						?.apply {
+							highlight()
 							edit()
 							updateValue("omit")
 						}
-					value[KnownFileProperties.AlbumArtist]?.edit()
+					value[KnownFileProperties.AlbumArtist]?.apply {
+						highlight()
+						edit()
+					}
 				}
 			}
 		}
@@ -108,5 +112,10 @@ class WhenAnotherPropertyIsEdited {
 	@Test
 	fun `then the new property is being edited`() {
 		assertThat(viewModel?.value?.fileProperties?.value?.get(KnownFileProperties.AlbumArtist)?.isEditing?.value).isTrue
+	}
+
+	@Test
+	fun `then the new property is highlighted`() {
+		assertThat(viewModel?.value?.highlightedProperty?.value).isEqualTo(viewModel?.value?.fileProperties?.value?.get(KnownFileProperties.AlbumArtist))
 	}
 }

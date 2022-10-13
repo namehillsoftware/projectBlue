@@ -106,4 +106,9 @@ class WhenCancelling {
 	fun `then the property change is NOT persisted`() {
 		assertThat(persistedTrackNumber).isEmpty()
 	}
+
+	@Test
+	fun `then the property is not highlighted`() {
+
+	}
 }

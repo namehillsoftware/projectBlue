@@ -73,8 +73,10 @@ class WhenHighlightingTheProperty {
 		fun act() {
 			viewModel?.value?.apply {
 				loadFromList(listOf(ServiceFile(serviceFileId)), 0).toExpiringFuture().get()
-				highlightProperty(KnownFileProperties.Date)
-				clearHighlights()
+				fileProperties.value[KnownFileProperties.Date]?.apply {
+					highlight()
+					cancel()
+				}
 			}
 		}
 

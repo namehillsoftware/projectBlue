@@ -84,7 +84,7 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
 	maybeHighlightedFileProperty?.let { fileProperty ->
 		val property = fileProperty.property
 
-		Dialog(onDismissRequest = viewModel::clearHighlights) {
+		Dialog(onDismissRequest = fileProperty::cancel) {
 			Surface(
 				color = coverArtColorState.backgroundColor,
 				contentColor = coverArtColorState.primaryTextColor,
@@ -253,7 +253,7 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
 		val itemPadding = 2.dp
 
         Row(
-			modifier = Modifier.clickable { viewModel.highlightProperty(property.key) }
+			modifier = Modifier.clickable { property.value.highlight() }
 		) {
             Text(
                 text = property.key,

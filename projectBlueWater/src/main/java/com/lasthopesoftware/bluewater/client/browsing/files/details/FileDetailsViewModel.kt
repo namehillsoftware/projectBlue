@@ -115,11 +115,6 @@ class FileDetailsViewModel(
 		controlPlayback.startPlaylist(associatedPlaylist, positionedFile.playlistPosition)
 	}
 
-	fun highlightProperty(property: String) {
-		val propertyValue = fileProperties.value[property]
-		mutableHighlightedProperty.value = propertyValue
-	}
-
 	private fun loadFileProperties(serviceFile: ServiceFile): Promise<Unit> =
 		scopedFilePropertiesProvider
 			.promiseFileProperties(serviceFile)
@@ -136,10 +131,6 @@ class FileDetailsViewModel(
 			}
 			.keepPromise(Unit)
 
-	fun clearHighlights() {
-		mutableHighlightedProperty.value = null
-	}
-
 	inner class FilePropertyViewModel(
 		val property: String,
 		private val originalValue: String
@@ -152,6 +143,10 @@ class FileDetailsViewModel(
 		val value = mutableValue.asStateFlow()
 		val isEditing = mutableIsEditing.asStateFlow()
 		val isEditable by lazy { editableFilePropertyDefinition != null }
+
+		fun highlight() {
+			mutableHighlightedProperty.value = this
+		}
 
 		fun edit() {
 			activeEditingFile?.cancel()
@@ -178,6 +173,7 @@ class FileDetailsViewModel(
 		fun cancel() {
 			mutableValue.value = originalValue
 			mutableIsEditing.value = false
+			mutableHighlightedProperty.compareAndSet(this, null)
 		}
 	}
 }

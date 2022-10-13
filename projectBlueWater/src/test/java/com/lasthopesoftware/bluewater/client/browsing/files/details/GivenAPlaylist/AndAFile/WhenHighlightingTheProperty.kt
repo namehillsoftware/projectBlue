@@ -73,7 +73,7 @@ class WhenHighlightingTheProperty {
 		fun act() {
 			viewModel?.value?.apply {
 				loadFromList(listOf(ServiceFile(serviceFileId)), 0).toExpiringFuture().get()
-				highlightProperty(KnownFileProperties.Publisher)
+				fileProperties.value[KnownFileProperties.Publisher]?.highlight()
 			}
 		}
 
