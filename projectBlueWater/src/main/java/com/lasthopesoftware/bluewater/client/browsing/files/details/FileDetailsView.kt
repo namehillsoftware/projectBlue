@@ -90,7 +90,7 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
 				color = coverArtColorState.backgroundColor,
 				contentColor = coverArtColorState.primaryTextColor,
 			) {
-				Box(
+				Column(
 					modifier = Modifier
 						.padding(8.dp)
 						.heightIn(200.dp, 400.dp),
@@ -99,7 +99,6 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
 						modifier = Modifier
 							.fillMaxWidth()
 							.padding(viewPadding)
-							.align(Alignment.TopCenter)
 					) {
 						ProvideTextStyle(MaterialTheme.typography.h5) {
 							Text(
@@ -120,40 +119,51 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
 						)
 					}
 
-
 					val propertyValueFlow = fileProperty.value
 					val propertyValue by propertyValueFlow.collectAsState()
 					val isEditing by fileProperty.isEditing.collectAsState()
 					Box(
 						modifier = Modifier
 							.padding(viewPadding)
-							.align(Alignment.Center),
+							.weight(weight = 1f, fill = false), // Use as much space as possible
 						contentAlignment = Alignment.Center
 					) {
-						if (fileProperty.property == KnownFileProperties.Rating) {
-							val ratingValue by derivedStateOf { propertyValue.toInt() }
-							RatingBar(
-								rating = ratingValue,
-								color = coverArtColorState.primaryTextColor,
-								backgroundColor = coverArtColorState.primaryTextColor.copy(.1f),
-								modifier = Modifier
-									.height(TextFieldDefaults.MinHeight)
-									.align(Alignment.CenterStart),
-							)
-						} else {
-							TextField(
-								value = propertyValue,
-								enabled = isEditing,
-								singleLine = fileProperty.editableType != FilePropertyType.LongFormText,
-								onValueChange = fileProperty::updateValue,
-							)
+						when {
+							fileProperty.property == KnownFileProperties.Rating -> {
+								val ratingValue by derivedStateOf { propertyValue.toInt() }
+								RatingBar(
+									rating = ratingValue,
+									color = coverArtColorState.primaryTextColor,
+									backgroundColor = coverArtColorState.primaryTextColor.copy(.1f),
+									modifier = Modifier
+										.height(TextFieldDefaults.MinHeight)
+										.align(Alignment.CenterStart),
+									onRatingSelected = { fileProperty.updateValue(it.toString()) }
+								)
+							}
+							fileProperty.editableType == FilePropertyType.LongFormText -> {
+								TextField(
+									value = propertyValue,
+									enabled = isEditing,
+									singleLine = false,
+									onValueChange = fileProperty::updateValue,
+									modifier = Modifier.verticalScroll(rememberScrollState())
+								)
+							}
+							else -> {
+								TextField(
+									value = propertyValue,
+									enabled = isEditing,
+									singleLine = true,
+									onValueChange = fileProperty::updateValue,
+								)
+							}
 						}
 					}
 
 					Row(modifier = Modifier
 						.fillMaxWidth()
 						.padding(viewPadding)
-						.align(Alignment.BottomCenter)
 					) {
 						when {
 							isEditing -> {
@@ -544,14 +554,14 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
                                 ),
                                 contentScale = ContentScale.FillWidth,
                                 modifier = Modifier
-									.fillMaxWidth()
-									.clip(RoundedCornerShape(5.dp))
-									.align(Alignment.Center)
-									.border(
-										1.dp,
-										shape = RoundedCornerShape(5.dp),
-										color = coverArtColorState.secondaryTextColor
-									),
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(5.dp))
+                                    .align(Alignment.Center)
+                                    .border(
+                                        1.dp,
+                                        shape = RoundedCornerShape(5.dp),
+                                        color = coverArtColorState.secondaryTextColor
+                                    ),
                             )
                         }
                 }
