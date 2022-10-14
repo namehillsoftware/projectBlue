@@ -33,10 +33,10 @@ class WhenPlayingFromFileDetails {
 				addFilePropertiesToCache(
 					ServiceFile(serviceFileId),
 					mapOf(
-						Pair(KnownFileProperties.NAME, "toward"),
-						Pair(KnownFileProperties.ARTIST, "load"),
-						Pair(KnownFileProperties.ALBUM, "square"),
-						Pair(KnownFileProperties.RATING, "4"),
+						Pair(KnownFileProperties.Name, "toward"),
+						Pair(KnownFileProperties.Artist, "load"),
+						Pair(KnownFileProperties.Album, "square"),
+						Pair(KnownFileProperties.Rating, "4"),
 						Pair("razor", "through"),
 						Pair("smile", "since"),
 						Pair("harvest", "old"),
@@ -46,6 +46,7 @@ class WhenPlayingFromFileDetails {
 
 			FileDetailsViewModel(
 				fakeFilesPropertiesProvider,
+				mockk(),
 				mockk {
 					every { promiseFileBitmap() } returns BitmapFactory
 						.decodeByteArray(byteArrayOf(111, 112), 0, 2)
@@ -132,16 +133,14 @@ class WhenPlayingFromFileDetails {
 
 	@Test
 	fun `then the file properties are correct`() {
-		assertThat(mut?.value?.fileProperties?.value).containsExactlyInAnyOrder(
-			*(mapOf(
-				Pair(KnownFileProperties.NAME, "toward"),
-				Pair(KnownFileProperties.ARTIST, "load"),
-				Pair(KnownFileProperties.ALBUM, "square"),
-				Pair(KnownFileProperties.RATING, "4"),
-				Pair("razor", "through"),
-				Pair("smile", "since"),
-				Pair("harvest", "old"),
-			).entries.toTypedArray())
+		assertThat(mut?.value?.fileProperties?.value?.map { Pair(it.property, it.committedValue.value) }).containsExactlyInAnyOrder(
+			Pair(KnownFileProperties.Name, "toward"),
+			Pair(KnownFileProperties.Artist, "load"),
+			Pair(KnownFileProperties.Album, "square"),
+			Pair(KnownFileProperties.Rating, "4"),
+			Pair("razor", "through"),
+			Pair("smile", "since"),
+			Pair("harvest", "old"),
 		)
 	}
 }

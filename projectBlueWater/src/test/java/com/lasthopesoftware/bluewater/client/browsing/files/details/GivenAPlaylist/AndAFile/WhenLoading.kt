@@ -33,15 +33,16 @@ class WhenLoading {
 				mockk<ProvideScopedFileProperties>().apply {
 					every { promiseFileProperties(ServiceFile(serviceFileId)) } returns Promise(
 						mapOf(
-							Pair(KnownFileProperties.RATING, "3"),
+							Pair(KnownFileProperties.Rating, "3"),
 							Pair("too", "prevent"),
 							Pair("shirt", "wind"),
-							Pair(KnownFileProperties.NAME, "holiday"),
-							Pair(KnownFileProperties.ARTIST, "board"),
-							Pair(KnownFileProperties.ALBUM, "virtue"),
+							Pair(KnownFileProperties.Name, "holiday"),
+							Pair(KnownFileProperties.Artist, "board"),
+							Pair(KnownFileProperties.Album, "virtue"),
 						)
 					)
 				},
+				mockk(),
 				mockk<ProvideDefaultImage>().apply {
 					every { promiseFileBitmap() } returns BitmapFactory
 						.decodeByteArray(byteArrayOf(3, 4), 0, 2)
@@ -75,15 +76,15 @@ class WhenLoading {
 
 	@Test
 	fun `then the properties are correct`() {
-		assertThat(viewModel?.value?.fileProperties?.value).hasSameElementsAs(
-			mapOf(
-				Pair(KnownFileProperties.RATING, "3"),
+		assertThat(viewModel?.value?.fileProperties?.value?.map { Pair(it.property, it.committedValue.value) }).hasSameElementsAs(
+			listOf(
+				Pair(KnownFileProperties.Rating, "3"),
 				Pair("too", "prevent"),
 				Pair("shirt", "wind"),
-				Pair(KnownFileProperties.NAME, "holiday"),
-				Pair(KnownFileProperties.ARTIST, "board"),
-				Pair(KnownFileProperties.ALBUM, "virtue"),
-			).entries
+				Pair(KnownFileProperties.Name, "holiday"),
+				Pair(KnownFileProperties.Artist, "board"),
+				Pair(KnownFileProperties.Album, "virtue"),
+			)
 		)
 	}
 

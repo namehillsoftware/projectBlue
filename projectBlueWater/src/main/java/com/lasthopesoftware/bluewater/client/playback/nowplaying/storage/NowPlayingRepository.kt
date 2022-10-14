@@ -11,66 +11,66 @@ import com.namehillsoftware.handoff.promises.Promise
 import java.util.concurrent.ConcurrentHashMap
 
 class NowPlayingRepository(
-    private val libraryProvider: ISpecificLibraryProvider,
-    private val libraryRepository: ILibraryStorage
+	private val libraryProvider: ISpecificLibraryProvider,
+	private val libraryRepository: ILibraryStorage
 ) : MaintainNowPlayingState {
 
 	companion object {
 		private val nowPlayingCache = ConcurrentHashMap<Int, NowPlaying>()
 	}
 
-    @Volatile
-    private var libraryId = -1
+	@Volatile
+	private var libraryId = -1
 
 	override fun promiseNowPlaying(): Promise<NowPlaying?> =
-    	nowPlayingCache[libraryId]?.toPromise()
+		nowPlayingCache[libraryId]?.toPromise()
 			?: libraryProvider.library
-            .eventually { library ->
-				library?.let {
-					libraryId = it.id
-					val savedTracksString = library.savedTracksString
-					if (savedTracksString == null || savedTracksString.isEmpty()) {
-						val nowPlaying = NowPlaying(
-							library.libraryId,
-							library.nowPlayingId,
-							library.nowPlayingProgress,
-							library.isRepeating
-						)
-						nowPlayingCache[libraryId] = nowPlaying
-						return@let nowPlaying.toPromise()
-					}
-
-					promiseParsedFileStringList(savedTracksString)
-						.then { files ->
+				.eventually { library ->
+					library?.let {
+						libraryId = it.id
+						val savedTracksString = library.savedTracksString
+						if (savedTracksString == null || savedTracksString.isEmpty()) {
 							val nowPlaying = NowPlaying(
 								library.libraryId,
-								if (files is List<*>) files as List<ServiceFile> else ArrayList(files),
 								library.nowPlayingId,
 								library.nowPlayingProgress,
 								library.isRepeating
 							)
 							nowPlayingCache[libraryId] = nowPlaying
-							nowPlaying
+							return@let nowPlaying.toPromise()
 						}
-				}.keepPromise()
-			}
+
+						promiseParsedFileStringList(savedTracksString)
+							.then { files ->
+								val nowPlaying = NowPlaying(
+									library.libraryId,
+									if (files is List<*>) files as List<ServiceFile> else ArrayList(files),
+									library.nowPlayingId,
+									library.nowPlayingProgress,
+									library.isRepeating
+								)
+								nowPlayingCache[libraryId] = nowPlaying
+								nowPlaying
+							}
+					}.keepPromise()
+				}
 
 	override fun updateNowPlaying(nowPlaying: NowPlaying): Promise<NowPlaying> {
-        if (libraryId < 0) return promiseNowPlaying().eventually { updateNowPlaying(nowPlaying) }
+		if (libraryId < 0) return promiseNowPlaying().eventually { updateNowPlaying(nowPlaying) }
 		nowPlayingCache[libraryId] = nowPlaying
-        libraryProvider.library
-            .then { library ->
+		libraryProvider.library
+			.then { library ->
 				library?.apply {
 					setNowPlayingId(nowPlaying.playlistPosition)
 					setNowPlayingProgress(nowPlaying.filePosition)
 					setRepeating(nowPlaying.isRepeating)
 					promiseSerializedFileStringList(nowPlaying.playlist)
-						.eventually { serializedPlaylist ->
+						.then { serializedPlaylist ->
 							setSavedTracksString(serializedPlaylist)
 							libraryRepository.saveLibrary(this)
 						}
 				}
 			}
 		return nowPlaying.toPromise()
-    }
+	}
 }

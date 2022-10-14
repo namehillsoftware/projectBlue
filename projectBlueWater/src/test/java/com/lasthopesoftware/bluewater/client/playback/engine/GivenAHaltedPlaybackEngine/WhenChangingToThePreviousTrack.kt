@@ -57,7 +57,7 @@ class WhenChangingToThePreviousTrack {
 		val filePropertiesContainerRepository = mockk<IFilePropertiesContainerRepository>()
 		every {
 			filePropertiesContainerRepository.getFilePropertiesContainer(UrlKeyHolder(EmptyUrl.url,	ServiceFile(4)))
-		} returns FilePropertiesContainer(1, mapOf(Pair(KnownFileProperties.DURATION, "100")))
+		} returns FilePropertiesContainer(1, mapOf(Pair(KnownFileProperties.Duration, "100")))
 
 		val playbackEngine =
 			PlaybackEngine(

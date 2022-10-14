@@ -22,11 +22,11 @@ class ImageCacheKeyLookup(private val cachedFilePropertiesProvider: CachedFilePr
 					.then { fileProperties ->
 						// First try storing by the album artist, which can cover the artist for the entire album (i.e. an album with various
 						// artists), and then by artist if that field is empty
-						var artist = fileProperties[KnownFileProperties.ALBUM_ARTIST]
-						if (artist == null || artist.isEmpty()) artist = fileProperties[KnownFileProperties.ARTIST]
+						var artist = fileProperties[KnownFileProperties.AlbumArtist]
+						if (artist == null || artist.isEmpty()) artist = fileProperties[KnownFileProperties.Artist]
 
-						var albumOrTrackName = fileProperties[KnownFileProperties.ALBUM]
-						if (albumOrTrackName == null) albumOrTrackName = fileProperties[KnownFileProperties.NAME]
+						var albumOrTrackName = fileProperties[KnownFileProperties.Album]
+						if (albumOrTrackName == null) albumOrTrackName = fileProperties[KnownFileProperties.Name]
 
 						resolve("$artist:$albumOrTrackName")
 					}

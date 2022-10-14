@@ -61,14 +61,14 @@ class WhenTheRatingPropertyChangesConcurrently {
 		val filePropertiesProvider = mockk<ProvideLibraryFileProperties> {
 			every { promiseFileProperties(LibraryId(libraryId), serviceFile) } returnsMany listOf(
 				mapOf(
-					Pair(KnownFileProperties.ARTIST, "within"),
-					Pair(KnownFileProperties.NAME, "descent"),
-					Pair(KnownFileProperties.RATING, "633"),
+					Pair(KnownFileProperties.Artist, "within"),
+					Pair(KnownFileProperties.Name, "descent"),
+					Pair(KnownFileProperties.Rating, "633"),
 				).toPromise(),
 				mapOf(
-					Pair(KnownFileProperties.ARTIST, "want"),
-					Pair(KnownFileProperties.NAME, "toward"),
-					Pair(KnownFileProperties.RATING, "899"),
+					Pair(KnownFileProperties.Artist, "want"),
+					Pair(KnownFileProperties.Name, "toward"),
+					Pair(KnownFileProperties.Rating, "899"),
 				).toPromise(),
 			)
 		}
@@ -93,7 +93,7 @@ class WhenTheRatingPropertyChangesConcurrently {
                 )
             },
             mockk {
-				every { promiseFileUpdate(LibraryId(libraryId), serviceFile, KnownFileProperties.RATING, any(), any()) } returns deferredFilePropertiesPromise
+				every { promiseFileUpdate(LibraryId(libraryId), serviceFile, KnownFileProperties.Rating, any(), any()) } returns deferredFilePropertiesPromise
 			},
             checkAuthentication,
             playbackService,

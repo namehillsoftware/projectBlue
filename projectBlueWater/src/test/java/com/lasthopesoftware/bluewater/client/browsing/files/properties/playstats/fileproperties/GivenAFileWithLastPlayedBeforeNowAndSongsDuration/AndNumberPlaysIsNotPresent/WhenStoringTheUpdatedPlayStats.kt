@@ -38,10 +38,10 @@ class WhenStoringTheUpdatedPlayStats {
 <Item>
 <Field Name="Key">23</Field>
 <Field Name="Media Type">Audio</Field>
-<Field Name="${KnownFileProperties.LAST_PLAYED}">$lastPlayed</Field>
+<Field Name="${KnownFileProperties.LastPlayed}">$lastPlayed</Field>
 <Field Name="Rating">4</Field>
 <Field Name="File Size">2345088</Field>
-<Field Name="${KnownFileProperties.DURATION}">$duration</Field>
+<Field Name="${KnownFileProperties.Duration}">$duration</Field>
 </Item>
 </MPL>
 """.toByteArray()
@@ -85,11 +85,11 @@ class WhenStoringTheUpdatedPlayStats {
 
 	@Test
 	fun thenTheLastPlayedIsRecent() {
-		assertThat(fileProperties!![KnownFileProperties.LAST_PLAYED]?.toLong()).isCloseTo(Duration.millis(System.currentTimeMillis()).standardSeconds, Offset.offset(10L))
+		assertThat(fileProperties!![KnownFileProperties.LastPlayed]?.toLong()).isCloseTo(Duration.millis(System.currentTimeMillis()).standardSeconds, Offset.offset(10L))
 	}
 
 	@Test
 	fun thenTheNumberPlaysIsIncremented() {
-		assertThat(fileProperties!![KnownFileProperties.NUMBER_PLAYS]).isEqualTo("1")
+		assertThat(fileProperties!![KnownFileProperties.NumberPlays]).isEqualTo("1")
 	}
 }

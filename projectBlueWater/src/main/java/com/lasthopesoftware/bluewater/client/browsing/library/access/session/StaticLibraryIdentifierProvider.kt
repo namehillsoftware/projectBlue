@@ -4,7 +4,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.namehillsoftware.handoff.promises.Promise
 
 class StaticLibraryIdentifierProvider constructor(instanceLibraryProvider: ProvideSelectedLibraryId) : ProvideSelectedLibraryId {
-	private val libraryId = instanceLibraryProvider.promiseSelectedLibraryId()
+	private val promisedLibraryId = instanceLibraryProvider.promiseSelectedLibraryId()
 
-	override fun promiseSelectedLibraryId(): Promise<LibraryId?> = libraryId
+	override fun promiseSelectedLibraryId(): Promise<LibraryId?> = promisedLibraryId
 }

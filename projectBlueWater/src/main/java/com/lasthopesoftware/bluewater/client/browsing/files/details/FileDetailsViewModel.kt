@@ -4,9 +4,11 @@ import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideImages
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableFilePropertyDefinition
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideScopedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.UpdateScopedFileProperties
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideScopedUrlKeyProvider
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
@@ -22,6 +24,7 @@ import kotlinx.coroutines.flow.asStateFlow
 
 class FileDetailsViewModel(
 	private val scopedFilePropertiesProvider: ProvideScopedFileProperties,
+	private val updateFileProperties: UpdateScopedFileProperties,
 	defaultImageProvider: ProvideDefaultImage,
 	private val imageProvider: ProvideImages,
 	private val controlPlayback: ControlPlaybackService,
@@ -31,18 +34,19 @@ class FileDetailsViewModel(
 
 	companion object {
 		private val propertiesToSkip = setOf(
-			KnownFileProperties.AUDIO_ANALYSIS_INFO,
-			KnownFileProperties.GET_COVER_ART_INFO,
-			KnownFileProperties.IMAGE_FILE,
-			KnownFileProperties.KEY,
-			KnownFileProperties.STACK_FILES,
-			KnownFileProperties.STACK_TOP,
-			KnownFileProperties.STACK_VIEW,
-			KnownFileProperties.WAVEFORM,
+			KnownFileProperties.AudioAnalysisInfo,
+			KnownFileProperties.GetCoverArtInfo,
+			KnownFileProperties.ImageFile,
+			KnownFileProperties.Key,
+			KnownFileProperties.StackFiles,
+			KnownFileProperties.StackTop,
+			KnownFileProperties.StackView,
+			KnownFileProperties.Waveform,
 			KnownFileProperties.LengthInPcmBlocks
 		)
 	}
 
+	private var activeEditingFile: FilePropertyViewModel? = null
 	private var associatedUrlKey: UrlKeyHolder<ServiceFile>? = null
 	private var associatedPlaylist = emptyList<ServiceFile>()
 	private var activePositionedFile: PositionedFile? = null
@@ -54,7 +58,7 @@ class FileDetailsViewModel(
 	private val mutableFileName = MutableStateFlow("")
 	private val mutableAlbum = MutableStateFlow("")
 	private val mutableArtist = MutableStateFlow("")
-	private val mutableFileProperties = MutableStateFlow(emptyList<Map.Entry<String, String>>())
+	private val mutableFileProperties = MutableStateFlow(emptyList<FilePropertyViewModel>())
 	private val mutableIsLoading = MutableStateFlow(false)
 	private val mutableCoverArt = MutableStateFlow<Bitmap?>(null)
 	private val promisedSetDefaultCoverArt = defaultImageProvider.promiseFileBitmap()
@@ -63,6 +67,7 @@ class FileDetailsViewModel(
 			it
 		}
 	private val mutableRating = MutableStateFlow(0)
+	private val mutableHighlightedProperty = MutableStateFlow<FilePropertyViewModel?>(null)
 
 	val fileName = mutableFileName.asStateFlow()
 	val artist = mutableArtist.asStateFlow()
@@ -71,6 +76,7 @@ class FileDetailsViewModel(
 	val isLoading = mutableIsLoading.asStateFlow()
 	val coverArt = mutableCoverArt.asStateFlow()
 	val rating = mutableRating.asStateFlow()
+	val highlightedProperty = mutableHighlightedProperty.asStateFlow()
 
 	override fun onCleared() {
 		propertyUpdateRegistrations.close()
@@ -113,14 +119,67 @@ class FileDetailsViewModel(
 		scopedFilePropertiesProvider
 			.promiseFileProperties(serviceFile)
 			.then { fileProperties ->
-				fileProperties[KnownFileProperties.NAME]?.also { mutableFileName.value = it }
-				fileProperties[KnownFileProperties.ARTIST]?.also { mutableArtist.value = it }
-				fileProperties[KnownFileProperties.ALBUM]?.also { mutableAlbum.value = it }
-				fileProperties[KnownFileProperties.RATING]?.toIntOrNull()?.also { mutableRating.value = it }
+				fileProperties[KnownFileProperties.Name]?.also { mutableFileName.value = it }
+				fileProperties[KnownFileProperties.Artist]?.also { mutableArtist.value = it }
+				fileProperties[KnownFileProperties.Album]?.also { mutableAlbum.value = it }
+				fileProperties[KnownFileProperties.Rating]?.toIntOrNull()?.also { mutableRating.value = it }
 
 				mutableFileProperties.value = fileProperties.entries
 					.filterNot { e -> propertiesToSkip.contains(e.key) }
-					.sortedBy { e -> e.key }
+					.sortedBy { it.key }
+					.map { FilePropertyViewModel(it.key, it.value) }
 			}
 			.keepPromise(Unit)
+
+	inner class FilePropertyViewModel(
+		val property: String,
+		originalValue: String
+	) {
+		private val editableFilePropertyDefinition by lazy { EditableFilePropertyDefinition.fromDescriptor(property) }
+
+		private val mutableCommittedValue = MutableStateFlow(originalValue)
+		private val mutableUncommittedValue = MutableStateFlow(originalValue)
+		private val mutableIsEditing = MutableStateFlow(false)
+
+		val committedValue = mutableCommittedValue.asStateFlow()
+		val uncommittedValue = mutableUncommittedValue.asStateFlow()
+		val isEditing = mutableIsEditing.asStateFlow()
+		val isEditable by lazy { editableFilePropertyDefinition != null }
+		val editableType by lazy { editableFilePropertyDefinition?.type }
+
+		fun highlight() {
+			mutableHighlightedProperty.value = this
+		}
+
+		fun edit() {
+			activeEditingFile?.takeUnless { it == this }?.cancel()
+			activeEditingFile = this
+			mutableIsEditing.value = isEditable
+		}
+
+		fun updateValue(newValue: String) {
+			mutableUncommittedValue.value = newValue
+		}
+
+		fun commitChanges(): Promise<Unit> {
+			mutableIsEditing.value = false
+			val newValue = uncommittedValue.value
+
+			return activePositionedFile
+				?.serviceFile
+				?.let { serviceFile ->
+					updateFileProperties
+						.promiseFileUpdate(serviceFile, property, newValue, false)
+						.then { mutableCommittedValue.value = newValue }
+				}
+				.keepPromise(Unit)
+				.must(::cancel)
+		}
+
+		fun cancel() {
+			mutableUncommittedValue.value = mutableCommittedValue.value
+			mutableIsEditing.value = false
+			mutableHighlightedProperty.compareAndSet(this, null)
+		}
+	}
 }

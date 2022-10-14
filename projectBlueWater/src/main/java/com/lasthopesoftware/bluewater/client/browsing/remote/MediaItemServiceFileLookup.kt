@@ -43,18 +43,18 @@ class MediaItemServiceFileLookup(
 		filePropertiesProvider.promiseFileProperties(serviceFile)
 			.then { p ->
 				MediaMetadataCompat.Builder().apply {
-					val artist = p[KnownFileProperties.ARTIST]
-					val name = p[KnownFileProperties.NAME]
-					val album = p[KnownFileProperties.ALBUM]
+					val artist = p[KnownFileProperties.Artist]
+					val name = p[KnownFileProperties.Name]
+					val album = p[KnownFileProperties.Album]
 					val duration = FilePropertyHelpers.parseDurationIntoMilliseconds(p).toLong()
 
-					putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, RemoteBrowserService.serviceFileMediaIdPrefix + RemoteBrowserService.mediaIdDelimiter + p[KnownFileProperties.KEY])
+					putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, RemoteBrowserService.serviceFileMediaIdPrefix + RemoteBrowserService.mediaIdDelimiter + p[KnownFileProperties.Key])
 					putString(MediaMetadataCompat.METADATA_KEY_ARTIST, artist)
 					putString(MediaMetadataCompat.METADATA_KEY_ALBUM, album)
 					putString(MediaMetadataCompat.METADATA_KEY_TITLE, name)
 					putLong(MediaMetadataCompat.METADATA_KEY_DURATION, duration)
 
-					val trackNumberString = p[KnownFileProperties.TRACK]
+					val trackNumberString = p[KnownFileProperties.Track]
 					val trackNumber = trackNumberString?.toLongOrNull()
 					if (trackNumber != null) {
 						putLong(MediaMetadataCompat.METADATA_KEY_TRACK_NUMBER, trackNumber)

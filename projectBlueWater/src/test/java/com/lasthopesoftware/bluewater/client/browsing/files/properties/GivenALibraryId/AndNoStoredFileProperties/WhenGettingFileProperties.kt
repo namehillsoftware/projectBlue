@@ -17,7 +17,7 @@ class WhenGettingFileProperties {
         val fakeFileConnectionProvider = FakeFileConnectionProvider()
         fakeFileConnectionProvider.setupFile(
 			ServiceFile(15),
-			mapOf(Pair(KnownFileProperties.KEY, "45")))
+			mapOf(Pair(KnownFileProperties.Key, "45")))
         val fakeLibraryConnectionProvider =
             FakeLibraryConnectionProvider(mapOf(Pair(LibraryId(14), fakeFileConnectionProvider)))
         val filePropertiesProvider = FilePropertiesProvider(
@@ -33,6 +33,6 @@ class WhenGettingFileProperties {
 
     @Test
     fun thenFilesAreRetrieved() {
-        assertThat(fileProperties!![KnownFileProperties.KEY]).isEqualTo("45")
+        assertThat(fileProperties!![KnownFileProperties.Key]).isEqualTo("45")
     }
 }

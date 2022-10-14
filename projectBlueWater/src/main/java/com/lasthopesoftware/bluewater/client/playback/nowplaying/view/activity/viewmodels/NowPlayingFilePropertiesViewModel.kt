@@ -148,7 +148,7 @@ class NowPlayingFilePropertiesViewModel(
 			.promiseFileUpdate(
 				libraryId,
 				serviceFile,
-				KnownFileProperties.RATING,
+				KnownFileProperties.Rating,
 				rating.roundToInt().toString(),
 				false)
 			.must { activeSongRatingUpdates = activeSongRatingUpdates.dec().coerceAtLeast(0) }
@@ -301,14 +301,14 @@ class NowPlayingFilePropertiesViewModel(
 	}
 
 	private fun setFileProperties(fileProperties: Map<String, String>, isReadOnly: Boolean) {
-		artistState.value = fileProperties[KnownFileProperties.ARTIST]
-		titleState.value = fileProperties[KnownFileProperties.NAME]
+		artistState.value = fileProperties[KnownFileProperties.Artist]
+		titleState.value = fileProperties[KnownFileProperties.Name]
 
 		val duration = FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties)
 		setTrackDuration(if (duration > 0) duration else Int.MAX_VALUE)
 
 		if (activeSongRatingUpdates == 0) {
-			val stringRating = fileProperties[KnownFileProperties.RATING]
+			val stringRating = fileProperties[KnownFileProperties.Rating]
 			val fileRating = stringRating?.toFloatOrNull() ?: 0f
 			songRatingState.value = fileRating
 		}

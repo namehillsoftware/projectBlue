@@ -35,11 +35,11 @@ class WhenStoringTheUpdatedPlayStats {
 <Item>
 <Field Name="Key">23</Field>
 <Field Name="Media Type">Audio</Field>
-<Field Name="${KnownFileProperties.LAST_PLAYED}">$lastPlayed</Field>
+<Field Name="${KnownFileProperties.LastPlayed}">$lastPlayed</Field>
 <Field Name="Rating">4</Field>
 <Field Name="File Size">2345088</Field>
-<Field Name="${KnownFileProperties.DURATION}">$duration</Field>
-<Field Name="${KnownFileProperties.NUMBER_PLAYS}">52</Field>
+<Field Name="${KnownFileProperties.Duration}">$duration</Field>
+<Field Name="${KnownFileProperties.NumberPlays}">52</Field>
 </Item>
 </MPL>
 """.toByteArray()
@@ -87,11 +87,11 @@ class WhenStoringTheUpdatedPlayStats {
 
 	@Test
 	fun thenTheLastPlayedIsNotUpdated() {
-		assertThat(fileProperties!![KnownFileProperties.LAST_PLAYED]).isEqualTo(lastPlayed.toString())
+		assertThat(fileProperties!![KnownFileProperties.LastPlayed]).isEqualTo(lastPlayed.toString())
 	}
 
 	@Test
 	fun thenTheNumberPlaysIsTheSame() {
-		assertThat(fileProperties!![KnownFileProperties.NUMBER_PLAYS]).isEqualTo("52")
+		assertThat(fileProperties!![KnownFileProperties.NumberPlays]).isEqualTo("52")
 	}
 }

@@ -35,26 +35,27 @@ class WhenTheFilePropertiesChange {
 					mockk {
 						every { promiseFileProperties(ServiceFile(serviceFileId)) } returns Promise(
 							mapOf(
-								Pair(KnownFileProperties.RATING, "815"),
+								Pair(KnownFileProperties.Rating, "815"),
 								Pair("little", "more"),
 								Pair("evening", "skin"),
-								Pair(KnownFileProperties.NAME, "ahead"),
-								Pair(KnownFileProperties.ARTIST, "moon"),
-								Pair(KnownFileProperties.ALBUM, "number"),
-								Pair(KnownFileProperties.IMAGE_FILE, "battle"),
+								Pair(KnownFileProperties.Name, "ahead"),
+								Pair(KnownFileProperties.Artist, "moon"),
+								Pair(KnownFileProperties.Album, "number"),
+								Pair(KnownFileProperties.ImageFile, "battle"),
 							)
 						) andThen Promise(
 							mapOf(
-								Pair(KnownFileProperties.RATING, "7"),
+								Pair(KnownFileProperties.Rating, "7"),
 								Pair("bread", "scenery"),
 								Pair("rush", "offense"),
-								Pair(KnownFileProperties.NAME, "kiss"),
-								Pair(KnownFileProperties.ARTIST, "adoption"),
-								Pair(KnownFileProperties.ALBUM, "motherly"),
-								Pair(KnownFileProperties.STACK_TOP, "under"),
+								Pair(KnownFileProperties.Name, "kiss"),
+								Pair(KnownFileProperties.Artist, "adoption"),
+								Pair(KnownFileProperties.Album, "motherly"),
+								Pair(KnownFileProperties.StackTop, "under"),
 							)
 						)
 					},
+					mockk(),
 					mockk {
 						every { promiseFileBitmap() } returns BitmapFactory
 							.decodeByteArray(byteArrayOf(3, 4), 0, 2)
@@ -105,15 +106,15 @@ class WhenTheFilePropertiesChange {
 
 	@Test
 	fun `then the properties are correct`() {
-		assertThat(services?.value?.second?.fileProperties?.value).hasSameElementsAs(
-			mapOf(
-				Pair(KnownFileProperties.RATING, "815"),
+		assertThat(services?.value?.second?.fileProperties?.value?.map { Pair(it.property, it.committedValue.value) }).hasSameElementsAs(
+			listOf(
+				Pair(KnownFileProperties.Rating, "815"),
 				Pair("little", "more"),
 				Pair("evening", "skin"),
-				Pair(KnownFileProperties.NAME, "ahead"),
-				Pair(KnownFileProperties.ARTIST, "moon"),
-				Pair(KnownFileProperties.ALBUM, "number"),
-			).entries
+				Pair(KnownFileProperties.Name, "ahead"),
+				Pair(KnownFileProperties.Artist, "moon"),
+				Pair(KnownFileProperties.Album, "number"),
+			)
 		)
 	}
 

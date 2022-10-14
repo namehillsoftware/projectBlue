@@ -9,7 +9,7 @@ object FilePropertyHelpers {
 	 */
 	@JvmStatic
 	fun parseDurationIntoMilliseconds(fileProperties: Map<String, String>): Int {
-        val durationToParse = fileProperties[KnownFileProperties.DURATION]
+        val durationToParse = fileProperties[KnownFileProperties.Duration]
 		return durationToParse?.toDoubleOrNull()?.let { it * 1000 }?.toInt() ?: -1
     }
 }

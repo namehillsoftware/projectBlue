@@ -4,6 +4,7 @@ import android.graphics.BitmapFactory
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
@@ -18,18 +19,35 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import java.net.URL
 
-private const val serviceFileId = 860
+private const val serviceFileId = 485
 
 @RunWith(AndroidJUnit4::class)
-class WhenAddingTheFileToNowPlaying {
+class WhenHighlightingTheProperty {
 	companion object {
-
-		private var addedServiceFile: ServiceFile? = null
 
 		private var viewModel: Lazy<FileDetailsViewModel>? = lazy {
 			FileDetailsViewModel(
 				mockk {
-					every { promiseFileProperties(ServiceFile(serviceFileId)) } returns Promise(emptyMap())
+					every { promiseFileProperties(ServiceFile(serviceFileId)) } returns Promise(
+						mapOf(
+							Pair(KnownFileProperties.Rating, "947"),
+							Pair("sound", "wave"),
+							Pair("creature", "concern"),
+							Pair(KnownFileProperties.Name, "mat"),
+							Pair(KnownFileProperties.Artist, "send"),
+							Pair(KnownFileProperties.Genre, "rush"),
+							Pair(KnownFileProperties.Lyrics, "reach"),
+							Pair(KnownFileProperties.Comment, "police"),
+							Pair(KnownFileProperties.Composer, "present"),
+							Pair(KnownFileProperties.Custom, "steel"),
+							Pair(KnownFileProperties.Publisher, "lipstick"),
+							Pair(KnownFileProperties.TotalDiscs, "small"),
+							Pair(KnownFileProperties.Track, "anxious"),
+							Pair(KnownFileProperties.AlbumArtist, "date"),
+							Pair(KnownFileProperties.Album, "ever"),
+							Pair(KnownFileProperties.Date, "9"),
+						)
+					)
 				},
 				mockk(),
 				mockk {
@@ -42,11 +60,7 @@ class WhenAddingTheFileToNowPlaying {
 						.decodeByteArray(byteArrayOf(61, 127), 0, 2)
 						.toPromise()
 				},
-				mockk {
-					every { addToPlaylist(any()) } answers {
-						addedServiceFile = firstArg()
-					}
-				},
+				mockk(),
 				RecordingApplicationMessageBus(),
 				mockk {
 					every { promiseUrlKey(ServiceFile(serviceFileId)) } returns UrlKeyHolder(URL("http://bow"), ServiceFile(serviceFileId)).toPromise()
@@ -57,32 +71,26 @@ class WhenAddingTheFileToNowPlaying {
 		@JvmStatic
 		@BeforeClass
 		fun act() {
-			viewModel?.value?.loadFromList(
-				listOf(
-					ServiceFile(291),
-					ServiceFile(312),
-					ServiceFile(783),
-					ServiceFile(380),
-					ServiceFile(serviceFileId),
-					ServiceFile(723),
-					ServiceFile(81),
-					ServiceFile(543),
-				),
-				4
-			)?.toExpiringFuture()?.get()
-			viewModel?.value?.addToNowPlaying()
+			viewModel?.value?.apply {
+				loadFromList(listOf(ServiceFile(serviceFileId)), 0).toExpiringFuture().get()
+				fileProperties.value.first { it.property == KnownFileProperties.Publisher }.highlight()
+			}
 		}
 
 		@JvmStatic
 		@AfterClass
 		fun cleanup() {
 			viewModel = null
-			addedServiceFile = null
 		}
 	}
 
 	@Test
-	fun `then the file is added to now playing`() {
-		assertThat(addedServiceFile).isEqualTo(ServiceFile(serviceFileId))
+	fun `then the highlighted property is correct`() {
+		assertThat(viewModel?.value?.highlightedProperty?.value?.property).isEqualTo(KnownFileProperties.Publisher)
+	}
+
+	@Test
+	fun `then the highlighted property value is correct`() {
+		assertThat(viewModel?.value?.highlightedProperty?.value?.committedValue?.value).isEqualTo("lipstick")
 	}
 }

@@ -24,7 +24,7 @@ class MediaQueryCursorProvider
 	}
 
 	override fun respond(fileProperties: Map<String, String>): Cursor? {
-		val originalFilename = fileProperties[KnownFileProperties.FILENAME]
+		val originalFilename = fileProperties[KnownFileProperties.Filename]
 			?: throw IOException("The filename property was not retrieved. A connection needs to be re-established.")
 
 		val filename = originalFilename.substring(originalFilename.lastIndexOf('\\') + 1, originalFilename.lastIndexOf('.'))
@@ -35,13 +35,13 @@ class MediaQueryCursorProvider
 		val params = ArrayList<String>(5)
 		params.add(filename)
 		querySb
-			.appendPropertyFilter(params, MediaStore.Audio.Media.ARTIST, fileProperties[KnownFileProperties.ARTIST])
+			.appendPropertyFilter(params, MediaStore.Audio.Media.ARTIST, fileProperties[KnownFileProperties.Artist])
 			.appendAnd()
-			.appendPropertyFilter(params, MediaStore.Audio.Media.ALBUM, fileProperties[KnownFileProperties.ALBUM])
+			.appendPropertyFilter(params, MediaStore.Audio.Media.ALBUM, fileProperties[KnownFileProperties.Album])
 			.appendAnd()
-			.appendPropertyFilter(params, MediaStore.Audio.Media.TITLE, fileProperties[KnownFileProperties.NAME])
+			.appendPropertyFilter(params, MediaStore.Audio.Media.TITLE, fileProperties[KnownFileProperties.Name])
 			.appendAnd()
-			.appendPropertyFilter(params, MediaStore.Audio.Media.TRACK, fileProperties[KnownFileProperties.TRACK])
+			.appendPropertyFilter(params, MediaStore.Audio.Media.TRACK, fileProperties[KnownFileProperties.Track])
 
 		return context.contentResolver.query(MediaStore.Audio.Media.EXTERNAL_CONTENT_URI, mediaQueryProjection, querySb.toString(), params.toTypedArray(), null)
 	}

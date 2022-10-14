@@ -135,10 +135,10 @@ class FileNameTextViewSetter(private val fileTextView: TextView, private val art
 		override fun respond(properties: Map<String, String>) {
 			if (isNotCurrentPromise || isUpdateCancelled) return
 
-			val trackName = properties[KnownFileProperties.NAME]
+			val trackName = properties[KnownFileProperties.Name]
 			if (trackName != null) fileTextView.text = trackName
 
-			artistTextView?.text = properties[KnownFileProperties.ARTIST] ?: "Unknown Artist"
+			artistTextView?.text = properties[KnownFileProperties.Artist] ?: "Unknown Artist"
 		}
 
 		private fun handleError(e: Throwable) {

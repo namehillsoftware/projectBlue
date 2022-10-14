@@ -32,7 +32,7 @@ class StoredFileDownloadingNotifier(
 
 	private fun notifyOfFileDownload(storedFile: StoredFile): Promise<Unit> {
 		return fileProperties.promiseFileProperties(LibraryId(storedFile.libraryId), ServiceFile(storedFile.serviceId))
-			.then { fileProperties -> syncNotification.notify(String.format(downloadingStatusLabel, fileProperties[KnownFileProperties.NAME])) }
+			.then { fileProperties -> syncNotification.notify(String.format(downloadingStatusLabel, fileProperties[KnownFileProperties.Name])) }
 			.excuse { syncNotification.notify(String.format(downloadingStatusLabel, context.getString(R.string.unknown_file))) }
 	}
 }

@@ -45,8 +45,8 @@ class WhenBuildingTheLoadingNotification : AndroidContext() {
 			ServiceFile(3),
 			object : HashMap<String, String>() {
 				init {
-					put(KnownFileProperties.ARTIST, "test-artist")
-					put(KnownFileProperties.NAME, "song")
+					put(KnownFileProperties.Artist, "test-artist")
+					put(KnownFileProperties.Name, "song")
 				}
 			})
 		val containerRepository = FakeFilePropertiesContainerRepository()

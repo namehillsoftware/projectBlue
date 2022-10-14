@@ -22,10 +22,10 @@ class WhenGettingTheStoredFilePath {
 				ServiceFile(340),
 				LibraryId(550),
 				mapOf(
-					Pair(KnownFileProperties.ARTIST, "screw"),
-					Pair(KnownFileProperties.ALBUM, "dog"),
-					Pair(KnownFileProperties.TRACK, "670"),
-					Pair(KnownFileProperties.FILENAME, "/my/linux-volume/a_filename.mp3")
+					Pair(KnownFileProperties.Artist, "screw"),
+					Pair(KnownFileProperties.Album, "dog"),
+					Pair(KnownFileProperties.Track, "670"),
+					Pair(KnownFileProperties.Filename, "/my/linux-volume/a_filename.mp3")
 				)
 			)
 

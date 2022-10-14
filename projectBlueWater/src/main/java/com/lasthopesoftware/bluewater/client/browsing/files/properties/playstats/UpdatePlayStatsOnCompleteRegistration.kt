@@ -37,6 +37,6 @@ class UpdatePlayStatsOnCompleteRegistration(private val messageBus: SendApplicat
 	override fun forClasses(): Collection<Class<out ApplicationMessage>> = classes
 
 	companion object {
-		private val classes = setOf<Class<out ApplicationMessage>>(cls<TrackCompleted>())
+		private val classes by lazy { setOf<Class<out ApplicationMessage>>(cls<TrackCompleted>()) }
 	}
 }

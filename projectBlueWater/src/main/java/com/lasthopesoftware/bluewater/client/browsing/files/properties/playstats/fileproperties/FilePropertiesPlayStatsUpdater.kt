@@ -20,17 +20,17 @@ class FilePropertiesPlayStatsUpdater(
 		filePropertiesProvider.promiseFileProperties(libraryId, serviceFile)
 			.eventually { fileProperties ->
 				try {
-					val lastPlayedServer = fileProperties[KnownFileProperties.LAST_PLAYED]
+					val lastPlayedServer = fileProperties[KnownFileProperties.LastPlayed]
 					val duration = parseDurationIntoMilliseconds(fileProperties)
 					val currentTime = System.currentTimeMillis()
 					if (lastPlayedServer != null && currentTime - duration <= lastPlayedServer.toLong() * 1000) return@eventually Promise.empty<Collection<Unit>>()
 
-					val numberPlaysString = fileProperties[KnownFileProperties.NUMBER_PLAYS]
+					val numberPlaysString = fileProperties[KnownFileProperties.NumberPlays]
 					val numberPlays = numberPlaysString?.toIntOrNull() ?: 0
 					val numberPlaysUpdate = filePropertiesStorage.promiseFileUpdate(
 						libraryId,
 						serviceFile,
-						KnownFileProperties.NUMBER_PLAYS,
+						KnownFileProperties.NumberPlays,
 						numberPlays.inc().toString(),
 						false
 					)
@@ -39,7 +39,7 @@ class FilePropertiesPlayStatsUpdater(
 					val lastPlayedUpdate = filePropertiesStorage.promiseFileUpdate(
 						libraryId,
 						serviceFile,
-						KnownFileProperties.LAST_PLAYED,
+						KnownFileProperties.LastPlayed,
 						newLastPlayed,
 						false
 					)

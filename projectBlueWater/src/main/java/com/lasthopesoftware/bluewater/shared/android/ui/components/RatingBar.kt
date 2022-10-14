@@ -2,8 +2,11 @@ package com.lasthopesoftware.bluewater.shared.android.ui.components
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
@@ -19,23 +22,40 @@ fun RatingBar(
 	modifier: Modifier = Modifier,
 	color: Color = Color.Yellow,
 	backgroundColor: Color = Color.Gray,
+	onRatingSelected: ((Int) -> Unit)? = null
 ) {
 	Row(modifier = modifier.wrapContentSize()) {
 		val padding = 1.dp
 
-		repeat(rating) {
+		repeat(rating) { r ->
+			var starModifier = Modifier.padding(start = padding, end = padding)
+			if (onRatingSelected != null)
+				starModifier = starModifier
+					.clickable(
+						interactionSource = remember { MutableInteractionSource() },
+						indication = null,
+					) { onRatingSelected(r + 1) }
+
 			Image(
 				painter = painterResource(id = R.drawable.ic_star_36),
 				colorFilter = ColorFilter.tint(color),
 				contentDescription = "Rating value",
 				contentScale = ContentScale.Fit,
-				modifier = Modifier.padding(start = padding, end = padding),
+				modifier = starModifier,
 			)
 		}
 
-		repeat(5 - rating) {
+		repeat(5 - rating) { r ->
+			var starModifier = Modifier.padding(start = padding, end = padding)
+			if (onRatingSelected != null)
+				starModifier = starModifier
+					.clickable(
+						interactionSource = remember { MutableInteractionSource() },
+						indication = null,
+					) { onRatingSelected(r + 1 + rating) }
+
 			Box(
-				modifier = Modifier.padding(start = padding, end = padding),
+				modifier = starModifier,
 			) {
 				Image(
 					painter = painterResource(id = R.drawable.ic_star_36),

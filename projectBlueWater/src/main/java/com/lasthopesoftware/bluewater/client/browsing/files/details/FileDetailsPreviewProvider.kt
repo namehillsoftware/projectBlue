@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideImages
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideScopedFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.UpdateScopedFileProperties
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideScopedUrlKeyProvider
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
@@ -29,12 +30,22 @@ class FileDetailsPreviewProvider : PreviewParameterProvider<FileDetailsViewModel
 						mapOf(
 							Pair("Key", "23"),
 							Pair("Media Type", "Audio"),
-							Pair(KnownFileProperties.LAST_PLAYED, lastPlayed.toString()),
+							Pair(KnownFileProperties.LastPlayed, lastPlayed.toString()),
 							Pair("Rating", "4"),
 							Pair("File Size", "2345088"),
-							Pair(KnownFileProperties.DURATION, duration.toString()),
+							Pair(KnownFileProperties.Duration, duration.toString()),
 						)
 					)
+				},
+				object : UpdateScopedFileProperties {
+					override fun promiseFileUpdate(
+						serviceFile: ServiceFile,
+						property: String,
+						value: String,
+						isFormatted: Boolean
+					): Promise<Unit> {
+						TODO("Not yet implemented")
+					}
 				},
 				object : ProvideDefaultImage {
 					override fun promiseFileBitmap(): Promise<Bitmap> =
