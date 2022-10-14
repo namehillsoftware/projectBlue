@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideScopedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.UpdateScopedFileProperties
+import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfScopedConnectionIsReadOnly
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideScopedUrlKeyProvider
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
@@ -23,6 +24,7 @@ import kotlinx.coroutines.flow.asStateFlow
 
 
 class FileDetailsViewModel(
+	private val connectionPermissions: CheckIfScopedConnectionIsReadOnly,
 	private val scopedFilePropertiesProvider: ProvideScopedFileProperties,
 	private val updateFileProperties: UpdateScopedFileProperties,
 	defaultImageProvider: ProvideDefaultImage,
@@ -46,6 +48,7 @@ class FileDetailsViewModel(
 		)
 	}
 
+	private var isConnectionReadOnly = false
 	private var activeEditingFile: FilePropertyViewModel? = null
 	private var associatedUrlKey: UrlKeyHolder<ServiceFile>? = null
 	private var associatedPlaylist = emptyList<ServiceFile>()
@@ -89,6 +92,9 @@ class FileDetailsViewModel(
 		associatedPlaylist = playlist
 
 		mutableIsLoading.value = true
+		val isReadOnlyPromise = connectionPermissions.promiseIsReadOnly()
+			.then { isConnectionReadOnly = it }
+
 		val filePropertiesSetPromise = loadFileProperties(serviceFile)
 
 		val urlKeyPromise = scopedUrlKeyProvider.promiseUrlKey(serviceFile)
@@ -102,7 +108,7 @@ class FileDetailsViewModel(
 			}
 
 		return Promise
-			.whenAll(filePropertiesSetPromise, bitmapSetPromise, urlKeyPromise)
+			.whenAll(filePropertiesSetPromise, bitmapSetPromise, urlKeyPromise, isReadOnlyPromise)
 			.then { mutableIsLoading.value = false }
 	}
 
@@ -144,7 +150,7 @@ class FileDetailsViewModel(
 		val committedValue = mutableCommittedValue.asStateFlow()
 		val uncommittedValue = mutableUncommittedValue.asStateFlow()
 		val isEditing = mutableIsEditing.asStateFlow()
-		val isEditable by lazy { editableFilePropertyDefinition != null }
+		val isEditable by lazy { !isConnectionReadOnly && editableFilePropertyDefinition != null }
 		val editableType by lazy { editableFilePropertyDefinition?.type }
 
 		fun highlight() {

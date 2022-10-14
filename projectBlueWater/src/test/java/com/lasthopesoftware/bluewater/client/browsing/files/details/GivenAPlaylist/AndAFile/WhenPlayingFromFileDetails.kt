@@ -45,6 +45,9 @@ class WhenPlayingFromFileDetails {
 			}
 
 			FileDetailsViewModel(
+				mockk {
+					every { promiseIsReadOnly() } returns false.toPromise()
+				},
 				fakeFilesPropertiesProvider,
 				mockk(),
 				mockk {

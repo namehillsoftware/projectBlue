@@ -30,6 +30,9 @@ class WhenCancellingAndEditingAgain {
 		private var viewModel: Lazy<FileDetailsViewModel>? = lazy {
 			FileDetailsViewModel(
 				mockk {
+					every { promiseIsReadOnly() } returns false.toPromise()
+				},
+				mockk {
 					every { promiseFileProperties(ServiceFile(serviceFileId)) } returns Promise(
 						mapOf(
 							Pair(KnownFileProperties.Rating, "68"),

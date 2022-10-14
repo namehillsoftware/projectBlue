@@ -8,12 +8,14 @@ import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideImages
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideScopedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.UpdateScopedFileProperties
+import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfScopedConnectionIsReadOnly
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideScopedUrlKeyProvider
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.images.ProvideDefaultImage
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import org.joda.time.DateTime
 import org.joda.time.Duration
@@ -22,6 +24,11 @@ class FileDetailsPreviewProvider : PreviewParameterProvider<FileDetailsViewModel
 	override val values: Sequence<FileDetailsViewModel>
 		get() = sequenceOf(
 			FileDetailsViewModel(
+				object : CheckIfScopedConnectionIsReadOnly {
+					override fun promiseIsReadOnly(): Promise<Boolean> {
+						return true.toPromise()
+					}
+				},
 				object : ProvideScopedFileProperties {
 					private val duration = Duration.standardMinutes(5).millis
 					private val lastPlayed = Duration.millis(DateTime.now().minus(Duration.standardDays(10)).millis).standardSeconds

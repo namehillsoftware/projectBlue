@@ -29,6 +29,9 @@ class WhenAddingTheFileToNowPlaying {
 		private var viewModel: Lazy<FileDetailsViewModel>? = lazy {
 			FileDetailsViewModel(
 				mockk {
+					every { promiseIsReadOnly() } returns false.toPromise()
+				},
+				mockk {
 					every { promiseFileProperties(ServiceFile(serviceFileId)) } returns Promise(emptyMap())
 				},
 				mockk(),

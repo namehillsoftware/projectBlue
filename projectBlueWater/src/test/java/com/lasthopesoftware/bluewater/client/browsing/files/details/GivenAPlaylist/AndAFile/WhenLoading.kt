@@ -5,6 +5,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideImages
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableFilePropertyDefinition
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyType
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideScopedFileProperties
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
@@ -30,6 +32,9 @@ class WhenLoading {
 
 		private var viewModel: Lazy<FileDetailsViewModel>? = lazy {
 			FileDetailsViewModel(
+				mockk {
+					every { promiseIsReadOnly() } returns false.toPromise()
+				},
 				mockk<ProvideScopedFileProperties>().apply {
 					every { promiseFileProperties(ServiceFile(serviceFileId)) } returns Promise(
 						mapOf(
@@ -84,7 +89,12 @@ class WhenLoading {
 				Pair(KnownFileProperties.Name, "holiday"),
 				Pair(KnownFileProperties.Artist, "board"),
 				Pair(KnownFileProperties.Album, "virtue"),
-			)
+			).union(EditableFilePropertyDefinition.values().map {
+				when(it.type) {
+					FilePropertyType.Integer -> Pair(it.descriptor, "0")
+					else -> Pair(it.descriptor, "")
+				}
+			})
 		)
 	}
 

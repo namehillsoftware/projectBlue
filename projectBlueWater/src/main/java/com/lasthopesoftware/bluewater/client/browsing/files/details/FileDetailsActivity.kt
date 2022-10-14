@@ -18,6 +18,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.Sta
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
 import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
+import com.lasthopesoftware.bluewater.client.connection.authentication.SelectedLibraryConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.libraries.SelectedLibraryUrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity.Companion.restoreSelectedConnection
@@ -83,8 +84,16 @@ class FileDetailsActivity : ComponentActivity() {
 		)
 	}
 
+	private val connectionPermissions by lazy {
+		SelectedLibraryConnectionAuthenticationChecker(
+			selectedLibraryIdProvider,
+			ConnectionAuthenticationChecker(libraryConnections)
+		)
+	}
+
 	private val vm by buildViewModelLazily {
 		FileDetailsViewModel(
+			connectionPermissions,
 			filePropertiesProvider,
 			scopedFilePropertyUpdates,
 			defaultImageProvider,
