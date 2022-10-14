@@ -88,6 +88,7 @@ class WhenAnotherPropertyIsEdited {
 					value.first { it.property == KnownFileProperties.AlbumArtist }.apply {
 						highlight()
 						edit()
+						updateValue("silk")
 					}
 				}
 			}
@@ -123,5 +124,10 @@ class WhenAnotherPropertyIsEdited {
 	@Test
 	fun `then the property has the correct editable type`() {
 		assertThat(viewModel?.value?.fileProperties?.value?.firstOrNull { it.property == KnownFileProperties.AlbumArtist }?.editableType).isEqualTo(FilePropertyType.ShortFormText)
+	}
+
+	@Test
+	fun `then the property is edited`() {
+		assertThat(viewModel?.value?.fileProperties?.value?.firstOrNull { it.property == KnownFileProperties.AlbumArtist }?.uncommittedValue?.value).isEqualTo("silk")
 	}
 }

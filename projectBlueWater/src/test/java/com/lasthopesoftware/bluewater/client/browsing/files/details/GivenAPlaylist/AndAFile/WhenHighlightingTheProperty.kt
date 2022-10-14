@@ -91,6 +91,6 @@ class WhenHighlightingTheProperty {
 
 	@Test
 	fun `then the highlighted property value is correct`() {
-		assertThat(viewModel?.value?.highlightedProperty?.value?.value?.value).isEqualTo("lipstick")
+		assertThat(viewModel?.value?.highlightedProperty?.value?.committedValue?.value).isEqualTo("lipstick")
 	}
 }

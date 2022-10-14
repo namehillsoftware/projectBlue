@@ -133,14 +133,16 @@ class FileDetailsViewModel(
 
 	inner class FilePropertyViewModel(
 		val property: String,
-		private val originalValue: String
+		originalValue: String
 	) {
 		private val editableFilePropertyDefinition by lazy { EditableFilePropertyDefinition.fromDescriptor(property) }
 
-		private val mutableValue = MutableStateFlow(originalValue)
+		private val mutableCommittedValue = MutableStateFlow(originalValue)
+		private val mutableUncommittedValue = MutableStateFlow(originalValue)
 		private val mutableIsEditing = MutableStateFlow(false)
 
-		val value = mutableValue.asStateFlow()
+		val committedValue = mutableCommittedValue.asStateFlow()
+		val uncommittedValue = mutableUncommittedValue.asStateFlow()
 		val isEditing = mutableIsEditing.asStateFlow()
 		val isEditable by lazy { editableFilePropertyDefinition != null }
 		val editableType by lazy { editableFilePropertyDefinition?.type }
@@ -156,23 +158,26 @@ class FileDetailsViewModel(
 		}
 
 		fun updateValue(newValue: String) {
-			mutableValue.value = newValue
+			mutableUncommittedValue.value = newValue
 		}
 
 		fun commitChanges(): Promise<Unit> {
-			val newValue = value.value
+			mutableIsEditing.value = false
+			val newValue = uncommittedValue.value
 
 			return activePositionedFile
 				?.serviceFile
 				?.let { serviceFile ->
-					updateFileProperties.promiseFileUpdate(serviceFile, property, newValue, false)
+					updateFileProperties
+						.promiseFileUpdate(serviceFile, property, newValue, false)
+						.then { mutableCommittedValue.value = newValue }
 				}
 				.keepPromise(Unit)
 				.must(::cancel)
 		}
 
 		fun cancel() {
-			mutableValue.value = originalValue
+			mutableUncommittedValue.value = mutableCommittedValue.value
 			mutableIsEditing.value = false
 			mutableHighlightedProperty.compareAndSet(this, null)
 		}

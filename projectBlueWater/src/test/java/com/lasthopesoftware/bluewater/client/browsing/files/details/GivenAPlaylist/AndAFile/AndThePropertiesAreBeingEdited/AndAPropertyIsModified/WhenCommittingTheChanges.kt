@@ -100,6 +100,18 @@ class WhenCommittingTheChanges {
 	}
 
 	@Test
+	fun `then the committed property is changed`() {
+		assertThat(
+			viewModel
+				?.value
+				?.fileProperties
+				?.value
+				?.firstOrNull { it.property == KnownFileProperties.Track }
+				?.committedValue
+				?.value).isEqualTo("617")
+	}
+
+	@Test
 	fun `then the property change is persisted`() {
 		assertThat(persistedValue).isEqualTo("617")
 	}

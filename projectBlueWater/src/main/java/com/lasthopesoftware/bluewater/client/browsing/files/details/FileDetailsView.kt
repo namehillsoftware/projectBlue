@@ -118,7 +118,7 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
 						)
 					}
 
-					val propertyValueFlow = fileProperty.value
+					val propertyValueFlow = fileProperty.uncommittedValue
 					val propertyValue by propertyValueFlow.collectAsState()
 					val isEditing by fileProperty.isEditing.collectAsState()
 					Box(
@@ -293,7 +293,7 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
 					),
             )
 
-			val propertyValue by property.value.collectAsState()
+			val propertyValue by property.committedValue.collectAsState()
 
             when (property.property) {
                 KnownFileProperties.Rating -> {

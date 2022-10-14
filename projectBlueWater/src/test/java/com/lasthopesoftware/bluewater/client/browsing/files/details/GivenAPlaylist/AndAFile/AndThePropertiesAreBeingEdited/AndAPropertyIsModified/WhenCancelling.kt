@@ -94,12 +94,38 @@ class WhenCancelling {
 
 	@Test
 	fun `then the property is not being edited`() {
-		assertThat(viewModel?.value?.fileProperties?.value?.firstOrNull { it.property == KnownFileProperties.Track }?.isEditing?.value).isFalse
+		assertThat(
+			viewModel
+				?.value
+				?.fileProperties
+				?.value
+				?.firstOrNull { it.property == KnownFileProperties.Track }
+				?.isEditing
+				?.value).isFalse
 	}
 
 	@Test
-	fun `then the property is NOT changed`() {
-		assertThat(viewModel?.value?.fileProperties?.value?.firstOrNull { it.property == KnownFileProperties.Track }?.value?.value).isEqualTo("703")
+	fun `then the uncommitted property is NOT changed`() {
+		assertThat(
+			viewModel
+				?.value
+				?.fileProperties
+				?.value
+				?.firstOrNull { it.property == KnownFileProperties.Track }
+				?.uncommittedValue
+				?.value).isEqualTo("703")
+	}
+
+	@Test
+	fun `then the committed property is NOT changed`() {
+		assertThat(
+			viewModel
+				?.value
+				?.fileProperties
+				?.value
+				?.firstOrNull { it.property == KnownFileProperties.Track }
+				?.committedValue
+				?.value).isEqualTo("703")
 	}
 
 	@Test

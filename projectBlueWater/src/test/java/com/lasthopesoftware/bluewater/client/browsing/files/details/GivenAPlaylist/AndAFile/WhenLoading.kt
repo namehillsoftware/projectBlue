@@ -76,7 +76,7 @@ class WhenLoading {
 
 	@Test
 	fun `then the properties are correct`() {
-		assertThat(viewModel?.value?.fileProperties?.value?.map { Pair(it.property, it.value.value) }).hasSameElementsAs(
+		assertThat(viewModel?.value?.fileProperties?.value?.map { Pair(it.property, it.committedValue.value) }).hasSameElementsAs(
 			listOf(
 				Pair(KnownFileProperties.Rating, "3"),
 				Pair("too", "prevent"),
