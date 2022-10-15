@@ -143,8 +143,8 @@ class FileDetailsViewModel(
 
 	inner class FilePropertyViewModel(fileProperty: FileProperty) {
 
-		private val formattedValue by lazy { fileProperty.getFormattedValue() }
-		private val editableFilePropertyDefinition by lazy { fileProperty.editableFilePropertyDefinition }
+		private val formattedValue by lazy(LazyThreadSafetyMode.NONE) { fileProperty.getFormattedValue() }
+		private val editableFilePropertyDefinition by lazy(LazyThreadSafetyMode.NONE) { fileProperty.editableFilePropertyDefinition }
 		private val mutableCommittedValue by lazy { MutableStateFlow(formattedValue) }
 		private val mutableUncommittedValue by lazy { MutableStateFlow(formattedValue) }
 		private val mutableIsEditing = MutableStateFlow(false)
@@ -152,8 +152,9 @@ class FileDetailsViewModel(
 		val committedValue by lazy { mutableCommittedValue.asStateFlow() }
 		val uncommittedValue by lazy { mutableUncommittedValue.asStateFlow() }
 		val isEditing = mutableIsEditing.asStateFlow()
-		val isEditable by lazy { !isConnectionReadOnly && editableFilePropertyDefinition != null }
-		val editableType by lazy { editableFilePropertyDefinition?.type }
+		val isEditable
+			get() = !isConnectionReadOnly && editableFilePropertyDefinition != null
+		val editableType by lazy(LazyThreadSafetyMode.NONE) { editableFilePropertyDefinition?.type }
 		val property = fileProperty.name
 
 		fun highlight() {
