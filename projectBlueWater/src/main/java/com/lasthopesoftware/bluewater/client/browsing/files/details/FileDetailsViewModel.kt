@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideImages
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideEditableScopedFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.getFormattedValue
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.UpdateScopedFileProperties
 import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfScopedConnectionIsReadOnly
@@ -142,13 +143,14 @@ class FileDetailsViewModel(
 
 	inner class FilePropertyViewModel(fileProperty: FileProperty) {
 
+		private val formattedValue by lazy { fileProperty.getFormattedValue() }
 		private val editableFilePropertyDefinition by lazy { fileProperty.editableFilePropertyDefinition }
-		private val mutableCommittedValue = MutableStateFlow(fileProperty.value)
-		private val mutableUncommittedValue = MutableStateFlow(fileProperty.value)
+		private val mutableCommittedValue by lazy { MutableStateFlow(formattedValue) }
+		private val mutableUncommittedValue by lazy { MutableStateFlow(formattedValue) }
 		private val mutableIsEditing = MutableStateFlow(false)
 
-		val committedValue = mutableCommittedValue.asStateFlow()
-		val uncommittedValue = mutableUncommittedValue.asStateFlow()
+		val committedValue by lazy { mutableCommittedValue.asStateFlow() }
+		val uncommittedValue by lazy { mutableUncommittedValue.asStateFlow() }
 		val isEditing = mutableIsEditing.asStateFlow()
 		val isEditable by lazy { !isConnectionReadOnly && editableFilePropertyDefinition != null }
 		val editableType by lazy { editableFilePropertyDefinition?.type }

@@ -40,6 +40,7 @@ class WhenLoading {
 							FileProperty(KnownFileProperties.Name, "holiday"),
 							FileProperty(KnownFileProperties.Artist, "board"),
 							FileProperty(KnownFileProperties.Album, "virtue"),
+							FileProperty(KnownFileProperties.DateCreated, "1592510356")
 						)
 					)
 				},
@@ -85,6 +86,7 @@ class WhenLoading {
 				FileProperty(KnownFileProperties.Name, "holiday"),
 				FileProperty(KnownFileProperties.Artist, "board"),
 				FileProperty(KnownFileProperties.Album, "virtue"),
+				FileProperty(KnownFileProperties.DateCreated, "6/18/2020 at 2:59 PM")
 			)
 		)
 	}
