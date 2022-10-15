@@ -6,7 +6,8 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideImages
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableFilePropertyDefinition
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideScopedFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideEditableScopedFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.getFormattedValue
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.UpdateScopedFileProperties
 import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfScopedConnectionIsReadOnly
@@ -25,7 +26,7 @@ import kotlinx.coroutines.flow.asStateFlow
 
 class FileDetailsViewModel(
 	private val connectionPermissions: CheckIfScopedConnectionIsReadOnly,
-	private val scopedFilePropertiesProvider: ProvideScopedFileProperties,
+	private val scopedFilePropertiesProvider: ProvideEditableScopedFileProperties,
 	private val updateFileProperties: UpdateScopedFileProperties,
 	defaultImageProvider: ProvideDefaultImage,
 	private val imageProvider: ProvideImages,
@@ -125,23 +126,26 @@ class FileDetailsViewModel(
 		scopedFilePropertiesProvider
 			.promiseFileProperties(serviceFile)
 			.then { fileProperties ->
-				fileProperties[KnownFileProperties.Name]?.also { mutableFileName.value = it }
-				fileProperties[KnownFileProperties.Artist]?.also { mutableArtist.value = it }
-				fileProperties[KnownFileProperties.Album]?.also { mutableAlbum.value = it }
-				fileProperties[KnownFileProperties.Rating]?.toIntOrNull()?.also { mutableRating.value = it }
+				val filePropertiesList = fileProperties.toList()
+				val filePropertiesMap = filePropertiesList.associateBy { it.name }
 
-				mutableFileProperties.value = fileProperties.entries
-					.filterNot { e -> propertiesToSkip.contains(e.key) }
-					.sortedBy { it.key }
-					.map { FilePropertyViewModel(it.key, it.value) }
+				mutableFileName.value = filePropertiesMap[KnownFileProperties.Name]?.value ?: ""
+				mutableArtist.value = filePropertiesMap[KnownFileProperties.Artist]?.value ?: ""
+				mutableAlbum.value = filePropertiesMap[KnownFileProperties.Album]?.value ?: ""
+				mutableRating.value = filePropertiesMap[KnownFileProperties.Rating]?.value?.toIntOrNull() ?: 0
+
+				mutableFileProperties.value = filePropertiesList
+					.filterNot { e -> propertiesToSkip.contains(e.name) }
+					.sortedBy { it.name }
+					.map { FilePropertyViewModel(it.name, it.getFormattedValue(), it.editableFilePropertyDefinition) }
 			}
 			.keepPromise(Unit)
 
 	inner class FilePropertyViewModel(
 		val property: String,
-		originalValue: String
+		originalValue: String,
+		private val editableFilePropertyDefinition: EditableFilePropertyDefinition?
 	) {
-		private val editableFilePropertyDefinition by lazy { EditableFilePropertyDefinition.fromDescriptor(property) }
 
 		private val mutableCommittedValue = MutableStateFlow(originalValue)
 		private val mutableUncommittedValue = MutableStateFlow(originalValue)

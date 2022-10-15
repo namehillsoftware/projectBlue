@@ -4,6 +4,7 @@ import android.graphics.BitmapFactory
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
@@ -37,24 +38,24 @@ class WhenTheFilePropertiesChange {
 					},
 					mockk {
 						every { promiseFileProperties(ServiceFile(serviceFileId)) } returns Promise(
-							mapOf(
-								Pair(KnownFileProperties.Rating, "815"),
-								Pair("little", "more"),
-								Pair("evening", "skin"),
-								Pair(KnownFileProperties.Name, "ahead"),
-								Pair(KnownFileProperties.Artist, "moon"),
-								Pair(KnownFileProperties.Album, "number"),
-								Pair(KnownFileProperties.ImageFile, "battle"),
+							sequenceOf(
+								FileProperty(KnownFileProperties.Rating, "815"),
+								FileProperty("little", "more"),
+								FileProperty("evening", "skin"),
+								FileProperty(KnownFileProperties.Name, "ahead"),
+								FileProperty(KnownFileProperties.Artist, "moon"),
+								FileProperty(KnownFileProperties.Album, "number"),
+								FileProperty(KnownFileProperties.ImageFile, "battle"),
 							)
 						) andThen Promise(
-							mapOf(
-								Pair(KnownFileProperties.Rating, "7"),
-								Pair("bread", "scenery"),
-								Pair("rush", "offense"),
-								Pair(KnownFileProperties.Name, "kiss"),
-								Pair(KnownFileProperties.Artist, "adoption"),
-								Pair(KnownFileProperties.Album, "motherly"),
-								Pair(KnownFileProperties.StackTop, "under"),
+							sequenceOf(
+								FileProperty(KnownFileProperties.Rating, "7"),
+								FileProperty("bread", "scenery"),
+								FileProperty("rush", "offense"),
+								FileProperty(KnownFileProperties.Name, "kiss"),
+								FileProperty(KnownFileProperties.Artist, "adoption"),
+								FileProperty(KnownFileProperties.Album, "motherly"),
+								FileProperty(KnownFileProperties.StackTop, "under"),
 							)
 						)
 					},

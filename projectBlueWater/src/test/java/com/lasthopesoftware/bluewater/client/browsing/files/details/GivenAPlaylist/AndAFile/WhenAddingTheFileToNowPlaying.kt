@@ -32,7 +32,7 @@ class WhenAddingTheFileToNowPlaying {
 					every { promiseIsReadOnly() } returns false.toPromise()
 				},
 				mockk {
-					every { promiseFileProperties(ServiceFile(serviceFileId)) } returns Promise(emptyMap())
+					every { promiseFileProperties(ServiceFile(serviceFileId)) } returns Promise(emptySequence())
 				},
 				mockk(),
 				mockk {

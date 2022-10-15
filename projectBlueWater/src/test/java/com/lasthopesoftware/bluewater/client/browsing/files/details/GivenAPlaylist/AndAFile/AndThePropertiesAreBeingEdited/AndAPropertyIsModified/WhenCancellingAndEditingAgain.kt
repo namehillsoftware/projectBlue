@@ -4,6 +4,7 @@ import android.graphics.BitmapFactory
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.connection.libraries.PassThroughScopedUrlKeyProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -34,23 +35,23 @@ class WhenCancellingAndEditingAgain {
 				},
 				mockk {
 					every { promiseFileProperties(ServiceFile(serviceFileId)) } returns Promise(
-						mapOf(
-							Pair(KnownFileProperties.Rating, "68"),
-							Pair("awkward", "prevent"),
-							Pair("feast", "wind"),
-							Pair(KnownFileProperties.Name, "please"),
-							Pair(KnownFileProperties.Artist, "brown"),
-							Pair(KnownFileProperties.Genre, "subject"),
-							Pair(KnownFileProperties.Lyrics, "belief"),
-							Pair(KnownFileProperties.Comment, "pad"),
-							Pair(KnownFileProperties.Composer, "hotel"),
-							Pair(KnownFileProperties.Custom, "curl"),
-							Pair(KnownFileProperties.Publisher, "capital"),
-							Pair(KnownFileProperties.TotalDiscs, "354"),
-							Pair(KnownFileProperties.Track, "703"),
-							Pair(KnownFileProperties.AlbumArtist, "calm"),
-							Pair(KnownFileProperties.Album, "distant"),
-							Pair(KnownFileProperties.Date, "1355"),
+						sequenceOf(
+							FileProperty(KnownFileProperties.Rating, "68"),
+							FileProperty("awkward", "prevent"),
+							FileProperty("feast", "wind"),
+							FileProperty(KnownFileProperties.Name, "please"),
+							FileProperty(KnownFileProperties.Artist, "brown"),
+							FileProperty(KnownFileProperties.Genre, "subject"),
+							FileProperty(KnownFileProperties.Lyrics, "belief"),
+							FileProperty(KnownFileProperties.Comment, "pad"),
+							FileProperty(KnownFileProperties.Composer, "hotel"),
+							FileProperty(KnownFileProperties.Custom, "curl"),
+							FileProperty(KnownFileProperties.Publisher, "capital"),
+							FileProperty(KnownFileProperties.TotalDiscs, "354"),
+							FileProperty(KnownFileProperties.Track, "703"),
+							FileProperty(KnownFileProperties.AlbumArtist, "calm"),
+							FileProperty(KnownFileProperties.Album, "distant"),
+							FileProperty(KnownFileProperties.Date, "1355"),
 						)
 					)
 				},

@@ -4,6 +4,7 @@ import android.graphics.BitmapFactory
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableScopedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FakeScopedCachedFilesPropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
@@ -48,7 +49,7 @@ class WhenPlayingFromFileDetails {
 				mockk {
 					every { promiseIsReadOnly() } returns false.toPromise()
 				},
-				fakeFilesPropertiesProvider,
+				EditableScopedFilePropertiesProvider(fakeFilesPropertiesProvider),
 				mockk(),
 				mockk {
 					every { promiseFileBitmap() } returns BitmapFactory

@@ -21,8 +21,8 @@ enum class EditableFilePropertyDefinition(val descriptor: String, val type: File
 	override fun toString() = descriptor
 
 	companion object {
-		private val descriptorLookup by lazy { values().associateBy { fp -> fp.descriptor } }
+		private val propertyLook by lazy { values().associateBy { fp -> fp.descriptor } }
 
-		fun fromDescriptor(descriptor: String) = descriptorLookup[descriptor]
+		fun fromName(name: String) = propertyLook[name]
 	}
 }

@@ -4,13 +4,9 @@ import android.graphics.BitmapFactory
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
-import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideImages
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableFilePropertyDefinition
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyType
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideScopedFileProperties
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
-import com.lasthopesoftware.bluewater.shared.images.ProvideDefaultImage
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
@@ -35,25 +31,25 @@ class WhenLoading {
 				mockk {
 					every { promiseIsReadOnly() } returns false.toPromise()
 				},
-				mockk<ProvideScopedFileProperties>().apply {
+				mockk {
 					every { promiseFileProperties(ServiceFile(serviceFileId)) } returns Promise(
-						mapOf(
-							Pair(KnownFileProperties.Rating, "3"),
-							Pair("too", "prevent"),
-							Pair("shirt", "wind"),
-							Pair(KnownFileProperties.Name, "holiday"),
-							Pair(KnownFileProperties.Artist, "board"),
-							Pair(KnownFileProperties.Album, "virtue"),
+						sequenceOf(
+							FileProperty(KnownFileProperties.Rating, "3"),
+							FileProperty("too", "prevent"),
+							FileProperty("shirt", "wind"),
+							FileProperty(KnownFileProperties.Name, "holiday"),
+							FileProperty(KnownFileProperties.Artist, "board"),
+							FileProperty(KnownFileProperties.Album, "virtue"),
 						)
 					)
 				},
 				mockk(),
-				mockk<ProvideDefaultImage>().apply {
+				mockk {
 					every { promiseFileBitmap() } returns BitmapFactory
 						.decodeByteArray(byteArrayOf(3, 4), 0, 2)
 						.toPromise()
 				},
-				mockk<ProvideImages>().apply {
+				mockk {
 					every { promiseFileBitmap(any()) } returns BitmapFactory
 						.decodeByteArray(byteArrayOf(61, 127), 0, 2)
 						.toPromise()
@@ -81,20 +77,15 @@ class WhenLoading {
 
 	@Test
 	fun `then the properties are correct`() {
-		assertThat(viewModel?.value?.fileProperties?.value?.map { Pair(it.property, it.committedValue.value) }).hasSameElementsAs(
+		assertThat(viewModel?.value?.fileProperties?.value?.map { FileProperty(it.property, it.committedValue.value) }).hasSameElementsAs(
 			listOf(
-				Pair(KnownFileProperties.Rating, "3"),
-				Pair("too", "prevent"),
-				Pair("shirt", "wind"),
-				Pair(KnownFileProperties.Name, "holiday"),
-				Pair(KnownFileProperties.Artist, "board"),
-				Pair(KnownFileProperties.Album, "virtue"),
-			).union(EditableFilePropertyDefinition.values().map {
-				when(it.type) {
-					FilePropertyType.Integer -> Pair(it.descriptor, "0")
-					else -> Pair(it.descriptor, "")
-				}
-			})
+				FileProperty(KnownFileProperties.Rating, "3"),
+				FileProperty("too", "prevent"),
+				FileProperty("shirt", "wind"),
+				FileProperty(KnownFileProperties.Name, "holiday"),
+				FileProperty(KnownFileProperties.Artist, "board"),
+				FileProperty(KnownFileProperties.Album, "virtue"),
+			)
 		)
 	}
 

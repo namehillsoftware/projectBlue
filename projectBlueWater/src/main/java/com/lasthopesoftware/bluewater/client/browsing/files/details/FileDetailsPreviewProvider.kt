@@ -5,8 +5,9 @@ import android.graphics.BitmapFactory
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideImages
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideScopedFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideEditableScopedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.UpdateScopedFileProperties
 import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfScopedConnectionIsReadOnly
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideScopedUrlKeyProvider
@@ -29,18 +30,18 @@ class FileDetailsPreviewProvider : PreviewParameterProvider<FileDetailsViewModel
 						return true.toPromise()
 					}
 				},
-				object : ProvideScopedFileProperties {
+				object : ProvideEditableScopedFileProperties {
 					private val duration = Duration.standardMinutes(5).millis
 					private val lastPlayed = Duration.millis(DateTime.now().minus(Duration.standardDays(10)).millis).standardSeconds
 
 					override fun promiseFileProperties(serviceFile: ServiceFile) = Promise(
-						mapOf(
-							Pair("Key", "23"),
-							Pair("Media Type", "Audio"),
-							Pair(KnownFileProperties.LastPlayed, lastPlayed.toString()),
-							Pair("Rating", "4"),
-							Pair("File Size", "2345088"),
-							Pair(KnownFileProperties.Duration, duration.toString()),
+						sequenceOf(
+							FileProperty("Key", "23"),
+							FileProperty("Media Type", "Audio"),
+							FileProperty(KnownFileProperties.LastPlayed, lastPlayed.toString()),
+							FileProperty("Rating", "4"),
+							FileProperty("File Size", "2345088"),
+							FileProperty(KnownFileProperties.Duration, duration.toString()),
 						)
 					)
 				},

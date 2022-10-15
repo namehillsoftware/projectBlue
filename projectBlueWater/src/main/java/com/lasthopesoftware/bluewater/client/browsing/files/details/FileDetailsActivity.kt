@@ -7,8 +7,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.image.CachedImageProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableScopedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.FormattedScopedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.SelectedLibraryFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertyStorage
@@ -59,7 +59,7 @@ class FileDetailsActivity : ComponentActivity() {
 	private val libraryRevisionProvider by lazy { LibraryRevisionProvider(libraryConnections) }
 
 	private val filePropertiesProvider by lazy {
-		FormattedScopedFilePropertiesProvider(
+		EditableScopedFilePropertiesProvider(
 			SelectedLibraryFilePropertiesProvider(
 				selectedLibraryIdProvider,
 				FilePropertiesProvider(
