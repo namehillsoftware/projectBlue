@@ -14,6 +14,8 @@ import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
+import org.joda.time.DateTime
+import org.joda.time.format.DateTimeFormatterBuilder
 import org.junit.AfterClass
 import org.junit.BeforeClass
 import org.junit.Test
@@ -78,15 +80,27 @@ class WhenLoading {
 
 	@Test
 	fun `then the properties are correct`() {
-		assertThat(viewModel?.value?.fileProperties?.value?.map { FileProperty(it.property, it.committedValue.value) }).hasSameElementsAs(
+		assertThat(viewModel?.value?.fileProperties?.value?.map { Pair(it.property, it.committedValue.value) }).hasSameElementsAs(
 			listOf(
-				FileProperty(KnownFileProperties.Rating, "3"),
-				FileProperty("too", "prevent"),
-				FileProperty("shirt", "wind"),
-				FileProperty(KnownFileProperties.Name, "holiday"),
-				FileProperty(KnownFileProperties.Artist, "board"),
-				FileProperty(KnownFileProperties.Album, "virtue"),
-				FileProperty(KnownFileProperties.DateCreated, "6/18/2020 at 2:59 PM")
+				Pair(KnownFileProperties.Rating, "3"),
+				Pair("too", "prevent"),
+				Pair("shirt", "wind"),
+				Pair(KnownFileProperties.Name, "holiday"),
+				Pair(KnownFileProperties.Artist, "board"),
+				Pair(KnownFileProperties.Album, "virtue"),
+				Pair(KnownFileProperties.DateCreated, DateTime(1592510356L * 1000).toString(DateTimeFormatterBuilder()
+					.appendMonthOfYear(1)
+					.appendLiteral('/')
+					.appendDayOfMonth(1)
+					.appendLiteral('/')
+					.appendYear(4, 4)
+					.appendLiteral(" at ")
+					.appendClockhourOfHalfday(1)
+					.appendLiteral(':')
+					.appendMinuteOfHour(2)
+					.appendLiteral(' ')
+					.appendHalfdayOfDayText()
+					.toFormatter()))
 			)
 		)
 	}
