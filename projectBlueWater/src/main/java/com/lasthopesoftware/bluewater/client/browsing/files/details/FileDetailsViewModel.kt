@@ -4,10 +4,9 @@ import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideImages
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableFilePropertyDefinition
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideEditableScopedFileProperties
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.getFormattedValue
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.UpdateScopedFileProperties
 import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfScopedConnectionIsReadOnly
@@ -137,18 +136,15 @@ class FileDetailsViewModel(
 				mutableFileProperties.value = filePropertiesList
 					.filterNot { e -> propertiesToSkip.contains(e.name) }
 					.sortedBy { it.name }
-					.map { FilePropertyViewModel(it.name, it.getFormattedValue(), it.editableFilePropertyDefinition) }
+					.map(::FilePropertyViewModel)
 			}
 			.keepPromise(Unit)
 
-	inner class FilePropertyViewModel(
-		val property: String,
-		originalValue: String,
-		private val editableFilePropertyDefinition: EditableFilePropertyDefinition?
-	) {
+	inner class FilePropertyViewModel(fileProperty: FileProperty) {
 
-		private val mutableCommittedValue = MutableStateFlow(originalValue)
-		private val mutableUncommittedValue = MutableStateFlow(originalValue)
+		private val editableFilePropertyDefinition by lazy { fileProperty.editableFilePropertyDefinition }
+		private val mutableCommittedValue = MutableStateFlow(fileProperty.value)
+		private val mutableUncommittedValue = MutableStateFlow(fileProperty.value)
 		private val mutableIsEditing = MutableStateFlow(false)
 
 		val committedValue = mutableCommittedValue.asStateFlow()
@@ -156,6 +152,7 @@ class FileDetailsViewModel(
 		val isEditing = mutableIsEditing.asStateFlow()
 		val isEditable by lazy { !isConnectionReadOnly && editableFilePropertyDefinition != null }
 		val editableType by lazy { editableFilePropertyDefinition?.type }
+		val property = fileProperty.name
 
 		fun highlight() {
 			mutableHighlightedProperty.value = this

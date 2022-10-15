@@ -4,13 +4,13 @@ import android.graphics.BitmapFactory
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableScopedFilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.FakeScopedCachedFilesPropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
+import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -30,26 +30,23 @@ class WhenPlayingFromFileDetails {
 	companion object {
 
 		private var mut: Lazy<FileDetailsViewModel>? = lazy {
-			val fakeFilesPropertiesProvider = FakeScopedCachedFilesPropertiesProvider().apply {
-				addFilePropertiesToCache(
-					ServiceFile(serviceFileId),
-					mapOf(
-						Pair(KnownFileProperties.Name, "toward"),
-						Pair(KnownFileProperties.Artist, "load"),
-						Pair(KnownFileProperties.Album, "square"),
-						Pair(KnownFileProperties.Rating, "4"),
-						Pair("razor", "through"),
-						Pair("smile", "since"),
-						Pair("harvest", "old"),
-					)
-				)
-			}
-
 			FileDetailsViewModel(
 				mockk {
 					every { promiseIsReadOnly() } returns false.toPromise()
 				},
-				EditableScopedFilePropertiesProvider(fakeFilesPropertiesProvider),
+				mockk {
+					every { promiseFileProperties(ServiceFile(serviceFileId)) } returns Promise(
+						sequenceOf(
+							FileProperty(KnownFileProperties.Name, "toward"),
+							FileProperty(KnownFileProperties.Artist, "load"),
+							FileProperty(KnownFileProperties.Album, "square"),
+							FileProperty(KnownFileProperties.Rating, "4"),
+							FileProperty("razor", "through"),
+							FileProperty("smile", "since"),
+							FileProperty("harvest", "old"),
+						)
+					)
+				},
 				mockk(),
 				mockk {
 					every { promiseFileBitmap() } returns BitmapFactory
