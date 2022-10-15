@@ -4,6 +4,7 @@ import android.graphics.BitmapFactory
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -28,24 +29,27 @@ class WhenHighlightingTheProperty {
 		private var viewModel: Lazy<FileDetailsViewModel>? = lazy {
 			FileDetailsViewModel(
 				mockk {
+					every { promiseIsReadOnly() } returns false.toPromise()
+				},
+				mockk {
 					every { promiseFileProperties(ServiceFile(serviceFileId)) } returns Promise(
-						mapOf(
-							Pair(KnownFileProperties.Rating, "412"),
-							Pair("simple", "middle"),
-							Pair("aside", "vessel"),
-							Pair(KnownFileProperties.Name, "skin"),
-							Pair(KnownFileProperties.Artist, "afford"),
-							Pair(KnownFileProperties.Genre, "avenue"),
-							Pair(KnownFileProperties.Lyrics, "regret"),
-							Pair(KnownFileProperties.Comment, "dream"),
-							Pair(KnownFileProperties.Composer, "risk"),
-							Pair(KnownFileProperties.Custom, "fate"),
-							Pair(KnownFileProperties.Publisher, "crash"),
-							Pair(KnownFileProperties.TotalDiscs, "bone"),
-							Pair(KnownFileProperties.Track, "passage"),
-							Pair(KnownFileProperties.AlbumArtist, "enclose"),
-							Pair(KnownFileProperties.Album, "amuse"),
-							Pair(KnownFileProperties.Date, "9357"),
+						sequenceOf(
+							FileProperty(KnownFileProperties.Rating, "412"),
+							FileProperty("simple", "middle"),
+							FileProperty("aside", "vessel"),
+							FileProperty(KnownFileProperties.Name, "skin"),
+							FileProperty(KnownFileProperties.Artist, "afford"),
+							FileProperty(KnownFileProperties.Genre, "avenue"),
+							FileProperty(KnownFileProperties.Lyrics, "regret"),
+							FileProperty(KnownFileProperties.Comment, "dream"),
+							FileProperty(KnownFileProperties.Composer, "risk"),
+							FileProperty(KnownFileProperties.Custom, "fate"),
+							FileProperty(KnownFileProperties.Publisher, "crash"),
+							FileProperty(KnownFileProperties.TotalDiscs, "bone"),
+							FileProperty(KnownFileProperties.Track, "passage"),
+							FileProperty(KnownFileProperties.AlbumArtist, "enclose"),
+							FileProperty(KnownFileProperties.Album, "amuse"),
+							FileProperty(KnownFileProperties.Date, "9357"),
 						)
 					)
 				},

@@ -4,6 +4,7 @@ import android.graphics.BitmapFactory
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -28,24 +29,27 @@ class WhenHighlightingTheProperty {
 		private var viewModel: Lazy<FileDetailsViewModel>? = lazy {
 			FileDetailsViewModel(
 				mockk {
+					every { promiseIsReadOnly() } returns false.toPromise()
+				},
+				mockk {
 					every { promiseFileProperties(ServiceFile(serviceFileId)) } returns Promise(
-						mapOf(
-							Pair(KnownFileProperties.Rating, "947"),
-							Pair("sound", "wave"),
-							Pair("creature", "concern"),
-							Pair(KnownFileProperties.Name, "mat"),
-							Pair(KnownFileProperties.Artist, "send"),
-							Pair(KnownFileProperties.Genre, "rush"),
-							Pair(KnownFileProperties.Lyrics, "reach"),
-							Pair(KnownFileProperties.Comment, "police"),
-							Pair(KnownFileProperties.Composer, "present"),
-							Pair(KnownFileProperties.Custom, "steel"),
-							Pair(KnownFileProperties.Publisher, "lipstick"),
-							Pair(KnownFileProperties.TotalDiscs, "small"),
-							Pair(KnownFileProperties.Track, "anxious"),
-							Pair(KnownFileProperties.AlbumArtist, "date"),
-							Pair(KnownFileProperties.Album, "ever"),
-							Pair(KnownFileProperties.Date, "9"),
+						sequenceOf(
+							FileProperty(KnownFileProperties.Rating, "947"),
+							FileProperty("sound", "wave"),
+							FileProperty("creature", "concern"),
+							FileProperty(KnownFileProperties.Name, "mat"),
+							FileProperty(KnownFileProperties.Artist, "send"),
+							FileProperty(KnownFileProperties.Genre, "rush"),
+							FileProperty(KnownFileProperties.Lyrics, "reach"),
+							FileProperty(KnownFileProperties.Comment, "police"),
+							FileProperty(KnownFileProperties.Composer, "present"),
+							FileProperty(KnownFileProperties.Custom, "steel"),
+							FileProperty(KnownFileProperties.Publisher, "lipstick"),
+							FileProperty(KnownFileProperties.TotalDiscs, "small"),
+							FileProperty(KnownFileProperties.Track, "anxious"),
+							FileProperty(KnownFileProperties.AlbumArtist, "date"),
+							FileProperty(KnownFileProperties.Album, "ever"),
+							FileProperty(KnownFileProperties.Date, "9"),
 						)
 					)
 				},

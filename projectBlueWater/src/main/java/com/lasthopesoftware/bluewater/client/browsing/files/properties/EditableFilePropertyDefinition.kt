@@ -4,7 +4,9 @@ enum class EditableFilePropertyDefinition(val descriptor: String, val type: File
 	Artist(KnownFileProperties.Artist, FilePropertyType.ShortFormText),
 	AlbumArtist(KnownFileProperties.AlbumArtist, FilePropertyType.ShortFormText),
 	Album(KnownFileProperties.Album, FilePropertyType.ShortFormText),
+	Band(KnownFileProperties.Band, FilePropertyType.ShortFormText),
 	Date(KnownFileProperties.Date, FilePropertyType.Date),
+	DiscNumber(KnownFileProperties.DiscNumber, FilePropertyType.Integer),
 	Name(KnownFileProperties.Name, FilePropertyType.ShortFormText),
 	Track(KnownFileProperties.Track, FilePropertyType.Integer),
 	Rating(KnownFileProperties.Rating, FilePropertyType.Integer),
@@ -19,8 +21,8 @@ enum class EditableFilePropertyDefinition(val descriptor: String, val type: File
 	override fun toString() = descriptor
 
 	companion object {
-		private val descriptorLookup by lazy { values().associateBy { fp -> fp.descriptor } }
+		private val propertyLook by lazy { values().associateBy { fp -> fp.descriptor } }
 
-		fun fromDescriptor(descriptor: String) = descriptorLookup[descriptor]
+		fun fromName(name: String) = propertyLook[name]
 	}
 }

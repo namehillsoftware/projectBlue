@@ -4,11 +4,9 @@ import android.graphics.BitmapFactory
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
-import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideImages
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideScopedFileProperties
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
-import com.lasthopesoftware.bluewater.shared.images.ProvideDefaultImage
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
@@ -16,6 +14,8 @@ import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
+import org.joda.time.DateTime
+import org.joda.time.format.DateTimeFormatterBuilder
 import org.junit.AfterClass
 import org.junit.BeforeClass
 import org.junit.Test
@@ -30,25 +30,29 @@ class WhenLoading {
 
 		private var viewModel: Lazy<FileDetailsViewModel>? = lazy {
 			FileDetailsViewModel(
-				mockk<ProvideScopedFileProperties>().apply {
+				mockk {
+					every { promiseIsReadOnly() } returns false.toPromise()
+				},
+				mockk {
 					every { promiseFileProperties(ServiceFile(serviceFileId)) } returns Promise(
-						mapOf(
-							Pair(KnownFileProperties.Rating, "3"),
-							Pair("too", "prevent"),
-							Pair("shirt", "wind"),
-							Pair(KnownFileProperties.Name, "holiday"),
-							Pair(KnownFileProperties.Artist, "board"),
-							Pair(KnownFileProperties.Album, "virtue"),
+						sequenceOf(
+							FileProperty(KnownFileProperties.Rating, "3"),
+							FileProperty("too", "prevent"),
+							FileProperty("shirt", "wind"),
+							FileProperty(KnownFileProperties.Name, "holiday"),
+							FileProperty(KnownFileProperties.Artist, "board"),
+							FileProperty(KnownFileProperties.Album, "virtue"),
+							FileProperty(KnownFileProperties.DateCreated, "1592510356")
 						)
 					)
 				},
 				mockk(),
-				mockk<ProvideDefaultImage>().apply {
+				mockk {
 					every { promiseFileBitmap() } returns BitmapFactory
 						.decodeByteArray(byteArrayOf(3, 4), 0, 2)
 						.toPromise()
 				},
-				mockk<ProvideImages>().apply {
+				mockk {
 					every { promiseFileBitmap(any()) } returns BitmapFactory
 						.decodeByteArray(byteArrayOf(61, 127), 0, 2)
 						.toPromise()
@@ -84,6 +88,19 @@ class WhenLoading {
 				Pair(KnownFileProperties.Name, "holiday"),
 				Pair(KnownFileProperties.Artist, "board"),
 				Pair(KnownFileProperties.Album, "virtue"),
+				Pair(KnownFileProperties.DateCreated, DateTime(1592510356L * 1000).toString(DateTimeFormatterBuilder()
+					.appendMonthOfYear(1)
+					.appendLiteral('/')
+					.appendDayOfMonth(1)
+					.appendLiteral('/')
+					.appendYear(4, 4)
+					.appendLiteral(" at ")
+					.appendClockhourOfHalfday(1)
+					.appendLiteral(':')
+					.appendMinuteOfHour(2)
+					.appendLiteral(' ')
+					.appendHalfdayOfDayText()
+					.toFormatter()))
 			)
 		)
 	}

@@ -4,8 +4,10 @@ object KnownFileProperties {
 	const val Artist = "Artist"
 	const val AlbumArtist = "Album Artist"
 	const val Album = "Album"
-	const val Duration = "Duration"
+	const val Band = "Band"
+	const val DiscNumber = "Disc #"
 	const val Name = "Name"
+	const val Duration = "Duration"
 	const val Filename = "Filename"
 	const val Track = "Track #"
 	const val NumberPlays = "Number Plays"
@@ -40,5 +42,5 @@ object KnownFileProperties {
 	const val Composer = "Composer"
 	const val Custom = "Custom"
 	const val Publisher = "Publisher"
-	const val TotalDiscs = "TotalDiscs"
+	const val TotalDiscs = "Total Discs"
 }

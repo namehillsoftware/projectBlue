@@ -7,8 +7,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.image.CachedImageProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableScopedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.FormattedScopedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.SelectedLibraryFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertyStorage
@@ -18,6 +18,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.Sta
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
 import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
+import com.lasthopesoftware.bluewater.client.connection.authentication.SelectedLibraryConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.libraries.SelectedLibraryUrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity.Companion.restoreSelectedConnection
@@ -58,7 +59,7 @@ class FileDetailsActivity : ComponentActivity() {
 	private val libraryRevisionProvider by lazy { LibraryRevisionProvider(libraryConnections) }
 
 	private val filePropertiesProvider by lazy {
-		FormattedScopedFilePropertiesProvider(
+		EditableScopedFilePropertiesProvider(
 			SelectedLibraryFilePropertiesProvider(
 				selectedLibraryIdProvider,
 				FilePropertiesProvider(
@@ -83,8 +84,16 @@ class FileDetailsActivity : ComponentActivity() {
 		)
 	}
 
+	private val connectionPermissions by lazy {
+		SelectedLibraryConnectionAuthenticationChecker(
+			selectedLibraryIdProvider,
+			ConnectionAuthenticationChecker(libraryConnections)
+		)
+	}
+
 	private val vm by buildViewModelLazily {
 		FileDetailsViewModel(
+			connectionPermissions,
 			filePropertiesProvider,
 			scopedFilePropertyUpdates,
 			defaultImageProvider,

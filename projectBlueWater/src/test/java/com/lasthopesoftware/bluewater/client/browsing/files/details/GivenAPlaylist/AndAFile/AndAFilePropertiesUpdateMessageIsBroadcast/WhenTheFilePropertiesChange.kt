@@ -4,6 +4,7 @@ import android.graphics.BitmapFactory
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
@@ -33,25 +34,28 @@ class WhenTheFilePropertiesChange {
 				recordingApplicationMessageBus,
 				FileDetailsViewModel(
 					mockk {
+						every { promiseIsReadOnly() } returns false.toPromise()
+					},
+					mockk {
 						every { promiseFileProperties(ServiceFile(serviceFileId)) } returns Promise(
-							mapOf(
-								Pair(KnownFileProperties.Rating, "3"),
-								Pair("bread", "prevent"),
-								Pair("silence", "wind"),
-								Pair(KnownFileProperties.Name, "sorry"),
-								Pair(KnownFileProperties.Artist, "receive"),
-								Pair(KnownFileProperties.Album, "part"),
-								Pair(KnownFileProperties.StackView, "basic"),
+							sequenceOf(
+								FileProperty(KnownFileProperties.Rating, "3"),
+								FileProperty("bread", "prevent"),
+								FileProperty("silence", "wind"),
+								FileProperty(KnownFileProperties.Name, "sorry"),
+								FileProperty(KnownFileProperties.Artist, "receive"),
+								FileProperty(KnownFileProperties.Album, "part"),
+								FileProperty(KnownFileProperties.StackView, "basic"),
 							)
 						) andThen Promise(
-							mapOf(
-								Pair(KnownFileProperties.Rating, "7"),
-								Pair("bread", "scenery"),
-								Pair("rush", "offense"),
-								Pair(KnownFileProperties.Name, "kiss"),
-								Pair(KnownFileProperties.Artist, "adoption"),
-								Pair(KnownFileProperties.Album, "motherly"),
-								Pair(KnownFileProperties.StackTop, "under"),
+							sequenceOf(
+								FileProperty(KnownFileProperties.Rating, "7"),
+								FileProperty("bread", "scenery"),
+								FileProperty("rush", "offense"),
+								FileProperty(KnownFileProperties.Name, "kiss"),
+								FileProperty(KnownFileProperties.Artist, "adoption"),
+								FileProperty(KnownFileProperties.Album, "motherly"),
+								FileProperty(KnownFileProperties.StackTop, "under"),
 							)
 						)
 					},

@@ -4,11 +4,13 @@ import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideImages
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableFilePropertyDefinition
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideScopedFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideEditableScopedFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.getFormattedValue
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.UpdateScopedFileProperties
+import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfScopedConnectionIsReadOnly
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideScopedUrlKeyProvider
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
@@ -23,7 +25,8 @@ import kotlinx.coroutines.flow.asStateFlow
 
 
 class FileDetailsViewModel(
-	private val scopedFilePropertiesProvider: ProvideScopedFileProperties,
+	private val connectionPermissions: CheckIfScopedConnectionIsReadOnly,
+	private val scopedFilePropertiesProvider: ProvideEditableScopedFileProperties,
 	private val updateFileProperties: UpdateScopedFileProperties,
 	defaultImageProvider: ProvideDefaultImage,
 	private val imageProvider: ProvideImages,
@@ -46,6 +49,7 @@ class FileDetailsViewModel(
 		)
 	}
 
+	private var isConnectionReadOnly = false
 	private var activeEditingFile: FilePropertyViewModel? = null
 	private var associatedUrlKey: UrlKeyHolder<ServiceFile>? = null
 	private var associatedPlaylist = emptyList<ServiceFile>()
@@ -89,6 +93,9 @@ class FileDetailsViewModel(
 		associatedPlaylist = playlist
 
 		mutableIsLoading.value = true
+		val isReadOnlyPromise = connectionPermissions.promiseIsReadOnly()
+			.then { isConnectionReadOnly = it }
+
 		val filePropertiesSetPromise = loadFileProperties(serviceFile)
 
 		val urlKeyPromise = scopedUrlKeyProvider.promiseUrlKey(serviceFile)
@@ -102,7 +109,7 @@ class FileDetailsViewModel(
 			}
 
 		return Promise
-			.whenAll(filePropertiesSetPromise, bitmapSetPromise, urlKeyPromise)
+			.whenAll(filePropertiesSetPromise, bitmapSetPromise, urlKeyPromise, isReadOnlyPromise)
 			.then { mutableIsLoading.value = false }
 	}
 
@@ -119,33 +126,36 @@ class FileDetailsViewModel(
 		scopedFilePropertiesProvider
 			.promiseFileProperties(serviceFile)
 			.then { fileProperties ->
-				fileProperties[KnownFileProperties.Name]?.also { mutableFileName.value = it }
-				fileProperties[KnownFileProperties.Artist]?.also { mutableArtist.value = it }
-				fileProperties[KnownFileProperties.Album]?.also { mutableAlbum.value = it }
-				fileProperties[KnownFileProperties.Rating]?.toIntOrNull()?.also { mutableRating.value = it }
+				val filePropertiesList = fileProperties.toList()
+				val filePropertiesMap = filePropertiesList.associateBy { it.name }
 
-				mutableFileProperties.value = fileProperties.entries
-					.filterNot { e -> propertiesToSkip.contains(e.key) }
-					.sortedBy { it.key }
-					.map { FilePropertyViewModel(it.key, it.value) }
+				mutableFileName.value = filePropertiesMap[KnownFileProperties.Name]?.value ?: ""
+				mutableArtist.value = filePropertiesMap[KnownFileProperties.Artist]?.value ?: ""
+				mutableAlbum.value = filePropertiesMap[KnownFileProperties.Album]?.value ?: ""
+				mutableRating.value = filePropertiesMap[KnownFileProperties.Rating]?.value?.toIntOrNull() ?: 0
+
+				mutableFileProperties.value = filePropertiesList
+					.filterNot { e -> propertiesToSkip.contains(e.name) }
+					.sortedBy { it.name }
+					.map(::FilePropertyViewModel)
 			}
 			.keepPromise(Unit)
 
-	inner class FilePropertyViewModel(
-		val property: String,
-		originalValue: String
-	) {
-		private val editableFilePropertyDefinition by lazy { EditableFilePropertyDefinition.fromDescriptor(property) }
+	inner class FilePropertyViewModel(fileProperty: FileProperty) {
 
-		private val mutableCommittedValue = MutableStateFlow(originalValue)
-		private val mutableUncommittedValue = MutableStateFlow(originalValue)
+		private val formattedValue by lazy(LazyThreadSafetyMode.NONE) { fileProperty.getFormattedValue() }
+		private val editableFilePropertyDefinition by lazy(LazyThreadSafetyMode.NONE) { fileProperty.editableFilePropertyDefinition }
+		private val mutableCommittedValue by lazy { MutableStateFlow(formattedValue) }
+		private val mutableUncommittedValue by lazy { MutableStateFlow(formattedValue) }
 		private val mutableIsEditing = MutableStateFlow(false)
 
-		val committedValue = mutableCommittedValue.asStateFlow()
-		val uncommittedValue = mutableUncommittedValue.asStateFlow()
+		val committedValue by lazy { mutableCommittedValue.asStateFlow() }
+		val uncommittedValue by lazy { mutableUncommittedValue.asStateFlow() }
 		val isEditing = mutableIsEditing.asStateFlow()
-		val isEditable by lazy { editableFilePropertyDefinition != null }
-		val editableType by lazy { editableFilePropertyDefinition?.type }
+		val isEditable
+			get() = !isConnectionReadOnly && editableFilePropertyDefinition != null
+		val editableType by lazy(LazyThreadSafetyMode.NONE) { editableFilePropertyDefinition?.type }
+		val property = fileProperty.name
 
 		fun highlight() {
 			mutableHighlightedProperty.value = this
