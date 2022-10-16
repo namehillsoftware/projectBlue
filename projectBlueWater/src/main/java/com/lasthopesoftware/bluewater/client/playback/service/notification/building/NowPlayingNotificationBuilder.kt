@@ -15,6 +15,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Co
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Companion.pendingPreviousIntent
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 
 class NowPlayingNotificationBuilder(
@@ -24,6 +25,8 @@ class NowPlayingNotificationBuilder(
 	private val scopedCachedFilePropertiesProvider: ScopedCachedFilePropertiesProvider,
 	private val imageProvider: ProvideImages
 ) : BuildNowPlayingNotificationContent, AutoCloseable {
+	private val notificationSync = Any()
+
 	private val lazyPlayingLoadingNotification by lazy {
 		addButtons(mediaStyleNotificationSetup.mediaStyleNotification, true)
 			.setOngoing(true)
@@ -39,8 +42,10 @@ class NowPlayingNotificationBuilder(
 	private var viewStructure: ViewStructure? = null
 
 	@Synchronized
-	override fun promiseNowPlayingNotification(serviceFile: ServiceFile, isPlaying: Boolean): Promise<NotificationCompat.Builder> {
-		val urlKeyHolder = UrlKeyHolder(connectionProvider.urlProvider.baseUrl!!, serviceFile.key)
+	override fun promiseNowPlayingNotification(serviceFile: ServiceFile, isPlaying: Boolean): Promise<NotificationCompat.Builder> = synchronized(notificationSync) {
+		val url = connectionProvider.urlProvider.baseUrl ?: return mediaStyleNotificationSetup.mediaStyleNotification.toPromise()
+
+		val urlKeyHolder = UrlKeyHolder(url, serviceFile.key)
 		if (viewStructure?.urlKeyHolder != urlKeyHolder) {
 			viewStructure?.release()
 			viewStructure = null

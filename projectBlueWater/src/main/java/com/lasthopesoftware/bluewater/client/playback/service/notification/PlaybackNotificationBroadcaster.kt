@@ -4,6 +4,7 @@ import android.app.Notification
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.BuildNowPlayingNotificationContent
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.BuildPlaybackStartingNotification
+import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.android.notifications.control.ControlNotifications
 
 class PlaybackNotificationBroadcaster(
@@ -39,6 +40,7 @@ class PlaybackNotificationBroadcaster(
 	}
 
 	override fun notifyPaused() {
+		val serviceFile = serviceFile
 		if (serviceFile == null) {
 			notificationsController.stopForegroundNotification(notificationId)
 			return
@@ -52,6 +54,7 @@ class PlaybackNotificationBroadcaster(
 	}
 
 	override fun notifyInterrupted() {
+		val serviceFile = serviceFile
 		if (serviceFile == null) {
 			notificationsController.stopForegroundNotification(notificationId)
 			return
@@ -74,6 +77,10 @@ class PlaybackNotificationBroadcaster(
 
 	override fun notifyPlayingFileChanged(serviceFile: ServiceFile) {
 		updateNowPlaying(serviceFile)
+	}
+
+	override fun notifyPropertiesUpdated(urlKeyHolder: UrlKeyHolder<ServiceFile>) {
+		TODO("Not yet implemented")
 	}
 
 	private fun updateNowPlaying(serviceFile: ServiceFile) {
