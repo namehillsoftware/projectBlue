@@ -1,30 +1,33 @@
 package com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.connected
 
-import android.content.Context
 import android.graphics.Bitmap
 import android.media.MediaMetadata
 import android.media.session.PlaybackState
-import android.os.Build
+import android.os.Handler
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
-import androidx.annotation.RequiresApi
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideImages
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ScopedCachedFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideScopedUrlKey
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.IRemoteBroadcaster
+import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
+import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
-import org.slf4j.LoggerFactory
 
-@RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 class MediaSessionBroadcaster(
-	private val context: Context,
+	private val handler: Handler,
+	private val scopedUrlKeyProvider: ProvideScopedUrlKey,
 	private val scopedCachedFilePropertiesProvider: ScopedCachedFilePropertiesProvider,
 	private val imageProvider: ProvideImages,
 	private val mediaSession: MediaSessionCompat
 ) : IRemoteBroadcaster {
+	@Volatile
+	private var activeUrlKeyPair: Pair<ServiceFile, UrlKeyHolder<ServiceFile>>? = null
+
 	@Volatile
 	private var playbackState = PlaybackStateCompat.STATE_STOPPED
 
@@ -73,13 +76,19 @@ class MediaSessionBroadcaster(
 			playbackSpeed
 		)
 		mediaSession.setPlaybackState(builder.build())
-		updateClientBitmap(null)
+		clearClientBitmap()
 	}
 
 	override fun updateNowPlaying(serviceFile: ServiceFile) {
+		scopedUrlKeyProvider.promiseUrlKey(serviceFile).then {
+			it?.also { urlKeyHolder -> activeUrlKeyPair = Pair(serviceFile, urlKeyHolder) }
+		}
+
+		val promisedBitmap = imageProvider.promiseFileBitmap(serviceFile)
+
 		scopedCachedFilePropertiesProvider
 			.promiseFileProperties(serviceFile)
-			.eventually(response({ fileProperties ->
+			.eventually { fileProperties ->
 				val artist = fileProperties[KnownFileProperties.Artist]
 				val name = fileProperties[KnownFileProperties.Name]
 				val album = fileProperties[KnownFileProperties.Album]
@@ -98,18 +107,27 @@ class MediaSessionBroadcaster(
 				if (trackNumber != null) {
 					metadataBuilder.putLong(MediaMetadata.METADATA_KEY_TRACK_NUMBER, trackNumber)
 				}
-				mediaSession.setMetadata(metadataBuilder.build().also { mediaMetadata = it })
-			}, context))
 
-		imageProvider
-			.promiseFileBitmap(serviceFile)
-			.eventually(response(::updateClientBitmap, context))
+				promisedBitmap.eventually(response({
+					if (remoteClientBitmap != it) {
+						metadataBuilder.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, it)
+						remoteClientBitmap = it
+					}
+					mediaSession.setMetadata(metadataBuilder.build().also { mediaMetadata = it })
+				}, handler))
+			}
 			.excuse { e ->
 				logger.warn(
-					"There was an error getting the image for the file with id `" + serviceFile.key + "`",
+					"There was an error updating the media session for `" + serviceFile.key + "`",
 					e
 				)
 			}
+	}
+
+	override fun filePropertiesUpdated(updatedKey: UrlKeyHolder<ServiceFile>) {
+		val (serviceFile, urlKey) = activeUrlKeyPair ?: return
+		if (updatedKey == urlKey)
+			updateNowPlaying(serviceFile)
 	}
 
 	override fun updateTrackPosition(trackPosition: Long) {
@@ -126,16 +144,16 @@ class MediaSessionBroadcaster(
 	}
 
 	@Synchronized
-	private fun updateClientBitmap(bitmap: Bitmap?) {
-		if (remoteClientBitmap == bitmap) return
+	private fun clearClientBitmap() {
+		if (remoteClientBitmap == null) return
 		val metadataBuilder = MediaMetadataCompat.Builder(mediaMetadata)
-		metadataBuilder.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, bitmap)
+		metadataBuilder.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, null)
 		mediaSession.setMetadata(metadataBuilder.build().also { mediaMetadata = it })
-		remoteClientBitmap = bitmap
+		remoteClientBitmap = null
 	}
 
 	companion object {
-		private val logger by lazy { LoggerFactory.getLogger(MediaSessionBroadcaster::class.java) }
+		private val logger by lazyLogger<MediaSessionBroadcaster>()
 		private const val playbackSpeed = 1.0f
 
 		private const val standardCapabilities = PlaybackStateCompat.ACTION_PLAY_PAUSE or

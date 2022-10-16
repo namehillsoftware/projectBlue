@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.details.LaunchFileDetails
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideScopedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
-import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideScopedUrlKeyProvider
+import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideScopedUrlKey
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.shared.messages.SendTypedMessages
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
@@ -12,13 +12,13 @@ import com.lasthopesoftware.resources.strings.GetStringResources
 import java.util.concurrent.ConcurrentLinkedQueue
 
 class TrackHeadlineViewModelProvider(
-	private val filePropertiesProvider: ProvideScopedFileProperties,
-	private val urlKeyProvider: ProvideScopedUrlKeyProvider,
-	private val stringResources: GetStringResources,
-	private val controlPlaybackService: ControlPlaybackService,
-	private val fileDetailsLauncher: LaunchFileDetails,
-	private val sendItemMenuMessages: SendTypedMessages<ItemListMenuMessage>,
-	private val receiveApplicationMessages: RegisterForApplicationMessages,
+    private val filePropertiesProvider: ProvideScopedFileProperties,
+    private val urlKeyProvider: ProvideScopedUrlKey,
+    private val stringResources: GetStringResources,
+    private val controlPlaybackService: ControlPlaybackService,
+    private val fileDetailsLauncher: LaunchFileDetails,
+    private val sendItemMenuMessages: SendTypedMessages<ItemListMenuMessage>,
+    private val receiveApplicationMessages: RegisterForApplicationMessages,
 ) : ViewModel() {
 
 	private val allViewModels = ConcurrentLinkedQueue<PooledFileItemViewModel>()

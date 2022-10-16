@@ -11,7 +11,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.getFormat
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.UpdateScopedFileProperties
 import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfScopedConnectionIsReadOnly
-import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideScopedUrlKeyProvider
+import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideScopedUrlKey
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
@@ -32,7 +32,7 @@ class FileDetailsViewModel(
 	private val imageProvider: ProvideImages,
 	private val controlPlayback: ControlPlaybackService,
 	registerForApplicationMessages: RegisterForApplicationMessages,
-	private val scopedUrlKeyProvider: ProvideScopedUrlKeyProvider,
+	private val scopedUrlKeyProvider: ProvideScopedUrlKey,
 ) : ViewModel() {
 
 	companion object {

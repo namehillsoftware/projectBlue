@@ -46,6 +46,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryR
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.libraries.ScopedUrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService.Companion.pollSessionConnection
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection
@@ -341,6 +342,8 @@ open class PlaybackService :
 	}
 
 	private val playbackHandler = lazy { playbackThread.value.then { h -> Handler(h.looper) } }
+
+	private val handler by lazy { Handler(mainLooper) }
 
 	private val playbackStartingNotificationBuilder by lazy {
 		promisedMediaSession.then { mediaSession ->
@@ -700,7 +703,8 @@ open class PlaybackService :
 
 			val promisedMediaBroadcaster = promisedMediaSession.then { mediaSession ->
 				val broadcaster = MediaSessionBroadcaster(
-					this,
+					handler,
+					ScopedUrlKeyProvider(connectionProvider),
 					cachedSessionFilePropertiesProvider,
 					imageProvider,
 					mediaSession)
