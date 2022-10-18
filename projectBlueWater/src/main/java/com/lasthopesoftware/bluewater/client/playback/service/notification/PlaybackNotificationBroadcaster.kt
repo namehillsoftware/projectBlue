@@ -77,7 +77,7 @@ class PlaybackNotificationBroadcaster(
 	}
 
 	override fun notifyPlayingFileUpdated() {
-		nowPlayingProvider.promiseNowPlaying().then { it?.playingFile?.serviceFile?.apply(::updateNowPlaying) }
+		nowPlayingProvider.promiseNowPlaying().then { it?.playingFile?.serviceFile?.also(::updateNowPlaying) }
 	}
 
 	private fun updateNowPlaying(serviceFile: ServiceFile) {

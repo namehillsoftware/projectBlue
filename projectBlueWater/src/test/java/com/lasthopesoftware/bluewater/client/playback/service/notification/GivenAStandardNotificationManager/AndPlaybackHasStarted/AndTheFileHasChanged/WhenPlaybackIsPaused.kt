@@ -55,7 +55,7 @@ class WhenPlaybackIsPaused : AndroidContext() {
 			mockk {
 				every { promiseNowPlaying() } returns NowPlaying(
 					LibraryId(223),
-					listOf(ServiceFile(100)),
+					listOf(ServiceFile(1)),
 					0,
 					0L,
 					false,

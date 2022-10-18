@@ -62,6 +62,12 @@ class WhenTheFileChanges : AndroidContext() {
 					0,
 					0L,
 					false,
+				).toPromise() andThen NowPlaying(
+					LibraryId(223),
+					listOf(ServiceFile(2)),
+					0,
+					0L,
+					false,
 				).toPromise()
 			}
 		)

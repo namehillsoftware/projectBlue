@@ -32,7 +32,7 @@ class WhenTheFileChanges : AndroidContext() {
             ApplicationProvider.getApplicationContext(),
             Notification()
         )
-		every { notificationContentBuilder.promiseNowPlayingNotification(any(), any()) } returns Promise(FakeNotificationCompatBuilder.newFakeBuilder(
+		every { notificationContentBuilder.promiseNowPlayingNotification(ServiceFile(179), any()) } returns Promise(FakeNotificationCompatBuilder.newFakeBuilder(
             ApplicationProvider.getApplicationContext(),
             firstNotification
         ))
@@ -51,6 +51,12 @@ class WhenTheFileChanges : AndroidContext() {
 			)) },
 			mockk {
 				every { promiseNowPlaying() } returns NowPlaying(
+					LibraryId(223),
+					listOf(ServiceFile(179)),
+					0,
+					0L,
+					false,
+				).toPromise() andThen NowPlaying(
 					LibraryId(223),
 					listOf(ServiceFile(2)),
 					0,

@@ -56,6 +56,12 @@ class WhenTheFileChanges : AndroidContext() {
 			mockk {
 				every { promiseNowPlaying() } returns NowPlaying(
 					LibraryId(223),
+					listOf(ServiceFile(1)),
+					0,
+					0L,
+					false,
+				).toPromise() andThen NowPlaying(
+					LibraryId(223),
 					listOf(ServiceFile(2)),
 					0,
 					0L,
