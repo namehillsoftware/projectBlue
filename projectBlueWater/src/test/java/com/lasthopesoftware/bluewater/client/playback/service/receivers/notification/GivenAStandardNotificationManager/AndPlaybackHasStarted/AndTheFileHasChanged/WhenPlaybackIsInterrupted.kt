@@ -18,7 +18,7 @@ class WhenPlaybackIsInterrupted {
 		@BeforeClass
 		fun before() {
 			val recordingApplicationMessageBus = RecordingApplicationMessageBus()
-			PlaybackNotificationRouter(playbackEventsNotifier, recordingApplicationMessageBus)
+			PlaybackNotificationRouter(playbackEventsNotifier, recordingApplicationMessageBus, mockk(), mockk())
 
 			recordingApplicationMessageBus.sendMessage(PlaybackMessage.PlaybackInterrupted)
 		}

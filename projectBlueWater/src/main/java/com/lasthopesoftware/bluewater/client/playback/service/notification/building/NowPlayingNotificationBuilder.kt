@@ -8,7 +8,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideImages
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ScopedCachedFilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideScopedUrlKey
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Companion.pendingNextIntent
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Companion.pendingPauseIntent
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Companion.pendingPlayingIntent
@@ -21,9 +21,9 @@ import com.namehillsoftware.handoff.promises.Promise
 class NowPlayingNotificationBuilder(
 	private val context: Context,
 	private val mediaStyleNotificationSetup: SetupMediaStyleNotifications,
-	private val connectionProvider: IConnectionProvider,
+	private val scopedUrlKeys: ProvideScopedUrlKey,
 	private val scopedCachedFilePropertiesProvider: ScopedCachedFilePropertiesProvider,
-	private val imageProvider: ProvideImages
+	private val imageProvider: ProvideImages,
 ) : BuildNowPlayingNotificationContent, AutoCloseable {
 	private val notificationSync = Any()
 
@@ -41,37 +41,38 @@ class NowPlayingNotificationBuilder(
 
 	private var viewStructure: ViewStructure? = null
 
-	@Synchronized
 	override fun promiseNowPlayingNotification(serviceFile: ServiceFile, isPlaying: Boolean): Promise<NotificationCompat.Builder> = synchronized(notificationSync) {
-		val url = connectionProvider.urlProvider.baseUrl ?: return mediaStyleNotificationSetup.mediaStyleNotification.toPromise()
+		return scopedUrlKeys
+			.promiseUrlKey(serviceFile)
+			.eventually { urlKeyHolder ->
+				if (viewStructure?.urlKeyHolder != urlKeyHolder) {
+					viewStructure?.release()
+					viewStructure = null
+				}
 
-		val urlKeyHolder = UrlKeyHolder(url, serviceFile.key)
-		if (viewStructure?.urlKeyHolder != urlKeyHolder) {
-			viewStructure?.release()
-			viewStructure = null
-		}
+				if (urlKeyHolder == null) return@eventually mediaStyleNotificationSetup.mediaStyleNotification.toPromise()
 
-		val viewStructure = viewStructure ?: ViewStructure(urlKeyHolder).also { viewStructure = it }
-		viewStructure.promisedNowPlayingImage = viewStructure.promisedNowPlayingImage ?: imageProvider.promiseFileBitmap(serviceFile)
+				val viewStructure = viewStructure ?: ViewStructure(urlKeyHolder).also { viewStructure = it }
+				viewStructure.promisedNowPlayingImage =
+					viewStructure.promisedNowPlayingImage ?: imageProvider.promiseFileBitmap(serviceFile)
 
-		val promisedFileProperties = viewStructure.promisedFileProperties
-			?: scopedCachedFilePropertiesProvider.promiseFileProperties(serviceFile).also { viewStructure.promisedFileProperties = it }
-
-		return promisedFileProperties
-			.eventually { fileProperties ->
-				val artist = fileProperties[KnownFileProperties.Artist]
-				val name = fileProperties[KnownFileProperties.Name]
-				val builder = addButtons(mediaStyleNotificationSetup.mediaStyleNotification, isPlaying)
-					.setOngoing(isPlaying)
-					.setContentTitle(name)
-					.setContentText(artist)
-				if (viewStructure.urlKeyHolder != urlKeyHolder) return@eventually Promise(builder)
-				viewStructure.promisedNowPlayingImage
-					?.then(
-						{ bitmap -> bitmap?.let(builder::setLargeIcon) },
-						{ builder }
-					)
-					.keepPromise(builder)
+				scopedCachedFilePropertiesProvider
+					.promiseFileProperties(serviceFile)
+					.eventually { fileProperties ->
+						val artist = fileProperties[KnownFileProperties.Artist]
+						val name = fileProperties[KnownFileProperties.Name]
+						val builder = addButtons(mediaStyleNotificationSetup.mediaStyleNotification, isPlaying)
+							.setOngoing(isPlaying)
+							.setContentTitle(name)
+							.setContentText(artist)
+						if (viewStructure.urlKeyHolder != urlKeyHolder) return@eventually Promise(builder)
+						viewStructure.promisedNowPlayingImage
+							?.then(
+								{ bitmap -> bitmap?.let(builder::setLargeIcon) },
+								{ builder }
+							)
+							.keepPromise(builder)
+					}
 			}
 	}
 
@@ -108,8 +109,7 @@ class NowPlayingNotificationBuilder(
 				)
 			)
 
-	private class ViewStructure(val urlKeyHolder: UrlKeyHolder<Int>) {
-		var promisedFileProperties: Promise<Map<String, String>>? = null
+	private class ViewStructure(val urlKeyHolder: UrlKeyHolder<ServiceFile>) {
 		var promisedNowPlayingImage: Promise<Bitmap?>? = null
 
 		fun release() {

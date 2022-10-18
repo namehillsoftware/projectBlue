@@ -2,16 +2,17 @@ package com.lasthopesoftware.bluewater.client.playback.service.notification
 
 import android.app.Notification
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.BuildNowPlayingNotificationContent
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.BuildPlaybackStartingNotification
-import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.android.notifications.control.ControlNotifications
 
 class PlaybackNotificationBroadcaster(
 	private val notificationsController: ControlNotifications,
 	notificationsConfiguration: NotificationsConfiguration,
 	private val nowPlayingNotificationContentBuilder: BuildNowPlayingNotificationContent,
-	private val playbackStartingNotification: BuildPlaybackStartingNotification
+	private val playbackStartingNotification: BuildPlaybackStartingNotification,
+	private val nowPlayingProvider: GetNowPlayingState,
 ) : NotifyOfPlaybackEvents {
 
 	private val notificationId = notificationsConfiguration.notificationId
@@ -47,7 +48,7 @@ class PlaybackNotificationBroadcaster(
 		}
 
 		nowPlayingNotificationContentBuilder
-			.promiseNowPlayingNotification(serviceFile, false.also { isPlaying = it })
+			.promiseNowPlayingNotification(serviceFile, false.also { isPlaying = false })
 			.then { builder ->
 				notificationsController.notifyBackground(builder.build(), notificationId)
 			}
@@ -75,12 +76,8 @@ class PlaybackNotificationBroadcaster(
 		}
 	}
 
-	override fun notifyPlayingFileChanged(serviceFile: ServiceFile) {
-		updateNowPlaying(serviceFile)
-	}
-
-	override fun notifyPropertiesUpdated(urlKeyHolder: UrlKeyHolder<ServiceFile>) {
-		TODO("Not yet implemented")
+	override fun notifyPlayingFileUpdated() {
+		nowPlayingProvider.promiseNowPlaying().then { it?.playingFile?.serviceFile?.apply(::updateNowPlaying) }
 	}
 
 	private fun updateNowPlaying(serviceFile: ServiceFile) {
@@ -106,7 +103,8 @@ class PlaybackNotificationBroadcaster(
 
 			notify(loadingBuilderNotification)
 
-			nowPlayingNotificationContentBuilder.promiseNowPlayingNotification(serviceFile, isPlaying)
+			nowPlayingNotificationContentBuilder
+				.promiseNowPlayingNotification(serviceFile, isPlaying)
 				.then { builder ->
 					synchronized(notificationSync) { notify(builder.build()) }
 				}

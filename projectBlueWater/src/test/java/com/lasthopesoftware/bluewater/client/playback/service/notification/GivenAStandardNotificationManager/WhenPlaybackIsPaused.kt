@@ -54,9 +54,13 @@ class WhenPlaybackIsPaused : AndroidContext() {
 					notificationManager
 				),
 				NotificationsConfiguration("", 43),
-				notificationContentBuilder
-			) { Promise(newFakeBuilder(context, Notification())) },
+				notificationContentBuilder,
+				{ Promise(newFakeBuilder(context, Notification())) },
+				mockk(),
+			),
 			mockk(relaxed = true),
+			mockk(),
+			mockk(),
 		)
         playbackNotificationRouter(PlaybackMessage.PlaybackPaused)
     }

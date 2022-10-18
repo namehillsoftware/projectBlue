@@ -14,6 +14,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.ScopedCac
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ScopedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeScopedRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.FakeFileConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.libraries.ScopedUrlKeyProvider
 import com.lasthopesoftware.bluewater.client.playback.service.notification.building.NowPlayingNotificationBuilder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ExpiringFuturePromise
 import com.namehillsoftware.handoff.promises.Promise
@@ -55,7 +56,7 @@ class WhenBuildingTheNotification : AndroidContext() {
 		val npBuilder = NowPlayingNotificationBuilder(
 			ApplicationProvider.getApplicationContext(),
 			{ spiedBuilder },
-			connectionProvider,
+			ScopedUrlKeyProvider(connectionProvider),
 			ScopedCachedFilePropertiesProvider(
 				connectionProvider,
 				containerRepository,

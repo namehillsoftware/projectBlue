@@ -6,6 +6,8 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 import com.lasthopesoftware.bluewater.client.playback.service.notification.NotificationsConfiguration
 import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationBroadcaster
@@ -48,12 +50,22 @@ class WhenTheFileChanges : AndroidContext() {
 		val playbackNotificationBroadcaster = PlaybackNotificationBroadcaster(
 			NotificationsController(service, notificationManager),
 			NotificationsConfiguration("", 43),
-			notificationContentBuilder
-		) { Promise(newFakeBuilder(context, Notification())) }
+			notificationContentBuilder,
+			{ Promise(newFakeBuilder(context, Notification())) },
+			mockk {
+				every { promiseNowPlaying() } returns NowPlaying(
+					LibraryId(223),
+					listOf(ServiceFile(2)),
+					0,
+					0L,
+					false,
+				).toPromise()
+			},
+		)
 		playbackNotificationBroadcaster.notifyPlaying()
-		playbackNotificationBroadcaster.notifyPlayingFileChanged(ServiceFile(1))
+		playbackNotificationBroadcaster.notifyPlayingFileUpdated()
 		playbackNotificationBroadcaster.notifyStopped()
-		playbackNotificationBroadcaster.notifyPlayingFileChanged(ServiceFile(2))
+		playbackNotificationBroadcaster.notifyPlayingFileUpdated()
 	}
 
 	@Test

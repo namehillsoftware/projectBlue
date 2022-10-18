@@ -51,12 +51,16 @@ class WhenPlaybackStarts : AndroidContext() {
 			PlaybackNotificationBroadcaster(
 				NotificationsController(service, notificationManager),
 				NotificationsConfiguration("", 43),
-				notificationContentBuilder
-			) { Promise(FakeNotificationCompatBuilder.newFakeBuilder(
-                ApplicationProvider.getApplicationContext(),
-                Notification()
-            )) },
-			mockk(relaxed = true, relaxUnitFun = true)
+				notificationContentBuilder,
+				{ Promise(FakeNotificationCompatBuilder.newFakeBuilder(
+					ApplicationProvider.getApplicationContext(),
+					Notification()
+				)) },
+				mockk(),
+			),
+			mockk(relaxed = true, relaxUnitFun = true),
+			mockk(),
+			mockk(),
 		)
 
 		playbackNotificationRouter(PlaybackMessage.TrackChanged(LibraryId(4), PositionedFile(4, ServiceFile(1))))

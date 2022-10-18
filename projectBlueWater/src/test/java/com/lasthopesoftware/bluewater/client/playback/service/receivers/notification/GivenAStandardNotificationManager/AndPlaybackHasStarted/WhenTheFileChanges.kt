@@ -51,12 +51,16 @@ class WhenTheFileChanges : AndroidContext() {
 			PlaybackNotificationBroadcaster(
 				NotificationsController(service, notificationManager),
 				NotificationsConfiguration("", 43),
-				notificationContentBuilder
-			) { Promise(FakeNotificationCompatBuilder.newFakeBuilder(
-                ApplicationProvider.getApplicationContext(),
-                startedNotification
-            )) },
-			mockk(relaxed = true)
+				notificationContentBuilder,
+				{ Promise(FakeNotificationCompatBuilder.newFakeBuilder(
+					ApplicationProvider.getApplicationContext(),
+					startedNotification
+				)) },
+				mockk(),
+			),
+			mockk(relaxed = true),
+			mockk(),
+			mockk(),
 		)
 
         playbackNotificationRouter(PlaybackMessage.PlaybackStarted)

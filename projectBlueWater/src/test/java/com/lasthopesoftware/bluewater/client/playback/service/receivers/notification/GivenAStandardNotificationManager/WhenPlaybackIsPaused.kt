@@ -56,12 +56,16 @@ class WhenPlaybackIsPaused : AndroidContext() {
 			PlaybackNotificationBroadcaster(
 				NotificationsController(service, notificationManager),
 				NotificationsConfiguration("", 43),
-				notificationContentBuilder
-			) { Promise(FakeNotificationCompatBuilder.newFakeBuilder(
-                ApplicationProvider.getApplicationContext(),
-                Notification()
-            )) },
-			recordingApplicationMessageBus
+				notificationContentBuilder,
+				{ Promise(FakeNotificationCompatBuilder.newFakeBuilder(
+					ApplicationProvider.getApplicationContext(),
+					Notification()
+				)) },
+				mockk(),
+			),
+			recordingApplicationMessageBus,
+			mockk(),
+			mockk(),
 		)
 
 		recordingApplicationMessageBus.sendMessage(PlaybackMessage.PlaybackPaused)

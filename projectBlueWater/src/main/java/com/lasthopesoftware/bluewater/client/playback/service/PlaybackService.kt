@@ -359,7 +359,8 @@ open class PlaybackService :
 	private val selectedLibraryProvider by lazy {
 		SelectedBrowserLibraryProvider(
 			selectedLibraryIdentifierProvider,
-			LibraryRepository(this))
+			libraryRepository
+		)
 	}
 
 	private val fileProperties by lazy {
@@ -701,10 +702,11 @@ open class PlaybackService :
 
 			remoteControlProxy?.close()
 
+			val scopedUrlKeyProvider = ScopedUrlKeyProvider(connectionProvider)
 			val promisedMediaBroadcaster = promisedMediaSession.then { mediaSession ->
 				val broadcaster = MediaSessionBroadcaster(
 					handler,
-					ScopedUrlKeyProvider(connectionProvider),
+					scopedUrlKeyProvider,
 					cachedSessionFilePropertiesProvider,
 					imageProvider,
 					mediaSession)
@@ -715,7 +717,7 @@ open class PlaybackService :
 					NowPlayingNotificationBuilder(
 						this,
 						mediaStyleNotificationSetup,
-						connectionProvider,
+						scopedUrlKeyProvider,
 						cachedSessionFilePropertiesProvider,
 						imageProvider
 					)
@@ -727,14 +729,22 @@ open class PlaybackService :
 						playbackNotificationRouter?.close()
 						playbackStartingNotificationBuilder.then { b ->
 							b?.let { playbackStartingNotificationBuilder ->
+								val nowPlayingRepository = NowPlayingRepository(
+									SpecificLibraryProvider(library.libraryId, libraryRepository),
+									libraryRepository
+								)
+
 								PlaybackNotificationRouter(
 									PlaybackNotificationBroadcaster(
 										lazyNotificationController.value,
 										playbackNotificationsConfiguration,
 										builder,
-										playbackStartingNotificationBuilder
+										playbackStartingNotificationBuilder,
+										nowPlayingRepository,
 									),
-									applicationMessageBus.value
+									applicationMessageBus.value,
+									scopedUrlKeyProvider,
+									nowPlayingRepository,
 								)
 							}
 						}
