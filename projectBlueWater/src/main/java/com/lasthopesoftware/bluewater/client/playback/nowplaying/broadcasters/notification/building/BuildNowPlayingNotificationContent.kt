@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.service.notification.building
+package com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building
 
 import androidx.core.app.NotificationCompat
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile

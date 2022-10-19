@@ -71,6 +71,13 @@ import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.QueueProviders
 import com.lasthopesoftware.bluewater.client.playback.file.volume.MaxFileVolumeProvider
 import com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.MaxFileVolumePreparationProvider
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.ExtendedPlaybackNotificationRouter
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.PlaybackNotificationRouter
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.PlaybackNotificationBroadcaster
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building.MediaStyleNotificationSetup
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building.NowPlayingNotificationBuilder
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building.PlaybackStartingNotificationBuilder
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.remote.MediaSessionBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.MaintainNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.NowPlayingActivity.Companion.startNowPlayingActivity
@@ -78,15 +85,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Ac
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaybackStartedBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage
-import com.lasthopesoftware.bluewater.client.playback.service.notification.NotificationsConfiguration
-import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationBroadcaster
-import com.lasthopesoftware.bluewater.client.playback.service.notification.building.MediaStyleNotificationSetup
-import com.lasthopesoftware.bluewater.client.playback.service.notification.building.NowPlayingNotificationBuilder
-import com.lasthopesoftware.bluewater.client.playback.service.notification.building.PlaybackStartingNotificationBuilder
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.AudioBecomingNoisyReceiver
-import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.RemoteControlProxy
-import com.lasthopesoftware.bluewater.client.playback.service.receivers.devices.remote.connected.MediaSessionBroadcaster
-import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.PlaybackNotificationRouter
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.MediaQueryCursorProvider
@@ -315,7 +314,10 @@ open class PlaybackService :
 	private val playbackNotificationsConfiguration by lazy {
 		val notificationChannelActivator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) NotificationChannelActivator(notificationManager) else NoOpChannelActivator()
 		val channelName = notificationChannelActivator.activateChannel(channelConfiguration)
-		NotificationsConfiguration(channelName, playingNotificationId)
+		com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.NotificationsConfiguration(
+			channelName,
+			playingNotificationId
+		)
 	}
 
 	private val arbitratorForOs by lazy { ExternalStorageReadPermissionsArbitratorForOs(this) }
@@ -430,9 +432,6 @@ open class PlaybackService :
 	private var playbackQueues: PreparedPlaybackQueueResourceManagement? = null
 	private var filePositionSubscription: Disposable? = null
 	private var playlistPlaybackBootstrapper: PlaylistPlaybackBootstrapper? = null
-	private var remoteControlProxy: RemoteControlProxy? = null
-	private var playbackNotificationRouter: PlaybackNotificationRouter? = null
-	private var nowPlayingNotificationBuilder: NowPlayingNotificationBuilder? = null
 	private var wakeLock: WakeLock? = null
 	private var cache: SimpleCache? = null
 	private var startId = 0
@@ -700,17 +699,29 @@ open class PlaybackService :
 
 			val imageProvider = CachedImageProvider.getInstance(this)
 
-			remoteControlProxy?.close()
-
 			val scopedUrlKeyProvider = ScopedUrlKeyProvider(connectionProvider)
+			val nowPlayingRepository = NowPlayingRepository(
+				SpecificLibraryProvider(library.libraryId, libraryRepository),
+				libraryRepository
+			)
 			val promisedMediaBroadcaster = promisedMediaSession.then { mediaSession ->
 				val broadcaster = MediaSessionBroadcaster(
 					handler,
-					scopedUrlKeyProvider,
+					nowPlayingRepository,
 					cachedSessionFilePropertiesProvider,
 					imageProvider,
 					mediaSession)
-				remoteControlProxy = RemoteControlProxy(applicationMessageBus.value, broadcaster)
+				ExtendedPlaybackNotificationRouter(
+					broadcaster,
+					PlaybackNotificationRouter(
+						broadcaster,
+						applicationMessageBus.value,
+						scopedUrlKeyProvider,
+						nowPlayingRepository,
+					).also(playbackEngineCloseables::manage),
+					applicationMessageBus.value,
+				).also(playbackEngineCloseables::manage)
+				Unit
 			}
 
 			val promisedMediaNotificationSetup = mediaStyleNotificationSetup.eventually { mediaStyleNotificationSetup ->
@@ -721,19 +732,10 @@ open class PlaybackService :
 						cachedSessionFilePropertiesProvider,
 						imageProvider
 					)
-					.also {
-						playbackEngineCloseables.manage(it)
-						nowPlayingNotificationBuilder = it
-					}
+					.also(playbackEngineCloseables::manage)
 					.let { builder ->
-						playbackNotificationRouter?.close()
 						playbackStartingNotificationBuilder.then { b ->
 							b?.let { playbackStartingNotificationBuilder ->
-								val nowPlayingRepository = NowPlayingRepository(
-									SpecificLibraryProvider(library.libraryId, libraryRepository),
-									libraryRepository
-								)
-
 								PlaybackNotificationRouter(
 									PlaybackNotificationBroadcaster(
 										lazyNotificationController.value,
@@ -745,13 +747,8 @@ open class PlaybackService :
 									applicationMessageBus.value,
 									scopedUrlKeyProvider,
 									nowPlayingRepository,
-								)
+								).also(playbackEngineCloseables::manage)
 							}
-						}
-					}
-					.then { router ->
-						router?.also {
-							playbackNotificationRouter = router
 						}
 					}
 			}

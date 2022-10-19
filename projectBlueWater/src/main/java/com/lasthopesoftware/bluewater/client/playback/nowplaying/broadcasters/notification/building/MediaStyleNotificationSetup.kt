@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.service.notification.building
+package com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building
 
 import android.app.PendingIntent
 import android.content.Context
@@ -9,16 +9,15 @@ import androidx.core.content.ContextCompat
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.NowPlayingActivity
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Companion.pendingKillService
-import com.lasthopesoftware.bluewater.client.playback.service.notification.NotificationsConfiguration
 import com.lasthopesoftware.bluewater.shared.android.makePendingIntentImmutable
 import com.lasthopesoftware.bluewater.shared.android.notifications.ProduceNotificationBuilders
 
 class MediaStyleNotificationSetup(
 	private val context: Context,
 	private val produceNotificationBuilders: ProduceNotificationBuilders,
-	private val configuration: NotificationsConfiguration,
+	private val configuration: com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.NotificationsConfiguration,
 	private val mediaSessionCompat: MediaSessionCompat
-) : SetupMediaStyleNotifications {
+) : com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building.SetupMediaStyleNotifications {
 	private val pendingNowPlayingIntent by lazy {
 		// Set the notification area
 		val viewIntent = Intent(context, NowPlayingActivity::class.java)

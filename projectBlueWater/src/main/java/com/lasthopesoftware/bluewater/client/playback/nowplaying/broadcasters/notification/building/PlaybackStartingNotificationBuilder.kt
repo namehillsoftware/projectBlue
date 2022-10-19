@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.service.notification.building
+package com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building
 
 import android.app.PendingIntent
 import android.content.Context
@@ -9,7 +9,6 @@ import androidx.core.content.ContextCompat
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.NowPlayingActivity
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Companion.pendingKillService
-import com.lasthopesoftware.bluewater.client.playback.service.notification.NotificationsConfiguration
 import com.lasthopesoftware.bluewater.shared.android.makePendingIntentImmutable
 import com.lasthopesoftware.bluewater.shared.android.notifications.ProduceNotificationBuilders
 import com.namehillsoftware.handoff.promises.Promise
@@ -17,8 +16,9 @@ import com.namehillsoftware.handoff.promises.Promise
 class PlaybackStartingNotificationBuilder(
 	private val context: Context,
 	private val produceNotificationBuilders: ProduceNotificationBuilders,
-	private val configuration: NotificationsConfiguration,
-	private val mediaSessionCompat: MediaSessionCompat) : BuildPlaybackStartingNotification {
+	private val configuration: com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.NotificationsConfiguration,
+	private val mediaSessionCompat: MediaSessionCompat) :
+	com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building.BuildPlaybackStartingNotification {
 
 	private val lazyPendingKillService = lazy { pendingKillService(context) }
 

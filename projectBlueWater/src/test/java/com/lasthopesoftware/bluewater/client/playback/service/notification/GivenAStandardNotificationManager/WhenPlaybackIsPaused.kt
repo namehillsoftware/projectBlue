@@ -6,12 +6,12 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.PlaybackNotificationRouter
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.NotificationsConfiguration
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.PlaybackNotificationBroadcaster
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building.BuildNowPlayingNotificationContent
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage
-import com.lasthopesoftware.bluewater.client.playback.service.notification.NotificationsConfiguration
-import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationBroadcaster
-import com.lasthopesoftware.bluewater.client.playback.service.notification.building.BuildNowPlayingNotificationContent
-import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.PlaybackNotificationRouter
 import com.lasthopesoftware.bluewater.shared.android.notifications.control.NotificationsController
 import com.lasthopesoftware.resources.notifications.FakeNotificationCompatBuilder.Companion.newFakeBuilder
 import com.namehillsoftware.handoff.promises.Promise
@@ -48,16 +48,19 @@ class WhenPlaybackIsPaused : AndroidContext() {
 		}
 
 		val playbackNotificationRouter = PlaybackNotificationRouter(
-			PlaybackNotificationBroadcaster(
-				NotificationsController(
-					service,
-					notificationManager
-				),
-				NotificationsConfiguration("", 43),
-				notificationContentBuilder,
-				{ Promise(newFakeBuilder(context, Notification())) },
-				mockk(),
-			),
+            PlaybackNotificationBroadcaster(
+                NotificationsController(
+                    service,
+                    notificationManager
+                ),
+                NotificationsConfiguration(
+                    "",
+                    43
+                ),
+                notificationContentBuilder,
+                { Promise(newFakeBuilder(context, Notification())) },
+                mockk(),
+            ),
 			mockk(relaxed = true),
 			mockk(),
 			mockk(),

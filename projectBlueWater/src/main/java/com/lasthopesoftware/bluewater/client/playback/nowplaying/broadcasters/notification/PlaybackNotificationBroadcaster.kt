@@ -1,10 +1,11 @@
-package com.lasthopesoftware.bluewater.client.playback.service.notification
+package com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification
 
 import android.app.Notification
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.NotifyOfPlaybackEvents
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building.BuildNowPlayingNotificationContent
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building.BuildPlaybackStartingNotification
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
-import com.lasthopesoftware.bluewater.client.playback.service.notification.building.BuildNowPlayingNotificationContent
-import com.lasthopesoftware.bluewater.client.playback.service.notification.building.BuildPlaybackStartingNotification
 import com.lasthopesoftware.bluewater.shared.android.notifications.control.ControlNotifications
 
 class PlaybackNotificationBroadcaster(

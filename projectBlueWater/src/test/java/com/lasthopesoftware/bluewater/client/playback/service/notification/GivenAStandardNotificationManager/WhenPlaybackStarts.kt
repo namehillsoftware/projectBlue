@@ -3,11 +3,11 @@ package com.lasthopesoftware.bluewater.client.playback.service.notification.Give
 import android.app.Notification
 import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.AndroidContext
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.PlaybackNotificationRouter
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.NotificationsConfiguration
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.PlaybackNotificationBroadcaster
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building.BuildNowPlayingNotificationContent
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage
-import com.lasthopesoftware.bluewater.client.playback.service.notification.NotificationsConfiguration
-import com.lasthopesoftware.bluewater.client.playback.service.notification.PlaybackNotificationBroadcaster
-import com.lasthopesoftware.bluewater.client.playback.service.notification.building.BuildNowPlayingNotificationContent
-import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.PlaybackNotificationRouter
 import com.lasthopesoftware.bluewater.shared.android.notifications.control.ControlNotifications
 import com.lasthopesoftware.resources.notifications.FakeNotificationCompatBuilder
 import com.namehillsoftware.handoff.promises.Promise
@@ -25,16 +25,23 @@ class WhenPlaybackStarts : AndroidContext() {
 	override fun before() {
 		val notificationContentBuilder = mockk<BuildNowPlayingNotificationContent>()
 		val playbackNotificationRouter = PlaybackNotificationRouter(
-			PlaybackNotificationBroadcaster(
-				notificationController,
-				NotificationsConfiguration("", 43),
-				notificationContentBuilder,
-				{ Promise(FakeNotificationCompatBuilder.newFakeBuilder(
-					ApplicationProvider.getApplicationContext(),
-					startedNotification
-				)) },
-				mockk(),
-			),
+            PlaybackNotificationBroadcaster(
+                notificationController,
+                NotificationsConfiguration(
+                    "",
+                    43
+                ),
+                notificationContentBuilder,
+                {
+                    Promise(
+                        FakeNotificationCompatBuilder.newFakeBuilder(
+                            ApplicationProvider.getApplicationContext(),
+                            startedNotification
+                        )
+                    )
+                },
+                mockk(),
+            ),
 			mockk(relaxed = true),
 			mockk(),
 			mockk(),
