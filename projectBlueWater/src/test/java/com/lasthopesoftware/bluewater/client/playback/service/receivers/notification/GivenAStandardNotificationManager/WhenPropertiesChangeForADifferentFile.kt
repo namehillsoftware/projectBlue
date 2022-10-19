@@ -1,9 +1,9 @@
 package com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.GivenAStandardNotificationManager
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage
 import com.lasthopesoftware.bluewater.client.playback.service.notification.NotifyOfPlaybackEvents
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.notification.PlaybackNotificationRouter
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
@@ -15,7 +15,7 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.net.URL
 
-class WhenPlaybackIsInterrupted {
+class WhenPropertiesChangeForADifferentFile {
 
 	private val mockNotifier by lazy { mockk<NotifyOfPlaybackEvents>(relaxUnitFun = true) }
 
@@ -28,7 +28,7 @@ class WhenPlaybackIsInterrupted {
 					UrlKeyHolder(
 						URL("http://test"),
 						firstArg<ServiceFile>()
-					).toPromise()
+						).toPromise()
 				}
 			},
 			mockk {
@@ -45,12 +45,12 @@ class WhenPlaybackIsInterrupted {
 	}
 
 	@BeforeAll
-	fun act() {
-		mut(PlaybackMessage.PlaybackInterrupted)
-	}
+    fun act() {
+		mut(FilePropertiesUpdatedMessage(UrlKeyHolder(URL("http://test"), ServiceFile(825))))
+    }
 
 	@Test
-	fun `then notifications are correctly sent`() {
-		verify(exactly = 1) { mockNotifier.notifyInterrupted() }
+	fun `then notification are correctly sent to update the playing file`() {
+		verify(exactly = 0) { mockNotifier.notifyPlayingFileUpdated() }
 	}
 }
