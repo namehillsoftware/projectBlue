@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.r
 import android.graphics.Bitmap
 import android.media.MediaMetadata
 import android.media.session.PlaybackState
-import android.os.Handler
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
@@ -16,7 +15,6 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.No
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.NotifyOfTrackPositionUpdates
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
 import com.lasthopesoftware.bluewater.shared.lazyLogger
-import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
 
 private val logger by lazyLogger<MediaSessionBroadcaster>()
 private const val playbackSpeed = 1.0f
@@ -29,7 +27,6 @@ private const val standardCapabilities = PlaybackStateCompat.ACTION_PLAY_PAUSE o
 	PlaybackStateCompat.ACTION_PLAY_FROM_SEARCH
 
 class MediaSessionBroadcaster(
-	private val handler: Handler,
 	private val nowPlayingProvider: GetNowPlayingState,
 	private val scopedCachedFilePropertiesProvider: ScopedCachedFilePropertiesProvider,
 	private val imageProvider: ProvideImages,
@@ -87,7 +84,7 @@ class MediaSessionBroadcaster(
 	}
 
 	override fun notifyInterrupted() {
-		TODO("Not yet implemented")
+		notifyPaused()
 	}
 
 	override fun notifyPlayingFileUpdated() {
@@ -143,13 +140,13 @@ class MediaSessionBroadcaster(
 					metadataBuilder.putLong(MediaMetadata.METADATA_KEY_TRACK_NUMBER, trackNumber)
 				}
 
-				promisedBitmap.eventually(response({
+				promisedBitmap.then {
 					if (remoteClientBitmap != it) {
 						metadataBuilder.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, it)
 						remoteClientBitmap = it
 					}
 					mediaSession.setMetadata(metadataBuilder.build().also { mediaMetadata = it })
-				}, handler))
+				}
 			}
 			.excuse { e -> logger.warn("There was an error updating the media session for `${serviceFile.key}`", e) }
 	}

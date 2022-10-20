@@ -345,8 +345,6 @@ open class PlaybackService :
 
 	private val playbackHandler = lazy { playbackThread.value.then { h -> Handler(h.looper) } }
 
-	private val handler by lazy { Handler(mainLooper) }
-
 	private val playbackStartingNotificationBuilder by lazy {
 		promisedMediaSession.then { mediaSession ->
 			PlaybackStartingNotificationBuilder(
@@ -706,11 +704,11 @@ open class PlaybackService :
 			)
 			val promisedMediaBroadcaster = promisedMediaSession.then { mediaSession ->
 				val broadcaster = MediaSessionBroadcaster(
-					handler,
 					nowPlayingRepository,
 					cachedSessionFilePropertiesProvider,
 					imageProvider,
-					mediaSession)
+					mediaSession
+				)
 				ExtendedPlaybackNotificationRouter(
 					broadcaster,
 					PlaybackNotificationRouter(
