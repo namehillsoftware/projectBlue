@@ -140,10 +140,10 @@ class MediaSessionBroadcaster(
 					metadataBuilder.putLong(MediaMetadata.METADATA_KEY_TRACK_NUMBER, trackNumber)
 				}
 
-				promisedBitmap.then {
-					if (remoteClientBitmap != it) {
-						metadataBuilder.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, it)
-						remoteClientBitmap = it
+				promisedBitmap.then { bitmap ->
+					if (remoteClientBitmap != bitmap) {
+						metadataBuilder.putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, bitmap)
+						remoteClientBitmap = bitmap
 					}
 					mediaSession.setMetadata(metadataBuilder.build().also { mediaMetadata = it })
 				}
