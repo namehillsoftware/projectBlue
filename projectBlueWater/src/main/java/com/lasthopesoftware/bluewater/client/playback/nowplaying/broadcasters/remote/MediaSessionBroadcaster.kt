@@ -126,7 +126,7 @@ class MediaSessionBroadcaster(
 				val artist = fileProperties[KnownFileProperties.Artist]
 				val name = fileProperties[KnownFileProperties.Name]
 				val album = fileProperties[KnownFileProperties.Album]
-				val duration = FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties).toLong()
+				val duration = FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties)
 
 				val metadataBuilder = MediaMetadataCompat.Builder(mediaMetadata)
 				metadataBuilder.putString(MediaMetadata.METADATA_KEY_ARTIST, artist)

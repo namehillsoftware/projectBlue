@@ -51,8 +51,7 @@ class PlaybackFileStartedScrobblerRegistration(private val context: Context) : R
 					val artist = fileProperties[KnownFileProperties.Artist]
 					val name = fileProperties[KnownFileProperties.Name]
 					val album = fileProperties[KnownFileProperties.Album]
-					val duration =
-						FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties).toLong()
+					val duration = FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties)
 
 					val scrobbleDroidIntent = scrobbleIntentProvider.provideScrobbleIntent(true)
 					scrobbleDroidIntent.putExtra("artist", artist)

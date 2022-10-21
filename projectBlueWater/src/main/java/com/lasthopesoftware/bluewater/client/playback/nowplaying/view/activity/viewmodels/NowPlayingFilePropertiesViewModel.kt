@@ -305,7 +305,7 @@ class NowPlayingFilePropertiesViewModel(
 		titleState.value = fileProperties[KnownFileProperties.Name]
 
 		val duration = FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties)
-		setTrackDuration(if (duration > 0) duration else Int.MAX_VALUE)
+		setTrackDuration(if (duration > 0) duration else Long.MAX_VALUE)
 
 		if (activeSongRatingUpdates == 0) {
 			val stringRating = fileProperties[KnownFileProperties.Rating]
