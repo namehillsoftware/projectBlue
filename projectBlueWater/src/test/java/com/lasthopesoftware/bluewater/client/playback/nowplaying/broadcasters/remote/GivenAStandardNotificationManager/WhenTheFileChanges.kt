@@ -65,7 +65,7 @@ class WhenTheFileChanges : AndroidContext() {
 				m.description.title == "wise" &&
 					m.getString(MediaMetadata.METADATA_KEY_ARTIST) == "dark" &&
 					m.getString(MediaMetadata.METADATA_KEY_ALBUM) == "brighten" &&
-					m.getLong(MediaMetadata.METADATA_KEY_DURATION) == 699392L * 1000
+					m.getLong(MediaMetadata.METADATA_KEY_DURATION) == 699392L * 1000 &&
 					m.getLong(MediaMetadata.METADATA_KEY_TRACK_NUMBER) == 687L
 			})
 		}
