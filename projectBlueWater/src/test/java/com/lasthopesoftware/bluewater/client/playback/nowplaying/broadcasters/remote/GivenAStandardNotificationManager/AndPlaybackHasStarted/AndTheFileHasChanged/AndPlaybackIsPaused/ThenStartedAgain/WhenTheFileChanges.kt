@@ -70,11 +70,13 @@ class WhenTheFileChanges : AndroidContext() {
 			},
 		)
 
-		playbackNotificationBroadcaster.notifyPlaying()
-		playbackNotificationBroadcaster.notifyPlayingFileUpdated()
-		playbackNotificationBroadcaster.notifyPaused()
-		playbackNotificationBroadcaster.notifyPlayingFileUpdated()
-		playbackNotificationBroadcaster.notifyPlaying()
+		with(playbackNotificationBroadcaster) {
+			notifyPlaying()
+			notifyPlayingFileUpdated()
+			notifyPaused()
+			notifyPlayingFileUpdated()
+			notifyPlaying()
+		}
 	}
 
 	@Test

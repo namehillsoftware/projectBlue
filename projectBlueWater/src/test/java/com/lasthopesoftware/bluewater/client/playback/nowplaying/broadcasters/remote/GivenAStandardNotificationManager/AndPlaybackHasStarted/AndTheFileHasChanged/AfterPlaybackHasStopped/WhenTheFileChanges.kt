@@ -1,91 +1,119 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.remote.GivenAStandardNotificationManager.AndPlaybackHasStarted.AndTheFileHasChanged.AfterPlaybackHasStopped
 
-import android.app.Notification
-import android.app.NotificationManager
-import android.content.Context
-import androidx.core.app.NotificationCompat
-import androidx.test.core.app.ApplicationProvider
+import android.graphics.BitmapFactory
+import android.media.MediaMetadata
+import android.support.v4.media.MediaMetadataCompat
+import android.support.v4.media.session.PlaybackStateCompat
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.NotificationsConfiguration
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.PlaybackNotificationBroadcaster
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building.BuildNowPlayingNotificationContent
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.remote.MediaSessionBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
-import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
-import com.lasthopesoftware.bluewater.shared.android.notifications.control.NotificationsController
-import com.lasthopesoftware.bluewater.shared.promises.extensions.PromiseMessenger
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
-import com.lasthopesoftware.resources.notifications.FakeNotificationCompatBuilder.Companion.newFakeBuilder
-import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.spyk
-import io.mockk.verify
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.AfterClass
 import org.junit.Test
-import org.robolectric.Robolectric
+
+private const val serviceFileId = 404
 
 class WhenTheFileChanges : AndroidContext() {
 
 	companion object {
-		private val secondNotification = Notification()
-		private val service by lazy {
-			spyk(Robolectric.buildService(PlaybackService::class.java).get())
+		private var playbackStates: MutableList<PlaybackStateCompat>? = ArrayList()
+		private var mediaMetadata: MutableList<MediaMetadataCompat>? = ArrayList()
+
+		@AfterClass
+		@JvmStatic
+		fun after() {
+			playbackStates = null
+			mediaMetadata = null
 		}
-		private val notificationManager = mockk<NotificationManager>(relaxUnitFun = true)
 	}
 
     override fun before() {
-		val context = ApplicationProvider.getApplicationContext<Context>()
+		val playbackNotificationBroadcaster = MediaSessionBroadcaster(
+			mockk {
+				every { promiseNowPlaying() } returns NowPlaying(
+					LibraryId(1),
+					listOf(ServiceFile(serviceFileId)),
+					0,
+					0L,
+					false
+				).toPromise()
+			},
+			mockk {
+				every { promiseFileProperties(ServiceFile(serviceFileId)) } returns mapOf(
+					Pair(KnownFileProperties.Name, "wing"),
+					Pair(KnownFileProperties.Rating, "861"),
+					Pair(KnownFileProperties.Artist, "toe"),
+					Pair(KnownFileProperties.Album, "paint"),
+					Pair(KnownFileProperties.Duration, "618"),
+					Pair(KnownFileProperties.Track, "723"),
+				).toPromise() andThen mapOf(
+					Pair(KnownFileProperties.Name, "deep"),
+					Pair(KnownFileProperties.Rating, "861"),
+					Pair(KnownFileProperties.Artist, "hut"),
+					Pair(KnownFileProperties.Album, "self"),
+					Pair(KnownFileProperties.Duration, "97"),
+					Pair(KnownFileProperties.Track, "340"),
+				).toPromise()
+			},
+			mockk {
+				every { promiseFileBitmap(ServiceFile(serviceFileId)) } returns BitmapFactory
+					.decodeByteArray(byteArrayOf((912 % 128).toByte(), (368 % 128).toByte(), (395 % 128).toByte()), 0, 3)
+					.toPromise()
+			},
+			mockk {
+				every { setPlaybackState(any()) } answers {
+					playbackStates?.add(firstArg())
+				}
 
-		val secondNotificationPromise = PromiseMessenger<NotificationCompat.Builder>()
+				every { setMetadata(any()) } answers {
+					mediaMetadata?.add(firstArg())
+				}
+			},
+		)
 
-		val notificationContentBuilder = mockk<BuildNowPlayingNotificationContent> {
-			every { getLoadingNotification(any()) } returns newFakeBuilder(context, Notification())
-			every { promiseNowPlayingNotification(any(), any()) } returns newFakeBuilder(context, Notification()).toPromise()
-			every { promiseNowPlayingNotification(ServiceFile(2), any()) } returns secondNotificationPromise
+		with(playbackNotificationBroadcaster) {
+			notifyPlaying()
+			notifyPlayingFileUpdated()
+			notifyPlayingFileUpdated()
+			notifyStopped()
 		}
+	}
 
-        val playbackNotificationBroadcaster =
-            PlaybackNotificationBroadcaster(
-                NotificationsController(service, notificationManager),
-                NotificationsConfiguration(
-                    "",
-                    43
-                ),
-                notificationContentBuilder,
-                { Promise(newFakeBuilder(context, Notification())) },
-                mockk {
-                    every { promiseNowPlaying() } returns NowPlaying(
-                        LibraryId(223),
-                        listOf(ServiceFile(2)),
-                        0,
-                        0L,
-                        false,
-                    ).toPromise()
-                },
-            )
+	@Test
+	fun `then the playback states are correct`() {
+		assertThat(playbackStates?.map { s -> s.state }).containsExactly(
+			PlaybackStateCompat.STATE_PLAYING,
+			PlaybackStateCompat.STATE_STOPPED,
+		)
+	}
 
-        playbackNotificationBroadcaster.notifyPlaying()
-        playbackNotificationBroadcaster.notifyPlayingFileUpdated()
-        playbackNotificationBroadcaster.notifyPlayingFileUpdated()
-        playbackNotificationBroadcaster.notifyStopped()
+	@Test
+	fun `then the first media metadata is correct`() {
+		assertThat(mediaMetadata?.first()).matches { m ->
+			m?.description?.title == "wing" &&
+				m.getString(MediaMetadata.METADATA_KEY_ARTIST) == "toe" &&
+				m.getString(MediaMetadata.METADATA_KEY_ALBUM) == "paint" &&
+				m.getLong(MediaMetadata.METADATA_KEY_DURATION) == 618L * 1000 &&
+				m.getLong(MediaMetadata.METADATA_KEY_TRACK_NUMBER) == 723L &&
+				m.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART) != null
+		}
+	}
 
-        secondNotificationPromise.sendResolution(newFakeBuilder(context, secondNotification))
-    }
-
-    @Test
-    fun `then the service is started in the foreground`() {
-        verify(atLeast = 1) { service.startForeground(43, any()) }
-    }
-
-    @Test
-    fun `then the service does not continue in the background`() {
-		verify { service.stopForeground(true) }
-    }
-
-    @Test
-    fun `then the notification is not set to the second notification`() {
-		verify(exactly = 0) { notificationManager.notify(43, secondNotification) }
-    }
+	@Test
+	fun `then the second media metadata is correct`() {
+		assertThat(mediaMetadata?.drop(1)?.first()).matches { m ->
+			m?.description?.title == "deep" &&
+				m.getString(MediaMetadata.METADATA_KEY_ARTIST) == "hut" &&
+				m.getString(MediaMetadata.METADATA_KEY_ALBUM) == "self" &&
+				m.getLong(MediaMetadata.METADATA_KEY_DURATION) == 97L * 1000 &&
+				m.getLong(MediaMetadata.METADATA_KEY_TRACK_NUMBER) == 340L &&
+				m.getBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART) != null
+		}
+	}
 }
