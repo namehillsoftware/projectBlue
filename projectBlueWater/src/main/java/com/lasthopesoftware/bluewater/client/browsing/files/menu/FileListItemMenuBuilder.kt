@@ -13,7 +13,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.F
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener.Companion.tryFlipToPreviousView
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.NotifyOnFlipViewAnimator
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.handlers.AbstractMenuClickHandler
-import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideScopedUrlKeyProvider
+import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideScopedUrlKey
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.ProvideNowPlayingFiles
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
@@ -31,7 +31,7 @@ class FileListItemMenuBuilder(
 	private val serviceFiles: Collection<ServiceFile>,
 	private val nowPlayingFileProvider: ProvideNowPlayingFiles,
 	private val registerForApplicationMessages: RegisterForApplicationMessages,
-	private val scopedUrlKeyProvider: ProvideScopedUrlKeyProvider
+	private val scopedUrlKeyProvider: ProvideScopedUrlKey
 )
 	: AbstractFileListItemMenuBuilder<FileListItemMenuBuilder.ViewHolder>(R.layout.layout_file_item_menu) {
 

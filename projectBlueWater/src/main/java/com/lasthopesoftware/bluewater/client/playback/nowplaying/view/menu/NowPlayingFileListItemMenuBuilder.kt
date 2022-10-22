@@ -20,7 +20,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAn
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener.Companion.tryFlipToPreviousView
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.NotifyOnFlipViewAnimator
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.OnViewChangedListener
-import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideScopedUrlKeyProvider
+import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideScopedUrlKey
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.MaintainNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
@@ -46,7 +46,7 @@ class NowPlayingFileListItemMenuBuilder(
 	private val hasEditPlaylistState: HasEditPlaylistState,
 	private val typedMessagesRegistration: RegisterForTypedMessages<NowPlayingPlaylistMessage>,
 	private val sendTypedMessages: SendTypedMessages<NowPlayingPlaylistMessage>,
-	private val scopedUrlKeyProvider: ProvideScopedUrlKeyProvider
+	private val scopedUrlKeyProvider: ProvideScopedUrlKey
 ) : BuildListItemMenuViewContainers<NowPlayingFileListItemMenuBuilder.ViewHolder>
 {
 	private var onViewChangedListener: OnViewChangedListener? = null

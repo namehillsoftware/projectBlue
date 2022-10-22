@@ -9,7 +9,7 @@ class SelectedLibraryUrlKeyProvider(
 	private val selectedLibraryId: ProvideSelectedLibraryId,
 	private val urlKey: ProvideUrlKey,
 )
-	: ProvideScopedUrlKeyProvider {
+	: ProvideScopedUrlKey {
 	override fun <Key> promiseUrlKey(key: Key): Promise<UrlKeyHolder<Key>?> =
 		selectedLibraryId
 			.promiseSelectedLibraryId()

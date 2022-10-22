@@ -41,10 +41,10 @@ class WhenGettingTheFileProperties {
 				FileProperty(KnownFileProperties.DateFirstRated, "Nr13052"),
 				FileProperty(KnownFileProperties.AlbumArtist, "MB4Q"),
 				FileProperty("Aj8", "4vBz"),
-			).plus(EditableFilePropertyDefinition.values().filterNot { arrayOf(KnownFileProperties.DateFirstRated, KnownFileProperties.AlbumArtist, "Aj8").contains(it.descriptor) }.map {
+			).plus(EditableFilePropertyDefinition.values().filterNot { arrayOf(KnownFileProperties.DateFirstRated, KnownFileProperties.AlbumArtist, "Aj8").contains(it.propertyName) }.map {
 				when(it.type) {
-					FilePropertyType.Integer -> FileProperty(it.descriptor, "0")
-					else -> FileProperty(it.descriptor, "")
+					FilePropertyType.Integer -> FileProperty(it.propertyName, "0")
+					else -> FileProperty(it.propertyName, "")
 				}
 			})
 		)

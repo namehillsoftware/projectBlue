@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.properties
 
-enum class EditableFilePropertyDefinition(val descriptor: String, val type: FilePropertyType? = null) {
+enum class EditableFilePropertyDefinition(val propertyName: String, val type: FilePropertyType? = null) {
 	Artist(KnownFileProperties.Artist, FilePropertyType.ShortFormText),
 	AlbumArtist(KnownFileProperties.AlbumArtist, FilePropertyType.ShortFormText),
 	Album(KnownFileProperties.Album, FilePropertyType.ShortFormText),
@@ -18,11 +18,11 @@ enum class EditableFilePropertyDefinition(val descriptor: String, val type: File
 	TotalDiscs(KnownFileProperties.TotalDiscs, FilePropertyType.Integer),
 	Genre(KnownFileProperties.Genre, FilePropertyType.ShortFormText);
 
-	override fun toString() = descriptor
+	override fun toString() = propertyName
 
 	companion object {
-		private val propertyLook by lazy { values().associateBy { fp -> fp.descriptor } }
+		private val propertyLookup by lazy { values().associateBy { fp -> fp.propertyName } }
 
-		fun fromName(name: String) = propertyLook[name]
+		fun fromName(name: String) = propertyLookup[name]
 	}
 }

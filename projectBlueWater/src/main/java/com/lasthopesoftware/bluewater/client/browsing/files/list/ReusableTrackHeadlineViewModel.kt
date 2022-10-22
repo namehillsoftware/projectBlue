@@ -7,7 +7,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideSc
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.HiddenListItemMenu
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
-import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideScopedUrlKeyProvider
+import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideScopedUrlKey
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
@@ -36,13 +36,13 @@ private val timeoutDuration by lazy { Duration.standardMinutes(1) }
 private val logger by lazyLogger<ReusableTrackHeadlineViewModel>()
 
 class ReusableTrackHeadlineViewModel(
-	private val filePropertiesProvider: ProvideScopedFileProperties,
-	private val urlKeyProvider: ProvideScopedUrlKeyProvider,
-	private val stringResources: GetStringResources,
-	private val controlPlaybackService: ControlPlaybackService,
-	private val fileDetailsLauncher: LaunchFileDetails,
-	private val sendItemMenuMessages: SendTypedMessages<ItemListMenuMessage>,
-	receiveMessages: RegisterForApplicationMessages,
+    private val filePropertiesProvider: ProvideScopedFileProperties,
+    private val urlKeyProvider: ProvideScopedUrlKey,
+    private val stringResources: GetStringResources,
+    private val controlPlaybackService: ControlPlaybackService,
+    private val fileDetailsLauncher: LaunchFileDetails,
+    private val sendItemMenuMessages: SendTypedMessages<ItemListMenuMessage>,
+    receiveMessages: RegisterForApplicationMessages,
 ) : ViewFileItem, HiddenListItemMenu, AutoCloseable, (FilePropertiesUpdatedMessage) -> Unit {
 
 	private val filePropertiesUpdatedSubscription = receiveMessages.registerReceiver(this)

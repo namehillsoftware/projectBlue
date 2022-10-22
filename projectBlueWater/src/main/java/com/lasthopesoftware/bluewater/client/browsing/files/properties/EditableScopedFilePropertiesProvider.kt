@@ -13,7 +13,7 @@ private fun buildProperties(rawProperties: Map<String, String>): Sequence<FilePr
 	}
 
 	for (editable in EditableFilePropertyDefinition.values()) {
-		val name = editable.descriptor
+		val name = editable.propertyName
 		if (!returnedProperties.add(name)) continue
 
 		val value = when(editable.type) {

@@ -10,7 +10,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideEditableScopedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.UpdateScopedFileProperties
 import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfScopedConnectionIsReadOnly
-import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideScopedUrlKeyProvider
+import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideScopedUrlKey
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.images.ProvideDefaultImage
@@ -109,7 +109,7 @@ class FileDetailsPreviewProvider : PreviewParameterProvider<FileDetailsViewModel
 				}
 
 			},
-			object : ProvideScopedUrlKeyProvider {
+			object : ProvideScopedUrlKey {
 				override fun <Key> promiseUrlKey(key: Key): Promise<UrlKeyHolder<Key>?> {
 					TODO("Not yet implemented")
 				}

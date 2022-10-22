@@ -80,7 +80,7 @@ class WhenAnotherPropertyIsEdited {
 		}
 
 		private val FileDetailsViewModel.propertyToEdit
-			get() = fileProperties.value.first { it.property == EditableFilePropertyDefinition.Band.descriptor }
+			get() = fileProperties.value.first { it.property == EditableFilePropertyDefinition.Band.propertyName }
 
 		@JvmStatic
 		@BeforeClass

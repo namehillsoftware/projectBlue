@@ -12,7 +12,7 @@ import androidx.core.app.NotificationCompat
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.Companion.getInstance
-import com.lasthopesoftware.bluewater.client.playback.service.notification.NotificationsConfiguration
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.NotificationsConfiguration
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.makePendingIntentImmutable
 import com.lasthopesoftware.bluewater.shared.android.notifications.NoOpChannelActivator
