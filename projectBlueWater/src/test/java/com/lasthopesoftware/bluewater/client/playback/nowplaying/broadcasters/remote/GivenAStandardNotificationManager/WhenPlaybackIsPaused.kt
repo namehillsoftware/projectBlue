@@ -1,23 +1,16 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.remote.GivenAStandardNotificationManager
 
-import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
-import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.remote.MediaSessionBroadcaster
+import com.lasthopesoftware.bluewater.shared.android.MediaSession.ControlMediaSession
 import io.mockk.mockk
-import io.mockk.spyk
 import io.mockk.verify
 import org.junit.Test
 
 class WhenPlaybackIsPaused : AndroidContext() {
 	companion object {
-		private val mediaSessionCompat = spyk(
-			MediaSessionCompat(
-				ApplicationProvider.getApplicationContext(),
-				"test"
-			)
-		)
+		private val mediaSessionCompat = mockk<ControlMediaSession>(relaxUnitFun = true)
 	}
 
     override fun before() {

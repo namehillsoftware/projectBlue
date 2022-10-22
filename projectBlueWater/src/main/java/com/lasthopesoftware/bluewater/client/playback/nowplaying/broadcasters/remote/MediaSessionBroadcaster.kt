@@ -4,7 +4,6 @@ import android.graphics.Bitmap
 import android.media.MediaMetadata
 import android.media.session.PlaybackState
 import android.support.v4.media.MediaMetadataCompat
-import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideImages
@@ -14,6 +13,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.ScopedCac
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.NotifyOfPlaybackEvents
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.NotifyOfTrackPositionUpdates
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
+import com.lasthopesoftware.bluewater.shared.android.MediaSession.ControlMediaSession
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 
 private val logger by lazyLogger<MediaSessionBroadcaster>()
@@ -30,7 +30,7 @@ class MediaSessionBroadcaster(
 	private val nowPlayingProvider: GetNowPlayingState,
 	private val scopedCachedFilePropertiesProvider: ScopedCachedFilePropertiesProvider,
 	private val imageProvider: ProvideImages,
-	private val mediaSession: MediaSessionCompat
+	private val mediaSession: ControlMediaSession
 ) : NotifyOfPlaybackEvents, NotifyOfTrackPositionUpdates {
 	@Volatile
 	private var playbackState = PlaybackStateCompat.STATE_STOPPED

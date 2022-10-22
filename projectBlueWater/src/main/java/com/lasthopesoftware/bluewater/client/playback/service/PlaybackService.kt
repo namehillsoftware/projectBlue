@@ -94,6 +94,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.uri.Stor
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.settings.volumeleveling.VolumeLevelSettings
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
+import com.lasthopesoftware.bluewater.shared.android.MediaSession.MediaSessionController
 import com.lasthopesoftware.bluewater.shared.android.MediaSession.MediaSessionService
 import com.lasthopesoftware.bluewater.shared.android.audiofocus.AudioFocusManagement
 import com.lasthopesoftware.bluewater.shared.android.makePendingIntentImmutable
@@ -707,7 +708,7 @@ open class PlaybackService :
 					nowPlayingRepository,
 					cachedSessionFilePropertiesProvider,
 					imageProvider,
-					mediaSession
+					MediaSessionController(mediaSession),
 				)
 				ExtendedPlaybackNotificationRouter(
 					broadcaster,

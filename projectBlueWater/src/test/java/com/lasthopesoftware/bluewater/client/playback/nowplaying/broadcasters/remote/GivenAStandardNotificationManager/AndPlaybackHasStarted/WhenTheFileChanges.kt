@@ -2,19 +2,17 @@ package com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.r
 
 import android.graphics.BitmapFactory
 import android.media.MediaMetadata
-import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
-import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.remote.MediaSessionBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
+import com.lasthopesoftware.bluewater.shared.android.MediaSession.ControlMediaSession
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.spyk
 import io.mockk.verify
 import org.junit.Test
 
@@ -22,12 +20,7 @@ private const val serviceFileId = 303
 
 class WhenTheFileChanges : AndroidContext() {
 	companion object {
-		private val mediaSessionCompat = spyk(
-			MediaSessionCompat(
-				ApplicationProvider.getApplicationContext(),
-				"test"
-			)
-		)
+		private val mediaSessionCompat = mockk<ControlMediaSession>(relaxUnitFun = true)
 	}
 
 	override fun before() {
