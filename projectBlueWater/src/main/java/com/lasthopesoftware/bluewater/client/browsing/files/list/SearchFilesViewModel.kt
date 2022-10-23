@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.list
 
 import androidx.lifecycle.ViewModel
+import com.lasthopesoftware.bluewater.client.browsing.TrackLoadedViewState
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideLibraryFiles
 import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
@@ -15,16 +16,16 @@ import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-class SearchListViewModel(
+class SearchFilesViewModel(
 	private val selectedLibraryId: ProvideSelectedLibraryId,
 	private val libraryFiles: ProvideLibraryFiles,
 	private val controlPlaybackService: ControlPlaybackService,
-) : ViewModel() {
+) : ViewModel(), TrackLoadedViewState {
 
 	private val mutableIsLoading = MutableStateFlow(false)
 	private val mutableFiles = MutableStateFlow(emptyList<ServiceFile>())
 
-	val isLoading = mutableIsLoading.asStateFlow()
+	override val isLoading = mutableIsLoading.asStateFlow()
 	val files = mutableFiles.asStateFlow()
 	val query = MutableStateFlow("")
 

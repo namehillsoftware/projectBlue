@@ -65,6 +65,9 @@
             </intent-filter>
         </activity>
         <activity
+            android:name=".client.browsing.files.list.SearchFilesActivity"
+            android:label="@string/title_activity_search_files" />
+        <activity
             android:name=".client.browsing.items.list.ItemListActivity"
             android:label="@string/title_activity_file_view">
             <meta-data

@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.list
 
 import androidx.lifecycle.ViewModel
+import com.lasthopesoftware.bluewater.client.browsing.TrackLoadedViewState
 import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.ProvideFileStringListForItem
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
@@ -32,13 +33,13 @@ class ItemListViewModel(
 	private val itemStringListProvider: ProvideFileStringListForItem,
 	private val controlNowPlaying: ControlPlaybackService,
 	private val sendItemMenuMessages: SendTypedMessages<ItemListMenuMessage>
-) : ViewModel() {
+) : ViewModel(), TrackLoadedViewState {
 
 	private val activityLaunchingReceiver = messageBus.registerReceiver { event : ActivityLaunching ->
-		mutableIsLoaded.value = event != ActivityLaunching.HALTED // Only show the item list view again when launching error'ed for some reason
+		mutableIsLoading.value = event != ActivityLaunching.HALTED // Only show the item list view again when launching error'ed for some reason
 	}
 	private val mutableItems = MutableStateFlow(emptyList<ChildItemViewModel>())
-	private val mutableIsLoaded = MutableStateFlow(true)
+	private val mutableIsLoading = MutableStateFlow(true)
 	private val mutableIsSynced = MutableStateFlow(false)
 	private val mutableItemValue = MutableStateFlow("")
 
@@ -48,14 +49,14 @@ class ItemListViewModel(
 	val itemValue = mutableItemValue.asStateFlow()
 	val isSynced = mutableIsSynced.asStateFlow()
 	val items = mutableItems.asStateFlow()
-	val isLoaded = mutableIsLoaded.asStateFlow()
+	override val isLoading = mutableIsLoading.asStateFlow()
 
 	override fun onCleared() {
 		activityLaunchingReceiver.close()
 	}
 
 	fun loadItem(item: Item): Promise<Unit> {
-		mutableIsLoaded.value = false
+		mutableIsLoading.value = true
 		mutableItemValue.value = item.value
 		return selectedLibraryId.promiseSelectedLibraryId()
 			.eventually { libraryId ->
@@ -82,7 +83,7 @@ class ItemListViewModel(
 			}
 			.then {
 				loadedItem = item
-				mutableIsLoaded.value = true
+				mutableIsLoading.value = false
 			}
 	}
 

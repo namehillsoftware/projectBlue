@@ -2,7 +2,8 @@ package com.lasthopesoftware.bluewater.client.browsing.items.media.files.list.Gi
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
-import com.lasthopesoftware.bluewater.client.browsing.files.list.SearchListViewModel
+import com.lasthopesoftware.bluewater.client.browsing.files.list.SearchFilesViewModel
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
@@ -20,10 +21,10 @@ class WhenFindingFiles {
 	private val loadingStates = ArrayList<Boolean>()
 
 	private val viewModel by lazy {
-		SearchListViewModel(
-			mockk {
-				every { promiseSelectedLibraryId() } returns LibraryId(libraryId).toPromise()
-			},
+		val libraryProvider = mockk<ProvideSelectedLibraryId>()
+
+		val vm = SearchFilesViewModel(
+			libraryProvider,
 			mockk {
 				every { promiseFiles(LibraryId(libraryId), FileListParameters.Options.None, "Files/Search", "Query=[Media Type]=[Audio] $query") } returns Promise(
 					listOf(
@@ -44,8 +45,17 @@ class WhenFindingFiles {
 			},
 			mockk(),
 		)
+
+		every { libraryProvider.promiseSelectedLibraryId() } answers {
+			isLoadingBeforeQueriesMade = vm.isLoading.value
+			loadingStates.add(vm.isLoading.value)
+			LibraryId(libraryId).toPromise()
+		}
+
+		vm
 	}
 
+	private var isLoadingBeforeQueriesMade = false
 
 	@BeforeAll
 	fun act() {
@@ -53,6 +63,10 @@ class WhenFindingFiles {
 		loadingStates.add(viewModel.isLoading.value)
 		viewModel.findFiles().toExpiringFuture().get()
 		loadingStates.add(viewModel.isLoading.value)
+	}
+
+	@Test fun `then loading is true before the query is made`() {
+		assertThat(isLoadingBeforeQueriesMade).isTrue
 	}
 
 	@Test fun `then the loading states are correct`() {

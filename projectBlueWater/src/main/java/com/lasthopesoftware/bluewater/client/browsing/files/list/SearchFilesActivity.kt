@@ -1,129 +1,62 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.list
+package com.lasthopesoftware.bluewater.client.browsing.files.list
 
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.os.Handler
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
-import com.lasthopesoftware.bluewater.client.browsing.files.access.ItemFileProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
-import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.ItemStringListProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.access.LibraryFileProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.LibraryFileStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsLauncher
-import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
-import com.lasthopesoftware.bluewater.client.browsing.files.list.TrackHeadlineViewModelProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.RateControlledFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.SelectedLibraryFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertyStorage
-import com.lasthopesoftware.bluewater.client.browsing.items.IItem
-import com.lasthopesoftware.bluewater.client.browsing.items.Item
-import com.lasthopesoftware.bluewater.client.browsing.items.access.CachedItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuViewModel
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
-import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
 import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.libraries.SelectedLibraryUrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.polling.ConnectionPoller
-import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity.Companion.restoreSelectedConnection
-import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
-import com.lasthopesoftware.bluewater.client.stored.library.items.StateChangeBroadcastingStoredItemAccess
-import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
-import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 import com.lasthopesoftware.bluewater.shared.cls
-import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRateLimiter
-import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
 import com.lasthopesoftware.resources.strings.StringResources
-import com.namehillsoftware.handoff.promises.Promise
 
-class ItemListActivity : AppCompatActivity(), Runnable {
+class SearchFilesActivity : AppCompatActivity() {
 
 	companion object {
-		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(ItemListActivity::class.java) }
-
-		private val key by lazy { magicPropertyBuilder.buildProperty("key") }
-		private val value by lazy { magicPropertyBuilder.buildProperty("value") }
-		private val playlistIdKey by lazy { magicPropertyBuilder.buildProperty("playlistId") }
-
-		fun Context.startItemListActivity(item: IItem) {
-			if (item is Item) startItemListActivity(item)
-			else startActivity(getItemListIntent(this, item))
-		}
-
-		fun Context.startItemListActivity(item: Item) {
-			val fileListIntent = getItemListIntent(this, item).apply {
-				item.playlistId?.also { putExtra(playlistIdKey, it.id) }
-			}
-			startActivity(fileListIntent)
-		}
-
-		private fun getItemListIntent(context: Context, item: IItem) = Intent(context, cls<ItemListActivity>()).apply {
-			putExtra(key, item.key)
-			putExtra(value, item.value)
+		fun Context.startSearchFilesActivity() {
+			startActivity(Intent(this, cls<SearchFilesActivity>()))
 		}
 	}
 
 	private val rateLimiter by lazy { PromisingRateLimiter<Map<String, String>>(2) }
 
-	private val handler by lazy { Handler(mainLooper) }
-
-	private val itemListProvider by lazy {
-		val connectionProvider = ConnectionSessionManager.get(this)
-
-		ItemStringListProvider(
-			FileListParameters,
-			LibraryFileStringListProvider(connectionProvider)
-		)
-	}
-
 	private val browserLibraryIdProvider by lazy { getCachedSelectedLibraryIdProvider() }
 
-	private val itemProvider by lazy { CachedItemProvider.getInstance(this) }
-
 	private val messageBus by lazy { getApplicationMessageBus() }
-
-	private val storedItemAccess by lazy {
-		StateChangeBroadcastingStoredItemAccess(StoredItemAccess(this), messageBus)
-	}
 
 	private val menuMessageBus by buildViewModelLazily { ViewModelMessageBus<ItemListMenuMessage>() }
 
 	private val itemListMenuViewModel by buildViewModelLazily { ItemListMenuViewModel(menuMessageBus) }
 
-	private val itemListViewModel by buildViewModelLazily {
-		ItemListViewModel(
+	private val searchFilesViewModel by buildViewModelLazily {
+		SearchFilesViewModel(
 			browserLibraryIdProvider,
-			itemProvider,
-			messageBus,
-			storedItemAccess,
-			itemListProvider,
+			LibraryFileProvider(LibraryFileStringListProvider(libraryConnectionProvider)),
 			PlaybackServiceController(this),
-			menuMessageBus,
-		)
-	}
-
-	private val fileProvider by lazy {
-		val libraryConnectionProvider = ConnectionSessionManager.get(this)
-		ItemFileProvider(
-			ItemStringListProvider(
-				FileListParameters,
-				LibraryFileStringListProvider(libraryConnectionProvider)
-			)
 		)
 	}
 
@@ -174,15 +107,6 @@ class ItemListActivity : AppCompatActivity(), Runnable {
 		)
 	}
 
-	private val fileListViewModel by buildViewModelLazily {
-		FileListViewModel(
-			browserLibraryIdProvider,
-			fileProvider,
-			storedItemAccess,
-			PlaybackServiceController(this),
-		)
-	}
-
 	private val trackHeadlineViewModelProvider by buildViewModelLazily {
 		TrackHeadlineViewModelProvider(
 			scopedFilePropertiesProvider,
@@ -209,51 +133,17 @@ class ItemListActivity : AppCompatActivity(), Runnable {
 		)
 	}
 
-	private lateinit var item: Item
-
 	public override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
-		item = Item(
-			savedInstanceState?.getInt(key) ?: intent.getIntExtra(key, 1),
-			savedInstanceState?.getString(value) ?: intent.getStringExtra(value)
-		)
-
-		val playlistId = savedInstanceState?.getInt(playlistIdKey, -1) ?: intent.getIntExtra(playlistIdKey, -1)
-		if (playlistId != -1) {
-			item = Item(item.key, item.value, playlistId)
-		}
-
-		title = item.value
-
 		setContent {
 			ProjectBlueTheme {
-				ItemListView(
-					itemListViewModel = itemListViewModel,
-					fileListViewModel = fileListViewModel,
+				SearchFilesView(
+					searchFilesViewModel = searchFilesViewModel,
 					nowPlayingViewModel = nowPlayingFilePropertiesViewModel,
-					itemListMenuViewModel = itemListMenuViewModel,
 					trackHeadlineViewModelProvider = trackHeadlineViewModelProvider,
 				)
 			}
-		}
-
-		restoreSelectedConnection(this).eventually(response({ run() }, handler))
-	}
-
-	override fun run() {
-		Promise.whenAll(fileListViewModel.loadItem(item), itemListViewModel.loadItem(item), nowPlayingFilePropertiesViewModel.initializeViewModel())
-			.excuse(HandleViewIoException(this, this))
-			.eventuallyExcuse(response(UnexpectedExceptionToasterResponse(this), handler))
-			.then { finish() }
-	}
-
-	override fun onSaveInstanceState(savedInstanceState: Bundle) {
-		super.onSaveInstanceState(savedInstanceState)
-		savedInstanceState.putInt(key, item.key)
-		savedInstanceState.putString(value, item.value)
-		item.playlistId?.id?.also {
-			savedInstanceState.putInt(playlistIdKey, it)
 		}
 	}
 

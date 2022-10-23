@@ -113,4 +113,6 @@
     <string name="drag_item">Drag Item</string>
     <string name="title_activity_test">TestActivity</string>
     <string name="lbl_cover_art">Cover Art for %1$s by %2$s</string>
+    <string name="file_count_label">%1$s file(s)</string>
+    <string name="item_count_label">%1$s item(s)</string>
 </resources>

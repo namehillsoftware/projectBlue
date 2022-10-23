@@ -82,17 +82,17 @@ class WhenShowingTheItemMenu {
 	}
 
 	@Test
-	fun thenTheItemValueIsCorrect() {
+	fun `then the item value is correct`() {
 		assertThat(viewModel.itemValue.value).isEqualTo("leaf")
 	}
 
 	@Test
-	fun thenIsLoadedIsTrue() {
-		assertThat(viewModel.isLoaded.value).isTrue
+	fun `then the view model is finished loading`() {
+		assertThat(viewModel.isLoading.value).isFalse
 	}
 
 	@Test
-	fun thenTheLoadedFilesAreCorrect() {
+	fun `then the loaded files are correct`() {
 		assertThat(viewModel.items.value.map { it.item })
 			.hasSameElementsAs(
 				listOf(
