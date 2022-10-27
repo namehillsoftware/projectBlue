@@ -21,8 +21,8 @@ ENV PATH ${ANDROID_HOME}/cmdline-tools/cmdline-tools/bin:${ANDROID_HOME}/tools:$
 ARG SDK_VERSION=commandlinetools-linux-8512546_latest.zip
 
 # Set these to the same versions as in build.gradle to avoid downloading updated tools
-ARG ANDROID_BUILD_VERSION=32
-ARG ANDROID_TOOLS_VERSION=32.0.0
+ARG ANDROID_BUILD_VERSION=33
+ARG ANDROID_TOOLS_VERSION=33.0.0
 
 # Full reference at https://dl.google.com/android/repository/repository2-1.xml
 # download and unpack android
