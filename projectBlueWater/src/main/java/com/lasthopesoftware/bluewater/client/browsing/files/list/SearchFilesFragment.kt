@@ -10,7 +10,7 @@ import android.widget.EditText
 import android.widget.ProgressBar
 import android.widget.RelativeLayout
 import android.widget.TextView
-import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.DividerItemDecoration
@@ -94,7 +94,7 @@ class SearchFilesFragment : Fragment(), View.OnKeyListener, TextView.OnEditorAct
 		if (keyCode != KeyEvent.KEYCODE_ENTER || event?.action != KeyEvent.ACTION_UP) return false
 
 		searchPrompt?.text.toString().also(::doSearch)
-		v?.let(ViewCompat::getWindowInsetsController)?.hide(WindowInsetsCompat.Type.ime())
+		activity?.window?.let { w -> v?.let { WindowCompat.getInsetsController(w, it) } }?.hide(WindowInsetsCompat.Type.ime())
 
 		return true
 	}
@@ -104,7 +104,7 @@ class SearchFilesFragment : Fragment(), View.OnKeyListener, TextView.OnEditorAct
 
 		v?.apply {
 			doSearch(text.toString())
-			ViewCompat.getWindowInsetsController(this)?.hide(WindowInsetsCompat.Type.ime())
+			activity?.window?.let { w -> WindowCompat.getInsetsController(w, this) }?.hide(WindowInsetsCompat.Type.ime())
 		}
 
 		return true
