@@ -226,6 +226,7 @@ class NowPlayingActivity :
 		this.viewAnimator = viewAnimator
 	}
 
+	@Deprecated("Deprecated in Java")
 	override fun onBackPressed() {
 		if (viewAnimator?.tryFlipToPreviousView() == true) return
 
