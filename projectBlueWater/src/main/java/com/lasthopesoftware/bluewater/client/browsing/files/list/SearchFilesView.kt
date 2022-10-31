@@ -90,7 +90,7 @@ fun SearchFilesView(
 			) {
 				ProvideTextStyle(MaterialTheme.typography.h5) {
 					Text(
-						text = "${files.size} files",
+						text = stringResource(R.string.file_count_label, files.size),
 						fontWeight = FontWeight.Bold,
 						modifier = Modifier
 							.padding(4.dp)
