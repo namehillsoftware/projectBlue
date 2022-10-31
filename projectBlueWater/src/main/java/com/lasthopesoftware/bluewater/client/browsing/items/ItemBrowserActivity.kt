@@ -29,12 +29,15 @@ import androidx.navigation.compose.rememberNavController
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.access.ItemFileProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.access.LibraryFileProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.ItemStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.LibraryFileStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsLauncher
 import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.list.SearchFilesActivity.Companion.startSearchFilesActivity
+import com.lasthopesoftware.bluewater.client.browsing.files.list.SearchFilesView
+import com.lasthopesoftware.bluewater.client.browsing.files.list.SearchFilesViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.list.TrackHeadlineViewModelProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
@@ -181,6 +184,8 @@ class ItemBrowserActivity : AppCompatActivity() {
 
 	private val fileDetailsLauncher by lazy { FileDetailsLauncher(this) }
 
+	private val libraryFilesProvider by lazy { LibraryFileProvider(LibraryFileStringListProvider(libraryConnectionProvider))  }
+
 	public override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
@@ -200,6 +205,7 @@ class ItemBrowserActivity : AppCompatActivity() {
 					scopedUrlKeyProvider,
 					stringResources,
 					fileDetailsLauncher,
+					libraryFilesProvider,
 				)
 			}
 		}
@@ -225,6 +231,7 @@ private fun ItemBrowserView(
 	scopedUrlKeyProvider: SelectedLibraryUrlKeyProvider,
 	stringResources: StringResources,
 	fileDetailsLauncher: FileDetailsLauncher,
+	libraryFilesProvider: LibraryFileProvider,
 ) {
 	val activity = LocalContext.current as? Activity ?: return
 
@@ -326,6 +333,7 @@ private fun ItemBrowserView(
 			}
 		}
 	}) {
+		it
 		val navController = rememberNavController()
 		val navHost = NavHost(navController, startDestination = "browse") {
 			composable("browse/{id}") { entry ->
@@ -363,6 +371,31 @@ private fun ItemBrowserView(
 							messageBus,
 						)
 					}
+				)
+			}
+
+			composable("search") { entry ->
+				val menuMessageBus = entry.viewModelStore.buildViewModel<ViewModelMessageBus<ItemListMenuMessage>> { ViewModelMessageBus() }
+				SearchFilesView(
+					searchFilesViewModel = entry.viewModelStore.buildViewModel {
+					   SearchFilesViewModel(
+						   browserLibraryIdProvider,
+						   libraryFilesProvider,
+						   playbackServiceController,
+					   )
+					},
+					nowPlayingViewModel = nowPlayingViewModel,
+					trackHeadlineViewModelProvider = entry.viewModelStore.buildViewModel {
+						TrackHeadlineViewModelProvider(
+							scopedFilePropertiesProvider,
+							scopedUrlKeyProvider,
+							stringResources,
+							playbackServiceController,
+							fileDetailsLauncher,
+							menuMessageBus,
+							messageBus,
+						)
+					},
 				)
 			}
 		}
