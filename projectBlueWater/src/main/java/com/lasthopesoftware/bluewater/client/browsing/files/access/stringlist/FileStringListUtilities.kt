@@ -18,8 +18,8 @@ object FileStringListUtilities {
 		val offset = headerInfo[0].toInt() + 1
 		val listSize = headerInfo[1].toInt()
 
-		return fileList.splitToSequence(";")
-			.drop(offset)
+		return headerInfo[2].splitToSequence(";")
+			.drop(offset - 2)
 			.filter { it.isNotEmpty() && it != "-1" }
 			.map { k -> ServiceFile(k.toInt()) }
 			.toCollection(ArrayList(listSize))

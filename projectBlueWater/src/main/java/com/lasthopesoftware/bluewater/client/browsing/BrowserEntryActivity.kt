@@ -235,6 +235,12 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 					}
 				}
 			}, messageHandler))
+			.excuse(HandleViewIoException(this, this))
+			.eventuallyExcuse(response(UnexpectedExceptionToasterResponse(this), this))
+			.then {
+				ApplicationSettingsActivity.launch(this)
+				finish()
+			}
 	}
 
 	private fun displayLibrary(library: Library?) {
