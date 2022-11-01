@@ -66,9 +66,7 @@ class ItemListViewModel(
 						val itemUpdate = itemProvider
 							.promiseItems(it, item.itemId)
 							.then { items ->
-								mutableItems.value = items.map { item ->
-									ChildItemViewModel(item)
-								}
+								mutableItems.value = items.map(::ChildItemViewModel)
 							}
 
 						val promisedSyncUpdate = storedItemAccess

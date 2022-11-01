@@ -393,12 +393,18 @@ private fun NowPlayingTemplate(
 			}
 		}
 	}) {
-		ItemListView(
-			itemListViewModel = itemListViewModel,
-			fileListViewModel = fileListViewModel,
-			nowPlayingViewModel = nowPlayingViewModel,
-			itemListMenuViewModel = itemListMenuViewModel,
-			trackHeadlineViewModelProvider = trackHeadlineViewModelProvider,
-		)
+		Box(modifier = Modifier
+			.padding(it)
+			.fillMaxSize()
+		) {
+			ItemListView(
+				itemListViewModel = itemListViewModel,
+				fileListViewModel = fileListViewModel,
+				nowPlayingViewModel = nowPlayingViewModel,
+				itemListMenuViewModel = itemListMenuViewModel,
+				trackHeadlineViewModelProvider = trackHeadlineViewModelProvider,
+				onBack = activity::finish
+			)
+		}
 	}
 }

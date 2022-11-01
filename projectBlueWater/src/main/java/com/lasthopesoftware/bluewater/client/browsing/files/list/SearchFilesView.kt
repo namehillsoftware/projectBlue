@@ -1,9 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.list
 
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.KeyboardActions
@@ -20,6 +17,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
 
 @Composable
@@ -27,6 +25,7 @@ fun SearchFilesView(
 	searchFilesViewModel: SearchFilesViewModel,
 	nowPlayingViewModel: NowPlayingFilePropertiesViewModel,
 	trackHeadlineViewModelProvider: TrackHeadlineViewModelProvider,
+	itemListMenuViewModel: ItemListMenuViewModel
 ) {
 	val files by searchFilesViewModel.files.collectAsState()
 	val playingFile by nowPlayingViewModel.nowPlayingFile.collectAsState()
@@ -52,6 +51,7 @@ fun SearchFilesView(
 			isMenuShown = isMenuShown,
 			onItemClick = fileItemViewModel::viewFileDetails,
 			onHiddenMenuClick = {
+				itemListMenuViewModel.hideAllMenus()
 				fileItemViewModel.showMenu()
 			},
 			onAddToNowPlayingClick = fileItemViewModel::addToNowPlaying,
@@ -63,48 +63,63 @@ fun SearchFilesView(
 		)
 	}
 
-	LazyColumn {
-		item {
-			Row {
+	Surface {
+		Column {
+			val isLoading by searchFilesViewModel.isLoading.collectAsState()
+
+			Row(
+				modifier = Modifier.fillMaxWidth().padding(16.dp),
+				horizontalArrangement = Arrangement.Center,
+			) {
 				val query by searchFilesViewModel.query.collectAsState()
 
 				TextField(
 					value = query,
+					placeholder = { stringResource(id = R.string.lbl_search_hint) },
 					onValueChange = { searchFilesViewModel.query.value = it },
-					modifier = Modifier.weight(1f),
 					singleLine = true,
 					keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
 					keyboardActions = KeyboardActions(onSearch = { searchFilesViewModel.findFiles() }),
 					trailingIcon = { Icon(Icons.Default.Search, contentDescription = stringResource(id = R.string.lbl_search)) },
+					enabled = !isLoading
 				)
 			}
-		}
 
-		if (!files.any()) return@LazyColumn
+			when {
+				isLoading -> {
+					Box(modifier = Modifier.weight(1f).fillMaxSize()) {
+						CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+					}
+				}
+				files.any() -> {
+					LazyColumn(modifier = Modifier.weight(1f)) {
+						item {
+							Box(
+								modifier = Modifier
+									.padding(4.dp)
+									.height(48.dp)
+							) {
+								ProvideTextStyle(MaterialTheme.typography.h5) {
+									Text(
+										text = stringResource(R.string.file_count_label, files.size),
+										fontWeight = FontWeight.Bold,
+										modifier = Modifier
+											.padding(4.dp)
+											.align(Alignment.CenterStart)
+									)
+								}
+							}
+						}
 
-		item {
-			Box(
-				modifier = Modifier
-					.padding(4.dp)
-					.height(48.dp)
-			) {
-				ProvideTextStyle(MaterialTheme.typography.h5) {
-					Text(
-						text = stringResource(R.string.file_count_label, files.size),
-						fontWeight = FontWeight.Bold,
-						modifier = Modifier
-							.padding(4.dp)
-							.align(Alignment.CenterStart)
-					)
+						itemsIndexed(files) { i, f ->
+							RenderTrackHeaderItem(i, f)
+
+							if (i < files.lastIndex)
+								Divider()
+						}
+					}
 				}
 			}
-		}
-
-		itemsIndexed(files) { i, f ->
-			RenderTrackHeaderItem(i, f)
-
-			if (i < files.lastIndex)
-				Divider()
 		}
 	}
 }

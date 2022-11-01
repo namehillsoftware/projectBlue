@@ -20,7 +20,9 @@ import androidx.fragment.app.Fragment
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.list.SearchFilesFragment
 import com.lasthopesoftware.bluewater.client.browsing.items.list.IItemListViewContainer
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuChangeHandler
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener.Companion.tryFlipToPreviousView
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistListFragment
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
@@ -41,9 +43,11 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlaying
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.fragment.ActiveFileDownloadsFragment
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
+import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils.buildStandardMenu
+import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
 import com.lasthopesoftware.bluewater.shared.lazyLogger
@@ -81,6 +85,10 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 	private val applicationMessageBus = lazy { getApplicationMessageBus().getScopedMessageBus() }
 
 	private val itemListMenuChangeHandler by lazy { ItemListMenuChangeHandler(this) }
+
+	private val menuMessageBus by buildViewModelLazily { ViewModelMessageBus<ItemListMenuMessage>() }
+
+	private val itemListMenuViewModel by buildViewModelLazily { ItemListMenuViewModel(menuMessageBus) }
 
 	private val specialViews by lazy {
 		val views = arrayOf(
@@ -297,8 +305,6 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 			oldTitle = specialView.name
 			supportActionBar?.title = oldTitle
 			val fragment = specialView.fragment
-			if (fragment is SearchFilesFragment)
-				fragment.setOnItemListMenuChangeHandler(itemListMenuChangeHandler)
 
 			swapFragments(fragment)
 			return
@@ -411,7 +417,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 	}
 
 	override fun onBackPressed() {
-		if (viewAnimator?.tryFlipToPreviousView() == true) return
+		if (itemListMenuViewModel.hideAllMenus() || viewAnimator?.tryFlipToPreviousView() == true) return
 		super.onBackPressed()
 	}
 

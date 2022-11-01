@@ -142,6 +142,7 @@ class SearchFilesActivity : AppCompatActivity() {
 					searchFilesViewModel = searchFilesViewModel,
 					nowPlayingViewModel = nowPlayingFilePropertiesViewModel,
 					trackHeadlineViewModelProvider = trackHeadlineViewModelProvider,
+					itemListMenuViewModel = itemListMenuViewModel,
 				)
 			}
 		}

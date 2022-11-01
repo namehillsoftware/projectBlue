@@ -10,15 +10,27 @@ import androidx.lifecycle.ViewModelStore
 
 @MainThread
 inline fun <reified V: ViewModel> ComponentActivity.buildViewModelLazily(noinline initializer: () -> V) =
-	viewModelStore.buildViewModelLazily(initializer)
+	ViewModelLazy(
+		viewModelClass = V::class,
+		storeProducer = { viewModelStore },
+		factoryProducer = PassThroughFactory(initializer)
+	)
 
 @MainThread
 inline fun <reified V: ViewModel> Fragment.buildViewModelLazily(noinline initializer: () -> V) =
-	viewModelStore.buildViewModelLazily(initializer)
+	ViewModelLazy(
+		viewModelClass = V::class,
+		storeProducer = { viewModelStore },
+		factoryProducer = PassThroughFactory(initializer)
+	)
 
 @MainThread
 inline fun <reified V: ViewModel> Fragment.buildActivityViewModelLazily(noinline initializer: () -> V) =
-	requireActivity().viewModelStore.buildViewModelLazily(initializer)
+	ViewModelLazy(
+		viewModelClass = V::class,
+		storeProducer = { requireActivity().viewModelStore },
+		factoryProducer = PassThroughFactory(initializer)
+	)
 
 @MainThread
 inline fun <reified V: ViewModel> Fragment.buildActivityViewModel(noinline initializer: () -> V) =

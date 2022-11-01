@@ -333,10 +333,15 @@ private fun ItemBrowserView(
 			}
 		}
 	}) {
-		it
 		val navController = rememberNavController()
-		val navHost = NavHost(navController, startDestination = "browse") {
-			composable("browse/{id}") { entry ->
+		NavHost(
+			navController,
+			modifier = Modifier
+				.padding(it)
+				.fillMaxSize(),
+			startDestination = "browse/-1"
+		) {
+			composable("browse/{id}?title={title}") { entry ->
 				val menuMessageBus = entry.viewModelStore.buildViewModel<ViewModelMessageBus<ItemListMenuMessage>> { ViewModelMessageBus() }
 				ItemListView(
 					itemListViewModel = entry.viewModelStore.buildViewModel {
@@ -371,18 +376,19 @@ private fun ItemBrowserView(
 							messageBus,
 						)
 					}
-				)
+				) { navController.navigateUp() }
 			}
 
 			composable("search") { entry ->
-				val menuMessageBus = entry.viewModelStore.buildViewModel<ViewModelMessageBus<ItemListMenuMessage>> { ViewModelMessageBus() }
+				val menuMessageBus =
+					entry.viewModelStore.buildViewModel<ViewModelMessageBus<ItemListMenuMessage>> { ViewModelMessageBus() }
 				SearchFilesView(
 					searchFilesViewModel = entry.viewModelStore.buildViewModel {
-					   SearchFilesViewModel(
-						   browserLibraryIdProvider,
-						   libraryFilesProvider,
-						   playbackServiceController,
-					   )
+						SearchFilesViewModel(
+							browserLibraryIdProvider,
+							libraryFilesProvider,
+							playbackServiceController,
+						)
 					},
 					nowPlayingViewModel = nowPlayingViewModel,
 					trackHeadlineViewModelProvider = entry.viewModelStore.buildViewModel {
@@ -396,6 +402,7 @@ private fun ItemBrowserView(
 							messageBus,
 						)
 					},
+					itemListMenuViewModel = itemListMenuViewModel,
 				)
 			}
 		}

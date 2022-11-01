@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.list
 
-import android.app.Activity
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -55,9 +54,8 @@ fun ItemListView(
 	nowPlayingViewModel: NowPlayingFilePropertiesViewModel,
 	itemListMenuViewModel: ItemListMenuViewModel,
 	trackHeadlineViewModelProvider: TrackHeadlineViewModelProvider,
+	onBack: () -> Unit,
 ) {
-	val activity = LocalContext.current as? Activity ?: return
-
 	val playingFile by nowPlayingViewModel.nowPlayingFile.collectAsState()
 	val lazyListState = rememberLazyListState()
 	val rowHeight = dimensionResource(id = R.dimen.standard_row_height)
@@ -71,6 +69,8 @@ fun ItemListView(
 		val isMenuShown by childItemViewModel.isMenuShown.collectAsState()
 
 		if (!isMenuShown) {
+			val context = LocalContext.current
+
 			Box(modifier = Modifier
 				.combinedClickable(
 					interactionSource = remember { MutableInteractionSource() },
@@ -83,7 +83,7 @@ fun ItemListView(
 						childItemViewModel.showMenu()
 					},
 					onClickLabel = stringResource(id = R.string.btn_view_song_details),
-					onClick = { activity.startItemListActivity(childItemViewModel.item) }
+					onClick = { context.startItemListActivity(childItemViewModel.item) }
 				)
 				.height(rowHeight)
 				.fillMaxSize()
@@ -273,7 +273,7 @@ fun ItemListView(
 
 	Surface {
 		val toolbarState = rememberCollapsingToolbarScaffoldState()
-		val headerHidingProgress by derivedStateOf { 1 - toolbarState.toolbarState.progress }
+		val headerHidingProgress by remember { derivedStateOf { 1 - toolbarState.toolbarState.progress } }
 
 		CollapsingToolbarScaffold(
 			enabled = true,
@@ -393,17 +393,13 @@ fun ItemListView(
 							.clickable(
 								interactionSource = remember { MutableInteractionSource() },
 								indication = null,
-								onClick = activity::finish
+								onClick = onBack
 							)
 					)
 				}
 			},
 		) {
-			BoxWithConstraints(
-				modifier = Modifier
-					.padding(bottom = 56.dp)
-					.fillMaxSize()
-			) {
+			BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
 				val isItemsLoading by itemListViewModel.isLoading.collectAsState()
 				val isFilesLoaded by fileListViewModel.isLoaded.collectAsState()
 				val isLoaded = !isItemsLoading && isFilesLoaded
