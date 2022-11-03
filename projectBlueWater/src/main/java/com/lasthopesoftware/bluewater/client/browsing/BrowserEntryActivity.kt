@@ -47,6 +47,7 @@ import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBu
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils.buildStandardMenu
+import com.lasthopesoftware.bluewater.shared.android.view.getValue
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
@@ -61,11 +62,11 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 private val logger by lazyLogger<BrowserEntryActivity>()
 
 class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnable {
-	private val browseLibraryContainerRelativeLayout = LazyViewFinder<RelativeLayout>(this, R.id.browseLibraryContainer)
-	private val selectViewsListView = LazyViewFinder<ListView>(this, R.id.lvLibraryViewSelection)
-	private val specialLibraryItemsListView = LazyViewFinder<ListView>(this, R.id.specialLibraryItemsListView)
-	private val drawerLayout = LazyViewFinder<DrawerLayout>(this, R.id.drawer_layout)
-	private val loadingViewsProgressBar = LazyViewFinder<ProgressBar>(this, R.id.pbLoadingViews)
+	private val browseLibraryContainerRelativeLayout by LazyViewFinder<RelativeLayout>(this, R.id.browseLibraryContainer)
+	private val selectViewsListView by LazyViewFinder<ListView>(this, R.id.lvLibraryViewSelection)
+	private val specialLibraryItemsListView by LazyViewFinder<ListView>(this, R.id.specialLibraryItemsListView)
+	private val drawerLayout by LazyViewFinder<DrawerLayout>(this, R.id.drawer_layout)
+	private val loadingViewsProgressBar by LazyViewFinder<ProgressBar>(this, R.id.pbLoadingViews)
 
 	private val libraryRepository by lazy { LibraryRepository(this)	}
 
@@ -126,7 +127,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 		val selectViewTitle = getText(R.string.select_view_title)
 		object : ActionBarDrawerToggle(
 			this@BrowserEntryActivity,  /* host Activity */
-			drawerLayout.findView(),  /* DrawerLayout object */
+			drawerLayout,  /* DrawerLayout object */
 			R.string.drawer_open,  /* "open drawer" description */
 			R.string.drawer_close /* "close drawer" description */
 		) {
@@ -194,11 +195,11 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 			setHomeButtonEnabled(true)
 		}
 
-		val drawerLayout = drawerLayout.findView()
+		val drawerLayout = drawerLayout
 		drawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START)
 		drawerLayout.addDrawerListener(drawerToggle.value)
 
-		specialLibraryItemsListView.findView().onItemClickListener = OnItemClickListener { _, _, position, _ ->
+		specialLibraryItemsListView.onItemClickListener = OnItemClickListener { _, _, position, _ ->
 			updateSelectedView(specialViews[position].viewType, position)
 		}
 	}
@@ -217,7 +218,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 
 	private fun startLibrary() {
 		isStopped = false
-		if (selectViewsListView.findView().adapter != null) return
+		if (selectViewsListView.adapter != null) return
 
 		showProgressBar()
 
@@ -254,7 +255,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 	private fun displayLibrary(library: Library?) {
 		if (library == null) return
 
-		specialLibraryItemsListView.findView().adapter = SelectStaticViewAdapter(
+		specialLibraryItemsListView.adapter = SelectStaticViewAdapter(
 			this,
 			specialViews.map { it.name },
 			library.selectedViewType,
@@ -296,8 +297,8 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 
 		viewAnimator?.tryFlipToPreviousView()
 
-		selectViewsListView.findView().adapter = SelectViewAdapter(this, items, selectedView.key)
-		selectViewsListView.findView().onItemClickListener = getOnSelectViewClickListener(items)
+		selectViewsListView.adapter = SelectViewAdapter(this, items, selectedView.key)
+		selectViewsListView.onItemClickListener = getOnSelectViewClickListener(items)
 		hideAllViews()
 
 		val specialView = specialViews.firstOrNull { v -> v.viewItem == selectedView }
@@ -339,7 +340,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 	}
 
 	private fun updateSelectedView(selectedViewType: ViewType, selectedViewKey: Int) {
-		drawerLayout.findView().closeDrawer(GravityCompat.START)
+		drawerLayout.closeDrawer(GravityCompat.START)
 		drawerToggle.value.syncState()
 
 		selectedBrowserLibraryProvider
@@ -376,7 +377,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 	}
 
 	private fun showProgressBar() {
-		showContainerView(loadingViewsProgressBar.findView())
+		showContainerView(loadingViewsProgressBar)
 	}
 
 	private fun showContainerView(view: View) {
@@ -385,8 +386,8 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 	}
 
 	private fun hideAllViews() {
-		for (i in 0 until browseLibraryContainerRelativeLayout.findView().childCount)
-			browseLibraryContainerRelativeLayout.findView().getChildAt(i).visibility = View.INVISIBLE
+		for (i in 0 until browseLibraryContainerRelativeLayout.childCount)
+			browseLibraryContainerRelativeLayout.getChildAt(i).visibility = View.INVISIBLE
 	}
 
 	@Synchronized
