@@ -1,15 +1,13 @@
 package com.lasthopesoftware.bluewater.shared.messages.application
 
-import java.util.concurrent.ConcurrentHashMap
-
 object ApplicationMessageRegistrations : HaveApplicationMessageRegistrations {
 	private val registrationSync = Any()
-	private val receivers = ConcurrentHashMap<Class<out ApplicationMessage>, ConcurrentHashMap<*, Unit>>()
-	private val classesByReceiver = HashMap<(ApplicationMessage) -> Unit, ConcurrentHashMap<Class<*>, Unit>>()
+	private val receivers = HashMap<Class<out ApplicationMessage>, HashMap<*, Unit>>()
+	private val classesByReceiver = HashMap<(ApplicationMessage) -> Unit, HashMap<Class<*>, Unit>>()
 
 	@Suppress("UNCHECKED_CAST")
 	override fun <Message : ApplicationMessage> getRegistrations(messageClass: Class<Message>): Collection<(Message) -> Unit> {
-		val typedReceivers = receivers[messageClass] as? ConcurrentHashMap<(Message) -> Unit, Unit>
+		val typedReceivers = receivers[messageClass] as? HashMap<(Message) -> Unit, Unit>
 		return typedReceivers?.keys ?: emptySet()
 	}
 
@@ -17,10 +15,10 @@ object ApplicationMessageRegistrations : HaveApplicationMessageRegistrations {
 	override fun <Message : ApplicationMessage> registerForClass(messageClass: Class<Message>, receiver: (Message) -> Unit): AutoCloseable {
 		synchronized(registrationSync) {
 			val receiverSet =
-				receivers.getOrPut(messageClass) { ConcurrentHashMap<(Message) -> Unit, Unit>() } as ConcurrentHashMap<(Message) -> Unit, Unit>
+				receivers.getOrPut(messageClass) { HashMap<(Message) -> Unit, Unit>() } as HashMap<(Message) -> Unit, Unit>
 			receiverSet[receiver] = Unit
 
-			val classesSet = classesByReceiver.getOrPut(receiver as (ApplicationMessage) -> Unit) { ConcurrentHashMap() }
+			val classesSet = classesByReceiver.getOrPut(receiver as (ApplicationMessage) -> Unit) { HashMap() }
 			classesSet[messageClass] = Unit
 
 			return ReceiverCloseable(receiver)
