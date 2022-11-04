@@ -321,7 +321,7 @@ private fun ItemBrowserView(
 
 				val filePosition by nowPlayingViewModel.filePosition.collectAsState()
 				val fileDuration by nowPlayingViewModel.fileDuration.collectAsState()
-				val fileProgress by derivedStateOf { filePosition / fileDuration.toFloat() }
+				val fileProgress by remember { derivedStateOf { filePosition / fileDuration.toFloat() } }
 				LinearProgressIndicator(
 					progress = fileProgress,
 					color = MaterialTheme.colors.primary,
@@ -342,27 +342,36 @@ private fun ItemBrowserView(
 			startDestination = "browse/-1"
 		) {
 			composable("browse/{id}?title={title}") { entry ->
-				val menuMessageBus = entry.viewModelStore.buildViewModel<ViewModelMessageBus<ItemListMenuMessage>> { ViewModelMessageBus() }
+				val item = Item(
+					entry.arguments?.getInt("id") ?: return@composable,
+					entry.arguments?.getString("title")
+				)
+
+				val menuMessageBus = entry.viewModelStore.buildViewModel { ViewModelMessageBus<ItemListMenuMessage>() }
+				val itemListViewModel = entry.viewModelStore.buildViewModel {
+					ItemListViewModel(
+						browserLibraryIdProvider,
+						itemProvider,
+						messageBus,
+						storedItemAccess,
+						itemListProvider,
+						playbackServiceController,
+						menuMessageBus,
+					)
+				}
+
+				val fileListViewModel = entry.viewModelStore.buildViewModel {
+					FileListViewModel(
+						browserLibraryIdProvider,
+						itemFileProvider,
+						storedItemAccess,
+						playbackServiceController,
+					)
+				}
+
 				ItemListView(
-					itemListViewModel = entry.viewModelStore.buildViewModel {
-						ItemListViewModel(
-							browserLibraryIdProvider,
-							itemProvider,
-							messageBus,
-							storedItemAccess,
-							itemListProvider,
-							playbackServiceController,
-							menuMessageBus,
-						)
-					},
-					fileListViewModel = entry.viewModelStore.buildViewModel {
-						FileListViewModel(
-							browserLibraryIdProvider,
-							itemFileProvider,
-							storedItemAccess,
-							playbackServiceController,
-						)
-					},
+					itemListViewModel = itemListViewModel,
+					fileListViewModel = fileListViewModel,
 					nowPlayingViewModel = nowPlayingViewModel,
 					itemListMenuViewModel = itemListMenuViewModel,
 					trackHeadlineViewModelProvider = entry.viewModelStore.buildViewModel {
@@ -377,6 +386,9 @@ private fun ItemBrowserView(
 						)
 					}
 				) { navController.navigateUp() }
+
+				itemListViewModel.loadItem(item)
+				fileListViewModel.loadItem(item)
 			}
 
 			composable("search") { entry ->

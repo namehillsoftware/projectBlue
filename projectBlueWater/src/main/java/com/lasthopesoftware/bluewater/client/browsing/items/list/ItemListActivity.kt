@@ -381,7 +381,7 @@ private fun NowPlayingTemplate(
 
 				val filePosition by nowPlayingViewModel.filePosition.collectAsState()
 				val fileDuration by nowPlayingViewModel.fileDuration.collectAsState()
-				val fileProgress by derivedStateOf { filePosition / fileDuration.toFloat() }
+				val fileProgress by remember { derivedStateOf { filePosition / fileDuration.toFloat() } }
 				LinearProgressIndicator(
 					progress = fileProgress,
 					color = MaterialTheme.colors.primary,
