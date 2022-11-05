@@ -6,9 +6,9 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.compose.ui.platform.ComposeView
 import androidx.fragment.app.Fragment
+import com.lasthopesoftware.bluewater.ActivityApplicationNavigation
 import com.lasthopesoftware.bluewater.client.browsing.files.access.LibraryFileProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.LibraryFileStringListProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsLauncher
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.RateControlledFilePropertiesProvider
@@ -100,7 +100,7 @@ class SearchFilesFragment : Fragment() {
 			scopedUrlKeyProvider,
 			StringResources(requireContext()),
 			PlaybackServiceController(requireContext()),
-			FileDetailsLauncher(requireContext()),
+			ActivityApplicationNavigation(requireContext()),
 			menuMessageBus,
 			scopedMessageBus.value,
 		)

@@ -60,10 +60,10 @@ class NowPlayingActivity :
 	IItemListMenuChangeHandler
 {
 	companion object {
-		fun startNowPlayingActivity(context: Context) {
-			val viewIntent = Intent(context, cls<NowPlayingActivity>())
+		fun Context.startNowPlayingActivity() {
+			val viewIntent = Intent(this, cls<NowPlayingActivity>())
 			viewIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
-			context.startActivity(viewIntent)
+			startActivity(viewIntent)
 		}
 	}
 

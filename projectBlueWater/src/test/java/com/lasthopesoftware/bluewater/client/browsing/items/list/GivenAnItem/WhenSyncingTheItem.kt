@@ -48,6 +48,7 @@ class WhenSyncingTheItem {
 			mockk(),
 			mockk(),
 			mockk(),
+			mockk(),
 		)
 	}
 

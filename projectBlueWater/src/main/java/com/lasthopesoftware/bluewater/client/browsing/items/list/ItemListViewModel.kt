@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.list
 
 import androidx.lifecycle.ViewModel
+import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.client.browsing.TrackLoadedViewState
 import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.ProvideFileStringListForItem
@@ -32,6 +33,7 @@ class ItemListViewModel(
 	private val storedItemAccess: AccessStoredItems,
 	private val itemStringListProvider: ProvideFileStringListForItem,
 	private val controlNowPlaying: ControlPlaybackService,
+	private val navigateApplication: NavigateApplication,
 	private val sendItemMenuMessages: SendTypedMessages<ItemListMenuMessage>
 ) : ViewModel(), TrackLoadedViewState {
 
@@ -128,6 +130,10 @@ class ItemListViewModel(
 					.then { mutableIsSynced.value = it }
 			}
 			.keepPromise(Unit)
+
+		fun viewItem() {
+			navigateApplication.viewItem(item)
+		}
 
 		override fun showMenu(): Boolean {
 			if (!mutableIsMenuShown.compareAndSet(expect = false, update = true)) return false

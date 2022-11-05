@@ -50,6 +50,7 @@ class WhenShowingTheItemMenu {
 			storedItemAccess,
 			mockk(),
 			mockk(),
+			mockk(),
 			recordingMessageBus,
 		)
 	}

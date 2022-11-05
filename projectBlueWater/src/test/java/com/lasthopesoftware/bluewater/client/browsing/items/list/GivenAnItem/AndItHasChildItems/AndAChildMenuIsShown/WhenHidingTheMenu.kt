@@ -49,6 +49,7 @@ class WhenHidingTheMenu {
 			storedItemAccess,
 			mockk(),
 			mockk(),
+			mockk(),
 			recordingMessageBus
 		)
 

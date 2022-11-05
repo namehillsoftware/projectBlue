@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.list
 
+import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.details.LaunchFileDetails
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideScopedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
@@ -36,13 +36,13 @@ private val timeoutDuration by lazy { Duration.standardMinutes(1) }
 private val logger by lazyLogger<ReusableTrackHeadlineViewModel>()
 
 class ReusableTrackHeadlineViewModel(
-    private val filePropertiesProvider: ProvideScopedFileProperties,
-    private val urlKeyProvider: ProvideScopedUrlKey,
-    private val stringResources: GetStringResources,
-    private val controlPlaybackService: ControlPlaybackService,
-    private val fileDetailsLauncher: LaunchFileDetails,
-    private val sendItemMenuMessages: SendTypedMessages<ItemListMenuMessage>,
-    receiveMessages: RegisterForApplicationMessages,
+	private val filePropertiesProvider: ProvideScopedFileProperties,
+	private val urlKeyProvider: ProvideScopedUrlKey,
+	private val stringResources: GetStringResources,
+	private val controlPlaybackService: ControlPlaybackService,
+	private val applicationNavigation: NavigateApplication,
+	private val sendItemMenuMessages: SendTypedMessages<ItemListMenuMessage>,
+	receiveMessages: RegisterForApplicationMessages,
 ) : ViewFileItem, HiddenListItemMenu, AutoCloseable, (FilePropertiesUpdatedMessage) -> Unit {
 
 	private val filePropertiesUpdatedSubscription = receiveMessages.registerReceiver(this)
@@ -106,7 +106,7 @@ class ReusableTrackHeadlineViewModel(
 
 	override fun viewFileDetails() {
 		activePositionedFile?.apply {
-			fileDetailsLauncher.launchFileDetails(associatedPlaylist, playlistPosition)
+			applicationNavigation.viewFileDetails(associatedPlaylist, playlistPosition)
 		}
 		hideMenu()
 	}

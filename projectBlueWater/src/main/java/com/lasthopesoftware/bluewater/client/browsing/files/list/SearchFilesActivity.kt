@@ -5,9 +5,9 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import com.lasthopesoftware.bluewater.ActivityApplicationNavigation
 import com.lasthopesoftware.bluewater.client.browsing.files.access.LibraryFileProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.LibraryFileStringListProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsLauncher
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.RateControlledFilePropertiesProvider
@@ -113,7 +113,7 @@ class SearchFilesActivity : AppCompatActivity() {
 			scopedUrlKeyProvider,
 			StringResources(this),
 			PlaybackServiceController(this),
-			FileDetailsLauncher(this),
+			ActivityApplicationNavigation(this),
 			menuMessageBus,
 			messageBus,
 		)

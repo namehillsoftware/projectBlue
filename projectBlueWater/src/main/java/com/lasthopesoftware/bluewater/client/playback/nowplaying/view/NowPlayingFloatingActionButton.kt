@@ -24,7 +24,7 @@ class NowPlayingFloatingActionButton private constructor(context: Context) : Flo
 	}
 
 	private fun initializeNowPlayingFloatingActionButton() {
-		setOnClickListener { v -> startNowPlayingActivity(v.context) }
+		setOnClickListener { v -> v.context.startNowPlayingActivity() }
 
 		visibility = ViewUtils.getVisibility(false)
 		// The user can change the library, so let's check if the state of visibility on the

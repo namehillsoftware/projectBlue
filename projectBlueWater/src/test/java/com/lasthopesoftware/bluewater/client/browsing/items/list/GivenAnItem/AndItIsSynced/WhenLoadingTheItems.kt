@@ -44,6 +44,7 @@ class WhenLoadingTheItems {
 			mockk(),
 			mockk(),
 			mockk(),
+			mockk(),
 		)
 	}
 

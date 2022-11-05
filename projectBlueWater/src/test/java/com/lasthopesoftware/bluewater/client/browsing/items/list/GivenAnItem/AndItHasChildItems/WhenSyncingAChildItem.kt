@@ -43,6 +43,7 @@ class WhenSyncingAChildItem {
 			mockk(),
 			mockk(),
 			mockk(),
+			mockk(),
 		)
 	}
 

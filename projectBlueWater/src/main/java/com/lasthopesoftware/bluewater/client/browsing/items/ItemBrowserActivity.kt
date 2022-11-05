@@ -23,19 +23,21 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import com.lasthopesoftware.bluewater.ActivityApplicationNavigation
+import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.access.ItemFileProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.LibraryFileProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.ItemStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.LibraryFileStringListProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsLauncher
 import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
-import com.lasthopesoftware.bluewater.client.browsing.files.list.SearchFilesActivity.Companion.startSearchFilesActivity
 import com.lasthopesoftware.bluewater.client.browsing.files.list.SearchFilesView
 import com.lasthopesoftware.bluewater.client.browsing.files.list.SearchFilesViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.list.TrackHeadlineViewModelProvider
@@ -59,12 +61,12 @@ import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.polling.ConnectionPoller
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.NowPlayingActivity
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.client.stored.library.items.StateChangeBroadcastingStoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
+import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModel
@@ -75,13 +77,34 @@ import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMes
 import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRateLimiter
 import com.lasthopesoftware.resources.strings.StringResources
 
-class ItemBrowserActivity : AppCompatActivity() {
+private val magicPropertyBuilder by lazy { MagicPropertyBuilder(ItemBrowserActivity::class.java) }
 
-	companion object {
-		fun Context.startItemBrowserActivity() {
-			startActivity(Intent(this, cls<ItemBrowserActivity>()))
-		}
+private const val keyArgument = "key"
+private const val titleArgument = "title"
+private const val playlistIdArgument = "playlistId"
+
+private val keyProperty by lazy { magicPropertyBuilder.buildProperty(keyArgument) }
+private val itemTitleProperty by lazy { magicPropertyBuilder.buildProperty(titleArgument) }
+private val playlistIdProperty by lazy { magicPropertyBuilder.buildProperty(playlistIdArgument) }
+
+fun Context.startItemBrowserActivity(item: IItem) {
+	if (item is Item) startItemBrowserActivity(item)
+	else startActivity(getItemBrowserIntent(this, item))
+}
+
+fun Context.startItemBrowserActivity(item: Item) {
+	val fileListIntent = getItemBrowserIntent(this, item).apply {
+		item.playlistId?.also { putExtra(playlistIdProperty, it.id) }
 	}
+	startActivity(fileListIntent)
+}
+
+private fun getItemBrowserIntent(context: Context, item: IItem) = Intent(context, cls<ItemBrowserActivity>()).apply {
+	putExtra(keyProperty, item.key)
+	putExtra(itemTitleProperty, item.value)
+}
+
+class ItemBrowserActivity : AppCompatActivity() {
 
 	private val rateLimiter by lazy { PromisingRateLimiter<Map<String, String>>(2) }
 
@@ -173,7 +196,7 @@ class ItemBrowserActivity : AppCompatActivity() {
 			playbackServiceController,
 			ConnectionPoller(this),
 			StringResources(this),
-		)
+		).apply { initializeViewModel() }
 	}
 
 	private val storedItemAccess by lazy {
@@ -182,12 +205,22 @@ class ItemBrowserActivity : AppCompatActivity() {
 
 	private val stringResources by lazy { StringResources(this) }
 
-	private val fileDetailsLauncher by lazy { FileDetailsLauncher(this) }
+	private val fileDetailsLauncher by lazy { ActivityApplicationNavigation(this) }
 
 	private val libraryFilesProvider by lazy { LibraryFileProvider(LibraryFileStringListProvider(libraryConnectionProvider))  }
 
 	public override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
+
+		var item = Item(
+			savedInstanceState?.getInt(keyProperty) ?: intent.getIntExtra(keyProperty, 1),
+			savedInstanceState?.getString(itemTitleProperty) ?: intent.getStringExtra(itemTitleProperty)
+		)
+
+		val playlistId = savedInstanceState?.getInt(playlistIdProperty, -1) ?: intent.getIntExtra(playlistIdProperty, -1)
+		if (playlistId != -1) {
+			item = Item(item.key, item.value, playlistId)
+		}
 
 		setContent {
 			ProjectBlueTheme {
@@ -206,6 +239,7 @@ class ItemBrowserActivity : AppCompatActivity() {
 					stringResources,
 					fileDetailsLauncher,
 					libraryFilesProvider,
+					item,
 				)
 			}
 		}
@@ -213,6 +247,25 @@ class ItemBrowserActivity : AppCompatActivity() {
 
 	override fun onBackPressed() {
 		if (!itemListMenuViewModel.hideAllMenus()) super.onBackPressed()
+	}
+}
+
+private object NavigationGraphRoutes {
+	const val search = "search"
+
+	object BrowseToItem {
+		const val route = "browse/{$keyArgument}?$titleArgument={$titleArgument}&$playlistIdArgument={$playlistIdArgument}"
+
+		fun buildPath(item: IItem): String {
+			var path = "browse/${item.key}?$titleArgument=${item.value}"
+			if (item is Item) {
+				val playlistId = item.playlistId
+				if (playlistId != null)
+					path += "&$playlistIdArgument=${playlistId.id}"
+			}
+
+			return path
+		}
 	}
 }
 
@@ -230,20 +283,33 @@ private fun ItemBrowserView(
 	scopedFilePropertiesProvider: SelectedLibraryFilePropertiesProvider,
 	scopedUrlKeyProvider: SelectedLibraryUrlKeyProvider,
 	stringResources: StringResources,
-	fileDetailsLauncher: FileDetailsLauncher,
+	applicationNavigation: ActivityApplicationNavigation,
 	libraryFilesProvider: LibraryFileProvider,
+	startingItem: IItem,
 ) {
 	val activity = LocalContext.current as? Activity ?: return
 
 	val systemUiController = rememberSystemUiController()
 	systemUiController.setStatusBarColor(MaterialTheme.colors.surface)
 
+	val navController = rememberNavController()
+
+	val graphNavigator = object : NavigateApplication by applicationNavigation {
+		override fun launchSearch() {
+			navController.navigate(NavigationGraphRoutes.search)
+		}
+
+		override fun viewItem(item: IItem) {
+			navController.navigate(NavigationGraphRoutes.BrowseToItem.buildPath(item))
+		}
+	}
+
 	Scaffold(bottomBar = {
 		BottomAppBar(
 			backgroundColor = MaterialTheme.colors.secondary,
 			contentPadding = PaddingValues(0.dp),
 			modifier = Modifier
-				.clickable { NowPlayingActivity.startNowPlayingActivity(activity) }
+				.clickable { applicationNavigation.viewNowPlaying() }
 		) {
 			Column {
 				Row(
@@ -258,7 +324,7 @@ private fun ItemBrowserView(
 						modifier = Modifier
 							.padding(end = 8.dp)
 							.align(Alignment.CenterVertically)
-							.clickable { activity.startSearchFilesActivity() },
+							.clickable(onClick = graphNavigator::launchSearch),
 					)
 
 					Column(
@@ -332,20 +398,45 @@ private fun ItemBrowserView(
 				)
 			}
 		}
-	}) {
-		val navController = rememberNavController()
+	}) { paddingValues ->
 		NavHost(
 			navController,
 			modifier = Modifier
-				.padding(it)
+				.padding(paddingValues)
 				.fillMaxSize(),
-			startDestination = "browse/-1"
+			startDestination = NavigationGraphRoutes.BrowseToItem.route,
 		) {
-			composable("browse/{id}?title={title}") { entry ->
-				val item = Item(
-					entry.arguments?.getInt("id") ?: return@composable,
-					entry.arguments?.getString("title")
+			composable(
+				NavigationGraphRoutes.BrowseToItem.route,
+				arguments = listOf(
+					navArgument(keyArgument) {
+						type = NavType.IntType
+						defaultValue = startingItem.key
+					},
+					navArgument(titleArgument) {
+						type = NavType.StringType
+						nullable = true
+						defaultValue = startingItem.value
+					},
+					navArgument(playlistIdArgument) {
+						type = NavType.IntType
+						defaultValue = startingItem.let { it as? Item }?.playlistId?.id ?: -1
+					},
 				)
+			) { entry ->
+				val playlistId = entry.arguments?.getInt(playlistIdArgument)
+				val item = if (playlistId != null && playlistId > -1) {
+					Item(
+						entry.arguments?.getInt(keyArgument) ?: return@composable,
+						entry.arguments?.getString(titleArgument),
+						playlistId,
+					)
+				} else {
+					Item(
+						entry.arguments?.getInt(keyArgument) ?: return@composable,
+						entry.arguments?.getString(titleArgument)
+					)
+				}
 
 				val menuMessageBus = entry.viewModelStore.buildViewModel { ViewModelMessageBus<ItemListMenuMessage>() }
 				val itemListViewModel = entry.viewModelStore.buildViewModel {
@@ -356,6 +447,7 @@ private fun ItemBrowserView(
 						storedItemAccess,
 						itemListProvider,
 						playbackServiceController,
+						graphNavigator,
 						menuMessageBus,
 					)
 				}
@@ -380,7 +472,7 @@ private fun ItemBrowserView(
 							scopedUrlKeyProvider,
 							stringResources,
 							playbackServiceController,
-							fileDetailsLauncher,
+							graphNavigator,
 							menuMessageBus,
 							messageBus,
 						)
@@ -391,7 +483,7 @@ private fun ItemBrowserView(
 				fileListViewModel.loadItem(item)
 			}
 
-			composable("search") { entry ->
+			composable(NavigationGraphRoutes.search) { entry ->
 				val menuMessageBus =
 					entry.viewModelStore.buildViewModel<ViewModelMessageBus<ItemListMenuMessage>> { ViewModelMessageBus() }
 				SearchFilesView(
@@ -409,7 +501,7 @@ private fun ItemBrowserView(
 							scopedUrlKeyProvider,
 							stringResources,
 							playbackServiceController,
-							fileDetailsLauncher,
+							applicationNavigation,
 							menuMessageBus,
 							messageBus,
 						)

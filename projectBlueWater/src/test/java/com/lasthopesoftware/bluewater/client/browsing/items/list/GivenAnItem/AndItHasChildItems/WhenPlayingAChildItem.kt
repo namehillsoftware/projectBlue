@@ -62,6 +62,7 @@ class WhenPlayingAChildItem {
 			itemStringListProvider,
 			controlNowPlaying,
 			mockk(),
+			mockk(),
 		)
 	}
 
