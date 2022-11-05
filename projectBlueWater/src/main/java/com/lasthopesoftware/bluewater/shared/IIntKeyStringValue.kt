@@ -1,6 +1,5 @@
-package com.lasthopesoftware.bluewater.shared;
+package com.lasthopesoftware.bluewater.shared
 
-public interface IIntKeyStringValue extends IIntKey<IIntKeyStringValue> {
-	String getValue();
-	void setValue(String value);
+interface IIntKeyStringValue : IIntKey<IIntKeyStringValue> {
+    val value: String?
 }

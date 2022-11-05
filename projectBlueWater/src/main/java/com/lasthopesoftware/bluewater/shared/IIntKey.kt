@@ -1,5 +1,5 @@
 package com.lasthopesoftware.bluewater.shared
 
-interface IIntKey<T> : Comparable<T> {
-    var key: Int
+interface IIntKey<T> {
+    val key: Int
 }

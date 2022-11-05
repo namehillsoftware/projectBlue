@@ -4,6 +4,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.Playlist
+import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistItemFinder
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.views.PlaylistViewItem
@@ -24,7 +25,7 @@ class WhenFindingThePlaylistItem {
 		private fun setupItemProviderWithItems(itemProvider: ProvideItems, sourceItem: ItemId, numberOfChildren: Int, withPlaylistIds: Boolean): List<Item> {
 			val items = ArrayList<Item>(numberOfChildren)
 			for (i in 0 until numberOfChildren) {
-				val newItem = if (withPlaylistIds) Item(random.nextInt(), null, random.nextInt())
+				val newItem = if (withPlaylistIds) Item(random.nextInt(), null, PlaylistId(random.nextInt()))
 				else Item(random.nextInt())
 				items.add(newItem)
 			}
@@ -35,7 +36,7 @@ class WhenFindingThePlaylistItem {
 
 	private val playlistId by lazy { random.nextInt() }
 
-	private val expectedItem by lazy { Item(random.nextInt(), null, playlistId) }
+	private val expectedItem by lazy { Item(random.nextInt(), null, PlaylistId(playlistId)) }
 
 	private val item by lazy {
 		val libraryViews = mockk<ProvideLibraryViews>()
@@ -83,7 +84,7 @@ class WhenFindingThePlaylistItem {
 			if (item == secondLevelChosenItem) continue
 			every { itemProvider.promiseItems(LibraryId(3), item.itemId) } returns Promise(emptyList())
 		}
-		val decoy = Item(random.nextInt(), null, random.nextInt())
+		val decoy = Item(random.nextInt(), null, PlaylistId(random.nextInt()))
 
 		every { itemProvider.promiseItems(LibraryId(3), secondLevelChosenItem.itemId) } returns Promise(
 			listOf(

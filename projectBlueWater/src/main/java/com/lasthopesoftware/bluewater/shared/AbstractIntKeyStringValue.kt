@@ -1,64 +1,17 @@
-package com.lasthopesoftware.bluewater.shared;
+package com.lasthopesoftware.bluewater.shared
 
-import java.util.Objects;
+import java.util.*
 
-public abstract class AbstractIntKeyStringValue implements IIntKeyStringValue {
-	private int mKey;
-	private String mValue;
-	
-	protected AbstractIntKeyStringValue(int key, String value) {
-		this.setKey(key);
-		this.setValue(value);
-	}
-	
-	protected AbstractIntKeyStringValue() {
-	}
-	
-	/**
-	 * @return the mKey
-	 */
-	public int getKey() {
-		return mKey;
-	}
+abstract class AbstractIntKeyStringValue protected constructor(
+	override var key: Int = 0,
+	override var value: String? = null)
+: IIntKeyStringValue {
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (other == null || javaClass != other.javaClass) return false
+        val that = other as AbstractIntKeyStringValue
+        return key == that.key && value == that.value
+    }
 
-	/**
-	 * @param mKey the mKey to set
-	 */
-	public void setKey(int mKey) {
-		this.mKey = mKey;
-	}
-
-	/**
-	 * @return the mValue
-	 */
-	public String getValue() {
-		return mValue;
-	}
-
-	/**
-	 * @param value the mValue to set
-	 */
-	public void setValue(String value) {
-		this.mValue = value;
-	}
-
-	@Override
-	public int compareTo(IIntKeyStringValue another) {
-		int result = this.getValue().compareTo(another.getValue());
-		if (result == 0) result = this.getKey() - another.getKey();
-		return result;
-	}
-
-	@Override
-	public boolean equals(Object o) {
-		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
-		final AbstractIntKeyStringValue that = (AbstractIntKeyStringValue) o;
-		return mKey == that.mKey && Objects.equals(mValue, that.mValue);
-	}
-
-	@Override
-	public int hashCode() {
-		return Objects.hash(mKey, mValue);
-	}
+    override fun hashCode(): Int = Objects.hash(key, value)
 }

@@ -1,3 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.library.views
 
-class DownloadViewItem : ViewItem(0, null)
+object DownloadViewItem : ViewItem {
+	override val key = 0
+	override val value: String? = null
+}

@@ -96,14 +96,14 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 			SpecialView(
 				ViewType.SearchView,
 				getString(R.string.lbl_search),
-				SearchViewItem(),
+				SearchViewItem,
 				supportFragmentManager.fragments.firstOrNull { f -> f is SearchFilesFragment }
 					?: SearchFilesFragment()
 			),
 			SpecialView(
 				ViewType.DownloadView,
 				getString(R.string.activeDownloads),
-				DownloadViewItem(),
+				DownloadViewItem,
 				supportFragmentManager.fragments.firstOrNull { f -> f is ActiveFileDownloadsFragment }
 					?: ActiveFileDownloadsFragment()
 			),
@@ -318,7 +318,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 			break
 		}
 
-		if (selectedView is PlaylistViewItem) {
+		if (selectedView.value == KnownViews.Playlists) {
 			val playlistListFragment = PlaylistListFragment()
 			playlistListFragment.setOnItemListMenuChangeHandler(itemListMenuChangeHandler)
 			swapFragments(playlistListFragment)

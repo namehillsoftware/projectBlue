@@ -85,7 +85,7 @@ fun ItemListView(
 				.fillMaxSize()
 			) {
 				Text(
-					text = childItemViewModel.item.value,
+					text = childItemViewModel.item.value ?: "",
 					fontSize = rowFontSize,
 					overflow = TextOverflow.Ellipsis,
 					maxLines = 1,

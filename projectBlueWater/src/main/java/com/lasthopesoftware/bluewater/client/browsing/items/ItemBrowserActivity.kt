@@ -52,6 +52,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListView
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuViewModel
+import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
@@ -219,7 +220,7 @@ class ItemBrowserActivity : AppCompatActivity() {
 
 		val playlistId = savedInstanceState?.getInt(playlistIdProperty, -1) ?: intent.getIntExtra(playlistIdProperty, -1)
 		if (playlistId != -1) {
-			item = Item(item.key, item.value, playlistId)
+			item = Item(item.key, item.value, PlaylistId(playlistId))
 		}
 
 		setContent {
@@ -431,7 +432,7 @@ private fun ItemBrowserView(
 					Item(
 						entry.arguments?.getInt(keyArgument) ?: return@composable,
 						entry.arguments?.getString(titleArgument),
-						playlistId,
+						PlaylistId(playlistId),
 					)
 				} else {
 					Item(

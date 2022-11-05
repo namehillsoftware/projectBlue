@@ -41,7 +41,7 @@ class FileListViewModel(
 
 	fun loadItem(item: IItem): Promise<Unit> {
 		mutableIsLoaded.value = false
-		mutableItemValue.value = item.value
+		mutableItemValue.value = item.value ?: ""
 
 		return selectedLibraryId.promiseSelectedLibraryId()
 			.eventually { libraryId ->
