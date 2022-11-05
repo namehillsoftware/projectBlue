@@ -233,6 +233,7 @@ class ItemBrowserActivity : AppCompatActivity() {
 					storedItemAccess,
 					playbackServiceController,
 					fileProvider,
+					menuMessageBus,
 					itemListMenuViewModel,
 					scopedFilePropertiesProvider,
 					scopedUrlKeyProvider,
@@ -279,6 +280,7 @@ private fun ItemBrowserView(
 	storedItemAccess: StateChangeBroadcastingStoredItemAccess,
 	playbackServiceController: PlaybackServiceController,
 	itemFileProvider: ItemFileProvider,
+	menuMessageBus: ViewModelMessageBus<ItemListMenuMessage>,
 	itemListMenuViewModel: ItemListMenuViewModel,
 	scopedFilePropertiesProvider: SelectedLibraryFilePropertiesProvider,
 	scopedUrlKeyProvider: SelectedLibraryUrlKeyProvider,
@@ -438,7 +440,6 @@ private fun ItemBrowserView(
 					)
 				}
 
-				val menuMessageBus = entry.viewModelStore.buildViewModel { ViewModelMessageBus<ItemListMenuMessage>() }
 				val itemListViewModel = entry.viewModelStore.buildViewModel {
 					ItemListViewModel(
 						browserLibraryIdProvider,
@@ -484,8 +485,6 @@ private fun ItemBrowserView(
 			}
 
 			composable(NavigationGraphRoutes.search) { entry ->
-				val menuMessageBus =
-					entry.viewModelStore.buildViewModel<ViewModelMessageBus<ItemListMenuMessage>> { ViewModelMessageBus() }
 				SearchFilesView(
 					searchFilesViewModel = entry.viewModelStore.buildViewModel {
 						SearchFilesViewModel(
