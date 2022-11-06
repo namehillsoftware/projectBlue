@@ -190,7 +190,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 
 		setTitle(R.string.title_activity_library)
 
-		supportActionBar?.run {
+		supportActionBar?.apply {
 			setDisplayHomeAsUpEnabled(true)
 			setHomeButtonEnabled(true)
 		}

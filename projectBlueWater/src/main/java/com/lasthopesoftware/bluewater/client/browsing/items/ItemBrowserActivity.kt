@@ -23,6 +23,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -87,11 +88,6 @@ private const val playlistIdArgument = "playlistId"
 private val keyProperty by lazy { magicPropertyBuilder.buildProperty(keyArgument) }
 private val itemTitleProperty by lazy { magicPropertyBuilder.buildProperty(titleArgument) }
 private val playlistIdProperty by lazy { magicPropertyBuilder.buildProperty(playlistIdArgument) }
-private val searchAction by lazy { magicPropertyBuilder.buildProperty("search") }
-
-fun Context.startItemSearchActivity() {
-	startActivity(Intent(this, cls<ItemBrowserActivity>()).apply { action = searchAction })
-}
 
 fun Context.startItemBrowserActivity(item: IItem) {
 	if (item is Item) startItemBrowserActivity(item)
@@ -211,30 +207,23 @@ class ItemBrowserActivity : AppCompatActivity() {
 
 	private val stringResources by lazy { StringResources(this) }
 
-	private val fileDetailsLauncher by lazy { ActivityApplicationNavigation(this) }
-
 	private val libraryFilesProvider by lazy { LibraryFileProvider(LibraryFileStringListProvider(libraryConnectionProvider))  }
 
 	public override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
-		val isSearch = intent.action == searchAction
-
-		val item = if (isSearch) null
-		else {
-			val playlistId = savedInstanceState?.getInt(playlistIdProperty, -1) ?: intent.getIntExtra(playlistIdProperty, -1)
-			if (playlistId > -1) {
-				Item(
-					savedInstanceState?.getInt(keyProperty) ?: intent.getIntExtra(keyProperty, 1),
-					savedInstanceState?.getString(itemTitleProperty) ?: intent.getStringExtra(itemTitleProperty),
-					PlaylistId(playlistId),
-				)
-			} else {
-				Item(
-					savedInstanceState?.getInt(keyProperty) ?: intent.getIntExtra(keyProperty, 1),
-					savedInstanceState?.getString(itemTitleProperty) ?: intent.getStringExtra(itemTitleProperty),
-				)
-			}
+		val playlistId = savedInstanceState?.getInt(playlistIdProperty, -1) ?: intent.getIntExtra(playlistIdProperty, -1)
+		val item = if (playlistId > -1) {
+			Item(
+				savedInstanceState?.getInt(keyProperty) ?: intent.getIntExtra(keyProperty, 1),
+				savedInstanceState?.getString(itemTitleProperty) ?: intent.getStringExtra(itemTitleProperty),
+				PlaylistId(playlistId),
+			)
+		} else {
+			Item(
+				savedInstanceState?.getInt(keyProperty) ?: intent.getIntExtra(keyProperty, 1),
+				savedInstanceState?.getString(itemTitleProperty) ?: intent.getStringExtra(itemTitleProperty),
+			)
 		}
 
 		setContent {
@@ -253,10 +242,8 @@ class ItemBrowserActivity : AppCompatActivity() {
 					scopedFilePropertiesProvider,
 					scopedUrlKeyProvider,
 					stringResources,
-					fileDetailsLauncher,
 					libraryFilesProvider,
 					item,
-					isSearch
 				)
 			}
 		}
@@ -267,8 +254,10 @@ class ItemBrowserActivity : AppCompatActivity() {
 	}
 }
 
-private object NavigationGraphRoutes {
-	const val search = "search"
+private class GraphNavigation(private val navController: NavHostController, private val inner: NavigateApplication) : NavigateApplication by inner {
+	object Search {
+		const val route = "search"
+	}
 
 	object BrowseToItem {
 		const val route = "browse/{$keyArgument}?$titleArgument={$titleArgument}&$playlistIdArgument={$playlistIdArgument}"
@@ -283,6 +272,14 @@ private object NavigationGraphRoutes {
 
 			return path
 		}
+	}
+
+	override fun launchSearch() {
+		navController.navigate(Search.route)
+	}
+
+	override fun viewItem(item: IItem) {
+		navController.navigate(BrowseToItem.buildPath(item))
 	}
 }
 
@@ -301,10 +298,8 @@ private fun ItemBrowserView(
 	scopedFilePropertiesProvider: SelectedLibraryFilePropertiesProvider,
 	scopedUrlKeyProvider: SelectedLibraryUrlKeyProvider,
 	stringResources: StringResources,
-	applicationNavigation: ActivityApplicationNavigation,
 	libraryFilesProvider: LibraryFileProvider,
 	startingItem: IItem? = null,
-	isSearch: Boolean = false,
 ) {
 	val activity = LocalContext.current as? Activity ?: return
 
@@ -313,22 +308,14 @@ private fun ItemBrowserView(
 
 	val navController = rememberNavController()
 
-	val graphNavigator = object : NavigateApplication by applicationNavigation {
-		override fun launchSearch() {
-			navController.navigate(NavigationGraphRoutes.search)
-		}
-
-		override fun viewItem(item: IItem) {
-			navController.navigate(NavigationGraphRoutes.BrowseToItem.buildPath(item))
-		}
-	}
+	val graphNavigation = GraphNavigation(navController, ActivityApplicationNavigation(activity))
 
 	Scaffold(bottomBar = {
 		BottomAppBar(
 			backgroundColor = MaterialTheme.colors.secondary,
 			contentPadding = PaddingValues(0.dp),
 			modifier = Modifier
-				.clickable { applicationNavigation.viewNowPlaying() }
+				.clickable(onClick = graphNavigation::viewNowPlaying)
 		) {
 			Column {
 				Row(
@@ -343,7 +330,7 @@ private fun ItemBrowserView(
 						modifier = Modifier
 							.padding(start = 8.dp, end = 8.dp)
 							.align(Alignment.CenterVertically)
-							.clickable(onClick = graphNavigator::launchSearch),
+							.clickable(onClick = graphNavigation::launchSearch),
 					)
 
 					Column(
@@ -423,10 +410,10 @@ private fun ItemBrowserView(
 			modifier = Modifier
 				.padding(paddingValues)
 				.fillMaxSize(),
-			startDestination = if (!isSearch) NavigationGraphRoutes.BrowseToItem.route else NavigationGraphRoutes.search,
+			startDestination = GraphNavigation.BrowseToItem.route,
 		) {
 			composable(
-				NavigationGraphRoutes.BrowseToItem.route,
+				GraphNavigation.BrowseToItem.route,
 				arguments = listOf(
 					navArgument(keyArgument) {
 						type = NavType.IntType
@@ -465,7 +452,7 @@ private fun ItemBrowserView(
 						storedItemAccess,
 						itemListProvider,
 						playbackServiceController,
-						graphNavigator,
+						graphNavigation,
 						menuMessageBus,
 					)
 				}
@@ -490,7 +477,7 @@ private fun ItemBrowserView(
 							scopedUrlKeyProvider,
 							stringResources,
 							playbackServiceController,
-							graphNavigator,
+							graphNavigation,
 							menuMessageBus,
 							messageBus,
 						)
@@ -506,7 +493,7 @@ private fun ItemBrowserView(
 				}
 			}
 
-			composable(NavigationGraphRoutes.search) { entry ->
+			composable(GraphNavigation.Search.route) { entry ->
 				SearchFilesView(
 					searchFilesViewModel = entry.viewModelStore.buildViewModel {
 						SearchFilesViewModel(
@@ -522,7 +509,7 @@ private fun ItemBrowserView(
 							scopedUrlKeyProvider,
 							stringResources,
 							playbackServiceController,
-							applicationNavigation,
+							graphNavigation,
 							menuMessageBus,
 							messageBus,
 						)
