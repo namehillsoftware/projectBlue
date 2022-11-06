@@ -87,6 +87,11 @@ private const val playlistIdArgument = "playlistId"
 private val keyProperty by lazy { magicPropertyBuilder.buildProperty(keyArgument) }
 private val itemTitleProperty by lazy { magicPropertyBuilder.buildProperty(titleArgument) }
 private val playlistIdProperty by lazy { magicPropertyBuilder.buildProperty(playlistIdArgument) }
+private val searchAction by lazy { magicPropertyBuilder.buildProperty("search") }
+
+fun Context.startItemSearchActivity() {
+	startActivity(Intent(this, cls<ItemBrowserActivity>()).apply { action = searchAction })
+}
 
 fun Context.startItemBrowserActivity(item: IItem) {
 	if (item is Item) startItemBrowserActivity(item)
@@ -213,14 +218,23 @@ class ItemBrowserActivity : AppCompatActivity() {
 	public override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
-		var item = Item(
-			savedInstanceState?.getInt(keyProperty) ?: intent.getIntExtra(keyProperty, 1),
-			savedInstanceState?.getString(itemTitleProperty) ?: intent.getStringExtra(itemTitleProperty)
-		)
+		val isSearch = intent.action == searchAction
 
-		val playlistId = savedInstanceState?.getInt(playlistIdProperty, -1) ?: intent.getIntExtra(playlistIdProperty, -1)
-		if (playlistId != -1) {
-			item = Item(item.key, item.value, PlaylistId(playlistId))
+		val item = if (isSearch) null
+		else {
+			val playlistId = savedInstanceState?.getInt(playlistIdProperty, -1) ?: intent.getIntExtra(playlistIdProperty, -1)
+			if (playlistId > -1) {
+				Item(
+					savedInstanceState?.getInt(keyProperty) ?: intent.getIntExtra(keyProperty, 1),
+					savedInstanceState?.getString(itemTitleProperty) ?: intent.getStringExtra(itemTitleProperty),
+					PlaylistId(playlistId),
+				)
+			} else {
+				Item(
+					savedInstanceState?.getInt(keyProperty) ?: intent.getIntExtra(keyProperty, 1),
+					savedInstanceState?.getString(itemTitleProperty) ?: intent.getStringExtra(itemTitleProperty),
+				)
+			}
 		}
 
 		setContent {
@@ -242,6 +256,7 @@ class ItemBrowserActivity : AppCompatActivity() {
 					fileDetailsLauncher,
 					libraryFilesProvider,
 					item,
+					isSearch
 				)
 			}
 		}
@@ -288,7 +303,8 @@ private fun ItemBrowserView(
 	stringResources: StringResources,
 	applicationNavigation: ActivityApplicationNavigation,
 	libraryFilesProvider: LibraryFileProvider,
-	startingItem: IItem,
+	startingItem: IItem? = null,
+	isSearch: Boolean = false,
 ) {
 	val activity = LocalContext.current as? Activity ?: return
 
@@ -325,7 +341,7 @@ private fun ItemBrowserView(
 						contentDescription = stringResource(id = R.string.lbl_search),
 						tint = MaterialTheme.colors.onSecondary,
 						modifier = Modifier
-							.padding(end = 8.dp)
+							.padding(start = 8.dp, end = 8.dp)
 							.align(Alignment.CenterVertically)
 							.clickable(onClick = graphNavigator::launchSearch),
 					)
@@ -407,19 +423,19 @@ private fun ItemBrowserView(
 			modifier = Modifier
 				.padding(paddingValues)
 				.fillMaxSize(),
-			startDestination = NavigationGraphRoutes.BrowseToItem.route,
+			startDestination = if (!isSearch) NavigationGraphRoutes.BrowseToItem.route else NavigationGraphRoutes.search,
 		) {
 			composable(
 				NavigationGraphRoutes.BrowseToItem.route,
 				arguments = listOf(
 					navArgument(keyArgument) {
 						type = NavType.IntType
-						defaultValue = startingItem.key
+						defaultValue = startingItem?.key ?: -1
 					},
 					navArgument(titleArgument) {
 						type = NavType.StringType
 						nullable = true
-						defaultValue = startingItem.value
+						defaultValue = startingItem?.value
 					},
 					navArgument(playlistIdArgument) {
 						type = NavType.IntType
@@ -481,8 +497,10 @@ private fun ItemBrowserView(
 					}
 				) { navController.navigateUp() }
 
-				itemListViewModel.loadItem(item)
-				fileListViewModel.loadItem(item)
+				LaunchedEffect(item) {
+					itemListViewModel.loadItem(item)
+					fileListViewModel.loadItem(item)
+				}
 			}
 
 			composable(NavigationGraphRoutes.search) { entry ->

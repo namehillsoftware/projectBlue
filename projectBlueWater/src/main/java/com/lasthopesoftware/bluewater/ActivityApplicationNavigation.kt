@@ -3,9 +3,9 @@ package com.lasthopesoftware.bluewater
 import android.content.Context
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsActivity.Companion.launchFileDetailsActivity
-import com.lasthopesoftware.bluewater.client.browsing.files.list.SearchFilesActivity.Companion.startSearchFilesActivity
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.startItemBrowserActivity
+import com.lasthopesoftware.bluewater.client.browsing.items.startItemSearchActivity
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.NowPlayingActivity.Companion.startNowPlayingActivity
 
 class ActivityApplicationNavigation(private val context: Context) : NavigateApplication {
@@ -14,7 +14,7 @@ class ActivityApplicationNavigation(private val context: Context) : NavigateAppl
 	}
 
 	override fun launchSearch() {
-		context.startSearchFilesActivity()
+		context.startItemSearchActivity()
 	}
 
 	override fun viewItem(item: IItem) {
