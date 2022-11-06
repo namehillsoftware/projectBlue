@@ -495,7 +495,10 @@ private fun ItemBrowserView(
 							messageBus,
 						)
 					}
-				) { navController.navigateUp() }
+				) {
+					if (!navController.navigateUp())
+						activity.finish()
+				}
 
 				LaunchedEffect(item) {
 					itemListViewModel.loadItem(item)
