@@ -16,6 +16,7 @@ import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.getValue
+import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
@@ -109,7 +110,7 @@ class InstantiateSelectedConnectionActivity : Activity(), (SelectedConnection.Bu
 		fun restoreSelectedConnection(activity: ComponentActivity): Promise<ActivityResult?> =
 			getInstance(activity).isSessionConnectionActive().eventually { isActive ->
 				if (!isActive) activity.promiseActivityResult(
-					Intent(activity, InstantiateSelectedConnectionActivity::class.java).apply {
+					Intent(activity, cls<InstantiateSelectedConnectionActivity>()).apply {
 						action = START_ACTIVITY_FOR_RETURN
 					}
 				)
@@ -117,7 +118,7 @@ class InstantiateSelectedConnectionActivity : Activity(), (SelectedConnection.Bu
 			}
 
 		fun startNewConnection(context: Context) {
-			context.startActivity(Intent(context, InstantiateSelectedConnectionActivity::class.java))
+			context.startActivity(Intent(context, cls<InstantiateSelectedConnectionActivity>()))
 		}
 	}
 }

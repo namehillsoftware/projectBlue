@@ -1,9 +1,9 @@
 package com.lasthopesoftware.bluewater.client.browsing.items
 
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.Image
@@ -77,9 +77,12 @@ import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRateLimiter
+import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.suspend
 import com.lasthopesoftware.resources.strings.StringResources
+import com.namehillsoftware.handoff.promises.Promise
 
-private val magicPropertyBuilder by lazy { MagicPropertyBuilder(ItemBrowserActivity::class.java) }
+private val magicPropertyBuilder by lazy { MagicPropertyBuilder(cls<ItemBrowserActivity>()) }
 
 private const val keyArgument = "key"
 private const val titleArgument = "title"
@@ -209,44 +212,51 @@ class ItemBrowserActivity : AppCompatActivity() {
 
 	private val libraryFilesProvider by lazy { LibraryFileProvider(LibraryFileStringListProvider(libraryConnectionProvider))  }
 
+	private val activityApplicationNavigation by lazy { ActivityApplicationNavigation(this) }
+
 	public override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
-		val playlistId = savedInstanceState?.getInt(playlistIdProperty, -1) ?: intent.getIntExtra(playlistIdProperty, -1)
-		val item = if (playlistId > -1) {
-			Item(
-				savedInstanceState?.getInt(keyProperty) ?: intent.getIntExtra(keyProperty, 1),
-				savedInstanceState?.getString(itemTitleProperty) ?: intent.getStringExtra(itemTitleProperty),
-				PlaylistId(playlistId),
-			)
-		} else {
-			Item(
-				savedInstanceState?.getInt(keyProperty) ?: intent.getIntExtra(keyProperty, 1),
-				savedInstanceState?.getString(itemTitleProperty) ?: intent.getStringExtra(itemTitleProperty),
-			)
-		}
+		activityApplicationNavigation
+			.viewConnectionRestoration()
+			.eventually(LoopedInPromise.response({
+				val playlistId = savedInstanceState?.getInt(playlistIdProperty, -1) ?: intent.getIntExtra(playlistIdProperty, -1)
+				val item = if (playlistId > -1) {
+					Item(
+						savedInstanceState?.getInt(keyProperty) ?: intent.getIntExtra(keyProperty, 1),
+						savedInstanceState?.getString(itemTitleProperty) ?: intent.getStringExtra(itemTitleProperty),
+						PlaylistId(playlistId),
+					)
+				} else {
+					Item(
+						savedInstanceState?.getInt(keyProperty) ?: intent.getIntExtra(keyProperty, 1),
+						savedInstanceState?.getString(itemTitleProperty) ?: intent.getStringExtra(itemTitleProperty),
+					)
+				}
 
-		setContent {
-			ProjectBlueTheme {
-				ItemBrowserView(
-					nowPlayingFilePropertiesViewModel,
-					browserLibraryIdProvider,
-					itemProvider,
-					itemListProvider,
-					messageBus,
-					storedItemAccess,
-					playbackServiceController,
-					fileProvider,
-					menuMessageBus,
-					itemListMenuViewModel,
-					scopedFilePropertiesProvider,
-					scopedUrlKeyProvider,
-					stringResources,
-					libraryFilesProvider,
-					item,
-				)
-			}
-		}
+				setContent {
+					ProjectBlueTheme {
+						ItemBrowserView(
+							nowPlayingFilePropertiesViewModel,
+							browserLibraryIdProvider,
+							itemProvider,
+							itemListProvider,
+							messageBus,
+							storedItemAccess,
+							playbackServiceController,
+							fileProvider,
+							menuMessageBus,
+							itemListMenuViewModel,
+							scopedFilePropertiesProvider,
+							scopedUrlKeyProvider,
+							stringResources,
+							libraryFilesProvider,
+							activityApplicationNavigation,
+							item,
+						)
+					}
+				}
+			}, this))
 	}
 
 	override fun onBackPressed() {
@@ -275,12 +285,16 @@ private class GraphNavigation(private val navController: NavHostController, priv
 	}
 
 	override fun launchSearch() {
-		navController.navigate(Search.route)
+		navController.navigate(Search.route) {
+			launchSingleTop = true
+		}
 	}
 
 	override fun viewItem(item: IItem) {
 		navController.navigate(BrowseToItem.buildPath(item))
 	}
+
+	override fun backOut(): Boolean = !navController.navigateUp() && inner.backOut()
 }
 
 @Composable
@@ -299,16 +313,17 @@ private fun ItemBrowserView(
 	scopedUrlKeyProvider: SelectedLibraryUrlKeyProvider,
 	stringResources: StringResources,
 	libraryFilesProvider: LibraryFileProvider,
+	applicationNavigation: NavigateApplication,
 	startingItem: IItem? = null,
 ) {
-	val activity = LocalContext.current as? Activity ?: return
+	val activity = LocalContext.current as? ComponentActivity ?: return
 
 	val systemUiController = rememberSystemUiController()
 	systemUiController.setStatusBarColor(MaterialTheme.colors.surface)
 
 	val navController = rememberNavController()
 
-	val graphNavigation = GraphNavigation(navController, ActivityApplicationNavigation(activity))
+	val graphNavigation = GraphNavigation(navController, applicationNavigation)
 
 	Scaffold(bottomBar = {
 		BottomAppBar(
@@ -321,17 +336,21 @@ private fun ItemBrowserView(
 				Row(
 					modifier = Modifier
 						.weight(1f)
-						.padding(start = 16.dp, end = 16.dp)
+						.padding(end = 16.dp)
 				) {
-					Icon(
-						Icons.Default.Search,
-						contentDescription = stringResource(id = R.string.lbl_search),
-						tint = MaterialTheme.colors.onSecondary,
+					Box(
 						modifier = Modifier
-							.padding(start = 8.dp, end = 8.dp)
 							.align(Alignment.CenterVertically)
+							.fillMaxHeight()
 							.clickable(onClick = graphNavigation::launchSearch),
-					)
+					) {
+						Icon(
+							Icons.Default.Search,
+							contentDescription = stringResource(id = R.string.lbl_search),
+							tint = MaterialTheme.colors.onSecondary,
+							modifier = Modifier.align(Alignment.Center).padding(start = 16.dp, end = 16.dp)
+						)
+					}
 
 					Column(
 						modifier = Modifier
@@ -467,9 +486,7 @@ private fun ItemBrowserView(
 				}
 
 				ItemListView(
-					itemListViewModel = itemListViewModel,
-					fileListViewModel = fileListViewModel,
-					nowPlayingViewModel = nowPlayingViewModel,
+					itemListViewModel = itemListViewModel, fileListViewModel = fileListViewModel, nowPlayingViewModel = nowPlayingViewModel,
 					itemListMenuViewModel = itemListMenuViewModel,
 					trackHeadlineViewModelProvider = entry.viewModelStore.buildViewModel {
 						TrackHeadlineViewModelProvider(
@@ -481,15 +498,15 @@ private fun ItemBrowserView(
 							menuMessageBus,
 							messageBus,
 						)
-					}
-				) {
-					if (!navController.navigateUp())
-						activity.finish()
-				}
+					},
+					onBack = graphNavigation::backOut
+				)
 
 				LaunchedEffect(item) {
-					itemListViewModel.loadItem(item)
-					fileListViewModel.loadItem(item)
+					Promise.whenAll(
+						itemListViewModel.loadItem(item),
+						fileListViewModel.loadItem(item)
+					).suspend()
 				}
 			}
 

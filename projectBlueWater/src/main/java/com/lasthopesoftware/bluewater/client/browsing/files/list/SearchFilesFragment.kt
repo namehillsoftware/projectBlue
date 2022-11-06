@@ -100,7 +100,7 @@ class SearchFilesFragment : Fragment() {
 			scopedUrlKeyProvider,
 			StringResources(requireContext()),
 			PlaybackServiceController(requireContext()),
-			ActivityApplicationNavigation(requireContext()),
+			ActivityApplicationNavigation(requireActivity()),
 			menuMessageBus,
 			scopedMessageBus.value,
 		)
