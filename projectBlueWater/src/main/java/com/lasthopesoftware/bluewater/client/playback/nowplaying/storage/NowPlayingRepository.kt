@@ -26,22 +26,12 @@ class NowPlayingRepository(
 		nowPlayingCache[libraryId]?.toPromise()
 			?: libraryProvider.library
 				.eventually { library ->
-					library?.let {
-						libraryId = it.id
-						val savedTracksString = library.savedTracksString
-						if (savedTracksString == null || savedTracksString.isEmpty()) {
-							val nowPlaying = NowPlaying(
-								library.libraryId,
-								library.nowPlayingId,
-								library.nowPlayingProgress,
-								library.isRepeating
-							)
-							nowPlayingCache[libraryId] = nowPlaying
-							return@let nowPlaying.toPromise()
-						}
-
-						promiseParsedFileStringList(savedTracksString)
-							.then { files ->
+					library?.let { l ->
+						libraryId = l.id
+						l.savedTracksString
+							?.takeIf { it.isNotEmpty() }
+							?.let(::promiseParsedFileStringList)
+							?.then { files ->
 								val nowPlaying = NowPlaying(
 									library.libraryId,
 									if (files is List<*>) files as List<ServiceFile> else ArrayList(files),
@@ -52,6 +42,13 @@ class NowPlayingRepository(
 								nowPlayingCache[libraryId] = nowPlaying
 								nowPlaying
 							}
+							.keepPromise(NowPlaying(
+								library.libraryId,
+								emptyList(),
+								library.nowPlayingId,
+								library.nowPlayingProgress,
+								library.isRepeating
+							).also { nowPlayingCache[libraryId] = it })
 					}.keepPromise()
 				}
 

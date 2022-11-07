@@ -103,7 +103,6 @@ class NowPlayingFilePropertiesViewModel(
 	val nowPlayingFile = nowPlayingFileState.asStateFlow()
 	val isScreenControlsVisible = isScreenControlsVisibleState.asStateFlow()
 	val isRepeating = isRepeatingState.asStateFlow()
-	val unexpectedError = unexpectedErrorState.asStateFlow()
 
 	override fun onCleared() {
 		cachedPromises?.close()

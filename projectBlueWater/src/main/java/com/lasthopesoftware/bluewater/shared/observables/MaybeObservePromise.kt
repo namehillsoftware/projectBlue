@@ -5,9 +5,9 @@ import io.reactivex.Maybe
 import io.reactivex.MaybeObserver
 import io.reactivex.disposables.Disposable
 
-fun <T> Promise<T>.toMaybeObservable(): Maybe<T> = MaybePromise(this)
+fun <T> Promise<T>.toMaybeObservable(): Maybe<T> = MaybeObservePromise(this)
 
-private class MaybePromise<T>(private val promise: Promise<T>) :
+private class MaybeObservePromise<T>(private val promise: Promise<T>) :
 	Maybe<T>(),
 	Disposable
 {

@@ -79,7 +79,7 @@ class LiveNowPlayingLookup private constructor(
 				}
 
 				np?.let {
-					trackedPosition?.let(it::withFilePosition) ?: it
+					trackedPosition?.let { p -> it.copy(filePosition = p) } ?: it
 				}
 			}
 			.keepPromise()

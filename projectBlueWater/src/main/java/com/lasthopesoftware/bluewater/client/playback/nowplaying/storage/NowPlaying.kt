@@ -4,7 +4,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 
-class NowPlaying(
+data class NowPlaying(
 	val libraryId: LibraryId,
 	val playlist: List<ServiceFile>,
     val playlistPosition: Int,
@@ -15,15 +15,4 @@ class NowPlaying(
 	val playingFile: PositionedFile?
 		get() =
 			playlistPosition.takeIf { it > -1 && it < playlist.size }?.let { PositionedFile(it, playlist[it]) }
-
-	fun withFilePosition(filePosition: Long): NowPlaying = NowPlaying(
-		libraryId,
-		playlist,
-		playlistPosition,
-		filePosition,
-		isRepeating,
-	)
-
-    constructor(libraryId: LibraryId, playlistPosition: Int, filePosition: Long, isRepeating: Boolean)
-		: this(libraryId, emptyList(), playlistPosition, filePosition, isRepeating)
 }

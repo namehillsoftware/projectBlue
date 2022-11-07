@@ -247,10 +247,6 @@ class NowPlayingPlaylistFragment : Fragment() {
 		super.onDestroy()
 	}
 
-	fun setOnItemListMenuChangeHandler(itemListMenuChangeHandler: IItemListMenuChangeHandler?) {
-		this.itemListMenuChangeHandler = itemListMenuChangeHandler
-	}
-
 	private class NowPlayingDragCallback<ViewHolder : RecyclerView.ViewHolder?>(
 		private val context: Context,
 		private val adapter: DeferredListAdapter<PositionedFile, ViewHolder>,

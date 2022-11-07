@@ -86,7 +86,7 @@ class PlaybackEngine(
 		this.playlist = playlist.toMutableList()
 		this.playlistPosition = playlistPosition
 		this.fileProgress = StaticProgressedFile(filePosition.toPromise())
-		return saveState().then { resumePlayback() }
+		return saveState().eventually { resumePlayback() }
 	}
 
 	override fun skipToNext(): Promise<PositionedFile> {
