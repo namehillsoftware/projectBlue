@@ -20,41 +20,41 @@ class NowPlayingRepository(
 	}
 
 	@Volatile
-	private var libraryId = -1
+	private var trackedLibraryId = -1
 
 	override fun promiseNowPlaying(): Promise<NowPlaying?> =
-		nowPlayingCache[libraryId]?.toPromise()
+		nowPlayingCache[trackedLibraryId]?.toPromise()
 			?: libraryProvider.library
 				.eventually { library ->
-					library?.let { l ->
-						libraryId = l.id
-						l.savedTracksString
+					library?.run {
+						trackedLibraryId = id
+						savedTracksString
 							?.takeIf { it.isNotEmpty() }
 							?.let(::promiseParsedFileStringList)
 							?.then { files ->
 								val nowPlaying = NowPlaying(
-									library.libraryId,
+									libraryId,
 									if (files is List<*>) files as List<ServiceFile> else ArrayList(files),
-									library.nowPlayingId,
-									library.nowPlayingProgress,
-									library.isRepeating
+									nowPlayingId,
+									nowPlayingProgress,
+									isRepeating
 								)
-								nowPlayingCache[libraryId] = nowPlaying
+								nowPlayingCache[id] = nowPlaying
 								nowPlaying
 							}
-							.keepPromise(NowPlaying(
-								library.libraryId,
+							?: NowPlaying(
+								libraryId,
 								emptyList(),
-								library.nowPlayingId,
-								library.nowPlayingProgress,
-								library.isRepeating
-							).also { nowPlayingCache[libraryId] = it })
+								nowPlayingId,
+								nowPlayingProgress,
+								isRepeating
+							).also { nowPlayingCache[id] = it }.toPromise()
 					}.keepPromise()
 				}
 
 	override fun updateNowPlaying(nowPlaying: NowPlaying): Promise<NowPlaying> {
-		if (libraryId < 0) return promiseNowPlaying().eventually { updateNowPlaying(nowPlaying) }
-		nowPlayingCache[libraryId] = nowPlaying
+		if (trackedLibraryId < 0) return promiseNowPlaying().eventually { updateNowPlaying(nowPlaying) }
+		nowPlayingCache[trackedLibraryId] = nowPlaying
 		libraryProvider.library
 			.then { library ->
 				library?.apply {
