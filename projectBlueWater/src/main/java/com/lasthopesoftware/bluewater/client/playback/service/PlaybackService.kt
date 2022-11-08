@@ -648,14 +648,15 @@ open class PlaybackService :
 		return FileStringListUtilities
 			.promiseParsedFileStringList(playlistString)
 			.eventually { playlist ->
-				val promiseStartedPlaylist = playbackState.startPlaylist(
+				playbackState.startPlaylist(
 					playlist.toMutableList(),
 					playlistPosition,
 					Duration.ZERO)
-				startNowPlayingActivity(this)
-				promiseStartedPlaylist
 			}
-			.then { applicationMessageBus.value.sendMessage(PlaybackMessage.PlaylistChanged) }
+			.then {
+				startNowPlayingActivity(this)
+				applicationMessageBus.value.sendMessage(PlaybackMessage.PlaylistChanged)
+			}
 	}
 
 	private fun resumePlayback(): Promise<Unit> {
