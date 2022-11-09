@@ -5,30 +5,27 @@ import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.Fi
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.FileStringListUtilities.promiseSerializedFileStringList
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ISpecificLibraryProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
-import java.util.concurrent.ConcurrentHashMap
 
 class NowPlayingRepository(
 	private val libraryProvider: ISpecificLibraryProvider,
-	private val libraryRepository: ILibraryStorage
+	private val libraryRepository: ILibraryStorage,
+	private val holdNowPlayingState: HoldNowPlayingState
 ) : MaintainNowPlayingState {
 
-	companion object {
-		private val nowPlayingCache = ConcurrentHashMap<Int, NowPlaying>()
-	}
-
 	@Volatile
-	private var trackedLibraryId = -1
+	private var trackedLibraryId: LibraryId? = null
 
 	override fun promiseNowPlaying(): Promise<NowPlaying?> =
-		nowPlayingCache[trackedLibraryId]?.toPromise()
+		trackedLibraryId?.let(holdNowPlayingState::get)?.toPromise()
 			?: libraryProvider.library
 				.eventually { library ->
 					library?.run {
-						trackedLibraryId = id
-						nowPlayingCache[id]?.toPromise()
+						trackedLibraryId = libraryId
+						holdNowPlayingState[libraryId]?.toPromise()
 							?: savedTracksString
 							?.takeIf { it.isNotEmpty() }
 							?.let(::promiseParsedFileStringList)
@@ -40,7 +37,7 @@ class NowPlayingRepository(
 									nowPlayingProgress,
 									isRepeating
 								)
-								nowPlayingCache[id] = nowPlaying
+								holdNowPlayingState[libraryId] = nowPlaying
 								nowPlaying
 							}
 							?: NowPlaying(
@@ -49,26 +46,30 @@ class NowPlayingRepository(
 								nowPlayingId,
 								nowPlayingProgress,
 								isRepeating
-							).also { nowPlayingCache[id] = it }.toPromise()
+							).also { holdNowPlayingState[libraryId] = it }.toPromise()
 					}.keepPromise()
 				}
 
 	override fun updateNowPlaying(nowPlaying: NowPlaying): Promise<NowPlaying> {
-		if (trackedLibraryId < 0) return promiseNowPlaying().eventually { updateNowPlaying(nowPlaying) }
-		nowPlayingCache[trackedLibraryId] = nowPlaying
-		libraryProvider.library
-			.then { library ->
-				library?.apply {
-					setNowPlayingId(nowPlaying.playlistPosition)
-					setNowPlayingProgress(nowPlaying.filePosition)
-					setRepeating(nowPlaying.isRepeating)
-					promiseSerializedFileStringList(nowPlaying.playlist)
-						.then { serializedPlaylist ->
-							setSavedTracksString(serializedPlaylist)
-							libraryRepository.saveLibrary(this)
+		return trackedLibraryId
+			?.also { holdNowPlayingState[it] = nowPlaying }
+			?.let {
+				holdNowPlayingState[it] = nowPlaying
+				libraryProvider.library
+					.then { library ->
+						library?.apply {
+							setNowPlayingId(nowPlaying.playlistPosition)
+							setNowPlayingProgress(nowPlaying.filePosition)
+							setRepeating(nowPlaying.isRepeating)
+							promiseSerializedFileStringList(nowPlaying.playlist)
+								.then { serializedPlaylist ->
+									setSavedTracksString(serializedPlaylist)
+									libraryRepository.saveLibrary(this)
+								}
 						}
-				}
+					}
+				nowPlaying.toPromise()
 			}
-		return nowPlaying.toPromise()
+			?: promiseNowPlaying().eventually { updateNowPlaying(nowPlaying) }
 	}
 }

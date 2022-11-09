@@ -85,7 +85,7 @@ class LiveNowPlayingLookup private constructor(
 			.keepPromise()
 
 	private fun updateInner(libraryId: LibraryId) {
-		inner = NowPlayingRepository(SpecificLibraryProvider(libraryId, libraryProvider), libraryStorage).apply {
+		inner = NowPlayingRepository(SpecificLibraryProvider(libraryId, libraryProvider), libraryStorage, InMemoryNowPlayingState).apply {
 				promiseNowPlaying()
 					.then {
 						mutableNowPlayingState.set(it?.playingFile)
