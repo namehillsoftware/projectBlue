@@ -89,6 +89,7 @@ class LiveNowPlayingLookup private constructor(
 				promiseNowPlaying()
 					.then {
 						mutableNowPlayingState.set(it?.playingFile)
+						trackedPosition = it?.filePosition
 					}
 		}
 	}
