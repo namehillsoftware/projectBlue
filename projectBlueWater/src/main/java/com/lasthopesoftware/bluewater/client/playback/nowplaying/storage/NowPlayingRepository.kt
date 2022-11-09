@@ -52,7 +52,6 @@ class NowPlayingRepository(
 
 	override fun updateNowPlaying(nowPlaying: NowPlaying): Promise<NowPlaying> {
 		return trackedLibraryId
-			?.also { holdNowPlayingState[it] = nowPlaying }
 			?.let {
 				holdNowPlayingState[it] = nowPlaying
 				libraryProvider.library

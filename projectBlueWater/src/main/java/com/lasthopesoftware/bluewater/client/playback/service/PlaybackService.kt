@@ -78,6 +78,7 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.no
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building.NowPlayingNotificationBuilder
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building.PlaybackStartingNotificationBuilder
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.remote.MediaSessionBroadcaster
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.InMemoryNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.MaintainNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.NowPlayingActivity.Companion.startNowPlayingActivity
@@ -443,7 +444,8 @@ open class PlaybackService :
 				l?.let {
                     NowPlayingRepository(
                         SpecificLibraryProvider(l, libraryRepository),
-                        libraryRepository
+                        libraryRepository,
+						InMemoryNowPlayingState,
                     )
 				}
 			}
@@ -702,7 +704,8 @@ open class PlaybackService :
 			val scopedUrlKeyProvider = ScopedUrlKeyProvider(connectionProvider)
 			val nowPlayingRepository = NowPlayingRepository(
 				SpecificLibraryProvider(library.libraryId, libraryRepository),
-				libraryRepository
+				libraryRepository,
+				InMemoryNowPlayingState,
 			)
 			val promisedMediaBroadcaster = promisedMediaSession.then { mediaSession ->
 				val broadcaster = MediaSessionBroadcaster(
