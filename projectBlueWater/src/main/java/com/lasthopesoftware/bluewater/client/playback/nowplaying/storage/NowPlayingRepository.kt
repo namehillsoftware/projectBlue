@@ -28,7 +28,8 @@ class NowPlayingRepository(
 				.eventually { library ->
 					library?.run {
 						trackedLibraryId = id
-						savedTracksString
+						nowPlayingCache[id]?.toPromise()
+							?: savedTracksString
 							?.takeIf { it.isNotEmpty() }
 							?.let(::promiseParsedFileStringList)
 							?.then { files ->
