@@ -12,6 +12,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedProgressedFile
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeDeferredPlayableFilePreparationSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.FakeNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -44,7 +45,7 @@ class WhenChangingTracks {
 		)
 		library.setNowPlayingId(0)
 		val libraryProvider = mockk<ISpecificLibraryProvider>()
-		every { libraryProvider.library } returns Promise(library)
+		every { libraryProvider.promiseLibrary() } returns Promise(library)
 
 		val libraryStorage = PassThroughLibraryStorage()
 		val playbackEngine = PlaybackEngine(
@@ -53,7 +54,8 @@ class WhenChangingTracks {
 			) { 1 }, listOf(CompletingFileQueueProvider()),
 			NowPlayingRepository(
 				libraryProvider,
-				libraryStorage
+				libraryStorage,
+				FakeNowPlayingState(),
 			),
 			PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
 		)

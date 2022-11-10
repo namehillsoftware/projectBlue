@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistP
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeDeferredPlayableFilePreparationSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.FakeNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
 import com.namehillsoftware.handoff.promises.Promise
@@ -25,7 +26,7 @@ class WhenNotObservingPlayback {
 		val fakePlaybackPreparerProvider = FakeDeferredPlayableFilePreparationSourceProvider()
 
 		val libraryProvider = mockk<ISpecificLibraryProvider>()
-		every { libraryProvider.library } returns Promise(library)
+		every { libraryProvider.promiseLibrary() } returns Promise(library)
 
 		val libraryStorage = mockk<ILibraryStorage>()
 		every { libraryStorage.saveLibrary(any()) } returns	Promise(library)
@@ -36,7 +37,8 @@ class WhenNotObservingPlayback {
 			) { 1 }, listOf(CompletingFileQueueProvider()),
 			NowPlayingRepository(
 				libraryProvider,
-				libraryStorage
+				libraryStorage,
+				FakeNowPlayingState(),
 			),
 			PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
 		)

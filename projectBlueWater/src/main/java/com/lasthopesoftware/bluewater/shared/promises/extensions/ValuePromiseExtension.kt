@@ -83,7 +83,8 @@ private class CompletablePromise(completable: Completable) : Promise<Unit>(), Co
 	override fun onError(e: Throwable) = reject(e)
 }
 
-private class PromisedListenableFuture<Resolution>(listenableFuture: ListenableFuture<Resolution>, executor: Executor) : Promise<Resolution>() {
+private class PromisedListenableFuture<Resolution>(listenableFuture: ListenableFuture<Resolution>, executor: Executor) :
+	Promise<Resolution>() {
 	init {
 		respondToCancellation { listenableFuture.cancel(false) }
 		listenableFuture.addListener({
@@ -100,7 +101,7 @@ private class PromisedListenableFuture<Resolution>(listenableFuture: ListenableF
 
 private class PromiseJob(private val job: Job) : Promise<Unit>(), Runnable, CompletionHandler {
 	init {
-	    job.invokeOnCompletion(this)
+		job.invokeOnCompletion(this)
 		respondToCancellation(this)
 	}
 
@@ -115,9 +116,9 @@ private class PromiseJob(private val job: Job) : Promise<Unit>(), Runnable, Comp
 }
 
 @ExperimentalCoroutinesApi
-private class PromiseDeferred<T>(private val deferred: Deferred<T>): Promise<T>(), Runnable, CompletionHandler {
+private class PromiseDeferred<T>(private val deferred: Deferred<T>) : Promise<T>(), Runnable, CompletionHandler {
 	init {
-	    deferred.invokeOnCompletion(this)
+		deferred.invokeOnCompletion(this)
 		respondToCancellation(this)
 	}
 

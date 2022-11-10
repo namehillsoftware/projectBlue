@@ -16,6 +16,7 @@ import com.lasthopesoftware.bluewater.client.playback.engine.preparation.Prepare
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeDeferredPlayableFilePreparationSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.FakeNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
@@ -49,8 +50,7 @@ class WhenChangingToThePreviousTrack {
 		libraryUnderTest.setNowPlayingId(4)
 
 		val libraryProvider = object : ISpecificLibraryProvider {
-			override val library: Promise<Library?>
-				get() = Promise(libraryUnderTest)
+            override fun promiseLibrary(): Promise<Library?> = Promise(libraryUnderTest)
 		}
 
 		val libraryStorage: ILibraryStorage = PassThroughLibraryStorage()
@@ -67,7 +67,8 @@ class WhenChangingToThePreviousTrack {
 				listOf(CompletingFileQueueProvider()),
 				NowPlayingRepository(
 					libraryProvider,
-					libraryStorage
+					libraryStorage,
+					FakeNowPlayingState(),
 				),
 				PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
 			)

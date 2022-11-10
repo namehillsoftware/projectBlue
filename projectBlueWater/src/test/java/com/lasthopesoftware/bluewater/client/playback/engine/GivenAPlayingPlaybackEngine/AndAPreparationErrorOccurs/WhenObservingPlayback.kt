@@ -15,6 +15,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.fakes.ResolvablePlayb
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.FakeNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
@@ -45,11 +46,15 @@ class WhenObservingPlayback {
 		val libraryProvider = mockk<ISpecificLibraryProvider>().also {
 			val library = Library()
 			library.setId(1)
-			every { it.library } returns Promise(library)
+			every { it.promiseLibrary() } returns Promise(library)
 		}
 
 		val libraryStorage: ILibraryStorage = PassThroughLibraryStorage()
-		val nowPlayingRepository = NowPlayingRepository(libraryProvider, libraryStorage)
+		val nowPlayingRepository = NowPlayingRepository(
+			libraryProvider,
+			libraryStorage,
+			FakeNowPlayingState(),
+		)
 
 		val playbackEngine = PlaybackEngine(
 			PreparedPlaybackQueueResourceManagement(

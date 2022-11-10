@@ -30,6 +30,7 @@ import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.polling.ConnectionPoller
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.InMemoryNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.InMemoryNowPlayingDisplaySettings
@@ -103,7 +104,8 @@ class NowPlayingPlaylistFragment : Fragment() {
 			.then { l ->
 				NowPlayingRepository(
 					SpecificLibraryProvider(l!!, libraryRepository),
-					libraryRepository
+					libraryRepository,
+					InMemoryNowPlayingState,
 				)
 			}
 	}

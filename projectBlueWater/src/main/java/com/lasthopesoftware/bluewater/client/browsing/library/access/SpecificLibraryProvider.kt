@@ -8,6 +8,5 @@ import com.namehillsoftware.handoff.promises.Promise
  * Created by david on 2/12/17.
  */
 class SpecificLibraryProvider(private val libraryId: LibraryId, private val libraryProvider: ILibraryProvider) : ISpecificLibraryProvider {
-	override val library: Promise<Library?>
-		get() = libraryProvider.getLibrary(libraryId)
+    override fun promiseLibrary(): Promise<Library?> = libraryProvider.getLibrary(libraryId)
 }

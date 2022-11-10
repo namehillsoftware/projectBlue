@@ -15,6 +15,7 @@ import com.lasthopesoftware.bluewater.client.playback.engine.preparation.Prepare
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeDeferredPlayableFilePreparationSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CyclicalFileQueueProvider
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.FakeNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
@@ -44,8 +45,7 @@ class WhenSettingEngineToRepeat {
 		)
 		library.setNowPlayingId(0)
 		val libraryProvider = object : ISpecificLibraryProvider {
-			override val library: Promise<Library?>
-				get() = library.toPromise()
+            override fun promiseLibrary(): Promise<Library?> = library.toPromise()
 		}
 
 		val libraryStorage = PassThroughLibraryStorage()
@@ -63,7 +63,8 @@ class WhenSettingEngineToRepeat {
 		val repository =
 			NowPlayingRepository(
 				libraryProvider,
-				libraryStorage
+				libraryStorage,
+				FakeNowPlayingState(),
 			)
 		val playbackEngine = PlaybackEngine(
 			PreparedPlaybackQueueResourceManagement(

@@ -5,72 +5,71 @@ import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.Fi
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.FileStringListUtilities.promiseSerializedFileStringList
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ISpecificLibraryProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
-import java.util.concurrent.ConcurrentHashMap
 
 class NowPlayingRepository(
 	private val libraryProvider: ISpecificLibraryProvider,
-	private val libraryRepository: ILibraryStorage
+	private val libraryRepository: ILibraryStorage,
+	private val holdNowPlayingState: HoldNowPlayingState
 ) : MaintainNowPlayingState {
 
-	companion object {
-		private val nowPlayingCache = ConcurrentHashMap<Int, NowPlaying>()
-	}
-
 	@Volatile
-	private var libraryId = -1
+	private var trackedLibraryId: LibraryId? = null
 
 	override fun promiseNowPlaying(): Promise<NowPlaying?> =
-		nowPlayingCache[libraryId]?.toPromise()
-			?: libraryProvider.library
+		trackedLibraryId
+			?.let(holdNowPlayingState::get)?.toPromise()
+			?: libraryProvider
+				.promiseLibrary()
 				.eventually { library ->
-					library?.let {
-						libraryId = it.id
-						val savedTracksString = library.savedTracksString
-						if (savedTracksString == null || savedTracksString.isEmpty()) {
-							val nowPlaying = NowPlaying(
-								library.libraryId,
-								library.nowPlayingId,
-								library.nowPlayingProgress,
-								library.isRepeating
-							)
-							nowPlayingCache[libraryId] = nowPlaying
-							return@let nowPlaying.toPromise()
-						}
-
-						promiseParsedFileStringList(savedTracksString)
-							.then { files ->
+					library?.run {
+						trackedLibraryId = libraryId
+						holdNowPlayingState[libraryId]?.toPromise()
+							?: savedTracksString
+							?.takeIf { it.isNotEmpty() }
+							?.let(::promiseParsedFileStringList)
+							?.then { files ->
 								val nowPlaying = NowPlaying(
-									library.libraryId,
+									libraryId,
 									if (files is List<*>) files as List<ServiceFile> else ArrayList(files),
-									library.nowPlayingId,
-									library.nowPlayingProgress,
-									library.isRepeating
+									nowPlayingId,
+									nowPlayingProgress,
+									isRepeating
 								)
-								nowPlayingCache[libraryId] = nowPlaying
+								holdNowPlayingState[libraryId] = nowPlaying
 								nowPlaying
 							}
+							?: NowPlaying(
+								libraryId,
+								emptyList(),
+								nowPlayingId,
+								nowPlayingProgress,
+								isRepeating
+							).also { holdNowPlayingState[libraryId] = it }.toPromise()
 					}.keepPromise()
 				}
 
-	override fun updateNowPlaying(nowPlaying: NowPlaying): Promise<NowPlaying> {
-		if (libraryId < 0) return promiseNowPlaying().eventually { updateNowPlaying(nowPlaying) }
-		nowPlayingCache[libraryId] = nowPlaying
-		libraryProvider.library
-			.then { library ->
-				library?.apply {
-					setNowPlayingId(nowPlaying.playlistPosition)
-					setNowPlayingProgress(nowPlaying.filePosition)
-					setRepeating(nowPlaying.isRepeating)
-					promiseSerializedFileStringList(nowPlaying.playlist)
-						.then { serializedPlaylist ->
-							setSavedTracksString(serializedPlaylist)
-							libraryRepository.saveLibrary(this)
+	override fun updateNowPlaying(nowPlaying: NowPlaying): Promise<NowPlaying> =
+		trackedLibraryId
+			?.let {
+				holdNowPlayingState[it] = nowPlaying
+				libraryProvider.promiseLibrary()
+					.then { library ->
+						library?.apply {
+							setNowPlayingId(nowPlaying.playlistPosition)
+							setNowPlayingProgress(nowPlaying.filePosition)
+							setRepeating(nowPlaying.isRepeating)
+							promiseSerializedFileStringList(nowPlaying.playlist)
+								.then { serializedPlaylist ->
+									setSavedTracksString(serializedPlaylist)
+									libraryRepository.saveLibrary(this)
+								}
 						}
-				}
+					}
+				nowPlaying.toPromise()
 			}
-		return nowPlaying.toPromise()
-	}
+			?: promiseNowPlaying().eventually { updateNowPlaying(nowPlaying) }
 }

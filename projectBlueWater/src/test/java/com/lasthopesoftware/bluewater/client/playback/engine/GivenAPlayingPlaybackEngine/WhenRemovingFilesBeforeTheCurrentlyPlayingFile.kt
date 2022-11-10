@@ -11,6 +11,7 @@ import com.lasthopesoftware.bluewater.client.playback.engine.preparation.Prepare
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedProgressedFile
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeDeferredPlayableFilePreparationSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.FakeNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
@@ -44,14 +45,16 @@ class WhenRemovingFilesBeforeTheCurrentlyPlayingFile {
 		library.setNowPlayingId(2)
 
 		val libraryProvider = mockk<ISpecificLibraryProvider>()
-		every { libraryProvider.library } returns Promise(library)
+		every { libraryProvider.promiseLibrary() } returns Promise(library)
 
 		val libraryStorage = PassThroughLibraryStorage()
 
+		val nowPlayingState = FakeNowPlayingState()
 		val repository =
 			NowPlayingRepository(
 				libraryProvider,
-				libraryStorage
+				libraryStorage,
+				nowPlayingState,
 			)
 		val playbackEngine =
 			PlaybackEngine(
@@ -66,7 +69,8 @@ class WhenRemovingFilesBeforeTheCurrentlyPlayingFile {
 				}),
 				NowPlayingRepository(
 					libraryProvider,
-					libraryStorage
+					libraryStorage,
+					nowPlayingState,
 				),
 				PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
 			)

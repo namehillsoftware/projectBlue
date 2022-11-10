@@ -24,7 +24,8 @@ class NowPlayingFileProvider private constructor(private val nowPlayingRepositor
 						NowPlayingFileProvider(
 							NowPlayingRepository(
 								SpecificLibraryProvider(it, libraryRepository),
-								libraryRepository
+								libraryRepository,
+								InMemoryNowPlayingState,
 							)
 						)
 					}

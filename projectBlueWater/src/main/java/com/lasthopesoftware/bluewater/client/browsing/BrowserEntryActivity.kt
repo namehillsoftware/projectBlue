@@ -40,7 +40,6 @@ import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnect
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingFloatingActionButton
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.fragment.ActiveFileDownloadsFragment
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity
-import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
@@ -71,8 +70,6 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 	private val selectedLibraryViews by lazy {
 		SelectedLibraryViewProvider(selectedBrowserLibraryProvider, libraryViewsProvider, libraryRepository)
 	}
-
-	private val applicationSettings by lazy { getApplicationSettingsRepository() }
 
 	private val selectedBrowserLibraryProvider by lazy { SelectedBrowserLibraryProvider(
 		getCachedSelectedLibraryIdProvider(),
