@@ -34,7 +34,7 @@ class WhenRestoringEngineStateAndResumingPlayback {
 		library.setNowPlayingId(586)
 
 		val libraryProvider = mockk<ISpecificLibraryProvider>()
-		every { libraryProvider.library } returns library.toPromise()
+		every { libraryProvider.promiseLibrary() } returns library.toPromise()
 
 		val libraryStorage = PassThroughLibraryStorage()
 

@@ -50,8 +50,7 @@ class WhenChangingToThePreviousTrack {
 		libraryUnderTest.setNowPlayingId(4)
 
 		val libraryProvider = object : ISpecificLibraryProvider {
-			override val library: Promise<Library?>
-				get() = Promise(libraryUnderTest)
+            override fun promiseLibrary(): Promise<Library?> = Promise(libraryUnderTest)
 		}
 
 		val libraryStorage: ILibraryStorage = PassThroughLibraryStorage()

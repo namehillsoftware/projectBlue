@@ -42,7 +42,7 @@ class WhenMovingTracksFromBeforeToAfterPlayingTrack {
 					)
 					.setNowPlayingId(3)
 			}
-			every { library } returns Promise(storedLibrary)
+			every { promiseLibrary() } returns Promise(storedLibrary)
 		}
 
 		val playbackEngine = PlaybackEngine(

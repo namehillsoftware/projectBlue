@@ -45,8 +45,7 @@ class WhenSettingEngineToRepeat {
 		)
 		library.setNowPlayingId(0)
 		val libraryProvider = object : ISpecificLibraryProvider {
-			override val library: Promise<Library?>
-				get() = library.toPromise()
+            override fun promiseLibrary(): Promise<Library?> = library.toPromise()
 		}
 
 		val libraryStorage = PassThroughLibraryStorage()

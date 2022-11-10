@@ -20,8 +20,10 @@ class NowPlayingRepository(
 	private var trackedLibraryId: LibraryId? = null
 
 	override fun promiseNowPlaying(): Promise<NowPlaying?> =
-		trackedLibraryId?.let(holdNowPlayingState::get)?.toPromise()
-			?: libraryProvider.library
+		trackedLibraryId
+			?.let(holdNowPlayingState::get)?.toPromise()
+			?: libraryProvider
+				.promiseLibrary()
 				.eventually { library ->
 					library?.run {
 						trackedLibraryId = libraryId
@@ -50,11 +52,11 @@ class NowPlayingRepository(
 					}.keepPromise()
 				}
 
-	override fun updateNowPlaying(nowPlaying: NowPlaying): Promise<NowPlaying> {
-		return trackedLibraryId
+	override fun updateNowPlaying(nowPlaying: NowPlaying): Promise<NowPlaying> =
+		trackedLibraryId
 			?.let {
 				holdNowPlayingState[it] = nowPlaying
-				libraryProvider.library
+				libraryProvider.promiseLibrary()
 					.then { library ->
 						library?.apply {
 							setNowPlayingId(nowPlaying.playlistPosition)
@@ -70,5 +72,4 @@ class NowPlayingRepository(
 				nowPlaying.toPromise()
 			}
 			?: promiseNowPlaying().eventually { updateNowPlaying(nowPlaying) }
-	}
 }

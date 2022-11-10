@@ -41,7 +41,7 @@ class WhenMovingThePlayingTrack {
 
 		val fakePlaybackPreparerProvider = FakeDeferredPlayableFilePreparationSourceProvider()
 		val libraryProvider = mockk<ISpecificLibraryProvider>().apply {
-			every { library } returns Promise(storedLibrary)
+			every { promiseLibrary() } returns Promise(storedLibrary)
 		}
 
 		val playbackEngine = PlaybackEngine(

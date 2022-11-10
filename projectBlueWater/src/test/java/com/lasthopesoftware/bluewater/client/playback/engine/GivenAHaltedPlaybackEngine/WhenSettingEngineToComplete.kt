@@ -46,7 +46,7 @@ class WhenSettingEngineToComplete {
 		library.setNowPlayingId(0)
 		library.setRepeating(true)
 		val libraryProvider = mockk<ISpecificLibraryProvider>()
-		every { libraryProvider.library } returns Promise(library)
+		every { libraryProvider.promiseLibrary() } returns Promise(library)
 
 		val libraryStorage = PassThroughLibraryStorage()
 		val filePropertiesContainerRepository = mockk<IFilePropertiesContainerRepository>()

@@ -26,7 +26,7 @@ class WhenNotObservingPlayback {
 		val fakePlaybackPreparerProvider = FakeDeferredPlayableFilePreparationSourceProvider()
 
 		val libraryProvider = mockk<ISpecificLibraryProvider>()
-		every { libraryProvider.library } returns Promise(library)
+		every { libraryProvider.promiseLibrary() } returns Promise(library)
 
 		val libraryStorage = mockk<ILibraryStorage>()
 		every { libraryStorage.saveLibrary(any()) } returns	Promise(library)

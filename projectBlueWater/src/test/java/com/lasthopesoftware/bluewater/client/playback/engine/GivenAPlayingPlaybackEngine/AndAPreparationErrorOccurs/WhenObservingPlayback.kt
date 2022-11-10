@@ -46,7 +46,7 @@ class WhenObservingPlayback {
 		val libraryProvider = mockk<ISpecificLibraryProvider>().also {
 			val library = Library()
 			library.setId(1)
-			every { it.library } returns Promise(library)
+			every { it.promiseLibrary() } returns Promise(library)
 		}
 
 		val libraryStorage: ILibraryStorage = PassThroughLibraryStorage()

@@ -45,7 +45,7 @@ class WhenChangingTracks {
 		)
 		library.setNowPlayingId(0)
 		val libraryProvider = mockk<ISpecificLibraryProvider>()
-		every { libraryProvider.library } returns Promise(library)
+		every { libraryProvider.promiseLibrary() } returns Promise(library)
 
 		val libraryStorage = PassThroughLibraryStorage()
 		val playbackEngine = PlaybackEngine(
