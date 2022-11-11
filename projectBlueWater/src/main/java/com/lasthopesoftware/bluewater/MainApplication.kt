@@ -137,7 +137,8 @@ open class MainApplication : Application() {
 	}
 
 	private fun initializeLogging() {
-		val lc = LoggerFactory.getILoggerFactory() as? LoggerContext ?: return
+		val loggerFactory = LoggerFactory.getILoggerFactory()
+		val lc = loggerFactory as? LoggerContext ?: return
 		lc.reset()
 
 		// setup LogcatAppender

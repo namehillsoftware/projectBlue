@@ -19,7 +19,7 @@ object WaitForConnectionDialog {
         init {
             val message = context.getString(R.string.lbl_attempting_to_reconnect)
 				.format(context.getString(R.string.app_name))
-            val builder = MaterialAlertDialogBuilder(context, R.style.AppTheme)
+            val builder = MaterialAlertDialogBuilder(context, R.style.AppTheme_DialogTheme)
             builder
 				.setTitle(context.getText(R.string.lbl_connection_lost_title))
 				.setMessage(message)
