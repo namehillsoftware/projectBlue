@@ -5,7 +5,6 @@
         <item name="drawerArrowStyle">@style/DrawerArrowStyle</item>
         <!-- Main theme colors -->
         <!--   your app branding color for the app bar -->
-        <item name="colorSurface">@color/white</item>
         <item name="colorPrimary">@color/project_blue_primary</item>
         <!--   darker variant for the status bar and contextual app bars -->
         <item name="colorPrimaryDark">@color/project_blue_dark</item>
@@ -27,7 +26,6 @@
         <item name="colorSecondary">@color/project_blue_dark</item>
         <item name="colorOnSecondary">@android:color/white</item>
         <item name="colorOnSurfaceVariant">?attr/colorOnSurface</item>
-        <item name="colorSurface">@color/white</item>
         <item name="android:textColor">?attr/colorOnSurface</item>
     </style>
 
