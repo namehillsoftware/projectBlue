@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.browsing.files.list
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
@@ -11,6 +12,8 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
@@ -19,6 +22,7 @@ import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
+import com.lasthopesoftware.bluewater.shared.android.ui.components.scrollbar
 
 @Composable
 fun SearchFilesView(
@@ -92,30 +96,54 @@ fun SearchFilesView(
 					}
 				}
 				files.any() -> {
-					LazyColumn(modifier = Modifier.weight(1f)) {
-						item {
-							Box(
-								modifier = Modifier
-									.padding(4.dp)
-									.height(48.dp)
-							) {
-								ProvideTextStyle(MaterialTheme.typography.h5) {
-									Text(
-										text = stringResource(R.string.file_count_label, files.size),
-										fontWeight = FontWeight.Bold,
-										modifier = Modifier
-											.padding(4.dp)
-											.align(Alignment.CenterStart)
-									)
-								}
+					BoxWithConstraints(modifier = Modifier.weight(1f).fillMaxSize()) {
+						val rowHeight = dimensionResource(id = R.dimen.standard_row_height)
+						val lazyListState = rememberLazyListState()
+						val knobHeight by remember {
+							derivedStateOf {
+								lazyListState.layoutInfo.totalItemsCount
+									.takeIf { it > 0 }
+									?.let { maxHeight / (rowHeight * it) }
+									?.takeIf { it > 0 && it < 1 }
 							}
 						}
+						LazyColumn(
+							state = lazyListState,
+							modifier = Modifier
+								.scrollbar(
+									lazyListState,
+									horizontal = false,
+									knobColor = MaterialTheme.colors.onSurface,
+									trackColor = Color.Transparent,
+									visibleAlpha = .4f,
+									knobCornerRadius = 1.dp,
+									fixedKnobRatio = knobHeight,
+								),
+						) {
+							item {
+								Box(
+									modifier = Modifier
+										.padding(4.dp)
+										.height(48.dp)
+								) {
+									ProvideTextStyle(MaterialTheme.typography.h5) {
+										Text(
+											text = stringResource(R.string.file_count_label, files.size),
+											fontWeight = FontWeight.Bold,
+											modifier = Modifier
+												.padding(4.dp)
+												.align(Alignment.CenterStart)
+										)
+									}
+								}
+							}
 
-						itemsIndexed(files) { i, f ->
-							RenderTrackHeaderItem(i, f)
+							itemsIndexed(files) { i, f ->
+								RenderTrackHeaderItem(i, f)
 
-							if (i < files.lastIndex)
-								Divider()
+								if (i < files.lastIndex)
+									Divider()
+							}
 						}
 					}
 				}
