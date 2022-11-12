@@ -63,7 +63,7 @@ class NowPlayingFilePropertiesViewModel(
 		registerForClass(cls<PlaybackMessage.PlaybackStopped>(), onPlaybackStopped)
 	}
 
-	private val onPlaybackChangedSubscription = applicationMessages.registerReceiver { _: PlaybackMessage.TrackChanged ->
+	private val onTrackChangedSubscription = applicationMessages.registerReceiver { _: PlaybackMessage.TrackChanged ->
 		updateViewFromRepository()
 		showNowPlayingControls()
 	}
@@ -109,7 +109,7 @@ class NowPlayingFilePropertiesViewModel(
 		cachedPromises?.close()
 
 		onTrackPositionChangedSubscription.close()
-		onPlaybackChangedSubscription.close()
+		onTrackChangedSubscription.close()
 		onPlaybackStartedSubscription.close()
 		onPlaylistChangedSubscription.close()
 		onPlaybackStoppedSubscription.close()
@@ -215,7 +215,6 @@ class NowPlayingFilePropertiesViewModel(
 		val isIoException = handleIoException(exception)
 		if (!isIoException) return
 
-		unexpectedErrorState.value = exception
 		pollConnections.pollSessionConnection().then {
 			synchronized(cachedPromiseSync) {
 				cachedPromises?.close()
@@ -265,7 +264,13 @@ class NowPlayingFilePropertiesViewModel(
 							}
 						}
 					}
-					.apply { excuse(::handleException) }
+					.then { showNowPlayingControls() }
+			}
+			.apply {
+				excuse {
+					setTrackProgress(0)
+					handleException(it)
+				}
 			}
 
 	private fun handleFilePropertyUpdates(message: FilePropertiesUpdatedMessage) {

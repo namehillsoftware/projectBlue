@@ -68,11 +68,17 @@ fun MarqueeText(
 		)
 	}
 	var offset by remember { mutableStateOf(0) }
-	val textLayoutInfoState = remember { mutableStateOf<TextLayoutInfo?>(null) }
-	LaunchedEffect(textLayoutInfoState.value) {
-		val textLayoutInfo = textLayoutInfoState.value ?: return@LaunchedEffect
-		if (textLayoutInfo.textWidth <= textLayoutInfo.containerWidth) return@LaunchedEffect
-		if (textLayoutInfo.containerWidth == 0) return@LaunchedEffect
+	var textLayoutInfoState by remember { mutableStateOf<TextLayoutInfo?>(null) }
+	LaunchedEffect(textLayoutInfoState) {
+		val textLayoutInfo = textLayoutInfoState?.takeUnless {
+			it.containerWidth == 0 || it.textWidth <= it.containerWidth
+		}
+
+		if (textLayoutInfo == null) {
+			offset = 0
+			return@LaunchedEffect
+		}
+
 		val duration = 7500 * textLayoutInfo.textWidth / textLayoutInfo.containerWidth
 		val delay = 1000L
 
@@ -115,10 +121,10 @@ fun MarqueeText(
 			mainText = subcompose(MarqueeLayers.SecondaryText) {
 				createText(textModifier.fillMaxWidth())
 			}.first().measure(constraints)
-			textLayoutInfoState.value = null
+			textLayoutInfoState = null
 		} else {
 			val spacing = constraints.maxWidth * 2 / 3
-			textLayoutInfoState.value = TextLayoutInfo(
+			textLayoutInfoState = TextLayoutInfo(
 				textWidth = mainText.width + spacing,
 				containerWidth = constraints.maxWidth
 			)

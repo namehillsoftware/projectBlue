@@ -1,7 +1,8 @@
 package com.lasthopesoftware.bluewater.client.connection.polling
 
-import android.app.AlertDialog
 import android.content.Context
+import androidx.appcompat.app.AlertDialog
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService.Companion.pollSessionConnection
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
@@ -12,13 +13,13 @@ object WaitForConnectionDialog {
     }
 
     private class AlertHolder(context: Context) {
-        private val alertDialog: AlertDialog
-        private var isDismissed = false
+		private val alertDialog: AlertDialog
+		private var isDismissed = false
 
         init {
             val message = context.getString(R.string.lbl_attempting_to_reconnect)
 				.format(context.getString(R.string.app_name))
-            val builder = AlertDialog.Builder(context, R.style.AppTheme_DialogTheme)
+            val builder = MaterialAlertDialogBuilder(context, R.style.AppTheme_DialogTheme)
             builder
 				.setTitle(context.getText(R.string.lbl_connection_lost_title))
 				.setMessage(message)
@@ -32,7 +33,6 @@ object WaitForConnectionDialog {
             builder.setOnCancelListener { isDismissed = true }
             alertDialog = builder.create()
 				.apply {
-					setInverseBackgroundForced(true)
 					setOnShowListener {
 						pollingSessionConnection
 							.must {
