@@ -21,7 +21,7 @@ import java.net.URL
 private const val libraryId = 718
 private const val serviceFileId = 355
 
-class `When Initializing The NowPlayingFilePropertiesViewModel` {
+class WhenInitializingTheNowPlayingFilePropertiesViewModel {
 
 	private val nowPlayingViewModel by lazy {
 		val nowPlayingRepository = mockk<MaintainNowPlayingState> {
