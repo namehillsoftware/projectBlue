@@ -264,6 +264,7 @@ class NowPlayingFilePropertiesViewModel(
 							}
 						}
 					}
+					.then { showNowPlayingControls() }
 			}
 			.apply {
 				excuse {
