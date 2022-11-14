@@ -2,14 +2,17 @@ package com.lasthopesoftware.bluewater.client.browsing.files.properties.playstat
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FakeFilePropertiesContainerRepository
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.ScopedFilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.fileproperties.ScopedFilePropertiesPlayStatsUpdater
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.ScopedFilePropertiesStorage
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.fileproperties.FilePropertiesPlayStatsUpdater
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertyStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeRevisionConnectionProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRevisionProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTuple
-import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfScopedConnectionIsReadOnly
+import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfConnectionIsReadOnly
+import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
+import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
@@ -22,18 +25,22 @@ import org.joda.time.Duration
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
+private const val libraryId = 548
+
 class WhenStoringTheUpdatedPlayStats {
 
 	private val services by lazy {
-		val connectionProvider = FakeRevisionConnectionProvider()
-		connectionProvider.setSyncRevision(1)
-		val duration = Duration.standardMinutes(5).millis
-		val lastPlayed = Duration.millis(DateTime.now().minus(Duration.standardDays(10)).millis).standardSeconds
 
-		connectionProvider.mapResponse(
-			{
-				FakeConnectionResponseTuple(
-					200, """<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+		val libraryConnectionProvider = mockk<ProvideLibraryConnections> {
+			val connectionProvider = FakeRevisionConnectionProvider()
+			connectionProvider.setSyncRevision(1)
+			val duration = Duration.standardMinutes(5).millis
+			val lastPlayed = Duration.millis(DateTime.now().minus(Duration.standardDays(10)).millis).standardSeconds
+
+			connectionProvider.mapResponse(
+				{
+					FakeConnectionResponseTuple(
+						200, """<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <MPL Version="2.0" Title="MCWS - Files - 10936" PathSeparator="\">
 <Item>
 <Field Name="Key">23</Field>
@@ -45,27 +52,33 @@ class WhenStoringTheUpdatedPlayStats {
 </Item>
 </MPL>
 """.toByteArray()
-				)
-			},
-			"File/GetInfo", "File=23"
-		)
-
-		val checkConnection = mockk<CheckIfScopedConnectionIsReadOnly>()
-		every { checkConnection.promiseIsReadOnly() } returns false.toPromise()
-		val filePropertiesContainer = FakeFilePropertiesContainerRepository()
-		val scopedRevisionProvider = ScopedRevisionProvider(connectionProvider)
-		val sessionFilePropertiesProvider =
-			ScopedFilePropertiesProvider(connectionProvider, scopedRevisionProvider, filePropertiesContainer)
-		Pair(ScopedFilePropertiesPlayStatsUpdater(
-			sessionFilePropertiesProvider,
-			ScopedFilePropertiesStorage(
-				connectionProvider,
-				checkConnection,
-				scopedRevisionProvider,
-				filePropertiesContainer,
-				RecordingApplicationMessageBus(),
+					)
+				},
+				"File/GetInfo", "File=23"
 			)
-		), sessionFilePropertiesProvider)
+
+			every { promiseLibraryConnection(LibraryId(libraryId)) } returns ProgressingPromise(connectionProvider)
+		}
+
+		val checkConnection = mockk<CheckIfConnectionIsReadOnly>()
+		every { checkConnection.promiseIsReadOnly(LibraryId(libraryId)) } returns false.toPromise()
+		val filePropertiesContainer = FakeFilePropertiesContainerRepository()
+		val scopedRevisionProvider = LibraryRevisionProvider(libraryConnectionProvider)
+		val sessionFilePropertiesProvider =
+			FilePropertiesProvider(libraryConnectionProvider, scopedRevisionProvider, filePropertiesContainer)
+		Pair(
+			FilePropertiesPlayStatsUpdater(
+				sessionFilePropertiesProvider,
+				FilePropertyStorage(
+					libraryConnectionProvider,
+					checkConnection,
+					scopedRevisionProvider,
+					filePropertiesContainer,
+					RecordingApplicationMessageBus(),
+				)
+			),
+			sessionFilePropertiesProvider,
+		)
 	}
 
 	private var fileProperties: Map<String, String>? = null
@@ -75,9 +88,9 @@ class WhenStoringTheUpdatedPlayStats {
 		val (filePropertiesPlayStatsUpdater, sessionFilePropertiesProvider) = services
 		val serviceFile = ServiceFile(23)
 		fileProperties = filePropertiesPlayStatsUpdater
-			.promisePlaystatsUpdate(serviceFile)
+			.promisePlaystatsUpdate(LibraryId(libraryId), serviceFile)
 			.eventually {
-				sessionFilePropertiesProvider.promiseFileProperties(serviceFile)
+				sessionFilePropertiesProvider.promiseFileProperties(LibraryId(libraryId), serviceFile)
 			}
 			.toExpiringFuture()
 			.get()

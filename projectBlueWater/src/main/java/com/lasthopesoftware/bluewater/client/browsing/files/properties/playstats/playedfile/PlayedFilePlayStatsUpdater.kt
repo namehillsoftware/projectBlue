@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.playedfile
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.UpdatePlaystats
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
 import com.lasthopesoftware.bluewater.shared.exceptions.HttpResponseException
@@ -11,7 +10,9 @@ import com.namehillsoftware.handoff.promises.Promise
 
 private val logger by lazyLogger<PlayedFilePlayStatsUpdater>()
 
-class PlayedFilePlayStatsUpdater(private val libraryConnections: ProvideLibraryConnections) : UpdatePlaystats {
+class PlayedFilePlayStatsUpdater(
+	private val libraryConnections: ProvideLibraryConnections
+) : UpdatePlayStatsWithPlayedSignal {
     override fun promisePlaystatsUpdate(libraryId: LibraryId, serviceFile: ServiceFile): Promise<*> =
 		libraryConnections
 			.promiseLibraryConnection(libraryId)

@@ -21,13 +21,21 @@ import ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy
 import ch.qos.logback.core.rolling.TimeBasedRollingPolicy
 import ch.qos.logback.core.util.FileSize
 import ch.qos.logback.core.util.StatusPrinter
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.UpdatePlayStatsOnCompleteRegistration
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.UpdatePlayStatsOnPlaybackCompleteReceiver
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.factory.LibraryPlaystatsUpdateSelector
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.fileproperties.FilePropertiesPlayStatsUpdater
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.playedfile.PlayedFilePlayStatsUpdater
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertyStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.request.read.StorageReadPermissionsRequestNotificationBuilder
 import com.lasthopesoftware.bluewater.client.browsing.library.request.read.StorageReadPermissionsRequestedBroadcaster
 import com.lasthopesoftware.bluewater.client.browsing.library.request.write.StorageWritePermissionsRequestNotificationBuilder
 import com.lasthopesoftware.bluewater.client.browsing.library.request.write.StorageWritePermissionsRequestedBroadcaster
+import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
+import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.receivers.SessionConnectionRegistrationsMaintainer
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionSettingsChangeReceiver
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
@@ -35,6 +43,7 @@ import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessio
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble.PlaybackFileStartedScrobblerRegistration
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble.PlaybackFileStoppedScrobblerRegistration
+import com.lasthopesoftware.bluewater.client.servers.version.LibraryServerVersionProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
 import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
@@ -54,6 +63,8 @@ open class MainApplication : Application() {
 		private var isWorkManagerInitialized = false
 	}
 
+	private val libraryConnections by lazy { ConnectionSessionManager.get(this) }
+	private val libraryRevisionProvider by lazy { LibraryRevisionProvider(libraryConnections) }
 	private val libraryRepository by lazy { LibraryRepository(this) }
 	private val storedFileAccess by lazy { StoredFileAccess(this) }
 	private val notificationManagerLazy by lazy { getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager }
@@ -116,7 +127,7 @@ open class MainApplication : Application() {
 			)
 		}
 
-		applicationMessageBus.registerReceiver(ConnectionSessionSettingsChangeReceiver(ConnectionSessionManager.get(this)))
+		applicationMessageBus.registerReceiver(ConnectionSessionSettingsChangeReceiver(libraryConnections))
 		applicationMessageBus.registerReceiver(
 			SelectedConnectionSettingsChangeReceiver(
 				SelectedLibraryIdProvider(applicationSettings),
@@ -125,9 +136,33 @@ open class MainApplication : Application() {
 		)
 
 		val connectionDependentReceiverRegistrations = listOf(
-			UpdatePlayStatsOnCompleteRegistration(applicationMessageBus),
 			PlaybackFileStartedScrobblerRegistration(this),
 			PlaybackFileStoppedScrobblerRegistration(this))
+
+		applicationMessageBus.registerReceiver(
+			UpdatePlayStatsOnPlaybackCompleteReceiver(
+				LibraryPlaystatsUpdateSelector(
+					LibraryServerVersionProvider(libraryConnections),
+					PlayedFilePlayStatsUpdater(
+						libraryConnections
+					),
+					FilePropertiesPlayStatsUpdater(
+						FilePropertiesProvider(
+							libraryConnections,
+							libraryRevisionProvider,
+							FilePropertyCache,
+						),
+						FilePropertyStorage(
+							libraryConnections,
+							ConnectionAuthenticationChecker(libraryConnections),
+							libraryRevisionProvider,
+							FilePropertyCache,
+							applicationMessageBus
+						),
+					),
+				)
+			)
+		)
 
 		applicationMessageBus.registerReceiver(SessionConnectionRegistrationsMaintainer(
 			this,

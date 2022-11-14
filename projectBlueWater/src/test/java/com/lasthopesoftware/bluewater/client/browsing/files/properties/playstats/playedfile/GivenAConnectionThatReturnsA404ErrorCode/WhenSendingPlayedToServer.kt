@@ -1,10 +1,14 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.playedfile.GivenAConnectionThatReturnsA404ErrorCode
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.playedfile.ScopedPlayedFilePlayStatsUpdater
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.playedfile.PlayedFilePlayStatsUpdater
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
 import com.lasthopesoftware.bluewater.shared.exceptions.HttpResponseException
+import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import io.mockk.every
+import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -16,10 +20,13 @@ class WhenSendingPlayedToServer {
 
 	@BeforeAll
 	fun act() {
-		val connectionProvider = FakeConnectionProvider()
-		val updater = ScopedPlayedFilePlayStatsUpdater(connectionProvider)
+		val updater = PlayedFilePlayStatsUpdater(
+			mockk {
+				every { promiseLibraryConnection(any()) } returns ProgressingPromise(FakeConnectionProvider())
+			}
+		)
 		try {
-			updater.promisePlaystatsUpdate(ServiceFile(15)).toExpiringFuture().get()
+			updater.promisePlaystatsUpdate(LibraryId(394), ServiceFile(15)).toExpiringFuture().get()
 		} catch (e: ExecutionException) {
 			httpResponseException = e.cause as? HttpResponseException?
 		}
