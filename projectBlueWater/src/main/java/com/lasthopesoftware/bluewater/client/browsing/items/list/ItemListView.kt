@@ -215,7 +215,7 @@ fun ItemListView(
 					) {
 						ProvideTextStyle(MaterialTheme.typography.h5) {
 							Text(
-								text = stringResource(R.string.item_count_label, files.size),
+								text = stringResource(R.string.item_count_label, items.size),
 								fontWeight = FontWeight.Bold,
 								modifier = Modifier
 									.padding(4.dp)

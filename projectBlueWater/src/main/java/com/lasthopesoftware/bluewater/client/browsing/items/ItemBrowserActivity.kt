@@ -532,6 +532,7 @@ private fun ItemBrowserView(
 						)
 					},
 					itemListMenuViewModel = itemListMenuViewModel,
+					onBack = graphNavigation::backOut,
 				)
 			}
 		}
