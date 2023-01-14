@@ -185,7 +185,7 @@ open class MainApplication : Application() {
 				}
 
 				rollingFileAppender.triggeringPolicy = SizeBasedTriggeringPolicy<ILoggingEvent>().apply {
-					maxFileSize = FileSize.valueOf("100 mb")
+					maxFileSize = FileSize.valueOf("512 mb")
 					context = lc
 					start()
 				}
