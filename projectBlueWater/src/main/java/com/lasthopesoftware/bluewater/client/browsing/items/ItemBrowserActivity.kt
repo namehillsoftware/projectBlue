@@ -9,6 +9,7 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.addCallback
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
@@ -366,6 +367,26 @@ private class GraphDependencies(inner: ItemBrowserViewDependencies, graphNavigat
 	override val applicationNavigation = graphNavigation
 }
 
+@Composable
+private fun OverrideBackNavigation(graphNavigation: GraphNavigation, navController: NavHostController) {
+	val onBackPressedDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
+	DisposableEffect(onBackPressedDispatcher) {
+		val callback = onBackPressedDispatcher
+			?.run {
+				navController.enableOnBackPressed(false)
+				addCallback { graphNavigation.backOut() }
+			}
+
+		onDispose {
+			callback
+				?.apply {
+					remove()
+					navController.enableOnBackPressed(true)
+				}
+		}
+	}
+}
+
 private val bottomAppBarHeight = Dimensions.AppBarHeight
 
 @OptIn(ExperimentalMaterialApi::class)
@@ -379,6 +400,7 @@ private fun ItemBrowserView(
 	systemUiController.setStatusBarColor(MaterialTheme.colors.surface)
 
 	val navController = rememberNavController()
+	navController.enableOnBackPressed(false)
 	val scaffoldState = rememberBottomSheetScaffoldState()
 	val coroutineScope = rememberCoroutineScope()
 
@@ -391,15 +413,6 @@ private fun ItemBrowserView(
 			coroutineScope,
 			itemBrowserViewDependencies.itemListMenuBackPressedHandler,
 		)
-	}
-
-	val onBackPressedDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
-	DisposableEffect(onBackPressedDispatcher) {
-		val callback = onBackPressedDispatcher?.addCallback { graphNavigation.backOut() }
-
-		onDispose {
-			callback?.remove()
-		}
 	}
 
 	with(remember {
@@ -632,6 +645,22 @@ private fun ItemBrowserView(
 						},
 					)
 				) { entry ->
+					val libraryId = entry.arguments?.getInt(libraryIdArgument)?.let(::LibraryId) ?: startingLibraryId ?: return@composable
+					val arguments = entry.arguments
+					val playlistId = arguments?.getInt(playlistIdArgument)
+					val item = if (playlistId != null && playlistId > -1) {
+						Item(
+							arguments.getInt(keyArgument),
+							arguments.getString(titleArgument),
+							PlaylistId(playlistId),
+						)
+					} else {
+						Item(
+							arguments?.getInt(keyArgument) ?: return@composable,
+							arguments.getString(titleArgument)
+						)
+					}
+
 					val view = entry.BrowsableItemListView(
 						connectionViewModel = entry.viewModelStore.buildViewModel {
 							ConnectionStatusViewModel(
@@ -677,21 +706,7 @@ private fun ItemBrowserView(
 						applicationNavigation = applicationNavigation,
 					)
 
-					val libraryId = entry.arguments?.getInt(libraryIdArgument)?.let(::LibraryId) ?: startingLibraryId ?: return@composable
-					val arguments = entry.arguments
-					val playlistId = arguments?.getInt(playlistIdArgument)
-					val item = if (playlistId != null && playlistId > -1) {
-						Item(
-							arguments.getInt(keyArgument),
-							arguments.getString(titleArgument),
-							PlaylistId(playlistId),
-						)
-					} else {
-						Item(
-							arguments?.getInt(keyArgument) ?: return@composable,
-							arguments.getString(titleArgument)
-						)
-					}
+					BackHandler { graphNavigation.backOut() }
 
 					view(libraryId, item)
 				}
@@ -706,6 +721,7 @@ private fun ItemBrowserView(
 					)
 				) { entry ->
 					val libraryId = entry.arguments?.getInt(libraryIdArgument)?.let(::LibraryId) ?: startingLibraryId ?: return@composable
+					BackHandler { graphNavigation.backOut() }
 
 					val activeFileDownloadsViewModel = entry.viewModelStore.buildViewModel {
 						ActiveFileDownloadsViewModel(
@@ -733,6 +749,8 @@ private fun ItemBrowserView(
 				}
 
 				composable(GraphNavigation.Search.route) { entry ->
+					BackHandler { graphNavigation.backOut() }
+
 					SearchFilesView(
 						searchFilesViewModel = entry.viewModelStore.buildViewModel {
 							SearchFilesViewModel(
