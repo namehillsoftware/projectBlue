@@ -17,7 +17,9 @@ import ch.qos.logback.classic.android.LogcatAppender
 import ch.qos.logback.classic.encoder.PatternLayoutEncoder
 import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.rolling.RollingFileAppender
+import ch.qos.logback.core.rolling.SizeBasedTriggeringPolicy
 import ch.qos.logback.core.rolling.TimeBasedRollingPolicy
+import ch.qos.logback.core.util.FileSize
 import ch.qos.logback.core.util.StatusPrinter
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.UpdatePlayStatsOnCompleteRegistration
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
@@ -174,14 +176,22 @@ open class MainApplication : Application() {
 				rollingFileAppender.context = lc
 				rollingFileAppender.encoder = filePle
 
-				val rollingPolicy = TimeBasedRollingPolicy<ILoggingEvent>()
-				rollingPolicy.fileNamePattern = File(logDir, "%d{yyyy-MM-dd}.log").absolutePath
-				rollingPolicy.maxHistory = 30
-				rollingPolicy.setParent(rollingFileAppender) // parent and context required!
-				rollingPolicy.context = lc
-				rollingPolicy.start()
-				rollingFileAppender.rollingPolicy = rollingPolicy
+				rollingFileAppender.rollingPolicy = TimeBasedRollingPolicy<ILoggingEvent>().apply {
+					fileNamePattern = File(logDir, "%d{yyyy-MM-dd}.log").absolutePath
+					maxHistory = 30
+					setParent(rollingFileAppender) // parent and context required!
+					context = lc
+					start()
+				}
+
+				rollingFileAppender.triggeringPolicy = SizeBasedTriggeringPolicy<ILoggingEvent>().apply {
+					maxFileSize = FileSize.valueOf("512 mb")
+					context = lc
+					start()
+				}
+
 				rollingFileAppender.start()
+
 				asyncAppender.addAppender(rollingFileAppender)
 			}
 
