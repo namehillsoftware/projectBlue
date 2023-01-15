@@ -28,7 +28,7 @@ open class GuavaPromiseCache<Input : Any, Output>(
 						cachedPromiseBox?.resolvedPromise != null -> cachedPromiseBox.originalPromise
 						// Otherwise, clear out the old entry and go back through the process (this could invalidate an in-progress promise)
 						else -> {
-							cachedPromises.invalidate(input)
+							cachedPromises.asMap().remove(input, cachedPromiseBox)
 							getOrAdd(input, factory)
 						}
 					}
