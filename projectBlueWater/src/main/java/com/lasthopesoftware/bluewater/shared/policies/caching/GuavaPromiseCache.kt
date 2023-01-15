@@ -20,11 +20,10 @@ open class GuavaPromiseCache<Input : Any, Output>(
 				// built result
 				{ factoryBuiltPromise ?: it.toPromise() },
 				{ e ->
-					if (factoryBuiltPromise != null && cachedPromises.getIfPresent(input) == factoryBuiltPromise) Promise(e)
+					if (factoryBuiltPromise != null && cachedPromises.getIfPresent(input)?.originalPromise == factoryBuiltPromise) Promise(e)
 					else {
-						val newPromise = factory(input)
-						cachedPromises.put(input, ResolvedPromiseBox(newPromise))
-						newPromise
+						cachedPromises.invalidate(input)
+						buildNewIfNeeded(input, factory)
 					}
 				}
 			)
