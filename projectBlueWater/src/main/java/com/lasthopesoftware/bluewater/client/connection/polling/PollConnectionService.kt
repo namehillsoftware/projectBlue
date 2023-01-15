@@ -96,9 +96,9 @@ class PollConnectionService : Service(), MessengerOperator<IConnectionProvider> 
 		if (withNotification) beginNotification()
 
 		ThreadPools.compute.execute {
-			var connectionTime = initialConnectionTimeMs.toLong()
+			var connectionWaitTime = initialConnectionTimeMs.toLong()
 			while (!cancellationToken.isCancelled) {
-				Thread.sleep(connectionTime)
+				Thread.sleep(connectionWaitTime)
 				try {
 					val connectionProvider = getInstance(this)
 						.promiseTestedSessionConnection()
@@ -112,7 +112,7 @@ class PollConnectionService : Service(), MessengerOperator<IConnectionProvider> 
 					// ignore
 				}
 
-				connectionTime = if (connectionTime < 32000) connectionTime * 2 else connectionTime
+				connectionWaitTime = if (connectionWaitTime < 32000) connectionWaitTime * 2 else connectionWaitTime
 			}
 		}
 	}
