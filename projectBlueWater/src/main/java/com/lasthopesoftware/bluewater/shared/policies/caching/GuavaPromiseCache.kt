@@ -13,26 +13,20 @@ open class GuavaPromiseCache<Input : Any, Output>(
 
 	private fun buildNewIfNeeded(input: Input, factory: (Input) -> Promise<Output>): Promise<Output> {
 		var factoryBuiltPromise: Promise<Output>? = null
-		return cachedPromises.get(input) { ResolvedPromiseBox(factory(input).also { factoryBuiltPromise = it }) }
-			.originalPromise
-			.eventually(
-				// If a new promise was built, use its result, otherwise try again or pass through the previous factory
-				// built result
-				{ factoryBuiltPromise ?: it.toPromise() },
-				{ e ->
-					val cachedPromiseBox = cachedPromises.getIfPresent(input)
-					when {
-						// If an error occurs and the promise is the most recently built, then just propagate the error
-						factoryBuiltPromise != null && cachedPromiseBox?.originalPromise == factoryBuiltPromise -> Promise(e)
-						// If the cached promise resolved, propagate the result
-						cachedPromiseBox?.resolvedPromise != null -> cachedPromiseBox.originalPromise
-						// Otherwise, clear out the old entry and go back through the process (this could invalidate an in-progress promise)
-						else -> {
-							cachedPromises.asMap().remove(input, cachedPromiseBox)
-							getOrAdd(input, factory)
-						}
+		val cachedPromiseBox = cachedPromises.get(input) { ResolvedPromiseBox(factory(input).also { factoryBuiltPromise = it }) }
+
+		// If the factory built the promise that was returned by the cache, return it directly to the caller,
+		// otherwise recursively call `getOrAdd` in the error condition, and otherwise pass through the result of the
+		// cached promise.
+		return factoryBuiltPromise.takeIf { it === cachedPromiseBox.originalPromise }
+			?: cachedPromiseBox
+				.originalPromise
+				.eventually(
+					{ it.toPromise() },
+					{
+						cachedPromises.asMap().remove(input, cachedPromiseBox)
+						getOrAdd(input, factory)
 					}
-				}
-			)
+				)
 	}
 }
