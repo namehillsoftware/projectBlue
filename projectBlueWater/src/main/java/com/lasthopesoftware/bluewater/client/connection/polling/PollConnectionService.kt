@@ -23,8 +23,6 @@ import com.lasthopesoftware.bluewater.shared.android.services.GenericBinder
 import com.lasthopesoftware.bluewater.shared.android.services.promiseBoundService
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
-import com.lasthopesoftware.bluewater.shared.promises.toFuture
-import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.Messenger
 import com.namehillsoftware.handoff.promises.MessengerOperator
 import com.namehillsoftware.handoff.promises.Promise
@@ -83,11 +81,10 @@ class PollConnectionService : Service(), MessengerOperator<IConnectionProvider> 
 	override fun send(messenger: Messenger<IConnectionProvider>) {
 		val cancellationToken = CancellationToken()
 		messenger.cancellationRequested(cancellationToken)
-
 		pollSessionConnection(messenger, cancellationToken, 1000)
 	}
 
-	private fun pollSessionConnection(messenger: Messenger<IConnectionProvider>, cancellationToken: CancellationToken, initialConnectionTimeMs: Int) {
+	private fun pollSessionConnection(messenger: Messenger<IConnectionProvider>, cancellationToken: CancellationToken, connectionTime: Int) {
 		if (cancellationToken.isCancelled) {
 			messenger.sendRejection(CancellationException("Polling the session connection was cancelled"))
 			return
@@ -95,27 +92,21 @@ class PollConnectionService : Service(), MessengerOperator<IConnectionProvider> 
 
 		if (withNotification) beginNotification()
 
-		ThreadPools.compute.execute {
-			var connectionWaitTime = initialConnectionTimeMs.toLong()
-			while (!cancellationToken.isCancelled) {
-				Thread.sleep(connectionWaitTime)
-				if (cancellationToken.isCancelled) break
-				try {
-					val connectionProvider = getInstance(this)
-						.promiseTestedSessionConnection()
-						.toFuture()
-						.get()
-					if (connectionProvider != null) {
-						messenger.sendResolution(connectionProvider)
-						break
-					}
-				} catch (e: Throwable) {
-					// ignore
+		val nextConnectionTime = if (connectionTime < 32000) connectionTime * 2 else connectionTime
+		getInstance(this)
+			.promiseTestedSessionConnection()
+			.then({
+				when (it) {
+					null -> handler.postDelayed(
+						{ pollSessionConnection(messenger, cancellationToken, nextConnectionTime) },
+						connectionTime.toLong())
+					else -> messenger.sendResolution(it)
 				}
-
-				connectionWaitTime = if (connectionWaitTime < 32000) connectionWaitTime * 2 else connectionWaitTime
-			}
-		}
+			}, {
+				handler.postDelayed(
+					{ pollSessionConnection(messenger, cancellationToken, nextConnectionTime) },
+					connectionTime.toLong())
+			})
 	}
 
 	private fun beginNotification() {
@@ -127,8 +118,9 @@ class PollConnectionService : Service(), MessengerOperator<IConnectionProvider> 
 
 		val builder = NotificationCompat.Builder(this, notificationsConfiguration.notificationChannel)
 			.setOngoing(true)
+			.setContentIntent(pi)
 			.setContentTitle(getText(R.string.lbl_waiting_for_connection))
-			.addAction(0, getString(R.string.btn_cancel), pi)
+			.setContentText(getText(R.string.lbl_click_to_cancel))
 			.setSmallIcon(R.drawable.now_playing_status_icon_white)
 			.setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
 
