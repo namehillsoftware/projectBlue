@@ -19,14 +19,10 @@ open class GuavaPromiseCache<Input : Any, Output>(
 		// cached promise in the success condition. This ensures that each caller handles issues caused by its factory.
 		return factoryBuiltPromise.takeIf { it === cachedPromiseBox.originalPromise }
 			?: cachedPromiseBox
-				.originalPromise
-				.eventually(
-					{ cachedPromiseBox.originalPromise },
-					{
-						// Remove if it is still the current cachedPromiseBox for this input.
-						cachedPromises.asMap().remove(input, cachedPromiseBox)
-						getOrAdd(input, factory)
-					}
-				)
+				.forwardResolution {
+					// Remove if it is still the current cachedPromiseBox for this input.
+					cachedPromises.asMap().remove(input, cachedPromiseBox)
+					getOrAdd(input, factory)
+				}
 	}
 }
