@@ -115,7 +115,7 @@ private fun getItemBrowserIntent(context: Context, libraryId: LibraryId, item: I
 
 class ItemBrowserActivity : AppCompatActivity() {
 
-	private val rateLimiter by lazy { PromisingRateLimiter<Map<String, String>>(2) }
+	private val rateLimiter by lazy { PromisingRateLimiter<Map<String, String>>(1) }
 
 	private val browserLibraryIdProvider by lazy { getCachedSelectedLibraryIdProvider() }
 

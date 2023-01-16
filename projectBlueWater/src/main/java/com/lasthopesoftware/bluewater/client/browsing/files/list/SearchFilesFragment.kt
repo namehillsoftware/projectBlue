@@ -70,7 +70,7 @@ class SearchFilesFragment : Fragment() {
 					revisionProvider,
 					FilePropertyCache,
 				),
-				PromisingRateLimiter(2),
+				PromisingRateLimiter(1),
 			),
 		)
 	}

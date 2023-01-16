@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.shared.policies.caching
 
 import com.google.common.cache.Cache
 import com.lasthopesoftware.bluewater.shared.promises.ResolvedPromiseBox
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 
 open class GuavaPromiseCache<Input : Any, Output>(
@@ -16,14 +15,15 @@ open class GuavaPromiseCache<Input : Any, Output>(
 		val cachedPromiseBox = cachedPromises.get(input) { ResolvedPromiseBox(factory(input).also { factoryBuiltPromise = it }) }
 
 		// If the factory built the promise that was returned by the cache, return it directly to the caller,
-		// otherwise recursively call `getOrAdd` in the error condition, and otherwise pass through the result of the
-		// cached promise.
+		// otherwise recursively call `getOrAdd` in the error condition or pass through the result of the
+		// cached promise in the success condition. This ensures that each caller handles issues caused by its factory.
 		return factoryBuiltPromise.takeIf { it === cachedPromiseBox.originalPromise }
 			?: cachedPromiseBox
 				.originalPromise
 				.eventually(
-					{ it.toPromise() },
+					{ cachedPromiseBox.originalPromise },
 					{
+						// Remove if it is still the current cachedPromiseBox for this input.
 						cachedPromises.asMap().remove(input, cachedPromiseBox)
 						getOrAdd(input, factory)
 					}
