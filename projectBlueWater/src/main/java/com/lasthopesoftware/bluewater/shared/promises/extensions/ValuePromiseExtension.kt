@@ -38,8 +38,8 @@ fun <T> Deferred<T>.toPromise(): Promise<T> = PromiseDeferred(this)
 
 @Suppress("UNCHECKED_CAST")
 fun <T> T.toPromise(): Promise<T> = when (this) {
-	is Unit -> UnitPromise as Promise<T>
 	null -> Promise.empty()
+	is Unit -> UnitPromise as Promise<T>
 	else -> Promise(this)
 }
 
