@@ -21,7 +21,6 @@ import com.lasthopesoftware.bluewater.shared.messages.SendTypedMessages
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.namehillsoftware.handoff.promises.Promise
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -57,30 +56,23 @@ class ItemListViewModel(
 		activityLaunchingReceiver.close()
 	}
 
-	fun loadItem(item: Item): Promise<Unit> {
+	fun loadItem(libraryId: LibraryId, item: Item): Promise<Unit> {
 		mutableIsLoading.value = true
 		mutableItemValue.value = item.value ?: ""
-		return selectedLibraryId.promiseSelectedLibraryId()
-			.eventually { libraryId ->
-				loadedLibraryId = libraryId
-				libraryId
-					?.let {
-						val itemUpdate = itemProvider
-							.promiseItems(it, item.itemId)
-							.then { items ->
-								mutableItems.value = items.map(::ChildItemViewModel)
-							}
-
-						val promisedSyncUpdate = storedItemAccess
-							.isItemMarkedForSync(libraryId, item)
-							.then { isSynced ->
-								mutableIsSynced.value = isSynced
-							}
-
-						Promise.whenAll(itemUpdate, promisedSyncUpdate).unitResponse()
-					}
-					.keepPromise(Unit)
+		loadedLibraryId = libraryId
+		val itemUpdate = itemProvider
+			.promiseItems(libraryId, item.itemId)
+			.then { items ->
+				mutableItems.value = items.map(::ChildItemViewModel)
 			}
+
+		val promisedSyncUpdate = storedItemAccess
+			.isItemMarkedForSync(libraryId, item)
+			.then { isSynced ->
+				mutableIsSynced.value = isSynced
+			}
+
+		return Promise.whenAll(itemUpdate, promisedSyncUpdate)
 			.then {
 				loadedItem = item
 				mutableIsLoading.value = false
@@ -132,7 +124,9 @@ class ItemListViewModel(
 			.keepPromise(Unit)
 
 		fun viewItem() {
-			navigateApplication.viewItem(item)
+			loadedLibraryId?.also {
+				navigateApplication.viewItem(it, item)
+			}
 		}
 
 		override fun showMenu(): Boolean {

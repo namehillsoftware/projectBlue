@@ -68,7 +68,7 @@ class WhenPlayingAChildItem {
 
 	@BeforeAll
 	fun act() {
-		viewModel.loadItem(Item(itemId, itemValue)).toExpiringFuture().get()
+		viewModel.loadItem(LibraryId(libraryId), Item(itemId, itemValue)).toExpiringFuture().get()
 		viewModel.items.value[2].play().toExpiringFuture().get()
 	}
 

@@ -53,7 +53,7 @@ class WhenHidingTheMenu {
 			recordingMessageBus
 		)
 
-		viewModel.loadItem(Item(rootItemId, "leaf")).toExpiringFuture().get()
+		viewModel.loadItem(LibraryId(libraryId), Item(rootItemId, "leaf")).toExpiringFuture().get()
 		viewModel.items.value[4]
 	}
 

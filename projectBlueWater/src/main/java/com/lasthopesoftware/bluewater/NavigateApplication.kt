@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 
@@ -10,7 +11,7 @@ interface NavigateApplication {
 
 	fun launchSearch() {}
 
-	fun viewItem(item: IItem) {}
+	fun viewItem(libraryId: LibraryId, item: IItem) {}
 
 	fun viewNowPlaying() {}
 

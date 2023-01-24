@@ -13,4 +13,18 @@ class FakeStringResources : GetStringResources {
 		get() = ""
 	override val aboutTitle: String
 		get() = ""
+	override val connecting: String
+		get() = ""
+	override val gettingLibrary: String
+		get() = ""
+	override val gettingLibraryFailed: String
+		get() = ""
+	override val sendingWakeSignal: String
+		get() = ""
+	override val connectingToServerLibrary: String
+		get() = ""
+	override val errorConnectingTryAgain: String
+		get() = ""
+	override val connected: String
+		get() = ""
 }

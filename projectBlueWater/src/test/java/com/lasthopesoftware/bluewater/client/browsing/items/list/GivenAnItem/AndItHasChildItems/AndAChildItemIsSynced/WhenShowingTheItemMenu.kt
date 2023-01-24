@@ -57,7 +57,7 @@ class WhenShowingTheItemMenu {
 
 	@BeforeAll
 	fun act() {
-		viewModel.loadItem(Item(rootItemId, "leaf")).toExpiringFuture().get()
+		viewModel.loadItem(LibraryId(libraryId), Item(rootItemId, "leaf")).toExpiringFuture().get()
 		viewModel.items.value[3].showMenu()
 	}
 

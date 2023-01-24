@@ -70,7 +70,7 @@ class WhenPlayingAShuffledChildItem {
 
 	@BeforeAll
 	fun act() {
-		viewModel.loadItem(Item(itemId, itemValue)).toExpiringFuture().get()
+		viewModel.loadItem(LibraryId(libraryId), Item(itemId, itemValue)).toExpiringFuture().get()
 		viewModel.items.value[4].playShuffled().toExpiringFuture().get()
 	}
 

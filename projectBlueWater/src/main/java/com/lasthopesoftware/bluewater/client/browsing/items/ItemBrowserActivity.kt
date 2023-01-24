@@ -56,6 +56,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.h
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.libraries.SelectedLibraryUrlKeyProvider
@@ -84,29 +85,32 @@ import com.namehillsoftware.handoff.promises.Promise
 
 private val magicPropertyBuilder by lazy { MagicPropertyBuilder(cls<ItemBrowserActivity>()) }
 
+private const val libraryIdArgument = "libraryId"
 private const val keyArgument = "key"
 private const val titleArgument = "title"
 private const val playlistIdArgument = "playlistId"
 
+private val libraryIdProperty by lazy { magicPropertyBuilder.buildProperty(libraryIdArgument) }
 private val keyProperty by lazy { magicPropertyBuilder.buildProperty(keyArgument) }
 private val itemTitleProperty by lazy { magicPropertyBuilder.buildProperty(titleArgument) }
 private val playlistIdProperty by lazy { magicPropertyBuilder.buildProperty(playlistIdArgument) }
 
-fun Context.startItemBrowserActivity(item: IItem) {
-	if (item is Item) startItemBrowserActivity(item)
-	else startActivity(getItemBrowserIntent(this, item))
+fun Context.startItemBrowserActivity(libraryId: LibraryId, item: IItem) {
+	if (item is Item) startItemBrowserActivity(libraryId, item)
+	else startActivity(getItemBrowserIntent(this, libraryId, item))
 }
 
-fun Context.startItemBrowserActivity(item: Item) {
-	val fileListIntent = getItemBrowserIntent(this, item).apply {
+fun Context.startItemBrowserActivity(libraryId: LibraryId, item: Item) {
+	val fileListIntent = getItemBrowserIntent(this, libraryId, item).apply {
 		item.playlistId?.also { putExtra(playlistIdProperty, it.id) }
 	}
 	startActivity(fileListIntent)
 }
 
-private fun getItemBrowserIntent(context: Context, item: IItem) = Intent(context, cls<ItemBrowserActivity>()).apply {
+private fun getItemBrowserIntent(context: Context, libraryId: LibraryId, item: IItem) = Intent(context, cls<ItemBrowserActivity>()).apply {
 	putExtra(keyProperty, item.key)
 	putExtra(itemTitleProperty, item.value)
+	putExtra(libraryIdProperty, libraryId.id)
 }
 
 class ItemBrowserActivity : AppCompatActivity() {
@@ -217,6 +221,8 @@ class ItemBrowserActivity : AppCompatActivity() {
 	public override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
+		val libraryIdInt = savedInstanceState?.getInt(libraryIdProperty, -1) ?: intent.getIntExtra(libraryIdProperty, -1)
+		val libraryId = LibraryId(libraryIdInt)
 		activityApplicationNavigation
 			.viewConnectionRestoration()
 			.eventually(LoopedInPromise.response({
@@ -252,6 +258,7 @@ class ItemBrowserActivity : AppCompatActivity() {
 							stringResources,
 							libraryFilesProvider,
 							activityApplicationNavigation,
+							libraryId,
 							item,
 						)
 					}
@@ -270,10 +277,10 @@ private class GraphNavigation(private val navController: NavHostController, priv
 	}
 
 	object BrowseToItem {
-		const val route = "browse/{$keyArgument}?$titleArgument={$titleArgument}&$playlistIdArgument={$playlistIdArgument}"
+		const val route = "library/{$libraryIdArgument}/item/{$keyArgument}?$titleArgument={$titleArgument}&$playlistIdArgument={$playlistIdArgument}"
 
-		fun buildPath(item: IItem): String {
-			var path = "browse/${item.key}?$titleArgument=${item.value}"
+		fun buildPath(libraryId: LibraryId, item: IItem): String {
+			var path = "library/${libraryId.id}/item/${item.key}?$titleArgument=${item.value}"
 			if (item is Item) {
 				val playlistId = item.playlistId
 				if (playlistId != null)
@@ -290,8 +297,8 @@ private class GraphNavigation(private val navController: NavHostController, priv
 		}
 	}
 
-	override fun viewItem(item: IItem) {
-		navController.navigate(BrowseToItem.buildPath(item))
+	override fun viewItem(libraryId: LibraryId, item: IItem) {
+		navController.navigate(BrowseToItem.buildPath(libraryId, item))
 	}
 
 	override fun backOut(): Boolean = !navController.navigateUp() && inner.backOut()
@@ -314,6 +321,7 @@ private fun ItemBrowserView(
 	stringResources: StringResources,
 	libraryFilesProvider: LibraryFileProvider,
 	applicationNavigation: NavigateApplication,
+	startingLibraryId: LibraryId? = null,
 	startingItem: IItem? = null,
 ) {
 	val activity = LocalContext.current as? ComponentActivity ?: return
@@ -434,6 +442,10 @@ private fun ItemBrowserView(
 			composable(
 				GraphNavigation.BrowseToItem.route,
 				arguments = listOf(
+					navArgument(libraryIdArgument) {
+						type = NavType.IntType
+						defaultValue = startingLibraryId?.id ?: -1
+					},
 					navArgument(keyArgument) {
 						type = NavType.IntType
 						defaultValue = startingItem?.key ?: -1
@@ -449,6 +461,7 @@ private fun ItemBrowserView(
 					},
 				)
 			) { entry ->
+				val libraryId = entry.arguments?.getInt(libraryIdArgument)?.let(::LibraryId) ?: return@composable
 				val playlistId = entry.arguments?.getInt(playlistIdArgument)
 				val item = if (playlistId != null && playlistId > -1) {
 					Item(
@@ -504,7 +517,7 @@ private fun ItemBrowserView(
 
 				LaunchedEffect(item) {
 					Promise.whenAll(
-						itemListViewModel.loadItem(item),
+						itemListViewModel.loadItem(libraryId, item),
 						fileListViewModel.loadItem(item)
 					).suspend()
 				}

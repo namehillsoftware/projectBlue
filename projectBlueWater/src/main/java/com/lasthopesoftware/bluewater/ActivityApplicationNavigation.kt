@@ -5,6 +5,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsActivity.Companion.launchFileDetailsActivity
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.startItemBrowserActivity
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.NowPlayingActivity.Companion.startNowPlayingActivity
 import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
@@ -15,8 +16,8 @@ class ActivityApplicationNavigation(private val componentActivity: ComponentActi
 		componentActivity.launchFileDetailsActivity(playlist, position)
 	}
 
-	override fun viewItem(item: IItem) {
-		componentActivity.startItemBrowserActivity(item)
+	override fun viewItem(libraryId: LibraryId, item: IItem) {
+		componentActivity.startItemBrowserActivity(libraryId, item)
 	}
 
 	override fun viewNowPlaying() {

@@ -15,15 +15,16 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
-class WhenLoadingTheItems {
+private const val libraryId = 163
 
+class WhenLoadingTheItems {
 	private val viewModel by lazy {
 		val selectedLibraryIdProvider = mockk<ProvideSelectedLibraryId>().apply {
-			every { promiseSelectedLibraryId() } returns LibraryId(163).toPromise()
+			every { promiseSelectedLibraryId() } returns LibraryId(libraryId).toPromise()
 		}
 
 		val itemProvider = mockk<ProvideItems>().apply {
-			every { promiseItems(LibraryId(163), ItemId(826)) } returns listOf(
+			every { promiseItems(LibraryId(libraryId), ItemId(826)) } returns listOf(
 				Item(55),
 				Item(137),
 				Item(766),
@@ -33,7 +34,7 @@ class WhenLoadingTheItems {
 
 		val storedItemAccess = mockk<AccessStoredItems>().apply {
 			every { isItemMarkedForSync(any(), any<Item>()) } returns false.toPromise()
-			every { isItemMarkedForSync(LibraryId(163), Item(826, "leaf")) } returns true.toPromise()
+			every { isItemMarkedForSync(LibraryId(libraryId), Item(826, "leaf")) } returns true.toPromise()
 		}
 
 		ItemListViewModel(
@@ -50,7 +51,7 @@ class WhenLoadingTheItems {
 
 	@BeforeAll
 	fun act() {
-		viewModel.loadItem(Item(826, "leaf")).toExpiringFuture().get()
+		viewModel.loadItem(LibraryId(libraryId), Item(826, "leaf")).toExpiringFuture().get()
 	}
 
 	@Test
