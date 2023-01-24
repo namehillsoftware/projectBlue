@@ -62,6 +62,9 @@ import com.lasthopesoftware.bluewater.client.connection.authentication.Connectio
 import com.lasthopesoftware.bluewater.client.connection.libraries.SelectedLibraryUrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.polling.ConnectionPoller
+import com.lasthopesoftware.bluewater.client.connection.selected.ConnectionUpdatesView
+import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionViewModel
+import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
@@ -78,7 +81,6 @@ import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRateLimiter
-import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.suspend
 import com.lasthopesoftware.resources.strings.StringResources
 import com.namehillsoftware.handoff.promises.Promise
@@ -223,47 +225,44 @@ class ItemBrowserActivity : AppCompatActivity() {
 
 		val libraryIdInt = savedInstanceState?.getInt(libraryIdProperty, -1) ?: intent.getIntExtra(libraryIdProperty, -1)
 		val libraryId = LibraryId(libraryIdInt)
-		activityApplicationNavigation
-			.viewConnectionRestoration()
-			.eventually(LoopedInPromise.response({
-				val playlistId = savedInstanceState?.getInt(playlistIdProperty, -1) ?: intent.getIntExtra(playlistIdProperty, -1)
-				val item = if (playlistId > -1) {
-					Item(
-						savedInstanceState?.getInt(keyProperty) ?: intent.getIntExtra(keyProperty, 1),
-						savedInstanceState?.getString(itemTitleProperty) ?: intent.getStringExtra(itemTitleProperty),
-						PlaylistId(playlistId),
-					)
-				} else {
-					Item(
-						savedInstanceState?.getInt(keyProperty) ?: intent.getIntExtra(keyProperty, 1),
-						savedInstanceState?.getString(itemTitleProperty) ?: intent.getStringExtra(itemTitleProperty),
-					)
-				}
+		val playlistId = savedInstanceState?.getInt(playlistIdProperty, -1) ?: intent.getIntExtra(playlistIdProperty, -1)
+		val item = if (playlistId > -1) {
+			Item(
+				savedInstanceState?.getInt(keyProperty) ?: intent.getIntExtra(keyProperty, 1),
+				savedInstanceState?.getString(itemTitleProperty) ?: intent.getStringExtra(itemTitleProperty),
+				PlaylistId(playlistId),
+			)
+		} else {
+			Item(
+				savedInstanceState?.getInt(keyProperty) ?: intent.getIntExtra(keyProperty, 1),
+				savedInstanceState?.getString(itemTitleProperty) ?: intent.getStringExtra(itemTitleProperty),
+			)
+		}
 
-				setContent {
-					ProjectBlueTheme {
-						ItemBrowserView(
-							nowPlayingFilePropertiesViewModel,
-							browserLibraryIdProvider,
-							itemProvider,
-							itemListProvider,
-							messageBus,
-							storedItemAccess,
-							playbackServiceController,
-							fileProvider,
-							menuMessageBus,
-							itemListMenuViewModel,
-							scopedFilePropertiesProvider,
-							scopedUrlKeyProvider,
-							stringResources,
-							libraryFilesProvider,
-							activityApplicationNavigation,
-							libraryId,
-							item,
-						)
-					}
-				}
-			}, this))
+		setContent {
+			ProjectBlueTheme {
+				ItemBrowserView(
+					nowPlayingFilePropertiesViewModel,
+					browserLibraryIdProvider,
+					itemProvider,
+					itemListProvider,
+					messageBus,
+					storedItemAccess,
+					playbackServiceController,
+					fileProvider,
+					menuMessageBus,
+					itemListMenuViewModel,
+					scopedFilePropertiesProvider,
+					scopedUrlKeyProvider,
+					stringResources,
+					libraryFilesProvider,
+					activityApplicationNavigation,
+					libraryConnectionProvider,
+					libraryId,
+					item,
+				)
+			}
+		}
 	}
 
 	override fun onBackPressed() {
@@ -321,6 +320,7 @@ private fun ItemBrowserView(
 	stringResources: StringResources,
 	libraryFilesProvider: LibraryFileProvider,
 	applicationNavigation: NavigateApplication,
+	libraryConnectionProvider: ConnectionSessionManager,
 	startingLibraryId: LibraryId? = null,
 	startingItem: IItem? = null,
 ) {
@@ -356,7 +356,9 @@ private fun ItemBrowserView(
 							Icons.Default.Search,
 							contentDescription = stringResource(id = R.string.lbl_search),
 							tint = MaterialTheme.colors.onSecondary,
-							modifier = Modifier.align(Alignment.Center).padding(start = 16.dp, end = 16.dp)
+							modifier = Modifier
+								.align(Alignment.Center)
+								.padding(start = 16.dp, end = 16.dp)
 						)
 					}
 
@@ -478,7 +480,6 @@ private fun ItemBrowserView(
 
 				val itemListViewModel = entry.viewModelStore.buildViewModel {
 					ItemListViewModel(
-						browserLibraryIdProvider,
 						itemProvider,
 						messageBus,
 						storedItemAccess,
@@ -498,24 +499,40 @@ private fun ItemBrowserView(
 					)
 				}
 
-				ItemListView(
-					itemListViewModel = itemListViewModel, fileListViewModel = fileListViewModel, nowPlayingViewModel = nowPlayingViewModel,
-					itemListMenuViewModel = itemListMenuViewModel,
-					trackHeadlineViewModelProvider = entry.viewModelStore.buildViewModel {
-						TrackHeadlineViewModelProvider(
-							scopedFilePropertiesProvider,
-							scopedUrlKeyProvider,
-							stringResources,
-							playbackServiceController,
-							graphNavigation,
-							menuMessageBus,
-							messageBus,
-						)
-					},
-					onBack = graphNavigation::backOut
-				)
+				val connectionViewModel = entry.viewModelStore.buildViewModel {
+					InstantiateSelectedConnectionViewModel(
+						stringResources,
+						libraryConnectionProvider,
+					)
+				}
+
+				val isCheckingConnection by connectionViewModel.isGettingConnection.collectAsState()
+
+				if (!isCheckingConnection) {
+					ItemListView(
+						itemListViewModel = itemListViewModel,
+						fileListViewModel = fileListViewModel,
+						nowPlayingViewModel = nowPlayingViewModel,
+						itemListMenuViewModel = itemListMenuViewModel,
+						trackHeadlineViewModelProvider = entry.viewModelStore.buildViewModel {
+							TrackHeadlineViewModelProvider(
+								scopedFilePropertiesProvider,
+								scopedUrlKeyProvider,
+								stringResources,
+								playbackServiceController,
+								graphNavigation,
+								menuMessageBus,
+								messageBus,
+							)
+						},
+						onBack = graphNavigation::backOut
+					)
+				} else {
+					ConnectionUpdatesView(connectionViewModel)
+				}
 
 				LaunchedEffect(item) {
+					connectionViewModel.ensureConnectionIsWorking(libraryId).suspend()
 					Promise.whenAll(
 						itemListViewModel.loadItem(libraryId, item),
 						fileListViewModel.loadItem(item)

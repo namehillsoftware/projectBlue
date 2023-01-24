@@ -6,10 +6,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsA
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.startItemBrowserActivity
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.NowPlayingActivity.Companion.startNowPlayingActivity
-import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
-import com.namehillsoftware.handoff.promises.Promise
 
 class ActivityApplicationNavigation(private val componentActivity: ComponentActivity) : NavigateApplication {
 	override fun viewFileDetails(playlist: List<ServiceFile>, position: Int) {
@@ -23,9 +20,6 @@ class ActivityApplicationNavigation(private val componentActivity: ComponentActi
 	override fun viewNowPlaying() {
 		componentActivity.startNowPlayingActivity()
 	}
-
-	override fun viewConnectionRestoration(): Promise<Unit> =
-		InstantiateSelectedConnectionActivity.restoreSelectedConnection(componentActivity).unitResponse()
 
 	override fun backOut(): Boolean {
 		componentActivity.finish()

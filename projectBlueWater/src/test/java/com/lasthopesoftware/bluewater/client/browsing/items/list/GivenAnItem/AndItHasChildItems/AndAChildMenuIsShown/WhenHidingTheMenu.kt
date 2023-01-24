@@ -5,7 +5,6 @@ import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.FakeStoredItemAccess
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -26,10 +25,6 @@ class WhenHidingTheMenu {
 	private val recordingMessageBus = RecordingTypedMessageBus<ItemListMenuMessage>()
 
 	private val viewModel by lazy {
-		val selectedLibraryIdProvider = mockk<ProvideSelectedLibraryId>().apply {
-			every { promiseSelectedLibraryId() } returns LibraryId(libraryId).toPromise()
-		}
-
 		val itemProvider = mockk<ProvideItems>().apply {
 			every { promiseItems(LibraryId(libraryId), ItemId(rootItemId)) } returns listOf(
 				Item(482),
@@ -43,15 +38,14 @@ class WhenHidingTheMenu {
 		val storedItemAccess = FakeStoredItemAccess()
 
 		val viewModel = ItemListViewModel(
-			selectedLibraryIdProvider,
-			itemProvider,
-			mockk(relaxed = true, relaxUnitFun = true),
-			storedItemAccess,
-			mockk(),
-			mockk(),
-			mockk(),
-			recordingMessageBus
-		)
+            itemProvider,
+            mockk(relaxed = true, relaxUnitFun = true),
+            storedItemAccess,
+            mockk(),
+            mockk(),
+            mockk(),
+            recordingMessageBus
+        )
 
 		viewModel.loadItem(LibraryId(libraryId), Item(rootItemId, "leaf")).toExpiringFuture().get()
 		viewModel.items.value[4]

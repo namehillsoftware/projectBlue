@@ -13,7 +13,6 @@ import com.lasthopesoftware.bluewater.client.browsing.items.itemId
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.HiddenListItemMenu
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.ActivityLaunching
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
@@ -26,7 +25,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 class ItemListViewModel(
-	private val selectedLibraryId: ProvideSelectedLibraryId,
 	private val itemProvider: ProvideItems,
 	messageBus: RegisterForApplicationMessages,
 	private val storedItemAccess: AccessStoredItems,

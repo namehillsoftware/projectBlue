@@ -4,7 +4,6 @@ import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -19,10 +18,6 @@ private const val libraryId = 163
 
 class WhenSyncingTheItem {
 	private val viewModel by lazy {
-		val selectedLibraryIdProvider = mockk<ProvideSelectedLibraryId>().apply {
-			every { promiseSelectedLibraryId() } returns LibraryId(libraryId).toPromise()
-		}
-
 		val itemProvider = mockk<ProvideItems>().apply {
 			every { promiseItems(LibraryId(libraryId), ItemId(826)) } returns listOf(
 				Item(471),
@@ -42,7 +37,6 @@ class WhenSyncingTheItem {
 		}
 
 		ItemListViewModel(
-			selectedLibraryIdProvider,
 			itemProvider,
 			mockk(relaxed = true, relaxUnitFun = true),
 			storedItemAccess,
