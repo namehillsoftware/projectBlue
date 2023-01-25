@@ -14,22 +14,24 @@ import com.lasthopesoftware.bluewater.R
 
 @Composable
 fun ConnectionUpdatesView(
-	connectionViewModel: InstantiateSelectedConnectionViewModel
+	connectionViewModel: ConnectionStatusViewModel
 ) {
-	Box(modifier = Modifier.fillMaxSize()) {
-		Column(modifier = Modifier.align(Alignment.Center)) {
-			ProvideTextStyle(MaterialTheme.typography.h5) {
-				val connectionText by connectionViewModel.connectionStatus.collectAsState()
-				Text(text = connectionText, modifier = Modifier.align(Alignment.CenterHorizontally))
-			}
+	Surface {
+		Box(modifier = Modifier.fillMaxSize()) {
+			Column(modifier = Modifier.align(Alignment.Center)) {
+				ProvideTextStyle(MaterialTheme.typography.h5) {
+					val connectionText by connectionViewModel.connectionStatus.collectAsState()
+					Text(text = connectionText, modifier = Modifier.align(Alignment.CenterHorizontally))
+				}
 
-			CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+				CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
 
-			Button(
-				onClick = connectionViewModel::cancelCurrentCheck,
-				modifier = Modifier.align(Alignment.CenterHorizontally)
-			) {
-				Text(text = stringResource(id = R.string.btn_cancel),)
+				Button(
+					onClick = connectionViewModel::cancelCurrentCheck,
+					modifier = Modifier.align(Alignment.CenterHorizontally)
+				) {
+					Text(text = stringResource(id = R.string.btn_cancel),)
+				}
 			}
 		}
 	}

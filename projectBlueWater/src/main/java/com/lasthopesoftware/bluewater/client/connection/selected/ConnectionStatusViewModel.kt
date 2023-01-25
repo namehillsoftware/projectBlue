@@ -11,7 +11,7 @@ import com.namehillsoftware.handoff.promises.response.ImmediateAction
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-class InstantiateSelectedConnectionViewModel(
+class ConnectionStatusViewModel(
 	private val stringResources: GetStringResources,
 	private val sessionConnections: ManageConnectionSessions,
 ) : ViewModel(), (BuildingConnectionStatus) -> Unit, ImmediateAction
@@ -19,14 +19,17 @@ class InstantiateSelectedConnectionViewModel(
 	private var promisedConnectionCheck = Promise.empty<IConnectionProvider?>()
 
 	private val isGettingConnectionFlow = MutableStateFlow(false)
-	private val connectionStatusFlow = MutableStateFlow(stringResources.connecting)
+	private val connectionStatusFlow = MutableStateFlow("")
 
 	val connectionStatus = connectionStatusFlow.asStateFlow()
 	val isGettingConnection = isGettingConnectionFlow.asStateFlow()
 
 	@Synchronized
 	fun ensureConnectionIsWorking(libraryId: LibraryId): Promise<*> {
+		promisedConnectionCheck.cancel()
+
 		isGettingConnectionFlow.value = true
+		connectionStatusFlow.value = stringResources.connecting
 
 		val promisedConnection = sessionConnections.promiseLibraryConnection(libraryId)
 		promisedConnection.updates(this)

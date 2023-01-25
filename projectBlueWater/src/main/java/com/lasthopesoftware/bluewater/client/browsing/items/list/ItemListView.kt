@@ -27,11 +27,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.list.TrackHeaderItem
 import com.lasthopesoftware.bluewater.client.browsing.files.list.TrackHeadlineViewModelProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.*
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
@@ -52,7 +54,7 @@ fun ItemListView(
 	nowPlayingViewModel: NowPlayingFilePropertiesViewModel,
 	itemListMenuViewModel: ItemListMenuViewModel,
 	trackHeadlineViewModelProvider: TrackHeadlineViewModelProvider,
-	onBack: () -> Unit,
+	applicationNavigation: NavigateApplication,
 ) {
 	val playingFile by nowPlayingViewModel.nowPlayingFile.collectAsState()
 	val lazyListState = rememberLazyListState()
@@ -389,7 +391,7 @@ fun ItemListView(
 							.clickable(
 								interactionSource = remember { MutableInteractionSource() },
 								indication = null,
-								onClick = onBack
+								onClick = applicationNavigation::backOut
 							)
 					)
 				}

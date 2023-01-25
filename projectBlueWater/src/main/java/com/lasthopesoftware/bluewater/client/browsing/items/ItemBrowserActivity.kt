@@ -1,5 +1,10 @@
 package com.lasthopesoftware.bluewater.client.browsing.items
 
+import BrowsableItemListView
+import ItemBrowsingArguments.keyArgument
+import ItemBrowsingArguments.libraryIdArgument
+import ItemBrowsingArguments.playlistIdArgument
+import ItemBrowsingArguments.titleArgument
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -49,7 +54,6 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.SelectedL
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertyStorage
 import com.lasthopesoftware.bluewater.client.browsing.items.access.CachedItemProvider
-import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListView
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuViewModel
@@ -62,8 +66,7 @@ import com.lasthopesoftware.bluewater.client.connection.authentication.Connectio
 import com.lasthopesoftware.bluewater.client.connection.libraries.SelectedLibraryUrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.polling.ConnectionPoller
-import com.lasthopesoftware.bluewater.client.connection.selected.ConnectionUpdatesView
-import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionViewModel
+import com.lasthopesoftware.bluewater.client.connection.selected.ConnectionStatusViewModel
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
@@ -81,16 +84,9 @@ import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRateLimiter
-import com.lasthopesoftware.bluewater.shared.promises.extensions.suspend
 import com.lasthopesoftware.resources.strings.StringResources
-import com.namehillsoftware.handoff.promises.Promise
 
 private val magicPropertyBuilder by lazy { MagicPropertyBuilder(cls<ItemBrowserActivity>()) }
-
-private const val libraryIdArgument = "libraryId"
-private const val keyArgument = "key"
-private const val titleArgument = "title"
-private const val playlistIdArgument = "playlistId"
 
 private val libraryIdProperty by lazy { magicPropertyBuilder.buildProperty(libraryIdArgument) }
 private val keyProperty by lazy { magicPropertyBuilder.buildProperty(keyArgument) }
@@ -463,81 +459,47 @@ private fun ItemBrowserView(
 					},
 				)
 			) { entry ->
-				val libraryId = entry.arguments?.getInt(libraryIdArgument)?.let(::LibraryId) ?: return@composable
-				val playlistId = entry.arguments?.getInt(playlistIdArgument)
-				val item = if (playlistId != null && playlistId > -1) {
-					Item(
-						entry.arguments?.getInt(keyArgument) ?: return@composable,
-						entry.arguments?.getString(titleArgument),
-						PlaylistId(playlistId),
-					)
-				} else {
-					Item(
-						entry.arguments?.getInt(keyArgument) ?: return@composable,
-						entry.arguments?.getString(titleArgument)
-					)
-				}
-
-				val itemListViewModel = entry.viewModelStore.buildViewModel {
-					ItemListViewModel(
-						itemProvider,
-						messageBus,
-						storedItemAccess,
-						itemListProvider,
-						playbackServiceController,
-						graphNavigation,
-						menuMessageBus,
-					)
-				}
-
-				val fileListViewModel = entry.viewModelStore.buildViewModel {
-					FileListViewModel(
-						browserLibraryIdProvider,
-						itemFileProvider,
-						storedItemAccess,
-						playbackServiceController,
-					)
-				}
-
-				val connectionViewModel = entry.viewModelStore.buildViewModel {
-					InstantiateSelectedConnectionViewModel(
-						stringResources,
-						libraryConnectionProvider,
-					)
-				}
-
-				val isCheckingConnection by connectionViewModel.isGettingConnection.collectAsState()
-
-				if (!isCheckingConnection) {
-					ItemListView(
-						itemListViewModel = itemListViewModel,
-						fileListViewModel = fileListViewModel,
-						nowPlayingViewModel = nowPlayingViewModel,
-						itemListMenuViewModel = itemListMenuViewModel,
-						trackHeadlineViewModelProvider = entry.viewModelStore.buildViewModel {
-							TrackHeadlineViewModelProvider(
-								scopedFilePropertiesProvider,
-								scopedUrlKeyProvider,
-								stringResources,
-								playbackServiceController,
-								graphNavigation,
-								menuMessageBus,
-								messageBus,
-							)
-						},
-						onBack = graphNavigation::backOut
-					)
-				} else {
-					ConnectionUpdatesView(connectionViewModel)
-				}
-
-				LaunchedEffect(item) {
-					connectionViewModel.ensureConnectionIsWorking(libraryId).suspend()
-					Promise.whenAll(
-						itemListViewModel.loadItem(libraryId, item),
-						fileListViewModel.loadItem(item)
-					).suspend()
-				}
+				entry.BrowsableItemListView(
+					entry.viewModelStore.buildViewModel {
+						ConnectionStatusViewModel(
+							stringResources,
+							libraryConnectionProvider,
+						)
+					},
+					entry.viewModelStore.buildViewModel {
+						ItemListViewModel(
+							itemProvider,
+							messageBus,
+							storedItemAccess,
+							itemListProvider,
+							playbackServiceController,
+							graphNavigation,
+							menuMessageBus,
+						)
+					},
+					entry.viewModelStore.buildViewModel {
+						FileListViewModel(
+							browserLibraryIdProvider,
+							itemFileProvider,
+							storedItemAccess,
+							playbackServiceController,
+						)
+					},
+					nowPlayingViewModel,
+					itemListMenuViewModel,
+					trackHeadlineViewModelProvider = entry.viewModelStore.buildViewModel {
+						TrackHeadlineViewModelProvider(
+							scopedFilePropertiesProvider,
+							scopedUrlKeyProvider,
+							stringResources,
+							playbackServiceController,
+							graphNavigation,
+							menuMessageBus,
+							messageBus,
+						)
+					},
+					graphNavigation,
+				)
 			}
 
 			composable(GraphNavigation.Search.route) { entry ->
