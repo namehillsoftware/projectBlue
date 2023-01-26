@@ -65,10 +65,14 @@ fun NavBackStackEntry.BrowsableItemListView(
 	}
 
 	LaunchedEffect(item) {
-		connectionViewModel.ensureConnectionIsWorking(libraryId).suspend()
-		Promise.whenAll(
-			itemListViewModel.loadItem(libraryId, item),
-			fileListViewModel.loadItem(item)
-		).suspend()
+		try {
+			connectionViewModel.ensureConnectionIsWorking(libraryId).suspend()
+			Promise.whenAll(
+				itemListViewModel.loadItem(libraryId, item),
+				fileListViewModel.loadItem(item)
+			).suspend()
+		} catch(e: Exception) {
+			applicationNavigation.backOut()
+		}
 	}
 }

@@ -5,6 +5,8 @@ import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 
 interface NavigateApplication {
+	fun launchSettings() {}
+
 	fun viewFileDetails(playlist: List<ServiceFile>, position: Int) {}
 
 	fun launchSearch() {}

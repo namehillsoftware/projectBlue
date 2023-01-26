@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.connection.selected
 
 import androidx.lifecycle.ViewModel
+import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
@@ -8,13 +9,15 @@ import com.lasthopesoftware.bluewater.client.connection.session.ManageConnection
 import com.lasthopesoftware.resources.strings.GetStringResources
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateAction
+import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 class ConnectionStatusViewModel(
 	private val stringResources: GetStringResources,
 	private val sessionConnections: ManageConnectionSessions,
-) : ViewModel(), (BuildingConnectionStatus) -> Unit, ImmediateAction
+	private val applicationNavigation: NavigateApplication,
+) : ViewModel(), (BuildingConnectionStatus) -> Unit, ImmediateAction, ImmediateResponse<Throwable, Unit>
 {
 	private var promisedConnectionCheck = Promise.empty<IConnectionProvider?>()
 
@@ -34,6 +37,7 @@ class ConnectionStatusViewModel(
 		val promisedConnection = sessionConnections.promiseLibraryConnection(libraryId)
 		promisedConnection.updates(this)
 		promisedConnection.must(this)
+		promisedConnection.excuse(this)
 
 		promisedConnectionCheck = promisedConnection
 
@@ -57,5 +61,9 @@ class ConnectionStatusViewModel(
 
 	override fun act() {
 		isGettingConnectionFlow.value = false
+	}
+
+	override fun respond(resolution: Throwable?) {
+		applicationNavigation.launchSettings()
 	}
 }

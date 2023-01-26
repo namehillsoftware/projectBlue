@@ -464,6 +464,7 @@ private fun ItemBrowserView(
 						ConnectionStatusViewModel(
 							stringResources,
 							libraryConnectionProvider,
+							graphNavigation,
 						)
 					},
 					entry.viewModelStore.buildViewModel {
