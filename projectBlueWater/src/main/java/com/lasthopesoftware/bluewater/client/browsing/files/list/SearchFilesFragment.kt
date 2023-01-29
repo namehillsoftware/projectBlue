@@ -92,7 +92,7 @@ class SearchFilesFragment : Fragment() {
 
 	private val menuMessageBus by buildActivityViewModelLazily { ViewModelMessageBus<ItemListMenuMessage>() }
 
-	private val itemListMenuViewModel by buildActivityViewModelLazily { ItemListMenuViewModel(menuMessageBus) }
+	private val itemListMenuViewModel by lazy { ItemListMenuViewModel(menuMessageBus) }
 
 	private val trackHeadlineViewModelProvider by buildViewModelLazily {
 		TrackHeadlineViewModelProvider(

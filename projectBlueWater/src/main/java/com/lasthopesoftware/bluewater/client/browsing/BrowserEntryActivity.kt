@@ -89,7 +89,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 
 	private val menuMessageBus by buildViewModelLazily { ViewModelMessageBus<ItemListMenuMessage>() }
 
-	private val itemListMenuViewModel by buildViewModelLazily { ItemListMenuViewModel(menuMessageBus) }
+	private val itemListMenuViewModel by lazy { ItemListMenuViewModel(menuMessageBus) }
 
 	private val specialViews by lazy {
 		val views = arrayOf(
@@ -202,6 +202,8 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 		specialLibraryItemsListView.onItemClickListener = OnItemClickListener { _, _, position, _ ->
 			updateSelectedView(specialViews[position].viewType, position)
 		}
+
+		lifecycle.addObserver(itemListMenuViewModel)
 	}
 
 	override fun onStart() {
@@ -417,6 +419,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 		super.onStop()
 	}
 
+	@Deprecated("Deprecated in Java")
 	override fun onBackPressed() {
 		if (itemListMenuViewModel.hideAllMenus() || viewAnimator?.tryFlipToPreviousView() == true) return
 		super.onBackPressed()

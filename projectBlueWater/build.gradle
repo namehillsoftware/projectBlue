@@ -5,6 +5,7 @@ apply plugin: 'com.cinnober.gradle.semver-git'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-kapt'
 apply plugin: 'de.mannodermaus.android-junit5'
+apply plugin: 'org.jetbrains.kotlin.android'
 
 def androidKeyStorePassword = hasProperty('androidKeyStorePassword') ? androidKeyStorePassword : null
 def hasKeyStorePassword = { androidKeyStorePassword != null && !androidKeyStorePassword.isEmpty() }
@@ -143,7 +144,8 @@ def getGeneratedVersionCode() {
 }
 
 dependencies {
-	def exoplayer_version = '2.18.1'
+	implementation 'androidx.core:core-ktx:+'
+    def exoplayer_version = '2.18.1'
 	def lifecycle_version = '2.5.1'
 	def junit5_version = '5.9.1'
 

@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.connection.selected
+package com.lasthopesoftware.bluewater.client.connection.session
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column

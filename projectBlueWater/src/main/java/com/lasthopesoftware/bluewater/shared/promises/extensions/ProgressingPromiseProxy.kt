@@ -37,11 +37,11 @@ open class ProgressingPromiseProxy<Progress, Resolution> : ProgressingPromise<Pr
 		source.then(proxyResolution)
 	}
 
-	protected fun doCancel(source: ProgressingPromise<Progress, Resolution>) {
+	protected fun doCancel(source: ProgressingPromise<*, *>) {
 		cancellationProxy.doCancel(source)
 	}
 
-	protected fun proxyUpdates(source: ProgressingPromise<Progress, Resolution>) {
+	protected fun proxyUpdates(source: ProgressingPromise<Progress, *>) {
 		source.progress.then(proxyUpdates)
 		source.updates(proxyUpdates)
 	}

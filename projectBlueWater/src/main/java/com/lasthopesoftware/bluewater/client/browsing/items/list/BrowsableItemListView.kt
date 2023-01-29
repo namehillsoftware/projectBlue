@@ -12,8 +12,8 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewMod
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.selected.ConnectionStatusViewModel
-import com.lasthopesoftware.bluewater.client.connection.selected.ConnectionUpdatesView
+import com.lasthopesoftware.bluewater.client.connection.session.ConnectionStatusViewModel
+import com.lasthopesoftware.bluewater.client.connection.session.ConnectionUpdatesView
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.shared.promises.extensions.suspend
 import com.namehillsoftware.handoff.promises.Promise

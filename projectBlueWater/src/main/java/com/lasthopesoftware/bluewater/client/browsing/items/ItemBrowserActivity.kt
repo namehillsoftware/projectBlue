@@ -66,9 +66,9 @@ import com.lasthopesoftware.bluewater.client.connection.authentication.Connectio
 import com.lasthopesoftware.bluewater.client.connection.libraries.SelectedLibraryUrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.polling.ConnectionPoller
-import com.lasthopesoftware.bluewater.client.connection.selected.ConnectionStatusViewModel
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
+import com.lasthopesoftware.bluewater.client.connection.session.ConnectionStatusViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
@@ -121,7 +121,7 @@ class ItemBrowserActivity : AppCompatActivity() {
 
 	private val menuMessageBus by buildViewModelLazily { ViewModelMessageBus<ItemListMenuMessage>() }
 
-	private val itemListMenuViewModel by buildViewModelLazily { ItemListMenuViewModel(menuMessageBus) }
+	private val itemListMenuViewModel by lazy { ItemListMenuViewModel(menuMessageBus) }
 
 	private val itemProvider by lazy { CachedItemProvider.getInstance(this) }
 
@@ -259,10 +259,9 @@ class ItemBrowserActivity : AppCompatActivity() {
 				)
 			}
 		}
-	}
 
-	override fun onBackPressed() {
-		if (!itemListMenuViewModel.hideAllMenus()) super.onBackPressed()
+		onBackPressedDispatcher.addCallback(this, itemListMenuViewModel)
+		lifecycle.addObserver(itemListMenuViewModel)
 	}
 }
 

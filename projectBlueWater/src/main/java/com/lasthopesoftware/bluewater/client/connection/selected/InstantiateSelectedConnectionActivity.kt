@@ -1,35 +1,34 @@
 package com.lasthopesoftware.bluewater.client.connection.selected
 
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
-import android.widget.TextView
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResult
-import com.lasthopesoftware.bluewater.R
+import androidx.appcompat.app.AppCompatActivity
+import com.lasthopesoftware.bluewater.ActivityApplicationNavigation
 import com.lasthopesoftware.bluewater.client.browsing.BrowserEntryActivity
-import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.Companion.getInstance
-import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity
+import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
+import com.lasthopesoftware.bluewater.client.connection.session.ConnectionStatusViewModel
+import com.lasthopesoftware.bluewater.client.connection.session.ConnectionUpdatesView
+import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
-import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
-import com.lasthopesoftware.bluewater.shared.android.view.getValue
+import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
+import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 import com.lasthopesoftware.bluewater.shared.cls
-import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
-import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.promiseActivityResult
+import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
+import com.lasthopesoftware.resources.strings.StringResources
 import com.namehillsoftware.handoff.promises.Promise
 
-class InstantiateSelectedConnectionActivity : Activity(), (SelectedConnection.BuildSessionConnectionBroadcast) -> Unit {
+class InstantiateSelectedConnectionActivity : AppCompatActivity() {
 	private var isCancelled = false
-
-	private val lblConnectionStatus by LazyViewFinder<TextView>(this, R.id.lblConnectionStatus)
-	private val cancelButton by LazyViewFinder<TextView>(this, R.id.cancelButton)
-
-	private val selectServerIntent by lazy { Intent(this, ApplicationSettingsActivity::class.java) }
 
 	private val browseLibraryIntent by lazy {
 		val browseLibraryIntent = Intent(this, BrowserEntryActivity::class.java)
@@ -39,69 +38,63 @@ class InstantiateSelectedConnectionActivity : Activity(), (SelectedConnection.Bu
 
 	private val handler by lazy { Handler(mainLooper) }
 
-	private val lazyPromisedSessionConnection = lazy { getInstance(this).promiseSessionConnection() }
+	private val libraryConnectionProvider by lazy { buildNewConnectionSessionManager() }
+
+	private val connectionStatusViewModel = buildViewModelLazily {
+		ConnectionStatusViewModel(
+			StringResources(this),
+			libraryConnectionProvider,
+			ActivityApplicationNavigation(this),
+		)
+	}
+
+	private val selectedLibraryProvider by lazy { SelectedLibraryIdProvider(getApplicationSettingsRepository()) }
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
-		setContentView(R.layout.layout_status)
+		setContent {
+			ProjectBlueTheme {
+				ConnectionUpdatesView(connectionStatusViewModel.value)
+			}
+		}
 
-		lblConnectionStatus.setText(R.string.lbl_connecting)
-		cancelButton.setOnClickListener { cancel() }
-
-		val registration = getApplicationMessageBus().registerReceiver(handler, this)
-
-		lazyPromisedSessionConnection
-			.value
+		selectedLibraryProvider
+			.promiseSelectedLibraryId()
+			.eventually { libraryId ->
+				libraryId
+					?.let { l ->
+						connectionStatusViewModel
+							.value
+							.ensureConnectionIsWorking(l)
+					}
+					.keepPromise()
+					.unitResponse()
+			}
 			.eventually(LoopedInPromise.response({ c ->
-				when {
-					isCancelled -> Unit
-					c == null -> launchActivityDelayed(selectServerIntent)
-					intent?.action == START_ACTIVITY_FOR_RETURN -> finishForResultDelayed()
-					else -> launchActivityDelayed(browseLibraryIntent)
+				if (c != null && intent?.action == START_ACTIVITY_FOR_RETURN) {
+					if (intent?.action == START_ACTIVITY_FOR_RETURN) finishForResultDelayed()
 				}
-			}, handler), LoopedInPromise.response({
-				launchActivityDelayed(selectServerIntent)
 			}, handler))
-			.must(registration::close)
 	}
 
+	@Deprecated("Deprecated in Java")
 	override fun onBackPressed() {
 		cancel()
 		super.onBackPressed()
 	}
 
-	override fun invoke(message: SelectedConnection.BuildSessionConnectionBroadcast) {
-		handleBuildStatusChange(message.buildingConnectionStatus)
-	}
-
-	private fun handleBuildStatusChange(status: BuildingConnectionStatus) {
-		lblConnectionStatus.setText(when (status) {
-			BuildingConnectionStatus.GettingLibrary -> R.string.lbl_getting_library_details
-			BuildingConnectionStatus.GettingLibraryFailed -> R.string.lbl_please_connect_to_valid_server
-			BuildingConnectionStatus.SendingWakeSignal -> R.string.sending_wake_signal
-			BuildingConnectionStatus.BuildingConnection -> R.string.lbl_connecting_to_server_library
-			BuildingConnectionStatus.BuildingConnectionFailed -> R.string.lbl_error_connecting_try_again
-			BuildingConnectionStatus.BuildingConnectionComplete -> R.string.lbl_connected
-		})
-	}
-
-	private fun launchActivityDelayed(intent: Intent) {
-		if (!isCancelled)
-			handler.postDelayed({ if (!isCancelled) startActivity(intent) }, ACTIVITY_LAUNCH_DELAY)
-	}
-
 	private fun finishForResultDelayed() {
-		if (!isCancelled)
+		if (!isCancelled())
 			handler.postDelayed({ if (!isCancelled) finish() }, ACTIVITY_LAUNCH_DELAY)
 	}
 
 	private fun cancel() {
-		isCancelled = true
-		if (lazyPromisedSessionConnection.isInitialized())
-			lazyPromisedSessionConnection.value.cancel()
-		startActivity(selectServerIntent)
+		if (connectionStatusViewModel.isInitialized())
+			connectionStatusViewModel.value.cancelCurrentCheck()
 	}
+
+	private fun isCancelled() = connectionStatusViewModel.isInitialized() && connectionStatusViewModel.value.isCancelled
 
 	companion object {
 		private val START_ACTIVITY_FOR_RETURN = MagicPropertyBuilder.buildMagicPropertyName<InstantiateSelectedConnectionActivity>("START_ACTIVITY_FOR_RETURN")

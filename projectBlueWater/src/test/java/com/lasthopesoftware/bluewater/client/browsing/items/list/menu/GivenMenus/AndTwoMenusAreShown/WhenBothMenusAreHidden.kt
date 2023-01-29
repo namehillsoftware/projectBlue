@@ -29,6 +29,6 @@ class WhenBothMenusAreHidden {
 
 	@Test
 	fun `then isAnyMenuShown is correct`() {
-		assertThat(arrangedServices.second.isAnyMenuShown.value).isFalse
+		assertThat(arrangedServices.second.isEnabled).isFalse
 	}
 }

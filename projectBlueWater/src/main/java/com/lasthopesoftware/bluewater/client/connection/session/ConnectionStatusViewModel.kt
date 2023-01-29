@@ -1,17 +1,20 @@
-package com.lasthopesoftware.bluewater.client.connection.selected
+package com.lasthopesoftware.bluewater.client.connection.session
 
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.session.ManageConnectionSessions
+import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay
 import com.lasthopesoftware.resources.strings.GetStringResources
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateAction
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import org.joda.time.Duration
+
+private val launchDelay by lazy { Duration.standardSeconds(2).plus(Duration.millis(500)) }
 
 class ConnectionStatusViewModel(
 	private val stringResources: GetStringResources,
@@ -26,10 +29,12 @@ class ConnectionStatusViewModel(
 
 	val connectionStatus = connectionStatusFlow.asStateFlow()
 	val isGettingConnection = isGettingConnectionFlow.asStateFlow()
+	var isCancelled = false
+		private set
 
-	@Synchronized
-	fun ensureConnectionIsWorking(libraryId: LibraryId): Promise<*> {
+	fun ensureConnectionIsWorking(libraryId: LibraryId): Promise<IConnectionProvider?> {
 		promisedConnectionCheck.cancel()
+		isCancelled = false
 
 		isGettingConnectionFlow.value = true
 		connectionStatusFlow.value = stringResources.connecting
@@ -37,7 +42,11 @@ class ConnectionStatusViewModel(
 		val promisedConnection = sessionConnections.promiseLibraryConnection(libraryId)
 		promisedConnection.updates(this)
 		promisedConnection.must(this)
-		promisedConnection.excuse(this)
+		promisedConnection.then(
+			{ c ->
+				if (c == null) launchSettingsDelayed()
+			},
+			this)
 
 		promisedConnectionCheck = promisedConnection
 
@@ -45,6 +54,7 @@ class ConnectionStatusViewModel(
 	}
 
 	fun cancelCurrentCheck() {
+		isCancelled = true
 		promisedConnectionCheck.cancel()
 	}
 
@@ -64,6 +74,12 @@ class ConnectionStatusViewModel(
 	}
 
 	override fun respond(resolution: Throwable?) {
-		applicationNavigation.launchSettings()
+		launchSettingsDelayed()
+	}
+
+	private fun launchSettingsDelayed() {
+		PromiseDelay
+			.delay<Any?>(launchDelay)
+			.then { applicationNavigation.launchSettings() }
 	}
 }
