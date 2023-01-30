@@ -144,8 +144,7 @@ def getGeneratedVersionCode() {
 }
 
 dependencies {
-	implementation 'androidx.core:core-ktx:+'
-    def exoplayer_version = '2.18.1'
+	def exoplayer_version = '2.18.1'
 	def lifecycle_version = '2.5.1'
 	def junit5_version = '5.9.1'
 
@@ -190,6 +189,7 @@ dependencies {
 	testImplementation 'commons-codec:commons-codec:1.15'
 	testImplementation 'androidx.test:core:1.5.0'
 	testImplementation 'io.mockk:mockk:1.13.2'
+	testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.4'
 	testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:$junit5_version"
 	testRuntimeOnly "org.junit.vintage:junit-vintage-engine:$junit5_version"
 	androidTestImplementation "androidx.compose.ui:ui-test-junit4:$compose_version"

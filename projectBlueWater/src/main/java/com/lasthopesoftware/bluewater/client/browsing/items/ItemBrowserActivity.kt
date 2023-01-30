@@ -66,6 +66,7 @@ import com.lasthopesoftware.bluewater.client.connection.authentication.Connectio
 import com.lasthopesoftware.bluewater.client.connection.libraries.SelectedLibraryUrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.polling.ConnectionPoller
+import com.lasthopesoftware.bluewater.client.connection.session.ConnectionInitializationController
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionStatusViewModel
@@ -462,8 +463,10 @@ private fun ItemBrowserView(
 					entry.viewModelStore.buildViewModel {
 						ConnectionStatusViewModel(
 							stringResources,
-							libraryConnectionProvider,
-							graphNavigation,
+							ConnectionInitializationController(
+								libraryConnectionProvider,
+								graphNavigation,
+							)
 						)
 					},
 					entry.viewModelStore.buildViewModel {
