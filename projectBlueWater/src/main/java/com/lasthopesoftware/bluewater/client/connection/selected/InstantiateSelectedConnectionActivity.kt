@@ -83,9 +83,7 @@ class InstantiateSelectedConnectionActivity : AppCompatActivity() {
 			.promiseSelectedLibraryId()
 			.eventually { libraryId ->
 				libraryId
-					?.let { l ->
-						connectionStatusViewModel.ensureConnectionIsWorking(l)
-					}
+					?.let(connectionStatusViewModel::ensureConnectionIsWorking)
 					.keepPromise(false)
 			}
 			.eventually(LoopedInPromise.response({
