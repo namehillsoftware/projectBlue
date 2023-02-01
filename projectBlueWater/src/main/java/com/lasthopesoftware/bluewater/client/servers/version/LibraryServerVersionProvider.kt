@@ -1,15 +1,22 @@
 package com.lasthopesoftware.bluewater.client.servers.version
 
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
 import com.lasthopesoftware.bluewater.shared.StandardRequest
+import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.namehillsoftware.handoff.promises.Promise
 
-class ProgramVersionProvider(private val connectionProvider: IConnectionProvider) : IProgramVersionProvider {
-
-	override fun promiseServerVersion(): Promise<SemanticVersion?> =
-		connectionProvider.promiseResponse("Alive")
+class LibraryServerVersionProvider(private val libraryConnections: ProvideLibraryConnections) : ProvideLibraryServerVersion {
+	override fun promiseServerVersion(libraryId: LibraryId): Promise<SemanticVersion?> =
+		libraryConnections
+			.promiseLibraryConnection(libraryId)
+			.eventually { connectionProvider ->
+				connectionProvider
+					?.promiseResponse("Alive")
+					.keepPromise()
+			}
 			.then { response ->
-				response.body
+				response?.body
 					?.use { body -> body.byteStream().use(StandardRequest::fromInputStream) }
 					?.let { standardRequest -> standardRequest.items["ProgramVersion"] }
 					?.let { semVerString ->

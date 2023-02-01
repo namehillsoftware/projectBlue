@@ -7,4 +7,11 @@ interface GetStringResources {
 	val defaultNowPlayingTrackTitle: String
 	val defaultNowPlayingArtist: String
     val aboutTitle: String
+    val connecting: String
+	val gettingLibrary: String
+	val gettingLibraryFailed: String
+	val sendingWakeSignal: String
+	val connectingToServerLibrary: String
+	val errorConnectingTryAgain: String
+	val connected: String
 }

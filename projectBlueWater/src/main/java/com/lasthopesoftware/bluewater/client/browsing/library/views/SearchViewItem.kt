@@ -1,3 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.library.views
 
-class SearchViewItem : ViewItem(0, null)
+object SearchViewItem : ViewItem {
+	override val key = 0
+	override val value: String? = null
+}
+

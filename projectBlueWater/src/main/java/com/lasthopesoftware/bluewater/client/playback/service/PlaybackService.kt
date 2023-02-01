@@ -656,7 +656,7 @@ open class PlaybackService :
 					Duration.ZERO)
 			}
 			.then {
-				startNowPlayingActivity(this)
+				this.startNowPlayingActivity()
 				applicationMessageBus.value.sendMessage(PlaybackMessage.PlaylistChanged)
 			}
 	}
@@ -1033,10 +1033,18 @@ open class PlaybackService :
 				.subscribe(observeUpdates(playingFile))
 		}
 
-		promisedPlayedFile.then {
-			applicationMessageBus.value.sendMessage(PlaybackMessage.TrackCompleted(positionedPlayingFile.serviceFile))
-			localSubscription?.dispose()
-		}
+		promisedPlayedFile
+			.then {
+				selectedLibraryIdentifierProvider.promiseSelectedLibraryId().then { l ->
+					l?.also {
+						applicationMessageBus.value.sendMessage(
+							PlaybackMessage.TrackCompleted(l, positionedPlayingFile.serviceFile)
+						)
+					}
+				}
+
+				localSubscription?.dispose()
+			}
 
 		filePositionSubscription = localSubscription
 

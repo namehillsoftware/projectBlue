@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.list.GivenAServiceFile.AndTheMenuIsShown
 
+import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.details.LaunchFileDetails
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusableTrackHeadlineViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideScopedFileProperties
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
@@ -23,21 +23,21 @@ class WhenViewingTheFileDetails {
 	private var launchedFile: ServiceFile? = null
 
 	private val viewModel by lazy {
-		val filePropertiesProvider = mockk<ProvideScopedFileProperties>().apply {
+		val filePropertiesProvider = mockk<ProvideScopedFileProperties> {
 			every { promiseFileProperties(ServiceFile(34)) } returns mapOf(
 				Pair("Artist", "adopt"),
 				Pair("Name", "lovely"),
 			).toPromise()
 		}
 
-		val stringResource = mockk<GetStringResources>().apply {
+		val stringResource = mockk<GetStringResources> {
 			every { loading } returns "native"
 			every { unknownArtist } returns "receive"
 			every { unknownTrack } returns "pack"
 		}
 
-		val launchFileDetails = mockk<LaunchFileDetails>().apply {
-			every { launchFileDetails(any(), any()) } answers {
+		val launchFileDetails = mockk<NavigateApplication> {
+			every { viewFileDetails(any(), any()) } answers {
 				val files = firstArg<List<ServiceFile>>()
 				launchedFile = files[lastArg()]
 			}

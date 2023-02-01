@@ -1,5 +1,5 @@
 package com.lasthopesoftware.bluewater.client.browsing.library.views
 
-import com.lasthopesoftware.bluewater.client.browsing.items.Item
+import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 
-abstract class ViewItem(key: Int, value: String?) : Item(key, value)
+interface ViewItem : IItem

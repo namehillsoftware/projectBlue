@@ -16,7 +16,7 @@ import org.junit.jupiter.api.Test
 
 class WhenGettingDefaultOrSelectedViews {
 
-	private val expectedView = SearchViewItem()
+	private val expectedView = SearchViewItem
 	private val libraryStorage = SavedLibraryRecordingStorage()
 	private var selectedLibraryView: ViewItem? = null
 

@@ -65,8 +65,8 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".client.browsing.items.list.ItemListActivity"
-            android:label="@string/title_activity_file_view">
+            android:name=".client.browsing.items.ItemBrowserActivity"
+            android:label="Browse Items">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.lasthopesoftware.bluewater.client.browsing.BrowserEntryActivity" />

@@ -18,8 +18,8 @@ class SelectedLibraryViewProvider(
 			libraryViews.promiseLibraryViews(library.libraryId).eventually<ViewItem> { views ->
 				if (views.isNotEmpty()) {
 					when (library.selectedViewType) {
-						Library.ViewType.DownloadView -> Promise(DownloadViewItem() as ViewItem)
-						Library.ViewType.SearchView -> Promise(SearchViewItem() as ViewItem)
+						Library.ViewType.DownloadView -> Promise(DownloadViewItem as ViewItem)
+						Library.ViewType.SearchView -> Promise(SearchViewItem as ViewItem)
 						else -> {
 							if (library.selectedView > 0) Promise(views.first { it.key == library.selectedView })
 							else {

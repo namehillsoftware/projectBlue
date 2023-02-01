@@ -15,7 +15,7 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
 class WhenGettingDefaultOrSelectedViews {
-	private val expectedView = DownloadViewItem()
+	private val expectedView = DownloadViewItem
 	private val libraryStorage = SavedLibraryRecordingStorage()
 	private var selectedLibraryView: ViewItem? = null
 

@@ -4,7 +4,6 @@ import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -15,15 +14,12 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
+private const val libraryId = 163
+
 class WhenSyncingTheItem {
-
 	private val viewModel by lazy {
-		val selectedLibraryIdProvider = mockk<ProvideSelectedLibraryId>().apply {
-			every { promiseSelectedLibraryId() } returns LibraryId(163).toPromise()
-		}
-
 		val itemProvider = mockk<ProvideItems>().apply {
-			every { promiseItems(LibraryId(163), ItemId(826)) } returns listOf(
+			every { promiseItems(LibraryId(libraryId), ItemId(826)) } returns listOf(
 				Item(471),
 				Item(469),
 				Item(102),
@@ -33,18 +29,18 @@ class WhenSyncingTheItem {
 
 		val storedItemAccess = mockk<AccessStoredItems>().apply {
 			var isItemMarkedForSync = false
-			every { toggleSync(LibraryId(163), ItemId(826), true) } answers {
+			every { toggleSync(LibraryId(libraryId), ItemId(826), true) } answers {
 				isItemMarkedForSync = true
 				Unit.toPromise()
 			}
-			every { isItemMarkedForSync(LibraryId(163), Item(826, "moderate")) } answers { isItemMarkedForSync.toPromise() }
+			every { isItemMarkedForSync(LibraryId(libraryId), Item(826, "moderate")) } answers { isItemMarkedForSync.toPromise() }
 		}
 
 		ItemListViewModel(
-			selectedLibraryIdProvider,
 			itemProvider,
 			mockk(relaxed = true, relaxUnitFun = true),
 			storedItemAccess,
+			mockk(),
 			mockk(),
 			mockk(),
 			mockk(),
@@ -52,7 +48,7 @@ class WhenSyncingTheItem {
 	}
 
 	@BeforeAll fun act() {
-		viewModel.loadItem(Item(826, "moderate"))
+		viewModel.loadItem(LibraryId(libraryId), Item(826, "moderate"))
 		viewModel.toggleSync().toExpiringFuture().get()
 	}
 

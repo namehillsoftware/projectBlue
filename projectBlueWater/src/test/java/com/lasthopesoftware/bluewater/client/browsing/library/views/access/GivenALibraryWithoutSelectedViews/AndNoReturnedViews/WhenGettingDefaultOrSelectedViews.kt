@@ -1,11 +1,10 @@
 package com.lasthopesoftware.bluewater.client.browsing.library.views.access.GivenALibraryWithoutSelectedViews.AndNoReturnedViews
 
-import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.views.ViewItem
 import com.lasthopesoftware.bluewater.client.browsing.library.views.access.SavedLibraryRecordingStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.views.access.SelectedLibraryViewProvider
-import com.lasthopesoftware.bluewater.shared.promises.extensions.ExpiringFuturePromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
@@ -14,7 +13,7 @@ import org.junit.jupiter.api.Test
 class WhenGettingDefaultOrSelectedViews {
 
 	private val libraryStorage = SavedLibraryRecordingStorage()
-	private var selectedLibraryView: Item? = null
+	private var selectedLibraryView: ViewItem? = null
 
 	@BeforeAll
 	fun act() {
@@ -24,7 +23,7 @@ class WhenGettingDefaultOrSelectedViews {
 			libraryStorage
 		)
 		selectedLibraryView =
-			ExpiringFuturePromise(selectedLibraryViewProvider.promiseSelectedOrDefaultView()).get()
+			selectedLibraryViewProvider.promiseSelectedOrDefaultView().toExpiringFuture().get()
 	}
 
     @Test

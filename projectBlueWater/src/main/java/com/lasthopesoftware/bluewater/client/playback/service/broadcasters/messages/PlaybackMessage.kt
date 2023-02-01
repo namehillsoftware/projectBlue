@@ -9,7 +9,7 @@ interface PlaybackMessage : ApplicationMessage {
 
 	class TrackChanged(val libraryId: LibraryId, val positionedFile: PositionedFile) : PlaybackMessage
 
-	class TrackCompleted(val completedFile: ServiceFile) : PlaybackMessage
+	data class TrackCompleted(val libraryId: LibraryId, val completedFile: ServiceFile) : PlaybackMessage
 
 	class TrackStarted(val startedFile: ServiceFile) : PlaybackMessage
 

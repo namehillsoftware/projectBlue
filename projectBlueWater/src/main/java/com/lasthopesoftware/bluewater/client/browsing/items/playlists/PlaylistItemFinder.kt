@@ -1,6 +1,8 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.playlists
 
+import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
+import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.views.KnownViews
@@ -16,8 +18,8 @@ class PlaylistItemFinder(private val libraryViews: ProvideLibraryViews, private 
 				recursivelySearchForPlaylist(libraryId, playlistItem, playlist)
 			}
 
-	private fun recursivelySearchForPlaylist(libraryId: LibraryId, rootItem: Item, playlist: Playlist): Promise<Item?> =
-		itemProvider.promiseItems(libraryId, rootItem.itemId)
+	private fun recursivelySearchForPlaylist(libraryId: LibraryId, rootItem: IItem, playlist: Playlist): Promise<Item?> =
+		itemProvider.promiseItems(libraryId, ItemId(rootItem.key))
 			.eventually { items ->
 				val possiblePlaylistItem = items.firstOrNull { it.playlistId?.id == playlist.key }
 				possiblePlaylistItem?.toPromise()

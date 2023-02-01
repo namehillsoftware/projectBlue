@@ -40,7 +40,7 @@ class WhenSyncingThePlaylist {
 				isItemMarkedForSync = true
 				Unit.toPromise()
 			}
-			every { isItemMarkedForSync(LibraryId(163), Item(826, "moderate", 391)) } answers { isItemMarkedForSync.toPromise() }
+			every { isItemMarkedForSync(LibraryId(163), Item(826, "moderate", PlaylistId(391))) } answers { isItemMarkedForSync.toPromise() }
 		}
 
 		FileListViewModel(
@@ -53,7 +53,7 @@ class WhenSyncingThePlaylist {
 
 	@BeforeAll
 	fun act() {
-		viewModel.loadItem(Item(826, "moderate", 391)).toExpiringFuture().get()
+		viewModel.loadItem(Item(826, "moderate", PlaylistId(391))).toExpiringFuture().get()
 		viewModel.toggleSync().toExpiringFuture().get()
 	}
 

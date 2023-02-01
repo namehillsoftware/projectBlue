@@ -22,6 +22,6 @@ class WhenAMenuShownMessageIsSent {
 
 	@Test
 	fun `then isAnyMenuShown is correct`() {
-		assertThat(arrangedServices.second.isAnyMenuShown.value).isTrue
+		assertThat(arrangedServices.second.isEnabled).isTrue
 	}
 }

@@ -14,7 +14,6 @@ import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.image.CachedImageProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.menu.FileListItemNowPlayingRegistrar
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertyStorage
@@ -43,6 +42,7 @@ import com.lasthopesoftware.bluewater.databinding.ActivityViewNowPlayingBinding
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModel
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
+import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToaster
 import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
@@ -60,10 +60,10 @@ class NowPlayingActivity :
 	IItemListMenuChangeHandler
 {
 	companion object {
-		fun startNowPlayingActivity(context: Context) {
-			val viewIntent = Intent(context, NowPlayingActivity::class.java)
+		fun Context.startNowPlayingActivity() {
+			val viewIntent = Intent(this, cls<NowPlayingActivity>())
 			viewIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
-			context.startActivity(viewIntent)
+			startActivity(viewIntent)
 		}
 	}
 
@@ -72,8 +72,6 @@ class NowPlayingActivity :
 	private val messageHandler by lazy { Handler(mainLooper) }
 
 	private val applicationMessageBus = lazy { getApplicationMessageBus().getScopedMessageBus() }
-
-	private val fileListItemNowPlayingRegistrar = lazy { FileListItemNowPlayingRegistrar(messageHandler, applicationMessageBus.value) }
 
 	private val imageProvider by lazy { CachedImageProvider.getInstance(this) }
 
@@ -211,7 +209,6 @@ class NowPlayingActivity :
 	override fun onDestroy() {
 		super.onDestroy()
 
-		if (fileListItemNowPlayingRegistrar.isInitialized()) fileListItemNowPlayingRegistrar.value.clear()
 		if (applicationMessageBus.isInitialized()) applicationMessageBus.value.unregisterReceiver(this)
 	}
 

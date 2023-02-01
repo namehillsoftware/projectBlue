@@ -12,7 +12,7 @@ fun ComponentActivity.promiseActivityResult(intent: Intent) = ActivityResultProm
 class ActivityResultPromise(activity: ComponentActivity, intent: Intent) : Promise<ActivityResult?>(),
 	ActivityResultCallback<ActivityResult> {
 	init {
-	    val launcher = activity.registerForActivityResult(ActivityResultContracts.StartActivityForResult(), this)
+		val launcher = activity.registerForActivityResult(ActivityResultContracts.StartActivityForResult(), this)
 		launcher.launch(intent)
 	}
 

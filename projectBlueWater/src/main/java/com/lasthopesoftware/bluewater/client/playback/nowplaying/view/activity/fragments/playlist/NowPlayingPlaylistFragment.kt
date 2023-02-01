@@ -14,7 +14,6 @@ import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.lasthopesoftware.bluewater.R
-import com.lasthopesoftware.bluewater.client.browsing.files.menu.FileListItemNowPlayingRegistrar
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertyStorage
@@ -111,8 +110,6 @@ class NowPlayingPlaylistFragment : Fragment() {
 	}
 
 	private val handler by lazy { Handler(requireContext().mainLooper) }
-
-	private val fileListItemNowPlayingRegistrar = lazy { FileListItemNowPlayingRegistrar(handler, applicationMessageBus.value) }
 
 	private val viewModelMessageBus by buildActivityViewModelLazily { ViewModelMessageBus<NowPlayingPlaylistMessage>() }
 
@@ -242,7 +239,6 @@ class NowPlayingPlaylistFragment : Fragment() {
 	}
 
 	override fun onDestroy() {
-		if (fileListItemNowPlayingRegistrar.isInitialized()) fileListItemNowPlayingRegistrar.value.clear()
 		if (scopedMessageReceiver.isInitialized()) scopedMessageReceiver.value.close()
 		if (applicationMessageBus.isInitialized()) applicationMessageBus.value.close()
 

@@ -1,10 +1,14 @@
 package com.lasthopesoftware.bluewater.client.servers.version.GivenAStandardConnectionProvider
 
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTuple
-import com.lasthopesoftware.bluewater.client.servers.version.ProgramVersionProvider
+import com.lasthopesoftware.bluewater.client.servers.version.LibraryServerVersionProvider
 import com.lasthopesoftware.bluewater.client.servers.version.SemanticVersion
+import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import io.mockk.every
+import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.util.concurrent.TimeUnit
@@ -31,8 +35,10 @@ class WhenReceivingThePromisedProgramVersion {
 					"</Response>").toByteArray()
 			)
 		}, "Alive")
-		val programVersionProvider = ProgramVersionProvider(connectionProvider)
-		programVersionProvider.promiseServerVersion().toExpiringFuture()[100, TimeUnit.MILLISECONDS]
+		val programVersionProvider = LibraryServerVersionProvider(mockk {
+			every { promiseLibraryConnection(LibraryId(506)) } returns ProgressingPromise(connectionProvider)
+		})
+		programVersionProvider.promiseServerVersion(LibraryId(506)).toExpiringFuture()[100, TimeUnit.MILLISECONDS]
 	}
 
 	@Test

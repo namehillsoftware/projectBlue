@@ -77,7 +77,7 @@ class ItemListAdapter internal constructor(
 			viewFlipper.tryFlipToPreviousView()
 
 			listItemLayout.setOnLongClickListener(LongClickViewAnimatorListener(viewFlipper))
-			listItemLayout.setOnClickListener(ClickItemListener(item))
+			listItemLayout.setOnClickListener(ClickItemListener(libraryId, item))
 
 			textView.findView().text = item.value
 			shuffleButton.findView().setOnClickListener(
@@ -88,7 +88,7 @@ class ItemListAdapter internal constructor(
 				PlayClickHandler(viewFlipper, itemStringListProvider, libraryId, item)
 			)
 
-			viewButton.findView().setOnClickListener(ViewFilesClickHandler(viewFlipper, item))
+			viewButton.findView().setOnClickListener(ViewFilesClickHandler(viewFlipper, libraryId, item))
 
 			with (syncButton.findView()) {
 				isEnabled = false

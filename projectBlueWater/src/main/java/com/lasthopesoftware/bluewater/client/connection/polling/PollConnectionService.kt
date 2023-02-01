@@ -99,6 +99,7 @@ class PollConnectionService : Service(), MessengerOperator<IConnectionProvider> 
 			var connectionWaitTime = initialConnectionTimeMs.toLong()
 			while (!cancellationToken.isCancelled) {
 				Thread.sleep(connectionWaitTime)
+				if (cancellationToken.isCancelled) break
 				try {
 					val connectionProvider = getInstance(this)
 						.promiseTestedSessionConnection()

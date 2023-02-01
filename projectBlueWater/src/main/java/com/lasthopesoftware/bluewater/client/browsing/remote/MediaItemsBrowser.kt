@@ -6,7 +6,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideItemFi
 import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideLibraryFiles
 import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.SearchFileParameterProvider
-import com.lasthopesoftware.bluewater.client.browsing.items.Item
+import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
@@ -24,7 +24,7 @@ class MediaItemsBrowser(
 	private val mediaItemServiceFileLookup: GetMediaItemsFromServiceFiles,
 ) : BrowseMediaItems {
 	companion object {
-		private fun toMediaItem(item: Item): MediaBrowserCompat.MediaItem =
+		private fun toMediaItem(item: IItem): MediaBrowserCompat.MediaItem =
 			MediaBrowserCompat.MediaItem(
 				MediaDescriptionCompat
 					.Builder()

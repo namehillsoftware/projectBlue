@@ -6,7 +6,6 @@ import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.client.stored.library.items.FakeStoredItemAccess
@@ -28,10 +27,6 @@ private var playedFileList = ""
 class WhenPlayingAShuffledChildItem {
 
 	private val viewModel by lazy {
-		val selectedLibraryIdProvider = mockk<ProvideSelectedLibraryId>().apply {
-			every { promiseSelectedLibraryId() } returns LibraryId(libraryId).toPromise()
-		}
-
 		val itemProvider = mockk<ProvideItems>().apply {
 			every { promiseItems(LibraryId(libraryId), ItemId(itemId)) } returns listOf(
 				Item(495),
@@ -57,19 +52,19 @@ class WhenPlayingAShuffledChildItem {
 		}
 
 		ItemListViewModel(
-			selectedLibraryIdProvider,
-			itemProvider,
-			mockk(relaxed = true, relaxUnitFun = true),
-			FakeStoredItemAccess(),
-			itemStringListProvider,
-			controlNowPlaying,
-			mockk(),
+            itemProvider,
+            mockk(relaxed = true, relaxUnitFun = true),
+            FakeStoredItemAccess(),
+            itemStringListProvider,
+            controlNowPlaying,
+            mockk(),
+            mockk(),
 		)
 	}
 
 	@BeforeAll
 	fun act() {
-		viewModel.loadItem(Item(itemId, itemValue)).toExpiringFuture().get()
+		viewModel.loadItem(LibraryId(libraryId), Item(itemId, itemValue)).toExpiringFuture().get()
 		viewModel.items.value[4].playShuffled().toExpiringFuture().get()
 	}
 

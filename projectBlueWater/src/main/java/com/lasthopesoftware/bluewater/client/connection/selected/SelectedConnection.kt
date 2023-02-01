@@ -24,12 +24,12 @@ class SelectedConnection(
 		selectedLibraryIdentifierProvider.promiseSelectedLibraryId().eventually { selectedLibraryId ->
 			selectedLibraryId
 				?.let {
-					libraryConnections.promiseTestedLibraryConnection(selectedLibraryId)
-						.also {
-							it.progress.then { progress ->
-								if (progress != BuildingConnectionStatus.BuildingConnectionComplete) {
-									if (progress != null) doStateChange(progress)
-									it.updates(::doStateChange)
+					libraryConnections.promiseTestedLibraryConnection(it)
+						.apply {
+							progress.then { p ->
+								if (p != BuildingConnectionStatus.BuildingConnectionComplete) {
+									if (p != null) doStateChange(p)
+									updates(::doStateChange)
 								}
 							}
 						}
@@ -47,12 +47,12 @@ class SelectedConnection(
 			selectedLibraryId
 				?.let {
 					libraryConnections
-						.promiseLibraryConnection(selectedLibraryId)
-						.also {
-							it.progress.then { progress ->
-								if (progress != BuildingConnectionStatus.BuildingConnectionComplete) {
-									if (progress != null) doStateChange(progress)
-									it.updates(::doStateChange)
+						.promiseLibraryConnection(it)
+						.apply {
+							progress.then { p ->
+								if (p != BuildingConnectionStatus.BuildingConnectionComplete) {
+									if (p != null) doStateChange(p)
+									updates(::doStateChange)
 								}
 							}
 						}

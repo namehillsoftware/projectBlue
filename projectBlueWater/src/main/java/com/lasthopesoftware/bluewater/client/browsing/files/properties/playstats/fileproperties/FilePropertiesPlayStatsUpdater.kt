@@ -4,7 +4,6 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.parseDurationIntoMilliseconds
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.UpdatePlaystats
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.UpdateFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.lazyLogger
@@ -15,7 +14,7 @@ private val logger by lazyLogger<FilePropertiesPlayStatsUpdater>()
 class FilePropertiesPlayStatsUpdater(
     private val filePropertiesProvider: ProvideLibraryFileProperties,
     private val filePropertiesStorage: UpdateFileProperties
-) : UpdatePlaystats {
+) : UpdatePlayStatsWithFileProperties {
     override fun promisePlaystatsUpdate(libraryId: LibraryId, serviceFile: ServiceFile): Promise<*> =
 		filePropertiesProvider.promiseFileProperties(libraryId, serviceFile)
 			.eventually { fileProperties ->

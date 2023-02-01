@@ -12,4 +12,11 @@ class StringResources(context: Context): GetStringResources {
 	override val aboutTitle by lazy { context
 		.getString(R.string.title_activity_about)
 		.format(context.getString(R.string.app_name)) }
+	override val connecting by lazy { context.getString(R.string.lbl_connecting) }
+	override val gettingLibrary by lazy { context.getString(R.string.lbl_getting_library_details) }
+	override val gettingLibraryFailed by lazy { context.getString(R.string.lbl_please_connect_to_valid_server) }
+	override val sendingWakeSignal by lazy { context.getString(R.string.sending_wake_signal) }
+	override val connectingToServerLibrary by lazy { context.getString(R.string.lbl_connecting_to_server_library) }
+	override val errorConnectingTryAgain by lazy { context.getString(R.string.lbl_error_connecting_try_again) }
+	override val connected by lazy { context.getString(R.string.lbl_connected) }
 }

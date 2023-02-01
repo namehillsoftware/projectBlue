@@ -1,6 +1,8 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.list
 
 import androidx.lifecycle.ViewModel
+import com.lasthopesoftware.bluewater.NavigateApplication
+import com.lasthopesoftware.bluewater.client.browsing.TrackLoadedViewState
 import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.ProvideFileStringListForItem
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
@@ -11,7 +13,6 @@ import com.lasthopesoftware.bluewater.client.browsing.items.itemId
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.HiddenListItemMenu
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.ActivityLaunching
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
@@ -19,26 +20,25 @@ import com.lasthopesoftware.bluewater.shared.messages.SendTypedMessages
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.namehillsoftware.handoff.promises.Promise
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 class ItemListViewModel(
-	private val selectedLibraryId: ProvideSelectedLibraryId,
 	private val itemProvider: ProvideItems,
 	messageBus: RegisterForApplicationMessages,
 	private val storedItemAccess: AccessStoredItems,
 	private val itemStringListProvider: ProvideFileStringListForItem,
 	private val controlNowPlaying: ControlPlaybackService,
+	private val navigateApplication: NavigateApplication,
 	private val sendItemMenuMessages: SendTypedMessages<ItemListMenuMessage>
-) : ViewModel() {
+) : ViewModel(), TrackLoadedViewState {
 
 	private val activityLaunchingReceiver = messageBus.registerReceiver { event : ActivityLaunching ->
-		mutableIsLoaded.value = event != ActivityLaunching.HALTED // Only show the item list view again when launching error'ed for some reason
+		mutableIsLoading.value = event != ActivityLaunching.HALTED // Only show the item list view again when launching error'ed for some reason
 	}
 	private val mutableItems = MutableStateFlow(emptyList<ChildItemViewModel>())
-	private val mutableIsLoaded = MutableStateFlow(true)
+	private val mutableIsLoading = MutableStateFlow(true)
 	private val mutableIsSynced = MutableStateFlow(false)
 	private val mutableItemValue = MutableStateFlow("")
 
@@ -48,41 +48,32 @@ class ItemListViewModel(
 	val itemValue = mutableItemValue.asStateFlow()
 	val isSynced = mutableIsSynced.asStateFlow()
 	val items = mutableItems.asStateFlow()
-	val isLoaded = mutableIsLoaded.asStateFlow()
+	override val isLoading = mutableIsLoading.asStateFlow()
 
 	override fun onCleared() {
 		activityLaunchingReceiver.close()
 	}
 
-	fun loadItem(item: Item): Promise<Unit> {
-		mutableIsLoaded.value = false
-		mutableItemValue.value = item.value
-		return selectedLibraryId.promiseSelectedLibraryId()
-			.eventually { libraryId ->
-				loadedLibraryId = libraryId
-				libraryId
-					?.let {
-						val itemUpdate = itemProvider
-							.promiseItems(it, item.itemId)
-							.then { items ->
-								mutableItems.value = items.map { item ->
-									ChildItemViewModel(item)
-								}
-							}
-
-						val promisedSyncUpdate = storedItemAccess
-							.isItemMarkedForSync(libraryId, item)
-							.then { isSynced ->
-								mutableIsSynced.value = isSynced
-							}
-
-						Promise.whenAll(itemUpdate, promisedSyncUpdate).unitResponse()
-					}
-					.keepPromise(Unit)
+	fun loadItem(libraryId: LibraryId, item: Item): Promise<Unit> {
+		mutableIsLoading.value = true
+		mutableItemValue.value = item.value ?: ""
+		loadedLibraryId = libraryId
+		val itemUpdate = itemProvider
+			.promiseItems(libraryId, item.itemId)
+			.then { items ->
+				mutableItems.value = items.map(::ChildItemViewModel)
 			}
+
+		val promisedSyncUpdate = storedItemAccess
+			.isItemMarkedForSync(libraryId, item)
+			.then { isSynced ->
+				mutableIsSynced.value = isSynced
+			}
+
+		return Promise.whenAll(itemUpdate, promisedSyncUpdate)
 			.then {
 				loadedItem = item
-				mutableIsLoaded.value = true
+				mutableIsLoading.value = false
 			}
 	}
 
@@ -129,6 +120,12 @@ class ItemListViewModel(
 					.then { mutableIsSynced.value = it }
 			}
 			.keepPromise(Unit)
+
+		fun viewItem() {
+			loadedLibraryId?.also {
+				navigateApplication.viewItem(it, item)
+			}
+		}
 
 		override fun showMenu(): Boolean {
 			if (!mutableIsMenuShown.compareAndSet(expect = false, update = true)) return false

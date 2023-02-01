@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.browsing.library.views.access.GivenALibraryWithAStandardSelectedView.AndNoReturnedViews
 
-import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.views.ViewItem
 import com.lasthopesoftware.bluewater.client.browsing.library.views.access.SavedLibraryRecordingStorage
@@ -14,7 +13,7 @@ import org.junit.jupiter.api.Test
 class WhenGettingDefaultOrSelectedViews {
 
 	private val libraryStorage = SavedLibraryRecordingStorage()
-	private var selectedLibraryView: Item? = null
+	private var selectedLibraryView: ViewItem? = null
 
 	@BeforeAll
 	fun before() {

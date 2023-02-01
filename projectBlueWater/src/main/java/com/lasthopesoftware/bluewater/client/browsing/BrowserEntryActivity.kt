@@ -20,7 +20,9 @@ import androidx.fragment.app.Fragment
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.list.SearchFilesFragment
 import com.lasthopesoftware.bluewater.client.browsing.items.list.IItemListViewContainer
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuChangeHandler
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener.Companion.tryFlipToPreviousView
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistListFragment
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
@@ -41,9 +43,12 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlaying
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.fragment.ActiveFileDownloadsFragment
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
+import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils.buildStandardMenu
+import com.lasthopesoftware.bluewater.shared.android.view.getValue
+import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
 import com.lasthopesoftware.bluewater.shared.lazyLogger
@@ -57,11 +62,11 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 private val logger by lazyLogger<BrowserEntryActivity>()
 
 class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnable {
-	private val browseLibraryContainerRelativeLayout = LazyViewFinder<RelativeLayout>(this, R.id.browseLibraryContainer)
-	private val selectViewsListView = LazyViewFinder<ListView>(this, R.id.lvLibraryViewSelection)
-	private val specialLibraryItemsListView = LazyViewFinder<ListView>(this, R.id.specialLibraryItemsListView)
-	private val drawerLayout = LazyViewFinder<DrawerLayout>(this, R.id.drawer_layout)
-	private val loadingViewsProgressBar = LazyViewFinder<ProgressBar>(this, R.id.pbLoadingViews)
+	private val browseLibraryContainerRelativeLayout by LazyViewFinder<RelativeLayout>(this, R.id.browseLibraryContainer)
+	private val selectViewsListView by LazyViewFinder<ListView>(this, R.id.lvLibraryViewSelection)
+	private val specialLibraryItemsListView by LazyViewFinder<ListView>(this, R.id.specialLibraryItemsListView)
+	private val drawerLayout by LazyViewFinder<DrawerLayout>(this, R.id.drawer_layout)
+	private val loadingViewsProgressBar by LazyViewFinder<ProgressBar>(this, R.id.pbLoadingViews)
 
 	private val libraryRepository by lazy { LibraryRepository(this)	}
 
@@ -82,19 +87,23 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 
 	private val itemListMenuChangeHandler by lazy { ItemListMenuChangeHandler(this) }
 
+	private val menuMessageBus by buildViewModelLazily { ViewModelMessageBus<ItemListMenuMessage>() }
+
+	private val itemListMenuViewModel by lazy { ItemListMenuViewModel(menuMessageBus) }
+
 	private val specialViews by lazy {
 		val views = arrayOf(
 			SpecialView(
 				ViewType.SearchView,
 				getString(R.string.lbl_search),
-				SearchViewItem(),
+				SearchViewItem,
 				supportFragmentManager.fragments.firstOrNull { f -> f is SearchFilesFragment }
 					?: SearchFilesFragment()
 			),
 			SpecialView(
 				ViewType.DownloadView,
 				getString(R.string.activeDownloads),
-				DownloadViewItem(),
+				DownloadViewItem,
 				supportFragmentManager.fragments.firstOrNull { f -> f is ActiveFileDownloadsFragment }
 					?: ActiveFileDownloadsFragment()
 			),
@@ -118,7 +127,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 		val selectViewTitle = getText(R.string.select_view_title)
 		object : ActionBarDrawerToggle(
 			this@BrowserEntryActivity,  /* host Activity */
-			drawerLayout.findView(),  /* DrawerLayout object */
+			drawerLayout,  /* DrawerLayout object */
 			R.string.drawer_open,  /* "open drawer" description */
 			R.string.drawer_close /* "close drawer" description */
 		) {
@@ -181,18 +190,20 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 
 		setTitle(R.string.title_activity_library)
 
-		supportActionBar?.run {
+		supportActionBar?.apply {
 			setDisplayHomeAsUpEnabled(true)
 			setHomeButtonEnabled(true)
 		}
 
-		val drawerLayout = drawerLayout.findView()
+		val drawerLayout = drawerLayout
 		drawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START)
 		drawerLayout.addDrawerListener(drawerToggle.value)
 
-		specialLibraryItemsListView.findView().onItemClickListener = OnItemClickListener { _, _, position, _ ->
+		specialLibraryItemsListView.onItemClickListener = OnItemClickListener { _, _, position, _ ->
 			updateSelectedView(specialViews[position].viewType, position)
 		}
+
+		lifecycle.addObserver(itemListMenuViewModel)
 	}
 
 	override fun onStart() {
@@ -209,7 +220,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 
 	private fun startLibrary() {
 		isStopped = false
-		if (selectViewsListView.findView().adapter != null) return
+		if (selectViewsListView.adapter != null) return
 
 		showProgressBar()
 
@@ -235,12 +246,18 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 					}
 				}
 			}, messageHandler))
+			.excuse(HandleViewIoException(this, this))
+			.eventuallyExcuse(response(UnexpectedExceptionToasterResponse(this), this))
+			.then {
+				ApplicationSettingsActivity.launch(this)
+				finish()
+			}
 	}
 
 	private fun displayLibrary(library: Library?) {
 		if (library == null) return
 
-		specialLibraryItemsListView.findView().adapter = SelectStaticViewAdapter(
+		specialLibraryItemsListView.adapter = SelectStaticViewAdapter(
 			this,
 			specialViews.map { it.name },
 			library.selectedViewType,
@@ -282,8 +299,8 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 
 		viewAnimator?.tryFlipToPreviousView()
 
-		selectViewsListView.findView().adapter = SelectViewAdapter(this, items, selectedView.key)
-		selectViewsListView.findView().onItemClickListener = getOnSelectViewClickListener(items)
+		selectViewsListView.adapter = SelectViewAdapter(this, items, selectedView.key)
+		selectViewsListView.onItemClickListener = getOnSelectViewClickListener(items)
 		hideAllViews()
 
 		val specialView = specialViews.firstOrNull { v -> v.viewItem == selectedView }
@@ -291,8 +308,6 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 			oldTitle = specialView.name
 			supportActionBar?.title = oldTitle
 			val fragment = specialView.fragment
-			if (fragment is SearchFilesFragment)
-				fragment.setOnItemListMenuChangeHandler(itemListMenuChangeHandler)
 
 			swapFragments(fragment)
 			return
@@ -305,7 +320,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 			break
 		}
 
-		if (selectedView is PlaylistViewItem) {
+		if (selectedView.value == KnownViews.Playlists) {
 			val playlistListFragment = PlaylistListFragment()
 			playlistListFragment.setOnItemListMenuChangeHandler(itemListMenuChangeHandler)
 			swapFragments(playlistListFragment)
@@ -327,7 +342,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 	}
 
 	private fun updateSelectedView(selectedViewType: ViewType, selectedViewKey: Int) {
-		drawerLayout.findView().closeDrawer(GravityCompat.START)
+		drawerLayout.closeDrawer(GravityCompat.START)
 		drawerToggle.value.syncState()
 
 		selectedBrowserLibraryProvider
@@ -364,7 +379,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 	}
 
 	private fun showProgressBar() {
-		showContainerView(loadingViewsProgressBar.findView())
+		showContainerView(loadingViewsProgressBar)
 	}
 
 	private fun showContainerView(view: View) {
@@ -373,8 +388,8 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 	}
 
 	private fun hideAllViews() {
-		for (i in 0 until browseLibraryContainerRelativeLayout.findView().childCount)
-			browseLibraryContainerRelativeLayout.findView().getChildAt(i).visibility = View.INVISIBLE
+		for (i in 0 until browseLibraryContainerRelativeLayout.childCount)
+			browseLibraryContainerRelativeLayout.getChildAt(i).visibility = View.INVISIBLE
 	}
 
 	@Synchronized
@@ -404,8 +419,9 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 		super.onStop()
 	}
 
+	@Deprecated("Deprecated in Java")
 	override fun onBackPressed() {
-		if (viewAnimator?.tryFlipToPreviousView() == true) return
+		if (itemListMenuViewModel.hideAllMenus() || viewAnimator?.tryFlipToPreviousView() == true) return
 		super.onBackPressed()
 	}
 

@@ -4,7 +4,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <data>
         <import type="android.view.View"/>
-        <variable name="vm" type="com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel"/>
+        <variable name="vm" type="com.lasthopesoftware.bluewater.client.browsing.TrackLoadedViewState"/>
     </data>
 
     <RelativeLayout
@@ -20,7 +20,7 @@
             android:scrollbars="vertical"
             android:layout_alignParentStart="true"
             android:layout_alignParentTop="true"
-            app:isVisible="@{vm.isLoaded}" />
+            app:isVisible="@{!vm.isLoading}" />
 
         <ProgressBar
             android:id="@+id/items_loading_progress"
@@ -28,7 +28,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerInParent="true"
-            app:isVisible="@{!vm.isLoaded}"/>
+            app:isVisible="@{vm.isLoading}"/>
 
     </RelativeLayout>
 </layout>
