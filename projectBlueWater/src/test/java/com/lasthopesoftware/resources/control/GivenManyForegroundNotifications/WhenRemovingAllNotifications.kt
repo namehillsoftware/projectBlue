@@ -1,5 +1,6 @@
 package com.lasthopesoftware.resources.control.GivenManyForegroundNotifications
 
+import android.app.Service
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 import com.lasthopesoftware.bluewater.shared.android.notifications.control.NotificationsController
@@ -25,12 +26,12 @@ class WhenRemovingAllNotifications : AndroidContext() {
     }
 
     @Test
-    fun thenTheServiceStartsForegroundForEachForegroundNotification() {
+    fun `then the service starts foreground for each foreground notification`() {
 		verify(exactly = 3) { service.startForeground(any(), any()) }
     }
 
     @Test
-    fun thenTheServiceIsNotInTheForegroundAndTheNotificationIsRemoved() {
-		verify(atLeast = 1) { service.stopForeground(true) }
+    fun `then the service is not in the foreground and the notification is removed`() {
+		verify(atLeast = 1) { service.stopForeground(Service.STOP_FOREGROUND_REMOVE) }
     }
 }

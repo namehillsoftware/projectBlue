@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.shared.android.notifications.control
 import android.app.Notification
 import android.app.NotificationManager
 import android.app.Service
+import android.os.Build
 import android.util.SparseBooleanArray
 
 class NotificationsController(
@@ -24,7 +25,7 @@ class NotificationsController(
 
 	override fun notifyBackground(notification: Notification?, notificationId: Int) {
 		synchronized(syncObject) {
-			if (isOnlyNotificationForeground(notificationId)) service.stopForeground(false)
+			if (isOnlyNotificationForeground(notificationId)) stopForeground(false)
 			markNotificationBackground(notificationId)
 			notificationManager.notify(notificationId, notification)
 		}
@@ -48,14 +49,14 @@ class NotificationsController(
 		synchronized(syncObject) {
 			notificationForegroundStatuses.delete(notificationId)
 			notificationManager.cancel(notificationId)
-			if (isAllNotificationsBackground) service.stopForeground(true)
+			if (isAllNotificationsBackground) stopForeground(true)
 		}
 	}
 
 	override fun stopForegroundNotification(notificationId: Int) {
 		synchronized(syncObject) {
 			markNotificationBackground(notificationId)
-			if (isAllNotificationsBackground) service.stopForeground(false)
+			if (isAllNotificationsBackground) stopForeground(false)
 		}
 	}
 
@@ -89,5 +90,16 @@ class NotificationsController(
 
 	private fun markNotificationForeground(notificationId: Int) {
 		synchronized(syncObject) { notificationForegroundStatuses.put(notificationId, true) }
+	}
+
+	private fun stopForeground(removeNotification: Boolean) {
+		if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+			service.stopForeground(
+				if (removeNotification) Service.STOP_FOREGROUND_REMOVE
+				else Service.STOP_FOREGROUND_DETACH
+			)
+		} else {
+			service.stopForeground(removeNotification)
+		}
 	}
 }

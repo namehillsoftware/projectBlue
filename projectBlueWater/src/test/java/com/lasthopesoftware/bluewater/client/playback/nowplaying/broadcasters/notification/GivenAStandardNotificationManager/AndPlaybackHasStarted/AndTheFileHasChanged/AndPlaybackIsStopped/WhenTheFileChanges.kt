@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.n
 
 import android.app.Notification
 import android.app.NotificationManager
+import android.app.Service
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.AndroidContext
@@ -79,7 +80,7 @@ class WhenTheFileChanges : AndroidContext() {
 
 	@Test
 	fun `then the service does not continue in the background`() {
-		verify { service.stopForeground(true) }
+		verify { service.stopForeground(Service.STOP_FOREGROUND_REMOVE) }
 	}
 
 	@Test

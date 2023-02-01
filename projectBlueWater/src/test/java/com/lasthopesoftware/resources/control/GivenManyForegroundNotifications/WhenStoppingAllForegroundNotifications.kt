@@ -1,5 +1,6 @@
 package com.lasthopesoftware.resources.control.GivenManyForegroundNotifications
 
+import android.app.Service
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 import com.lasthopesoftware.bluewater.shared.android.notifications.control.NotificationsController
@@ -33,7 +34,7 @@ class WhenStoppingAllForegroundNotifications : AndroidContext() {
     }
 
     @Test
-    fun thenTheServiceIsNotInTheForegroundAndTheNotificationIsNotRemoved() {
-		verify(exactly = 1) { service.stopForeground(false) }
+    fun `then the service is not in the foreground and the notification is not removed`() {
+		verify(exactly = 1) { service.stopForeground(Service.STOP_FOREGROUND_DETACH) }
     }
 }
