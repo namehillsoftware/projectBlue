@@ -22,12 +22,12 @@ class WhenStoppingTheForegroundNotification : AndroidContext() {
 	}
 
 	@Test
-	fun thenTheServiceStartsForegroundForEachForegroundNotification() {
+	fun `then the service starts foreground for each foreground notification`() {
 		verify(exactly = 1) { service.startForeground(any(), any()) }
 	}
 
 	@Test
-	fun thenTheServiceGoesToBackgroundOnce() {
-		verify(exactly = 1) { service.stopForeground(any<Boolean>()) }
+	fun `then the service goes to background once`() {
+		verify(exactly = 1) { service.stopForeground(any<Int>()) }
 	}
 }
