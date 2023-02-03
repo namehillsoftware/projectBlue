@@ -25,6 +25,7 @@ import com.lasthopesoftware.bluewater.client.playback.engine.selection.view.Play
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 import com.lasthopesoftware.bluewater.client.servers.list.ServerListAdapter
 import com.lasthopesoftware.bluewater.client.servers.list.listeners.EditServerClickListener
+import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.getValue
@@ -48,14 +49,17 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 		setContentView(R.layout.activity_application_settings)
 		setSupportActionBar(findViewById(R.id.applicationSettingsToolbar))
 
+		val syncScheduler = SyncScheduler(this)
 		HandleSyncCheckboxPreference.handle(
 			applicationSettingsRepository,
+			syncScheduler,
 			{ s -> s.isSyncOnPowerOnly },
 			{ s -> s::isSyncOnPowerOnly::set },
 			findViewById(R.id.syncOnPowerCheckbox))
 
 		HandleSyncCheckboxPreference.handle(
 			applicationSettingsRepository,
+			syncScheduler,
 			{ it.isSyncOnWifiOnly },
 			{ s -> s::isSyncOnWifiOnly::set },
 			findViewById(R.id.syncOnWifiCheckbox))

@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.stored.library.items.files.fragment.adapter
+package com.lasthopesoftware.bluewater.client.stored.library.items.files.view.adapter
 
 import android.view.View
 import androidx.recyclerview.widget.RecyclerView

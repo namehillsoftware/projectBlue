@@ -53,8 +53,8 @@ class StoredFileAccess(private val context: Context) : AccessStoredFiles {
 			}
 		}
 
-	override val downloadingStoredFiles: Promise<List<StoredFile>>
-		get() = promiseTableMessage<List<StoredFile>, StoredFile> {
+	override fun promiseDownloadingFiles(): Promise<List<StoredFile>> =
+		promiseTableMessage<List<StoredFile>, StoredFile> {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				repositoryAccessHelper
 					.mapSql(

@@ -72,6 +72,7 @@ open class MainApplication : Application() {
 	private val storageWritePermissionsRequestNotificationBuilder by lazy { StorageWritePermissionsRequestNotificationBuilder(this) }
 	private val applicationMessageBus by lazy { getApplicationMessageBus() }
 	private val applicationSettings by lazy { getApplicationSettingsRepository() }
+	private val syncScheduler by lazy { SyncScheduler(this) }
 
 	@SuppressLint("DefaultLocale")
 	override fun onCreate() {
@@ -89,9 +90,9 @@ open class MainApplication : Application() {
 			isWorkManagerInitialized = true
 		}
 
-		SyncScheduler
-			.promiseIsScheduled(this)
-			.then { isScheduled -> if (!isScheduled) SyncScheduler.scheduleSync(this) }
+		syncScheduler
+			.promiseIsScheduled()
+			.then { isScheduled -> if (!isScheduled) syncScheduler.scheduleSync() }
 
 		LiveNowPlayingLookup.initializeInstance(this)
 	}
@@ -170,7 +171,7 @@ open class MainApplication : Application() {
 			connectionDependentReceiverRegistrations
 		))
 
-		applicationMessageBus.registerReceiver(SyncItemStateChangedListener(this))
+		applicationMessageBus.registerReceiver(SyncItemStateChangedListener(syncScheduler))
 	}
 
 	private fun initializeLogging() {

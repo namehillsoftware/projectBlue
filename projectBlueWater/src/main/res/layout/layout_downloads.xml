@@ -1,20 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
+<layout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto">
 
-	<include
-		layout="@layout/asynchronous_recycler_view"
+	<data>
+		<variable name="vm" type="com.lasthopesoftware.bluewater.client.stored.library.items.files.view.ActiveFileDownloadsViewModel"/>
+	</data>
+
+	<RelativeLayout
 		android:layout_width="match_parent"
-		android:layout_height="match_parent"
-	    android:layout_above="@+id/toggleSyncButton" />
+		android:layout_height="match_parent">
 
-    <Button
-	    android:id="@id/toggleSyncButton"
-	    android:layout_width="match_parent"
-	    android:layout_height="wrap_content"
-	    android:layout_alignParentBottom="true"
-	    android:background="@drawable/borderless_button"
-	    android:enabled="false"
-	    android:text="@string/start_sync_button"/>
-</RelativeLayout>
+		<include
+			android:id="@+id/downloadsList"
+			layout="@layout/asynchronous_recycler_view"
+			android:layout_width="match_parent"
+			android:layout_height="match_parent"
+			android:layout_above="@+id/toggleSyncButton"
+			app:vm="@{vm}" />
+
+		<Button
+			android:id="@id/toggleSyncButton"
+			android:layout_width="match_parent"
+			android:layout_height="wrap_content"
+			android:layout_alignParentBottom="true"
+			android:background="@drawable/borderless_button"
+			android:enabled="@{vm.isSyncEnabled()}"
+			android:text="@{!vm.isSyncing() ? @string/start_sync_button : @string/stop_sync_button}"/>
+	</RelativeLayout>
+</layout>

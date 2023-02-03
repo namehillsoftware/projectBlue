@@ -1,0 +1,93 @@
+package com.lasthopesoftware.bluewater.client.stored.library.items.files.view
+
+import androidx.lifecycle.ViewModel
+import com.lasthopesoftware.bluewater.client.browsing.TrackLoadedViewState
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.AccessStoredFiles
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
+import com.lasthopesoftware.bluewater.client.stored.sync.ScheduleSyncs
+import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileMessage
+import com.lasthopesoftware.bluewater.client.stored.sync.SyncStateMessage
+import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
+import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
+import com.namehillsoftware.handoff.promises.Promise
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+
+class ActiveFileDownloadsViewModel(
+	private val storedFileAccess: AccessStoredFiles,
+	applicationMessages: RegisterForApplicationMessages,
+	private val scheduler: ScheduleSyncs,
+) : ViewModel(), TrackLoadedViewState {
+	private var activeLibraryId: LibraryId? = null
+
+	private val mutableIsLoading = MutableStateFlow(false)
+	private val mutableIsSyncing = MutableStateFlow(false)
+	private val mutableIsSyncEnabled = MutableStateFlow(false)
+	private val mutableDownloadingFiles = MutableStateFlow(emptyMap<Int, StoredFile>())
+
+	private val fileDownloadedRegistration = applicationMessages.registerReceiver { message: StoredFileMessage.FileDownloaded ->
+		mutableDownloadingFiles.value -= message.storedFileId
+	}
+
+	private val fileDownloadingRegistration = applicationMessages.registerReceiver { message: StoredFileMessage.FileQueued ->
+		message.storedFileId
+			.takeUnless(mutableDownloadingFiles.value::containsKey)
+			?.let(storedFileAccess::getStoredFile)
+			?.then { storedFile ->
+				if (storedFile != null && storedFile.libraryId == activeLibraryId?.id) {
+					mutableDownloadingFiles.value += Pair(storedFile.id, storedFile)
+				}
+			}
+	}
+
+	private val syncStartedReceiver = applicationMessages.registerReceiver { _ : SyncStateMessage.SyncStarted ->
+		mutableIsSyncing.value = true
+	}
+
+	private val syncStoppedReceiver = applicationMessages.registerReceiver { _ : SyncStateMessage.SyncStopped ->
+		mutableIsSyncing.value = false
+	}
+
+	val isSyncing = mutableIsSyncing.asStateFlow()
+	val isSyncEnabled = mutableIsSyncEnabled.asStateFlow()
+	val downloadingFiles = mutableDownloadingFiles.asStateFlow()
+	override val isLoading = mutableIsLoading.asStateFlow()
+
+	init {
+	    scheduler
+			.promiseIsSyncing()
+			.then {
+				mutableIsSyncing.value = it
+				mutableIsSyncEnabled.value = true
+			}
+	}
+
+	override fun onCleared() {
+		fileDownloadedRegistration.close()
+		fileDownloadingRegistration.close()
+		syncStartedReceiver.close()
+		syncStoppedReceiver.close()
+	}
+
+	fun loadActiveDownloads(libraryId: LibraryId): Promise<*> {
+		mutableIsLoading.value = true
+		activeLibraryId = libraryId
+		return storedFileAccess
+			.promiseDownloadingFiles()
+			.then { storedFiles ->
+				mutableDownloadingFiles.value =
+					storedFiles
+						.filter { sf -> sf.libraryId == libraryId.id }
+						.associateBy { sf -> sf.id }
+			}
+			.must { mutableIsLoading.value = false }
+	}
+
+	fun toggleSync() {
+		scheduler.promiseIsSyncing().then { isSyncRunning ->
+			if (isSyncRunning) scheduler.cancelSync()
+			else scheduler.syncImmediately()
+		}
+	}
+}

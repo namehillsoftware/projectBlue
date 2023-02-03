@@ -10,22 +10,23 @@ import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.promises.Promise
 import java.util.concurrent.TimeUnit
 
-object SyncScheduler {
-	private const val workName = "StoredFilesSync"
+private const val workName = "StoredFilesSync"
 
-	fun syncImmediately(context: Context): Promise<Operation> {
+class SyncScheduler(private val context: Context) : ScheduleSyncs {
+
+	override fun syncImmediately(): Promise<Operation> {
 		val oneTimeWorkRequest = OneTimeWorkRequest.Builder(SyncWorker::class.java)
 		return WorkManager.getInstance(context)
 			.enqueueUniqueWork(workName, ExistingWorkPolicy.REPLACE, oneTimeWorkRequest.build())
 			.result
 			.toPromise(ThreadPools.compute)
 			.eventually(
-				{ scheduleSync(context) },
-				{ scheduleSync(context) })
+				{ scheduleSync() },
+				{ scheduleSync() })
 	}
 
-	fun scheduleSync(context: Context): Promise<Operation> =
-		constraints(context).then { c ->
+	override fun scheduleSync(): Promise<Operation> =
+		constraints().then { c ->
 			val workerClass =
 				if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) SyncWorker::class.java
 				else MutedSyncWorker::class.java
@@ -35,24 +36,24 @@ object SyncScheduler {
 				.enqueueUniquePeriodicWork(workName, ExistingPeriodicWorkPolicy.KEEP, periodicWorkRequest.build())
 		}
 
-	fun cancelSync(context: Context): Promise<Unit> =
-		promiseWorkInfos(context).then { wi ->
+	override fun cancelSync(): Promise<Unit> =
+		promiseWorkInfos().then { wi ->
 			val workManager = WorkManager.getInstance(context)
 			for (item in wi.filter { it.state == WorkInfo.State.RUNNING })
 				workManager.cancelWorkById(item.id)
 		}
 
-	private fun constraints(context: Context): Promise<Constraints> {
+	override fun constraints(): Promise<Constraints> {
 		val applicationSettings = context.getApplicationSettingsRepository()
 		return SyncWorkerConstraints(applicationSettings).currentConstraints
 	}
 
-	fun promiseIsSyncing(context: Context): Promise<Boolean> =
-		promiseWorkInfos(context).then { workInfos -> workInfos.any { wi -> wi.state == WorkInfo.State.RUNNING } }
+	override fun promiseIsSyncing(): Promise<Boolean> =
+		promiseWorkInfos().then { workInfos -> workInfos.any { wi -> wi.state == WorkInfo.State.RUNNING } }
 
-	fun promiseIsScheduled(context: Context): Promise<Boolean> =
-		promiseWorkInfos(context).then { workInfos -> workInfos.any { wi -> wi.state == WorkInfo.State.ENQUEUED } }
+	override fun promiseIsScheduled(): Promise<Boolean> =
+		promiseWorkInfos().then { workInfos -> workInfos.any { wi -> wi.state == WorkInfo.State.ENQUEUED } }
 
-	private fun promiseWorkInfos(context: Context): Promise<List<WorkInfo>> =
+	override fun promiseWorkInfos(): Promise<List<WorkInfo>> =
 		WorkManager.getInstance(context).getWorkInfosForUniqueWork(workName).toPromise(ThreadPools.compute)
 }
