@@ -23,7 +23,7 @@ class ActiveFileDownloadsViewModel(
 
 	private val mutableIsLoading = MutableStateFlow(false)
 	private val mutableIsSyncing = MutableStateFlow(false)
-	private val mutableIsSyncEnabled = MutableStateFlow(false)
+	private val mutableIsSyncStateChangeEnabled = MutableStateFlow(false)
 	private val mutableDownloadingFiles = MutableStateFlow(emptyMap<Int, StoredFile>())
 
 	private val fileDownloadedRegistration = applicationMessages.registerReceiver { message: StoredFileMessage.FileDownloaded ->
@@ -50,7 +50,7 @@ class ActiveFileDownloadsViewModel(
 	}
 
 	val isSyncing = mutableIsSyncing.asStateFlow()
-	val isSyncEnabled = mutableIsSyncEnabled.asStateFlow()
+	val isSyncStateChangeEnabled = mutableIsSyncStateChangeEnabled.asStateFlow()
 	val downloadingFiles = mutableDownloadingFiles.asStateFlow()
 	override val isLoading = mutableIsLoading.asStateFlow()
 
@@ -59,7 +59,7 @@ class ActiveFileDownloadsViewModel(
 			.promiseIsSyncing()
 			.then {
 				mutableIsSyncing.value = it
-				mutableIsSyncEnabled.value = true
+				mutableIsSyncStateChangeEnabled.value = true
 			}
 	}
 
@@ -85,9 +85,15 @@ class ActiveFileDownloadsViewModel(
 	}
 
 	fun toggleSync() {
-		scheduler.promiseIsSyncing().then { isSyncRunning ->
-			if (isSyncRunning) scheduler.cancelSync()
-			else scheduler.syncImmediately()
-		}
+		mutableIsSyncStateChangeEnabled.value = false
+		scheduler
+			.promiseIsSyncing()
+			.eventually { isSyncRunning ->
+				if (isSyncRunning) scheduler.cancelSync()
+				else scheduler.syncImmediately()
+			}
+			.must {
+				mutableIsSyncStateChangeEnabled.value = true
+			}
 	}
 }

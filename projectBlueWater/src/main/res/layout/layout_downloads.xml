@@ -25,7 +25,7 @@
 			android:layout_height="wrap_content"
 			android:layout_alignParentBottom="true"
 			android:background="@drawable/borderless_button"
-			android:enabled="@{vm.isSyncEnabled()}"
-			android:text="@{!vm.isSyncing() ? @string/start_sync_button : @string/stop_sync_button}"/>
+			android:enabled="@{vm.isSyncStateChangeEnabled}"
+			android:text="@{!vm.isSyncing ? @string/start_sync_button : @string/stop_sync_button}"/>
 	</RelativeLayout>
 </layout>
