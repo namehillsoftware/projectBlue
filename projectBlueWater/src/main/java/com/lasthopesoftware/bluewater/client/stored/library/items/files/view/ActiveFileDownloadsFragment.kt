@@ -38,8 +38,8 @@ class ActiveFileDownloadsFragment : Fragment() {
 
 		val binding = DataBindingUtil.inflate<LayoutDownloadsBinding>(inflater, R.layout.layout_downloads, container, false)
 		binding.vm = viewModel
-		binding.downloadsList.vm = viewModel
-		val activeFileDownloadsAdapter = ActiveFileDownloadsAdapter(container.context)
+		val context = container.context
+		val activeFileDownloadsAdapter = ActiveFileDownloadsAdapter(context)
 		val listView = binding.downloadsList.loadedRecyclerView
 		listView.adapter = activeFileDownloadsAdapter
 		viewModel.downloadingFiles.onEach {

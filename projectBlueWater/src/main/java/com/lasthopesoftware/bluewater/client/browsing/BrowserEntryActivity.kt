@@ -21,8 +21,8 @@ import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.list.SearchFilesFragment
 import com.lasthopesoftware.bluewater.client.browsing.items.list.IItemListViewContainer
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuChangeHandler
-import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener.Companion.tryFlipToPreviousView
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistListFragment
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
@@ -58,6 +58,7 @@ import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessa
 import com.lasthopesoftware.bluewater.shared.messages.registerOnHandler
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
+import com.lasthopesoftware.resources.closables.LifecycleCloseableManager
 
 private val logger by lazyLogger<BrowserEntryActivity>()
 
@@ -83,13 +84,15 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 
 	private val messageHandler by lazy { Handler(mainLooper) }
 
-	private val applicationMessageBus = lazy { getApplicationMessageBus().getScopedMessageBus() }
+	private val lifecycleCloseableManager by lazy { LifecycleCloseableManager(this) }
+
+	private val applicationMessageBus by lazy { getApplicationMessageBus().getScopedMessageBus().also(lifecycleCloseableManager::manage) }
 
 	private val itemListMenuChangeHandler by lazy { ItemListMenuChangeHandler(this) }
 
 	private val menuMessageBus by buildViewModelLazily { ViewModelMessageBus<ItemListMenuMessage>() }
 
-	private val itemListMenuViewModel by lazy { ItemListMenuViewModel(menuMessageBus) }
+	private val itemListMenuBackPressedHandler by lazy { ItemListMenuBackPressedHandler(menuMessageBus).also(lifecycleCloseableManager::manage) }
 
 	private val specialViews by lazy {
 		val views = arrayOf(
@@ -175,13 +178,13 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 		setSupportActionBar(findViewById(R.id.browseLibraryToolbar))
 		setTheme(R.style.AppTheme)
 
-		applicationMessageBus.value.registerOnHandler(
+		applicationMessageBus.registerOnHandler(
 			cls<SelectedConnectionSettingsChangeReceiver.SelectedConnectionSettingsUpdated>(),
 			messageHandler,
 			connectionSettingsUpdatedReceiver
 		)
 
-		applicationMessageBus.value.registerOnHandler(
+		applicationMessageBus.registerOnHandler(
 			cls<BrowserLibrarySelection.LibraryChosenMessage>(),
 			messageHandler,
 			connectionSettingsUpdatedReceiver)
@@ -202,8 +205,6 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 		specialLibraryItemsListView.onItemClickListener = OnItemClickListener { _, _, position, _ ->
 			updateSelectedView(specialViews[position].viewType, position)
 		}
-
-		lifecycle.addObserver(itemListMenuViewModel)
 	}
 
 	override fun onStart() {
@@ -421,7 +422,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 
 	@Deprecated("Deprecated in Java")
 	override fun onBackPressed() {
-		if (itemListMenuViewModel.hideAllMenus() || viewAnimator?.tryFlipToPreviousView() == true) return
+		if (itemListMenuBackPressedHandler.hideAllMenus() || viewAnimator?.tryFlipToPreviousView() == true) return
 		super.onBackPressed()
 	}
 
@@ -430,13 +431,6 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 	}
 
 	override fun getNowPlayingFloatingActionButton(): NowPlayingFloatingActionButton = nowPlayingFloatingActionButton
-
-	override fun onDestroy() {
-		if (applicationMessageBus.isInitialized())
-			applicationMessageBus.value.close()
-
-		super.onDestroy()
-	}
 
 	private class SpecialView(val viewType: ViewType, val name: String, val viewItem: ViewItem, val fragment: Fragment)
 

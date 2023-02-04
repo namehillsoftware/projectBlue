@@ -25,7 +25,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuViewModel
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.shared.android.ui.components.scrollbar
 import me.onebone.toolbar.CollapsingToolbarScaffold
@@ -38,7 +38,7 @@ fun SearchFilesView(
 	searchFilesViewModel: SearchFilesViewModel,
 	nowPlayingViewModel: NowPlayingFilePropertiesViewModel,
 	trackHeadlineViewModelProvider: TrackHeadlineViewModelProvider,
-	itemListMenuViewModel: ItemListMenuViewModel,
+	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
 	onBack: (() -> Unit)? = null,
 ) {
 	val files by searchFilesViewModel.files.collectAsState()
@@ -65,7 +65,7 @@ fun SearchFilesView(
 			isMenuShown = isMenuShown,
 			onItemClick = fileItemViewModel::viewFileDetails,
 			onHiddenMenuClick = {
-				itemListMenuViewModel.hideAllMenus()
+				itemListMenuBackPressedHandler.hideAllMenus()
 				fileItemViewModel.showMenu()
 			},
 			onAddToNowPlayingClick = fileItemViewModel::addToNowPlaying,

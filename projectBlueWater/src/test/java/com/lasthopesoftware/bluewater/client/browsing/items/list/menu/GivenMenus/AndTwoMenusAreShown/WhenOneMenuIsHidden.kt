@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.browsing.items.list.menu.GivenMenu
 
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.HiddenListItemMenu
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
-import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuViewModel
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.resources.RecordingTypedMessageBus
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -13,7 +13,7 @@ class WhenOneMenuIsHidden {
 
 	private val arrangedServices by lazy {
 		val recordingMessageBus = RecordingTypedMessageBus<ItemListMenuMessage>()
-		Pair(recordingMessageBus, ItemListMenuViewModel(recordingMessageBus))
+		Pair(recordingMessageBus, ItemListMenuBackPressedHandler(recordingMessageBus))
 	}
 
 	@BeforeAll

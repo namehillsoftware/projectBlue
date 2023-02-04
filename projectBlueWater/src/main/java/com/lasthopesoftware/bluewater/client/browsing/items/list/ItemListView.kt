@@ -34,7 +34,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewMod
 import com.lasthopesoftware.bluewater.client.browsing.files.list.TrackHeaderItem
 import com.lasthopesoftware.bluewater.client.browsing.files.list.TrackHeadlineViewModelProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.*
-import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuViewModel
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
@@ -52,7 +52,7 @@ fun ItemListView(
 	itemListViewModel: ItemListViewModel,
 	fileListViewModel: FileListViewModel,
 	nowPlayingViewModel: NowPlayingFilePropertiesViewModel,
-	itemListMenuViewModel: ItemListMenuViewModel,
+	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
 	trackHeadlineViewModelProvider: TrackHeadlineViewModelProvider,
 	applicationNavigation: NavigateApplication,
 ) {
@@ -76,7 +76,7 @@ fun ItemListView(
 					onLongClick = {
 						hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
 
-						itemListMenuViewModel.hideAllMenus()
+						itemListMenuBackPressedHandler.hideAllMenus()
 
 						childItemViewModel.showMenu()
 					},
@@ -170,7 +170,7 @@ fun ItemListView(
 			isMenuShown = isMenuShown,
 			onItemClick = fileItemViewModel::viewFileDetails,
 			onHiddenMenuClick = {
-				itemListMenuViewModel.hideAllMenus()
+				itemListMenuBackPressedHandler.hideAllMenus()
 				fileItemViewModel.showMenu()
 			},
 			onAddToNowPlayingClick = fileItemViewModel::addToNowPlaying,

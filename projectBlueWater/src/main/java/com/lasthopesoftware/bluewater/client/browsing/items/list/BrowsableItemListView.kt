@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.list.TrackHeadlineVi
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListView
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
-import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuViewModel
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionStatusViewModel
@@ -31,7 +31,7 @@ fun NavBackStackEntry.BrowsableItemListView(
 	itemListViewModel: ItemListViewModel,
 	fileListViewModel: FileListViewModel,
 	nowPlayingViewModel: NowPlayingFilePropertiesViewModel,
-	itemListMenuViewModel: ItemListMenuViewModel,
+	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
 	trackHeadlineViewModelProvider: TrackHeadlineViewModelProvider,
 	applicationNavigation: NavigateApplication,
 ) {
@@ -41,7 +41,7 @@ fun NavBackStackEntry.BrowsableItemListView(
 			itemListViewModel,
 			fileListViewModel,
 			nowPlayingViewModel,
-			itemListMenuViewModel,
+			itemListMenuBackPressedHandler,
 			trackHeadlineViewModelProvider,
 			applicationNavigation,
 		)

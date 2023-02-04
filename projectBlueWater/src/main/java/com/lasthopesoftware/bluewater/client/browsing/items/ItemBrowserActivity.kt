@@ -56,7 +56,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.F
 import com.lasthopesoftware.bluewater.client.browsing.items.access.CachedItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
-import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuViewModel
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
@@ -82,9 +82,11 @@ import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModel
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 import com.lasthopesoftware.bluewater.shared.cls
-import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
+import com.lasthopesoftware.bluewater.shared.messages.application.ScopedApplicationMessageBus
+import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
 import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRateLimiter
+import com.lasthopesoftware.resources.closables.LifecycleCloseableManager
 import com.lasthopesoftware.resources.strings.StringResources
 
 private val magicPropertyBuilder by lazy { MagicPropertyBuilder(cls<ItemBrowserActivity>()) }
@@ -116,13 +118,15 @@ class ItemBrowserActivity : AppCompatActivity() {
 
 	private val rateLimiter by lazy { PromisingRateLimiter<Map<String, String>>(1) }
 
+	private val lifecycleCloseableManager by lazy { LifecycleCloseableManager(this) }
+
 	private val browserLibraryIdProvider by lazy { getCachedSelectedLibraryIdProvider() }
 
-	private val messageBus by lazy { getApplicationMessageBus() }
+	private val messageBus by lazy { getApplicationMessageBus().getScopedMessageBus().also(lifecycleCloseableManager::manage) }
 
 	private val menuMessageBus by buildViewModelLazily { ViewModelMessageBus<ItemListMenuMessage>() }
 
-	private val itemListMenuViewModel by lazy { ItemListMenuViewModel(menuMessageBus) }
+	private val itemListMenuBackPressedHandler by lazy { ItemListMenuBackPressedHandler(menuMessageBus).also(lifecycleCloseableManager::manage) }
 
 	private val itemProvider by lazy { CachedItemProvider.getInstance(this) }
 
@@ -248,7 +252,7 @@ class ItemBrowserActivity : AppCompatActivity() {
 					playbackServiceController,
 					fileProvider,
 					menuMessageBus,
-					itemListMenuViewModel,
+					itemListMenuBackPressedHandler,
 					scopedFilePropertiesProvider,
 					scopedUrlKeyProvider,
 					stringResources,
@@ -261,8 +265,7 @@ class ItemBrowserActivity : AppCompatActivity() {
 			}
 		}
 
-		onBackPressedDispatcher.addCallback(this, itemListMenuViewModel)
-		lifecycle.addObserver(itemListMenuViewModel)
+		onBackPressedDispatcher.addCallback(this, itemListMenuBackPressedHandler)
 	}
 }
 
@@ -305,12 +308,12 @@ private fun ItemBrowserView(
 	browserLibraryIdProvider: CachedSelectedLibraryIdProvider,
 	itemProvider: CachedItemProvider,
 	itemListProvider: ItemStringListProvider,
-	messageBus: ApplicationMessageBus,
+	messageBus: ScopedApplicationMessageBus,
 	storedItemAccess: StateChangeBroadcastingStoredItemAccess,
 	playbackServiceController: PlaybackServiceController,
 	itemFileProvider: ItemFileProvider,
 	menuMessageBus: ViewModelMessageBus<ItemListMenuMessage>,
-	itemListMenuViewModel: ItemListMenuViewModel,
+	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
 	scopedFilePropertiesProvider: SelectedLibraryFilePropertiesProvider,
 	scopedUrlKeyProvider: SelectedLibraryUrlKeyProvider,
 	stringResources: StringResources,
@@ -489,7 +492,7 @@ private fun ItemBrowserView(
 						)
 					},
 					nowPlayingViewModel,
-					itemListMenuViewModel,
+					itemListMenuBackPressedHandler,
 					trackHeadlineViewModelProvider = entry.viewModelStore.buildViewModel {
 						TrackHeadlineViewModelProvider(
 							scopedFilePropertiesProvider,
@@ -526,7 +529,7 @@ private fun ItemBrowserView(
 							messageBus,
 						)
 					},
-					itemListMenuViewModel = itemListMenuViewModel,
+					itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
 					onBack = graphNavigation::backOut,
 				)
 			}

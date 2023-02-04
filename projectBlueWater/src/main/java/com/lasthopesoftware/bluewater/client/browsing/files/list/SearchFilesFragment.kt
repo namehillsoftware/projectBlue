@@ -16,7 +16,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.SelectedL
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertyStorage
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
-import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuViewModel
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
@@ -34,6 +34,7 @@ import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLa
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
 import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRateLimiter
+import com.lasthopesoftware.resources.closables.LifecycleCloseableManager
 import com.lasthopesoftware.resources.strings.StringResources
 
 class SearchFilesFragment : Fragment() {
@@ -54,8 +55,10 @@ class SearchFilesFragment : Fragment() {
 		)
 	}
 
-	private val scopedMessageBus = lazy {
-		getApplicationMessageBus().getScopedMessageBus()
+	private val lifecycleCloseableManager by lazy { LifecycleCloseableManager(this) }
+
+	private val scopedMessageBus by lazy {
+		getApplicationMessageBus().getScopedMessageBus().also(lifecycleCloseableManager::manage)
 	}
 
 	private val revisionProvider by lazy { LibraryRevisionProvider(libraryConnectionProvider) }
@@ -92,7 +95,7 @@ class SearchFilesFragment : Fragment() {
 
 	private val menuMessageBus by buildActivityViewModelLazily { ViewModelMessageBus<ItemListMenuMessage>() }
 
-	private val itemListMenuViewModel by lazy { ItemListMenuViewModel(menuMessageBus) }
+	private val itemListMenuBackPressedHandler by lazy { ItemListMenuBackPressedHandler(menuMessageBus) }
 
 	private val trackHeadlineViewModelProvider by buildViewModelLazily {
 		TrackHeadlineViewModelProvider(
@@ -102,7 +105,7 @@ class SearchFilesFragment : Fragment() {
 			PlaybackServiceController(requireContext()),
 			ActivityApplicationNavigation(requireActivity()),
 			menuMessageBus,
-			scopedMessageBus.value,
+			scopedMessageBus,
 		)
 	}
 
@@ -116,13 +119,13 @@ class SearchFilesFragment : Fragment() {
 			connectionAuthenticationChecker,
 			revisionProvider,
 			FilePropertyCache,
-			scopedMessageBus.value
+			scopedMessageBus
 		)
 	}
 
 	private val nowPlayingFilePropertiesViewModel by buildViewModelLazily {
 		NowPlayingFilePropertiesViewModel(
-			scopedMessageBus.value,
+			scopedMessageBus,
 			LiveNowPlayingLookup.getInstance(),
 			libraryFilePropertiesProvider,
 			UrlKeyProvider(libraryConnectionProvider),
@@ -142,16 +145,10 @@ class SearchFilesFragment : Fragment() {
 						searchFilesViewModel = searchFilesViewModel,
 						nowPlayingViewModel = nowPlayingFilePropertiesViewModel,
 						trackHeadlineViewModelProvider = trackHeadlineViewModelProvider,
-						itemListMenuViewModel = itemListMenuViewModel,
+						itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
 					)
 				}
 			}
 		}
-	}
-
-	override fun onDestroy() {
-		super.onDestroy()
-
-		if (scopedMessageBus.isInitialized()) scopedMessageBus.value.close()
 	}
 }
