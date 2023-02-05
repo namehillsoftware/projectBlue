@@ -19,12 +19,15 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.list.TrackHeaderItemView
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewFileItem
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
+import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
+import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.scrollbar
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Light
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
@@ -32,6 +35,7 @@ import me.onebone.toolbar.CollapsingToolbarScaffold
 import me.onebone.toolbar.ScrollStrategy
 import me.onebone.toolbar.rememberCollapsingToolbarScaffoldState
 import kotlin.math.pow
+import kotlin.math.roundToInt
 
 @Composable
 fun ActiveFileDownloadsView(
@@ -74,78 +78,94 @@ fun ActiveFileDownloadsView(
 			modifier = Modifier.fillMaxSize(),
 			toolbar = {
 				val appBarHeight = 56
-				val searchFieldPadding = 16
-				val minimumMenuWidth = (2 * 32).dp
-
+				val topPadding by remember { derivedStateOf { (appBarHeight - 46 * headerHidingProgress).dp } }
+				val expandedTitleHeight = 84
 				val expandedIconSize = 36
-				val expandedMenuVerticalPadding = 4
-				val boxHeight = appBarHeight + expandedIconSize + expandedMenuVerticalPadding * 2 + searchFieldPadding * 2
-
-				val acceleratedProgress by remember {
-					derivedStateOf {
-						1 - toolbarState.toolbarState.progress.pow(
-							5
-						).coerceIn(0f, 1f)
-					}
-				}
-
+				val expandedMenuVerticalPadding = 12
+				val boxHeight =
+					expandedTitleHeight + expandedIconSize + expandedMenuVerticalPadding * 2 + appBarHeight
 				BoxWithConstraints(
 					modifier = Modifier
 						.height(boxHeight.dp)
-						.fillMaxWidth()
+						.padding(top = topPadding)
 				) {
-					if (files.any()) {
-
-						val collapsedIconSize = 24
-						val menuWidth by remember { derivedStateOf { (maxWidth - (maxWidth - minimumMenuWidth) * acceleratedProgress) } }
-						val expandedTopRowPadding = appBarHeight + expandedMenuVerticalPadding + searchFieldPadding * 2
-						val collapsedTopRowPadding = searchFieldPadding + appBarHeight / 2 - collapsedIconSize / 2
-						val topRowPadding by remember { derivedStateOf { (expandedTopRowPadding - (expandedTopRowPadding - collapsedTopRowPadding) * headerHidingProgress).dp } }
-						Row(
-							modifier = Modifier
-								.padding(
-									top = topRowPadding,
-									bottom = expandedMenuVerticalPadding.dp,
-									start = 8.dp,
-									end = 8.dp
-								)
-								.width(menuWidth)
-								.align(Alignment.TopEnd)
-						) {
-							val iconSize by remember { derivedStateOf { (expandedIconSize - ((expandedIconSize - collapsedIconSize) * headerHidingProgress)).dp } }
-
-							val isSyncing by activeFileDownloadsViewModel.isSyncing.collectAsState()
-
-							Image(
-								painter = painterResource(id = R.drawable.ic_sync_white),
-								contentDescription = stringResource(id = R.string.btn_sync_item),
-								colorFilter = ColorFilter.tint(if (isSyncing) MaterialTheme.colors.primary else Light.GrayClickable),
-								alpha = if (isSyncing) .9f else .6f,
+					val minimumMenuWidth = (3 * 32).dp
+					val acceleratedProgress by remember {
+						derivedStateOf {
+							1 - toolbarState.toolbarState.progress.pow(
+								3
+							).coerceIn(0f, 1f)
+						}
+					}
+					ProvideTextStyle(MaterialTheme.typography.h5) {
+						val startPadding by remember { derivedStateOf { (4 + 48 * headerHidingProgress).dp } }
+						val endPadding by remember { derivedStateOf { 4.dp + minimumMenuWidth * acceleratedProgress } }
+						val maxLines by remember { derivedStateOf { (2 - headerHidingProgress).roundToInt() } }
+						val header = stringResource(id = R.string.activeDownloads)
+						if (maxLines > 1) {
+							Text(
+								text = header,
+								maxLines = maxLines,
+								overflow = TextOverflow.Ellipsis,
 								modifier = Modifier
 									.fillMaxWidth()
-									.size(iconSize)
-									.clickable { activeFileDownloadsViewModel.toggleSync() }
-									.weight(1f),
+									.padding(start = startPadding, end = endPadding),
+							)
+						} else {
+							MarqueeText(
+								text = header,
+								overflow = TextOverflow.Ellipsis,
+								gradientSides = setOf(GradientSide.End),
+								gradientEdgeColor = MaterialTheme.colors.surface,
+								modifier = Modifier
+									.fillMaxWidth()
+									.padding(start = startPadding, end = endPadding),
 							)
 						}
 					}
+
+					val menuWidth by remember { derivedStateOf { (maxWidth - (maxWidth - minimumMenuWidth) * acceleratedProgress) } }
+					val expandedTopRowPadding = expandedTitleHeight + expandedMenuVerticalPadding
+					val collapsedTopRowPadding = 6
+					val topRowPadding by remember { derivedStateOf { (expandedTopRowPadding - (expandedTopRowPadding - collapsedTopRowPadding) * headerHidingProgress).dp } }
+					Row(
+						modifier = Modifier
+							.padding(
+								top = topRowPadding,
+								bottom = expandedMenuVerticalPadding.dp,
+								start = 8.dp,
+								end = 8.dp
+							)
+							.width(menuWidth)
+							.align(Alignment.TopEnd)
+					) {
+						val iconSize by remember { derivedStateOf { (expandedIconSize - (12 * headerHidingProgress)).dp } }
+
+						val isSyncing by activeFileDownloadsViewModel.isSyncing.collectAsState()
+
+						Image(
+							painter = painterResource(id = R.drawable.ic_sync_white),
+							contentDescription = stringResource(id = R.string.btn_sync_item),
+							colorFilter = ColorFilter.tint(if (isSyncing) MaterialTheme.colors.primary else Light.GrayClickable),
+							alpha = if (isSyncing) .9f else .6f,
+							modifier = Modifier
+								.fillMaxWidth()
+								.size(iconSize)
+								.clickable { activeFileDownloadsViewModel.toggleSync() }
+								.weight(1f),
+						)
+					}
 				}
 
-				Row(
-					modifier = Modifier
-						.fillMaxWidth()
-						.padding(searchFieldPadding.dp)
-						.height(appBarHeight.dp),
-					horizontalArrangement = Arrangement.Center,
-				) {
-					if (onBack != null) {
+				if (onBack != null) {
+					Box(modifier = Modifier.height(appBarHeight.dp)) {
 						Icon(
 							Icons.Default.ArrowBack,
 							contentDescription = "",
 							tint = MaterialTheme.colors.onSurface,
 							modifier = Modifier
 								.padding(16.dp)
-								.align(Alignment.CenterVertically)
+								.align(Alignment.CenterStart)
 								.clickable(
 									interactionSource = remember { MutableInteractionSource() },
 									indication = null,

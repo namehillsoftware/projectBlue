@@ -14,14 +14,12 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.RateContr
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.SelectedLibraryFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.SelectedLibraryUrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
 import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
-import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
@@ -84,8 +82,8 @@ class ActiveFileDownloadsFragment : Fragment() {
 		)
 	}
 
-	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-		return ComposeView(requireContext()).apply {
+	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? =
+		ComposeView(requireContext()).apply {
 			setContent {
 				ProjectBlueTheme {
 					ActiveFileDownloadsView(
@@ -95,12 +93,11 @@ class ActiveFileDownloadsFragment : Fragment() {
 				}
 			}
 		}
-	}
 
 	override fun onAttach(context: Context) {
 		super.onAttach(context)
 
-		SelectedLibraryIdProvider(context.getApplicationSettingsRepository())
+		selectedLibraryIdProvider
 			.promiseSelectedLibraryId()
 			.then {
 				if (it != null)
