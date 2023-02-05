@@ -31,8 +31,8 @@ import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
-import com.lasthopesoftware.bluewater.client.browsing.files.list.TrackHeaderItem
-import com.lasthopesoftware.bluewater.client.browsing.files.list.TrackHeadlineViewModelProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.list.TrackHeaderItemView
+import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewPlaylistFileItem
 import com.lasthopesoftware.bluewater.client.browsing.items.*
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
@@ -40,6 +40,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.scrollbar
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Light
+import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 import me.onebone.toolbar.CollapsingToolbarScaffold
 import me.onebone.toolbar.ScrollStrategy
 import me.onebone.toolbar.rememberCollapsingToolbarScaffoldState
@@ -53,7 +54,7 @@ fun ItemListView(
 	fileListViewModel: FileListViewModel,
 	nowPlayingViewModel: NowPlayingFilePropertiesViewModel,
 	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
-	trackHeadlineViewModelProvider: TrackHeadlineViewModelProvider,
+	trackHeadlineViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
 	applicationNavigation: NavigateApplication,
 ) {
 	val playingFile by nowPlayingViewModel.nowPlayingFile.collectAsState()
@@ -164,10 +165,10 @@ fun ItemListView(
 		val fileName by fileItemViewModel.title.collectAsState()
 		val isPlaying by remember { derivedStateOf { playingFile?.serviceFile == serviceFile } }
 
-		TrackHeaderItem(
+		TrackHeaderItemView(
 			itemName = fileName,
-			isPlaying = isPlaying,
-			isMenuShown = isMenuShown,
+			isActive = isPlaying,
+			isHiddenMenuShown = isMenuShown,
 			onItemClick = fileItemViewModel::viewFileDetails,
 			onHiddenMenuClick = {
 				itemListMenuBackPressedHandler.hideAllMenus()

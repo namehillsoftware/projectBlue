@@ -1,18 +1,12 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.list
 
-import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideScopedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
-import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.HiddenListItemMenu
-import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideScopedUrlKey
-import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
-import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.lazyLogger
-import com.lasthopesoftware.bluewater.shared.messages.SendTypedMessages
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay
@@ -33,47 +27,37 @@ import java.util.concurrent.CancellationException
 import javax.net.ssl.SSLProtocolException
 
 private val timeoutDuration by lazy { Duration.standardMinutes(1) }
-private val logger by lazyLogger<ReusableTrackHeadlineViewModel>()
+private val logger by lazyLogger<ReusableFileViewModel>()
 
-class ReusableTrackHeadlineViewModel(
+class ReusableFileViewModel(
 	private val filePropertiesProvider: ProvideScopedFileProperties,
-	private val urlKeyProvider: ProvideScopedUrlKey,
 	private val stringResources: GetStringResources,
-	private val controlPlaybackService: ControlPlaybackService,
-	private val applicationNavigation: NavigateApplication,
-	private val sendItemMenuMessages: SendTypedMessages<ItemListMenuMessage>,
+	private val urlKeyProvider: ProvideScopedUrlKey,
 	receiveMessages: RegisterForApplicationMessages,
-) : ViewFileItem, HiddenListItemMenu, AutoCloseable, (FilePropertiesUpdatedMessage) -> Unit {
+) : ViewFileItem,  (FilePropertiesUpdatedMessage) -> Unit {
 
 	private val filePropertiesUpdatedSubscription = receiveMessages.registerReceiver(this)
 
 	private val promiseSync = Any()
 
 	@Volatile
-	private var promisedState = Unit.toPromise()
-
-	@Volatile
 	private var activeUrlKey: UrlKeyHolder<ServiceFile>? = null
 
 	@Volatile
-	private var activePositionedFile: PositionedFile? = null
+	private var activeServiceFile: ServiceFile? = null
 
 	@Volatile
-	private var associatedPlaylist = emptyList<ServiceFile>()
+	private var promisedState = Unit.toPromise()
 
 	private val mutableArtist = MutableStateFlow("")
 	private val mutableTitle = MutableStateFlow(stringResources.loading)
-	private val mutableIsMenuShown = MutableStateFlow(false)
 
 	override val artist = mutableArtist.asStateFlow()
 	override val title = mutableTitle.asStateFlow()
-	override val isMenuShown = mutableIsMenuShown.asStateFlow()
 
-	override fun promiseUpdate(associatedPlaylist: List<ServiceFile>, position: Int): Promise<Unit> =
+	override fun promiseUpdate(serviceFile: ServiceFile): Promise<Unit> =
 		synchronized(promiseSync) {
-			val serviceFile = associatedPlaylist[position]
-			activePositionedFile = PositionedFile(position, serviceFile)
-			this.associatedPlaylist = associatedPlaylist
+			activeServiceFile = serviceFile
 
 			val currentPromisedState = promisedState
 			promisedState = currentPromisedState.inevitably(EventualTextViewUpdate(serviceFile))
@@ -82,33 +66,9 @@ class ReusableTrackHeadlineViewModel(
 		}
 
 	override fun invoke(message: FilePropertiesUpdatedMessage) {
-		if (activeUrlKey == message.urlServiceKey) activePositionedFile?.playlistPosition?.also {
-			promiseUpdate(associatedPlaylist, it)
+		if (activeUrlKey == message.urlServiceKey) activeServiceFile?.also {
+			promiseUpdate(it)
 		}
-	}
-
-	override fun showMenu(): Boolean =
-		mutableIsMenuShown.compareAndSet(expect = false, update = true)
-			.also {
-				if (it) sendItemMenuMessages.sendMessage(ItemListMenuMessage.MenuShown(this))
-			}
-
-	override fun hideMenu(): Boolean =
-		mutableIsMenuShown.compareAndSet(expect = true, update = false)
-			.also {
-				if (it) sendItemMenuMessages.sendMessage(ItemListMenuMessage.MenuHidden(this))
-			}
-
-	override fun addToNowPlaying() {
-		activePositionedFile?.serviceFile?.apply(controlPlaybackService::addToPlaylist)
-		hideMenu()
-	}
-
-	override fun viewFileDetails() {
-		activePositionedFile?.apply {
-			applicationNavigation.viewFileDetails(associatedPlaylist, playlistPosition)
-		}
-		hideMenu()
 	}
 
 	override fun close() {
@@ -127,7 +87,6 @@ class ReusableTrackHeadlineViewModel(
 	private fun resetState() {
 		mutableTitle.value = stringResources.loading
 		mutableArtist.value = ""
-		hideMenu()
 	}
 
 	private inner class EventualTextViewUpdate(private val serviceFile: ServiceFile) : EventualAction {
@@ -210,7 +169,7 @@ class ReusableTrackHeadlineViewModel(
 		}
 
 		private val isNotCurrentServiceFile: Boolean
-			get() = activePositionedFile?.serviceFile != serviceFile
+			get() = activeServiceFile != serviceFile
 		private val isUpdateCancelled: Boolean
 			get() = cancellationProxy.isCancelled
 	}

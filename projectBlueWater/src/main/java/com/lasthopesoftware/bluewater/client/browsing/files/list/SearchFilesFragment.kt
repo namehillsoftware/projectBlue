@@ -97,8 +97,8 @@ class SearchFilesFragment : Fragment() {
 
 	private val itemListMenuBackPressedHandler by lazy { ItemListMenuBackPressedHandler(menuMessageBus) }
 
-	private val trackHeadlineViewModelProvider by buildViewModelLazily {
-		TrackHeadlineViewModelProvider(
+	private val reusablePlaylistFileItemViewModelProvider by buildViewModelLazily {
+		ReusablePlaylistFileItemViewModelProvider(
 			scopedFilePropertiesProvider,
 			scopedUrlKeyProvider,
 			StringResources(requireContext()),
@@ -144,7 +144,7 @@ class SearchFilesFragment : Fragment() {
 					SearchFilesView(
 						searchFilesViewModel = searchFilesViewModel,
 						nowPlayingViewModel = nowPlayingFilePropertiesViewModel,
-						trackHeadlineViewModelProvider = trackHeadlineViewModelProvider,
+						trackHeadlineViewModelProvider = reusablePlaylistFileItemViewModelProvider,
 						itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
 					)
 				}

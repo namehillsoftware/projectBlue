@@ -5,7 +5,7 @@ import androidx.compose.runtime.getValue
 import androidx.navigation.NavBackStackEntry
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
-import com.lasthopesoftware.bluewater.client.browsing.files.list.TrackHeadlineViewModelProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusablePlaylistFileItemViewModelProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListView
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
@@ -32,7 +32,7 @@ fun NavBackStackEntry.BrowsableItemListView(
 	fileListViewModel: FileListViewModel,
 	nowPlayingViewModel: NowPlayingFilePropertiesViewModel,
 	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
-	trackHeadlineViewModelProvider: TrackHeadlineViewModelProvider,
+	reusablePlaylistFileItemViewModelProvider: ReusablePlaylistFileItemViewModelProvider,
 	applicationNavigation: NavigateApplication,
 ) {
 	val isCheckingConnection by connectionViewModel.isGettingConnection.collectAsState()
@@ -42,7 +42,7 @@ fun NavBackStackEntry.BrowsableItemListView(
 			fileListViewModel,
 			nowPlayingViewModel,
 			itemListMenuBackPressedHandler,
-			trackHeadlineViewModelProvider,
+			reusablePlaylistFileItemViewModelProvider,
 			applicationNavigation,
 		)
 	} else {

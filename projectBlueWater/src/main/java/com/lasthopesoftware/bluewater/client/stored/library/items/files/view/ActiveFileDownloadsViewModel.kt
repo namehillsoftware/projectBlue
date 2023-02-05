@@ -21,24 +21,31 @@ class ActiveFileDownloadsViewModel(
 ) : ViewModel(), TrackLoadedViewState {
 	private var activeLibraryId: LibraryId? = null
 
+	private val downloadingFilesMap = mutableMapOf<Int, StoredFile>()
 	private val mutableIsLoading = MutableStateFlow(false)
 	private val mutableIsSyncing = MutableStateFlow(false)
 	private val mutableIsSyncStateChangeEnabled = MutableStateFlow(false)
-	private val mutableDownloadingFiles = MutableStateFlow(emptyMap<Int, StoredFile>())
+	private val mutableDownloadingFiles = MutableStateFlow(emptyList<StoredFile>())
+	private val mutableDownloadingFileId = MutableStateFlow<Int?>(null)
 
 	private val fileDownloadedRegistration = applicationMessages.registerReceiver { message: StoredFileMessage.FileDownloaded ->
-		mutableDownloadingFiles.value -= message.storedFileId
+		if (downloadingFilesMap.remove(message.storedFileId) != null)
+			mutableDownloadingFiles.value = downloadingFilesMap.values.toList()
 	}
 
-	private val fileDownloadingRegistration = applicationMessages.registerReceiver { message: StoredFileMessage.FileQueued ->
+	private val fileQueuedRegistration = applicationMessages.registerReceiver { message: StoredFileMessage.FileQueued ->
 		message.storedFileId
-			.takeUnless(mutableDownloadingFiles.value::containsKey)
+			.takeUnless(downloadingFilesMap::containsKey)
 			?.let(storedFileAccess::getStoredFile)
 			?.then { storedFile ->
-				if (storedFile != null && storedFile.libraryId == activeLibraryId?.id) {
-					mutableDownloadingFiles.value += Pair(storedFile.id, storedFile)
+				if (storedFile != null && storedFile.libraryId == activeLibraryId?.id && downloadingFilesMap.put(storedFile.id, storedFile) == null) {
+					mutableDownloadingFiles.value = downloadingFilesMap.values.toList()
 				}
 			}
+	}
+
+	private val fileDownloadingRegistration = applicationMessages.registerReceiver { message: StoredFileMessage.FileDownloading ->
+		mutableDownloadingFileId.value = message.storedFileId
 	}
 
 	private val syncStartedReceiver = applicationMessages.registerReceiver { _ : SyncStateMessage.SyncStarted ->
@@ -52,6 +59,7 @@ class ActiveFileDownloadsViewModel(
 	val isSyncing = mutableIsSyncing.asStateFlow()
 	val isSyncStateChangeEnabled = mutableIsSyncStateChangeEnabled.asStateFlow()
 	val downloadingFiles = mutableDownloadingFiles.asStateFlow()
+	val downloadingFileId = mutableDownloadingFileId.asStateFlow()
 	override val isLoading = mutableIsLoading.asStateFlow()
 
 	init {
@@ -65,9 +73,10 @@ class ActiveFileDownloadsViewModel(
 
 	override fun onCleared() {
 		fileDownloadedRegistration.close()
-		fileDownloadingRegistration.close()
+		fileQueuedRegistration.close()
 		syncStartedReceiver.close()
 		syncStoppedReceiver.close()
+		fileDownloadingRegistration.close()
 	}
 
 	fun loadActiveDownloads(libraryId: LibraryId): Promise<*> {
@@ -76,10 +85,11 @@ class ActiveFileDownloadsViewModel(
 		return storedFileAccess
 			.promiseDownloadingFiles()
 			.then { storedFiles ->
-				mutableDownloadingFiles.value =
+				downloadingFilesMap.putAll(
 					storedFiles
 						.filter { sf -> sf.libraryId == libraryId.id }
-						.associateBy { sf -> sf.id }
+						.map { sf -> Pair(sf.id, sf) })
+				mutableDownloadingFiles.value = downloadingFilesMap.values.toList()
 			}
 			.must { mutableIsLoading.value = false }
 	}

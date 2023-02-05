@@ -44,9 +44,9 @@ import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.Fi
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.ItemStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.LibraryFileStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
+import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusablePlaylistFileItemViewModelProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.list.SearchFilesView
 import com.lasthopesoftware.bluewater.client.browsing.files.list.SearchFilesViewModel
-import com.lasthopesoftware.bluewater.client.browsing.files.list.TrackHeadlineViewModelProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.RateControlledFilePropertiesProvider
@@ -493,8 +493,8 @@ private fun ItemBrowserView(
 					},
 					nowPlayingViewModel,
 					itemListMenuBackPressedHandler,
-					trackHeadlineViewModelProvider = entry.viewModelStore.buildViewModel {
-						TrackHeadlineViewModelProvider(
+					reusablePlaylistFileItemViewModelProvider = entry.viewModelStore.buildViewModel {
+						ReusablePlaylistFileItemViewModelProvider(
 							scopedFilePropertiesProvider,
 							scopedUrlKeyProvider,
 							stringResources,
@@ -519,7 +519,7 @@ private fun ItemBrowserView(
 					},
 					nowPlayingViewModel = nowPlayingViewModel,
 					trackHeadlineViewModelProvider = entry.viewModelStore.buildViewModel {
-						TrackHeadlineViewModelProvider(
+						ReusablePlaylistFileItemViewModelProvider(
 							scopedFilePropertiesProvider,
 							scopedUrlKeyProvider,
 							stringResources,

@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.browsing.files.list
+package com.lasthopesoftware.bluewater.client.stored.library.items.files.view
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -7,27 +7,26 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
+import com.lasthopesoftware.bluewater.client.browsing.files.list.TrackHeaderItemView
+import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewFileItem
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.shared.android.ui.components.scrollbar
+import com.lasthopesoftware.bluewater.shared.android.ui.theme.Light
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 import me.onebone.toolbar.CollapsingToolbarScaffold
 import me.onebone.toolbar.ScrollStrategy
@@ -35,53 +34,38 @@ import me.onebone.toolbar.rememberCollapsingToolbarScaffoldState
 import kotlin.math.pow
 
 @Composable
-fun SearchFilesView(
-	searchFilesViewModel: SearchFilesViewModel,
-	nowPlayingViewModel: NowPlayingFilePropertiesViewModel,
-	trackHeadlineViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
-	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
+fun ActiveFileDownloadsView(
+	activeFileDownloadsViewModel: ActiveFileDownloadsViewModel,
+	trackHeadlineViewModelProvider: PooledCloseablesViewModel<ViewFileItem>,
 	onBack: (() -> Unit)? = null,
 ) {
-	val files by searchFilesViewModel.files.collectAsState()
-	val playingFile by nowPlayingViewModel.nowPlayingFile.collectAsState()
+	val files by activeFileDownloadsViewModel.downloadingFiles.collectAsState()
+	val downloadingFileId by activeFileDownloadsViewModel.downloadingFileId.collectAsState()
 
 	@Composable
-	fun RenderTrackHeaderItem(position: Int, serviceFile: ServiceFile) {
+	fun RenderTrackHeaderItem(storedFile: StoredFile) {
 		val fileItemViewModel = remember(trackHeadlineViewModelProvider::getViewModel)
 
 		DisposableEffect(Unit) {
-			fileItemViewModel.promiseUpdate(files, position)
+			fileItemViewModel.promiseUpdate(ServiceFile(storedFile.serviceId))
 
 			onDispose {
 				fileItemViewModel.reset()
 			}
 		}
 
-		val isMenuShown by fileItemViewModel.isMenuShown.collectAsState()
 		val fileName by fileItemViewModel.title.collectAsState()
 
 		TrackHeaderItemView(
 			itemName = fileName,
-			isActive = playingFile?.serviceFile == serviceFile,
-			isHiddenMenuShown = isMenuShown,
-			onItemClick = fileItemViewModel::viewFileDetails,
-			onHiddenMenuClick = {
-				itemListMenuBackPressedHandler.hideAllMenus()
-				fileItemViewModel.showMenu()
-			},
-			onAddToNowPlayingClick = fileItemViewModel::addToNowPlaying,
-			onViewFilesClick = fileItemViewModel::viewFileDetails,
-			onPlayClick = {
-				fileItemViewModel.hideMenu()
-				searchFilesViewModel.play(position)
-			}
+			isActive = downloadingFileId == storedFile.id,
 		)
 	}
 
 	Surface {
 		val toolbarState = rememberCollapsingToolbarScaffoldState()
 		val headerHidingProgress by remember { derivedStateOf { 1 - toolbarState.toolbarState.progress } }
-		val isLoading by searchFilesViewModel.isLoading.collectAsState()
+		val isLoading by activeFileDownloadsViewModel.isLoading.collectAsState()
 
 		CollapsingToolbarScaffold(
 			enabled = true,
@@ -130,28 +114,18 @@ fun SearchFilesView(
 						) {
 							val iconSize by remember { derivedStateOf { (expandedIconSize - ((expandedIconSize - collapsedIconSize) * headerHidingProgress)).dp } }
 
-							Image(
-								painter = painterResource(id = R.drawable.av_play),
-								contentDescription = stringResource(id = R.string.btn_play),
-								modifier = Modifier
-									.fillMaxWidth()
-									.weight(1f)
-									.size(iconSize)
-									.clickable {
-										searchFilesViewModel.play()
-									}
-							)
+							val isSyncing by activeFileDownloadsViewModel.isSyncing.collectAsState()
 
 							Image(
-								painter = painterResource(id = R.drawable.av_shuffle),
-								contentDescription = stringResource(id = R.string.btn_shuffle_files),
+								painter = painterResource(id = R.drawable.ic_sync_white),
+								contentDescription = stringResource(id = R.string.btn_sync_item),
+								colorFilter = ColorFilter.tint(if (isSyncing) MaterialTheme.colors.primary else Light.GrayClickable),
+								alpha = if (isSyncing) .9f else .6f,
 								modifier = Modifier
 									.fillMaxWidth()
 									.size(iconSize)
-									.weight(1f)
-									.clickable {
-										searchFilesViewModel.playShuffled()
-									}
+									.clickable { activeFileDownloadsViewModel.toggleSync() }
+									.weight(1f),
 							)
 						}
 					}
@@ -179,23 +153,6 @@ fun SearchFilesView(
 								)
 						)
 					}
-
-					val endPadding by remember { derivedStateOf { 4.dp + minimumMenuWidth * acceleratedProgress } }
-					val query by searchFilesViewModel.query.collectAsState()
-
-					TextField(
-						value = query,
-						placeholder = { stringResource(id = R.string.lbl_search_hint) },
-						onValueChange = { searchFilesViewModel.query.value = it },
-						singleLine = true,
-						keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-						keyboardActions = KeyboardActions(onSearch = { searchFilesViewModel.findFiles() }),
-						trailingIcon = { Icon(Icons.Default.Search, contentDescription = stringResource(id = R.string.lbl_search)) },
-						enabled = !isLoading,
-						modifier = Modifier
-							.padding(end = endPadding)
-							.weight(1f)
-					)
 				}
 			},
 		) {
@@ -250,7 +207,7 @@ fun SearchFilesView(
 							}
 
 							itemsIndexed(files) { i, f ->
-								RenderTrackHeaderItem(i, f)
+								RenderTrackHeaderItem(f)
 
 								if (i < files.lastIndex)
 									Divider()

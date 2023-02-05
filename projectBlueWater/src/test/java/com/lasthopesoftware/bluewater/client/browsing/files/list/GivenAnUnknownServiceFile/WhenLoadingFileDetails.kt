@@ -1,7 +1,8 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.list.GivenAnUnknownServiceFile
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusableTrackHeadlineViewModel
+import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusableFileViewModel
+import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusablePlaylistFileViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideScopedFileProperties
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -30,20 +31,22 @@ class WhenLoadingFileDetails {
 			every { unknownTrack } returns "bold"
 		}
 
-		ReusableTrackHeadlineViewModel(
-			filePropertiesProvider,
-			mockk {
-				every { promiseUrlKey(any<ServiceFile>()) } answers {
-					Promise(
-						UrlKeyHolder(URL("http://test"), firstArg())
-					)
-				}
-			},
-			stringResource,
+		ReusablePlaylistFileViewModel(
 			mockk(),
 			mockk(),
 			RecordingTypedMessageBus(),
-			RecordingApplicationMessageBus(),
+			ReusableFileViewModel(
+				filePropertiesProvider,
+				stringResource,
+				mockk {
+					every { promiseUrlKey(any<ServiceFile>()) } answers {
+						Promise(
+							UrlKeyHolder(URL("http://test"), firstArg())
+						)
+					}
+				},
+				RecordingApplicationMessageBus(),
+			),
 		)
 	}
 
