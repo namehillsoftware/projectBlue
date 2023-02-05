@@ -16,7 +16,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -36,10 +35,10 @@ import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewPlaylistFil
 import com.lasthopesoftware.bluewater.client.browsing.items.*
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
+import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncButton
 import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.scrollbar
-import com.lasthopesoftware.bluewater.shared.android.ui.theme.Light
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 import me.onebone.toolbar.CollapsingToolbarScaffold
 import me.onebone.toolbar.ScrollStrategy
@@ -124,12 +123,8 @@ fun ItemListView(
 			)
 
 			val isChildItemSynced by childItemViewModel.isSynced.collectAsState()
-
-			Image(
-				painter = painterResource(id = R.drawable.ic_sync_white),
-				contentDescription = stringResource(id = R.string.btn_sync_item),
-				colorFilter = ColorFilter.tint(if (isChildItemSynced) MaterialTheme.colors.primary else Light.GrayClickable),
-				alpha = if (isChildItemSynced) .9f else .6f,
+			SyncButton(
+				isActive = isChildItemSynced,
 				modifier = Modifier
 					.fillMaxWidth()
 					.clickable { childItemViewModel.toggleSync() }
@@ -355,11 +350,8 @@ fun ItemListView(
 
 						val isSynced by itemListViewModel.isSynced.collectAsState()
 
-						Image(
-							painter = painterResource(id = R.drawable.ic_sync_white),
-							contentDescription = stringResource(id = R.string.btn_sync_item),
-							colorFilter = ColorFilter.tint(if (isSynced) MaterialTheme.colors.primary else Light.GrayClickable),
-							alpha = if (isSynced) .9f else .6f,
+						SyncButton(
+							isActive = isSynced,
 							modifier = Modifier
 								.fillMaxWidth()
 								.size(iconSize)

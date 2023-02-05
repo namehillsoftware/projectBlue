@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.view
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
@@ -14,9 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.dimensionResource
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -26,10 +23,10 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.list.TrackHeaderItemView
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewFileItem
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
+import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncButton
 import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.scrollbar
-import com.lasthopesoftware.bluewater.shared.android.ui.theme.Light
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 import me.onebone.toolbar.CollapsingToolbarScaffold
 import me.onebone.toolbar.ScrollStrategy
@@ -143,11 +140,8 @@ fun ActiveFileDownloadsView(
 
 						val isSyncing by activeFileDownloadsViewModel.isSyncing.collectAsState()
 
-						Image(
-							painter = painterResource(id = R.drawable.ic_sync_white),
-							contentDescription = stringResource(id = R.string.btn_sync_item),
-							colorFilter = ColorFilter.tint(if (isSyncing) MaterialTheme.colors.primary else Light.GrayClickable),
-							alpha = if (isSyncing) .9f else .6f,
+						SyncButton(
+							isActive = isSyncing,
 							modifier = Modifier
 								.fillMaxWidth()
 								.size(iconSize)
