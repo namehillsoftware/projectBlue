@@ -12,6 +12,7 @@ import android.widget.ListView
 import android.widget.ProgressBar
 import android.widget.RelativeLayout
 import android.widget.ViewAnimator
+import androidx.activity.addCallback
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
@@ -204,6 +205,11 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 
 		specialLibraryItemsListView.onItemClickListener = OnItemClickListener { _, _, position, _ ->
 			updateSelectedView(specialViews[position].viewType, position)
+		}
+
+		onBackPressedDispatcher.addCallback {
+			if (!itemListMenuBackPressedHandler.hideAllMenus() && viewAnimator?.tryFlipToPreviousView() == false)
+				finish()
 		}
 	}
 
@@ -418,12 +424,6 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 	public override fun onStop() {
 		isStopped = true
 		super.onStop()
-	}
-
-	@Deprecated("Deprecated in Java")
-	override fun onBackPressed() {
-		if (itemListMenuBackPressedHandler.hideAllMenus() || viewAnimator?.tryFlipToPreviousView() == true) return
-		super.onBackPressed()
 	}
 
 	override fun updateViewAnimator(viewAnimator: ViewAnimator) {

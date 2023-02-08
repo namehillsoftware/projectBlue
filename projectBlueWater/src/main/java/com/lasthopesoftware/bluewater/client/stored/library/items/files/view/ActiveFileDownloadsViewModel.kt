@@ -21,25 +21,23 @@ class ActiveFileDownloadsViewModel(
 ) : ViewModel(), TrackLoadedViewState {
 	private var activeLibraryId: LibraryId? = null
 
-	private val downloadingFilesMap = mutableMapOf<Int, StoredFile>()
 	private val mutableIsLoading = MutableStateFlow(false)
 	private val mutableIsSyncing = MutableStateFlow(false)
 	private val mutableIsSyncStateChangeEnabled = MutableStateFlow(false)
-	private val mutableDownloadingFiles = MutableStateFlow(emptyList<StoredFile>())
+	private val mutableDownloadingFiles = MutableStateFlow(emptyMap<Int, StoredFile>())
 	private val mutableDownloadingFileId = MutableStateFlow<Int?>(null)
 
 	private val fileDownloadedRegistration = applicationMessages.registerReceiver { message: StoredFileMessage.FileDownloaded ->
-		if (downloadingFilesMap.remove(message.storedFileId) != null)
-			mutableDownloadingFiles.value = downloadingFilesMap.values.toList()
+		mutableDownloadingFiles.value -= message.storedFileId
 	}
 
 	private val fileQueuedRegistration = applicationMessages.registerReceiver { message: StoredFileMessage.FileQueued ->
 		message.storedFileId
-			.takeUnless(downloadingFilesMap::containsKey)
+			.takeUnless(mutableDownloadingFiles.value::containsKey)
 			?.let(storedFileAccess::getStoredFile)
 			?.then { storedFile ->
-				if (storedFile != null && storedFile.libraryId == activeLibraryId?.id && downloadingFilesMap.put(storedFile.id, storedFile) == null) {
-					mutableDownloadingFiles.value = downloadingFilesMap.values.toList()
+				if (storedFile != null && storedFile.libraryId == activeLibraryId?.id) {
+					mutableDownloadingFiles.value += Pair(storedFile.id, storedFile)
 				}
 			}
 	}
@@ -85,16 +83,16 @@ class ActiveFileDownloadsViewModel(
 		return storedFileAccess
 			.promiseDownloadingFiles()
 			.then { storedFiles ->
-				downloadingFilesMap.putAll(
-					storedFiles
+				mutableDownloadingFiles.value = storedFiles
 						.filter { sf -> sf.libraryId == libraryId.id }
-						.map { sf -> Pair(sf.id, sf) })
-				mutableDownloadingFiles.value = downloadingFilesMap.values.toList()
+						.associateBy { sf -> sf.id }
 			}
 			.must { mutableIsLoading.value = false }
 	}
 
 	fun toggleSync() {
+		if (!mutableIsSyncStateChangeEnabled.value) return
+
 		mutableIsSyncStateChangeEnabled.value = false
 		scheduler
 			.promiseIsSyncing()
