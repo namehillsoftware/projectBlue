@@ -65,8 +65,8 @@ class NowPlayingNotificationBuilder(
 							.setOngoing(isPlaying)
 							.setContentTitle(name)
 							.setContentText(artist)
-						if (viewStructure.urlKeyHolder != urlKeyHolder) return@eventually Promise(builder)
-						viewStructure.promisedNowPlayingImage
+						if (viewStructure.urlKeyHolder != urlKeyHolder) Promise(builder)
+						else viewStructure.promisedNowPlayingImage
 							?.then(
 								{ bitmap -> bitmap?.let(builder::setLargeIcon) },
 								{ builder }

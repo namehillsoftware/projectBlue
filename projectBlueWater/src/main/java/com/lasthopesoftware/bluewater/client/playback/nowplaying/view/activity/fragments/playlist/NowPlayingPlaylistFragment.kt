@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.
 
 import android.content.Context
 import android.os.Bundle
-import android.os.Handler
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -49,6 +48,7 @@ import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessa
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.suspend
+import com.lasthopesoftware.resources.closables.LifecycleCloseableManager
 import com.lasthopesoftware.resources.strings.StringResources
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.launchIn
@@ -60,7 +60,9 @@ class NowPlayingPlaylistFragment : Fragment() {
 
 	private var itemListMenuChangeHandler: IItemListMenuChangeHandler? = null
 
-	private val applicationMessageBus = lazy { getApplicationMessageBus().getScopedMessageBus() }
+	private val activityLifecycleCloseableManager by lazy { LifecycleCloseableManager(requireActivity()) }
+
+	private val applicationMessageBus by lazy { getApplicationMessageBus().getScopedMessageBus().also(activityLifecycleCloseableManager::manage) }
 
 	private val libraryConnectionProvider by lazy { requireContext().buildNewConnectionSessionManager() }
 
@@ -84,7 +86,7 @@ class NowPlayingPlaylistFragment : Fragment() {
 			connectionAuthenticationChecker,
 			revisionProvider,
 			FilePropertyCache,
-			applicationMessageBus.value
+			applicationMessageBus
 		)
 	}
 
@@ -109,19 +111,17 @@ class NowPlayingPlaylistFragment : Fragment() {
 			}
 	}
 
-	private val handler by lazy { Handler(requireContext().mainLooper) }
-
 	private val viewModelMessageBus by buildActivityViewModelLazily { ViewModelMessageBus<NowPlayingPlaylistMessage>() }
 
-	private val scopedMessageReceiver = lazy { ScopedMessageBus(viewModelMessageBus, viewModelMessageBus) }
+	private val scopedMessageReceiver by lazy { ScopedMessageBus(viewModelMessageBus, viewModelMessageBus).also(activityLifecycleCloseableManager::manage) }
 
 	private val nowPlayingListAdapter by lazy {
 		nowPlayingRepository.eventually(LoopedInPromise.response({ r ->
 			val nowPlayingFileListMenuBuilder = NowPlayingFileListItemMenuBuilder(
 				r,
-				applicationMessageBus.value,
+				applicationMessageBus,
 				playlistViewModel,
-				scopedMessageReceiver.value,
+				scopedMessageReceiver,
 				viewModelMessageBus,
 				scopedUrlKeyProvider
 			)
@@ -141,7 +141,7 @@ class NowPlayingPlaylistFragment : Fragment() {
 
 	private val nowPlayingViewModel by buildActivityViewModelLazily {
 		NowPlayingScreenViewModel(
-			applicationMessageBus.value,
+			applicationMessageBus,
 			InMemoryNowPlayingDisplaySettings,
 			PlaybackServiceController(requireContext()),
 		)
@@ -151,7 +151,7 @@ class NowPlayingPlaylistFragment : Fragment() {
 		val playbackService = PlaybackServiceController(requireContext())
 
 		NowPlayingFilePropertiesViewModel(
-            applicationMessageBus.value,
+            applicationMessageBus,
             LiveNowPlayingLookup.getInstance(),
             libraryFilePropertiesProvider,
             UrlKeyProvider(libraryConnectionProvider),
@@ -165,7 +165,7 @@ class NowPlayingPlaylistFragment : Fragment() {
 
 	private val playlistViewModel by buildActivityViewModelLazily {
 		NowPlayingPlaylistViewModel(
-			applicationMessageBus.value,
+			applicationMessageBus,
 			LiveNowPlayingLookup.getInstance(),
 			viewModelMessageBus
 		)
@@ -194,8 +194,8 @@ class NowPlayingPlaylistFragment : Fragment() {
 				val dragCallback = NowPlayingDragCallback(requireContext(), a, playlistViewModel)
 				val itemTouchHelper = ItemDraggedTouchHelper(dragCallback)
 				itemTouchHelper.attachToRecyclerView(listView)
-				scopedMessageReceiver.value.registerReceiver(dragCallback)
-				scopedMessageReceiver.value.registerReceiver(itemTouchHelper)
+				scopedMessageReceiver.registerReceiver(dragCallback)
+				scopedMessageReceiver.registerReceiver(itemTouchHelper)
 
 				playlistViewModel.nowPlayingList
 					.onEach {
@@ -236,13 +236,6 @@ class NowPlayingPlaylistFragment : Fragment() {
 
 			return nowPlayingBottomSheet
 		}
-	}
-
-	override fun onDestroy() {
-		if (scopedMessageReceiver.isInitialized()) scopedMessageReceiver.value.close()
-		if (applicationMessageBus.isInitialized()) applicationMessageBus.value.close()
-
-		super.onDestroy()
 	}
 
 	fun setOnItemListMenuChangeHandler(itemListMenuChangeHandler: IItemListMenuChangeHandler?) {
