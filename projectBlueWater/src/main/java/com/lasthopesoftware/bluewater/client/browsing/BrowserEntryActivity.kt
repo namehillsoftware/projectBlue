@@ -59,7 +59,7 @@ import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessa
 import com.lasthopesoftware.bluewater.shared.messages.registerOnHandler
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
-import com.lasthopesoftware.resources.closables.LifecycleCloseableManager
+import com.lasthopesoftware.resources.closables.lazyScoped
 
 private val logger by lazyLogger<BrowserEntryActivity>()
 
@@ -85,15 +85,13 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 
 	private val messageHandler by lazy { Handler(mainLooper) }
 
-	private val lifecycleCloseableManager by lazy { LifecycleCloseableManager(this) }
-
-	private val applicationMessageBus by lazy { getApplicationMessageBus().getScopedMessageBus().also(lifecycleCloseableManager::manage) }
+	private val applicationMessageBus by lazyScoped { getApplicationMessageBus().getScopedMessageBus() }
 
 	private val itemListMenuChangeHandler by lazy { ItemListMenuChangeHandler(this) }
 
 	private val menuMessageBus by buildViewModelLazily { ViewModelMessageBus<ItemListMenuMessage>() }
 
-	private val itemListMenuBackPressedHandler by lazy { ItemListMenuBackPressedHandler(menuMessageBus).also(lifecycleCloseableManager::manage) }
+	private val itemListMenuBackPressedHandler by lazyScoped { ItemListMenuBackPressedHandler(menuMessageBus) }
 
 	private val specialViews by lazy {
 		val views = arrayOf(

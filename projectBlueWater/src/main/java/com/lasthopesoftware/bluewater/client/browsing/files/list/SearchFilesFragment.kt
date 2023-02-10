@@ -34,7 +34,7 @@ import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLa
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
 import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRateLimiter
-import com.lasthopesoftware.resources.closables.LifecycleCloseableManager
+import com.lasthopesoftware.resources.closables.lazyScoped
 import com.lasthopesoftware.resources.strings.StringResources
 
 class SearchFilesFragment : Fragment() {
@@ -55,10 +55,8 @@ class SearchFilesFragment : Fragment() {
 		)
 	}
 
-	private val lifecycleCloseableManager by lazy { LifecycleCloseableManager(this) }
-
-	private val scopedMessageBus by lazy {
-		getApplicationMessageBus().getScopedMessageBus().also(lifecycleCloseableManager::manage)
+	private val scopedMessageBus by lazyScoped {
+		getApplicationMessageBus().getScopedMessageBus()
 	}
 
 	private val revisionProvider by lazy { LibraryRevisionProvider(libraryConnectionProvider) }

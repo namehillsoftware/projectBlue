@@ -48,7 +48,8 @@ import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessa
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.suspend
-import com.lasthopesoftware.resources.closables.LifecycleCloseableManager
+import com.lasthopesoftware.resources.closables.lazyActivityScoped
+import com.lasthopesoftware.resources.closables.lazyScoped
 import com.lasthopesoftware.resources.strings.StringResources
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.launchIn
@@ -60,9 +61,7 @@ class NowPlayingPlaylistFragment : Fragment() {
 
 	private var itemListMenuChangeHandler: IItemListMenuChangeHandler? = null
 
-	private val activityLifecycleCloseableManager by lazy { LifecycleCloseableManager(requireActivity()) }
-
-	private val applicationMessageBus by lazy { getApplicationMessageBus().getScopedMessageBus().also(activityLifecycleCloseableManager::manage) }
+	private val applicationMessageBus by lazyActivityScoped { getApplicationMessageBus().getScopedMessageBus() }
 
 	private val libraryConnectionProvider by lazy { requireContext().buildNewConnectionSessionManager() }
 
@@ -113,7 +112,7 @@ class NowPlayingPlaylistFragment : Fragment() {
 
 	private val viewModelMessageBus by buildActivityViewModelLazily { ViewModelMessageBus<NowPlayingPlaylistMessage>() }
 
-	private val scopedMessageReceiver by lazy { ScopedMessageBus(viewModelMessageBus, viewModelMessageBus).also(activityLifecycleCloseableManager::manage) }
+	private val scopedMessageReceiver by lazyScoped { ScopedMessageBus(viewModelMessageBus, viewModelMessageBus) }
 
 	private val nowPlayingListAdapter by lazy {
 		nowPlayingRepository.eventually(LoopedInPromise.response({ r ->

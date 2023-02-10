@@ -50,7 +50,7 @@ import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMes
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
-import com.lasthopesoftware.resources.closables.LifecycleCloseableManager
+import com.lasthopesoftware.resources.closables.lazyScoped
 import com.lasthopesoftware.resources.strings.StringResources
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.launchIn
@@ -73,9 +73,7 @@ class NowPlayingActivity :
 
 	private val messageHandler by lazy { Handler(mainLooper) }
 
-	private val lifecycleCloseableManager by lazy { LifecycleCloseableManager(this) }
-
-	private val applicationMessageBus by lazy { getApplicationMessageBus().getScopedMessageBus().also(lifecycleCloseableManager::manage) }
+	private val applicationMessageBus by lazyScoped { getApplicationMessageBus().getScopedMessageBus() }
 
 	private val imageProvider by lazy { CachedImageProvider.getInstance(this) }
 

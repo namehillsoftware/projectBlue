@@ -86,7 +86,7 @@ import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMes
 import com.lasthopesoftware.bluewater.shared.messages.application.ScopedApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
 import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRateLimiter
-import com.lasthopesoftware.resources.closables.LifecycleCloseableManager
+import com.lasthopesoftware.resources.closables.lazyScoped
 import com.lasthopesoftware.resources.strings.StringResources
 
 private val magicPropertyBuilder by lazy { MagicPropertyBuilder(cls<ItemBrowserActivity>()) }
@@ -118,15 +118,13 @@ class ItemBrowserActivity : AppCompatActivity() {
 
 	private val rateLimiter by lazy { PromisingRateLimiter<Map<String, String>>(1) }
 
-	private val lifecycleCloseableManager by lazy { LifecycleCloseableManager(this) }
-
 	private val browserLibraryIdProvider by lazy { getCachedSelectedLibraryIdProvider() }
 
-	private val messageBus by lazy { getApplicationMessageBus().getScopedMessageBus().also(lifecycleCloseableManager::manage) }
+	private val messageBus by lazyScoped { getApplicationMessageBus().getScopedMessageBus() }
 
 	private val menuMessageBus by buildViewModelLazily { ViewModelMessageBus<ItemListMenuMessage>() }
 
-	private val itemListMenuBackPressedHandler by lazy { ItemListMenuBackPressedHandler(menuMessageBus).also(lifecycleCloseableManager::manage) }
+	private val itemListMenuBackPressedHandler by lazyScoped { ItemListMenuBackPressedHandler(menuMessageBus) }
 
 	private val itemProvider by lazy { CachedItemProvider.getInstance(this) }
 
