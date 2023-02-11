@@ -14,6 +14,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.dimensionResource
@@ -77,8 +78,8 @@ fun ActiveFileDownloadsView(
 				val appBarHeight = 56
 				val topPadding by remember { derivedStateOf(structuralEqualityPolicy()) { (appBarHeight - 46 * headerHidingProgress).dp } }
 				val expandedTitleHeight = 84
-				val expandedIconSize = 36
-				val expandedMenuVerticalPadding = 12
+				val expandedIconSize = 44
+				val expandedMenuVerticalPadding = 8
 				val boxHeight =
 					expandedTitleHeight + expandedIconSize + expandedMenuVerticalPadding * 2 + appBarHeight
 				BoxWithConstraints(
@@ -89,9 +90,7 @@ fun ActiveFileDownloadsView(
 					val minimumMenuWidth = (3 * 32).dp
 					val acceleratedProgress by remember {
 						derivedStateOf(structuralEqualityPolicy()) {
-							1 - toolbarState.toolbarState.progress.pow(
-								3
-							).coerceIn(0f, 1f)
+							1 - toolbarState.toolbarState.progress.pow(3).coerceIn(0f, 1f)
 						}
 					}
 					ProvideTextStyle(MaterialTheme.typography.h5) {
@@ -125,35 +124,49 @@ fun ActiveFileDownloadsView(
 							.width(menuWidth)
 							.align(Alignment.TopEnd)
 					) {
-						val iconSize by remember { derivedStateOf { (expandedIconSize - (12 * headerHidingProgress)).dp } }
+						Column(
+							horizontalAlignment = Alignment.CenterHorizontally,
+							modifier = Modifier
+								.fillMaxHeight()
+								.wrapContentWidth()
+								.weight(1f)
+								.clickable { activeFileDownloadsViewModel.toggleSync() },
+						) {
+							val isSyncing by activeFileDownloadsViewModel.isSyncing.collectAsState()
 
-						val isSyncing by activeFileDownloadsViewModel.isSyncing.collectAsState()
+							var modifier = Modifier.size(24.dp)
 
-						var modifier = Modifier
-							.fillMaxWidth()
-							.size(iconSize)
-							.clickable { activeFileDownloadsViewModel.toggleSync() }
-							.weight(1f)
-
-						if (isSyncing) {
-							val infiniteTransition = rememberInfiniteTransition()
-							val angle by infiniteTransition.animateFloat(
-								initialValue = 360F,
-								targetValue = 0F,
-								animationSpec = infiniteRepeatable(
-									animation = tween(2000, easing = LinearEasing)
+							if (isSyncing) {
+								val infiniteTransition = rememberInfiniteTransition()
+								val angle by infiniteTransition.animateFloat(
+									initialValue = 360F,
+									targetValue = 0F,
+									animationSpec = infiniteRepeatable(
+										animation = tween(2000, easing = LinearEasing)
+									)
 								)
+
+								modifier = modifier.graphicsLayer {
+									rotationZ = angle
+								}
+							}
+
+							SyncButton(
+								isActive = isSyncing,
+								modifier = modifier,
 							)
 
-							modifier = modifier.graphicsLayer {
-								rotationZ = angle
+							val invertedProgress by remember { derivedStateOf { 1 - acceleratedProgress } }
+							if (acceleratedProgress < 1) {
+								Text(
+									text = stringResource(
+										if (isSyncing) R.string.stop_sync_button
+										else R.string.start_sync_button
+									),
+									modifier = Modifier.alpha(invertedProgress),
+								)
 							}
 						}
-
-						SyncButton(
-							isActive = isSyncing,
-							modifier = modifier,
-						)
 					}
 				}
 
