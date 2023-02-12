@@ -65,7 +65,7 @@ class ActiveFileDownloadsFragment : Fragment() {
 		)
 	}
 
-	private val reusableFileItemViewModelProvider by lazy {
+	private val reusableFileItemViewModelProvider by buildViewModelLazily {
 		ReusableFileItemViewModelProvider(
 			scopedFilePropertiesProvider,
 			scopedUrlKeyProvider,

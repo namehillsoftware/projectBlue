@@ -12,9 +12,11 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
@@ -23,6 +25,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -43,10 +46,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.access.LibraryFilePr
 import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.ItemStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.LibraryFileStringListProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
-import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusablePlaylistFileItemViewModelProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.list.SearchFilesView
-import com.lasthopesoftware.bluewater.client.browsing.files.list.SearchFilesViewModel
+import com.lasthopesoftware.bluewater.client.browsing.files.list.*
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.RateControlledFilePropertiesProvider
@@ -76,6 +76,10 @@ import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.client.stored.library.items.StateChangeBroadcastingStoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.view.ActiveFileDownloadsView
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.view.ActiveFileDownloadsViewModel
+import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
@@ -88,6 +92,7 @@ import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessa
 import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRateLimiter
 import com.lasthopesoftware.resources.closables.lazyScoped
 import com.lasthopesoftware.resources.strings.StringResources
+import kotlinx.coroutines.launch
 
 private val magicPropertyBuilder by lazy { MagicPropertyBuilder(cls<ItemBrowserActivity>()) }
 
@@ -213,11 +218,15 @@ class ItemBrowserActivity : AppCompatActivity() {
 		StateChangeBroadcastingStoredItemAccess(StoredItemAccess(this), messageBus)
 	}
 
+	private val storedFileAccess by lazy { StoredFileAccess(this) }
+
 	private val stringResources by lazy { StringResources(this) }
 
 	private val libraryFilesProvider by lazy { LibraryFileProvider(LibraryFileStringListProvider(libraryConnectionProvider))  }
 
 	private val activityApplicationNavigation by lazy { ActivityApplicationNavigation(this) }
+
+	private val syncScheduler by lazy { SyncScheduler(this) }
 
 	public override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -257,6 +266,8 @@ class ItemBrowserActivity : AppCompatActivity() {
 					libraryFilesProvider,
 					activityApplicationNavigation,
 					libraryConnectionProvider,
+					storedFileAccess,
+					syncScheduler,
 					libraryId,
 					item,
 				)
@@ -270,6 +281,10 @@ class ItemBrowserActivity : AppCompatActivity() {
 private class GraphNavigation(private val navController: NavHostController, private val inner: NavigateApplication) : NavigateApplication by inner {
 	object Search {
 		const val route = "search"
+	}
+
+	object Downloads {
+		const val route = "downloads"
 	}
 
 	object BrowseToItem {
@@ -297,9 +312,16 @@ private class GraphNavigation(private val navController: NavHostController, priv
 		navController.navigate(BrowseToItem.buildPath(libraryId, item))
 	}
 
+	override fun viewActiveDownloads() {
+		navController.navigate(Downloads.route) {
+			launchSingleTop = true
+		}
+	}
+
 	override fun backOut(): Boolean = !navController.navigateUp() && inner.backOut()
 }
 
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 private fun ItemBrowserView(
 	nowPlayingViewModel: NowPlayingFilePropertiesViewModel,
@@ -318,6 +340,8 @@ private fun ItemBrowserView(
 	libraryFilesProvider: LibraryFileProvider,
 	applicationNavigation: NavigateApplication,
 	libraryConnectionProvider: ConnectionSessionManager,
+	storedFileAccess: StoredFileAccess,
+	syncScheduler: SyncScheduler,
 	startingLibraryId: LibraryId? = null,
 	startingItem: IItem? = null,
 ) {
@@ -330,106 +354,165 @@ private fun ItemBrowserView(
 
 	val graphNavigation = GraphNavigation(navController, applicationNavigation)
 
-	Scaffold(bottomBar = {
-		BottomAppBar(
-			backgroundColor = MaterialTheme.colors.secondary,
-			contentPadding = PaddingValues(0.dp),
-			modifier = Modifier
-				.clickable(onClick = graphNavigation::viewNowPlaying)
-		) {
-			Column {
+	val scaffoldState = rememberBottomSheetScaffoldState()
+	BottomSheetScaffold(
+		scaffoldState = scaffoldState,
+		sheetPeekHeight = 64.dp,
+		sheetElevation = 16.dp,
+		sheetShape = RoundedCornerShape(4.dp),
+		sheetContent = {
+			Row(
+				modifier = Modifier
+					.clickable(onClick = graphNavigation::viewNowPlaying)
+					.background(MaterialTheme.colors.secondary)
+					.height(64.dp)
+			) {
+				Column {
+					Row(
+						modifier = Modifier
+							.height(8.dp)
+							.fillMaxWidth(),
+						horizontalArrangement = Arrangement.Center
+					) {
+						Divider(
+							thickness = 2.dp,
+							modifier = Modifier
+								.fillMaxWidth(.5f)
+								.align(Alignment.CenterVertically),
+							color = MaterialTheme.colors.onSecondary,
+						)
+					}
+
+					Row(
+						modifier = Modifier
+							.weight(1f)
+							.padding(end = 16.dp)
+					) {
+						Box(
+							modifier = Modifier
+								.align(Alignment.CenterVertically)
+								.fillMaxHeight()
+								.clickable(onClick = graphNavigation::launchSearch),
+						) {
+							Icon(
+								Icons.Default.Search,
+								contentDescription = stringResource(id = R.string.lbl_search),
+								tint = MaterialTheme.colors.onSecondary,
+								modifier = Modifier
+									.align(Alignment.Center)
+									.padding(start = 16.dp, end = 16.dp)
+							)
+						}
+
+						Column(
+							modifier = Modifier
+								.weight(1f)
+								.align(Alignment.CenterVertically),
+						) {
+							val songTitle by nowPlayingViewModel.title.collectAsState()
+
+							ProvideTextStyle(MaterialTheme.typography.subtitle1) {
+								Text(
+									text = songTitle
+										?: stringResource(id = R.string.lbl_loading),
+									maxLines = 1,
+									overflow = TextOverflow.Ellipsis,
+									fontWeight = FontWeight.Medium,
+									color = MaterialTheme.colors.onSecondary,
+								)
+							}
+
+							val songArtist by nowPlayingViewModel.artist.collectAsState()
+							ProvideTextStyle(MaterialTheme.typography.body2) {
+								Text(
+									text = songArtist
+										?: stringResource(id = R.string.lbl_loading),
+									maxLines = 1,
+									overflow = TextOverflow.Ellipsis,
+									color = MaterialTheme.colors.onSecondary,
+								)
+							}
+						}
+
+						val isPlaying by nowPlayingViewModel.isPlaying.collectAsState()
+						Image(
+							painter = painterResource(id = if (!isPlaying) R.drawable.av_play_white else R.drawable.av_pause_white),
+							contentDescription = stringResource(id = R.string.btn_play),
+							modifier = Modifier
+								.clickable(
+									interactionSource = remember { MutableInteractionSource() },
+									indication = null,
+									onClick = {
+										if (!isPlaying) PlaybackService.play(activity)
+										else PlaybackService.pause(activity)
+
+										nowPlayingViewModel.togglePlaying(!isPlaying)
+									}
+								)
+								.padding(start = 8.dp, end = 8.dp)
+								.align(Alignment.CenterVertically)
+								.size(24.dp),
+						)
+
+						Icon(
+							Icons.Default.ArrowForward,
+							contentDescription = stringResource(id = R.string.title_activity_view_now_playing),
+							tint = MaterialTheme.colors.onSecondary,
+							modifier = Modifier
+								.padding(start = 8.dp, end = 8.dp)
+								.align(Alignment.CenterVertically)
+						)
+					}
+
+					val filePosition by nowPlayingViewModel.filePosition.collectAsState()
+					val fileDuration by nowPlayingViewModel.fileDuration.collectAsState()
+					val fileProgress by remember { derivedStateOf { filePosition / fileDuration.toFloat() } }
+					LinearProgressIndicator(
+						progress = fileProgress,
+						color = MaterialTheme.colors.primary,
+						backgroundColor = MaterialTheme.colors.onPrimary.copy(alpha = .6f),
+						modifier = Modifier
+							.fillMaxWidth()
+							.padding(0.dp)
+					)
+				}
+			}
+
+			val rowHeight = dimensionResource(id = R.dimen.standard_row_height)
+			val coroutineScope = rememberCoroutineScope()
+
+			ProvideTextStyle(value = MaterialTheme.typography.subtitle1) {
 				Row(
 					modifier = Modifier
-						.weight(1f)
-						.padding(end = 16.dp)
+						.height(rowHeight)
+						.fillMaxWidth()
+						.clickable {
+							graphNavigation.viewActiveDownloads()
+							coroutineScope.launch {
+								scaffoldState.bottomSheetState.collapse()
+							}
+						},
+					verticalAlignment = Alignment.CenterVertically,
 				) {
 					Box(
 						modifier = Modifier
 							.align(Alignment.CenterVertically)
 							.fillMaxHeight()
-							.clickable(onClick = graphNavigation::launchSearch),
 					) {
-						Icon(
-							Icons.Default.Search,
+						Image(
+							painter = painterResource(id = R.drawable.ic_water),
 							contentDescription = stringResource(id = R.string.lbl_search),
-							tint = MaterialTheme.colors.onSecondary,
 							modifier = Modifier
 								.align(Alignment.Center)
 								.padding(start = 16.dp, end = 16.dp)
 						)
 					}
 
-					Column(
-						modifier = Modifier
-							.weight(1f)
-							.align(Alignment.CenterVertically),
-					) {
-						val songTitle by nowPlayingViewModel.title.collectAsState()
-
-						ProvideTextStyle(MaterialTheme.typography.subtitle1) {
-							Text(
-								text = songTitle
-									?: stringResource(id = R.string.lbl_loading),
-								maxLines = 1,
-								overflow = TextOverflow.Ellipsis,
-								fontWeight = FontWeight.Medium
-							)
-						}
-
-						val songArtist by nowPlayingViewModel.artist.collectAsState()
-						ProvideTextStyle(MaterialTheme.typography.body2) {
-							Text(
-								text = songArtist
-									?: stringResource(id = R.string.lbl_loading),
-								maxLines = 1,
-								overflow = TextOverflow.Ellipsis,
-							)
-						}
-					}
-
-					val isPlaying by nowPlayingViewModel.isPlaying.collectAsState()
-					Image(
-						painter = painterResource(id = if (!isPlaying) R.drawable.av_play_white else R.drawable.av_pause_white),
-						contentDescription = stringResource(id = R.string.btn_play),
-						modifier = Modifier
-							.clickable(
-								interactionSource = remember { MutableInteractionSource() },
-								indication = null,
-								onClick = {
-									if (!isPlaying) PlaybackService.play(activity)
-									else PlaybackService.pause(activity)
-
-									nowPlayingViewModel.togglePlaying(!isPlaying)
-								}
-							)
-							.padding(start = 8.dp, end = 8.dp)
-							.align(Alignment.CenterVertically)
-							.size(24.dp),
-					)
-
-					Icon(
-						Icons.Default.ArrowForward,
-						contentDescription = "",
-						tint = MaterialTheme.colors.onSecondary,
-						modifier = Modifier
-							.padding(start = 8.dp, end = 8.dp)
-							.align(Alignment.CenterVertically)
+					Text(
+						text = stringResource(R.string.activeDownloads),
 					)
 				}
-
-				val filePosition by nowPlayingViewModel.filePosition.collectAsState()
-				val fileDuration by nowPlayingViewModel.fileDuration.collectAsState()
-				val fileProgress by remember { derivedStateOf { filePosition / fileDuration.toFloat() } }
-				LinearProgressIndicator(
-					progress = fileProgress,
-					color = MaterialTheme.colors.primary,
-					backgroundColor = MaterialTheme.colors.onPrimary.copy(alpha = .6f),
-					modifier = Modifier
-						.fillMaxWidth()
-						.padding(0.dp)
-				)
 			}
-		}
 	}) { paddingValues ->
 		NavHost(
 			navController,
@@ -529,6 +612,27 @@ private fun ItemBrowserView(
 					},
 					itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
 					onBack = graphNavigation::backOut,
+				)
+			}
+
+			composable(GraphNavigation.Downloads.route) { entry ->
+				ActiveFileDownloadsView(
+					activeFileDownloadsViewModel = entry.viewModelStore.buildViewModel {
+						ActiveFileDownloadsViewModel(
+							storedFileAccess,
+							messageBus,
+							syncScheduler,
+						)
+					},
+					trackHeadlineViewModelProvider = entry.viewModelStore.buildViewModel {
+						ReusableFileItemViewModelProvider(
+							scopedFilePropertiesProvider,
+							scopedUrlKeyProvider,
+							stringResources,
+							messageBus,
+						)
+					},
+					onBack = graphNavigation::backOut
 				)
 			}
 		}
