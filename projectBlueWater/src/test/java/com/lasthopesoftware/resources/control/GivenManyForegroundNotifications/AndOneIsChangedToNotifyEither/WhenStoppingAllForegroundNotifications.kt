@@ -33,6 +33,6 @@ class WhenStoppingAllForegroundNotifications : AndroidContext() {
 
     @Test
     fun `then the service stays in the foreground because the either notification remained foreground`() {
-		verify(exactly = 0) { service.stopForeground(any<Boolean>()) }
+		verify(exactly = 0) { service.stopForeground(any<Int>()) }
     }
 }
