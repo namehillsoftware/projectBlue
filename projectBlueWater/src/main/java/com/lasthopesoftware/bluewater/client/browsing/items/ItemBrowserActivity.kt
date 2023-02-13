@@ -58,7 +58,6 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewMod
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
@@ -67,7 +66,6 @@ import com.lasthopesoftware.bluewater.client.connection.libraries.SelectedLibrar
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.polling.ConnectionPoller
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionInitializationController
-import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionStatusViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
@@ -87,7 +85,6 @@ import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModel
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
-import com.lasthopesoftware.bluewater.shared.messages.application.ScopedApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
 import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRateLimiter
 import com.lasthopesoftware.resources.closables.lazyScoped
@@ -119,30 +116,30 @@ private fun getItemBrowserIntent(context: Context, libraryId: LibraryId, item: I
 	putExtra(libraryIdProperty, libraryId.id)
 }
 
-class ItemBrowserActivity : AppCompatActivity() {
+class ItemBrowserActivity : AppCompatActivity(), ItemBrowserViewDependencies {
 
 	private val rateLimiter by lazy { PromisingRateLimiter<Map<String, String>>(1) }
 
-	private val browserLibraryIdProvider by lazy { getCachedSelectedLibraryIdProvider() }
+	override val browserLibraryIdProvider by lazy { getCachedSelectedLibraryIdProvider() }
 
-	private val messageBus by lazyScoped { getApplicationMessageBus().getScopedMessageBus() }
+	override val messageBus by lazyScoped { getApplicationMessageBus().getScopedMessageBus() }
 
-	private val menuMessageBus by buildViewModelLazily { ViewModelMessageBus<ItemListMenuMessage>() }
+	override val menuMessageBus by buildViewModelLazily { ViewModelMessageBus<ItemListMenuMessage>() }
 
-	private val itemListMenuBackPressedHandler by lazyScoped { ItemListMenuBackPressedHandler(menuMessageBus) }
+	override val itemListMenuBackPressedHandler by lazyScoped { ItemListMenuBackPressedHandler(menuMessageBus) }
 
-	private val itemProvider by lazy { CachedItemProvider.getInstance(this) }
+	override val itemProvider by lazy { CachedItemProvider.getInstance(this) }
 
 	private val libraryFileStringListProvider by lazy { LibraryFileStringListProvider(libraryConnectionProvider) }
 
-	private val itemListProvider by lazy {
+	override val itemListProvider by lazy {
 		ItemStringListProvider(
 			FileListParameters,
 			libraryFileStringListProvider
 		)
 	}
 
-	private val fileProvider by lazy {
+	override val itemFileProvider by lazy {
 		ItemFileProvider(
 			ItemStringListProvider(
 				FileListParameters,
@@ -166,21 +163,21 @@ class ItemBrowserActivity : AppCompatActivity() {
 		)
 	}
 
-	private val scopedFilePropertiesProvider by lazy {
+	override val scopedFilePropertiesProvider by lazy {
 		SelectedLibraryFilePropertiesProvider(
 			browserLibraryIdProvider,
 			libraryFilePropertiesProvider,
 		)
 	}
 
-	private val scopedUrlKeyProvider by lazy {
+	override val scopedUrlKeyProvider by lazy {
 		SelectedLibraryUrlKeyProvider(
 			browserLibraryIdProvider,
 			UrlKeyProvider(libraryConnectionProvider),
 		)
 	}
 
-	private val libraryConnectionProvider by lazy { buildNewConnectionSessionManager() }
+	override val libraryConnectionProvider by lazy { buildNewConnectionSessionManager() }
 
 	private val connectionAuthenticationChecker by lazy {
 		ConnectionAuthenticationChecker(libraryConnectionProvider)
@@ -198,9 +195,9 @@ class ItemBrowserActivity : AppCompatActivity() {
 		)
 	}
 
-	private val playbackServiceController by lazy { PlaybackServiceController(this) }
+	override val playbackServiceController by lazy { PlaybackServiceController(this) }
 
-	private val nowPlayingFilePropertiesViewModel by buildViewModelLazily {
+	override val nowPlayingFilePropertiesViewModel by buildViewModelLazily {
 		NowPlayingFilePropertiesViewModel(
 			messageBus,
 			LiveNowPlayingLookup.getInstance(),
@@ -214,19 +211,19 @@ class ItemBrowserActivity : AppCompatActivity() {
 		).apply { initializeViewModel() }
 	}
 
-	private val storedItemAccess by lazy {
+	override val storedItemAccess by lazy {
 		StateChangeBroadcastingStoredItemAccess(StoredItemAccess(this), messageBus)
 	}
 
-	private val storedFileAccess by lazy { StoredFileAccess(this) }
+	override val storedFileAccess by lazy { StoredFileAccess(this) }
 
-	private val stringResources by lazy { StringResources(this) }
+	override val stringResources by lazy { StringResources(this) }
 
-	private val libraryFilesProvider by lazy { LibraryFileProvider(LibraryFileStringListProvider(libraryConnectionProvider))  }
+	override val libraryFilesProvider by lazy { LibraryFileProvider(LibraryFileStringListProvider(libraryConnectionProvider))  }
 
-	private val activityApplicationNavigation by lazy { ActivityApplicationNavigation(this) }
+	override val applicationNavigation by lazy { ActivityApplicationNavigation(this) }
 
-	private val syncScheduler by lazy { SyncScheduler(this) }
+	override val syncScheduler by lazy { SyncScheduler(this) }
 
 	public override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -250,24 +247,6 @@ class ItemBrowserActivity : AppCompatActivity() {
 		setContent {
 			ProjectBlueTheme {
 				ItemBrowserView(
-					nowPlayingFilePropertiesViewModel,
-					browserLibraryIdProvider,
-					itemProvider,
-					itemListProvider,
-					messageBus,
-					storedItemAccess,
-					playbackServiceController,
-					fileProvider,
-					menuMessageBus,
-					itemListMenuBackPressedHandler,
-					scopedFilePropertiesProvider,
-					scopedUrlKeyProvider,
-					stringResources,
-					libraryFilesProvider,
-					activityApplicationNavigation,
-					libraryConnectionProvider,
-					storedFileAccess,
-					syncScheduler,
 					libraryId,
 					item,
 				)
@@ -323,25 +302,7 @@ private class GraphNavigation(private val navController: NavHostController, priv
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
-private fun ItemBrowserView(
-	nowPlayingViewModel: NowPlayingFilePropertiesViewModel,
-	browserLibraryIdProvider: CachedSelectedLibraryIdProvider,
-	itemProvider: CachedItemProvider,
-	itemListProvider: ItemStringListProvider,
-	messageBus: ScopedApplicationMessageBus,
-	storedItemAccess: StateChangeBroadcastingStoredItemAccess,
-	playbackServiceController: PlaybackServiceController,
-	itemFileProvider: ItemFileProvider,
-	menuMessageBus: ViewModelMessageBus<ItemListMenuMessage>,
-	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
-	scopedFilePropertiesProvider: SelectedLibraryFilePropertiesProvider,
-	scopedUrlKeyProvider: SelectedLibraryUrlKeyProvider,
-	stringResources: StringResources,
-	libraryFilesProvider: LibraryFileProvider,
-	applicationNavigation: NavigateApplication,
-	libraryConnectionProvider: ConnectionSessionManager,
-	storedFileAccess: StoredFileAccess,
-	syncScheduler: SyncScheduler,
+private fun ItemBrowserViewDependencies.ItemBrowserView(
 	startingLibraryId: LibraryId? = null,
 	startingItem: IItem? = null,
 ) {
@@ -409,7 +370,7 @@ private fun ItemBrowserView(
 								.weight(1f)
 								.align(Alignment.CenterVertically),
 						) {
-							val songTitle by nowPlayingViewModel.title.collectAsState()
+							val songTitle by nowPlayingFilePropertiesViewModel.title.collectAsState()
 
 							ProvideTextStyle(MaterialTheme.typography.subtitle1) {
 								Text(
@@ -422,7 +383,7 @@ private fun ItemBrowserView(
 								)
 							}
 
-							val songArtist by nowPlayingViewModel.artist.collectAsState()
+							val songArtist by nowPlayingFilePropertiesViewModel.artist.collectAsState()
 							ProvideTextStyle(MaterialTheme.typography.body2) {
 								Text(
 									text = songArtist
@@ -434,7 +395,7 @@ private fun ItemBrowserView(
 							}
 						}
 
-						val isPlaying by nowPlayingViewModel.isPlaying.collectAsState()
+						val isPlaying by nowPlayingFilePropertiesViewModel.isPlaying.collectAsState()
 						Image(
 							painter = painterResource(id = if (!isPlaying) R.drawable.av_play_white else R.drawable.av_pause_white),
 							contentDescription = stringResource(id = R.string.btn_play),
@@ -446,7 +407,7 @@ private fun ItemBrowserView(
 										if (!isPlaying) PlaybackService.play(activity)
 										else PlaybackService.pause(activity)
 
-										nowPlayingViewModel.togglePlaying(!isPlaying)
+										nowPlayingFilePropertiesViewModel.togglePlaying(!isPlaying)
 									}
 								)
 								.padding(start = 8.dp, end = 8.dp)
@@ -464,8 +425,8 @@ private fun ItemBrowserView(
 						)
 					}
 
-					val filePosition by nowPlayingViewModel.filePosition.collectAsState()
-					val fileDuration by nowPlayingViewModel.fileDuration.collectAsState()
+					val filePosition by nowPlayingFilePropertiesViewModel.filePosition.collectAsState()
+					val fileDuration by nowPlayingFilePropertiesViewModel.fileDuration.collectAsState()
 					val fileProgress by remember { derivedStateOf { filePosition / fileDuration.toFloat() } }
 					LinearProgressIndicator(
 						progress = fileProgress,
@@ -572,7 +533,7 @@ private fun ItemBrowserView(
 							playbackServiceController,
 						)
 					},
-					nowPlayingViewModel,
+					nowPlayingFilePropertiesViewModel,
 					itemListMenuBackPressedHandler,
 					reusablePlaylistFileItemViewModelProvider = entry.viewModelStore.buildViewModel {
 						ReusablePlaylistFileItemViewModelProvider(
@@ -598,7 +559,7 @@ private fun ItemBrowserView(
 							playbackServiceController,
 						)
 					},
-					nowPlayingViewModel = nowPlayingViewModel,
+					nowPlayingViewModel = nowPlayingFilePropertiesViewModel,
 					trackHeadlineViewModelProvider = entry.viewModelStore.buildViewModel {
 						ReusablePlaylistFileItemViewModelProvider(
 							scopedFilePropertiesProvider,
