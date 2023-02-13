@@ -49,7 +49,7 @@ fun SearchFilesView(
 	fun RenderTrackHeaderItem(position: Int, serviceFile: ServiceFile) {
 		val fileItemViewModel = remember(trackHeadlineViewModelProvider::getViewModel)
 
-		DisposableEffect(Unit) {
+		DisposableEffect(serviceFile) {
 			fileItemViewModel.promiseUpdate(files, position)
 
 			onDispose {

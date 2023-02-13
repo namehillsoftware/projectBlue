@@ -57,12 +57,11 @@ fun ItemListView(
 	applicationNavigation: NavigateApplication,
 ) {
 	val playingFile by nowPlayingViewModel.nowPlayingFile.collectAsState()
-	val lazyListState = rememberLazyListState()
+	val files by fileListViewModel.files.collectAsState()
 	val rowHeight = dimensionResource(id = R.dimen.standard_row_height)
 	val rowFontSize = LocalDensity.current.run { dimensionResource(id = R.dimen.row_font_size).toSp() }
 	val hapticFeedback = LocalHapticFeedback.current
 	val itemValue by itemListViewModel.itemValue.collectAsState()
-	val files by fileListViewModel.files.collectAsState()
 
 	@Composable
 	fun ChildItem(childItemViewModel: ItemListViewModel.ChildItemViewModel) {
@@ -101,7 +100,7 @@ fun ItemListView(
 			return
 		}
 
-		DisposableEffect(Unit) {
+		DisposableEffect(childItemViewModel.item) {
 			onDispose {
 				childItemViewModel.hideMenu()
 			}
@@ -148,7 +147,7 @@ fun ItemListView(
 	fun RenderTrackHeaderItem(position: Int, serviceFile: ServiceFile) {
 		val fileItemViewModel = remember(trackHeadlineViewModelProvider::getViewModel)
 
-		DisposableEffect(Unit) {
+		DisposableEffect(serviceFile) {
 			fileItemViewModel.promiseUpdate(files, position)
 
 			onDispose {
@@ -181,6 +180,8 @@ fun ItemListView(
 	@Composable
 	fun BoxWithConstraintsScope.LoadedItemListView() {
 		val items by itemListViewModel.items.collectAsState()
+
+		val lazyListState = rememberLazyListState() // instantiate lazyListState here to ensure it updates when a new list is retrieved
 
 		val knobHeight by remember {
 			derivedStateOf {
