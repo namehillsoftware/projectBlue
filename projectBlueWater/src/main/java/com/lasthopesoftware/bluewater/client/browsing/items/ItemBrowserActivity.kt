@@ -89,6 +89,7 @@ import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessa
 import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRateLimiter
 import com.lasthopesoftware.resources.closables.lazyScoped
 import com.lasthopesoftware.resources.strings.StringResources
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 private val magicPropertyBuilder by lazy { MagicPropertyBuilder(cls<ItemBrowserActivity>()) }
@@ -257,7 +258,13 @@ class ItemBrowserActivity : AppCompatActivity(), ItemBrowserViewDependencies {
 	}
 }
 
-private class GraphNavigation(private val navController: NavHostController, private val inner: NavigateApplication) : NavigateApplication by inner {
+@OptIn(ExperimentalMaterialApi::class)
+private class GraphNavigation(
+	private val navController: NavHostController,
+	private val bottomSheetState: BottomSheetState,
+	private val inner: NavigateApplication,
+	private val coroutineScope: CoroutineScope
+) : NavigateApplication by inner {
 	object Search {
 		const val route = "search"
 	}
@@ -295,9 +302,20 @@ private class GraphNavigation(private val navController: NavHostController, priv
 		navController.navigate(Downloads.route) {
 			launchSingleTop = true
 		}
+
+		coroutineScope.launch {
+			bottomSheetState.collapse()
+		}
 	}
 
-	override fun backOut(): Boolean = !navController.navigateUp() && inner.backOut()
+	override fun backOut(): Boolean {
+		if (!bottomSheetState.isCollapsed) {
+			coroutineScope.launch { bottomSheetState.collapse() }
+			return false
+		}
+
+		return !navController.navigateUp() && inner.backOut()
+	}
 }
 
 @OptIn(ExperimentalMaterialApi::class)
@@ -313,9 +331,12 @@ private fun ItemBrowserViewDependencies.ItemBrowserView(
 
 	val navController = rememberNavController()
 
-	val graphNavigation = GraphNavigation(navController, applicationNavigation)
-
 	val scaffoldState = rememberBottomSheetScaffoldState()
+	val coroutineScope = rememberCoroutineScope()
+	val graphNavigation = remember {
+		GraphNavigation(navController, scaffoldState.bottomSheetState, applicationNavigation, coroutineScope)
+	}
+
 	BottomSheetScaffold(
 		scaffoldState = scaffoldState,
 		sheetPeekHeight = 64.dp,
@@ -440,19 +461,12 @@ private fun ItemBrowserViewDependencies.ItemBrowserView(
 			}
 
 			val rowHeight = dimensionResource(id = R.dimen.standard_row_height)
-			val coroutineScope = rememberCoroutineScope()
-
 			ProvideTextStyle(value = MaterialTheme.typography.subtitle1) {
 				Row(
 					modifier = Modifier
 						.height(rowHeight)
 						.fillMaxWidth()
-						.clickable {
-							graphNavigation.viewActiveDownloads()
-							coroutineScope.launch {
-								scaffoldState.bottomSheetState.collapse()
-							}
-						},
+						.clickable(onClick = graphNavigation::viewActiveDownloads),
 					verticalAlignment = Alignment.CenterVertically,
 				) {
 					Box(
