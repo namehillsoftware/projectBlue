@@ -8,7 +8,6 @@ import ItemBrowsingArguments.titleArgument
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.Image
@@ -24,7 +23,6 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -70,7 +68,6 @@ import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessio
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionStatusViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
-import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.client.stored.library.items.StateChangeBroadcastingStoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
@@ -324,8 +321,6 @@ private fun ItemBrowserViewDependencies.ItemBrowserView(
 	startingLibraryId: LibraryId? = null,
 	startingItem: IItem? = null,
 ) {
-	val activity = LocalContext.current as? ComponentActivity ?: return
-
 	val systemUiController = rememberSystemUiController()
 	systemUiController.setStatusBarColor(MaterialTheme.colors.surface)
 
@@ -425,8 +420,8 @@ private fun ItemBrowserViewDependencies.ItemBrowserView(
 									interactionSource = remember { MutableInteractionSource() },
 									indication = null,
 									onClick = {
-										if (!isPlaying) PlaybackService.play(activity)
-										else PlaybackService.pause(activity)
+										if (!isPlaying) playbackServiceController.play()
+										else playbackServiceController.pause()
 
 										nowPlayingFilePropertiesViewModel.togglePlaying(!isPlaying)
 									}
