@@ -10,7 +10,6 @@ import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListView
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
-import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionStatusViewModel
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionUpdatesView
@@ -34,7 +33,7 @@ fun NavBackStackEntry.BrowsableItemListView(
 	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
 	reusablePlaylistFileItemViewModelProvider: ReusablePlaylistFileItemViewModelProvider,
 	applicationNavigation: NavigateApplication,
-) {
+): @Composable (LibraryId, Item) -> Unit {
 	val isCheckingConnection by connectionViewModel.isGettingConnection.collectAsState()
 	if (!isCheckingConnection) {
 		ItemListView(
@@ -49,30 +48,17 @@ fun NavBackStackEntry.BrowsableItemListView(
 		ConnectionUpdatesView(connectionViewModel)
 	}
 
-	val libraryId = arguments?.getInt(ItemBrowsingArguments.libraryIdArgument)?.let(::LibraryId) ?: return
-	val playlistId = arguments?.getInt(ItemBrowsingArguments.playlistIdArgument)
-	val item = if (playlistId != null && playlistId > -1) {
-		Item(
-			arguments?.getInt(ItemBrowsingArguments.keyArgument) ?: return,
-			arguments?.getString(ItemBrowsingArguments.titleArgument),
-			PlaylistId(playlistId),
-		)
-	} else {
-		Item(
-			arguments?.getInt(ItemBrowsingArguments.keyArgument) ?: return,
-			arguments?.getString(ItemBrowsingArguments.titleArgument)
-		)
-	}
-
-	LaunchedEffect(item) {
-		try {
-			connectionViewModel.ensureConnectionIsWorking(libraryId).suspend()
-			Promise.whenAll(
-				itemListViewModel.loadItem(libraryId, item),
-				fileListViewModel.loadItem(item)
-			).suspend()
-		} catch(e: Exception) {
-			applicationNavigation.backOut()
+	return { libraryId: LibraryId, item: Item ->
+		LaunchedEffect(item) {
+			try {
+				connectionViewModel.ensureConnectionIsWorking(libraryId).suspend()
+				Promise.whenAll(
+					itemListViewModel.loadItem(libraryId, item),
+					fileListViewModel.loadItem(item)
+				).suspend()
+			} catch (e: Exception) {
+				applicationNavigation.backOut()
+			}
 		}
 	}
 }

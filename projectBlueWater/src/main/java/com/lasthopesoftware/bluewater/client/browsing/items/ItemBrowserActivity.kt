@@ -29,12 +29,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
-import androidx.navigation.NavType
+import androidx.navigation.*
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navArgument
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.lasthopesoftware.bluewater.ActivityApplicationNavigation
 import com.lasthopesoftware.bluewater.NavigateApplication
@@ -108,11 +106,12 @@ fun Context.startItemBrowserActivity(libraryId: LibraryId, item: Item) {
 	startActivity(fileListIntent)
 }
 
-private fun getItemBrowserIntent(context: Context, libraryId: LibraryId, item: IItem) = Intent(context, cls<ItemBrowserActivity>()).apply {
-	putExtra(keyProperty, item.key)
-	putExtra(itemTitleProperty, item.value)
-	putExtra(libraryIdProperty, libraryId.id)
-}
+private fun getItemBrowserIntent(context: Context, libraryId: LibraryId, item: IItem) =
+	Intent(context, cls<ItemBrowserActivity>()).apply {
+		putExtra(keyProperty, item.key)
+		putExtra(itemTitleProperty, item.value)
+		putExtra(libraryIdProperty, libraryId.id)
+	}
 
 class ItemBrowserActivity : AppCompatActivity(), ItemBrowserViewDependencies {
 
@@ -217,7 +216,13 @@ class ItemBrowserActivity : AppCompatActivity(), ItemBrowserViewDependencies {
 
 	override val stringResources by lazy { StringResources(this) }
 
-	override val libraryFilesProvider by lazy { LibraryFileProvider(LibraryFileStringListProvider(libraryConnectionProvider))  }
+	override val libraryFilesProvider by lazy {
+		LibraryFileProvider(
+			LibraryFileStringListProvider(
+				libraryConnectionProvider
+			)
+		)
+	}
 
 	override val applicationNavigation by lazy { ActivityApplicationNavigation(this) }
 
@@ -226,9 +231,11 @@ class ItemBrowserActivity : AppCompatActivity(), ItemBrowserViewDependencies {
 	public override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
-		val libraryIdInt = savedInstanceState?.getInt(libraryIdProperty, -1) ?: intent.getIntExtra(libraryIdProperty, -1)
+		val libraryIdInt =
+			savedInstanceState?.getInt(libraryIdProperty, -1) ?: intent.getIntExtra(libraryIdProperty, -1)
 		val libraryId = LibraryId(libraryIdInt)
-		val playlistId = savedInstanceState?.getInt(playlistIdProperty, -1) ?: intent.getIntExtra(playlistIdProperty, -1)
+		val playlistId =
+			savedInstanceState?.getInt(playlistIdProperty, -1) ?: intent.getIntExtra(playlistIdProperty, -1)
 		val item = if (playlistId > -1) {
 			Item(
 				savedInstanceState?.getInt(keyProperty) ?: intent.getIntExtra(keyProperty, 1),
@@ -245,6 +252,7 @@ class ItemBrowserActivity : AppCompatActivity(), ItemBrowserViewDependencies {
 		setContent {
 			ProjectBlueTheme {
 				ItemBrowserView(
+					this,
 					libraryId,
 					item,
 				)
@@ -266,17 +274,27 @@ private class GraphNavigation(
 		const val route = "search"
 	}
 
-	object Downloads {
-		const val route = "library/{$libraryIdArgument}/downloads"
+	object Library {
+		const val route = "library/{$libraryIdArgument}"
 
-		fun buildPath(libraryId: LibraryId): String = "library/${libraryId.id}/downloads"
+		fun buildPath(libraryId: LibraryId) = "library/${libraryId.id}"
+	}
+
+	object Downloads {
+		const val nestedRoute = "downloads"
+
+		fun buildPath(libraryId: LibraryId) = "${Library.buildPath(libraryId)}/$nestedRoute"
 	}
 
 	object BrowseToItem {
-		const val route = "library/{$libraryIdArgument}/item/{$keyArgument}?$titleArgument={$titleArgument}&$playlistIdArgument={$playlistIdArgument}"
+		const val nestedRoute =
+			"item/{$keyArgument}?$titleArgument={$titleArgument}&$playlistIdArgument={$playlistIdArgument}"
 
-		fun buildPath(libraryId: LibraryId, item: IItem): String {
-			var path = "library/${libraryId.id}/item/${item.key}?$titleArgument=${item.value}"
+		fun buildPath(libraryId: LibraryId, item: IItem): String =
+			"${Library.buildPath(libraryId)}/${buildNestedPath(item)}"
+
+		fun buildNestedPath(item: IItem): String {
+			var path = "item/${item.key}?$titleArgument=${item.value}"
 			if (item is Item) {
 				val playlistId = item.playlistId
 				if (playlistId != null)
@@ -297,8 +315,8 @@ private class GraphNavigation(
 		navController.navigate(BrowseToItem.buildPath(libraryId, item))
 	}
 
-	override fun viewActiveDownloads() {
-		navController.navigate(Downloads.route) {
+	override fun viewActiveDownloads(libraryId: LibraryId) {
+		navController.navigate(Downloads.buildPath(libraryId)) {
 			launchSingleTop = true
 		}
 
@@ -316,226 +334,67 @@ private class GraphNavigation(
 	}
 }
 
-@OptIn(ExperimentalMaterialApi::class)
-@Composable
-private fun ItemBrowserViewDependencies.ItemBrowserView(
+private class GraphDependencies(private val inner: ItemBrowserViewDependencies, graphNavigation: GraphNavigation) :
+	ItemBrowserViewDependencies by inner
+{
+	override val applicationNavigation = graphNavigation
+}
+
+private fun NavGraphBuilder.libraryRoutes(
+	itemBrowserViewDependencies: ItemBrowserViewDependencies,
 	startingLibraryId: LibraryId? = null,
 	startingItem: IItem? = null,
 ) {
-	val systemUiController = rememberSystemUiController()
-	systemUiController.setStatusBarColor(MaterialTheme.colors.surface)
+	navigation(
+		route = GraphNavigation.Library.route,
+		startDestination = GraphNavigation.BrowseToItem.nestedRoute)
+	{
 
-	val navController = rememberNavController()
-
-	val scaffoldState = rememberBottomSheetScaffoldState()
-	val coroutineScope = rememberCoroutineScope()
-	val graphNavigation = remember {
-		GraphNavigation(navController, scaffoldState.bottomSheetState, applicationNavigation, coroutineScope)
-	}
-
-	BottomSheetScaffold(
-		scaffoldState = scaffoldState,
-		sheetPeekHeight = 64.dp,
-		sheetElevation = 16.dp,
-		sheetShape = RoundedCornerShape(4.dp),
-		sheetContent = {
-			Row(
-				modifier = Modifier
-					.clickable(onClick = graphNavigation::viewNowPlaying)
-					.background(MaterialTheme.colors.secondary)
-					.height(64.dp)
-			) {
-				Column {
-					Row(
-						modifier = Modifier
-							.height(8.dp)
-							.fillMaxWidth(),
-						horizontalArrangement = Arrangement.Center
-					) {
-						Divider(
-							thickness = 2.dp,
-							modifier = Modifier
-								.fillMaxWidth(.5f)
-								.align(Alignment.CenterVertically),
-							color = MaterialTheme.colors.onSecondary,
-						)
-					}
-
-					Row(
-						modifier = Modifier
-							.weight(1f)
-							.padding(end = 16.dp)
-					) {
-						Box(
-							modifier = Modifier
-								.align(Alignment.CenterVertically)
-								.fillMaxHeight()
-								.clickable(onClick = graphNavigation::launchSearch),
-						) {
-							Icon(
-								Icons.Default.Search,
-								contentDescription = stringResource(id = R.string.lbl_search),
-								tint = MaterialTheme.colors.onSecondary,
-								modifier = Modifier
-									.align(Alignment.Center)
-									.padding(start = 16.dp, end = 16.dp)
-							)
-						}
-
-						Column(
-							modifier = Modifier
-								.weight(1f)
-								.align(Alignment.CenterVertically),
-						) {
-							val songTitle by nowPlayingFilePropertiesViewModel.title.collectAsState()
-
-							ProvideTextStyle(MaterialTheme.typography.subtitle1) {
-								Text(
-									text = songTitle
-										?: stringResource(id = R.string.lbl_loading),
-									maxLines = 1,
-									overflow = TextOverflow.Ellipsis,
-									fontWeight = FontWeight.Medium,
-									color = MaterialTheme.colors.onSecondary,
-								)
-							}
-
-							val songArtist by nowPlayingFilePropertiesViewModel.artist.collectAsState()
-							ProvideTextStyle(MaterialTheme.typography.body2) {
-								Text(
-									text = songArtist
-										?: stringResource(id = R.string.lbl_loading),
-									maxLines = 1,
-									overflow = TextOverflow.Ellipsis,
-									color = MaterialTheme.colors.onSecondary,
-								)
-							}
-						}
-
-						val isPlaying by nowPlayingFilePropertiesViewModel.isPlaying.collectAsState()
-						Image(
-							painter = painterResource(id = if (!isPlaying) R.drawable.av_play_white else R.drawable.av_pause_white),
-							contentDescription = stringResource(id = R.string.btn_play),
-							modifier = Modifier
-								.clickable(
-									interactionSource = remember { MutableInteractionSource() },
-									indication = null,
-									onClick = {
-										if (!isPlaying) playbackServiceController.play()
-										else playbackServiceController.pause()
-
-										nowPlayingFilePropertiesViewModel.togglePlaying(!isPlaying)
-									}
-								)
-								.padding(start = 8.dp, end = 8.dp)
-								.align(Alignment.CenterVertically)
-								.size(24.dp),
-						)
-
-						Icon(
-							Icons.Default.ArrowForward,
-							contentDescription = stringResource(id = R.string.title_activity_view_now_playing),
-							tint = MaterialTheme.colors.onSecondary,
-							modifier = Modifier
-								.padding(start = 8.dp, end = 8.dp)
-								.align(Alignment.CenterVertically)
-						)
-					}
-
-					val filePosition by nowPlayingFilePropertiesViewModel.filePosition.collectAsState()
-					val fileDuration by nowPlayingFilePropertiesViewModel.fileDuration.collectAsState()
-					val fileProgress by remember { derivedStateOf { filePosition / fileDuration.toFloat() } }
-					LinearProgressIndicator(
-						progress = fileProgress,
-						color = MaterialTheme.colors.primary,
-						backgroundColor = MaterialTheme.colors.onPrimary.copy(alpha = .6f),
-						modifier = Modifier
-							.fillMaxWidth()
-							.padding(0.dp)
-					)
-				}
-			}
-
-			val rowHeight = dimensionResource(id = R.dimen.standard_row_height)
-			ProvideTextStyle(value = MaterialTheme.typography.subtitle1) {
-				Row(
-					modifier = Modifier
-						.height(rowHeight)
-						.fillMaxWidth()
-						.clickable(onClick = graphNavigation::viewActiveDownloads),
-					verticalAlignment = Alignment.CenterVertically,
-				) {
-					Box(
-						modifier = Modifier
-							.align(Alignment.CenterVertically)
-							.fillMaxHeight()
-					) {
-						Image(
-							painter = painterResource(id = R.drawable.ic_water),
-							contentDescription = stringResource(id = R.string.lbl_search),
-							modifier = Modifier
-								.align(Alignment.Center)
-								.padding(start = 16.dp, end = 16.dp)
-						)
-					}
-
-					Text(
-						text = stringResource(R.string.activeDownloads),
-					)
-				}
-			}
-	}) { paddingValues ->
-		NavHost(
-			navController,
-			modifier = Modifier
-				.padding(paddingValues)
-				.fillMaxSize(),
-			startDestination = GraphNavigation.BrowseToItem.route,
-		) {
-			composable(
-				GraphNavigation.BrowseToItem.route,
-				arguments = listOf(
-					navArgument(libraryIdArgument) {
-						type = NavType.IntType
-						defaultValue = startingLibraryId?.id ?: -1
-					},
-					navArgument(keyArgument) {
-						type = NavType.IntType
-						defaultValue = startingItem?.key ?: -1
-					},
-					navArgument(titleArgument) {
-						type = NavType.StringType
-						nullable = true
-						defaultValue = startingItem?.value
-					},
-					navArgument(playlistIdArgument) {
-						type = NavType.IntType
-						defaultValue = startingItem.let { it as? Item }?.playlistId?.id ?: -1
-					},
-				)
-			) { entry ->
+		composable(
+			GraphNavigation.BrowseToItem.nestedRoute,
+			arguments = listOf(
+				navArgument(libraryIdArgument) {
+					type = NavType.IntType
+					defaultValue = startingLibraryId?.id ?: -1
+				},
+				navArgument(keyArgument) {
+					type = NavType.IntType
+					defaultValue = startingItem?.key ?: -1
+				},
+				navArgument(titleArgument) {
+					type = NavType.StringType
+					nullable = true
+					defaultValue = startingItem?.value
+				},
+				navArgument(playlistIdArgument) {
+					type = NavType.IntType
+					defaultValue = startingItem.let { it as? Item }?.playlistId?.id ?: -1
+				},
+			)
+		) { entry ->
+			val view = with(itemBrowserViewDependencies) {
 				entry.BrowsableItemListView(
-					entry.viewModelStore.buildViewModel {
+					connectionViewModel = entry.viewModelStore.buildViewModel {
 						ConnectionStatusViewModel(
 							stringResources,
 							ConnectionInitializationController(
 								libraryConnectionProvider,
-								graphNavigation,
+								applicationNavigation,
 							)
 						)
 					},
-					entry.viewModelStore.buildViewModel {
+					itemListViewModel = entry.viewModelStore.buildViewModel {
 						ItemListViewModel(
 							itemProvider,
 							messageBus,
 							storedItemAccess,
 							itemListProvider,
 							playbackServiceController,
-							graphNavigation,
+							applicationNavigation,
 							menuMessageBus,
 						)
 					},
-					entry.viewModelStore.buildViewModel {
+					fileListViewModel = entry.viewModelStore.buildViewModel {
 						FileListViewModel(
 							browserLibraryIdProvider,
 							itemFileProvider,
@@ -543,60 +402,52 @@ private fun ItemBrowserViewDependencies.ItemBrowserView(
 							playbackServiceController,
 						)
 					},
-					nowPlayingFilePropertiesViewModel,
-					itemListMenuBackPressedHandler,
+					nowPlayingViewModel = nowPlayingFilePropertiesViewModel,
+					itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
 					reusablePlaylistFileItemViewModelProvider = entry.viewModelStore.buildViewModel {
 						ReusablePlaylistFileItemViewModelProvider(
 							scopedFilePropertiesProvider,
 							scopedUrlKeyProvider,
 							stringResources,
 							playbackServiceController,
-							graphNavigation,
+							applicationNavigation,
 							menuMessageBus,
 							messageBus,
 						)
 					},
-					graphNavigation,
+					applicationNavigation = applicationNavigation,
 				)
 			}
 
-			composable(GraphNavigation.Search.route) { entry ->
-				SearchFilesView(
-					searchFilesViewModel = entry.viewModelStore.buildViewModel {
-						SearchFilesViewModel(
-							browserLibraryIdProvider,
-							libraryFilesProvider,
-							playbackServiceController,
-						)
-					},
-					nowPlayingViewModel = nowPlayingFilePropertiesViewModel,
-					trackHeadlineViewModelProvider = entry.viewModelStore.buildViewModel {
-						ReusablePlaylistFileItemViewModelProvider(
-							scopedFilePropertiesProvider,
-							scopedUrlKeyProvider,
-							stringResources,
-							playbackServiceController,
-							graphNavigation,
-							menuMessageBus,
-							messageBus,
-						)
-					},
-					itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
-					onBack = graphNavigation::backOut,
+			val libraryId = entry.arguments?.getInt(libraryIdArgument)?.let(::LibraryId) ?: startingLibraryId ?: return@composable
+			val arguments = entry.arguments
+			val playlistId = arguments?.getInt(playlistIdArgument)
+			val item = if (playlistId != null && playlistId > -1) {
+				Item(
+					arguments.getInt(keyArgument),
+					arguments.getString(titleArgument),
+					PlaylistId(playlistId),
+				)
+			} else {
+				Item(
+					arguments?.getInt(keyArgument) ?: return@composable,
+					arguments.getString(titleArgument)
 				)
 			}
 
-			composable(
-				GraphNavigation.Downloads.route,
-				arguments = listOf(
-					navArgument(libraryIdArgument) {
-						type = NavType.IntType
-						defaultValue = startingLibraryId?.id ?: -1
-					},
-				)
-			) { entry ->
-				val libraryId = entry.arguments?.getInt(libraryIdArgument)?.let(::LibraryId) ?: return@composable
+			view(libraryId, item)
+		}
 
+		composable(
+			GraphNavigation.Downloads.nestedRoute,
+			arguments = listOf(
+				navArgument(libraryIdArgument) {
+					type = NavType.IntType
+					defaultValue = startingLibraryId?.id ?: -1
+				},
+			)
+		) { entry ->
+			with(itemBrowserViewDependencies) {
 				val activeFileDownloadsViewModel = entry.viewModelStore.buildViewModel {
 					ActiveFileDownloadsViewModel(
 						storedFileAccess,
@@ -604,6 +455,7 @@ private fun ItemBrowserViewDependencies.ItemBrowserView(
 						syncScheduler,
 					)
 				}
+
 				ActiveFileDownloadsView(
 					activeFileDownloadsViewModel = activeFileDownloadsViewModel,
 					trackHeadlineViewModelProvider = entry.viewModelStore.buildViewModel {
@@ -614,10 +466,235 @@ private fun ItemBrowserViewDependencies.ItemBrowserView(
 							messageBus,
 						)
 					},
-					onBack = graphNavigation::backOut
+					onBack = applicationNavigation::backOut
 				)
 
+				val libraryId = entry.arguments?.getInt(libraryIdArgument)?.let(::LibraryId) ?: startingLibraryId ?: return@composable
 				activeFileDownloadsViewModel.loadActiveDownloads(libraryId)
+			}
+		}
+	}
+}
+
+@OptIn(ExperimentalMaterialApi::class)
+@Composable
+private fun ItemBrowserView(
+	itemBrowserViewDependencies: ItemBrowserViewDependencies,
+	startingLibraryId: LibraryId? = null,
+	startingItem: IItem? = null,
+) {
+	val systemUiController = rememberSystemUiController()
+	systemUiController.setStatusBarColor(MaterialTheme.colors.surface)
+
+	val navController = rememberNavController()
+	val scaffoldState = rememberBottomSheetScaffoldState()
+	val coroutineScope = rememberCoroutineScope()
+
+	with(remember {
+		GraphDependencies(
+			itemBrowserViewDependencies,
+			GraphNavigation(
+				navController,
+				scaffoldState.bottomSheetState,
+				itemBrowserViewDependencies.applicationNavigation,
+				coroutineScope
+			)
+		)
+	}) {
+		BottomSheetScaffold(
+			scaffoldState = scaffoldState,
+			sheetPeekHeight = 64.dp,
+			sheetElevation = 16.dp,
+			sheetShape = RoundedCornerShape(4.dp),
+			sheetContent = {
+				Row(
+					modifier = Modifier
+						.clickable(onClick = applicationNavigation::viewNowPlaying)
+						.background(MaterialTheme.colors.secondary)
+						.height(64.dp)
+				) {
+					Column {
+						Row(
+							modifier = Modifier
+								.height(8.dp)
+								.fillMaxWidth(),
+							horizontalArrangement = Arrangement.Center
+						) {
+							Divider(
+								thickness = 2.dp,
+								modifier = Modifier
+									.fillMaxWidth(.5f)
+									.align(Alignment.CenterVertically),
+								color = MaterialTheme.colors.onSecondary,
+							)
+						}
+
+						Row(
+							modifier = Modifier
+								.weight(1f)
+								.padding(end = 16.dp)
+						) {
+							Box(
+								modifier = Modifier
+									.align(Alignment.CenterVertically)
+									.fillMaxHeight()
+									.clickable(onClick = applicationNavigation::launchSearch),
+							) {
+								Icon(
+									Icons.Default.Search,
+									contentDescription = stringResource(id = R.string.lbl_search),
+									tint = MaterialTheme.colors.onSecondary,
+									modifier = Modifier
+										.align(Alignment.Center)
+										.padding(start = 16.dp, end = 16.dp)
+								)
+							}
+
+							Column(
+								modifier = Modifier
+									.weight(1f)
+									.align(Alignment.CenterVertically),
+							) {
+								val songTitle by nowPlayingFilePropertiesViewModel.title.collectAsState()
+
+								ProvideTextStyle(MaterialTheme.typography.subtitle1) {
+									Text(
+										text = songTitle
+											?: stringResource(id = R.string.lbl_loading),
+										maxLines = 1,
+										overflow = TextOverflow.Ellipsis,
+										fontWeight = FontWeight.Medium,
+										color = MaterialTheme.colors.onSecondary,
+									)
+								}
+
+								val songArtist by nowPlayingFilePropertiesViewModel.artist.collectAsState()
+								ProvideTextStyle(MaterialTheme.typography.body2) {
+									Text(
+										text = songArtist
+											?: stringResource(id = R.string.lbl_loading),
+										maxLines = 1,
+										overflow = TextOverflow.Ellipsis,
+										color = MaterialTheme.colors.onSecondary,
+									)
+								}
+							}
+
+							val isPlaying by nowPlayingFilePropertiesViewModel.isPlaying.collectAsState()
+							Image(
+								painter = painterResource(id = if (!isPlaying) R.drawable.av_play_white else R.drawable.av_pause_white),
+								contentDescription = stringResource(id = R.string.btn_play),
+								modifier = Modifier
+									.clickable(
+										interactionSource = remember { MutableInteractionSource() },
+										indication = null,
+										onClick = {
+											if (!isPlaying) playbackServiceController.play()
+											else playbackServiceController.pause()
+
+											nowPlayingFilePropertiesViewModel.togglePlaying(!isPlaying)
+										}
+									)
+									.padding(start = 8.dp, end = 8.dp)
+									.align(Alignment.CenterVertically)
+									.size(24.dp),
+							)
+
+							Icon(
+								Icons.Default.ArrowForward,
+								contentDescription = stringResource(id = R.string.title_activity_view_now_playing),
+								tint = MaterialTheme.colors.onSecondary,
+								modifier = Modifier
+									.padding(start = 8.dp, end = 8.dp)
+									.align(Alignment.CenterVertically)
+							)
+						}
+
+						val filePosition by nowPlayingFilePropertiesViewModel.filePosition.collectAsState()
+						val fileDuration by nowPlayingFilePropertiesViewModel.fileDuration.collectAsState()
+						val fileProgress by remember { derivedStateOf { filePosition / fileDuration.toFloat() } }
+						LinearProgressIndicator(
+							progress = fileProgress,
+							color = MaterialTheme.colors.primary,
+							backgroundColor = MaterialTheme.colors.onPrimary.copy(alpha = .6f),
+							modifier = Modifier
+								.fillMaxWidth()
+								.padding(0.dp)
+						)
+					}
+				}
+
+				val rowHeight = dimensionResource(id = R.dimen.standard_row_height)
+				ProvideTextStyle(value = MaterialTheme.typography.subtitle1) {
+					Row(
+						modifier = Modifier
+							.height(rowHeight)
+							.fillMaxWidth()
+							.clickable {
+								if (startingLibraryId != null)
+									applicationNavigation.viewActiveDownloads(startingLibraryId)
+							},
+						verticalAlignment = Alignment.CenterVertically,
+					) {
+						Box(
+							modifier = Modifier
+								.align(Alignment.CenterVertically)
+								.fillMaxHeight()
+						) {
+							Image(
+								painter = painterResource(id = R.drawable.ic_water),
+								contentDescription = stringResource(id = R.string.lbl_search),
+								modifier = Modifier
+									.align(Alignment.Center)
+									.padding(start = 16.dp, end = 16.dp)
+							)
+						}
+
+						Text(
+							text = stringResource(R.string.activeDownloads),
+						)
+					}
+				}
+			}) { paddingValues ->
+			NavHost(
+				navController,
+				modifier = Modifier
+					.padding(paddingValues)
+					.fillMaxSize(),
+				startDestination = GraphNavigation.Library.route,
+			) {
+
+				libraryRoutes(
+					itemBrowserViewDependencies = itemBrowserViewDependencies,
+					startingLibraryId = startingLibraryId,
+					startingItem = startingItem
+				)
+
+				composable(GraphNavigation.Search.route) { entry ->
+					SearchFilesView(
+						searchFilesViewModel = entry.viewModelStore.buildViewModel {
+							SearchFilesViewModel(
+								browserLibraryIdProvider,
+								libraryFilesProvider,
+								playbackServiceController,
+							)
+						},
+						nowPlayingViewModel = nowPlayingFilePropertiesViewModel,
+						trackHeadlineViewModelProvider = entry.viewModelStore.buildViewModel {
+							ReusablePlaylistFileItemViewModelProvider(
+								scopedFilePropertiesProvider,
+								scopedUrlKeyProvider,
+								stringResources,
+								playbackServiceController,
+								applicationNavigation,
+								menuMessageBus,
+								messageBus,
+							)
+						},
+						itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
+						onBack = applicationNavigation::backOut,
+					)
+				}
 			}
 		}
 	}

@@ -15,7 +15,7 @@ interface NavigateApplication {
 
 	fun viewNowPlaying() {}
 
-	fun viewActiveDownloads() {}
+	fun viewActiveDownloads(libraryId: LibraryId) {}
 
 	fun backOut(): Boolean = true
 }
