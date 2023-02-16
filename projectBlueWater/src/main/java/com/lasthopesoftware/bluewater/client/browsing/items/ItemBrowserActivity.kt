@@ -267,7 +267,9 @@ private class GraphNavigation(
 	}
 
 	object Downloads {
-		const val route = "downloads"
+		const val route = "library/{$libraryIdArgument}/downloads"
+
+		fun buildPath(libraryId: LibraryId): String = "library/${libraryId.id}/downloads"
 	}
 
 	object BrowseToItem {
@@ -308,7 +310,6 @@ private class GraphNavigation(
 	override fun backOut(): Boolean {
 		if (!bottomSheetState.isCollapsed) {
 			coroutineScope.launch { bottomSheetState.collapse() }
-			return false
 		}
 
 		return !navController.navigateUp() && inner.backOut()
@@ -585,15 +586,26 @@ private fun ItemBrowserViewDependencies.ItemBrowserView(
 				)
 			}
 
-			composable(GraphNavigation.Downloads.route) { entry ->
-				ActiveFileDownloadsView(
-					activeFileDownloadsViewModel = entry.viewModelStore.buildViewModel {
-						ActiveFileDownloadsViewModel(
-							storedFileAccess,
-							messageBus,
-							syncScheduler,
-						)
+			composable(
+				GraphNavigation.Downloads.route,
+				arguments = listOf(
+					navArgument(libraryIdArgument) {
+						type = NavType.IntType
+						defaultValue = startingLibraryId?.id ?: -1
 					},
+				)
+			) { entry ->
+				val libraryId = entry.arguments?.getInt(libraryIdArgument)?.let(::LibraryId) ?: return@composable
+
+				val activeFileDownloadsViewModel = entry.viewModelStore.buildViewModel {
+					ActiveFileDownloadsViewModel(
+						storedFileAccess,
+						messageBus,
+						syncScheduler,
+					)
+				}
+				ActiveFileDownloadsView(
+					activeFileDownloadsViewModel = activeFileDownloadsViewModel,
 					trackHeadlineViewModelProvider = entry.viewModelStore.buildViewModel {
 						ReusableFileItemViewModelProvider(
 							scopedFilePropertiesProvider,
@@ -604,6 +616,8 @@ private fun ItemBrowserViewDependencies.ItemBrowserView(
 					},
 					onBack = graphNavigation::backOut
 				)
+
+				activeFileDownloadsViewModel.loadActiveDownloads(libraryId)
 			}
 		}
 	}
