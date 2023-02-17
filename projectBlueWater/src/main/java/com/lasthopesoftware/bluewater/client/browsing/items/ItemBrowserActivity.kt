@@ -283,6 +283,8 @@ private class GraphNavigation(
 	object Downloads {
 		const val nestedRoute = "downloads"
 
+		const val route = "${Library.route}/$nestedRoute"
+
 		fun buildPath(libraryId: LibraryId) = "${Library.buildPath(libraryId)}/$nestedRoute"
 	}
 
@@ -290,10 +292,12 @@ private class GraphNavigation(
 		const val nestedRoute =
 			"item/{$keyArgument}?$titleArgument={$titleArgument}&$playlistIdArgument={$playlistIdArgument}"
 
+		const val route = "${Library.route}/${nestedRoute}"
+
 		fun buildPath(libraryId: LibraryId, item: IItem): String =
 			"${Library.buildPath(libraryId)}/${buildNestedPath(item)}"
 
-		fun buildNestedPath(item: IItem): String {
+		private fun buildNestedPath(item: IItem): String {
 			var path = "item/${item.key}?$titleArgument=${item.value}"
 			if (item is Item) {
 				val playlistId = item.playlistId
@@ -330,7 +334,7 @@ private class GraphNavigation(
 			coroutineScope.launch { bottomSheetState.collapse() }
 		}
 
-		return !navController.navigateUp() && inner.backOut()
+		return navController.navigateUp() || inner.backOut()
 	}
 }
 
@@ -338,142 +342,6 @@ private class GraphDependencies(private val inner: ItemBrowserViewDependencies, 
 	ItemBrowserViewDependencies by inner
 {
 	override val applicationNavigation = graphNavigation
-}
-
-private fun NavGraphBuilder.libraryRoutes(
-	itemBrowserViewDependencies: ItemBrowserViewDependencies,
-	startingLibraryId: LibraryId? = null,
-	startingItem: IItem? = null,
-) {
-	navigation(
-		route = GraphNavigation.Library.route,
-		startDestination = GraphNavigation.BrowseToItem.nestedRoute)
-	{
-
-		composable(
-			GraphNavigation.BrowseToItem.nestedRoute,
-			arguments = listOf(
-				navArgument(libraryIdArgument) {
-					type = NavType.IntType
-					defaultValue = startingLibraryId?.id ?: -1
-				},
-				navArgument(keyArgument) {
-					type = NavType.IntType
-					defaultValue = startingItem?.key ?: -1
-				},
-				navArgument(titleArgument) {
-					type = NavType.StringType
-					nullable = true
-					defaultValue = startingItem?.value
-				},
-				navArgument(playlistIdArgument) {
-					type = NavType.IntType
-					defaultValue = startingItem.let { it as? Item }?.playlistId?.id ?: -1
-				},
-			)
-		) { entry ->
-			val view = with(itemBrowserViewDependencies) {
-				entry.BrowsableItemListView(
-					connectionViewModel = entry.viewModelStore.buildViewModel {
-						ConnectionStatusViewModel(
-							stringResources,
-							ConnectionInitializationController(
-								libraryConnectionProvider,
-								applicationNavigation,
-							)
-						)
-					},
-					itemListViewModel = entry.viewModelStore.buildViewModel {
-						ItemListViewModel(
-							itemProvider,
-							messageBus,
-							storedItemAccess,
-							itemListProvider,
-							playbackServiceController,
-							applicationNavigation,
-							menuMessageBus,
-						)
-					},
-					fileListViewModel = entry.viewModelStore.buildViewModel {
-						FileListViewModel(
-							browserLibraryIdProvider,
-							itemFileProvider,
-							storedItemAccess,
-							playbackServiceController,
-						)
-					},
-					nowPlayingViewModel = nowPlayingFilePropertiesViewModel,
-					itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
-					reusablePlaylistFileItemViewModelProvider = entry.viewModelStore.buildViewModel {
-						ReusablePlaylistFileItemViewModelProvider(
-							scopedFilePropertiesProvider,
-							scopedUrlKeyProvider,
-							stringResources,
-							playbackServiceController,
-							applicationNavigation,
-							menuMessageBus,
-							messageBus,
-						)
-					},
-					applicationNavigation = applicationNavigation,
-				)
-			}
-
-			val libraryId = entry.arguments?.getInt(libraryIdArgument)?.let(::LibraryId) ?: startingLibraryId ?: return@composable
-			val arguments = entry.arguments
-			val playlistId = arguments?.getInt(playlistIdArgument)
-			val item = if (playlistId != null && playlistId > -1) {
-				Item(
-					arguments.getInt(keyArgument),
-					arguments.getString(titleArgument),
-					PlaylistId(playlistId),
-				)
-			} else {
-				Item(
-					arguments?.getInt(keyArgument) ?: return@composable,
-					arguments.getString(titleArgument)
-				)
-			}
-
-			view(libraryId, item)
-		}
-
-		composable(
-			GraphNavigation.Downloads.nestedRoute,
-			arguments = listOf(
-				navArgument(libraryIdArgument) {
-					type = NavType.IntType
-					defaultValue = startingLibraryId?.id ?: -1
-				},
-			)
-		) { entry ->
-			with(itemBrowserViewDependencies) {
-				val activeFileDownloadsViewModel = entry.viewModelStore.buildViewModel {
-					ActiveFileDownloadsViewModel(
-						storedFileAccess,
-						messageBus,
-						syncScheduler,
-					)
-				}
-
-				ActiveFileDownloadsView(
-					activeFileDownloadsViewModel = activeFileDownloadsViewModel,
-					trackHeadlineViewModelProvider = entry.viewModelStore.buildViewModel {
-						ReusableFileItemViewModelProvider(
-							scopedFilePropertiesProvider,
-							scopedUrlKeyProvider,
-							stringResources,
-							messageBus,
-						)
-					},
-					onBack = applicationNavigation::backOut
-				)
-
-				val libraryId = entry.arguments?.getInt(libraryIdArgument)?.let(::LibraryId) ?: startingLibraryId ?: return@composable
-				activeFileDownloadsViewModel.loadActiveDownloads(libraryId)
-			}
-		}
-	}
 }
 
 @OptIn(ExperimentalMaterialApi::class)
@@ -661,14 +529,129 @@ private fun ItemBrowserView(
 				modifier = Modifier
 					.padding(paddingValues)
 					.fillMaxSize(),
-				startDestination = GraphNavigation.Library.route,
+				startDestination = GraphNavigation.BrowseToItem.route,
 			) {
+				composable(
+					GraphNavigation.BrowseToItem.route,
+					arguments = listOf(
+						navArgument(libraryIdArgument) {
+							type = NavType.IntType
+							defaultValue = startingLibraryId?.id ?: -1
+						},
+						navArgument(keyArgument) {
+							type = NavType.IntType
+							defaultValue = startingItem?.key ?: -1
+						},
+						navArgument(titleArgument) {
+							type = NavType.StringType
+							nullable = true
+							defaultValue = startingItem?.value
+						},
+						navArgument(playlistIdArgument) {
+							type = NavType.IntType
+							defaultValue = startingItem.let { it as? Item }?.playlistId?.id ?: -1
+						},
+					)
+				) { entry ->
+					val view = entry.BrowsableItemListView(
+						connectionViewModel = entry.viewModelStore.buildViewModel {
+							ConnectionStatusViewModel(
+								stringResources,
+								ConnectionInitializationController(
+									libraryConnectionProvider,
+									applicationNavigation,
+								)
+							)
+						},
+						itemListViewModel = entry.viewModelStore.buildViewModel {
+							ItemListViewModel(
+								itemProvider,
+								messageBus,
+								storedItemAccess,
+								itemListProvider,
+								playbackServiceController,
+								applicationNavigation,
+								menuMessageBus,
+							)
+						},
+						fileListViewModel = entry.viewModelStore.buildViewModel {
+							FileListViewModel(
+								browserLibraryIdProvider,
+								itemFileProvider,
+								storedItemAccess,
+								playbackServiceController,
+							)
+						},
+						nowPlayingViewModel = nowPlayingFilePropertiesViewModel,
+						itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
+						reusablePlaylistFileItemViewModelProvider = entry.viewModelStore.buildViewModel {
+							ReusablePlaylistFileItemViewModelProvider(
+								scopedFilePropertiesProvider,
+								scopedUrlKeyProvider,
+								stringResources,
+								playbackServiceController,
+								applicationNavigation,
+								menuMessageBus,
+								messageBus,
+							)
+						},
+						applicationNavigation = applicationNavigation,
+					)
 
-				libraryRoutes(
-					itemBrowserViewDependencies = itemBrowserViewDependencies,
-					startingLibraryId = startingLibraryId,
-					startingItem = startingItem
-				)
+					val libraryId = entry.arguments?.getInt(libraryIdArgument)?.let(::LibraryId) ?: startingLibraryId ?: return@composable
+					val arguments = entry.arguments
+					val playlistId = arguments?.getInt(playlistIdArgument)
+					val item = if (playlistId != null && playlistId > -1) {
+						Item(
+							arguments.getInt(keyArgument),
+							arguments.getString(titleArgument),
+							PlaylistId(playlistId),
+						)
+					} else {
+						Item(
+							arguments?.getInt(keyArgument) ?: return@composable,
+							arguments.getString(titleArgument)
+						)
+					}
+
+					view(libraryId, item)
+				}
+
+				composable(
+					GraphNavigation.Downloads.route,
+					arguments = listOf(
+						navArgument(libraryIdArgument) {
+							type = NavType.IntType
+							defaultValue = startingLibraryId?.id ?: -1
+						},
+					)
+				) { entry ->
+					val libraryId = entry.arguments?.getInt(libraryIdArgument)?.let(::LibraryId) ?: startingLibraryId ?: return@composable
+
+					val activeFileDownloadsViewModel = entry.viewModelStore.buildViewModel {
+						ActiveFileDownloadsViewModel(
+							storedFileAccess,
+							messageBus,
+							syncScheduler,
+						)
+					}
+
+					ActiveFileDownloadsView(
+						activeFileDownloadsViewModel = activeFileDownloadsViewModel,
+						trackHeadlineViewModelProvider =
+						entry.viewModelStore.buildViewModel {
+							ReusableFileItemViewModelProvider(
+								scopedFilePropertiesProvider,
+								scopedUrlKeyProvider,
+								stringResources,
+								messageBus,
+							)
+						},
+						onBack = applicationNavigation::backOut
+					)
+
+					activeFileDownloadsViewModel.loadActiveDownloads(libraryId)
+				}
 
 				composable(GraphNavigation.Search.route) { entry ->
 					SearchFilesView(
