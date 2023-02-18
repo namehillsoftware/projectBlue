@@ -25,13 +25,11 @@ import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceCon
 import com.lasthopesoftware.bluewater.databinding.ControlNowPlayingTopSheetBinding
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildActivityViewModelLazily
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
-import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
-import com.lasthopesoftware.resources.closables.lazyActivityScoped
 import com.lasthopesoftware.resources.strings.StringResources
 
 class NowPlayingTopFragment : Fragment() {
 
-	private val applicationMessageBus by lazyActivityScoped { getApplicationMessageBus().getScopedMessageBus() }
+	private val applicationMessageBus by lazy { getApplicationMessageBus() }
 
 	private val libraryConnectionProvider by lazy { requireContext().buildNewConnectionSessionManager() }
 

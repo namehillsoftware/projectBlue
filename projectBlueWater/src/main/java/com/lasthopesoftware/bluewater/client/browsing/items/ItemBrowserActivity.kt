@@ -82,6 +82,7 @@ import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
 import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRateLimiter
+import com.lasthopesoftware.resources.closables.ViewModelCloseableManager
 import com.lasthopesoftware.resources.closables.lazyScoped
 import com.lasthopesoftware.resources.strings.StringResources
 import kotlinx.coroutines.CoroutineScope
@@ -117,9 +118,11 @@ class ItemBrowserActivity : AppCompatActivity(), ItemBrowserViewDependencies {
 
 	private val rateLimiter by lazy { PromisingRateLimiter<Map<String, String>>(1) }
 
+	private val viewModelScope by buildViewModelLazily { ViewModelCloseableManager() }
+
 	override val browserLibraryIdProvider by lazy { getCachedSelectedLibraryIdProvider() }
 
-	override val messageBus by lazyScoped { getApplicationMessageBus().getScopedMessageBus() }
+	override val messageBus by lazy { getApplicationMessageBus().getScopedMessageBus().also(viewModelScope::manage) }
 
 	override val menuMessageBus by buildViewModelLazily { ViewModelMessageBus<ItemListMenuMessage>() }
 

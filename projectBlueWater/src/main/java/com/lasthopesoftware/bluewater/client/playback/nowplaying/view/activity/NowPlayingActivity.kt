@@ -50,6 +50,7 @@ import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMes
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
+import com.lasthopesoftware.resources.closables.ViewModelCloseableManager
 import com.lasthopesoftware.resources.closables.lazyScoped
 import com.lasthopesoftware.resources.strings.StringResources
 import kotlinx.coroutines.flow.filterNotNull
@@ -73,7 +74,11 @@ class NowPlayingActivity :
 
 	private val messageHandler by lazy { Handler(mainLooper) }
 
-	private val applicationMessageBus by lazyScoped { getApplicationMessageBus().getScopedMessageBus() }
+	private val applicationMessageBus by lazy { getApplicationMessageBus() }
+
+	private val viewModelScope by buildViewModelLazily { ViewModelCloseableManager() }
+
+	private val activityScopedMessageBus by lazyScoped { applicationMessageBus.getScopedMessageBus() }
 
 	private val imageProvider by lazy { CachedImageProvider.getInstance(this) }
 
@@ -124,7 +129,7 @@ class NowPlayingActivity :
 		val liveNowPlayingLookup = LiveNowPlayingLookup.getInstance()
 		binding.filePropertiesVm = buildViewModel {
 			NowPlayingFilePropertiesViewModel(
-                applicationMessageBus,
+				applicationMessageBus,
                 liveNowPlayingLookup,
                 libraryFilePropertiesProvider,
                 UrlKeyProvider(libraryConnectionProvider),
@@ -194,7 +199,7 @@ class NowPlayingActivity :
 			})
 		}
 
-		applicationMessageBus.registerReceiver(this)
+		activityScopedMessageBus.registerReceiver(this)
 
 		onBackPressedDispatcher.addCallback {
 			when {

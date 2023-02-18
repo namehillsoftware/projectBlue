@@ -44,11 +44,9 @@ import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBu
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildActivityViewModelLazily
 import com.lasthopesoftware.bluewater.shared.messages.ScopedMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
-import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.suspend
-import com.lasthopesoftware.resources.closables.lazyActivityScoped
 import com.lasthopesoftware.resources.closables.lazyScoped
 import com.lasthopesoftware.resources.strings.StringResources
 import kotlinx.coroutines.flow.filterNotNull
@@ -61,7 +59,7 @@ class NowPlayingPlaylistFragment : Fragment() {
 
 	private var itemListMenuChangeHandler: IItemListMenuChangeHandler? = null
 
-	private val applicationMessageBus by lazyActivityScoped { getApplicationMessageBus().getScopedMessageBus() }
+	private val applicationMessageBus by lazy { getApplicationMessageBus() }
 
 	private val libraryConnectionProvider by lazy { requireContext().buildNewConnectionSessionManager() }
 

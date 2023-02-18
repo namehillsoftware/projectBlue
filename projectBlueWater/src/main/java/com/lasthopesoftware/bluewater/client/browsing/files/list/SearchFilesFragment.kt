@@ -32,9 +32,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildActivityViewModelLazily
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
-import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
 import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRateLimiter
-import com.lasthopesoftware.resources.closables.lazyScoped
 import com.lasthopesoftware.resources.strings.StringResources
 
 class SearchFilesFragment : Fragment() {
@@ -55,9 +53,7 @@ class SearchFilesFragment : Fragment() {
 		)
 	}
 
-	private val scopedMessageBus by lazyScoped {
-		getApplicationMessageBus().getScopedMessageBus()
-	}
+	private val applicationMessageBus by lazy { getApplicationMessageBus() }
 
 	private val revisionProvider by lazy { LibraryRevisionProvider(libraryConnectionProvider) }
 
@@ -103,7 +99,7 @@ class SearchFilesFragment : Fragment() {
 			PlaybackServiceController(requireContext()),
 			ActivityApplicationNavigation(requireActivity()),
 			menuMessageBus,
-			scopedMessageBus,
+			applicationMessageBus,
 		)
 	}
 
@@ -117,13 +113,13 @@ class SearchFilesFragment : Fragment() {
 			connectionAuthenticationChecker,
 			revisionProvider,
 			FilePropertyCache,
-			scopedMessageBus
+			applicationMessageBus
 		)
 	}
 
 	private val nowPlayingFilePropertiesViewModel by buildViewModelLazily {
 		NowPlayingFilePropertiesViewModel(
-			scopedMessageBus,
+			applicationMessageBus,
 			LiveNowPlayingLookup.getInstance(),
 			libraryFilePropertiesProvider,
 			UrlKeyProvider(libraryConnectionProvider),
