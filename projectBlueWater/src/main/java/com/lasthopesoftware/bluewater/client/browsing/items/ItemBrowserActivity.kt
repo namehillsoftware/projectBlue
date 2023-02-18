@@ -15,7 +15,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
@@ -376,7 +375,6 @@ private fun ItemBrowserView(
 			scaffoldState = scaffoldState,
 			sheetPeekHeight = 64.dp,
 			sheetElevation = 16.dp,
-			sheetShape = RoundedCornerShape(4.dp),
 			sheetContent = {
 				Row(
 					modifier = Modifier
@@ -405,6 +403,25 @@ private fun ItemBrowserView(
 								.weight(1f)
 								.padding(end = 16.dp)
 						) {
+							val bottomSheetState = scaffoldState.bottomSheetState
+							val offset by bottomSheetState.offset
+							val bottomSheetProgress = bottomSheetState.progress
+
+							var progress by remember { mutableStateOf(0f) }
+							DisposableEffect(key1 = offset) {
+								val fraction = bottomSheetProgress.fraction
+								val currentState = bottomSheetProgress.from
+								progress = when {
+									currentState == BottomSheetValue.Collapsed && fraction == 1f -> 0f
+									currentState == BottomSheetValue.Collapsed -> fraction
+									currentState == BottomSheetValue.Expanded && fraction == 1f -> 1f
+									currentState == BottomSheetValue.Expanded -> 1 - fraction
+									else -> 0f
+								}
+
+								onDispose {  }
+							}
+
 							Box(
 								modifier = Modifier
 									.align(Alignment.CenterVertically)
