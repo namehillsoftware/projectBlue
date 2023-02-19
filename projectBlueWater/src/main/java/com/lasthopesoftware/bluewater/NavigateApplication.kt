@@ -9,7 +9,7 @@ interface NavigateApplication {
 
 	fun viewFileDetails(playlist: List<ServiceFile>, position: Int) {}
 
-	fun launchSearch() {}
+	fun launchSearch(libraryId: LibraryId) {}
 
 	fun viewItem(libraryId: LibraryId, item: IItem) {}
 
@@ -17,5 +17,7 @@ interface NavigateApplication {
 
 	fun viewActiveDownloads(libraryId: LibraryId) {}
 
-	fun backOut(): Boolean = true
+	fun navigateUp(): Boolean = true
+
+	fun backOut(): Boolean = navigateUp()
 }

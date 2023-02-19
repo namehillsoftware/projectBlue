@@ -75,6 +75,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.view.Act
 import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
+import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModel
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
@@ -86,6 +87,8 @@ import com.lasthopesoftware.resources.closables.ViewModelCloseableManager
 import com.lasthopesoftware.resources.closables.lazyScoped
 import com.lasthopesoftware.resources.strings.StringResources
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 private val magicPropertyBuilder by lazy { MagicPropertyBuilder(cls<ItemBrowserActivity>()) }
@@ -266,29 +269,34 @@ class ItemBrowserActivity : AppCompatActivity(), ItemBrowserViewDependencies {
 	}
 }
 
+enum class OverlayView {
+	Downloads, Search
+}
+
 @OptIn(ExperimentalMaterialApi::class)
 private class GraphNavigation(
 	private val navController: NavHostController,
 	private val bottomSheetState: BottomSheetState,
 	private val inner: NavigateApplication,
-	private val coroutineScope: CoroutineScope
+	private val coroutineScope: CoroutineScope,
 ) : NavigateApplication by inner {
-	object Search {
-		const val route = "search"
-	}
 
 	object Library {
+		const val specialRouteArgument = "specialRoute"
+
 		const val route = "library/{$libraryIdArgument}"
+
+		const val specialRoute = "$route?$specialRouteArgument={$specialRouteArgument}"
 
 		fun buildPath(libraryId: LibraryId) = "library/${libraryId.id}"
 	}
 
+	object Search {
+		fun buildPath(libraryId: LibraryId) = "${Library.buildPath(libraryId)}/${OverlayView.Search.name}"
+	}
+
 	object Downloads {
-		const val nestedRoute = "downloads"
-
-		const val route = "${Library.route}/$nestedRoute"
-
-		fun buildPath(libraryId: LibraryId) = "${Library.buildPath(libraryId)}/$nestedRoute"
+		fun buildPath(libraryId: LibraryId) = "${Library.buildPath(libraryId)}/${OverlayView.Downloads.name}"
 	}
 
 	object BrowseToItem {
@@ -312,40 +320,53 @@ private class GraphNavigation(
 		}
 	}
 
-	override fun launchSearch() {
-		navController.navigate(Search.route) {
-			launchSingleTop = true
-		}
+	private val mutableOverlayView = MutableStateFlow<OverlayView?>(null)
+
+	val specialView = mutableOverlayView.asStateFlow()
+
+	override fun launchSearch(libraryId: LibraryId) {
+		mutableOverlayView.value = OverlayView.Search
+
+		hideBottomSheet()
 	}
 
 	override fun viewItem(libraryId: LibraryId, item: IItem) {
 		navController.navigate(BrowseToItem.buildPath(libraryId, item))
+
+		hideBottomSheet()
 	}
 
 	override fun viewActiveDownloads(libraryId: LibraryId) {
-		navController.navigate(Downloads.buildPath(libraryId)) {
-			launchSingleTop = true
-		}
+		mutableOverlayView.value = OverlayView.Downloads
 
-		coroutineScope.launch {
-			bottomSheetState.collapse()
-		}
+		hideBottomSheet()
 	}
 
-	override fun backOut(): Boolean {
+	override fun navigateUp(): Boolean {
+		hideBottomSheet()
+
+		val specialView = mutableOverlayView.value
+		if (specialView != null && mutableOverlayView.compareAndSet(specialView, null)) {
+			return true
+		}
+
+		return navController.navigateUp() || inner.navigateUp()
+	}
+
+	private fun hideBottomSheet() {
 		if (!bottomSheetState.isCollapsed) {
 			coroutineScope.launch { bottomSheetState.collapse() }
 		}
-
-		return navController.navigateUp() || inner.backOut()
 	}
 }
 
-private class GraphDependencies(private val inner: ItemBrowserViewDependencies, graphNavigation: GraphNavigation) :
+private class GraphDependencies(inner: ItemBrowserViewDependencies, graphNavigation: GraphNavigation) :
 	ItemBrowserViewDependencies by inner
 {
 	override val applicationNavigation = graphNavigation
 }
+
+private val bottomAppBarHeight = Dimensions.AppBarHeight
 
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -362,28 +383,31 @@ private fun ItemBrowserView(
 	val coroutineScope = rememberCoroutineScope()
 
 	val bottomSheetState = scaffoldState.bottomSheetState
+	val graphNavigation = remember {
+		GraphNavigation(
+			navController,
+			bottomSheetState,
+			itemBrowserViewDependencies.applicationNavigation,
+			coroutineScope
+		)
+	}
 
 	with(remember {
 		GraphDependencies(
 			itemBrowserViewDependencies,
-			GraphNavigation(
-				navController,
-				bottomSheetState,
-				itemBrowserViewDependencies.applicationNavigation,
-				coroutineScope
-			)
+			graphNavigation,
 		)
 	}) {
 		BottomSheetScaffold(
 			scaffoldState = scaffoldState,
-			sheetPeekHeight = 56.dp,
+			sheetPeekHeight = bottomAppBarHeight,
 			sheetElevation = 16.dp,
 			sheetContent = {
 				Row(
 					modifier = Modifier
 						.clickable(onClick = applicationNavigation::viewNowPlaying)
 						.background(MaterialTheme.colors.secondary)
-						.height(56.dp)
+						.height(bottomAppBarHeight)
 				) {
 					Column {
 						Row(
@@ -540,7 +564,10 @@ private fun ItemBrowserView(
 						modifier = Modifier
 							.height(rowHeight)
 							.fillMaxWidth()
-							.clickable(onClick = applicationNavigation::launchSearch),
+							.clickable {
+								if (startingLibraryId != null)
+									applicationNavigation.launchSearch(startingLibraryId)
+							},
 						verticalAlignment = Alignment.CenterVertically,
 					) {
 						Box(
@@ -564,11 +591,13 @@ private fun ItemBrowserView(
 				}
 			}
 		) { paddingValues ->
+			val hostModifier = Modifier
+				.padding(paddingValues)
+				.fillMaxSize()
+
 			NavHost(
 				navController,
-				modifier = Modifier
-					.padding(paddingValues)
-					.fillMaxSize(),
+				modifier = hostModifier,
 				startDestination = GraphNavigation.BrowseToItem.route,
 			) {
 				composable(
@@ -655,68 +684,61 @@ private fun ItemBrowserView(
 					}
 
 					view(libraryId, item)
-				}
 
-				composable(
-					GraphNavigation.Downloads.route,
-					arguments = listOf(
-						navArgument(libraryIdArgument) {
-							type = NavType.IntType
-							defaultValue = startingLibraryId?.id ?: -1
-						},
-					)
-				) { entry ->
-					val libraryId = entry.arguments?.getInt(libraryIdArgument)?.let(::LibraryId) ?: startingLibraryId ?: return@composable
+					val overlayView by graphNavigation.specialView.collectAsState()
+					when (overlayView) {
+						null -> {}
+						OverlayView.Search -> {
+							SearchFilesView(
+								searchFilesViewModel = entry.viewModelStore.buildViewModel {
+									SearchFilesViewModel(
+										browserLibraryIdProvider,
+										libraryFilesProvider,
+										playbackServiceController,
+									)
+								},
+								nowPlayingViewModel = nowPlayingFilePropertiesViewModel,
+								trackHeadlineViewModelProvider = entry.viewModelStore.buildViewModel {
+									ReusablePlaylistFileItemViewModelProvider(
+										scopedFilePropertiesProvider,
+										scopedUrlKeyProvider,
+										stringResources,
+										playbackServiceController,
+										applicationNavigation,
+										menuMessageBus,
+										messageBus,
+									)
+								},
+								itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
+								onBack = applicationNavigation::navigateUp,
+							)
+						}
+						OverlayView.Downloads -> {
+							val activeFileDownloadsViewModel = entry.viewModelStore.buildViewModel {
+								ActiveFileDownloadsViewModel(
+									storedFileAccess,
+									messageBus,
+									syncScheduler,
+								)
+							}
 
-					val activeFileDownloadsViewModel = entry.viewModelStore.buildViewModel {
-						ActiveFileDownloadsViewModel(
-							storedFileAccess,
-							messageBus,
-							syncScheduler,
-						)
+							ActiveFileDownloadsView(
+								activeFileDownloadsViewModel = activeFileDownloadsViewModel,
+								trackHeadlineViewModelProvider =
+								entry.viewModelStore.buildViewModel {
+									ReusableFileItemViewModelProvider(
+										scopedFilePropertiesProvider,
+										scopedUrlKeyProvider,
+										stringResources,
+										messageBus,
+									)
+								},
+								onBack = applicationNavigation::navigateUp
+							)
+
+							activeFileDownloadsViewModel.loadActiveDownloads(libraryId)
+						}
 					}
-
-					ActiveFileDownloadsView(
-						activeFileDownloadsViewModel = activeFileDownloadsViewModel,
-						trackHeadlineViewModelProvider =
-						entry.viewModelStore.buildViewModel {
-							ReusableFileItemViewModelProvider(
-								scopedFilePropertiesProvider,
-								scopedUrlKeyProvider,
-								stringResources,
-								messageBus,
-							)
-						},
-						onBack = applicationNavigation::backOut
-					)
-
-					activeFileDownloadsViewModel.loadActiveDownloads(libraryId)
-				}
-
-				composable(GraphNavigation.Search.route) { entry ->
-					SearchFilesView(
-						searchFilesViewModel = entry.viewModelStore.buildViewModel {
-							SearchFilesViewModel(
-								browserLibraryIdProvider,
-								libraryFilesProvider,
-								playbackServiceController,
-							)
-						},
-						nowPlayingViewModel = nowPlayingFilePropertiesViewModel,
-						trackHeadlineViewModelProvider = entry.viewModelStore.buildViewModel {
-							ReusablePlaylistFileItemViewModelProvider(
-								scopedFilePropertiesProvider,
-								scopedUrlKeyProvider,
-								stringResources,
-								playbackServiceController,
-								applicationNavigation,
-								menuMessageBus,
-								messageBus,
-							)
-						},
-						itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
-						onBack = applicationNavigation::backOut,
-					)
 				}
 			}
 		}

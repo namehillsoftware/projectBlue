@@ -385,7 +385,7 @@ fun ItemListView(
 							.clickable(
 								interactionSource = remember { MutableInteractionSource() },
 								indication = null,
-								onClick = applicationNavigation::backOut
+								onClick = applicationNavigation::navigateUp
 							)
 					)
 				}
