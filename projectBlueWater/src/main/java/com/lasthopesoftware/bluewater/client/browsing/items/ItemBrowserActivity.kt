@@ -332,8 +332,6 @@ private class GraphNavigation(
 
 	override fun viewItem(libraryId: LibraryId, item: IItem) {
 		navController.navigate(BrowseToItem.buildPath(libraryId, item))
-
-		hideBottomSheet()
 	}
 
 	override fun viewActiveDownloads(libraryId: LibraryId) {
@@ -345,8 +343,8 @@ private class GraphNavigation(
 	override fun navigateUp(): Boolean {
 		hideBottomSheet()
 
-		val specialView = mutableOverlayView.value
-		if (specialView != null && mutableOverlayView.compareAndSet(specialView, null)) {
+		val overlayView = mutableOverlayView.value
+		if (overlayView != null && mutableOverlayView.compareAndSet(overlayView, null)) {
 			return true
 		}
 

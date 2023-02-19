@@ -171,7 +171,7 @@ fun SearchFilesView(
 							contentDescription = "",
 							tint = MaterialTheme.colors.onSurface,
 							modifier = Modifier
-								.padding(16.dp)
+								.padding(end = 16.dp)
 								.align(Alignment.CenterVertically)
 								.clickable(
 									interactionSource = remember { MutableInteractionSource() },
