@@ -388,20 +388,24 @@ private fun ItemBrowserView(
 	val scaffoldState = rememberBottomSheetScaffoldState()
 	val coroutineScope = rememberCoroutineScope()
 
-	val onBackPressedDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
 	val bottomSheetState = scaffoldState.bottomSheetState
 	val graphNavigation = remember {
-		val newGraphNavigation = GraphNavigation(
+		GraphNavigation(
 			navController,
 			bottomSheetState,
 			itemBrowserViewDependencies.applicationNavigation,
 			coroutineScope,
 			itemBrowserViewDependencies.itemListMenuBackPressedHandler,
 		)
+	}
 
-		onBackPressedDispatcher?.addCallback { newGraphNavigation.backOut() }
+	val onBackPressedDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
+	DisposableEffect(onBackPressedDispatcher) {
+		val callback = onBackPressedDispatcher?.addCallback { graphNavigation.backOut() }
 
-		newGraphNavigation
+		onDispose {
+			callback?.remove()
+		}
 	}
 
 	with(remember {
