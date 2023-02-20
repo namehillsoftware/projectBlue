@@ -318,19 +318,19 @@ private class GraphNavigation(
 		}
 	}
 
-	private var lastItemPath: String? = null
-
 	override fun launchSearch(libraryId: LibraryId) {
 		navController.navigate(Search.buildPath(libraryId)) {
 			launchSingleTop = true
-			lastItemPath?.also(::popUpTo)
+			popUpTo(BrowseToItem.route)
 		}
+
+		hideBottomSheet()
 	}
 
 	override fun viewActiveDownloads(libraryId: LibraryId) {
 		navController.navigate(Downloads.buildPath(libraryId)) {
 			launchSingleTop = true
-			lastItemPath?.also(::popUpTo)
+			popUpTo(BrowseToItem.route)
 		}
 
 		hideBottomSheet()
@@ -338,7 +338,6 @@ private class GraphNavigation(
 
 	override fun viewItem(libraryId: LibraryId, item: IItem) {
 		val path = BrowseToItem.buildPath(libraryId, item)
-		lastItemPath = path
 		navController.navigate(path)
 	}
 
