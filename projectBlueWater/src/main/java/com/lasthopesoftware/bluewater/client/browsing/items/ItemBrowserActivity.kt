@@ -269,9 +269,9 @@ class ItemBrowserActivity : AppCompatActivity(), ItemBrowserViewDependencies {
 
 @OptIn(ExperimentalMaterialApi::class)
 private class GraphNavigation(
+	private val inner: NavigateApplication,
 	private val navController: NavHostController,
 	private val bottomSheetState: BottomSheetState,
-	private val inner: NavigateApplication,
 	private val coroutineScope: CoroutineScope,
 	private val itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
 ) : NavigateApplication by inner {
@@ -337,8 +337,8 @@ private class GraphNavigation(
 	}
 
 	override fun viewItem(libraryId: LibraryId, item: IItem) {
-		val path = BrowseToItem.buildPath(libraryId, item)
-		navController.navigate(path)
+		navController.navigate(BrowseToItem.buildPath(libraryId, item))
+		hideBottomSheet()
 	}
 
 	override fun navigateUp(): Boolean {
@@ -385,9 +385,9 @@ private fun ItemBrowserView(
 	val bottomSheetState = scaffoldState.bottomSheetState
 	val graphNavigation = remember {
 		GraphNavigation(
+			itemBrowserViewDependencies.applicationNavigation,
 			navController,
 			bottomSheetState,
-			itemBrowserViewDependencies.applicationNavigation,
 			coroutineScope,
 			itemBrowserViewDependencies.itemListMenuBackPressedHandler,
 		)
