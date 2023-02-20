@@ -8,6 +8,8 @@ import ItemBrowsingArguments.titleArgument
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import androidx.activity.addCallback
+import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.Image
@@ -264,8 +266,6 @@ class ItemBrowserActivity : AppCompatActivity(), ItemBrowserViewDependencies {
 				)
 			}
 		}
-
-		onBackPressedDispatcher.addCallback(this, itemListMenuBackPressedHandler)
 	}
 }
 
@@ -279,6 +279,7 @@ private class GraphNavigation(
 	private val bottomSheetState: BottomSheetState,
 	private val inner: NavigateApplication,
 	private val coroutineScope: CoroutineScope,
+	private val itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
 ) : NavigateApplication by inner {
 
 	object Library {
@@ -351,10 +352,17 @@ private class GraphNavigation(
 		return navController.navigateUp() || inner.navigateUp()
 	}
 
-	private fun hideBottomSheet() {
+	override fun backOut(): Boolean {
+		return (itemListMenuBackPressedHandler.hideAllMenus() or hideBottomSheet()) || navigateUp()
+	}
+
+	private fun hideBottomSheet(): Boolean {
 		if (!bottomSheetState.isCollapsed) {
 			coroutineScope.launch { bottomSheetState.collapse() }
+			return true
 		}
+
+		return false
 	}
 }
 
@@ -380,14 +388,20 @@ private fun ItemBrowserView(
 	val scaffoldState = rememberBottomSheetScaffoldState()
 	val coroutineScope = rememberCoroutineScope()
 
+	val onBackPressedDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
 	val bottomSheetState = scaffoldState.bottomSheetState
 	val graphNavigation = remember {
-		GraphNavigation(
+		val newGraphNavigation = GraphNavigation(
 			navController,
 			bottomSheetState,
 			itemBrowserViewDependencies.applicationNavigation,
-			coroutineScope
+			coroutineScope,
+			itemBrowserViewDependencies.itemListMenuBackPressedHandler,
 		)
+
+		onBackPressedDispatcher?.addCallback { newGraphNavigation.backOut() }
+
+		newGraphNavigation
 	}
 
 	with(remember {

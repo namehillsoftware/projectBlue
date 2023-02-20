@@ -30,7 +30,7 @@ class ActivityApplicationNavigation(private val componentActivity: ComponentActi
 		componentActivity.startNowPlayingActivity()
 	}
 
-	override fun backOut(): Boolean {
+	override fun navigateUp(): Boolean {
 		componentActivity.finish()
 		return true
 	}

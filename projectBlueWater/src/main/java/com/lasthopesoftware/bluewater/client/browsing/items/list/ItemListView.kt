@@ -35,7 +35,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewPlaylistFil
 import com.lasthopesoftware.bluewater.client.browsing.items.*
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
-import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncButton
+import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.scrollbar
@@ -122,7 +122,7 @@ fun ItemListView(
 			)
 
 			val isChildItemSynced by childItemViewModel.isSynced.collectAsState()
-			SyncButton(
+			SyncIcon(
 				isActive = isChildItemSynced,
 				modifier = Modifier
 					.fillMaxWidth()
@@ -351,7 +351,7 @@ fun ItemListView(
 
 						val isSynced by itemListViewModel.isSynced.collectAsState()
 
-						SyncButton(
+						SyncIcon(
 							isActive = isSynced,
 							modifier = Modifier
 								.fillMaxWidth()

@@ -27,7 +27,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.list.TrackHeaderItemView
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewFileItem
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
-import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncButton
+import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.scrollbar
@@ -151,18 +151,21 @@ fun ActiveFileDownloadsView(
 								}
 							}
 
-							SyncButton(
+							val label = stringResource(
+								if (isSyncing) R.string.stop_sync_button
+								else R.string.start_sync_button
+							)
+
+							SyncIcon(
 								isActive = isSyncing,
 								modifier = modifier,
+								contentDescription = label,
 							)
 
 							val invertedProgress by remember { derivedStateOf { 1 - acceleratedProgress } }
 							if (acceleratedProgress < 1) {
 								Text(
-									text = stringResource(
-										if (isSyncing) R.string.stop_sync_button
-										else R.string.start_sync_button
-									),
+									text = label,
 									modifier = Modifier.alpha(invertedProgress),
 								)
 							}

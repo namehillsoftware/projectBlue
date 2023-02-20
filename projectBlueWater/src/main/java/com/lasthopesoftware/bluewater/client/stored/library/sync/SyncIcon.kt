@@ -14,9 +14,10 @@ import androidx.compose.ui.res.stringResource
 import com.lasthopesoftware.bluewater.R
 
 @Composable
-fun SyncButton(
+fun SyncIcon(
 	isActive: Boolean,
 	modifier: Modifier = Modifier,
+	contentDescription: String = stringResource(id = R.string.btn_sync_item)
 ) {
 	fun getContentControlColor(context: Context, defaultColor: Color): Color {
 		val contentControlAttribute = context.obtainStyledAttributes(R.style.AppTheme, intArrayOf(R.attr.colorControlNormal))
@@ -30,7 +31,7 @@ fun SyncButton(
 
 	Image(
 		painter = painterResource(id = R.drawable.ic_sync_white),
-		contentDescription = stringResource(id = R.string.btn_sync_item),
+		contentDescription = contentDescription,
 		colorFilter = ColorFilter.tint(
 			if (isActive) MaterialTheme.colors.primary
 			else getContentControlColor(LocalContext.current, LocalContentColor.current)),
