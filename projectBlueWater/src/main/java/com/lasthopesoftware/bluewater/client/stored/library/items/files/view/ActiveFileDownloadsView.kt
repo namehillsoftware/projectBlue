@@ -31,6 +31,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.scrollbar
+import com.lasthopesoftware.bluewater.shared.android.ui.theme.MenuIcon
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 import me.onebone.toolbar.CollapsingToolbarScaffold
 import me.onebone.toolbar.ScrollStrategy
@@ -124,52 +125,53 @@ fun ActiveFileDownloadsView(
 							.width(menuWidth)
 							.align(Alignment.TopEnd)
 					) {
-						Column(
-							horizontalAlignment = Alignment.CenterHorizontally,
+						val isSyncing by activeFileDownloadsViewModel.isSyncing.collectAsState()
+						val label = stringResource(
+							if (isSyncing) R.string.stop_sync_button
+							else R.string.start_sync_button
+						)
+
+						MenuIcon(
 							modifier = Modifier
 								.fillMaxHeight()
 								.wrapContentWidth()
 								.weight(1f)
 								.clickable { activeFileDownloadsViewModel.toggleSync() },
-						) {
-							val isSyncing by activeFileDownloadsViewModel.isSyncing.collectAsState()
-
-							var modifier = Modifier.size(24.dp)
-
-							if (isSyncing) {
-								val infiniteTransition = rememberInfiniteTransition()
-								val angle by infiniteTransition.animateFloat(
-									initialValue = 360F,
-									targetValue = 0F,
-									animationSpec = infiniteRepeatable(
-										animation = tween(2000, easing = LinearEasing)
+							onClick = { activeFileDownloadsViewModel.toggleSync() },
+							label = {
+								if (acceleratedProgress < 1) {
+									val invertedProgress by remember { derivedStateOf { 1 - acceleratedProgress } }
+									Text(
+										text = label,
+										modifier = Modifier.alpha(invertedProgress),
 									)
-								)
-
-								modifier = modifier.graphicsLayer {
-									rotationZ = angle
 								}
-							}
+							},
+							icon =  {
+								var modifier = Modifier.size(24.dp)
 
-							val label = stringResource(
-								if (isSyncing) R.string.stop_sync_button
-								else R.string.start_sync_button
-							)
+								if (isSyncing) {
+									val infiniteTransition = rememberInfiniteTransition()
+									val angle by infiniteTransition.animateFloat(
+										initialValue = 360F,
+										targetValue = 0F,
+										animationSpec = infiniteRepeatable(
+											animation = tween(2000, easing = LinearEasing)
+										)
+									)
 
-							SyncIcon(
-								isActive = isSyncing,
-								modifier = modifier,
-								contentDescription = label,
-							)
+									modifier = modifier.graphicsLayer {
+										rotationZ = angle
+									}
+								}
 
-							val invertedProgress by remember { derivedStateOf { 1 - acceleratedProgress } }
-							if (acceleratedProgress < 1) {
-								Text(
-									text = label,
-									modifier = Modifier.alpha(invertedProgress),
+								SyncIcon(
+									isActive = isSyncing,
+									modifier = modifier,
+									contentDescription = label,
 								)
-							}
-						}
+							},
+						)
 					}
 				}
 
