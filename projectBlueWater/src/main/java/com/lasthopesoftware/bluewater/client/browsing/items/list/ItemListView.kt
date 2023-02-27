@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalDensity
@@ -23,6 +24,7 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
@@ -39,12 +41,20 @@ import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.scrollbar
+import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
+import com.lasthopesoftware.bluewater.shared.android.ui.theme.MenuIcon
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 import me.onebone.toolbar.CollapsingToolbarScaffold
 import me.onebone.toolbar.ScrollStrategy
 import me.onebone.toolbar.rememberCollapsingToolbarScaffoldState
 import kotlin.math.pow
 import kotlin.math.roundToInt
+
+val appBarHeight = Dimensions.AppBarHeight.value
+const val expandedTitleHeight = 84
+const val expandedIconSize = 48
+const val expandedMenuVerticalPadding = 12
+val boxHeight = expandedTitleHeight + expandedIconSize + expandedMenuVerticalPadding * 2 + appBarHeight
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -274,13 +284,7 @@ fun ItemListView(
 			scrollStrategy = ScrollStrategy.ExitUntilCollapsed,
 			modifier = Modifier.fillMaxSize(),
 			toolbar = {
-				val appBarHeight = 56
 				val topPadding by remember { derivedStateOf { (appBarHeight - 46 * headerHidingProgress).dp } }
-				val expandedTitleHeight = 84
-				val expandedIconSize = 36
-				val expandedMenuVerticalPadding = 12
-				val boxHeight =
-					expandedTitleHeight + expandedIconSize + expandedMenuVerticalPadding * 2 + appBarHeight
 				BoxWithConstraints(
 					modifier = Modifier
 						.height(boxHeight.dp)
@@ -335,41 +339,87 @@ fun ItemListView(
 							.width(menuWidth)
 							.align(Alignment.TopEnd)
 					) {
-						val iconSize by remember { derivedStateOf { (expandedIconSize - (12 * headerHidingProgress)).dp } }
+						val iconSize = 24.dp
+						val invertedProgress by remember { derivedStateOf { 1 - acceleratedProgress } }
+						val textModifier = Modifier.alpha(invertedProgress)
 
-						Image(
-							painter = painterResource(id = R.drawable.av_play),
-							contentDescription = stringResource(id = R.string.btn_play),
-							modifier = Modifier
-								.fillMaxWidth()
-								.weight(1f)
-								.size(iconSize)
-								.clickable {
-									fileListViewModel.play()
+						val playButtonLabel = stringResource(id = R.string.btn_play)
+						MenuIcon(
+							modifier = Modifier.weight(1f),
+							onClick = { fileListViewModel.play() },
+							label = {
+								if (acceleratedProgress < 1) {
+									Text(
+										text = playButtonLabel,
+										modifier = textModifier,
+										maxLines = 1,
+									)
 								}
+							},
+							icon = {
+								Image(
+									painter = painterResource(id = R.drawable.av_play),
+									contentDescription = stringResource(id = R.string.btn_play),
+									modifier = Modifier
+										.fillMaxWidth()
+										.size(iconSize)
+								)
+							}
 						)
 
 						val isSynced by itemListViewModel.isSynced.collectAsState()
-
-						SyncIcon(
-							isActive = isSynced,
-							modifier = Modifier
-								.fillMaxWidth()
-								.size(iconSize)
-								.clickable { itemListViewModel.toggleSync() }
-								.weight(1f),
+						val syncButtonLabel =
+							if (!isSynced) stringResource(id = R.string.btn_sync_item)
+							else stringResource(id = R.string.files_synced)
+						MenuIcon(
+							modifier = Modifier.weight(1f),
+							onClick = { itemListViewModel.toggleSync() },
+							label = {
+								if (acceleratedProgress < 1) {
+									Text(
+										text = syncButtonLabel,
+										modifier = textModifier,
+										maxLines = 1,
+										textAlign = TextAlign.Center,
+									)
+								}
+							},
+							icon = {
+								SyncIcon(
+									isActive = isSynced,
+									modifier = Modifier
+										.fillMaxWidth()
+										.size(iconSize),
+									contentDescription = syncButtonLabel,
+								)
+							}
 						)
 
-						Image(
-							painter = painterResource(id = R.drawable.av_shuffle),
-							contentDescription = stringResource(id = R.string.btn_shuffle_files),
-							modifier = Modifier
-								.fillMaxWidth()
-								.size(iconSize)
-								.weight(1f)
-								.clickable {
-									fileListViewModel.playShuffled()
+						val shuffleButtonLabel = stringResource(R.string.btn_shuffle_files)
+						MenuIcon(
+							modifier = Modifier.weight(1f),
+							onClick = { fileListViewModel.playShuffled() },
+							label = {
+								if (acceleratedProgress < 1) {
+									Text(
+										text = shuffleButtonLabel,
+										modifier = textModifier,
+										maxLines = 1,
+									)
 								}
+							},
+							icon = {
+								Image(
+									painter = painterResource(id = R.drawable.av_shuffle),
+									contentDescription = shuffleButtonLabel,
+									modifier = Modifier
+										.fillMaxWidth()
+										.size(iconSize)
+										.clickable {
+											fileListViewModel.playShuffled()
+										}
+								)
+							}
 						)
 					}
 				}

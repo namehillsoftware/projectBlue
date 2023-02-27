@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.browsing.items
 
-import BrowsableItemListView
 import ItemBrowsingArguments.keyArgument
 import ItemBrowsingArguments.libraryIdArgument
 import ItemBrowsingArguments.playlistIdArgument
@@ -8,9 +7,7 @@ import ItemBrowsingArguments.titleArgument
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import androidx.activity.addCallback
 import androidx.activity.compose.BackHandler
-import androidx.activity.compose.LocalOnBackPressedDispatcherOwner
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.Image
@@ -36,6 +33,7 @@ import androidx.navigation.*
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import browsableItemListView
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.lasthopesoftware.bluewater.ActivityApplicationNavigation
 import com.lasthopesoftware.bluewater.NavigateApplication
@@ -367,26 +365,6 @@ private class GraphDependencies(inner: ItemBrowserViewDependencies, graphNavigat
 	override val applicationNavigation = graphNavigation
 }
 
-@Composable
-private fun OverrideBackNavigation(graphNavigation: GraphNavigation, navController: NavHostController) {
-	val onBackPressedDispatcher = LocalOnBackPressedDispatcherOwner.current?.onBackPressedDispatcher
-	DisposableEffect(onBackPressedDispatcher) {
-		val callback = onBackPressedDispatcher
-			?.run {
-				navController.enableOnBackPressed(false)
-				addCallback { graphNavigation.backOut() }
-			}
-
-		onDispose {
-			callback
-				?.apply {
-					remove()
-					navController.enableOnBackPressed(true)
-				}
-		}
-	}
-}
-
 private val bottomAppBarHeight = Dimensions.AppBarHeight
 
 @OptIn(ExperimentalMaterialApi::class)
@@ -661,7 +639,7 @@ private fun ItemBrowserView(
 						)
 					}
 
-					val view = entry.BrowsableItemListView(
+					val view = browsableItemListView(
 						connectionViewModel = entry.viewModelStore.buildViewModel {
 							ConnectionStatusViewModel(
 								stringResources,

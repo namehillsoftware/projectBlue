@@ -31,12 +31,19 @@ import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.scrollbar
+import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.MenuIcon
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 import me.onebone.toolbar.CollapsingToolbarScaffold
 import me.onebone.toolbar.ScrollStrategy
 import me.onebone.toolbar.rememberCollapsingToolbarScaffoldState
 import kotlin.math.pow
+
+
+private const val expandedTitleHeight = 84
+private const val expandedIconSize = 44
+private const val expandedMenuVerticalPadding = 8
+private val appBarHeight = Dimensions.AppBarHeight.value
 
 @Composable
 fun ActiveFileDownloadsView(
@@ -76,11 +83,7 @@ fun ActiveFileDownloadsView(
 			scrollStrategy = ScrollStrategy.ExitUntilCollapsed,
 			modifier = Modifier.fillMaxSize(),
 			toolbar = {
-				val appBarHeight = 56
 				val topPadding by remember { derivedStateOf(structuralEqualityPolicy()) { (appBarHeight - 46 * headerHidingProgress).dp } }
-				val expandedTitleHeight = 84
-				val expandedIconSize = 44
-				val expandedMenuVerticalPadding = 8
 				val boxHeight =
 					expandedTitleHeight + expandedIconSize + expandedMenuVerticalPadding * 2 + appBarHeight
 				BoxWithConstraints(
@@ -134,9 +137,7 @@ fun ActiveFileDownloadsView(
 						MenuIcon(
 							modifier = Modifier
 								.fillMaxHeight()
-								.wrapContentWidth()
-								.weight(1f)
-								.clickable { activeFileDownloadsViewModel.toggleSync() },
+								.weight(1f),
 							onClick = { activeFileDownloadsViewModel.toggleSync() },
 							label = {
 								if (acceleratedProgress < 1) {

@@ -2,7 +2,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.navigation.NavBackStackEntry
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusablePlaylistFileItemViewModelProvider
@@ -25,7 +24,7 @@ object ItemBrowsingArguments {
 }
 
 @Composable
-fun NavBackStackEntry.BrowsableItemListView(
+fun browsableItemListView(
 	connectionViewModel: ConnectionStatusViewModel,
 	itemListViewModel: ItemListViewModel,
 	fileListViewModel: FileListViewModel,

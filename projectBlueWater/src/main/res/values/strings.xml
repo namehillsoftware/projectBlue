@@ -60,7 +60,8 @@
     <string name="title_long_click_menu">Long Click</string>
     <string name="tutorial_long_click_menu">Long click on an item to see a menu with additional actions available.</string>
     <string name="lbl_details">%1$s details</string>
-    <string name="btn_sync_item">Synchronize item locally</string>
+    <string name="btn_sync_item">Sync Files</string>
+    <string name="files_synced">Syncing Files</string>
     <string name="btn_add_server">Add Server</string>
     <string name="lbl_sync_path">Custom Sync Path</string>
     <string name="lblSyncMusicLocation">Sync Music Location:</string>
