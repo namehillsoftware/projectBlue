@@ -48,10 +48,11 @@ import me.onebone.toolbar.rememberCollapsingToolbarScaffoldState
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
-val appBarHeight = Dimensions.AppBarHeight.value
-const val expandedTitleHeight = 84
-const val expandedIconSize = 48
 const val expandedMenuVerticalPadding = 12
+const val expandedTitleHeight = 84
+val appBarHeight = Dimensions.AppBarHeight.value
+val expandedIconSize = Dimensions.MenuHeight.value
+
 val boxHeight = expandedTitleHeight + expandedIconSize + expandedMenuVerticalPadding * 2 + appBarHeight
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -341,7 +342,7 @@ fun ItemListView(
 							.width(menuWidth)
 							.align(Alignment.TopEnd)
 					) {
-						val iconSize = 24.dp
+						val iconSize = Dimensions.MenuIconSize
 						val textModifier = Modifier.alpha(acceleratedToolbarStateProgress)
 
 						val playButtonLabel = stringResource(id = R.string.btn_play)

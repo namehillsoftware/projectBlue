@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
@@ -28,6 +29,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.shared.android.ui.components.scrollbar
+import com.lasthopesoftware.bluewater.shared.android.ui.theme.ColumnMenuIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 import me.onebone.toolbar.CollapsingToolbarScaffold
@@ -90,69 +92,77 @@ fun SearchFilesView(
 			scrollStrategy = ScrollStrategy.ExitUntilCollapsed,
 			modifier = Modifier.fillMaxSize(),
 			toolbar = {
-				val appBarHeight = Dimensions.AppBarHeight.value
-				val searchFieldPadding = 16
+				val appBarHeight = Dimensions.AppBarHeight
+				val searchFieldPadding = 16.dp
 				val minimumMenuWidth = (2 * 32).dp
 
-				val expandedIconSize = 36
-				val expandedMenuVerticalPadding = 4
-				val boxHeight = appBarHeight + expandedIconSize + expandedMenuVerticalPadding * 2 + searchFieldPadding * 2
+				val expandedMenuVerticalPadding = 4.dp
+				val boxHeight = appBarHeight + Dimensions.MenuHeight + expandedMenuVerticalPadding * 2 + searchFieldPadding * 2
 
-				val acceleratedProgress by remember {
+				val acceleratedToolbarStateProgress by remember {
 					derivedStateOf {
-						1 - toolbarState.toolbarState.progress.pow(
+						toolbarState.toolbarState.progress.pow(
 							5
 						).coerceIn(0f, 1f)
 					}
 				}
+				val acceleratedHeaderHidingProgress by remember {
+					derivedStateOf { 1 - acceleratedToolbarStateProgress }
+				}
 
 				BoxWithConstraints(
 					modifier = Modifier
-						.height(boxHeight.dp)
+						.height(boxHeight)
 						.fillMaxWidth()
 				) {
 					if (files.any()) {
 
-						val collapsedIconSize = 24
-						val menuWidth by remember { derivedStateOf { (maxWidth - (maxWidth - minimumMenuWidth) * acceleratedProgress) } }
+						val iconSize = Dimensions.MenuIconSize
+						val menuWidth by remember { derivedStateOf { (maxWidth - (maxWidth - minimumMenuWidth) * acceleratedHeaderHidingProgress) } }
 						val expandedTopRowPadding = appBarHeight + expandedMenuVerticalPadding + searchFieldPadding * 2
-						val collapsedTopRowPadding = searchFieldPadding + appBarHeight / 2 - collapsedIconSize / 2
-						val topRowPadding by remember { derivedStateOf { (expandedTopRowPadding - (expandedTopRowPadding - collapsedTopRowPadding) * headerHidingProgress).dp } }
+						val collapsedTopRowPadding = searchFieldPadding + appBarHeight / 2 - iconSize / 2
+						val topRowPadding by remember { derivedStateOf { (expandedTopRowPadding - (expandedTopRowPadding - collapsedTopRowPadding) * headerHidingProgress) } }
 						Row(
 							modifier = Modifier
 								.padding(
 									top = topRowPadding,
-									bottom = expandedMenuVerticalPadding.dp,
+									bottom = expandedMenuVerticalPadding,
 									start = 8.dp,
 									end = 8.dp
 								)
 								.width(menuWidth)
 								.align(Alignment.TopEnd)
 						) {
-							val iconSize by remember { derivedStateOf { (expandedIconSize - ((expandedIconSize - collapsedIconSize) * headerHidingProgress)).dp } }
+							val textModifier = Modifier.alpha(acceleratedToolbarStateProgress)
 
-							Image(
-								painter = painterResource(id = R.drawable.av_play),
-								contentDescription = stringResource(id = R.string.btn_play),
-								modifier = Modifier
-									.fillMaxWidth()
-									.weight(1f)
-									.size(iconSize)
-									.clickable {
-										searchFilesViewModel.play()
-									}
+							val playLabel = stringResource(id = R.string.btn_play)
+							ColumnMenuIcon(
+								onClick = { searchFilesViewModel.play() },
+								icon = {
+									Image(
+										painter = painterResource(id = R.drawable.av_play),
+										contentDescription = playLabel,
+										modifier = Modifier.size(iconSize)
+									)
+								},
+								label = if (acceleratedHeaderHidingProgress < 1) playLabel else null,
+								labelModifier = textModifier,
+								labelMaxLines = 1,
 							)
 
-							Image(
-								painter = painterResource(id = R.drawable.av_shuffle),
-								contentDescription = stringResource(id = R.string.btn_shuffle_files),
-								modifier = Modifier
-									.fillMaxWidth()
-									.size(iconSize)
-									.weight(1f)
-									.clickable {
-										searchFilesViewModel.playShuffled()
-									}
+							val shuffleLabel = stringResource(id = R.string.btn_shuffle_files)
+							ColumnMenuIcon(
+								onClick = { searchFilesViewModel.playShuffled() },
+								icon = {
+									Image(
+										painter = painterResource(id = R.drawable.av_shuffle),
+										contentDescription = shuffleLabel,
+										modifier = Modifier.size(iconSize)
+									)
+								},
+								label = if (acceleratedHeaderHidingProgress < 1) shuffleLabel else null,
+								labelModifier = textModifier,
+								labelMaxLines = 1,
 							)
 						}
 					}
@@ -161,8 +171,8 @@ fun SearchFilesView(
 				Row(
 					modifier = Modifier
 						.fillMaxWidth()
-						.padding(searchFieldPadding.dp)
-						.height(appBarHeight.dp),
+						.padding(searchFieldPadding)
+						.height(appBarHeight),
 					horizontalArrangement = Arrangement.Center,
 				) {
 					if (onBack != null) {
@@ -181,7 +191,7 @@ fun SearchFilesView(
 						)
 					}
 
-					val endPadding by remember { derivedStateOf { 4.dp + minimumMenuWidth * acceleratedProgress } }
+					val endPadding by remember { derivedStateOf { 4.dp + minimumMenuWidth * acceleratedHeaderHidingProgress } }
 					val query by searchFilesViewModel.query.collectAsState()
 
 					TextField(
