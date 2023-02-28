@@ -21,6 +21,7 @@ fun RowScope.ColumnMenuIcon(
 	icon: @Composable () -> Unit,
 	modifier: Modifier = Modifier,
 	label: String? = null,
+	labelColor: Color = LocalContentColor.current,
 	labelModifier: Modifier = Modifier,
 	labelMaxLines: Int = Int.MAX_VALUE,
 ) {
@@ -29,6 +30,7 @@ fun RowScope.ColumnMenuIcon(
 		icon = icon,
 		modifier = Modifier.weight(1f).then(modifier),
 		label = label,
+		labelColor = labelColor,
 		labelModifier = labelModifier,
 		labelMaxLines = labelMaxLines,
 	)
@@ -40,6 +42,7 @@ fun MenuIcon(
 	icon: @Composable () -> Unit,
 	modifier: Modifier = Modifier,
 	label: String? = null,
+	labelColor: Color = LocalContentColor.current,
 	labelModifier: Modifier = Modifier,
 	labelMaxLines: Int = Int.MAX_VALUE,
 
@@ -54,6 +57,7 @@ fun MenuIcon(
 					text = label,
 					modifier = labelModifier,
 					maxLines = labelMaxLines,
+					color = labelColor,
 				)
 			}
 		)

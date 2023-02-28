@@ -72,7 +72,7 @@ fun TrackHeaderItemView(
 		) {
 			Image(
 				painter = painterResource(id = R.drawable.ic_add_item_36dp),
-				contentDescription = stringResource(id = R.string.btn_add_file),
+				contentDescription = stringResource(id = R.string.btn_add_file_to_playback),
 				modifier = Modifier
 					.fillMaxWidth()
 					.weight(1f)

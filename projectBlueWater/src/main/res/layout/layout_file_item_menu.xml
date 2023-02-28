@@ -17,7 +17,7 @@
         android:layout_width="0dip"
         android:layout_height="match_parent"
         android:layout_weight="1"
-        android:contentDescription="@string/btn_add_file"
+        android:contentDescription="@string/btn_add_file_to_playback"
         android:src="@drawable/ic_add_item_36dp" />
 
 	<ImageButton
