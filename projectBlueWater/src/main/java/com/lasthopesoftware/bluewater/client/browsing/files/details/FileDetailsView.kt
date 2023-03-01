@@ -21,7 +21,6 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
@@ -238,31 +237,41 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
 	fun fileMenu() {
 		Row(
 			modifier = Modifier
-				.height(dimensionResource(id = R.dimen.standard_row_height))
+				.height(Dimensions.MenuHeight)
 				.padding(viewPadding + 8.dp)
 		) {
-			Image(
-				painter = painterResource(id = R.drawable.ic_add_item_white_36dp),
-				colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
-				contentDescription = stringResource(id = R.string.btn_add_file_to_playback),
-				modifier = Modifier
-					.fillMaxWidth()
-					.weight(1f)
-					.clickable { viewModel.addToNowPlaying() }
-					.align(Alignment.CenterVertically),
+			val iconSize = Dimensions.MenuIconSize
+
+			val addFileToPlaybackLabel = stringResource(id = R.string.btn_add_file_to_playback)
+			ColumnMenuIcon(
+				onClick = { viewModel.addToNowPlaying() },
+				icon = {
+					Image(
+						painter = painterResource(id = R.drawable.ic_add_item_white_36dp),
+						colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
+						contentDescription = addFileToPlaybackLabel,
+						modifier = Modifier.size(iconSize),
+					)
+				},
+				label = addFileToPlaybackLabel,
+				labelColor = coverArtColorState.secondaryTextColor,
+				labelMaxLines = 1,
 			)
 
-			Image(
-				painter = painterResource(id = R.drawable.av_play_white),
-				colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
-				contentDescription = stringResource(id = R.string.btn_play),
-				modifier = Modifier
-					.fillMaxWidth()
-					.weight(1f)
-					.clickable {
-						viewModel.play()
-					}
-					.align(Alignment.CenterVertically),
+			val playLabel = stringResource(id = R.string.btn_play)
+			ColumnMenuIcon(
+				onClick = { viewModel.addToNowPlaying() },
+				icon = {
+					Image(
+						painter = painterResource(id = R.drawable.av_play_white),
+						colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
+						contentDescription = playLabel,
+						modifier = Modifier.size(iconSize),
+					)
+				},
+				label = playLabel,
+				labelColor = coverArtColorState.secondaryTextColor,
+				labelMaxLines = 1,
 			)
 		}
 	}
