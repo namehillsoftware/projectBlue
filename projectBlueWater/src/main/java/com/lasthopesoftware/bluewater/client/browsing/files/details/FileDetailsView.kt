@@ -21,8 +21,10 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
@@ -49,6 +51,59 @@ import me.onebone.toolbar.ExperimentalToolbarApi
 import me.onebone.toolbar.ScrollStrategy
 import me.onebone.toolbar.rememberCollapsingToolbarScaffoldState
 import kotlin.math.pow
+
+private val viewPadding = 4.dp
+
+@Composable
+private fun StaticFileMenu(viewModel: FileDetailsViewModel, coverArtColorState: MediaStylePalette) {
+	val padding = viewPadding * 3
+
+	Row(
+		modifier = Modifier
+			.height(dimensionResource(id = R.dimen.standard_row_height))
+			.padding(
+				top = padding,
+			)
+	) {
+		val iconColor = coverArtColorState.secondaryTextColor
+		ProvideTextStyle(value = TextStyle(color = iconColor)) {
+			val iconSize = Dimensions.MenuIconSize
+
+			val addFileToPlaybackLabel = stringResource(id = R.string.btn_add_file_to_playback)
+			val colorFilter = ColorFilter.tint(iconColor)
+			ColumnMenuIcon(
+				onClick = { viewModel.addToNowPlaying() },
+				icon = {
+					Image(
+						painter = painterResource(id = R.drawable.ic_add_item_white_36dp),
+						colorFilter = colorFilter,
+						contentDescription = addFileToPlaybackLabel,
+						modifier = Modifier
+							.size(iconSize)
+							.align(Alignment.CenterVertically),
+					)
+				},
+				label = addFileToPlaybackLabel,
+				labelMaxLines = 1,
+			)
+
+			val playLabel = stringResource(id = R.string.btn_play)
+			ColumnMenuIcon(
+				onClick = { viewModel.addToNowPlaying() },
+				icon = {
+					Image(
+						painter = painterResource(id = R.drawable.av_play_white),
+						colorFilter = colorFilter,
+						contentDescription = playLabel,
+						modifier = Modifier.size(iconSize),
+					)
+				},
+				label = playLabel,
+				labelMaxLines = 1,
+			)
+		}
+	}
+}
 
 @Preview
 @Composable
@@ -77,8 +132,6 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
 	val coverArtColorState by coverArtColors.collectAsState(defaultMediaStylePalette)
 	val systemUiController = rememberSystemUiController()
 	systemUiController.setStatusBarColor(coverArtColorState.actionBarColor)
-
-	val viewPadding = 4.dp
 
 	val artist by viewModel.artist.collectAsState()
 	val album by viewModel.album.collectAsState()
@@ -230,49 +283,6 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
 					gradientSides = gradientSides,
 				)
 			}
-		}
-	}
-
-	@Composable
-	fun fileMenu() {
-		Row(
-			modifier = Modifier
-				.height(Dimensions.MenuHeight)
-				.padding(viewPadding + 8.dp)
-		) {
-			val iconSize = Dimensions.MenuIconSize
-
-			val addFileToPlaybackLabel = stringResource(id = R.string.btn_add_file_to_playback)
-			ColumnMenuIcon(
-				onClick = { viewModel.addToNowPlaying() },
-				icon = {
-					Image(
-						painter = painterResource(id = R.drawable.ic_add_item_white_36dp),
-						colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
-						contentDescription = addFileToPlaybackLabel,
-						modifier = Modifier.size(iconSize),
-					)
-				},
-				label = addFileToPlaybackLabel,
-				labelColor = coverArtColorState.secondaryTextColor,
-				labelMaxLines = 1,
-			)
-
-			val playLabel = stringResource(id = R.string.btn_play)
-			ColumnMenuIcon(
-				onClick = { viewModel.addToNowPlaying() },
-				icon = {
-					Image(
-						painter = painterResource(id = R.drawable.av_play_white),
-						colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
-						contentDescription = playLabel,
-						modifier = Modifier.size(iconSize),
-					)
-				},
-				label = playLabel,
-				labelColor = coverArtColorState.secondaryTextColor,
-				labelMaxLines = 1,
-			)
 		}
 	}
 
@@ -559,10 +569,9 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
 				modifier = Modifier
 					.fillMaxHeight()
 					.width(250.dp)
-					.padding(viewPadding)
 					.padding(
 						start = viewPadding,
-						end = 10.dp,
+						end = viewPadding * 2,
 						bottom = viewPadding,
 						top = viewPadding,
 					)
@@ -571,7 +580,6 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
 					modifier = Modifier
 						.fillMaxWidth()
 						.weight(1.0f)
-						.padding(bottom = 10.dp)
 						.align(Alignment.CenterHorizontally)
 				) {
 					coverArtState
@@ -597,7 +605,7 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
 						}
 				}
 
-				fileMenu()
+				StaticFileMenu(viewModel, coverArtColorState)
 			}
 
 			LazyColumn(modifier = Modifier.fillMaxWidth()) {
@@ -611,7 +619,7 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
 								bottom = viewPadding,
 								end = 40.dp + viewPadding
 							)
-							.fillParentMaxWidth()
+							.fillMaxWidth()
 					)
 				}
 
@@ -641,7 +649,6 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
 			.fillMaxSize()
 			.background(coverArtColorState.backgroundColor)
 	) {
-
 		when {
 			isLoading -> CircularProgressIndicator(
 				color = coverArtColorState.primaryTextColor,

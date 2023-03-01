@@ -23,7 +23,7 @@ fun RowScope.ColumnMenuIcon(
 	label: String? = null,
 	labelColor: Color = LocalContentColor.current,
 	labelModifier: Modifier = Modifier,
-	labelMaxLines: Int = Int.MAX_VALUE,
+	labelMaxLines: Int = 1,
 ) {
 	MenuIcon(
 		onClick = onClick,
