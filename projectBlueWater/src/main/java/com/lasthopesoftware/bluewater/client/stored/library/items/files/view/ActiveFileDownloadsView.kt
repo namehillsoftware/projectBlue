@@ -246,7 +246,7 @@ fun ActiveFileDownloadsView(
 							}
 						}
 
-						itemsIndexed(files) { i, f ->
+						itemsIndexed(files, { _, f -> f.id }) { i, f ->
 							RenderTrackHeaderItem(f)
 
 							if (i < files.lastIndex)
