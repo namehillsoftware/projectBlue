@@ -5,13 +5,12 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -206,7 +205,7 @@ fun ActiveFileDownloadsView(
 					val rowHeight = dimensionResource(id = R.dimen.standard_row_height)
 					val fileMap by activeFileDownloadsViewModel.downloadingFiles.collectAsState()
 					val files by remember { derivedStateOf(referentialEqualityPolicy()) { fileMap.values.toList() } }
-					val lazyListState = rememberSaveable(files, saver = LazyListState.Saver) { LazyListState() }
+					val lazyListState = rememberLazyListState()
 					val knobHeight by rememberCalculatedKnobHeight(lazyListState, rowHeight)
 
 					LazyColumn(
