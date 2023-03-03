@@ -2,8 +2,12 @@ package com.lasthopesoftware.bluewater.shared.android.ui.components
 
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.BoxWithConstraintsScope
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.draw.drawWithContent
@@ -14,6 +18,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
+@Composable
+fun BoxWithConstraintsScope.rememberCalculatedKnobHeight(lazyListState: LazyListState, rowHeight: Dp) = remember {
+	derivedStateOf {
+		lazyListState.layoutInfo.totalItemsCount
+			.takeIf { it > 0 }
+			?.let { maxHeight / (rowHeight * it) }
+			?.takeIf { it > 0 && it < 1 }
+	}
+}
 
 /**
  * Renders a scrollbar.

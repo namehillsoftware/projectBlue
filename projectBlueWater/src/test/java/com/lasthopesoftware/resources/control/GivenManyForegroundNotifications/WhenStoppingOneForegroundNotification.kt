@@ -30,6 +30,6 @@ class WhenStoppingOneForegroundNotification : AndroidContext() {
 
     @Test
     fun thenTheServiceIsStillInTheForeground() {
-		verify(exactly = 0) { service.stopForeground(any<Boolean>()) }
+		verify(exactly = 0) { service.stopForeground(any<Int>()) }
     }
 }

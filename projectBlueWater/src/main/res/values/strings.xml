@@ -43,7 +43,7 @@
     <string name="title_activity_wait_for_connection">Waiting For Connection</string>
     <string name="btn_view_song_details">View Song Details</string>
     <string name="lbl_loading">Loading&#8230;</string>
-    <string name="btn_add_file">Queue file for playback</string>
+    <string name="btn_add_file_to_playback">Play Last</string>
     <string name="lbl_song_added_to_now_playing">Song added to Now Playing</string>
     <string name="lbl_getting_library_details">Getting library details</string>
     <string name="lbl_connecting_to_server_library">Connecting to server library</string>
@@ -51,7 +51,7 @@
     <string name="lbl_error_connecting_try_again">There was an error connecting to the server, try again later!</string>
     <string name="lbl_library_no_views">This library doesn\'t contain any views</string>
     <string name="lbl_getting_library_views">Getting library views</string>
-    <string name="lbl_search">Search</string>
+    <string name="search">Search</string>
     <string name="title_activity_search_files">Search Files</string>
     <string name="lbl_search_hint">Search for files</string>
     <string name="title_activity_search_results">Search Results for &quot;%1$s&quot;</string>
@@ -60,7 +60,8 @@
     <string name="title_long_click_menu">Long Click</string>
     <string name="tutorial_long_click_menu">Long click on an item to see a menu with additional actions available.</string>
     <string name="lbl_details">%1$s details</string>
-    <string name="btn_sync_item">Synchronize item locally</string>
+    <string name="btn_sync_item">Sync Files</string>
+    <string name="files_synced">Syncing Files</string>
     <string name="btn_add_server">Add Server</string>
     <string name="lbl_sync_path">Custom Sync Path</string>
     <string name="lblSyncMusicLocation">Sync Music Location:</string>
@@ -115,4 +116,6 @@
     <string name="lbl_cover_art">Cover Art for %1$s by %2$s</string>
     <string name="file_count_label">%1$s file(s)</string>
     <string name="item_count_label">%1$s item(s)</string>
+    <string name="show_menu">Show Menu</string>
+    <string name="hide_menu">Hide Menu</string>
 </resources>

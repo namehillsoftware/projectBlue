@@ -15,8 +15,8 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -31,20 +31,30 @@ import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
-import com.lasthopesoftware.bluewater.client.browsing.files.list.TrackHeaderItem
-import com.lasthopesoftware.bluewater.client.browsing.files.list.TrackHeadlineViewModelProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.list.TrackHeaderItemView
+import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewPlaylistFileItem
 import com.lasthopesoftware.bluewater.client.browsing.items.*
-import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuViewModel
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
+import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
+import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberCalculatedKnobHeight
 import com.lasthopesoftware.bluewater.shared.android.ui.components.scrollbar
-import com.lasthopesoftware.bluewater.shared.android.ui.theme.Light
+import com.lasthopesoftware.bluewater.shared.android.ui.theme.*
+import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 import me.onebone.toolbar.CollapsingToolbarScaffold
 import me.onebone.toolbar.ScrollStrategy
 import me.onebone.toolbar.rememberCollapsingToolbarScaffoldState
 import kotlin.math.pow
 import kotlin.math.roundToInt
+
+const val expandedMenuVerticalPadding = 12
+const val expandedTitleHeight = 84
+val appBarHeight = Dimensions.AppBarHeight.value
+val expandedIconSize = Dimensions.MenuHeight.value
+
+val boxHeight = expandedTitleHeight + expandedIconSize + expandedMenuVerticalPadding * 2 + appBarHeight
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -52,17 +62,16 @@ fun ItemListView(
 	itemListViewModel: ItemListViewModel,
 	fileListViewModel: FileListViewModel,
 	nowPlayingViewModel: NowPlayingFilePropertiesViewModel,
-	itemListMenuViewModel: ItemListMenuViewModel,
-	trackHeadlineViewModelProvider: TrackHeadlineViewModelProvider,
+	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
+	trackHeadlineViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
 	applicationNavigation: NavigateApplication,
 ) {
 	val playingFile by nowPlayingViewModel.nowPlayingFile.collectAsState()
-	val lazyListState = rememberLazyListState()
+	val files by fileListViewModel.files.collectAsState()
 	val rowHeight = dimensionResource(id = R.dimen.standard_row_height)
 	val rowFontSize = LocalDensity.current.run { dimensionResource(id = R.dimen.row_font_size).toSp() }
 	val hapticFeedback = LocalHapticFeedback.current
 	val itemValue by itemListViewModel.itemValue.collectAsState()
-	val files by fileListViewModel.files.collectAsState()
 
 	@Composable
 	fun ChildItem(childItemViewModel: ItemListViewModel.ChildItemViewModel) {
@@ -76,7 +85,7 @@ fun ItemListView(
 					onLongClick = {
 						hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
 
-						itemListMenuViewModel.hideAllMenus()
+						itemListMenuBackPressedHandler.hideAllMenus()
 
 						childItemViewModel.showMenu()
 					},
@@ -101,7 +110,7 @@ fun ItemListView(
 			return
 		}
 
-		DisposableEffect(Unit) {
+		DisposableEffect(childItemViewModel.item) {
 			onDispose {
 				childItemViewModel.hideMenu()
 			}
@@ -123,12 +132,8 @@ fun ItemListView(
 			)
 
 			val isChildItemSynced by childItemViewModel.isSynced.collectAsState()
-
-			Image(
-				painter = painterResource(id = R.drawable.ic_sync_white),
-				contentDescription = stringResource(id = R.string.btn_sync_item),
-				colorFilter = ColorFilter.tint(if (isChildItemSynced) MaterialTheme.colors.primary else Light.GrayClickable),
-				alpha = if (isChildItemSynced) .9f else .6f,
+			SyncIcon(
+				isActive = isChildItemSynced,
 				modifier = Modifier
 					.fillMaxWidth()
 					.clickable { childItemViewModel.toggleSync() }
@@ -152,7 +157,7 @@ fun ItemListView(
 	fun RenderTrackHeaderItem(position: Int, serviceFile: ServiceFile) {
 		val fileItemViewModel = remember(trackHeadlineViewModelProvider::getViewModel)
 
-		DisposableEffect(Unit) {
+		DisposableEffect(serviceFile) {
 			fileItemViewModel.promiseUpdate(files, position)
 
 			onDispose {
@@ -164,13 +169,13 @@ fun ItemListView(
 		val fileName by fileItemViewModel.title.collectAsState()
 		val isPlaying by remember { derivedStateOf { playingFile?.serviceFile == serviceFile } }
 
-		TrackHeaderItem(
+		TrackHeaderItemView(
 			itemName = fileName,
-			isPlaying = isPlaying,
-			isMenuShown = isMenuShown,
+			isActive = isPlaying,
+			isHiddenMenuShown = isMenuShown,
 			onItemClick = fileItemViewModel::viewFileDetails,
 			onHiddenMenuClick = {
-				itemListMenuViewModel.hideAllMenus()
+				itemListMenuBackPressedHandler.hideAllMenus()
 				fileItemViewModel.showMenu()
 			},
 			onAddToNowPlayingClick = fileItemViewModel::addToNowPlaying,
@@ -186,15 +191,9 @@ fun ItemListView(
 	fun BoxWithConstraintsScope.LoadedItemListView() {
 		val items by itemListViewModel.items.collectAsState()
 
-		val knobHeight by remember {
-			derivedStateOf {
-				lazyListState.layoutInfo.totalItemsCount
-					.takeIf { it > 0 }
-					?.let { maxHeight / (rowHeight * it) }
-					?.takeIf { it > 0 && it < 1 }
-			}
-		}
+		val lazyListState = rememberLazyListState() // instantiate lazyListState here to ensure it updates when a new list is retrieved
 
+		val knobHeight by rememberCalculatedKnobHeight(lazyListState, rowHeight)
 		LazyColumn(
 			state = lazyListState,
 			modifier = Modifier
@@ -277,29 +276,26 @@ fun ItemListView(
 			scrollStrategy = ScrollStrategy.ExitUntilCollapsed,
 			modifier = Modifier.fillMaxSize(),
 			toolbar = {
-				val appBarHeight = 56
 				val topPadding by remember { derivedStateOf { (appBarHeight - 46 * headerHidingProgress).dp } }
-				val expandedTitleHeight = 84
-				val expandedIconSize = 36
-				val expandedMenuVerticalPadding = 12
-				val boxHeight =
-					expandedTitleHeight + expandedIconSize + expandedMenuVerticalPadding * 2 + appBarHeight
 				BoxWithConstraints(
 					modifier = Modifier
 						.height(boxHeight.dp)
 						.padding(top = topPadding)
 				) {
 					val minimumMenuWidth = (3 * 32).dp
-					val acceleratedProgress by remember {
+					val acceleratedToolbarStateProgress by remember {
 						derivedStateOf {
-							1 - toolbarState.toolbarState.progress.pow(
+							toolbarState.toolbarState.progress.pow(
 								3
 							).coerceIn(0f, 1f)
 						}
 					}
+					val acceleratedHeaderHidingProgress by remember {
+						derivedStateOf { 1 - acceleratedToolbarStateProgress }
+					}
 					ProvideTextStyle(MaterialTheme.typography.h5) {
 						val startPadding by remember { derivedStateOf { (4 + 48 * headerHidingProgress).dp } }
-						val endPadding by remember { derivedStateOf { 4.dp + minimumMenuWidth * acceleratedProgress } }
+						val endPadding by remember { derivedStateOf { 4.dp + minimumMenuWidth * acceleratedHeaderHidingProgress } }
 						val maxLines by remember { derivedStateOf { (2 - headerHidingProgress).roundToInt() } }
 						if (maxLines > 1) {
 							Text(
@@ -323,10 +319,11 @@ fun ItemListView(
 						}
 					}
 
-					val menuWidth by remember { derivedStateOf { (maxWidth - (maxWidth - minimumMenuWidth) * acceleratedProgress) } }
+					val menuWidth by remember { derivedStateOf { (maxWidth - (maxWidth - minimumMenuWidth) * acceleratedHeaderHidingProgress) } }
 					val expandedTopRowPadding = expandedTitleHeight + expandedMenuVerticalPadding
 					val collapsedTopRowPadding = 6
 					val topRowPadding by remember { derivedStateOf { (expandedTopRowPadding - (expandedTopRowPadding - collapsedTopRowPadding) * headerHidingProgress).dp } }
+
 					Row(
 						modifier = Modifier
 							.padding(
@@ -338,44 +335,55 @@ fun ItemListView(
 							.width(menuWidth)
 							.align(Alignment.TopEnd)
 					) {
-						val iconSize by remember { derivedStateOf { (expandedIconSize - (12 * headerHidingProgress)).dp } }
+						val iconSize = Dimensions.MenuIconSize
+						val textModifier = Modifier.alpha(acceleratedToolbarStateProgress)
 
-						Image(
-							painter = painterResource(id = R.drawable.av_play),
-							contentDescription = stringResource(id = R.string.btn_play),
-							modifier = Modifier
-								.fillMaxWidth()
-								.weight(1f)
-								.size(iconSize)
-								.clickable {
-									fileListViewModel.play()
-								}
+						val playButtonLabel = stringResource(id = R.string.btn_play)
+						ColumnMenuIcon(
+							onClick = { fileListViewModel.play() },
+							icon = {
+								Image(
+									painter = painterResource(id = R.drawable.av_play),
+									contentDescription = playButtonLabel,
+									modifier = Modifier.size(iconSize)
+								)
+							},
+							label =	if (acceleratedHeaderHidingProgress < 1) playButtonLabel else null,
+							labelModifier = textModifier,
+							labelMaxLines = 1,
 						)
 
 						val isSynced by itemListViewModel.isSynced.collectAsState()
-
-						Image(
-							painter = painterResource(id = R.drawable.ic_sync_white),
-							contentDescription = stringResource(id = R.string.btn_sync_item),
-							colorFilter = ColorFilter.tint(if (isSynced) MaterialTheme.colors.primary else Light.GrayClickable),
-							alpha = if (isSynced) .9f else .6f,
-							modifier = Modifier
-								.fillMaxWidth()
-								.size(iconSize)
-								.clickable { itemListViewModel.toggleSync() }
-								.weight(1f),
+						val syncButtonLabel =
+							if (!isSynced) stringResource(id = R.string.btn_sync_item)
+							else stringResource(id = R.string.files_synced)
+						ColumnMenuIcon(
+							onClick = { itemListViewModel.toggleSync() },
+							icon = {
+								SyncIcon(
+									isActive = isSynced,
+									modifier = Modifier.size(iconSize),
+									contentDescription = syncButtonLabel,
+								)
+							},
+							label = if (acceleratedHeaderHidingProgress < 1) syncButtonLabel else null,
+							labelMaxLines = 1,
+							labelModifier = textModifier,
 						)
 
-						Image(
-							painter = painterResource(id = R.drawable.av_shuffle),
-							contentDescription = stringResource(id = R.string.btn_shuffle_files),
-							modifier = Modifier
-								.fillMaxWidth()
-								.size(iconSize)
-								.weight(1f)
-								.clickable {
-									fileListViewModel.playShuffled()
-								}
+						val shuffleButtonLabel = stringResource(R.string.btn_shuffle_files)
+						ColumnMenuIcon(
+							onClick = { fileListViewModel.playShuffled() },
+							icon = {
+								Image(
+									painter = painterResource(id = R.drawable.av_shuffle),
+									contentDescription = shuffleButtonLabel,
+									modifier = Modifier.size(iconSize)
+								)
+							},
+							label = if (acceleratedHeaderHidingProgress < 1) shuffleButtonLabel else null,
+							labelModifier = textModifier,
+							labelMaxLines = 1,
 						)
 					}
 				}
@@ -391,7 +399,7 @@ fun ItemListView(
 							.clickable(
 								interactionSource = remember { MutableInteractionSource() },
 								indication = null,
-								onClick = applicationNavigation::backOut
+								onClick = applicationNavigation::navigateUp
 							)
 					)
 				}

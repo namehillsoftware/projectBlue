@@ -54,7 +54,6 @@ import com.lasthopesoftware.bluewater.client.stored.sync.notifications.PostSyncN
 import com.lasthopesoftware.bluewater.client.stored.sync.notifications.SyncChannelProperties
 import com.lasthopesoftware.bluewater.client.stored.sync.receivers.SyncStartedReceiver
 import com.lasthopesoftware.bluewater.client.stored.sync.receivers.file.*
-import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.android.makePendingIntentImmutable
 import com.lasthopesoftware.bluewater.shared.android.notifications.NoOpChannelActivator
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.NotificationChannelActivator
@@ -91,8 +90,6 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 			StoredFilesChecker(StoredFilesCounter(StoredFilesCollection(context)))
 		)
 	}
-
-	private val applicationSettings by lazy { context.getApplicationSettingsRepository() }
 
 	private val applicationMessageBus by lazy { getApplicationMessageBus().getScopedMessageBus() }
 	private val storedFileAccess by lazy { StoredFileAccess(context) }

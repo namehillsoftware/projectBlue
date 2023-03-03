@@ -27,6 +27,6 @@ class WhenNotifyingEither : AndroidContext() {
 
 	@Test
 	fun thenTheServiceNeverGoesToBackground() {
-		verify(exactly = 0) { service.stopForeground(any<Boolean>()) }
+		verify(exactly = 0) { service.stopForeground(any<Int>()) }
 	}
 }

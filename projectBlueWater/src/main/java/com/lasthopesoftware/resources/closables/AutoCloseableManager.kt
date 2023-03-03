@@ -1,12 +1,12 @@
 package com.lasthopesoftware.resources.closables
 
-import org.slf4j.LoggerFactory
+import com.lasthopesoftware.bluewater.shared.lazyLogger
 import java.util.concurrent.ConcurrentLinkedQueue
 
-class CloseableManager : ManageCloseables {
+class AutoCloseableManager : ManageCloseables, AutoCloseable {
 
 	companion object {
-		private val logger = LoggerFactory.getLogger(CloseableManager::class.java)
+		private val logger by lazyLogger<AutoCloseableManager>()
 	}
 
 	private val closeables = ConcurrentLinkedQueue<AutoCloseable>()

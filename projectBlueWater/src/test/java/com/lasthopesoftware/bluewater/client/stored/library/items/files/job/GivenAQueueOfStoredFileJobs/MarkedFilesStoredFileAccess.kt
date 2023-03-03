@@ -19,8 +19,7 @@ class MarkedFilesStoredFileAccess : AccessStoredFiles {
         return Promise.empty()
     }
 
-    override val downloadingStoredFiles: Promise<List<StoredFile>>
-        get() = Promise(emptyList())
+	override fun promiseDownloadingFiles(): Promise<List<StoredFile>> = Promise(emptyList())
 
     override fun markStoredFileAsDownloaded(storedFile: StoredFile): Promise<StoredFile> {
         storedFilesMarkedAsDownloaded.add(storedFile)

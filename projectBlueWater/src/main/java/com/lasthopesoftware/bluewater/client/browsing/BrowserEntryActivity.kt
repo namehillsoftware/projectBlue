@@ -12,6 +12,7 @@ import android.widget.ListView
 import android.widget.ProgressBar
 import android.widget.RelativeLayout
 import android.widget.ViewAnimator
+import androidx.activity.addCallback
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
@@ -21,8 +22,8 @@ import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.list.SearchFilesFragment
 import com.lasthopesoftware.bluewater.client.browsing.items.list.IItemListViewContainer
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuChangeHandler
-import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener.Companion.tryFlipToPreviousView
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistListFragment
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
@@ -40,7 +41,7 @@ import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionSettingsChangeReceiver
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingFloatingActionButton
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.fragment.ActiveFileDownloadsFragment
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.view.ActiveFileDownloadsFragment
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
@@ -58,6 +59,7 @@ import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessa
 import com.lasthopesoftware.bluewater.shared.messages.registerOnHandler
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
+import com.lasthopesoftware.resources.closables.lazyScoped
 
 private val logger by lazyLogger<BrowserEntryActivity>()
 
@@ -83,19 +85,19 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 
 	private val messageHandler by lazy { Handler(mainLooper) }
 
-	private val applicationMessageBus = lazy { getApplicationMessageBus().getScopedMessageBus() }
+	private val applicationMessageBus by lazyScoped { getApplicationMessageBus().getScopedMessageBus() }
 
 	private val itemListMenuChangeHandler by lazy { ItemListMenuChangeHandler(this) }
 
 	private val menuMessageBus by buildViewModelLazily { ViewModelMessageBus<ItemListMenuMessage>() }
 
-	private val itemListMenuViewModel by lazy { ItemListMenuViewModel(menuMessageBus) }
+	private val itemListMenuBackPressedHandler by lazyScoped { ItemListMenuBackPressedHandler(menuMessageBus) }
 
 	private val specialViews by lazy {
 		val views = arrayOf(
 			SpecialView(
 				ViewType.SearchView,
-				getString(R.string.lbl_search),
+				getString(R.string.search),
 				SearchViewItem,
 				supportFragmentManager.fragments.firstOrNull { f -> f is SearchFilesFragment }
 					?: SearchFilesFragment()
@@ -175,13 +177,13 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 		setSupportActionBar(findViewById(R.id.browseLibraryToolbar))
 		setTheme(R.style.AppTheme)
 
-		applicationMessageBus.value.registerOnHandler(
+		applicationMessageBus.registerOnHandler(
 			cls<SelectedConnectionSettingsChangeReceiver.SelectedConnectionSettingsUpdated>(),
 			messageHandler,
 			connectionSettingsUpdatedReceiver
 		)
 
-		applicationMessageBus.value.registerOnHandler(
+		applicationMessageBus.registerOnHandler(
 			cls<BrowserLibrarySelection.LibraryChosenMessage>(),
 			messageHandler,
 			connectionSettingsUpdatedReceiver)
@@ -203,7 +205,10 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 			updateSelectedView(specialViews[position].viewType, position)
 		}
 
-		lifecycle.addObserver(itemListMenuViewModel)
+		onBackPressedDispatcher.addCallback {
+			if (!itemListMenuBackPressedHandler.hideAllMenus() && viewAnimator?.tryFlipToPreviousView() == false)
+				finish()
+		}
 	}
 
 	override fun onStart() {
@@ -419,24 +424,11 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 		super.onStop()
 	}
 
-	@Deprecated("Deprecated in Java")
-	override fun onBackPressed() {
-		if (itemListMenuViewModel.hideAllMenus() || viewAnimator?.tryFlipToPreviousView() == true) return
-		super.onBackPressed()
-	}
-
 	override fun updateViewAnimator(viewAnimator: ViewAnimator) {
 		this.viewAnimator = viewAnimator
 	}
 
 	override fun getNowPlayingFloatingActionButton(): NowPlayingFloatingActionButton = nowPlayingFloatingActionButton
-
-	override fun onDestroy() {
-		if (applicationMessageBus.isInitialized())
-			applicationMessageBus.value.close()
-
-		super.onDestroy()
-	}
 
 	private class SpecialView(val viewType: ViewType, val name: String, val viewItem: ViewItem, val fragment: Fragment)
 

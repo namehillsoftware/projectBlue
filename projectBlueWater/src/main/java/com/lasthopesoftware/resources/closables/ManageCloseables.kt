@@ -1,5 +1,5 @@
 package com.lasthopesoftware.resources.closables
 
-interface ManageCloseables : AutoCloseable {
+interface ManageCloseables {
 	fun manage(closeable: AutoCloseable)
 }

@@ -9,11 +9,23 @@ interface NavigateApplication {
 
 	fun viewFileDetails(playlist: List<ServiceFile>, position: Int) {}
 
-	fun launchSearch() {}
+	fun launchSearch(libraryId: LibraryId) {}
 
 	fun viewItem(libraryId: LibraryId, item: IItem) {}
 
 	fun viewNowPlaying() {}
 
-	fun backOut(): Boolean = true
+	fun viewActiveDownloads(libraryId: LibraryId) {}
+
+	/**
+	 * Call this to navigate "up" in the navigation hierarchy.
+	 * @return true if navigating up was handled, false if not handled.
+	 */
+	fun navigateUp(): Boolean = true
+
+	/**
+	 * Call this to "back out" of the last user action. Note that this is more of an undo than [navigateUp].
+	 * @return true if backing out was handled, false if not handled.
+	 */
+	fun backOut(): Boolean = navigateUp()
 }

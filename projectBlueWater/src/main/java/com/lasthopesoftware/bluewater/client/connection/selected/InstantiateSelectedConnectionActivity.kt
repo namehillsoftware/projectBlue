@@ -5,11 +5,10 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import androidx.activity.ComponentActivity
-import androidx.activity.OnBackPressedCallback
+import androidx.activity.addCallback
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResult
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.lifecycleScope
 import com.lasthopesoftware.bluewater.ActivityApplicationNavigation
 import com.lasthopesoftware.bluewater.client.browsing.BrowserEntryActivity
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedLibraryIdProvider
@@ -28,8 +27,6 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.promiseActivityResult
 import com.lasthopesoftware.resources.strings.StringResources
 import com.namehillsoftware.handoff.promises.Promise
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
 
 class InstantiateSelectedConnectionActivity : AppCompatActivity() {
 	private val browseLibraryIntent by lazy {
@@ -54,17 +51,7 @@ class InstantiateSelectedConnectionActivity : AppCompatActivity() {
 			StringResources(this),
 			connectionInitializationController,
 		).apply {
-			onBackPressedDispatcher.addCallback(object: OnBackPressedCallback(false) {
-				init {
-				    isGettingConnection.onEach {
-						isEnabled = it
-					}.launchIn(lifecycleScope)
-				}
 
-				override fun handleOnBackPressed() {
-					cancelCurrentCheck()
-				}
-			})
 		}
 	}
 
@@ -92,6 +79,14 @@ class InstantiateSelectedConnectionActivity : AppCompatActivity() {
 					else launchActivityDelayed(browseLibraryIntent)
 				}
 			}, handler))
+
+		onBackPressedDispatcher.addCallback {
+			with (connectionStatusViewModel) {
+				if (isGettingConnection.value)
+					cancelCurrentCheck()
+			}
+			finish()
+		}
 	}
 
 	private fun launchActivityDelayed(intent: Intent) {

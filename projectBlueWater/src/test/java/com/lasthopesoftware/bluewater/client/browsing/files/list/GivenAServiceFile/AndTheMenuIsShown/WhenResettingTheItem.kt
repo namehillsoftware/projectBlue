@@ -1,7 +1,8 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.list.GivenAServiceFile.AndTheMenuIsShown
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusableTrackHeadlineViewModel
+import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusableFileViewModel
+import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusablePlaylistFileViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
@@ -26,20 +27,22 @@ class WhenResettingTheItem {
 			every { unknownTrack } returns "shout"
 		}
 
-		ReusableTrackHeadlineViewModel(
-			mockk(),
-			mockk {
-				every { promiseUrlKey(any<ServiceFile>()) } answers {
-					Promise(
-						UrlKeyHolder(URL("http://test"), firstArg())
-					)
-				}
-			},
-			stringResource,
+		ReusablePlaylistFileViewModel(
 			mockk(),
 			mockk(),
 			recordingMessageBus,
-			RecordingApplicationMessageBus()
+			ReusableFileViewModel(
+				mockk(),
+				stringResource,
+				mockk {
+					every { promiseUrlKey(any<ServiceFile>()) } answers {
+						Promise(
+							UrlKeyHolder(URL("http://test"), firstArg())
+						)
+					}
+				},
+				RecordingApplicationMessageBus(),
+			)
 		)
 	}
 

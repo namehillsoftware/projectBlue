@@ -9,7 +9,7 @@ interface AccessStoredFiles {
 	fun getStoredFile(storedFileId: Int): Promise<StoredFile?>
 	fun getStoredFile(library: Library, serviceFile: ServiceFile): Promise<StoredFile?>
 	fun promiseDanglingFiles(): Promise<Collection<StoredFile>>
-	val downloadingStoredFiles: Promise<List<StoredFile>>
+	fun promiseDownloadingFiles(): Promise<List<StoredFile>>
 	fun markStoredFileAsDownloaded(storedFile: StoredFile): Promise<StoredFile>
 	fun addMediaFile(library: Library, serviceFile: ServiceFile, mediaFileId: Int, filePath: String): Promise<Unit>
 	fun deleteStoredFile(storedFile: StoredFile): Promise<Unit>

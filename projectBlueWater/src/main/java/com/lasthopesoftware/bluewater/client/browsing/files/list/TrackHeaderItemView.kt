@@ -23,22 +23,22 @@ import com.lasthopesoftware.bluewater.R
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun TrackHeaderItem(
+fun TrackHeaderItemView(
 	itemName: String,
-	isPlaying: Boolean,
-	isMenuShown: Boolean,
-	onItemClick: () -> Unit,
-	onHiddenMenuClick: () -> Unit,
-	onAddToNowPlayingClick: () -> Unit,
-	onViewFilesClick: () -> Unit,
-	onPlayClick: () -> Unit,
+	isActive: Boolean = false,
+	isHiddenMenuShown: Boolean = false,
+	onItemClick: () -> Unit = {},
+	onHiddenMenuClick: () -> Unit = {},
+	onAddToNowPlayingClick: () -> Unit = {},
+	onViewFilesClick: () -> Unit = {},
+	onPlayClick: () -> Unit = {},
 ) {
 
 	val hapticFeedback = LocalHapticFeedback.current
 	val rowHeight = dimensionResource(id = R.dimen.standard_row_height)
 	val rowFontSize = LocalDensity.current.run { dimensionResource(id = R.dimen.row_font_size).toSp() }
 
-	if (!isMenuShown) {
+	if (!isHiddenMenuShown) {
 		Box(modifier = Modifier
 			.combinedClickable(
 				interactionSource = remember { MutableInteractionSource() },
@@ -59,7 +59,7 @@ fun TrackHeaderItem(
 				fontSize = rowFontSize,
 				overflow = TextOverflow.Ellipsis,
 				maxLines = 1,
-				fontWeight = if (isPlaying) FontWeight.Bold else FontWeight.Normal,
+				fontWeight = if (isActive) FontWeight.Bold else FontWeight.Normal,
 				modifier = Modifier
 					.padding(12.dp)
 					.align(Alignment.CenterStart),
@@ -72,7 +72,7 @@ fun TrackHeaderItem(
 		) {
 			Image(
 				painter = painterResource(id = R.drawable.ic_add_item_36dp),
-				contentDescription = stringResource(id = R.string.btn_add_file),
+				contentDescription = stringResource(id = R.string.btn_add_file_to_playback),
 				modifier = Modifier
 					.fillMaxWidth()
 					.weight(1f)

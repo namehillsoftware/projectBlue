@@ -5,6 +5,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import java.util.concurrent.atomic.AtomicReference
 
@@ -36,8 +37,8 @@ class CachedSelectedLibraryIdProvider(private val inner: ProvideSelectedLibraryI
 				cachedPromise
 			}
 
-		override fun invoke(p1: BrowserLibrarySelection.LibraryChosenMessage) {
-			cachedPromisedLibrary.compareAndSet(cachedPromisedLibrary.get(), null)
+		override fun invoke(message: BrowserLibrarySelection.LibraryChosenMessage) {
+			cachedPromisedLibrary.compareAndSet(cachedPromisedLibrary.get(), message.chosenLibraryId.toPromise())
 		}
 	}
 

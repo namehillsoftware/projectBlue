@@ -8,9 +8,10 @@ class DeviceBootSyncScheduler : BroadcastReceiver() {
 	override fun onReceive(context: Context, intent: Intent) {
 		if (Intent.ACTION_BOOT_COMPLETED != intent.action) return
 
-		SyncScheduler.promiseIsScheduled(context)
+		val syncScheduler = SyncScheduler(context)
+		syncScheduler.promiseIsScheduled()
 			.then { isScheduled ->
-				if (!isScheduled) SyncScheduler.scheduleSync(context)
+				if (!isScheduled) syncScheduler.scheduleSync()
 			}
 	}
 }

@@ -20,7 +20,8 @@
         android:theme="@style/AppTheme"
         android:usesCleartextTraffic="true"
         tools:ignore="GoogleAppIndexingWarning"
-        tools:targetApi="m">
+        tools:targetApi="tiramisu"
+        android:enableOnBackInvokedCallback="true">
 
         <meta-data
             android:name="android.app.default_searchable"

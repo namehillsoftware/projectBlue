@@ -1,7 +1,8 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.list.GivenAServiceFile
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusableTrackHeadlineViewModel
+import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusableFileViewModel
+import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusablePlaylistFileViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideScopedFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
@@ -44,20 +45,22 @@ class WhenItsPropertiesChange {
 			every { unknownTrack } returns "dead"
 		}
 
-		ReusableTrackHeadlineViewModel(
-			filePropertiesProvider,
-			mockk {
-				every { promiseUrlKey(any<ServiceFile>()) } answers {
-					Promise(
-						UrlKeyHolder(URL("http://maybe"), firstArg())
-					)
-				}
-			},
-			stringResource,
+		ReusablePlaylistFileViewModel(
 			mockk(),
 			mockk(),
 			recordingMessageBus,
-			recordingApplicationMessageBus,
+			ReusableFileViewModel(
+				filePropertiesProvider,
+				stringResource,
+				mockk {
+					every { promiseUrlKey(any<ServiceFile>()) } answers {
+						Promise(
+							UrlKeyHolder(URL("http://maybe"), firstArg())
+						)
+					}
+				},
+				recordingApplicationMessageBus,
+			),
 		)
 	}
 

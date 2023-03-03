@@ -1,17 +1,14 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers
 
 import androidx.activity.OnBackPressedCallback
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
-import androidx.lifecycle.LifecycleOwner
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.HiddenListItemMenu
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
 import com.lasthopesoftware.bluewater.shared.messages.RegisterForTypedMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import java.util.concurrent.ConcurrentHashMap
 
-class ItemListMenuViewModel(receiveTypedMessages: RegisterForTypedMessages<ItemListMenuMessage>)
-	: LifecycleEventObserver, OnBackPressedCallback(false) {
+class ItemListMenuBackPressedHandler(receiveTypedMessages: RegisterForTypedMessages<ItemListMenuMessage>)
+	: AutoCloseable, OnBackPressedCallback(false) {
 
 	private val shownMenus = ConcurrentHashMap<HiddenListItemMenu, Unit>()
 
@@ -32,9 +29,7 @@ class ItemListMenuViewModel(receiveTypedMessages: RegisterForTypedMessages<ItemL
 		hideAllMenus()
 	}
 
-	override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
-		if (event != Lifecycle.Event.ON_DESTROY) return
-
+	override fun close() {
 		shownMenus.clear()
 		onMenuShown.close()
 		onMenuHidden.close()
