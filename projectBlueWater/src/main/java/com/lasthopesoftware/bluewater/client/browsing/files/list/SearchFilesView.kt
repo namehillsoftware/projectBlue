@@ -190,7 +190,7 @@ fun SearchFilesView(
 						singleLine = true,
 						keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
 						keyboardActions = KeyboardActions(onSearch = { searchFilesViewModel.findFiles() }),
-						trailingIcon = { Icon(Icons.Default.Search, contentDescription = stringResource(id = R.string.lbl_search)) },
+						trailingIcon = { Icon(Icons.Default.Search, contentDescription = stringResource(id = R.string.search)) },
 						enabled = !isLoading,
 						modifier = Modifier
 							.padding(end = endPadding)

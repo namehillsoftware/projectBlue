@@ -50,7 +50,6 @@ import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMes
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
-import com.lasthopesoftware.resources.closables.ViewModelCloseableManager
 import com.lasthopesoftware.resources.closables.lazyScoped
 import com.lasthopesoftware.resources.strings.StringResources
 import kotlinx.coroutines.flow.filterNotNull
@@ -75,8 +74,6 @@ class NowPlayingActivity :
 	private val messageHandler by lazy { Handler(mainLooper) }
 
 	private val applicationMessageBus by lazy { getApplicationMessageBus() }
-
-	private val viewModelScope by buildViewModelLazily { ViewModelCloseableManager() }
 
 	private val activityScopedMessageBus by lazyScoped { applicationMessageBus.getScopedMessageBus() }
 

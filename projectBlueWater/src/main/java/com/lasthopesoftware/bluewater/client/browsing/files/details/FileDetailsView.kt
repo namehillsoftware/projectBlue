@@ -130,7 +130,7 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
 					) {
 						when {
 							fileProperty.property == KnownFileProperties.Rating -> {
-								val ratingValue by derivedStateOf { propertyValue.toInt() }
+								val ratingValue by remember { derivedStateOf { propertyValue.toInt() } }
 								RatingBar(
 									rating = ratingValue,
 									color = coverArtColorState.primaryTextColor,
@@ -345,7 +345,7 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
 		val fileProperties by viewModel.fileProperties.collectAsState()
 
 		val toolbarState = rememberCollapsingToolbarScaffoldState()
-		val headerHidingProgress by derivedStateOf { 1 - toolbarState.toolbarState.progress }
+		val headerHidingProgress by remember { derivedStateOf { 1 - toolbarState.toolbarState.progress } }
 
         CollapsingToolbarScaffold(
             enabled = true,
@@ -358,7 +358,7 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
                 val coverArtBottomPadding = viewPadding + 8.dp
                 val coverArtContainerHeight = 300.dp
 
-                val coverArtScrollOffset by derivedStateOf { -coverArtContainerHeight * headerHidingProgress }
+                val coverArtScrollOffset by remember { derivedStateOf { -coverArtContainerHeight * headerHidingProgress } }
                 Box(
                     modifier = Modifier
 						.height(coverArtContainerHeight)
@@ -425,7 +425,7 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
                 val boxHeight =
                     expandedTitlePadding + titleHeight + expandedIconSize + expandedMenuVerticalPadding * 2
 
-                val topTitlePadding by derivedStateOf { expandedTitlePadding * toolbarState.toolbarState.progress }
+                val topTitlePadding by remember { derivedStateOf { expandedTitlePadding * toolbarState.toolbarState.progress } }
                 BoxWithConstraints(
                     modifier = Modifier
 						.height(boxHeight)
@@ -434,31 +434,31 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
                 ) {
                     val minimumMenuWidth = (3 * 32).dp
 
-                    val acceleratedProgress by derivedStateOf {
-                        1 - toolbarState.toolbarState.progress.pow(
-                            3
-                        ).coerceIn(0f, 1f)
-                    }
+                    val acceleratedProgress by remember {
+						derivedStateOf {
+							1 - toolbarState.toolbarState.progress.pow(3).coerceIn(0f, 1f)
+						}
+					}
 
-                    val startPadding by derivedStateOf { viewPadding + 48.dp * headerHidingProgress }
-                    val endPadding by derivedStateOf { viewPadding + minimumMenuWidth * acceleratedProgress }
+                    val startPadding by remember { derivedStateOf { viewPadding + 48.dp * headerHidingProgress } }
+                    val endPadding by remember { derivedStateOf { viewPadding + minimumMenuWidth * acceleratedProgress } }
                     filePropertyHeader(
                         modifier = Modifier.padding(start = startPadding, end = endPadding),
                         titleFontSize = titleFontSize,
                     )
 
-                    val menuWidth by derivedStateOf { (maxWidth - (maxWidth - minimumMenuWidth) * acceleratedProgress) }
+                    val menuWidth by remember { derivedStateOf { (maxWidth - (maxWidth - minimumMenuWidth) * acceleratedProgress) } }
                     val expandedTopRowPadding = titleHeight + expandedMenuVerticalPadding
-                    val topRowPadding by derivedStateOf { expandedTopRowPadding - (expandedTopRowPadding - 14.dp) * headerHidingProgress }
+                    val topRowPadding by remember { derivedStateOf { expandedTopRowPadding - (expandedTopRowPadding - 14.dp) * headerHidingProgress } }
 					Row(
 						modifier = Modifier
 							.padding(top = topRowPadding, start = 8.dp, end = 8.dp)
 							.width(menuWidth)
 							.align(Alignment.TopEnd)
 					) {
-						val iconSize by derivedStateOf { expandedIconSize - (12 * headerHidingProgress).dp }
-						val chevronRotation by derivedStateOf { 180 * headerHidingProgress }
-						val isCollapsed by derivedStateOf { headerHidingProgress > .98f }
+						val iconSize by remember { derivedStateOf { expandedIconSize - (12 * headerHidingProgress).dp } }
+						val chevronRotation by remember { derivedStateOf { 180 * headerHidingProgress } }
+						val isCollapsed by remember { derivedStateOf { headerHidingProgress > .98f } }
 
 						val scope = rememberCoroutineScope()
 						Image(
@@ -573,14 +573,14 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
                 stickyHeader {
                     filePropertyHeader(
                         modifier = Modifier
-                            .background(coverArtColorState.backgroundColor)
-                            .padding(
-                                start = viewPadding,
-                                top = viewPadding,
-                                bottom = viewPadding,
-                                end = 40.dp + viewPadding
-                            )
-                            .fillParentMaxWidth()
+							.background(coverArtColorState.backgroundColor)
+							.padding(
+								start = viewPadding,
+								top = viewPadding,
+								bottom = viewPadding,
+								end = 40.dp + viewPadding
+							)
+							.fillParentMaxWidth()
                     )
                 }
 

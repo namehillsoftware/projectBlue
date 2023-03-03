@@ -97,7 +97,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 		val views = arrayOf(
 			SpecialView(
 				ViewType.SearchView,
-				getString(R.string.lbl_search),
+				getString(R.string.search),
 				SearchViewItem,
 				supportFragmentManager.fragments.firstOrNull { f -> f is SearchFilesFragment }
 					?: SearchFilesFragment()

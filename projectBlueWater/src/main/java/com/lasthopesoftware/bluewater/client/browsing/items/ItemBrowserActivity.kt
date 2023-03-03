@@ -22,6 +22,7 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -360,12 +361,14 @@ private fun ItemBrowserView(
 	val scaffoldState = rememberBottomSheetScaffoldState()
 	val coroutineScope = rememberCoroutineScope()
 
+	val bottomSheetState = scaffoldState.bottomSheetState
+
 	with(remember {
 		GraphDependencies(
 			itemBrowserViewDependencies,
 			GraphNavigation(
 				navController,
-				scaffoldState.bottomSheetState,
+				bottomSheetState,
 				itemBrowserViewDependencies.applicationNavigation,
 				coroutineScope
 			)
@@ -373,42 +376,24 @@ private fun ItemBrowserView(
 	}) {
 		BottomSheetScaffold(
 			scaffoldState = scaffoldState,
-			sheetPeekHeight = 64.dp,
+			sheetPeekHeight = 56.dp,
 			sheetElevation = 16.dp,
 			sheetContent = {
 				Row(
 					modifier = Modifier
 						.clickable(onClick = applicationNavigation::viewNowPlaying)
 						.background(MaterialTheme.colors.secondary)
-						.height(64.dp)
+						.height(56.dp)
 				) {
 					Column {
-						Row(
-							modifier = Modifier
-								.height(8.dp)
-								.fillMaxWidth(),
-							horizontalArrangement = Arrangement.Center
-						) {
-							Divider(
-								thickness = 2.dp,
-								modifier = Modifier
-									.fillMaxWidth(.5f)
-									.align(Alignment.CenterVertically),
-								color = MaterialTheme.colors.onSecondary,
-							)
-						}
-
 						Row(
 							modifier = Modifier
 								.weight(1f)
 								.padding(end = 16.dp)
 						) {
-							val bottomSheetState = scaffoldState.bottomSheetState
-							val offset by bottomSheetState.offset
-							val bottomSheetProgress = bottomSheetState.progress
-
 							var progress by remember { mutableStateOf(0f) }
-							DisposableEffect(key1 = offset) {
+							DisposableEffect(key1 = bottomSheetState.offset.value) {
+								val bottomSheetProgress = bottomSheetState.progress
 								val fraction = bottomSheetProgress.fraction
 								val currentState = bottomSheetProgress.from
 								progress = when {
@@ -426,15 +411,23 @@ private fun ItemBrowserView(
 								modifier = Modifier
 									.align(Alignment.CenterVertically)
 									.fillMaxHeight()
-									.clickable(onClick = applicationNavigation::launchSearch),
+									.wrapContentWidth()
+									.clickable {
+										coroutineScope.launch {
+											if (bottomSheetState.isExpanded) bottomSheetState.collapse()
+											else bottomSheetState.expand()
+										}
+									},
 							) {
-								Icon(
-									Icons.Default.Search,
-									contentDescription = stringResource(id = R.string.lbl_search),
-									tint = MaterialTheme.colors.onSecondary,
+								val chevronRotation by remember { derivedStateOf { 180 * progress } }
+								Image(
+									painter = painterResource(id = R.drawable.chevron_up_white_36dp),
+									contentDescription = stringResource(id = if (bottomSheetState.isCollapsed) R.string.show_menu else R.string.hide_menu),
 									modifier = Modifier
 										.align(Alignment.Center)
+										.rotate(chevronRotation)
 										.padding(start = 16.dp, end = 16.dp)
+										.requiredSize(24.dp)
 								)
 							}
 
@@ -531,7 +524,7 @@ private fun ItemBrowserView(
 						) {
 							Image(
 								painter = painterResource(id = R.drawable.ic_water),
-								contentDescription = stringResource(id = R.string.lbl_search),
+								contentDescription = stringResource(id = R.string.activeDownloads),
 								modifier = Modifier
 									.align(Alignment.Center)
 									.padding(start = 16.dp, end = 16.dp)
@@ -542,8 +535,35 @@ private fun ItemBrowserView(
 							text = stringResource(R.string.activeDownloads),
 						)
 					}
+
+					Row(
+						modifier = Modifier
+							.height(rowHeight)
+							.fillMaxWidth()
+							.clickable(onClick = applicationNavigation::launchSearch),
+						verticalAlignment = Alignment.CenterVertically,
+					) {
+						Box(
+							modifier = Modifier
+								.align(Alignment.CenterVertically)
+								.fillMaxHeight()
+						) {
+							Icon(
+								Icons.Default.Search,
+								contentDescription = stringResource(id = R.string.search),
+								modifier = Modifier
+									.align(Alignment.Center)
+									.padding(start = 16.dp, end = 16.dp)
+							)
+						}
+
+						Text(
+							text = stringResource(R.string.search),
+						)
+					}
 				}
-			}) { paddingValues ->
+			}
+		) { paddingValues ->
 			NavHost(
 				navController,
 				modifier = Modifier
