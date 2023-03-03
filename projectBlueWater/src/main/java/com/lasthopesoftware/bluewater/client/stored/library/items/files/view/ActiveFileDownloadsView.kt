@@ -30,6 +30,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.reposito
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
+import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberCalculatedKnobHeight
 import com.lasthopesoftware.bluewater.shared.android.ui.components.scrollbar
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.MenuIcon
@@ -206,14 +207,7 @@ fun ActiveFileDownloadsView(
 					val fileMap by activeFileDownloadsViewModel.downloadingFiles.collectAsState()
 					val files by remember { derivedStateOf(referentialEqualityPolicy()) { fileMap.values.toList() } }
 					val lazyListState = rememberSaveable(files, saver = LazyListState.Saver) { LazyListState() }
-					val knobHeight by remember {
-						derivedStateOf {
-							lazyListState.layoutInfo.totalItemsCount
-								.takeIf { it > 0 }
-								?.let { maxHeight / (rowHeight * it) }
-								?.takeIf { it > 0 && it < 1 }
-						}
-					}
+					val knobHeight by rememberCalculatedKnobHeight(lazyListState, rowHeight)
 
 					LazyColumn(
 						state = lazyListState,

@@ -28,6 +28,7 @@ import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
+import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberCalculatedKnobHeight
 import com.lasthopesoftware.bluewater.shared.android.ui.components.scrollbar
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ColumnMenuIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
@@ -221,14 +222,7 @@ fun SearchFilesView(
 					BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
 						val rowHeight = dimensionResource(id = R.dimen.standard_row_height)
 						val lazyListState = rememberLazyListState()
-						val knobHeight by remember {
-							derivedStateOf {
-								lazyListState.layoutInfo.totalItemsCount
-									.takeIf { it > 0 }
-									?.let { maxHeight / (rowHeight * it) }
-									?.takeIf { it > 0 && it < 1 }
-							}
-						}
+						val knobHeight by rememberCalculatedKnobHeight(lazyListState, rowHeight)
 						LazyColumn(
 							state = lazyListState,
 							modifier = Modifier

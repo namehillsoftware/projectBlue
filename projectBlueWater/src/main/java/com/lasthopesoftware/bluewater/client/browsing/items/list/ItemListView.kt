@@ -39,6 +39,7 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.v
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
+import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberCalculatedKnobHeight
 import com.lasthopesoftware.bluewater.shared.android.ui.components.scrollbar
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.*
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
@@ -192,15 +193,7 @@ fun ItemListView(
 
 		val lazyListState = rememberLazyListState() // instantiate lazyListState here to ensure it updates when a new list is retrieved
 
-		val knobHeight by remember {
-			derivedStateOf {
-				lazyListState.layoutInfo.totalItemsCount
-					.takeIf { it > 0 }
-					?.let { maxHeight / (rowHeight * it) }
-					?.takeIf { it > 0 && it < 1 }
-			}
-		}
-
+		val knobHeight by rememberCalculatedKnobHeight(lazyListState, rowHeight)
 		LazyColumn(
 			state = lazyListState,
 			modifier = Modifier
