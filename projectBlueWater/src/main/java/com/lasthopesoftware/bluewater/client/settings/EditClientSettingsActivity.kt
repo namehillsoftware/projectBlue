@@ -28,6 +28,7 @@ import com.lasthopesoftware.bluewater.permissions.write.ApplicationWritePermissi
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
+import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
@@ -80,6 +81,18 @@ class EditClientSettingsActivity :
 					getCachedSelectedLibraryIdProvider(),
 					libraryProvider,
 					BrowserLibrarySelection(applicationSettingsRepository, applicationMessageBus, libraryProvider))))
+	}
+	private val clientSettingsViewModel by buildViewModelLazily {
+		ClientSettingsViewModel(
+			libraryProvider,
+			libraryStorage,
+			LibraryRemoval(
+				StoredItemAccess(this),
+				libraryStorage,
+				getCachedSelectedLibraryIdProvider(),
+				libraryProvider,
+				BrowserLibrarySelection(applicationSettingsRepository, applicationMessageBus, libraryProvider))
+		)
 	}
 	private var library: Library? = null
 
