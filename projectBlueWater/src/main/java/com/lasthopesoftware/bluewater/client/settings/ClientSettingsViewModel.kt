@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.settings
 
+import android.os.Environment
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.TrackLoadedViewState
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
@@ -37,6 +38,9 @@ class ClientSettingsViewModel(
 
 	fun loadLibrary(libraryId: LibraryId): Promise<*> {
 		mutableIsLoading.value = true
+
+		Environment.getExternalStorageDirectory()?.path?.also { customSyncPath.value = it }
+
 		return libraryProvider
 			.getLibrary(libraryId)
 			.then(this)
