@@ -2,7 +2,7 @@
 <layout xmlns:android="http://schemas.android.com/apk/res/android">
 
 	<data>
-		<variable name="vm" type="com.lasthopesoftware.bluewater.client.settings.ClientSettingsViewModel" />
+		<variable name="vm" type="com.lasthopesoftware.bluewater.client.settings.LibrarySettingsViewModel" />
 	</data>
 	<RelativeLayout
 				android:layout_width="match_parent"

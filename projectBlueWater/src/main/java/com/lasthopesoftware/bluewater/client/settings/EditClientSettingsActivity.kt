@@ -7,12 +7,10 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.Button
-import android.widget.RadioGroup
-import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
-import androidx.databinding.DataBindingUtil
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRemoval
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
@@ -24,11 +22,11 @@ import com.lasthopesoftware.bluewater.client.browsing.library.views.RemoveLibrar
 import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettingsLookup
 import com.lasthopesoftware.bluewater.client.connection.settings.changes.ObservableConnectionSettingsLibraryStorage
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
-import com.lasthopesoftware.bluewater.databinding.ActivityEditServerSettingsBinding
 import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermissionsRequirementsProvider
 import com.lasthopesoftware.bluewater.permissions.write.ApplicationWritePermissionsRequirementsProvider
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
+import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.getValue
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
@@ -39,18 +37,14 @@ import com.lasthopesoftware.resources.strings.StringResources
 
 class EditClientSettingsActivity :
 	AppCompatActivity(),
-	View.OnClickListener,
-	RadioGroup.OnCheckedChangeListener
+	View.OnClickListener
 {
-
 	companion object {
 		val serverIdExtra by lazy { MagicPropertyBuilder.buildMagicPropertyName<EditClientSettingsActivity>("serverIdExtra") }
 		private const val permissionsRequestInteger = 1
 	}
 
 	private val saveButton by LazyViewFinder<Button>(this, R.id.btnConnect)
-	private val txtSyncPath = LazyViewFinder<TextView>(this, R.id.txtSyncPath)
-	private val rgSyncFileOptions = LazyViewFinder<RadioGroup>(this, R.id.rgSyncFileOptions)
 	private val applicationWritePermissionsRequirementsProviderLazy by lazy { ApplicationWritePermissionsRequirementsProvider(this) }
 	private val applicationReadPermissionsRequirementsProviderLazy by lazy { ApplicationReadPermissionsRequirementsProvider(this) }
 	private val libraryProvider by lazy { LibraryRepository(this) }
@@ -76,8 +70,8 @@ class EditClientSettingsActivity :
 					libraryProvider,
 					BrowserLibrarySelection(applicationSettingsRepository, applicationMessageBus, libraryProvider))))
 	}
-	private val clientSettingsViewModel by buildViewModelLazily {
-		ClientSettingsViewModel(
+	private val librarySettingsViewModel by buildViewModelLazily {
+		LibrarySettingsViewModel(
 			libraryProvider,
 			libraryStorage,
 			LibraryRemoval(
@@ -92,11 +86,12 @@ class EditClientSettingsActivity :
 
 	public override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
-		val binding = DataBindingUtil.setContentView<ActivityEditServerSettingsBinding>(this, R.layout.activity_edit_server_settings)
-		binding.vm = clientSettingsViewModel
-		setSupportActionBar(findViewById(R.id.serverSettingsToolbar))
-		supportActionBar?.setDisplayHomeAsUpEnabled(true)
-		saveButton.setOnClickListener(this)
+
+		setContent {
+			ProjectBlueTheme {
+				LibrarySettingsView(librarySettingsViewModel = librarySettingsViewModel)
+			}
+		}
 	}
 
 	override fun onCreateOptionsMenu(menu: Menu): Boolean = settingsMenu.buildSettingsMenu(menu)
@@ -115,15 +110,10 @@ class EditClientSettingsActivity :
 		settingsMenu.handleSettingsMenuClicks(item, library)
 
 	private fun initializeLibrary(intent: Intent) {
-		with (rgSyncFileOptions.findView()) {
-			check(R.id.rbPrivateToApp)
-			setOnCheckedChangeListener(this@EditClientSettingsActivity)
-		}
-
 		val libraryId = intent.getIntExtra(serverIdExtra, -1)
 		if (libraryId < 0) return
 
-		clientSettingsViewModel.loadLibrary(LibraryId(libraryId))
+		librarySettingsViewModel.loadLibrary(LibraryId(libraryId))
 	}
 
 	override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
@@ -139,10 +129,6 @@ class EditClientSettingsActivity :
 		}
 
 		saveLibraryAndFinish()
-	}
-
-	override fun onCheckedChanged(group: RadioGroup?, checkedId: Int) {
-		txtSyncPath.findView().isEnabled = checkedId == R.id.rbCustomLocation
 	}
 
 	override fun onClick(v: View?) {
@@ -168,7 +154,7 @@ class EditClientSettingsActivity :
 	}
 
 	private fun saveLibraryAndFinish() {
-		clientSettingsViewModel.saveLibrary().eventually(response({
+		librarySettingsViewModel.saveLibrary().eventually(response({
 			saveButton.text = getText(R.string.btn_saved)
 			finish()
 		}, this))

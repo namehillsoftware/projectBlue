@@ -16,7 +16,7 @@ import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-class ClientSettingsViewModel(
+class LibrarySettingsViewModel(
 	private val libraryProvider: ILibraryProvider,
 	private val libraryStorage: ILibraryStorage,
 	private val libraryRemoval: RemoveLibraries,
