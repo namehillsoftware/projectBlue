@@ -123,8 +123,7 @@ class EditClientSettingsActivity :
 		val libraryId = intent.getIntExtra(serverIdExtra, -1)
 		if (libraryId < 0) return
 
-		clientSettingsViewModel
-			.loadLibrary(LibraryId(libraryId))
+		clientSettingsViewModel.loadLibrary(LibraryId(libraryId))
 	}
 
 	override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
@@ -159,7 +158,7 @@ class EditClientSettingsActivity :
 			val permissionsToRequestArray = permissionsToRequest.toTypedArray()
 			ActivityCompat.requestPermissions(this, permissionsToRequestArray, permissionsRequestInteger)
 		} else {
-			clientSettingsViewModel.saveLibrary()
+			saveLibraryAndFinish()
 		}
 	}
 
@@ -169,9 +168,7 @@ class EditClientSettingsActivity :
 	}
 
 	private fun saveLibraryAndFinish() {
-		val library = library ?: return
-
-		libraryStorage.saveLibrary(library).eventually(response({
+		clientSettingsViewModel.saveLibrary().eventually(response({
 			saveButton.text = getText(R.string.btn_saved)
 			finish()
 		}, this))

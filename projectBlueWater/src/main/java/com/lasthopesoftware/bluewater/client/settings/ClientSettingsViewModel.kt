@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.RemoveLibra
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateAction
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
@@ -47,7 +48,7 @@ class ClientSettingsViewModel(
 			.must(this)
 	}
 
-	fun saveLibrary(): Promise<*> {
+	fun saveLibrary(): Promise<Unit> {
 		val localLibrary = library ?: Library(_nowPlayingId = -1)
 
 		library = localLibrary
@@ -61,7 +62,7 @@ class ClientSettingsViewModel(
 			.setIsSyncLocalConnectionsOnly(isUsingLocalConnectionForSync.value)
 			.setIsWakeOnLanEnabled(isWakeOnLanEnabled.value)
 
-		return libraryStorage.saveLibrary(localLibrary)
+		return libraryStorage.saveLibrary(localLibrary).unitResponse()
 	}
 
 	fun removeLibrary(): Promise<*> = library?.let(libraryRemoval::removeLibrary).keepPromise()
