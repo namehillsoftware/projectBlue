@@ -25,6 +25,7 @@ class LibrarySettingsViewModel(
 	private var library: Library? = null
 
 	private val mutableIsLoading = MutableStateFlow(false)
+	private val mutableIsSaving = MutableStateFlow(false)
 
 	val accessCode = MutableStateFlow("")
 	val userName = MutableStateFlow("")
@@ -36,6 +37,7 @@ class LibrarySettingsViewModel(
 	val isUsingExistingFiles = MutableStateFlow(false)
 	val isUsingLocalConnectionForSync = MutableStateFlow(false)
 	override val isLoading = mutableIsLoading.asStateFlow()
+	val isSaving = mutableIsSaving.asStateFlow()
 
 	fun loadLibrary(libraryId: LibraryId): Promise<*> {
 		mutableIsLoading.value = true
@@ -49,6 +51,7 @@ class LibrarySettingsViewModel(
 	}
 
 	fun saveLibrary(): Promise<Unit> {
+		mutableIsSaving.value = true
 		val localLibrary = library ?: Library(_nowPlayingId = -1)
 
 		library = localLibrary
@@ -62,7 +65,10 @@ class LibrarySettingsViewModel(
 			.setIsSyncLocalConnectionsOnly(isUsingLocalConnectionForSync.value)
 			.setIsWakeOnLanEnabled(isWakeOnLanEnabled.value)
 
-		return libraryStorage.saveLibrary(localLibrary).unitResponse()
+		return libraryStorage
+			.saveLibrary(localLibrary)
+			.must(this)
+			.unitResponse()
 	}
 
 	fun removeLibrary(): Promise<*> = library?.let(libraryRemoval::removeLibrary).keepPromise()
@@ -85,5 +91,6 @@ class LibrarySettingsViewModel(
 
 	override fun act() {
 		mutableIsLoading.value = false
+		mutableIsSaving.value = false
 	}
 }

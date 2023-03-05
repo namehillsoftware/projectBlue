@@ -1,12 +1,12 @@
 package com.lasthopesoftware.bluewater.client.settings
 
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -14,9 +14,12 @@ import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 
 @Composable
-private fun DataEntryRow(content: @Composable (RowScope.() -> Unit)) {
+private fun DataEntryRow(content: @Composable() (RowScope.() -> Unit)) {
 	Row(
-		verticalAlignment = Alignment.CenterVertically
+		modifier = Modifier
+			.fillMaxWidth(.8f)
+			.height(dimensionResource(id = R.dimen.standard_row_height)),
+		verticalAlignment = Alignment.CenterVertically,
 	) {
 		content()
 	}
@@ -26,25 +29,35 @@ private fun DataEntryRow(content: @Composable (RowScope.() -> Unit)) {
 fun LibrarySettingsView(librarySettingsViewModel: LibrarySettingsViewModel) {
 	Surface {
 		Column(
+			modifier = Modifier.fillMaxSize(),
 			horizontalAlignment = Alignment.CenterHorizontally,
 		) {
 			librarySettingsViewModel.apply {
-				TextField(
-					value = accessCode.collectAsState().value,
-					onValueChange = { accessCode.value = it }
-				)
+				DataEntryRow {
+					TextField(
+						modifier = Modifier.fillMaxWidth(),
+						value = accessCode.collectAsState().value,
+						onValueChange = { accessCode.value = it }
+					)
+				}
 
-				TextField(
-					value = userName.collectAsState().value,
-					onValueChange = { userName.value = it },
-				)
+				DataEntryRow {
+					TextField(
+						modifier = Modifier.fillMaxWidth(),
+						value = userName.collectAsState().value,
+						onValueChange = { userName.value = it },
+					)
+				}
 
-				TextField(
-					value = password.collectAsState().value,
-					onValueChange = { password.value = it },
-					visualTransformation = PasswordVisualTransformation(),
-					keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-				)
+				DataEntryRow {
+					TextField(
+						modifier = Modifier.fillMaxWidth(),
+						value = password.collectAsState().value,
+						onValueChange = { password.value = it },
+						visualTransformation = PasswordVisualTransformation(),
+						keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+					)
+				}
 
 				DataEntryRow {
 					Checkbox(
@@ -94,11 +107,14 @@ fun LibrarySettingsView(librarySettingsViewModel: LibrarySettingsViewModel) {
 					Text(stringResource(id = R.string.rbCustomLocation))
 				}
 
-				TextField(
-					value = customSyncPath.collectAsState().value,
-					onValueChange = { customSyncPath.value = it },
-					enabled = syncedFileLocationValue == Library.SyncedFileLocation.CUSTOM,
-				)
+				DataEntryRow {
+					TextField(
+						modifier = Modifier.fillMaxWidth(),
+						value = customSyncPath.collectAsState().value,
+						onValueChange = { customSyncPath.value = it },
+						enabled = syncedFileLocationValue == Library.SyncedFileLocation.CUSTOM,
+					)
+				}
 
 				DataEntryRow {
 					Checkbox(
@@ -118,15 +134,18 @@ fun LibrarySettingsView(librarySettingsViewModel: LibrarySettingsViewModel) {
 					Text(stringResource(id = R.string.lbl_use_existing_music))
 				}
 
-				var isSaving by mutableStateOf(false)
-				TextButton(
-					onClick = {
-						isSaving = true
-						saveLibrary()
-					},
-					enabled = !isSaving,
-				) {
-					Text(text = stringResource(id = R.string.btn_save))
+				DataEntryRow {
+					val isSavingState by isSaving.collectAsState()
+					var isSaved by remember { mutableStateOf(false) }
+					Button(
+						onClick = {
+							saveLibrary()
+								.then { isSaved = true }
+						},
+						enabled = !isSavingState && !isSaved,
+					) {
+						Text(text = if (isSaved) stringResource(id = R.string.btn_saved) else stringResource(id = R.string.btn_save))
+					}
 				}
 			}
 		}
