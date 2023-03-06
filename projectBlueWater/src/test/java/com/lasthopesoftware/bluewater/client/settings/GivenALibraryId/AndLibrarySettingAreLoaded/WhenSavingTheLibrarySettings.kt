@@ -46,7 +46,7 @@ class WhenSavingTheLibrarySettings {
 			password.value = "sl0Ha"
 			userName.value = "xw9wy0T"
 			isLocalOnly.value = !isLocalOnly.value
-			isUsingLocalConnectionForSync.value = !isUsingLocalConnectionForSync.value
+			isSyncLocalConnectionsOnly.value = !isSyncLocalConnectionsOnly.value
 			isUsingExistingFiles.value = !isUsingExistingFiles.value
 			isWakeOnLanEnabled.value = !isWakeOnLanEnabled.value
 			syncedFileLocation.value = Library.SyncedFileLocation.CUSTOM
@@ -71,7 +71,7 @@ class WhenSavingTheLibrarySettings {
 
     @Test
     fun `then sync local only connections is correct`() {
-        assertThat(services.isUsingLocalConnectionForSync.value).isFalse
+        assertThat(services.isSyncLocalConnectionsOnly.value).isFalse
     }
 
     @Test

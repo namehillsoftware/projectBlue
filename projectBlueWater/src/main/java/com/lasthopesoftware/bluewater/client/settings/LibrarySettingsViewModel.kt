@@ -35,7 +35,7 @@ class LibrarySettingsViewModel(
 	val syncedFileLocation = MutableStateFlow<Library.SyncedFileLocation?>(null)
 	val isWakeOnLanEnabled = MutableStateFlow(false)
 	val isUsingExistingFiles = MutableStateFlow(false)
-	val isUsingLocalConnectionForSync = MutableStateFlow(false)
+	val isSyncLocalConnectionsOnly = MutableStateFlow(false)
 	override val isLoading = mutableIsLoading.asStateFlow()
 	val isSaving = mutableIsSaving.asStateFlow()
 
@@ -62,7 +62,7 @@ class LibrarySettingsViewModel(
 			.setCustomSyncedFilesPath(customSyncPath.value)
 			.setSyncedFileLocation(syncedFileLocation.value)
 			.setIsUsingExistingFiles(isUsingExistingFiles.value)
-			.setIsSyncLocalConnectionsOnly(isUsingLocalConnectionForSync.value)
+			.setIsSyncLocalConnectionsOnly(isSyncLocalConnectionsOnly.value)
 			.setIsWakeOnLanEnabled(isWakeOnLanEnabled.value)
 
 		return libraryStorage
@@ -78,7 +78,7 @@ class LibrarySettingsViewModel(
 
 		isLocalOnly.value = result.isLocalOnly
 		isUsingExistingFiles.value = result.isUsingExistingFiles
-		isUsingLocalConnectionForSync.value = result.isSyncLocalConnectionsOnly
+		isSyncLocalConnectionsOnly.value = result.isSyncLocalConnectionsOnly
 		isWakeOnLanEnabled.value = result.isWakeOnLanEnabled
 
 		customSyncPath.value = result.customSyncedFilesPath ?: ""

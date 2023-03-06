@@ -180,7 +180,7 @@
 							android:layout_width="fill_parent"
 							android:layout_height="wrap_content"
 							android:text="@string/lbl_sync_local_connection"
-							android:checked="@={vm.isUsingLocalConnectionForSync}"/>
+							android:checked="@={vm.isSyncLocalConnectionsOnly}"/>
 					</LinearLayout>
 				</LinearLayout>
 

@@ -57,7 +57,7 @@ class WhenLoadingTheLibrarySettings {
 
     @Test
     fun `then sync local only connections is correct`() {
-        Assertions.assertThat(services.isUsingLocalConnectionForSync.value).isTrue
+        Assertions.assertThat(services.isSyncLocalConnectionsOnly.value).isTrue
     }
 
     @Test

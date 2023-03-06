@@ -12,6 +12,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
+import com.lasthopesoftware.bluewater.shared.android.viewmodels.collectAsMutableState
 
 @Composable
 private fun DataEntryRow(content: @Composable() (RowScope.() -> Unit)) {
@@ -34,44 +35,49 @@ fun LibrarySettingsView(librarySettingsViewModel: LibrarySettingsViewModel) {
 		) {
 			librarySettingsViewModel.apply {
 				DataEntryRow {
+					var accessCodeState by accessCode.collectAsMutableState()
 					TextField(
 						modifier = Modifier.fillMaxWidth(),
-						value = accessCode.collectAsState().value,
-						onValueChange = { accessCode.value = it }
+						value = accessCodeState,
+						onValueChange = { accessCodeState = it }
 					)
 				}
 
 				DataEntryRow {
+					var userNameState by userName.collectAsMutableState()
 					TextField(
 						modifier = Modifier.fillMaxWidth(),
-						value = userName.collectAsState().value,
-						onValueChange = { userName.value = it },
+						value = userNameState,
+						onValueChange = { userNameState = it },
 					)
 				}
 
 				DataEntryRow {
+					var passwordState by password.collectAsMutableState()
 					TextField(
 						modifier = Modifier.fillMaxWidth(),
-						value = password.collectAsState().value,
-						onValueChange = { password.value = it },
+						value = passwordState,
+						onValueChange = { passwordState = it },
 						visualTransformation = PasswordVisualTransformation(),
 						keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
 					)
 				}
 
 				DataEntryRow {
+					var isLocalOnlyState by isLocalOnly.collectAsMutableState()
 					Checkbox(
-						checked = isLocalOnly.collectAsState().value,
-						onCheckedChange = { isLocalOnly.value = it },
+						checked = isLocalOnlyState,
+						onCheckedChange = { isLocalOnlyState = it },
 					)
 
 					Text(text = stringResource(id = R.string.lbl_local_only))
 				}
 
 				DataEntryRow {
+					var isWolEnabledState by isWakeOnLanEnabled.collectAsMutableState()
 					Checkbox(
-						checked = isWakeOnLanEnabled.collectAsState().value,
-						onCheckedChange = { isWakeOnLanEnabled.value = it },
+						checked = isWolEnabledState,
+						onCheckedChange = { isWolEnabledState = it },
 					)
 
 					Text(text = stringResource(id = R.string.wake_on_lan_setting))
@@ -79,11 +85,11 @@ fun LibrarySettingsView(librarySettingsViewModel: LibrarySettingsViewModel) {
 
 				Text(stringResource(id = R.string.lblSyncMusicLocation))
 
-				val syncedFileLocationValue by syncedFileLocation.collectAsState()
+				var syncedFileLocationState by syncedFileLocation.collectAsMutableState()
 				DataEntryRow {
 					RadioButton(
-						selected = syncedFileLocationValue == Library.SyncedFileLocation.INTERNAL,
-						onClick = { syncedFileLocation.value = Library.SyncedFileLocation.INTERNAL },
+						selected = syncedFileLocationState == Library.SyncedFileLocation.INTERNAL,
+						onClick = { syncedFileLocationState = Library.SyncedFileLocation.INTERNAL },
 					)
 
 					Text(stringResource(id = R.string.rbPrivateToApp))
@@ -91,8 +97,8 @@ fun LibrarySettingsView(librarySettingsViewModel: LibrarySettingsViewModel) {
 
 				DataEntryRow {
 					RadioButton(
-						selected = syncedFileLocationValue == Library.SyncedFileLocation.EXTERNAL,
-						onClick = { syncedFileLocation.value = Library.SyncedFileLocation.EXTERNAL },
+						selected = syncedFileLocationState == Library.SyncedFileLocation.EXTERNAL,
+						onClick = { syncedFileLocationState = Library.SyncedFileLocation.EXTERNAL },
 					)
 
 					Text(stringResource(id = R.string.rbPublicLocation))
@@ -100,35 +106,38 @@ fun LibrarySettingsView(librarySettingsViewModel: LibrarySettingsViewModel) {
 
 				DataEntryRow {
 					RadioButton(
-						selected = syncedFileLocationValue == Library.SyncedFileLocation.CUSTOM,
-						onClick = { syncedFileLocation.value = Library.SyncedFileLocation.CUSTOM },
+						selected = syncedFileLocationState == Library.SyncedFileLocation.CUSTOM,
+						onClick = { syncedFileLocationState = Library.SyncedFileLocation.CUSTOM },
 					)
 
 					Text(stringResource(id = R.string.rbCustomLocation))
 				}
 
 				DataEntryRow {
+					var customSyncPathState by customSyncPath.collectAsMutableState()
 					TextField(
 						modifier = Modifier.fillMaxWidth(),
-						value = customSyncPath.collectAsState().value,
-						onValueChange = { customSyncPath.value = it },
-						enabled = syncedFileLocationValue == Library.SyncedFileLocation.CUSTOM,
+						value = customSyncPathState,
+						onValueChange = { customSyncPathState = it },
+						enabled = syncedFileLocationState == Library.SyncedFileLocation.CUSTOM,
 					)
 				}
 
 				DataEntryRow {
+					var isSyncLocalConnectionsOnlyState by isSyncLocalConnectionsOnly.collectAsMutableState()
 					Checkbox(
-						checked = isUsingLocalConnectionForSync.collectAsState().value,
-						onCheckedChange = { isUsingLocalConnectionForSync.value = it },
+						checked = isSyncLocalConnectionsOnlyState,
+						onCheckedChange = { isSyncLocalConnectionsOnlyState = it },
 					)
 
 					Text(stringResource(id = R.string.lbl_sync_local_connection))
 				}
 
 				DataEntryRow {
+					var isUsingExistingFilesState by isUsingExistingFiles.collectAsMutableState()
 					Checkbox(
-						checked = isUsingExistingFiles.collectAsState().value,
-						onCheckedChange = { isUsingExistingFiles.value = it },
+						checked = isUsingExistingFilesState,
+						onCheckedChange = { isUsingExistingFilesState = it },
 					)
 
 					Text(stringResource(id = R.string.lbl_use_existing_music))
