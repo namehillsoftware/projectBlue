@@ -1,18 +1,28 @@
 package com.lasthopesoftware.bluewater.client.settings
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.unit.dp
+import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
+import com.lasthopesoftware.bluewater.shared.android.ui.theme.ColumnMenuIcon
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.collectAsMutableState
+import com.lasthopesoftware.resources.strings.GetStringResources
 
 @Composable
 private fun DataEntryRow(content: @Composable() (RowScope.() -> Unit)) {
@@ -27,10 +37,78 @@ private fun DataEntryRow(content: @Composable() (RowScope.() -> Unit)) {
 }
 
 @Composable
-fun LibrarySettingsView(librarySettingsViewModel: LibrarySettingsViewModel) {
-	Surface {
+fun LibrarySettingsView(
+	librarySettingsViewModel: LibrarySettingsViewModel,
+	navigateApplication: NavigateApplication,
+	stringResources: GetStringResources,
+) {
+	Scaffold(
+		topBar = {
+			TopAppBar(
+				backgroundColor = MaterialTheme.colors.surface,
+			) {
+				Icon(
+					Icons.Default.ArrowBack,
+					contentDescription = "",
+					tint = MaterialTheme.colors.onSurface,
+					modifier = Modifier
+						.padding(16.dp)
+						.align(Alignment.CenterVertically)
+						.clickable(
+							interactionSource = remember { MutableInteractionSource() },
+							indication = null,
+							onClick = navigateApplication::navigateUp
+						)
+				)
+
+				Text(
+					modifier = Modifier.align(Alignment.CenterVertically).weight(1f),
+					text = stringResource(id = R.string.settings),
+				)
+
+				Row(
+					modifier = Modifier
+						.padding(8.dp)
+						.width(24.dp * 2)
+						.align(Alignment.CenterVertically)
+				) {
+					ColumnMenuIcon(
+						modifier = Modifier
+							.fillMaxHeight(),
+						onClick = {
+							navigateApplication.launchAboutActivity()
+						},
+						icon = {
+							Image(
+								painter = painterResource(id = R.drawable.ic_help),
+								contentDescription = stringResources.aboutTitle,
+								modifier = Modifier.size(24.dp)
+							)
+						},
+					)
+
+					ColumnMenuIcon(
+						modifier = Modifier
+							.fillMaxHeight(),
+						onClick = {
+//							librarySettingsViewModel.removeLibrary()
+						},
+						icon = {
+							Image(
+								painter = painterResource(id = R.drawable.ic_remove_item_36dp),
+								contentDescription = stringResources.removeServer,
+								modifier = Modifier.size(24.dp)
+							)
+						},
+					)
+				}
+			}
+		}
+	) {
 		Column(
-			modifier = Modifier.fillMaxSize(),
+			modifier = Modifier
+				.padding(it)
+				.fillMaxSize(),
 			horizontalAlignment = Alignment.CenterHorizontally,
 		) {
 			librarySettingsViewModel.apply {

@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater
 import android.content.Intent
 import android.os.Handler
 import androidx.activity.ComponentActivity
+import com.lasthopesoftware.bluewater.about.AboutActivity
 import com.lasthopesoftware.bluewater.client.browsing.BrowserEntryActivity
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsActivity.Companion.launchFileDetailsActivity
@@ -31,6 +32,10 @@ class ActivityApplicationNavigation(private val componentActivity: ComponentActi
 
 	override fun viewApplicationSettings() = loopInOperation {
 		componentActivity.startActivity(selectServerIntent)
+	}
+
+	override fun launchAboutActivity() = loopInOperation {
+		componentActivity.startActivity(Intent(componentActivity, AboutActivity::class.java))
 	}
 
 	override fun viewFileDetails(playlist: List<ServiceFile>, position: Int) = loopInOperation {

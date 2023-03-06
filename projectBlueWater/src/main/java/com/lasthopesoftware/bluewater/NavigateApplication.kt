@@ -9,6 +9,8 @@ interface NavigateApplication {
 	fun viewBrowserRoot() = Unit.toPromise()
 	fun viewApplicationSettings() = Unit.toPromise()
 
+	fun launchAboutActivity() = Unit.toPromise()
+
 	fun viewFileDetails(playlist: List<ServiceFile>, position: Int) = Unit.toPromise()
 
 	fun launchSearch(libraryId: LibraryId) = Unit.toPromise()

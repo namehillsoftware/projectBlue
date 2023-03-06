@@ -5,7 +5,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.material.ContentAlpha
 import androidx.compose.material.LocalContentColor
 import androidx.compose.material.Text
 import androidx.compose.material.ripple.rememberRipple
@@ -78,8 +77,6 @@ fun MenuIcon(
 	modifier: Modifier = Modifier,
 	label: @Composable (() -> Unit)? = null,
 	interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
-	selectedContentColor: Color = LocalContentColor.current,
-	unselectedContentColor: Color = selectedContentColor.copy(alpha = ContentAlpha.medium),
 ) {
 	Column(
 		horizontalAlignment = Alignment.CenterHorizontally,

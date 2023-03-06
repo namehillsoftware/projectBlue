@@ -11,6 +11,7 @@ import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import com.lasthopesoftware.bluewater.ActivityApplicationNavigation
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRemoval
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
@@ -89,7 +90,11 @@ class EditClientSettingsActivity :
 
 		setContent {
 			ProjectBlueTheme {
-				LibrarySettingsView(librarySettingsViewModel = librarySettingsViewModel)
+				LibrarySettingsView(
+					librarySettingsViewModel = librarySettingsViewModel,
+					navigateApplication = ActivityApplicationNavigation(this),
+					stringResources = StringResources(this)
+				)
 			}
 		}
 	}
