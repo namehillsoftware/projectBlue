@@ -4,7 +4,9 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -62,7 +64,9 @@ fun LibrarySettingsView(
 				)
 
 				Text(
-					modifier = Modifier.align(Alignment.CenterVertically).weight(1f),
+					modifier = Modifier
+						.align(Alignment.CenterVertically)
+						.weight(1f),
 					text = stringResource(id = R.string.settings),
 				)
 
@@ -104,11 +108,12 @@ fun LibrarySettingsView(
 				}
 			}
 		}
-	) {
+	) { paddingValues ->
 		Column(
 			modifier = Modifier
-				.padding(it)
-				.fillMaxSize(),
+				.padding(paddingValues)
+				.fillMaxSize()
+				.verticalScroll(rememberScrollState()),
 			horizontalAlignment = Alignment.CenterHorizontally,
 		) {
 			librarySettingsViewModel.apply {
