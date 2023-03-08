@@ -6,7 +6,6 @@ import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import android.widget.Button
 import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
@@ -28,8 +27,6 @@ import com.lasthopesoftware.bluewater.permissions.write.ApplicationWritePermissi
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
-import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
-import com.lasthopesoftware.bluewater.shared.android.view.getValue
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
@@ -45,7 +42,6 @@ class EditClientSettingsActivity :
 		private const val permissionsRequestInteger = 1
 	}
 
-	private val saveButton by LazyViewFinder<Button>(this, R.id.btnConnect)
 	private val applicationWritePermissionsRequirementsProviderLazy by lazy { ApplicationWritePermissionsRequirementsProvider(this) }
 	private val applicationReadPermissionsRequirementsProviderLazy by lazy { ApplicationReadPermissionsRequirementsProvider(this) }
 	private val libraryProvider by lazy { LibraryRepository(this) }
@@ -129,7 +125,6 @@ class EditClientSettingsActivity :
 		for (grantResult in grantResults) {
 			if (grantResult == PackageManager.PERMISSION_GRANTED) continue
 			Toast.makeText(this, R.string.permissions_must_be_granted_for_settings, Toast.LENGTH_LONG).show()
-			saveButton.isEnabled = true
 			return
 		}
 
@@ -137,8 +132,6 @@ class EditClientSettingsActivity :
 	}
 
 	override fun onClick(v: View?) {
-		saveButton.isEnabled = false
-
 		val permissionsToRequest = ArrayList<String>(2)
 //		if (applicationReadPermissionsRequirementsProviderLazy.isReadPermissionsRequiredForLibrary(localLibrary))
 //			permissionsToRequest.add(Manifest.permission.READ_EXTERNAL_STORAGE)
@@ -160,7 +153,6 @@ class EditClientSettingsActivity :
 
 	private fun saveLibraryAndFinish() {
 		librarySettingsViewModel.saveLibrary().eventually(response({
-			saveButton.text = getText(R.string.btn_saved)
 			finish()
 		}, this))
 	}

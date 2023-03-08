@@ -27,7 +27,7 @@ import com.lasthopesoftware.bluewater.shared.android.viewmodels.collectAsMutable
 import com.lasthopesoftware.resources.strings.GetStringResources
 
 @Composable
-private fun DataEntryRow(content: @Composable() (RowScope.() -> Unit)) {
+private fun DataEntryRow(content: @Composable (RowScope.() -> Unit)) {
 	Row(
 		modifier = Modifier
 			.fillMaxWidth(.8f)
@@ -108,10 +108,10 @@ fun LibrarySettingsView(
 				}
 			}
 		}
-	) { paddingValues ->
+	) { padding ->
 		Column(
 			modifier = Modifier
-				.padding(paddingValues)
+				.padding(padding)
 				.fillMaxSize()
 				.verticalScroll(rememberScrollState()),
 			horizontalAlignment = Alignment.CenterHorizontally,
