@@ -3,8 +3,6 @@ package com.lasthopesoftware.bluewater.client.settings
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.view.Menu
-import android.view.MenuItem
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
@@ -13,9 +11,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRemo
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.browsing.library.views.RemoveLibraryConfirmationDialogBuilder
 import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettingsLookup
 import com.lasthopesoftware.bluewater.client.connection.settings.changes.ObservableConnectionSettingsLibraryStorage
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
@@ -28,6 +24,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
+import com.lasthopesoftware.resources.closables.lazyScoped
 import com.lasthopesoftware.resources.strings.StringResources
 import com.namehillsoftware.handoff.promises.Promise
 import java.util.concurrent.ConcurrentHashMap
@@ -53,23 +50,7 @@ class EditClientSettingsActivity :
         )
 	}
 	private val applicationSettingsRepository by lazy { getApplicationSettingsRepository() }
-	private val applicationMessageBus by lazy { getApplicationMessageBus().getScopedMessageBus() }
-	private val settingsMenu by lazy {
-		EditClientSettingsMenu(
-			this,
-			StringResources(this),
-			RemoveLibraryConfirmationDialogBuilder(
-				this,
-				LibraryRemoval(
-					StoredItemAccess(this),
-					libraryStorage,
-					getCachedSelectedLibraryIdProvider(),
-					libraryProvider,
-					BrowserLibrarySelection(applicationSettingsRepository, applicationMessageBus, libraryProvider)
-				)
-			)
-		)
-	}
+	private val applicationMessageBus by lazyScoped { getApplicationMessageBus().getScopedMessageBus() }
 	private val librarySettingsViewModel by buildViewModelLazily {
 		LibrarySettingsViewModel(
 			libraryProvider,
@@ -91,8 +72,6 @@ class EditClientSettingsActivity :
 
 	private val permissionsRequests = ConcurrentHashMap<Int, (Map<String, Boolean>) -> Unit>()
 
-	private var library: Library? = null
-
 	public override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
@@ -107,8 +86,6 @@ class EditClientSettingsActivity :
 		}
 	}
 
-	override fun onCreateOptionsMenu(menu: Menu): Boolean = settingsMenu.buildSettingsMenu(menu)
-
 	override fun onStart() {
 		super.onStart()
 		initializeLibrary(intent)
@@ -118,9 +95,6 @@ class EditClientSettingsActivity :
 		super.onNewIntent(intent)
 		initializeLibrary(intent)
 	}
-
-	override fun onOptionsItemSelected(item: MenuItem): Boolean =
-		settingsMenu.handleSettingsMenuClicks(item, library)
 
 	private fun initializeLibrary(intent: Intent) {
 		val libraryId = intent.getIntExtra(serverIdExtra, -1)
@@ -153,10 +127,5 @@ class EditClientSettingsActivity :
 		val request = permissionsRequests[requestCode] ?: return
 
 		request(grantResults.zip(permissions).associate { (r, p) -> Pair(p, r == PackageManager.PERMISSION_GRANTED) })
-	}
-
-	override fun onDestroy() {
-		super.onDestroy()
-		applicationMessageBus.close()
 	}
 }
