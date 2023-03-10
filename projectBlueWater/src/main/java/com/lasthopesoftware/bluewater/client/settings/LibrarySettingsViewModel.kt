@@ -14,7 +14,6 @@ import com.lasthopesoftware.bluewater.permissions.write.ProvideWritePermissionsR
 import com.lasthopesoftware.bluewater.shared.android.permissions.ManagePermissions
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateAction
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
@@ -29,7 +28,7 @@ class LibrarySettingsViewModel(
 	private val applicationReadPermissionsRequirementsProvider: ProvideReadPermissionsRequirements,
 	private val applicationWritePermissionsRequirementsProvider: ProvideWritePermissionsRequirements,
 	private val permissionsManager: ManagePermissions,
-) : ViewModel(), PromisedResponse<Map<String, Boolean>, Unit>, ImmediateResponse<Library?, Unit>, TrackLoadedViewState, ImmediateAction
+) : ViewModel(), PromisedResponse<Map<String, Boolean>, Boolean>, ImmediateResponse<Library?, Unit>, TrackLoadedViewState, ImmediateAction
 {
 	private var library: Library? = null
 
@@ -61,7 +60,7 @@ class LibrarySettingsViewModel(
 			.must(this)
 	}
 
-	fun saveLibrary(): Promise<Unit> {
+	fun saveLibrary(): Promise<Boolean> {
 		mutableIsSaving.value = true
 		val localLibrary = library ?: Library(_nowPlayingId = -1)
 
@@ -106,17 +105,19 @@ class LibrarySettingsViewModel(
 		password.value = result.password ?: ""
 	}
 
-	override fun promiseResponse(resolution: Map<String, Boolean>): Promise<Unit> {
+	override fun promiseResponse(resolution: Map<String, Boolean>): Promise<Boolean> {
 		val isPermissionsNeeded = resolution.values.any { !it }
 		mutableIsPermissionsNeeded.value = isPermissionsNeeded
 
-		val localLibrary = library ?: return Unit.toPromise()
+		if (isPermissionsNeeded) return false.toPromise()
+
+		val localLibrary = library ?: return false.toPromise()
 
 		library = localLibrary
 
 		return libraryStorage
 			.saveLibrary(localLibrary)
-			.unitResponse()
+			.then { l -> l != null }
 	}
 
 	override fun act() {

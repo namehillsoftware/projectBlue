@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.settings.GivenALibraryId.AndLibrarySettingAreLoaded
+package com.lasthopesoftware.bluewater.client.settings.GivenALibraryId.AndLibrarySettingAreLoaded.AndNotAllPermissionsAreGranted
 
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
@@ -36,14 +36,20 @@ class WhenSavingTheLibrarySettings {
             libraryRepository,
             mockk(),
 			mockk {
-				every { isReadPermissionsRequiredForLibrary(any()) } returns false
+				every { isReadPermissionsRequiredForLibrary(any()) } returns true
 			},
 			mockk {
-				every { isWritePermissionsRequiredForLibrary(any()) } returns false
+				every { isWritePermissionsRequiredForLibrary(any()) } returns true
 			},
 			mockk {
 				every { requestPermissions(any()) } answers {
-					firstArg<List<String>>().associateWith { true }.toPromise()
+					var lastResult = false
+					firstArg<List<String>>()
+						.associateWith {
+							lastResult = !lastResult
+							lastResult
+						}
+						.toPromise()
 				}
 			},
         )
@@ -69,13 +75,13 @@ class WhenSavingTheLibrarySettings {
     }
 
 	@Test
-	fun `then the library is saved`() {
-		assertThat(isSaved).isTrue
+	fun `then the library is not saved`() {
+		assertThat(isSaved).isFalse
 	}
 
 	@Test
-	fun `then permissions are not required`() {
-		assertThat(services.isPermissionsNeeded.value).isFalse
+	fun `then permissions are required`() {
+		assertThat(services.isPermissionsNeeded.value).isTrue
 	}
 
     @Test
