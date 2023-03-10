@@ -26,6 +26,7 @@ import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMes
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
 import com.lasthopesoftware.resources.closables.lazyScoped
 import com.lasthopesoftware.resources.strings.StringResources
+import com.namehillsoftware.handoff.Messenger
 import com.namehillsoftware.handoff.promises.Promise
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
@@ -70,7 +71,7 @@ class EditClientSettingsActivity :
 
 	private val permissionsRequestRef = AtomicInteger(0)
 
-	private val permissionsRequests = ConcurrentHashMap<Int, (Map<String, Boolean>) -> Unit>()
+	private val permissionsRequests = ConcurrentHashMap<Int, Messenger<Map<String, Boolean>>>()
 
 	public override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -104,28 +105,23 @@ class EditClientSettingsActivity :
 	}
 
 	override fun requestPermissions(permissions: List<String>): Promise<Map<String, Boolean>> {
-		return object : Promise<Map<String, Boolean>>() {
-			init {
-				val requestId = permissionsRequestRef.getAndIncrement()
-				permissionsRequests[requestId] = {
-					permissionsRequests.remove(requestId)
-					resolve(it)
-				}
+		return if (permissions.isEmpty()) Promise(emptyMap())
+		else Promise<Map<String, Boolean>> { messenger ->
+			val requestId = permissionsRequestRef.getAndIncrement()
+			permissionsRequests[requestId] = messenger
 
-				ActivityCompat.requestPermissions(
-					this@EditClientSettingsActivity,
-					permissions.toTypedArray(),
-					requestId
-				)
-			}
+			ActivityCompat.requestPermissions(
+				this@EditClientSettingsActivity,
+				permissions.toTypedArray(),
+				requestId
+			)
 		}
 	}
 
 	override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
 		super.onRequestPermissionsResult(requestCode, permissions, grantResults)
 
-		val request = permissionsRequests[requestCode] ?: return
-
-		request(grantResults.zip(permissions).associate { (r, p) -> Pair(p, r == PackageManager.PERMISSION_GRANTED) })
+		permissionsRequests.remove(requestCode)
+			?.sendResolution(grantResults.zip(permissions).associate { (r, p) -> Pair(p, r == PackageManager.PERMISSION_GRANTED) })
 	}
 }
