@@ -9,12 +9,13 @@ import android.os.IBinder
 import com.lasthopesoftware.bluewater.shared.cls
 import com.namehillsoftware.handoff.promises.Promise
 
-inline fun <reified TService : Service> Context.promiseBoundService(): Promise<ConnectedServiceBinding<TService>> {
-	val c = cls<TService>()
-	val intent = Intent(this, c)
-	return object : Promise<ConnectedServiceBinding<TService>>() {
+inline fun <reified TService : Service> Context.promiseBoundService(): Promise<ConnectedServiceBinding<TService>> =
+	object : Promise<ConnectedServiceBinding<TService>>() {
 		init {
 			try {
+				val c = cls<TService>()
+				val intent = Intent(this@promiseBoundService, c)
+
 				bindService(intent, object : ServiceConnection {
 					override fun onServiceConnected(name: ComponentName?, service: IBinder) {
 						val boundService = (service as? GenericBinder<*>)?.service as? TService
@@ -42,4 +43,3 @@ inline fun <reified TService : Service> Context.promiseBoundService(): Promise<C
 			}
 		}
 	}
-}

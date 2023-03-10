@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.settings
 
+import android.Manifest
 import android.os.Environment
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.TrackLoadedViewState
@@ -8,11 +9,16 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibrarySto
 import com.lasthopesoftware.bluewater.client.browsing.library.access.RemoveLibraries
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.permissions.read.ProvideReadPermissionsRequirements
+import com.lasthopesoftware.bluewater.permissions.write.ProvideWritePermissionsRequirements
+import com.lasthopesoftware.bluewater.shared.android.permissions.ManagePermissions
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateAction
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
+import com.namehillsoftware.handoff.promises.response.PromisedResponse
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
@@ -20,12 +26,16 @@ class LibrarySettingsViewModel(
 	private val libraryProvider: ILibraryProvider,
 	private val libraryStorage: ILibraryStorage,
 	private val libraryRemoval: RemoveLibraries,
-) : ViewModel(), ImmediateResponse<Library?, Unit>, TrackLoadedViewState, ImmediateAction
+	private val applicationReadPermissionsRequirementsProvider: ProvideReadPermissionsRequirements,
+	private val applicationWritePermissionsRequirementsProvider: ProvideWritePermissionsRequirements,
+	private val permissionsManager: ManagePermissions,
+) : ViewModel(), PromisedResponse<Map<String, Boolean>, Unit>, ImmediateResponse<Library?, Unit>, TrackLoadedViewState, ImmediateAction
 {
 	private var library: Library? = null
 
 	private val mutableIsLoading = MutableStateFlow(false)
 	private val mutableIsSaving = MutableStateFlow(false)
+	private val mutableIsPermissionsNeeded = MutableStateFlow(false)
 
 	val accessCode = MutableStateFlow("")
 	val userName = MutableStateFlow("")
@@ -38,6 +48,7 @@ class LibrarySettingsViewModel(
 	val isSyncLocalConnectionsOnly = MutableStateFlow(false)
 	override val isLoading = mutableIsLoading.asStateFlow()
 	val isSaving = mutableIsSaving.asStateFlow()
+	val isPermissionsNeeded = mutableIsPermissionsNeeded.asStateFlow()
 
 	fun loadLibrary(libraryId: LibraryId): Promise<*> {
 		mutableIsLoading.value = true
@@ -65,10 +76,16 @@ class LibrarySettingsViewModel(
 			.setIsSyncLocalConnectionsOnly(isSyncLocalConnectionsOnly.value)
 			.setIsWakeOnLanEnabled(isWakeOnLanEnabled.value)
 
-		return libraryStorage
-			.saveLibrary(localLibrary)
+		val permissionsToRequest = ArrayList<String>(2)
+		if (applicationReadPermissionsRequirementsProvider.isReadPermissionsRequiredForLibrary(localLibrary))
+			permissionsToRequest.add(Manifest.permission.READ_EXTERNAL_STORAGE)
+		if (applicationWritePermissionsRequirementsProvider.isWritePermissionsRequiredForLibrary(localLibrary))
+			permissionsToRequest.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+
+		return permissionsManager
+			.requestPermissions(permissionsToRequest)
+			.eventually(this)
 			.must(this)
-			.unitResponse()
 	}
 
 	fun removeLibrary(): Promise<*> = library?.let(libraryRemoval::removeLibrary).keepPromise()
@@ -81,12 +98,25 @@ class LibrarySettingsViewModel(
 		isSyncLocalConnectionsOnly.value = result.isSyncLocalConnectionsOnly
 		isWakeOnLanEnabled.value = result.isWakeOnLanEnabled
 
-		customSyncPath.value = result.customSyncedFilesPath ?: ""
+		customSyncPath.value = result.customSyncedFilesPath ?: Environment.getExternalStorageDirectory()?.path ?: ""
 		syncedFileLocation.value = result.syncedFileLocation
 
 		accessCode.value = result.accessCode ?: ""
 		userName.value = result.userName ?: ""
 		password.value = result.password ?: ""
+	}
+
+	override fun promiseResponse(resolution: Map<String, Boolean>): Promise<Unit> {
+		val isPermissionsNeeded = resolution.values.any { !it }
+		mutableIsPermissionsNeeded.value = isPermissionsNeeded
+
+		val localLibrary = library ?: return Unit.toPromise()
+
+		library = localLibrary
+
+		return libraryStorage
+			.saveLibrary(localLibrary)
+			.unitResponse()
 	}
 
 	override fun act() {

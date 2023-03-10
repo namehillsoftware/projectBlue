@@ -10,7 +10,7 @@ import com.lasthopesoftware.storage.write.permissions.IStorageWritePermissionArb
 class ApplicationWritePermissionsRequirementsProvider(
     private val storageWritePermissionsRequirementsProvider: ILibraryStorageWritePermissionsRequirementsProvider,
     private val storageWritePermissionArbitratorForOs: IStorageWritePermissionArbitratorForOs
-) : IApplicationWritePermissionsRequirementsProvider {
+) : ProvideWritePermissionsRequirements {
     constructor(context: Context?) : this(
         LibraryStorageWritePermissionsRequirementsProvider(),
         ExternalStorageWritePermissionsArbitratorForOs(context)

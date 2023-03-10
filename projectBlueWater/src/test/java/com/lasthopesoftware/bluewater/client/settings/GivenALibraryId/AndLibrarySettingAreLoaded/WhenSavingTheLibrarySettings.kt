@@ -34,6 +34,9 @@ class WhenSavingTheLibrarySettings {
             libraryRepository,
             libraryRepository,
             mockk(),
+			mockk(),
+			mockk(),
+			mockk(),
         )
     }
 

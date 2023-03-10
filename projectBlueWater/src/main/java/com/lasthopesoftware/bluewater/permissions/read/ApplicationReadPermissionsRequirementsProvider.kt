@@ -10,7 +10,7 @@ import com.lasthopesoftware.storage.read.permissions.IStorageReadPermissionArbit
 class ApplicationReadPermissionsRequirementsProvider(
     private val libraryStorageReadPermissionsRequirementsProvider: ILibraryStorageReadPermissionsRequirementsProvider,
     private val storageReadPermissionArbitratorForOs: IStorageReadPermissionArbitratorForOs
-) : IApplicationReadPermissionsRequirementsProvider {
+) : ProvideReadPermissionsRequirements {
     constructor(context: Context) : this(
         LibraryStorageReadPermissionsRequirementsProvider(),
         ExternalStorageReadPermissionsArbitratorForOs(context)

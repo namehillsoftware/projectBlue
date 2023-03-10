@@ -20,6 +20,18 @@ fun <T> MutableStateFlow<T>.collectAsMutableState(
 				mutableState.value = it
 			}
 		} else withContext(context) {
+			snapshotFlow { mutableState.value }.collect {
+				value = it
+			}
+		}
+	}
+
+	LaunchedEffect(key1 = this) {
+		if (context == EmptyCoroutineContext) {
+			collect {
+				mutableState.value = it
+			}
+		} else withContext(context) {
 			collect {
 				mutableState.value = it
 			}

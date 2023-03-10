@@ -5,13 +5,10 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
-import android.view.View
-import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.lasthopesoftware.bluewater.ActivityApplicationNavigation
-import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRemoval
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
@@ -26,24 +23,27 @@ import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermission
 import com.lasthopesoftware.bluewater.permissions.write.ApplicationWritePermissionsRequirementsProvider
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
+import com.lasthopesoftware.bluewater.shared.android.permissions.ManagePermissions
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
-import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
 import com.lasthopesoftware.resources.strings.StringResources
+import com.namehillsoftware.handoff.promises.Promise
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicInteger
 
 class EditClientSettingsActivity :
 	AppCompatActivity(),
-	View.OnClickListener
+	ActivityCompat.OnRequestPermissionsResultCallback,
+	ManagePermissions
 {
 	companion object {
 		val serverIdExtra by lazy { MagicPropertyBuilder.buildMagicPropertyName<EditClientSettingsActivity>("serverIdExtra") }
-		private const val permissionsRequestInteger = 1
 	}
 
-	private val applicationWritePermissionsRequirementsProviderLazy by lazy { ApplicationWritePermissionsRequirementsProvider(this) }
-	private val applicationReadPermissionsRequirementsProviderLazy by lazy { ApplicationReadPermissionsRequirementsProvider(this) }
+	private val applicationWritePermissionsRequirementsProvider by lazy { ApplicationWritePermissionsRequirementsProvider(this) }
+	private val applicationReadPermissionsRequirementsProvider by lazy { ApplicationReadPermissionsRequirementsProvider(this) }
 	private val libraryProvider by lazy { LibraryRepository(this) }
 	private val libraryStorage by lazy {
 		ObservableConnectionSettingsLibraryStorage(
@@ -65,7 +65,10 @@ class EditClientSettingsActivity :
 					libraryStorage,
 					getCachedSelectedLibraryIdProvider(),
 					libraryProvider,
-					BrowserLibrarySelection(applicationSettingsRepository, applicationMessageBus, libraryProvider))))
+					BrowserLibrarySelection(applicationSettingsRepository, applicationMessageBus, libraryProvider)
+				)
+			)
+		)
 	}
 	private val librarySettingsViewModel by buildViewModelLazily {
 		LibrarySettingsViewModel(
@@ -76,9 +79,18 @@ class EditClientSettingsActivity :
 				libraryStorage,
 				getCachedSelectedLibraryIdProvider(),
 				libraryProvider,
-				BrowserLibrarySelection(applicationSettingsRepository, applicationMessageBus, libraryProvider))
+				BrowserLibrarySelection(applicationSettingsRepository, applicationMessageBus, libraryProvider)
+			),
+			applicationReadPermissionsRequirementsProvider,
+			applicationWritePermissionsRequirementsProvider,
+			this
 		)
 	}
+
+	private val permissionsRequestRef = AtomicInteger(0)
+
+	private val permissionsRequests = ConcurrentHashMap<Int, (Map<String, Boolean>) -> Unit>()
+
 	private var library: Library? = null
 
 	public override fun onCreate(savedInstanceState: Bundle?) {
@@ -117,43 +129,34 @@ class EditClientSettingsActivity :
 		librarySettingsViewModel.loadLibrary(LibraryId(libraryId))
 	}
 
+	override fun requestPermissions(permissions: List<String>): Promise<Map<String, Boolean>> {
+		return object : Promise<Map<String, Boolean>>() {
+			init {
+				val requestId = permissionsRequestRef.getAndIncrement()
+				permissionsRequests[requestId] = {
+					permissionsRequests.remove(requestId)
+					resolve(it)
+				}
+
+				ActivityCompat.requestPermissions(
+					this@EditClientSettingsActivity,
+					permissions.toTypedArray(),
+					requestId
+				)
+			}
+		}
+	}
+
 	override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
 		super.onRequestPermissionsResult(requestCode, permissions, grantResults)
 
-		if (requestCode != permissionsRequestInteger) return
+		val request = permissionsRequests[requestCode] ?: return
 
-		for (grantResult in grantResults) {
-			if (grantResult == PackageManager.PERMISSION_GRANTED) continue
-			Toast.makeText(this, R.string.permissions_must_be_granted_for_settings, Toast.LENGTH_LONG).show()
-			return
-		}
-
-		saveLibraryAndFinish()
-	}
-
-	override fun onClick(v: View?) {
-		val permissionsToRequest = ArrayList<String>(2)
-//		if (applicationReadPermissionsRequirementsProviderLazy.isReadPermissionsRequiredForLibrary(localLibrary))
-//			permissionsToRequest.add(Manifest.permission.READ_EXTERNAL_STORAGE)
-//		if (applicationWritePermissionsRequirementsProviderLazy.isWritePermissionsRequiredForLibrary(localLibrary))
-//			permissionsToRequest.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-
-		if (permissionsToRequest.size > 0) {
-			val permissionsToRequestArray = permissionsToRequest.toTypedArray()
-			ActivityCompat.requestPermissions(this, permissionsToRequestArray, permissionsRequestInteger)
-		} else {
-			saveLibraryAndFinish()
-		}
+		request(grantResults.zip(permissions).associate { (r, p) -> Pair(p, r == PackageManager.PERMISSION_GRANTED) })
 	}
 
 	override fun onDestroy() {
 		super.onDestroy()
 		applicationMessageBus.close()
-	}
-
-	private fun saveLibraryAndFinish() {
-		librarySettingsViewModel.saveLibrary().eventually(response({
-			finish()
-		}, this))
 	}
 }
