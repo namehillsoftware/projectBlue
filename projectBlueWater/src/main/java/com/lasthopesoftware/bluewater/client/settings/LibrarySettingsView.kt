@@ -87,6 +87,7 @@ fun LibrarySettingsView(
 	Surface {
 		var accessCodeState by librarySettingsViewModel.accessCode.collectAsMutableState()
 
+		val scope = rememberCoroutineScope()
 		val libraryRemovalRequested by librarySettingsViewModel.isRemovalRequested.collectAsState()
 		if (libraryRemovalRequested) {
 			AlertDialog(
@@ -106,9 +107,10 @@ fun LibrarySettingsView(
 
 						Button(
 							onClick = {
-								librarySettingsViewModel
-									.removeLibrary()
-									.then { navigateApplication.navigateUp() }
+								scope.launch {
+									librarySettingsViewModel.removeLibrary().suspend()
+									navigateApplication.navigateUp()
+								}
 							},
 						) {
 							Text(text = stringResource(id = R.string.yes))
@@ -363,7 +365,6 @@ fun LibrarySettingsView(
 
 					val isSavingState by isSaving.collectAsState()
 					var isSaved by remember { mutableStateOf(false) }
-					val scope = rememberCoroutineScope()
 					Button(
 						onClick = {
 							scope.launch {
