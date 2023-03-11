@@ -190,7 +190,7 @@ fun LibrarySettingsView(
 					) {
 						val textModifier = Modifier.alpha(acceleratedToolbarStateProgress)
 
-						if (acceleratedHeaderHidingProgress < 1) {
+						if (menuWidth > iconSize * 2) {
 							ColumnMenuIcon(
 								modifier = Modifier
 									.fillMaxHeight(),
