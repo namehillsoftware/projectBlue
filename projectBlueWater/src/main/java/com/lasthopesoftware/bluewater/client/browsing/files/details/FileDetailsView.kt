@@ -89,7 +89,7 @@ private fun StaticFileMenu(viewModel: FileDetailsViewModel, coverArtColorState: 
 
 			val playLabel = stringResource(id = R.string.btn_play)
 			ColumnMenuIcon(
-				onClick = { viewModel.addToNowPlaying() },
+				onClick = { viewModel.play() },
 				icon = {
 					Image(
 						painter = painterResource(id = R.drawable.av_play_white),
@@ -531,7 +531,7 @@ internal fun FileDetailsView(@PreviewParameter(FileDetailsPreviewProvider::class
 
 						val playLabel = stringResource(id = R.string.btn_play)
 						ColumnMenuIcon(
-							onClick = { viewModel.addToNowPlaying() },
+							onClick = { viewModel.play() },
 							icon = {
 								Image(
 									painter = painterResource(id = R.drawable.av_play_white),
