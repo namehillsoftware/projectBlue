@@ -31,7 +31,9 @@ import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ColumnMenuIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.collectAsMutableState
+import com.lasthopesoftware.bluewater.shared.promises.extensions.suspend
 import com.lasthopesoftware.resources.strings.GetStringResources
+import kotlinx.coroutines.launch
 import me.onebone.toolbar.CollapsingToolbarScaffold
 import me.onebone.toolbar.ScrollStrategy
 import me.onebone.toolbar.rememberCollapsingToolbarScaffoldState
@@ -361,13 +363,14 @@ fun LibrarySettingsView(
 
 					val isSavingState by isSaving.collectAsState()
 					var isSaved by remember { mutableStateOf(false) }
+					val scope = rememberCoroutineScope()
 					Button(
 						onClick = {
-							saveLibrary()
-								.then {
-									isSaved = true
-									navigateApplication.navigateUp()
-								}
+							scope.launch {
+								saveLibrary().suspend()
+								isSaved = true
+								navigateApplication.navigateUp()
+							}
 						},
 						enabled = !isSavingState && !isSaved,
 					) {
