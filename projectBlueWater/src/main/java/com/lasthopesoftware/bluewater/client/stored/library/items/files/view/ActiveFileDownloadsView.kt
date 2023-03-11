@@ -39,7 +39,6 @@ import me.onebone.toolbar.ScrollStrategy
 import me.onebone.toolbar.rememberCollapsingToolbarScaffoldState
 import kotlin.math.pow
 
-
 private const val expandedTitleHeight = 84
 private const val expandedIconSize = 44
 private const val expandedMenuVerticalPadding = 8

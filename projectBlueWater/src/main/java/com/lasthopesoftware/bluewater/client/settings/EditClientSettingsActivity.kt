@@ -40,6 +40,7 @@ class EditClientSettingsActivity :
 		val serverIdExtra by lazy { MagicPropertyBuilder.buildMagicPropertyName<EditClientSettingsActivity>("serverIdExtra") }
 	}
 
+	private val applicationMessageBus by lazyScoped { getApplicationMessageBus().getScopedMessageBus() }
 	private val applicationWritePermissionsRequirementsProvider by lazy { ApplicationWritePermissionsRequirementsProvider(this) }
 	private val applicationReadPermissionsRequirementsProvider by lazy { ApplicationReadPermissionsRequirementsProvider(this) }
 	private val libraryProvider by lazy { LibraryRepository(this) }
@@ -51,7 +52,6 @@ class EditClientSettingsActivity :
         )
 	}
 	private val applicationSettingsRepository by lazy { getApplicationSettingsRepository() }
-	private val applicationMessageBus by lazyScoped { getApplicationMessageBus().getScopedMessageBus() }
 	private val librarySettingsViewModel by buildViewModelLazily {
 		LibrarySettingsViewModel(
 			libraryProvider,
