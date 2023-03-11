@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.settings
 
+import android.os.Environment
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -19,6 +20,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.NavigateApplication
@@ -52,6 +54,26 @@ private fun DataEntryRow(content: @Composable (RowScope.() -> Unit)) {
 	) {
 		content()
 	}
+}
+
+@Composable
+private fun StandardTextField(
+	placeholder: String,
+	value: String,
+	onValueChange: (String) -> Unit,
+	enabled: Boolean = true,
+	visualTransformation: VisualTransformation = VisualTransformation.None,
+	keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+) {
+	TextField(
+		modifier = Modifier.fillMaxWidth(),
+		value = value,
+		placeholder = { Text(placeholder) },
+		onValueChange = onValueChange,
+		maxLines = 1,
+		visualTransformation = visualTransformation,
+		keyboardOptions = keyboardOptions,
+	)
 }
 
 @Composable
@@ -168,20 +190,22 @@ fun LibrarySettingsView(
 					) {
 						val textModifier = Modifier.alpha(acceleratedToolbarStateProgress)
 
-						ColumnMenuIcon(
-							modifier = Modifier
-								.fillMaxHeight(),
-							onClick = librarySettingsViewModel::requestLibraryRemoval,
-							icon = {
-								Image(
-									painter = painterResource(id = R.drawable.ic_remove_item_36dp),
-									contentDescription = stringResources.removeServer,
-									modifier = Modifier.size(iconSize)
-								)
-							},
-							label = if (acceleratedHeaderHidingProgress < 1) stringResources.removeServer else null,
-							labelModifier = textModifier,
-						)
+						if (acceleratedHeaderHidingProgress < 1) {
+							ColumnMenuIcon(
+								modifier = Modifier
+									.fillMaxHeight(),
+								onClick = librarySettingsViewModel::requestLibraryRemoval,
+								icon = {
+									Image(
+										painter = painterResource(id = R.drawable.ic_remove_item_36dp),
+										contentDescription = stringResources.removeServer,
+										modifier = Modifier.size(iconSize)
+									)
+								},
+								label = stringResources.removeServer,
+								labelModifier = textModifier,
+							)
+						}
 
 						ColumnMenuIcon(
 							modifier = Modifier
@@ -228,8 +252,8 @@ fun LibrarySettingsView(
 			) {
 				librarySettingsViewModel.apply {
 					DataEntryRow {
-						TextField(
-							modifier = Modifier.fillMaxWidth(),
+						StandardTextField(
+							placeholder = stringResource(R.string.lbl_access_code),
 							value = accessCodeState,
 							onValueChange = { accessCodeState = it }
 						)
@@ -237,17 +261,17 @@ fun LibrarySettingsView(
 
 					DataEntryRow {
 						var userNameState by userName.collectAsMutableState()
-						TextField(
-							modifier = Modifier.fillMaxWidth(),
+						StandardTextField(
+							placeholder = stringResource(R.string.lbl_user_name),
 							value = userNameState,
-							onValueChange = { userNameState = it },
+							onValueChange = { userNameState = it }
 						)
 					}
 
 					DataEntryRow {
 						var passwordState by password.collectAsMutableState()
-						TextField(
-							modifier = Modifier.fillMaxWidth(),
+						StandardTextField(
+							placeholder = stringResource(R.string.lbl_password),
 							value = passwordState,
 							onValueChange = { passwordState = it },
 							visualTransformation = PasswordVisualTransformation(),
@@ -307,8 +331,8 @@ fun LibrarySettingsView(
 
 					DataEntryRow {
 						var customSyncPathState by customSyncPath.collectAsMutableState()
-						TextField(
-							modifier = Modifier.fillMaxWidth(),
+						StandardTextField(
+							placeholder = Environment.getExternalStorageDirectory()?.path ?: "",
 							value = customSyncPathState,
 							onValueChange = { customSyncPathState = it },
 							enabled = syncedFileLocationState == Library.SyncedFileLocation.CUSTOM,
@@ -340,7 +364,10 @@ fun LibrarySettingsView(
 					Button(
 						onClick = {
 							saveLibrary()
-								.then { isSaved = true }
+								.then {
+									isSaved = true
+									navigateApplication.navigateUp()
+								}
 						},
 						enabled = !isSavingState && !isSaved,
 					) {
