@@ -35,10 +35,12 @@ import me.onebone.toolbar.ScrollStrategy
 import me.onebone.toolbar.rememberCollapsingToolbarScaffoldState
 import kotlin.math.pow
 
-private const val expandedTitleHeight = 84
-private const val expandedIconSize = 44
-private const val expandedMenuVerticalPadding = 8
-private val appBarHeight = Dimensions.AppBarHeight.value
+private val expandedTitleHeight = 84.dp
+private val expandedIconSize = 48.dp
+private val expandedMenuVerticalPadding = 8.dp
+private val collapsedTopRowPadding = 6.dp
+private val appBarHeight = Dimensions.AppBarHeight
+private val boxHeight = expandedTitleHeight + expandedIconSize + expandedMenuVerticalPadding * 2 + appBarHeight
 
 @Composable
 private fun DataEntryRow(content: @Composable (RowScope.() -> Unit)) {
@@ -59,6 +61,55 @@ fun LibrarySettingsView(
 	stringResources: GetStringResources,
 ) {
 	Surface {
+		var accessCodeState by librarySettingsViewModel.accessCode.collectAsMutableState()
+
+		val libraryRemovalRequested by librarySettingsViewModel.isRemovalRequested.collectAsState()
+		if (libraryRemovalRequested) {
+			AlertDialog(
+				onDismissRequest = librarySettingsViewModel::cancelLibraryRemovalRequest,
+				buttons = {
+					Row(
+						modifier = Modifier
+							.fillMaxWidth()
+							.padding(Dimensions.ViewPadding),
+						horizontalArrangement = Arrangement.SpaceEvenly,
+					) {
+						Button(
+							onClick = librarySettingsViewModel::cancelLibraryRemovalRequest,
+						) {
+							Text(text = stringResource(id = R.string.no))
+						}
+
+						Button(
+							onClick = {
+								librarySettingsViewModel
+									.removeLibrary()
+									.then { navigateApplication.navigateUp() }
+							},
+						) {
+							Text(text = stringResource(id = R.string.yes))
+						}
+					}
+				},
+				title = {
+					Text(
+						text = stringResource(id = R.string.removeServer),
+					)
+				},
+				text = {
+					Box(
+						modifier = Modifier
+							.padding(Dimensions.ViewPadding)
+							.fillMaxWidth()
+							.heightIn(100.dp, 300.dp),
+						contentAlignment = Alignment.Center
+					) {
+						Text(stringResource(id = R.string.confirmServerRemoval, accessCodeState))
+					}
+				}
+			)
+		}
+
 		val toolbarState = rememberCollapsingToolbarScaffoldState()
 		val headerHidingProgress by remember { derivedStateOf(structuralEqualityPolicy()) { 1 - toolbarState.toolbarState.progress } }
 
@@ -68,15 +119,13 @@ fun LibrarySettingsView(
 			scrollStrategy = ScrollStrategy.ExitUntilCollapsed,
 			modifier = Modifier.fillMaxSize(),
 			toolbar = {
-				val topPadding by remember { derivedStateOf(structuralEqualityPolicy()) { (appBarHeight - 46 * headerHidingProgress).dp } }
-				val boxHeight =
-					expandedTitleHeight + expandedIconSize + expandedMenuVerticalPadding * 2 + appBarHeight
+				val topPadding by remember { derivedStateOf(structuralEqualityPolicy()) { (appBarHeight - 46.dp * headerHidingProgress) } }
 				BoxWithConstraints(
 					modifier = Modifier
-						.height(boxHeight.dp)
+						.height(boxHeight)
 						.padding(top = topPadding)
 				) {
-					val minimumMenuWidth = (3 * 32).dp
+					val iconSize = Dimensions.MenuIconSize
 					val acceleratedToolbarStateProgress by remember {
 						derivedStateOf {
 							toolbarState.toolbarState.progress.pow(
@@ -90,7 +139,7 @@ fun LibrarySettingsView(
 					ProvideTextStyle(MaterialTheme.typography.h5) {
 						val iconClearance = 48
 						val startPadding by remember {  derivedStateOf(structuralEqualityPolicy()) { (4 + iconClearance * headerHidingProgress).dp } }
-						val endPadding by remember { derivedStateOf(structuralEqualityPolicy()) { 4.dp + minimumMenuWidth * acceleratedHeaderHidingProgress } }
+						val endPadding by remember { derivedStateOf(structuralEqualityPolicy()) { 4.dp + iconSize * acceleratedHeaderHidingProgress } }
 						val header = stringResource(id = R.string.settings)
 						MarqueeText(
 							text = header,
@@ -103,23 +152,36 @@ fun LibrarySettingsView(
 						)
 					}
 
-					val menuWidth by remember { derivedStateOf(structuralEqualityPolicy()) { (maxWidth - (maxWidth - minimumMenuWidth) * acceleratedHeaderHidingProgress) } }
+					val menuWidth by remember { derivedStateOf(structuralEqualityPolicy()) { (maxWidth - (maxWidth - iconSize) * acceleratedHeaderHidingProgress) } }
 					val expandedTopRowPadding = expandedTitleHeight + expandedMenuVerticalPadding
-					val collapsedTopRowPadding = 6
-					val topRowPadding by remember { derivedStateOf(structuralEqualityPolicy()) { (expandedTopRowPadding - (expandedTopRowPadding - collapsedTopRowPadding) * headerHidingProgress).dp } }
+					val topRowPadding by remember { derivedStateOf(structuralEqualityPolicy()) { (expandedTopRowPadding - (expandedTopRowPadding - collapsedTopRowPadding) * headerHidingProgress) } }
 					Row(
 						modifier = Modifier
 							.padding(
 								top = topRowPadding,
-								bottom = expandedMenuVerticalPadding.dp,
+								bottom = expandedMenuVerticalPadding,
 								start = 8.dp,
 								end = 8.dp
 							)
 							.width(menuWidth)
 							.align(Alignment.TopEnd)
 					) {
-						val iconSize = Dimensions.MenuIconSize
 						val textModifier = Modifier.alpha(acceleratedToolbarStateProgress)
+
+						ColumnMenuIcon(
+							modifier = Modifier
+								.fillMaxHeight(),
+							onClick = librarySettingsViewModel::requestLibraryRemoval,
+							icon = {
+								Image(
+									painter = painterResource(id = R.drawable.ic_remove_item_36dp),
+									contentDescription = stringResources.removeServer,
+									modifier = Modifier.size(iconSize)
+								)
+							},
+							label = if (acceleratedHeaderHidingProgress < 1) stringResources.removeServer else null,
+							labelModifier = textModifier,
+						)
 
 						ColumnMenuIcon(
 							modifier = Modifier
@@ -137,28 +199,11 @@ fun LibrarySettingsView(
 							label = if (acceleratedHeaderHidingProgress < 1) stringResources.aboutTitle else null,
 							labelModifier = textModifier,
 						)
-
-						ColumnMenuIcon(
-							modifier = Modifier
-								.fillMaxHeight(),
-							onClick = {
-//							librarySettingsViewModel.removeLibrary()
-							},
-							icon = {
-								Image(
-									painter = painterResource(id = R.drawable.ic_remove_item_36dp),
-									contentDescription = stringResources.removeServer,
-									modifier = Modifier.size(iconSize)
-								)
-							},
-							label = if (acceleratedHeaderHidingProgress < 1) stringResources.removeServer else null,
-							labelModifier = textModifier,
-						)
 					}
 				}
 
 				// Always draw box to help the collapsing toolbar measure minimum size
-				Box(modifier = Modifier.height(appBarHeight.dp)) {
+				Box(modifier = Modifier.height(appBarHeight)) {
 					Icon(
 						Icons.Default.ArrowBack,
 						contentDescription = "",
@@ -183,7 +228,6 @@ fun LibrarySettingsView(
 			) {
 				librarySettingsViewModel.apply {
 					DataEntryRow {
-						var accessCodeState by accessCode.collectAsMutableState()
 						TextField(
 							modifier = Modifier.fillMaxWidth(),
 							value = accessCodeState,
@@ -291,18 +335,16 @@ fun LibrarySettingsView(
 						Text(stringResource(id = R.string.lbl_use_existing_music))
 					}
 
-					DataEntryRow {
-						val isSavingState by isSaving.collectAsState()
-						var isSaved by remember { mutableStateOf(false) }
-						Button(
-							onClick = {
-								saveLibrary()
-									.then { isSaved = true }
-							},
-							enabled = !isSavingState && !isSaved,
-						) {
-							Text(text = if (isSaved) stringResource(id = R.string.btn_saved) else stringResource(id = R.string.btn_save))
-						}
+					val isSavingState by isSaving.collectAsState()
+					var isSaved by remember { mutableStateOf(false) }
+					Button(
+						onClick = {
+							saveLibrary()
+								.then { isSaved = true }
+						},
+						enabled = !isSavingState && !isSaved,
+					) {
+						Text(text = if (isSaved) stringResource(id = R.string.btn_saved) else stringResource(id = R.string.btn_save))
 					}
 				}
 			}

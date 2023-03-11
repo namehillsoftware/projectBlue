@@ -35,6 +35,7 @@ class LibrarySettingsViewModel(
 	private val mutableIsLoading = MutableStateFlow(false)
 	private val mutableIsSaving = MutableStateFlow(false)
 	private val mutableIsPermissionsNeeded = MutableStateFlow(false)
+	private val mutableIsRemovalRequested = MutableStateFlow(false)
 
 	val accessCode = MutableStateFlow("")
 	val userName = MutableStateFlow("")
@@ -48,6 +49,7 @@ class LibrarySettingsViewModel(
 	override val isLoading = mutableIsLoading.asStateFlow()
 	val isSaving = mutableIsSaving.asStateFlow()
 	val isPermissionsNeeded = mutableIsPermissionsNeeded.asStateFlow()
+	val isRemovalRequested = mutableIsRemovalRequested.asStateFlow()
 
 	fun loadLibrary(libraryId: LibraryId): Promise<*> {
 		mutableIsLoading.value = true
@@ -87,7 +89,15 @@ class LibrarySettingsViewModel(
 			.must(this)
 	}
 
-	fun removeLibrary(): Promise<*> = library?.let(libraryRemoval::removeLibrary).keepPromise()
+	fun requestLibraryRemoval() {
+		mutableIsRemovalRequested.value = true
+	}
+
+	fun cancelLibraryRemovalRequest() {
+		mutableIsRemovalRequested.value = false
+	}
+
+	fun removeLibrary(): Promise<*> = library?.takeIf { mutableIsRemovalRequested.value }?.let(libraryRemoval::removeLibrary).keepPromise()
 
 	override fun respond(result: Library?) {
 		library = result ?: return
