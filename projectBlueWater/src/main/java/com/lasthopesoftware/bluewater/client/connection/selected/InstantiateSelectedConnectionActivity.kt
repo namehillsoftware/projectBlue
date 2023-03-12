@@ -88,25 +88,34 @@ class InstantiateSelectedConnectionActivity : AppCompatActivity() {
 			with (connectionStatusViewModel) {
 				if (isGettingConnection.value)
 					cancelCurrentCheck()
+				finish()
 			}
 		}
 	}
 
 	private fun launchActivityDelayed(intent: Intent) {
-		if (!isCancelled())
-			handler.postDelayed(
-				{
-					if (!isCancelled())
-						startActivity(intent)
-					finish()
-				},
-				ACTIVITY_LAUNCH_DELAY
-			)
+		if (isCancelled()) {
+			finish()
+			return
+		}
+
+		handler.postDelayed(
+			{
+				if (!isCancelled())
+					startActivity(intent)
+				finish()
+			},
+			ACTIVITY_LAUNCH_DELAY
+		)
 	}
 
 	private fun finishForResultDelayed() {
-		if (!isCancelled())
-			handler.postDelayed({ if (!isCancelled()) finish() }, ACTIVITY_LAUNCH_DELAY)
+		if (isCancelled()) {
+			finish()
+			return
+		}
+
+		handler.postDelayed(::finish, ACTIVITY_LAUNCH_DELAY)
 	}
 
 	private fun isCancelled() = connectionStatusViewModel.isCancelled

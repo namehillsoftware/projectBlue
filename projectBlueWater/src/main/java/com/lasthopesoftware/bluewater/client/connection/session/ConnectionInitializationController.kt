@@ -25,6 +25,7 @@ class ConnectionInitializationController(
 		else object : ProgressingPromiseProxy<BuildingConnectionStatus, Boolean>() {
 			init {
 			    val promisedConnection = manageConnectionSessions.promiseLibraryConnection(libraryId)
+				doCancel(promisedConnection)
 				proxyUpdates(promisedConnection)
 				promisedConnection.then(
 					{
