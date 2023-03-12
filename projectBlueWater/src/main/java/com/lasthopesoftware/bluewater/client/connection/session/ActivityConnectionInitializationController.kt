@@ -43,5 +43,5 @@ class ActivityConnectionInitializationController(
 	private fun launchSettingsDelayed() =
 		PromiseDelay
 			.delay<Any?>(launchDelay)
-			.eventually { applicationNavigation.launchSettings() }
+			.eventually { applicationNavigation.viewApplicationSettings() }
 }

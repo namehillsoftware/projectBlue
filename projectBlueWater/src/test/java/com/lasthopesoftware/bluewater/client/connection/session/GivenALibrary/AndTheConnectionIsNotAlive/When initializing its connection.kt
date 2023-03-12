@@ -12,13 +12,10 @@ import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 
 private const val libraryId = 148
 
 class `when initializing its connection` {
-	private val settingsLaunchedLatch = CountDownLatch(1)
 
 	private val mut by lazy {
 		val deferredProgressingPromise =
@@ -33,8 +30,8 @@ class `when initializing its connection` {
                     every { promiseLibraryConnection(LibraryId(libraryId)) } returns deferredProgressingPromise
                 },
 				mockk {
-					every { launchSettings() } answers {
-						settingsLaunchedLatch.countDown()
+					every { viewApplicationSettings() } answers {
+						isSettingsLaunched = true
 						Unit.toPromise()
 					}
 				},
@@ -81,6 +78,6 @@ class `when initializing its connection` {
 
 	@Test
 	fun `then the settings are not launched`() {
-		assertThat(settingsLaunchedLatch.await(10, TimeUnit.SECONDS)).isFalse
+		assertThat(isSettingsLaunched).isFalse
 	}
 }

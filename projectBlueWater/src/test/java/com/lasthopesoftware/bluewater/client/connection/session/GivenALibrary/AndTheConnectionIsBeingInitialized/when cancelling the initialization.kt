@@ -13,7 +13,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 
 private const val libraryId = 552
 
@@ -33,8 +32,8 @@ class `when cancelling the initialization` {
 					every { promiseLibraryConnection(LibraryId(libraryId)) } returns deferredProgressingPromise
 				},
 				mockk {
-					every { launchSettings() } answers {
-						settingsLaunchedLatch.countDown()
+					every { viewApplicationSettings() } answers {
+						isSettingsLaunched = true
 						Unit.toPromise()
 					}
 				},
@@ -45,6 +44,7 @@ class `when cancelling the initialization` {
 	private val recordedUpdates = mutableListOf<BuildingConnectionStatus>()
 
 	private var isInitialized = false
+	private var isSettingsLaunched = false
 
 	@BeforeAll
 	fun act() {
@@ -84,6 +84,6 @@ class `when cancelling the initialization` {
 
 	@Test
 	fun `then the settings are launched`() {
-		assertThat(settingsLaunchedLatch.await(10, TimeUnit.SECONDS)).isTrue
+		assertThat(isSettingsLaunched).isTrue
 	}
 }

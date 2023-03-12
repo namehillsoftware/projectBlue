@@ -18,7 +18,7 @@ class ActivityApplicationNavigation(private val componentActivity: ComponentActi
 	private val handler by lazy { Handler(componentActivity.mainLooper) }
 	private val selectServerIntent by lazy { Intent(componentActivity, ApplicationSettingsActivity::class.java) }
 
-	override fun launchSettings() = loopInOperation {
+	override fun viewApplicationSettings() = loopInOperation {
 		componentActivity.startActivity(selectServerIntent)
 	}
 

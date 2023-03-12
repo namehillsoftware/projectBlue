@@ -5,7 +5,6 @@ import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ActivityConnectionInitializationController
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredProgressingPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import io.mockk.every
@@ -17,8 +16,6 @@ import org.junit.jupiter.api.Test
 private const val libraryId = 388
 
 class `when initializing its connection` {
-	private val settingsLaunchedLatch = DeferredPromise(true)
-
 	private val mut by lazy {
 		val deferredProgressingPromise =
             DeferredProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>()
@@ -32,8 +29,8 @@ class `when initializing its connection` {
                     every { promiseLibraryConnection(LibraryId(libraryId)) } returns deferredProgressingPromise
                 },
 				mockk {
-					every { launchSettings() } answers {
-						settingsLaunchedLatch.resolve()
+					every { viewApplicationSettings() } answers {
+						isSettingsLaunched = true
 						Unit.toPromise()
 					}
 				},
@@ -43,6 +40,7 @@ class `when initializing its connection` {
 
 	private val recordedUpdates = mutableListOf<BuildingConnectionStatus>()
 	private var isInitialized = false
+	private var isSettingsLaunched = false
 
 	@BeforeAll
 	fun act() {
@@ -83,6 +81,6 @@ class `when initializing its connection` {
 
 	@Test
 	fun `then the settings are launched`() {
-		assertThat(settingsLaunchedLatch.toExpiringFuture().get()).isTrue
+		assertThat(isSettingsLaunched).isTrue
 	}
 }
