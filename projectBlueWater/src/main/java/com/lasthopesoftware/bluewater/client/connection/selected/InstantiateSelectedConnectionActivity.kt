@@ -17,7 +17,6 @@ import com.lasthopesoftware.bluewater.client.connection.session.ConnectionInitia
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionStatusViewModel
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionUpdatesView
-import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
@@ -79,8 +78,10 @@ class InstantiateSelectedConnectionActivity : AppCompatActivity() {
 					if (intent?.action == START_ACTIVITY_FOR_RETURN) finishForResultDelayed()
 					else launchActivityDelayed(browseLibraryIntent)
 				} else {
-					ApplicationSettingsActivity.launch(this)
+					finish()
 				}
+			}, handler), LoopedInPromise.response({
+				finish()
 			}, handler))
 
 		onBackPressedDispatcher.addCallback {
@@ -88,13 +89,19 @@ class InstantiateSelectedConnectionActivity : AppCompatActivity() {
 				if (isGettingConnection.value)
 					cancelCurrentCheck()
 			}
-			finish()
 		}
 	}
 
 	private fun launchActivityDelayed(intent: Intent) {
 		if (!isCancelled())
-			handler.postDelayed({ if (!isCancelled()) startActivity(intent) }, ACTIVITY_LAUNCH_DELAY)
+			handler.postDelayed(
+				{
+					if (!isCancelled())
+						startActivity(intent)
+					finish()
+				},
+				ACTIVITY_LAUNCH_DELAY
+			)
 	}
 
 	private fun finishForResultDelayed() {
