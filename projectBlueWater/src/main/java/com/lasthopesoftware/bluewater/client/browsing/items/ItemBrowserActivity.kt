@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalCoroutinesApi::class)
+
 package com.lasthopesoftware.bluewater.client.browsing.items
 
 import ItemBrowsingArguments.keyArgument
@@ -62,7 +64,7 @@ import com.lasthopesoftware.bluewater.client.connection.authentication.Connectio
 import com.lasthopesoftware.bluewater.client.connection.libraries.SelectedLibraryUrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.polling.ConnectionPoller
-import com.lasthopesoftware.bluewater.client.connection.session.ConnectionInitializationController
+import com.lasthopesoftware.bluewater.client.connection.session.ActivityConnectionInitializationController
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionStatusViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
@@ -84,10 +86,14 @@ import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
 import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRateLimiter
+import com.lasthopesoftware.bluewater.shared.promises.extensions.suspend
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.resources.closables.ViewModelCloseableManager
 import com.lasthopesoftware.resources.closables.lazyScoped
 import com.lasthopesoftware.resources.strings.StringResources
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 
 private val magicPropertyBuilder by lazy { MagicPropertyBuilder(cls<ItemBrowserActivity>()) }
@@ -317,37 +323,38 @@ private class GraphNavigation(
 		}
 	}
 
-	override fun launchSearch(libraryId: LibraryId) {
+	override fun launchSearch(libraryId: LibraryId) = coroutineScope.launch {
 		navController.navigate(Search.buildPath(libraryId)) {
 			launchSingleTop = true
 			popUpTo(BrowseToItem.route)
 		}
 
 		hideBottomSheet()
-	}
+	}.toPromise()
 
-	override fun viewActiveDownloads(libraryId: LibraryId) {
+	override fun viewActiveDownloads(libraryId: LibraryId) = coroutineScope.launch {
 		navController.navigate(Downloads.buildPath(libraryId)) {
 			launchSingleTop = true
 			popUpTo(BrowseToItem.route)
 		}
 
 		hideBottomSheet()
-	}
+	}.toPromise()
 
-	override fun viewItem(libraryId: LibraryId, item: IItem) {
+	override fun viewItem(libraryId: LibraryId, item: IItem) = coroutineScope.launch {
 		navController.navigate(BrowseToItem.buildPath(libraryId, item))
 		hideBottomSheet()
-	}
+	}.toPromise()
 
-	override fun navigateUp(): Boolean {
+	override fun navigateUp() = coroutineScope.async {
 		hideBottomSheet()
 
-		return navController.navigateUp() || inner.navigateUp()
-	}
+		navController.navigateUp() || inner.navigateUp().suspend()
+	}.toPromise()
 
-	override fun backOut(): Boolean =
-		(itemListMenuBackPressedHandler.hideAllMenus() or hideBottomSheet()) || navigateUp()
+	override fun backOut() = coroutineScope.async {
+		(itemListMenuBackPressedHandler.hideAllMenus() or hideBottomSheet()) || navigateUp().suspend()
+	}.toPromise()
 
 	private fun hideBottomSheet(): Boolean {
 		if (!bottomSheetState.isCollapsed) {
@@ -643,7 +650,7 @@ private fun ItemBrowserView(
 						connectionViewModel = entry.viewModelStore.buildViewModel {
 							ConnectionStatusViewModel(
 								stringResources,
-								ConnectionInitializationController(
+								ActivityConnectionInitializationController(
 									libraryConnectionProvider,
 									applicationNavigation,
 								),

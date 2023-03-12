@@ -3,9 +3,10 @@ package com.lasthopesoftware.bluewater.client.connection.session.GivenALibrary.A
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.session.ConnectionInitializationController
+import com.lasthopesoftware.bluewater.client.connection.session.ActivityConnectionInitializationController
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredProgressingPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -25,7 +26,7 @@ class `when initializing its connection` {
 
 		Pair(
 			deferredProgressingPromise,
-            ConnectionInitializationController(
+            ActivityConnectionInitializationController(
                 mockk {
                     every { isConnectionActive(LibraryId(libraryId)) } returns false
 
@@ -34,6 +35,7 @@ class `when initializing its connection` {
 				mockk {
 					every { launchSettings() } answers {
 						settingsLaunchedLatch.countDown()
+						Unit.toPromise()
 					}
 				},
             )

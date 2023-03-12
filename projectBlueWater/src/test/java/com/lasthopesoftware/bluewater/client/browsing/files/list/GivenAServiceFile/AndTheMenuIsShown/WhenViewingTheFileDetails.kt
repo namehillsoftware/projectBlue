@@ -41,6 +41,7 @@ class WhenViewingTheFileDetails {
 			every { viewFileDetails(any(), any()) } answers {
 				val files = firstArg<List<ServiceFile>>()
 				launchedFile = files[lastArg()]
+				Unit.toPromise()
 			}
 		}
 

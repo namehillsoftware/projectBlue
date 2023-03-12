@@ -10,9 +10,9 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingProm
 import org.joda.time.Duration
 
 private val launchDelay by lazy { Duration.standardSeconds(2).plus(Duration.millis(500)) }
-private val logger by lazyLogger<ConnectionInitializationController>()
+private val logger by lazyLogger<ActivityConnectionInitializationController>()
 
-class ConnectionInitializationController(
+class ActivityConnectionInitializationController(
     private val manageConnectionSessions: ManageConnectionSessions,
 	private val applicationNavigation: NavigateApplication
 ) : ControlConnectionInitialization {
@@ -29,21 +29,19 @@ class ConnectionInitializationController(
 				proxyUpdates(promisedConnection)
 				promisedConnection.then(
 					{
-						resolve(it != null)
-						if (it == null)	launchSettingsDelayed()
+						if (it == null)	launchSettingsDelayed().then { resolve(false) }
+						else resolve(true)
 					},
 					{  e ->
 						logger.error("An error occurred getting the connection for library ID ${libraryId.id}.", e)
-						resolve(false)
-						launchSettingsDelayed()
+						launchSettingsDelayed().then { resolve(false) }
 					}
 				)
 			}
 		}
 
-	private fun launchSettingsDelayed() {
+	private fun launchSettingsDelayed() =
 		PromiseDelay
 			.delay<Any?>(launchDelay)
-			.then { applicationNavigation.launchSettings() }
-	}
+			.eventually { applicationNavigation.launchSettings() }
 }

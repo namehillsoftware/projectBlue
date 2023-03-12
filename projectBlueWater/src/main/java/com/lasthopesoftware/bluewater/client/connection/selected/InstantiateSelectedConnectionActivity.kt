@@ -13,7 +13,7 @@ import com.lasthopesoftware.bluewater.ActivityApplicationNavigation
 import com.lasthopesoftware.bluewater.client.browsing.BrowserEntryActivity
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.Companion.getInstance
-import com.lasthopesoftware.bluewater.client.connection.session.ConnectionInitializationController
+import com.lasthopesoftware.bluewater.client.connection.session.ActivityConnectionInitializationController
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionStatusViewModel
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionUpdatesView
@@ -39,8 +39,8 @@ class InstantiateSelectedConnectionActivity : AppCompatActivity() {
 
 	private val libraryConnectionProvider by lazy { buildNewConnectionSessionManager() }
 
-	private val connectionInitializationController by lazy {
-		ConnectionInitializationController(
+	private val activityConnectionInitializationController by lazy {
+		ActivityConnectionInitializationController(
 			libraryConnectionProvider,
 			ActivityApplicationNavigation(this),
 		)
@@ -49,10 +49,8 @@ class InstantiateSelectedConnectionActivity : AppCompatActivity() {
 	private val connectionStatusViewModel by buildViewModelLazily {
 		ConnectionStatusViewModel(
 			StringResources(this),
-			connectionInitializationController,
-		).apply {
-
-		}
+			activityConnectionInitializationController,
+		)
 	}
 
 	private val selectedLibraryProvider by lazy { SelectedLibraryIdProvider(getApplicationSettingsRepository()) }

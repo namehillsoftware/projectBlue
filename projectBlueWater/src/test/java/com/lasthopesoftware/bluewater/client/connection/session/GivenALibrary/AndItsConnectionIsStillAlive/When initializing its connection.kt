@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.connection.session.GivenALibrary.A
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.session.ConnectionInitializationController
+import com.lasthopesoftware.bluewater.client.connection.session.ActivityConnectionInitializationController
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredProgressingPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import io.mockk.every
@@ -21,7 +21,7 @@ class `when initializing its connection` {
 
 		Pair(
 			deferredProgressingPromise,
-            ConnectionInitializationController(
+            ActivityConnectionInitializationController(
                 mockk {
                     every { isConnectionActive(LibraryId(libraryId)) } returns true
 
