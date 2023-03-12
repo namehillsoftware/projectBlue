@@ -646,7 +646,7 @@ private fun ItemBrowserView(
 								ConnectionInitializationController(
 									libraryConnectionProvider,
 									applicationNavigation,
-								)
+								),
 							)
 						},
 						itemListViewModel = entry.viewModelStore.buildViewModel {
