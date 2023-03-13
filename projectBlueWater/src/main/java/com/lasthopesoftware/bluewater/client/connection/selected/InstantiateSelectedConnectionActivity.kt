@@ -93,6 +93,7 @@ class InstantiateSelectedConnectionActivity : AppCompatActivity(), ControlConnec
 					else PromiseDelay
 						.delay<Any?>(ConnectionInitializationConstants.dramaticPause)
 						.also(::doCancel)
+						.guaranteedUnitResponse()
 						.eventually { applicationNavigation.viewBrowserRoot() }
 				} else finishForResultDelayed().also(::doCancel)
 		}
@@ -101,6 +102,7 @@ class InstantiateSelectedConnectionActivity : AppCompatActivity(), ControlConnec
 		PromiseDelay
 			.delay<Any?>(ConnectionInitializationConstants.dramaticPause)
 			.also(cp::doCancel)
+			.guaranteedUnitResponse()
 			.eventually(LoopedInPromise.response({ finish() }, handler))
 	}
 
