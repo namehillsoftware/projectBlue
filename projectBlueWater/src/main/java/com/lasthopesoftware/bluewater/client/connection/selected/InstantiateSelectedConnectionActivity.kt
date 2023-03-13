@@ -67,13 +67,12 @@ class InstantiateSelectedConnectionActivity : AppCompatActivity(), ControlConnec
 					?.let(connectionStatusViewModel::ensureConnectionIsWorking)
 					.keepPromise(false)
 			}
-			.must(::finishForResultDelayed)
+			.inevitably(LoopedInPromise.act(::finish, handler))
 
 		onBackPressedDispatcher.addCallback {
 			with (connectionStatusViewModel) {
 				if (isGettingConnection.value)
 					cancelCurrentCheck()
-				finish()
 			}
 		}
 	}
@@ -87,26 +86,19 @@ class InstantiateSelectedConnectionActivity : AppCompatActivity(), ControlConnec
 				promisedConnection.eventually(this)
 			}
 
-			override fun promiseResponse(connection: IConnectionProvider?): Promise<Unit> =
-				(
-					if (connection != null) {
-						if (intent?.action == START_ACTIVITY_FOR_RETURN) finishForResultDelayed().also(::doCancel)
-						else PromiseDelay
-							.delay<Any?>(ConnectionInitializationConstants.dramaticPause)
-							.also(::doCancel)
-							.guaranteedUnitResponse()
-							.eventually { applicationNavigation.viewBrowserRoot() }
-					} else finishForResultDelayed().also(::doCancel)
-				).then({ resolve(connection) }, ::reject)
-		}
+			override fun promiseResponse(connection: IConnectionProvider?): Promise<Unit> {
+				var promisedResponse = PromiseDelay
+					.delay<Any?>(ConnectionInitializationConstants.dramaticPause)
+					.also(::doCancel)
+					.guaranteedUnitResponse()
 
-	private fun finishForResultDelayed() = CancellableProxyPromise { cp ->
-		PromiseDelay
-			.delay<Any?>(ConnectionInitializationConstants.dramaticPause)
-			.also(cp::doCancel)
-			.guaranteedUnitResponse()
-			.eventually(LoopedInPromise.response({ finish() }, handler))
-	}
+				if (connection != null && intent?.action != START_ACTIVITY_FOR_RETURN) {
+					promisedResponse = promisedResponse.eventually { applicationNavigation.viewBrowserRoot() }
+				}
+
+				return promisedResponse.then({ resolve(connection) }, ::reject)
+			}
+		}
 
 	companion object {
 		private val START_ACTIVITY_FOR_RETURN = MagicPropertyBuilder.buildMagicPropertyName<InstantiateSelectedConnectionActivity>("START_ACTIVITY_FOR_RETURN")
