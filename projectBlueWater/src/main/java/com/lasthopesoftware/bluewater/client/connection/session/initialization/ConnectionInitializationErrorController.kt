@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay
 import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromiseProxy
+import java.util.concurrent.CancellationException
 
 private val logger by lazyLogger<ConnectionInitializationErrorController>()
 
@@ -25,12 +26,16 @@ class ConnectionInitializationErrorController(
 				proxyUpdates(promisedConnection)
 				promisedConnection.then(
 					{ c ->
-						if (c == null)	launchSettingsDelayed().also(::doCancel).then { resolve(c) }
+						if (c == null)	launchSettingsDelayed().also(::doCancel).must { resolve(c) }
 						else resolve(c)
 					},
 					{  e ->
 						logger.error("An error occurred getting the connection for library ID ${libraryId.id}.", e)
-						launchSettingsDelayed().also(::doCancel).then { resolve(null) }
+						val promisedSettingsLaunch =
+							if (e is CancellationException) applicationNavigation.viewApplicationSettings()
+							else launchSettingsDelayed().also(::doCancel)
+
+						promisedSettingsLaunch.must { resolve(null) }
 					}
 				)
 			}

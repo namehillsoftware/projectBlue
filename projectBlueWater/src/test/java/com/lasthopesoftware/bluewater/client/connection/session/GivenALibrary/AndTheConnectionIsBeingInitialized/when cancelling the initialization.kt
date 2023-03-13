@@ -12,13 +12,10 @@ import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
-import java.util.concurrent.CountDownLatch
 
 private const val libraryId = 552
 
 class `when cancelling the initialization` {
-	private val settingsLaunchedLatch = CountDownLatch(1)
-
 	private val mut by lazy {
 		val deferredProgressingPromise =
 			DeferredProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>()
