@@ -97,7 +97,7 @@ class InstantiateSelectedConnectionActivity : AppCompatActivity(), ControlConnec
 							.guaranteedUnitResponse()
 							.eventually { applicationNavigation.viewBrowserRoot() }
 					} else finishForResultDelayed().also(::doCancel)
-				).must { resolve(connection) }
+				).then({ resolve(connection) }, ::reject)
 		}
 
 	private fun finishForResultDelayed() = CancellableProxyPromise { cp ->
