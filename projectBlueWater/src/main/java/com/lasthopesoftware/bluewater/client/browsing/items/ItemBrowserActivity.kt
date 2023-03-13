@@ -64,9 +64,10 @@ import com.lasthopesoftware.bluewater.client.connection.authentication.Connectio
 import com.lasthopesoftware.bluewater.client.connection.libraries.SelectedLibraryUrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.polling.ConnectionPoller
-import com.lasthopesoftware.bluewater.client.connection.session.ActivityConnectionInitializationController
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
-import com.lasthopesoftware.bluewater.client.connection.session.ConnectionStatusViewModel
+import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionInitializationErrorController
+import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionInitializationProxy
+import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionStatusViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
@@ -650,8 +651,8 @@ private fun ItemBrowserView(
 						connectionViewModel = entry.viewModelStore.buildViewModel {
 							ConnectionStatusViewModel(
 								stringResources,
-								ActivityConnectionInitializationController(
-									libraryConnectionProvider,
+								ConnectionInitializationErrorController(
+									ConnectionInitializationProxy(libraryConnectionProvider),
 									applicationNavigation,
 								),
 							)

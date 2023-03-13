@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.connection.session.GivenALibrary.A
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.session.ActivityConnectionInitializationController
+import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionInitializationErrorController
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredProgressingPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
@@ -22,11 +22,9 @@ class `when initializing its connection` {
 
 		Pair(
 			deferredProgressingPromise,
-            ActivityConnectionInitializationController(
+            ConnectionInitializationErrorController(
                 mockk {
-                    every { isConnectionActive(LibraryId(libraryId)) } returns false
-
-                    every { promiseLibraryConnection(LibraryId(libraryId)) } returns deferredProgressingPromise
+                    every { promiseInitializedConnection(LibraryId(libraryId)) } returns deferredProgressingPromise
                 },
 				mockk {
 					every { viewApplicationSettings() } answers {
@@ -38,13 +36,13 @@ class `when initializing its connection` {
 		)
 	}
 	private val recordedUpdates = mutableListOf<BuildingConnectionStatus>()
-	private var isInitialized = false
+	private var initializedConnection: IConnectionProvider? = null
 	private var isSettingsLaunched = false
 
 	@BeforeAll
 	fun act() {
 		val (deferredPromise, controller) = mut
-		val isInitializedPromise = controller
+		val promisedConnection = controller
 			.promiseInitializedConnection(LibraryId(libraryId))
 			.apply { updates(recordedUpdates::add) }
 
@@ -55,9 +53,7 @@ class `when initializing its connection` {
 		)
 		deferredPromise.sendRejection(Exception("boom!"))
 
-		isInitialized = isInitializedPromise
-			.toExpiringFuture()
-			.get()!!
+		initializedConnection = promisedConnection.toExpiringFuture().get()
 	}
 
 	@Test
@@ -71,7 +67,7 @@ class `when initializing its connection` {
 
 	@Test
     fun `then the connection is not initialized`() {
-		assertThat(isInitialized).isFalse
+		assertThat(initializedConnection).isNull()
 	}
 
 	@Test

@@ -1,8 +1,9 @@
-package com.lasthopesoftware.bluewater.client.connection.session
+package com.lasthopesoftware.bluewater.client.connection.session.initialization
 
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
+import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.resources.strings.GetStringResources
 import com.namehillsoftware.handoff.promises.Promise
@@ -35,9 +36,14 @@ class ConnectionStatusViewModel(
 		val promisedConnection = connectionInitializationController.promiseInitializedConnection(libraryId)
 		promisedConnection.updates(this)
 		promisedConnection.must(this)
-		promisedConnectionCheck = promisedConnection
+		val promiseIsConnected = CancellableProxyPromise { cp ->
+			promisedConnection
+				.also(cp::doCancel)
+				.then { it != null }
+		}
+		promisedConnectionCheck = promiseIsConnected
 
-		return promisedConnection
+		return promiseIsConnected
 	}
 
 	fun cancelCurrentCheck() {

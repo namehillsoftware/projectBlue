@@ -6,6 +6,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 
 interface NavigateApplication {
+	fun viewBrowserRoot() = Unit.toPromise()
 	fun viewApplicationSettings() = Unit.toPromise()
 
 	fun viewFileDetails(playlist: List<ServiceFile>, position: Int) = Unit.toPromise()

@@ -2,7 +2,8 @@ package com.lasthopesoftware.bluewater.client.connection.session.GivenALibrary.A
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
-import com.lasthopesoftware.bluewater.client.connection.session.ConnectionStatusViewModel
+import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionStatusViewModel
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredProgressingPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.resources.strings.FakeStringResources
@@ -17,7 +18,7 @@ private const val libraryId = 206
 class `when ensuring the connection is working` {
 	private val mut by lazy {
 		val deferredProgressingPromise =
-            DeferredProgressingPromise<BuildingConnectionStatus, Boolean>()
+            DeferredProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>()
 
 		Pair(
 			deferredProgressingPromise,
@@ -43,7 +44,7 @@ class `when ensuring the connection is working` {
 
 		val isInitializedPromise = viewModel.ensureConnectionIsWorking(LibraryId(libraryId))
 		isConnectingDuringCheck = viewModel.isGettingConnection.value
-		deferredPromise.sendResolution(true)
+		deferredPromise.sendResolution(mockk())
 
 		isInitialized = isInitializedPromise
 			.toExpiringFuture()

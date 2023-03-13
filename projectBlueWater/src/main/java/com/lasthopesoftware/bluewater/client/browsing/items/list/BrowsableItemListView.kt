@@ -10,8 +10,8 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListView
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.session.ConnectionStatusViewModel
-import com.lasthopesoftware.bluewater.client.connection.session.ConnectionUpdatesView
+import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionStatusViewModel
+import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionUpdatesView
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.shared.promises.extensions.suspend
 import com.namehillsoftware.handoff.promises.Promise
@@ -25,13 +25,13 @@ object ItemBrowsingArguments {
 
 @Composable
 fun browsableItemListView(
-	connectionViewModel: ConnectionStatusViewModel,
-	itemListViewModel: ItemListViewModel,
-	fileListViewModel: FileListViewModel,
-	nowPlayingViewModel: NowPlayingFilePropertiesViewModel,
-	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
-	reusablePlaylistFileItemViewModelProvider: ReusablePlaylistFileItemViewModelProvider,
-	applicationNavigation: NavigateApplication,
+    connectionViewModel: ConnectionStatusViewModel,
+    itemListViewModel: ItemListViewModel,
+    fileListViewModel: FileListViewModel,
+    nowPlayingViewModel: NowPlayingFilePropertiesViewModel,
+    itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
+    reusablePlaylistFileItemViewModelProvider: ReusablePlaylistFileItemViewModelProvider,
+    applicationNavigation: NavigateApplication,
 ): @Composable (LibraryId, Item) -> Unit {
 	val isCheckingConnection by connectionViewModel.isGettingConnection.collectAsState()
 	if (!isCheckingConnection) {
