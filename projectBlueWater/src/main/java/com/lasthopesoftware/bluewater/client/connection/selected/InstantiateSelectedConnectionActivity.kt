@@ -90,7 +90,7 @@ class InstantiateSelectedConnectionActivity : AppCompatActivity(), ControlConnec
 				var promisedResponse = PromiseDelay
 					.delay<Any?>(ConnectionInitializationConstants.dramaticPause)
 					.also(::doCancel)
-					.guaranteedUnitResponse()
+					.unitResponse()
 
 				if (connection != null && intent?.action != START_ACTIVITY_FOR_RETURN) {
 					promisedResponse = promisedResponse.eventually { applicationNavigation.viewBrowserRoot() }
