@@ -51,6 +51,8 @@ fun <T> Promise<T>?.keepPromise(default: T): Promise<T> = this ?: default.toProm
 
 fun <T> Promise<T>.unitResponse(): Promise<Unit> = this.then(UnitResponse.respond())
 
+fun <T> Promise<T>.guaranteedUnitResponse(): Promise<Unit> = this.then(UnitResponse.respond(), UnitResponse.respond())
+
 private class UnitResponse<Resolution> private constructor() : ImmediateResponse<Resolution, Unit> {
 	override fun respond(resolution: Resolution) = Unit
 

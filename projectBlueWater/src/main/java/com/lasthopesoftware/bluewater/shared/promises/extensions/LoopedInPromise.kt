@@ -9,6 +9,8 @@ import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import com.namehillsoftware.handoff.promises.queued.PreparedMessengerOperator
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellablePreparedMessengerOperator
+import com.namehillsoftware.handoff.promises.response.EventualAction
+import com.namehillsoftware.handoff.promises.response.ImmediateAction
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import com.namehillsoftware.handoff.promises.response.PromisedResponse
 import org.joda.time.Duration
@@ -81,6 +83,16 @@ open class LoopedInPromise<Result> : Promise<Result> {
 				return LoopedInPromise(this, handler)
 			}
 		}
+
+		class ReducingAction(private val action: ImmediateAction, private val handler: Handler): EventualAction, MessageWriter<Unit> {
+			override fun promiseAction(): Promise<*> {
+				return LoopedInPromise(this, handler)
+			}
+
+			override fun prepareMessage() {
+				action.act()
+			}
+		}
 	}
 
 	companion object {
@@ -92,6 +104,10 @@ open class LoopedInPromise<Result> : Promise<Result> {
 		@JvmStatic
 		fun <TResult, TNewResult> response(task: ImmediateResponse<TResult, TNewResult>, handler: Handler): PromisedResponse<TResult, TNewResult> {
 			return OneParameterExecutors.ReducingFunction(task, handler)
+		}
+
+		fun act(task: ImmediateAction, handler: Handler): EventualAction {
+			return OneParameterExecutors.ReducingAction(task, handler)
 		}
 	}
 }

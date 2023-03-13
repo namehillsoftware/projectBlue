@@ -1,9 +1,10 @@
 package com.lasthopesoftware.bluewater.shared.promises.extensions
 
+import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 
-open class ProgressingPromiseProxy<Progress, Resolution> : ProgressingPromise<Progress, Resolution>() {
+open class ProgressingPromiseProxy<Progress, Resolution> protected constructor() : ProgressingPromise<Progress, Resolution>() {
 	private val cancellationProxy = CancellationProxy()
 	private val proxyResolution = ImmediateResponse<Resolution, Unit> { resolve(it) }
 	private val proxyRejection = ImmediateResponse<Throwable, Unit> { reject(it) }
@@ -15,6 +16,10 @@ open class ProgressingPromiseProxy<Progress, Resolution> : ProgressingPromise<Pr
 		override fun invoke(progress: Progress) {
 			reportProgress(progress)
 		}
+	}
+
+	constructor(source: ProgressingPromise<Progress, Resolution>) : this() {
+		proxy(source)
 	}
 
 	init {
@@ -37,7 +42,15 @@ open class ProgressingPromiseProxy<Progress, Resolution> : ProgressingPromise<Pr
 		source.then(proxyResolution)
 	}
 
-	protected fun doCancel(source: ProgressingPromise<*, *>) {
+	protected fun proxyRejection(source: ProgressingPromise<Progress, Resolution>) {
+		doCancel(source)
+
+		proxyUpdates(source)
+
+		source.excuse(proxyRejection)
+	}
+
+	protected fun doCancel(source: Promise<*>) {
 		cancellationProxy.doCancel(source)
 	}
 

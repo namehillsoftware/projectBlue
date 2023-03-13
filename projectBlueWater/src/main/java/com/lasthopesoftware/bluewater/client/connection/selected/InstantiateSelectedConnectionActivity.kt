@@ -10,49 +10,43 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResult
 import androidx.appcompat.app.AppCompatActivity
 import com.lasthopesoftware.bluewater.ActivityApplicationNavigation
-import com.lasthopesoftware.bluewater.client.browsing.BrowserEntryActivity
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedLibraryIdProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
+import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.Companion.getInstance
-import com.lasthopesoftware.bluewater.client.connection.session.ConnectionInitializationController
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
-import com.lasthopesoftware.bluewater.client.connection.session.ConnectionStatusViewModel
-import com.lasthopesoftware.bluewater.client.connection.session.ConnectionUpdatesView
+import com.lasthopesoftware.bluewater.client.connection.session.initialization.*
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 import com.lasthopesoftware.bluewater.shared.cls
-import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.promiseActivityResult
+import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay
+import com.lasthopesoftware.bluewater.shared.promises.extensions.*
 import com.lasthopesoftware.resources.strings.StringResources
 import com.namehillsoftware.handoff.promises.Promise
+import com.namehillsoftware.handoff.promises.response.PromisedResponse
 
-class InstantiateSelectedConnectionActivity : AppCompatActivity() {
-	private val browseLibraryIntent by lazy {
-		val browseLibraryIntent = Intent(this, BrowserEntryActivity::class.java)
-		browseLibraryIntent.flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
-		browseLibraryIntent
-	}
+class InstantiateSelectedConnectionActivity : AppCompatActivity(), ControlConnectionInitialization {
 
 	private val handler by lazy { Handler(mainLooper) }
 
 	private val libraryConnectionProvider by lazy { buildNewConnectionSessionManager() }
 
-	private val connectionInitializationController by lazy {
-		ConnectionInitializationController(
-			libraryConnectionProvider,
-			ActivityApplicationNavigation(this),
-		)
+	private val connectionInitializationProxy by lazy { ConnectionInitializationProxy(libraryConnectionProvider) }
+
+	private val applicationNavigation by lazy { ActivityApplicationNavigation(this) }
+
+	private val errorController by lazy {
+		ConnectionInitializationErrorController(this, applicationNavigation)
 	}
 
 	private val connectionStatusViewModel by buildViewModelLazily {
 		ConnectionStatusViewModel(
 			StringResources(this),
-			connectionInitializationController,
-		).apply {
-
-		}
+			errorController,
+		)
 	}
 
 	private val selectedLibraryProvider by lazy { SelectedLibraryIdProvider(getApplicationSettingsRepository()) }
@@ -73,16 +67,7 @@ class InstantiateSelectedConnectionActivity : AppCompatActivity() {
 					?.let(connectionStatusViewModel::ensureConnectionIsWorking)
 					.keepPromise(false)
 			}
-			.eventually(LoopedInPromise.response({
-				if (it) {
-					if (intent?.action == START_ACTIVITY_FOR_RETURN) finishForResultDelayed()
-					else launchActivityDelayed(browseLibraryIntent)
-				} else {
-					finish()
-				}
-			}, handler), LoopedInPromise.response({
-				finish()
-			}, handler))
+			.inevitably(LoopedInPromise.act(::finish, handler))
 
 		onBackPressedDispatcher.addCallback {
 			with (connectionStatusViewModel) {
@@ -92,28 +77,31 @@ class InstantiateSelectedConnectionActivity : AppCompatActivity() {
 		}
 	}
 
-	private fun launchActivityDelayed(intent: Intent) {
-		if (!isCancelled())
-			handler.postDelayed(
-				{
-					if (!isCancelled())
-						startActivity(intent)
-					finish()
-				},
-				ACTIVITY_LAUNCH_DELAY
-			)
-	}
+	override fun promiseInitializedConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?> =
+		object : ProgressingPromiseProxy<BuildingConnectionStatus, IConnectionProvider?>(), PromisedResponse<IConnectionProvider?, Unit> {
+			init {
+				val promisedConnection = connectionInitializationProxy.promiseInitializedConnection(libraryId)
+				doCancel(promisedConnection)
+				proxyRejection(promisedConnection)
+				promisedConnection.eventually(this)
+			}
 
-	private fun finishForResultDelayed() {
-		if (!isCancelled())
-			handler.postDelayed({ if (!isCancelled()) finish() }, ACTIVITY_LAUNCH_DELAY)
-	}
+			override fun promiseResponse(connection: IConnectionProvider?): Promise<Unit> {
+				var promisedResponse = PromiseDelay
+					.delay<Any?>(ConnectionInitializationConstants.dramaticPause)
+					.also(::doCancel)
+					.unitResponse()
 
-	private fun isCancelled() = connectionStatusViewModel.isCancelled
+				if (connection != null && intent?.action != START_ACTIVITY_FOR_RETURN) {
+					promisedResponse = promisedResponse.eventually { applicationNavigation.viewBrowserRoot() }
+				}
+
+				return promisedResponse.then({ resolve(connection) }, ::reject)
+			}
+		}
 
 	companion object {
 		private val START_ACTIVITY_FOR_RETURN = MagicPropertyBuilder.buildMagicPropertyName<InstantiateSelectedConnectionActivity>("START_ACTIVITY_FOR_RETURN")
-		private const val ACTIVITY_LAUNCH_DELAY = 2500L
 
 		fun restoreSelectedConnection(activity: ComponentActivity): Promise<ActivityResult?> =
 			getInstance(activity).isSessionConnectionActive().eventually { isActive ->

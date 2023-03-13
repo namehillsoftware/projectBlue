@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.connection.session.GivenALibrary.AndTheConnectionIsNotAlive
+package com.lasthopesoftware.bluewater.client.connection.session.GivenALibrary.AndTheConnectionIsBeingInitialized
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
@@ -13,69 +13,70 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
-private const val libraryId = 148
+private const val libraryId = 552
 
-class `when initializing its connection` {
-
+class `when cancelling the initialization` {
 	private val mut by lazy {
 		val deferredProgressingPromise =
-            DeferredProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>()
+			DeferredProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>()
 
 		Pair(
 			deferredProgressingPromise,
-            ConnectionInitializationErrorController(
-                mockk {
-                    every { promiseInitializedConnection(LibraryId(libraryId)) } returns deferredProgressingPromise
-                },
+			ConnectionInitializationErrorController(
+				mockk {
+					every { promiseInitializedConnection(LibraryId(libraryId)) } returns deferredProgressingPromise
+				},
 				mockk {
 					every { viewApplicationSettings() } answers {
 						isSettingsLaunched = true
 						Unit.toPromise()
 					}
 				},
-            )
+			)
 		)
 	}
 
 	private val recordedUpdates = mutableListOf<BuildingConnectionStatus>()
+
 	private var initializedConnection: IConnectionProvider? = null
 	private var isSettingsLaunched = false
 
 	@BeforeAll
 	fun act() {
 		val (deferredPromise, controller) = mut
-		val isInitializedPromise = controller
+		val promisedConnection = controller
 			.promiseInitializedConnection(LibraryId(libraryId))
 			.apply { updates(recordedUpdates::add) }
 
 		deferredPromise.sendProgressUpdates(
-            BuildingConnectionStatus.BuildingConnection,
-            BuildingConnectionStatus.GettingLibrary,
-            BuildingConnectionStatus.SendingWakeSignal,
+			BuildingConnectionStatus.BuildingConnection,
+			BuildingConnectionStatus.GettingLibrary,
+			BuildingConnectionStatus.SendingWakeSignal,
 		)
+
+		promisedConnection.cancel()
+
 		deferredPromise.sendResolution(mockk())
 
-		initializedConnection = isInitializedPromise
-			.toExpiringFuture()
-			.get()!!
+		initializedConnection = promisedConnection.toExpiringFuture().get()
 	}
 
 	@Test
-    fun `then the updates are correct`() {
+	fun `then the updates are correct`() {
 		assertThat(recordedUpdates).containsExactly(
-            BuildingConnectionStatus.BuildingConnection,
-            BuildingConnectionStatus.GettingLibrary,
-            BuildingConnectionStatus.SendingWakeSignal,
+			BuildingConnectionStatus.BuildingConnection,
+			BuildingConnectionStatus.GettingLibrary,
+			BuildingConnectionStatus.SendingWakeSignal,
 		)
 	}
 
 	@Test
-    fun `then the connection is initialized`() {
-		assertThat(initializedConnection).isNotNull
+	fun `then the connection is not initialized`() {
+		assertThat(initializedConnection).isNull()
 	}
 
 	@Test
-	fun `then the settings are not launched`() {
-		assertThat(isSettingsLaunched).isFalse
+	fun `then the settings are launched`() {
+		assertThat(isSettingsLaunched).isTrue
 	}
 }
