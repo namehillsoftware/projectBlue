@@ -33,13 +33,20 @@ class ConnectionStatusViewModel(
 		isGettingConnectionFlow.value = true
 		connectionStatusFlow.value = stringResources.connecting
 
-		val promisedConnection = connectionInitializationController.promiseInitializedConnection(libraryId)
-		promisedConnection.updates(this)
-		promisedConnection.must(this)
 		val promiseIsConnected = CancellableProxyPromise { cp ->
+			val promisedConnection = connectionInitializationController.promiseInitializedConnection(libraryId)
+			promisedConnection.progress.then { p ->
+				if (p != null) invoke(p)
+				promisedConnection.updates(this)
+			}
+			promisedConnection.must(this)
 			promisedConnection
 				.also(cp::doCancel)
-				.then { it != null }
+				.then {
+					val isConnected = it != null
+					connectionStatusFlow.value = if (isConnected) stringResources.connected else stringResources.gettingLibraryFailed
+					isConnected
+				}
 		}
 		promisedConnectionCheck = promiseIsConnected
 
