@@ -88,14 +88,16 @@ class InstantiateSelectedConnectionActivity : AppCompatActivity(), ControlConnec
 			}
 
 			override fun promiseResponse(connection: IConnectionProvider?): Promise<Unit> =
-				if (connection != null) {
-					if (intent?.action == START_ACTIVITY_FOR_RETURN) finishForResultDelayed().also(::doCancel)
-					else PromiseDelay
-						.delay<Any?>(ConnectionInitializationConstants.dramaticPause)
-						.also(::doCancel)
-						.guaranteedUnitResponse()
-						.eventually { applicationNavigation.viewBrowserRoot() }
-				} else finishForResultDelayed().also(::doCancel)
+				(
+					if (connection != null) {
+						if (intent?.action == START_ACTIVITY_FOR_RETURN) finishForResultDelayed().also(::doCancel)
+						else PromiseDelay
+							.delay<Any?>(ConnectionInitializationConstants.dramaticPause)
+							.also(::doCancel)
+							.guaranteedUnitResponse()
+							.eventually { applicationNavigation.viewBrowserRoot() }
+					} else finishForResultDelayed().also(::doCancel)
+				).must { resolve(connection) }
 		}
 
 	private fun finishForResultDelayed() = CancellableProxyPromise { cp ->
