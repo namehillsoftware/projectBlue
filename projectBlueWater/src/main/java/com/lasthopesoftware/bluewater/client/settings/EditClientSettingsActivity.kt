@@ -85,7 +85,7 @@ class EditClientSettingsActivity :
 						this,
 						EditClientSettingsActivityIntentBuilder(IntentFactory(this))
 					),
-					stringResources = StringResources(this)
+					stringResources = StringResources(this),
 				)
 			}
 		}

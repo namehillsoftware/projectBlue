@@ -42,7 +42,7 @@ class LibrarySettingsViewModel(
 	val password = MutableStateFlow("")
 	val customSyncPath = MutableStateFlow("")
 	val isLocalOnly = MutableStateFlow(false)
-	val syncedFileLocation = MutableStateFlow<Library.SyncedFileLocation?>(null)
+	val syncedFileLocation = MutableStateFlow(Library.SyncedFileLocation.INTERNAL)
 	val isWakeOnLanEnabled = MutableStateFlow(false)
 	val isUsingExistingFiles = MutableStateFlow(false)
 	val isSyncLocalConnectionsOnly = MutableStateFlow(false)
@@ -100,19 +100,19 @@ class LibrarySettingsViewModel(
 	fun removeLibrary(): Promise<*> = library?.takeIf { mutableIsRemovalRequested.value }?.let(libraryRemoval::removeLibrary).keepPromise()
 
 	override fun respond(result: Library?) {
-		library = result ?: return
+		library = result
 
-		isLocalOnly.value = result.isLocalOnly
-		isUsingExistingFiles.value = result.isUsingExistingFiles
-		isSyncLocalConnectionsOnly.value = result.isSyncLocalConnectionsOnly
-		isWakeOnLanEnabled.value = result.isWakeOnLanEnabled
+		isLocalOnly.value = result?.isLocalOnly ?: false
+		isUsingExistingFiles.value = result?.isUsingExistingFiles ?: false
+		isSyncLocalConnectionsOnly.value = result?.isSyncLocalConnectionsOnly ?: false
+		isWakeOnLanEnabled.value = result?.isWakeOnLanEnabled ?: false
 
-		customSyncPath.value = result.customSyncedFilesPath ?: Environment.getExternalStorageDirectory()?.path ?: ""
-		syncedFileLocation.value = result.syncedFileLocation
+		customSyncPath.value = result?.customSyncedFilesPath ?: Environment.getExternalStorageDirectory()?.path ?: ""
+		syncedFileLocation.value = result?.syncedFileLocation ?: Library.SyncedFileLocation.INTERNAL
 
-		accessCode.value = result.accessCode ?: ""
-		userName.value = result.userName ?: ""
-		password.value = result.password ?: ""
+		accessCode.value = result?.accessCode ?: ""
+		userName.value = result?.userName ?: ""
+		password.value = result?.password ?: ""
 	}
 
 	override fun promiseResponse(resolution: Map<String, Boolean>): Promise<Boolean> {

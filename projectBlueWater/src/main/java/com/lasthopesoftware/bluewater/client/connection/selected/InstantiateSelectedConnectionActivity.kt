@@ -84,7 +84,6 @@ class InstantiateSelectedConnectionActivity : AppCompatActivity(), ControlConnec
 		object : ProgressingPromiseProxy<BuildingConnectionStatus, IConnectionProvider?>(), PromisedResponse<IConnectionProvider?, Unit> {
 			init {
 				val promisedConnection = connectionInitializationProxy.promiseInitializedConnection(libraryId)
-				doCancel(promisedConnection)
 				proxyRejection(promisedConnection)
 				promisedConnection.eventually(this)
 			}
