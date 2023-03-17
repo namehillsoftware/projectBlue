@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.servers.list
 
 import android.app.Activity
 import android.content.Context
+import android.os.Handler
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -28,6 +29,7 @@ import com.namehillsoftware.handoff.promises.Promise
 class ServerListAdapter(private val activity: Activity, private val browserLibrarySelection: SelectBrowserLibrary, private val registerForApplicationMessages: RegisterForApplicationMessages)
 	: DeferredListAdapter<Library, ServerListAdapter.ViewHolder>(activity, LibraryDiffer) {
 
+	private val handler by lazy { Handler(activity.mainLooper) }
 	private var activeLibrary: Library? = null
 
 	fun updateLibraries(libraries: Collection<Library>, activeLibrary: Library?): Promise<Unit> {
@@ -55,26 +57,27 @@ class ServerListAdapter(private val activity: Activity, private val browserLibra
 		private val btnSelectServer by LazyViewFinder<Button>(parent, R.id.btnSelectServer)
 		private val btnConfigureServer by LazyViewFinder<ImageButton>(parent, R.id.btnConfigureServer)
 
-		private var broadcastReceiver: ((BrowserLibrarySelection.LibraryChosenMessage) -> Unit)? = null
+		private var librarySelectionChangedSubscription: AutoCloseable? = null
 		private var onAttachStateChangeListener: View.OnAttachStateChangeListener? = null
 
 		fun update(library: Library) {
 			textView.text = library.accessCode
 			textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(library.id == activeLibrary?.id))
 
-			broadcastReceiver?.run { registerForApplicationMessages.unregisterReceiver(this) }
-			registerForApplicationMessages.registerReceiver(
-				{ m : BrowserLibrarySelection.LibraryChosenMessage ->
-					textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(library.id == m.chosenLibraryId.id))
-				}.also { broadcastReceiver = it })
+			librarySelectionChangedSubscription?.close()
+			librarySelectionChangedSubscription = registerForApplicationMessages
+				.registerReceiver(handler) { m: BrowserLibrarySelection.LibraryChosenMessage ->
+					textView.setTypeface(
+						null,
+						ViewUtils.getActiveListItemTextViewStyle(library.id == m.chosenLibraryId.id)
+					)
+				}
 
-			onAttachStateChangeListener?.run { parent.removeOnAttachStateChangeListener(this) }
+			onAttachStateChangeListener?.also(parent::removeOnAttachStateChangeListener)
 			parent.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
 				override fun onViewAttachedToWindow(v: View) {}
 				override fun onViewDetachedFromWindow(v: View) {
-					val broadcastReceiver = broadcastReceiver
-					if (broadcastReceiver != null)
-						registerForApplicationMessages.unregisterReceiver(broadcastReceiver)
+					librarySelectionChangedSubscription?.close()
 				}
 			}.apply { onAttachStateChangeListener = this })
 
