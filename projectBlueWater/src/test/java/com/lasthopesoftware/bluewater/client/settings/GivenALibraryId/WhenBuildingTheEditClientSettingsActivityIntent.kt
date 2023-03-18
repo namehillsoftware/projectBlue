@@ -2,10 +2,11 @@ package com.lasthopesoftware.bluewater.client.settings.GivenALibraryId
 
 import android.content.Intent
 import androidx.test.core.app.ApplicationProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.settings.EditClientSettingsActivity
 import com.lasthopesoftware.bluewater.client.settings.EditClientSettingsActivityIntentBuilder
 import com.lasthopesoftware.resources.intents.IntentFactory
-import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.*
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -23,12 +24,12 @@ class WhenBuildingTheEditClientSettingsActivityIntent {
         val editClientSettingsActivityIntentBuilder = EditClientSettingsActivityIntentBuilder(
             IntentFactory(ApplicationProvider.getApplicationContext())
         )
-        returnedIntent = editClientSettingsActivityIntentBuilder.buildIntent(13)
+        returnedIntent = editClientSettingsActivityIntentBuilder.buildIntent(LibraryId(13))
     }
 
     @Test
     fun thenTheIdInTheIntentIsSetToTheLibraryId() {
-        Assertions.assertThat(
+        assertThat(
             returnedIntent!!.getIntExtra(
 				EditClientSettingsActivity.serverIdExtra,
                 -1
@@ -38,7 +39,7 @@ class WhenBuildingTheEditClientSettingsActivityIntent {
 
     @Test
     fun thenTheReturnedIntentIsEditClientSettingsActivity() {
-        Assertions.assertThat(returnedIntent!!.component!!.className)
+        assertThat(returnedIntent!!.component!!.className)
             .isEqualTo(EditClientSettingsActivity::class.java.name)
     }
 }

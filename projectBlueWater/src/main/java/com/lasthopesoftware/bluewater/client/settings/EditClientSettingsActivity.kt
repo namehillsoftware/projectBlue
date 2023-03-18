@@ -25,6 +25,7 @@ import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLa
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
 import com.lasthopesoftware.resources.closables.lazyScoped
+import com.lasthopesoftware.resources.intents.IntentFactory
 import com.lasthopesoftware.resources.strings.StringResources
 import com.namehillsoftware.handoff.Messenger
 import com.namehillsoftware.handoff.promises.Promise
@@ -80,7 +81,10 @@ class EditClientSettingsActivity :
 			ProjectBlueTheme {
 				LibrarySettingsView(
 					librarySettingsViewModel = librarySettingsViewModel,
-					navigateApplication = ActivityApplicationNavigation(this),
+					navigateApplication = ActivityApplicationNavigation(
+						this,
+						EditClientSettingsActivityIntentBuilder(IntentFactory(this))
+					),
 					stringResources = StringResources(this)
 				)
 			}
@@ -111,7 +115,7 @@ class EditClientSettingsActivity :
 			permissionsRequests[requestId] = messenger
 
 			ActivityCompat.requestPermissions(
-				this@EditClientSettingsActivity,
+				this,
 				permissions.toTypedArray(),
 				requestId
 			)

@@ -27,12 +27,14 @@ import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessio
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
+import com.lasthopesoftware.bluewater.client.settings.EditClientSettingsActivityIntentBuilder
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildActivityViewModelLazily
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRateLimiter
+import com.lasthopesoftware.resources.intents.IntentFactory
 import com.lasthopesoftware.resources.strings.StringResources
 
 class SearchFilesFragment : Fragment() {
@@ -97,7 +99,7 @@ class SearchFilesFragment : Fragment() {
 			scopedUrlKeyProvider,
 			StringResources(requireContext()),
 			PlaybackServiceController(requireContext()),
-			ActivityApplicationNavigation(requireActivity()),
+			ActivityApplicationNavigation(requireActivity(), EditClientSettingsActivityIntentBuilder(IntentFactory(requireContext()))),
 			menuMessageBus,
 			applicationMessageBus,
 		)

@@ -16,10 +16,8 @@ import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.Companion.getInstance
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
-import com.lasthopesoftware.bluewater.client.connection.session.ConnectionStatusViewModel
-import com.lasthopesoftware.bluewater.client.connection.session.ConnectionUpdatesView
-import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.*
+import com.lasthopesoftware.bluewater.client.settings.EditClientSettingsActivityIntentBuilder
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
@@ -27,6 +25,7 @@ import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLa
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay
 import com.lasthopesoftware.bluewater.shared.promises.extensions.*
+import com.lasthopesoftware.resources.intents.IntentFactory
 import com.lasthopesoftware.resources.strings.StringResources
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.PromisedResponse
@@ -39,7 +38,7 @@ class InstantiateSelectedConnectionActivity : AppCompatActivity(), ControlConnec
 
 	private val connectionInitializationProxy by lazy { ConnectionInitializationProxy(libraryConnectionProvider) }
 
-	private val applicationNavigation by lazy { ActivityApplicationNavigation(this) }
+	private val applicationNavigation by lazy { ActivityApplicationNavigation(this, EditClientSettingsActivityIntentBuilder(IntentFactory(this))) }
 
 	private val errorController by lazy {
 		ConnectionInitializationErrorController(this, applicationNavigation)
