@@ -30,7 +30,6 @@ import com.lasthopesoftware.resources.strings.StringResources
 import com.namehillsoftware.handoff.Messenger
 import com.namehillsoftware.handoff.promises.Promise
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicInteger
 
 class EditClientSettingsActivity :
 	AppCompatActivity(),
@@ -70,8 +69,6 @@ class EditClientSettingsActivity :
 		)
 	}
 
-	private val permissionsRequestRef = AtomicInteger(0)
-
 	private val permissionsRequests = ConcurrentHashMap<Int, Messenger<Map<String, Boolean>>>()
 
 	public override fun onCreate(savedInstanceState: Bundle?) {
@@ -103,7 +100,6 @@ class EditClientSettingsActivity :
 
 	private fun initializeLibrary(intent: Intent) {
 		val libraryId = intent.getIntExtra(serverIdExtra, -1)
-		if (libraryId < 0) return
 
 		librarySettingsViewModel.loadLibrary(LibraryId(libraryId))
 	}
@@ -111,7 +107,7 @@ class EditClientSettingsActivity :
 	override fun requestPermissions(permissions: List<String>): Promise<Map<String, Boolean>> {
 		return if (permissions.isEmpty()) Promise(emptyMap())
 		else Promise<Map<String, Boolean>> { messenger ->
-			val requestId = permissionsRequestRef.getAndIncrement()
+			val requestId = messenger.hashCode()
 			permissionsRequests[requestId] = messenger
 
 			ActivityCompat.requestPermissions(

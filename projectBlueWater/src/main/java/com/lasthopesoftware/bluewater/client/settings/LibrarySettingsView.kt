@@ -1,12 +1,13 @@
 package com.lasthopesoftware.bluewater.client.settings
 
-import android.os.Environment
 import android.view.KeyEvent.ACTION_DOWN
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -26,6 +27,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -54,6 +56,7 @@ private val expandedMenuVerticalPadding = Dimensions.ViewPadding * 2
 private val collapsedTopRowPadding = 6.dp
 private val appBarHeight = Dimensions.AppBarHeight
 private val boxHeight = expandedTitleHeight + expandedIconSize + expandedMenuVerticalPadding * 2 + appBarHeight
+private val groupPadding = Dimensions.ViewPadding * 2
 
 @Composable
 private fun SpacedOutRow(content: @Composable (RowScope.() -> Unit)) {
@@ -82,7 +85,7 @@ private fun StandardTextField(
 		modifier = Modifier
 			.fillMaxWidth()
 			.onPreviewKeyEvent {
-				if (it.key == Key.Tab && it.nativeKeyEvent.action == ACTION_DOWN){
+				if (it.key == Key.Tab && it.nativeKeyEvent.action == ACTION_DOWN) {
 					focusManager.moveFocus(FocusDirection.Down)
 					true
 				} else {
@@ -105,21 +108,24 @@ private fun StandardTextField(
 @Composable
 private fun LabeledSelection(
 	label: String,
-	onClick: () -> Unit,
+	selected: Boolean,
+	onSelected: () -> Unit,
+	role: Role? = null,
 	selectableContent: @Composable () -> Unit,
 ) {
 	Row(
-		modifier = Modifier.clickable(
-			interactionSource = remember { MutableInteractionSource() },
-			indication = null,
-			onClick = onClick
-		),
+		modifier = Modifier
+			.selectable(
+				selected = selected,
+				onClick = onSelected,
+				role = role,
+			),
 	) {
 		selectableContent()
 
 		Text(
 			text = label,
-			modifier = Modifier.padding(start = Dimensions.ViewPadding),
+			modifier = Modifier.padding(start = Dimensions.ViewPadding * 4),
 		)
 	}
 }
@@ -333,7 +339,9 @@ fun LibrarySettingsView(
 						var isLocalOnlyState by isLocalOnly.collectAsMutableState()
 						LabeledSelection(
 							label = stringResource(id = R.string.lbl_local_only),
-							onClick = { isLocalOnlyState = !isLocalOnlyState }
+							selected = isLocalOnlyState,
+							onSelected = { isLocalOnlyState = !isLocalOnlyState },
+							role = Role.Checkbox,
 						) {
 							Checkbox(
 								checked = isLocalOnlyState,
@@ -346,7 +354,9 @@ fun LibrarySettingsView(
 						var isWolEnabledState by isWakeOnLanEnabled.collectAsMutableState()
 						LabeledSelection(
 							label = stringResource(id = R.string.wake_on_lan_setting),
-							onClick = { isWolEnabledState = !isWolEnabledState }
+							selected = isWolEnabledState,
+							onSelected = { isWolEnabledState = !isWolEnabledState },
+							role = Role.Checkbox,
 						) {
 							Checkbox(
 								checked = isWolEnabledState,
@@ -355,60 +365,86 @@ fun LibrarySettingsView(
 						}
 					}
 
-					Text(stringResource(id = R.string.lblSyncMusicLocation))
-
-					var syncedFileLocationState by syncedFileLocation.collectAsMutableState()
-					SpacedOutRow {
-						LabeledSelection(
-							label = stringResource(id = R.string.rbPrivateToApp),
-							onClick = { syncedFileLocationState = Library.SyncedFileLocation.INTERNAL }
-						) {
-							RadioButton(
-								selected = syncedFileLocationState == Library.SyncedFileLocation.INTERNAL,
-								onClick = null,
-							)
-						}
-					}
-
-					SpacedOutRow {
-						LabeledSelection(
-							label = stringResource(id = R.string.rbPublicLocation),
-							onClick = { syncedFileLocationState = Library.SyncedFileLocation.EXTERNAL }
-						) {
-							RadioButton(
-								selected = syncedFileLocationState == Library.SyncedFileLocation.EXTERNAL,
-								onClick = null,
-							)
-						}
-					}
-
-					SpacedOutRow {
-						LabeledSelection(
-							label = stringResource(id = R.string.rbCustomLocation),
-							onClick = { syncedFileLocationState = Library.SyncedFileLocation.CUSTOM }
-						) {
-							RadioButton(
-								selected = syncedFileLocationState == Library.SyncedFileLocation.CUSTOM,
-								onClick = null,
-							)
-						}
-					}
-
-					SpacedOutRow {
-						var customSyncPathState by customSyncPath.collectAsMutableState()
-						StandardTextField(
-							placeholder = Environment.getExternalStorageDirectory()?.path ?: "",
-							value = customSyncPathState,
-							onValueChange = { customSyncPathState = it },
-							enabled = syncedFileLocationState == Library.SyncedFileLocation.CUSTOM,
+					Column(modifier = Modifier
+						.fillMaxWidth(.8f)
+						.selectableGroup()
+					) {
+						Text(
+							text = stringResource(id = R.string.lblSyncMusicLocation),
+							modifier = Modifier.padding(groupPadding),
 						)
+
+						var syncedFileLocationState by syncedFileLocation.collectAsMutableState()
+						Row(
+							modifier = Modifier.padding(groupPadding)
+						) {
+							LabeledSelection(
+								label = stringResource(id = R.string.rbPrivateToApp),
+								selected = syncedFileLocationState == Library.SyncedFileLocation.INTERNAL,
+								onSelected = { syncedFileLocationState = Library.SyncedFileLocation.INTERNAL },
+								role = Role.RadioButton,
+							) {
+								RadioButton(
+									selected = syncedFileLocationState == Library.SyncedFileLocation.INTERNAL,
+									onClick = null,
+								)
+							}
+						}
+
+						Row(
+							modifier = Modifier.padding(groupPadding)
+						) {
+							LabeledSelection(
+								label = stringResource(id = R.string.rbPublicLocation),
+								selected = syncedFileLocationState == Library.SyncedFileLocation.EXTERNAL,
+								onSelected = { syncedFileLocationState = Library.SyncedFileLocation.EXTERNAL },
+								role = Role.RadioButton,
+							) {
+								RadioButton(
+									selected = syncedFileLocationState == Library.SyncedFileLocation.EXTERNAL,
+									onClick = null,
+								)
+							}
+						}
+
+						Row(
+							modifier = Modifier.padding(groupPadding)
+						) {
+							LabeledSelection(
+								label = stringResource(id = R.string.rbCustomLocation),
+								selected = syncedFileLocationState == Library.SyncedFileLocation.CUSTOM,
+								onSelected = { syncedFileLocationState = Library.SyncedFileLocation.CUSTOM },
+								role = Role.RadioButton,
+							) {
+								RadioButton(
+									selected = syncedFileLocationState == Library.SyncedFileLocation.CUSTOM,
+									onClick = null,
+								)
+							}
+						}
+
+						Row(
+							modifier = Modifier
+								.fillMaxWidth()
+								.padding(groupPadding)
+						) {
+							var customSyncPathState by customSyncPath.collectAsMutableState()
+							StandardTextField(
+								placeholder = stringResource(id = R.string.lbl_sync_path),
+								value = customSyncPathState,
+								onValueChange = { customSyncPathState = it },
+								enabled = syncedFileLocationState == Library.SyncedFileLocation.CUSTOM,
+							)
+						}
 					}
 
 					SpacedOutRow {
 						var isSyncLocalConnectionsOnlyState by isSyncLocalConnectionsOnly.collectAsMutableState()
 						LabeledSelection(
 							label = stringResource(id = R.string.lbl_sync_local_connection),
-							onClick = { isSyncLocalConnectionsOnlyState = !isSyncLocalConnectionsOnlyState }
+							selected = isSyncLocalConnectionsOnlyState,
+							onSelected = { isSyncLocalConnectionsOnlyState = !isSyncLocalConnectionsOnlyState },
+							role = Role.Checkbox,
 						) {
 							Checkbox(
 								checked = isSyncLocalConnectionsOnlyState,
@@ -421,7 +457,9 @@ fun LibrarySettingsView(
 						var isUsingExistingFilesState by isUsingExistingFiles.collectAsMutableState()
 						LabeledSelection(
 							label = stringResource(id = R.string.lbl_use_existing_music),
-							onClick = { isUsingExistingFilesState = !isUsingExistingFilesState }
+							selected = isUsingExistingFilesState,
+							onSelected = { isUsingExistingFilesState = !isUsingExistingFilesState },
+							role = Role.Checkbox,
 						) {
 							Checkbox(
 								checked = isUsingExistingFilesState,

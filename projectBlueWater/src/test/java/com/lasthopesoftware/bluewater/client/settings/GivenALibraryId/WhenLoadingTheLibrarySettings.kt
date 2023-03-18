@@ -6,7 +6,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsViewModel
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import io.mockk.mockk
-import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
@@ -45,47 +45,47 @@ class WhenLoadingTheLibrarySettings {
 
     @Test
     fun `then the access code is correct`() {
-        Assertions.assertThat(services.accessCode.value).isEqualTo("r64HLI")
+        assertThat(services.accessCode.value).isEqualTo("r64HLI")
     }
 
     @Test
     fun `then the custom synced files path is correct`() {
-        Assertions.assertThat(services.customSyncPath.value).isEqualTo("T5YN")
+        assertThat(services.customSyncPath.value).isEqualTo("T5YN")
     }
 
     @Test
     fun `then the connection is local only`() {
-        Assertions.assertThat(services.isLocalOnly.value).isTrue
+        assertThat(services.isLocalOnly.value).isTrue
     }
 
     @Test
     fun `then sync local only connections is correct`() {
-        Assertions.assertThat(services.isSyncLocalConnectionsOnly.value).isTrue
+        assertThat(services.isSyncLocalConnectionsOnly.value).isTrue
     }
 
     @Test
     fun `then wake on lan is correct`() {
-        Assertions.assertThat(services.isWakeOnLanEnabled.value).isTrue
+        assertThat(services.isWakeOnLanEnabled.value).isTrue
     }
 
     @Test
     fun `then the user name is correct`() {
-        Assertions.assertThat(services.userName.value).isEqualTo("ZaxM5Iid")
+        assertThat(services.userName.value).isEqualTo("ZaxM5Iid")
     }
 
     @Test
     fun `then the password is correct`() {
-        Assertions.assertThat(services.password.value).isEqualTo("sL33L3Xt")
+        assertThat(services.password.value).isEqualTo("sL33L3Xt")
     }
 
     @Test
     fun `then synced file location is correct`() {
-        Assertions.assertThat(services.syncedFileLocation.value)
+        assertThat(services.syncedFileLocation.value)
             .isEqualTo(Library.SyncedFileLocation.EXTERNAL)
     }
 
     @Test
     fun `then is using existing files is correct`() {
-        Assertions.assertThat(services.isUsingExistingFiles.value).isTrue
+        assertThat(services.isUsingExistingFiles.value).isTrue
     }
 }

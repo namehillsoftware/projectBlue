@@ -40,7 +40,7 @@ class LibrarySettingsViewModel(
 	val accessCode = MutableStateFlow("")
 	val userName = MutableStateFlow("")
 	val password = MutableStateFlow("")
-	val customSyncPath = MutableStateFlow("")
+	val customSyncPath = MutableStateFlow(Environment.getExternalStorageDirectory()?.path ?: "")
 	val isLocalOnly = MutableStateFlow(false)
 	val syncedFileLocation = MutableStateFlow(Library.SyncedFileLocation.INTERNAL)
 	val isWakeOnLanEnabled = MutableStateFlow(false)
@@ -53,8 +53,6 @@ class LibrarySettingsViewModel(
 
 	fun loadLibrary(libraryId: LibraryId): Promise<*> {
 		mutableIsLoading.value = true
-
-		Environment.getExternalStorageDirectory()?.path?.also { customSyncPath.value = it }
 
 		return libraryProvider
 			.getLibrary(libraryId)
@@ -107,7 +105,7 @@ class LibrarySettingsViewModel(
 		isSyncLocalConnectionsOnly.value = result?.isSyncLocalConnectionsOnly ?: false
 		isWakeOnLanEnabled.value = result?.isWakeOnLanEnabled ?: false
 
-		customSyncPath.value = result?.customSyncedFilesPath ?: Environment.getExternalStorageDirectory()?.path ?: ""
+		customSyncPath.value = result?.customSyncedFilesPath?.takeIf { it.isNotEmpty() } ?: Environment.getExternalStorageDirectory()?.path ?: ""
 		syncedFileLocation.value = result?.syncedFileLocation ?: Library.SyncedFileLocation.INTERNAL
 
 		accessCode.value = result?.accessCode ?: ""
