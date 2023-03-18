@@ -56,7 +56,7 @@ private val appBarHeight = Dimensions.AppBarHeight
 private val boxHeight = expandedTitleHeight + expandedIconSize + expandedMenuVerticalPadding * 2 + appBarHeight
 
 @Composable
-private fun DataEntryRow(content: @Composable (RowScope.() -> Unit)) {
+private fun SpacedOutRow(content: @Composable (RowScope.() -> Unit)) {
 	Row(
 		modifier = Modifier
 			.fillMaxWidth(.8f)
@@ -100,6 +100,25 @@ private fun StandardTextField(
 			onNext = { focusManager.moveFocus(FocusDirection.Down) }
 		)
 	)
+}
+
+@Composable
+private fun LabeledSelection(
+	label: String,
+	onClick: () -> Unit,
+	selectableContent: @Composable () -> Unit,
+) {
+	Row(
+		modifier = Modifier.clickable(
+			interactionSource = remember { MutableInteractionSource() },
+			indication = null,
+			onClick = onClick
+		),
+	) {
+		selectableContent()
+
+		Text(label)
+	}
 }
 
 @Composable
@@ -279,7 +298,7 @@ fun LibrarySettingsView(
 				horizontalAlignment = Alignment.CenterHorizontally,
 			) {
 				librarySettingsViewModel.apply {
-					DataEntryRow {
+					SpacedOutRow {
 						StandardTextField(
 							placeholder = stringResource(R.string.lbl_access_code),
 							value = accessCodeState,
@@ -287,7 +306,7 @@ fun LibrarySettingsView(
 						)
 					}
 
-					DataEntryRow {
+					SpacedOutRow {
 						var userNameState by userName.collectAsMutableState()
 						StandardTextField(
 							placeholder = stringResource(R.string.lbl_user_name),
@@ -296,7 +315,7 @@ fun LibrarySettingsView(
 						)
 					}
 
-					DataEntryRow {
+					SpacedOutRow {
 						var passwordState by password.collectAsMutableState()
 						StandardTextField(
 							placeholder = stringResource(R.string.lbl_password),
@@ -307,89 +326,72 @@ fun LibrarySettingsView(
 						)
 					}
 
-					DataEntryRow {
+					SpacedOutRow {
 						var isLocalOnlyState by isLocalOnly.collectAsMutableState()
-						Row(
-							modifier = Modifier
-								.fillMaxWidth()
-								.clickable {
-									isLocalOnlyState = !isLocalOnlyState
-								}
+						LabeledSelection(
+							label = stringResource(id = R.string.lbl_local_only),
+							onClick = { isLocalOnlyState = !isLocalOnlyState }
 						) {
 							Checkbox(
 								checked = isLocalOnlyState,
 								onCheckedChange = null,
 							)
-
-							Text(text = stringResource(id = R.string.lbl_local_only))
 						}
 					}
 
-					DataEntryRow {
+					SpacedOutRow {
 						var isWolEnabledState by isWakeOnLanEnabled.collectAsMutableState()
-						Row(
-							modifier = Modifier
-								.fillMaxWidth()
-								.clickable {
-									isWolEnabledState = !isWolEnabledState
-								}
+						LabeledSelection(
+							label = stringResource(id = R.string.wake_on_lan_setting),
+							onClick = { isWolEnabledState = !isWolEnabledState }
 						) {
 							Checkbox(
 								checked = isWolEnabledState,
 								onCheckedChange = null,
 							)
-
-							Text(text = stringResource(id = R.string.wake_on_lan_setting))
 						}
 					}
 
 					Text(stringResource(id = R.string.lblSyncMusicLocation))
 
 					var syncedFileLocationState by syncedFileLocation.collectAsMutableState()
-					DataEntryRow {
-						RadioButton(
-							selected = syncedFileLocationState == Library.SyncedFileLocation.INTERNAL,
-							onClick = { syncedFileLocationState = Library.SyncedFileLocation.INTERNAL },
-						)
-
-						Text(stringResource(id = R.string.rbPrivateToApp))
+					SpacedOutRow {
+						LabeledSelection(
+							label = stringResource(id = R.string.rbPrivateToApp),
+							onClick = { syncedFileLocationState = Library.SyncedFileLocation.INTERNAL }
+						) {
+							RadioButton(
+								selected = syncedFileLocationState == Library.SyncedFileLocation.INTERNAL,
+								onClick = null,
+							)
+						}
 					}
 
-					DataEntryRow {
-						Row(
-							modifier = Modifier
-								.fillMaxWidth()
-								.clickable {
-									syncedFileLocationState = Library.SyncedFileLocation.EXTERNAL
-								}
+					SpacedOutRow {
+						LabeledSelection(
+							label = stringResource(id = R.string.rbPublicLocation),
+							onClick = { syncedFileLocationState = Library.SyncedFileLocation.EXTERNAL }
 						) {
 							RadioButton(
 								selected = syncedFileLocationState == Library.SyncedFileLocation.EXTERNAL,
 								onClick = null,
 							)
-
-							Text(stringResource(id = R.string.rbPublicLocation))
 						}
 					}
 
-					DataEntryRow {
-						Row(
-							modifier = Modifier
-								.fillMaxWidth()
-								.clickable {
-									syncedFileLocationState = Library.SyncedFileLocation.CUSTOM
-								}
+					SpacedOutRow {
+						LabeledSelection(
+							label = stringResource(id = R.string.rbCustomLocation),
+							onClick = { syncedFileLocationState = Library.SyncedFileLocation.CUSTOM }
 						) {
 							RadioButton(
 								selected = syncedFileLocationState == Library.SyncedFileLocation.CUSTOM,
 								onClick = null,
 							)
-
-							Text(stringResource(id = R.string.rbCustomLocation))
 						}
 					}
 
-					DataEntryRow {
+					SpacedOutRow {
 						var customSyncPathState by customSyncPath.collectAsMutableState()
 						StandardTextField(
 							placeholder = Environment.getExternalStorageDirectory()?.path ?: "",
@@ -399,40 +401,30 @@ fun LibrarySettingsView(
 						)
 					}
 
-					DataEntryRow {
+					SpacedOutRow {
 						var isSyncLocalConnectionsOnlyState by isSyncLocalConnectionsOnly.collectAsMutableState()
-						Row(
-							modifier = Modifier
-								.fillMaxWidth()
-								.clickable {
-									isSyncLocalConnectionsOnlyState = !isSyncLocalConnectionsOnlyState
-								}
+						LabeledSelection(
+							label = stringResource(id = R.string.lbl_sync_local_connection),
+							onClick = { isSyncLocalConnectionsOnlyState = !isSyncLocalConnectionsOnlyState }
 						) {
 							Checkbox(
 								checked = isSyncLocalConnectionsOnlyState,
 								null,
 							)
-
-							Text(stringResource(id = R.string.lbl_sync_local_connection))
 						}
 					}
 
-					DataEntryRow {
+					SpacedOutRow {
 						var isUsingExistingFilesState by isUsingExistingFiles.collectAsMutableState()
-						Row(
-							modifier = Modifier
-								.fillMaxWidth()
-								.clickable {
-									isUsingExistingFilesState = !isUsingExistingFilesState
-								}
+						LabeledSelection(
+							label = stringResource(id = R.string.lbl_use_existing_music),
+							onClick = { isUsingExistingFilesState = !isUsingExistingFilesState }
 						) {
 							Checkbox(
 								checked = isUsingExistingFilesState,
 								null,
 							)
 						}
-
-						Text(stringResource(id = R.string.lbl_use_existing_music))
 					}
 
 					val isSavingState by isSaving.collectAsState()
