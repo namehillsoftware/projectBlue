@@ -56,7 +56,7 @@ private val expandedMenuVerticalPadding = Dimensions.ViewPadding * 2
 private val collapsedTopRowPadding = 6.dp
 private val appBarHeight = Dimensions.AppBarHeight
 private val boxHeight = expandedTitleHeight + expandedIconSize + expandedMenuVerticalPadding * 2 + appBarHeight
-private val groupPadding = Dimensions.ViewPadding * 2
+private val innerGroupPadding = Dimensions.ViewPadding * 2
 
 @Composable
 private fun SpacedOutRow(content: @Composable (RowScope.() -> Unit)) {
@@ -371,12 +371,12 @@ fun LibrarySettingsView(
 					) {
 						Text(
 							text = stringResource(id = R.string.lblSyncMusicLocation),
-							modifier = Modifier.padding(groupPadding),
+							modifier = Modifier.padding(innerGroupPadding),
 						)
 
 						var syncedFileLocationState by syncedFileLocation.collectAsMutableState()
 						Row(
-							modifier = Modifier.padding(groupPadding)
+							modifier = Modifier.padding(innerGroupPadding)
 						) {
 							LabeledSelection(
 								label = stringResource(id = R.string.rbPrivateToApp),
@@ -392,7 +392,7 @@ fun LibrarySettingsView(
 						}
 
 						Row(
-							modifier = Modifier.padding(groupPadding)
+							modifier = Modifier.padding(innerGroupPadding)
 						) {
 							LabeledSelection(
 								label = stringResource(id = R.string.rbPublicLocation),
@@ -408,7 +408,7 @@ fun LibrarySettingsView(
 						}
 
 						Row(
-							modifier = Modifier.padding(groupPadding)
+							modifier = Modifier.padding(innerGroupPadding)
 						) {
 							LabeledSelection(
 								label = stringResource(id = R.string.rbCustomLocation),
@@ -426,7 +426,7 @@ fun LibrarySettingsView(
 						Row(
 							modifier = Modifier
 								.fillMaxWidth()
-								.padding(groupPadding)
+								.padding(innerGroupPadding)
 						) {
 							var customSyncPathState by customSyncPath.collectAsMutableState()
 							StandardTextField(
@@ -473,9 +473,9 @@ fun LibrarySettingsView(
 					Button(
 						onClick = {
 							scope.launch {
-								saveLibrary().suspend()
-								isSaved = true
-								navigateApplication.navigateUp()
+								isSaved = saveLibrary().suspend()
+								if (isSaved)
+									navigateApplication.navigateUp()
 							}
 						},
 						enabled = !isSavingState && !isSaved,

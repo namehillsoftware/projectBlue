@@ -3,10 +3,12 @@ package com.lasthopesoftware.bluewater.client.settings
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import com.lasthopesoftware.bluewater.ActivityApplicationNavigation
+import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRemoval
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
@@ -121,7 +123,22 @@ class EditClientSettingsActivity :
 	override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
 		super.onRequestPermissionsResult(requestCode, permissions, grantResults)
 
-		permissionsRequests.remove(requestCode)
-			?.sendResolution(grantResults.zip(permissions).associate { (r, p) -> Pair(p, r == PackageManager.PERMISSION_GRANTED) })
+		permissionsRequests
+			.remove(requestCode)
+			?.sendResolution(
+				grantResults
+					.zip(permissions)
+					.associate { (r, p) -> Pair(p, r == PackageManager.PERMISSION_GRANTED) }
+					.apply {
+						if (values.any { !it }) {
+							Toast
+								.makeText(
+									this@EditClientSettingsActivity,
+									R.string.permissions_must_be_granted_for_settings,
+									Toast.LENGTH_LONG
+								)
+								.show()
+						}
+					})
 	}
 }

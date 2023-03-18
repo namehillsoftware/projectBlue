@@ -10,6 +10,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
@@ -338,8 +339,23 @@ class ItemBrowserActivity :
 	override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
 		super.onRequestPermissionsResult(requestCode, permissions, grantResults)
 
-		permissionsRequests.remove(requestCode)
-			?.sendResolution(grantResults.zip(permissions).associate { (r, p) -> Pair(p, r == PackageManager.PERMISSION_GRANTED) })
+		permissionsRequests
+			.remove(requestCode)
+			?.sendResolution(
+				grantResults
+					.zip(permissions)
+					.associate { (r, p) -> Pair(p, r == PackageManager.PERMISSION_GRANTED) }
+					.apply {
+						if (values.any { !it }) {
+							Toast
+								.makeText(
+									this@ItemBrowserActivity,
+									R.string.permissions_must_be_granted_for_settings,
+									Toast.LENGTH_LONG
+								)
+								.show()
+						}
+					})
 	}
 }
 
