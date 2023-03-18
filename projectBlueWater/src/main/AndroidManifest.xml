@@ -48,14 +48,14 @@
 
         <activity
             android:name=".settings.ApplicationSettingsActivity"
-            android:label="@string/layout_settings" />
+            android:label="@string/settings" />
         <activity
             android:name=".about.AboutActivity"
             android:label="@string/title_activity_about" />
         <activity
             android:name=".settings.hidden.HiddenSettingsActivity"
             android:exported="false"
-            android:label="@string/layout_settings" />
+            android:label="@string/settings" />
         <activity
             android:name=".client.browsing.BrowserEntryActivity"
             android:exported="true"

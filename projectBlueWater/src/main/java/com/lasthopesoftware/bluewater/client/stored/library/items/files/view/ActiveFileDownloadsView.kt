@@ -39,7 +39,6 @@ import me.onebone.toolbar.ScrollStrategy
 import me.onebone.toolbar.rememberCollapsingToolbarScaffoldState
 import kotlin.math.pow
 
-
 private const val expandedTitleHeight = 84
 private const val expandedIconSize = 44
 private const val expandedMenuVerticalPadding = 8
@@ -135,19 +134,7 @@ fun ActiveFileDownloadsView(
 						)
 
 						MenuIcon(
-							modifier = Modifier
-								.fillMaxHeight()
-								.weight(1f),
 							onClick = { activeFileDownloadsViewModel.toggleSync() },
-							label = {
-								if (acceleratedProgress < 1) {
-									val invertedProgress by remember { derivedStateOf { 1 - acceleratedProgress } }
-									Text(
-										text = label,
-										modifier = Modifier.alpha(invertedProgress),
-									)
-								}
-							},
 							icon =  {
 								var modifier = Modifier.size(24.dp)
 
@@ -171,6 +158,18 @@ fun ActiveFileDownloadsView(
 									modifier = modifier,
 									contentDescription = label,
 								)
+							},
+							modifier = Modifier
+								.fillMaxHeight()
+								.weight(1f),
+							label = {
+								if (acceleratedProgress < 1) {
+									val invertedProgress by remember { derivedStateOf { 1 - acceleratedProgress } }
+									Text(
+										text = label,
+										modifier = Modifier.alpha(invertedProgress),
+									)
+								}
 							},
 						)
 					}

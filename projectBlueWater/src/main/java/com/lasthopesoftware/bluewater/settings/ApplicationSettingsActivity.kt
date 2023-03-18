@@ -32,6 +32,7 @@ import com.lasthopesoftware.bluewater.shared.android.view.getValue
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
+import com.lasthopesoftware.resources.closables.lazyScoped
 import com.lasthopesoftware.resources.strings.StringResources
 
 class ApplicationSettingsActivity : AppCompatActivity() {
@@ -41,7 +42,7 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 	private val killPlaybackEngineButton by LazyViewFinder<Button>(this, R.id.killPlaybackEngine)
 	private val settingsMenu by lazy { SettingsMenu(this, StringResources(this)) }
 	private val applicationSettingsRepository by lazy { getApplicationSettingsRepository() }
-	private val applicationMessageBus by lazy { getApplicationMessageBus().getScopedMessageBus() }
+	private val applicationMessageBus by lazyScoped { getApplicationMessageBus().getScopedMessageBus() }
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -112,12 +113,6 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 	}
 
 	override fun onOptionsItemSelected(item: MenuItem): Boolean = settingsMenu.handleSettingsMenuClicks(item)
-
-	override fun onDestroy() {
-		super.onDestroy()
-
-		applicationMessageBus.close()
-	}
 
 	private fun updateServerList() {
 		serverListView.visibility = View.INVISIBLE

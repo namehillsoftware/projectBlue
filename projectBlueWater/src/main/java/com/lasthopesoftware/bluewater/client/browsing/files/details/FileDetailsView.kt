@@ -52,7 +52,7 @@ import me.onebone.toolbar.ScrollStrategy
 import me.onebone.toolbar.rememberCollapsingToolbarScaffoldState
 import kotlin.math.pow
 
-private val viewPadding = 4.dp
+private val viewPadding = Dimensions.ViewPadding
 
 @Composable
 private fun StaticFileMenu(viewModel: FileDetailsViewModel, coverArtColorState: MediaStylePalette) {

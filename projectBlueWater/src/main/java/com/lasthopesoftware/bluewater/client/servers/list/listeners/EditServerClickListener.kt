@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.servers.list.listeners
 
 import android.app.Activity
 import android.view.View
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.settings.EditClientSettingsActivityIntentBuilder
 import com.lasthopesoftware.bluewater.client.settings.IEditClientSettingsActivityIntentBuilder
 
@@ -9,5 +10,5 @@ class EditServerClickListener(private val activity: Activity, private val editCl
 	constructor(activity: Activity, libraryId: Int) : this(activity, EditClientSettingsActivityIntentBuilder(activity), libraryId)
 
 	override fun onClick(v: View) =
-		activity.startActivityForResult(editClientSettingsActivityIntentBuilder.buildIntent(libraryId), 5388)
+		activity.startActivityForResult(editClientSettingsActivityIntentBuilder.buildIntent(LibraryId(libraryId)), 5388)
 }

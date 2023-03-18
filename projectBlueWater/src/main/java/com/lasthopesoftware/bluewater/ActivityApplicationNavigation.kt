@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater
 import android.content.Intent
 import android.os.Handler
 import androidx.activity.ComponentActivity
+import com.lasthopesoftware.bluewater.about.AboutActivity
 import com.lasthopesoftware.bluewater.client.browsing.BrowserEntryActivity
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsActivity.Companion.launchFileDetailsActivity
@@ -10,12 +11,16 @@ import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.startItemBrowserActivity
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.NowPlayingActivity.Companion.startNowPlayingActivity
+import com.lasthopesoftware.bluewater.client.settings.IEditClientSettingsActivityIntentBuilder
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.MessageWriter
 
-class ActivityApplicationNavigation(private val componentActivity: ComponentActivity) : NavigateApplication {
+class ActivityApplicationNavigation(
+	private val componentActivity: ComponentActivity,
+	private val editClientSettingsIntentBuilder: IEditClientSettingsActivityIntentBuilder,
+) : NavigateApplication {
 
 	private val handler by lazy { Handler(componentActivity.mainLooper) }
 	private val selectServerIntent by lazy { Intent(componentActivity, ApplicationSettingsActivity::class.java) }
@@ -31,6 +36,14 @@ class ActivityApplicationNavigation(private val componentActivity: ComponentActi
 
 	override fun viewApplicationSettings() = loopInOperation {
 		componentActivity.startActivity(selectServerIntent)
+	}
+
+	override fun launchAboutActivity() = loopInOperation {
+		componentActivity.startActivity(Intent(componentActivity, AboutActivity::class.java))
+	}
+
+	override fun viewServerSettings(libraryId: LibraryId) = loopInOperation {
+		componentActivity.startActivity(editClientSettingsIntentBuilder.buildIntent(libraryId))
 	}
 
 	override fun viewFileDetails(playlist: List<ServiceFile>, position: Int) = loopInOperation {

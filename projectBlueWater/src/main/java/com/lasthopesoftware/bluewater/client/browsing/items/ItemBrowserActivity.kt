@@ -8,7 +8,9 @@ import ItemBrowsingArguments.playlistIdArgument
 import ItemBrowsingArguments.titleArgument
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
@@ -31,6 +33,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.core.app.ActivityCompat
 import androidx.navigation.*
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -57,6 +60,8 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewMod
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
+import com.lasthopesoftware.bluewater.client.browsing.library.access.*
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
@@ -71,14 +76,21 @@ import com.lasthopesoftware.bluewater.client.connection.session.initialization.C
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
+import com.lasthopesoftware.bluewater.client.settings.EditClientSettingsActivityIntentBuilder
+import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsView
+import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsViewModel
 import com.lasthopesoftware.bluewater.client.stored.library.items.StateChangeBroadcastingStoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.view.ActiveFileDownloadsView
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.view.ActiveFileDownloadsViewModel
 import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
+import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermissionsRequirementsProvider
+import com.lasthopesoftware.bluewater.permissions.write.ApplicationWritePermissionsRequirementsProvider
+import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
+import com.lasthopesoftware.bluewater.shared.android.permissions.ManagePermissions
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModel
@@ -91,11 +103,15 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.suspend
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.resources.closables.ViewModelCloseableManager
 import com.lasthopesoftware.resources.closables.lazyScoped
+import com.lasthopesoftware.resources.intents.IntentFactory
 import com.lasthopesoftware.resources.strings.StringResources
+import com.namehillsoftware.handoff.Messenger
+import com.namehillsoftware.handoff.promises.Promise
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import java.util.concurrent.ConcurrentHashMap
 
 private val magicPropertyBuilder by lazy { MagicPropertyBuilder(cls<ItemBrowserActivity>()) }
 
@@ -123,7 +139,12 @@ private fun getItemBrowserIntent(context: Context, libraryId: LibraryId, item: I
 		putExtra(libraryIdProperty, libraryId.id)
 	}
 
-class ItemBrowserActivity : AppCompatActivity(), ItemBrowserViewDependencies {
+class ItemBrowserActivity :
+	AppCompatActivity(),
+	ItemBrowserViewDependencies,
+	ActivityCompat.OnRequestPermissionsResultCallback,
+	ManagePermissions
+{
 
 	private val rateLimiter by lazy { PromisingRateLimiter<Map<String, String>>(1) }
 
@@ -236,9 +257,38 @@ class ItemBrowserActivity : AppCompatActivity(), ItemBrowserViewDependencies {
 		)
 	}
 
-	override val applicationNavigation by lazy { ActivityApplicationNavigation(this) }
+	override val applicationNavigation by lazy {
+		ActivityApplicationNavigation(
+			this,
+			EditClientSettingsActivityIntentBuilder(IntentFactory(this)),
+		)
+	}
 
 	override val syncScheduler by lazy { SyncScheduler(this) }
+
+	private val libraryRepository by lazy { LibraryRepository(this) }
+
+	override val libraryProvider: ILibraryProvider
+		get() = libraryRepository
+
+	override val libraryStorage: ILibraryStorage
+		get() = libraryRepository
+
+	override val libraryRemoval by lazy {
+		LibraryRemoval(
+			storedItemAccess,
+			libraryRepository,
+			browserLibraryIdProvider,
+			libraryRepository,
+			BrowserLibrarySelection(getApplicationSettingsRepository(), messageBus, libraryProvider),
+		)
+	}
+
+	override val readPermissionsRequirements by lazy { ApplicationReadPermissionsRequirementsProvider(this) }
+	override val writePermissionsRequirements by lazy { ApplicationWritePermissionsRequirementsProvider(this) }
+	override val permissionsManager = this
+
+	private val permissionsRequests = ConcurrentHashMap<Int, Messenger<Map<String, Boolean>>>()
 
 	public override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -271,6 +321,42 @@ class ItemBrowserActivity : AppCompatActivity(), ItemBrowserViewDependencies {
 			}
 		}
 	}
+
+	override fun requestPermissions(permissions: List<String>): Promise<Map<String, Boolean>> {
+		return if (permissions.isEmpty()) Promise(emptyMap())
+		else Promise<Map<String, Boolean>> { messenger ->
+			val requestId = messenger.hashCode()
+			permissionsRequests[requestId] = messenger
+
+			ActivityCompat.requestPermissions(
+				this,
+				permissions.toTypedArray(),
+				requestId
+			)
+		}
+	}
+
+	override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
+		super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+		permissionsRequests
+			.remove(requestCode)
+			?.sendResolution(
+				grantResults
+					.zip(permissions)
+					.associate { (r, p) -> Pair(p, r == PackageManager.PERMISSION_GRANTED) }
+					.apply {
+						if (values.any { !it }) {
+							Toast
+								.makeText(
+									this@ItemBrowserActivity,
+									R.string.permissions_must_be_granted_for_settings,
+									Toast.LENGTH_LONG
+								)
+								.show()
+						}
+					})
+	}
 }
 
 @OptIn(ExperimentalMaterialApi::class)
@@ -285,6 +371,14 @@ private class GraphNavigation(
 		const val route = "library/{$libraryIdArgument}"
 
 		fun buildPath(libraryId: LibraryId) = "library/${libraryId.id}"
+	}
+
+	object Settings {
+		const val nestedRoute = "settings"
+
+		const val route = "${Library.route}/$nestedRoute"
+
+		fun buildPath(libraryId: LibraryId) = "${Library.buildPath(libraryId)}/${nestedRoute}"
 	}
 
 	object Search {
@@ -326,6 +420,15 @@ private class GraphNavigation(
 
 	override fun launchSearch(libraryId: LibraryId) = coroutineScope.launch {
 		navController.navigate(Search.buildPath(libraryId)) {
+			launchSingleTop = true
+			popUpTo(BrowseToItem.route)
+		}
+
+		hideBottomSheet()
+	}.toPromise()
+
+	override fun viewServerSettings(libraryId: LibraryId) = coroutineScope.launch {
+		navController.navigate(Settings.buildPath(libraryId)) {
 			launchSingleTop = true
 			popUpTo(BrowseToItem.route)
 		}
@@ -597,6 +700,36 @@ private fun ItemBrowserView(
 							text = stringResource(R.string.search),
 						)
 					}
+
+					Row(
+						modifier = Modifier
+							.height(rowHeight)
+							.fillMaxWidth()
+							.clickable {
+								if (startingLibraryId != null)
+									applicationNavigation.viewServerSettings(startingLibraryId)
+							},
+						verticalAlignment = Alignment.CenterVertically,
+					) {
+						Box(
+							modifier = Modifier
+								.align(Alignment.CenterVertically)
+								.fillMaxHeight()
+						) {
+							Image(
+								painter = painterResource(id = R.drawable.ic_action_settings),
+								contentDescription = stringResource(id = R.string.settings),
+								modifier = Modifier
+									.align(Alignment.Center)
+									.padding(start = 16.dp, end = 16.dp)
+									.size(Dimensions.MenuIconSize)
+							)
+						}
+
+						Text(
+							text = stringResource(R.string.settings),
+						)
+					}
 				}
 			}
 		) { paddingValues ->
@@ -760,6 +893,38 @@ private fun ItemBrowserView(
 						itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
 						onBack = applicationNavigation::backOut,
 					)
+				}
+
+				composable(
+					GraphNavigation.Settings.route,
+					arguments = listOf(
+						navArgument(libraryIdArgument) {
+							type = NavType.IntType
+							defaultValue = startingLibraryId?.id ?: -1
+						},
+					)
+				) { entry ->
+					val libraryId = entry.arguments?.getInt(libraryIdArgument)?.let(::LibraryId) ?: startingLibraryId ?: return@composable
+					BackHandler { graphNavigation.backOut() }
+
+					val viewModel = entry.viewModelStore.buildViewModel {
+						LibrarySettingsViewModel(
+							libraryProvider = libraryProvider,
+							libraryStorage = libraryStorage,
+							libraryRemoval = libraryRemoval,
+							applicationReadPermissionsRequirementsProvider = readPermissionsRequirements,
+							applicationWritePermissionsRequirementsProvider = writePermissionsRequirements,
+							permissionsManager = permissionsManager,
+						)
+					}
+
+					LibrarySettingsView(
+						librarySettingsViewModel = viewModel,
+						navigateApplication = graphNavigation,
+						stringResources = stringResources
+					)
+
+					viewModel.loadLibrary(libraryId)
 				}
 			}
 		}
