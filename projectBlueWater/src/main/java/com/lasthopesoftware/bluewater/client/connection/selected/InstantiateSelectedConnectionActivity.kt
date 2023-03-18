@@ -65,7 +65,8 @@ class InstantiateSelectedConnectionActivity : AppCompatActivity(), ControlConnec
 			.eventually { libraryId ->
 				libraryId
 					?.let(connectionStatusViewModel::ensureConnectionIsWorking)
-					.keepPromise(false)
+					// If no library is chosen, view application settings
+					?: applicationNavigation.viewApplicationSettings()
 			}
 			.inevitably(LoopedInPromise.act(::finish, handler))
 
