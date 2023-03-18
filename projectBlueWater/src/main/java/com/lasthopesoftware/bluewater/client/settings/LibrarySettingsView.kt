@@ -1,11 +1,13 @@
 package com.lasthopesoftware.bluewater.client.settings
 
 import android.os.Environment
+import android.view.KeyEvent.ACTION_DOWN
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
@@ -13,11 +15,18 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -58,6 +67,7 @@ private fun DataEntryRow(content: @Composable (RowScope.() -> Unit)) {
 	}
 }
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 private fun StandardTextField(
 	placeholder: String,
@@ -67,14 +77,28 @@ private fun StandardTextField(
 	visualTransformation: VisualTransformation = VisualTransformation.None,
 	keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
 ) {
+	val focusManager = LocalFocusManager.current
 	TextField(
-		modifier = Modifier.fillMaxWidth(),
+		modifier = Modifier
+			.fillMaxWidth()
+			.onPreviewKeyEvent {
+				if (it.key == Key.Tab && it.nativeKeyEvent.action == ACTION_DOWN){
+					focusManager.moveFocus(FocusDirection.Down)
+					true
+				} else {
+					false
+				}
+			},
 		value = value,
 		placeholder = { Text(placeholder) },
 		onValueChange = onValueChange,
+		enabled = enabled,
 		maxLines = 1,
 		visualTransformation = visualTransformation,
-		keyboardOptions = keyboardOptions,
+		keyboardOptions = keyboardOptions.copy(imeAction = ImeAction.Next),
+		keyboardActions = KeyboardActions(
+			onNext = { focusManager.moveFocus(FocusDirection.Down) }
+		)
 	)
 }
 
@@ -285,22 +309,38 @@ fun LibrarySettingsView(
 
 					DataEntryRow {
 						var isLocalOnlyState by isLocalOnly.collectAsMutableState()
-						Checkbox(
-							checked = isLocalOnlyState,
-							onCheckedChange = { isLocalOnlyState = it },
-						)
+						Row(
+							modifier = Modifier
+								.fillMaxWidth()
+								.clickable {
+									isLocalOnlyState = !isLocalOnlyState
+								}
+						) {
+							Checkbox(
+								checked = isLocalOnlyState,
+								onCheckedChange = null,
+							)
 
-						Text(text = stringResource(id = R.string.lbl_local_only))
+							Text(text = stringResource(id = R.string.lbl_local_only))
+						}
 					}
 
 					DataEntryRow {
 						var isWolEnabledState by isWakeOnLanEnabled.collectAsMutableState()
-						Checkbox(
-							checked = isWolEnabledState,
-							onCheckedChange = { isWolEnabledState = it },
-						)
+						Row(
+							modifier = Modifier
+								.fillMaxWidth()
+								.clickable {
+									isWolEnabledState = !isWolEnabledState
+								}
+						) {
+							Checkbox(
+								checked = isWolEnabledState,
+								onCheckedChange = null,
+							)
 
-						Text(text = stringResource(id = R.string.wake_on_lan_setting))
+							Text(text = stringResource(id = R.string.wake_on_lan_setting))
+						}
 					}
 
 					Text(stringResource(id = R.string.lblSyncMusicLocation))
@@ -316,21 +356,37 @@ fun LibrarySettingsView(
 					}
 
 					DataEntryRow {
-						RadioButton(
-							selected = syncedFileLocationState == Library.SyncedFileLocation.EXTERNAL,
-							onClick = { syncedFileLocationState = Library.SyncedFileLocation.EXTERNAL },
-						)
+						Row(
+							modifier = Modifier
+								.fillMaxWidth()
+								.clickable {
+									syncedFileLocationState = Library.SyncedFileLocation.EXTERNAL
+								}
+						) {
+							RadioButton(
+								selected = syncedFileLocationState == Library.SyncedFileLocation.EXTERNAL,
+								onClick = null,
+							)
 
-						Text(stringResource(id = R.string.rbPublicLocation))
+							Text(stringResource(id = R.string.rbPublicLocation))
+						}
 					}
 
 					DataEntryRow {
-						RadioButton(
-							selected = syncedFileLocationState == Library.SyncedFileLocation.CUSTOM,
-							onClick = { syncedFileLocationState = Library.SyncedFileLocation.CUSTOM },
-						)
+						Row(
+							modifier = Modifier
+								.fillMaxWidth()
+								.clickable {
+									syncedFileLocationState = Library.SyncedFileLocation.CUSTOM
+								}
+						) {
+							RadioButton(
+								selected = syncedFileLocationState == Library.SyncedFileLocation.CUSTOM,
+								onClick = null,
+							)
 
-						Text(stringResource(id = R.string.rbCustomLocation))
+							Text(stringResource(id = R.string.rbCustomLocation))
+						}
 					}
 
 					DataEntryRow {
@@ -345,20 +401,36 @@ fun LibrarySettingsView(
 
 					DataEntryRow {
 						var isSyncLocalConnectionsOnlyState by isSyncLocalConnectionsOnly.collectAsMutableState()
-						Checkbox(
-							checked = isSyncLocalConnectionsOnlyState,
-							onCheckedChange = { isSyncLocalConnectionsOnlyState = it },
-						)
+						Row(
+							modifier = Modifier
+								.fillMaxWidth()
+								.clickable {
+									isSyncLocalConnectionsOnlyState = !isSyncLocalConnectionsOnlyState
+								}
+						) {
+							Checkbox(
+								checked = isSyncLocalConnectionsOnlyState,
+								null,
+							)
 
-						Text(stringResource(id = R.string.lbl_sync_local_connection))
+							Text(stringResource(id = R.string.lbl_sync_local_connection))
+						}
 					}
 
 					DataEntryRow {
 						var isUsingExistingFilesState by isUsingExistingFiles.collectAsMutableState()
-						Checkbox(
-							checked = isUsingExistingFilesState,
-							onCheckedChange = { isUsingExistingFilesState = it },
-						)
+						Row(
+							modifier = Modifier
+								.fillMaxWidth()
+								.clickable {
+									isUsingExistingFilesState = !isUsingExistingFilesState
+								}
+						) {
+							Checkbox(
+								checked = isUsingExistingFilesState,
+								null,
+							)
+						}
 
 						Text(stringResource(id = R.string.lbl_use_existing_music))
 					}
