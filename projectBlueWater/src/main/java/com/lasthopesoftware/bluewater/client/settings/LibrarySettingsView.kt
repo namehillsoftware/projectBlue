@@ -49,8 +49,8 @@ import me.onebone.toolbar.rememberCollapsingToolbarScaffoldState
 import kotlin.math.pow
 
 private val expandedTitleHeight = 84.dp
-private val expandedIconSize = 48.dp
-private val expandedMenuVerticalPadding = 8.dp
+private val expandedIconSize = Dimensions.MenuHeight
+private val expandedMenuVerticalPadding = Dimensions.ViewPadding * 2
 private val collapsedTopRowPadding = 6.dp
 private val appBarHeight = Dimensions.AppBarHeight
 private val boxHeight = expandedTitleHeight + expandedIconSize + expandedMenuVerticalPadding * 2 + appBarHeight
@@ -117,7 +117,10 @@ private fun LabeledSelection(
 	) {
 		selectableContent()
 
-		Text(label)
+		Text(
+			text = label,
+			modifier = Modifier.padding(start = Dimensions.ViewPadding),
+		)
 	}
 }
 
