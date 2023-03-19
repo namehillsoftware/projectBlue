@@ -194,6 +194,7 @@ fun SearchFilesView(
 
 					val endPadding by remember { derivedStateOf { 4.dp + minimumMenuWidth * acceleratedHeaderHidingProgress } }
 					val query by searchFilesViewModel.query.collectAsState()
+					val isLibraryIdActive by searchFilesViewModel.isLibraryIdActive.collectAsState()
 
 					TextField(
 						value = query,
@@ -203,7 +204,7 @@ fun SearchFilesView(
 						keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
 						keyboardActions = KeyboardActions(onSearch = { searchFilesViewModel.findFiles() }),
 						trailingIcon = { Icon(Icons.Default.Search, contentDescription = stringResource(id = R.string.search)) },
-						enabled = !isLoading,
+						enabled = isLibraryIdActive && !isLoading,
 						modifier = Modifier
 							.padding(end = endPadding)
 							.weight(1f)

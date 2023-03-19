@@ -25,13 +25,16 @@ class SearchFilesViewModel(
 
 	private val mutableIsLoading = MutableStateFlow(false)
 	private val mutableFiles = MutableStateFlow(emptyList<ServiceFile>())
+	private val mutableIsLibraryIdActive = MutableStateFlow(false)
 
 	override val isLoading = mutableIsLoading.asStateFlow()
+	val isLibraryIdActive = mutableIsLibraryIdActive.asStateFlow()
 	val files = mutableFiles.asStateFlow()
 	val query = MutableStateFlow("")
 
 	fun setActiveLibraryId(libraryId: LibraryId) {
 		this.libraryId = libraryId
+		mutableIsLibraryIdActive.value = true
 	}
 
 	fun findFiles(): Promise<Unit> {
