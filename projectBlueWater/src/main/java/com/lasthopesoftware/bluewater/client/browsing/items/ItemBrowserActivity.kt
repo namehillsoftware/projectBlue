@@ -73,6 +73,8 @@ import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessio
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionInitializationErrorController
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionInitializationProxy
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionStatusViewModel
+import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettingsLookup
+import com.lasthopesoftware.bluewater.client.connection.settings.changes.ObservableConnectionSettingsLibraryStorage
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
@@ -271,8 +273,13 @@ class ItemBrowserActivity :
 	override val libraryProvider: ILibraryProvider
 		get() = libraryRepository
 
-	override val libraryStorage: ILibraryStorage
-		get() = libraryRepository
+	override val libraryStorage by lazy {
+		ObservableConnectionSettingsLibraryStorage(
+			libraryRepository,
+			ConnectionSettingsLookup(libraryProvider),
+			messageBus
+		)
+	}
 
 	override val libraryRemoval by lazy {
 		LibraryRemoval(
