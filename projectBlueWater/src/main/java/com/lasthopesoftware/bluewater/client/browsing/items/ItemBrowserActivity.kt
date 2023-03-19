@@ -886,17 +886,30 @@ private fun ItemBrowserView(
 					activeFileDownloadsViewModel.loadActiveDownloads(libraryId)
 				}
 
-				composable(GraphNavigation.Search.route) { entry ->
+				composable(
+					GraphNavigation.Search.route,
+					arguments = listOf(
+						navArgument(libraryIdArgument) {
+							type = NavType.IntType
+							defaultValue = startingLibraryId?.id ?: -1
+						},
+					)
+				) { entry ->
+					val libraryId = entry.arguments?.getInt(libraryIdArgument)?.let(::LibraryId) ?: startingLibraryId ?: return@composable
+
 					BackHandler { graphNavigation.backOut() }
 
+					val searchFilesViewModel = entry.viewModelStore.buildViewModel {
+						SearchFilesViewModel(
+							libraryFilesProvider,
+							playbackServiceController,
+						)
+					}
+
+					searchFilesViewModel.setActiveLibraryId(libraryId)
+
 					SearchFilesView(
-						searchFilesViewModel = entry.viewModelStore.buildViewModel {
-							SearchFilesViewModel(
-								browserLibraryIdProvider,
-								libraryFilesProvider,
-								playbackServiceController,
-							)
-						},
+						searchFilesViewModel = searchFilesViewModel,
 						nowPlayingViewModel = nowPlayingFilePropertiesViewModel,
 						trackHeadlineViewModelProvider = entry.viewModelStore.buildViewModel {
 							ReusablePlaylistFileItemViewModelProvider(

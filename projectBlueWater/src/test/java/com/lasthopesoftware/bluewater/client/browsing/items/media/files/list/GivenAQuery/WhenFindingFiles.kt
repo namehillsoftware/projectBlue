@@ -24,26 +24,25 @@ class WhenFindingFiles {
 		val libraryProvider = mockk<ProvideSelectedLibraryId>()
 
 		val vm = SearchFilesViewModel(
-			libraryProvider,
-			mockk {
-				every { promiseFiles(LibraryId(libraryId), FileListParameters.Options.None, "Files/Search", "Query=[Media Type]=[Audio] $query") } returns Promise(
-					listOf(
-						ServiceFile(209),
-						ServiceFile(792),
-						ServiceFile(61),
-						ServiceFile(637),
-						ServiceFile(948),
-						ServiceFile(349),
-						ServiceFile(459),
-						ServiceFile(747),
-						ServiceFile(922),
-						ServiceFile(713),
-						ServiceFile(617),
-						ServiceFile(249),
-					)
-				)
-			},
-			mockk(),
+            mockk {
+                every { promiseFiles(LibraryId(libraryId), FileListParameters.Options.None, "Files/Search", "Query=[Media Type]=[Audio] $query") } returns Promise(
+                    listOf(
+                        ServiceFile(209),
+                        ServiceFile(792),
+                        ServiceFile(61),
+                        ServiceFile(637),
+                        ServiceFile(948),
+                        ServiceFile(349),
+                        ServiceFile(459),
+                        ServiceFile(747),
+                        ServiceFile(922),
+                        ServiceFile(713),
+                        ServiceFile(617),
+                        ServiceFile(249),
+                    )
+                )
+            },
+            mockk(),
 		)
 
 		every { libraryProvider.promiseSelectedLibraryId() } answers {
@@ -59,6 +58,7 @@ class WhenFindingFiles {
 
 	@BeforeAll
 	fun act() {
+		viewModel.setActiveLibraryId(LibraryId(libraryId))
 		viewModel.query.value = query
 		loadingStates.add(viewModel.isLoading.value)
 		viewModel.findFiles().toExpiringFuture().get()
