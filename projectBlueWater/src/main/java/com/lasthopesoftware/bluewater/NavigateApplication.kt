@@ -6,7 +6,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 
 interface NavigateApplication {
-	fun viewBrowserRoot() = Unit.toPromise()
+	fun resetToBrowserRoot() = Unit.toPromise()
 	fun viewApplicationSettings() = Unit.toPromise()
 
 	fun launchAboutActivity() = Unit.toPromise()

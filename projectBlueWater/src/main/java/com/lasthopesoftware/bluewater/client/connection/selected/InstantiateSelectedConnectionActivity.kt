@@ -95,7 +95,7 @@ class InstantiateSelectedConnectionActivity : AppCompatActivity(), ControlConnec
 					.unitResponse()
 
 				if (connection != null && intent?.action != START_ACTIVITY_FOR_RETURN) {
-					promisedResponse = promisedResponse.eventually { applicationNavigation.viewBrowserRoot() }
+					promisedResponse = promisedResponse.eventually { applicationNavigation.resetToBrowserRoot() }
 				}
 
 				return promisedResponse.then({ resolve(connection) }, ::reject)

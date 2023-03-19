@@ -836,17 +836,6 @@ private fun ItemBrowserView(
 					BackHandler { graphNavigation.backOut() }
 
 					view(libraryId, item)
-
-					DisposableEffect(key1 = Unit) {
-						val registration = messageBus.registerReceiver(coroutineScope) { m: ObservableConnectionSettingsLibraryStorage.ConnectionSettingsUpdated ->
-							if (libraryId == m.libraryId)
-								graphNavigation.navigateUp()
-						}
-
-						onDispose {
-							registration.close()
-						}
-					}
 				}
 
 				composable(
@@ -957,6 +946,17 @@ private fun ItemBrowserView(
 					)
 
 					viewModel.loadLibrary(libraryId)
+
+					DisposableEffect(key1 = Unit) {
+						val registration = messageBus.registerReceiver(coroutineScope) { m: ObservableConnectionSettingsLibraryStorage.ConnectionSettingsUpdated ->
+							if (libraryId == m.libraryId)
+								graphNavigation.resetToBrowserRoot()
+						}
+
+						onDispose {
+							registration.close()
+						}
+					}
 				}
 			}
 		}
