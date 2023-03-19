@@ -100,6 +100,7 @@ import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLa
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
+import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRateLimiter
 import com.lasthopesoftware.bluewater.shared.promises.extensions.suspend
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
@@ -835,6 +836,17 @@ private fun ItemBrowserView(
 					BackHandler { graphNavigation.backOut() }
 
 					view(libraryId, item)
+
+					DisposableEffect(key1 = Unit) {
+						val registration = messageBus.registerReceiver(coroutineScope) { m: ObservableConnectionSettingsLibraryStorage.ConnectionSettingsUpdated ->
+							if (libraryId == m.libraryId)
+								graphNavigation.navigateUp()
+						}
+
+						onDispose {
+							registration.close()
+						}
+					}
 				}
 
 				composable(
