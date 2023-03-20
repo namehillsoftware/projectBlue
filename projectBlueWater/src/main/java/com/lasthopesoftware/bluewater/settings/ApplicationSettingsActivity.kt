@@ -5,7 +5,6 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
-import android.widget.Button
 import android.widget.RadioGroup
 import androidx.appcompat.app.AppCompatActivity
 import androidx.databinding.DataBindingUtil
@@ -48,8 +47,6 @@ private val logger by lazyLogger<ApplicationSettingsActivity>()
 
 class ApplicationSettingsActivity : AppCompatActivity() {
 	private val serverListView by LazyViewFinder<RecyclerView>(this, R.id.loaded_recycler_view)
-	private val addServerButton by LazyViewFinder<Button>(this, R.id.addServerButton)
-	private val killPlaybackEngineButton by LazyViewFinder<Button>(this, R.id.killPlaybackEngine)
 	private val settingsMenu by lazy { SettingsMenu(this, StringResources(this)) }
 	private val applicationNavigation by lazy {
 		ActivityApplicationNavigation(
@@ -142,9 +139,9 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 		playbackEngineOptions
 			.setOnCheckedChangeListener { _, checkedId -> selection.selectPlaybackEngine(PlaybackEngineType.values()[checkedId]) }
 
-		killPlaybackEngineButton.setOnClickListener { PlaybackService.killService(this) }
+		binding.killPlaybackEngine.setOnClickListener { PlaybackService.killService(this) }
 
-		addServerButton.setOnClickListener(EditServerClickListener(this, -1))
+		binding.addServerButton.setOnClickListener(EditServerClickListener(this, -1))
 
 		val adapter = ServerListAdapter(
 			this,
@@ -168,6 +165,7 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 	@Deprecated("Deprecated in Java")
 	override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
 		super.onActivityResult(requestCode, resultCode, data)
+		viewModel.loadSettings()
 	}
 
 	override fun onOptionsItemSelected(item: MenuItem): Boolean = settingsMenu.handleSettingsMenuClicks(item)
