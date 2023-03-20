@@ -8,7 +8,6 @@ import com.lasthopesoftware.bluewater.repository.InsertBuilder
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.chosenLibraryIdColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.isSyncOnPowerOnlyColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.isSyncOnWifiOnlyColumn
-import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.isUsingCustomCachingColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.isVolumeLevelingEnabledColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.playbackEngineTypeNameColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.tableName
@@ -39,8 +38,7 @@ class ApplicationSettingsMigrator(private val context: Context) {
 			`$isSyncOnPowerOnlyColumn` SMALLINT ,
 			`$isVolumeLevelingEnabledColumn` SMALLINT ,
 			`$playbackEngineTypeNameColumn` VARCHAR ,
-			`$chosenLibraryIdColumn` INTEGER DEFAULT -1 NOT NULL,
-			`$isUsingCustomCachingColumn` SMALLINT DEFAULT 1 )""")
+			`$chosenLibraryIdColumn` INTEGER DEFAULT -1 NOT NULL )""")
 
 		val insertQuery = InsertBuilder.fromTable(tableName)
 			.addColumn(isSyncOnWifiOnlyColumn)

@@ -9,5 +9,4 @@ data class ApplicationSettings(
 	var isVolumeLevelingEnabled: Boolean = false,
 	var playbackEngineTypeName: String? = null,
 	var chosenLibraryId: Int = -1,
-	var isUsingCustomCaching: Boolean = false,
 )
