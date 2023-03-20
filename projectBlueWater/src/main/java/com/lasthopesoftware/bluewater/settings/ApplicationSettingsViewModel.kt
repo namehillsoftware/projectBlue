@@ -46,7 +46,11 @@ class ApplicationSettingsViewModel(
 			.promiseSelectedPlaybackEngineType()
 			.then { playbackEngineType.value = it }
 
-		return Promise.whenAll(promisedSimpleValuesUpdate, promisedEngineTypeUpdate).must(this)
+		val promisedLibrariesUpdate = libraryProvider.allLibraries.then { mutableLibraries.value = it.toList() }
+
+		return Promise
+			.whenAll(promisedSimpleValuesUpdate, promisedEngineTypeUpdate, promisedLibrariesUpdate)
+			.must(this)
 	}
 
 	fun addServer() {

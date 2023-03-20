@@ -159,6 +159,8 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 
 			adapter.updateLibraries(it, selectedBrowserLibrary).suspend()
 		}.launchIn(lifecycleScope)
+
+		viewModel.loadSettings()
 	}
 
 	override fun onCreateOptionsMenu(menu: Menu): Boolean = settingsMenu.buildSettingsMenu(menu)
