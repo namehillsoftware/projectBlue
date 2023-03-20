@@ -23,10 +23,6 @@
         tools:targetApi="tiramisu"
         android:enableOnBackInvokedCallback="true">
 
-        <meta-data
-            android:name="android.app.default_searchable"
-            android:value=".client.library.items.media.files.list.SearchFilesActivity" />
-
         <!-- Begin Connection intents -->
         <activity
             android:name=".client.connection.selected.InstantiateSelectedConnectionActivity"
@@ -48,7 +44,14 @@
 
         <activity
             android:name=".settings.ApplicationSettingsActivity"
-            android:label="@string/settings" />
+            android:exported="true"
+            android:label="@string/settings">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
         <activity
             android:name=".about.AboutActivity"
             android:label="@string/title_activity_about" />
@@ -58,13 +61,10 @@
             android:label="@string/settings" />
         <activity
             android:name=".client.browsing.BrowserEntryActivity"
-            android:exported="true"
             android:launchMode="singleTop">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".settings.ApplicationSettingsActivity" />
         </activity>
         <activity
             android:name=".client.browsing.items.ItemBrowserActivity"

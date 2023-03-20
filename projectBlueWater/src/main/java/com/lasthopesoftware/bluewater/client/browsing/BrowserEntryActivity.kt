@@ -18,6 +18,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
+import com.lasthopesoftware.bluewater.ActivityApplicationNavigation
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.list.SearchFilesFragment
 import com.lasthopesoftware.bluewater.client.browsing.items.list.IItemListViewContainer
@@ -41,8 +42,8 @@ import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionSettingsChangeReceiver
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingFloatingActionButton
+import com.lasthopesoftware.bluewater.client.settings.EditClientSettingsActivityIntentBuilder
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.view.ActiveFileDownloadsFragment
-import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
@@ -50,18 +51,15 @@ import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils.buildStandardMenu
 import com.lasthopesoftware.bluewater.shared.android.view.getValue
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
-import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
-import com.lasthopesoftware.bluewater.shared.lazyLogger
-import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
-import com.lasthopesoftware.bluewater.shared.messages.registerOnHandler
+import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.resources.closables.lazyScoped
+import com.lasthopesoftware.resources.intents.IntentFactory
 
-private val logger by lazyLogger<BrowserEntryActivity>()
 
 class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnable {
 	private val browseLibraryContainerRelativeLayout by LazyViewFinder<RelativeLayout>(this, R.id.browseLibraryContainer)
@@ -92,6 +90,13 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 	private val menuMessageBus by buildViewModelLazily { ViewModelMessageBus<ItemListMenuMessage>() }
 
 	private val itemListMenuBackPressedHandler by lazyScoped { ItemListMenuBackPressedHandler(menuMessageBus) }
+
+	private val applicationNavigation by lazy {
+		ActivityApplicationNavigation(
+			this,
+			EditClientSettingsActivityIntentBuilder(IntentFactory(this)),
+		)
+	}
 
 	private val specialViews by lazy {
 		val views = arrayOf(
@@ -150,8 +155,6 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 		}
 	}
 
-	private val connectionSettingsUpdatedReceiver : (ApplicationMessage) -> Unit = { finishAffinity() }
-
 	private lateinit var nowPlayingFloatingActionButton: NowPlayingFloatingActionButton
 	private var viewAnimator: ViewAnimator? = null
 	private var activeFragment: Fragment? = null
@@ -161,32 +164,17 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 	public override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
-		// Ensure that this task is only started when it's the task root. A workaround for an Android bug.
-		// See http://stackoverflow.com/a/7748416
-		if (!isTaskRoot) {
-			val intent = intent
-			if (Intent.ACTION_MAIN == intent.action && intent.hasCategory(Intent.CATEGORY_LAUNCHER)) {
-				val className = javaClass.name
-				logger.info("$className is not the root.  Finishing $className instead of launching.")
-				finish()
-				return
-			}
-		}
-
 		setContentView(R.layout.activity_browse_library)
 		setSupportActionBar(findViewById(R.id.browseLibraryToolbar))
 		setTheme(R.style.AppTheme)
 
-		applicationMessageBus.registerOnHandler(
-			cls<SelectedConnectionSettingsChangeReceiver.SelectedConnectionSettingsUpdated>(),
-			messageHandler,
-			connectionSettingsUpdatedReceiver
-		)
+		applicationMessageBus.registerReceiver(messageHandler) { _: SelectedConnectionSettingsChangeReceiver.SelectedConnectionSettingsUpdated ->
+			startLibrary()
+		}
 
-		applicationMessageBus.registerOnHandler(
-			cls<BrowserLibrarySelection.LibraryChosenMessage>(),
-			messageHandler,
-			connectionSettingsUpdatedReceiver)
+		applicationMessageBus.registerReceiver(messageHandler) { _: BrowserLibrarySelection.LibraryChosenMessage ->
+			finishAffinity()
+		}
 
 		nowPlayingFloatingActionButton = NowPlayingFloatingActionButton.addNowPlayingFloatingActionButton(findViewById(R.id.browseLibraryRelativeLayout))
 
@@ -206,7 +194,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 		}
 
 		onBackPressedDispatcher.addCallback {
-			if (!itemListMenuBackPressedHandler.hideAllMenus() && viewAnimator?.tryFlipToPreviousView() == false)
+			if (!itemListMenuBackPressedHandler.hideAllMenus() && viewAnimator?.tryFlipToPreviousView() != false)
 				finish()
 		}
 	}
@@ -235,6 +223,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 				when {
 					library == null -> {
 						// No library, must bail out
+						applicationNavigation.viewApplicationSettings()
 						finish()
 					}
 					showDownloadsAction == intent.action -> {
@@ -254,7 +243,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 			.excuse(HandleViewIoException(this, this))
 			.eventuallyExcuse(response(UnexpectedExceptionToasterResponse(this), this))
 			.then {
-				ApplicationSettingsActivity.launch(this)
+				applicationNavigation.viewApplicationSettings()
 				finish()
 			}
 	}
@@ -294,7 +283,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 			.excuse(HandleViewIoException(this, this))
 			.eventuallyExcuse(response(UnexpectedExceptionToasterResponse(this), this))
 			.then {
-				ApplicationSettingsActivity.launch(this)
+				applicationNavigation.viewApplicationSettings()
 				finish()
 			}
 	}

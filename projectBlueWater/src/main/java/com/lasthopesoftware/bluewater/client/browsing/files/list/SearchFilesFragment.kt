@@ -76,7 +76,6 @@ class SearchFilesFragment : Fragment() {
 
 	private val searchFilesViewModel by buildViewModelLazily {
 		SearchFilesViewModel(
-			selectedLibraryIdProvider,
 			fileProvider,
 			PlaybackServiceController(requireContext()),
 		)
@@ -134,6 +133,8 @@ class SearchFilesFragment : Fragment() {
 	}
 
 	override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View {
+		selectedLibraryIdProvider.promiseSelectedLibraryId().then { it?.apply(searchFilesViewModel::setActiveLibraryId) }
+
 		return ComposeView(requireContext()).apply {
 			setContent {
 				ProjectBlueTheme {

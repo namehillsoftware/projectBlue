@@ -73,6 +73,8 @@ import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessio
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionInitializationErrorController
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionInitializationProxy
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionStatusViewModel
+import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettingsLookup
+import com.lasthopesoftware.bluewater.client.connection.settings.changes.ObservableConnectionSettingsLibraryStorage
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
@@ -98,6 +100,7 @@ import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLa
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
+import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRateLimiter
 import com.lasthopesoftware.bluewater.shared.promises.extensions.suspend
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
@@ -271,8 +274,13 @@ class ItemBrowserActivity :
 	override val libraryProvider: ILibraryProvider
 		get() = libraryRepository
 
-	override val libraryStorage: ILibraryStorage
-		get() = libraryRepository
+	override val libraryStorage by lazy {
+		ObservableConnectionSettingsLibraryStorage(
+			libraryRepository,
+			ConnectionSettingsLookup(libraryProvider),
+			messageBus
+		)
+	}
 
 	override val libraryRemoval by lazy {
 		LibraryRemoval(
@@ -867,17 +875,30 @@ private fun ItemBrowserView(
 					activeFileDownloadsViewModel.loadActiveDownloads(libraryId)
 				}
 
-				composable(GraphNavigation.Search.route) { entry ->
+				composable(
+					GraphNavigation.Search.route,
+					arguments = listOf(
+						navArgument(libraryIdArgument) {
+							type = NavType.IntType
+							defaultValue = startingLibraryId?.id ?: -1
+						},
+					)
+				) { entry ->
+					val libraryId = entry.arguments?.getInt(libraryIdArgument)?.let(::LibraryId) ?: startingLibraryId ?: return@composable
+
 					BackHandler { graphNavigation.backOut() }
 
+					val searchFilesViewModel = entry.viewModelStore.buildViewModel {
+						SearchFilesViewModel(
+							libraryFilesProvider,
+							playbackServiceController,
+						)
+					}
+
+					searchFilesViewModel.setActiveLibraryId(libraryId)
+
 					SearchFilesView(
-						searchFilesViewModel = entry.viewModelStore.buildViewModel {
-							SearchFilesViewModel(
-								browserLibraryIdProvider,
-								libraryFilesProvider,
-								playbackServiceController,
-							)
-						},
+						searchFilesViewModel = searchFilesViewModel,
 						nowPlayingViewModel = nowPlayingFilePropertiesViewModel,
 						trackHeadlineViewModelProvider = entry.viewModelStore.buildViewModel {
 							ReusablePlaylistFileItemViewModelProvider(
@@ -925,6 +946,17 @@ private fun ItemBrowserView(
 					)
 
 					viewModel.loadLibrary(libraryId)
+
+					DisposableEffect(key1 = Unit) {
+						val registration = messageBus.registerReceiver(coroutineScope) { m: ObservableConnectionSettingsLibraryStorage.ConnectionSettingsUpdated ->
+							if (libraryId == m.libraryId)
+								graphNavigation.resetToBrowserRoot()
+						}
+
+						onDispose {
+							registration.close()
+						}
+					}
 				}
 			}
 		}

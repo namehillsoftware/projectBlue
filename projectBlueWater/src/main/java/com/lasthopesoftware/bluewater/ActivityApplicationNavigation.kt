@@ -23,19 +23,17 @@ class ActivityApplicationNavigation(
 ) : NavigateApplication {
 
 	private val handler by lazy { Handler(componentActivity.mainLooper) }
-	private val selectServerIntent by lazy { Intent(componentActivity, ApplicationSettingsActivity::class.java) }
 	private val browseLibraryIntent by lazy {
 		val browseLibraryIntent = Intent(componentActivity, BrowserEntryActivity::class.java)
-		browseLibraryIntent.flags = Intent.FLAG_ACTIVITY_REORDER_TO_FRONT
 		browseLibraryIntent
 	}
 
-	override fun viewBrowserRoot(): Promise<Unit> = loopInOperation {
+	override fun resetToBrowserRoot(): Promise<Unit> = loopInOperation {
 		componentActivity.startActivity(browseLibraryIntent)
 	}
 
 	override fun viewApplicationSettings() = loopInOperation {
-		componentActivity.startActivity(selectServerIntent)
+		ApplicationSettingsActivity.launch(componentActivity)
 	}
 
 	override fun launchAboutActivity() = loopInOperation {
