@@ -51,6 +51,5 @@ class ApplicationSettingsRepository(private val context: Context): HoldApplicati
 					it.setTransactionSuccessful()
 				}
 			}
-		}
-			.eventually { promiseApplicationSettings() }
+		}.eventually { promiseApplicationSettings() }
 }

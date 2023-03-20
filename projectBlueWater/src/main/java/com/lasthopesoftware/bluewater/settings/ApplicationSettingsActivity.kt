@@ -5,18 +5,17 @@ import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
-import android.view.View
 import android.widget.Button
-import android.widget.ProgressBar
 import android.widget.RadioGroup
 import androidx.appcompat.app.AppCompatActivity
+import androidx.databinding.DataBindingUtil
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.lasthopesoftware.bluewater.ActivityApplicationNavigation
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineType
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineTypeSelectionPersistence
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.SelectedPlaybackEngineTypeAccess
@@ -28,21 +27,26 @@ import com.lasthopesoftware.bluewater.client.servers.list.ServerListAdapter
 import com.lasthopesoftware.bluewater.client.servers.list.listeners.EditServerClickListener
 import com.lasthopesoftware.bluewater.client.settings.EditClientSettingsActivityIntentBuilder
 import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
+import com.lasthopesoftware.bluewater.databinding.ActivityApplicationSettingsBinding
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.getValue
+import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.suspend
 import com.lasthopesoftware.resources.closables.lazyScoped
 import com.lasthopesoftware.resources.intents.IntentFactory
 import com.lasthopesoftware.resources.strings.StringResources
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 
 private val logger by lazyLogger<ApplicationSettingsActivity>()
 
 class ApplicationSettingsActivity : AppCompatActivity() {
-	private val progressBar by LazyViewFinder<ProgressBar>(this, R.id.items_loading_progress)
 	private val serverListView by LazyViewFinder<RecyclerView>(this, R.id.loaded_recycler_view)
 	private val addServerButton by LazyViewFinder<Button>(this, R.id.addServerButton)
 	private val killPlaybackEngineButton by LazyViewFinder<Button>(this, R.id.killPlaybackEngine)
@@ -54,7 +58,21 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 		)
 	}
 	private val applicationSettingsRepository by lazy { getApplicationSettingsRepository() }
+	private val selectedPlaybackEngineTypeAccess by lazy {
+		SelectedPlaybackEngineTypeAccess(
+			applicationSettingsRepository,
+			DefaultPlaybackEngineLookup()
+		)
+	}
+	private val libraryProvider by lazy { LibraryRepository(this) }
 	private val applicationMessageBus by lazyScoped { getApplicationMessageBus().getScopedMessageBus() }
+	private val viewModel by buildViewModelLazily {
+		ApplicationSettingsViewModel(
+			applicationSettingsRepository,
+			selectedPlaybackEngineTypeAccess,
+			libraryProvider,
+		)
+	}
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -78,29 +96,25 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 				}
 		}
 
-		setContentView(R.layout.activity_application_settings)
 		setSupportActionBar(findViewById(R.id.applicationSettingsToolbar))
 
+		val binding = DataBindingUtil.setContentView<ActivityApplicationSettingsBinding>(this, R.layout.activity_application_settings)
+		binding.vm = viewModel
+
 		val syncScheduler = SyncScheduler(this)
-		HandleSyncCheckboxPreference.handle(
-			applicationSettingsRepository,
-			syncScheduler,
-			{ s -> s.isSyncOnPowerOnly },
-			{ s -> s::isSyncOnPowerOnly::set },
-			findViewById(R.id.syncOnPowerCheckbox))
+		viewModel.isVolumeLevelingEnabled.drop(1).onEach {
+			viewModel.saveSettings().suspend()
+		}.launchIn(lifecycleScope)
 
-		HandleSyncCheckboxPreference.handle(
-			applicationSettingsRepository,
-			syncScheduler,
-			{ it.isSyncOnWifiOnly },
-			{ s -> s::isSyncOnWifiOnly::set },
-			findViewById(R.id.syncOnWifiCheckbox))
+		viewModel.isSyncOnPowerOnly.drop(1).onEach {
+			viewModel.saveSettings().suspend()
+			syncScheduler.scheduleSync().suspend()
+		}.launchIn(lifecycleScope)
 
-		HandleCheckboxPreference.handle(
-			applicationSettingsRepository,
-			{ it.isVolumeLevelingEnabled },
-			{ s -> s::isVolumeLevelingEnabled::set },
-			findViewById(R.id.isVolumeLevelingEnabled))
+		viewModel.isSyncOnWifiOnly.drop(1).onEach {
+			viewModel.saveSettings().suspend()
+			syncScheduler.scheduleSync().suspend()
+		}.launchIn(lifecycleScope)
 
 		val selection = PlaybackEngineTypeSelectionPersistence(
 			applicationSettingsRepository,
@@ -132,27 +146,6 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 
 		addServerButton.setOnClickListener(EditServerClickListener(this, -1))
 
-		updateServerList()
-	}
-
-	override fun onCreateOptionsMenu(menu: Menu): Boolean = settingsMenu.buildSettingsMenu(menu)
-
-	@Deprecated("Deprecated in Java")
-	override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-		super.onActivityResult(requestCode, resultCode, data)
-		updateServerList()
-	}
-
-	override fun onOptionsItemSelected(item: MenuItem): Boolean = settingsMenu.handleSettingsMenuClicks(item)
-
-	private fun updateServerList() {
-		serverListView.visibility = View.INVISIBLE
-		progressBar.visibility = View.VISIBLE
-
-		val libraryProvider = LibraryRepository(this)
-		val promisedLibraries = libraryProvider.allLibraries
-		val promisedSelectedLibrary = getCachedSelectedLibraryIdProvider().promiseSelectedLibraryId()
-
 		val adapter = ServerListAdapter(
 			this,
 			BrowserLibrarySelection(applicationSettingsRepository, applicationMessageBus, libraryProvider),
@@ -161,19 +154,21 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 		serverListView.adapter = adapter
 		serverListView.layoutManager = LinearLayoutManager(this)
 
-		promisedLibraries
-			.eventually { libraries ->
-				promisedSelectedLibrary
-					.eventually(LoopedInPromise.response({ chosenLibraryId ->
-						val selectedBrowserLibrary = libraries.firstOrNull { l -> l.libraryId == chosenLibraryId }
+		viewModel.libraries.onEach {
+			val selectedBrowserLibrary = it.firstOrNull { l -> l.libraryId == viewModel.chosenLibraryId.value }
 
-						adapter.updateLibraries(libraries, selectedBrowserLibrary)
-
-						progressBar.visibility = View.INVISIBLE
-						serverListView.visibility = View.VISIBLE
-					}, this))
-			}
+			adapter.updateLibraries(it, selectedBrowserLibrary).suspend()
+		}.launchIn(lifecycleScope)
 	}
+
+	override fun onCreateOptionsMenu(menu: Menu): Boolean = settingsMenu.buildSettingsMenu(menu)
+
+	@Deprecated("Deprecated in Java")
+	override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+		super.onActivityResult(requestCode, resultCode, data)
+	}
+
+	override fun onOptionsItemSelected(item: MenuItem): Boolean = settingsMenu.handleSettingsMenuClicks(item)
 
 	companion object {
 		fun launch(context: Context) =
