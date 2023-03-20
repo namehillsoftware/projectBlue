@@ -44,7 +44,6 @@ import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnect
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingFloatingActionButton
 import com.lasthopesoftware.bluewater.client.settings.EditClientSettingsActivityIntentBuilder
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.view.ActiveFileDownloadsFragment
-import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
@@ -53,7 +52,6 @@ import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils.buildStandar
 import com.lasthopesoftware.bluewater.shared.android.view.getValue
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
-import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
@@ -62,7 +60,6 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.resources.closables.lazyScoped
 import com.lasthopesoftware.resources.intents.IntentFactory
 
-private val logger by lazyLogger<BrowserEntryActivity>()
 
 class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnable {
 	private val browseLibraryContainerRelativeLayout by LazyViewFinder<RelativeLayout>(this, R.id.browseLibraryContainer)
@@ -167,18 +164,6 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 	public override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
-		// Ensure that this task is only started when it's the task root. A workaround for an Android bug.
-		// See http://stackoverflow.com/a/7748416
-		if (!isTaskRoot) {
-			val intent = intent
-			if (Intent.ACTION_MAIN == intent.action && intent.hasCategory(Intent.CATEGORY_LAUNCHER)) {
-				val className = javaClass.name
-				logger.info("$className is not the root.  Finishing $className instead of launching.")
-				finish()
-				return
-			}
-		}
-
 		setContentView(R.layout.activity_browse_library)
 		setSupportActionBar(findViewById(R.id.browseLibraryToolbar))
 		setTheme(R.style.AppTheme)
@@ -209,7 +194,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 		}
 
 		onBackPressedDispatcher.addCallback {
-			if (!itemListMenuBackPressedHandler.hideAllMenus() && viewAnimator?.tryFlipToPreviousView() == false)
+			if (!itemListMenuBackPressedHandler.hideAllMenus() && viewAnimator?.tryFlipToPreviousView() != false)
 				finish()
 		}
 	}
@@ -238,6 +223,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 				when {
 					library == null -> {
 						// No library, must bail out
+						applicationNavigation.viewApplicationSettings()
 						finish()
 					}
 					showDownloadsAction == intent.action -> {
@@ -297,7 +283,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 			.excuse(HandleViewIoException(this, this))
 			.eventuallyExcuse(response(UnexpectedExceptionToasterResponse(this), this))
 			.then {
-				ApplicationSettingsActivity.launch(this)
+				applicationNavigation.viewApplicationSettings()
 				finish()
 			}
 	}

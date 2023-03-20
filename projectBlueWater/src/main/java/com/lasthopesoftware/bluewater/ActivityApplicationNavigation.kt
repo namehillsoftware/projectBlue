@@ -25,7 +25,6 @@ class ActivityApplicationNavigation(
 	private val handler by lazy { Handler(componentActivity.mainLooper) }
 	private val browseLibraryIntent by lazy {
 		val browseLibraryIntent = Intent(componentActivity, BrowserEntryActivity::class.java)
-		browseLibraryIntent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
 		browseLibraryIntent
 	}
 

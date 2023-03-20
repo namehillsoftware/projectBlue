@@ -12,6 +12,7 @@ import android.widget.RadioGroup
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.lasthopesoftware.bluewater.ActivityApplicationNavigation
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
@@ -25,15 +26,20 @@ import com.lasthopesoftware.bluewater.client.playback.engine.selection.view.Play
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 import com.lasthopesoftware.bluewater.client.servers.list.ServerListAdapter
 import com.lasthopesoftware.bluewater.client.servers.list.listeners.EditServerClickListener
+import com.lasthopesoftware.bluewater.client.settings.EditClientSettingsActivityIntentBuilder
 import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.getValue
+import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.resources.closables.lazyScoped
+import com.lasthopesoftware.resources.intents.IntentFactory
 import com.lasthopesoftware.resources.strings.StringResources
+
+private val logger by lazyLogger<ApplicationSettingsActivity>()
 
 class ApplicationSettingsActivity : AppCompatActivity() {
 	private val progressBar by LazyViewFinder<ProgressBar>(this, R.id.items_loading_progress)
@@ -41,11 +47,36 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 	private val addServerButton by LazyViewFinder<Button>(this, R.id.addServerButton)
 	private val killPlaybackEngineButton by LazyViewFinder<Button>(this, R.id.killPlaybackEngine)
 	private val settingsMenu by lazy { SettingsMenu(this, StringResources(this)) }
+	private val applicationNavigation by lazy {
+		ActivityApplicationNavigation(
+			this,
+			EditClientSettingsActivityIntentBuilder(IntentFactory(this))
+		)
+	}
 	private val applicationSettingsRepository by lazy { getApplicationSettingsRepository() }
 	private val applicationMessageBus by lazyScoped { getApplicationMessageBus().getScopedMessageBus() }
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
+
+		// Ensure that this task is only started when it's the task root. A workaround for an Android bug.
+		// See http://stackoverflow.com/a/7748416
+		val intent = intent
+		if (Intent.ACTION_MAIN == intent.action && intent.hasCategory(Intent.CATEGORY_LAUNCHER)) {
+			if (!isTaskRoot) {
+				val className = javaClass.name
+				logger.info("$className is not the root.  Finishing $className instead of launching.")
+				finish()
+				return
+			}
+
+			applicationSettingsRepository
+				.promiseApplicationSettings()
+				.then { s ->
+					if (s.chosenLibraryId > -1)
+						applicationNavigation.resetToBrowserRoot()
+				}
+		}
 
 		setContentView(R.layout.activity_application_settings)
 		setSupportActionBar(findViewById(R.id.applicationSettingsToolbar))
