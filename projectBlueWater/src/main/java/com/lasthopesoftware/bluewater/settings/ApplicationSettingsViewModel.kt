@@ -7,8 +7,8 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.LookupSelectedPlaybackEngineType
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineType
+import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
 import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateAction
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -57,7 +57,17 @@ class ApplicationSettingsViewModel(
 
 	}
 
-	fun saveSettings(): Promise<*> = Unit.toPromise()
+	fun saveSettings(): Promise<*> =
+		applicationSettingsRepository
+			.promiseUpdatedSettings(
+				ApplicationSettings(
+					isSyncOnPowerOnly = isSyncOnPowerOnly.value,
+					isVolumeLevelingEnabled = isVolumeLevelingEnabled.value,
+					isSyncOnWifiOnly = isSyncOnWifiOnly.value,
+					playbackEngineTypeName = playbackEngineType.value.name,
+					chosenLibraryId = chosenLibraryId.value.id
+				)
+			)
 
 	override fun act() {
 		mutableIsLoading.value = false
