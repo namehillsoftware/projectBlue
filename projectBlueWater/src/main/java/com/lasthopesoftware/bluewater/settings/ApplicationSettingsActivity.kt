@@ -93,10 +93,10 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 				}
 		}
 
-		setSupportActionBar(findViewById(R.id.applicationSettingsToolbar))
-
 		val binding = DataBindingUtil.setContentView<ActivityApplicationSettingsBinding>(this, R.layout.activity_application_settings)
 		binding.vm = viewModel
+
+		setSupportActionBar(findViewById(R.id.applicationSettingsToolbar))
 
 		val syncScheduler = SyncScheduler(this)
 		viewModel.isVolumeLevelingEnabled.drop(1).onEach {
