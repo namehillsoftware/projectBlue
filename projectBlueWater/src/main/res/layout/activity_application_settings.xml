@@ -53,14 +53,14 @@
                         android:layout_width="fill_parent"
                         android:layout_height="wrap_content"
                         android:text="@string/app_only_sync_on_wifi"
-                        android:checked="@{vm.isSyncOnWifiOnly}"/>
+                        android:checked="@={vm.isSyncOnWifiOnly}"/>
 
                     <CheckBox
                         android:id="@+id/syncOnPowerCheckbox"
                         android:layout_width="fill_parent"
                         android:layout_height="wrap_content"
                         android:text="@string/app_only_sync_ext_power"
-                        android:checked="@{vm.isSyncOnPowerOnly}"/>
+                        android:checked="@={vm.isSyncOnPowerOnly}"/>
 
                     <TextView
                         android:layout_width="fill_parent"
@@ -74,7 +74,7 @@
                         android:layout_width="fill_parent"
                         android:layout_height="wrap_content"
                         android:text="@string/useVolumeLevelingSetting"
-                        android:checked="@{vm.isVolumeLevelingEnabled}"/>
+                        android:checked="@={vm.isVolumeLevelingEnabled}"/>
 
                     <LinearLayout
                         android:id="@+id/playbackEngineContainer"
@@ -138,6 +138,7 @@
 
                 <include
                     layout="@layout/asynchronous_recycler_view"
+                    android:id="@+id/serverList"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:layout_below="@id/addServerContainer"

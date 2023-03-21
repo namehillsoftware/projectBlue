@@ -117,8 +117,6 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 			applicationSettingsRepository,
 			PlaybackEngineTypeChangedBroadcaster(applicationMessageBus))
 
-		val selectedPlaybackEngineTypeAccess = SelectedPlaybackEngineTypeAccess(applicationSettingsRepository, DefaultPlaybackEngineLookup())
-
 		val playbackEngineTypeSelectionView = PlaybackEngineTypeSelectionView(this)
 
 		val playbackEngineOptions = findViewById<RadioGroup>(R.id.playbackEngineOptions)
