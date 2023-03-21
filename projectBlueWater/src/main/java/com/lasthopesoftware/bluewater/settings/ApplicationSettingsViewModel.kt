@@ -3,12 +3,15 @@ package com.lasthopesoftware.bluewater.settings
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.TrackLoadedViewState
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.LookupSelectedPlaybackEngineType
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineType
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
 import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
+import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
+import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateAction
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,8 +21,13 @@ class ApplicationSettingsViewModel(
 	private val applicationSettingsRepository: HoldApplicationSettings,
 	private val selectedPlaybackEngineTypeAccess: LookupSelectedPlaybackEngineType,
 	private val libraryProvider: ILibraryProvider,
+	receiveMessages: RegisterForApplicationMessages,
 ) : ViewModel(), TrackLoadedViewState, ImmediateAction
 {
+	private val libraryChosenSubscription = receiveMessages.registerReceiver { m: BrowserLibrarySelection.LibraryChosenMessage ->
+		chosenLibraryId.value = m.chosenLibraryId
+	}
+
 	private val mutableLibraries = MutableStateFlow(emptyList<Library>())
 	private val mutableIsLoading = MutableStateFlow(false)
 
@@ -30,6 +38,10 @@ class ApplicationSettingsViewModel(
 	val chosenLibraryId = MutableStateFlow(LibraryId(-1))
 	val libraries = mutableLibraries.asStateFlow()
 	override val isLoading = mutableIsLoading.asStateFlow()
+
+	override fun onCleared() {
+		libraryChosenSubscription.close()
+	}
 
 	fun loadSettings(): Promise<*> {
 		mutableIsLoading.value = true

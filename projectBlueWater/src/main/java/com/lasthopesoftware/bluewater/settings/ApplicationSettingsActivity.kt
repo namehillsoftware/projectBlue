@@ -68,6 +68,7 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 			applicationSettingsRepository,
 			selectedPlaybackEngineTypeAccess,
 			libraryProvider,
+			applicationMessageBus,
 		)
 	}
 
@@ -97,21 +98,6 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 		binding.vm = viewModel
 
 		setSupportActionBar(findViewById(R.id.applicationSettingsToolbar))
-
-		val syncScheduler = SyncScheduler(this)
-		viewModel.isVolumeLevelingEnabled.drop(1).onEach {
-			viewModel.saveSettings().suspend()
-		}.launchIn(lifecycleScope)
-
-		viewModel.isSyncOnPowerOnly.drop(1).onEach {
-			viewModel.saveSettings().suspend()
-			syncScheduler.scheduleSync().suspend()
-		}.launchIn(lifecycleScope)
-
-		viewModel.isSyncOnWifiOnly.drop(1).onEach {
-			viewModel.saveSettings().suspend()
-			syncScheduler.scheduleSync().suspend()
-		}.launchIn(lifecycleScope)
 
 		val selection = PlaybackEngineTypeSelectionPersistence(
 			applicationSettingsRepository,
@@ -149,13 +135,30 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 		serverListView.adapter = adapter
 		serverListView.layoutManager = LinearLayoutManager(this)
 
-		viewModel.libraries.onEach {
-			val selectedBrowserLibrary = it.firstOrNull { l -> l.libraryId == viewModel.chosenLibraryId.value }
+		viewModel
+			.loadSettings()
+			.then {
+				viewModel.libraries.onEach {
+					val selectedBrowserLibrary = it.firstOrNull { l -> l.libraryId == viewModel.chosenLibraryId.value }
 
-			adapter.updateLibraries(it, selectedBrowserLibrary).suspend()
-		}.launchIn(lifecycleScope)
+					adapter.updateLibraries(it, selectedBrowserLibrary).suspend()
+				}.launchIn(lifecycleScope)
 
-		viewModel.loadSettings()
+				val syncScheduler = SyncScheduler(this)
+				viewModel.isVolumeLevelingEnabled.drop(1).onEach {
+					viewModel.saveSettings().suspend()
+				}.launchIn(lifecycleScope)
+
+				viewModel.isSyncOnPowerOnly.drop(1).onEach {
+					viewModel.saveSettings().suspend()
+					syncScheduler.scheduleSync().suspend()
+				}.launchIn(lifecycleScope)
+
+				viewModel.isSyncOnWifiOnly.drop(1).onEach {
+					viewModel.saveSettings().suspend()
+					syncScheduler.scheduleSync().suspend()
+				}.launchIn(lifecycleScope)
+			}
 	}
 
 	override fun onCreateOptionsMenu(menu: Menu): Boolean = settingsMenu.buildSettingsMenu(menu)
