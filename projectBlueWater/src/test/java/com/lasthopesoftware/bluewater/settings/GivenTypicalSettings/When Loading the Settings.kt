@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.settings.GivenTypicalSettings
 
-import com.lasthopesoftware.TestDispatcherSetup
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineType
@@ -12,7 +11,6 @@ import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -48,10 +46,8 @@ class `When Loading the Settings` {
 		)
 	}
 
-	@OptIn(ExperimentalCoroutinesApi::class)
 	@BeforeAll
 	fun act() {
-		TestDispatcherSetup.setupTestDispatcher()
 		mutt.loadSettings().toExpiringFuture().get()
 	}
 

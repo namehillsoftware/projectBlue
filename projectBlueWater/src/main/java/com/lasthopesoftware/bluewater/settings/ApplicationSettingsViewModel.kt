@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.settings
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.lasthopesoftware.bluewater.client.browsing.TrackLoadedViewState
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
@@ -14,11 +13,10 @@ import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
 import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
-import com.lasthopesoftware.bluewater.shared.promises.extensions.suspend
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateAction
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 class ApplicationSettingsViewModel(
 	private val applicationSettingsRepository: HoldApplicationSettings,
@@ -28,67 +26,39 @@ class ApplicationSettingsViewModel(
 	private val syncScheduler: ScheduleSyncs,
 ) : ViewModel(), TrackLoadedViewState, ImmediateAction
 {
-	private var isSyncOnPowerJob: Job? = null
-	private var isSyncOnWifiJob: Job? = null
-	private var isVolumeLevelingJob: Job? = null
-
 	private val libraryChosenSubscription = receiveMessages.registerReceiver { m: BrowserLibrarySelection.LibraryChosenMessage ->
-		chosenLibraryId.value = m.chosenLibraryId
+		mutableChosenLibraryId.value = m.chosenLibraryId
 	}
 
 	private val mutableLibraries = MutableStateFlow(emptyList<Library>())
 	private val mutableIsLoading = MutableStateFlow(false)
+	private val mutableChosenLibraryId = MutableStateFlow(LibraryId(-1))
+	private val mutableIsSyncOnPowerOnly = MutableStateFlow(false)
+	private val mutableIsSyncOnWifiOnly = MutableStateFlow(false)
+	private val mutableIsVolumeLevelingEnabled = MutableStateFlow(false)
 
-	val isSyncOnWifiOnly = MutableStateFlow(false)
-	val isSyncOnPowerOnly = MutableStateFlow(false)
-	val isVolumeLevelingEnabled = MutableStateFlow(false)
+	val isSyncOnWifiOnly = mutableIsSyncOnWifiOnly.asStateFlow()
+	val isSyncOnPowerOnly = mutableIsSyncOnPowerOnly.asStateFlow()
+	val isVolumeLevelingEnabled = mutableIsVolumeLevelingEnabled.asStateFlow()
 	val playbackEngineType = MutableStateFlow(PlaybackEngineType.ExoPlayer)
-	val chosenLibraryId = MutableStateFlow(LibraryId(-1))
+	val chosenLibraryId = mutableChosenLibraryId.asStateFlow()
 	val libraries = mutableLibraries.asStateFlow()
 	override val isLoading = mutableIsLoading.asStateFlow()
 
 	override fun onCleared() {
 		libraryChosenSubscription.close()
-		isSyncOnWifiJob?.cancel()
 	}
 
 	fun loadSettings(): Promise<*> {
 		mutableIsLoading.value = true
 
-		isSyncOnWifiJob?.cancel()
-		isSyncOnPowerJob?.cancel()
-		isVolumeLevelingJob?.cancel()
-
 		val promisedSimpleValuesUpdate = applicationSettingsRepository
 			.promiseApplicationSettings()
 			.then { s ->
-				isSyncOnWifiOnly.value = s.isSyncOnWifiOnly
-				isSyncOnWifiJob = isSyncOnWifiOnly
-					.dropWhile { it == s.isSyncOnWifiOnly }
-					.onEach {
-						saveSettings().suspend()
-						syncScheduler.scheduleSync().suspend()
-					}
-					.launchIn(viewModelScope)
-
-				isSyncOnPowerOnly.value = s.isSyncOnPowerOnly
-				isSyncOnPowerJob = isSyncOnPowerOnly
-					.dropWhile { it == s.isSyncOnPowerOnly }
-					.onEach {
-						saveSettings().suspend()
-						syncScheduler.scheduleSync().suspend()
-					}
-					.launchIn(viewModelScope)
-
-				isVolumeLevelingEnabled.value = s.isVolumeLevelingEnabled
-				isVolumeLevelingJob = isVolumeLevelingEnabled
-					.dropWhile { it == s.isVolumeLevelingEnabled }
-					.onEach {
-						saveSettings().suspend()
-					}
-					.launchIn(viewModelScope)
-
-				chosenLibraryId.value = LibraryId(s.chosenLibraryId)
+				mutableIsSyncOnWifiOnly.value = s.isSyncOnWifiOnly
+				mutableIsSyncOnPowerOnly.value = s.isSyncOnPowerOnly
+				mutableIsVolumeLevelingEnabled.value = s.isVolumeLevelingEnabled
+				mutableChosenLibraryId.value = LibraryId(s.chosenLibraryId)
 			}
 
 		val promisedEngineTypeUpdate = selectedPlaybackEngineTypeAccess
@@ -102,7 +72,28 @@ class ApplicationSettingsViewModel(
 			.must(this)
 	}
 
-	fun saveSettings(): Promise<*> =
+	fun promiseSyncOnPowerChange(isSyncOnPowerOnly: Boolean): Promise<*> {
+		mutableIsSyncOnPowerOnly.value = isSyncOnPowerOnly
+		return saveSettings()
+			.eventually {
+				syncScheduler.scheduleSync()
+			}
+	}
+
+	fun promiseSyncOnWifiChange(isSyncOnWifiOnly: Boolean): Promise<*> {
+		mutableIsSyncOnWifiOnly.value = isSyncOnWifiOnly
+		return saveSettings()
+			.eventually {
+				syncScheduler.scheduleSync()
+			}
+	}
+
+	fun promiseVolumeLevelingEnabledChange(isVolumeLevelingEnabled: Boolean): Promise<*> {
+		mutableIsVolumeLevelingEnabled.value = isVolumeLevelingEnabled
+		return saveSettings()
+	}
+
+	private fun saveSettings(): Promise<*> =
 		applicationSettingsRepository
 			.promiseUpdatedSettings(
 				ApplicationSettings(

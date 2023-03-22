@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.settings.GivenTypicalSettings.AndTheSettingsAreLoaded
 
-import com.lasthopesoftware.TestDispatcherSetup
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineType
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsViewModel
@@ -11,18 +10,12 @@ import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.test.*
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 
 class `When Changing isSyncOnPowerOnly` {
 	private var savedApplicationSettings: ApplicationSettings? = null
-	private val settingsSavedLatch = CountDownLatch(1)
-	private val syncScheduledLatch = CountDownLatch(1)
 	private var isSyncScheduled = false
 
 	private val mutt by lazy {
@@ -41,7 +34,6 @@ class `When Changing isSyncOnPowerOnly` {
 				every { promiseUpdatedSettings(any()) } answers {
 					val settings = firstArg<ApplicationSettings>()
 					savedApplicationSettings = settings
-					settingsSavedLatch.countDown()
 					Promise(settings)
 				}
 			},
@@ -61,28 +53,19 @@ class `When Changing isSyncOnPowerOnly` {
 			mockk {
 				every { scheduleSync() } answers {
 					isSyncScheduled = true
-					syncScheduledLatch.countDown()
 					Promise.empty()
 				}
 			}
 		)
 	}
 
-	@OptIn(ExperimentalCoroutinesApi::class)
 	@BeforeAll
 	fun act() {
-		val testDispatcher = TestDispatcherSetup.setupTestDispatcher()
 		mutt.apply {
 			loadSettings().toExpiringFuture().get()
 
-			testDispatcher.scheduler.advanceUntilIdle()
-
-			isSyncOnPowerOnly.value = !isSyncOnPowerOnly.value
+			promiseSyncOnPowerChange(!isSyncOnPowerOnly.value).toExpiringFuture().get()
 		}
-
-		testDispatcher.scheduler.advanceUntilIdle()
-
-		settingsSavedLatch.await(10, TimeUnit.SECONDS)
 	}
 
 	@Test
