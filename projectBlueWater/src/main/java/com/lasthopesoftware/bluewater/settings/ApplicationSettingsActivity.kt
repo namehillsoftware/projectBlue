@@ -39,7 +39,6 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.suspend
 import com.lasthopesoftware.resources.closables.lazyScoped
 import com.lasthopesoftware.resources.intents.IntentFactory
 import com.lasthopesoftware.resources.strings.StringResources
-import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
@@ -69,6 +68,7 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 			selectedPlaybackEngineTypeAccess,
 			libraryProvider,
 			applicationMessageBus,
+			SyncScheduler(this),
 		)
 	}
 
@@ -142,21 +142,6 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 					val selectedBrowserLibrary = it.firstOrNull { l -> l.libraryId == viewModel.chosenLibraryId.value }
 
 					adapter.updateLibraries(it, selectedBrowserLibrary).suspend()
-				}.launchIn(lifecycleScope)
-
-				val syncScheduler = SyncScheduler(this)
-				viewModel.isVolumeLevelingEnabled.drop(1).onEach {
-					viewModel.saveSettings().suspend()
-				}.launchIn(lifecycleScope)
-
-				viewModel.isSyncOnPowerOnly.drop(1).onEach {
-					viewModel.saveSettings().suspend()
-					syncScheduler.scheduleSync().suspend()
-				}.launchIn(lifecycleScope)
-
-				viewModel.isSyncOnWifiOnly.drop(1).onEach {
-					viewModel.saveSettings().suspend()
-					syncScheduler.scheduleSync().suspend()
 				}.launchIn(lifecycleScope)
 			}
 	}

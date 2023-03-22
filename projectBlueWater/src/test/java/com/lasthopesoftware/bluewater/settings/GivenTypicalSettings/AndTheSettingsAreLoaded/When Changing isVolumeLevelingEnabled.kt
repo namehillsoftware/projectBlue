@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.settings.GivenTypicalSettings.AndTheSettingsAreLoaded
 
+import com.lasthopesoftware.TestDispatcherSetup
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineType
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsViewModel
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
@@ -11,12 +11,17 @@ import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.*
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
-class `When Saving the Settings` {
+class `When Changing isVolumeLevelingEnabled` {
 	private var savedApplicationSettings: ApplicationSettings? = null
+	private val settingsSavedLatch = CountDownLatch(1)
 
 	private val mutt by lazy {
 		ApplicationSettingsViewModel(
@@ -24,7 +29,7 @@ class `When Saving the Settings` {
 				every { promiseApplicationSettings() } returns Promise(
 					ApplicationSettings(
 						isSyncOnPowerOnly = false,
-						isSyncOnWifiOnly = true,
+						isSyncOnWifiOnly = false,
 						isVolumeLevelingEnabled = true,
 						chosenLibraryId = 95,
 						playbackEngineTypeName = PlaybackEngineType.ExoPlayer.name,
@@ -34,6 +39,7 @@ class `When Saving the Settings` {
 				every { promiseUpdatedSettings(any()) } answers {
 					val settings = firstArg<ApplicationSettings>()
 					savedApplicationSettings = settings
+					settingsSavedLatch.countDown()
 					Promise(settings)
 				}
 			},
@@ -50,26 +56,30 @@ class `When Saving the Settings` {
 				)
 			},
 			RecordingApplicationMessageBus(),
+			mockk(),
 		)
 	}
 
+	@OptIn(ExperimentalCoroutinesApi::class)
 	@BeforeAll
 	fun act() {
+		val testDispatcher = TestDispatcherSetup.setupTestDispatcher()
 		mutt.apply {
 			loadSettings().toExpiringFuture().get()
 
-			isSyncOnWifiOnly.value = !isSyncOnWifiOnly.value
-			isSyncOnPowerOnly.value = !isSyncOnPowerOnly.value
-			isVolumeLevelingEnabled.value = !isVolumeLevelingEnabled.value
-			chosenLibraryId.value = LibraryId(463)
+			testDispatcher.scheduler.advanceUntilIdle()
 
-			saveSettings().toExpiringFuture().get()
+			isVolumeLevelingEnabled.value = !isVolumeLevelingEnabled.value
 		}
+
+		testDispatcher.scheduler.advanceUntilIdle()
+
+		settingsSavedLatch.await(10, TimeUnit.SECONDS)
 	}
 
 	@Test
 	fun `then isSyncOnPowerOnly is correct`() {
-		assertThat(savedApplicationSettings?.isSyncOnPowerOnly).isTrue
+		assertThat(savedApplicationSettings?.isSyncOnPowerOnly).isFalse
 	}
 
 	@Test
@@ -84,7 +94,7 @@ class `When Saving the Settings` {
 
 	@Test
 	fun `then chosenLibraryId is correct`() {
-		assertThat(savedApplicationSettings?.chosenLibraryId).isEqualTo(463)
+		assertThat(savedApplicationSettings?.chosenLibraryId).isEqualTo(95)
 	}
 
 	@Test
