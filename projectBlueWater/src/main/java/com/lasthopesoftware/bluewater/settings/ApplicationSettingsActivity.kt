@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.settings
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.view.MenuItem
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import com.lasthopesoftware.bluewater.ActivityApplicationNavigation
@@ -21,12 +20,10 @@ import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMes
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
 import com.lasthopesoftware.resources.closables.lazyScoped
 import com.lasthopesoftware.resources.intents.IntentFactory
-import com.lasthopesoftware.resources.strings.StringResources
 
 private val logger by lazyLogger<ApplicationSettingsActivity>()
 
 class ApplicationSettingsActivity : AppCompatActivity() {
-	private val settingsMenu by lazy { SettingsMenu(this, StringResources(this)) }
 	private val applicationSettingsRepository by lazy { getApplicationSettingsRepository() }
 	private val selectedPlaybackEngineTypeAccess by lazy {
 		SelectedPlaybackEngineTypeAccess(
@@ -96,8 +93,6 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 		super.onActivityResult(requestCode, resultCode, data)
 		viewModel.loadSettings()
 	}
-
-	override fun onOptionsItemSelected(item: MenuItem): Boolean = settingsMenu.handleSettingsMenuClicks(item)
 
 	companion object {
 		fun launch(context: Context) =
