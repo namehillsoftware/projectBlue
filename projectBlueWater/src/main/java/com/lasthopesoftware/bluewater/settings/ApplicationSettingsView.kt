@@ -17,10 +17,13 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.shared.android.ui.components.LabeledSelection
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
+
+private val optionsPadding = PaddingValues(start = 32.dp, end = 32.dp)
 
 @Composable
 fun ApplicationSettingsView(
@@ -41,9 +44,10 @@ fun ApplicationSettingsView(
 		) {
 			item {
 				Row(
-					modifier = Modifier.fillMaxWidth(),
+					modifier = Modifier.fillMaxWidth().height(rowHeight),
+					verticalAlignment = Alignment.CenterVertically,
 				) {
-					ProvideTextStyle(value = MaterialTheme.typography.h3) {
+					ProvideTextStyle(value = MaterialTheme.typography.h5) {
 						Text(text = stringResource(id = R.string.app_sync_settings))
 					}
 				}
@@ -51,7 +55,8 @@ fun ApplicationSettingsView(
 
 			item {
 				Row(
-					modifier = Modifier.fillMaxWidth(),
+					modifier = Modifier.fillMaxWidth().height(rowHeight).padding(optionsPadding),
+					verticalAlignment = Alignment.CenterVertically,
 				) {
 					val isSyncOnWifiOnly by applicationSettingsViewModel.isSyncOnWifiOnly.collectAsState()
 					LabeledSelection(
@@ -66,7 +71,8 @@ fun ApplicationSettingsView(
 
 			item {
 				Row(
-					modifier = Modifier.fillMaxWidth(),
+					modifier = Modifier.fillMaxWidth().height(rowHeight).padding(optionsPadding),
+					verticalAlignment = Alignment.CenterVertically,
 				) {
 					val isSyncOnPowerOnly by applicationSettingsViewModel.isSyncOnPowerOnly.collectAsState()
 					LabeledSelection(
@@ -81,9 +87,10 @@ fun ApplicationSettingsView(
 
 			item {
 				Row(
-					modifier = Modifier.fillMaxWidth(),
+					modifier = Modifier.fillMaxWidth().height(rowHeight),
+					verticalAlignment = Alignment.CenterVertically,
 				) {
-					ProvideTextStyle(value = MaterialTheme.typography.h3) {
+					ProvideTextStyle(value = MaterialTheme.typography.h5) {
 						Text(text = stringResource(id = R.string.app_audio_settings))
 					}
 				}
@@ -91,13 +98,14 @@ fun ApplicationSettingsView(
 
 			item {
 				Row(
-					modifier = Modifier.fillMaxWidth(),
+					modifier = Modifier.fillMaxWidth().height(rowHeight).padding(optionsPadding),
+					verticalAlignment = Alignment.CenterVertically,
 				) {
 					val isVolumeLevelingEnabled by applicationSettingsViewModel.isVolumeLevelingEnabled.collectAsState()
 					LabeledSelection(
 						label = stringResource(id = R.string.useVolumeLevelingSetting),
 						selected = isVolumeLevelingEnabled,
-						onSelected = { applicationSettingsViewModel.promiseSyncOnPowerChange(!isVolumeLevelingEnabled) }
+						onSelected = { applicationSettingsViewModel.promiseVolumeLevelingEnabledChange(!isVolumeLevelingEnabled) }
 					) {
 						Checkbox(checked = isVolumeLevelingEnabled, onCheckedChange = null)
 					}
@@ -108,9 +116,11 @@ fun ApplicationSettingsView(
 				Row(
 					modifier = Modifier
 						.fillMaxWidth()
+						.height(rowHeight)
 						.clickable {
 							applicationNavigation.viewNewServerSettings()
 						},
+					verticalAlignment = Alignment.CenterVertically,
 					horizontalArrangement = Arrangement.SpaceBetween,
 				) {
 					Text(text = stringResource(id = R.string.btn_add_server))
@@ -140,7 +150,10 @@ fun ApplicationSettingsView(
 					Image(
 						painter = painterResource(id = R.drawable.ic_action_settings),
 						contentDescription = stringResource(id = R.string.action_settings),
-						modifier = Modifier.clickable { applicationNavigation.viewServerSettings(library.libraryId) }
+						modifier = Modifier
+							.clickable { applicationNavigation.viewServerSettings(library.libraryId) }
+							.size(Dimensions.MenuIconSize)
+							.padding(Dimensions.ViewPadding),
 					)
 
 					Button(
