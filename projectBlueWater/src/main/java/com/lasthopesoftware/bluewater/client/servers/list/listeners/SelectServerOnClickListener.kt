@@ -11,7 +11,8 @@ class SelectServerOnClickListener(
 	private val browserLibrarySelection: SelectBrowserLibrary
 ) : View.OnClickListener {
 	override fun onClick(v: View) {
-		browserLibrarySelection.selectBrowserLibrary(library.libraryId)
+		browserLibrarySelection
+			.selectBrowserLibrary(library.libraryId)
 			.eventually(LoopedInPromise.response({ startNewConnection(v.context) }, v.context))
 	}
 }

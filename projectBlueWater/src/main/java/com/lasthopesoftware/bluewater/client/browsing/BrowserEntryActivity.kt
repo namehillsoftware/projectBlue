@@ -44,6 +44,7 @@ import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnect
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingFloatingActionButton
 import com.lasthopesoftware.bluewater.client.settings.EditClientSettingsActivityIntentBuilder
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.view.ActiveFileDownloadsFragment
+import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
@@ -95,6 +96,11 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 		ActivityApplicationNavigation(
 			this,
 			EditClientSettingsActivityIntentBuilder(IntentFactory(this)),
+			BrowserLibrarySelection(
+				getApplicationSettingsRepository(),
+				applicationMessageBus,
+				libraryRepository,
+			),
 		)
 	}
 

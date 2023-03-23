@@ -82,7 +82,12 @@ class EditClientSettingsActivity :
 					librarySettingsViewModel = librarySettingsViewModel,
 					navigateApplication = ActivityApplicationNavigation(
 						this,
-						EditClientSettingsActivityIntentBuilder(IntentFactory(this))
+						EditClientSettingsActivityIntentBuilder(IntentFactory(this)),
+						BrowserLibrarySelection(
+							applicationSettingsRepository,
+							applicationMessageBus,
+							libraryProvider,
+						),
 					),
 					stringResources = StringResources(this),
 				)

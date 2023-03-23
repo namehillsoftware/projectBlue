@@ -10,6 +10,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResult
 import androidx.appcompat.app.AppCompatActivity
 import com.lasthopesoftware.bluewater.ActivityApplicationNavigation
+import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
@@ -23,6 +25,7 @@ import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 import com.lasthopesoftware.bluewater.shared.cls
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay
 import com.lasthopesoftware.bluewater.shared.promises.extensions.*
 import com.lasthopesoftware.resources.intents.IntentFactory
@@ -38,7 +41,17 @@ class InstantiateSelectedConnectionActivity : AppCompatActivity(), ControlConnec
 
 	private val connectionInitializationProxy by lazy { ConnectionInitializationProxy(libraryConnectionProvider) }
 
-	private val applicationNavigation by lazy { ActivityApplicationNavigation(this, EditClientSettingsActivityIntentBuilder(IntentFactory(this))) }
+	private val applicationNavigation by lazy {
+		ActivityApplicationNavigation(
+			this,
+			EditClientSettingsActivityIntentBuilder(IntentFactory(this)),
+			BrowserLibrarySelection(
+				getApplicationSettingsRepository(),
+				ApplicationMessageBus.getApplicationMessageBus(),
+				LibraryRepository(this),
+			),
+		)
+	}
 
 	private val errorController by lazy {
 		ConnectionInitializationErrorController(this, applicationNavigation)

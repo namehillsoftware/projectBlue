@@ -17,6 +17,8 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.repositor
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertyStorage
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
+import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
@@ -28,6 +30,7 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNow
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.client.settings.EditClientSettingsActivityIntentBuilder
+import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildActivityViewModelLazily
@@ -98,7 +101,15 @@ class SearchFilesFragment : Fragment() {
 			scopedUrlKeyProvider,
 			StringResources(requireContext()),
 			PlaybackServiceController(requireContext()),
-			ActivityApplicationNavigation(requireActivity(), EditClientSettingsActivityIntentBuilder(IntentFactory(requireContext()))),
+			ActivityApplicationNavigation(
+				requireActivity(),
+				EditClientSettingsActivityIntentBuilder(IntentFactory(requireContext())),
+				BrowserLibrarySelection(
+					requireActivity().getApplicationSettingsRepository(),
+					applicationMessageBus,
+					LibraryRepository(requireContext()),
+				),
+			),
 			menuMessageBus,
 			applicationMessageBus,
 		)

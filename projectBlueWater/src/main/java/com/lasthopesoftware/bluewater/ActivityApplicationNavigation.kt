@@ -9,7 +9,9 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsActivity.Companion.launchFileDetailsActivity
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.startItemBrowserActivity
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectBrowserLibrary
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.NowPlayingActivity.Companion.startNowPlayingActivity
 import com.lasthopesoftware.bluewater.client.settings.IEditClientSettingsActivityIntentBuilder
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity
@@ -20,6 +22,7 @@ import com.namehillsoftware.handoff.promises.queued.MessageWriter
 class ActivityApplicationNavigation(
 	private val componentActivity: ComponentActivity,
 	private val editClientSettingsIntentBuilder: IEditClientSettingsActivityIntentBuilder,
+	private val libraryBrowserSelection: SelectBrowserLibrary
 ) : NavigateApplication {
 
 	private val handler by lazy { Handler(componentActivity.mainLooper) }
@@ -27,6 +30,16 @@ class ActivityApplicationNavigation(
 		val browseLibraryIntent = Intent(componentActivity, BrowserEntryActivity::class.java)
 		browseLibraryIntent
 	}
+
+	override fun connectToLibrary(libraryId: LibraryId): Promise<Unit> =
+		libraryBrowserSelection
+			.selectBrowserLibrary(libraryId)
+			.eventually(
+				LoopedInPromise.response(
+					{ InstantiateSelectedConnectionActivity.startNewConnection(componentActivity) },
+					handler
+				)
+			)
 
 	override fun resetToBrowserRoot(): Promise<Unit> = loopInOperation {
 		componentActivity.startActivity(browseLibraryIntent)
@@ -38,6 +51,10 @@ class ActivityApplicationNavigation(
 
 	override fun launchAboutActivity() = loopInOperation {
 		componentActivity.startActivity(Intent(componentActivity, AboutActivity::class.java))
+	}
+
+	override fun viewNewServerSettings(): Promise<Unit> = loopInOperation {
+		componentActivity.startActivity(editClientSettingsIntentBuilder.buildIntent(LibraryId(-1)))
 	}
 
 	override fun viewServerSettings(libraryId: LibraryId) = loopInOperation {

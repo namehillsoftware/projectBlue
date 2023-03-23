@@ -264,6 +264,11 @@ class ItemBrowserActivity :
 		ActivityApplicationNavigation(
 			this,
 			EditClientSettingsActivityIntentBuilder(IntentFactory(this)),
+			BrowserLibrarySelection(
+				getApplicationSettingsRepository(),
+				messageBus,
+				libraryProvider,
+			),
 		)
 	}
 

@@ -6,10 +6,15 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 
 interface NavigateApplication {
+
+	fun connectToLibrary(libraryId: LibraryId) = Unit.toPromise()
+
 	fun resetToBrowserRoot() = Unit.toPromise()
 	fun viewApplicationSettings() = Unit.toPromise()
 
 	fun launchAboutActivity() = Unit.toPromise()
+
+	fun viewNewServerSettings() = Unit.toPromise()
 
 	fun viewServerSettings(libraryId: LibraryId) = Unit.toPromise()
 
