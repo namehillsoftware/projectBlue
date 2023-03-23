@@ -20,6 +20,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
+import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.shared.android.ui.components.LabeledSelection
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 
@@ -29,6 +30,7 @@ private val optionsPadding = PaddingValues(start = 32.dp, end = 32.dp)
 fun ApplicationSettingsView(
 	applicationSettingsViewModel: ApplicationSettingsViewModel,
 	applicationNavigation: NavigateApplication,
+	playbackService: ControlPlaybackService,
 ) {
 	Surface {
 		val rowHeight = dimensionResource(id = R.dimen.standard_row_height)
@@ -40,11 +42,14 @@ fun ApplicationSettingsView(
 		LazyColumn(
 			modifier = Modifier
 				.fillMaxSize()
-				.padding(Dimensions.ViewPadding)
+				.padding(Dimensions.ViewPadding),
+			horizontalAlignment = Alignment.CenterHorizontally,
 		) {
 			item {
 				Row(
-					modifier = Modifier.fillMaxWidth().height(rowHeight),
+					modifier = Modifier
+						.fillMaxWidth()
+						.height(rowHeight),
 					verticalAlignment = Alignment.CenterVertically,
 				) {
 					ProvideTextStyle(value = MaterialTheme.typography.h5) {
@@ -55,7 +60,10 @@ fun ApplicationSettingsView(
 
 			item {
 				Row(
-					modifier = Modifier.fillMaxWidth().height(rowHeight).padding(optionsPadding),
+					modifier = Modifier
+						.fillMaxWidth()
+						.height(rowHeight)
+						.padding(optionsPadding),
 					verticalAlignment = Alignment.CenterVertically,
 				) {
 					val isSyncOnWifiOnly by applicationSettingsViewModel.isSyncOnWifiOnly.collectAsState()
@@ -71,7 +79,10 @@ fun ApplicationSettingsView(
 
 			item {
 				Row(
-					modifier = Modifier.fillMaxWidth().height(rowHeight).padding(optionsPadding),
+					modifier = Modifier
+						.fillMaxWidth()
+						.height(rowHeight)
+						.padding(optionsPadding),
 					verticalAlignment = Alignment.CenterVertically,
 				) {
 					val isSyncOnPowerOnly by applicationSettingsViewModel.isSyncOnPowerOnly.collectAsState()
@@ -87,7 +98,9 @@ fun ApplicationSettingsView(
 
 			item {
 				Row(
-					modifier = Modifier.fillMaxWidth().height(rowHeight),
+					modifier = Modifier
+						.fillMaxWidth()
+						.height(rowHeight),
 					verticalAlignment = Alignment.CenterVertically,
 				) {
 					ProvideTextStyle(value = MaterialTheme.typography.h5) {
@@ -98,7 +111,10 @@ fun ApplicationSettingsView(
 
 			item {
 				Row(
-					modifier = Modifier.fillMaxWidth().height(rowHeight).padding(optionsPadding),
+					modifier = Modifier
+						.fillMaxWidth()
+						.height(rowHeight)
+						.padding(optionsPadding),
 					verticalAlignment = Alignment.CenterVertically,
 				) {
 					val isVolumeLevelingEnabled by applicationSettingsViewModel.isVolumeLevelingEnabled.collectAsState()
@@ -113,6 +129,19 @@ fun ApplicationSettingsView(
 			}
 
 			item {
+				Button(
+					onClick = {
+						playbackService.kill()
+					}
+				) {
+					Text(
+						text = stringResource(id = R.string.kill_playback),
+						fontSize = rowFontSize,
+					)
+				}
+			}
+
+			item {
 				Row(
 					modifier = Modifier
 						.fillMaxWidth()
@@ -123,7 +152,10 @@ fun ApplicationSettingsView(
 					verticalAlignment = Alignment.CenterVertically,
 					horizontalArrangement = Arrangement.SpaceBetween,
 				) {
-					Text(text = stringResource(id = R.string.btn_add_server))
+					Text(
+						text = stringResource(id = R.string.btn_add_server),
+						fontSize = rowFontSize,
+					)
 					Image(
 						painter = painterResource(id = R.drawable.ic_add_item_36dp),
 						contentDescription = stringResource(id = R.string.btn_add_server)
@@ -140,7 +172,7 @@ fun ApplicationSettingsView(
 				) {
 					Text(
 						text = library.accessCode ?: "",
-						modifier = Modifier.weight(1f),
+						modifier = Modifier.weight(1f).padding(Dimensions.ViewPadding),
 						maxLines = 1,
 						overflow = TextOverflow.Ellipsis,
 						fontWeight = if (library.libraryId == selectedLibraryId) FontWeight.Bold else FontWeight.Normal,
@@ -152,14 +184,14 @@ fun ApplicationSettingsView(
 						contentDescription = stringResource(id = R.string.action_settings),
 						modifier = Modifier
 							.clickable { applicationNavigation.viewServerSettings(library.libraryId) }
-							.size(Dimensions.MenuIconSize)
 							.padding(Dimensions.ViewPadding),
 					)
 
-					Button(
-						onClick = {
-							applicationNavigation.connectToLibrary(library.libraryId)
-						}
+					Row(
+						modifier = Modifier
+							.clickable { applicationNavigation.connectToLibrary(library.libraryId) }
+							.padding(Dimensions.ViewPadding),
+						verticalAlignment = Alignment.CenterVertically,
 					) {
 						Text(
 							text = stringResource(id = R.string.lbl_connect),

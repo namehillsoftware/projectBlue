@@ -29,4 +29,5 @@ class PlaybackServiceController(private val context: Context) : ControlPlaybackS
 	override fun setRepeating() = PlaybackService.setRepeating(context)
 
 	override fun setCompleting() = PlaybackService.setCompleting(context)
+	override fun kill() = PlaybackService.killService(context)
 }

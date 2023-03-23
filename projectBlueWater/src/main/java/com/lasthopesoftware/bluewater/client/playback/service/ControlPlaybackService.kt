@@ -19,4 +19,6 @@ interface ControlPlaybackService {
 	fun setRepeating()
 
 	fun setCompleting()
+
+	fun kill()
 }
