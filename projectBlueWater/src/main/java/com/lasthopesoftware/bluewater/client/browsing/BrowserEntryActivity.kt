@@ -42,10 +42,11 @@ import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionSettingsChangeReceiver
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingFloatingActionButton
-import com.lasthopesoftware.bluewater.client.settings.EditClientSettingsActivityIntentBuilder
+import com.lasthopesoftware.bluewater.client.settings.IntentBuilder
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.view.ActiveFileDownloadsFragment
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
+import com.lasthopesoftware.bluewater.shared.android.intents.IntentFactory
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
@@ -59,7 +60,6 @@ import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.resources.closables.lazyScoped
-import com.lasthopesoftware.resources.intents.IntentFactory
 
 
 class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnable {
@@ -95,7 +95,11 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 	private val applicationNavigation by lazy {
 		ActivityApplicationNavigation(
 			this,
-			EditClientSettingsActivityIntentBuilder(IntentFactory(this)),
+			IntentBuilder(
+				IntentFactory(
+					this
+				)
+			),
 			BrowserLibrarySelection(
 				getApplicationSettingsRepository(),
 				applicationMessageBus,

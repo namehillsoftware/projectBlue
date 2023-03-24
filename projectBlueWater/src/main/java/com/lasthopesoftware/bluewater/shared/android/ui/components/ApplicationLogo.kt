@@ -11,12 +11,14 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.BuildConfig
 import com.lasthopesoftware.bluewater.R
 
 @Composable
-fun ApplicationLogo(modifier: Modifier) {
+@Preview
+fun ApplicationLogo(modifier: Modifier = Modifier) {
 	Image(
 		painter = painterResource(id = R.drawable.project_blue_logo),
 		contentDescription = stringResource(R.string.app_logo, stringResource(id = R.string.app_name)),
@@ -29,7 +31,8 @@ fun ApplicationLogo(modifier: Modifier) {
 }
 
 @Composable
-fun ApplicationInfoText(modifier: Modifier) {
+@Preview
+fun ApplicationInfoText(modifier: Modifier = Modifier) {
 	Text(
 		stringResource(
 			R.string.aboutAppText,

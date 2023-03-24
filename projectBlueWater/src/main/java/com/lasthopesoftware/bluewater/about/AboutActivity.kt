@@ -13,38 +13,53 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
-import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsActivityIntentBuilder
+import com.lasthopesoftware.bluewater.ActivityApplicationNavigation
+import com.lasthopesoftware.bluewater.NavigateApplication
+import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
+import com.lasthopesoftware.bluewater.client.settings.IntentBuilder
+import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
+import com.lasthopesoftware.bluewater.shared.android.intents.IntentFactory
 import com.lasthopesoftware.bluewater.shared.android.ui.components.ApplicationInfoText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.ApplicationLogo
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
-import com.lasthopesoftware.resources.intents.IntentFactory
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
 import com.lasthopesoftware.resources.strings.StringResources
 
 class AboutActivity : ComponentActivity() {
 	private val stringResources by lazy { StringResources(this) }
-	private val hiddenSettingsActivityIntentBuilder by lazy { HiddenSettingsActivityIntentBuilder(IntentFactory(this)) }
+	private val applicationNavigation by lazy {
+		ActivityApplicationNavigation(
+			this,
+			IntentBuilder(IntentFactory(this)),
+			BrowserLibrarySelection(
+				getApplicationSettingsRepository(),
+				ApplicationMessageBus.getApplicationMessageBus(),
+				LibraryRepository(this),
+			),
+		)
+	}
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
 		title = stringResources.aboutTitle
 
-		setContent { ProjectBlueTheme { AboutView(hiddenSettingsActivityIntentBuilder) } }
+		setContent { ProjectBlueTheme { AboutView(applicationNavigation) } }
 	}
 }
 
 @Composable
-fun AboutView(hiddenSettingsActivityIntentBuilder: HiddenSettingsActivityIntentBuilder) {
+fun AboutView(applicationNavigation: NavigateApplication) {
 	Surface {
 		BoxWithConstraints(modifier = Modifier
 			.fillMaxSize()
 			.padding(12.dp)
 		) {
-			if (maxWidth < maxHeight) AboutViewVertical(hiddenSettingsActivityIntentBuilder)
-			else AboutViewHorizontal(hiddenSettingsActivityIntentBuilder)
+			if (maxWidth < maxHeight) AboutViewVertical(applicationNavigation)
+			else AboutViewHorizontal(applicationNavigation)
 		}
 	}
 }
@@ -52,69 +67,61 @@ fun AboutView(hiddenSettingsActivityIntentBuilder: HiddenSettingsActivityIntentB
 @Composable
 @OptIn(ExperimentalFoundationApi::class)
 fun AboutViewVertical(
-	hiddenSettingsActivityIntentBuilder: HiddenSettingsActivityIntentBuilder,
+	applicationNavigation: NavigateApplication,
 ) {
 	Column(
 		Modifier.fillMaxSize()
 	) {
-		with (LocalContext.current) {
-			val hapticFeedback = LocalHapticFeedback.current
-			ApplicationLogo(
-				modifier = Modifier
-					.combinedClickable(
-						interactionSource = remember { MutableInteractionSource() },
-						indication = null,
-						enabled = true,
-						onLongClick = {
-							hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-							startActivity(
-								hiddenSettingsActivityIntentBuilder.buildHiddenSettingsIntent()
-							)
-						},
-						onClick = {}
-					)
-					.fillMaxWidth(),
-			)
+		val hapticFeedback = LocalHapticFeedback.current
+		ApplicationLogo(
+			modifier = Modifier
+				.combinedClickable(
+					interactionSource = remember { MutableInteractionSource() },
+					indication = null,
+					enabled = true,
+					onLongClick = {
+						hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+						applicationNavigation.viewHiddenApplicationSettings()
+					},
+					onClick = {}
+				)
+				.fillMaxWidth(),
+		)
 
-			ApplicationInfoText(
-				modifier = Modifier
-					.fillMaxSize()
-					.align(Alignment.CenterHorizontally)
-					.padding(top = 48.dp)
-			)
-		}
+		ApplicationInfoText(
+			modifier = Modifier
+				.fillMaxSize()
+				.align(Alignment.CenterHorizontally)
+				.padding(top = 48.dp)
+		)
 	}
 }
 
 @Composable
 @OptIn(ExperimentalFoundationApi::class)
-fun AboutViewHorizontal(hiddenSettingsActivityIntentBuilder: HiddenSettingsActivityIntentBuilder) {
+fun AboutViewHorizontal(applicationNavigation: NavigateApplication) {
 	Row(
-		Modifier
-			.fillMaxSize()) {
-		with (LocalContext.current) {
-			val hapticFeedback = LocalHapticFeedback.current
-			ApplicationLogo(
-				modifier = Modifier
-					.combinedClickable(
-						interactionSource = remember { MutableInteractionSource() },
-						indication = null,
-						enabled = true,
-						onLongClick = {
-							hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-							startActivity(
-								hiddenSettingsActivityIntentBuilder.buildHiddenSettingsIntent()
-							)
-						},
-						onClick = {}
-					)
-					.fillMaxHeight(),
-			)
+		Modifier.fillMaxSize()
+	) {
+		val hapticFeedback = LocalHapticFeedback.current
+		ApplicationLogo(
+			modifier = Modifier
+				.combinedClickable(
+					interactionSource = remember { MutableInteractionSource() },
+					indication = null,
+					enabled = true,
+					onLongClick = {
+						hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+						applicationNavigation.viewHiddenApplicationSettings()
+					},
+					onClick = {}
+				)
+				.fillMaxHeight(),
+		)
 
-			ApplicationInfoText(
-				modifier = Modifier.fillMaxSize().align(Alignment.CenterVertically)
-			)
-		}
+		ApplicationInfoText(
+			modifier = Modifier.fillMaxSize().align(Alignment.CenterVertically)
+		)
 	}
 }
 

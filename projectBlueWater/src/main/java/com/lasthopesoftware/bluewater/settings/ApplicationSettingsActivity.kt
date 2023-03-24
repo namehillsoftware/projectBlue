@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.settings
 
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
@@ -11,16 +10,16 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.Bro
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.SelectedPlaybackEngineTypeAccess
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.defaults.DefaultPlaybackEngineLookup
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
-import com.lasthopesoftware.bluewater.client.settings.EditClientSettingsActivityIntentBuilder
+import com.lasthopesoftware.bluewater.client.settings.IntentBuilder
 import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
+import com.lasthopesoftware.bluewater.shared.android.intents.IntentFactory
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
 import com.lasthopesoftware.resources.closables.lazyScoped
-import com.lasthopesoftware.resources.intents.IntentFactory
 
 private val logger by lazyLogger<ApplicationSettingsActivity>()
 
@@ -36,7 +35,11 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 	private val applicationNavigation by lazy {
 		ActivityApplicationNavigation(
 			this,
-			EditClientSettingsActivityIntentBuilder(IntentFactory(this)),
+			IntentBuilder(
+				IntentFactory(
+					this
+				)
+			),
 			BrowserLibrarySelection(
 				applicationSettingsRepository,
 				applicationMessageBus,
@@ -94,10 +97,5 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 	override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
 		super.onActivityResult(requestCode, resultCode, data)
 		viewModel.loadSettings()
-	}
-
-	companion object {
-		fun launch(context: Context) =
-			context.startActivity(Intent(context, ApplicationSettingsActivity::class.java))
 	}
 }

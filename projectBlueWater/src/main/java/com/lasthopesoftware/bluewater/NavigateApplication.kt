@@ -10,13 +10,16 @@ interface NavigateApplication {
 	fun browseLibrary(libraryId: LibraryId) = Unit.toPromise()
 
 	fun resetToBrowserRoot() = Unit.toPromise()
-	fun viewApplicationSettings() = Unit.toPromise()
 
-	fun launchAboutActivity() = Unit.toPromise()
+	fun viewApplicationSettings() = Unit.toPromise()
 
 	fun viewNewServerSettings() = Unit.toPromise()
 
 	fun viewServerSettings(libraryId: LibraryId) = Unit.toPromise()
+
+	fun viewHiddenApplicationSettings() = Unit.toPromise()
+
+	fun launchAboutActivity() = Unit.toPromise()
 
 	fun viewFileDetails(playlist: List<ServiceFile>, position: Int) = Unit.toPromise()
 
