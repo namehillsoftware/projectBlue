@@ -2,6 +2,7 @@
 <resources>
 
     <string name="app_name">project blue</string>
+    <string name="app_logo">%1$s logo</string>
     <string name="company_name">Name Hill Software</string>
     <string name="copyright_year">2015</string>
     <string name="settings">Settings</string>

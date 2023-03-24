@@ -31,7 +31,7 @@ class ActivityApplicationNavigation(
 		browseLibraryIntent
 	}
 
-	override fun connectToLibrary(libraryId: LibraryId): Promise<Unit> =
+	override fun browseLibrary(libraryId: LibraryId): Promise<Unit> =
 		libraryBrowserSelection
 			.selectBrowserLibrary(libraryId)
 			.eventually(

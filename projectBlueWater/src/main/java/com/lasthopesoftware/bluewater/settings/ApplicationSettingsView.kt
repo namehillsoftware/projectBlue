@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.settings
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -21,11 +22,14 @@ import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
+import com.lasthopesoftware.bluewater.shared.android.ui.components.ApplicationInfoText
+import com.lasthopesoftware.bluewater.shared.android.ui.components.ApplicationLogo
 import com.lasthopesoftware.bluewater.shared.android.ui.components.LabeledSelection
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 
 private val optionsPadding = PaddingValues(start = 32.dp, end = 32.dp)
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ApplicationSettingsView(
 	applicationSettingsViewModel: ApplicationSettingsViewModel,
@@ -35,6 +39,10 @@ fun ApplicationSettingsView(
 	Surface {
 		val rowHeight = dimensionResource(id = R.dimen.standard_row_height)
 		val rowFontSize = LocalDensity.current.run { dimensionResource(id = R.dimen.row_font_size).toSp() }
+
+		val standardRowModifier = Modifier
+			.fillMaxWidth()
+			.height(rowHeight)
 
 		val libraries by applicationSettingsViewModel.libraries.collectAsState()
 		val selectedLibraryId by applicationSettingsViewModel.chosenLibraryId.collectAsState()
@@ -46,13 +54,25 @@ fun ApplicationSettingsView(
 			horizontalAlignment = Alignment.CenterHorizontally,
 		) {
 			item {
+				Box(
+					modifier = Modifier.fillMaxWidth()
+				) {
+					ApplicationLogo(modifier = Modifier.fillMaxWidth(.5f).align(Alignment.TopCenter))
+				}
+			}
+
+			stickyHeader {
+				ProvideTextStyle(MaterialTheme.typography.h5) {
+					Text(text = stringResource(id = R.string.app_name))
+				}
+			}
+
+			item {
 				Row(
-					modifier = Modifier
-						.fillMaxWidth()
-						.height(rowHeight),
+					modifier = standardRowModifier,
 					verticalAlignment = Alignment.CenterVertically,
 				) {
-					ProvideTextStyle(value = MaterialTheme.typography.h5) {
+					ProvideTextStyle(value = MaterialTheme.typography.h6) {
 						Text(text = stringResource(id = R.string.app_sync_settings))
 					}
 				}
@@ -60,10 +80,7 @@ fun ApplicationSettingsView(
 
 			item {
 				Row(
-					modifier = Modifier
-						.fillMaxWidth()
-						.height(rowHeight)
-						.padding(optionsPadding),
+					modifier = standardRowModifier.padding(optionsPadding),
 					verticalAlignment = Alignment.CenterVertically,
 				) {
 					val isSyncOnWifiOnly by applicationSettingsViewModel.isSyncOnWifiOnly.collectAsState()
@@ -79,10 +96,7 @@ fun ApplicationSettingsView(
 
 			item {
 				Row(
-					modifier = Modifier
-						.fillMaxWidth()
-						.height(rowHeight)
-						.padding(optionsPadding),
+					modifier = standardRowModifier.padding(optionsPadding),
 					verticalAlignment = Alignment.CenterVertically,
 				) {
 					val isSyncOnPowerOnly by applicationSettingsViewModel.isSyncOnPowerOnly.collectAsState()
@@ -98,12 +112,10 @@ fun ApplicationSettingsView(
 
 			item {
 				Row(
-					modifier = Modifier
-						.fillMaxWidth()
-						.height(rowHeight),
+					modifier = standardRowModifier,
 					verticalAlignment = Alignment.CenterVertically,
 				) {
-					ProvideTextStyle(value = MaterialTheme.typography.h5) {
+					ProvideTextStyle(value = MaterialTheme.typography.h6) {
 						Text(text = stringResource(id = R.string.app_audio_settings))
 					}
 				}
@@ -111,10 +123,7 @@ fun ApplicationSettingsView(
 
 			item {
 				Row(
-					modifier = Modifier
-						.fillMaxWidth()
-						.height(rowHeight)
-						.padding(optionsPadding),
+					modifier = standardRowModifier.padding(optionsPadding),
 					verticalAlignment = Alignment.CenterVertically,
 				) {
 					val isVolumeLevelingEnabled by applicationSettingsViewModel.isVolumeLevelingEnabled.collectAsState()
@@ -143,9 +152,7 @@ fun ApplicationSettingsView(
 
 			item {
 				Row(
-					modifier = Modifier
-						.fillMaxWidth()
-						.height(rowHeight)
+					modifier = standardRowModifier
 						.clickable {
 							applicationNavigation.viewNewServerSettings()
 						},
@@ -165,14 +172,14 @@ fun ApplicationSettingsView(
 
 			items(libraries) { library ->
 				Row(
-					modifier = Modifier
-						.fillMaxWidth()
-						.height(rowHeight),
+					modifier = standardRowModifier,
 					verticalAlignment = Alignment.CenterVertically,
 				) {
 					Text(
 						text = library.accessCode ?: "",
-						modifier = Modifier.weight(1f).padding(Dimensions.ViewPadding),
+						modifier = Modifier
+							.weight(1f)
+							.padding(Dimensions.ViewPadding),
 						maxLines = 1,
 						overflow = TextOverflow.Ellipsis,
 						fontWeight = if (library.libraryId == selectedLibraryId) FontWeight.Bold else FontWeight.Normal,
@@ -181,7 +188,7 @@ fun ApplicationSettingsView(
 
 					Image(
 						painter = painterResource(id = R.drawable.ic_action_settings),
-						contentDescription = stringResource(id = R.string.action_settings),
+						contentDescription = stringResource(id = R.string.settings),
 						modifier = Modifier
 							.clickable { applicationNavigation.viewServerSettings(library.libraryId) }
 							.padding(Dimensions.ViewPadding),
@@ -189,7 +196,7 @@ fun ApplicationSettingsView(
 
 					Row(
 						modifier = Modifier
-							.clickable { applicationNavigation.connectToLibrary(library.libraryId) }
+							.clickable { applicationNavigation.browseLibrary(library.libraryId) }
 							.padding(Dimensions.ViewPadding),
 						verticalAlignment = Alignment.CenterVertically,
 					) {
@@ -203,6 +210,20 @@ fun ApplicationSettingsView(
 							contentDescription = stringResource(id = R.string.lbl_connect)
 						)
 					}
+				}
+			}
+
+			item {
+				Box(
+					modifier = Modifier
+						.fillMaxWidth()
+						.padding(top = 48.dp)
+				) {
+					ApplicationInfoText(
+						modifier = Modifier
+							.fillMaxWidth()
+							.align(Alignment.Center)
+					)
 				}
 			}
 		}

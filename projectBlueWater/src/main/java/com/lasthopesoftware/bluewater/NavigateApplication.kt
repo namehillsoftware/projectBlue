@@ -7,7 +7,7 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 
 interface NavigateApplication {
 
-	fun connectToLibrary(libraryId: LibraryId) = Unit.toPromise()
+	fun browseLibrary(libraryId: LibraryId) = Unit.toPromise()
 
 	fun resetToBrowserRoot() = Unit.toPromise()
 	fun viewApplicationSettings() = Unit.toPromise()
