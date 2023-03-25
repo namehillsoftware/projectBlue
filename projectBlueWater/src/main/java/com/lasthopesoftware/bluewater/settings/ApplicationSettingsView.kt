@@ -2,9 +2,11 @@ package com.lasthopesoftware.bluewater.settings
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.*
 import androidx.compose.runtime.Composable
@@ -18,9 +20,13 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.shared.android.ui.components.ApplicationInfoText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.ApplicationLogo
@@ -30,13 +36,243 @@ import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 private val optionsPadding = PaddingValues(start = 32.dp, end = 32.dp)
 
 @OptIn(ExperimentalFoundationApi::class)
+private fun LazyListScope.settingsList(
+	standardRowModifier: Modifier,
+	rowFontSize: TextUnit,
+	applicationSettingsViewModel: ApplicationSettingsViewModel,
+	applicationNavigation: NavigateApplication,
+	playbackService: ControlPlaybackService,
+	libraries: List<Library>,
+	selectedLibraryId: LibraryId,
+) {
+	stickyHeader {
+		Row(
+			modifier = Modifier.fillMaxWidth().background(MaterialTheme.colors.surface)
+		) {
+			ProvideTextStyle(MaterialTheme.typography.h5) {
+				Text(text = stringResource(id = R.string.app_name))
+			}
+		}
+	}
+
+	item {
+		Row(
+			modifier = standardRowModifier,
+			verticalAlignment = Alignment.CenterVertically,
+		) {
+			ProvideTextStyle(value = MaterialTheme.typography.h6) {
+				Text(text = stringResource(id = R.string.app_sync_settings))
+			}
+		}
+	}
+
+	item {
+		Row(
+			modifier = standardRowModifier.padding(optionsPadding),
+			verticalAlignment = Alignment.CenterVertically,
+		) {
+			val isSyncOnWifiOnly by applicationSettingsViewModel.isSyncOnWifiOnly.collectAsState()
+			LabeledSelection(
+				label = stringResource(id = R.string.app_only_sync_on_wifi),
+				selected = isSyncOnWifiOnly,
+				onSelected = { applicationSettingsViewModel.promiseSyncOnWifiChange(!isSyncOnWifiOnly) }
+			) {
+				Checkbox(checked = isSyncOnWifiOnly, onCheckedChange = null)
+			}
+		}
+	}
+
+	item {
+		Row(
+			modifier = standardRowModifier.padding(optionsPadding),
+			verticalAlignment = Alignment.CenterVertically,
+		) {
+			val isSyncOnPowerOnly by applicationSettingsViewModel.isSyncOnPowerOnly.collectAsState()
+			LabeledSelection(
+				label = stringResource(id = R.string.app_only_sync_ext_power),
+				selected = isSyncOnPowerOnly,
+				onSelected = { applicationSettingsViewModel.promiseSyncOnPowerChange(!isSyncOnPowerOnly) }
+			) {
+				Checkbox(checked = isSyncOnPowerOnly, onCheckedChange = null)
+			}
+		}
+	}
+
+	item {
+		Row(
+			modifier = standardRowModifier,
+			verticalAlignment = Alignment.CenterVertically,
+		) {
+			ProvideTextStyle(value = MaterialTheme.typography.h6) {
+				Text(text = stringResource(id = R.string.app_audio_settings))
+			}
+		}
+	}
+
+	item {
+		Row(
+			modifier = standardRowModifier.padding(optionsPadding),
+			verticalAlignment = Alignment.CenterVertically,
+		) {
+			val isVolumeLevelingEnabled by applicationSettingsViewModel.isVolumeLevelingEnabled.collectAsState()
+			LabeledSelection(
+				label = stringResource(id = R.string.useVolumeLevelingSetting),
+				selected = isVolumeLevelingEnabled,
+				onSelected = { applicationSettingsViewModel.promiseVolumeLevelingEnabledChange(!isVolumeLevelingEnabled) }
+			) {
+				Checkbox(checked = isVolumeLevelingEnabled, onCheckedChange = null)
+			}
+		}
+	}
+
+	item {
+		Button(
+			onClick = {
+				playbackService.kill()
+			}
+		) {
+			Text(
+				text = stringResource(id = R.string.kill_playback),
+				fontSize = rowFontSize,
+			)
+		}
+	}
+
+	item {
+		Row(
+			modifier = standardRowModifier
+				.clickable {
+					applicationNavigation.viewNewServerSettings()
+				},
+			verticalAlignment = Alignment.CenterVertically,
+			horizontalArrangement = Arrangement.SpaceBetween,
+		) {
+			Text(
+				text = stringResource(id = R.string.btn_add_server),
+				fontSize = rowFontSize,
+			)
+			Image(
+				painter = painterResource(id = R.drawable.ic_add_item_36dp),
+				contentDescription = stringResource(id = R.string.btn_add_server)
+			)
+		}
+	}
+
+	items(libraries) { library ->
+		Row(
+			modifier = standardRowModifier,
+			verticalAlignment = Alignment.CenterVertically,
+		) {
+			Text(
+				text = library.accessCode ?: "",
+				modifier = Modifier
+					.weight(1f)
+					.padding(Dimensions.ViewPadding),
+				maxLines = 1,
+				overflow = TextOverflow.Ellipsis,
+				fontWeight = if (library.libraryId == selectedLibraryId) FontWeight.Bold else FontWeight.Normal,
+				fontSize = rowFontSize,
+			)
+
+			Image(
+				painter = painterResource(id = R.drawable.ic_action_settings),
+				contentDescription = stringResource(id = R.string.settings),
+				modifier = Modifier
+					.clickable { applicationNavigation.viewServerSettings(library.libraryId) }
+					.padding(Dimensions.ViewPadding),
+			)
+
+			Row(
+				modifier = Modifier
+					.clickable { applicationNavigation.browseLibrary(library.libraryId) }
+					.padding(Dimensions.ViewPadding),
+				verticalAlignment = Alignment.CenterVertically,
+			) {
+				Text(
+					text = stringResource(id = R.string.lbl_connect),
+					fontSize = rowFontSize,
+				)
+
+				Image(
+					painter = painterResource(id = R.drawable.ic_arrow_right),
+					contentDescription = stringResource(id = R.string.lbl_connect)
+				)
+			}
+		}
+	}
+
+	item {
+		Box(
+			modifier = Modifier
+				.fillMaxWidth()
+				.padding(top = 48.dp)
+		) {
+			ApplicationInfoText(
+				modifier = Modifier
+					.fillMaxWidth()
+					.align(Alignment.Center)
+			)
+		}
+	}
+}
+
 @Composable
-fun ApplicationSettingsView(
+private fun ApplicationSettingsViewVertical(
 	applicationSettingsViewModel: ApplicationSettingsViewModel,
 	applicationNavigation: NavigateApplication,
 	playbackService: ControlPlaybackService,
 ) {
-	Surface {
+	val rowHeight = dimensionResource(id = R.dimen.standard_row_height)
+	val rowFontSize = LocalDensity.current.run { dimensionResource(id = R.dimen.row_font_size).toSp() }
+
+	val standardRowModifier = Modifier
+		.fillMaxWidth()
+		.height(rowHeight)
+
+	val libraries by applicationSettingsViewModel.libraries.collectAsState()
+	val selectedLibraryId by applicationSettingsViewModel.chosenLibraryId.collectAsState()
+
+	LazyColumn(
+		modifier = Modifier.fillMaxSize(),
+		horizontalAlignment = Alignment.CenterHorizontally,
+	) {
+		item {
+			Box(
+				modifier = Modifier.fillMaxWidth()
+			) {
+				ApplicationLogo(modifier = Modifier
+					.fillMaxWidth(.5f)
+					.align(Alignment.TopCenter))
+			}
+		}
+
+		settingsList(
+			standardRowModifier,
+			rowFontSize,
+			applicationSettingsViewModel,
+			applicationNavigation,
+			playbackService,
+			libraries,
+			selectedLibraryId
+		)
+	}
+}
+
+@Composable
+fun ApplicationSettingsViewHorizontal(
+	applicationSettingsViewModel: ApplicationSettingsViewModel,
+	applicationNavigation: NavigateApplication,
+	playbackService: ControlPlaybackService,
+) {
+	Row(
+		modifier = Modifier.fillMaxSize(),
+		horizontalArrangement = Arrangement.SpaceEvenly,
+	) {
+		ApplicationLogo(modifier = Modifier
+			.fillMaxHeight(.75f)
+			.align(Alignment.CenterVertically)
+		)
+
 		val rowHeight = dimensionResource(id = R.dimen.standard_row_height)
 		val rowFontSize = LocalDensity.current.run { dimensionResource(id = R.dimen.row_font_size).toSp() }
 
@@ -49,183 +285,38 @@ fun ApplicationSettingsView(
 
 		LazyColumn(
 			modifier = Modifier
-				.fillMaxSize()
-				.padding(Dimensions.ViewPadding),
-			horizontalAlignment = Alignment.CenterHorizontally,
+				.fillMaxHeight()
+				.padding(start = Dimensions.ViewPadding * 2)
 		) {
-			item {
-				Box(
-					modifier = Modifier.fillMaxWidth()
-				) {
-					ApplicationLogo(modifier = Modifier.fillMaxWidth(.5f).align(Alignment.TopCenter))
-				}
-			}
+			settingsList(
+				standardRowModifier,
+				rowFontSize,
+				applicationSettingsViewModel,
+				applicationNavigation,
+				playbackService,
+				libraries,
+				selectedLibraryId
+			)
+		}
+	}
+}
 
-			stickyHeader {
-				ProvideTextStyle(MaterialTheme.typography.h5) {
-					Text(text = stringResource(id = R.string.app_name))
-				}
-			}
+@Composable
+fun ApplicationSettingsView(
+	applicationSettingsViewModel: ApplicationSettingsViewModel,
+	applicationNavigation: NavigateApplication,
+	playbackService: ControlPlaybackService,
+) {
+	val systemUiController = rememberSystemUiController()
+	systemUiController.setStatusBarColor(MaterialTheme.colors.surface)
 
-			item {
-				Row(
-					modifier = standardRowModifier,
-					verticalAlignment = Alignment.CenterVertically,
-				) {
-					ProvideTextStyle(value = MaterialTheme.typography.h6) {
-						Text(text = stringResource(id = R.string.app_sync_settings))
-					}
-				}
-			}
-
-			item {
-				Row(
-					modifier = standardRowModifier.padding(optionsPadding),
-					verticalAlignment = Alignment.CenterVertically,
-				) {
-					val isSyncOnWifiOnly by applicationSettingsViewModel.isSyncOnWifiOnly.collectAsState()
-					LabeledSelection(
-						label = stringResource(id = R.string.app_only_sync_on_wifi),
-						selected = isSyncOnWifiOnly,
-						onSelected = { applicationSettingsViewModel.promiseSyncOnWifiChange(!isSyncOnWifiOnly) }
-					) {
-						Checkbox(checked = isSyncOnWifiOnly, onCheckedChange = null)
-					}
-				}
-			}
-
-			item {
-				Row(
-					modifier = standardRowModifier.padding(optionsPadding),
-					verticalAlignment = Alignment.CenterVertically,
-				) {
-					val isSyncOnPowerOnly by applicationSettingsViewModel.isSyncOnPowerOnly.collectAsState()
-					LabeledSelection(
-						label = stringResource(id = R.string.app_only_sync_ext_power),
-						selected = isSyncOnPowerOnly,
-						onSelected = { applicationSettingsViewModel.promiseSyncOnPowerChange(!isSyncOnPowerOnly) }
-					) {
-						Checkbox(checked = isSyncOnPowerOnly, onCheckedChange = null)
-					}
-				}
-			}
-
-			item {
-				Row(
-					modifier = standardRowModifier,
-					verticalAlignment = Alignment.CenterVertically,
-				) {
-					ProvideTextStyle(value = MaterialTheme.typography.h6) {
-						Text(text = stringResource(id = R.string.app_audio_settings))
-					}
-				}
-			}
-
-			item {
-				Row(
-					modifier = standardRowModifier.padding(optionsPadding),
-					verticalAlignment = Alignment.CenterVertically,
-				) {
-					val isVolumeLevelingEnabled by applicationSettingsViewModel.isVolumeLevelingEnabled.collectAsState()
-					LabeledSelection(
-						label = stringResource(id = R.string.useVolumeLevelingSetting),
-						selected = isVolumeLevelingEnabled,
-						onSelected = { applicationSettingsViewModel.promiseVolumeLevelingEnabledChange(!isVolumeLevelingEnabled) }
-					) {
-						Checkbox(checked = isVolumeLevelingEnabled, onCheckedChange = null)
-					}
-				}
-			}
-
-			item {
-				Button(
-					onClick = {
-						playbackService.kill()
-					}
-				) {
-					Text(
-						text = stringResource(id = R.string.kill_playback),
-						fontSize = rowFontSize,
-					)
-				}
-			}
-
-			item {
-				Row(
-					modifier = standardRowModifier
-						.clickable {
-							applicationNavigation.viewNewServerSettings()
-						},
-					verticalAlignment = Alignment.CenterVertically,
-					horizontalArrangement = Arrangement.SpaceBetween,
-				) {
-					Text(
-						text = stringResource(id = R.string.btn_add_server),
-						fontSize = rowFontSize,
-					)
-					Image(
-						painter = painterResource(id = R.drawable.ic_add_item_36dp),
-						contentDescription = stringResource(id = R.string.btn_add_server)
-					)
-				}
-			}
-
-			items(libraries) { library ->
-				Row(
-					modifier = standardRowModifier,
-					verticalAlignment = Alignment.CenterVertically,
-				) {
-					Text(
-						text = library.accessCode ?: "",
-						modifier = Modifier
-							.weight(1f)
-							.padding(Dimensions.ViewPadding),
-						maxLines = 1,
-						overflow = TextOverflow.Ellipsis,
-						fontWeight = if (library.libraryId == selectedLibraryId) FontWeight.Bold else FontWeight.Normal,
-						fontSize = rowFontSize,
-					)
-
-					Image(
-						painter = painterResource(id = R.drawable.ic_action_settings),
-						contentDescription = stringResource(id = R.string.settings),
-						modifier = Modifier
-							.clickable { applicationNavigation.viewServerSettings(library.libraryId) }
-							.padding(Dimensions.ViewPadding),
-					)
-
-					Row(
-						modifier = Modifier
-							.clickable { applicationNavigation.browseLibrary(library.libraryId) }
-							.padding(Dimensions.ViewPadding),
-						verticalAlignment = Alignment.CenterVertically,
-					) {
-						Text(
-							text = stringResource(id = R.string.lbl_connect),
-							fontSize = rowFontSize,
-						)
-
-						Image(
-							painter = painterResource(id = R.drawable.ic_arrow_right),
-							contentDescription = stringResource(id = R.string.lbl_connect)
-						)
-					}
-				}
-			}
-
-			item {
-				Box(
-					modifier = Modifier
-						.fillMaxWidth()
-						.padding(top = 48.dp)
-				) {
-					ApplicationInfoText(
-						modifier = Modifier
-							.fillMaxWidth()
-							.align(Alignment.Center)
-					)
-				}
-			}
+	Surface {
+		BoxWithConstraints(modifier = Modifier
+			.fillMaxSize()
+			.padding(Dimensions.ViewPadding)
+		) {
+			if (maxWidth < maxHeight) ApplicationSettingsViewVertical(applicationSettingsViewModel, applicationNavigation, playbackService)
+			else ApplicationSettingsViewHorizontal(applicationSettingsViewModel, applicationNavigation, playbackService)
 		}
 	}
 }
