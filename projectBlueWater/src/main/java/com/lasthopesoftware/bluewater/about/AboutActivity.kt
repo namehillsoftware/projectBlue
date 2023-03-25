@@ -19,8 +19,8 @@ import com.lasthopesoftware.bluewater.ActivityApplicationNavigation
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
-import com.lasthopesoftware.bluewater.client.settings.IntentBuilder
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
+import com.lasthopesoftware.bluewater.shared.android.intents.IntentBuilder
 import com.lasthopesoftware.bluewater.shared.android.ui.components.ApplicationInfoText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.ApplicationLogo
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme

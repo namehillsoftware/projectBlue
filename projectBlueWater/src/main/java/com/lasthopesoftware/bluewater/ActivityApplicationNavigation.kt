@@ -10,9 +10,9 @@ import com.lasthopesoftware.bluewater.client.browsing.items.startItemBrowserActi
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectBrowserLibrary
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity
-import com.lasthopesoftware.bluewater.client.settings.BuildIntents
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity
 import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsActivity
+import com.lasthopesoftware.bluewater.shared.android.intents.BuildIntents
 import com.lasthopesoftware.bluewater.shared.android.intents.startActivity
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.namehillsoftware.handoff.promises.Promise

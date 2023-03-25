@@ -4,6 +4,8 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.shared.android.intents.BuildIntents
+import com.lasthopesoftware.bluewater.shared.android.intents.IntentBuilder
 import com.lasthopesoftware.bluewater.shared.android.makePendingIntentImmutable
 
 class EditClientSettingsPendingIntentBuilder(

@@ -78,7 +78,6 @@ import com.lasthopesoftware.bluewater.client.connection.settings.changes.Observa
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
-import com.lasthopesoftware.bluewater.client.settings.IntentBuilder
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsView
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsViewModel
 import com.lasthopesoftware.bluewater.client.stored.library.items.StateChangeBroadcastingStoredItemAccess
@@ -91,6 +90,7 @@ import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermission
 import com.lasthopesoftware.bluewater.permissions.write.ApplicationWritePermissionsRequirementsProvider
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
+import com.lasthopesoftware.bluewater.shared.android.intents.IntentBuilder
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
 import com.lasthopesoftware.bluewater.shared.android.permissions.ManagePermissions
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions

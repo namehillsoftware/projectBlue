@@ -29,8 +29,8 @@ import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessio
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
-import com.lasthopesoftware.bluewater.client.settings.IntentBuilder
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
+import com.lasthopesoftware.bluewater.shared.android.intents.IntentBuilder
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildActivityViewModelLazily

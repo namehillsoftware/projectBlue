@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.settings
+package com.lasthopesoftware.bluewater.shared.android.intents
 
 import android.content.Intent
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile

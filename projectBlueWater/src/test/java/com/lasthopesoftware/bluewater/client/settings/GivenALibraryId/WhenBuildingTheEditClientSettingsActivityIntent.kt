@@ -4,7 +4,7 @@ import android.content.Intent
 import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.settings.EditClientSettingsActivity
-import com.lasthopesoftware.bluewater.client.settings.IntentBuilder
+import com.lasthopesoftware.bluewater.shared.android.intents.IntentBuilder
 import org.assertj.core.api.Assertions.*
 import org.junit.Before
 import org.junit.Test

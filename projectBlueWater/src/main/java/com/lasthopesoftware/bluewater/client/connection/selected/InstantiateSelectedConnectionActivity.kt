@@ -19,9 +19,9 @@ import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.Companion.getInstance
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.*
-import com.lasthopesoftware.bluewater.client.settings.IntentBuilder
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
+import com.lasthopesoftware.bluewater.shared.android.intents.IntentBuilder
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 import com.lasthopesoftware.bluewater.shared.cls

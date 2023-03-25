@@ -42,10 +42,10 @@ import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionSettingsChangeReceiver
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingFloatingActionButton
-import com.lasthopesoftware.bluewater.client.settings.IntentBuilder
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.view.ActiveFileDownloadsFragment
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
+import com.lasthopesoftware.bluewater.shared.android.intents.IntentBuilder
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
