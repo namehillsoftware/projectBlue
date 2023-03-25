@@ -238,7 +238,7 @@ private fun ApplicationSettingsViewVertical(
 	) {
 		item {
 			Box(
-				modifier = Modifier.fillMaxWidth()
+				modifier = Modifier.fillMaxWidth().padding(Dimensions.ViewPadding * 8)
 			) {
 				ApplicationLogo(modifier = Modifier
 					.fillMaxWidth(.5f)
