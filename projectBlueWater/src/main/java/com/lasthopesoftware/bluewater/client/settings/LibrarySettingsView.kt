@@ -1,14 +1,11 @@
 package com.lasthopesoftware.bluewater.client.settings
 
-import android.view.KeyEvent.ACTION_DOWN
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
-import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
@@ -16,29 +13,23 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.focus.FocusDirection
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onPreviewKeyEvent
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
+import com.lasthopesoftware.bluewater.shared.android.ui.components.LabeledSelection
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
+import com.lasthopesoftware.bluewater.shared.android.ui.components.StandardTextField
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ColumnMenuIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.collectAsMutableState
@@ -67,66 +58,6 @@ private fun SpacedOutRow(content: @Composable (RowScope.() -> Unit)) {
 		verticalAlignment = Alignment.CenterVertically,
 	) {
 		content()
-	}
-}
-
-@OptIn(ExperimentalComposeUiApi::class)
-@Composable
-private fun StandardTextField(
-	placeholder: String,
-	value: String,
-	onValueChange: (String) -> Unit,
-	enabled: Boolean = true,
-	visualTransformation: VisualTransformation = VisualTransformation.None,
-	keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
-) {
-	val focusManager = LocalFocusManager.current
-	TextField(
-		modifier = Modifier
-			.fillMaxWidth()
-			.onPreviewKeyEvent {
-				if (it.key == Key.Tab && it.nativeKeyEvent.action == ACTION_DOWN) {
-					focusManager.moveFocus(FocusDirection.Down)
-					true
-				} else {
-					false
-				}
-			},
-		value = value,
-		placeholder = { Text(placeholder) },
-		onValueChange = onValueChange,
-		enabled = enabled,
-		maxLines = 1,
-		visualTransformation = visualTransformation,
-		keyboardOptions = keyboardOptions.copy(imeAction = ImeAction.Next),
-		keyboardActions = KeyboardActions(
-			onNext = { focusManager.moveFocus(FocusDirection.Down) }
-		)
-	)
-}
-
-@Composable
-private fun LabeledSelection(
-	label: String,
-	selected: Boolean,
-	onSelected: () -> Unit,
-	role: Role? = null,
-	selectableContent: @Composable () -> Unit,
-) {
-	Row(
-		modifier = Modifier
-			.selectable(
-				selected = selected,
-				onClick = onSelected,
-				role = role,
-			),
-	) {
-		selectableContent()
-
-		Text(
-			text = label,
-			modifier = Modifier.padding(start = Dimensions.ViewPadding * 4),
-		)
 	}
 }
 

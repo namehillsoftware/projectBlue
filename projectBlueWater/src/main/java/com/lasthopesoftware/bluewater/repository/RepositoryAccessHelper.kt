@@ -22,7 +22,7 @@ class RepositoryAccessHelper(private val context: Context) : SQLiteOpenHelper(co
 
 	companion object {
 		private val databaseSynchronization by lazy { ReentrantReadWriteLock() }
-		private const val DATABASE_VERSION = 11
+		private const val DATABASE_VERSION = 12
 		private const val DATABASE_NAME = "sessions_db"
 	}
 

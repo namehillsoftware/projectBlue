@@ -4,14 +4,16 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.shared.android.intents.BuildIntents
+import com.lasthopesoftware.bluewater.shared.android.intents.IntentBuilder
 import com.lasthopesoftware.bluewater.shared.android.makePendingIntentImmutable
 
 class EditClientSettingsPendingIntentBuilder(
     private val context: Context,
-    private val editClientSettingsActivityIntentBuilder: IEditClientSettingsActivityIntentBuilder = EditClientSettingsActivityIntentBuilder(context)
+    private val editClientSettingsActivityIntentBuilder: BuildIntents = IntentBuilder(context)
 ) : IEditClientSettingsPendingIntentBuilder {
     override fun buildEditServerSettingsPendingIntent(libraryId: Int): PendingIntent {
-        val settingsIntent = editClientSettingsActivityIntentBuilder.buildIntent(LibraryId(libraryId))
+        val settingsIntent = editClientSettingsActivityIntentBuilder.buildLibrarySettingsIntent(LibraryId(libraryId))
         settingsIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         return PendingIntent.getActivity(context, 0, settingsIntent, 0.makePendingIntentImmutable())
     }

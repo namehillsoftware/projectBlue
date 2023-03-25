@@ -9,7 +9,6 @@ import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.chosenLibraryIdColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.isSyncOnPowerOnlyColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.isSyncOnWifiOnlyColumn
-import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.isUsingCustomCachingColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.isVolumeLevelingEnabledColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.playbackEngineTypeNameColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.tableName
@@ -25,7 +24,6 @@ class ApplicationSettingsRepository(private val context: Context): HoldApplicati
 				.addSetter(isVolumeLevelingEnabledColumn)
 				.addSetter(playbackEngineTypeNameColumn)
 				.addSetter(chosenLibraryIdColumn)
-				.addSetter(isUsingCustomCachingColumn)
 				.buildQuery()
 		}
 	}
@@ -49,11 +47,9 @@ class ApplicationSettingsRepository(private val context: Context): HoldApplicati
 						.addParameter(isVolumeLevelingEnabledColumn, applicationSettings.isVolumeLevelingEnabled)
 						.addParameter(playbackEngineTypeNameColumn, applicationSettings.playbackEngineTypeName)
 						.addParameter(chosenLibraryIdColumn, applicationSettings.chosenLibraryId)
-						.addParameter(isUsingCustomCachingColumn, applicationSettings.isUsingCustomCaching)
 						.execute()
 					it.setTransactionSuccessful()
 				}
 			}
-		}
-			.eventually { promiseApplicationSettings() }
+		}.eventually { promiseApplicationSettings() }
 }

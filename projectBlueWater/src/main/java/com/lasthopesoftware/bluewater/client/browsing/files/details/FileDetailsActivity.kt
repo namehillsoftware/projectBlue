@@ -37,8 +37,8 @@ class FileDetailsActivity : ComponentActivity() {
 	companion object {
 
 		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(FileDetailsActivity::class.java) }
-		private val playlist by lazy { magicPropertyBuilder.buildProperty("playlist") }
-		private val playlistPosition by lazy { magicPropertyBuilder.buildProperty("playlistPosition") }
+		val playlist by lazy { magicPropertyBuilder.buildProperty("playlist") }
+		val playlistPosition by lazy { magicPropertyBuilder.buildProperty("playlistPosition") }
 
 		fun Context.launchFileDetailsActivity(playlist: Collection<ServiceFile>, position: Int) {
 			startActivity(Intent(this, FileDetailsActivity::class.java).apply {

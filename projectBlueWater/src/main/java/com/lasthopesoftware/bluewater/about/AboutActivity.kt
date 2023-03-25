@@ -4,151 +4,123 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.Surface
-import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.lasthopesoftware.bluewater.BuildConfig
-import com.lasthopesoftware.bluewater.R
-import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsActivityIntentBuilder
+import com.lasthopesoftware.bluewater.ActivityApplicationNavigation
+import com.lasthopesoftware.bluewater.NavigateApplication
+import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
+import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
+import com.lasthopesoftware.bluewater.shared.android.intents.IntentBuilder
+import com.lasthopesoftware.bluewater.shared.android.ui.components.ApplicationInfoText
+import com.lasthopesoftware.bluewater.shared.android.ui.components.ApplicationLogo
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
-import com.lasthopesoftware.resources.intents.IntentFactory
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
 import com.lasthopesoftware.resources.strings.StringResources
 
 class AboutActivity : ComponentActivity() {
 	private val stringResources by lazy { StringResources(this) }
+	private val applicationNavigation by lazy {
+		ActivityApplicationNavigation(
+			this,
+			IntentBuilder(this),
+			BrowserLibrarySelection(
+				getApplicationSettingsRepository(),
+				ApplicationMessageBus.getApplicationMessageBus(),
+				LibraryRepository(this),
+			),
+		)
+	}
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
 		title = stringResources.aboutTitle
 
-		setContent { ProjectBlueTheme { AboutView() } }
+		setContent { ProjectBlueTheme { AboutView(applicationNavigation) } }
 	}
 }
 
-@Preview
 @Composable
-fun AboutView() {
+fun AboutView(applicationNavigation: NavigateApplication) {
 	Surface {
 		BoxWithConstraints(modifier = Modifier
 			.fillMaxSize()
-			.padding(Dp(10f))
+			.padding(12.dp)
 		) {
-			if (maxWidth < maxHeight) AboutViewVertical()
-			else AboutViewHorizontal()
+			if (maxWidth < maxHeight) AboutViewVertical(applicationNavigation)
+			else AboutViewHorizontal(applicationNavigation)
 		}
 	}
 }
 
 @Composable
 @OptIn(ExperimentalFoundationApi::class)
-fun AboutViewVertical() {
+fun AboutViewVertical(
+	applicationNavigation: NavigateApplication,
+) {
 	Column(
-		Modifier.fillMaxSize()) {
-		with (LocalContext.current) {
-			val hapticFeedback = LocalHapticFeedback.current
-			val hiddenSettingsActivityIntentBuilder = HiddenSettingsActivityIntentBuilder(IntentFactory(this))
-			Image(
-				painter = painterResource(id = R.drawable.project_blue_logo),
-				contentDescription = "Project Blue logo",
-				contentScale = ContentScale.Inside,
-				alignment = Alignment.TopCenter,
-				modifier = Modifier
-					.shadow(elevation = 20.dp, shape = CircleShape, clip = true)
-					.combinedClickable(
-						interactionSource = remember { MutableInteractionSource() },
-						indication = null,
-						enabled = true,
-						onLongClick = {
-							hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-							startActivity(
-								hiddenSettingsActivityIntentBuilder.buildHiddenSettingsIntent()
-							)
-						},
-						onClick = {}
-					)
-					.fillMaxWidth(),
-			)
+		Modifier.fillMaxSize()
+	) {
+		val hapticFeedback = LocalHapticFeedback.current
+		ApplicationLogo(
+			modifier = Modifier
+				.combinedClickable(
+					interactionSource = remember { MutableInteractionSource() },
+					indication = null,
+					enabled = true,
+					onLongClick = {
+						hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+						applicationNavigation.viewHiddenApplicationSettings()
+					},
+					onClick = {}
+				)
+				.fillMaxWidth(),
+		)
 
-			Text(
-				getString(R.string.aboutAppText).format(
-					getString(R.string.app_name),
-					BuildConfig.VERSION_NAME,
-					BuildConfig.VERSION_CODE,
-					getString(R.string.company_name),
-					getString(R.string.copyright_year)
-				),
-				textAlign = TextAlign.Center,
-				modifier = Modifier
-					.fillMaxSize()
-					.align(Alignment.CenterHorizontally)
-					.padding(top = 50.dp)
-			)
-		}
+		ApplicationInfoText(
+			modifier = Modifier
+				.fillMaxSize()
+				.align(Alignment.CenterHorizontally)
+				.padding(top = 48.dp)
+		)
 	}
 }
 
 @Composable
 @OptIn(ExperimentalFoundationApi::class)
-fun AboutViewHorizontal() {
+fun AboutViewHorizontal(applicationNavigation: NavigateApplication) {
 	Row(
-		Modifier
-			.fillMaxSize()) {
-		with (LocalContext.current) {
-			val hapticFeedback = LocalHapticFeedback.current
-			val hiddenSettingsActivityIntentBuilder = HiddenSettingsActivityIntentBuilder(IntentFactory(this))
-			Image(
-				painter = painterResource(id = R.drawable.project_blue_logo),
-				contentDescription = "Project Blue logo",
-				contentScale = ContentScale.Inside,
-				alignment = Alignment.TopCenter,
-				modifier = Modifier
-					.shadow(elevation = 20.dp, shape = CircleShape, clip = true)
-					.combinedClickable(
-						interactionSource = remember { MutableInteractionSource() },
-						indication = null,
-						enabled = true,
-						onLongClick = {
-							hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-							startActivity(
-								hiddenSettingsActivityIntentBuilder.buildHiddenSettingsIntent()
-							)
-						},
-						onClick = {}
-					)
-					.fillMaxHeight(),
-			)
+		Modifier.fillMaxSize()
+	) {
+		val hapticFeedback = LocalHapticFeedback.current
+		ApplicationLogo(
+			modifier = Modifier
+				.combinedClickable(
+					interactionSource = remember { MutableInteractionSource() },
+					indication = null,
+					enabled = true,
+					onLongClick = {
+						hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+						applicationNavigation.viewHiddenApplicationSettings()
+					},
+					onClick = {}
+				)
+				.fillMaxHeight(),
+		)
 
-			Text(
-				getString(R.string.aboutAppText).format(
-					getString(R.string.app_name),
-					BuildConfig.VERSION_NAME,
-					BuildConfig.VERSION_CODE,
-					getString(R.string.company_name),
-					getString(R.string.copyright_year)
-				),
-				textAlign = TextAlign.Center,
-				modifier = Modifier.fillMaxSize().align(Alignment.CenterVertically)
-			)
-		}
+		ApplicationInfoText(
+			modifier = Modifier.fillMaxSize().align(Alignment.CenterVertically)
+		)
 	}
 }
 

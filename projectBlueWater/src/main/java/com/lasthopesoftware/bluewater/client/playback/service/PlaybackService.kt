@@ -781,7 +781,7 @@ open class PlaybackService :
 					selectedLibraryProvider,
 					StoredFileAccess(this),
 					arbitratorForOs),
-				CachedAudioFileUriProvider(applicationSettings, remoteFileUriProvider, audioCache),
+				CachedAudioFileUriProvider(remoteFileUriProvider, audioCache),
 				MediaFileUriProvider(
 					MediaQueryCursorProvider(this, cachedFileProperties),
 					arbitratorForOs,
