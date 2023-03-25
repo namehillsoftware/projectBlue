@@ -31,7 +31,6 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.v
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.client.settings.IntentBuilder
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
-import com.lasthopesoftware.bluewater.shared.android.intents.IntentFactory
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildActivityViewModelLazily
@@ -103,11 +102,7 @@ class SearchFilesFragment : Fragment() {
 			PlaybackServiceController(requireContext()),
 			ActivityApplicationNavigation(
 				requireActivity(),
-				IntentBuilder(
-					IntentFactory(
-						requireContext()
-					)
-				),
+				IntentBuilder(requireContext()),
 				BrowserLibrarySelection(
 					requireActivity().getApplicationSettingsRepository(),
 					applicationMessageBus,

@@ -5,7 +5,6 @@ import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.settings.EditClientSettingsActivity
 import com.lasthopesoftware.bluewater.client.settings.IntentBuilder
-import com.lasthopesoftware.bluewater.shared.android.intents.IntentFactory
 import org.assertj.core.api.Assertions.*
 import org.junit.Before
 import org.junit.Test
@@ -21,9 +20,7 @@ class WhenBuildingTheEditClientSettingsActivityIntent {
 
     @Before
     fun before() {
-        val editClientSettingsActivityIntentBuilder = IntentBuilder(
-			IntentFactory(ApplicationProvider.getApplicationContext())
-        )
+        val editClientSettingsActivityIntentBuilder = IntentBuilder(ApplicationProvider.getApplicationContext())
         returnedIntent = editClientSettingsActivityIntentBuilder.buildLibrarySettingsIntent(LibraryId(13))
     }
 

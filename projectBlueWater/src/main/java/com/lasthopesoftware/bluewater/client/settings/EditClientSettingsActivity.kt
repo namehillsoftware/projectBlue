@@ -21,7 +21,6 @@ import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermission
 import com.lasthopesoftware.bluewater.permissions.write.ApplicationWritePermissionsRequirementsProvider
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
-import com.lasthopesoftware.bluewater.shared.android.intents.IntentFactory
 import com.lasthopesoftware.bluewater.shared.android.permissions.ManagePermissions
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
@@ -82,11 +81,7 @@ class EditClientSettingsActivity :
 					librarySettingsViewModel = librarySettingsViewModel,
 					navigateApplication = ActivityApplicationNavigation(
 						this,
-						IntentBuilder(
-							IntentFactory(
-								this
-							)
-						),
+						IntentBuilder(this),
 						BrowserLibrarySelection(
 							applicationSettingsRepository,
 							applicationMessageBus,

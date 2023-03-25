@@ -46,7 +46,6 @@ import com.lasthopesoftware.bluewater.client.settings.IntentBuilder
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.view.ActiveFileDownloadsFragment
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
-import com.lasthopesoftware.bluewater.shared.android.intents.IntentFactory
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
 import com.lasthopesoftware.bluewater.shared.android.view.LazyViewFinder
 import com.lasthopesoftware.bluewater.shared.android.view.ViewUtils
@@ -95,11 +94,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 	private val applicationNavigation by lazy {
 		ActivityApplicationNavigation(
 			this,
-			IntentBuilder(
-				IntentFactory(
-					this
-				)
-			),
+			IntentBuilder(this),
 			BrowserLibrarySelection(
 				getApplicationSettingsRepository(),
 				applicationMessageBus,

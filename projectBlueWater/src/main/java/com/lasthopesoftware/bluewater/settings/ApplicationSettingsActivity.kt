@@ -13,7 +13,6 @@ import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceCon
 import com.lasthopesoftware.bluewater.client.settings.IntentBuilder
 import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
-import com.lasthopesoftware.bluewater.shared.android.intents.IntentFactory
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 import com.lasthopesoftware.bluewater.shared.lazyLogger
@@ -35,11 +34,7 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 	private val applicationNavigation by lazy {
 		ActivityApplicationNavigation(
 			this,
-			IntentBuilder(
-				IntentFactory(
-					this
-				)
-			),
+			IntentBuilder(this),
 			BrowserLibrarySelection(
 				applicationSettingsRepository,
 				applicationMessageBus,
