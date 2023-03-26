@@ -7,7 +7,6 @@ import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.Fi
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
@@ -20,7 +19,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 class FileListViewModel(
-	private val selectedLibraryId: ProvideSelectedLibraryId,
 	private val itemFileProvider: ProvideItemFiles,
 	private val storedItemAccess: AccessStoredItems,
 	private val controlPlaybackService: ControlPlaybackService,
@@ -39,31 +37,31 @@ class FileListViewModel(
 	val itemValue = mutableItemValue.asStateFlow()
 	val isSynced = mutableIsSynced.asStateFlow()
 
-	fun loadItem(item: IItem): Promise<Unit> {
+	fun loadItem(libraryId: LibraryId, item: IItem? = null): Promise<Unit> {
 		mutableIsLoaded.value = false
-		mutableItemValue.value = item.value ?: ""
+		mutableItemValue.value = item?.value ?: ""
+		mutableIsSynced.value = false
+		loadedLibraryId = libraryId
 
-		return selectedLibraryId.promiseSelectedLibraryId()
-			.eventually { libraryId ->
-				libraryId
-					?.let {
-						loadedLibraryId = libraryId
-						val promisedFilesUpdate = itemFileProvider
-							.promiseFiles(libraryId, ItemId(item.key), FileListParameters.Options.None)
-							.then { f -> mutableFiles.value = f }
+		val promisedFilesUpdate = itemFileProvider
+			.promiseFiles(libraryId, item?.key?.let(::ItemId), FileListParameters.Options.None)
+			.then { f -> mutableFiles.value = f }
 
-						val promisedSyncUpdate = storedItemAccess
-							.isItemMarkedForSync(libraryId, item)
-							.then { isSynced ->
-								mutableIsSynced.value = isSynced
-							}
-
-						Promise.whenAll(promisedFilesUpdate, promisedSyncUpdate)
+		val promisedSyncUpdate = item
+			?.let {
+				storedItemAccess
+					.isItemMarkedForSync(libraryId, it)
+					.then { isSynced ->
+						mutableIsSynced.value = isSynced
 					}
-					.keepPromise()
 			}
+			.keepPromise()
+
+		return Promise.whenAll(promisedFilesUpdate, promisedSyncUpdate)
 			.then {
 				loadedItem = item
+			}
+			.must {
 				mutableIsLoaded.value = true
 			}
 	}

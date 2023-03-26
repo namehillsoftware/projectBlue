@@ -108,6 +108,7 @@ class SearchFilesFragment : Fragment() {
 					applicationMessageBus,
 					LibraryRepository(requireContext()),
 				),
+				requireContext().getCachedSelectedLibraryIdProvider(),
 			),
 			menuMessageBus,
 			applicationMessageBus,

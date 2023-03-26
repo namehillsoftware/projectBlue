@@ -7,7 +7,6 @@ import ItemBrowsingArguments.libraryIdArgument
 import ItemBrowsingArguments.playlistIdArgument
 import ItemBrowsingArguments.titleArgument
 import android.content.Context
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.widget.Toast
@@ -43,6 +42,7 @@ import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.lasthopesoftware.bluewater.ActivityApplicationNavigation
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
+import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.ItemFileProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.LibraryFileProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
@@ -91,6 +91,7 @@ import com.lasthopesoftware.bluewater.permissions.write.ApplicationWritePermissi
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.intents.IntentBuilder
+import com.lasthopesoftware.bluewater.shared.android.intents.getIntent
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
 import com.lasthopesoftware.bluewater.shared.android.permissions.ManagePermissions
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
@@ -117,10 +118,11 @@ import java.util.concurrent.ConcurrentHashMap
 
 private val magicPropertyBuilder by lazy { MagicPropertyBuilder(cls<ItemBrowserActivity>()) }
 
-private val libraryIdProperty by lazy { magicPropertyBuilder.buildProperty(libraryIdArgument) }
-private val keyProperty by lazy { magicPropertyBuilder.buildProperty(keyArgument) }
-private val itemTitleProperty by lazy { magicPropertyBuilder.buildProperty(titleArgument) }
-private val playlistIdProperty by lazy { magicPropertyBuilder.buildProperty(playlistIdArgument) }
+val libraryIdProperty by lazy { magicPropertyBuilder.buildProperty(libraryIdArgument) }
+val keyProperty by lazy { magicPropertyBuilder.buildProperty(keyArgument) }
+val itemTitleProperty by lazy { magicPropertyBuilder.buildProperty(titleArgument) }
+val playlistIdProperty by lazy { magicPropertyBuilder.buildProperty(playlistIdArgument) }
+val downloadsRoute by lazy { magicPropertyBuilder.buildProperty(GraphNavigation.Downloads.nestedRoute) }
 
 fun Context.startItemBrowserActivity(libraryId: LibraryId, item: IItem) {
 	if (item is Item) startItemBrowserActivity(libraryId, item)
@@ -135,9 +137,13 @@ fun Context.startItemBrowserActivity(libraryId: LibraryId, item: Item) {
 }
 
 private fun getItemBrowserIntent(context: Context, libraryId: LibraryId, item: IItem) =
-	Intent(context, cls<ItemBrowserActivity>()).apply {
+	getItemBrowserIntent(context, libraryId).apply {
 		putExtra(keyProperty, item.key)
 		putExtra(itemTitleProperty, item.value)
+	}
+
+private fun getItemBrowserIntent(context: Context, libraryId: LibraryId) =
+	context.getIntent<ItemBrowserActivity>().apply {
 		putExtra(libraryIdProperty, libraryId.id)
 	}
 
@@ -268,6 +274,7 @@ class ItemBrowserActivity :
 				messageBus,
 				libraryProvider,
 			),
+			browserLibraryIdProvider,
 		)
 	}
 
@@ -457,10 +464,28 @@ private class GraphNavigation(
 		hideBottomSheet()
 	}.toPromise()
 
+	override fun viewLibrary(libraryId: LibraryId) = coroutineScope.launch {
+		navController.navigate(Library.buildPath(libraryId)) {
+			popUpTo(Library.route)
+		}
+
+		hideBottomSheet()
+	}.toPromise()
+
 	override fun viewItem(libraryId: LibraryId, item: IItem) = coroutineScope.launch {
 		navController.navigate(BrowseToItem.buildPath(libraryId, item))
 		hideBottomSheet()
 	}.toPromise()
+
+	override fun viewFileDetails(playlist: List<ServiceFile>, position: Int): Promise<Unit> {
+		hideBottomSheet()
+		return inner.viewFileDetails(playlist, position)
+	}
+
+	override fun viewNowPlaying(): Promise<Unit> {
+		hideBottomSheet()
+		return inner.viewNowPlaying()
+	}
 
 	override fun navigateUp() = coroutineScope.async {
 		hideBottomSheet()
@@ -752,8 +777,68 @@ private fun ItemBrowserView(
 			NavHost(
 				navController,
 				modifier = hostModifier,
-				startDestination = GraphNavigation.BrowseToItem.route,
+				startDestination = GraphNavigation.Library.route,
 			) {
+				composable(
+					GraphNavigation.Library.route,
+					arguments = listOf(
+						navArgument(libraryIdArgument) {
+							type = NavType.IntType
+							defaultValue = startingLibraryId?.id ?: -1
+						},
+					)
+				) { entry ->
+					val libraryId = entry.arguments?.getInt(libraryIdArgument)?.let(::LibraryId) ?: startingLibraryId ?: return@composable
+
+					val view = browsableItemListView(
+						connectionViewModel = entry.viewModelStore.buildViewModel {
+							ConnectionStatusViewModel(
+								stringResources,
+								ConnectionInitializationErrorController(
+									ConnectionInitializationProxy(libraryConnectionProvider),
+									applicationNavigation,
+								),
+							)
+						},
+						itemListViewModel = entry.viewModelStore.buildViewModel {
+							ItemListViewModel(
+								itemProvider,
+								messageBus,
+								storedItemAccess,
+								itemListProvider,
+								playbackServiceController,
+								applicationNavigation,
+								menuMessageBus,
+							)
+						},
+						fileListViewModel = entry.viewModelStore.buildViewModel {
+							FileListViewModel(
+								itemFileProvider,
+								storedItemAccess,
+								playbackServiceController,
+							)
+						},
+						nowPlayingViewModel = nowPlayingFilePropertiesViewModel,
+						itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
+						reusablePlaylistFileItemViewModelProvider = entry.viewModelStore.buildViewModel {
+							ReusablePlaylistFileItemViewModelProvider(
+								scopedFilePropertiesProvider,
+								scopedUrlKeyProvider,
+								stringResources,
+								playbackServiceController,
+								applicationNavigation,
+								menuMessageBus,
+								messageBus,
+							)
+						},
+						applicationNavigation = applicationNavigation,
+					)
+
+					BackHandler { graphNavigation.backOut() }
+
+					view(libraryId, null)
+				}
+
 				composable(
 					GraphNavigation.BrowseToItem.route,
 					arguments = listOf(
@@ -779,17 +864,22 @@ private fun ItemBrowserView(
 					val libraryId = entry.arguments?.getInt(libraryIdArgument)?.let(::LibraryId) ?: startingLibraryId ?: return@composable
 					val arguments = entry.arguments
 					val playlistId = arguments?.getInt(playlistIdArgument)
-					val item = if (playlistId != null && playlistId > -1) {
-						Item(
-							arguments.getInt(keyArgument),
-							arguments.getString(titleArgument),
-							PlaylistId(playlistId),
-						)
+					val itemKey = arguments?.getInt(keyArgument)
+					val item = if (itemKey != null) {
+						if (playlistId != null && playlistId > -1) {
+							Item(
+								itemKey,
+								arguments.getString(titleArgument),
+								PlaylistId(playlistId),
+							)
+						} else {
+							Item(
+								itemKey,
+								arguments.getString(titleArgument)
+							)
+						}
 					} else {
-						Item(
-							arguments?.getInt(keyArgument) ?: return@composable,
-							arguments.getString(titleArgument)
-						)
+						null
 					}
 
 					val view = browsableItemListView(
@@ -815,7 +905,6 @@ private fun ItemBrowserView(
 						},
 						fileListViewModel = entry.viewModelStore.buildViewModel {
 							FileListViewModel(
-								browserLibraryIdProvider,
 								itemFileProvider,
 								storedItemAccess,
 								playbackServiceController,
@@ -954,7 +1043,7 @@ private fun ItemBrowserView(
 					DisposableEffect(key1 = Unit) {
 						val registration = messageBus.registerReceiver(coroutineScope) { m: ObservableConnectionSettingsLibraryStorage.ConnectionSettingsUpdated ->
 							if (libraryId == m.libraryId)
-								graphNavigation.resetToBrowserRoot()
+								graphNavigation.viewLibrary(libraryId)
 						}
 
 						onDispose {

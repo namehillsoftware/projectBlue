@@ -100,6 +100,7 @@ class BrowserEntryActivity : AppCompatActivity(), IItemListViewContainer, Runnab
 				applicationMessageBus,
 				libraryRepository,
 			),
+			getCachedSelectedLibraryIdProvider(),
 		)
 	}
 

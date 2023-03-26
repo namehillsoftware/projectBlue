@@ -10,9 +10,9 @@ class ItemStringListProvider(
 	private val parameterProvider: IFileListParameterProvider,
 	private val parameterizedFileStringListProvider: ProvideFileStringListsForParameters
 ) : ProvideFileStringListForItem {
-	override fun promiseFileStringList(libraryId: LibraryId, itemId: ItemId, options: FileListParameters.Options): Promise<String> {
+	override fun promiseFileStringList(libraryId: LibraryId, itemId: ItemId?, options: FileListParameters.Options): Promise<String> {
 		// Put any crazy workarounds to get a fresh file list in here
-		val parameters = parameterProvider.getFileListParameters(itemId)
+		val parameters = itemId?.let(parameterProvider::getFileListParameters) ?: parameterProvider.getFileListParameters()
 		return parameterizedFileStringListProvider.promiseFileStringList(libraryId, options, *parameters)
 	}
 }

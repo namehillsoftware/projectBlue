@@ -19,6 +19,7 @@ import com.lasthopesoftware.bluewater.ActivityApplicationNavigation
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.android.intents.IntentBuilder
 import com.lasthopesoftware.bluewater.shared.android.ui.components.ApplicationInfoText
@@ -38,6 +39,7 @@ class AboutActivity : ComponentActivity() {
 				ApplicationMessageBus.getApplicationMessageBus(),
 				LibraryRepository(this),
 			),
+			getCachedSelectedLibraryIdProvider(),
 		)
 	}
 

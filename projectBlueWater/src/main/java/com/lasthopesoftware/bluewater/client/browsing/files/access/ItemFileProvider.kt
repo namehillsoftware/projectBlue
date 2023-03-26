@@ -8,7 +8,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.namehillsoftware.handoff.promises.Promise
 
 class ItemFileProvider(private val fileStringListProvider: ProvideFileStringListForItem) : ProvideItemFiles {
-	override fun promiseFiles(libraryId: LibraryId, itemId: ItemId, options: FileListParameters.Options): Promise<List<ServiceFile>> =
+	override fun promiseFiles(libraryId: LibraryId, itemId: ItemId?, options: FileListParameters.Options): Promise<List<ServiceFile>> =
 		fileStringListProvider.promiseFileStringList(libraryId, itemId, options)
 			.eventually(FileResponses)
 			.then(FileResponses)

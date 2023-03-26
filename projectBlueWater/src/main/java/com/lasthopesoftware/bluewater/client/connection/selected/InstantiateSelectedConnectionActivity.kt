@@ -12,6 +12,7 @@ import androidx.appcompat.app.AppCompatActivity
 import com.lasthopesoftware.bluewater.ActivityApplicationNavigation
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
@@ -40,6 +41,8 @@ class InstantiateSelectedConnectionActivity : AppCompatActivity(), ControlConnec
 
 	private val connectionInitializationProxy by lazy { ConnectionInitializationProxy(libraryConnectionProvider) }
 
+	private val selectedLibraryIdProvider by lazy { getCachedSelectedLibraryIdProvider() }
+
 	private val applicationNavigation by lazy {
 		ActivityApplicationNavigation(
 			this,
@@ -49,6 +52,7 @@ class InstantiateSelectedConnectionActivity : AppCompatActivity(), ControlConnec
 				ApplicationMessageBus.getApplicationMessageBus(),
 				LibraryRepository(this),
 			),
+			getCachedSelectedLibraryIdProvider(),
 		)
 	}
 
@@ -107,7 +111,13 @@ class InstantiateSelectedConnectionActivity : AppCompatActivity(), ControlConnec
 					.unitResponse()
 
 				if (connection != null && intent?.action != START_ACTIVITY_FOR_RETURN) {
-					promisedResponse = promisedResponse.eventually { applicationNavigation.resetToBrowserRoot() }
+					promisedResponse = promisedResponse.eventually {
+						selectedLibraryIdProvider
+							.promiseSelectedLibraryId()
+							.eventually {
+								it?.let(applicationNavigation::viewLibrary).keepPromise(Unit)
+							}
+					}
 				}
 
 				return promisedResponse.then({ resolve(connection) }, ::reject)

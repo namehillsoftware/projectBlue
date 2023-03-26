@@ -9,7 +9,7 @@ interface NavigateApplication {
 
 	fun browseLibrary(libraryId: LibraryId) = Unit.toPromise()
 
-	fun resetToBrowserRoot() = Unit.toPromise()
+	fun viewLibrary(libraryId: LibraryId) = Unit.toPromise()
 
 	fun viewApplicationSettings() = Unit.toPromise()
 

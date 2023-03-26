@@ -32,7 +32,7 @@ fun browsableItemListView(
     itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
     reusablePlaylistFileItemViewModelProvider: ReusablePlaylistFileItemViewModelProvider,
     applicationNavigation: NavigateApplication,
-): @Composable (LibraryId, Item) -> Unit {
+): @Composable (LibraryId, Item?) -> Unit {
 	val isCheckingConnection by connectionViewModel.isGettingConnection.collectAsState()
 	if (!isCheckingConnection) {
 		ItemListView(
@@ -47,13 +47,13 @@ fun browsableItemListView(
 		ConnectionUpdatesView(connectionViewModel)
 	}
 
-	return { libraryId: LibraryId, item: Item ->
+	return { libraryId: LibraryId, item: Item? ->
 		LaunchedEffect(item) {
 			try {
 				connectionViewModel.ensureConnectionIsWorking(libraryId).suspend()
 				Promise.whenAll(
 					itemListViewModel.loadItem(libraryId, item),
-					fileListViewModel.loadItem(item)
+					fileListViewModel.loadItem(libraryId, item),
 				).suspend()
 			} catch (e: Exception) {
 				applicationNavigation.backOut()

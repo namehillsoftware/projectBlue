@@ -3,10 +3,9 @@ package com.lasthopesoftware.bluewater
 import android.os.Handler
 import androidx.activity.ComponentActivity
 import com.lasthopesoftware.bluewater.about.AboutActivity
-import com.lasthopesoftware.bluewater.client.browsing.BrowserEntryActivity
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
-import com.lasthopesoftware.bluewater.client.browsing.items.startItemBrowserActivity
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectBrowserLibrary
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity
@@ -21,7 +20,8 @@ import com.namehillsoftware.handoff.promises.queued.MessageWriter
 class ActivityApplicationNavigation(
 	private val componentActivity: ComponentActivity,
 	private val intentBuilder: BuildIntents,
-	private val libraryBrowserSelection: SelectBrowserLibrary
+	private val libraryBrowserSelection: SelectBrowserLibrary,
+	private val selectedLibraryId: ProvideSelectedLibraryId,
 ) : NavigateApplication {
 
 	private val handler by lazy { Handler(componentActivity.mainLooper) }
@@ -36,8 +36,8 @@ class ActivityApplicationNavigation(
 				)
 			)
 
-	override fun resetToBrowserRoot(): Promise<Unit> = loopInOperation {
-		componentActivity.startActivity<BrowserEntryActivity>()
+	override fun viewLibrary(libraryId: LibraryId): Promise<Unit> = loopInOperation {
+		componentActivity.startActivity(intentBuilder.buildItemBrowserIntent(libraryId))
 	}
 
 	override fun viewApplicationSettings() = loopInOperation {
@@ -65,7 +65,7 @@ class ActivityApplicationNavigation(
 	}
 
 	override fun viewItem(libraryId: LibraryId, item: IItem) = loopInOperation {
-		componentActivity.startItemBrowserActivity(libraryId, item)
+		componentActivity.startActivity(intentBuilder.buildItemBrowserIntent(libraryId, item))
 	}
 
 	override fun viewNowPlaying() = loopInOperation {

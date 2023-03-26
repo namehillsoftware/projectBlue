@@ -6,7 +6,6 @@ import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.Fi
 import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -20,10 +19,6 @@ import org.junit.jupiter.api.Test
 class WhenSyncingTheItem {
 
 	private val viewModel by lazy {
-		val selectedLibraryIdProvider = mockk<ProvideSelectedLibraryId>().apply {
-			every { promiseSelectedLibraryId() } returns LibraryId(163).toPromise()
-		}
-
 		val itemProvider = mockk<ProvideItemFiles>().apply {
 			every { promiseFiles(LibraryId(163), ItemId(826), FileListParameters.Options.None) } returns listOf(
 				ServiceFile(471),
@@ -43,16 +38,15 @@ class WhenSyncingTheItem {
 		}
 
 		FileListViewModel(
-			selectedLibraryIdProvider,
-			itemProvider,
-			storedItemAccess,
-			mockk(),
+            itemProvider,
+            storedItemAccess,
+            mockk(),
 		)
 	}
 
 	@BeforeAll
 	fun act() {
-		viewModel.loadItem(Item(826, "moderate")).toExpiringFuture().get()
+		viewModel.loadItem(LibraryId(163), Item(826, "moderate")).toExpiringFuture().get()
 		viewModel.toggleSync().toExpiringFuture().get()
 	}
 

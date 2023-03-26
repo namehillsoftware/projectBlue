@@ -12,6 +12,7 @@ import com.lasthopesoftware.bluewater.ActivityApplicationNavigation
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.SelectedPlaybackEngineTypeAccess
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.defaults.DefaultPlaybackEngineLookup
@@ -51,6 +52,7 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 					applicationMessageBus,
 					libraryProvider,
 				),
+				getCachedSelectedLibraryIdProvider(),
 			),
 			intentBuilder,
 		)
@@ -84,7 +86,7 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 				.promiseApplicationSettings()
 				.then { s ->
 					if (s.chosenLibraryId > -1)
-						applicationNavigation.resetToBrowserRoot()
+						applicationNavigation.viewLibrary(LibraryId(s.chosenLibraryId))
 				}
 		}
 

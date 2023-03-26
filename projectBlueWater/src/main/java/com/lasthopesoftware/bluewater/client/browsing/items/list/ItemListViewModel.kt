@@ -54,25 +54,32 @@ class ItemListViewModel(
 		activityLaunchingReceiver.close()
 	}
 
-	fun loadItem(libraryId: LibraryId, item: Item): Promise<Unit> {
+	fun loadItem(libraryId: LibraryId, item: Item? = null): Promise<Unit> {
 		mutableIsLoading.value = true
-		mutableItemValue.value = item.value ?: ""
+		mutableIsSynced.value = false
+		mutableItemValue.value = item?.value ?: ""
 		loadedLibraryId = libraryId
 		val itemUpdate = itemProvider
-			.promiseItems(libraryId, item.itemId)
+			.promiseItems(libraryId, item?.itemId)
 			.then { items ->
 				mutableItems.value = items.map(::ChildItemViewModel)
 			}
 
-		val promisedSyncUpdate = storedItemAccess
-			.isItemMarkedForSync(libraryId, item)
-			.then { isSynced ->
-				mutableIsSynced.value = isSynced
+		val promisedSyncUpdate = item
+			?.let {
+				storedItemAccess
+					.isItemMarkedForSync(libraryId, it)
+					.then { isSynced ->
+						mutableIsSynced.value = isSynced
+					}
 			}
+			.keepPromise()
 
 		return Promise.whenAll(itemUpdate, promisedSyncUpdate)
 			.then {
 				loadedItem = item
+			}
+			.must {
 				mutableIsLoading.value = false
 			}
 	}

@@ -6,5 +6,5 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.namehillsoftware.handoff.promises.Promise
 
 interface ProvideFileStringListForItem {
-	fun promiseFileStringList(libraryId: LibraryId, itemId: ItemId, options: FileListParameters.Options): Promise<String>
+	fun promiseFileStringList(libraryId: LibraryId, itemId: ItemId? = null, options: FileListParameters.Options = FileListParameters.Options.None): Promise<String>
 }

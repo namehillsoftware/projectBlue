@@ -6,7 +6,6 @@ import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.Fi
 import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
@@ -31,10 +30,6 @@ class WhenPlayingTheFiles {
 	}
 
 	private val services by lazy {
-		val selectedLibraryIdProvider = mockk<ProvideSelectedLibraryId>().apply {
-			every { promiseSelectedLibraryId() } returns LibraryId(960).toPromise()
-		}
-
 		val itemProvider = mockk<ProvideItemFiles>().apply {
 			every { promiseFiles(LibraryId(960), ItemId(868), FileListParameters.Options.None) } returns fileList.toPromise()
 		}
@@ -46,10 +41,9 @@ class WhenPlayingTheFiles {
 		val controlNowPlaying = mockk<ControlPlaybackService>(relaxUnitFun = true)
 
 		val viewModel = FileListViewModel(
-			selectedLibraryIdProvider,
-			itemProvider,
-			storedItemAccess,
-			controlNowPlaying,
+            itemProvider,
+            storedItemAccess,
+            controlNowPlaying,
 		)
 
 		Pair(viewModel, controlNowPlaying)
@@ -58,7 +52,7 @@ class WhenPlayingTheFiles {
 	@BeforeAll
 	fun act() {
 		val (viewModel, _) = services
-		viewModel.loadItem(Item(868, "king")).toExpiringFuture().get()
+		viewModel.loadItem(LibraryId(960), Item(868, "king")).toExpiringFuture().get()
 		viewModel.play()
 	}
 

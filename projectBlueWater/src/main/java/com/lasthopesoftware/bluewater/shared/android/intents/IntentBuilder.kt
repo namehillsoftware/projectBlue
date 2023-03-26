@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsActivity
+import com.lasthopesoftware.bluewater.client.browsing.items.*
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.NowPlayingActivity
 import com.lasthopesoftware.bluewater.client.settings.EditClientSettingsActivity
@@ -32,4 +33,25 @@ class IntentBuilder(private val context: Context) : BuildIntents {
 		viewIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
 		return viewIntent
 	}
+
+	override fun buildShowDownloadsIntent(): Intent =
+		context.getIntent<ItemBrowserActivity>().apply {
+			action = "Downloads"
+		}
+
+	override fun buildItemBrowserIntent(libraryId: LibraryId): Intent =
+		context.getIntent<ItemBrowserActivity>().apply {
+			putExtra(libraryIdProperty, libraryId.id)
+		}
+
+	override fun buildItemBrowserIntent(libraryId: LibraryId, item: Item): Intent =
+		buildItemBrowserIntent(libraryId, item).apply {
+			item.playlistId?.also { putExtra(playlistIdProperty, it.id) }
+		}
+
+	override fun buildItemBrowserIntent(libraryId: LibraryId, item: IItem): Intent =
+		buildItemBrowserIntent(libraryId).apply {
+			putExtra(keyProperty, item.key)
+			putExtra(itemTitleProperty, item.value)
+		}
 }
