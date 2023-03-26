@@ -861,25 +861,21 @@ private fun ItemBrowserView(
 						},
 					)
 				) { entry ->
-					val libraryId = entry.arguments?.getInt(libraryIdArgument)?.let(::LibraryId) ?: startingLibraryId ?: return@composable
-					val arguments = entry.arguments
-					val playlistId = arguments?.getInt(playlistIdArgument)
-					val itemKey = arguments?.getInt(keyArgument)
-					val item = if (itemKey != null) {
-						if (playlistId != null && playlistId > -1) {
-							Item(
-								itemKey,
-								arguments.getString(titleArgument),
-								PlaylistId(playlistId),
-							)
-						} else {
-							Item(
-								itemKey,
-								arguments.getString(titleArgument)
-							)
-						}
+					val arguments = entry.arguments ?: return@composable
+					val libraryId = LibraryId(arguments.getInt(libraryIdArgument))
+					val itemKey = arguments.getInt(keyArgument)
+					val playlistId = arguments.getInt(playlistIdArgument)
+					val item = if (playlistId > -1) {
+						Item(
+							itemKey,
+							arguments.getString(titleArgument),
+							PlaylistId(playlistId),
+						)
 					} else {
-						null
+						Item(
+							itemKey,
+							arguments.getString(titleArgument)
+						)
 					}
 
 					val view = browsableItemListView(
