@@ -126,19 +126,6 @@ private fun LazyListScope.settingsList(
 	}
 
 	item {
-		Button(
-			onClick = {
-				playbackService.kill()
-			}
-		) {
-			Text(
-				text = stringResource(id = R.string.kill_playback),
-				fontSize = rowFontSize,
-			)
-		}
-	}
-
-	item {
 		Row(
 			modifier = standardRowModifier
 				.clickable {
@@ -211,6 +198,21 @@ private fun LazyListScope.settingsList(
 				modifier = Modifier
 					.fillMaxWidth()
 					.align(Alignment.Center)
+			)
+		}
+	}
+
+	item {
+		Button(
+			modifier = Modifier
+				.padding(top = 48.dp),
+			onClick = {
+				playbackService.kill()
+			}
+		) {
+			Text(
+				text = stringResource(id = R.string.kill_playback),
+				fontSize = rowFontSize,
 			)
 		}
 	}
