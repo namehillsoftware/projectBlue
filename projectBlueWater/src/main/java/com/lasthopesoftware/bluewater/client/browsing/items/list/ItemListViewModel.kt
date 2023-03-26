@@ -39,14 +39,12 @@ class ItemListViewModel(
 	}
 	private val mutableItems = MutableStateFlow(emptyList<ChildItemViewModel>())
 	private val mutableIsLoading = MutableStateFlow(true)
-	private val mutableIsSynced = MutableStateFlow(false)
 	private val mutableItemValue = MutableStateFlow("")
 
 	var loadedItem: IItem? = null
 	var loadedLibraryId: LibraryId? = null
 
 	val itemValue = mutableItemValue.asStateFlow()
-	val isSynced = mutableIsSynced.asStateFlow()
 	val items = mutableItems.asStateFlow()
 	override val isLoading = mutableIsLoading.asStateFlow()
 
@@ -56,44 +54,19 @@ class ItemListViewModel(
 
 	fun loadItem(libraryId: LibraryId, item: Item? = null): Promise<Unit> {
 		mutableIsLoading.value = true
-		mutableIsSynced.value = false
 		mutableItemValue.value = item?.value ?: ""
 		loadedLibraryId = libraryId
-		val itemUpdate = itemProvider
+
+		return itemProvider
 			.promiseItems(libraryId, item?.itemId)
 			.then { items ->
 				mutableItems.value = items.map(::ChildItemViewModel)
-			}
-
-		val promisedSyncUpdate = item
-			?.let {
-				storedItemAccess
-					.isItemMarkedForSync(libraryId, it)
-					.then { isSynced ->
-						mutableIsSynced.value = isSynced
-					}
-			}
-			.keepPromise()
-
-		return Promise.whenAll(itemUpdate, promisedSyncUpdate)
-			.then {
 				loadedItem = item
 			}
 			.must {
 				mutableIsLoading.value = false
 			}
 	}
-
-	fun toggleSync(): Promise<Unit> = loadedLibraryId
-		?.let { libraryId ->
-			loadedItem?.let { (it as? Item)?.playlistId ?: ItemId(it.key) }?.let { key ->
-				val isSynced = !mutableIsSynced.value
-				storedItemAccess
-					.toggleSync(libraryId, key, isSynced)
-					.then { mutableIsSynced.value = isSynced }
-			}
-		}
-		.keepPromise(Unit)
 
 	inner class ChildItemViewModel internal constructor(val item: IItem) : HiddenListItemMenu {
 		private val mutableIsSynced = MutableStateFlow(false)

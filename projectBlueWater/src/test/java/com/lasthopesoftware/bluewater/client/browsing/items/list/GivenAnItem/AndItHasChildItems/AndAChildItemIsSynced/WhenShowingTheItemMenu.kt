@@ -72,11 +72,6 @@ class WhenShowingTheItemMenu {
 	}
 
 	@Test
-	fun `then the root item is NOT marked for sync`() {
-		assertThat(viewModel.isSynced.value).isFalse
-	}
-
-	@Test
 	fun `then the item value is correct`() {
 		assertThat(viewModel.itemValue.value).isEqualTo("leaf")
 	}

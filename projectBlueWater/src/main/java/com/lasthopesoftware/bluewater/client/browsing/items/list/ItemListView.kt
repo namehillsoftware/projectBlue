@@ -49,12 +49,8 @@ import me.onebone.toolbar.rememberCollapsingToolbarScaffoldState
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
-const val expandedMenuVerticalPadding = 12
 const val expandedTitleHeight = 84
 val appBarHeight = Dimensions.AppBarHeight.value
-val expandedIconSize = Dimensions.MenuHeight.value
-
-val boxHeight = expandedTitleHeight + expandedIconSize + expandedMenuVerticalPadding * 2 + appBarHeight
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -267,9 +263,17 @@ fun ItemListView(
 	systemUiController.setStatusBarColor(MaterialTheme.colors.surface)
 
 	Surface {
+		val isAnyFiles by remember { derivedStateOf { files.any() } }
+		val expandedIconSize by remember { derivedStateOf { if (isAnyFiles) Dimensions.MenuHeight.value else 0f } }
+		val expandedMenuVerticalPadding by remember { derivedStateOf { if (isAnyFiles) 12 else 0 } }
+		val boxHeight by remember {
+			derivedStateOf {
+				expandedTitleHeight + appBarHeight + expandedIconSize + expandedMenuVerticalPadding * 2
+			}
+		}
+
 		val toolbarState = rememberCollapsingToolbarScaffoldState()
 		val headerHidingProgress by remember { derivedStateOf { 1 - toolbarState.toolbarState.progress } }
-
 		CollapsingToolbarScaffold(
 			enabled = true,
 			state = toolbarState,
@@ -282,7 +286,7 @@ fun ItemListView(
 						.height(boxHeight.dp)
 						.padding(top = topPadding)
 				) {
-					val minimumMenuWidth = (3 * 32).dp
+					val minimumMenuWidth by remember { derivedStateOf { (3 * expandedIconSize).dp } }
 					val acceleratedToolbarStateProgress by remember {
 						derivedStateOf {
 							toolbarState.toolbarState.progress.pow(
@@ -319,72 +323,74 @@ fun ItemListView(
 						}
 					}
 
-					val menuWidth by remember { derivedStateOf { (maxWidth - (maxWidth - minimumMenuWidth) * acceleratedHeaderHidingProgress) } }
-					val expandedTopRowPadding = expandedTitleHeight + expandedMenuVerticalPadding
-					val collapsedTopRowPadding = 6
-					val topRowPadding by remember { derivedStateOf { (expandedTopRowPadding - (expandedTopRowPadding - collapsedTopRowPadding) * headerHidingProgress).dp } }
+					if (isAnyFiles) {
+						val menuWidth by remember { derivedStateOf { (maxWidth - (maxWidth - minimumMenuWidth) * acceleratedHeaderHidingProgress) } }
+						val expandedTopRowPadding = expandedTitleHeight + expandedMenuVerticalPadding
+						val collapsedTopRowPadding = 6
+						val topRowPadding by remember { derivedStateOf { (expandedTopRowPadding - (expandedTopRowPadding - collapsedTopRowPadding) * headerHidingProgress).dp } }
 
-					Row(
-						modifier = Modifier
-							.padding(
-								top = topRowPadding,
-								bottom = expandedMenuVerticalPadding.dp,
-								start = 8.dp,
-								end = 8.dp
+						Row(
+							modifier = Modifier
+								.padding(
+									top = topRowPadding,
+									bottom = expandedMenuVerticalPadding.dp,
+									start = 8.dp,
+									end = 8.dp
+								)
+								.width(menuWidth)
+								.align(Alignment.TopEnd)
+						) {
+							val iconSize = Dimensions.MenuIconSize
+							val textModifier = Modifier.alpha(acceleratedToolbarStateProgress)
+
+							val playButtonLabel = stringResource(id = R.string.btn_play)
+							ColumnMenuIcon(
+								onClick = { fileListViewModel.play() },
+								icon = {
+									Image(
+										painter = painterResource(id = R.drawable.av_play),
+										contentDescription = playButtonLabel,
+										modifier = Modifier.size(iconSize)
+									)
+								},
+								label = if (acceleratedHeaderHidingProgress < 1) playButtonLabel else null,
+								labelModifier = textModifier,
+								labelMaxLines = 1,
 							)
-							.width(menuWidth)
-							.align(Alignment.TopEnd)
-					) {
-						val iconSize = Dimensions.MenuIconSize
-						val textModifier = Modifier.alpha(acceleratedToolbarStateProgress)
 
-						val playButtonLabel = stringResource(id = R.string.btn_play)
-						ColumnMenuIcon(
-							onClick = { fileListViewModel.play() },
-							icon = {
-								Image(
-									painter = painterResource(id = R.drawable.av_play),
-									contentDescription = playButtonLabel,
-									modifier = Modifier.size(iconSize)
-								)
-							},
-							label =	if (acceleratedHeaderHidingProgress < 1) playButtonLabel else null,
-							labelModifier = textModifier,
-							labelMaxLines = 1,
-						)
+							val isSynced by fileListViewModel.isSynced.collectAsState()
+							val syncButtonLabel =
+								if (!isSynced) stringResource(id = R.string.btn_sync_item)
+								else stringResource(id = R.string.files_synced)
+							ColumnMenuIcon(
+								onClick = { fileListViewModel.toggleSync() },
+								icon = {
+									SyncIcon(
+										isActive = isSynced,
+										modifier = Modifier.size(iconSize),
+										contentDescription = syncButtonLabel,
+									)
+								},
+								label = if (acceleratedHeaderHidingProgress < 1) syncButtonLabel else null,
+								labelMaxLines = 1,
+								labelModifier = textModifier,
+							)
 
-						val isSynced by itemListViewModel.isSynced.collectAsState()
-						val syncButtonLabel =
-							if (!isSynced) stringResource(id = R.string.btn_sync_item)
-							else stringResource(id = R.string.files_synced)
-						ColumnMenuIcon(
-							onClick = { itemListViewModel.toggleSync() },
-							icon = {
-								SyncIcon(
-									isActive = isSynced,
-									modifier = Modifier.size(iconSize),
-									contentDescription = syncButtonLabel,
-								)
-							},
-							label = if (acceleratedHeaderHidingProgress < 1) syncButtonLabel else null,
-							labelMaxLines = 1,
-							labelModifier = textModifier,
-						)
-
-						val shuffleButtonLabel = stringResource(R.string.btn_shuffle_files)
-						ColumnMenuIcon(
-							onClick = { fileListViewModel.playShuffled() },
-							icon = {
-								Image(
-									painter = painterResource(id = R.drawable.av_shuffle),
-									contentDescription = shuffleButtonLabel,
-									modifier = Modifier.size(iconSize)
-								)
-							},
-							label = if (acceleratedHeaderHidingProgress < 1) shuffleButtonLabel else null,
-							labelModifier = textModifier,
-							labelMaxLines = 1,
-						)
+							val shuffleButtonLabel = stringResource(R.string.btn_shuffle_files)
+							ColumnMenuIcon(
+								onClick = { fileListViewModel.playShuffled() },
+								icon = {
+									Image(
+										painter = painterResource(id = R.drawable.av_shuffle),
+										contentDescription = shuffleButtonLabel,
+										modifier = Modifier.size(iconSize)
+									)
+								},
+								label = if (acceleratedHeaderHidingProgress < 1) shuffleButtonLabel else null,
+								labelModifier = textModifier,
+								labelMaxLines = 1,
+							)
+						}
 					}
 				}
 

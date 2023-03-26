@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.list.GivenAnItem.AndItIsSynced
+package com.lasthopesoftware.bluewater.client.browsing.items.list.GivenAnItem
 
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
@@ -20,10 +20,10 @@ class WhenLoadingTheItems {
 	private val viewModel by lazy {
 		val itemProvider = mockk<ProvideItems>().apply {
 			every { promiseItems(LibraryId(libraryId), ItemId(826)) } returns listOf(
-				Item(55),
-				Item(137),
-				Item(766),
-				Item(812),
+                Item(55),
+                Item(137),
+                Item(766),
+                Item(812),
 			).toPromise()
 		}
 
@@ -32,25 +32,20 @@ class WhenLoadingTheItems {
 			every { isItemMarkedForSync(LibraryId(libraryId), Item(826, "leaf")) } returns true.toPromise()
 		}
 
-		ItemListViewModel(
-			itemProvider,
-			mockk(relaxed = true, relaxUnitFun = true),
-			storedItemAccess,
-			mockk(),
-			mockk(),
-			mockk(),
-			mockk(),
-		)
+        ItemListViewModel(
+            itemProvider,
+            mockk(relaxed = true, relaxUnitFun = true),
+            storedItemAccess,
+            mockk(),
+            mockk(),
+            mockk(),
+            mockk(),
+        )
 	}
 
 	@BeforeAll
 	fun act() {
 		viewModel.loadItem(LibraryId(libraryId), Item(826, "leaf")).toExpiringFuture().get()
-	}
-
-	@Test
-	fun `then the item is marked for sync`() {
-		assertThat(viewModel.isSynced.value).isTrue
 	}
 
 	@Test
@@ -68,10 +63,10 @@ class WhenLoadingTheItems {
 		assertThat(viewModel.items.value.map { it.item })
 			.hasSameElementsAs(
 				listOf(
-					Item(55),
-					Item(137),
-					Item(766),
-					Item(812),
+                    Item(55),
+                    Item(137),
+                    Item(766),
+                    Item(812),
 				)
 			)
 	}
