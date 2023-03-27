@@ -28,6 +28,7 @@ class WhenSavingTheLibrarySettings {
 				_password = "hmpyA",
 				_syncedFileLocation = Library.SyncedFileLocation.EXTERNAL,
 				_isUsingExistingFiles = true,
+				_libraryName = "theater",
 			)
 		)
 
@@ -70,6 +71,7 @@ class WhenSavingTheLibrarySettings {
 			isUsingExistingFiles.value = !isUsingExistingFiles.value
 			isWakeOnLanEnabled.value = !isWakeOnLanEnabled.value
 			syncedFileLocation.value = Library.SyncedFileLocation.CUSTOM
+			libraryName.value = "spit"
 			isSaved = saveLibrary().toExpiringFuture().get() == true
 		}
     }
@@ -129,4 +131,9 @@ class WhenSavingTheLibrarySettings {
     fun `then is using existing files is correct`() {
         assertThat(services.isUsingExistingFiles.value).isFalse
     }
+
+	@Test
+	fun `then the library name is correct`() {
+		assertThat(services.libraryName.value).isEqualTo("spit")
+	}
 }

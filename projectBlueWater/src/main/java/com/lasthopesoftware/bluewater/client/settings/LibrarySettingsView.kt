@@ -267,6 +267,15 @@ fun LibrarySettingsView(
 					}
 
 					SpacedOutRow {
+						var libraryNameState by libraryName.collectAsMutableState()
+						StandardTextField(
+							placeholder = stringResource(R.string.lbl_library_name),
+							value = libraryNameState,
+							onValueChange = { libraryNameState = it },
+						)
+					}
+
+					SpacedOutRow {
 						var isLocalOnlyState by isLocalOnly.collectAsMutableState()
 						LabeledSelection(
 							label = stringResource(id = R.string.lbl_local_only),

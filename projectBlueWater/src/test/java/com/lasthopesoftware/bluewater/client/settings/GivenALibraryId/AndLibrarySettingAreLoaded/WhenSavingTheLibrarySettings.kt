@@ -59,6 +59,7 @@ class WhenSavingTheLibrarySettings {
 			customSyncPath.value = "s39"
 			password.value = "sl0Ha"
 			userName.value = "xw9wy0T"
+			libraryName.value = "left"
 			isLocalOnly.value = !isLocalOnly.value
 			isSyncLocalConnectionsOnly.value = !isSyncLocalConnectionsOnly.value
 			isUsingExistingFiles.value = !isUsingExistingFiles.value
@@ -123,4 +124,9 @@ class WhenSavingTheLibrarySettings {
     fun `then is using existing files is correct`() {
         assertThat(services.isUsingExistingFiles.value).isFalse
     }
+
+	@Test
+	fun `then the library name is correct`() {
+		assertThat(services.libraryName.value).isEqualTo("left")
+	}
 }

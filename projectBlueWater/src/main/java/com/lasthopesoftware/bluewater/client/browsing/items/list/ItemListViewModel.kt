@@ -65,7 +65,7 @@ class ItemListViewModel(
 			else libraryProvider
 				.promiseLibrary(libraryId)
 				.then { l ->
-					mutableItemValue.value = l?.accessCode ?: ""
+					mutableItemValue.value = l?.libraryName?.takeIf { it.isNotEmpty() } ?: l?.accessCode ?: ""
 				}
 
 		val promisedItemUpdate = itemProvider

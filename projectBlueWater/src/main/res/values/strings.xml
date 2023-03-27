@@ -10,6 +10,7 @@
     <string name="title_activity_library">Library</string>
     <string name="lbl_user_name">User Name</string>
     <string name="lbl_access_code">Access Code</string>
+    <string name="lbl_library_name">Optional Name</string>
     <string name="lbl_password">Password</string>
     <string name="lbl_local_only">Local Connections Only</string>
     <string name="btn_save">Save</string>
