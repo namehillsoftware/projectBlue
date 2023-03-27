@@ -13,6 +13,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.itemId
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.HiddenListItemMenu
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.ActivityLaunching
+import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
@@ -20,6 +21,7 @@ import com.lasthopesoftware.bluewater.shared.messages.SendTypedMessages
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -27,6 +29,7 @@ import kotlinx.coroutines.flow.asStateFlow
 class ItemListViewModel(
 	private val itemProvider: ProvideItems,
 	messageBus: RegisterForApplicationMessages,
+	private val libraryProvider: ILibraryProvider,
 	private val storedItemAccess: AccessStoredItems,
 	private val itemStringListProvider: ProvideFileStringListForItem,
 	private val controlNowPlaying: ControlPlaybackService,
@@ -57,10 +60,22 @@ class ItemListViewModel(
 		mutableItemValue.value = item?.value ?: ""
 		loadedLibraryId = libraryId
 
-		return itemProvider
+		val promisedLibraryUpdate =
+			if (item != null) Unit.toPromise()
+			else libraryProvider
+				.promiseLibrary(libraryId)
+				.then { l ->
+					mutableItemValue.value = l?.accessCode ?: ""
+				}
+
+		val promisedItemUpdate = itemProvider
 			.promiseItems(libraryId, item?.itemId)
 			.then { items ->
 				mutableItems.value = items.map(::ChildItemViewModel)
+			}
+
+		return Promise.whenAll(promisedItemUpdate, promisedLibraryUpdate)
+			.then {
 				loadedItem = item
 			}
 			.must {

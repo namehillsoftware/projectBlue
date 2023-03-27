@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.list.AndItHasChildItems.AndAChildItemIsSynced
+package com.lasthopesoftware.bluewater.client.browsing.items.list.GivenALibrary.AndAnItem.AndItHasChildItems.AndAChildMenuIsShown
 
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
@@ -7,7 +7,6 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewMod
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.FakeStoredItemAccess
-import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingTypedMessageBus
@@ -17,81 +16,77 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
-private const val libraryId = 391
-private const val rootItemId = 217
-private const val childItemId = 637
+private const val libraryId = 703
+private const val rootItemId = 707
+private const val childItemId = 571
 
-class WhenShowingTheItemMenu {
+class WhenHidingTheMenu {
 
 	private val recordingMessageBus = RecordingTypedMessageBus<ItemListMenuMessage>()
 
 	private val viewModel by lazy {
 		val itemProvider = mockk<ProvideItems>().apply {
 			every { promiseItems(LibraryId(libraryId), ItemId(rootItemId)) } returns listOf(
-				Item(55),
-				Item(137),
-				Item(766),
+				Item(482),
+				Item(449),
+				Item(160),
+				Item(214),
 				Item(childItemId),
-				Item(812),
 			).toPromise()
 		}
 
-		val storedItemAccess = FakeStoredItemAccess(StoredItem(libraryId, childItemId, StoredItem.ItemType.ITEM))
+		val storedItemAccess = FakeStoredItemAccess()
 
-		ItemListViewModel(
+		val viewModel = ItemListViewModel(
             itemProvider,
             mockk(relaxed = true, relaxUnitFun = true),
-            storedItemAccess,
+			mockk(),
+			storedItemAccess,
             mockk(),
             mockk(),
             mockk(),
-            recordingMessageBus,
-		)
+            recordingMessageBus
+        )
+
+		viewModel.loadItem(LibraryId(libraryId), Item(rootItemId, "leaf")).toExpiringFuture().get()
+		viewModel.items.value[4]
 	}
+
+	private var didMenuShow = false
+	private var isMenuHidden = false
 
 	@BeforeAll
 	fun act() {
-		viewModel.loadItem(LibraryId(libraryId), Item(rootItemId, "leaf")).toExpiringFuture().get()
-		viewModel.items.value[3].showMenu()
+		didMenuShow = viewModel.showMenu()
+		isMenuHidden = viewModel.hideMenu()
 	}
 
 	@Test
 	fun `then a menu shown message is sent`() {
-		assertThat(recordingMessageBus.recordedMessages.filterIsInstance<ItemListMenuMessage.MenuShown>()
-				.map { it.menuItem }).containsOnlyOnce(viewModel.items.value[3])
+		assertThat(
+			recordingMessageBus.recordedMessages.filterIsInstance<ItemListMenuMessage.MenuShown>()
+				.map { it.menuItem }).containsOnlyOnce(viewModel)
 	}
 
 	@Test
-	fun `then the child item is marked for sync`() {
-		assertThat(viewModel.items.value[3].isSynced.value).isTrue
+	fun `then a menu hidden message is sent`() {
+		assertThat(
+			recordingMessageBus.recordedMessages.filterIsInstance<ItemListMenuMessage.MenuHidden>()
+				.map { it.menuItem }).containsOnlyOnce(viewModel)
 	}
 
 	@Test
-	fun `then the menu is shown`() {
-		assertThat(viewModel.items.value[3].isMenuShown.value).isTrue
+	fun `then the menu did show`() {
+		assertThat(didMenuShow).isTrue
 	}
 
 	@Test
-	fun `then the item value is correct`() {
-		assertThat(viewModel.itemValue.value).isEqualTo("leaf")
+	fun `then it is indicated that the menu was hidden`() {
+		assertThat(isMenuHidden).isTrue
 	}
 
 	@Test
-	fun `then the view model is finished loading`() {
-		assertThat(viewModel.isLoading.value).isFalse
-	}
-
-	@Test
-	fun `then the loaded files are correct`() {
-		assertThat(viewModel.items.value.map { it.item })
-			.hasSameElementsAs(
-				listOf(
-					Item(55),
-					Item(137),
-					Item(766),
-					Item(childItemId),
-					Item(812),
-				)
-			)
+	fun `then the menu is not shown`() {
+		assertThat(viewModel.isMenuShown.value).isFalse
 	}
 }

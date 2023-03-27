@@ -55,7 +55,7 @@ class LibrarySettingsViewModel(
 		mutableIsLoading.value = true
 
 		return libraryProvider
-			.getLibrary(libraryId)
+			.promiseLibrary(libraryId)
 			.then(this)
 			.must(this)
 	}

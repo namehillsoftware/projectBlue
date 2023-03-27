@@ -8,7 +8,7 @@ import com.namehillsoftware.handoff.promises.Promise
 class FakeLibraryProvider(vararg libraries: Library) : ILibraryProvider, ILibraryStorage {
 	private val libraries = libraries.associateBy { l -> l.id }.toMutableMap()
 
-    override fun getLibrary(libraryId: LibraryId): Promise<Library?> = Promise(libraries[libraryId.id])
+    override fun promiseLibrary(libraryId: LibraryId): Promise<Library?> = Promise(libraries[libraryId.id])
 
     override val allLibraries: Promise<Collection<Library>>
         get() = Promise(libraries.values)

@@ -47,7 +47,7 @@ class WhenRemovingTheLibrary {
 
 		val selectBrowserLibrary = mockk<SelectBrowserLibrary>()
 		every { selectBrowserLibrary.selectBrowserLibrary(any()) } answers {
-			libraryProvider.getLibrary(firstArg()).then { l ->
+			libraryProvider.promiseLibrary(firstArg()).then { l ->
 				selectedLibraryId = l?.libraryId
 				l
 			}

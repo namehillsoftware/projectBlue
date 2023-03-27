@@ -13,7 +13,7 @@ import xmlwise.Xmlwise
 
 class ServerInfoXmlRequest(private val libraryProvider: ILibraryProvider, private val clientFactory: ProvideOkHttpClients) : RequestServerInfoXml {
 	override fun promiseServerInfoXml(libraryId: LibraryId): Promise<XmlElement?> = CancellableProxyPromise { cp ->
-		libraryProvider.getLibrary(libraryId).eventually { library ->
+		libraryProvider.promiseLibrary(libraryId).eventually { library ->
 			library
 				?.run {
 					Request.Builder()

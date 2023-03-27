@@ -1,13 +1,13 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.list.GivenAnItem
+package com.lasthopesoftware.bluewater.client.browsing.items.list.GivenALibrary.AndAnItem
 
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -27,15 +27,11 @@ class WhenLoadingTheItems {
 			).toPromise()
 		}
 
-		val storedItemAccess = mockk<AccessStoredItems>().apply {
-			every { isItemMarkedForSync(any(), any<Item>()) } returns false.toPromise()
-			every { isItemMarkedForSync(LibraryId(libraryId), Item(826, "leaf")) } returns true.toPromise()
-		}
-
         ItemListViewModel(
             itemProvider,
-            mockk(relaxed = true, relaxUnitFun = true),
-            storedItemAccess,
+            RecordingApplicationMessageBus(),
+			mockk(),
+            mockk(),
             mockk(),
             mockk(),
             mockk(),

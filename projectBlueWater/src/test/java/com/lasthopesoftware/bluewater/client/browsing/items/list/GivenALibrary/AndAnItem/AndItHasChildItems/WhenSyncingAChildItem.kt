@@ -33,6 +33,7 @@ class WhenSyncingAChildItem {
 		ItemListViewModel(
 			itemProvider,
 			mockk(relaxed = true, relaxUnitFun = true),
+			mockk(),
 			storedItemAccess,
 			mockk(),
 			mockk(),

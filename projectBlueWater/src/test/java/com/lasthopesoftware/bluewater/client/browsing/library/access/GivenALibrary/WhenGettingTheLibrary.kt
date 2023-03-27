@@ -38,7 +38,7 @@ class WhenGettingTheLibrary {
 			val libraryRepository = LibraryRepository(ApplicationProvider.getApplicationContext())
 			libraryRepository
 				.saveLibrary(expectedLibrary)
-				.eventually { l -> libraryRepository.getLibrary(l.libraryId) }
+				.eventually { l -> libraryRepository.promiseLibrary(l.libraryId) }
 				.toExpiringFuture()
 				.get()
 		}

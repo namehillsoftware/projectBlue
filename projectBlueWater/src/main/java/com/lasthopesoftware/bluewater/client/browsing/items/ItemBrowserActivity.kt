@@ -804,6 +804,7 @@ private fun ItemBrowserView(
 							ItemListViewModel(
 								itemProvider,
 								messageBus,
+								libraryProvider,
 								storedItemAccess,
 								itemListProvider,
 								playbackServiceController,
@@ -892,6 +893,7 @@ private fun ItemBrowserView(
 							ItemListViewModel(
 								itemProvider,
 								messageBus,
+								libraryProvider,
 								storedItemAccess,
 								itemListProvider,
 								playbackServiceController,

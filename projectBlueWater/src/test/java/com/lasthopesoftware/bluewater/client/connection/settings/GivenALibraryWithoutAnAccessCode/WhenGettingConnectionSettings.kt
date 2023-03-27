@@ -18,7 +18,7 @@ class WhenGettingConnectionSettings {
 
 	private val mut by lazy {
 		val libraryProvider = mockk<ILibraryProvider>()
-		every { libraryProvider.getLibrary(LibraryId(10)) } returns Library().toPromise()
+		every { libraryProvider.promiseLibrary(LibraryId(10)) } returns Library().toPromise()
 
 		val connectionSettingsLookup = ConnectionSettingsLookup(libraryProvider)
 

@@ -18,30 +18,28 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
-private const val libraryId = 411
-private const val itemId = 883
-private const val itemValue = "can"
+private const val libraryId = 773
+private const val itemId = 107
+private const val itemValue = "height"
 
 private var playedFileList = ""
 
-class WhenPlayingAShuffledChildItem {
-
+class WhenPlayingAChildItem {
 	private val viewModel by lazy {
 		val itemProvider = mockk<ProvideItems>().apply {
 			every { promiseItems(LibraryId(libraryId), ItemId(itemId)) } returns listOf(
-				Item(495),
-				Item(74),
-				Item(525),
-				Item(787),
-				Item(460),
-				Item(107),
-				Item(923),
+				Item(611),
+				Item(306),
+				Item(867),
+				Item(623),
+				Item(335),
+				Item(983),
 			).toPromise()
 		}
 
 		val itemStringListProvider = mockk<ProvideFileStringListForItem>().apply {
-			every { promiseFileStringList(LibraryId(libraryId), ItemId(460), FileListParameters.Options.Shuffled) } returns Promise(
-				"2;-1;920;388;906;356204;641;221;889;"
+			every { promiseFileStringList(LibraryId(libraryId), ItemId(867), FileListParameters.Options.None) } returns Promise(
+				"2;-1;959;191;559;815;165;"
 			)
 		}
 
@@ -54,7 +52,8 @@ class WhenPlayingAShuffledChildItem {
 		ItemListViewModel(
             itemProvider,
             mockk(relaxed = true, relaxUnitFun = true),
-            FakeStoredItemAccess(),
+			mockk(),
+			FakeStoredItemAccess(),
             itemStringListProvider,
             controlNowPlaying,
             mockk(),
@@ -65,11 +64,11 @@ class WhenPlayingAShuffledChildItem {
 	@BeforeAll
 	fun act() {
 		viewModel.loadItem(LibraryId(libraryId), Item(itemId, itemValue)).toExpiringFuture().get()
-		viewModel.items.value[4].playShuffled().toExpiringFuture().get()
+		viewModel.items.value[2].play().toExpiringFuture().get()
 	}
 
 	@Test
 	fun `then the child items are played`() {
-		assertThat(playedFileList).isEqualTo("2;-1;920;388;906;356204;641;221;889;")
+		assertThat(playedFileList).isEqualTo("2;-1;959;191;559;815;165;")
 	}
 }

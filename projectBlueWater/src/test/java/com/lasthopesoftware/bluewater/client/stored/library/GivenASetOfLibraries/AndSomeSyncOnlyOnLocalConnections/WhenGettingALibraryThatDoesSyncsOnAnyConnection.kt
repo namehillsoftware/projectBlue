@@ -19,7 +19,7 @@ class WhenGettingALibraryThatDoesSyncsOnAnyConnection {
 				Library().setId(13).setIsSyncLocalConnectionsOnly(true)
 			)
 		)
-		ExpiringFuturePromise(syncLibraryProvider.getLibrary(LibraryId(4))).get()
+		ExpiringFuturePromise(syncLibraryProvider.promiseLibrary(LibraryId(4))).get()
 	}
 
     @Test
