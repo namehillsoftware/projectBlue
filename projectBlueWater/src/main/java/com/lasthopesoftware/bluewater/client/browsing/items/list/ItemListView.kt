@@ -262,8 +262,12 @@ fun ItemListView(
 	val systemUiController = rememberSystemUiController()
 	systemUiController.setStatusBarColor(MaterialTheme.colors.surface)
 
+	val isFilesLoaded by fileListViewModel.isLoaded.collectAsState()
+
 	Surface {
-		val isAnyFiles by remember { derivedStateOf { files.any() } }
+		// Treat the files not being loaded as isAnyFiles being false to trick the CollapsingToolbarScaffold
+		// into measuring the expanded size correctly.
+		val isAnyFiles by remember { derivedStateOf { !isFilesLoaded || files.any() } }
 		val expandedIconSize by remember { derivedStateOf { if (isAnyFiles) Dimensions.MenuHeight.value else 0f } }
 		val expandedMenuVerticalPadding by remember { derivedStateOf { if (isAnyFiles) 12 else 0 } }
 		val boxHeight by remember {
@@ -323,7 +327,7 @@ fun ItemListView(
 						}
 					}
 
-					if (isAnyFiles) {
+					if (files.any()) {
 						val menuWidth by remember { derivedStateOf { (maxWidth - (maxWidth - minimumMenuWidth) * acceleratedHeaderHidingProgress) } }
 						val expandedTopRowPadding = expandedTitleHeight + expandedMenuVerticalPadding
 						val collapsedTopRowPadding = 6
@@ -413,7 +417,6 @@ fun ItemListView(
 		) {
 			BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
 				val isItemsLoading by itemListViewModel.isLoading.collectAsState()
-				val isFilesLoaded by fileListViewModel.isLoaded.collectAsState()
 				val isLoaded = !isItemsLoading && isFilesLoaded
 
 				if (isLoaded) LoadedItemListView()
