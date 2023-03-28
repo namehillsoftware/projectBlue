@@ -331,9 +331,9 @@ class BrowserActivity :
 					libraryId,
 				)
 			}
-		}
 
-		actOnIntent(intent)
+			actOnIntent(intent)
+		}
 	}
 
 	override fun onNewIntent(intent: Intent?) {
@@ -461,7 +461,7 @@ private class GraphNavigation(
 	}
 
 	init {
-	    navigationMessages.registerReceiver { message: ViewDownloadsMessage ->
+		navigationMessages.registerReceiver { message: ViewDownloadsMessage ->
 			viewActiveDownloads(message.libraryId)
 		}
 
