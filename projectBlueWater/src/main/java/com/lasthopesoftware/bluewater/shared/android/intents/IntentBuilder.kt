@@ -2,9 +2,11 @@ package com.lasthopesoftware.bluewater.shared.android.intents
 
 import android.content.Context
 import android.content.Intent
+import com.lasthopesoftware.bluewater.client.browsing.*
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsActivity
-import com.lasthopesoftware.bluewater.client.browsing.items.*
+import com.lasthopesoftware.bluewater.client.browsing.items.IItem
+import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.NowPlayingActivity
 import com.lasthopesoftware.bluewater.client.settings.EditClientSettingsActivity
@@ -35,12 +37,12 @@ class IntentBuilder(private val context: Context) : BuildIntents {
 	}
 
 	override fun buildShowDownloadsIntent(): Intent =
-		context.getIntent<ItemBrowserActivity>().apply {
-			action = "Downloads"
+		context.getIntent<BrowserActivity>().apply {
+			action = downloadsAction
 		}
 
 	override fun buildItemBrowserIntent(libraryId: LibraryId): Intent =
-		context.getIntent<ItemBrowserActivity>().apply {
+		context.getIntent<BrowserActivity>().apply {
 			putExtra(libraryIdProperty, libraryId.id)
 		}
 

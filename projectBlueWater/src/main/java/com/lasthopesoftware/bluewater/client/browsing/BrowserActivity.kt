@@ -1,12 +1,13 @@
 @file:OptIn(ExperimentalCoroutinesApi::class)
 
-package com.lasthopesoftware.bluewater.client.browsing.items
+package com.lasthopesoftware.bluewater.client.browsing
 
 import ItemBrowsingArguments.keyArgument
 import ItemBrowsingArguments.libraryIdArgument
 import ItemBrowsingArguments.playlistIdArgument
 import ItemBrowsingArguments.titleArgument
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.widget.Toast
@@ -55,6 +56,8 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.RateContr
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.SelectedLibraryFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertyStorage
+import com.lasthopesoftware.bluewater.client.browsing.items.IItem
+import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.access.CachedItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
@@ -65,6 +68,8 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.Bro
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
+import com.lasthopesoftware.bluewater.client.browsing.navigation.NavigationMessage
+import com.lasthopesoftware.bluewater.client.browsing.navigation.ViewDownloadsMessage
 import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.libraries.SelectedLibraryUrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
@@ -99,6 +104,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModel
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 import com.lasthopesoftware.bluewater.shared.cls
+import com.lasthopesoftware.bluewater.shared.messages.RegisterForTypedMessages
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
@@ -116,13 +122,13 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
 
-private val magicPropertyBuilder by lazy { MagicPropertyBuilder(cls<ItemBrowserActivity>()) }
+private val magicPropertyBuilder by lazy { MagicPropertyBuilder(cls<BrowserActivity>()) }
 
 val libraryIdProperty by lazy { magicPropertyBuilder.buildProperty(libraryIdArgument) }
 val keyProperty by lazy { magicPropertyBuilder.buildProperty(keyArgument) }
 val itemTitleProperty by lazy { magicPropertyBuilder.buildProperty(titleArgument) }
 val playlistIdProperty by lazy { magicPropertyBuilder.buildProperty(playlistIdArgument) }
-val downloadsRoute by lazy { magicPropertyBuilder.buildProperty(GraphNavigation.Downloads.nestedRoute) }
+val downloadsAction by lazy { magicPropertyBuilder.buildProperty("downloads") }
 
 fun Context.startItemBrowserActivity(libraryId: LibraryId, item: IItem) {
 	if (item is Item) startItemBrowserActivity(libraryId, item)
@@ -143,13 +149,13 @@ private fun getItemBrowserIntent(context: Context, libraryId: LibraryId, item: I
 	}
 
 private fun getItemBrowserIntent(context: Context, libraryId: LibraryId) =
-	context.getIntent<ItemBrowserActivity>().apply {
+	context.getIntent<BrowserActivity>().apply {
 		putExtra(libraryIdProperty, libraryId.id)
 	}
 
-class ItemBrowserActivity :
+class BrowserActivity :
 	AppCompatActivity(),
-	ItemBrowserViewDependencies,
+	BrowserViewDependencies,
 	ActivityCompat.OnRequestPermissionsResultCallback,
 	ManagePermissions
 {
@@ -306,6 +312,7 @@ class ItemBrowserActivity :
 	override val readPermissionsRequirements by lazy { ApplicationReadPermissionsRequirementsProvider(this) }
 	override val writePermissionsRequirements by lazy { ApplicationWritePermissionsRequirementsProvider(this) }
 	override val permissionsManager = this
+	override val navigationMessages by buildViewModelLazily { ViewModelMessageBus<NavigationMessage>() }
 
 	private val permissionsRequests = ConcurrentHashMap<Int, Messenger<Map<String, Boolean>>>()
 
@@ -315,29 +322,27 @@ class ItemBrowserActivity :
 		val libraryIdInt =
 			savedInstanceState?.getInt(libraryIdProperty, -1) ?: intent.getIntExtra(libraryIdProperty, -1)
 		val libraryId = LibraryId(libraryIdInt)
-		val playlistId =
-			savedInstanceState?.getInt(playlistIdProperty, -1) ?: intent.getIntExtra(playlistIdProperty, -1)
-		val item = if (playlistId > -1) {
-			Item(
-				savedInstanceState?.getInt(keyProperty) ?: intent.getIntExtra(keyProperty, 1),
-				savedInstanceState?.getString(itemTitleProperty) ?: intent.getStringExtra(itemTitleProperty),
-				PlaylistId(playlistId),
-			)
-		} else {
-			Item(
-				savedInstanceState?.getInt(keyProperty) ?: intent.getIntExtra(keyProperty, 1),
-				savedInstanceState?.getString(itemTitleProperty) ?: intent.getStringExtra(itemTitleProperty),
-			)
-		}
 
 		setContent {
 			ProjectBlueTheme {
 				ItemBrowserView(
 					this,
 					libraryId,
-					item,
 				)
 			}
+		}
+	}
+
+	override fun onNewIntent(intent: Intent?) {
+		super.onNewIntent(intent)
+
+		if (intent?.action == downloadsAction) {
+			browserLibraryIdProvider
+				.promiseSelectedLibraryId()
+				.then { l ->
+					if (l != null)
+						navigationMessages.sendMessage(ViewDownloadsMessage(l))
+				}
 		}
 	}
 
@@ -368,7 +373,7 @@ class ItemBrowserActivity :
 						if (values.any { !it }) {
 							Toast
 								.makeText(
-									this@ItemBrowserActivity,
+									this@BrowserActivity,
 									R.string.permissions_must_be_granted_for_settings,
 									Toast.LENGTH_LONG
 								)
@@ -385,6 +390,7 @@ private class GraphNavigation(
 	private val bottomSheetState: BottomSheetState,
 	private val coroutineScope: CoroutineScope,
 	private val itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
+	navigationMessages: RegisterForTypedMessages<NavigationMessage>
 ) : NavigateApplication by inner {
 	object Library {
 		const val route = "library/{$libraryIdArgument}"
@@ -397,7 +403,7 @@ private class GraphNavigation(
 
 		const val route = "${Library.route}/$nestedRoute"
 
-		fun buildPath(libraryId: LibraryId) = "${Library.buildPath(libraryId)}/${nestedRoute}"
+		fun buildPath(libraryId: LibraryId) = "${Library.buildPath(libraryId)}/$nestedRoute"
 	}
 
 	object Search {
@@ -420,7 +426,7 @@ private class GraphNavigation(
 		const val nestedRoute =
 			"item/{$keyArgument}?$titleArgument={$titleArgument}&$playlistIdArgument={$playlistIdArgument}"
 
-		const val route = "${Library.route}/${nestedRoute}"
+		const val route = "${Library.route}/$nestedRoute"
 
 		fun buildPath(libraryId: LibraryId, item: IItem): String =
 			"${Library.buildPath(libraryId)}/${buildNestedPath(item)}"
@@ -434,6 +440,12 @@ private class GraphNavigation(
 			}
 
 			return path
+		}
+	}
+
+	init {
+	    navigationMessages.registerReceiver { message: ViewDownloadsMessage ->
+			viewActiveDownloads(message.libraryId)
 		}
 	}
 
@@ -507,8 +519,8 @@ private class GraphNavigation(
 	}
 }
 
-private class GraphDependencies(inner: ItemBrowserViewDependencies, graphNavigation: GraphNavigation) :
-	ItemBrowserViewDependencies by inner
+private class GraphDependencies(inner: BrowserViewDependencies, graphNavigation: GraphNavigation) :
+	BrowserViewDependencies by inner
 {
 	override val applicationNavigation = graphNavigation
 }
@@ -518,9 +530,8 @@ private val bottomAppBarHeight = Dimensions.AppBarHeight
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 private fun ItemBrowserView(
-	itemBrowserViewDependencies: ItemBrowserViewDependencies,
+	browserViewDependencies: BrowserViewDependencies,
 	startingLibraryId: LibraryId? = null,
-	startingItem: IItem? = null,
 ) {
 	val systemUiController = rememberSystemUiController()
 	systemUiController.setStatusBarColor(MaterialTheme.colors.surface)
@@ -533,17 +544,18 @@ private fun ItemBrowserView(
 	val bottomSheetState = scaffoldState.bottomSheetState
 	val graphNavigation = remember {
 		GraphNavigation(
-			itemBrowserViewDependencies.applicationNavigation,
+			browserViewDependencies.applicationNavigation,
 			navController,
 			bottomSheetState,
 			coroutineScope,
-			itemBrowserViewDependencies.itemListMenuBackPressedHandler,
+			browserViewDependencies.itemListMenuBackPressedHandler,
+			browserViewDependencies.navigationMessages,
 		)
 	}
 
 	with(remember {
 		GraphDependencies(
-			itemBrowserViewDependencies,
+			browserViewDependencies,
 			graphNavigation,
 		)
 	}) {
@@ -849,16 +861,16 @@ private fun ItemBrowserView(
 						},
 						navArgument(keyArgument) {
 							type = NavType.IntType
-							defaultValue = startingItem?.key ?: -1
+							defaultValue = -1
 						},
 						navArgument(titleArgument) {
 							type = NavType.StringType
 							nullable = true
-							defaultValue = startingItem?.value
+							defaultValue = null
 						},
 						navArgument(playlistIdArgument) {
 							type = NavType.IntType
-							defaultValue = startingItem.let { it as? Item }?.playlistId?.id ?: -1
+							defaultValue = -1
 						},
 					)
 				) { entry ->

@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.browsing.items
+package com.lasthopesoftware.bluewater.client.browsing
 
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.client.browsing.files.access.ItemFileProvider
@@ -12,6 +12,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryPro
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.access.RemoveLibraries
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider
+import com.lasthopesoftware.bluewater.client.browsing.navigation.NavigationMessage
 import com.lasthopesoftware.bluewater.client.connection.libraries.SelectedLibraryUrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
@@ -23,10 +24,11 @@ import com.lasthopesoftware.bluewater.permissions.read.ProvideReadPermissionsReq
 import com.lasthopesoftware.bluewater.permissions.write.ProvideWritePermissionsRequirements
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
 import com.lasthopesoftware.bluewater.shared.android.permissions.ManagePermissions
+import com.lasthopesoftware.bluewater.shared.messages.RegisterForTypedMessages
 import com.lasthopesoftware.bluewater.shared.messages.application.ScopedApplicationMessageBus
 import com.lasthopesoftware.resources.strings.StringResources
 
-interface ItemBrowserViewDependencies {
+interface BrowserViewDependencies {
 	val nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel
 	val browserLibraryIdProvider: CachedSelectedLibraryIdProvider
 	val itemProvider: CachedItemProvider
@@ -51,4 +53,5 @@ interface ItemBrowserViewDependencies {
 	val readPermissionsRequirements: ProvideReadPermissionsRequirements
 	val writePermissionsRequirements: ProvideWritePermissionsRequirements
 	val permissionsManager: ManagePermissions
+	val navigationMessages: RegisterForTypedMessages<NavigationMessage>
 }
