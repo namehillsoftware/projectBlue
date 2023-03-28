@@ -12,7 +12,6 @@ import com.lasthopesoftware.bluewater.ActivityApplicationNavigation
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.SelectedPlaybackEngineTypeAccess
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.defaults.DefaultPlaybackEngineLookup
@@ -45,14 +44,13 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 		val intentBuilder = IntentBuilder(this)
 		ServerSettingsLaunchingNavigation(
 			ActivityApplicationNavigation(
-				this,
-				intentBuilder,
-				BrowserLibrarySelection(
-					applicationSettingsRepository,
-					applicationMessageBus,
-					libraryProvider,
-				),
-				getCachedSelectedLibraryIdProvider(),
+                this,
+                intentBuilder,
+                BrowserLibrarySelection(
+                    applicationSettingsRepository,
+                    applicationMessageBus,
+                    libraryProvider,
+                ),
 			),
 			intentBuilder,
 		)

@@ -88,7 +88,6 @@ class EditClientSettingsActivity :
 							applicationMessageBus,
 							libraryProvider,
 						),
-						getCachedSelectedLibraryIdProvider(),
 					),
 					stringResources = StringResources(this),
 				)

@@ -5,7 +5,6 @@ import androidx.activity.ComponentActivity
 import com.lasthopesoftware.bluewater.about.AboutActivity
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectBrowserLibrary
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity
@@ -21,7 +20,6 @@ class ActivityApplicationNavigation(
 	private val componentActivity: ComponentActivity,
 	private val intentBuilder: BuildIntents,
 	private val libraryBrowserSelection: SelectBrowserLibrary,
-	private val selectedLibraryId: ProvideSelectedLibraryId,
 ) : NavigateApplication {
 
 	private val handler by lazy { Handler(componentActivity.mainLooper) }

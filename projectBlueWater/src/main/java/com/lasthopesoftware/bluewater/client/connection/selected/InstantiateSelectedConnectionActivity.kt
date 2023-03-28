@@ -45,14 +45,13 @@ class InstantiateSelectedConnectionActivity : AppCompatActivity(), ControlConnec
 
 	private val applicationNavigation by lazy {
 		ActivityApplicationNavigation(
-			this,
-			IntentBuilder(this),
-			BrowserLibrarySelection(
-				getApplicationSettingsRepository(),
-				ApplicationMessageBus.getApplicationMessageBus(),
-				LibraryRepository(this),
-			),
-			getCachedSelectedLibraryIdProvider(),
+            this,
+            IntentBuilder(this),
+            BrowserLibrarySelection(
+                getApplicationSettingsRepository(),
+                ApplicationMessageBus.getApplicationMessageBus(),
+                LibraryRepository(this),
+            ),
 		)
 	}
 

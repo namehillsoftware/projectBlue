@@ -282,7 +282,6 @@ class BrowserActivity :
 				messageBus,
 				libraryProvider,
 			),
-			browserLibraryIdProvider,
 		)
 	}
 
@@ -322,8 +321,8 @@ class BrowserActivity :
 		super.onCreate(savedInstanceState)
 
 		val libraryIdInt =
-			savedInstanceState?.getInt(libraryIdProperty, -1) ?: intent.getIntExtra(libraryIdProperty, -1)
-		val libraryId = LibraryId(libraryIdInt)
+			savedInstanceState?.getInt(libraryIdProperty) ?: intent?.getIntExtra(libraryIdProperty, -1)?.takeIf { it > -1 }
+		val libraryId = libraryIdInt?.let(::LibraryId)
 
 		setContent {
 			ProjectBlueTheme {
@@ -333,27 +332,16 @@ class BrowserActivity :
 				)
 			}
 		}
+
+		actOnIntent(intent)
 	}
 
 	override fun onNewIntent(intent: Intent?) {
 		super.onNewIntent(intent)
 
-		when (intent?.action) {
-			downloadsAction -> {
-				browserLibraryIdProvider
-					.promiseSelectedLibraryId()
-					.then { l ->
-						if (l != null)
-							navigationMessages.sendMessage(ViewDownloadsMessage(l))
-					}
-			}
-			serverSettingsAction -> {
-				val libraryIdInt =
-					intent.getIntExtra(libraryIdProperty, -1)
-				val libraryId = LibraryId(libraryIdInt)
-				navigationMessages.sendMessage(ViewServerSettingsMessage(libraryId))
-			}
-		}
+		this.intent = intent
+
+		actOnIntent(intent)
 	}
 
 	override fun requestPermissions(permissions: List<String>): Promise<Map<String, Boolean>> {
@@ -390,6 +378,25 @@ class BrowserActivity :
 								.show()
 						}
 					})
+	}
+
+	private fun actOnIntent(intent: Intent?) {
+		when (intent?.action) {
+			downloadsAction -> {
+				browserLibraryIdProvider
+					.promiseSelectedLibraryId()
+					.then { l ->
+						if (l != null)
+							navigationMessages.sendMessage(ViewDownloadsMessage(l))
+					}
+			}
+			serverSettingsAction -> {
+				val libraryIdInt =
+					intent.getIntExtra(libraryIdProperty, -1)
+				val libraryId = LibraryId(libraryIdInt)
+				navigationMessages.sendMessage(ViewServerSettingsMessage(libraryId))
+			}
+		}
 	}
 }
 
