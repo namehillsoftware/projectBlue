@@ -31,7 +31,7 @@ class PlaybackFileStartedScrobblerRegistration(private val context: Context) : R
 		)
 		return PlaybackFileChangedScrobbleDroidProxy(
 			filePropertiesProvider,
-			ScrobbleIntentProvider.getInstance()
+			ScrobbleIntentProvider
 		)
 	}
 

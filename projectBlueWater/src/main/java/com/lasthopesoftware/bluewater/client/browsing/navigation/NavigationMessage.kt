@@ -6,3 +6,5 @@ import com.lasthopesoftware.bluewater.shared.messages.TypedMessage
 interface NavigationMessage : TypedMessage
 
 class ViewDownloadsMessage(val libraryId: LibraryId): NavigationMessage
+
+class ViewServerSettingsMessage(val libraryId: LibraryId): NavigationMessage

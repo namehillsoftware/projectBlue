@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.rendering;
 
-import com.google.android.exoplayer2.Format;
 import com.google.android.exoplayer2.audio.AudioRendererEventListener;
 import com.google.android.exoplayer2.decoder.DecoderCounters;
 
@@ -29,13 +28,6 @@ implements
 			"decoderName=" + decoderName + ", " +
 			"initializedTimestampMs=" + initializedTimestampMs + ", " +
 			"initializationDurationMs=" + initializationDurationMs);
-	}
-
-	@Override
-	public void onAudioInputFormatChanged(Format format) {
-		if (!logger.isDebugEnabled()) return;
-
-		logger.info("Audio format changed.");
 	}
 
 	@Override

@@ -14,8 +14,9 @@ import com.lasthopesoftware.bluewater.client.settings.EditClientSettingsActivity
 class IntentBuilder(private val context: Context) : BuildIntents {
 
 	override fun buildLibrarySettingsIntent(libraryId: LibraryId): Intent {
-		val returnIntent = context.getIntent<EditClientSettingsActivity>()
-		returnIntent.putExtra(EditClientSettingsActivity.serverIdExtra, libraryId.id)
+		val returnIntent = context.getIntent<BrowserActivity>()
+		returnIntent.action = serverSettingsAction
+		returnIntent.putExtra(libraryIdProperty, libraryId.id)
 		return returnIntent
 	}
 

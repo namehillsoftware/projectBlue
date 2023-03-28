@@ -2,8 +2,9 @@ package com.lasthopesoftware.bluewater.client.settings.GivenALibraryId
 
 import android.content.Intent
 import androidx.test.core.app.ApplicationProvider
+import com.lasthopesoftware.bluewater.client.browsing.BrowserActivity
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.settings.EditClientSettingsActivity
+import com.lasthopesoftware.bluewater.client.browsing.libraryIdProperty
 import com.lasthopesoftware.bluewater.shared.android.intents.IntentBuilder
 import org.assertj.core.api.Assertions.*
 import org.junit.Before
@@ -28,7 +29,7 @@ class WhenBuildingTheEditClientSettingsActivityIntent {
     fun thenTheIdInTheIntentIsSetToTheLibraryId() {
         assertThat(
             returnedIntent!!.getIntExtra(
-				EditClientSettingsActivity.serverIdExtra,
+				libraryIdProperty,
                 -1
             )
         ).isEqualTo(13)
@@ -37,6 +38,6 @@ class WhenBuildingTheEditClientSettingsActivityIntent {
     @Test
     fun thenTheReturnedIntentIsEditClientSettingsActivity() {
         assertThat(returnedIntent!!.component!!.className)
-            .isEqualTo(EditClientSettingsActivity::class.java.name)
+            .isEqualTo(BrowserActivity::class.java.name)
     }
 }

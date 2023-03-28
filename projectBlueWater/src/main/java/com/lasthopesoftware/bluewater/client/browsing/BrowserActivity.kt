@@ -70,6 +70,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NavigationMessage
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ViewDownloadsMessage
+import com.lasthopesoftware.bluewater.client.browsing.navigation.ViewServerSettingsMessage
 import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.libraries.SelectedLibraryUrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
@@ -129,6 +130,7 @@ val keyProperty by lazy { magicPropertyBuilder.buildProperty(keyArgument) }
 val itemTitleProperty by lazy { magicPropertyBuilder.buildProperty(titleArgument) }
 val playlistIdProperty by lazy { magicPropertyBuilder.buildProperty(playlistIdArgument) }
 val downloadsAction by lazy { magicPropertyBuilder.buildProperty("downloads") }
+val serverSettingsAction by lazy { magicPropertyBuilder.buildProperty("settings") }
 
 fun Context.startItemBrowserActivity(libraryId: LibraryId, item: IItem) {
 	if (item is Item) startItemBrowserActivity(libraryId, item)
@@ -336,13 +338,21 @@ class BrowserActivity :
 	override fun onNewIntent(intent: Intent?) {
 		super.onNewIntent(intent)
 
-		if (intent?.action == downloadsAction) {
-			browserLibraryIdProvider
-				.promiseSelectedLibraryId()
-				.then { l ->
-					if (l != null)
-						navigationMessages.sendMessage(ViewDownloadsMessage(l))
-				}
+		when (intent?.action) {
+			downloadsAction -> {
+				browserLibraryIdProvider
+					.promiseSelectedLibraryId()
+					.then { l ->
+						if (l != null)
+							navigationMessages.sendMessage(ViewDownloadsMessage(l))
+					}
+			}
+			serverSettingsAction -> {
+				val libraryIdInt =
+					intent.getIntExtra(libraryIdProperty, -1)
+				val libraryId = LibraryId(libraryIdInt)
+				navigationMessages.sendMessage(ViewServerSettingsMessage(libraryId))
+			}
 		}
 	}
 
@@ -446,6 +456,10 @@ private class GraphNavigation(
 	init {
 	    navigationMessages.registerReceiver { message: ViewDownloadsMessage ->
 			viewActiveDownloads(message.libraryId)
+		}
+
+		navigationMessages.registerReceiver { message: ViewServerSettingsMessage ->
+			viewServerSettings(message.libraryId)
 		}
 	}
 

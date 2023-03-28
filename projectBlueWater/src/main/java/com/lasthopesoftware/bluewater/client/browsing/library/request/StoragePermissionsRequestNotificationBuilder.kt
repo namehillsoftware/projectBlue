@@ -28,9 +28,7 @@ class StoragePermissionsRequestNotificationBuilder(
         notificationBuilder.setContentTitle(stringResourceProvider.getString(R.string.permissions_needed))
         notificationBuilder.setContentText(stringResourceProvider.getString(R.string.permissions_needed_launch_settings))
         notificationBuilder.setContentIntent(
-            editServerSettingsPendingIntentBuilder.buildEditServerSettingsPendingIntent(
-                libraryId
-            )
+            editServerSettingsPendingIntentBuilder.buildEditServerSettingsPendingIntent(libraryId)
         )
         notificationBuilder.setAutoCancel(true)
         notificationBuilder.setVisibility(NotificationCompat.VISIBILITY_PUBLIC)

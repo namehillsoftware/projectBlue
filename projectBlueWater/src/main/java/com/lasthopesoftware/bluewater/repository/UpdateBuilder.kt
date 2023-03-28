@@ -1,40 +1,31 @@
-package com.lasthopesoftware.bluewater.repository;
+package com.lasthopesoftware.bluewater.repository
 
-import java.util.ArrayList;
+class UpdateBuilder private constructor(tableName: String) {
+    private val sqlStringBuilder = StringBuilder("UPDATE $tableName SET ")
+    private val setters = ArrayList<String>()
+    private var filter = ""
 
-/**
- * Created by david on 12/14/15.
- */
-public class UpdateBuilder {
-	private final StringBuilder sqlStringBuilder;
-	private final ArrayList<String> setters = new ArrayList<>();
-	private String filter = "";
+    fun addSetter(columnName: String): UpdateBuilder {
+        setters.add(columnName)
+        return this
+    }
 
-	public static UpdateBuilder fromTable(String tableName) {
-		return new UpdateBuilder(tableName);
-	}
+    fun setFilter(filter: String): UpdateBuilder {
+        this.filter = filter
+        return this
+    }
 
-	private UpdateBuilder(String tableName) {
-		sqlStringBuilder = new StringBuilder("UPDATE " + tableName + " SET ");
-	}
+    fun buildQuery(): String {
+        for (setter in setters) {
+            sqlStringBuilder.append(setter).append(" = @").append(setter)
+            if (setter !== setters[setters.size - 1]) sqlStringBuilder.append(", ")
+        }
+        return sqlStringBuilder.append(' ').append(filter).toString()
+    }
 
-	public UpdateBuilder addSetter(String columnName) {
-		setters.add(columnName);
-		return this;
-	}
-
-	public UpdateBuilder setFilter(String filter) {
-		this.filter = filter;
-		return this;
-	}
-
-	public String buildQuery() {
-		for (String setter : setters) {
-			sqlStringBuilder.append(setter).append(" = @").append(setter);
-			if (setter != setters.get(setters.size()  - 1))
-				sqlStringBuilder.append(", ");
-		}
-
-		return sqlStringBuilder.append(' ').append(filter).toString();
-	}
+    companion object {
+        fun fromTable(tableName: String): UpdateBuilder {
+            return UpdateBuilder(tableName)
+        }
+    }
 }
