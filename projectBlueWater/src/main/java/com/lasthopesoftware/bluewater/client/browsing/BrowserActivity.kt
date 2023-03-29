@@ -535,6 +535,315 @@ private class GraphDependencies(inner: BrowserViewDependencies, graphNavigation:
 
 private val bottomAppBarHeight = Dimensions.AppBarHeight
 
+@OptIn(ExperimentalMaterialApi::class)
+private fun NavGraphBuilder.libraryRoutes(
+	itemBrowserViewDependencies: BrowserViewDependencies,
+	scaffoldState: BottomSheetScaffoldState,
+	coroutineScope: CoroutineScope,
+	startingLibraryId: LibraryId? = null,
+) {
+	with(itemBrowserViewDependencies) {
+		composable(
+			GraphNavigation.Library.route,
+			arguments = listOf(
+				navArgument(libraryIdArgument) {
+					type = NavType.IntType
+					defaultValue = startingLibraryId?.id ?: -1
+				},
+			)
+		) { entry ->
+			val libraryId = entry.arguments?.getInt(libraryIdArgument)?.let(::LibraryId) ?: return@composable
+			BottomSheetScaffold(
+				scaffoldState = scaffoldState,
+				sheetPeekHeight = bottomAppBarHeight,
+				sheetElevation = 16.dp,
+				sheetContent = {
+					LibraryMenu(
+						applicationNavigation = applicationNavigation,
+						nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
+						playbackServiceController = playbackServiceController,
+						bottomSheetState = scaffoldState.bottomSheetState,
+						libraryId = libraryId,
+					)
+				}
+			) { paddingValues ->
+				Box(modifier = Modifier.padding(paddingValues)) {
+					navigation(
+						route = GraphNavigation.Library.route,
+						startDestination = ""
+					) {
+						composable(
+							GraphNavigation.Library.route,
+							arguments = listOf(
+								navArgument(libraryIdArgument) {
+									type = NavType.IntType
+									defaultValue = libraryId.id
+								},
+							)
+						) { entry ->
+							val view = browsableItemListView(
+								connectionViewModel = entry.viewModelStore.buildViewModel {
+									ConnectionStatusViewModel(
+										stringResources,
+										ConnectionInitializationErrorController(
+											ConnectionInitializationProxy(libraryConnectionProvider),
+											applicationNavigation,
+										),
+									)
+								},
+								itemListViewModel = entry.viewModelStore.buildViewModel {
+									ItemListViewModel(
+										itemProvider,
+										messageBus,
+										libraryProvider,
+										storedItemAccess,
+										itemListProvider,
+										playbackServiceController,
+										applicationNavigation,
+										menuMessageBus,
+									)
+								},
+								fileListViewModel = entry.viewModelStore.buildViewModel {
+									FileListViewModel(
+										itemFileProvider,
+										storedItemAccess,
+										playbackServiceController,
+									)
+								},
+								nowPlayingViewModel = nowPlayingFilePropertiesViewModel,
+								itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
+								reusablePlaylistFileItemViewModelProvider = entry.viewModelStore.buildViewModel {
+									ReusablePlaylistFileItemViewModelProvider(
+										scopedFilePropertiesProvider,
+										scopedUrlKeyProvider,
+										stringResources,
+										playbackServiceController,
+										applicationNavigation,
+										menuMessageBus,
+										messageBus,
+									)
+								},
+								applicationNavigation = applicationNavigation,
+							)
+
+							BackHandler { applicationNavigation.backOut() }
+
+							view(libraryId, null)
+						}
+
+						composable(
+							GraphNavigation.BrowseToItem.route,
+							arguments = listOf(
+								navArgument(libraryIdArgument) {
+									type = NavType.IntType
+									defaultValue = libraryId.id
+								},
+								navArgument(keyArgument) {
+									type = NavType.IntType
+									defaultValue = -1
+								},
+								navArgument(titleArgument) {
+									type = NavType.StringType
+									nullable = true
+									defaultValue = null
+								},
+								navArgument(playlistIdArgument) {
+									type = NavType.IntType
+									defaultValue = -1
+								},
+							)
+						) { entry ->
+							val arguments = entry.arguments ?: return@composable
+							val itemKey = arguments.getInt(keyArgument)
+							val playlistId = arguments.getInt(playlistIdArgument)
+							val item = if (playlistId > -1) {
+								Item(
+									itemKey,
+									arguments.getString(titleArgument),
+									PlaylistId(playlistId),
+								)
+							} else {
+								Item(
+									itemKey,
+									arguments.getString(titleArgument)
+								)
+							}
+
+							val view = browsableItemListView(
+								connectionViewModel = entry.viewModelStore.buildViewModel {
+									ConnectionStatusViewModel(
+										stringResources,
+										ConnectionInitializationErrorController(
+											ConnectionInitializationProxy(libraryConnectionProvider),
+											applicationNavigation,
+										),
+									)
+								},
+								itemListViewModel = entry.viewModelStore.buildViewModel {
+									ItemListViewModel(
+										itemProvider,
+										messageBus,
+										libraryProvider,
+										storedItemAccess,
+										itemListProvider,
+										playbackServiceController,
+										applicationNavigation,
+										menuMessageBus,
+									)
+								},
+								fileListViewModel = entry.viewModelStore.buildViewModel {
+									FileListViewModel(
+										itemFileProvider,
+										storedItemAccess,
+										playbackServiceController,
+									)
+								},
+								nowPlayingViewModel = nowPlayingFilePropertiesViewModel,
+								itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
+								reusablePlaylistFileItemViewModelProvider = entry.viewModelStore.buildViewModel {
+									ReusablePlaylistFileItemViewModelProvider(
+										scopedFilePropertiesProvider,
+										scopedUrlKeyProvider,
+										stringResources,
+										playbackServiceController,
+										applicationNavigation,
+										menuMessageBus,
+										messageBus,
+									)
+								},
+								applicationNavigation = applicationNavigation,
+							)
+
+							BackHandler { applicationNavigation.backOut() }
+
+							view(libraryId, item)
+						}
+
+						composable(
+							GraphNavigation.Downloads.route,
+							arguments = listOf(
+								navArgument(libraryIdArgument) {
+									type = NavType.IntType
+									defaultValue = libraryId.id
+								},
+							)
+						) { entry ->
+							BackHandler { applicationNavigation.backOut() }
+
+							val activeFileDownloadsViewModel = entry.viewModelStore.buildViewModel {
+								ActiveFileDownloadsViewModel(
+									storedFileAccess,
+									messageBus,
+									syncScheduler,
+								)
+							}
+
+							ActiveFileDownloadsView(
+								activeFileDownloadsViewModel = activeFileDownloadsViewModel,
+								trackHeadlineViewModelProvider =
+								entry.viewModelStore.buildViewModel {
+									ReusableFileItemViewModelProvider(
+										scopedFilePropertiesProvider,
+										scopedUrlKeyProvider,
+										stringResources,
+										messageBus,
+									)
+								},
+								onBack = applicationNavigation::backOut
+							)
+
+							activeFileDownloadsViewModel.loadActiveDownloads(libraryId)
+						}
+
+						composable(
+							GraphNavigation.Search.nestedRoute,
+							arguments = listOf(
+								navArgument(libraryIdArgument) {
+									type = NavType.IntType
+									defaultValue = libraryId.id
+								},
+							)
+						) { entry ->
+
+							BackHandler { applicationNavigation.backOut() }
+
+							val searchFilesViewModel = entry.viewModelStore.buildViewModel {
+								SearchFilesViewModel(
+									libraryFilesProvider,
+									playbackServiceController,
+								)
+							}
+
+							searchFilesViewModel.setActiveLibraryId(libraryId)
+
+							SearchFilesView(
+								searchFilesViewModel = searchFilesViewModel,
+								nowPlayingViewModel = nowPlayingFilePropertiesViewModel,
+								trackHeadlineViewModelProvider = entry.viewModelStore.buildViewModel {
+									ReusablePlaylistFileItemViewModelProvider(
+										scopedFilePropertiesProvider,
+										scopedUrlKeyProvider,
+										stringResources,
+										playbackServiceController,
+										applicationNavigation,
+										menuMessageBus,
+										messageBus,
+									)
+								},
+								itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
+								onBack = applicationNavigation::backOut,
+							)
+						}
+
+						composable(
+							GraphNavigation.Settings.route,
+							arguments = listOf(
+								navArgument(libraryIdArgument) {
+									type = NavType.IntType
+									defaultValue = libraryId.id
+								},
+							)
+						) { entry ->
+							BackHandler { applicationNavigation.backOut() }
+
+							val viewModel = entry.viewModelStore.buildViewModel {
+								LibrarySettingsViewModel(
+									libraryProvider = libraryProvider,
+									libraryStorage = libraryStorage,
+									libraryRemoval = libraryRemoval,
+									applicationReadPermissionsRequirementsProvider = readPermissionsRequirements,
+									applicationWritePermissionsRequirementsProvider = writePermissionsRequirements,
+									permissionsManager = permissionsManager,
+								)
+							}
+
+							LibrarySettingsView(
+								librarySettingsViewModel = viewModel,
+								navigateApplication = applicationNavigation,
+								stringResources = stringResources
+							)
+
+							viewModel.loadLibrary(libraryId)
+
+							DisposableEffect(key1 = Unit) {
+								val registration =
+									messageBus.registerReceiver(coroutineScope) { m: ObservableConnectionSettingsLibraryStorage.ConnectionSettingsUpdated ->
+										if (libraryId == m.libraryId)
+											applicationNavigation.viewLibrary(libraryId)
+									}
+
+								onDispose {
+									registration.close()
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
+
 @Composable
 @OptIn(ExperimentalMaterialApi::class)
 private fun ItemBrowserView(
@@ -561,304 +870,23 @@ private fun ItemBrowserView(
 		)
 	}
 
-	with(remember {
+	val graphDependencies = remember {
 		GraphDependencies(
 			browserViewDependencies,
 			graphNavigation,
 		)
-	}) {
-		BottomSheetScaffold(
-			scaffoldState = scaffoldState,
-			sheetPeekHeight = bottomAppBarHeight,
-			sheetElevation = 16.dp,
-			sheetContent = {
-				if (startingLibraryId != null) {
-					LibraryMenu(
-						applicationNavigation = graphNavigation,
-						nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
-						playbackServiceController = playbackServiceController,
-						bottomSheetState = bottomSheetState,
-						libraryId = startingLibraryId,
-					)
-				}
-			}
-		) { paddingValues ->
-			NavHost(
-				navController,
-				modifier = Modifier.padding(paddingValues).fillMaxSize(),
-				startDestination = GraphNavigation.Library.route,
-			) {
-				composable(
-					GraphNavigation.Library.route,
-					arguments = listOf(
-						navArgument(libraryIdArgument) {
-							type = NavType.IntType
-							defaultValue = startingLibraryId?.id ?: -1
-						},
-					)
-				) { entry ->
-					val libraryId = entry.arguments?.getInt(libraryIdArgument)?.let(::LibraryId) ?: startingLibraryId ?: return@composable
+	}
 
-					val view = browsableItemListView(
-						connectionViewModel = entry.viewModelStore.buildViewModel {
-							ConnectionStatusViewModel(
-								stringResources,
-								ConnectionInitializationErrorController(
-									ConnectionInitializationProxy(libraryConnectionProvider),
-									applicationNavigation,
-								),
-							)
-						},
-						itemListViewModel = entry.viewModelStore.buildViewModel {
-							ItemListViewModel(
-								itemProvider,
-								messageBus,
-								libraryProvider,
-								storedItemAccess,
-								itemListProvider,
-								playbackServiceController,
-								applicationNavigation,
-								menuMessageBus,
-							)
-						},
-						fileListViewModel = entry.viewModelStore.buildViewModel {
-							FileListViewModel(
-								itemFileProvider,
-								storedItemAccess,
-								playbackServiceController,
-							)
-						},
-						nowPlayingViewModel = nowPlayingFilePropertiesViewModel,
-						itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
-						reusablePlaylistFileItemViewModelProvider = entry.viewModelStore.buildViewModel {
-							ReusablePlaylistFileItemViewModelProvider(
-								scopedFilePropertiesProvider,
-								scopedUrlKeyProvider,
-								stringResources,
-								playbackServiceController,
-								applicationNavigation,
-								menuMessageBus,
-								messageBus,
-							)
-						},
-						applicationNavigation = applicationNavigation,
-					)
-
-					BackHandler { graphNavigation.backOut() }
-
-					view(libraryId, null)
-				}
-
-				composable(
-					GraphNavigation.BrowseToItem.route,
-					arguments = listOf(
-						navArgument(libraryIdArgument) {
-							type = NavType.IntType
-							defaultValue = startingLibraryId?.id ?: -1
-						},
-						navArgument(keyArgument) {
-							type = NavType.IntType
-							defaultValue = -1
-						},
-						navArgument(titleArgument) {
-							type = NavType.StringType
-							nullable = true
-							defaultValue = null
-						},
-						navArgument(playlistIdArgument) {
-							type = NavType.IntType
-							defaultValue = -1
-						},
-					)
-				) { entry ->
-					val arguments = entry.arguments ?: return@composable
-					val libraryId = LibraryId(arguments.getInt(libraryIdArgument))
-					val itemKey = arguments.getInt(keyArgument)
-					val playlistId = arguments.getInt(playlistIdArgument)
-					val item = if (playlistId > -1) {
-						Item(
-							itemKey,
-							arguments.getString(titleArgument),
-							PlaylistId(playlistId),
-						)
-					} else {
-						Item(
-							itemKey,
-							arguments.getString(titleArgument)
-						)
-					}
-
-					val view = browsableItemListView(
-						connectionViewModel = entry.viewModelStore.buildViewModel {
-							ConnectionStatusViewModel(
-								stringResources,
-								ConnectionInitializationErrorController(
-									ConnectionInitializationProxy(libraryConnectionProvider),
-									applicationNavigation,
-								),
-							)
-						},
-						itemListViewModel = entry.viewModelStore.buildViewModel {
-							ItemListViewModel(
-								itemProvider,
-								messageBus,
-								libraryProvider,
-								storedItemAccess,
-								itemListProvider,
-								playbackServiceController,
-								applicationNavigation,
-								menuMessageBus,
-							)
-						},
-						fileListViewModel = entry.viewModelStore.buildViewModel {
-							FileListViewModel(
-								itemFileProvider,
-								storedItemAccess,
-								playbackServiceController,
-							)
-						},
-						nowPlayingViewModel = nowPlayingFilePropertiesViewModel,
-						itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
-						reusablePlaylistFileItemViewModelProvider = entry.viewModelStore.buildViewModel {
-							ReusablePlaylistFileItemViewModelProvider(
-								scopedFilePropertiesProvider,
-								scopedUrlKeyProvider,
-								stringResources,
-								playbackServiceController,
-								applicationNavigation,
-								menuMessageBus,
-								messageBus,
-							)
-						},
-						applicationNavigation = applicationNavigation,
-					)
-
-					BackHandler { graphNavigation.backOut() }
-
-					view(libraryId, item)
-				}
-
-				composable(
-					GraphNavigation.Downloads.route,
-					arguments = listOf(
-						navArgument(libraryIdArgument) {
-							type = NavType.IntType
-							defaultValue = startingLibraryId?.id ?: -1
-						},
-					)
-				) { entry ->
-					val libraryId = entry.arguments?.getInt(libraryIdArgument)?.let(::LibraryId) ?: startingLibraryId ?: return@composable
-					BackHandler { graphNavigation.backOut() }
-
-					val activeFileDownloadsViewModel = entry.viewModelStore.buildViewModel {
-						ActiveFileDownloadsViewModel(
-							storedFileAccess,
-							messageBus,
-							syncScheduler,
-						)
-					}
-
-					ActiveFileDownloadsView(
-						activeFileDownloadsViewModel = activeFileDownloadsViewModel,
-						trackHeadlineViewModelProvider =
-						entry.viewModelStore.buildViewModel {
-							ReusableFileItemViewModelProvider(
-								scopedFilePropertiesProvider,
-								scopedUrlKeyProvider,
-								stringResources,
-								messageBus,
-							)
-						},
-						onBack = applicationNavigation::backOut
-					)
-
-					activeFileDownloadsViewModel.loadActiveDownloads(libraryId)
-				}
-
-				composable(
-					GraphNavigation.Search.route,
-					arguments = listOf(
-						navArgument(libraryIdArgument) {
-							type = NavType.IntType
-							defaultValue = startingLibraryId?.id ?: -1
-						},
-					)
-				) { entry ->
-					val libraryId = entry.arguments?.getInt(libraryIdArgument)?.let(::LibraryId) ?: startingLibraryId ?: return@composable
-
-					BackHandler { graphNavigation.backOut() }
-
-					val searchFilesViewModel = entry.viewModelStore.buildViewModel {
-						SearchFilesViewModel(
-							libraryFilesProvider,
-							playbackServiceController,
-						)
-					}
-
-					searchFilesViewModel.setActiveLibraryId(libraryId)
-
-					SearchFilesView(
-						searchFilesViewModel = searchFilesViewModel,
-						nowPlayingViewModel = nowPlayingFilePropertiesViewModel,
-						trackHeadlineViewModelProvider = entry.viewModelStore.buildViewModel {
-							ReusablePlaylistFileItemViewModelProvider(
-								scopedFilePropertiesProvider,
-								scopedUrlKeyProvider,
-								stringResources,
-								playbackServiceController,
-								applicationNavigation,
-								menuMessageBus,
-								messageBus,
-							)
-						},
-						itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
-						onBack = applicationNavigation::backOut,
-					)
-				}
-
-				composable(
-					GraphNavigation.Settings.route,
-					arguments = listOf(
-						navArgument(libraryIdArgument) {
-							type = NavType.IntType
-							defaultValue = startingLibraryId?.id ?: -1
-						},
-					)
-				) { entry ->
-					val libraryId = entry.arguments?.getInt(libraryIdArgument)?.let(::LibraryId) ?: startingLibraryId ?: return@composable
-					BackHandler { graphNavigation.backOut() }
-
-					val viewModel = entry.viewModelStore.buildViewModel {
-						LibrarySettingsViewModel(
-							libraryProvider = libraryProvider,
-							libraryStorage = libraryStorage,
-							libraryRemoval = libraryRemoval,
-							applicationReadPermissionsRequirementsProvider = readPermissionsRequirements,
-							applicationWritePermissionsRequirementsProvider = writePermissionsRequirements,
-							permissionsManager = permissionsManager,
-						)
-					}
-
-					LibrarySettingsView(
-						librarySettingsViewModel = viewModel,
-						navigateApplication = graphNavigation,
-						stringResources = stringResources
-					)
-
-					viewModel.loadLibrary(libraryId)
-
-					DisposableEffect(key1 = Unit) {
-						val registration = messageBus.registerReceiver(coroutineScope) { m: ObservableConnectionSettingsLibraryStorage.ConnectionSettingsUpdated ->
-							if (libraryId == m.libraryId)
-								graphNavigation.viewLibrary(libraryId)
-						}
-
-						onDispose {
-							registration.close()
-						}
-					}
-				}
-			}
-		}
+	NavHost(
+		navController,
+		modifier = Modifier.fillMaxSize(),
+		startDestination = GraphNavigation.Library.route,
+	) {
+		libraryRoutes(
+			graphDependencies,
+			scaffoldState,
+			coroutineScope,
+			startingLibraryId,
+		)
 	}
 }
