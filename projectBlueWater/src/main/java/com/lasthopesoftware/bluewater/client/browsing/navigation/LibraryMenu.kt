@@ -50,19 +50,18 @@ fun LibraryMenu(
                     .weight(1f)
                     .padding(end = 16.dp)
 			) {
-				var progress by remember { mutableStateOf(0f) }
-				DisposableEffect(key1 = bottomSheetState.requireOffset()) {
-					val bottomSheetProgress = bottomSheetState.progress
-					val currentState = bottomSheetState.currentValue
-					progress = when {
-						currentState == BottomSheetValue.Collapsed && bottomSheetProgress == 1f -> 0f
-						currentState == BottomSheetValue.Collapsed -> bottomSheetProgress
-						currentState == BottomSheetValue.Expanded && bottomSheetProgress == 1f -> 1f
-						currentState == BottomSheetValue.Expanded -> 1 - bottomSheetProgress
-						else -> 0f
+				val progress by remember {
+					derivedStateOf {
+						val bottomSheetProgress = bottomSheetState.progress
+						val currentState = bottomSheetState.currentValue
+						when {
+							currentState == BottomSheetValue.Collapsed && bottomSheetProgress == 1f -> 0f
+							currentState == BottomSheetValue.Collapsed -> bottomSheetProgress
+							currentState == BottomSheetValue.Expanded && bottomSheetProgress == 1f -> 1f
+							currentState == BottomSheetValue.Expanded -> 1 - bottomSheetProgress
+							else -> 0f
+						}
 					}
-
-					onDispose { }
 				}
 
 				val coroutineScope = rememberCoroutineScope()
