@@ -51,15 +51,14 @@ fun LibraryMenu(
                     .padding(end = 16.dp)
 			) {
 				var progress by remember { mutableStateOf(0f) }
-				DisposableEffect(key1 = bottomSheetState.offset.value) {
+				DisposableEffect(key1 = bottomSheetState.requireOffset()) {
 					val bottomSheetProgress = bottomSheetState.progress
-					val fraction = bottomSheetProgress.fraction
-					val currentState = bottomSheetProgress.from
+					val currentState = bottomSheetState.currentValue
 					progress = when {
-						currentState == BottomSheetValue.Collapsed && fraction == 1f -> 0f
-						currentState == BottomSheetValue.Collapsed -> fraction
-						currentState == BottomSheetValue.Expanded && fraction == 1f -> 1f
-						currentState == BottomSheetValue.Expanded -> 1 - fraction
+						currentState == BottomSheetValue.Collapsed && bottomSheetProgress == 1f -> 0f
+						currentState == BottomSheetValue.Collapsed -> bottomSheetProgress
+						currentState == BottomSheetValue.Expanded && bottomSheetProgress == 1f -> 1f
+						currentState == BottomSheetValue.Expanded -> 1 - bottomSheetProgress
 						else -> 0f
 					}
 

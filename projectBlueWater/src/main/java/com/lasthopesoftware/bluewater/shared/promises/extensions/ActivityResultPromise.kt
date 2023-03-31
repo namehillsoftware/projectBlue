@@ -16,7 +16,7 @@ class ActivityResultPromise(activity: ComponentActivity, intent: Intent) : Promi
 		launcher.launch(intent)
 	}
 
-	override fun onActivityResult(result: ActivityResult?) {
+	override fun onActivityResult(result: ActivityResult) {
 		resolve(result)
 	}
 }

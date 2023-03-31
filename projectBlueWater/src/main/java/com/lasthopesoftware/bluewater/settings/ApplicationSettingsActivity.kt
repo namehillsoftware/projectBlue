@@ -36,7 +36,7 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 	private val selectedPlaybackEngineTypeAccess by lazy {
 		SelectedPlaybackEngineTypeAccess(
 			applicationSettingsRepository,
-			DefaultPlaybackEngineLookup()
+			DefaultPlaybackEngineLookup
 		)
 	}
 	private val libraryProvider by lazy { LibraryRepository(this) }
@@ -117,7 +117,7 @@ class ApplicationSettingsActivity : AppCompatActivity() {
 			launcher.launch(intentBuilder.buildLibrarySettingsIntent(libraryId))
 		}
 
-		override fun onActivityResult(result: ActivityResult?) {
+		override fun onActivityResult(result: ActivityResult) {
 			viewModel.loadSettings()
 		}
 

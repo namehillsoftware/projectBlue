@@ -15,6 +15,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.Cac
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NavigationMessage
 import com.lasthopesoftware.bluewater.client.connection.libraries.SelectedLibraryUrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
+import com.lasthopesoftware.bluewater.client.playback.engine.selection.LookupSelectedPlaybackEngineType
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.client.stored.library.items.StateChangeBroadcastingStoredItemAccess
@@ -22,6 +23,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFi
 import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
 import com.lasthopesoftware.bluewater.permissions.read.ProvideReadPermissionsRequirements
 import com.lasthopesoftware.bluewater.permissions.write.ProvideWritePermissionsRequirements
+import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
 import com.lasthopesoftware.bluewater.shared.android.permissions.ManagePermissions
 import com.lasthopesoftware.bluewater.shared.messages.RegisterForTypedMessages
@@ -54,4 +56,6 @@ interface BrowserViewDependencies {
 	val writePermissionsRequirements: ProvideWritePermissionsRequirements
 	val permissionsManager: ManagePermissions
 	val navigationMessages: RegisterForTypedMessages<NavigationMessage>
+	val applicationSettingsRepository: HoldApplicationSettings
+	val selectedPlaybackEngineTypeAccess: LookupSelectedPlaybackEngineType
 }

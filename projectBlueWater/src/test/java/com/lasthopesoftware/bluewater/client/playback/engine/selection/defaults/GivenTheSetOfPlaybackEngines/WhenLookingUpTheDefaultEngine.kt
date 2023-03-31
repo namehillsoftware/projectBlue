@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test
 
 class WhenLookingUpTheDefaultEngine {
 	private val playbackEngineType by lazy {
-		DefaultPlaybackEngineLookup().promiseDefaultEngineType().toExpiringFuture().get()
+		DefaultPlaybackEngineLookup.promiseDefaultEngineType().toExpiringFuture().get()
 	}
 
 	@Test
