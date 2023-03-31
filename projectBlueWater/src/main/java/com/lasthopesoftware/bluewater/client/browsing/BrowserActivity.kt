@@ -634,13 +634,9 @@ private fun LibraryRoutes(
 							applicationNavigation = applicationNavigation,
 						)
 
-						BackHandler { applicationNavigation.backOut() }
-
 						view(screen.libraryId, screen.item)
 					}
 					is DownloadsScreen -> {
-						BackHandler { applicationNavigation.backOut() }
-
 						val activeFileDownloadsViewModel = viewModel {
 							ActiveFileDownloadsViewModel(
 								storedFileAccess,
@@ -665,8 +661,6 @@ private fun LibraryRoutes(
 						activeFileDownloadsViewModel.loadActiveDownloads(screen.libraryId)
 					}
 					is SearchScreen -> {
-						BackHandler { applicationNavigation.backOut() }
-
 						val searchFilesViewModel = viewModel {
 							SearchFilesViewModel(
 								libraryFilesProvider,
@@ -695,8 +689,6 @@ private fun LibraryRoutes(
 						)
 					}
 					is ConnectionSettingsScreen -> {
-						BackHandler { applicationNavigation.backOut() }
-
 						val viewModel = viewModel {
 							LibrarySettingsViewModel(
 								libraryProvider = libraryProvider,
