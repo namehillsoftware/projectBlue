@@ -2,14 +2,14 @@ package com.lasthopesoftware.bluewater.shared.android.intents
 
 import android.content.Context
 import android.content.Intent
-import com.lasthopesoftware.bluewater.client.browsing.*
+import com.lasthopesoftware.bluewater.client.browsing.BrowserActivity
+import com.lasthopesoftware.bluewater.client.browsing.downloadsAction
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsActivity
-import com.lasthopesoftware.bluewater.client.browsing.items.IItem
-import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.browsing.libraryIdProperty
+import com.lasthopesoftware.bluewater.client.browsing.serverSettingsAction
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.NowPlayingActivity
-import com.lasthopesoftware.bluewater.client.settings.EditClientSettingsActivity
 
 class IntentBuilder(private val context: Context) : BuildIntents {
 
@@ -17,12 +17,6 @@ class IntentBuilder(private val context: Context) : BuildIntents {
 		val returnIntent = context.getIntent<BrowserActivity>()
 		returnIntent.action = serverSettingsAction
 		returnIntent.putExtra(libraryIdProperty, libraryId.id)
-		return returnIntent
-	}
-
-	override fun buildNewLibraryIntent(): Intent {
-		val returnIntent = context.getIntent<EditClientSettingsActivity>()
-		returnIntent.putExtra(EditClientSettingsActivity.serverIdExtra, -1)
 		return returnIntent
 	}
 
@@ -40,21 +34,5 @@ class IntentBuilder(private val context: Context) : BuildIntents {
 	override fun buildShowDownloadsIntent(): Intent =
 		context.getIntent<BrowserActivity>().apply {
 			action = downloadsAction
-		}
-
-	override fun buildItemBrowserIntent(libraryId: LibraryId): Intent =
-		context.getIntent<BrowserActivity>().apply {
-			putExtra(libraryIdProperty, libraryId.id)
-		}
-
-	override fun buildItemBrowserIntent(libraryId: LibraryId, item: Item): Intent =
-		buildItemBrowserIntent(libraryId, item).apply {
-			item.playlistId?.also { putExtra(playlistIdProperty, it.id) }
-		}
-
-	override fun buildItemBrowserIntent(libraryId: LibraryId, item: IItem): Intent =
-		buildItemBrowserIntent(libraryId).apply {
-			putExtra(keyProperty, item.key)
-			putExtra(itemTitleProperty, item.value)
 		}
 }

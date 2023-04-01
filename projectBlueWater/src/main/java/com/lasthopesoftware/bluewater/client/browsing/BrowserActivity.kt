@@ -2,11 +2,7 @@
 
 package com.lasthopesoftware.bluewater.client.browsing
 
-import ItemBrowsingArguments.keyArgument
 import ItemBrowsingArguments.libraryIdArgument
-import ItemBrowsingArguments.playlistIdArgument
-import ItemBrowsingArguments.titleArgument
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
@@ -27,6 +23,7 @@ import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.lasthopesoftware.bluewater.ActivityApplicationNavigation
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
+import com.lasthopesoftware.bluewater.about.AboutView
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.ItemFileProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.LibraryFileProvider
@@ -49,6 +46,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.h
 import com.lasthopesoftware.bluewater.client.browsing.library.access.*
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectBrowserLibrary
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.browsing.navigation.LibraryMenu
@@ -82,16 +80,18 @@ import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermission
 import com.lasthopesoftware.bluewater.permissions.write.ApplicationWritePermissionsRequirementsProvider
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsView
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsViewModel
+import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsView
+import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsViewModel
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.intents.IntentBuilder
-import com.lasthopesoftware.bluewater.shared.android.intents.getIntent
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
 import com.lasthopesoftware.bluewater.shared.android.permissions.ManagePermissions
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 import com.lasthopesoftware.bluewater.shared.cls
+import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.messages.RegisterForTypedMessages
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
@@ -112,37 +112,12 @@ import kotlinx.coroutines.launch
 import kotlinx.parcelize.Parcelize
 import java.util.concurrent.ConcurrentHashMap
 
+private val logger by lazyLogger<BrowserActivity>()
 private val magicPropertyBuilder by lazy { MagicPropertyBuilder(cls<BrowserActivity>()) }
 
 val libraryIdProperty by lazy { magicPropertyBuilder.buildProperty(libraryIdArgument) }
-val keyProperty by lazy { magicPropertyBuilder.buildProperty(keyArgument) }
-val itemTitleProperty by lazy { magicPropertyBuilder.buildProperty(titleArgument) }
-val playlistIdProperty by lazy { magicPropertyBuilder.buildProperty(playlistIdArgument) }
 val downloadsAction by lazy { magicPropertyBuilder.buildProperty("downloads") }
 val serverSettingsAction by lazy { magicPropertyBuilder.buildProperty("settings") }
-
-fun Context.startItemBrowserActivity(libraryId: LibraryId, item: IItem) {
-	if (item is Item) startItemBrowserActivity(libraryId, item)
-	else startActivity(getItemBrowserIntent(this, libraryId, item))
-}
-
-fun Context.startItemBrowserActivity(libraryId: LibraryId, item: Item) {
-	val fileListIntent = getItemBrowserIntent(this, libraryId, item).apply {
-		item.playlistId?.also { putExtra(playlistIdProperty, it.id) }
-	}
-	startActivity(fileListIntent)
-}
-
-private fun getItemBrowserIntent(context: Context, libraryId: LibraryId, item: IItem) =
-	getItemBrowserIntent(context, libraryId).apply {
-		putExtra(keyProperty, item.key)
-		putExtra(itemTitleProperty, item.value)
-	}
-
-private fun getItemBrowserIntent(context: Context, libraryId: LibraryId) =
-	context.getIntent<BrowserActivity>().apply {
-		putExtra(libraryIdProperty, libraryId.id)
-	}
 
 class BrowserActivity :
 	AppCompatActivity(),
@@ -150,9 +125,6 @@ class BrowserActivity :
 	ActivityCompat.OnRequestPermissionsResultCallback,
 	ManagePermissions
 {
-
-	private val rateLimiter by lazy { PromisingRateLimiter<Map<String, String>>(1) }
-
 	private val viewModelScope by buildViewModelLazily { ViewModelCloseableManager() }
 
 	private val libraryFileStringListProvider by lazy { LibraryFileStringListProvider(libraryConnectionProvider) }
@@ -167,7 +139,7 @@ class BrowserActivity :
 					revisionProvider,
 					FilePropertyCache,
 				),
-				rateLimiter,
+				PromisingRateLimiter(1),
 			),
 		)
 	}
@@ -310,22 +282,34 @@ class BrowserActivity :
 			DefaultPlaybackEngineLookup
 		)
 	}
+	override val libraryBrowserSelection by lazy {
+		BrowserLibrarySelection(
+			applicationSettingsRepository,
+			messageBus,
+			libraryProvider,
+		)
+	}
 
 	private val permissionsRequests = ConcurrentHashMap<Int, Messenger<Map<String, Boolean>>>()
 
 	public override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
-		val libraryIdInt =
-			savedInstanceState?.getInt(libraryIdProperty) ?: intent?.getIntExtra(libraryIdProperty, -1)?.takeIf { it > -1 }
-		val libraryId = libraryIdInt?.let(::LibraryId)
+		// Ensure that this task is only started when it's the task root. A workaround for an Android bug.
+		// See http://stackoverflow.com/a/7748416
+		val intent = intent
+		if (Intent.ACTION_MAIN == intent.action && intent.hasCategory(Intent.CATEGORY_LAUNCHER)) {
+			if (!isTaskRoot) {
+				val className = javaClass.name
+				logger.info("$className is not the root.  Finishing $className instead of launching.")
+				finish()
+				return
+			}
+		}
 
 		setContent {
 			ProjectBlueTheme {
-				ItemBrowserView(
-					this,
-					libraryId,
-				)
+				BrowserView(this)
 			}
 
 			actOnIntent(intent)
@@ -401,6 +385,15 @@ private sealed interface Destination : Parcelable
 @Parcelize
 private object ApplicationSettingsScreen : Destination
 
+@Parcelize
+private object AboutScreen : Destination
+
+@Parcelize
+private object NewConnectionSettingsScreen : Destination
+
+@Parcelize
+private object HiddenSettingsScreen : Destination
+
 private sealed interface LibraryDestination : Destination {
 	val libraryId: LibraryId
 }
@@ -427,7 +420,8 @@ private class GraphNavigation(
 	private val bottomSheetState: BottomSheetState,
 	private val coroutineScope: CoroutineScope,
 	private val itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
-	navigationMessages: RegisterForTypedMessages<NavigationMessage>
+	navigationMessages: RegisterForTypedMessages<NavigationMessage>,
+	private val libraryBrowserSelection: SelectBrowserLibrary,
 ) : NavigateApplication by inner {
 
 	init {
@@ -440,16 +434,28 @@ private class GraphNavigation(
 		}
 	}
 
+	override fun browseLibrary(libraryId: LibraryId) = coroutineScope.launch {
+		navController.popUpTo { it is ApplicationSettingsScreen }
+
+		navController.navigate(LibraryScreen(libraryId))
+	}.toPromise()
+
 	override fun launchSearch(libraryId: LibraryId) = coroutineScope.launch {
-		navController.popUpTo { d -> d is ItemScreen }
+		navController.popUpTo { it is ItemScreen }
 
 		navController.navigate(SearchScreen(libraryId))
 
 		hideBottomSheet()
 	}.toPromise()
 
+	override fun viewNewServerSettings() = coroutineScope.launch {
+		navController.popUpTo { it is ApplicationSettingsScreen }
+
+		navController.navigate(NewConnectionSettingsScreen)
+	}.toPromise()
+
 	override fun viewServerSettings(libraryId: LibraryId) = coroutineScope.launch {
-		navController.popUpTo { d -> d is ItemScreen }
+		navController.popUpTo { it is ItemScreen }
 
 		navController.navigate(ConnectionSettingsScreen(libraryId))
 
@@ -457,7 +463,7 @@ private class GraphNavigation(
 	}.toPromise()
 
 	override fun viewActiveDownloads(libraryId: LibraryId) = coroutineScope.launch {
-		navController.popUpTo { d -> d is ItemScreen }
+		navController.popUpTo { it is ItemScreen }
 
 		navController.navigate(DownloadsScreen(libraryId))
 
@@ -465,6 +471,8 @@ private class GraphNavigation(
 	}.toPromise()
 
 	override fun viewLibrary(libraryId: LibraryId) = coroutineScope.launch {
+		libraryBrowserSelection.selectBrowserLibrary(libraryId).suspend()
+
 		navController.navigate(LibraryScreen(libraryId))
 
 		hideBottomSheet()
@@ -486,6 +494,10 @@ private class GraphNavigation(
 		hideBottomSheet()
 		return inner.viewNowPlaying()
 	}
+
+	override fun launchAboutActivity() = coroutineScope.launch {
+		navController.navigate(AboutScreen)
+	}.toPromise()
 
 	override fun navigateUp() = coroutineScope.async {
 		hideBottomSheet()
@@ -517,13 +529,13 @@ private val bottomAppBarHeight = Dimensions.AppBarHeight
 
 @Composable
 @OptIn(ExperimentalMaterialApi::class)
-private fun LibraryRoutes(
+private fun LibraryRouting(
 	screen: LibraryDestination,
-	itemBrowserViewDependencies: BrowserViewDependencies,
+	browserViewDependencies: BrowserViewDependencies,
 	scaffoldState: BottomSheetScaffoldState,
 	coroutineScope: CoroutineScope,
 ) {
-	with(itemBrowserViewDependencies) {
+	with(browserViewDependencies) {
 		BottomSheetScaffold(
 			scaffoldState = scaffoldState,
 			sheetPeekHeight = bottomAppBarHeight,
@@ -728,16 +740,13 @@ private fun LibraryRoutes(
 
 @Composable
 @OptIn(ExperimentalMaterialApi::class)
-private fun ItemBrowserView(
+private fun BrowserView(
 	browserViewDependencies: BrowserViewDependencies,
-	startingLibraryId: LibraryId? = null,
 ) {
 	val systemUiController = rememberSystemUiController()
 	systemUiController.setStatusBarColor(MaterialTheme.colors.surface)
 
-	val navController = rememberNavController(
-		startDestination = startingLibraryId?.let { LibraryScreen(it) } ?: ApplicationSettingsScreen
-	)
+	val navController = rememberNavController<Destination>(startDestination = ApplicationSettingsScreen)
 	val scaffoldState = rememberBottomSheetScaffoldState()
 	val coroutineScope = rememberCoroutineScope()
 
@@ -750,6 +759,7 @@ private fun ItemBrowserView(
 			coroutineScope,
 			browserViewDependencies.itemListMenuBackPressedHandler,
 			browserViewDependencies.navigationMessages,
+			browserViewDependencies.libraryBrowserSelection,
 		)
 	}
 
@@ -762,11 +772,11 @@ private fun ItemBrowserView(
 		)
 	}
 
-	NavHost(navController) { screen ->
-		when (screen) {
+	NavHost(navController) { destination ->
+		when (destination) {
 			is LibraryDestination -> {
-				LibraryRoutes(
-					screen,
+				LibraryRouting(
+					destination,
 					graphDependencies,
 					scaffoldState,
 					coroutineScope,
@@ -791,6 +801,38 @@ private fun ItemBrowserView(
 
 				viewModel.loadSettings()
 			}
+			is NewConnectionSettingsScreen -> {
+				val viewModel = viewModel {
+					LibrarySettingsViewModel(
+						libraryProvider = graphDependencies.libraryProvider,
+						libraryStorage = graphDependencies.libraryStorage,
+						libraryRemoval = graphDependencies.libraryRemoval,
+						applicationReadPermissionsRequirementsProvider = graphDependencies.readPermissionsRequirements,
+						applicationWritePermissionsRequirementsProvider = graphDependencies.writePermissionsRequirements,
+						permissionsManager = graphDependencies.permissionsManager,
+					)
+				}
+
+				LibrarySettingsView(
+					librarySettingsViewModel = viewModel,
+					navigateApplication = graphNavigation,
+					stringResources = graphDependencies.stringResources
+				)
+			}
+			is AboutScreen -> {
+				AboutView(graphNavigation)
+			}
+			is HiddenSettingsScreen -> {
+				HiddenSettingsView(viewModel {
+					HiddenSettingsViewModel(graphDependencies.applicationSettingsRepository)
+				})
+			}
 		}
+	}
+
+	LaunchedEffect(key1 = Unit) {
+		val settings = graphDependencies.applicationSettingsRepository.promiseApplicationSettings().suspend()
+		if (settings.chosenLibraryId > -1)
+			graphNavigation.viewLibrary(LibraryId(settings.chosenLibraryId)).suspend()
 	}
 }

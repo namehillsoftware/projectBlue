@@ -1,8 +1,5 @@
 package com.lasthopesoftware.bluewater.about
 
-import android.os.Bundle
-import androidx.activity.ComponentActivity
-import androidx.activity.compose.setContent
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -15,40 +12,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
-import com.lasthopesoftware.bluewater.ActivityApplicationNavigation
 import com.lasthopesoftware.bluewater.NavigateApplication
-import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
-import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
-import com.lasthopesoftware.bluewater.shared.android.intents.IntentBuilder
 import com.lasthopesoftware.bluewater.shared.android.ui.components.ApplicationInfoText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.ApplicationLogo
-import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
-import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
-import com.lasthopesoftware.resources.strings.StringResources
-
-class AboutActivity : ComponentActivity() {
-	private val stringResources by lazy { StringResources(this) }
-	private val applicationNavigation by lazy {
-		ActivityApplicationNavigation(
-			this,
-			IntentBuilder(this),
-			BrowserLibrarySelection(
-				getApplicationSettingsRepository(),
-				ApplicationMessageBus.getApplicationMessageBus(),
-				LibraryRepository(this),
-			),
-		)
-	}
-
-	override fun onCreate(savedInstanceState: Bundle?) {
-		super.onCreate(savedInstanceState)
-
-		title = stringResources.aboutTitle
-
-		setContent { ProjectBlueTheme { AboutView(applicationNavigation) } }
-	}
-}
 
 @Composable
 fun AboutView(applicationNavigation: NavigateApplication) {
