@@ -27,6 +27,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackSer
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import kotlinx.coroutines.launch
 
+private const val fudgeFactor = .01f
 private val bottomAppBarHeight = Dimensions.AppBarHeight
 
 @Composable
@@ -52,15 +53,7 @@ fun LibraryMenu(
 			) {
 				val progress by remember {
 					derivedStateOf {
-						val bottomSheetProgress = bottomSheetState.progress
-						val currentState = bottomSheetState.currentValue
-						when {
-							currentState == BottomSheetValue.Collapsed && bottomSheetProgress == 1f -> 0f
-							currentState == BottomSheetValue.Collapsed -> bottomSheetProgress
-							currentState == BottomSheetValue.Expanded && bottomSheetProgress == 1f -> 1f
-							currentState == BottomSheetValue.Expanded -> 1 - bottomSheetProgress
-							else -> 0f
-						}
+						if (bottomSheetState.currentValue == BottomSheetValue.Collapsed) 0f else 1f
 					}
 				}
 

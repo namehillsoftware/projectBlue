@@ -543,12 +543,13 @@ private val bottomAppBarHeight = Dimensions.AppBarHeight
 
 @Composable
 @OptIn(ExperimentalMaterialApi::class)
-private fun LibraryRouting(
-	screen: LibraryDestination,
+private fun LibraryDestination.Navigate(
 	browserViewDependencies: BrowserViewDependencies,
 	scaffoldState: BottomSheetScaffoldState,
 	coroutineScope: CoroutineScope,
 ) {
+	val screen = this
+
 	with(browserViewDependencies) {
 		BottomSheetScaffold(
 			scaffoldState = scaffoldState,
@@ -773,8 +774,7 @@ private fun BrowserView(
 			NavHost(navController) { destination ->
 				when (destination) {
 					is LibraryDestination -> {
-						LibraryRouting(
-							destination,
+						destination.Navigate(
 							graphDependencies,
 							scaffoldState,
 							coroutineScope,
