@@ -16,6 +16,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.Sel
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NavigationMessage
 import com.lasthopesoftware.bluewater.client.connection.libraries.SelectedLibraryUrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
+import com.lasthopesoftware.bluewater.client.connection.session.initialization.ControlConnectionInitialization
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.LookupSelectedPlaybackEngineType
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
@@ -33,7 +34,7 @@ import com.lasthopesoftware.resources.strings.StringResources
 
 interface BrowserViewDependencies {
 	val nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel
-	val browserLibraryIdProvider: CachedSelectedLibraryIdProvider
+	val selectedLibraryIdProvider: CachedSelectedLibraryIdProvider
 	val itemProvider: CachedItemProvider
 	val itemListProvider: ItemStringListProvider
 	val messageBus: ScopedApplicationMessageBus
@@ -60,4 +61,5 @@ interface BrowserViewDependencies {
 	val applicationSettingsRepository: HoldApplicationSettings
 	val selectedPlaybackEngineTypeAccess: LookupSelectedPlaybackEngineType
 	val libraryBrowserSelection: SelectBrowserLibrary
+	val controlConnectionInitialization: ControlConnectionInitialization
 }

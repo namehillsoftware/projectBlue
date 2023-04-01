@@ -8,3 +8,5 @@ interface NavigationMessage : TypedMessage
 class ViewDownloadsMessage(val libraryId: LibraryId): NavigationMessage
 
 class ViewServerSettingsMessage(val libraryId: LibraryId): NavigationMessage
+
+object ViewApplicationSettingsMessage: NavigationMessage

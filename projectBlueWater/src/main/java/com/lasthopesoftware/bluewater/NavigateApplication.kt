@@ -7,8 +7,6 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 
 interface NavigateApplication {
 
-	fun browseLibrary(libraryId: LibraryId) = Unit.toPromise()
-
 	fun viewLibrary(libraryId: LibraryId) = Unit.toPromise()
 
 	fun viewApplicationSettings() = Unit.toPromise()

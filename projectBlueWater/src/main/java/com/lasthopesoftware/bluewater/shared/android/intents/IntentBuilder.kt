@@ -2,16 +2,18 @@ package com.lasthopesoftware.bluewater.shared.android.intents
 
 import android.content.Context
 import android.content.Intent
-import com.lasthopesoftware.bluewater.client.browsing.BrowserActivity
-import com.lasthopesoftware.bluewater.client.browsing.downloadsAction
+import com.lasthopesoftware.bluewater.client.browsing.*
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsActivity
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.browsing.libraryIdProperty
-import com.lasthopesoftware.bluewater.client.browsing.serverSettingsAction
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.NowPlayingActivity
 
 class IntentBuilder(private val context: Context) : BuildIntents {
+	override fun buildApplicationSettingsIntent(): Intent {
+		val returnIntent = context.getIntent<BrowserActivity>()
+		returnIntent.action = applicationSettingsAction
+		return returnIntent
+	}
 
 	override fun buildLibrarySettingsIntent(libraryId: LibraryId): Intent {
 		val returnIntent = context.getIntent<BrowserActivity>()

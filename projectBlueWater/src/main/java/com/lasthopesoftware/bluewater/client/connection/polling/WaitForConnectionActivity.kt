@@ -1,26 +1,33 @@
 package com.lasthopesoftware.bluewater.client.connection.polling
 
-import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import androidx.appcompat.app.AppCompatActivity
+import com.lasthopesoftware.bluewater.ActivityApplicationNavigation
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService.Companion.pollSessionConnection
-import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity
+import com.lasthopesoftware.bluewater.shared.android.intents.IntentBuilder
 import java.util.concurrent.CancellationException
 
-class WaitForConnectionActivity : Activity() {
+class WaitForConnectionActivity : AppCompatActivity() {
+	private val applicationNavigation by lazy {
+		ActivityApplicationNavigation(
+			this,
+			IntentBuilder(this),
+		)
+	}
+
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 		setContentView(R.layout.activity_wait_for_connection)
 
-		val selectServerIntent = Intent(this, ApplicationSettingsActivity::class.java)
 		val pollSessionConnection = pollSessionConnection(this)
 
 		findViewById<View>(R.id.btnCancel).setOnClickListener {
 			pollSessionConnection.cancel()
-			startActivity(selectServerIntent)
+			applicationNavigation.viewApplicationSettings()
 			finish()
 		}
 
@@ -28,7 +35,7 @@ class WaitForConnectionActivity : Activity() {
 			.then(
 				{ finish() },
 				{ e ->
-					if (e is CancellationException) startActivity(selectServerIntent)
+					if (e is CancellationException) applicationNavigation.viewApplicationSettings()
 					finish()
 				})
 	}

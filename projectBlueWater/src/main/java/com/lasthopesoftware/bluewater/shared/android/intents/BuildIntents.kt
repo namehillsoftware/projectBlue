@@ -5,6 +5,8 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 
 interface BuildIntents {
+	fun buildApplicationSettingsIntent(): Intent
+
 	fun buildLibrarySettingsIntent(libraryId: LibraryId): Intent
 
 	fun buildFileDetailsIntent(playlist: Collection<ServiceFile>, position: Int): Intent

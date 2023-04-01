@@ -49,18 +49,13 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.Cac
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectBrowserLibrary
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
-import com.lasthopesoftware.bluewater.client.browsing.navigation.LibraryMenu
-import com.lasthopesoftware.bluewater.client.browsing.navigation.NavigationMessage
-import com.lasthopesoftware.bluewater.client.browsing.navigation.ViewDownloadsMessage
-import com.lasthopesoftware.bluewater.client.browsing.navigation.ViewServerSettingsMessage
+import com.lasthopesoftware.bluewater.client.browsing.navigation.*
 import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.libraries.SelectedLibraryUrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.polling.ConnectionPoller
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
-import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionInitializationErrorController
-import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionInitializationProxy
-import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionStatusViewModel
+import com.lasthopesoftware.bluewater.client.connection.session.initialization.*
 import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettingsLookup
 import com.lasthopesoftware.bluewater.client.connection.settings.changes.ObservableConnectionSettingsLibraryStorage
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.SelectedPlaybackEngineTypeAccess
@@ -97,8 +92,7 @@ import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMes
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRateLimiter
-import com.lasthopesoftware.bluewater.shared.promises.extensions.suspend
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.*
 import com.lasthopesoftware.resources.closables.ViewModelCloseableManager
 import com.lasthopesoftware.resources.closables.lazyScoped
 import com.lasthopesoftware.resources.strings.StringResources
@@ -117,7 +111,8 @@ private val magicPropertyBuilder by lazy { MagicPropertyBuilder(cls<BrowserActiv
 
 val libraryIdProperty by lazy { magicPropertyBuilder.buildProperty(libraryIdArgument) }
 val downloadsAction by lazy { magicPropertyBuilder.buildProperty("downloads") }
-val serverSettingsAction by lazy { magicPropertyBuilder.buildProperty("settings") }
+val serverSettingsAction by lazy { magicPropertyBuilder.buildProperty("serverSettings") }
+val applicationSettingsAction by lazy { magicPropertyBuilder.buildProperty("applicationSettings") }
 
 class BrowserActivity :
 	AppCompatActivity(),
@@ -160,7 +155,7 @@ class BrowserActivity :
 		)
 	}
 
-	override val browserLibraryIdProvider by lazy { getCachedSelectedLibraryIdProvider() }
+	override val selectedLibraryIdProvider by lazy { getCachedSelectedLibraryIdProvider() }
 
 	override val messageBus by lazy { getApplicationMessageBus().getScopedMessageBus().also(viewModelScope::manage) }
 
@@ -188,14 +183,14 @@ class BrowserActivity :
 
 	override val scopedFilePropertiesProvider by lazy {
 		SelectedLibraryFilePropertiesProvider(
-			browserLibraryIdProvider,
+			selectedLibraryIdProvider,
 			libraryFilePropertiesProvider,
 		)
 	}
 
 	override val scopedUrlKeyProvider by lazy {
 		SelectedLibraryUrlKeyProvider(
-			browserLibraryIdProvider,
+			selectedLibraryIdProvider,
 			UrlKeyProvider(libraryConnectionProvider),
 		)
 	}
@@ -238,11 +233,6 @@ class BrowserActivity :
 		ActivityApplicationNavigation(
 			this,
 			IntentBuilder(this),
-			BrowserLibrarySelection(
-				getApplicationSettingsRepository(),
-				messageBus,
-				libraryProvider,
-			),
 		)
 	}
 
@@ -265,7 +255,7 @@ class BrowserActivity :
 		LibraryRemoval(
 			storedItemAccess,
 			libraryRepository,
-			browserLibraryIdProvider,
+			selectedLibraryIdProvider,
 			libraryRepository,
 			BrowserLibrarySelection(getApplicationSettingsRepository(), messageBus, libraryProvider),
 		)
@@ -287,6 +277,12 @@ class BrowserActivity :
 			applicationSettingsRepository,
 			messageBus,
 			libraryProvider,
+		)
+	}
+	override val controlConnectionInitialization by lazy {
+		ConnectionInitializationErrorController(
+			ConnectionInitializationProxy(libraryConnectionProvider),
+			applicationNavigation,
 		)
 	}
 
@@ -363,7 +359,7 @@ class BrowserActivity :
 	private fun actOnIntent(intent: Intent?) {
 		when (intent?.action) {
 			downloadsAction -> {
-				browserLibraryIdProvider
+				selectedLibraryIdProvider
 					.promiseSelectedLibraryId()
 					.then { l ->
 						if (l != null)
@@ -376,6 +372,9 @@ class BrowserActivity :
 				val libraryId = LibraryId(libraryIdInt)
 				navigationMessages.sendMessage(ViewServerSettingsMessage(libraryId))
 			}
+			applicationSettingsAction -> {
+				navigationMessages.sendMessage(ViewApplicationSettingsMessage)
+			}
 		}
 	}
 }
@@ -384,6 +383,9 @@ private sealed interface Destination : Parcelable
 
 @Parcelize
 private object ApplicationSettingsScreen : Destination
+
+@Parcelize
+private object InstantiateSessionConnectionScreen : Destination
 
 @Parcelize
 private object AboutScreen : Destination
@@ -432,13 +434,11 @@ private class GraphNavigation(
 		navigationMessages.registerReceiver { message: ViewServerSettingsMessage ->
 			viewServerSettings(message.libraryId)
 		}
+
+		navigationMessages.registerReceiver { _: ViewApplicationSettingsMessage ->
+			viewApplicationSettings()
+		}
 	}
-
-	override fun browseLibrary(libraryId: LibraryId) = coroutineScope.launch {
-		navController.popUpTo { it is ApplicationSettingsScreen }
-
-		navController.navigate(LibraryScreen(libraryId))
-	}.toPromise()
 
 	override fun launchSearch(libraryId: LibraryId) = coroutineScope.launch {
 		navController.popUpTo { it is ItemScreen }
@@ -446,6 +446,10 @@ private class GraphNavigation(
 		navController.navigate(SearchScreen(libraryId))
 
 		hideBottomSheet()
+	}.toPromise()
+
+	override fun viewApplicationSettings() = coroutineScope.launch {
+		navController.popUpTo { it is ApplicationSettingsScreen }
 	}.toPromise()
 
 	override fun viewNewServerSettings() = coroutineScope.launch {
@@ -472,6 +476,8 @@ private class GraphNavigation(
 
 	override fun viewLibrary(libraryId: LibraryId) = coroutineScope.launch {
 		libraryBrowserSelection.selectBrowserLibrary(libraryId).suspend()
+
+		navController.popUpTo { it is ApplicationSettingsScreen }
 
 		navController.navigate(LibraryScreen(libraryId))
 
@@ -523,6 +529,14 @@ private class GraphDependencies(inner: BrowserViewDependencies, graphNavigation:
 	BrowserViewDependencies by inner
 {
 	override val applicationNavigation = graphNavigation
+
+	override val controlConnectionInitialization by lazy {
+		DramaticConnectionInitializationController(
+			inner.controlConnectionInitialization,
+			applicationNavigation,
+			selectedLibraryIdProvider,
+		)
+	}
 }
 
 private val bottomAppBarHeight = Dimensions.AppBarHeight
@@ -554,15 +568,6 @@ private fun LibraryRouting(
 				when (screen) {
 					is LibraryScreen -> {
 						val view = browsableItemListView(
-							connectionViewModel = viewModel {
-								ConnectionStatusViewModel(
-									stringResources,
-									ConnectionInitializationErrorController(
-										ConnectionInitializationProxy(libraryConnectionProvider),
-										applicationNavigation,
-									),
-								)
-							},
 							itemListViewModel = viewModel {
 								ItemListViewModel(
 									itemProvider,
@@ -602,15 +607,6 @@ private fun LibraryRouting(
 					}
 					is ItemScreen -> {
 						val view = browsableItemListView(
-							connectionViewModel = viewModel {
-								ConnectionStatusViewModel(
-									stringResources,
-									ConnectionInitializationErrorController(
-										ConnectionInitializationProxy(libraryConnectionProvider),
-										applicationNavigation,
-									),
-								)
-							},
 							itemListViewModel = viewModel {
 								ItemListViewModel(
 									itemProvider,
@@ -746,7 +742,7 @@ private fun BrowserView(
 	val systemUiController = rememberSystemUiController()
 	systemUiController.setStatusBarColor(MaterialTheme.colors.surface)
 
-	val navController = rememberNavController<Destination>(startDestination = ApplicationSettingsScreen)
+	val navController = rememberNavController(listOf(ApplicationSettingsScreen, InstantiateSessionConnectionScreen))
 	val scaffoldState = rememberBottomSheetScaffoldState()
 	val coroutineScope = rememberCoroutineScope()
 
@@ -759,7 +755,7 @@ private fun BrowserView(
 			coroutineScope,
 			browserViewDependencies.itemListMenuBackPressedHandler,
 			browserViewDependencies.navigationMessages,
-			browserViewDependencies.libraryBrowserSelection,
+			browserViewDependencies.libraryBrowserSelection
 		)
 	}
 
@@ -803,23 +799,51 @@ private fun BrowserView(
 
 						viewModel.loadSettings()
 					}
-					is NewConnectionSettingsScreen -> {
-						val viewModel = viewModel {
-							LibrarySettingsViewModel(
-								libraryProvider = graphDependencies.libraryProvider,
-								libraryStorage = graphDependencies.libraryStorage,
-								libraryRemoval = graphDependencies.libraryRemoval,
-								applicationReadPermissionsRequirementsProvider = graphDependencies.readPermissionsRequirements,
-								applicationWritePermissionsRequirementsProvider = graphDependencies.writePermissionsRequirements,
-								permissionsManager = graphDependencies.permissionsManager,
-							)
+					is InstantiateSessionConnectionScreen -> {
+						val viewModel = with (graphDependencies) {
+							val viewModel = viewModel {
+								ConnectionStatusViewModel(
+									stringResources,
+									controlConnectionInitialization,
+								)
+							}
+
+							LaunchedEffect(key1 = viewModel) {
+								val settings = applicationSettingsRepository.promiseApplicationSettings().suspend()
+								if (settings.chosenLibraryId > -1) {
+									val libraryId = LibraryId(settings.chosenLibraryId)
+									viewModel
+										.ensureConnectionIsWorking(libraryId)
+										.suspend()
+								} else {
+									applicationNavigation.backOut()
+								}
+							}
+
+							viewModel
 						}
 
-						LibrarySettingsView(
-							librarySettingsViewModel = viewModel,
-							navigateApplication = graphNavigation,
-							stringResources = graphDependencies.stringResources
-						)
+						ConnectionUpdatesView(connectionViewModel = viewModel)
+					}
+					is NewConnectionSettingsScreen -> {
+						with (graphDependencies) {
+							val viewModel = viewModel {
+								LibrarySettingsViewModel(
+									libraryProvider = libraryProvider,
+									libraryStorage = libraryStorage,
+									libraryRemoval = libraryRemoval,
+									applicationReadPermissionsRequirementsProvider = readPermissionsRequirements,
+									applicationWritePermissionsRequirementsProvider = writePermissionsRequirements,
+									permissionsManager = permissionsManager,
+								)
+							}
+
+							LibrarySettingsView(
+								librarySettingsViewModel = viewModel,
+								navigateApplication = applicationNavigation,
+								stringResources = stringResources
+							)
+						}
 					}
 					is AboutScreen -> {
 						AboutView(graphNavigation)
@@ -832,11 +856,5 @@ private fun BrowserView(
 				}
 			}
 		}
-	}
-
-	LaunchedEffect(key1 = Unit) {
-		val settings = graphDependencies.applicationSettingsRepository.promiseApplicationSettings().suspend()
-		if (settings.chosenLibraryId > -1)
-			graphNavigation.viewLibrary(LibraryId(settings.chosenLibraryId)).suspend()
 	}
 }

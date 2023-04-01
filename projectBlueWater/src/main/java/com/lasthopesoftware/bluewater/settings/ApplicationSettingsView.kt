@@ -171,7 +171,7 @@ private fun LazyListScope.settingsList(
 
 			Row(
 				modifier = Modifier
-					.clickable { applicationNavigation.browseLibrary(library.libraryId) }
+					.clickable { applicationNavigation.viewLibrary(library.libraryId) }
 					.padding(Dimensions.ViewPadding),
 				verticalAlignment = Alignment.CenterVertically,
 			) {
