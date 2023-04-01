@@ -772,60 +772,64 @@ private fun BrowserView(
 		)
 	}
 
-	NavHost(navController) { destination ->
-		when (destination) {
-			is LibraryDestination -> {
-				LibraryRouting(
-					destination,
-					graphDependencies,
-					scaffoldState,
-					coroutineScope,
-				)
-			}
-			is ApplicationSettingsScreen -> {
-				val viewModel = viewModel {
-					ApplicationSettingsViewModel(
-						graphDependencies.applicationSettingsRepository,
-						graphDependencies.selectedPlaybackEngineTypeAccess,
-						graphDependencies.libraryProvider,
-						graphDependencies.messageBus,
-						graphDependencies.syncScheduler,
-					)
+	Box(modifier = Modifier.fillMaxSize()) {
+		Surface {
+			NavHost(navController) { destination ->
+				when (destination) {
+					is LibraryDestination -> {
+						LibraryRouting(
+							destination,
+							graphDependencies,
+							scaffoldState,
+							coroutineScope,
+						)
+					}
+					is ApplicationSettingsScreen -> {
+						val viewModel = viewModel {
+							ApplicationSettingsViewModel(
+								graphDependencies.applicationSettingsRepository,
+								graphDependencies.selectedPlaybackEngineTypeAccess,
+								graphDependencies.libraryProvider,
+								graphDependencies.messageBus,
+								graphDependencies.syncScheduler,
+							)
+						}
+
+						ApplicationSettingsView(
+							applicationSettingsViewModel = viewModel,
+							applicationNavigation = graphNavigation,
+							playbackService = graphDependencies.playbackServiceController,
+						)
+
+						viewModel.loadSettings()
+					}
+					is NewConnectionSettingsScreen -> {
+						val viewModel = viewModel {
+							LibrarySettingsViewModel(
+								libraryProvider = graphDependencies.libraryProvider,
+								libraryStorage = graphDependencies.libraryStorage,
+								libraryRemoval = graphDependencies.libraryRemoval,
+								applicationReadPermissionsRequirementsProvider = graphDependencies.readPermissionsRequirements,
+								applicationWritePermissionsRequirementsProvider = graphDependencies.writePermissionsRequirements,
+								permissionsManager = graphDependencies.permissionsManager,
+							)
+						}
+
+						LibrarySettingsView(
+							librarySettingsViewModel = viewModel,
+							navigateApplication = graphNavigation,
+							stringResources = graphDependencies.stringResources
+						)
+					}
+					is AboutScreen -> {
+						AboutView(graphNavigation)
+					}
+					is HiddenSettingsScreen -> {
+						HiddenSettingsView(viewModel {
+							HiddenSettingsViewModel(graphDependencies.applicationSettingsRepository)
+						})
+					}
 				}
-
-				ApplicationSettingsView(
-					applicationSettingsViewModel = viewModel,
-					applicationNavigation = graphNavigation,
-					playbackService = graphDependencies.playbackServiceController,
-				)
-
-				viewModel.loadSettings()
-			}
-			is NewConnectionSettingsScreen -> {
-				val viewModel = viewModel {
-					LibrarySettingsViewModel(
-						libraryProvider = graphDependencies.libraryProvider,
-						libraryStorage = graphDependencies.libraryStorage,
-						libraryRemoval = graphDependencies.libraryRemoval,
-						applicationReadPermissionsRequirementsProvider = graphDependencies.readPermissionsRequirements,
-						applicationWritePermissionsRequirementsProvider = graphDependencies.writePermissionsRequirements,
-						permissionsManager = graphDependencies.permissionsManager,
-					)
-				}
-
-				LibrarySettingsView(
-					librarySettingsViewModel = viewModel,
-					navigateApplication = graphNavigation,
-					stringResources = graphDependencies.stringResources
-				)
-			}
-			is AboutScreen -> {
-				AboutView(graphNavigation)
-			}
-			is HiddenSettingsScreen -> {
-				HiddenSettingsView(viewModel {
-					HiddenSettingsViewModel(graphDependencies.applicationSettingsRepository)
-				})
 			}
 		}
 	}
