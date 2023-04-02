@@ -35,7 +35,6 @@ class WhenLoadingTheFiles {
 		FileListViewModel(
             itemProvider,
             storedItemAccess,
-            mockk(),
 		)
 	}
 

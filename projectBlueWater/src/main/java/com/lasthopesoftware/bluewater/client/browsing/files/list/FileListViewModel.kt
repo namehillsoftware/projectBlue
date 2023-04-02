@@ -8,20 +8,15 @@ import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
-import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.queued.MessageWriter
-import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 class FileListViewModel(
 	private val itemFileProvider: ProvideItemFiles,
 	private val storedItemAccess: AccessStoredItems,
-	private val controlPlaybackService: ControlPlaybackService,
 ) : ViewModel() {
 
 	private val mutableIsLoaded = MutableStateFlow(false)
@@ -76,12 +71,4 @@ class FileListViewModel(
 			}
 		}
 		.keepPromise(Unit)
-
-	fun play(position: Int = 0) {
-		controlPlaybackService.startPlaylist(files.value, position)
-	}
-
-	fun playShuffled() = QueuedPromise(MessageWriter {
-		controlPlaybackService.startPlaylist(files.value.shuffled())
-	}, ThreadPools.compute)
 }

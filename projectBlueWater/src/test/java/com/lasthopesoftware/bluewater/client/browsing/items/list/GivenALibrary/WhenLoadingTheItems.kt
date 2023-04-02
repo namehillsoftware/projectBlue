@@ -30,8 +30,8 @@ class WhenLoadingTheItems {
 		}
 
         ItemListViewModel(
-            itemProvider,
-            RecordingApplicationMessageBus(),
+			itemProvider,
+			RecordingApplicationMessageBus(),
 			mockk {
 				every { promiseLibrary(LibraryId(libraryId)) } returns Promise(
 					Library(
@@ -40,11 +40,8 @@ class WhenLoadingTheItems {
 					)
 				)
 			},
-            mockk(),
-            mockk(),
-            mockk(),
-            mockk(),
-            mockk(),
+			mockk(),
+			mockk(),
         )
 	}
 

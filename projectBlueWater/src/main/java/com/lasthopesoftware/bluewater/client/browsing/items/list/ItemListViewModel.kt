@@ -1,13 +1,9 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.list
 
 import androidx.lifecycle.ViewModel
-import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.client.browsing.TrackLoadedViewState
-import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
-import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.ProvideFileStringListForItem
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
-import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
 import com.lasthopesoftware.bluewater.client.browsing.items.itemId
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.HiddenListItemMenu
@@ -15,7 +11,6 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.I
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.ActivityLaunching
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
 import com.lasthopesoftware.bluewater.shared.messages.SendTypedMessages
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
@@ -31,9 +26,6 @@ class ItemListViewModel(
 	messageBus: RegisterForApplicationMessages,
 	private val libraryProvider: ILibraryProvider,
 	private val storedItemAccess: AccessStoredItems,
-	private val itemStringListProvider: ProvideFileStringListForItem,
-	private val controlNowPlaying: ControlPlaybackService,
-	private val navigateApplication: NavigateApplication,
 	private val sendItemMenuMessages: SendTypedMessages<ItemListMenuMessage>
 ) : ViewModel(), TrackLoadedViewState {
 
@@ -90,24 +82,6 @@ class ItemListViewModel(
 		val isSynced = mutableIsSynced.asStateFlow()
 		override val isMenuShown = mutableIsMenuShown.asStateFlow()
 
-		fun play() =
-			loadedLibraryId
-				?.let { libraryId ->
-					itemStringListProvider
-						.promiseFileStringList(libraryId, ItemId(item.key), FileListParameters.Options.None)
-						.then(controlNowPlaying::startPlaylist)
-				}
-				.keepPromise(Unit)
-
-		fun playShuffled() =
-			loadedLibraryId
-				?.let { libraryId ->
-					itemStringListProvider
-						.promiseFileStringList(libraryId, ItemId(item.key), FileListParameters.Options.Shuffled)
-						.then(controlNowPlaying::startPlaylist)
-				}
-				.keepPromise(Unit)
-
 		fun toggleSync(): Promise<Unit> = loadedLibraryId
 			?.let { libraryId ->
 				storedItemAccess
@@ -115,12 +89,6 @@ class ItemListViewModel(
 					.then { mutableIsSynced.value = it }
 			}
 			.keepPromise(Unit)
-
-		fun viewItem() {
-			loadedLibraryId?.also {
-				navigateApplication.viewItem(it, item)
-			}
-		}
 
 		override fun showMenu(): Boolean {
 			if (!mutableIsMenuShown.compareAndSet(expect = false, update = true)) return false

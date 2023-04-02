@@ -39,14 +39,11 @@ class WhenShowingTheItemMenu {
 		val storedItemAccess = FakeStoredItemAccess(StoredItem(libraryId, childItemId, StoredItem.ItemType.ITEM))
 
 		ItemListViewModel(
-            itemProvider,
-            mockk(relaxed = true, relaxUnitFun = true),
+			itemProvider,
+			mockk(relaxed = true, relaxUnitFun = true),
 			mockk(),
-            storedItemAccess,
-            mockk(),
-            mockk(),
-            mockk(),
-            recordingMessageBus,
+			storedItemAccess,
+			recordingMessageBus,
 		)
 	}
 

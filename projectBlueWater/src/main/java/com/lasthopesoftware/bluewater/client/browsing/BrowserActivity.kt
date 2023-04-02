@@ -41,6 +41,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.access.CachedItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
+import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemPlayback
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.browsing.library.access.*
@@ -155,6 +156,13 @@ class BrowserActivity :
 		)
 	}
 
+	private val itemListProvider by lazy {
+		ItemStringListProvider(
+			FileListParameters,
+			libraryFileStringListProvider
+		)
+	}
+
 	override val selectedLibraryIdProvider by lazy { getCachedSelectedLibraryIdProvider() }
 
 	override val messageBus by lazy { getApplicationMessageBus().getScopedMessageBus().also(viewModelScope::manage) }
@@ -163,14 +171,7 @@ class BrowserActivity :
 
 	override val itemListMenuBackPressedHandler by lazyScoped { ItemListMenuBackPressedHandler(menuMessageBus) }
 
-	override val itemProvider by lazy { CachedItemProvider.getInstance(this) }
-
-	override val itemListProvider by lazy {
-		ItemStringListProvider(
-			FileListParameters,
-			libraryFileStringListProvider
-		)
-	}
+	override val itemProvider by lazy { CachedItemProvider.getInstance(applicationContext) }
 
 	override val itemFileProvider by lazy {
 		ItemFileProvider(
@@ -197,7 +198,7 @@ class BrowserActivity :
 
 	override val libraryConnectionProvider by lazy { buildNewConnectionSessionManager() }
 
-	override val playbackServiceController by lazy { PlaybackServiceController(this) }
+	override val playbackServiceController by lazy { PlaybackServiceController(applicationContext) }
 
 	override val nowPlayingFilePropertiesViewModel by buildViewModelLazily {
 		NowPlayingFilePropertiesViewModel(
@@ -208,18 +209,18 @@ class BrowserActivity :
 			filePropertiesStorage,
 			connectionAuthenticationChecker,
 			playbackServiceController,
-			ConnectionPoller(this),
-			StringResources(this),
+			ConnectionPoller(applicationContext),
+			stringResources,
 		).apply { initializeViewModel() }
 	}
 
 	override val storedItemAccess by lazy {
-		StateChangeBroadcastingStoredItemAccess(StoredItemAccess(this), messageBus)
+		StateChangeBroadcastingStoredItemAccess(StoredItemAccess(applicationContext), messageBus)
 	}
 
-	override val storedFileAccess by lazy { StoredFileAccess(this) }
+	override val storedFileAccess by lazy { StoredFileAccess(applicationContext) }
 
-	override val stringResources by lazy { StringResources(this) }
+	override val stringResources by lazy { StringResources(applicationContext) }
 
 	override val libraryFilesProvider by lazy {
 		LibraryFileProvider(
@@ -232,13 +233,13 @@ class BrowserActivity :
 	override val applicationNavigation by lazy {
 		ActivityApplicationNavigation(
 			this,
-			IntentBuilder(this),
+			IntentBuilder(applicationContext),
 		)
 	}
 
-	override val syncScheduler by lazy { SyncScheduler(this) }
+	override val syncScheduler by lazy { SyncScheduler(applicationContext) }
 
-	private val libraryRepository by lazy { LibraryRepository(this) }
+	private val libraryRepository by lazy { LibraryRepository(applicationContext) }
 
 	override val libraryProvider: ILibraryProvider
 		get() = libraryRepository
@@ -261,8 +262,8 @@ class BrowserActivity :
 		)
 	}
 
-	override val readPermissionsRequirements by lazy { ApplicationReadPermissionsRequirementsProvider(this) }
-	override val writePermissionsRequirements by lazy { ApplicationWritePermissionsRequirementsProvider(this) }
+	override val readPermissionsRequirements by lazy { ApplicationReadPermissionsRequirementsProvider(applicationContext) }
+	override val writePermissionsRequirements by lazy { ApplicationWritePermissionsRequirementsProvider(applicationContext) }
 	override val permissionsManager = this
 	override val navigationMessages by buildViewModelLazily { ViewModelMessageBus<NavigationMessage>() }
 	override val applicationSettingsRepository by lazy { getApplicationSettingsRepository() }
@@ -283,6 +284,13 @@ class BrowserActivity :
 		ConnectionInitializationErrorController(
 			ConnectionInitializationProxy(libraryConnectionProvider),
 			applicationNavigation,
+		)
+	}
+
+	override val playbackLibraryItems by lazy {
+		ItemPlayback(
+			itemListProvider,
+			playbackServiceController
 		)
 	}
 
@@ -575,9 +583,6 @@ private fun LibraryDestination.Navigate(
 									messageBus,
 									libraryProvider,
 									storedItemAccess,
-									itemListProvider,
-									playbackServiceController,
-									applicationNavigation,
 									menuMessageBus,
 								)
 							},
@@ -585,7 +590,6 @@ private fun LibraryDestination.Navigate(
 								FileListViewModel(
 									itemFileProvider,
 									storedItemAccess,
-									playbackServiceController,
 								)
 							},
 							nowPlayingViewModel = nowPlayingFilePropertiesViewModel,
@@ -602,6 +606,8 @@ private fun LibraryDestination.Navigate(
 								)
 							},
 							applicationNavigation = applicationNavigation,
+							playbackLibraryItems = playbackLibraryItems,
+							playbackServiceController = playbackServiceController,
 						)
 
 						view(screen.libraryId, null)
@@ -614,9 +620,6 @@ private fun LibraryDestination.Navigate(
 									messageBus,
 									libraryProvider,
 									storedItemAccess,
-									itemListProvider,
-									playbackServiceController,
-									applicationNavigation,
 									menuMessageBus,
 								)
 							},
@@ -624,7 +627,6 @@ private fun LibraryDestination.Navigate(
 								FileListViewModel(
 									itemFileProvider,
 									storedItemAccess,
-									playbackServiceController,
 								)
 							},
 							nowPlayingViewModel = nowPlayingFilePropertiesViewModel,
@@ -641,6 +643,8 @@ private fun LibraryDestination.Navigate(
 								)
 							},
 							applicationNavigation = applicationNavigation,
+							playbackLibraryItems = playbackLibraryItems,
+							playbackServiceController = playbackServiceController,
 						)
 
 						view(screen.libraryId, screen.item)

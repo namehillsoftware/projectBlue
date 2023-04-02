@@ -38,15 +38,12 @@ class WhenHidingTheMenu {
 		val storedItemAccess = FakeStoredItemAccess()
 
 		val viewModel = ItemListViewModel(
-            itemProvider,
-            mockk(relaxed = true, relaxUnitFun = true),
+			itemProvider,
+			mockk(relaxed = true, relaxUnitFun = true),
 			mockk(),
 			storedItemAccess,
-            mockk(),
-            mockk(),
-            mockk(),
-            recordingMessageBus
-        )
+			recordingMessageBus
+		)
 
 		viewModel.loadItem(LibraryId(libraryId), Item(rootItemId, "leaf")).toExpiringFuture().get()
 		viewModel.items.value[4]

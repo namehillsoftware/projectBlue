@@ -41,7 +41,6 @@ class WhenSyncingThePlaylist {
 		FileListViewModel(
             itemProvider,
             storedItemAccess,
-            mockk(),
 		)
 	}
 

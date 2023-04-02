@@ -3,9 +3,9 @@ package com.lasthopesoftware.bluewater.client.browsing
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.client.browsing.files.access.ItemFileProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.LibraryFileProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.ItemStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.SelectedLibraryFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.access.CachedItemProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.list.PlaybackLibraryItems
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
@@ -36,7 +36,6 @@ interface BrowserViewDependencies {
 	val nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel
 	val selectedLibraryIdProvider: CachedSelectedLibraryIdProvider
 	val itemProvider: CachedItemProvider
-	val itemListProvider: ItemStringListProvider
 	val messageBus: ScopedApplicationMessageBus
 	val storedItemAccess: StateChangeBroadcastingStoredItemAccess
 	val playbackServiceController: PlaybackServiceController
@@ -62,4 +61,5 @@ interface BrowserViewDependencies {
 	val selectedPlaybackEngineTypeAccess: LookupSelectedPlaybackEngineType
 	val libraryBrowserSelection: SelectBrowserLibrary
 	val controlConnectionInitialization: ControlConnectionInitialization
+	val playbackLibraryItems: PlaybackLibraryItems
 }

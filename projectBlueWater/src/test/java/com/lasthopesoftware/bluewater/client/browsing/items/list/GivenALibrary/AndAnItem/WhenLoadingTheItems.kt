@@ -28,14 +28,11 @@ class WhenLoadingTheItems {
 		}
 
         ItemListViewModel(
-            itemProvider,
-            RecordingApplicationMessageBus(),
+			itemProvider,
+			RecordingApplicationMessageBus(),
 			mockk(),
-            mockk(),
-            mockk(),
-            mockk(),
-            mockk(),
-            mockk(),
+			mockk(),
+			mockk(),
         )
 	}
 

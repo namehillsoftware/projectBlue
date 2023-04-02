@@ -36,9 +36,6 @@ class WhenSyncingAChildItem {
 			mockk(),
 			storedItemAccess,
 			mockk(),
-			mockk(),
-			mockk(),
-			mockk(),
 		)
 	}
 

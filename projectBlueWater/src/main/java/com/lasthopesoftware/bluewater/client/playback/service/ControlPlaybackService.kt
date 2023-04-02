@@ -14,6 +14,8 @@ interface ControlPlaybackService {
 
 	fun startPlaylist(serviceFiles: List<ServiceFile>, position: Int = 0)
 
+	fun shuffleAndStartPlaylist(serviceFiles: List<ServiceFile>)
+
 	fun addToPlaylist(serviceFile: ServiceFile)
 
 	fun setRepeating()

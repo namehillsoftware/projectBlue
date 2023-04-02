@@ -36,6 +36,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewPlaylistFil
 import com.lasthopesoftware.bluewater.client.browsing.items.*
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
+import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
@@ -61,6 +62,8 @@ fun ItemListView(
 	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
 	trackHeadlineViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
 	applicationNavigation: NavigateApplication,
+	playbackLibraryItems: PlaybackLibraryItems,
+	playbackServiceController: ControlPlaybackService,
 ) {
 	val playingFile by nowPlayingViewModel.nowPlayingFile.collectAsState()
 	val files by fileListViewModel.files.collectAsState()
@@ -86,7 +89,11 @@ fun ItemListView(
 						childItemViewModel.showMenu()
 					},
 					onClickLabel = stringResource(id = R.string.btn_view_song_details),
-					onClick = childItemViewModel::viewItem
+					onClick = {
+						itemListViewModel.loadedLibraryId?.also {
+							applicationNavigation.viewItem(it, childItemViewModel.item)
+						}
+					}
 				)
 				.height(rowHeight)
 				.fillMaxSize()
@@ -123,7 +130,11 @@ fun ItemListView(
 				modifier = Modifier
 					.fillMaxWidth()
 					.weight(1f)
-					.clickable(onClick = childItemViewModel::play)
+					.clickable {
+						itemListViewModel.loadedLibraryId?.also {
+							playbackLibraryItems.playItem(it, ItemId(childItemViewModel.item.key))
+						}
+					}
 					.align(Alignment.CenterVertically),
 			)
 
@@ -143,7 +154,11 @@ fun ItemListView(
 				modifier = Modifier
 					.fillMaxWidth()
 					.weight(1f)
-					.clickable(onClick = childItemViewModel::playShuffled)
+					.clickable {
+						itemListViewModel.loadedLibraryId?.also {
+							playbackLibraryItems.playItemShuffled(it, ItemId(childItemViewModel.item.key))
+						}
+					}
 					.align(Alignment.CenterVertically),
 			)
 		}
@@ -178,7 +193,7 @@ fun ItemListView(
 			onViewFilesClick = fileItemViewModel::viewFileDetails,
 			onPlayClick = {
 				fileItemViewModel.hideMenu()
-				fileListViewModel.play(position)
+				playbackServiceController.startPlaylist(files, 0)
 			}
 		)
 	}
@@ -349,7 +364,7 @@ fun ItemListView(
 
 							val playButtonLabel = stringResource(id = R.string.btn_play)
 							ColumnMenuIcon(
-								onClick = { fileListViewModel.play() },
+								onClick = { playbackServiceController.startPlaylist(files) },
 								icon = {
 									Image(
 										painter = painterResource(id = R.drawable.av_play),
@@ -382,7 +397,7 @@ fun ItemListView(
 
 							val shuffleButtonLabel = stringResource(R.string.btn_shuffle_files)
 							ColumnMenuIcon(
-								onClick = { fileListViewModel.playShuffled() },
+								onClick = { playbackServiceController.shuffleAndStartPlaylist(files) },
 								icon = {
 									Image(
 										painter = painterResource(id = R.drawable.av_shuffle),

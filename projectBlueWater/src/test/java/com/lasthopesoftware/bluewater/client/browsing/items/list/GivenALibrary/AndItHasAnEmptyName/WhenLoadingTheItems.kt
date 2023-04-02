@@ -27,22 +27,19 @@ class WhenLoadingTheItems {
 		}
 
         ItemListViewModel(
-            itemProvider,
-            RecordingApplicationMessageBus(),
-            mockk {
-                every { promiseLibrary(LibraryId(libraryId)) } returns Promise(
-                    Library(
-                        _id = libraryId,
-                        _accessCode = "5HCMsD",
+			itemProvider,
+			RecordingApplicationMessageBus(),
+			mockk {
+				every { promiseLibrary(LibraryId(libraryId)) } returns Promise(
+					Library(
+						_id = libraryId,
+						_accessCode = "5HCMsD",
 						_libraryName = "",
-                    )
-                )
-            },
-            mockk(),
-            mockk(),
-            mockk(),
-            mockk(),
-            mockk(),
+					)
+				)
+			},
+			mockk(),
+			mockk(),
         )
 	}
 

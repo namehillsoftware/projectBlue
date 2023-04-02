@@ -40,7 +40,6 @@ class WhenSyncingTheItem {
 		FileListViewModel(
             itemProvider,
             storedItemAccess,
-            mockk(),
 		)
 	}
 

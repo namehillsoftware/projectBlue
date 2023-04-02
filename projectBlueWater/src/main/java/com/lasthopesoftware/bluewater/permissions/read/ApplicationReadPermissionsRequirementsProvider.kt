@@ -14,10 +14,9 @@ class ApplicationReadPermissionsRequirementsProvider(
     constructor(context: Context) : this(
         LibraryStorageReadPermissionsRequirementsProvider(),
         ExternalStorageReadPermissionsArbitratorForOs(context)
-    ) {
-    }
+    )
 
-    override fun isReadPermissionsRequiredForLibrary(library: Library): Boolean {
+	override fun isReadPermissionsRequiredForLibrary(library: Library): Boolean {
         return libraryStorageReadPermissionsRequirementsProvider.isReadPermissionsRequiredForLibrary(
             library
         ) && !storageReadPermissionArbitratorForOs.isReadPermissionGranted
