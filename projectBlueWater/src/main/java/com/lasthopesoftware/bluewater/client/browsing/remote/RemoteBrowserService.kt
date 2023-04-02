@@ -5,10 +5,8 @@ import android.support.v4.media.MediaBrowserCompat
 import androidx.media.MediaBrowserServiceCompat
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.access.ItemFileProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.access.CachedItemFileProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.LibraryFileProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
-import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.ItemStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.LibraryFileStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.image.CachedImageProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
@@ -71,14 +69,7 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 		LibraryFileProvider(libraryFileStringListProvider)
 	}
 
-	private val itemFileProvider by lazy {
-		ItemFileProvider(
-			ItemStringListProvider(
-                FileListParameters,
-                libraryFileStringListProvider
-            )
-		)
-	}
+	private val itemFileProvider by lazy { CachedItemFileProvider.getInstance(this) }
 
 	private val selectedLibraryIdProvider by lazy { getCachedSelectedLibraryIdProvider() }
 

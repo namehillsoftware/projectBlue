@@ -25,7 +25,7 @@ import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.about.AboutView
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.access.ItemFileProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.access.CachedItemFileProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.LibraryFileProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.ItemStringListProvider
@@ -173,14 +173,7 @@ class BrowserActivity :
 
 	override val itemProvider by lazy { CachedItemProvider.getInstance(applicationContext) }
 
-	override val itemFileProvider by lazy {
-		ItemFileProvider(
-			ItemStringListProvider(
-				FileListParameters,
-				libraryFileStringListProvider
-			)
-		)
-	}
+	override val itemFileProvider by lazy { CachedItemFileProvider.getInstance(applicationContext) }
 
 	override val scopedFilePropertiesProvider by lazy {
 		SelectedLibraryFilePropertiesProvider(

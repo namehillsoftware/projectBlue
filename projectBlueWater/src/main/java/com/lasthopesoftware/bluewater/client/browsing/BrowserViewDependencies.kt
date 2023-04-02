@@ -1,8 +1,8 @@
 package com.lasthopesoftware.bluewater.client.browsing
 
 import com.lasthopesoftware.bluewater.NavigateApplication
-import com.lasthopesoftware.bluewater.client.browsing.files.access.ItemFileProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.LibraryFileProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideItemFiles
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.SelectedLibraryFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.access.CachedItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.list.PlaybackLibraryItems
@@ -39,7 +39,7 @@ interface BrowserViewDependencies {
 	val messageBus: ScopedApplicationMessageBus
 	val storedItemAccess: StateChangeBroadcastingStoredItemAccess
 	val playbackServiceController: PlaybackServiceController
-	val itemFileProvider: ItemFileProvider
+	val itemFileProvider: ProvideItemFiles
 	val menuMessageBus: ViewModelMessageBus<ItemListMenuMessage>
 	val itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler
 	val scopedFilePropertiesProvider: SelectedLibraryFilePropertiesProvider
