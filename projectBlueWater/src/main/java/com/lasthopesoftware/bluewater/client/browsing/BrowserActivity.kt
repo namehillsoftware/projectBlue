@@ -599,8 +599,6 @@ private fun LibraryDestination.Navigate(
 									scopedFilePropertiesProvider,
 									scopedUrlKeyProvider,
 									stringResources,
-									playbackServiceController,
-									applicationNavigation,
 									menuMessageBus,
 									messageBus,
 								)
@@ -636,8 +634,6 @@ private fun LibraryDestination.Navigate(
 									scopedFilePropertiesProvider,
 									scopedUrlKeyProvider,
 									stringResources,
-									playbackServiceController,
-									applicationNavigation,
 									menuMessageBus,
 									messageBus,
 								)
@@ -686,8 +682,6 @@ private fun LibraryDestination.Navigate(
 									scopedFilePropertiesProvider,
 									scopedUrlKeyProvider,
 									stringResources,
-									playbackServiceController,
-									applicationNavigation,
 									menuMessageBus,
 									messageBus,
 								)
