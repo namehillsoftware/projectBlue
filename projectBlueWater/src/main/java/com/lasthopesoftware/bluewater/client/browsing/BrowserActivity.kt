@@ -677,7 +677,6 @@ private fun LibraryDestination.Navigate(
 						val searchFilesViewModel = viewModel {
 							SearchFilesViewModel(
 								libraryFilesProvider,
-								playbackServiceController,
 							)
 						}
 
@@ -698,6 +697,8 @@ private fun LibraryDestination.Navigate(
 								)
 							},
 							itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
+							applicationNavigation = applicationNavigation,
+							playbackServiceController = playbackServiceController,
 							onBack = applicationNavigation::backOut,
 						)
 					}

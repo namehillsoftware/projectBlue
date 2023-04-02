@@ -16,7 +16,6 @@ import org.junit.jupiter.api.Test
 
 private const val libraryId = 411
 private const val itemId = 883
-private const val itemValue = "can"
 
 class WhenPlayingAShuffledChildItem {
 	private var playedFileList = ""

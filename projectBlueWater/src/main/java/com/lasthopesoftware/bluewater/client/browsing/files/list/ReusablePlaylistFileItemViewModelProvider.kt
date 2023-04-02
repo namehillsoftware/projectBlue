@@ -20,8 +20,6 @@ class ReusablePlaylistFileItemViewModelProvider(
 	private val receiveApplicationMessages: RegisterForApplicationMessages,
 ) : PooledCloseablesViewModel<ViewPlaylistFileItem>() {
 	override fun getNewCloseable(): ViewPlaylistFileItem = ReusablePlaylistFileViewModel(
-		controlPlaybackService,
-		applicationNavigation,
 		sendItemMenuMessages,
 		ReusableFileViewModel(
 			filePropertiesProvider,

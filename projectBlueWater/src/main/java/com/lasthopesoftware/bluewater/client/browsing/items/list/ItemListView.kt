@@ -169,7 +169,7 @@ fun ItemListView(
 		val fileItemViewModel = remember(trackHeadlineViewModelProvider::getViewModel)
 
 		DisposableEffect(serviceFile) {
-			fileItemViewModel.promiseUpdate(files, position)
+			fileItemViewModel.promiseUpdate(serviceFile)
 
 			onDispose {
 				fileItemViewModel.reset()
@@ -184,16 +184,22 @@ fun ItemListView(
 			itemName = fileName,
 			isActive = isPlaying,
 			isHiddenMenuShown = isMenuShown,
-			onItemClick = fileItemViewModel::viewFileDetails,
+			onItemClick = {
+				applicationNavigation.viewFileDetails(files, position)
+			},
 			onHiddenMenuClick = {
 				itemListMenuBackPressedHandler.hideAllMenus()
 				fileItemViewModel.showMenu()
 			},
-			onAddToNowPlayingClick = fileItemViewModel::addToNowPlaying,
-			onViewFilesClick = fileItemViewModel::viewFileDetails,
+			onAddToNowPlayingClick = {
+				 playbackServiceController.addToPlaylist(serviceFile)
+			},
+			onViewFilesClick = {
+				applicationNavigation.viewFileDetails(files, position)
+			},
 			onPlayClick = {
 				fileItemViewModel.hideMenu()
-				playbackServiceController.startPlaylist(files, 0)
+				playbackServiceController.startPlaylist(files, position)
 			}
 		)
 	}
