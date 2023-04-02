@@ -27,7 +27,6 @@ import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackSer
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import kotlinx.coroutines.launch
 
-private const val fudgeFactor = .01f
 private val bottomAppBarHeight = Dimensions.AppBarHeight
 
 @Composable

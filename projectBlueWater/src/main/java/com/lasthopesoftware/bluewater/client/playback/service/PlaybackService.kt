@@ -352,8 +352,7 @@ open class PlaybackService :
 			PlaybackStartingNotificationBuilder(
 				this,
 				NotificationBuilderProducer(this),
-				playbackNotificationsConfiguration,
-				mediaSession
+				playbackNotificationsConfiguration
 			)
 		}
 	}

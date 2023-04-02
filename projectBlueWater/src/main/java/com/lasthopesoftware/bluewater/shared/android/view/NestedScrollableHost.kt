@@ -38,48 +38,48 @@ import kotlin.math.sign
  * Source at time this was copied: https://github.com/android/views-widgets-samples/blob/f9cb520a06911e786f2e204da19e22e2a7f371d7/ViewPager2/app/src/main/java/androidx/viewpager2/integration/testapp/NestedScrollableHost.kt
  */
 class NestedScrollableHost : FrameLayout {
-    constructor(context: Context) : super(context)
-    constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
+	constructor(context: Context) : super(context)
+	constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
 
-    private var touchSlop = 0
-    private var initialX = 0f
-    private var initialY = 0f
-    private val parentViewPager: ViewPager2?
-        get() {
-            var v: View? = parent as? View
-            while (v != null && v !is ViewPager2) {
-                v = v.parent as? View
-            }
-            return v as? ViewPager2
-        }
+	private var touchSlop = 0
+	private var initialX = 0f
+	private var initialY = 0f
+	private val parentViewPager: ViewPager2?
+		get() {
+			var v: View? = parent as? View
+			while (v != null && v !is ViewPager2) {
+				v = v.parent as? View
+			}
+			return v as? ViewPager2
+		}
 
-    private val child: View? get() = if (childCount > 0) getChildAt(0) else null
+	private val child: View? get() = if (childCount > 0) getChildAt(0) else null
 
-    init {
-        touchSlop = ViewConfiguration.get(context).scaledTouchSlop
-    }
+	init {
+		touchSlop = ViewConfiguration.get(context).scaledTouchSlop
+	}
 
 	override fun onInterceptTouchEvent(e: MotionEvent): Boolean {
 		handleInterceptTouchEvent(e)
 		return super.onInterceptTouchEvent(e)
 	}
 
-    private fun canChildScroll(orientation: Int, delta: Float): Boolean {
-        val direction = -delta.sign.toInt()
-        return when (orientation) {
-            0 -> child?.canScrollHorizontally(direction) ?: false
-            1 -> child?.canScrollVertically(direction) ?: false
-            else -> throw IllegalArgumentException()
-        }
-    }
+	private fun canChildScroll(orientation: Int, delta: Float): Boolean {
+		val direction = -delta.sign.toInt()
+		return when (orientation) {
+			0 -> child?.canScrollHorizontally(direction) ?: false
+			1 -> child?.canScrollVertically(direction) ?: false
+			else -> throw IllegalArgumentException()
+		}
+	}
 
-    private fun handleInterceptTouchEvent(e: MotionEvent) {
-        val orientation = parentViewPager?.orientation ?: return
+	private fun handleInterceptTouchEvent(e: MotionEvent) {
+		val orientation = parentViewPager?.orientation ?: return
 
-        // Early return if child can't scroll in same direction as parent
-        if (!canChildScroll(orientation, -1f) && !canChildScroll(orientation, 1f)) {
-            return
-        }
+		// Early return if child can't scroll in same direction as parent
+		if (!canChildScroll(orientation, -1f) && !canChildScroll(orientation, 1f)) {
+			return
+		}
 
 		when (e.action) {
 			MotionEvent.ACTION_DOWN -> {
@@ -113,5 +113,5 @@ class NestedScrollableHost : FrameLayout {
 				}
 			}
 		}
-    }
+	}
 }

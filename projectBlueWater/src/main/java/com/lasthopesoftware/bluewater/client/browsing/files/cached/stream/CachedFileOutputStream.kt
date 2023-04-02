@@ -52,8 +52,8 @@ class CachedFileOutputStream(
 		if (!isClosed) diskFileCachePersistence.putIntoDatabase(uniqueKey, file)
 		else Promise.empty()
 
-    override fun close() {
+	override fun close() {
 		isClosed = true
-        if (lazyFileOutputStream.isInitialized()) lazyFileOutputStream.value.close()
-    }
+		if (lazyFileOutputStream.isInitialized()) lazyFileOutputStream.value.close()
+	}
 }
