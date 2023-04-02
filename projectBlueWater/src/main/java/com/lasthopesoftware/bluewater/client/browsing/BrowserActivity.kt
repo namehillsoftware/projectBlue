@@ -668,17 +668,13 @@ private fun LibraryDestination.Navigate(
 									messageBus,
 								)
 							},
-							onBack = applicationNavigation::backOut
+							applicationNavigation,
 						)
 
 						activeFileDownloadsViewModel.loadActiveDownloads(screen.libraryId)
 					}
 					is SearchScreen -> {
-						val searchFilesViewModel = viewModel {
-							SearchFilesViewModel(
-								libraryFilesProvider,
-							)
-						}
+						val searchFilesViewModel = viewModel { SearchFilesViewModel(libraryFilesProvider) }
 
 						searchFilesViewModel.setActiveLibraryId(screen.libraryId)
 
@@ -699,7 +695,6 @@ private fun LibraryDestination.Navigate(
 							itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
 							applicationNavigation = applicationNavigation,
 							playbackServiceController = playbackServiceController,
-							onBack = applicationNavigation::backOut,
 						)
 					}
 					is ConnectionSettingsScreen -> {

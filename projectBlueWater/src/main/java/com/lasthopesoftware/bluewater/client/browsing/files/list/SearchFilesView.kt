@@ -48,7 +48,6 @@ fun SearchFilesView(
 	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
 	applicationNavigation: NavigateApplication,
 	playbackServiceController: ControlPlaybackService,
-	onBack: (() -> Unit)? = null,
 ) {
 	val files by searchFilesViewModel.files.collectAsState()
 	val playingFile by nowPlayingViewModel.nowPlayingFile.collectAsState()
