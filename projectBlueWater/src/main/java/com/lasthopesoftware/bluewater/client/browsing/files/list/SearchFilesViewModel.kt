@@ -16,7 +16,8 @@ class SearchFilesViewModel(
 	private val libraryFiles: ProvideLibraryFiles,
 ) : ViewModel(), TrackLoadedViewState {
 
-	private var libraryId: LibraryId? = null
+	var libraryId: LibraryId? = null
+		private set
 
 	private val mutableIsLoading = MutableStateFlow(false)
 	private val mutableFiles = MutableStateFlow(emptyList<ServiceFile>())

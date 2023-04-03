@@ -23,7 +23,6 @@ import com.lasthopesoftware.bluewater.shared.android.intents.IntentBuilder
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 import com.lasthopesoftware.bluewater.shared.cls
-import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay
 import com.lasthopesoftware.bluewater.shared.promises.extensions.*
 import com.lasthopesoftware.resources.strings.StringResources
 import com.namehillsoftware.handoff.promises.Promise
@@ -35,7 +34,12 @@ class InstantiateSelectedConnectionActivity : AppCompatActivity(), ControlConnec
 
 	private val libraryConnectionProvider by lazy { buildNewConnectionSessionManager() }
 
-	private val connectionInitializationProxy by lazy { ConnectionInitializationProxy(libraryConnectionProvider) }
+	private val connectionInitializationProxy by lazy {
+		DramaticConnectionInitializationController(
+			ConnectionInitializationProxy(libraryConnectionProvider),
+			libraryConnectionProvider,
+		)
+	}
 
 	private val selectedLibraryIdProvider by lazy { getCachedSelectedLibraryIdProvider() }
 
@@ -95,22 +99,17 @@ class InstantiateSelectedConnectionActivity : AppCompatActivity(), ControlConnec
 			}
 
 			override fun promiseResponse(connection: IConnectionProvider?): Promise<Unit> {
-				var promisedResponse = PromiseDelay
-					.delay<Any?>(ConnectionInitializationConstants.dramaticPause)
-					.also(::doCancel)
-					.unitResponse()
-
 				if (connection != null && intent?.action != START_ACTIVITY_FOR_RETURN) {
-					promisedResponse = promisedResponse.eventually {
-						selectedLibraryIdProvider
-							.promiseSelectedLibraryId()
-							.eventually {
-								it?.let(applicationNavigation::viewLibrary).keepPromise(Unit)
-							}
-					}
+					return selectedLibraryIdProvider
+						.promiseSelectedLibraryId()
+						.eventually {
+							it?.let(applicationNavigation::viewLibrary).keepPromise(Unit)
+						}
+						.then({ resolve(connection) }, ::reject)
 				}
 
-				return promisedResponse.then({ resolve(connection) }, ::reject)
+				resolve(connection)
+				return Unit.toPromise()
 			}
 		}
 

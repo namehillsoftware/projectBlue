@@ -114,6 +114,7 @@ val libraryIdProperty by lazy { magicPropertyBuilder.buildProperty(libraryIdArgu
 val downloadsAction by lazy { magicPropertyBuilder.buildProperty("downloads") }
 val serverSettingsAction by lazy { magicPropertyBuilder.buildProperty("serverSettings") }
 val applicationSettingsAction by lazy { magicPropertyBuilder.buildProperty("applicationSettings") }
+val viewLibraryAction by lazy { magicPropertyBuilder.buildProperty("viewLibrary") }
 
 class BrowserActivity :
 	AppCompatActivity(),
@@ -269,12 +270,6 @@ class BrowserActivity :
 			libraryProvider,
 		)
 	}
-	override val controlConnectionInitialization by lazy {
-		ConnectionInitializationErrorController(
-			ConnectionInitializationProxy(libraryConnectionProvider),
-			applicationNavigation,
-		)
-	}
 
 	override val playbackLibraryItems by lazy {
 		ItemPlayback(
@@ -363,6 +358,12 @@ class BrowserActivity :
 							navigationMessages.sendMessage(ViewDownloadsMessage(l))
 					}
 			}
+			viewLibraryAction -> {
+				val libraryIdInt =
+					intent.getIntExtra(libraryIdProperty, -1)
+				val libraryId = LibraryId(libraryIdInt)
+				navigationMessages.sendMessage(ViewLibraryMessage(libraryId))
+			}
 			serverSettingsAction -> {
 				val libraryIdInt =
 					intent.getIntExtra(libraryIdProperty, -1)
@@ -382,7 +383,7 @@ private sealed interface Destination : Parcelable
 private object ApplicationSettingsScreen : Destination
 
 @Parcelize
-private object InstantiateSessionConnectionScreen : Destination
+private object SelectedLibraryReRouter : Destination
 
 @Parcelize
 private object AboutScreen : Destination
@@ -434,6 +435,10 @@ private class GraphNavigation(
 
 		navigationMessages.registerReceiver { _: ViewApplicationSettingsMessage ->
 			viewApplicationSettings()
+		}
+
+		navigationMessages.registerReceiver { message: ViewLibraryMessage ->
+			viewLibrary(message.libraryId)
 		}
 	}
 
@@ -488,9 +493,9 @@ private class GraphNavigation(
 		hideBottomSheet()
 	}.toPromise()
 
-	override fun viewFileDetails(playlist: List<ServiceFile>, position: Int): Promise<Unit> {
+	override fun viewFileDetails(libraryId: LibraryId, playlist: List<ServiceFile>, position: Int): Promise<Unit> {
 		hideBottomSheet()
-		return inner.viewFileDetails(playlist, position)
+		return inner.viewFileDetails(libraryId, playlist, position)
 	}
 
 	override fun viewNowPlaying(): Promise<Unit> {
@@ -522,16 +527,13 @@ private class GraphNavigation(
 	}
 }
 
-private class GraphDependencies(inner: BrowserViewDependencies, graphNavigation: GraphNavigation) :
+private class GraphDependencies(inner: BrowserViewDependencies, graphNavigation: GraphNavigation, connectionStatusViewModel: ConnectionStatusViewModel) :
 	BrowserViewDependencies by inner
 {
-	override val applicationNavigation = graphNavigation
-
-	override val controlConnectionInitialization by lazy {
-		DramaticConnectionInitializationController(
-			inner.controlConnectionInitialization,
-			applicationNavigation,
-			selectedLibraryIdProvider,
+	override val applicationNavigation by lazy {
+		ConnectionInitializingLibrarySelectionNavigation(
+			graphNavigation,
+			connectionStatusViewModel,
 		)
 	}
 }
@@ -726,7 +728,7 @@ private fun BrowserView(
 	val systemUiController = rememberSystemUiController()
 	systemUiController.setStatusBarColor(MaterialTheme.colors.surface)
 
-	val navController = rememberNavController(listOf(ApplicationSettingsScreen, InstantiateSessionConnectionScreen))
+	val navController = rememberNavController(listOf(ApplicationSettingsScreen, SelectedLibraryReRouter))
 	val scaffoldState = rememberBottomSheetScaffoldState()
 	val coroutineScope = rememberCoroutineScope()
 
@@ -743,98 +745,109 @@ private fun BrowserView(
 		)
 	}
 
-	BackHandler { graphNavigation.backOut() }
+	val connectionStatusViewModel = viewModel {
+		ConnectionStatusViewModel(
+			browserViewDependencies.stringResources,
+			ConnectionInitializationErrorController(
+				DramaticConnectionInitializationController(
+					ConnectionInitializationProxy(browserViewDependencies.libraryConnectionProvider),
+					browserViewDependencies.libraryConnectionProvider,
+				),
+				graphNavigation,
+			),
+		)
+	}
 
 	val graphDependencies = remember {
 		GraphDependencies(
 			browserViewDependencies,
 			graphNavigation,
+			connectionStatusViewModel,
 		)
 	}
 
+	BackHandler { graphDependencies.applicationNavigation.backOut() }
+
 	Box(modifier = Modifier.fillMaxSize()) {
 		Surface {
-			NavHost(navController) { destination ->
-				when (destination) {
-					is LibraryDestination -> {
-						destination.Navigate(
-							graphDependencies,
-							scaffoldState,
-							coroutineScope,
-						)
-					}
-					is ApplicationSettingsScreen -> {
-						val viewModel = viewModel {
-							ApplicationSettingsViewModel(
-								graphDependencies.applicationSettingsRepository,
-								graphDependencies.selectedPlaybackEngineTypeAccess,
-								graphDependencies.libraryProvider,
-								graphDependencies.messageBus,
-								graphDependencies.syncScheduler,
+			val isCheckingConnection by connectionStatusViewModel.isGettingConnection.collectAsState()
+			if (isCheckingConnection) {
+				ConnectionUpdatesView(connectionViewModel = connectionStatusViewModel)
+			} else {
+				NavHost(navController) { destination ->
+					when (destination) {
+						is LibraryDestination -> {
+							destination.Navigate(
+								graphDependencies,
+								scaffoldState,
+								coroutineScope,
 							)
 						}
-
-						ApplicationSettingsView(
-							applicationSettingsViewModel = viewModel,
-							applicationNavigation = graphNavigation,
-							playbackService = graphDependencies.playbackServiceController,
-						)
-
-						viewModel.loadSettings()
-					}
-					is InstantiateSessionConnectionScreen -> {
-						val viewModel = with (graphDependencies) {
+						is ApplicationSettingsScreen -> {
 							val viewModel = viewModel {
-								ConnectionStatusViewModel(
-									stringResources,
-									controlConnectionInitialization,
+								ApplicationSettingsViewModel(
+									graphDependencies.applicationSettingsRepository,
+									graphDependencies.selectedPlaybackEngineTypeAccess,
+									graphDependencies.libraryProvider,
+									graphDependencies.messageBus,
+									graphDependencies.syncScheduler,
 								)
 							}
 
-							LaunchedEffect(key1 = viewModel) {
-								val settings = applicationSettingsRepository.promiseApplicationSettings().suspend()
-								if (settings.chosenLibraryId > -1) {
-									val libraryId = LibraryId(settings.chosenLibraryId)
-									viewModel
-										.ensureConnectionIsWorking(libraryId)
-										.suspend()
-								} else {
+							ApplicationSettingsView(
+								applicationSettingsViewModel = viewModel,
+								applicationNavigation = graphDependencies.applicationNavigation,
+								playbackService = graphDependencies.playbackServiceController,
+							)
+
+							viewModel.loadSettings()
+						}
+						is SelectedLibraryReRouter -> {
+							graphDependencies.apply {
+								LaunchedEffect(key1 = Unit) {
+									try {
+										val settings = applicationSettingsRepository.promiseApplicationSettings().suspend()
+										if (settings.chosenLibraryId > -1) {
+											val libraryId = LibraryId(settings.chosenLibraryId)
+											applicationNavigation.viewLibrary(libraryId)
+											return@LaunchedEffect
+										}
+									} catch (e: Throwable) {
+										logger.error("An error occurred initializing the library", e)
+									}
+
 									applicationNavigation.backOut()
 								}
 							}
-
-							viewModel
 						}
+						is NewConnectionSettingsScreen -> {
+							with(graphDependencies) {
+								val viewModel = viewModel {
+									LibrarySettingsViewModel(
+										libraryProvider = libraryProvider,
+										libraryStorage = libraryStorage,
+										libraryRemoval = libraryRemoval,
+										applicationReadPermissionsRequirementsProvider = readPermissionsRequirements,
+										applicationWritePermissionsRequirementsProvider = writePermissionsRequirements,
+										permissionsManager = permissionsManager,
+									)
+								}
 
-						ConnectionUpdatesView(connectionViewModel = viewModel)
-					}
-					is NewConnectionSettingsScreen -> {
-						with (graphDependencies) {
-							val viewModel = viewModel {
-								LibrarySettingsViewModel(
-									libraryProvider = libraryProvider,
-									libraryStorage = libraryStorage,
-									libraryRemoval = libraryRemoval,
-									applicationReadPermissionsRequirementsProvider = readPermissionsRequirements,
-									applicationWritePermissionsRequirementsProvider = writePermissionsRequirements,
-									permissionsManager = permissionsManager,
+								LibrarySettingsView(
+									librarySettingsViewModel = viewModel,
+									navigateApplication = applicationNavigation,
+									stringResources = stringResources
 								)
 							}
-
-							LibrarySettingsView(
-								librarySettingsViewModel = viewModel,
-								navigateApplication = applicationNavigation,
-								stringResources = stringResources
-							)
 						}
-					}
-					is AboutScreen -> {
-						AboutView(graphNavigation)
-					}
-					is HiddenSettingsScreen -> {
-						HiddenSettingsView(viewModel {
-							HiddenSettingsViewModel(graphDependencies.applicationSettingsRepository)
-						})
+						is AboutScreen -> {
+							AboutView(graphDependencies.applicationNavigation)
+						}
+						is HiddenSettingsScreen -> {
+							HiddenSettingsView(viewModel {
+								HiddenSettingsViewModel(graphDependencies.applicationSettingsRepository)
+							})
+						}
 					}
 				}
 			}

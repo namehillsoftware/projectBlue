@@ -9,6 +9,13 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.NowPlayingActivity
 
 class IntentBuilder(private val context: Context) : BuildIntents {
+	override fun buildViewLibraryIntent(libraryId: LibraryId): Intent {
+		val returnIntent = context.getIntent<BrowserActivity>()
+		returnIntent.action = viewLibraryAction
+		returnIntent.putExtra(libraryIdProperty, libraryId.id)
+		return returnIntent
+	}
+
 	override fun buildApplicationSettingsIntent(): Intent {
 		val returnIntent = context.getIntent<BrowserActivity>()
 		returnIntent.action = applicationSettingsAction
@@ -22,7 +29,8 @@ class IntentBuilder(private val context: Context) : BuildIntents {
 		return returnIntent
 	}
 
-	override fun buildFileDetailsIntent(playlist: Collection<ServiceFile>, position: Int) = context.getIntent<FileDetailsActivity>().apply {
+	override fun buildFileDetailsIntent(libraryId: LibraryId, playlist: Collection<ServiceFile>, position: Int) = context.getIntent<FileDetailsActivity>().apply {
+		putExtra(FileDetailsActivity.libraryIdKey, libraryId)
 		putExtra(FileDetailsActivity.playlistPosition, position)
 		putExtra(FileDetailsActivity.playlist, playlist.map { it.key }.toIntArray())
 	}

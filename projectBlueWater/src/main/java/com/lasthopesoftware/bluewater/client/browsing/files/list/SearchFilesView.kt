@@ -67,13 +67,18 @@ fun SearchFilesView(
 		val isMenuShown by fileItemViewModel.isMenuShown.collectAsState()
 		val fileName by fileItemViewModel.title.collectAsState()
 
+		val viewFilesClickHandler = {
+			searchFilesViewModel.libraryId?.also {
+				applicationNavigation.viewFileDetails(it, files, position)
+			}
+			Unit
+		}
+
 		TrackHeaderItemView(
 			itemName = fileName,
 			isActive = playingFile?.serviceFile == serviceFile,
 			isHiddenMenuShown = isMenuShown,
-			onItemClick = {
-				applicationNavigation.viewFileDetails(files, position)
-			},
+			onItemClick = viewFilesClickHandler,
 			onHiddenMenuClick = {
 				itemListMenuBackPressedHandler.hideAllMenus()
 				fileItemViewModel.showMenu()
@@ -81,9 +86,7 @@ fun SearchFilesView(
 			onAddToNowPlayingClick = {
 				playbackServiceController.addToPlaylist(serviceFile)
 			},
-			onViewFilesClick = {
-				applicationNavigation.viewFileDetails(files, position)
-			},
+			onViewFilesClick = viewFilesClickHandler,
 			onPlayClick = {
 				fileItemViewModel.hideMenu()
 				playbackServiceController.startPlaylist(files, position)
