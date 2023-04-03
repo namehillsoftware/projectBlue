@@ -1,32 +1,35 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.list.menu.GivenMenus.AndTwoMenusAreShown
+package com.lasthopesoftware.bluewater.client.browsing.items.list.menu.GivenMenus.AndTwoMenusAreShown.AndThenHidden
 
-import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.HiddenListItemMenu
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menu.GivenMenus.FakeMenu
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.resources.RecordingTypedMessageBus
-import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
-class WhenOneMenuIsHidden {
+class `When Hiding All Menus` {
 
 	private val arrangedServices by lazy {
 		val recordingMessageBus = RecordingTypedMessageBus<ItemListMenuMessage>()
 		Pair(recordingMessageBus, ItemListMenuBackPressedHandler(recordingMessageBus))
 	}
+	private var wereAnyMenusHidden = false
 
 	@BeforeAll
 	fun act() {
-		val (messageBus, _) = arrangedServices
-		val firstMenu = mockk<HiddenListItemMenu>()
+		val (messageBus, handler) = arrangedServices
+		val firstMenu = FakeMenu()
+		val secondMenu = FakeMenu()
 		messageBus.sendMessage(ItemListMenuMessage.MenuShown(firstMenu))
-		messageBus.sendMessage(ItemListMenuMessage.MenuShown(mockk()))
+		messageBus.sendMessage(ItemListMenuMessage.MenuShown(secondMenu))
 		messageBus.sendMessage(ItemListMenuMessage.MenuHidden(firstMenu))
+		messageBus.sendMessage(ItemListMenuMessage.MenuHidden(secondMenu))
+		wereAnyMenusHidden = handler.hideAllMenus()
 	}
 
 	@Test
-	fun `then isAnyMenuShown is correct`() {
-		assertThat(arrangedServices.second.isEnabled).isTrue
+	fun `then no menus were hidden`() {
+		assertThat(wereAnyMenusHidden).isFalse
 	}
 }

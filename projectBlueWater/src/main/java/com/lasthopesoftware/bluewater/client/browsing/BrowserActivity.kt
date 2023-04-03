@@ -216,11 +216,7 @@ class BrowserActivity :
 	override val stringResources by lazy { StringResources(applicationContext) }
 
 	override val libraryFilesProvider by lazy {
-		LibraryFileProvider(
-			LibraryFileStringListProvider(
-				libraryConnectionProvider
-			)
-		)
+		LibraryFileProvider(LibraryFileStringListProvider(libraryConnectionProvider))
 	}
 
 	override val applicationNavigation by lazy {

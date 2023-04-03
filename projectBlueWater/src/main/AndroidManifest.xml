@@ -36,12 +36,19 @@
         <activity
             android:name="com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsActivity"
             android:label="@string/title_activity_file_view">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".client.browsing.BrowserActivity" />
         </activity>
         <activity
             android:name=".client.playback.nowplaying.view.activity.NowPlayingActivity"
             android:label="@string/title_activity_view_now_playing"
             android:launchMode="singleTask"
-            android:theme="@style/NowPlayingTheme" />
+            android:theme="@style/NowPlayingTheme">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".client.browsing.BrowserActivity" />
+        </activity>
 
         <receiver
             android:name=".client.playback.service.receivers.AudioBecomingNoisyReceiver"
