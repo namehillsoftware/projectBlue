@@ -1,17 +1,9 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.list.GivenALibrary.AndAnItem.AndItHasChildItems.AndAChildMenuIsShown
 
-import com.lasthopesoftware.bluewater.client.browsing.items.Item
-import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
-import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
-import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
+import com.lasthopesoftware.bluewater.client.browsing.items.list.ReusableChildItemViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.FakeStoredItemAccess
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingTypedMessageBus
-import io.mockk.every
-import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -25,28 +17,11 @@ class WhenHidingTheMenu {
 	private val recordingMessageBus = RecordingTypedMessageBus<ItemListMenuMessage>()
 
 	private val viewModel by lazy {
-		val itemProvider = mockk<ProvideItems>().apply {
-			every { promiseItems(LibraryId(libraryId), ItemId(rootItemId)) } returns listOf(
-				Item(482),
-				Item(449),
-				Item(160),
-				Item(214),
-				Item(childItemId),
-			).toPromise()
-		}
-
 		val storedItemAccess = FakeStoredItemAccess()
-
-		val viewModel = ItemListViewModel(
-			itemProvider,
-			mockk(relaxed = true, relaxUnitFun = true),
-			mockk(),
+		ReusableChildItemViewModel(
 			storedItemAccess,
 			recordingMessageBus
 		)
-
-		viewModel.loadItem(LibraryId(libraryId), Item(rootItemId, "leaf")).toExpiringFuture().get()
-		viewModel.items.value[4]
 	}
 
 	private var didMenuShow = false

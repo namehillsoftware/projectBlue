@@ -7,10 +7,12 @@ import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListView
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.list.PlaybackLibraryItems
+import com.lasthopesoftware.bluewater.client.browsing.items.list.ReusableChildItemViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
+import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 import com.lasthopesoftware.bluewater.shared.promises.extensions.suspend
 import com.namehillsoftware.handoff.promises.Promise
 
@@ -25,6 +27,7 @@ fun browsableItemListView(
 	nowPlayingViewModel: NowPlayingFilePropertiesViewModel,
 	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
 	reusablePlaylistFileItemViewModelProvider: ReusablePlaylistFileItemViewModelProvider,
+	childItemViewModelProvider: PooledCloseablesViewModel<ReusableChildItemViewModel>,
 	applicationNavigation: NavigateApplication,
 	playbackLibraryItems: PlaybackLibraryItems,
 	playbackServiceController: ControlPlaybackService,
@@ -35,6 +38,7 @@ fun browsableItemListView(
 		nowPlayingViewModel,
 		itemListMenuBackPressedHandler,
 		reusablePlaylistFileItemViewModelProvider,
+		childItemViewModelProvider,
 		applicationNavigation,
 		playbackLibraryItems,
 		playbackServiceController,

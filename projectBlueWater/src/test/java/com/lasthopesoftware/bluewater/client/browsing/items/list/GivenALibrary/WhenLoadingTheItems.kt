@@ -40,9 +40,7 @@ class WhenLoadingTheItems {
 					)
 				)
 			},
-			mockk(),
-			mockk(),
-        )
+		)
 	}
 
 	@BeforeAll
@@ -62,7 +60,7 @@ class WhenLoadingTheItems {
 
 	@Test
 	fun `then the loaded files are correct`() {
-		assertThat(viewModel.items.value.map { it.item })
+		assertThat(viewModel.items.value)
 			.hasSameElementsAs(
 				listOf(
 					Item(226),

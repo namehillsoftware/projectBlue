@@ -42,6 +42,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.access.CachedItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemPlayback
+import com.lasthopesoftware.bluewater.client.browsing.items.list.ReusableChildItemViewModelProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.browsing.library.access.*
@@ -573,8 +574,6 @@ private fun LibraryDestination.Navigate(
 									itemProvider,
 									messageBus,
 									libraryProvider,
-									storedItemAccess,
-									menuMessageBus,
 								)
 							},
 							fileListViewModel = viewModel {
@@ -592,6 +591,12 @@ private fun LibraryDestination.Navigate(
 									stringResources,
 									menuMessageBus,
 									messageBus,
+								)
+							},
+							childItemViewModelProvider = viewModel {
+								ReusableChildItemViewModelProvider(
+									storedItemAccess,
+									menuMessageBus,
 								)
 							},
 							applicationNavigation = applicationNavigation,
@@ -608,8 +613,6 @@ private fun LibraryDestination.Navigate(
 									itemProvider,
 									messageBus,
 									libraryProvider,
-									storedItemAccess,
-									menuMessageBus,
 								)
 							},
 							fileListViewModel = viewModel {
@@ -627,6 +630,12 @@ private fun LibraryDestination.Navigate(
 									stringResources,
 									menuMessageBus,
 									messageBus,
+								)
+							},
+							childItemViewModelProvider = viewModel {
+								ReusableChildItemViewModelProvider(
+									storedItemAccess,
+									menuMessageBus,
 								)
 							},
 							applicationNavigation = applicationNavigation,

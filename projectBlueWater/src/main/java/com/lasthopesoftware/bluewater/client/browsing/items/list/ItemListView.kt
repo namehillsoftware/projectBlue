@@ -61,6 +61,7 @@ fun ItemListView(
 	nowPlayingViewModel: NowPlayingFilePropertiesViewModel,
 	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
 	trackHeadlineViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
+	childItemViewModelProvider: PooledCloseablesViewModel<ReusableChildItemViewModel>,
 	applicationNavigation: NavigateApplication,
 	playbackLibraryItems: PlaybackLibraryItems,
 	playbackServiceController: ControlPlaybackService,
@@ -73,7 +74,19 @@ fun ItemListView(
 	val itemValue by itemListViewModel.itemValue.collectAsState()
 
 	@Composable
-	fun ChildItem(childItemViewModel: ItemListViewModel.ChildItemViewModel) {
+	fun ChildItem(item: IItem) {
+		val childItemViewModel = remember(childItemViewModelProvider::getViewModel)
+
+		DisposableEffect(key1 = item) {
+			itemListViewModel.loadedLibraryId?.also {
+				childItemViewModel.update(it, item)
+			}
+
+			onDispose {
+				childItemViewModel.reset()
+			}
+		}
+
 		val isMenuShown by childItemViewModel.isMenuShown.collectAsState()
 
 		if (!isMenuShown) {
@@ -91,7 +104,7 @@ fun ItemListView(
 					onClickLabel = stringResource(id = R.string.btn_view_song_details),
 					onClick = {
 						itemListViewModel.loadedLibraryId?.also {
-							applicationNavigation.viewItem(it, childItemViewModel.item)
+							applicationNavigation.viewItem(it, item)
 						}
 					}
 				)
@@ -99,7 +112,7 @@ fun ItemListView(
 				.fillMaxSize()
 			) {
 				Text(
-					text = childItemViewModel.item.value ?: "",
+					text = item.value ?: "",
 					fontSize = rowFontSize,
 					overflow = TextOverflow.Ellipsis,
 					maxLines = 1,
@@ -111,12 +124,6 @@ fun ItemListView(
 			}
 
 			return
-		}
-
-		DisposableEffect(childItemViewModel.item) {
-			onDispose {
-				childItemViewModel.hideMenu()
-			}
 		}
 
 		Row(
@@ -132,7 +139,7 @@ fun ItemListView(
 					.weight(1f)
 					.clickable {
 						itemListViewModel.loadedLibraryId?.also {
-							playbackLibraryItems.playItem(it, ItemId(childItemViewModel.item.key))
+							playbackLibraryItems.playItem(it, ItemId(item.key))
 						}
 					}
 					.align(Alignment.CenterVertically),
@@ -156,7 +163,7 @@ fun ItemListView(
 					.weight(1f)
 					.clickable {
 						itemListViewModel.loadedLibraryId?.also {
-							playbackLibraryItems.playItemShuffled(it, ItemId(childItemViewModel.item.key))
+							playbackLibraryItems.playItemShuffled(it, ItemId(item.key))
 						}
 					}
 					.align(Alignment.CenterVertically),
@@ -246,7 +253,7 @@ fun ItemListView(
 					}
 				}
 
-				itemsIndexed(items) { i, f ->
+				itemsIndexed(items, { _, i -> i.key }) { i, f ->
 					ChildItem(f)
 
 					if (i < items.lastIndex)
