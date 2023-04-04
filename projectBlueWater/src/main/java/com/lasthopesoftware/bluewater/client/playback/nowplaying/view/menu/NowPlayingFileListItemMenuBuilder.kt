@@ -158,13 +158,18 @@ class NowPlayingFileListItemMenuBuilder(
 				?: false
 
 		override fun respond(np: NowPlaying?) {
-			np?.libraryId?.also { libraryId ->
-				positionedFile?.also { file ->
-					playlist?.also {
-						viewFileDetailsButton.setOnClickListener(ViewFileDetailsClickListener(viewAnimator, libraryId, file, it))
+			val viewFileDetailsClickListener = np?.libraryId?.let { libraryId ->
+				positionedFile?.let { file ->
+					playlist?.let {
+						ViewFileDetailsClickListener(viewAnimator, libraryId, file, it)
 					}
 				}
 			}
+			if (viewFileDetailsClickListener != null) {
+				viewAnimator.setOnClickListener(viewFileDetailsClickListener)
+				viewFileDetailsButton.setOnClickListener(viewFileDetailsClickListener)
+			}
+
 			val position = positionedFile?.playlistPosition
 			textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(position == np?.playlistPosition))
 			viewAnimator.isSelected = position == np?.playlistPosition
