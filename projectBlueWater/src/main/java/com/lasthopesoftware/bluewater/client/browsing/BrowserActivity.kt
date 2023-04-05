@@ -758,8 +758,7 @@ private fun BrowserView(
 		ConnectionStatusViewModel(
 			browserViewDependencies.stringResources,
 			ConnectionInitializationErrorController(
-				DramaticConnectionInitializationController(
-					ConnectionInitializationProxy(browserViewDependencies.libraryConnectionProvider),
+				DramaticConnectionInitializationProxy(
 					browserViewDependencies.libraryConnectionProvider,
 				),
 				graphNavigation,

@@ -35,8 +35,7 @@ class InstantiateSelectedConnectionActivity : AppCompatActivity(), ControlConnec
 	private val libraryConnectionProvider by lazy { buildNewConnectionSessionManager() }
 
 	private val connectionInitializationProxy by lazy {
-		DramaticConnectionInitializationController(
-			ConnectionInitializationProxy(libraryConnectionProvider),
+		DramaticConnectionInitializationProxy(
 			libraryConnectionProvider,
 		)
 	}

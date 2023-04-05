@@ -26,7 +26,10 @@ import com.lasthopesoftware.bluewater.client.connection.authentication.SelectedL
 import com.lasthopesoftware.bluewater.client.connection.libraries.SelectedLibraryUrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
-import com.lasthopesoftware.bluewater.client.connection.session.initialization.*
+import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionInitializationErrorController
+import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionStatusViewModel
+import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionUpdatesView
+import com.lasthopesoftware.bluewater.client.connection.session.initialization.DramaticConnectionInitializationProxy
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.intents.IntentBuilder
@@ -120,8 +123,7 @@ class FileDetailsActivity : ComponentActivity() {
 		ConnectionStatusViewModel(
 			StringResources(this),
 			ConnectionInitializationErrorController(
-				DramaticConnectionInitializationController(
-					ConnectionInitializationProxy(libraryConnections),
+				DramaticConnectionInitializationProxy(
 					libraryConnections,
 				),
 				applicationNavigation,
