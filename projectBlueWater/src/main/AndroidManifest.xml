@@ -25,7 +25,6 @@
 
         <activity
             android:name=".client.browsing.BrowserActivity"
-            android:label="Browse Items"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
