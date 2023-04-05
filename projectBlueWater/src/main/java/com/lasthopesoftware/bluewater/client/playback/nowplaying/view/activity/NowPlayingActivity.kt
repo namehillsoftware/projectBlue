@@ -21,6 +21,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.F
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener.Companion.tryFlipToPreviousView
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
+import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
 import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.polling.ConnectionPoller
@@ -45,6 +46,7 @@ import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModel
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToaster
+import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
 import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
@@ -59,7 +61,8 @@ import kotlinx.coroutines.flow.onEach
 class NowPlayingActivity :
 	AppCompatActivity(),
 	(PollConnectionService.ConnectionLostNotification) -> Unit,
-	IItemListMenuChangeHandler
+	IItemListMenuChangeHandler,
+	Runnable
 {
 	companion object {
 		fun Context.startNowPlayingActivity() {
@@ -211,12 +214,20 @@ class NowPlayingActivity :
 	override fun onStart() {
 		super.onStart()
 
-		restoreSelectedConnection(this).eventually(LoopedInPromise.response({
-			binding.also { b ->
-				b.filePropertiesVm?.initializeViewModel()
-				b.coverArtVm?.initializeViewModel()
-			}
-		}, messageHandler))
+		run()
+	}
+
+	override fun run() {
+		restoreSelectedConnection(this)
+			.eventually(LoopedInPromise.response({
+				binding.also { b ->
+					b.filePropertiesVm?.initializeViewModel()
+					b.coverArtVm?.initializeViewModel()
+				}
+			}, messageHandler))
+			.excuse(HandleViewIoException(this, this))
+			.eventuallyExcuse(LoopedInPromise.response(UnexpectedExceptionToasterResponse(this), this))
+			.then { finish() }
 	}
 
 	override fun invoke(p1: PollConnectionService.ConnectionLostNotification) {
