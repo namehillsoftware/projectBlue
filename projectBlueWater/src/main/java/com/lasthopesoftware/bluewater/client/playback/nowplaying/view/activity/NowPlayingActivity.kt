@@ -1,19 +1,19 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity
 
-import android.content.Context
-import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.view.View
 import android.widget.ViewAnimator
 import androidx.activity.addCallback
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.TaskStackBuilder
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
 import com.lasthopesoftware.bluewater.R
+import com.lasthopesoftware.bluewater.client.browsing.BrowserActivity
 import com.lasthopesoftware.bluewater.client.browsing.files.image.CachedImageProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
@@ -64,14 +64,6 @@ class NowPlayingActivity :
 	IItemListMenuChangeHandler,
 	Runnable
 {
-	companion object {
-		fun Context.startNowPlayingActivity() {
-			val viewIntent = Intent(this, cls<NowPlayingActivity>())
-			viewIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
-			startActivity(viewIntent)
-		}
-	}
-
 	private var viewAnimator: ViewAnimator? = null
 
 	private val messageHandler by lazy { Handler(mainLooper) }
@@ -168,6 +160,9 @@ class NowPlayingActivity :
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
+		val taskStackBuilder = TaskStackBuilder.create(this)
+		taskStackBuilder.addParentStack(cls<BrowserActivity>())
+
 		binding.pager.adapter = PagerAdapter()
 
 		binding.filePropertiesVm?.unexpectedError?.filterNotNull()?.onEach {
@@ -214,6 +209,11 @@ class NowPlayingActivity :
 	override fun onStart() {
 		super.onStart()
 
+		if (isTaskRoot) {
+			finish()
+			return
+		}
+
 		run()
 	}
 
@@ -226,7 +226,7 @@ class NowPlayingActivity :
 				}
 			}, messageHandler))
 			.excuse(HandleViewIoException(this, this))
-			.eventuallyExcuse(LoopedInPromise.response(UnexpectedExceptionToasterResponse(this), this))
+			.eventuallyExcuse(LoopedInPromise.response(UnexpectedExceptionToasterResponse(this), messageHandler))
 			.then { finish() }
 	}
 

@@ -37,6 +37,7 @@
 
         <activity
             android:name=".client.browsing.BrowserActivity"
+            android:launchMode="singleTask"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -46,7 +47,8 @@
         </activity>
         <activity
             android:name="com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsActivity"
-            android:label="@string/title_activity_file_view">
+            android:label="@string/title_activity_file_view"
+            android:parentActivityName=".client.browsing.BrowserActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".client.browsing.BrowserActivity" />
@@ -54,8 +56,9 @@
         <activity
             android:name=".client.playback.nowplaying.view.activity.NowPlayingActivity"
             android:label="@string/title_activity_view_now_playing"
-            android:launchMode="singleTask"
-            android:theme="@style/NowPlayingTheme">
+            android:theme="@style/NowPlayingTheme"
+            android:launchMode="singleTop"
+            android:parentActivityName=".client.browsing.BrowserActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".client.browsing.BrowserActivity" />

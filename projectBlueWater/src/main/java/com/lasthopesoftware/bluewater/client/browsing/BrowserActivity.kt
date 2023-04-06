@@ -1,12 +1,9 @@
-@file:OptIn(ExperimentalCoroutinesApi::class)
-
 package com.lasthopesoftware.bluewater.client.browsing
 
-import ItemBrowsingArguments.libraryIdArgument
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
-import android.os.Parcelable
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
@@ -48,7 +45,6 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.h
 import com.lasthopesoftware.bluewater.client.browsing.library.access.*
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectBrowserLibrary
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.browsing.navigation.*
@@ -89,12 +85,12 @@ import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.lazyLogger
-import com.lasthopesoftware.bluewater.shared.messages.RegisterForTypedMessages
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRateLimiter
 import com.lasthopesoftware.bluewater.shared.promises.extensions.*
+import com.lasthopesoftware.resources.closables.AutoCloseableManager
 import com.lasthopesoftware.resources.closables.ViewModelCloseableManager
 import com.lasthopesoftware.resources.closables.lazyScoped
 import com.lasthopesoftware.resources.strings.StringResources
@@ -105,24 +101,19 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
-import kotlinx.parcelize.Parcelize
 import java.util.concurrent.ConcurrentHashMap
 
 private val logger by lazyLogger<BrowserActivity>()
 private val magicPropertyBuilder by lazy { MagicPropertyBuilder(cls<BrowserActivity>()) }
 
-val libraryIdProperty by lazy { magicPropertyBuilder.buildProperty(libraryIdArgument) }
-val downloadsAction by lazy { magicPropertyBuilder.buildProperty("downloads") }
-val serverSettingsAction by lazy { magicPropertyBuilder.buildProperty("serverSettings") }
-val applicationSettingsAction by lazy { magicPropertyBuilder.buildProperty("applicationSettings") }
-val viewLibraryAction by lazy { magicPropertyBuilder.buildProperty("viewLibrary") }
+val destinationProperty by lazy { magicPropertyBuilder.buildProperty("destination") }
 
 class BrowserActivity :
 	AppCompatActivity(),
 	BrowserViewDependencies,
 	ActivityCompat.OnRequestPermissionsResultCallback,
-	ManagePermissions
-{
+	ManagePermissions {
+
 	private val viewModelScope by buildViewModelLazily { ViewModelCloseableManager() }
 
 	private val libraryFileStringListProvider by lazy { LibraryFileStringListProvider(libraryConnectionProvider) }
@@ -221,7 +212,7 @@ class BrowserActivity :
 		LibraryFileProvider(LibraryFileStringListProvider(libraryConnectionProvider))
 	}
 
-	override val applicationNavigation by lazy {
+	override val applicationNavigation: NavigateApplication by lazy {
 		ActivityApplicationNavigation(
 			this,
 			IntentBuilder(applicationContext),
@@ -254,7 +245,11 @@ class BrowserActivity :
 	}
 
 	override val readPermissionsRequirements by lazy { ApplicationReadPermissionsRequirementsProvider(applicationContext) }
-	override val writePermissionsRequirements by lazy { ApplicationWritePermissionsRequirementsProvider(applicationContext) }
+	override val writePermissionsRequirements by lazy {
+		ApplicationWritePermissionsRequirementsProvider(
+			applicationContext
+		)
+	}
 	override val permissionsManager = this
 	override val navigationMessages by buildViewModelLazily { ViewModelMessageBus<NavigationMessage>() }
 	override val applicationSettingsRepository by lazy { getApplicationSettingsRepository() }
@@ -298,10 +293,8 @@ class BrowserActivity :
 
 		setContent {
 			ProjectBlueTheme {
-				BrowserView(this)
+				BrowserView(this, getDestination(intent))
 			}
-
-			actOnIntent(intent)
 		}
 	}
 
@@ -310,7 +303,7 @@ class BrowserActivity :
 
 		this.intent = intent
 
-		actOnIntent(intent)
+		getDestination(intent)?.also { navigationMessages.sendMessage(NavigationMessage(it)) }
 	}
 
 	override fun requestPermissions(permissions: List<String>): Promise<Map<String, Boolean>> {
@@ -349,99 +342,25 @@ class BrowserActivity :
 					})
 	}
 
-	private fun actOnIntent(intent: Intent?) {
-		when (intent?.action) {
-			downloadsAction -> {
-				selectedLibraryIdProvider
-					.promiseSelectedLibraryId()
-					.then { l ->
-						if (l != null)
-							navigationMessages.sendMessage(ViewDownloadsMessage(l))
-					}
+	private fun getDestination(intent: Intent?) =
+		intent
+			?.run {
+				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+					getParcelableExtra(destinationProperty, cls<Destination>())
+				} else {
+					getParcelableExtra(destinationProperty)
+				}
 			}
-			viewLibraryAction -> {
-				val libraryIdInt =
-					intent.getIntExtra(libraryIdProperty, -1)
-				val libraryId = LibraryId(libraryIdInt)
-				navigationMessages.sendMessage(ViewLibraryMessage(libraryId))
-			}
-			serverSettingsAction -> {
-				val libraryIdInt =
-					intent.getIntExtra(libraryIdProperty, -1)
-				val libraryId = LibraryId(libraryIdInt)
-				navigationMessages.sendMessage(ViewServerSettingsMessage(libraryId))
-			}
-			applicationSettingsAction -> {
-				navigationMessages.sendMessage(ViewApplicationSettingsMessage)
-			}
-		}
-	}
 }
 
-private sealed interface Destination : Parcelable
-
-@Parcelize
-private object ApplicationSettingsScreen : Destination
-
-@Parcelize
-private object SelectedLibraryReRouter : Destination
-
-@Parcelize
-private object AboutScreen : Destination
-
-@Parcelize
-private object NewConnectionSettingsScreen : Destination
-
-@Parcelize
-private object HiddenSettingsScreen : Destination
-
-private sealed interface LibraryDestination : Destination {
-	val libraryId: LibraryId
-}
-
-@Parcelize
-private class LibraryScreen(override val libraryId: LibraryId) : LibraryDestination
-
-@Parcelize
-private class ItemScreen(override val libraryId: LibraryId, val item: Item) : LibraryDestination
-
-@Parcelize
-private class DownloadsScreen(override val libraryId: LibraryId) : LibraryDestination
-
-@Parcelize
-private class ConnectionSettingsScreen(override val libraryId: LibraryId) : LibraryDestination
-
-@Parcelize
-private class SearchScreen(override val libraryId: LibraryId) : LibraryDestination
-
-@OptIn(ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterialApi::class, ExperimentalCoroutinesApi::class)
 private class GraphNavigation(
 	private val inner: NavigateApplication,
 	private val navController: NavController<Destination>,
 	private val bottomSheetState: BottomSheetState,
 	private val coroutineScope: CoroutineScope,
-	private val itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
-	navigationMessages: RegisterForTypedMessages<NavigationMessage>,
-	private val libraryBrowserSelection: SelectBrowserLibrary,
+	private val itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler
 ) : NavigateApplication by inner {
-
-	init {
-		navigationMessages.registerReceiver { message: ViewDownloadsMessage ->
-			viewActiveDownloads(message.libraryId)
-		}
-
-		navigationMessages.registerReceiver { message: ViewServerSettingsMessage ->
-			viewServerSettings(message.libraryId)
-		}
-
-		navigationMessages.registerReceiver { _: ViewApplicationSettingsMessage ->
-			viewApplicationSettings()
-		}
-
-		navigationMessages.registerReceiver { message: ViewLibraryMessage ->
-			viewLibrary(message.libraryId)
-		}
-	}
 
 	override fun launchSearch(libraryId: LibraryId) = coroutineScope.launch {
 		navController.popUpTo { it is ItemScreen }
@@ -478,8 +397,6 @@ private class GraphNavigation(
 	}.toPromise()
 
 	override fun viewLibrary(libraryId: LibraryId) = coroutineScope.launch {
-		libraryBrowserSelection.selectBrowserLibrary(libraryId).suspend()
-
 		navController.popUpTo { it is ApplicationSettingsScreen }
 
 		navController.navigate(LibraryScreen(libraryId))
@@ -511,7 +428,7 @@ private class GraphNavigation(
 	override fun navigateUp() = coroutineScope.async {
 		hideBottomSheet()
 
-		navController.pop() || inner.navigateUp().suspend()
+		(navController.pop() && navController.backstack.entries.any()) || inner.navigateUp().suspend()
 	}.toPromise()
 
 	override fun backOut() = coroutineScope.async {
@@ -528,14 +445,32 @@ private class GraphNavigation(
 	}
 }
 
-private class GraphDependencies(inner: BrowserViewDependencies, graphNavigation: GraphNavigation, connectionStatusViewModel: ConnectionStatusViewModel) :
-	BrowserViewDependencies by inner
-{
+private class GraphDependencies(
+	inner: BrowserViewDependencies,
+	graphNavigation: GraphNavigation,
+	connectionStatusViewModel: ConnectionStatusViewModel,
+	navController: NavController<Destination>,
+	initialDestination: Destination?
+) : BrowserViewDependencies by inner, AutoCloseable {
+	private val closeableManager = AutoCloseableManager()
+
 	override val applicationNavigation by lazy {
-		ConnectionInitializingLibrarySelectionNavigation(
-			graphNavigation,
-			connectionStatusViewModel,
+		closeableManager.manage(
+			DestinationApplicationNavigation(
+				ConnectionInitializingLibrarySelectionNavigation(
+					graphNavigation,
+					libraryBrowserSelection,
+					connectionStatusViewModel,
+				),
+				navController,
+				navigationMessages,
+				initialDestination
+			)
 		)
+	}
+
+	override fun close() {
+		closeableManager.close()
 	}
 }
 
@@ -733,11 +668,15 @@ private fun LibraryDestination.Navigate(
 @OptIn(ExperimentalMaterialApi::class)
 private fun BrowserView(
 	browserViewDependencies: BrowserViewDependencies,
+	initialDestination: Destination? = null
 ) {
 	val systemUiController = rememberSystemUiController()
 	systemUiController.setStatusBarColor(MaterialTheme.colors.surface)
 
-	val navController = rememberNavController(listOf(ApplicationSettingsScreen, SelectedLibraryReRouter))
+	val navController = rememberNavController(
+		if (initialDestination == null) listOf(ApplicationSettingsScreen, SelectedLibraryReRouter)
+		else listOf(ApplicationSettingsScreen)
+	)
 	val scaffoldState = rememberBottomSheetScaffoldState()
 	val coroutineScope = rememberCoroutineScope()
 
@@ -748,9 +687,7 @@ private fun BrowserView(
 			navController,
 			bottomSheetState,
 			coroutineScope,
-			browserViewDependencies.itemListMenuBackPressedHandler,
-			browserViewDependencies.navigationMessages,
-			browserViewDependencies.libraryBrowserSelection
+			browserViewDependencies.itemListMenuBackPressedHandler
 		)
 	}
 
@@ -771,93 +708,122 @@ private fun BrowserView(
 			browserViewDependencies,
 			graphNavigation,
 			connectionStatusViewModel,
+			navController,
+			initialDestination
 		)
+	}
+
+	DisposableEffect(key1 = graphDependencies) {
+		onDispose {
+			graphDependencies.close()
+		}
 	}
 
 	BackHandler { graphDependencies.applicationNavigation.backOut() }
 
 	Box(modifier = Modifier.fillMaxSize()) {
 		Surface {
+			NavHost(navController) { destination ->
+				when (destination) {
+					is SelectedLibraryReRouter -> {
+						graphDependencies.apply {
+							LaunchedEffect(key1 = Unit) {
+								try {
+									val settings =
+										applicationSettingsRepository.promiseApplicationSettings().suspend()
+									if (settings.chosenLibraryId > -1) {
+										val libraryId = LibraryId(settings.chosenLibraryId)
+										applicationNavigation.viewLibrary(libraryId).suspend()
+										return@LaunchedEffect
+									}
+								} catch (e: Throwable) {
+									logger.error("An error occurred initializing the library", e)
+								}
+
+								applicationNavigation.backOut().suspend()
+							}
+						}
+					}
+					is ActiveLibraryDownloadsScreen -> {
+						graphDependencies.apply {
+							LaunchedEffect(key1 = Unit) {
+								try {
+									val settings =
+										applicationSettingsRepository.promiseApplicationSettings().suspend()
+									if (settings.chosenLibraryId > -1) {
+										val libraryId = LibraryId(settings.chosenLibraryId)
+										applicationNavigation.viewLibrary(libraryId).suspend()
+										applicationNavigation.viewActiveDownloads(libraryId).suspend()
+										return@LaunchedEffect
+									}
+								} catch (e: Throwable) {
+									logger.error("An error occurred initializing the library", e)
+								}
+
+								applicationNavigation.backOut().suspend()
+							}
+						}
+					}
+					is LibraryDestination -> {
+						destination.Navigate(
+							graphDependencies,
+							scaffoldState,
+							coroutineScope,
+						)
+					}
+					is ApplicationSettingsScreen -> {
+						val viewModel = viewModel {
+							ApplicationSettingsViewModel(
+								graphDependencies.applicationSettingsRepository,
+								graphDependencies.selectedPlaybackEngineTypeAccess,
+								graphDependencies.libraryProvider,
+								graphDependencies.messageBus,
+								graphDependencies.syncScheduler,
+							)
+						}
+
+						ApplicationSettingsView(
+							applicationSettingsViewModel = viewModel,
+							applicationNavigation = graphDependencies.applicationNavigation,
+							playbackService = graphDependencies.playbackServiceController,
+						)
+
+						viewModel.loadSettings()
+					}
+					is NewConnectionSettingsScreen -> {
+						with(graphDependencies) {
+							val viewModel = viewModel {
+								LibrarySettingsViewModel(
+									libraryProvider = libraryProvider,
+									libraryStorage = libraryStorage,
+									libraryRemoval = libraryRemoval,
+									applicationReadPermissionsRequirementsProvider = readPermissionsRequirements,
+									applicationWritePermissionsRequirementsProvider = writePermissionsRequirements,
+									permissionsManager = permissionsManager,
+								)
+							}
+
+							LibrarySettingsView(
+								librarySettingsViewModel = viewModel,
+								navigateApplication = applicationNavigation,
+								stringResources = stringResources
+							)
+						}
+					}
+					is AboutScreen -> {
+						AboutView(graphDependencies.applicationNavigation)
+					}
+					is HiddenSettingsScreen -> {
+						HiddenSettingsView(viewModel {
+							HiddenSettingsViewModel(graphDependencies.applicationSettingsRepository)
+						})
+					}
+				}
+			}
+
 			val isCheckingConnection by connectionStatusViewModel.isGettingConnection.collectAsState()
 			if (isCheckingConnection) {
 				ConnectionUpdatesView(connectionViewModel = connectionStatusViewModel)
-			} else {
-				NavHost(navController) { destination ->
-					when (destination) {
-						is LibraryDestination -> {
-							destination.Navigate(
-								graphDependencies,
-								scaffoldState,
-								coroutineScope,
-							)
-						}
-						is ApplicationSettingsScreen -> {
-							val viewModel = viewModel {
-								ApplicationSettingsViewModel(
-									graphDependencies.applicationSettingsRepository,
-									graphDependencies.selectedPlaybackEngineTypeAccess,
-									graphDependencies.libraryProvider,
-									graphDependencies.messageBus,
-									graphDependencies.syncScheduler,
-								)
-							}
-
-							ApplicationSettingsView(
-								applicationSettingsViewModel = viewModel,
-								applicationNavigation = graphDependencies.applicationNavigation,
-								playbackService = graphDependencies.playbackServiceController,
-							)
-
-							viewModel.loadSettings()
-						}
-						is SelectedLibraryReRouter -> {
-							graphDependencies.apply {
-								LaunchedEffect(key1 = Unit) {
-									try {
-										val settings = applicationSettingsRepository.promiseApplicationSettings().suspend()
-										if (settings.chosenLibraryId > -1) {
-											val libraryId = LibraryId(settings.chosenLibraryId)
-											applicationNavigation.viewLibrary(libraryId)
-											return@LaunchedEffect
-										}
-									} catch (e: Throwable) {
-										logger.error("An error occurred initializing the library", e)
-									}
-
-									applicationNavigation.backOut()
-								}
-							}
-						}
-						is NewConnectionSettingsScreen -> {
-							with(graphDependencies) {
-								val viewModel = viewModel {
-									LibrarySettingsViewModel(
-										libraryProvider = libraryProvider,
-										libraryStorage = libraryStorage,
-										libraryRemoval = libraryRemoval,
-										applicationReadPermissionsRequirementsProvider = readPermissionsRequirements,
-										applicationWritePermissionsRequirementsProvider = writePermissionsRequirements,
-										permissionsManager = permissionsManager,
-									)
-								}
-
-								LibrarySettingsView(
-									librarySettingsViewModel = viewModel,
-									navigateApplication = applicationNavigation,
-									stringResources = stringResources
-								)
-							}
-						}
-						is AboutScreen -> {
-							AboutView(graphDependencies.applicationNavigation)
-						}
-						is HiddenSettingsScreen -> {
-							HiddenSettingsView(viewModel {
-								HiddenSettingsViewModel(graphDependencies.applicationSettingsRepository)
-							})
-						}
-					}
-				}
 			}
 		}
 	}

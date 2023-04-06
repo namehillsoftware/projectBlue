@@ -81,7 +81,6 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.re
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.InMemoryNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.MaintainNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.NowPlayingActivity.Companion.startNowPlayingActivity
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Action.Bag
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaybackStartedBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster
@@ -98,6 +97,7 @@ import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.MediaSession.MediaSessionController
 import com.lasthopesoftware.bluewater.shared.android.MediaSession.MediaSessionService
 import com.lasthopesoftware.bluewater.shared.android.audiofocus.AudioFocusManagement
+import com.lasthopesoftware.bluewater.shared.android.intents.IntentBuilder
 import com.lasthopesoftware.bluewater.shared.android.makePendingIntentImmutable
 import com.lasthopesoftware.bluewater.shared.android.notifications.NoOpChannelActivator
 import com.lasthopesoftware.bluewater.shared.android.notifications.NotificationBuilderProducer
@@ -334,7 +334,8 @@ open class PlaybackService :
 					this,
 					NotificationBuilderProducer(this),
 					playbackNotificationsConfiguration,
-					mediaSession
+					mediaSession,
+					intentBuilder,
 				)
 			}
 		}
@@ -348,13 +349,12 @@ open class PlaybackService :
 	private val playbackHandler = lazy { playbackThread.value.then { h -> Handler(h.looper) } }
 
 	private val playbackStartingNotificationBuilder by lazy {
-		promisedMediaSession.then { mediaSession ->
-			PlaybackStartingNotificationBuilder(
-				this,
-				NotificationBuilderProducer(this),
-				playbackNotificationsConfiguration
-			)
-		}
+		PlaybackStartingNotificationBuilder(
+			this,
+			NotificationBuilderProducer(this),
+			playbackNotificationsConfiguration,
+			intentBuilder,
+		)
 	}
 
 	private val selectedLibraryProvider by lazy {
@@ -388,6 +388,7 @@ open class PlaybackService :
 	private val lazyNotificationController = lazy { NotificationsController(this, notificationManager) }
 	private val disconnectionLatch by lazy { TimedCountdownLatch(numberOfDisconnects, disconnectResetDuration) }
 	private val errorLatch by lazy { TimedCountdownLatch(numberOfErrors, errorLatchResetDuration) }
+	private val intentBuilder by lazy { IntentBuilder(this) }
 
 	private val connectionRegainedListener by lazy { ImmediateResponse<IConnectionProvider, Unit> { closeAndRestartPlaylistManager() } }
 	private val onPollingCancelledListener by lazy { ImmediateResponse<Throwable?, Unit> { e ->
@@ -655,7 +656,7 @@ open class PlaybackService :
 					Duration.ZERO)
 			}
 			.then {
-				this.startNowPlayingActivity()
+				startActivity(intentBuilder.buildNowPlayingIntent())
 				applicationMessageBus.value.sendMessage(PlaybackMessage.PlaylistChanged)
 			}
 	}
@@ -726,7 +727,7 @@ open class PlaybackService :
 				Unit
 			}
 
-			val promisedMediaNotificationSetup = mediaStyleNotificationSetup.eventually { mediaStyleNotificationSetup ->
+			val promisedMediaNotificationSetup = mediaStyleNotificationSetup.then { mediaStyleNotificationSetup ->
 					NowPlayingNotificationBuilder(
 						this,
 						mediaStyleNotificationSetup,
@@ -736,22 +737,18 @@ open class PlaybackService :
 					)
 					.also(playbackEngineCloseables::manage)
 					.let { builder ->
-						playbackStartingNotificationBuilder.then { b ->
-							b?.let { playbackStartingNotificationBuilder ->
-								PlaybackNotificationRouter(
-									PlaybackNotificationBroadcaster(
-										lazyNotificationController.value,
-										playbackNotificationsConfiguration,
-										builder,
-										playbackStartingNotificationBuilder,
-										nowPlayingRepository,
-									),
-									applicationMessageBus.value,
-									scopedUrlKeyProvider,
-									nowPlayingRepository,
-								).also(playbackEngineCloseables::manage)
-							}
-						}
+						PlaybackNotificationRouter(
+							PlaybackNotificationBroadcaster(
+								lazyNotificationController.value,
+								playbackNotificationsConfiguration,
+								builder,
+								playbackStartingNotificationBuilder,
+								nowPlayingRepository,
+							),
+							applicationMessageBus.value,
+							scopedUrlKeyProvider,
+							nowPlayingRepository,
+						).also(playbackEngineCloseables::manage)
 					}
 			}
 
