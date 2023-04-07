@@ -214,11 +214,11 @@ fun ItemListView(
 		)
 	}
 
+	val lazyListState = rememberLazyListState()
+
 	@Composable
 	fun BoxWithConstraintsScope.LoadedItemListView() {
 		val items by itemListViewModel.items.collectAsState()
-
-		val lazyListState = rememberLazyListState() // instantiate lazyListState here to ensure it updates when a new list is retrieved
 
 		val knobHeight by rememberCalculatedKnobHeight(lazyListState, rowHeight)
 		LazyColumn(
@@ -354,6 +354,7 @@ fun ItemListView(
 								modifier = Modifier
 									.fillMaxWidth()
 									.padding(start = startPadding, end = endPadding),
+								isMarqueeEnabled = !lazyListState.isScrollInProgress
 							)
 						}
 					}
