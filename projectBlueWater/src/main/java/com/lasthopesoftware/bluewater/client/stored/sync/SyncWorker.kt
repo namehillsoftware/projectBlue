@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.stored.sync
 
 import android.app.NotificationManager
-import android.app.PendingIntent
 import android.content.Context
 import android.content.pm.ServiceInfo
 import android.os.Build
@@ -53,7 +52,6 @@ import com.lasthopesoftware.bluewater.client.stored.sync.notifications.SyncChann
 import com.lasthopesoftware.bluewater.client.stored.sync.receivers.SyncStartedReceiver
 import com.lasthopesoftware.bluewater.client.stored.sync.receivers.file.*
 import com.lasthopesoftware.bluewater.shared.android.intents.IntentBuilder
-import com.lasthopesoftware.bluewater.shared.android.makePendingIntentImmutable
 import com.lasthopesoftware.bluewater.shared.android.notifications.NoOpChannelActivator
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.NotificationChannelActivator
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
@@ -214,11 +212,7 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 	private val intentBuilder by lazy { IntentBuilder(context) }
 
 	private val showDownloadsIntent by lazy {
-		PendingIntent.getActivity(
-			context,
-			0,
-			intentBuilder.buildShowDownloadsIntent(),
-			0.makePendingIntentImmutable())
+		intentBuilder.buildPendingShowDownloadsIntent()
 	}
 
 	private val cancelIntent by lazy { WorkManager.getInstance(context).createCancelPendingIntent(id) }

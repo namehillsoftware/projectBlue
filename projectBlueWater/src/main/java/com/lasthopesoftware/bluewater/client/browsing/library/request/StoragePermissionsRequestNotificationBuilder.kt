@@ -4,8 +4,9 @@ import android.app.Notification
 import android.content.Context
 import androidx.core.app.NotificationCompat
 import com.lasthopesoftware.bluewater.R
-import com.lasthopesoftware.bluewater.client.settings.EditClientSettingsPendingIntentBuilder
-import com.lasthopesoftware.bluewater.client.settings.IEditClientSettingsPendingIntentBuilder
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.shared.android.intents.BuildIntents
+import com.lasthopesoftware.bluewater.shared.android.intents.IntentBuilder
 import com.lasthopesoftware.resources.strings.IStringResourceProvider
 import com.lasthopesoftware.resources.strings.StringResourceProvider
 
@@ -15,12 +16,12 @@ import com.lasthopesoftware.resources.strings.StringResourceProvider
 class StoragePermissionsRequestNotificationBuilder(
     private val notificationBuilder: NotificationCompat.Builder,
     private val stringResourceProvider: IStringResourceProvider,
-    private val editServerSettingsPendingIntentBuilder: IEditClientSettingsPendingIntentBuilder
+    private val editServerSettingsPendingIntentBuilder: BuildIntents
 ) : IStoragePermissionsRequestNotificationBuilder {
     constructor(context: Context) : this(
         NotificationCompat.Builder(context),
 		StringResourceProvider(context),
-		EditClientSettingsPendingIntentBuilder(context)
+		IntentBuilder(context)
     )
 
 	override fun buildStoragePermissionsRequestNotification(libraryId: Int): Notification {
@@ -28,7 +29,7 @@ class StoragePermissionsRequestNotificationBuilder(
         notificationBuilder.setContentTitle(stringResourceProvider.getString(R.string.permissions_needed))
         notificationBuilder.setContentText(stringResourceProvider.getString(R.string.permissions_needed_launch_settings))
         notificationBuilder.setContentIntent(
-            editServerSettingsPendingIntentBuilder.buildEditServerSettingsPendingIntent(libraryId)
+            editServerSettingsPendingIntentBuilder.buildLibraryServerSettingsPendingIntent(LibraryId(libraryId))
         )
         notificationBuilder.setAutoCancel(true)
         notificationBuilder.setVisibility(NotificationCompat.VISIBILITY_PUBLIC)

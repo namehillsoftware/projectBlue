@@ -105,8 +105,10 @@ import java.util.concurrent.ConcurrentHashMap
 
 private val logger by lazyLogger<BrowserActivity>()
 private val magicPropertyBuilder by lazy { MagicPropertyBuilder(cls<BrowserActivity>()) }
+private val cachedDestinationActions = ConcurrentHashMap<Class<*>, String>()
 
 val destinationProperty by lazy { magicPropertyBuilder.buildProperty("destination") }
+fun destinationAction(destination: Destination): String = cachedDestinationActions.getOrPut(destination.javaClass) { "$destinationProperty(${destination.javaClass.name})" }
 
 class BrowserActivity :
 	AppCompatActivity(),

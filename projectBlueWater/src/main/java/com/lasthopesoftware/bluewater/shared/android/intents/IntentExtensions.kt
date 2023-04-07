@@ -5,8 +5,4 @@ import android.content.Context
 import android.content.Intent
 import com.lasthopesoftware.bluewater.shared.cls
 
-inline fun <reified T : Activity> Context.startActivity() {
-	startActivity(getIntent<T>())
-}
-
 inline fun <reified T: Activity> Context.getIntent() = Intent(this, cls<T>())
