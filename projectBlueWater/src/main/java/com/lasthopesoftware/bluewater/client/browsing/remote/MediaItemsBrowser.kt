@@ -10,7 +10,6 @@ import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
-import com.lasthopesoftware.bluewater.client.browsing.library.views.access.ProvideLibraryViews
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
@@ -20,7 +19,6 @@ class MediaItemsBrowser(
 	private val itemProvider: ProvideItems,
 	private val fileProvider: ProvideLibraryFiles,
 	private val itemFileProvider: ProvideItemFiles,
-	private val libraryViews: ProvideLibraryViews,
 	private val mediaItemServiceFileLookup: GetMediaItemsFromServiceFiles,
 ) : BrowseMediaItems {
 	companion object {
@@ -82,7 +80,7 @@ class MediaItemsBrowser(
 	override fun promiseLibraryItems(): Promise<List<MediaBrowserCompat.MediaItem>> =
 		selectedLibraryIdProvider.promiseSelectedLibraryId().eventually { maybeId ->
 			maybeId
-				?.let { libraryId -> libraryViews.promiseLibraryViews(libraryId).then { v -> v.map(::toMediaItem) } }
+				?.let { libraryId -> itemProvider.promiseItems(libraryId).then { v -> v.map(::toMediaItem) } }
 				.keepPromise(emptyList())
 		}
 

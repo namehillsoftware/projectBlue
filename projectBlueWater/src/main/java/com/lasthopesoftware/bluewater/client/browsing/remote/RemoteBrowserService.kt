@@ -20,7 +20,6 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepo
 import com.lasthopesoftware.bluewater.client.browsing.library.access.SpecificLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.views.access.CachedLibraryViewsProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.InMemoryNowPlayingState
@@ -58,8 +57,6 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 	}
 
 	private val packageValidator by lazy { PackageValidator(this, R.xml.allowed_media_browser_callers) }
-
-	private val libraryViewsProvider by lazy { CachedLibraryViewsProvider.getInstance(this) }
 
 	private val itemProvider by lazy { CachedItemProvider.getInstance(this) }
 
@@ -127,7 +124,6 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 			itemProvider,
 			fileProvider,
 			itemFileProvider,
-			libraryViewsProvider,
 			mediaItemServiceFileLookup
 		)
 	}

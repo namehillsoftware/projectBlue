@@ -7,9 +7,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.playlists.Playlist
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistItemFinder
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.browsing.library.views.PlaylistViewItem
-import com.lasthopesoftware.bluewater.client.browsing.library.views.StandardViewItem
-import com.lasthopesoftware.bluewater.client.browsing.library.views.access.ProvideLibraryViews
+import com.lasthopesoftware.bluewater.client.browsing.library.views.KnownViews
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
@@ -39,16 +37,14 @@ class WhenFindingThePlaylistItem {
 	private val expectedItem by lazy { Item(random.nextInt(), null, PlaylistId(playlistId)) }
 
 	private val item by lazy {
-		val libraryViews = mockk<ProvideLibraryViews>()
-		every { libraryViews.promiseLibraryViews(LibraryId(3)) } returns Promise(
-			listOf(
-				StandardViewItem(2, "Music"),
-				PlaylistViewItem(16)
-			)
-		)
-
 		val itemProvider = mockk<ProvideItems>()
 		every { itemProvider.promiseItems(any(), any()) } returns Promise(emptyList())
+		every { itemProvider.promiseItems(LibraryId(3)) } returns Promise(
+			listOf(
+				Item(2, "Music"),
+				Item(16, KnownViews.Playlists)
+			)
+		)
 
 		setupItemProviderWithItems(
 			itemProvider,
@@ -93,7 +89,7 @@ class WhenFindingThePlaylistItem {
 			)
 		)
 
-		val playlistItemFinder = PlaylistItemFinder(libraryViews, itemProvider)
+		val playlistItemFinder = PlaylistItemFinder(itemProvider)
 		playlistItemFinder.promiseItem(LibraryId(3), Playlist(playlistId)).toExpiringFuture().get()
 	}
 

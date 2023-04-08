@@ -2,16 +2,15 @@ package com.lasthopesoftware.bluewater.client.browsing.remote.GivenAnActiveLibra
 
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaMetadataCompat
+import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.browsing.library.views.StandardViewItem
-import com.lasthopesoftware.bluewater.client.browsing.library.views.access.ProvideLibraryViews
 import com.lasthopesoftware.bluewater.client.browsing.remote.MediaItemsBrowser
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
-import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.*
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -40,15 +39,13 @@ class `When Getting Library Items` {
 			val selectedLibraryId = mockk<ProvideSelectedLibraryId>()
 			every { selectedLibraryId.promiseSelectedLibraryId() } returns Promise(LibraryId(489))
 
-			val libraryViews = mockk<ProvideLibraryViews>()
-			every { libraryViews.promiseLibraryViews(LibraryId(489)) } returns Promise(viewIds.map(::StandardViewItem))
-
 			val mediaItemsBrowser = MediaItemsBrowser(
                 selectedLibraryId,
-                mockk(),
+                mockk {
+					every { promiseItems(LibraryId(489)) } returns Promise(viewIds.map(::Item))
+				},
                 mockk(),
 				mockk(),
-                libraryViews,
                 mockk(),
 			)
 			mediaItemsBrowser
@@ -60,6 +57,6 @@ class `When Getting Library Items` {
 
 	@Test
 	fun `then the media items are correct`() {
-		Assertions.assertThat(mediaItems?.map { i -> i.mediaId }).isEqualTo(expectedMediaItems.map { i -> i.mediaId })
+		assertThat(mediaItems?.map { i -> i.mediaId }).isEqualTo(expectedMediaItems.map { i -> i.mediaId })
 	}
 }
