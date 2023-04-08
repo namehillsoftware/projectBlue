@@ -5,8 +5,6 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.shared.lazyLogger
-import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay
-import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromiseProxy
 import java.util.concurrent.CancellationException
@@ -26,25 +24,18 @@ class ConnectionInitializationErrorController(
 				proxyUpdates(promisedConnection)
 				promisedConnection.then(
 					{ c ->
-						if (c == null)	launchSettingsDelayed().also(::doCancel).must { resolve(c) }
+						if (c == null) applicationNavigation.viewApplicationSettings().also(::doCancel).must { resolve(null) }
 						else resolve(c)
 					},
 					{  e ->
 						logger.error("An error occurred getting the connection for library ID ${libraryId.id}.", e)
 						val promisedSettingsLaunch =
-							if (e is CancellationException) applicationNavigation.viewApplicationSettings()
-							else launchSettingsDelayed().also(::doCancel)
+							if (e is CancellationException) applicationNavigation.viewApplicationSettings().also(::doCancel)
+							else applicationNavigation.viewApplicationSettings().also(::doCancel)
 
 						promisedSettingsLaunch.must { resolve(null) }
 					}
 				)
 			}
 		}
-
-	private fun launchSettingsDelayed() = CancellableProxyPromise { cp ->
-		PromiseDelay
-			.delay<Any?>(ConnectionInitializationConstants.dramaticPause)
-			.also(cp::doCancel)
-			.eventually { applicationNavigation.viewApplicationSettings() }
-	}
 }

@@ -25,7 +25,7 @@ class SyncDirectoryLookup(
 			.then { files -> files.maxByOrNull(freeSpace::getFreeSpace) }
 
 	private fun getExternalFilesDirectoriesStream(libraryId: LibraryId): Promise<Collection<File>> =
-		libraryProvider.getLibrary(libraryId)
+		libraryProvider.promiseLibrary(libraryId)
 			.eventually { library ->
 				when (library?.syncedFileLocation) {
 					SyncedFileLocation.EXTERNAL -> publicDrives.promisePublicDrives().promiseDirectoriesWithLibrary(libraryId)

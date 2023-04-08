@@ -1,0 +1,11 @@
+@startuml
+start
+:Load Application Settings;
+if (Is Library Chosen) then
+    :Instantiate Connection;
+    :Load Library;
+endif
+
+stop
+
+@enduml

@@ -14,12 +14,12 @@ import com.namehillsoftware.handoff.promises.Promise
 class CachedItemProvider(
 	private val inner: ProvideItems,
 	private val revisions: CheckRevisions,
-	private val functionCache: CachePromiseFunctions<Triple<LibraryId, ItemId, Int>, List<Item>>
+	private val itemFunctionCache: CachePromiseFunctions<Triple<LibraryId, ItemId?, Int>, List<Item>>,
 ) : ProvideItems {
 
 	companion object {
 
-		private val functionCache = LruPromiseCache<Triple<LibraryId, ItemId, Int>, List<Item>>(20)
+		private val itemFunctionCache = LruPromiseCache<Triple<LibraryId, ItemId?, Int>, List<Item>>(20)
 
 		fun getInstance(context: Context): CachedItemProvider {
 			val libraryConnectionProvider = context.buildNewConnectionSessionManager()
@@ -27,15 +27,15 @@ class CachedItemProvider(
 			return CachedItemProvider(
 				ItemProvider(libraryConnectionProvider),
 				LibraryRevisionProvider(libraryConnectionProvider),
-				functionCache
+				itemFunctionCache
 			)
 		}
 	}
 
-	override fun promiseItems(libraryId: LibraryId, itemId: ItemId): Promise<List<Item>> =
+	override fun promiseItems(libraryId: LibraryId, itemId: ItemId?): Promise<List<Item>> =
 		revisions
 			.promiseRevision(libraryId)
 			.eventually { revision ->
-				functionCache.getOrAdd(Triple(libraryId, itemId, revision)) { (l, k, _) -> inner.promiseItems(l, k) }
+				itemFunctionCache.getOrAdd(Triple(libraryId, itemId, revision)) { (l, k, _) -> inner.promiseItems(l, k) }
 			}
 }

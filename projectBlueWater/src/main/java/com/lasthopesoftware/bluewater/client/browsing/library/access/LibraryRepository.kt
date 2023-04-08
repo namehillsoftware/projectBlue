@@ -14,7 +14,7 @@ import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import org.slf4j.LoggerFactory
 
 class LibraryRepository(private val context: Context) : ILibraryStorage, ILibraryProvider {
-	override fun getLibrary(libraryId: LibraryId): Promise<Library?> =
+	override fun promiseLibrary(libraryId: LibraryId): Promise<Library?> =
 		DatabasePromise(GetLibraryWriter(context, libraryId))
 
 	override val allLibraries: Promise<Collection<Library>>

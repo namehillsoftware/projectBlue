@@ -85,8 +85,7 @@ class `When Getting Items` {
 				itemsProvider,
 				mockk(),
 				provideFiles,
-				mockk(),
-				serviceFiles,
+                serviceFiles,
 			)
 
 			mediaItemsBrowser

@@ -11,8 +11,9 @@ class AutoCloseableManager : ManageCloseables, AutoCloseable {
 
 	private val closeables = ConcurrentLinkedQueue<AutoCloseable>()
 
-	override fun manage(closeable: AutoCloseable) {
+	override fun <T : AutoCloseable> manage(closeable: T): T {
 		closeables.offer(closeable)
+		return closeable
 	}
 
 	override fun close() {

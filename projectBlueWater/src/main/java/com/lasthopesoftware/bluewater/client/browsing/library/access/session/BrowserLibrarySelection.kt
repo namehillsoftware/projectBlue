@@ -15,12 +15,12 @@ class BrowserLibrarySelection(
 ) : SelectBrowserLibrary {
     override fun selectBrowserLibrary(libraryId: LibraryId): Promise<Library> =
 		applicationSettings.promiseApplicationSettings().eventually { a ->
-			if (a.chosenLibraryId == libraryId.id) libraryProvider.getLibrary(libraryId)
+			if (a.chosenLibraryId == libraryId.id) libraryProvider.promiseLibrary(libraryId)
 			else {
 				a.chosenLibraryId = libraryId.id
 				applicationSettings.promiseUpdatedSettings(a).eventually {
 					applicationMessages.sendMessage(LibraryChosenMessage(libraryId))
-					libraryProvider.getLibrary(libraryId)
+					libraryProvider.promiseLibrary(libraryId)
 				}
 			}
 		}

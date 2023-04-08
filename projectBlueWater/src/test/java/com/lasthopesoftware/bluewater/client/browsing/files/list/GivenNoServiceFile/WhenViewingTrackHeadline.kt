@@ -30,8 +30,6 @@ class WhenViewingTrackHeadline {
 		}
 
 		ReusablePlaylistFileViewModel(
-			mockk(),
-			mockk(),
 			RecordingTypedMessageBus(),
 			ReusableFileViewModel(
 				filePropertiesProvider,

@@ -25,8 +25,7 @@ class WhenFindingFiles {
 
 		val vm = SearchFilesViewModel(
 			libraryFileProvider,
-            mockk(),
-		)
+        )
 
 		every { libraryFileProvider.promiseFiles(LibraryId(libraryId), FileListParameters.Options.None, "Files/Search", "Query=[Media Type]=[Audio] $query") } answers {
 			isLoadingBeforeQueriesMade = vm.isLoading.value

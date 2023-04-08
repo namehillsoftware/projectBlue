@@ -45,7 +45,8 @@ fun MarqueeText(
 	softWrap: Boolean = true,
 	onTextLayout: (TextLayoutResult) -> Unit = {},
 	style: TextStyle = LocalTextStyle.current,
-	gradientSides: Set<GradientSide> = setOf(GradientSide.Start, GradientSide.End)
+	gradientSides: Set<GradientSide> = setOf(GradientSide.Start, GradientSide.End),
+	isMarqueeEnabled: Boolean = true,
 ) {
 	val createText = @Composable { localModifier: Modifier ->
 		Text(
@@ -67,43 +68,48 @@ fun MarqueeText(
 			style = style,
 		)
 	}
+
 	var offset by remember { mutableStateOf(0) }
 	var textLayoutInfoState by remember { mutableStateOf<TextLayoutInfo?>(null) }
-	LaunchedEffect(textLayoutInfoState) {
-		val textLayoutInfo = textLayoutInfoState?.takeUnless {
-			it.containerWidth == 0 || it.textWidth <= it.containerWidth
-		}
+	if (isMarqueeEnabled) {
+		LaunchedEffect(textLayoutInfoState) {
+			val textLayoutInfo = textLayoutInfoState?.takeUnless {
+				it.containerWidth == 0 || it.textWidth <= it.containerWidth
+			}
 
-		if (textLayoutInfo == null) {
-			offset = 0
-			return@LaunchedEffect
-		}
+			if (textLayoutInfo == null) {
+				offset = 0
+				return@LaunchedEffect
+			}
 
-		val duration = 7500 * textLayoutInfo.textWidth / textLayoutInfo.containerWidth
-		val delay = 1000L
+			val duration = 7500 * textLayoutInfo.textWidth / textLayoutInfo.containerWidth
+			val delay = 1000L
 
-		do {
-			val animation = TargetBasedAnimation(
-				animationSpec = repeatable(
-					iterations = 2,
-					animation = tween(
-						durationMillis = duration,
-						delayMillis = 1000,
-						easing = LinearEasing,
-					),
-					repeatMode = RepeatMode.Restart
-				),
-				typeConverter = Int.VectorConverter,
-				initialValue = 0,
-				targetValue = -textLayoutInfo.textWidth
-			)
-			val startTime = withFrameNanos { it }
 			do {
-				val playTime = withFrameNanos { it } - startTime
-				offset = (animation.getValueFromNanos(playTime))
-			} while (!animation.isFinishedFromNanos(playTime))
-			delay(delay)
-		} while (true)
+				val animation = TargetBasedAnimation(
+					animationSpec = repeatable(
+						iterations = 2,
+						animation = tween(
+							durationMillis = duration,
+							delayMillis = 1000,
+							easing = LinearEasing,
+						),
+						repeatMode = RepeatMode.Restart
+					),
+					typeConverter = Int.VectorConverter,
+					initialValue = 0,
+					targetValue = -textLayoutInfo.textWidth
+				)
+				val startTime = withFrameNanos { it }
+				do {
+					val playTime = withFrameNanos { it } - startTime
+					offset = (animation.getValueFromNanos(playTime))
+				} while (!animation.isFinishedFromNanos(playTime))
+				delay(delay)
+			} while (true)
+		}
+	} else {
+		offset = 0
 	}
 
 	SubcomposeLayout(

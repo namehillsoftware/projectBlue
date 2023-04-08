@@ -88,4 +88,9 @@ class WhenLoadingTheLibrarySettings {
     fun `then is using existing files is correct`() {
         assertThat(services.isUsingExistingFiles.value).isTrue
     }
+
+	@Test
+	fun `then the library name is correct`() {
+		assertThat(services.libraryName.value).isEmpty()
+	}
 }

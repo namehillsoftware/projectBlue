@@ -28,8 +28,6 @@ class WhenResettingTheItem {
 		}
 
 		ReusablePlaylistFileViewModel(
-			mockk(),
-			mockk(),
 			recordingMessageBus,
 			ReusableFileViewModel(
 				mockk(),

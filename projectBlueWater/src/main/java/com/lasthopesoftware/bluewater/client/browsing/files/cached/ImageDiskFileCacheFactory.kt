@@ -18,7 +18,7 @@ class ImageDiskFileCacheFactory private constructor(private val context: Context
 
 	override fun promiseCache(libraryId: LibraryId): Promise<out CacheFiles?> =
 		libraryProvider
-			.getLibrary(libraryId)
+			.promiseLibrary(libraryId)
 			.then { library -> library?.let(::buildNewCache) }
 
 	private fun buildNewCache(library: Library): CacheFiles {

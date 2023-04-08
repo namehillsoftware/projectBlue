@@ -32,8 +32,6 @@ class WhenLoadingFileDetails {
 		}
 
 		ReusablePlaylistFileViewModel(
-			mockk(),
-			mockk(),
 			RecordingTypedMessageBus(),
 			ReusableFileViewModel(
 				filePropertiesProvider,
@@ -52,12 +50,7 @@ class WhenLoadingFileDetails {
 
 	@BeforeAll
 	fun act() {
-		viewModel.promiseUpdate(
-			listOf(
-				ServiceFile(943)
-			),
-			0
-		).toExpiringFuture().get()
+		viewModel.promiseUpdate(ServiceFile(943)).toExpiringFuture().get()
 	}
 
 	@Test

@@ -50,7 +50,6 @@ class `When Getting Items` {
                 mockk(),
                 mockk(),
                 mockk(),
-                mockk(),
 			)
 			mediaItemsBrowser
 				.promiseItems(ItemId(504))

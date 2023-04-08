@@ -4,7 +4,12 @@ import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
 
 object FileListParameters : IFileListParameterProvider {
-    override fun getFileListParameters(itemId: ItemId): Array<String> = arrayOf(
+	override fun getFileListParameters(): Array<String> = arrayOf(
+		"Browse/Files",
+		"Version=2"
+	)
+
+	override fun getFileListParameters(itemId: ItemId): Array<String> = arrayOf(
 		"Browse/Files",
 		"ID=${itemId.id}",
 		"Version=2"

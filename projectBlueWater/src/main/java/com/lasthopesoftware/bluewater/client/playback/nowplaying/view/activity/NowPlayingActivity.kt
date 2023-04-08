@@ -1,19 +1,19 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity
 
-import android.content.Context
-import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.view.View
 import android.widget.ViewAnimator
 import androidx.activity.addCallback
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.TaskStackBuilder
 import androidx.databinding.DataBindingUtil
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.viewpager2.adapter.FragmentStateAdapter
 import androidx.viewpager2.widget.ViewPager2
 import com.lasthopesoftware.bluewater.R
+import com.lasthopesoftware.bluewater.client.browsing.BrowserActivity
 import com.lasthopesoftware.bluewater.client.browsing.files.image.CachedImageProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
@@ -21,6 +21,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.F
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener.Companion.tryFlipToPreviousView
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
+import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
 import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.polling.ConnectionPoller
@@ -45,6 +46,7 @@ import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModel
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToaster
+import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
 import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
@@ -59,16 +61,9 @@ import kotlinx.coroutines.flow.onEach
 class NowPlayingActivity :
 	AppCompatActivity(),
 	(PollConnectionService.ConnectionLostNotification) -> Unit,
-	IItemListMenuChangeHandler
+	IItemListMenuChangeHandler,
+	Runnable
 {
-	companion object {
-		fun Context.startNowPlayingActivity() {
-			val viewIntent = Intent(this, cls<NowPlayingActivity>())
-			viewIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
-			startActivity(viewIntent)
-		}
-	}
-
 	private var viewAnimator: ViewAnimator? = null
 
 	private val messageHandler by lazy { Handler(mainLooper) }
@@ -165,6 +160,9 @@ class NowPlayingActivity :
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
+		val taskStackBuilder = TaskStackBuilder.create(this)
+		taskStackBuilder.addParentStack(cls<BrowserActivity>())
+
 		binding.pager.adapter = PagerAdapter()
 
 		binding.filePropertiesVm?.unexpectedError?.filterNotNull()?.onEach {
@@ -211,12 +209,25 @@ class NowPlayingActivity :
 	override fun onStart() {
 		super.onStart()
 
-		restoreSelectedConnection(this).eventually(LoopedInPromise.response({
-			binding.also { b ->
-				b.filePropertiesVm?.initializeViewModel()
-				b.coverArtVm?.initializeViewModel()
-			}
-		}, messageHandler))
+		if (isTaskRoot) {
+			finish()
+			return
+		}
+
+		run()
+	}
+
+	override fun run() {
+		restoreSelectedConnection(this)
+			.eventually(LoopedInPromise.response({
+				binding.also { b ->
+					b.filePropertiesVm?.initializeViewModel()
+					b.coverArtVm?.initializeViewModel()
+				}
+			}, messageHandler))
+			.excuse(HandleViewIoException(this, this))
+			.eventuallyExcuse(LoopedInPromise.response(UnexpectedExceptionToasterResponse(this), messageHandler))
+			.then { finish() }
 	}
 
 	override fun invoke(p1: PollConnectionService.ConnectionLostNotification) {

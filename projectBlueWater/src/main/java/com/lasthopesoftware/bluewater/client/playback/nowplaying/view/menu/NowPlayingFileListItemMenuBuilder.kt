@@ -122,11 +122,13 @@ class NowPlayingFileListItemMenuBuilder(
 			}
 		}
 
+		private var playlist: List<ServiceFile>? = null
 		private var positionedFile: PositionedFile? = null
 		private var urlKey: UrlKeyHolder<ServiceFile>? = null
 
 		fun update(positionedFile: PositionedFile, playlist: List<ServiceFile>) {
 			this.positionedFile = positionedFile
+			this.playlist = playlist
 
 			val serviceFile = positionedFile.serviceFile
 
@@ -143,9 +145,7 @@ class NowPlayingFileListItemMenuBuilder(
 				.then { urlKey = it }
 
 			viewAnimator.tryFlipToPreviousView()
-			viewAnimator.setOnClickListener(ViewFileDetailsClickListener(viewAnimator, positionedFile, playlist))
 			playButton.setOnClickListener(FileSeekToClickListener(viewAnimator, position))
-			viewFileDetailsButton.setOnClickListener(ViewFileDetailsClickListener(viewAnimator, positionedFile, playlist))
 			removeButton.setOnClickListener(RemovePlaylistFileClickListener(viewAnimator, position))
 		}
 
@@ -158,6 +158,18 @@ class NowPlayingFileListItemMenuBuilder(
 				?: false
 
 		override fun respond(np: NowPlaying?) {
+			val viewFileDetailsClickListener = np?.libraryId?.let { libraryId ->
+				positionedFile?.let { file ->
+					playlist?.let {
+						ViewFileDetailsClickListener(viewAnimator, libraryId, file, it)
+					}
+				}
+			}
+			if (viewFileDetailsClickListener != null) {
+				viewAnimator.setOnClickListener(viewFileDetailsClickListener)
+				viewFileDetailsButton.setOnClickListener(viewFileDetailsClickListener)
+			}
+
 			val position = positionedFile?.playlistPosition
 			textView.setTypeface(null, ViewUtils.getActiveListItemTextViewStyle(position == np?.playlistPosition))
 			viewAnimator.isSelected = position == np?.playlistPosition

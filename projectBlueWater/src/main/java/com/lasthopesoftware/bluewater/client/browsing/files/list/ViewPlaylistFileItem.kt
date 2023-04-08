@@ -10,7 +10,5 @@ interface ViewPlaylistFileItem : HiddenListItemMenu, ResettableCloseable {
 	val artist: StateFlow<String>
 	val title: StateFlow<String>
 
-	fun promiseUpdate(associatedPlaylist: List<ServiceFile>, position: Int): Promise<Unit>
-	fun addToNowPlaying()
-	fun viewFileDetails()
+	fun promiseUpdate(serviceFile: ServiceFile): Promise<Unit>
 }

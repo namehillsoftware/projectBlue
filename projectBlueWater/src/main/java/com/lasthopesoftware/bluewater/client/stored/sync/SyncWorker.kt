@@ -1,9 +1,7 @@
 package com.lasthopesoftware.bluewater.client.stored.sync
 
 import android.app.NotificationManager
-import android.app.PendingIntent
 import android.content.Context
-import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
 import androidx.core.app.NotificationCompat
@@ -14,7 +12,6 @@ import androidx.work.WorkerParameters
 import com.google.common.util.concurrent.ListenableFuture
 import com.google.common.util.concurrent.SettableFuture
 import com.lasthopesoftware.bluewater.R
-import com.lasthopesoftware.bluewater.client.browsing.BrowserEntryActivity
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFileUriQueryParamsProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.LibraryFileProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
@@ -54,7 +51,7 @@ import com.lasthopesoftware.bluewater.client.stored.sync.notifications.PostSyncN
 import com.lasthopesoftware.bluewater.client.stored.sync.notifications.SyncChannelProperties
 import com.lasthopesoftware.bluewater.client.stored.sync.receivers.SyncStartedReceiver
 import com.lasthopesoftware.bluewater.client.stored.sync.receivers.file.*
-import com.lasthopesoftware.bluewater.shared.android.makePendingIntentImmutable
+import com.lasthopesoftware.bluewater.shared.android.intents.IntentBuilder
 import com.lasthopesoftware.bluewater.shared.android.notifications.NoOpChannelActivator
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.NotificationChannelActivator
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
@@ -212,18 +209,10 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 		notificationChannelActivator.activateChannel(channelConfiguration)
 	}
 
-	private val browseLibraryIntent by lazy {
-		val browseLibraryIntent = Intent(context, BrowserEntryActivity::class.java)
-		browseLibraryIntent.action = BrowserEntryActivity.showDownloadsAction
-		browseLibraryIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
-	}
+	private val intentBuilder by lazy { IntentBuilder(context) }
 
 	private val showDownloadsIntent by lazy {
-		PendingIntent.getActivity(
-			context,
-			0,
-			browseLibraryIntent,
-			0.makePendingIntentImmutable())
+		intentBuilder.buildPendingShowDownloadsIntent()
 	}
 
 	private val cancelIntent by lazy { WorkManager.getInstance(context).createCancelPendingIntent(id) }

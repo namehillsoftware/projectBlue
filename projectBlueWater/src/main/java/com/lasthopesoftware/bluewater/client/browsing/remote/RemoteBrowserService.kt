@@ -5,10 +5,8 @@ import android.support.v4.media.MediaBrowserCompat
 import androidx.media.MediaBrowserServiceCompat
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.access.ItemFileProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.access.CachedItemFileProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.LibraryFileProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
-import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.ItemStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.LibraryFileStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.image.CachedImageProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
@@ -22,7 +20,6 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepo
 import com.lasthopesoftware.bluewater.client.browsing.library.access.SpecificLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.views.access.CachedLibraryViewsProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.InMemoryNowPlayingState
@@ -61,8 +58,6 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 
 	private val packageValidator by lazy { PackageValidator(this, R.xml.allowed_media_browser_callers) }
 
-	private val libraryViewsProvider by lazy { CachedLibraryViewsProvider.getInstance(this) }
-
 	private val itemProvider by lazy { CachedItemProvider.getInstance(this) }
 
 	private val libraryFileStringListProvider by lazy { LibraryFileStringListProvider(ConnectionSessionManager.get(this)) }
@@ -71,14 +66,7 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 		LibraryFileProvider(libraryFileStringListProvider)
 	}
 
-	private val itemFileProvider by lazy {
-		ItemFileProvider(
-			ItemStringListProvider(
-                FileListParameters,
-                libraryFileStringListProvider
-            )
-		)
-	}
+	private val itemFileProvider by lazy { CachedItemFileProvider.getInstance(this) }
 
 	private val selectedLibraryIdProvider by lazy { getCachedSelectedLibraryIdProvider() }
 
@@ -136,7 +124,6 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 			itemProvider,
 			fileProvider,
 			itemFileProvider,
-			libraryViewsProvider,
 			mediaItemServiceFileLookup
 		)
 	}

@@ -99,7 +99,7 @@ open class MainApplication : Application() {
 		applicationMessageBus.registerReceiver { mediaFileFound : MediaFileUriProvider.MediaFileFound ->
 			mediaFileFound.mediaId ?: return@registerReceiver
 			libraryRepository
-				.getLibrary(mediaFileFound.libraryId)
+				.promiseLibrary(mediaFileFound.libraryId)
 				.then { library ->
 					if (library != null) {
 						storedFileAccess.addMediaFile(

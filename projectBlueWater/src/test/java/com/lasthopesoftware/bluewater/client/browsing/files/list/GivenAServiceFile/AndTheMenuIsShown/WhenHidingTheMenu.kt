@@ -28,8 +28,6 @@ class WhenHidingTheMenu {
 		}
 
 		ReusablePlaylistFileViewModel(
-			mockk(),
-			mockk(),
 			recordingMessageBus,
 			ReusableFileViewModel(
 				mockk(),

@@ -46,8 +46,6 @@ class WhenItsPropertiesChange {
 		}
 
 		ReusablePlaylistFileViewModel(
-			mockk(),
-			mockk(),
 			recordingMessageBus,
 			ReusableFileViewModel(
 				filePropertiesProvider,
@@ -66,22 +64,7 @@ class WhenItsPropertiesChange {
 
 	@BeforeAll
 	fun act() {
-		viewModel.promiseUpdate(
-			listOf(
-				ServiceFile(13),
-				ServiceFile(546),
-				ServiceFile(serviceFileId),
-				ServiceFile(801),
-				ServiceFile(76),
-				ServiceFile(551),
-				ServiceFile(5),
-				ServiceFile(99),
-				ServiceFile(285),
-				ServiceFile(357),
-				ServiceFile(920),
-			),
-			2,
-		).toExpiringFuture().get()
+		viewModel.promiseUpdate(ServiceFile(serviceFileId)).toExpiringFuture().get()
 		recordingApplicationMessageBus.sendMessage(
 			FilePropertiesUpdatedMessage(
 				UrlKeyHolder(

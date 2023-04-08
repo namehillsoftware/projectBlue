@@ -38,6 +38,7 @@ class LibrarySettingsViewModel(
 	private val mutableIsRemovalRequested = MutableStateFlow(false)
 
 	val accessCode = MutableStateFlow("")
+	val libraryName = MutableStateFlow("")
 	val userName = MutableStateFlow("")
 	val password = MutableStateFlow("")
 	val customSyncPath = MutableStateFlow(Environment.getExternalStorageDirectory()?.path ?: "")
@@ -55,7 +56,7 @@ class LibrarySettingsViewModel(
 		mutableIsLoading.value = true
 
 		return libraryProvider
-			.getLibrary(libraryId)
+			.promiseLibrary(libraryId)
 			.then(this)
 			.must(this)
 	}
@@ -74,6 +75,7 @@ class LibrarySettingsViewModel(
 			.setIsUsingExistingFiles(isUsingExistingFiles.value)
 			.setIsSyncLocalConnectionsOnly(isSyncLocalConnectionsOnly.value)
 			.setIsWakeOnLanEnabled(isWakeOnLanEnabled.value)
+			.setLibraryName(libraryName.value)
 
 		val permissionsToRequest = ArrayList<String>(2)
 		if (applicationReadPermissionsRequirementsProvider.isReadPermissionsRequiredForLibrary(localLibrary))
@@ -111,6 +113,7 @@ class LibrarySettingsViewModel(
 		accessCode.value = result?.accessCode ?: ""
 		userName.value = result?.userName ?: ""
 		password.value = result?.password ?: ""
+		libraryName.value = result?.libraryName ?: ""
 	}
 
 	override fun promiseResponse(resolution: Map<String, Boolean>): Promise<Boolean> {

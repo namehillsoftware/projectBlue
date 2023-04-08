@@ -1,4 +1,4 @@
-FROM gradle:7.5.1-jdk11
+FROM gradle:8.0.2-jdk11
 
 # Install system dependencies
 RUN apt-get update -qq && apt-get install -qq -y --no-install-recommends \
@@ -18,7 +18,7 @@ ENV ANDROID_SDK_HOME=${ANDROID_HOME}
 ENV PATH ${ANDROID_HOME}/cmdline-tools/cmdline-tools/bin:${ANDROID_HOME}/tools:${ANDROID_HOME}/tools/bin:${ANDROID_HOME}/platform-tools:${PATH}
 
 # set default build arguments
-ARG SDK_VERSION=commandlinetools-linux-8512546_latest.zip
+ARG SDK_VERSION=commandlinetools-linux-9477386_latest.zip
 
 # Set these to the same versions as in build.gradle to avoid downloading updated tools
 ARG ANDROID_BUILD_VERSION=33

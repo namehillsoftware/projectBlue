@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.connection.selected
 
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
@@ -10,8 +9,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResult
 import androidx.appcompat.app.AppCompatActivity
 import com.lasthopesoftware.bluewater.ActivityApplicationNavigation
-import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
@@ -25,8 +23,6 @@ import com.lasthopesoftware.bluewater.shared.android.intents.IntentBuilder
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 import com.lasthopesoftware.bluewater.shared.cls
-import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
-import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay
 import com.lasthopesoftware.bluewater.shared.promises.extensions.*
 import com.lasthopesoftware.resources.strings.StringResources
 import com.namehillsoftware.handoff.promises.Promise
@@ -38,17 +34,18 @@ class InstantiateSelectedConnectionActivity : AppCompatActivity(), ControlConnec
 
 	private val libraryConnectionProvider by lazy { buildNewConnectionSessionManager() }
 
-	private val connectionInitializationProxy by lazy { ConnectionInitializationProxy(libraryConnectionProvider) }
+	private val connectionInitializationProxy by lazy {
+		DramaticConnectionInitializationProxy(
+			libraryConnectionProvider,
+		)
+	}
+
+	private val selectedLibraryIdProvider by lazy { getCachedSelectedLibraryIdProvider() }
 
 	private val applicationNavigation by lazy {
 		ActivityApplicationNavigation(
 			this,
 			IntentBuilder(this),
-			BrowserLibrarySelection(
-				getApplicationSettingsRepository(),
-				ApplicationMessageBus.getApplicationMessageBus(),
-				LibraryRepository(this),
-			),
 		)
 	}
 
@@ -101,16 +98,17 @@ class InstantiateSelectedConnectionActivity : AppCompatActivity(), ControlConnec
 			}
 
 			override fun promiseResponse(connection: IConnectionProvider?): Promise<Unit> {
-				var promisedResponse = PromiseDelay
-					.delay<Any?>(ConnectionInitializationConstants.dramaticPause)
-					.also(::doCancel)
-					.unitResponse()
-
 				if (connection != null && intent?.action != START_ACTIVITY_FOR_RETURN) {
-					promisedResponse = promisedResponse.eventually { applicationNavigation.resetToBrowserRoot() }
+					return selectedLibraryIdProvider
+						.promiseSelectedLibraryId()
+						.eventually {
+							it?.let(applicationNavigation::viewLibrary).keepPromise(Unit)
+						}
+						.then({ resolve(connection) }, ::reject)
 				}
 
-				return promisedResponse.then({ resolve(connection) }, ::reject)
+				resolve(connection)
+				return Unit.toPromise()
 			}
 		}
 
@@ -126,9 +124,5 @@ class InstantiateSelectedConnectionActivity : AppCompatActivity(), ControlConnec
 				)
 				else Promise.empty()
 			}
-
-		fun startNewConnection(context: Context) {
-			context.startActivity(Intent(context, cls<InstantiateSelectedConnectionActivity>()))
-		}
 	}
 }

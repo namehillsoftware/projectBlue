@@ -1,10 +1,13 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.details
 
 import android.content.Context
-import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import com.lasthopesoftware.bluewater.ActivityApplicationNavigation
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.image.CachedImageProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableScopedFilePropertiesProvider
@@ -15,35 +18,45 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.F
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.SelectedLibraryFilePropertyStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.StaticLibraryIdentifierProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
 import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.authentication.SelectedLibraryConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.libraries.SelectedLibraryUrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
-import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity.Companion.restoreSelectedConnection
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
+import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionInitializationErrorController
+import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionStatusViewModel
+import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionUpdatesView
+import com.lasthopesoftware.bluewater.client.connection.session.initialization.DramaticConnectionInitializationProxy
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
+import com.lasthopesoftware.bluewater.shared.android.intents.IntentBuilder
+import com.lasthopesoftware.bluewater.shared.android.intents.getIntent
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
+import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
 import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
+import com.lasthopesoftware.resources.strings.StringResources
 
 class FileDetailsActivity : ComponentActivity() {
 
 	companion object {
 
-		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(FileDetailsActivity::class.java) }
+		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(cls<FileDetailsActivity>()) }
 		val playlist by lazy { magicPropertyBuilder.buildProperty("playlist") }
 		val playlistPosition by lazy { magicPropertyBuilder.buildProperty("playlistPosition") }
+		val libraryIdKey by lazy { magicPropertyBuilder.buildProperty("libraryId") }
 
-		fun Context.launchFileDetailsActivity(playlist: Collection<ServiceFile>, position: Int) {
-			startActivity(Intent(this, FileDetailsActivity::class.java).apply {
+		fun Context.launchFileDetailsActivity(libraryId: LibraryId, playlist: Collection<ServiceFile>, position: Int) {
+			startActivity(getIntent<FileDetailsActivity>().apply {
 				putExtra(playlistPosition, position)
 				putExtra(Companion.playlist, playlist.map { it.key }.toIntArray())
+				putExtra(libraryIdKey, libraryId)
 			})
 		}
 	}
@@ -104,16 +117,47 @@ class FileDetailsActivity : ComponentActivity() {
 		)
 	}
 
+	private val connectionStatusViewModel by lazy {
+		val applicationNavigation = ActivityApplicationNavigation(this, IntentBuilder(this))
+
+		ConnectionStatusViewModel(
+			StringResources(this),
+			ConnectionInitializationErrorController(
+				DramaticConnectionInitializationProxy(
+					libraryConnections,
+				),
+				applicationNavigation,
+			),
+		)
+	}
+
 	public override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
 		setContent {
 			ProjectBlueTheme {
-				FileDetailsView(vm)
+				val isGettingConnection by connectionStatusViewModel.isGettingConnection.collectAsState()
+
+				if (isGettingConnection) {
+					ConnectionUpdatesView(connectionViewModel = connectionStatusViewModel)
+				} else {
+					FileDetailsView(vm)
+				}
 			}
 		}
 
-		restoreSelectedConnection(this).eventually(LoopedInPromise.response({
+		val libraryId = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+			intent.getParcelableExtra(libraryIdKey, cls<LibraryId>())
+		} else {
+			intent.getParcelableExtra(libraryIdKey)
+		}
+
+		if (libraryId == null) {
+			finish()
+			return
+		}
+
+		connectionStatusViewModel.ensureConnectionIsWorking(libraryId).eventually(LoopedInPromise.response({
 			val position = intent.getIntExtra(playlistPosition, -1)
 			val playlist = intent.getIntArrayExtra(playlist)?.map(::ServiceFile) ?: emptyList()
 			setView(playlist, position)

@@ -6,6 +6,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -253,7 +254,7 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 	}
 
 	@Composable
-	fun filePropertyHeader(modifier: Modifier, titleFontSize: TextUnit = 24.sp) {
+	fun filePropertyHeader(modifier: Modifier, isMarqueeEnabled: Boolean, titleFontSize: TextUnit = 24.sp) {
 		val fileName by viewModel.fileName.collectAsState(stringResource(id = R.string.lbl_loading))
 
 		Column(modifier = modifier) {
@@ -267,6 +268,7 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 					fontSize = titleFontSize,
 					overflow = TextOverflow.Ellipsis,
 					gradientSides = gradientSides,
+					isMarqueeEnabled = isMarqueeEnabled,
 				)
 			}
 
@@ -368,6 +370,7 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 
 		val toolbarState = rememberCollapsingToolbarScaffoldState()
 		val headerHidingProgress by remember { derivedStateOf { 1 - toolbarState.toolbarState.progress } }
+		val lazyListState = rememberLazyListState()
 
 		CollapsingToolbarScaffold(
 			enabled = true,
@@ -469,6 +472,7 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 					filePropertyHeader(
 						modifier = Modifier.padding(start = startPadding, end = endPadding),
 						titleFontSize = titleFontSize,
+						isMarqueeEnabled = !lazyListState.isScrollInProgress
 					)
 
 					val menuWidth by remember { derivedStateOf { (maxWidth - (maxWidth - minimumMenuWidth) * acceleratedHeaderHidingProgress) } }
@@ -546,7 +550,7 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 				}
 			}
 		) {
-			LazyColumn(modifier = Modifier.fillMaxSize()) {
+			LazyColumn(modifier = Modifier.fillMaxSize(), state = lazyListState) {
 				items(fileProperties) {
 					filePropertyRow(it)
 				}
@@ -605,7 +609,8 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 				StaticFileMenu(viewModel, coverArtColorState)
 			}
 
-			LazyColumn(modifier = Modifier.fillMaxWidth()) {
+			val lazyListState = rememberLazyListState()
+			LazyColumn(modifier = Modifier.fillMaxWidth(), state = lazyListState) {
 				stickyHeader {
 					filePropertyHeader(
 						modifier = Modifier
@@ -616,7 +621,8 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 								bottom = viewPadding,
 								end = 40.dp + viewPadding
 							)
-							.fillMaxWidth()
+							.fillMaxWidth(),
+						isMarqueeEnabled = !lazyListState.isScrollInProgress
 					)
 				}
 

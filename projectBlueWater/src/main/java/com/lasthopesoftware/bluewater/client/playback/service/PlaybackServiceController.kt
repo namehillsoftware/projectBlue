@@ -3,7 +3,10 @@ package com.lasthopesoftware.bluewater.client.playback.service
 import android.content.Context
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.FileStringListUtilities
+import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.promises.Promise
+import com.namehillsoftware.handoff.promises.queued.MessageWriter
+import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 
 class PlaybackServiceController(private val context: Context) : ControlPlaybackService {
 	override fun promiseIsMarkedForPlay(): Promise<Boolean> = PlaybackService.promiseIsMarkedForPlay(context)
@@ -20,6 +23,12 @@ class PlaybackServiceController(private val context: Context) : ControlPlaybackS
 		FileStringListUtilities
 			.promiseSerializedFileStringList(serviceFiles)
 			.then { startPlaylist(it, position) }
+	}
+
+	override fun shuffleAndStartPlaylist(serviceFiles: List<ServiceFile>) {
+		QueuedPromise(MessageWriter {
+			startPlaylist(serviceFiles.shuffled())
+		}, ThreadPools.compute)
 	}
 
 	override fun addToPlaylist(serviceFile: ServiceFile) {

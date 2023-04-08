@@ -2,23 +2,22 @@ package com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.n
 
 import android.app.PendingIntent
 import android.content.Context
-import android.content.Intent
-import android.support.v4.media.session.MediaSessionCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.lasthopesoftware.bluewater.R
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.NowPlayingActivity
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.NotificationsConfiguration
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Companion.pendingKillService
-import com.lasthopesoftware.bluewater.shared.android.makePendingIntentImmutable
+import com.lasthopesoftware.bluewater.shared.android.intents.BuildIntents
 import com.lasthopesoftware.bluewater.shared.android.notifications.ProduceNotificationBuilders
 import com.namehillsoftware.handoff.promises.Promise
 
 class PlaybackStartingNotificationBuilder(
 	private val context: Context,
 	private val produceNotificationBuilders: ProduceNotificationBuilders,
-	private val configuration: com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.NotificationsConfiguration,
-	private val mediaSessionCompat: MediaSessionCompat) :
-	com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building.BuildPlaybackStartingNotification {
+	private val configuration: NotificationsConfiguration,
+	private val intentBuilder: BuildIntents,
+) :
+	BuildPlaybackStartingNotification {
 
 	private val lazyPendingKillService = lazy { pendingKillService(context) }
 
@@ -40,8 +39,6 @@ class PlaybackStartingNotificationBuilder(
 
 	private fun buildNowPlayingActivityIntent(): PendingIntent {
 		// Set the notification area
-		val viewIntent = Intent(context, NowPlayingActivity::class.java)
-		viewIntent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
-		return PendingIntent.getActivity(context, 0, viewIntent, 0.makePendingIntentImmutable())
+		return intentBuilder.buildPendingNowPlayingIntent()
 	}
 }

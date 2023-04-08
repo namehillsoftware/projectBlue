@@ -1,0 +1,63 @@
+package com.lasthopesoftware.bluewater.client.browsing
+
+import com.lasthopesoftware.bluewater.NavigateApplication
+import com.lasthopesoftware.bluewater.client.browsing.files.access.LibraryFileProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideItemFiles
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.SelectedLibraryFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.access.CachedItemProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.list.PlaybackLibraryItems
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
+import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryStorage
+import com.lasthopesoftware.bluewater.client.browsing.library.access.RemoveLibraries
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectBrowserLibrary
+import com.lasthopesoftware.bluewater.client.browsing.navigation.NavigationMessage
+import com.lasthopesoftware.bluewater.client.connection.libraries.SelectedLibraryUrlKeyProvider
+import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
+import com.lasthopesoftware.bluewater.client.playback.engine.selection.LookupSelectedPlaybackEngineType
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
+import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
+import com.lasthopesoftware.bluewater.client.stored.library.items.StateChangeBroadcastingStoredItemAccess
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
+import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
+import com.lasthopesoftware.bluewater.permissions.read.ProvideReadPermissionsRequirements
+import com.lasthopesoftware.bluewater.permissions.write.ProvideWritePermissionsRequirements
+import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
+import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
+import com.lasthopesoftware.bluewater.shared.android.permissions.ManagePermissions
+import com.lasthopesoftware.bluewater.shared.messages.RegisterForTypedMessages
+import com.lasthopesoftware.bluewater.shared.messages.application.ScopedApplicationMessageBus
+import com.lasthopesoftware.resources.strings.StringResources
+
+interface BrowserViewDependencies {
+	val nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel
+	val selectedLibraryIdProvider: CachedSelectedLibraryIdProvider
+	val itemProvider: CachedItemProvider
+	val messageBus: ScopedApplicationMessageBus
+	val storedItemAccess: StateChangeBroadcastingStoredItemAccess
+	val playbackServiceController: PlaybackServiceController
+	val itemFileProvider: ProvideItemFiles
+	val menuMessageBus: ViewModelMessageBus<ItemListMenuMessage>
+	val itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler
+	val scopedFilePropertiesProvider: SelectedLibraryFilePropertiesProvider
+	val scopedUrlKeyProvider: SelectedLibraryUrlKeyProvider
+	val stringResources: StringResources
+	val libraryFilesProvider: LibraryFileProvider
+	val applicationNavigation: NavigateApplication
+	val libraryConnectionProvider: ConnectionSessionManager
+	val storedFileAccess: StoredFileAccess
+	val syncScheduler: SyncScheduler
+	val libraryProvider: ILibraryProvider
+	val libraryStorage: ILibraryStorage
+	val libraryRemoval: RemoveLibraries
+	val readPermissionsRequirements: ProvideReadPermissionsRequirements
+	val writePermissionsRequirements: ProvideWritePermissionsRequirements
+	val permissionsManager: ManagePermissions
+	val navigationMessages: RegisterForTypedMessages<NavigationMessage>
+	val applicationSettingsRepository: HoldApplicationSettings
+	val selectedPlaybackEngineTypeAccess: LookupSelectedPlaybackEngineType
+	val libraryBrowserSelection: SelectBrowserLibrary
+	val playbackLibraryItems: PlaybackLibraryItems
+}

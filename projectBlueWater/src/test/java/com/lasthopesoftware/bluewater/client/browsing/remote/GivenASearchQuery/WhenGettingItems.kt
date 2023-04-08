@@ -77,7 +77,6 @@ class `When Getting Items` {
                 itemsProvider,
                 provideFiles,
 				mockk(),
-                mockk(),
                 serviceFiles,
 			)
 

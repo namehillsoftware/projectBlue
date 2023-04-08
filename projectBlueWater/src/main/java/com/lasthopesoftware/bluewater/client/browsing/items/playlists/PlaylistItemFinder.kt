@@ -6,13 +6,12 @@ import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.views.KnownViews
-import com.lasthopesoftware.bluewater.client.browsing.library.views.access.ProvideLibraryViews
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 
-class PlaylistItemFinder(private val libraryViews: ProvideLibraryViews, private val itemProvider: ProvideItems) : FindPlaylistItem {
+class PlaylistItemFinder(private val itemProvider: ProvideItems) : FindPlaylistItem {
 	override fun promiseItem(libraryId: LibraryId, playlist: Playlist): Promise<Item?> =
-		libraryViews.promiseLibraryViews(libraryId)
+		itemProvider.promiseItems(libraryId)
 			.eventually { v ->
 				val playlistItem = v.single { i -> KnownViews.Playlists == i.value }
 				recursivelySearchForPlaylist(libraryId, playlistItem, playlist)

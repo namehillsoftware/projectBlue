@@ -1,27 +1,11 @@
 package com.lasthopesoftware.bluewater.shared.android.view
 
-import android.app.Activity
 import android.content.Context
-import android.content.Intent
 import android.graphics.Typeface
-import android.view.Menu
-import android.view.MenuItem
 import android.view.View
 import androidx.annotation.IntDef
-import com.lasthopesoftware.bluewater.R
-import com.lasthopesoftware.bluewater.settings.ApplicationSettingsActivity
 
 object ViewUtils {
-    fun Activity.buildStandardMenu(menu: Menu): Boolean {
-        menuInflater.inflate(R.menu.menu_blue_water, menu)
-        return true
-    }
-
-    fun handleMenuClicks(context: Context, item: MenuItem): Boolean {
-        if (item.itemId != R.id.menu_connection_settings) return false
-        context.startActivity(Intent(context, ApplicationSettingsActivity::class.java))
-        return true
-    }
 
 	@Visibility
     fun getVisibility(isVisible: Boolean): Int {

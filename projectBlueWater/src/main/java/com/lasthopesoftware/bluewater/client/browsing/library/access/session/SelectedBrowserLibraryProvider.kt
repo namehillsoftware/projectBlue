@@ -8,6 +8,6 @@ import com.namehillsoftware.handoff.promises.Promise
 class SelectedBrowserLibraryProvider(private val selectedLibraryIdentifierProvider: ProvideSelectedLibraryId, private val libraryProvider: ILibraryProvider) : ISelectedBrowserLibraryProvider {
 	override fun getBrowserLibrary(): Promise<Library?> =
 		selectedLibraryIdentifierProvider.promiseSelectedLibraryId().eventually {
-			it?.let(libraryProvider::getLibrary).keepPromise()
+			it?.let(libraryProvider::promiseLibrary).keepPromise()
 		}
 }

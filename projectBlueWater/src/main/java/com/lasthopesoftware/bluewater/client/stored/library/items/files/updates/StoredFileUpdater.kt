@@ -82,7 +82,7 @@ class StoredFileUpdater(
 			else lookupStoredFilePaths.promiseStoredFilePath(libraryId, serviceFile)
 				.then { p -> storedFile.apply { path = p } }
 
-		val promisedLibrary = libraryProvider.getLibrary(libraryId)
+		val promisedLibrary = libraryProvider.promiseLibrary(libraryId)
 		return storedFiles.promiseStoredFile(libraryId, serviceFile)
 			.eventually { storedFile ->
 				storedFile

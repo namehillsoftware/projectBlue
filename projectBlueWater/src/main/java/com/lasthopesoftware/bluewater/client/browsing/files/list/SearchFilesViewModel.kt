@@ -7,21 +7,17 @@ import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideLibrar
 import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.SearchFileParameterProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
-import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.queued.MessageWriter
-import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 class SearchFilesViewModel(
 	private val libraryFiles: ProvideLibraryFiles,
-	private val controlPlaybackService: ControlPlaybackService,
 ) : ViewModel(), TrackLoadedViewState {
 
-	private var libraryId: LibraryId? = null
+	var libraryId: LibraryId? = null
+		private set
 
 	private val mutableIsLoading = MutableStateFlow(false)
 	private val mutableFiles = MutableStateFlow(emptyList<ServiceFile>())
@@ -49,12 +45,4 @@ class SearchFilesViewModel(
 			.keepPromise(Unit)
 			.must { mutableIsLoading.value = false }
 	}
-
-	fun play(position: Int = 0) {
-		controlPlaybackService.startPlaylist(files.value, position)
-	}
-
-	fun playShuffled() = QueuedPromise(MessageWriter {
-		controlPlaybackService.startPlaylist(files.value.shuffled())
-	}, ThreadPools.compute)
 }

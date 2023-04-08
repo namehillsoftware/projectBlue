@@ -21,6 +21,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.list.TrackHeaderItemView
@@ -48,7 +49,7 @@ private val appBarHeight = Dimensions.AppBarHeight.value
 fun ActiveFileDownloadsView(
 	activeFileDownloadsViewModel: ActiveFileDownloadsViewModel,
 	trackHeadlineViewModelProvider: PooledCloseablesViewModel<ViewFileItem>,
-	onBack: (() -> Unit)? = null,
+	applicationNavigation: NavigateApplication,
 ) {
 	@Composable
 	fun RenderTrackHeaderItem(storedFile: StoredFile) {
@@ -97,7 +98,7 @@ fun ActiveFileDownloadsView(
 						}
 					}
 					ProvideTextStyle(MaterialTheme.typography.h5) {
-						val iconClearance = if (onBack != null) 48 else 0
+						val iconClearance = 48
 						val startPadding by remember {  derivedStateOf(structuralEqualityPolicy()) { (4 + iconClearance * headerHidingProgress).dp } }
 						val endPadding by remember { derivedStateOf(structuralEqualityPolicy()) { 4.dp + minimumMenuWidth * acceleratedProgress } }
 						val header = stringResource(id = R.string.activeDownloads)
@@ -177,21 +178,19 @@ fun ActiveFileDownloadsView(
 
 				// Always draw box to help the collapsing toolbar measure minimum size
 				Box(modifier = Modifier.height(appBarHeight.dp)) {
-					if (onBack != null) {
-						Icon(
-							Icons.Default.ArrowBack,
-							contentDescription = "",
-							tint = MaterialTheme.colors.onSurface,
-							modifier = Modifier
-								.padding(16.dp)
-								.align(Alignment.CenterStart)
-								.clickable(
-									interactionSource = remember { MutableInteractionSource() },
-									indication = null,
-									onClick = onBack
-								)
-						)
-					}
+					Icon(
+						Icons.Default.ArrowBack,
+						contentDescription = "",
+						tint = MaterialTheme.colors.onSurface,
+						modifier = Modifier
+							.padding(16.dp)
+							.align(Alignment.CenterStart)
+							.clickable(
+								interactionSource = remember { MutableInteractionSource() },
+								indication = null,
+								onClick = applicationNavigation::backOut
+							)
+					)
 				}
 			},
 		) {

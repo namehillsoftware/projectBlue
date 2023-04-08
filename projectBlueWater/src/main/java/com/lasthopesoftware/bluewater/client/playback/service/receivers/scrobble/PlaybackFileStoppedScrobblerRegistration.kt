@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMes
 
 class PlaybackFileStoppedScrobblerRegistration(private val context: Context) : RegisterReceiverForEvents {
 	override fun registerWithConnectionProvider(connectionProvider: IConnectionProvider): (ApplicationMessage) -> Unit =
-		PlaybackFileStoppedScrobbleDroidProxy(ScrobbleIntentProvider.getInstance())
+		PlaybackFileStoppedScrobbleDroidProxy(ScrobbleIntentProvider)
 
 	override fun forClasses(): Collection<Class<out ApplicationMessage>> = classes
 

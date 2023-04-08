@@ -6,6 +6,7 @@ apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-kapt'
 apply plugin: 'de.mannodermaus.android-junit5'
 apply plugin: 'org.jetbrains.kotlin.android'
+apply plugin: 'kotlin-parcelize'
 
 def androidKeyStorePassword = hasProperty('androidKeyStorePassword') ? androidKeyStorePassword : null
 def hasKeyStorePassword = { androidKeyStorePassword != null && !androidKeyStorePassword.isEmpty() }
@@ -149,8 +150,8 @@ dependencies {
 	def junit5_version = '5.9.1'
 
 	implementation 'androidx.core:core-ktx:1.9.0'
-	implementation 'androidx.annotation:annotation:1.5.0'
-	implementation 'androidx.work:work-runtime:2.7.1'
+	implementation 'androidx.annotation:annotation:1.6.0'
+	implementation 'androidx.work:work-runtime:2.8.1'
 	implementation 'androidx.media:media:1.6.0'
 	implementation 'androidx.palette:palette-ktx:1.0.0'
 	implementation 'androidx.preference:preference-ktx:1.2.0'
@@ -172,14 +173,14 @@ dependencies {
 	implementation 'com.squareup.okhttp3:okhttp:4.9.2'
 	implementation 'com.github.namehillsoftware:artful:0.3.0'
 	implementation "androidx.compose.ui:ui:$compose_version"
-	implementation "androidx.compose.material:material:1.3.1"
+	implementation "androidx.compose.material:material:1.4.0"
 	implementation "androidx.compose.ui:ui-tooling:$compose_version"
 	implementation 'com.google.accompanist:accompanist-systemuicontroller:0.27.0'
-	implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.5.1'
-	implementation 'androidx.activity:activity-compose:1.6.1'
-	implementation 'androidx.compose.compiler:compiler:1.4.0'
+	implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.1'
+	implementation 'androidx.activity:activity-compose:1.7.0'
+	implementation 'androidx.compose.compiler:compiler:1.4.4'
 	implementation 'me.onebone:toolbar-compose:2.3.5'
-	implementation "androidx.navigation:navigation-compose:2.5.3"
+	implementation "dev.olshevski.navigation:reimagined:1.4.0"
 	debugImplementation "androidx.compose.ui:ui-tooling:$compose_version"
 	testImplementation 'androidx.test.ext:junit:1.1.5'
 	testImplementation 'junit:junit:4.13.2'

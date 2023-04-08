@@ -24,10 +24,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
+import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberCalculatedKnobHeight
 import com.lasthopesoftware.bluewater.shared.android.ui.components.scrollbar
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ColumnMenuIcon
@@ -44,7 +46,8 @@ fun SearchFilesView(
 	nowPlayingViewModel: NowPlayingFilePropertiesViewModel,
 	trackHeadlineViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
 	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
-	onBack: (() -> Unit)? = null,
+	applicationNavigation: NavigateApplication,
+	playbackServiceController: ControlPlaybackService,
 ) {
 	val files by searchFilesViewModel.files.collectAsState()
 	val playingFile by nowPlayingViewModel.nowPlayingFile.collectAsState()
@@ -54,7 +57,7 @@ fun SearchFilesView(
 		val fileItemViewModel = remember(trackHeadlineViewModelProvider::getViewModel)
 
 		DisposableEffect(serviceFile) {
-			fileItemViewModel.promiseUpdate(files, position)
+			fileItemViewModel.promiseUpdate(serviceFile)
 
 			onDispose {
 				fileItemViewModel.reset()
@@ -64,20 +67,29 @@ fun SearchFilesView(
 		val isMenuShown by fileItemViewModel.isMenuShown.collectAsState()
 		val fileName by fileItemViewModel.title.collectAsState()
 
+		val viewFilesClickHandler = {
+			searchFilesViewModel.libraryId?.also {
+				applicationNavigation.viewFileDetails(it, files, position)
+			}
+			Unit
+		}
+
 		TrackHeaderItemView(
 			itemName = fileName,
 			isActive = playingFile?.serviceFile == serviceFile,
 			isHiddenMenuShown = isMenuShown,
-			onItemClick = fileItemViewModel::viewFileDetails,
+			onItemClick = viewFilesClickHandler,
 			onHiddenMenuClick = {
 				itemListMenuBackPressedHandler.hideAllMenus()
 				fileItemViewModel.showMenu()
 			},
-			onAddToNowPlayingClick = fileItemViewModel::addToNowPlaying,
-			onViewFilesClick = fileItemViewModel::viewFileDetails,
+			onAddToNowPlayingClick = {
+				playbackServiceController.addToPlaylist(serviceFile)
+			},
+			onViewFilesClick = viewFilesClickHandler,
 			onPlayClick = {
 				fileItemViewModel.hideMenu()
-				searchFilesViewModel.play(position)
+				playbackServiceController.startPlaylist(files, position)
 			}
 		)
 	}
@@ -138,7 +150,7 @@ fun SearchFilesView(
 
 							val playLabel = stringResource(id = R.string.btn_play)
 							ColumnMenuIcon(
-								onClick = { searchFilesViewModel.play() },
+								onClick = { playbackServiceController.startPlaylist(files, 0) },
 								icon = {
 									Image(
 										painter = painterResource(id = R.drawable.av_play),
@@ -153,7 +165,7 @@ fun SearchFilesView(
 
 							val shuffleLabel = stringResource(id = R.string.btn_shuffle_files)
 							ColumnMenuIcon(
-								onClick = { searchFilesViewModel.playShuffled() },
+								onClick = { playbackServiceController.shuffleAndStartPlaylist(files) },
 								icon = {
 									Image(
 										painter = painterResource(id = R.drawable.av_shuffle),
@@ -176,21 +188,19 @@ fun SearchFilesView(
 						.height(appBarHeight),
 					horizontalArrangement = Arrangement.Center,
 				) {
-					if (onBack != null) {
-						Icon(
-							Icons.Default.ArrowBack,
-							contentDescription = "",
-							tint = MaterialTheme.colors.onSurface,
-							modifier = Modifier
-								.padding(end = 16.dp)
-								.align(Alignment.CenterVertically)
-								.clickable(
-									interactionSource = remember { MutableInteractionSource() },
-									indication = null,
-									onClick = onBack
-								)
-						)
-					}
+					Icon(
+						Icons.Default.ArrowBack,
+						contentDescription = "",
+						tint = MaterialTheme.colors.onSurface,
+						modifier = Modifier
+							.padding(end = 16.dp)
+							.align(Alignment.CenterVertically)
+							.clickable(
+								interactionSource = remember { MutableInteractionSource() },
+								indication = null,
+								onClick = applicationNavigation::backOut
+							)
+					)
 
 					val endPadding by remember { derivedStateOf { 4.dp + minimumMenuWidth * acceleratedHeaderHidingProgress } }
 					val query by searchFilesViewModel.query.collectAsState()
