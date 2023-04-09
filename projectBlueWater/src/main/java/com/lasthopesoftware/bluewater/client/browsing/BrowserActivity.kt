@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.browsing
 
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
@@ -78,6 +77,7 @@ import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsViewModel
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.intents.IntentBuilder
+import com.lasthopesoftware.bluewater.shared.android.intents.safelyGetParcelableExtra
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
 import com.lasthopesoftware.bluewater.shared.android.permissions.ManagePermissions
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
@@ -345,14 +345,7 @@ class BrowserActivity :
 	}
 
 	private fun getDestination(intent: Intent?) =
-		intent
-			?.run {
-				if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-					getParcelableExtra(destinationProperty, cls<Destination>())
-				} else {
-					getParcelableExtra(destinationProperty)
-				}
-			}
+		intent?.safelyGetParcelableExtra<Destination>(destinationProperty)
 }
 
 @OptIn(ExperimentalMaterialApi::class, ExperimentalCoroutinesApi::class)

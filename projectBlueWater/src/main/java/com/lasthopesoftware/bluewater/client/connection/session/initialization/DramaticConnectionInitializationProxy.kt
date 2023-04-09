@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingProm
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromiseProxy
 import org.joda.time.Duration
 
-val dramaticPause: Duration by lazy { Duration.standardSeconds(2).plus(Duration.millis(500)) }
+private val dramaticPause by lazy { Duration.standardSeconds(2).plus(Duration.millis(500)) }
 
 /*
 Dramatically pauses before forwarding the result of getting the connection. If the connection was already retrieved,

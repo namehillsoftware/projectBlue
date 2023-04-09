@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.details
 
 import android.content.Context
-import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -34,6 +33,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceCon
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.intents.IntentBuilder
 import com.lasthopesoftware.bluewater.shared.android.intents.getIntent
+import com.lasthopesoftware.bluewater.shared.android.intents.safelyGetParcelableExtra
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 import com.lasthopesoftware.bluewater.shared.cls
@@ -146,11 +146,7 @@ class FileDetailsActivity : ComponentActivity() {
 			}
 		}
 
-		val libraryId = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-			intent.getParcelableExtra(libraryIdKey, cls<LibraryId>())
-		} else {
-			intent.getParcelableExtra(libraryIdKey)
-		}
+		val libraryId = intent.safelyGetParcelableExtra<LibraryId>(libraryIdKey)
 
 		if (libraryId == null) {
 			finish()
