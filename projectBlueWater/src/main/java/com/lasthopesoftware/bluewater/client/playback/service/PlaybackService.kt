@@ -557,6 +557,8 @@ open class PlaybackService :
 		}
 
 		fun initializeEngineAndActOnIntent(intent: Intent) {
+			logger.debug("initializeEngineAndActOnIntent({})", intent)
+
 			val promisedTimeout = delay<Any?>(playbackStartTimeout)
 
 			val promisedIntentHandling = selectedLibraryProvider.browserLibrary

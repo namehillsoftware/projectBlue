@@ -38,17 +38,24 @@ fun LibraryMenu(
 	bottomSheetState: BottomSheetState,
 	libraryId: LibraryId,
 ) {
+	val nowPlayingFile by nowPlayingFilePropertiesViewModel.nowPlayingFile.collectAsState()
+	val isNowPlayingFileSet by remember { derivedStateOf { nowPlayingFile != null } }
+
+	var rowModifier = Modifier
+		.background(MaterialTheme.colors.secondary)
+		.height(bottomAppBarHeight)
+
+	if (isNowPlayingFileSet)
+		rowModifier = rowModifier.clickable(onClick = applicationNavigation::viewNowPlaying)
+
 	Row(
-		modifier = Modifier
-            .clickable(onClick = applicationNavigation::viewNowPlaying)
-            .background(MaterialTheme.colors.secondary)
-            .height(bottomAppBarHeight)
+		modifier = rowModifier
 	) {
 		Column {
 			Row(
 				modifier = Modifier
-                    .weight(1f)
-                    .padding(end = 16.dp)
+					.weight(1f)
+					.padding(end = 16.dp)
 			) {
 				val progress by remember {
 					derivedStateOf {
@@ -59,32 +66,32 @@ fun LibraryMenu(
 				val coroutineScope = rememberCoroutineScope()
 				Box(
 					modifier = Modifier
-                        .align(Alignment.CenterVertically)
-                        .fillMaxHeight()
-                        .wrapContentWidth()
-                        .clickable {
-                            coroutineScope.launch {
-                                if (bottomSheetState.isExpanded) bottomSheetState.collapse()
-                                else bottomSheetState.expand()
-                            }
-                        },
+						.align(Alignment.CenterVertically)
+						.fillMaxHeight()
+						.wrapContentWidth()
+						.clickable {
+							coroutineScope.launch {
+								if (bottomSheetState.isExpanded) bottomSheetState.collapse()
+								else bottomSheetState.expand()
+							}
+						},
 				) {
 					val chevronRotation by remember { derivedStateOf { 180 * progress } }
 					Image(
 						painter = painterResource(id = R.drawable.chevron_up_white_36dp),
 						contentDescription = stringResource(id = if (bottomSheetState.isCollapsed) R.string.show_menu else R.string.hide_menu),
 						modifier = Modifier
-                            .align(Alignment.Center)
-                            .rotate(chevronRotation)
-                            .padding(start = 16.dp, end = 16.dp)
-                            .requiredSize(24.dp)
+							.align(Alignment.Center)
+							.rotate(chevronRotation)
+							.padding(start = 16.dp, end = 16.dp)
+							.requiredSize(24.dp)
 					)
 				}
 
 				Column(
 					modifier = Modifier
-                        .weight(1f)
-                        .align(Alignment.CenterVertically),
+						.weight(1f)
+						.align(Alignment.CenterVertically),
 				) {
 					val songTitle by nowPlayingFilePropertiesViewModel.title.collectAsState()
 
@@ -111,34 +118,36 @@ fun LibraryMenu(
 					}
 				}
 
-				val isPlaying by nowPlayingFilePropertiesViewModel.isPlaying.collectAsState()
-				Image(
-					painter = painterResource(id = if (!isPlaying) R.drawable.av_play_white else R.drawable.av_pause_white),
-					contentDescription = stringResource(id = R.string.btn_play),
-					modifier = Modifier
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                            onClick = {
-                                if (!isPlaying) playbackServiceController.play()
-                                else playbackServiceController.pause()
+				if (isNowPlayingFileSet) {
+					val isPlaying by nowPlayingFilePropertiesViewModel.isPlaying.collectAsState()
+					Image(
+						painter = painterResource(id = if (!isPlaying) R.drawable.av_play_white else R.drawable.av_pause_white),
+						contentDescription = stringResource(id = R.string.btn_play),
+						modifier = Modifier
+							.clickable(
+								interactionSource = remember { MutableInteractionSource() },
+								indication = null,
+								onClick = {
+									if (!isPlaying) playbackServiceController.play()
+									else playbackServiceController.pause()
 
-                                nowPlayingFilePropertiesViewModel.togglePlaying(!isPlaying)
-                            }
-                        )
-                        .padding(start = 8.dp, end = 8.dp)
-                        .align(Alignment.CenterVertically)
-                        .size(24.dp),
-				)
+									nowPlayingFilePropertiesViewModel.togglePlaying(!isPlaying)
+								}
+							)
+							.padding(start = 8.dp, end = 8.dp)
+							.align(Alignment.CenterVertically)
+							.size(24.dp),
+					)
 
-				Icon(
-					Icons.Default.ArrowForward,
-					contentDescription = stringResource(id = R.string.title_activity_view_now_playing),
-					tint = MaterialTheme.colors.onSecondary,
-					modifier = Modifier
-                        .padding(start = 8.dp, end = 8.dp)
-                        .align(Alignment.CenterVertically)
-				)
+					Icon(
+						Icons.Default.ArrowForward,
+						contentDescription = stringResource(id = R.string.title_activity_view_now_playing),
+						tint = MaterialTheme.colors.onSecondary,
+						modifier = Modifier
+							.padding(start = 8.dp, end = 8.dp)
+							.align(Alignment.CenterVertically)
+					)
+				}
 			}
 
 			val filePosition by nowPlayingFilePropertiesViewModel.filePosition.collectAsState()
@@ -149,8 +158,8 @@ fun LibraryMenu(
 				color = MaterialTheme.colors.primary,
 				backgroundColor = MaterialTheme.colors.onPrimary.copy(alpha = .6f),
 				modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(0.dp)
+					.fillMaxWidth()
+					.padding(0.dp)
 			)
 		}
 	}
@@ -159,24 +168,24 @@ fun LibraryMenu(
 	ProvideTextStyle(value = MaterialTheme.typography.subtitle1) {
 		Row(
 			modifier = Modifier
-                .height(rowHeight)
-                .fillMaxWidth()
-                .clickable {
-                    applicationNavigation.viewActiveDownloads(libraryId)
-                },
+				.height(rowHeight)
+				.fillMaxWidth()
+				.clickable {
+					applicationNavigation.viewActiveDownloads(libraryId)
+				},
 			verticalAlignment = Alignment.CenterVertically,
 		) {
 			Box(
 				modifier = Modifier
-                    .align(Alignment.CenterVertically)
-                    .fillMaxHeight()
+					.align(Alignment.CenterVertically)
+					.fillMaxHeight()
 			) {
 				Image(
 					painter = painterResource(id = R.drawable.ic_water),
 					contentDescription = stringResource(id = R.string.activeDownloads),
 					modifier = Modifier
-                        .align(Alignment.Center)
-                        .padding(start = 16.dp, end = 16.dp)
+						.align(Alignment.Center)
+						.padding(start = 16.dp, end = 16.dp)
 				)
 			}
 
@@ -187,24 +196,24 @@ fun LibraryMenu(
 
 		Row(
 			modifier = Modifier
-                .height(rowHeight)
-                .fillMaxWidth()
-                .clickable {
-                    applicationNavigation.launchSearch(libraryId)
-                },
+				.height(rowHeight)
+				.fillMaxWidth()
+				.clickable {
+					applicationNavigation.launchSearch(libraryId)
+				},
 			verticalAlignment = Alignment.CenterVertically,
 		) {
 			Box(
 				modifier = Modifier
-                    .align(Alignment.CenterVertically)
-                    .fillMaxHeight()
+					.align(Alignment.CenterVertically)
+					.fillMaxHeight()
 			) {
 				Icon(
 					Icons.Default.Search,
 					contentDescription = stringResource(id = R.string.search),
 					modifier = Modifier
-                        .align(Alignment.Center)
-                        .padding(start = 16.dp, end = 16.dp)
+						.align(Alignment.Center)
+						.padding(start = 16.dp, end = 16.dp)
 				)
 			}
 
@@ -215,25 +224,25 @@ fun LibraryMenu(
 
 		Row(
 			modifier = Modifier
-                .height(rowHeight)
-                .fillMaxWidth()
-                .clickable {
-                    applicationNavigation.viewServerSettings(libraryId)
-                },
+				.height(rowHeight)
+				.fillMaxWidth()
+				.clickable {
+					applicationNavigation.viewServerSettings(libraryId)
+				},
 			verticalAlignment = Alignment.CenterVertically,
 		) {
 			Box(
 				modifier = Modifier
-                    .align(Alignment.CenterVertically)
-                    .fillMaxHeight()
+					.align(Alignment.CenterVertically)
+					.fillMaxHeight()
 			) {
 				Image(
 					painter = painterResource(id = R.drawable.ic_action_settings),
 					contentDescription = stringResource(id = R.string.settings),
 					modifier = Modifier
-                        .align(Alignment.Center)
-                        .padding(start = 16.dp, end = 16.dp)
-                        .size(Dimensions.MenuIconSize)
+						.align(Alignment.Center)
+						.padding(start = 16.dp, end = 16.dp)
+						.size(Dimensions.MenuIconSize)
 				)
 			}
 

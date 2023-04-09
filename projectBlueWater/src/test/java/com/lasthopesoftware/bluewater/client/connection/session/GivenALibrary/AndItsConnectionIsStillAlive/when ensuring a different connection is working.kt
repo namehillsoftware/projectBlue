@@ -1,10 +1,12 @@
-package com.lasthopesoftware.bluewater.client.connection.session.GivenALibrary.AndTheConnectionIsNotInitialized
+package com.lasthopesoftware.bluewater.client.connection.session.GivenALibrary.AndItsConnectionIsStillAlive
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
+import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionStatusViewModel
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredProgressingPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.resources.strings.FakeStringResources
 import io.mockk.every
@@ -13,21 +15,23 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
-private const val libraryId = 206
+private const val originalLibraryId = 907
+private const val libraryId = 220
 
-class `when ensuring the connection is working` {
+class `when ensuring a different connection is working` {
 	private val mut by lazy {
 		val deferredProgressingPromise =
-            DeferredProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>()
+			DeferredProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>()
 
 		Pair(
 			deferredProgressingPromise,
-            ConnectionStatusViewModel(
-                FakeStringResources(),
+			ConnectionStatusViewModel(
+				FakeStringResources(),
 				mockk {
+					every { promiseInitializedConnection(LibraryId(originalLibraryId)) } returns ProgressingPromise(FakeConnectionProvider())
 					every { promiseInitializedConnection(LibraryId(libraryId)) } returns deferredProgressingPromise
 				}
-            )
+			)
 		)
 	}
 
@@ -40,8 +44,9 @@ class `when ensuring the connection is working` {
 	fun act() {
 		val (deferredPromise, viewModel) = mut
 
-		isConnectingBeforeCheck = viewModel.isGettingConnection.value
+		viewModel.ensureConnectionIsWorking(LibraryId(originalLibraryId)).toExpiringFuture().get()
 
+		isConnectingBeforeCheck = viewModel.isGettingConnection.value
 		val isInitializedPromise = viewModel.ensureConnectionIsWorking(LibraryId(libraryId))
 		isConnectingDuringCheck = viewModel.isGettingConnection.value
 		testedLibraryIdDuringCheck = viewModel.testedLibraryId.value
@@ -53,7 +58,7 @@ class `when ensuring the connection is working` {
 	}
 
 	@Test
-    fun `then the connection is initialized`() {
+	fun `then the connection is initialized`() {
 		assertThat(isInitialized).isTrue
 	}
 

@@ -16,10 +16,6 @@ import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseables
 import com.lasthopesoftware.bluewater.shared.promises.extensions.suspend
 import com.namehillsoftware.handoff.promises.Promise
 
-object ItemBrowsingArguments {
-	const val libraryIdArgument = "libraryId"
-}
-
 @Composable
 fun browsableItemListView(
 	itemListViewModel: ItemListViewModel,

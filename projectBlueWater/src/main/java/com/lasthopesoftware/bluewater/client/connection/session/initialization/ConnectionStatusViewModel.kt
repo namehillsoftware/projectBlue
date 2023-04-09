@@ -18,11 +18,13 @@ class ConnectionStatusViewModel(
 {
 	private var promisedConnectionCheck = false.toPromise()
 
-	private val isGettingConnectionFlow = MutableStateFlow(false)
-	private val connectionStatusFlow = MutableStateFlow("")
+	private val mutableIsGettingConnection = MutableStateFlow(false)
+	private val mutableConnectionStatus = MutableStateFlow("")
+	private val mutableTestedLibraryId = MutableStateFlow<LibraryId?>(null)
 
-	val connectionStatus = connectionStatusFlow.asStateFlow()
-	val isGettingConnection = isGettingConnectionFlow.asStateFlow()
+	val connectionStatus = mutableConnectionStatus.asStateFlow()
+	val isGettingConnection = mutableIsGettingConnection.asStateFlow()
+	val testedLibraryId = mutableTestedLibraryId.asStateFlow()
 	var isCancelled = false
 		private set
 
@@ -30,8 +32,9 @@ class ConnectionStatusViewModel(
 		promisedConnectionCheck.cancel()
 		isCancelled = false
 
-		isGettingConnectionFlow.value = true
-		connectionStatusFlow.value = stringResources.connecting
+		mutableIsGettingConnection.value = true
+		mutableTestedLibraryId.value = null
+		mutableConnectionStatus.value = stringResources.connecting
 
 		val promiseIsConnected = CancellableProxyPromise { cp ->
 			val promisedConnection = connectionInitializationController.promiseInitializedConnection(libraryId)
@@ -44,7 +47,8 @@ class ConnectionStatusViewModel(
 				.also(cp::doCancel)
 				.then {
 					val isConnected = it != null
-					connectionStatusFlow.value = if (isConnected) stringResources.connected else stringResources.gettingLibraryFailed
+					if (isConnected) mutableTestedLibraryId.value = libraryId
+					mutableConnectionStatus.value = if (isConnected) stringResources.connected else stringResources.gettingLibraryFailed
 					isConnected
 				}
 		}
@@ -59,7 +63,7 @@ class ConnectionStatusViewModel(
 	}
 
 	override fun invoke(status: BuildingConnectionStatus) {
-		connectionStatusFlow.value = when (status) {
+		mutableConnectionStatus.value = when (status) {
 			BuildingConnectionStatus.GettingLibrary -> stringResources.gettingLibrary
 			BuildingConnectionStatus.GettingLibraryFailed -> stringResources.gettingLibraryFailed
 			BuildingConnectionStatus.SendingWakeSignal -> stringResources.sendingWakeSignal
@@ -70,6 +74,6 @@ class ConnectionStatusViewModel(
 	}
 
 	override fun act() {
-		isGettingConnectionFlow.value = false
+		mutableIsGettingConnection.value = false
 	}
 }
