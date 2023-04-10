@@ -10,8 +10,11 @@ import android.os.Handler
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import com.lasthopesoftware.bluewater.R
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.Companion.getInstance
+import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.NotificationsConfiguration
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.intents.getIntent
@@ -22,8 +25,12 @@ import com.lasthopesoftware.bluewater.shared.android.notifications.notificationc
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.SharedChannelProperties
 import com.lasthopesoftware.bluewater.shared.android.services.GenericBinder
 import com.lasthopesoftware.bluewater.shared.android.services.promiseBoundService
+import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
+import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
+import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
+import com.lasthopesoftware.resources.closables.AutoCloseableManager
 import com.namehillsoftware.handoff.Messenger
 import com.namehillsoftware.handoff.promises.MessengerOperator
 import com.namehillsoftware.handoff.promises.Promise
@@ -33,6 +40,10 @@ import java.util.concurrent.CancellationException
 class PollConnectionService : Service(), MessengerOperator<IConnectionProvider> {
 
 	companion object {
+		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(cls<PollConnectionService>()) }
+
+		private val stopWaitingForConnectionAction by lazy { magicPropertyBuilder.buildProperty("stopWaitingForConnection") }
+
 		fun pollSessionConnection(context: Context, withNotification: Boolean = false): Promise<IConnectionProvider> =
 			context.promiseBoundService<PollConnectionService>()
 				.eventually {  s ->
@@ -41,8 +52,6 @@ class PollConnectionService : Service(), MessengerOperator<IConnectionProvider> 
 						it.lazyConnectionPoller.value.must { context.unbindService(s.serviceConnection) }
 					}
 				}
-
-		private val stopWaitingForConnectionAction by lazy { MagicPropertyBuilder.buildMagicPropertyName<PollConnectionService>("stopWaitingForConnection") }
 	}
 
 	object ConnectionLostNotification : ApplicationMessage
@@ -53,8 +62,13 @@ class PollConnectionService : Service(), MessengerOperator<IConnectionProvider> 
 	private val binder by lazy { GenericBinder(this) }
 	private val handler by lazy { Handler(mainLooper) }
 
+	private val lazyCloseableManager = lazy { AutoCloseableManager() }
+	private val messageBus by lazy {
+		getApplicationMessageBus().getScopedMessageBus().also(lazyCloseableManager.value::manage)
+	}
+
 	private val lazyConnectionPoller = lazy {
-		getApplicationMessageBus().sendMessage(ConnectionLostNotification)
+		messageBus.sendMessage(ConnectionLostNotification)
 		Promise(this)
 	}
 
@@ -70,6 +84,11 @@ class PollConnectionService : Service(), MessengerOperator<IConnectionProvider> 
 	}
 	private val lazyNotificationController = lazy { NotificationsController(this, notificationManager) }
 
+	private val selectedLibraryIdProvider by lazy { getCachedSelectedLibraryIdProvider() }
+	private val libraryConnectionProvider by lazy { ConnectionSessionManager.get(this) }
+
+	private lateinit var libraryIdUnderTest: LibraryId
+
 	override fun onBind(intent: Intent): IBinder = binder
 
 	override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -82,7 +101,22 @@ class PollConnectionService : Service(), MessengerOperator<IConnectionProvider> 
 	override fun send(messenger: Messenger<IConnectionProvider>) {
 		val cancellationToken = CancellationToken()
 		messenger.cancellationRequested(cancellationToken)
-		pollSessionConnection(messenger, cancellationToken, 1000)
+
+		selectedLibraryIdProvider
+			.promiseSelectedLibraryId()
+			.then { libraryId ->
+				if (libraryId == null) {
+					messenger.sendRejection(IllegalStateException("A library ID has not been selected to poll a connection."))
+				} else {
+					libraryIdUnderTest = libraryId
+					lazyCloseableManager.value.manage(messageBus.registerReceiver { m: BrowserLibrarySelection.LibraryChosenMessage ->
+						if (m.chosenLibraryId != libraryIdUnderTest)
+							cancellationToken.run()
+					})
+					pollSessionConnection(messenger, cancellationToken, 1000)
+				}
+			}
+			.excuse(messenger::sendRejection)
 	}
 
 	private fun pollSessionConnection(messenger: Messenger<IConnectionProvider>, cancellationToken: CancellationToken, connectionTime: Int) {
@@ -94,8 +128,8 @@ class PollConnectionService : Service(), MessengerOperator<IConnectionProvider> 
 		if (withNotification) beginNotification()
 
 		val nextConnectionTime = if (connectionTime < 32000) connectionTime * 2 else connectionTime
-		getInstance(this)
-			.promiseTestedSessionConnection()
+		libraryConnectionProvider
+			.promiseTestedLibraryConnection(libraryIdUnderTest)
 			.then({
 				if (it == null) {
 					handler.postDelayed(
@@ -132,6 +166,8 @@ class PollConnectionService : Service(), MessengerOperator<IConnectionProvider> 
 	override fun onDestroy() {
 		if (lazyNotificationController.isInitialized())
 			lazyNotificationController.value.removeAllNotifications()
+		if (lazyCloseableManager.isInitialized())
+			lazyCloseableManager.value.close()
 		super.onDestroy()
 	}
 }
