@@ -242,7 +242,7 @@ class BrowserActivity :
 			libraryRepository,
 			selectedLibraryIdProvider,
 			libraryRepository,
-			BrowserLibrarySelection(getApplicationSettingsRepository(), messageBus, libraryProvider),
+			BrowserLibrarySelection(applicationSettingsRepository, messageBus, libraryProvider),
 		)
 	}
 
@@ -254,7 +254,7 @@ class BrowserActivity :
 	}
 	override val permissionsManager = this
 	override val navigationMessages by buildViewModelLazily { ViewModelMessageBus<NavigationMessage>() }
-	override val applicationSettingsRepository by lazy { getApplicationSettingsRepository() }
+	override val applicationSettingsRepository by lazy { applicationContext.getApplicationSettingsRepository() }
 	override val selectedPlaybackEngineTypeAccess by lazy {
 		SelectedPlaybackEngineTypeAccess(
 			applicationSettingsRepository,
