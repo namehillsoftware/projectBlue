@@ -14,6 +14,7 @@ import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection.Companion.getInstance
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.NotificationsConfiguration
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
+import com.lasthopesoftware.bluewater.shared.android.intents.getIntent
 import com.lasthopesoftware.bluewater.shared.android.makePendingIntentImmutable
 import com.lasthopesoftware.bluewater.shared.android.notifications.NoOpChannelActivator
 import com.lasthopesoftware.bluewater.shared.android.notifications.control.NotificationsController
@@ -96,11 +97,12 @@ class PollConnectionService : Service(), MessengerOperator<IConnectionProvider> 
 		getInstance(this)
 			.promiseTestedSessionConnection()
 			.then({
-				when (it) {
-					null -> handler.postDelayed(
+				if (it == null) {
+					handler.postDelayed(
 						{ pollSessionConnection(messenger, cancellationToken, nextConnectionTime) },
 						connectionTime.toLong())
-					else -> messenger.sendResolution(it)
+				} else {
+					messenger.sendResolution(it)
 				}
 			}, {
 				handler.postDelayed(
@@ -111,16 +113,16 @@ class PollConnectionService : Service(), MessengerOperator<IConnectionProvider> 
 
 	private fun beginNotification() {
 		// Add intent for canceling waiting for connection to come back
-		val intent = Intent(this, PollConnectionService::class.java)
+		val intent = getIntent<PollConnectionService>()
 		intent.action = stopWaitingForConnectionAction
 
 		val pi = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT.makePendingIntentImmutable())
 
 		val builder = NotificationCompat.Builder(this, notificationsConfiguration.notificationChannel)
 			.setOngoing(true)
-			.setContentIntent(pi)
+			.addAction(0, getText(R.string.btn_cancel), pi)
 			.setContentTitle(getText(R.string.lbl_waiting_for_connection))
-			.setContentText(getText(R.string.lbl_click_to_cancel))
+			.setContentText(getText(R.string.lbl_something_went_wrong))
 			.setSmallIcon(R.drawable.now_playing_status_icon_white)
 			.setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
 
