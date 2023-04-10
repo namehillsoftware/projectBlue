@@ -911,8 +911,14 @@ open class PlaybackService :
 			}
 
 			logger.warn("Number of disconnections has not surpassed $numberOfDisconnects in less than $disconnectResetDuration. Checking for disconnections.")
-			pollSessionConnection(this, true)
-				.then(connectionRegainedListener, onPollingCancelledListener)
+			selectedLibraryIdentifierProvider
+				.promiseSelectedLibraryId()
+				.then {
+					it?.also { libraryId ->
+						pollSessionConnection(this, libraryId, true)
+							.then(connectionRegainedListener, onPollingCancelledListener)
+					}
+				}
 		}
 
 		fun handlePlaybackEngineInitializationException(exception: PlaybackEngineInitializationException) {

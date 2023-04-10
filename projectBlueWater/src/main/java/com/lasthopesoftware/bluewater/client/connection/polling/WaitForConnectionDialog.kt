@@ -4,15 +4,16 @@ import android.content.Context
 import androidx.appcompat.app.AlertDialog
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.lasthopesoftware.bluewater.R
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService.Companion.pollSessionConnection
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 
 object WaitForConnectionDialog {
-    fun show(context: Context) {
-        AlertHolder(context)
+    fun show(context: Context, libraryId: LibraryId) {
+        AlertHolder(context, libraryId)
     }
 
-    private class AlertHolder(context: Context) {
+    private class AlertHolder(context: Context, libraryId: LibraryId) {
 		private val alertDialog: AlertDialog
 		private var isDismissed = false
 
@@ -24,7 +25,7 @@ object WaitForConnectionDialog {
 				.setTitle(context.getText(R.string.lbl_connection_lost_title))
 				.setMessage(message)
 				.setCancelable(true)
-            val pollingSessionConnection = pollSessionConnection(context)
+            val pollingSessionConnection = pollSessionConnection(context, libraryId)
             builder.setNegativeButton(context.getText(R.string.btn_cancel)) { dialog, _ ->
                 pollingSessionConnection.cancel()
                 dialog.dismiss()

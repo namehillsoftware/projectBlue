@@ -215,7 +215,8 @@ class NowPlayingFilePropertiesViewModel(
 		val isIoException = handleIoException(exception)
 		if (!isIoException) return
 
-		pollConnections.pollSessionConnection().then {
+		val libraryId = cachedPromises?.libraryId ?: return
+		pollConnections.pollConnection(libraryId).then {
 			synchronized(cachedPromiseSync) {
 				cachedPromises?.close()
 				cachedPromises = null

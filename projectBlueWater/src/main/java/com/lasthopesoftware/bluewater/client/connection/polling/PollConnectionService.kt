@@ -6,18 +6,19 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.os.Bundle
 import android.os.Handler
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.NotificationsConfiguration
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.intents.getIntent
+import com.lasthopesoftware.bluewater.shared.android.intents.safelyGetParcelableExtra
 import com.lasthopesoftware.bluewater.shared.android.makePendingIntentImmutable
 import com.lasthopesoftware.bluewater.shared.android.notifications.NoOpChannelActivator
 import com.lasthopesoftware.bluewater.shared.android.notifications.control.NotificationsController
@@ -44,17 +45,25 @@ class PollConnectionService : Service(), MessengerOperator<IConnectionProvider> 
 
 		private val stopWaitingForConnectionAction by lazy { magicPropertyBuilder.buildProperty("stopWaitingForConnection") }
 
-		fun pollSessionConnection(context: Context, withNotification: Boolean = false): Promise<IConnectionProvider> =
-			context.promiseBoundService<PollConnectionService>()
+		private val libraryIdProperty by lazy  { magicPropertyBuilder.buildProperty("libraryId") }
+
+		fun pollSessionConnection(context: Context, libraryId: LibraryId, withNotification: Boolean = false): Promise<IConnectionProvider> {
+			val bundle = Bundle().apply {
+				putParcelable(libraryIdProperty, libraryId)
+			}
+
+			return context.promiseBoundService<PollConnectionService>(bundle)
 				.eventually {  s ->
-					s.service.let {
-						it.withNotification = it.withNotification || withNotification
-						it.lazyConnectionPoller.value.must { context.unbindService(s.serviceConnection) }
+					s.service.run {
+						this.withNotification = this.withNotification || withNotification
+						if (libraryIdUnderTest != libraryId) Promise(IllegalStateException("libraryId is not the libraryIdUnderTest."))
+						else lazyConnectionPoller.value.must { context.unbindService(s.serviceConnection) }
 					}
 				}
+		}
 	}
 
-	object ConnectionLostNotification : ApplicationMessage
+	class ConnectionLostNotification(val libraryId: LibraryId) : ApplicationMessage
 
 	private var withNotification = false
 
@@ -68,7 +77,7 @@ class PollConnectionService : Service(), MessengerOperator<IConnectionProvider> 
 	}
 
 	private val lazyConnectionPoller = lazy {
-		messageBus.sendMessage(ConnectionLostNotification)
+		messageBus.sendMessage(ConnectionLostNotification(libraryIdUnderTest))
 		Promise(this)
 	}
 
@@ -84,7 +93,6 @@ class PollConnectionService : Service(), MessengerOperator<IConnectionProvider> 
 	}
 	private val lazyNotificationController = lazy { NotificationsController(this, notificationManager) }
 
-	private val selectedLibraryIdProvider by lazy { getCachedSelectedLibraryIdProvider() }
 	private val libraryConnectionProvider by lazy { ConnectionSessionManager.get(this) }
 
 	private lateinit var libraryIdUnderTest: LibraryId
@@ -95,6 +103,13 @@ class PollConnectionService : Service(), MessengerOperator<IConnectionProvider> 
 		if (intent?.action == stopWaitingForConnectionAction && lazyConnectionPoller.isInitialized())
 			lazyConnectionPoller.value.cancel()
 
+		if (!this::libraryIdUnderTest.isInitialized) {
+			val libraryId = intent?.safelyGetParcelableExtra<LibraryId>(libraryIdProperty)
+			if (libraryId != null) {
+				libraryIdUnderTest = libraryId
+			}
+		}
+
 		return START_NOT_STICKY
 	}
 
@@ -102,21 +117,12 @@ class PollConnectionService : Service(), MessengerOperator<IConnectionProvider> 
 		val cancellationToken = CancellationToken()
 		messenger.cancellationRequested(cancellationToken)
 
-		selectedLibraryIdProvider
-			.promiseSelectedLibraryId()
-			.then { libraryId ->
-				if (libraryId == null) {
-					messenger.sendRejection(IllegalStateException("A library ID has not been selected to poll a connection."))
-				} else {
-					libraryIdUnderTest = libraryId
-					lazyCloseableManager.value.manage(messageBus.registerReceiver { m: BrowserLibrarySelection.LibraryChosenMessage ->
-						if (m.chosenLibraryId != libraryIdUnderTest)
-							cancellationToken.run()
-					})
-					pollSessionConnection(messenger, cancellationToken, 1000)
-				}
-			}
-			.excuse(messenger::sendRejection)
+		lazyCloseableManager.value.manage(messageBus.registerReceiver { m: BrowserLibrarySelection.LibraryChosenMessage ->
+			if (m.chosenLibraryId != libraryIdUnderTest)
+				cancellationToken.run()
+		})
+
+		pollSessionConnection(messenger, cancellationToken, 1000)
 	}
 
 	private fun pollSessionConnection(messenger: Messenger<IConnectionProvider>, cancellationToken: CancellationToken, connectionTime: Int) {

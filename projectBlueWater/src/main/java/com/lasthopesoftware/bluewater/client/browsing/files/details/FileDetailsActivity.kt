@@ -156,18 +156,18 @@ class FileDetailsActivity : ComponentActivity() {
 		connectionStatusViewModel.ensureConnectionIsWorking(libraryId).eventually(LoopedInPromise.response({
 			val position = intent.getIntExtra(playlistPosition, -1)
 			val playlist = intent.getIntArrayExtra(playlist)?.map(::ServiceFile) ?: emptyList()
-			setView(playlist, position)
+			setView(libraryId, playlist, position)
 		}, this))
 	}
 
-	private fun setView(playlist: List<ServiceFile>, position: Int) {
+	private fun setView(libraryId: LibraryId, playlist: List<ServiceFile>, position: Int) {
 		if (position < 0) {
 			finish()
 			return
 		}
 
 		vm.loadFromList(playlist, position)
-			.excuse(HandleViewIoException(this) { setView(playlist, position) })
+			.excuse(HandleViewIoException(this, libraryId) { setView(libraryId, playlist, position) })
 			.eventuallyExcuse(LoopedInPromise.response(UnexpectedExceptionToasterResponse(this), this))
 			.then { finish() }
 	}
