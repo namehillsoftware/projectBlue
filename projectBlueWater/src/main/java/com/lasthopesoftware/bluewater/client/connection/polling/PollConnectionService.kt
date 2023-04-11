@@ -37,14 +37,13 @@ class PollConnectionService : Service() {
 		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(cls<PollConnectionService>()) }
 
 		private val stopWaitingForConnectionAction by lazy { magicPropertyBuilder.buildProperty("stopWaitingForConnection") }
-
 		fun pollSessionConnection(context: Context, libraryId: LibraryId, withNotification: Boolean = false): Promise<IConnectionProvider> {
 			return context.promiseBoundService<PollConnectionService>()
 				.eventually {  s ->
 					s.service.run {
 						this.withNotification = this.withNotification || withNotification
-						promiseTestedLibrary(libraryId).must { context.unbindService(s.serviceConnection) }
-					}
+						promiseTestedLibrary(libraryId)
+					}.must { context.unbindService(s.serviceConnection) }
 				}
 		}
 	}
