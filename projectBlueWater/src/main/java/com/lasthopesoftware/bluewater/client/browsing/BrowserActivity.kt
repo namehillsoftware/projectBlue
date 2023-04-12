@@ -475,21 +475,20 @@ private val bottomAppBarHeight = Dimensions.AppBarHeight
 @OptIn(ExperimentalMaterialApi::class)
 private fun LibraryDestination.Navigate(
 	browserViewDependencies: BrowserViewDependencies,
-	connectionStatusViewModel: ConnectionStatusViewModel,
 	scaffoldState: BottomSheetScaffoldState,
 	coroutineScope: CoroutineScope,
 ) {
 	val screen = this
 
-	val testedLibraryId by connectionStatusViewModel.testedLibraryId.collectAsState()
-
 	with(browserViewDependencies) {
+		val selectedLibraryId by selectedLibraryIdProvider.promiseSelectedLibraryId().toState(initialValue = null)
+
 		BottomSheetScaffold(
 			scaffoldState = scaffoldState,
-			sheetPeekHeight = if (testedLibraryId == libraryId) bottomAppBarHeight else 0.dp,
+			sheetPeekHeight = if (selectedLibraryId == libraryId) bottomAppBarHeight else 0.dp,
 			sheetElevation = 16.dp,
 			sheetContent = {
-				if (testedLibraryId == libraryId) {
+				if (selectedLibraryId == libraryId) {
 					LibraryMenu(
 						applicationNavigation = applicationNavigation,
 						nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
@@ -767,7 +766,6 @@ private fun BrowserView(
 					is LibraryDestination -> {
 						destination.Navigate(
 							graphDependencies,
-							connectionStatusViewModel,
 							scaffoldState,
 							coroutineScope,
 						)
