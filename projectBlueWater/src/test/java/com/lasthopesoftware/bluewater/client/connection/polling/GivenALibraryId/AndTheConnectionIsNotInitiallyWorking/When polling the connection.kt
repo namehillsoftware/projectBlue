@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.connection.polling.GivenADifferentLibraryId.AndTheConnectionIsNotInitiallyWorking
+package com.lasthopesoftware.bluewater.client.connection.polling.GivenALibraryId.AndTheConnectionIsNotInitiallyWorking
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
@@ -15,16 +15,18 @@ import org.junit.jupiter.api.Test
 import java.util.concurrent.TimeUnit
 import kotlin.math.log2
 
-private const val libraryId = 79
+private const val libraryId = 298
 
 class `When polling the connection` {
 
 	private val mut by lazy {
         LibraryConnectionPoller(
             mockk {
-				val nullIterations = log2(32.0).toInt()
-				val connectionResponses = MutableList(nullIterations) { ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>(null as IConnectionProvider?) }
-				connectionResponses.add(ProgressingPromise(FakeConnectionProvider()))
+                val nullIterations = log2(8.0).toInt()
+                val connectionResponses = MutableList(nullIterations) {
+                    ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>(java.lang.Exception("whoops"))
+                }
+                connectionResponses.add(ProgressingPromise(FakeConnectionProvider()))
                 every { promiseTestedLibraryConnection(LibraryId(libraryId)) } returnsMany connectionResponses
             }
         )
@@ -34,7 +36,10 @@ class `When polling the connection` {
 
 	@BeforeAll
 	fun act() {
-		connectionProvider = mut.pollConnection(LibraryId(libraryId)).toExpiringFuture().get(3, TimeUnit.MINUTES)
+		connectionProvider = mut
+			.pollConnection(LibraryId(libraryId))
+			.toExpiringFuture()
+			.get(3, TimeUnit.MINUTES)
 	}
 
 	@Test
