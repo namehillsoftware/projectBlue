@@ -13,6 +13,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibrarySto
 import com.lasthopesoftware.bluewater.client.browsing.library.access.RemoveLibraries
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectBrowserLibrary
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedLibraryViewModel
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NavigationMessage
 import com.lasthopesoftware.bluewater.client.connection.libraries.SelectedLibraryUrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
@@ -32,6 +33,7 @@ import com.lasthopesoftware.bluewater.shared.messages.application.ScopedApplicat
 import com.lasthopesoftware.resources.strings.StringResources
 
 interface BrowserViewDependencies {
+	val selectedLibraryViewModel: SelectedLibraryViewModel
 	val nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel
 	val selectedLibraryIdProvider: CachedSelectedLibraryIdProvider
 	val itemProvider: CachedItemProvider

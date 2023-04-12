@@ -44,6 +44,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.h
 import com.lasthopesoftware.bluewater.client.browsing.library.access.*
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedLibraryViewModel
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.browsing.navigation.*
@@ -276,6 +277,13 @@ class BrowserActivity :
 		)
 	}
 
+	override val selectedLibraryViewModel by buildViewModelLazily {
+		SelectedLibraryViewModel(
+			selectedLibraryIdProvider,
+			libraryBrowserSelection,
+		).apply { loadSelectedLibraryId() }
+	}
+
 	private val permissionsRequests = ConcurrentHashMap<Int, Messenger<Map<String, Boolean>>>()
 
 	public override fun onCreate(savedInstanceState: Bundle?) {
@@ -454,7 +462,7 @@ private class GraphDependencies(
 			DestinationApplicationNavigation(
 				ConnectionInitializingLibrarySelectionNavigation(
 					graphNavigation,
-					libraryBrowserSelection,
+					selectedLibraryViewModel,
 					connectionStatusViewModel,
 				),
 				navController,
@@ -479,7 +487,7 @@ private fun LibraryDestination.Navigate(
 	coroutineScope: CoroutineScope,
 ) {
 	with(browserViewDependencies) {
-		val selectedLibraryId by selectedLibraryIdProvider.promiseSelectedLibraryId().toState(initialValue = null)
+		val selectedLibraryId by selectedLibraryViewModel.selectedLibraryId.collectAsState()
 
 		BottomSheetScaffold(
 			scaffoldState = scaffoldState,
