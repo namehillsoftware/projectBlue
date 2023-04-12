@@ -14,7 +14,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.F
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
-import com.lasthopesoftware.bluewater.client.connection.polling.ConnectionPoller
+import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionServiceProxy
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.InMemoryNowPlayingDisplaySettings
@@ -76,7 +76,7 @@ class NowPlayingTopFragment : Fragment() {
             filePropertiesStorage,
             connectionAuthenticationChecker,
             playbackService,
-            ConnectionPoller(requireContext()),
+            PollConnectionServiceProxy(requireContext()),
             StringResources(requireContext()),
         )
 	}

@@ -50,7 +50,7 @@ import com.lasthopesoftware.bluewater.client.browsing.navigation.*
 import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.libraries.SelectedLibraryUrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
-import com.lasthopesoftware.bluewater.client.connection.polling.ConnectionPoller
+import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionServiceProxy
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.*
 import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettingsLookup
@@ -197,7 +197,7 @@ class BrowserActivity :
 			filePropertiesStorage,
 			connectionAuthenticationChecker,
 			playbackServiceController,
-			ConnectionPoller(applicationContext),
+			PollConnectionServiceProxy(applicationContext),
 			stringResources,
 		).apply { initializeViewModel() }
 	}
@@ -478,8 +478,6 @@ private fun LibraryDestination.Navigate(
 	scaffoldState: BottomSheetScaffoldState,
 	coroutineScope: CoroutineScope,
 ) {
-	val screen = this
-
 	with(browserViewDependencies) {
 		val selectedLibraryId by selectedLibraryIdProvider.promiseSelectedLibraryId().toState(initialValue = null)
 
@@ -500,7 +498,7 @@ private fun LibraryDestination.Navigate(
 			}
 		) { paddingValues ->
 			Box(modifier = Modifier.padding(paddingValues)) {
-				when (screen) {
+				when (this@Navigate) {
 					is LibraryScreen -> {
 						val view = browsableItemListView(
 							itemListViewModel = viewModel {
@@ -538,7 +536,7 @@ private fun LibraryDestination.Navigate(
 							playbackServiceController = playbackServiceController,
 						)
 
-						view(screen.libraryId, null)
+						view(libraryId, null)
 					}
 					is ItemScreen -> {
 						val view = browsableItemListView(
@@ -577,7 +575,7 @@ private fun LibraryDestination.Navigate(
 							playbackServiceController = playbackServiceController,
 						)
 
-						view(screen.libraryId, screen.item)
+						view(libraryId, item)
 					}
 					is DownloadsScreen -> {
 						val activeFileDownloadsViewModel = viewModel {
@@ -601,12 +599,12 @@ private fun LibraryDestination.Navigate(
 							applicationNavigation,
 						)
 
-						activeFileDownloadsViewModel.loadActiveDownloads(screen.libraryId)
+						activeFileDownloadsViewModel.loadActiveDownloads(libraryId)
 					}
 					is SearchScreen -> {
 						val searchFilesViewModel = viewModel { SearchFilesViewModel(libraryFilesProvider) }
 
-						searchFilesViewModel.setActiveLibraryId(screen.libraryId)
+						searchFilesViewModel.setActiveLibraryId(libraryId)
 
 						SearchFilesView(
 							searchFilesViewModel = searchFilesViewModel,
@@ -643,13 +641,13 @@ private fun LibraryDestination.Navigate(
 							stringResources = stringResources
 						)
 
-						viewModel.loadLibrary(screen.libraryId)
+						viewModel.loadLibrary(libraryId)
 
 						DisposableEffect(key1 = Unit) {
 							val registration =
 								messageBus.registerReceiver(coroutineScope) { m: ObservableConnectionSettingsLibraryStorage.ConnectionSettingsUpdated ->
-									if (screen.libraryId == m.libraryId)
-										applicationNavigation.viewLibrary(screen.libraryId)
+									if (libraryId == m.libraryId)
+										applicationNavigation.viewLibrary(libraryId)
 								}
 
 							onDispose {

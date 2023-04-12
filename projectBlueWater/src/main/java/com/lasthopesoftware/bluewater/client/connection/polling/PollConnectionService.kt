@@ -6,7 +6,6 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.os.Build
-import android.os.Handler
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import com.lasthopesoftware.bluewater.R
@@ -25,10 +24,8 @@ import com.lasthopesoftware.bluewater.shared.android.services.GenericBinder
 import com.lasthopesoftware.bluewater.shared.android.services.promiseBoundService
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
-import com.namehillsoftware.handoff.Messenger
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken
-import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 
 class PollConnectionService : Service() {
@@ -41,7 +38,9 @@ class PollConnectionService : Service() {
 			return context.promiseBoundService<PollConnectionService>()
 				.eventually {  s ->
 					s.service.run {
-						this.withNotification = this.withNotification || withNotification
+						if (withNotification)
+							beginNotification()
+
 						promiseTestedLibrary(libraryId)
 					}.must { context.unbindService(s.serviceConnection) }
 				}
@@ -50,11 +49,10 @@ class PollConnectionService : Service() {
 
 	class ConnectionLostNotification(val libraryId: LibraryId) : ApplicationMessage
 
-	private var withNotification = false
+	private var isNotifying = false
 
 	private val notificationId = 99
 	private val binder by lazy { GenericBinder(this) }
-	private val handler by lazy { Handler(mainLooper) }
 
 	private val connectionPollerLookup = ConcurrentHashMap<LibraryId, Lazy<Promise<IConnectionProvider>>>()
 
@@ -71,7 +69,11 @@ class PollConnectionService : Service() {
 
 	private val lazyNotificationController = lazy { NotificationsController(this, notificationManager) }
 
+	private val messageBus by lazy { ApplicationMessageBus.getApplicationMessageBus() }
+
 	private val libraryConnectionProvider by lazy { ConnectionSessionManager.get(this) }
+
+	private val libraryConnectionPoller by lazy { LibraryConnectionPoller(libraryConnectionProvider) }
 
 	override fun onBind(intent: Intent): IBinder = binder
 
@@ -85,45 +87,16 @@ class PollConnectionService : Service() {
 	private fun promiseTestedLibrary(libraryId: LibraryId) =
 		connectionPollerLookup.getOrPut(libraryId) {
 			lazy {
-				Promise<IConnectionProvider> { m ->
-					val cancellationToken = CancellationToken()
-					m.cancellationRequested(cancellationToken)
-
-					pollSessionConnection(libraryId, m, cancellationToken, 1000)
-				}
+				messageBus.sendMessage(ConnectionLostNotification(libraryId))
+				libraryConnectionPoller.pollConnection(libraryId)
 			}
 		}.value
 
-	private fun pollSessionConnection(libraryId: LibraryId, messenger: Messenger<IConnectionProvider>, cancellationToken: CancellationToken, connectionTime: Int) {
-		if (cancellationToken.isCancelled) {
-			messenger.sendRejection(CancellationException("Polling the session connection was cancelled"))
-			return
-		}
-
-		if (withNotification) beginNotification()
-
-		val nextConnectionTime = if (connectionTime < 32000) connectionTime * 2 else connectionTime
-		libraryConnectionProvider
-			.promiseTestedLibraryConnection(libraryId)
-			.then({
-				if (it == null) {
-					handler.postDelayed(
-						{ pollSessionConnection(libraryId, messenger, cancellationToken, nextConnectionTime) },
-						connectionTime.toLong()
-					)
-				} else {
-					connectionPollerLookup.remove(libraryId)
-					messenger.sendResolution(it)
-				}
-			}, {
-				handler.postDelayed(
-					{ pollSessionConnection(libraryId, messenger, cancellationToken, nextConnectionTime) },
-					connectionTime.toLong()
-				)
-			})
-	}
-
 	private fun beginNotification() {
+		if (isNotifying) return
+
+		isNotifying = true
+
 		// Add intent for canceling waiting for connection to come back
 		val intent = getIntent<PollConnectionService>()
 		intent.action = stopWaitingForConnectionAction

@@ -24,8 +24,8 @@ import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryR
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
 import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
-import com.lasthopesoftware.bluewater.client.connection.polling.ConnectionPoller
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService
+import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionServiceProxy
 import com.lasthopesoftware.bluewater.client.connection.polling.WaitForConnectionDialog
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity.Companion.restoreSelectedConnection
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
@@ -131,7 +131,7 @@ class NowPlayingActivity :
                 filePropertiesStorage,
                 connectionAuthenticationChecker,
                 PlaybackServiceController(this),
-                ConnectionPoller(this),
+                PollConnectionServiceProxy(this),
                 StringResources(this),
             )
 		}
@@ -143,7 +143,7 @@ class NowPlayingActivity :
 				lazySelectedConnectionProvider,
 				defaultImageProvider,
 				imageProvider,
-				ConnectionPoller(this),
+				PollConnectionServiceProxy(this),
 			)
 		}
 

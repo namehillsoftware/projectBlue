@@ -14,8 +14,7 @@ import kotlinx.coroutines.flow.asStateFlow
 class ConnectionStatusViewModel(
 	private val stringResources: GetStringResources,
 	private val connectionInitializationController: ControlConnectionInitialization
-) : ViewModel(), (BuildingConnectionStatus) -> Unit, ImmediateAction
-{
+) : ViewModel(), (BuildingConnectionStatus) -> Unit, ImmediateAction, TrackConnectionStatus {
 	private var promisedConnectionCheck = false.toPromise()
 
 	private val mutableIsGettingConnection = MutableStateFlow(false)
@@ -28,7 +27,7 @@ class ConnectionStatusViewModel(
 	var isCancelled = false
 		private set
 
-	fun ensureConnectionIsWorking(libraryId: LibraryId): Promise<Boolean> {
+	override fun ensureConnectionIsWorking(libraryId: LibraryId): Promise<Boolean> {
 		promisedConnectionCheck.cancel()
 		isCancelled = false
 
