@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.browsing.files.list.GivenNoService
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusableFileViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusablePlaylistFileViewModel
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideScopedFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
@@ -19,8 +19,8 @@ import java.net.URL
 class WhenViewingTrackHeadline {
 
 	private val viewModel by lazy {
-		val filePropertiesProvider = mockk<ProvideScopedFileProperties>().apply {
-			every { promiseFileProperties(any()) } returns emptyMap<String, String>().toPromise()
+		val filePropertiesProvider = mockk<ProvideLibraryFileProperties>().apply {
+			every { promiseFileProperties(any(), any()) } returns emptyMap<String, String>().toPromise()
 		}
 
 		val stringResource = mockk<GetStringResources>().apply {
@@ -35,7 +35,7 @@ class WhenViewingTrackHeadline {
 				filePropertiesProvider,
 				stringResource,
 				mockk {
-					every { promiseUrlKey(any<ServiceFile>()) } answers {
+					every { promiseUrlKey(any(), any<ServiceFile>()) } answers {
 						Promise(
 							UrlKeyHolder(URL("http://test"), firstArg())
 						)

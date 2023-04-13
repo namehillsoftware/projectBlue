@@ -30,7 +30,6 @@ import com.lasthopesoftware.bluewater.client.browsing.files.list.*
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.RateControlledFilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.SelectedLibraryFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertyStorage
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
@@ -49,7 +48,6 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.browsing.navigation.*
 import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
-import com.lasthopesoftware.bluewater.client.connection.libraries.SelectedLibraryUrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionServiceProxy
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
@@ -121,21 +119,6 @@ class BrowserActivity :
 
 	private val libraryFileStringListProvider by lazy { LibraryFileStringListProvider(libraryConnectionProvider) }
 
-	private val libraryFilePropertiesProvider by lazy {
-		CachedFilePropertiesProvider(
-			libraryConnectionProvider,
-			FilePropertyCache,
-			RateControlledFilePropertiesProvider(
-				FilePropertiesProvider(
-					libraryConnectionProvider,
-					revisionProvider,
-					FilePropertyCache,
-				),
-				PromisingRateLimiter(1),
-			),
-		)
-	}
-
 	private val connectionAuthenticationChecker by lazy {
 		ConnectionAuthenticationChecker(libraryConnectionProvider)
 	}
@@ -159,6 +142,21 @@ class BrowserActivity :
 		)
 	}
 
+	override val libraryFilePropertiesProvider by lazy {
+		CachedFilePropertiesProvider(
+			libraryConnectionProvider,
+			FilePropertyCache,
+			RateControlledFilePropertiesProvider(
+				FilePropertiesProvider(
+					libraryConnectionProvider,
+					revisionProvider,
+					FilePropertyCache,
+				),
+				PromisingRateLimiter(1),
+			),
+		)
+	}
+
 	override val selectedLibraryIdProvider by lazy { getCachedSelectedLibraryIdProvider() }
 
 	override val messageBus by lazy { getApplicationMessageBus().getScopedMessageBus().also(viewModelScope::manage) }
@@ -171,19 +169,7 @@ class BrowserActivity :
 
 	override val itemFileProvider by lazy { CachedItemFileProvider.getInstance(applicationContext) }
 
-	override val scopedFilePropertiesProvider by lazy {
-		SelectedLibraryFilePropertiesProvider(
-			selectedLibraryIdProvider,
-			libraryFilePropertiesProvider,
-		)
-	}
-
-	override val scopedUrlKeyProvider by lazy {
-		SelectedLibraryUrlKeyProvider(
-			selectedLibraryIdProvider,
-			UrlKeyProvider(libraryConnectionProvider),
-		)
-	}
+	override val urlKeyProvider by lazy { UrlKeyProvider(libraryConnectionProvider) }
 
 	override val libraryConnectionProvider by lazy { buildNewConnectionSessionManager() }
 
@@ -526,8 +512,8 @@ private fun LibraryDestination.Navigate(
 							itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
 							reusablePlaylistFileItemViewModelProvider = viewModel {
 								ReusablePlaylistFileItemViewModelProvider(
-									scopedFilePropertiesProvider,
-									scopedUrlKeyProvider,
+									libraryFilePropertiesProvider,
+									urlKeyProvider,
 									stringResources,
 									menuMessageBus,
 									messageBus,
@@ -565,8 +551,8 @@ private fun LibraryDestination.Navigate(
 							itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
 							reusablePlaylistFileItemViewModelProvider = viewModel {
 								ReusablePlaylistFileItemViewModelProvider(
-									scopedFilePropertiesProvider,
-									scopedUrlKeyProvider,
+									libraryFilePropertiesProvider,
+									urlKeyProvider,
 									stringResources,
 									menuMessageBus,
 									messageBus,
@@ -598,8 +584,8 @@ private fun LibraryDestination.Navigate(
 							activeFileDownloadsViewModel = activeFileDownloadsViewModel,
 							trackHeadlineViewModelProvider = viewModel {
 								ReusableFileItemViewModelProvider(
-									scopedFilePropertiesProvider,
-									scopedUrlKeyProvider,
+									libraryFilePropertiesProvider,
+									urlKeyProvider,
 									stringResources,
 									messageBus,
 								)
@@ -619,8 +605,8 @@ private fun LibraryDestination.Navigate(
 							nowPlayingViewModel = nowPlayingFilePropertiesViewModel,
 							trackHeadlineViewModelProvider = viewModel {
 								ReusablePlaylistFileItemViewModelProvider(
-									scopedFilePropertiesProvider,
-									scopedUrlKeyProvider,
+									libraryFilePropertiesProvider,
+									urlKeyProvider,
 									stringResources,
 									menuMessageBus,
 									messageBus,

@@ -19,14 +19,12 @@ class ActiveFileDownloadsViewModel(
 	applicationMessages: RegisterForApplicationMessages,
 	private val scheduler: ScheduleSyncs,
 ) : ViewModel(), TrackLoadedViewState {
-	private var activeLibraryId: LibraryId? = null
-
 	private val mutableIsLoading = MutableStateFlow(false)
+
 	private val mutableIsSyncing = MutableStateFlow(false)
 	private val mutableIsSyncStateChangeEnabled = MutableStateFlow(false)
 	private val mutableDownloadingFiles = MutableStateFlow(emptyMap<Int, StoredFile>())
 	private val mutableDownloadingFileId = MutableStateFlow<Int?>(null)
-
 	private val fileDownloadedRegistration = applicationMessages.registerReceiver { message: StoredFileMessage.FileDownloaded ->
 		mutableDownloadingFiles.value -= message.storedFileId
 	}
@@ -53,6 +51,9 @@ class ActiveFileDownloadsViewModel(
 	private val syncStoppedReceiver = applicationMessages.registerReceiver { _ : SyncStateMessage.SyncStopped ->
 		mutableIsSyncing.value = false
 	}
+
+	var activeLibraryId: LibraryId? = null
+		private set
 
 	val isSyncing = mutableIsSyncing.asStateFlow()
 	val isSyncStateChangeEnabled = mutableIsSyncStateChangeEnabled.asStateFlow()

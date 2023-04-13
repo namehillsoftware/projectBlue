@@ -176,7 +176,9 @@ fun ItemListView(
 		val fileItemViewModel = remember(trackHeadlineViewModelProvider::getViewModel)
 
 		DisposableEffect(serviceFile) {
-			fileItemViewModel.promiseUpdate(serviceFile)
+			itemListViewModel.loadedLibraryId?.also {
+				fileItemViewModel.promiseUpdate(it, serviceFile)
+			}
 
 			onDispose {
 				fileItemViewModel.reset()

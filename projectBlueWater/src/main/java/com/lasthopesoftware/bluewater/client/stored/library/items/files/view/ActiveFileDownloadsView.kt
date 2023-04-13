@@ -57,7 +57,9 @@ fun ActiveFileDownloadsView(
 		val fileItemViewModel = remember(trackHeadlineViewModelProvider::getViewModel)
 
 		DisposableEffect(storedFile.serviceId) {
-			fileItemViewModel.promiseUpdate(ServiceFile(storedFile.serviceId))
+			activeFileDownloadsViewModel.activeLibraryId?.also {
+				fileItemViewModel.promiseUpdate(it, ServiceFile(storedFile.serviceId))
+			}
 
 			onDispose {
 				fileItemViewModel.reset()
@@ -134,6 +136,7 @@ fun ActiveFileDownloadsView(
 							else R.string.start_sync_button
 						)
 
+						val isSyncChangeEnabled by activeFileDownloadsViewModel.isSyncStateChangeEnabled.collectAsState()
 						MenuIcon(
 							onClick = { activeFileDownloadsViewModel.toggleSync() },
 							icon =  {
@@ -172,6 +175,7 @@ fun ActiveFileDownloadsView(
 									)
 								}
 							},
+							enabled = isSyncChangeEnabled,
 						)
 					}
 				}

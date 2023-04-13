@@ -3,9 +3,10 @@ package com.lasthopesoftware.bluewater.client.browsing.files.list.GivenAServiceF
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusableFileViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusablePlaylistFileViewModel
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideScopedFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
@@ -20,6 +21,7 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.net.URL
 
+private const val libraryId = 95
 private const val serviceFileId = 889
 
 class WhenItsPropertiesChange {
@@ -29,8 +31,8 @@ class WhenItsPropertiesChange {
 	private val recordingApplicationMessageBus = RecordingApplicationMessageBus()
 
 	private val viewModel by lazy {
-		val filePropertiesProvider = mockk<ProvideScopedFileProperties>().apply {
-			every { promiseFileProperties(ServiceFile(serviceFileId)) } returns mapOf(
+		val filePropertiesProvider = mockk<ProvideLibraryFileProperties>().apply {
+			every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns mapOf(
 				Pair("Artist", "give"),
 				Pair("Name", "although"),
 			).toPromise() andThen mapOf(
@@ -51,9 +53,9 @@ class WhenItsPropertiesChange {
 				filePropertiesProvider,
 				stringResource,
 				mockk {
-					every { promiseUrlKey(any<ServiceFile>()) } answers {
+					every { promiseUrlKey(LibraryId(libraryId), any<ServiceFile>()) } answers {
 						Promise(
-							UrlKeyHolder(URL("http://maybe"), firstArg())
+							UrlKeyHolder(URL("http://maybe"), arg(1))
 						)
 					}
 				},
@@ -64,7 +66,7 @@ class WhenItsPropertiesChange {
 
 	@BeforeAll
 	fun act() {
-		viewModel.promiseUpdate(ServiceFile(serviceFileId)).toExpiringFuture().get()
+		viewModel.promiseUpdate(LibraryId(libraryId), ServiceFile(serviceFileId)).toExpiringFuture().get()
 		recordingApplicationMessageBus.sendMessage(
 			FilePropertiesUpdatedMessage(
 				UrlKeyHolder(

@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.browsing.files.list
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.HiddenListItemMenu
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.messages.SendTypedMessages
 import com.lasthopesoftware.resources.closables.ResettableCloseable
 import com.namehillsoftware.handoff.promises.Promise
@@ -14,20 +15,14 @@ class ReusablePlaylistFileViewModel(
 	private val viewFileItem: ViewFileItem
 ) : ViewPlaylistFileItem, HiddenListItemMenu, ResettableCloseable {
 
-	@Volatile
-	private var activeServiceFile: ServiceFile? = null
-
 	private val mutableIsMenuShown = MutableStateFlow(false)
 
 	override val artist = viewFileItem.artist
 	override val title = viewFileItem.title
 	override val isMenuShown = mutableIsMenuShown.asStateFlow()
 
-	override fun promiseUpdate(serviceFile: ServiceFile): Promise<Unit> {
-		activeServiceFile = serviceFile
-
-		return viewFileItem.promiseUpdate(serviceFile)
-	}
+	override fun promiseUpdate(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Unit> =
+		viewFileItem.promiseUpdate(libraryId, serviceFile)
 
 	override fun showMenu(): Boolean =
 		mutableIsMenuShown.compareAndSet(expect = false, update = true)

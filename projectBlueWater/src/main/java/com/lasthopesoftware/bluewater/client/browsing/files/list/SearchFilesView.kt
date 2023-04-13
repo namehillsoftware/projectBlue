@@ -57,7 +57,9 @@ fun SearchFilesView(
 		val fileItemViewModel = remember(trackHeadlineViewModelProvider::getViewModel)
 
 		DisposableEffect(serviceFile) {
-			fileItemViewModel.promiseUpdate(serviceFile)
+			searchFilesViewModel.libraryId?.also {
+				fileItemViewModel.promiseUpdate(it, serviceFile)
+			}
 
 			onDispose {
 				fileItemViewModel.reset()

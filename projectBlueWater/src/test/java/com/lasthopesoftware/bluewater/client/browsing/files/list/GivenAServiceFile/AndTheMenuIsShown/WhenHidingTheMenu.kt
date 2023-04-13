@@ -4,6 +4,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusableFileViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusablePlaylistFileViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import com.lasthopesoftware.resources.RecordingTypedMessageBus
@@ -15,6 +16,8 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.net.URL
+
+private const val libraryId = 3
 
 class WhenHidingTheMenu {
 
@@ -33,7 +36,7 @@ class WhenHidingTheMenu {
 				mockk(),
 				stringResource,
 				mockk {
-					every { promiseUrlKey(any<ServiceFile>()) } answers {
+					every { promiseUrlKey(LibraryId(libraryId), any<ServiceFile>()) } answers {
 						Promise(
 							UrlKeyHolder(URL("http://test"), firstArg())
 						)

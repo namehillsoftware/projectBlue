@@ -77,6 +77,7 @@ fun MenuIcon(
 	modifier: Modifier = Modifier,
 	label: @Composable (() -> Unit)? = null,
 	interactionSource: MutableInteractionSource = remember { MutableInteractionSource() },
+	enabled: Boolean = true,
 ) {
 	Column(
 		horizontalAlignment = Alignment.CenterHorizontally,
@@ -85,6 +86,7 @@ fun MenuIcon(
 				interactionSource = interactionSource,
 				indication = rememberRipple(),
 				onClick = onClick,
+				enabled = enabled,
 			)
 			.wrapContentWidth(),
 	) {
