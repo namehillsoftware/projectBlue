@@ -113,7 +113,8 @@ class BrowserActivity :
 	AppCompatActivity(),
 	BrowserViewDependencies,
 	ActivityCompat.OnRequestPermissionsResultCallback,
-	ManagePermissions {
+	ManagePermissions
+{
 
 	private val viewModelScope by buildViewModelLazily { ViewModelCloseableManager() }
 
@@ -474,13 +475,14 @@ private fun LibraryDestination.Navigate(
 ) {
 	with(browserViewDependencies) {
 		val selectedLibraryId by selectedLibraryViewModel.selectedLibraryId.collectAsState()
+		val isSelectedLibrary by remember { derivedStateOf { selectedLibraryId == libraryId } }
 
 		BottomSheetScaffold(
 			scaffoldState = scaffoldState,
-			sheetPeekHeight = if (selectedLibraryId == libraryId) bottomAppBarHeight else 0.dp,
+			sheetPeekHeight = if (isSelectedLibrary) bottomAppBarHeight else 0.dp,
 			sheetElevation = 16.dp,
 			sheetContent = {
-				if (selectedLibraryId == libraryId) {
+				if (isSelectedLibrary) {
 					LibraryMenu(
 						applicationNavigation = applicationNavigation,
 						nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,

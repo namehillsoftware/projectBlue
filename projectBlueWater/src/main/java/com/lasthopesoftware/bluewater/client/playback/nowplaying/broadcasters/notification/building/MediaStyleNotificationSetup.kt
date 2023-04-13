@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building
 
-import android.app.PendingIntent
 import android.content.Context
 import android.support.v4.media.session.MediaSessionCompat
 import androidx.core.app.NotificationCompat
@@ -9,7 +8,6 @@ import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.NotificationsConfiguration
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Companion.pendingKillService
 import com.lasthopesoftware.bluewater.shared.android.intents.BuildIntents
-import com.lasthopesoftware.bluewater.shared.android.makePendingIntentImmutable
 import com.lasthopesoftware.bluewater.shared.android.notifications.ProduceNotificationBuilders
 
 class MediaStyleNotificationSetup(
@@ -21,8 +19,7 @@ class MediaStyleNotificationSetup(
 ) : SetupMediaStyleNotifications {
 	override fun getMediaStyleNotification(): NotificationCompat.Builder {
 		val builder = produceNotificationBuilders.getNotificationBuilder(configuration.notificationChannel)
-		val intent = intentBuilder.buildNowPlayingIntent()
-		val taskStackBuilder =
+		val intent = intentBuilder.buildPendingNowPlayingIntent()
 		return builder
 			.setStyle(
 				androidx.media.app.NotificationCompat.MediaStyle()
@@ -33,7 +30,7 @@ class MediaStyleNotificationSetup(
 			)
 			.setPriority(NotificationCompat.PRIORITY_DEFAULT)
 			.setColor(ContextCompat.getColor(context, R.color.project_blue_dark))
-			.setContentIntent(PendingIntent.getActivity(context, 0, intent, 0.makePendingIntentImmutable()))
+			.setContentIntent(intent)
 			.setDeleteIntent(pendingKillService(context))
 			.setShowWhen(false)
 			.setSmallIcon(R.drawable.now_playing_status_icon_white)
