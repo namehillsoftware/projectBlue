@@ -174,7 +174,7 @@ class BrowserActivity :
 
 	override val libraryConnectionProvider by lazy { buildNewConnectionSessionManager() }
 
-	override val playbackServiceController by lazy { PlaybackServiceController(applicationContext) }
+	override val playbackServiceController by lazy { PlaybackServiceController(this) }
 
 	override val nowPlayingFilePropertiesViewModel by buildViewModelLazily {
 		NowPlayingFilePropertiesViewModel(
