@@ -24,7 +24,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryR
 import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
 import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
-import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService
+import com.lasthopesoftware.bluewater.client.connection.polling.ConnectionLostNotification
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionServiceProxy
 import com.lasthopesoftware.bluewater.client.connection.polling.WaitForConnectionDialog
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity.Companion.restoreSelectedConnection
@@ -62,7 +62,7 @@ import kotlinx.coroutines.flow.onEach
 
 class NowPlayingActivity :
 	AppCompatActivity(),
-	(PollConnectionService.ConnectionLostNotification) -> Unit,
+	(ConnectionLostNotification) -> Unit,
 	IItemListMenuChangeHandler,
 	Runnable
 {
@@ -240,7 +240,7 @@ class NowPlayingActivity :
 			.then { finish() }
 	}
 
-	override fun invoke(p1: PollConnectionService.ConnectionLostNotification) {
+	override fun invoke(p1: ConnectionLostNotification) {
 		nowPlayingLookup.promiseNowPlaying().eventually(
 			LoopedInPromise.response({ np ->
 				np?.libraryId?.also { libraryId ->

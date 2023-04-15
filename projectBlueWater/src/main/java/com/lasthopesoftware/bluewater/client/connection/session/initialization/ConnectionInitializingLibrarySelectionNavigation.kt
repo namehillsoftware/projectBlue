@@ -28,7 +28,7 @@ class ConnectionInitializingLibrarySelectionNavigation(
 	private fun selectConnection(libraryId: LibraryId, onConnectionInitialized: () -> Promise<Unit>) =
 		selectedLibraryViewModel
 			.selectLibrary(libraryId)
-			.eventually { connectionStatusViewModel.ensureConnectionIsWorking(libraryId) }
+			.eventually { connectionStatusViewModel.initializeConnection(libraryId) }
 			.eventually {
 				if (it) onConnectionInitialized()
 				else Unit.toPromise()

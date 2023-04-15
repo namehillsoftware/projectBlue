@@ -27,7 +27,7 @@ class ConnectionStatusViewModel(
 	var isCancelled = false
 		private set
 
-	override fun ensureConnectionIsWorking(libraryId: LibraryId): Promise<Boolean> {
+	override fun initializeConnection(libraryId: LibraryId): Promise<Boolean> {
 		promisedConnectionCheck.cancel()
 		isCancelled = false
 

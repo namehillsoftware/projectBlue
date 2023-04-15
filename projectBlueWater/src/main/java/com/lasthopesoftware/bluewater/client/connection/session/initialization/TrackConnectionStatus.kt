@@ -4,5 +4,5 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.namehillsoftware.handoff.promises.Promise
 
 interface TrackConnectionStatus {
-	fun ensureConnectionIsWorking(libraryId: LibraryId): Promise<Boolean>
+	fun initializeConnection(libraryId: LibraryId): Promise<Boolean>
 }

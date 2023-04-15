@@ -153,7 +153,7 @@ class FileDetailsActivity : ComponentActivity() {
 			return
 		}
 
-		connectionStatusViewModel.ensureConnectionIsWorking(libraryId).eventually(LoopedInPromise.response({
+		connectionStatusViewModel.initializeConnection(libraryId).eventually(LoopedInPromise.response({
 			val position = intent.getIntExtra(playlistPosition, -1)
 			val playlist = intent.getIntArrayExtra(playlist)?.map(::ServiceFile) ?: emptyList()
 			setView(libraryId, playlist, position)

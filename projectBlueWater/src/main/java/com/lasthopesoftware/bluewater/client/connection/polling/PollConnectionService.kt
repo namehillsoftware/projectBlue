@@ -23,7 +23,6 @@ import com.lasthopesoftware.bluewater.shared.android.notifications.notificationc
 import com.lasthopesoftware.bluewater.shared.android.services.GenericBinder
 import com.lasthopesoftware.bluewater.shared.android.services.promiseBoundService
 import com.lasthopesoftware.bluewater.shared.cls
-import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
 import com.namehillsoftware.handoff.promises.Promise
 import java.util.concurrent.ConcurrentHashMap
@@ -46,8 +45,6 @@ class PollConnectionService : Service() {
 				}
 		}
 	}
-
-	class ConnectionLostNotification(val libraryId: LibraryId) : ApplicationMessage
 
 	private var isNotifying = false
 
@@ -73,24 +70,23 @@ class PollConnectionService : Service() {
 
 	private val libraryConnectionProvider by lazy { ConnectionSessionManager.get(this) }
 
-	private val libraryConnectionPoller by lazy { LibraryConnectionPoller(libraryConnectionProvider) }
+	private val libraryConnectionPoller by lazy {
+		LibraryConnectionPollingSessions(
+			messageBus,
+			LibraryConnectionPoller(libraryConnectionProvider),
+		)
+	}
 
 	override fun onBind(intent: Intent): IBinder = binder
 
 	override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
 		if (intent?.action == stopWaitingForConnectionAction)
-			connectionPollerLookup.values.forEach { it.value.cancel() }
+			libraryConnectionPoller.cancelActiveConnections()
 
 		return START_NOT_STICKY
 	}
 
-	private fun promiseTestedLibrary(libraryId: LibraryId) =
-		connectionPollerLookup.getOrPut(libraryId) {
-			lazy {
-				messageBus.sendMessage(ConnectionLostNotification(libraryId))
-				libraryConnectionPoller.pollConnection(libraryId)
-			}
-		}.value
+	private fun promiseTestedLibrary(libraryId: LibraryId) = libraryConnectionPoller.pollConnection(libraryId)
 
 	private fun beginNotification() {
 		if (isNotifying) return
