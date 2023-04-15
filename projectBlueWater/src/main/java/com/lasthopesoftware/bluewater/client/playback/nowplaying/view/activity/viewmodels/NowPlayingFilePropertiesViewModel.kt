@@ -157,6 +157,9 @@ class NowPlayingFilePropertiesViewModel(
 
 	@Synchronized
 	fun showNowPlayingControls() {
+		controlsShownPromise.excuse {
+			// ignored - handle to avoid logging
+		}
 		controlsShownPromise.cancel()
 
 		isScreenControlsVisibleState.value = true

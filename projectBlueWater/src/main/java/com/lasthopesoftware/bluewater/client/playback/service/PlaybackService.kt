@@ -564,7 +564,12 @@ open class PlaybackService :
 			val promisedIntentHandling = selectedLibraryProvider.browserLibrary
 				.eventually { it?.let(::initializePlaybackPlaylistStateManagerSerially) ?: Promise.empty() }
 				.eventually { it?.let { actOnIntent(intent) } ?: Promise(UninitializedPlaybackEngineException()) }
-				.must { promisedTimeout.cancel() }
+				.must {
+					promisedTimeout.excuse {
+						// ignored - handle to avoid logging
+					}
+					promisedTimeout.cancel()
+				}
 
 			val timeoutResponse =
 				promisedTimeout.then<Unit> { throw TimeoutException("Timed out after $playbackStartTimeout") }
