@@ -22,6 +22,7 @@ import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.about.AboutView
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.CachedItemFileProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.access.DelegatingItemFileProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.LibraryFileProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.ItemStringListProvider
@@ -47,6 +48,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.Sel
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.browsing.navigation.*
+import com.lasthopesoftware.bluewater.client.connection.ConnectionLostRetryHandler
 import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionServiceProxy
@@ -88,6 +90,7 @@ import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMes
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRateLimiter
+import com.lasthopesoftware.bluewater.shared.policies.retries.RetryExecutionPolicy
 import com.lasthopesoftware.bluewater.shared.promises.extensions.*
 import com.lasthopesoftware.resources.closables.AutoCloseableManager
 import com.lasthopesoftware.resources.closables.ViewModelCloseableManager
@@ -168,7 +171,12 @@ class BrowserActivity :
 
 	override val itemProvider by lazy { CachedItemProvider.getInstance(applicationContext) }
 
-	override val itemFileProvider by lazy { CachedItemFileProvider.getInstance(applicationContext) }
+	override val itemFileProvider by lazy {
+		DelegatingItemFileProvider(
+			CachedItemFileProvider.getInstance(applicationContext),
+			RetryExecutionPolicy(ConnectionLostRetryHandler),
+		)
+	}
 
 	override val urlKeyProvider by lazy { UrlKeyProvider(libraryConnectionProvider) }
 
