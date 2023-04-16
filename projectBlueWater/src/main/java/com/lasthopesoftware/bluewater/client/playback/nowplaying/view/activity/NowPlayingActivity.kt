@@ -21,10 +21,11 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.F
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener.Companion.tryFlipToPreviousView
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
-import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
+import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
 import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.polling.ConnectionLostNotification
+import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionServiceProxy
 import com.lasthopesoftware.bluewater.client.connection.polling.WaitForConnectionDialog
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity.Companion.restoreSelectedConnection
@@ -63,8 +64,7 @@ import kotlinx.coroutines.flow.onEach
 class NowPlayingActivity :
 	AppCompatActivity(),
 	(ConnectionLostNotification) -> Unit,
-	IItemListMenuChangeHandler,
-	Runnable
+	IItemListMenuChangeHandler
 {
 	private var viewAnimator: ViewAnimator? = null
 
@@ -217,22 +217,24 @@ class NowPlayingActivity :
 			return
 		}
 
-		run()
-	}
-
-	override fun run() {
 		restoreSelectedConnection(this)
 			.eventually { nowPlayingLookup.promiseNowPlaying() }
 			.eventually { np ->
 				np?.libraryId
 					?.let { libraryId ->
-							binding.run {
+						binding
+							.run {
 								Promise.whenAll(
 									filePropertiesVm?.initializeViewModel().keepPromise(Unit),
 									coverArtVm?.initializeViewModel().keepPromise(Unit)
 								)
 							}
-							.excuse(HandleViewIoException(this, libraryId, this))
+							.eventuallyExcuse { e ->
+								if (ConnectionLostExceptionFilter.isConnectionLostException(e))
+									PollConnectionService.pollSessionConnection(this, libraryId)
+								else
+									Promise(e)
+							}
 					}
 					.keepPromise()
 			}

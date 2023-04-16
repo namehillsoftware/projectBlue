@@ -25,7 +25,6 @@ import com.lasthopesoftware.bluewater.shared.android.services.promiseBoundServic
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
 import com.namehillsoftware.handoff.promises.Promise
-import java.util.concurrent.ConcurrentHashMap
 
 class PollConnectionService : Service() {
 
@@ -36,12 +35,9 @@ class PollConnectionService : Service() {
 		fun pollSessionConnection(context: Context, libraryId: LibraryId, withNotification: Boolean = false): Promise<IConnectionProvider> {
 			return context.promiseBoundService<PollConnectionService>()
 				.eventually {  s ->
-					s.service.run {
-						if (withNotification)
-							beginNotification()
-
-						promiseTestedLibrary(libraryId)
-					}.must { context.unbindService(s.serviceConnection) }
+					s.service
+						.promiseTestedLibrary(libraryId, withNotification)
+						.must { context.unbindService(s.serviceConnection) }
 				}
 		}
 	}
@@ -50,8 +46,6 @@ class PollConnectionService : Service() {
 
 	private val notificationId = 99
 	private val binder by lazy { GenericBinder(this) }
-
-	private val connectionPollerLookup = ConcurrentHashMap<LibraryId, Lazy<Promise<IConnectionProvider>>>()
 
 	private val channelConfiguration by lazy { SharedChannelProperties(this) }
 	private val notificationManager by lazy { getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager }
@@ -86,7 +80,12 @@ class PollConnectionService : Service() {
 		return START_NOT_STICKY
 	}
 
-	private fun promiseTestedLibrary(libraryId: LibraryId) = libraryConnectionPoller.pollConnection(libraryId)
+	private fun promiseTestedLibrary(libraryId: LibraryId, withNotification: Boolean): Promise<IConnectionProvider> {
+		if (withNotification)
+			beginNotification()
+
+		return libraryConnectionPoller.pollConnection(libraryId)
+	}
 
 	private fun beginNotification() {
 		if (isNotifying) return
@@ -94,8 +93,9 @@ class PollConnectionService : Service() {
 		isNotifying = true
 
 		// Add intent for canceling waiting for connection to come back
-		val intent = getIntent<PollConnectionService>()
-		intent.action = stopWaitingForConnectionAction
+		val intent = getIntent<PollConnectionService>().apply {
+			action = stopWaitingForConnectionAction
+		}
 
 		val pi = PendingIntent.getService(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT.makePendingIntentImmutable())
 
