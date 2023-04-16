@@ -9,10 +9,11 @@ import java.util.concurrent.ConcurrentHashMap
 class LibraryConnectionPollingSessions(
 	private val messageBus: SendApplicationMessages,
 	private val inner: PollForLibraryConnections,
+	private val connectionPollerLookup: ConcurrentHashMap<LibraryId, Lazy<Promise<IConnectionProvider>>> = sharedConnectionPollerLookup
 ) : PollForLibraryConnections {
 
 	companion object {
-		private val connectionPollerLookup = ConcurrentHashMap<LibraryId, Lazy<Promise<IConnectionProvider>>>()
+		private val sharedConnectionPollerLookup = ConcurrentHashMap<LibraryId, Lazy<Promise<IConnectionProvider>>>()
 	}
 
 	override fun pollConnection(libraryId: LibraryId): Promise<IConnectionProvider> =
