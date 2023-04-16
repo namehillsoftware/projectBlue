@@ -13,15 +13,12 @@ object ConnectionLostRetryHandler : RetryPromises {
 		return RecursivePromiseRetryHandler.retryOnException { error ->
 			attempts++
 
-			when (attempts) {
-				1 -> promiseFactory(error)
-				2, 3 -> {
-					if (ConnectionLostExceptionFilter.isConnectionLostException(error)) {
-						val originalTimeToWait = timeToWait
-						timeToWait = timeToWait.multipliedBy(2)
-						PromiseDelay.delay<Any?>(originalTimeToWait).eventually { promiseFactory(error) }
-					}
-					else Promise(error)
+			when {
+				attempts == 1 -> promiseFactory(error)
+				attempts <= 3 && ConnectionLostExceptionFilter.isConnectionLostException(error) -> {
+					val originalTimeToWait = timeToWait
+					timeToWait = timeToWait.multipliedBy(2)
+					PromiseDelay.delay<Any?>(originalTimeToWait).eventually { promiseFactory(error) }
 				}
 				else -> Promise(error)
 			}
