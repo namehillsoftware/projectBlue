@@ -36,6 +36,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.F
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.access.CachedItemProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.access.DelegatingItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemPlayback
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ReusableChildItemViewModelProvider
@@ -146,6 +147,10 @@ class BrowserActivity :
 		)
 	}
 
+	private val connectionLostRetryPolicy by lazy {
+		RetryExecutionPolicy(ConnectionLostRetryHandler)
+	}
+
 	override val libraryFilePropertiesProvider by lazy {
 		CachedFilePropertiesProvider(
 			libraryConnectionProvider,
@@ -169,12 +174,17 @@ class BrowserActivity :
 
 	override val itemListMenuBackPressedHandler by lazyScoped { ItemListMenuBackPressedHandler(menuMessageBus) }
 
-	override val itemProvider by lazy { CachedItemProvider.getInstance(applicationContext) }
+	override val itemProvider by lazy {
+		DelegatingItemProvider(
+			CachedItemProvider.getInstance(applicationContext),
+			connectionLostRetryPolicy
+		)
+	}
 
 	override val itemFileProvider by lazy {
 		DelegatingItemFileProvider(
 			CachedItemFileProvider.getInstance(applicationContext),
-			RetryExecutionPolicy(ConnectionLostRetryHandler),
+			connectionLostRetryPolicy,
 		)
 	}
 

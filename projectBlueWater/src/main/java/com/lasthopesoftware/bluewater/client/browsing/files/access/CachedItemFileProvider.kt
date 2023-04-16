@@ -9,7 +9,6 @@ import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.CheckRevisions
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
-import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
 import com.lasthopesoftware.bluewater.shared.policies.caching.CachePromiseFunctions
 import com.lasthopesoftware.bluewater.shared.policies.caching.LruPromiseCache
@@ -32,7 +31,7 @@ class CachedItemFileProvider(
 				ItemFileProvider(
 					ItemStringListProvider(
 						FileListParameters,
-						LibraryFileStringListProvider(ConnectionSessionManager.get(context))
+						LibraryFileStringListProvider(libraryConnectionProvider),
 					)
 				),
 				LibraryRevisionProvider(libraryConnectionProvider),
