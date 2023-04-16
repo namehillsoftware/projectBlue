@@ -20,22 +20,25 @@ class FilePropertiesProvider(
 
 	override fun promiseFileProperties(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Map<String, String>> =
 		CancellableProxyPromise { cp ->
-			libraryConnections.promiseLibraryConnection(libraryId).also(cp::doCancel).eventually { connectionProvider ->
-				if (cp.isCancelled) promisedEmptyProperties
-				else connectionProvider
-					?.let {
-						checkRevisions
-							.promiseRevision(libraryId).also(cp::doCancel)
-							.eventually { revision ->
-								FilePropertiesPromise(
-									it,
-									filePropertiesContainerProvider,
-									serviceFile,
-									revision
-								)
-							}
-					}
-					?: promisedEmptyProperties
+			libraryConnections
+				.promiseLibraryConnection(libraryId)
+				.also(cp::doCancel).eventually { connectionProvider ->
+					if (cp.isCancelled) promisedEmptyProperties
+					else connectionProvider
+						?.let {
+							checkRevisions
+								.promiseRevision(libraryId)
+								.also(cp::doCancel)
+								.eventually { revision ->
+									FilePropertiesPromise(
+										it,
+										filePropertiesContainerProvider,
+										serviceFile,
+										revision
+									)
+								}
+						}
+						?: promisedEmptyProperties
 			}
 		}
 }

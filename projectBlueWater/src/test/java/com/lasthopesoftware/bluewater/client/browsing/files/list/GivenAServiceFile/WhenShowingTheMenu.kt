@@ -3,8 +3,9 @@ package com.lasthopesoftware.bluewater.client.browsing.files.list.GivenAServiceF
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusableFileViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusablePlaylistFileViewModel
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideScopedFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
@@ -19,13 +20,15 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.net.URL
 
+private const val libraryId = 235
+
 class WhenShowingTheMenu {
 
 	private val recordingMessageBus = RecordingTypedMessageBus<ItemListMenuMessage>()
 
 	private val viewModel by lazy {
-		val filePropertiesProvider = mockk<ProvideScopedFileProperties>().apply {
-			every { promiseFileProperties(ServiceFile(99)) } returns mapOf(
+		val filePropertiesProvider = mockk<ProvideLibraryFileProperties>().apply {
+			every { promiseFileProperties(LibraryId(libraryId), ServiceFile(99)) } returns mapOf(
 				Pair("Artist", "fool"),
 				Pair("Name", "coin"),
 			).toPromise()
@@ -43,9 +46,9 @@ class WhenShowingTheMenu {
 				filePropertiesProvider,
 				stringResource,
 				mockk {
-					every { promiseUrlKey(any<ServiceFile>()) } answers {
+					every { promiseUrlKey(LibraryId(libraryId), any<ServiceFile>()) } answers {
 						Promise(
-							UrlKeyHolder(URL("http://test"), firstArg())
+							UrlKeyHolder(URL("http://test"), arg(1))
 						)
 					}
 				},
@@ -56,7 +59,7 @@ class WhenShowingTheMenu {
 
 	@BeforeAll
 	fun act() {
-		viewModel.promiseUpdate(ServiceFile(99)).toExpiringFuture().get()
+		viewModel.promiseUpdate(LibraryId(libraryId), ServiceFile(99)).toExpiringFuture().get()
 		viewModel.showMenu()
 	}
 

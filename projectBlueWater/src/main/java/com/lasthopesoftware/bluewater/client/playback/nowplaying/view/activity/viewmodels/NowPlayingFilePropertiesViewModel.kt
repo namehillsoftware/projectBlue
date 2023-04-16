@@ -157,6 +157,9 @@ class NowPlayingFilePropertiesViewModel(
 
 	@Synchronized
 	fun showNowPlayingControls() {
+		controlsShownPromise.excuse {
+			// ignored - handle to avoid logging
+		}
 		controlsShownPromise.cancel()
 
 		isScreenControlsVisibleState.value = true
@@ -215,7 +218,8 @@ class NowPlayingFilePropertiesViewModel(
 		val isIoException = handleIoException(exception)
 		if (!isIoException) return
 
-		pollConnections.pollSessionConnection().then {
+		val libraryId = cachedPromises?.libraryId ?: return
+		pollConnections.pollConnection(libraryId).then {
 			synchronized(cachedPromiseSync) {
 				cachedPromises?.close()
 				cachedPromises = null

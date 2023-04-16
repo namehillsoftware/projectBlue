@@ -20,7 +20,7 @@ import com.namehillsoftware.handoff.promises.Promise
 
 class NowPlayingNotificationBuilder(
 	private val context: Context,
-	private val mediaStyleNotificationSetup: com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building.SetupMediaStyleNotifications,
+	private val mediaStyleNotificationSetup: SetupMediaStyleNotifications,
 	private val scopedUrlKeys: ProvideScopedUrlKey,
 	private val scopedCachedFilePropertiesProvider: ScopedCachedFilePropertiesProvider,
 	private val imageProvider: ProvideImages,

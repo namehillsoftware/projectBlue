@@ -99,6 +99,7 @@ class NotificationsController(
 				else Service.STOP_FOREGROUND_DETACH
 			)
 		} else {
+			@Suppress("DEPRECATION")
 			service.stopForeground(removeNotification)
 		}
 	}

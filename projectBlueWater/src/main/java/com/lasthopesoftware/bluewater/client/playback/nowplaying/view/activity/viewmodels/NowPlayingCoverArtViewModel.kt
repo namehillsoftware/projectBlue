@@ -4,6 +4,7 @@ import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideImages
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
 import com.lasthopesoftware.bluewater.client.connection.polling.PollForConnections
 import com.lasthopesoftware.bluewater.client.connection.selected.ProvideSelectedConnection
@@ -15,6 +16,8 @@ import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.images.ProvideDefaultImage
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
+import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.namehillsoftware.handoff.promises.Promise
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -59,19 +62,24 @@ class NowPlayingCoverArtViewModel(
 		applicationMessage.unregisterReceiver(this)
 	}
 
-	fun initializeViewModel() {
-		setView()
+	fun initializeViewModel(): Promise<Unit> {
 
-		promisedDefaultImage.then { defaultImageState.value = it }
+		return Promise.whenAll(
+			setView(),
+			promisedDefaultImage.then { defaultImageState.value = it }
+		).unitResponse()
 	}
 
-	private fun setView() {
-		nowPlayingRepository
+	private fun setView(): Promise<Unit> {
+		val promisedSetView = nowPlayingRepository
 			.promiseNowPlaying()
-			.then { np ->
-				np?.playingFile?.also { positionedFile -> setView(positionedFile.serviceFile) }
+			.eventually { np ->
+				np?.playingFile?.run { setView(np.libraryId, serviceFile) }.keepPromise(Unit)
 			}
-			.excuse { error -> logger.warn("An error occurred initializing `NowPlayingActivity`", error) }
+
+		promisedSetView.excuse { error -> logger.warn("An error occurred initializing `NowPlayingActivity`", error) }
+
+		return promisedSetView
 	}
 
 	private fun handleIoException(exception: Throwable) =
@@ -81,14 +89,14 @@ class NowPlayingCoverArtViewModel(
 			false
 		}
 
-	private fun setView(serviceFile: ServiceFile) {
+	private fun setView(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Unit> {
 
 		fun handleException(exception: Throwable) {
 			val isIoException = handleIoException(exception)
 			if (!isIoException) return
 
 			unexpectedErrorState.value = exception
-			pollConnections.pollSessionConnection().then {
+			pollConnections.pollConnection(libraryId).then {
 				cachedPromises?.close()
 				cachedPromises = null
 				setView()
@@ -114,7 +122,7 @@ class NowPlayingCoverArtViewModel(
 				}
 		}
 
-		selectedConnectionProvider.promiseSessionConnection()
+		return selectedConnectionProvider.promiseSessionConnection()
 			.then { connectionProvider ->
 				val baseUrl = connectionProvider?.urlProvider?.baseUrl ?: return@then
 

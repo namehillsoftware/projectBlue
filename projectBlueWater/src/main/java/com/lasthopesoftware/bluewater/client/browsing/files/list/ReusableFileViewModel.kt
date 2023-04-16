@@ -2,9 +2,10 @@ package com.lasthopesoftware.bluewater.client.browsing.files.list
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideScopedFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
-import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideScopedUrlKey
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideUrlKey
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
@@ -30,9 +31,9 @@ private val timeoutDuration by lazy { Duration.standardMinutes(1) }
 private val logger by lazyLogger<ReusableFileViewModel>()
 
 class ReusableFileViewModel(
-	private val filePropertiesProvider: ProvideScopedFileProperties,
+	private val filePropertiesProvider: ProvideLibraryFileProperties,
 	private val stringResources: GetStringResources,
-	private val urlKeyProvider: ProvideScopedUrlKey,
+	private val urlKeyProvider: ProvideUrlKey,
 	receiveMessages: RegisterForApplicationMessages,
 ) : ViewFileItem,  (FilePropertiesUpdatedMessage) -> Unit {
 
@@ -42,6 +43,9 @@ class ReusableFileViewModel(
 
 	@Volatile
 	private var activeUrlKey: UrlKeyHolder<ServiceFile>? = null
+
+	@Volatile
+	private var activeLibraryId: LibraryId? = null
 
 	@Volatile
 	private var activeServiceFile: ServiceFile? = null
@@ -55,19 +59,22 @@ class ReusableFileViewModel(
 	override val artist = mutableArtist.asStateFlow()
 	override val title = mutableTitle.asStateFlow()
 
-	override fun promiseUpdate(serviceFile: ServiceFile): Promise<Unit> =
+	override fun promiseUpdate(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Unit> =
 		synchronized(promiseSync) {
+			activeLibraryId = libraryId
 			activeServiceFile = serviceFile
 
 			val currentPromisedState = promisedState
-			promisedState = currentPromisedState.inevitably(EventualTextViewUpdate(serviceFile))
+			promisedState = currentPromisedState.inevitably(EventualTextViewUpdate(libraryId, serviceFile))
 			currentPromisedState.cancel()
 			promisedState
 		}
 
 	override fun invoke(message: FilePropertiesUpdatedMessage) {
-		if (activeUrlKey == message.urlServiceKey) activeServiceFile?.also {
-			promiseUpdate(it)
+		if (activeUrlKey == message.urlServiceKey) activeServiceFile?.also { f ->
+			activeLibraryId?.also { l ->
+				promiseUpdate(l, f)
+			}
 		}
 	}
 
@@ -89,11 +96,11 @@ class ReusableFileViewModel(
 		mutableArtist.value = ""
 	}
 
-	private inner class EventualTextViewUpdate(private val serviceFile: ServiceFile) : EventualAction {
-		override fun promiseAction(): Promise<*> = PromisedTextViewUpdate(serviceFile)
+	private inner class EventualTextViewUpdate(private val libraryId: LibraryId, private val serviceFile: ServiceFile) : EventualAction {
+		override fun promiseAction(): Promise<*> = PromisedTextViewUpdate(libraryId, serviceFile)
 	}
 
-	private inner class PromisedTextViewUpdate(private val serviceFile: ServiceFile) :
+	private inner class PromisedTextViewUpdate(private val libraryId: LibraryId, private val serviceFile: ServiceFile) :
 		Promise<Unit>(), ImmediateResponse<Map<String, String>, Unit> {
 
 		private val cancellationProxy = CancellationProxy()
@@ -109,9 +116,9 @@ class ReusableFileViewModel(
 
 			if (isNotCurrentServiceFile || isUpdateCancelled) return resolve(Unit)
 
-			val filePropertiesPromise = filePropertiesProvider.promiseFileProperties(serviceFile)
+			val filePropertiesPromise = filePropertiesProvider.promiseFileProperties(libraryId, serviceFile)
 			val promisedUrlKey = urlKeyProvider
-				.promiseUrlKey(serviceFile)
+				.promiseUrlKey(libraryId, serviceFile)
 				.then { activeUrlKey = it }
 			cancellationProxy.doCancel(filePropertiesPromise)
 

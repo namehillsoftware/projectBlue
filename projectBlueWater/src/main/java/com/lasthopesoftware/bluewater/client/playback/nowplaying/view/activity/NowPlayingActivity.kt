@@ -21,11 +21,12 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.F
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.IItemListMenuChangeHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.LongClickViewAnimatorListener.Companion.tryFlipToPreviousView
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
-import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
+import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
 import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
-import com.lasthopesoftware.bluewater.client.connection.polling.ConnectionPoller
+import com.lasthopesoftware.bluewater.client.connection.polling.ConnectionLostNotification
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService
+import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionServiceProxy
 import com.lasthopesoftware.bluewater.client.connection.polling.WaitForConnectionDialog
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity.Companion.restoreSelectedConnection
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
@@ -52,17 +53,18 @@ import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMes
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.resources.closables.lazyScoped
 import com.lasthopesoftware.resources.strings.StringResources
+import com.namehillsoftware.handoff.promises.Promise
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 
 class NowPlayingActivity :
 	AppCompatActivity(),
-	(PollConnectionService.ConnectionLostNotification) -> Unit,
-	IItemListMenuChangeHandler,
-	Runnable
+	(ConnectionLostNotification) -> Unit,
+	IItemListMenuChangeHandler
 {
 	private var viewAnimator: ViewAnimator? = null
 
@@ -104,6 +106,8 @@ class NowPlayingActivity :
 
 	private val defaultImageProvider by lazy { DefaultImageProvider(this) }
 
+	private val nowPlayingLookup by lazy { LiveNowPlayingLookup.getInstance() }
+
 	private val viewModelMessageBus by buildViewModelLazily { ViewModelMessageBus<NowPlayingPlaylistMessage>() }
 
 	private val nowPlayingViewModel by buildViewModelLazily {
@@ -118,17 +122,16 @@ class NowPlayingActivity :
 		val binding = DataBindingUtil.setContentView<ActivityViewNowPlayingBinding>(this, R.layout.activity_view_now_playing)
 		binding.lifecycleOwner = this
 
-		val liveNowPlayingLookup = LiveNowPlayingLookup.getInstance()
 		binding.filePropertiesVm = buildViewModel {
 			NowPlayingFilePropertiesViewModel(
 				applicationMessageBus,
-                liveNowPlayingLookup,
+				nowPlayingLookup,
                 libraryFilePropertiesProvider,
                 UrlKeyProvider(libraryConnectionProvider),
                 filePropertiesStorage,
                 connectionAuthenticationChecker,
                 PlaybackServiceController(this),
-                ConnectionPoller(this),
+                PollConnectionServiceProxy(this),
                 StringResources(this),
             )
 		}
@@ -136,11 +139,11 @@ class NowPlayingActivity :
 		binding.coverArtVm = buildViewModel {
 			NowPlayingCoverArtViewModel(
 				applicationMessageBus,
-				liveNowPlayingLookup,
+				nowPlayingLookup,
 				lazySelectedConnectionProvider,
 				defaultImageProvider,
 				imageProvider,
-				ConnectionPoller(this),
+				PollConnectionServiceProxy(this),
 			)
 		}
 
@@ -214,24 +217,38 @@ class NowPlayingActivity :
 			return
 		}
 
-		run()
-	}
-
-	override fun run() {
 		restoreSelectedConnection(this)
-			.eventually(LoopedInPromise.response({
-				binding.also { b ->
-					b.filePropertiesVm?.initializeViewModel()
-					b.coverArtVm?.initializeViewModel()
-				}
-			}, messageHandler))
-			.excuse(HandleViewIoException(this, this))
+			.eventually { nowPlayingLookup.promiseNowPlaying() }
+			.eventually { np ->
+				np?.libraryId
+					?.let { libraryId ->
+						binding
+							.run {
+								Promise.whenAll(
+									filePropertiesVm?.initializeViewModel().keepPromise(Unit),
+									coverArtVm?.initializeViewModel().keepPromise(Unit)
+								)
+							}
+							.eventuallyExcuse { e ->
+								if (ConnectionLostExceptionFilter.isConnectionLostException(e))
+									PollConnectionService.pollSessionConnection(this, libraryId)
+								else
+									Promise(e)
+							}
+					}
+					.keepPromise()
+			}
 			.eventuallyExcuse(LoopedInPromise.response(UnexpectedExceptionToasterResponse(this), messageHandler))
 			.then { finish() }
 	}
 
-	override fun invoke(p1: PollConnectionService.ConnectionLostNotification) {
-		WaitForConnectionDialog.show(this)
+	override fun invoke(p1: ConnectionLostNotification) {
+		nowPlayingLookup.promiseNowPlaying().eventually(
+			LoopedInPromise.response({ np ->
+				np?.libraryId?.also { libraryId ->
+					WaitForConnectionDialog.show(this, libraryId)
+				}
+			}, messageHandler))
 	}
 
 	override fun onAllMenusHidden() {}

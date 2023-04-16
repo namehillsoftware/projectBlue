@@ -44,10 +44,10 @@ class `when ensuring a different connection is working` {
 	fun act() {
 		val (deferredPromise, viewModel) = mut
 
-		viewModel.ensureConnectionIsWorking(LibraryId(originalLibraryId)).toExpiringFuture().get()
+		viewModel.initializeConnection(LibraryId(originalLibraryId)).toExpiringFuture().get()
 
 		isConnectingBeforeCheck = viewModel.isGettingConnection.value
-		val isInitializedPromise = viewModel.ensureConnectionIsWorking(LibraryId(libraryId))
+		val isInitializedPromise = viewModel.initializeConnection(LibraryId(libraryId))
 		isConnectingDuringCheck = viewModel.isGettingConnection.value
 		testedLibraryIdDuringCheck = viewModel.testedLibraryId.value
 		deferredPromise.sendResolution(mockk())

@@ -12,6 +12,9 @@ open class ProgressingPromise<Progress, Resolution> : ProgressedPromise<Progress
 	private val isResolved = AtomicBoolean()
 
 	constructor(resolution: Resolution?) : super(resolution)
+
+	constructor(rejection: Throwable) : super(rejection)
+
 	constructor(messengerOperator: MessengerOperator<Resolution>?) : super(messengerOperator)
 	protected constructor()
 

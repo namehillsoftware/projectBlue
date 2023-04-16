@@ -33,7 +33,7 @@ class WhenResettingTheItem {
 				mockk(),
 				stringResource,
 				mockk {
-					every { promiseUrlKey(any<ServiceFile>()) } answers {
+					every { promiseUrlKey(any(), any<ServiceFile>()) } answers {
 						Promise(
 							UrlKeyHolder(URL("http://test"), firstArg())
 						)

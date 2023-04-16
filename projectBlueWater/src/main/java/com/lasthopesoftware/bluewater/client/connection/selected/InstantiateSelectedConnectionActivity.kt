@@ -75,7 +75,7 @@ class InstantiateSelectedConnectionActivity : AppCompatActivity(), ControlConnec
 			.promiseSelectedLibraryId()
 			.eventually { libraryId ->
 				libraryId
-					?.let(connectionStatusViewModel::ensureConnectionIsWorking)
+					?.let(connectionStatusViewModel::initializeConnection)
 					// If no library is chosen, view application settings
 					?: applicationNavigation.viewApplicationSettings()
 			}
