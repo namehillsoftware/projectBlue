@@ -27,7 +27,9 @@ import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.items.list.ConnectionLostView
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
+import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberCalculatedKnobHeight
@@ -35,9 +37,12 @@ import com.lasthopesoftware.bluewater.shared.android.ui.components.scrollbar
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ColumnMenuIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
+import com.lasthopesoftware.bluewater.shared.promises.extensions.suspend
+import kotlinx.coroutines.launch
 import me.onebone.toolbar.CollapsingToolbarScaffold
 import me.onebone.toolbar.ScrollStrategy
 import me.onebone.toolbar.rememberCollapsingToolbarScaffoldState
+import java.io.IOException
 import kotlin.math.pow
 
 @Composable
@@ -51,6 +56,8 @@ fun SearchFilesView(
 ) {
 	val files by searchFilesViewModel.files.collectAsState()
 	val playingFile by nowPlayingViewModel.nowPlayingFile.collectAsState()
+	var isConnectionLost by remember { mutableStateOf(false) }
+	val scope = rememberCoroutineScope()
 
 	@Composable
 	fun RenderTrackHeaderItem(position: Int, serviceFile: ServiceFile) {
@@ -214,7 +221,15 @@ fun SearchFilesView(
 						onValueChange = { searchFilesViewModel.query.value = it },
 						singleLine = true,
 						keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-						keyboardActions = KeyboardActions(onSearch = { searchFilesViewModel.findFiles() }),
+						keyboardActions = KeyboardActions(onSearch = {
+							scope.launch {
+								try {
+									searchFilesViewModel.findFiles().suspend()
+								} catch (e: IOException) {
+									isConnectionLost = ConnectionLostExceptionFilter.isConnectionLostException(e)
+								}
+							}
+						}),
 						trailingIcon = { Icon(Icons.Default.Search, contentDescription = stringResource(id = R.string.search)) },
 						enabled = isLibraryIdActive && !isLoading,
 						modifier = Modifier
@@ -230,6 +245,20 @@ fun SearchFilesView(
 					Box(modifier = Modifier.fillMaxSize()) {
 						CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
 					}
+				}
+				isConnectionLost -> {
+					ConnectionLostView(
+						onCancel = { isConnectionLost = false },
+						onRetry = {
+							scope.launch {
+								try {
+									searchFilesViewModel.findFiles().suspend()
+								} catch (e: IOException) {
+									isConnectionLost = ConnectionLostExceptionFilter.isConnectionLostException(e)
+								}
+							}
+						}
+					)
 				}
 				files.any() -> {
 					BoxWithConstraints(modifier = Modifier.fillMaxSize()) {

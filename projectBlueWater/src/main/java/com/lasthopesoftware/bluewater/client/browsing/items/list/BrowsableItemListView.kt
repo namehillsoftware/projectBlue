@@ -29,9 +29,10 @@ fun browsableItemListView(
 	var isConnectionLost by remember { mutableStateOf(false) }
 
 	if (isConnectionLost) {
-		ConnectionLostView(applicationNavigation) {
-			isConnectionLost = false
-		}
+		ConnectionLostView(
+			onCancel = { applicationNavigation.viewApplicationSettings() },
+			onRetry = { isConnectionLost = false }
+		)
 	} else {
 		ItemListView(
 			itemListViewModel,

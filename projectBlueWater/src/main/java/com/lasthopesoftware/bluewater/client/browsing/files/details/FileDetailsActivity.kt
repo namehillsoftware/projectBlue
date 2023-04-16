@@ -4,8 +4,7 @@ import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
+import androidx.compose.runtime.*
 import com.lasthopesoftware.bluewater.ActivityApplicationNavigation
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.image.CachedImageProvider
@@ -15,11 +14,12 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.SelectedL
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertyStorage
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.SelectedLibraryFilePropertyStorage
+import com.lasthopesoftware.bluewater.client.browsing.items.list.ConnectionLostView
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.StaticLibraryIdentifierProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
-import com.lasthopesoftware.bluewater.client.connection.HandleViewIoException
+import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
 import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.authentication.SelectedLibraryConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.libraries.SelectedLibraryUrlKeyProvider
@@ -37,11 +37,11 @@ import com.lasthopesoftware.bluewater.shared.android.intents.safelyGetParcelable
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 import com.lasthopesoftware.bluewater.shared.cls
-import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
 import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
-import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.suspend
 import com.lasthopesoftware.resources.strings.StringResources
+import java.io.IOException
 
 class FileDetailsActivity : ComponentActivity() {
 
@@ -134,18 +134,6 @@ class FileDetailsActivity : ComponentActivity() {
 	public override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
-		setContent {
-			ProjectBlueTheme {
-				val isGettingConnection by connectionStatusViewModel.isGettingConnection.collectAsState()
-
-				if (isGettingConnection) {
-					ConnectionUpdatesView(connectionViewModel = connectionStatusViewModel)
-				} else {
-					FileDetailsView(vm)
-				}
-			}
-		}
-
 		val libraryId = intent.safelyGetParcelableExtra<LibraryId>(libraryIdKey)
 
 		if (libraryId == null) {
@@ -153,23 +141,52 @@ class FileDetailsActivity : ComponentActivity() {
 			return
 		}
 
-		connectionStatusViewModel.initializeConnection(libraryId).eventually(LoopedInPromise.response({
-			val position = intent.getIntExtra(playlistPosition, -1)
-			val playlist = intent.getIntArrayExtra(playlist)?.map(::ServiceFile) ?: emptyList()
-			setView(libraryId, playlist, position)
-		}, this))
-	}
+		setContent {
+			ProjectBlueTheme {
+				val isGettingConnection by connectionStatusViewModel.isGettingConnection.collectAsState()
+				var isConnectionLost by remember { mutableStateOf(false) }
 
-	private fun setView(libraryId: LibraryId, playlist: List<ServiceFile>, position: Int) {
-		if (position < 0) {
-			finish()
-			return
+				when {
+					isGettingConnection -> {
+						ConnectionUpdatesView(connectionViewModel = connectionStatusViewModel)
+					}
+					isConnectionLost -> {
+						ConnectionLostView(onCancel = { finish() }, onRetry = { isConnectionLost = false })
+					}
+					else -> {
+						FileDetailsView(vm)
+					}
+				}
+
+				if (!isConnectionLost) {
+					LaunchedEffect(key1 = Unit) {
+						try {
+							val isInitialized = connectionStatusViewModel.initializeConnection(libraryId).suspend()
+							if (!isInitialized) {
+								isConnectionLost = true
+								return@LaunchedEffect
+							}
+
+							val position = intent.getIntExtra(playlistPosition, -1)
+							if (position < 0) {
+								finish()
+								return@LaunchedEffect
+							}
+							val playlist = intent.getIntArrayExtra(playlist)?.map(::ServiceFile) ?: emptyList()
+
+							vm.loadFromList(playlist, position).suspend()
+						} catch (e: IOException) {
+							if (ConnectionLostExceptionFilter.isConnectionLostException(e))
+								isConnectionLost = true
+							else
+								finish()
+						} catch (e: Throwable) {
+							finish()
+						}
+					}
+				}
+			}
 		}
-
-		vm.loadFromList(playlist, position)
-			.excuse(HandleViewIoException(this, libraryId) { setView(libraryId, playlist, position) })
-			.eventuallyExcuse(LoopedInPromise.response(UnexpectedExceptionToasterResponse(this), this))
-			.then { finish() }
 	}
 }
 

@@ -8,12 +8,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 
 @Composable
 fun ConnectionLostView(
-	applicationNavigation: NavigateApplication,
+	onCancel: () -> Unit,
 	onRetry: () -> Unit,
 ) {
 	Surface {
@@ -36,7 +35,7 @@ fun ConnectionLostView(
 					val buttonPadding = 16.dp
 					Button(
 						modifier = Modifier.padding(buttonPadding),
-						onClick = applicationNavigation::viewApplicationSettings,
+						onClick = onCancel,
 					) {
 						Text(text = stringResource(id = R.string.btn_cancel),)
 					}
