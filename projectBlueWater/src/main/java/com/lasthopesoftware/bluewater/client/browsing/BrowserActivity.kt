@@ -27,6 +27,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.access.LibraryFilePr
 import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.ItemStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.LibraryFileStringListProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.image.CachedImageProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.list.*
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
@@ -53,6 +54,7 @@ import com.lasthopesoftware.bluewater.client.connection.ConnectionLostRetryHandl
 import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionServiceProxy
+import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.*
 import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettingsLookup
@@ -60,7 +62,13 @@ import com.lasthopesoftware.bluewater.client.connection.settings.changes.Observa
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.SelectedPlaybackEngineTypeAccess
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.defaults.DefaultPlaybackEngineLookup
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingView
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.fragments.playlist.NowPlayingPlaylistMessage
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.fragments.playlist.NowPlayingPlaylistViewModel
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.InMemoryNowPlayingDisplaySettings
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingCoverArtViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingScreenViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsView
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsViewModel
@@ -86,6 +94,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 import com.lasthopesoftware.bluewater.shared.cls
+import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
@@ -151,6 +160,12 @@ class BrowserActivity :
 		RetryExecutionPolicy(ConnectionLostRetryHandler)
 	}
 
+	private val libraryRepository by lazy { LibraryRepository(applicationContext) }
+
+	private val defaultImageProvider by lazy { DefaultImageProvider(applicationContext) }
+
+	private val imageProvider by lazy { CachedImageProvider.getInstance(applicationContext) }
+
 	override val libraryFilePropertiesProvider by lazy {
 		CachedFilePropertiesProvider(
 			libraryConnectionProvider,
@@ -194,10 +209,14 @@ class BrowserActivity :
 
 	override val playbackServiceController by lazy { PlaybackServiceController(this) }
 
+	override val nowPlayingState by lazy { LiveNowPlayingLookup.getInstance() }
+
+	override val selectedConnectionProvider by lazy { SelectedConnectionProvider(this) }
+
 	override val nowPlayingFilePropertiesViewModel by buildViewModelLazily {
 		NowPlayingFilePropertiesViewModel(
 			messageBus,
-			LiveNowPlayingLookup.getInstance(),
+			nowPlayingState,
 			libraryFilePropertiesProvider,
 			UrlKeyProvider(libraryConnectionProvider),
 			filePropertiesStorage,
@@ -228,8 +247,6 @@ class BrowserActivity :
 	}
 
 	override val syncScheduler by lazy { SyncScheduler(applicationContext) }
-
-	private val libraryRepository by lazy { LibraryRepository(applicationContext) }
 
 	override val libraryProvider: ILibraryProvider
 		get() = libraryRepository
@@ -287,6 +304,29 @@ class BrowserActivity :
 			selectedLibraryIdProvider,
 			libraryBrowserSelection,
 		).apply { loadSelectedLibraryId() }
+	}
+
+	override val nowPlayingTypedMessageBus by buildViewModelLazily { ViewModelMessageBus<NowPlayingPlaylistMessage>() }
+
+	override val pollForConnections by lazy { PollConnectionServiceProxy(this) }
+
+	override val nowPlayingCoverArtViewModel by buildViewModelLazily {
+		NowPlayingCoverArtViewModel(
+			messageBus,
+			nowPlayingState,
+			selectedConnectionProvider,
+			defaultImageProvider,
+			imageProvider,
+			pollForConnections,
+		).apply { initializeViewModel() }
+	}
+
+	override val nowPlayingPlaylistViewModel by buildViewModelLazily {
+		NowPlayingPlaylistViewModel(
+			messageBus,
+			nowPlayingState,
+			nowPlayingTypedMessageBus,
+		)
 	}
 
 	private val permissionsRequests = ConcurrentHashMap<Int, Messenger<Map<String, Boolean>>>()
@@ -424,10 +464,13 @@ private class GraphNavigation(
 		return inner.viewFileDetails(libraryId, playlist, position)
 	}
 
-	override fun viewNowPlaying(): Promise<Unit> {
+	override fun viewNowPlaying() = coroutineScope.launch {
+		navController.popUpTo { it is ItemScreen }
+
+		navController.navigate(NowPlayingScreen)
+
 		hideBottomSheet()
-		return inner.viewNowPlaying()
-	}
+	}.toPromise()
 
 	override fun launchAboutActivity() = coroutineScope.launch {
 		navController.navigate(AboutScreen)
@@ -828,6 +871,34 @@ private fun BrowserView(
 						HiddenSettingsView(viewModel {
 							HiddenSettingsViewModel(graphDependencies.applicationSettingsRepository)
 						})
+					}
+					is NowPlayingScreen -> {
+						with (graphDependencies) {
+							NowPlayingView(
+								nowPlayingCoverArtViewModel = nowPlayingCoverArtViewModel,
+								nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
+								screenOnState = viewModel {
+									NowPlayingScreenViewModel(
+										messageBus,
+										InMemoryNowPlayingDisplaySettings,
+										playbackServiceController,
+									)
+								},
+								playbackServiceController = playbackServiceController,
+								playlistViewModel = nowPlayingPlaylistViewModel,
+								childItemViewModelProvider = viewModel {
+									ReusablePlaylistFileItemViewModelProvider(
+										libraryFilePropertiesProvider,
+										urlKeyProvider,
+										stringResources,
+										menuMessageBus,
+										messageBus,
+									)
+								},
+								applicationNavigation = applicationNavigation,
+								itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
+							)
+						}
 					}
 				}
 			}

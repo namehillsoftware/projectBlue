@@ -83,8 +83,8 @@ class NowPlayingFilePropertiesViewModel(
 	private val fileDurationState = MutableStateFlow(Int.MAX_VALUE) // Use max so that position updates will take effect
 	private val isPlayingState = MutableStateFlow(false)
 	private val isReadOnlyState = MutableStateFlow(false)
-	private val artistState = MutableStateFlow<String>(stringResources.defaultNowPlayingArtist)
-	private val titleState = MutableStateFlow<String>(stringResources.defaultNowPlayingTrackTitle)
+	private val artistState = MutableStateFlow(stringResources.defaultNowPlayingArtist)
+	private val titleState = MutableStateFlow(stringResources.defaultNowPlayingTrackTitle)
 	private val songRatingState = MutableStateFlow(0F)
 	private val isSongRatingEnabledState = MutableStateFlow(false)
 	private val nowPlayingFileState = MutableStateFlow<PositionedFile?>(null)
@@ -104,6 +104,8 @@ class NowPlayingFilePropertiesViewModel(
 	val isScreenControlsVisible = isScreenControlsVisibleState.asStateFlow()
 	val isRepeating = isRepeatingState.asStateFlow()
 	val unexpectedError = unexpectedErrorState.asStateFlow()
+	val activeLibraryId: LibraryId?
+		get() = cachedPromises?.libraryId
 
 	override fun onCleared() {
 		cachedPromises?.close()

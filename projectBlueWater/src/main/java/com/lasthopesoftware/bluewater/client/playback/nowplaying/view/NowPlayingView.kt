@@ -5,29 +5,39 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
+import com.lasthopesoftware.bluewater.client.browsing.files.list.TrackHeaderItemView
+import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewPlaylistFileItem
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.fragments.playlist.NowPlayingPlaylistViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.ControlScreenOnState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingCoverArtViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.shared.android.ui.components.RatingBar
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
+import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 import kotlinx.coroutines.launch
 
 @Composable
-fun NowPlayingCoverArtView(
+private fun NowPlayingCoverArtView(
 	nowPlayingCoverArtViewModel: NowPlayingCoverArtViewModel
 ) {
 	Box(
@@ -72,7 +82,11 @@ fun NowPlayingView(
 	nowPlayingCoverArtViewModel: NowPlayingCoverArtViewModel,
 	nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel,
 	screenOnState: ControlScreenOnState,
-	playbackServiceController: ControlPlaybackService
+	playbackServiceController: ControlPlaybackService,
+	playlistViewModel: NowPlayingPlaylistViewModel,
+	childItemViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
+	applicationNavigation: NavigateApplication,
+	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
 ) {
 	Surface {
 		NowPlayingCoverArtView(nowPlayingCoverArtViewModel = nowPlayingCoverArtViewModel)
@@ -85,8 +99,13 @@ fun NowPlayingView(
 				.fillMaxSize()
 				.background(Color.Transparent),
 		) {
+			val scope = rememberCoroutineScope()
+			val filePosition by nowPlayingFilePropertiesViewModel.filePosition.collectAsState()
+			val fileDuration by nowPlayingFilePropertiesViewModel.fileDuration.collectAsState()
+			val fileProgress by remember { derivedStateOf { filePosition / fileDuration.toFloat() } }
 			Box {
 				val isScreenControlsVisible by nowPlayingFilePropertiesViewModel.isScreenControlsVisible.collectAsState()
+				val isPlaying by nowPlayingFilePropertiesViewModel.isPlaying.collectAsState()
 
 				Row(
 					modifier = Modifier.fillMaxWidth(),
@@ -118,7 +137,6 @@ fun NowPlayingView(
 									.clickable(onClick = screenOnState::toggleScreenOn),
 							)
 
-							val scope = rememberCoroutineScope()
 							Image(
 								painter = painterResource(R.drawable.chevron_up_white_36dp),
 								alpha = .8f,
@@ -153,9 +171,6 @@ fun NowPlayingView(
 						)
 					}
 
-					val filePosition by nowPlayingFilePropertiesViewModel.filePosition.collectAsState()
-					val fileDuration by nowPlayingFilePropertiesViewModel.fileDuration.collectAsState()
-					val fileProgress by remember { derivedStateOf { filePosition / fileDuration.toFloat() } }
 					LinearProgressIndicator(
 						progress = fileProgress,
 						color = Color.White,
@@ -180,7 +195,6 @@ fun NowPlayingView(
 								}
 							)
 
-							val isPlaying by nowPlayingFilePropertiesViewModel.isPlaying.collectAsState()
 							if (isPlaying) {
 								Image(
 									painter = painterResource(id = R.drawable.av_pause_white),
@@ -208,6 +222,165 @@ fun NowPlayingView(
 									playbackServiceController.next()
 								}
 							)
+						}
+					}
+				}
+			}
+
+			Box {
+				Column(
+					modifier = Modifier.fillMaxSize()
+				) {
+					Row(modifier = Modifier
+						.height(56.dp)
+						.fillMaxWidth()
+					) {
+						val isEditingPlaylist by playlistViewModel.isEditingPlaylistState.collectAsState()
+						if (isEditingPlaylist) {
+							Image(
+								painter = painterResource(id = R.drawable.pencil),
+								contentDescription = stringResource(id = R.string.edit_now_playing_list),
+								modifier = Modifier.clickable {
+									playlistViewModel.editPlaylist()
+								},
+								alpha = .8f,
+							)
+						} else {
+							Image(
+								painter = painterResource(id = R.drawable.ic_remove_item_white_36dp),
+								contentDescription = stringResource(id = R.string.finish_edit_now_playing_list),
+								modifier = Modifier.clickable {
+									playlistViewModel.finishPlaylistEdit()
+								},
+								alpha = .8f,
+							)
+						}
+
+						val isRepeating by nowPlayingFilePropertiesViewModel.isRepeating.collectAsState()
+						if (isRepeating) {
+							Image(
+								painter = painterResource(id = R.drawable.av_no_repeat_white),
+								contentDescription = stringResource(id = R.string.btn_repeat_playlist),
+								modifier = Modifier.clickable {
+									nowPlayingFilePropertiesViewModel.toggleRepeating()
+								},
+								alpha = .8f,
+							)
+						} else {
+							Image(
+								painter = painterResource(id = R.drawable.av_repeat_white),
+								contentDescription = stringResource(id = R.string.btn_complete_playlist),
+								modifier = Modifier.clickable {
+									nowPlayingFilePropertiesViewModel.toggleRepeating()
+								},
+								alpha = .8f,
+							)
+						}
+
+						val isPlaying by nowPlayingFilePropertiesViewModel.isPlaying.collectAsState()
+						if (isPlaying) {
+							Image(
+								painter = painterResource(id = R.drawable.av_pause_white),
+								contentDescription = stringResource(id = R.string.btn_pause),
+								modifier = Modifier.clickable {
+									playbackServiceController.pause()
+									nowPlayingFilePropertiesViewModel.togglePlaying(false)
+								}
+							)
+						} else {
+							Image(
+								painter = painterResource(id = R.drawable.av_play_white),
+								contentDescription = stringResource(id = R.string.btn_play),
+								modifier = Modifier.clickable {
+									playbackServiceController.pause()
+									nowPlayingFilePropertiesViewModel.togglePlaying(true)
+								}
+							)
+						}
+
+						Image(
+							painter = painterResource(R.drawable.chevron_up_white_36dp),
+							alpha = .8f,
+							contentDescription = stringResource(R.string.btn_hide_files),
+							modifier = Modifier
+								.clickable(onClick = {
+									scope.launch {
+										pagerState.scrollToPage(1)
+									}
+								})
+								.rotate(180f),
+						)
+					}
+
+					LinearProgressIndicator(
+						progress = fileProgress,
+						color = Color.White,
+						backgroundColor = Color.White.copy(alpha = .6f),
+						modifier = Modifier
+							.fillMaxWidth()
+							.padding(0.dp)
+					)
+
+
+					val nowPlayingFiles by playlistViewModel.nowPlayingList.collectAsState()
+					val playingFile by nowPlayingFilePropertiesViewModel.nowPlayingFile.collectAsState()
+
+					@Composable
+					fun NowPlayingFileView(positionedFile: PositionedFile) {
+						val fileItemViewModel = remember(childItemViewModelProvider::getViewModel)
+
+						DisposableEffect(positionedFile) {
+							nowPlayingFilePropertiesViewModel.activeLibraryId?.also {
+								fileItemViewModel.promiseUpdate(it, positionedFile.serviceFile)
+							}
+
+							onDispose {
+								fileItemViewModel.reset()
+							}
+						}
+
+						val isMenuShown by fileItemViewModel.isMenuShown.collectAsState()
+						val fileName by fileItemViewModel.title.collectAsState()
+						val isPlaying by remember { derivedStateOf { playingFile == positionedFile } }
+
+						val viewFilesClickHandler = {
+							nowPlayingFilePropertiesViewModel.activeLibraryId?.also {
+								applicationNavigation.viewFileDetails(
+									it,
+									nowPlayingFiles.map { p -> p.serviceFile },
+									positionedFile.playlistPosition)
+							}
+							Unit
+						}
+
+						TrackHeaderItemView(
+							itemName = fileName,
+							isActive = isPlaying,
+							isHiddenMenuShown = isMenuShown,
+							onItemClick = viewFilesClickHandler,
+							onHiddenMenuClick = {
+								itemListMenuBackPressedHandler.hideAllMenus()
+								fileItemViewModel.showMenu()
+							},
+							onAddToNowPlayingClick = {
+								playbackServiceController.addToPlaylist(positionedFile.serviceFile)
+							},
+							onViewFilesClick = viewFilesClickHandler,
+							onPlayClick = {
+								fileItemViewModel.hideMenu()
+								playbackServiceController.startPlaylist(
+									nowPlayingFiles.map { it.serviceFile },
+									positionedFile.playlistPosition
+								)
+							}
+						)
+					}
+
+					LazyColumn(
+						modifier = Modifier.weight(1f)
+					) {
+						items(nowPlayingFiles) { f ->
+							NowPlayingFileView(f)
 						}
 					}
 				}

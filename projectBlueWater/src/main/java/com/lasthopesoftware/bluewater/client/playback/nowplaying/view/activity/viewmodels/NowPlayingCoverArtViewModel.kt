@@ -14,6 +14,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messa
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.images.ProvideDefaultImage
+import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
@@ -21,10 +22,9 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.namehillsoftware.handoff.promises.Promise
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import org.slf4j.LoggerFactory
 import java.util.concurrent.CancellationException
 
-private val logger by lazy { LoggerFactory.getLogger(NowPlayingCoverArtViewModel::class.java) }
+private val logger by lazyLogger<NowPlayingCoverArtViewModel>()
 
 class NowPlayingCoverArtViewModel(
 	private val applicationMessage: RegisterForApplicationMessages,

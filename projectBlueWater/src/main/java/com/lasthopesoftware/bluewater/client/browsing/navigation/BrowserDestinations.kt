@@ -19,6 +19,9 @@ object NewConnectionSettingsScreen : Destination
 @Parcelize
 object HiddenSettingsScreen : Destination
 
+@Parcelize
+object NowPlayingScreen : Destination
+
 sealed interface ConnectingDestination : Destination
 
 @Parcelize
