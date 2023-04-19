@@ -464,13 +464,10 @@ private class GraphNavigation(
 		return inner.viewFileDetails(libraryId, playlist, position)
 	}
 
-	override fun viewNowPlaying() = coroutineScope.launch {
-		navController.popUpTo { it is ItemScreen }
-
-		navController.navigate(NowPlayingScreen)
-
+	override fun viewNowPlaying(): Promise<Unit> {
 		hideBottomSheet()
-	}.toPromise()
+		return inner.viewNowPlaying()
+	}
 
 	override fun launchAboutActivity() = coroutineScope.launch {
 		navController.navigate(AboutScreen)
@@ -775,7 +772,9 @@ private fun BrowserView(
 
 	BackHandler { graphDependencies.applicationNavigation.backOut() }
 
-	Box(modifier = Modifier.fillMaxSize()) {
+	val screenPadding = PaddingValues() // WindowInsets.systemBars.asPaddingValues()
+
+	Box(modifier = Modifier.fillMaxSize().padding(screenPadding)) {
 		Surface {
 			NavHost(navController) { destination ->
 				when (destination) {
