@@ -97,8 +97,7 @@ fun LibraryMenu(
 
 					ProvideTextStyle(MaterialTheme.typography.subtitle1) {
 						Text(
-							text = songTitle
-								?: stringResource(id = R.string.lbl_loading),
+							text = songTitle,
 							maxLines = 1,
 							overflow = TextOverflow.Ellipsis,
 							fontWeight = FontWeight.Medium,
@@ -109,8 +108,7 @@ fun LibraryMenu(
 					val songArtist by nowPlayingFilePropertiesViewModel.artist.collectAsState()
 					ProvideTextStyle(MaterialTheme.typography.body2) {
 						Text(
-							text = songArtist
-								?: stringResource(id = R.string.lbl_loading),
+							text = songArtist,
 							maxLines = 1,
 							overflow = TextOverflow.Ellipsis,
 							color = MaterialTheme.colors.onSecondary,

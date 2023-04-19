@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.fragments.playlist
+package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.playlist
 
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile

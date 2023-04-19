@@ -24,7 +24,11 @@ import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideScopedU
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.MaintainNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.fragments.playlist.*
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.playlist.EditPlaylist
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.playlist.FinishEditPlaylist
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.playlist.HasEditPlaylistState
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.playlist.ItemDragged
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.playlist.NowPlayingPlaylistMessage
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.menu.listeners.FileSeekToClickListener
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.menu.listeners.RemovePlaylistFileClickListener
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage
@@ -152,7 +156,7 @@ class NowPlayingFileListItemMenuBuilder(
 		override fun onLongClick(v: View?): Boolean =
 			positionedFile
 				?.let {
-					sendTypedMessages.sendMessage(ItemDragged(it, this))
+					sendTypedMessages.sendMessage(ItemDragged(it))
 					true
 				}
 				?: false
