@@ -18,6 +18,7 @@ class PlaybackServiceController(private val context: Context) : ControlPlaybackS
 	override fun next() = PlaybackService.next(context)
 
 	override fun previous() = PlaybackService.previous(context)
+	override fun seekTo(position: Int) = PlaybackService.seekTo(context, position)
 
 	override fun startPlaylist(fileStringList: String, position: Int) {
 		PlaybackService.launchMusicService(context, position, fileStringList)
@@ -37,6 +38,10 @@ class PlaybackServiceController(private val context: Context) : ControlPlaybackS
 
 	override fun addToPlaylist(serviceFile: ServiceFile) {
 		PlaybackService.addFileToPlaylist(context, serviceFile.key)
+	}
+
+	override fun removeFromPlaylistAtPosition(position: Int) {
+		PlaybackService.removeFileAtPositionFromPlaylist(context, position)
 	}
 
 	override fun setRepeating() = PlaybackService.setRepeating(context)

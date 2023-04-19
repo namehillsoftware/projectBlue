@@ -101,7 +101,7 @@ class NowPlayingActivity :
 
 	private val itemListMenuBackPressedHandler by lazyScoped { ItemListMenuBackPressedHandler(menuMessageBus) }
 
-	private val nowPlayingViewModel by buildViewModelLazily {
+	private val nowPlayingScreenViewModel by buildViewModelLazily {
 		NowPlayingScreenViewModel(
 			applicationMessageBus,
 			InMemoryNowPlayingDisplaySettings,
@@ -161,7 +161,7 @@ class NowPlayingActivity :
 			NowPlayingView(
 				nowPlayingCoverArtViewModel = nowPlayingCoverArtViewModel,
 				nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
-				screenOnState = nowPlayingViewModel,
+				screenOnState = nowPlayingScreenViewModel,
 				playbackServiceController = PlaybackServiceController(this),
 				playlistViewModel = playlistViewModel,
 				childItemViewModelProvider = childViewItemProvider,

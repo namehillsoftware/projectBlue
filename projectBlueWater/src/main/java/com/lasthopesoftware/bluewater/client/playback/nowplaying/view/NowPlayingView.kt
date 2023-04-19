@@ -8,6 +8,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -19,13 +20,12 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
-import com.lasthopesoftware.bluewater.client.browsing.files.list.TrackHeaderItemView
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewPlaylistFileItem
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
@@ -33,10 +33,13 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.p
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.ControlScreenOnState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingCoverArtViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.components.NowPlayingItemView
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.components.PlayPauseButton
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
+import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.RatingBar
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
+import com.lasthopesoftware.bluewater.shared.android.ui.theme.SharedColors
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 import kotlinx.coroutines.launch
 
@@ -83,6 +86,17 @@ private fun NowPlayingCoverArtView(
 }
 
 @Composable
+private fun KeepScreenOn(keepScreenOn: Boolean) {
+	val currentView = LocalView.current
+	DisposableEffect(keepScreenOn) {
+		currentView.keepScreenOn = keepScreenOn
+		onDispose {
+			currentView.keepScreenOn = false
+		}
+	}
+}
+
+@Composable
 @OptIn(ExperimentalFoundationApi::class)
 fun NowPlayingView(
 	nowPlayingCoverArtViewModel: NowPlayingCoverArtViewModel,
@@ -94,7 +108,13 @@ fun NowPlayingView(
 	applicationNavigation: NavigateApplication,
 	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
 ) {
-	Surface {
+	val isScreenOn by screenOnState.isScreenOnEnabled.collectAsState()
+	KeepScreenOn(isScreenOn)
+
+	Surface(
+		color = Color.Transparent,
+		contentColor = Color.White,
+	) {
 		NowPlayingCoverArtView(nowPlayingCoverArtViewModel = nowPlayingCoverArtViewModel)
 
 		val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
@@ -105,7 +125,7 @@ fun NowPlayingView(
 			state = pagerState,
 			modifier = Modifier
 				.fillMaxSize()
-				.background(colorResource(id = R.color.overlay_dark))
+				.background(SharedColors.OverlayDark)
 				.padding(systemBarsPadding),
 		) { page ->
 			val scope = rememberCoroutineScope()
@@ -130,22 +150,29 @@ fun NowPlayingView(
 						horizontalArrangement = Arrangement.SpaceBetween,
 						verticalAlignment = Alignment.CenterVertically
 					) {
-						Column {
+						Column(
+							modifier = Modifier.weight(1f)
+						) {
 							ProvideTextStyle(value = MaterialTheme.typography.h5) {
 								val title by nowPlayingFilePropertiesViewModel.title.collectAsState()
 
-								Text(text = title, color = Color.White)
+								MarqueeText(
+									text = title,
+									gradientEdgeColor = Color.Transparent,
+								)
 							}
 
 							ProvideTextStyle(value = MaterialTheme.typography.subtitle1) {
 								val artist by nowPlayingFilePropertiesViewModel.artist.collectAsState()
-								Text(text = artist, color = Color.White)
+								MarqueeText(
+									text = artist,
+									gradientEdgeColor = Color.Transparent,
+								)
 							}
 						}
 
 						if (isScreenControlsVisible) {
-							Row {
-								val isScreenOn by screenOnState.isScreenOnEnabled.collectAsState()
+							Row(modifier = Modifier.wrapContentWidth()) {
 								Image(
 									painter = painterResource(if (isScreenOn) R.drawable.ic_screen_on_white_36dp else R.drawable.ic_screen_off_white_36dp),
 									alpha = .8f,
@@ -184,9 +211,7 @@ fun NowPlayingView(
 								rating = ratingInt,
 								color = Color.White,
 								backgroundColor = Color.White.copy(alpha = .1f),
-								modifier = Modifier
-									.height(52.dp)
-									.padding(bottom = 16.dp),
+								modifier = Modifier.height(64.dp),
 								onRatingSelected = { nowPlayingFilePropertiesViewModel.updateRating(it.toFloat()) }
 							)
 						}
@@ -197,7 +222,7 @@ fun NowPlayingView(
 							backgroundColor = Color.White.copy(alpha = .6f),
 							modifier = Modifier
 								.fillMaxWidth()
-								.padding(0.dp)
+								.padding(top = 16.dp)
 						)
 
 						Row(
@@ -231,6 +256,7 @@ fun NowPlayingView(
 				}
 			} else {
 				Box {
+					val isEditingPlaylist by playlistViewModel.isEditingPlaylistState.collectAsState()
 					Column(
 						modifier = Modifier.fillMaxSize()
 					) {
@@ -241,17 +267,7 @@ fun NowPlayingView(
 							horizontalArrangement = Arrangement.SpaceAround,
 							verticalAlignment = Alignment.CenterVertically,
 						) {
-							val isEditingPlaylist by playlistViewModel.isEditingPlaylistState.collectAsState()
 							if (isEditingPlaylist) {
-								Image(
-									painter = painterResource(id = R.drawable.pencil),
-									contentDescription = stringResource(id = R.string.edit_now_playing_list),
-									modifier = Modifier.clickable {
-										playlistViewModel.editPlaylist()
-									},
-									alpha = .8f,
-								)
-							} else {
 								Image(
 									painter = painterResource(id = R.drawable.ic_remove_item_white_36dp),
 									contentDescription = stringResource(id = R.string.finish_edit_now_playing_list),
@@ -260,13 +276,22 @@ fun NowPlayingView(
 									},
 									alpha = .8f,
 								)
+							} else {
+								Image(
+									painter = painterResource(id = R.drawable.pencil),
+									contentDescription = stringResource(id = R.string.edit_now_playing_list),
+									modifier = Modifier.clickable {
+										playlistViewModel.editPlaylist()
+									},
+									alpha = .8f,
+								)
 							}
 
 							val isRepeating by nowPlayingFilePropertiesViewModel.isRepeating.collectAsState()
 							if (isRepeating) {
 								Image(
-									painter = painterResource(id = R.drawable.av_no_repeat_white),
-									contentDescription = stringResource(id = R.string.btn_repeat_playlist),
+									painter = painterResource(id = R.drawable.av_repeat_white),
+									contentDescription = stringResource(id = R.string.btn_complete_playlist),
 									modifier = Modifier.clickable {
 										nowPlayingFilePropertiesViewModel.toggleRepeating()
 									},
@@ -274,8 +299,8 @@ fun NowPlayingView(
 								)
 							} else {
 								Image(
-									painter = painterResource(id = R.drawable.av_repeat_white),
-									contentDescription = stringResource(id = R.string.btn_complete_playlist),
+									painter = painterResource(id = R.drawable.av_no_repeat_white),
+									contentDescription = stringResource(id = R.string.btn_repeat_playlist),
 									modifier = Modifier.clickable {
 										nowPlayingFilePropertiesViewModel.toggleRepeating()
 									},
@@ -292,7 +317,7 @@ fun NowPlayingView(
 								modifier = Modifier
 									.clickable(onClick = {
 										scope.launch {
-											pagerState.scrollToPage(1)
+											pagerState.scrollToPage(0)
 										}
 									})
 									.rotate(180f),
@@ -328,44 +353,58 @@ fun NowPlayingView(
 
 							val isMenuShown by fileItemViewModel.isMenuShown.collectAsState()
 							val fileName by fileItemViewModel.title.collectAsState()
+							val artist by fileItemViewModel.artist.collectAsState()
 							val isPlaying by remember { derivedStateOf { playingFile == positionedFile } }
 
+							val playlist by remember { derivedStateOf { nowPlayingFiles.map { p -> p.serviceFile } } }
 							val viewFilesClickHandler = {
 								nowPlayingFilePropertiesViewModel.activeLibraryId?.also {
 									applicationNavigation.viewFileDetails(
 										it,
-										nowPlayingFiles.map { p -> p.serviceFile },
+										playlist,
 										positionedFile.playlistPosition
 									)
 								}
 								Unit
 							}
 
-							TrackHeaderItemView(
+							NowPlayingItemView(
 								itemName = fileName,
+								artist = artist,
 								isActive = isPlaying,
+								isEditingPlaylist = isEditingPlaylist,
 								isHiddenMenuShown = isMenuShown,
 								onItemClick = viewFilesClickHandler,
 								onHiddenMenuClick = {
 									itemListMenuBackPressedHandler.hideAllMenus()
 									fileItemViewModel.showMenu()
 								},
-								onAddToNowPlayingClick = {
-									playbackServiceController.addToPlaylist(positionedFile.serviceFile)
+								onRemoveFromNowPlayingClick = {
+									playbackServiceController.removeFromPlaylistAtPosition(positionedFile.playlistPosition)
 								},
 								onViewFilesClick = viewFilesClickHandler,
 								onPlayClick = {
 									fileItemViewModel.hideMenu()
-									playbackServiceController.startPlaylist(
-										nowPlayingFiles.map { it.serviceFile },
-										positionedFile.playlistPosition
-									)
+									playbackServiceController.seekTo(positionedFile.playlistPosition)
 								}
 							)
 						}
 
+						val listState = rememberLazyListState()
+
+						if (pagerState.currentPage == 0) {
+							playingFile?.apply {
+								scope.launch {
+									listState.scrollToItem(playlistPosition)
+								}
+							}
+						}
+
 						LazyColumn(
-							modifier = Modifier.weight(1f)
+							modifier = Modifier
+								.weight(1f)
+								.background(SharedColors.OverlayDark),
+							state = listState,
 						) {
 							items(nowPlayingFiles) { f ->
 								NowPlayingFileView(f)

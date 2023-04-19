@@ -14,6 +14,8 @@ interface ControlPlaybackService {
 
 	fun previous()
 
+	fun seekTo(position: Int)
+
 	fun startPlaylist(fileStringList: String, position: Int = 0)
 
 	fun startPlaylist(serviceFiles: List<ServiceFile>, position: Int = 0)
@@ -21,6 +23,8 @@ interface ControlPlaybackService {
 	fun shuffleAndStartPlaylist(serviceFiles: List<ServiceFile>)
 
 	fun addToPlaylist(serviceFile: ServiceFile)
+
+	fun removeFromPlaylistAtPosition(position: Int)
 
 	fun setRepeating()
 
