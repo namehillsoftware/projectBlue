@@ -33,6 +33,7 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.p
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.ControlScreenOnState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingCoverArtViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.components.PlayPauseButton
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.shared.android.ui.components.RatingBar
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
@@ -123,7 +124,6 @@ fun NowPlayingView(
 						),
 				) {
 					val isScreenControlsVisible by nowPlayingFilePropertiesViewModel.isScreenControlsVisible.collectAsState()
-					val isPlaying by nowPlayingFilePropertiesViewModel.isPlaying.collectAsState()
 
 					Row(
 						modifier = Modifier.fillMaxWidth(),
@@ -184,7 +184,9 @@ fun NowPlayingView(
 								rating = ratingInt,
 								color = Color.White,
 								backgroundColor = Color.White.copy(alpha = .1f),
-								modifier = Modifier.height(52.dp).padding(bottom = 16.dp),
+								modifier = Modifier
+									.height(52.dp)
+									.padding(bottom = 16.dp),
 								onRatingSelected = { nowPlayingFilePropertiesViewModel.updateRating(it.toFloat()) }
 							)
 						}
@@ -214,25 +216,7 @@ fun NowPlayingView(
 									}
 								)
 
-								if (isPlaying) {
-									Image(
-										painter = painterResource(id = R.drawable.av_pause_white),
-										contentDescription = stringResource(id = R.string.btn_pause),
-										modifier = Modifier.clickable {
-											playbackServiceController.pause()
-											nowPlayingFilePropertiesViewModel.togglePlaying(false)
-										}
-									)
-								} else {
-									Image(
-										painter = painterResource(id = R.drawable.av_play_white),
-										contentDescription = stringResource(id = R.string.btn_play),
-										modifier = Modifier.clickable {
-											playbackServiceController.pause()
-											nowPlayingFilePropertiesViewModel.togglePlaying(true)
-										}
-									)
-								}
+								PlayPauseButton(nowPlayingFilePropertiesViewModel, playbackServiceController)
 
 								Image(
 									painter = painterResource(id = R.drawable.av_next_white),
@@ -299,26 +283,7 @@ fun NowPlayingView(
 								)
 							}
 
-							val isPlaying by nowPlayingFilePropertiesViewModel.isPlaying.collectAsState()
-							if (isPlaying) {
-								Image(
-									painter = painterResource(id = R.drawable.av_pause_white),
-									contentDescription = stringResource(id = R.string.btn_pause),
-									modifier = Modifier.clickable {
-										playbackServiceController.pause()
-										nowPlayingFilePropertiesViewModel.togglePlaying(false)
-									}
-								)
-							} else {
-								Image(
-									painter = painterResource(id = R.drawable.av_play_white),
-									contentDescription = stringResource(id = R.string.btn_play),
-									modifier = Modifier.clickable {
-										playbackServiceController.play()
-										nowPlayingFilePropertiesViewModel.togglePlaying(true)
-									}
-								)
-							}
+							PlayPauseButton(nowPlayingFilePropertiesViewModel, playbackServiceController)
 
 							Image(
 								painter = painterResource(R.drawable.chevron_up_white_36dp),
