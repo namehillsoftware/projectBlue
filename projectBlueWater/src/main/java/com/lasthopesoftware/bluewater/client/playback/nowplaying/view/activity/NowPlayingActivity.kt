@@ -8,7 +8,9 @@ import androidx.appcompat.app.AppCompatActivity
 import com.lasthopesoftware.bluewater.ActivityApplicationNavigation
 import com.lasthopesoftware.bluewater.client.browsing.files.image.CachedImageProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusablePlaylistFileItemViewModelProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.RateControlledFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertyStorage
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
@@ -40,6 +42,7 @@ import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
+import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRateLimiter
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.resources.closables.lazyScoped
@@ -70,10 +73,17 @@ class NowPlayingActivity :
 	private val lazySelectedConnectionProvider by lazy { SelectedConnectionProvider(this) }
 
 	private val libraryFilePropertiesProvider by lazy {
-		FilePropertiesProvider(
+		CachedFilePropertiesProvider(
 			libraryConnectionProvider,
-			revisionProvider,
 			FilePropertyCache,
+			RateControlledFilePropertiesProvider(
+				FilePropertiesProvider(
+					libraryConnectionProvider,
+					revisionProvider,
+					FilePropertyCache,
+				),
+				PromisingRateLimiter(1),
+			),
 		)
 	}
 
