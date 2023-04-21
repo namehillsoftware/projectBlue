@@ -4,15 +4,19 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
@@ -30,12 +34,17 @@ fun RatingBar(
 	backgroundColor: Color = Color.Gray,
 	onRatingSelected: ((Int) -> Unit)? = null
 ) {
-	Box(modifier = modifier) {
-		Row(modifier = Modifier.wrapContentSize()) {
+	BoxWithConstraints(modifier = modifier) {
+		Row(
+			modifier = Modifier
+				.fillMaxHeight()
+				.align(Alignment.Center),
+			horizontalArrangement = Arrangement.SpaceEvenly,
+		) {
 			val padding = 1.dp
 
 			repeat(rating) { r ->
-				var starModifier = Modifier.padding(start = padding, end = padding)
+				var starModifier = Modifier.padding(start = padding, end = padding).requiredSize(this@BoxWithConstraints.maxHeight)
 				if (onRatingSelected != null)
 					starModifier = starModifier
 						.clickable(
@@ -54,12 +63,13 @@ fun RatingBar(
 
 			repeat(5 - rating) { r ->
 				var starModifier = Modifier.padding(start = padding, end = padding)
-				if (onRatingSelected != null)
+				if (onRatingSelected != null) {
 					starModifier = starModifier
 						.clickable(
 							interactionSource = remember { MutableInteractionSource() },
 							indication = null,
 						) { onRatingSelected(r + 1 + rating) }
+				}
 
 				Box(
 					modifier = starModifier,
@@ -69,6 +79,7 @@ fun RatingBar(
 						colorFilter = ColorFilter.tint(backgroundColor),
 						contentDescription = "Rating value",
 						contentScale = ContentScale.Fit,
+						modifier = Modifier.requiredSize(this@BoxWithConstraints.maxHeight),
 					)
 
 					Image(
@@ -76,6 +87,7 @@ fun RatingBar(
 						colorFilter = ColorFilter.tint(color),
 						contentDescription = "Rating value",
 						contentScale = ContentScale.Fit,
+						modifier = Modifier.requiredSize(this@BoxWithConstraints.maxHeight),
 					)
 				}
 			}

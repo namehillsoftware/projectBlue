@@ -211,7 +211,7 @@ fun NowPlayingView(
 								rating = ratingInt,
 								color = Color.White,
 								backgroundColor = Color.White.copy(alpha = .1f),
-								modifier = Modifier.height(64.dp),
+								modifier = Modifier.height(44.dp),
 								onRatingSelected = { nowPlayingFilePropertiesViewModel.updateRating(it.toFloat()) }
 							)
 						}
