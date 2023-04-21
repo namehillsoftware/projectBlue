@@ -29,12 +29,12 @@ import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewPlaylistFileItem
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.playlist.NowPlayingPlaylistViewModel
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.ControlScreenOnState
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingCoverArtViewModel
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.components.NowPlayingItemView
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.components.PlayPauseButton
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingCoverArtViewModel
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingScreenViewModel
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.playlist.NowPlayingPlaylistViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.RatingBar
@@ -101,14 +101,14 @@ private fun KeepScreenOn(keepScreenOn: Boolean) {
 fun NowPlayingView(
 	nowPlayingCoverArtViewModel: NowPlayingCoverArtViewModel,
 	nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel,
-	screenOnState: ControlScreenOnState,
+	screenOnState: NowPlayingScreenViewModel,
 	playbackServiceController: ControlPlaybackService,
 	playlistViewModel: NowPlayingPlaylistViewModel,
 	childItemViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
 	applicationNavigation: NavigateApplication,
 	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
 ) {
-	val isScreenOn by screenOnState.isScreenOnEnabled.collectAsState()
+	val isScreenOn by screenOnState.isScreenOn.collectAsState()
 	KeepScreenOn(isScreenOn)
 
 	Surface(
@@ -173,10 +173,11 @@ fun NowPlayingView(
 
 						if (isScreenControlsVisible) {
 							Row(modifier = Modifier.wrapContentWidth()) {
+								val isScreenOnEnabled by screenOnState.isScreenOnEnabled.collectAsState()
 								Image(
-									painter = painterResource(if (isScreenOn) R.drawable.ic_screen_on_white_36dp else R.drawable.ic_screen_off_white_36dp),
+									painter = painterResource(if (isScreenOnEnabled) R.drawable.ic_screen_on_white_36dp else R.drawable.ic_screen_off_white_36dp),
 									alpha = .8f,
-									contentDescription = stringResource(if (isScreenOn) R.string.screen_is_on else R.string.screen_is_off),
+									contentDescription = stringResource(if (isScreenOnEnabled) R.string.screen_is_on else R.string.screen_is_off),
 									modifier = Modifier
 										.padding(Dimensions.ViewPadding)
 										.clickable(onClick = screenOnState::toggleScreenOn),
@@ -211,7 +212,9 @@ fun NowPlayingView(
 								rating = ratingInt,
 								color = Color.White,
 								backgroundColor = Color.White.copy(alpha = .1f),
-								modifier = Modifier.fillMaxWidth().height(64.dp),
+								modifier = Modifier
+									.fillMaxWidth()
+									.height(64.dp),
 								onRatingSelected = { nowPlayingFilePropertiesViewModel.updateRating(it.toFloat()) }
 							)
 						}
