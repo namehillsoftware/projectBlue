@@ -72,18 +72,22 @@ class NowPlayingActivity :
 
 	private val lazySelectedConnectionProvider by lazy { SelectedConnectionProvider(this) }
 
+	private val freshLibraryFileProperties by lazy {
+		RateControlledFilePropertiesProvider(
+			FilePropertiesProvider(
+				libraryConnectionProvider,
+				revisionProvider,
+				FilePropertyCache,
+			),
+			PromisingRateLimiter(1),
+		)
+	}
+
 	private val libraryFilePropertiesProvider by lazy {
 		CachedFilePropertiesProvider(
 			libraryConnectionProvider,
 			FilePropertyCache,
-			RateControlledFilePropertiesProvider(
-				FilePropertiesProvider(
-					libraryConnectionProvider,
-					revisionProvider,
-					FilePropertyCache,
-				),
-				PromisingRateLimiter(1),
-			),
+			freshLibraryFileProperties,
 		)
 	}
 
@@ -123,7 +127,7 @@ class NowPlayingActivity :
 		NowPlayingFilePropertiesViewModel(
 			applicationMessageBus,
 			nowPlayingLookup,
-			libraryFilePropertiesProvider,
+			freshLibraryFileProperties,
 			UrlKeyProvider(libraryConnectionProvider),
 			filePropertiesStorage,
 			connectionAuthenticationChecker,

@@ -12,7 +12,7 @@ class FilePropertiesProvider(
 	private val libraryConnections: ProvideLibraryConnections,
 	private val checkRevisions: CheckRevisions,
 	private val filePropertiesContainerProvider: IFilePropertiesContainerRepository
-) : ProvideLibraryFileProperties {
+) : ProvideFreshLibraryFileProperties {
 
 	companion object {
 		private val promisedEmptyProperties by lazy { Promise(emptyMap<String, String>()) }

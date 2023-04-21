@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideFreshLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.UpdateFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -38,7 +38,7 @@ private val screenControlVisibilityTime by lazy { Duration.standardSeconds(5) }
 class NowPlayingFilePropertiesViewModel(
 	applicationMessages: RegisterForApplicationMessages,
 	private val nowPlayingRepository: GetNowPlayingState,
-	private val fileProperties: ProvideLibraryFileProperties,
+	private val fileProperties: ProvideFreshLibraryFileProperties,
 	private val provideUrlKey: ProvideUrlKey,
 	private val updateFileProperties: UpdateFileProperties,
 	private val checkAuthentication: CheckIfConnectionIsReadOnly,

@@ -166,18 +166,22 @@ class BrowserActivity :
 
 	private val imageProvider by lazy { CachedImageProvider.getInstance(applicationContext) }
 
+	private val freshLibraryFileProperties by lazy {
+		RateControlledFilePropertiesProvider(
+			FilePropertiesProvider(
+				libraryConnectionProvider,
+				revisionProvider,
+				FilePropertyCache,
+			),
+			PromisingRateLimiter(1),
+		)
+	}
+
 	override val libraryFilePropertiesProvider by lazy {
 		CachedFilePropertiesProvider(
 			libraryConnectionProvider,
 			FilePropertyCache,
-			RateControlledFilePropertiesProvider(
-				FilePropertiesProvider(
-					libraryConnectionProvider,
-					revisionProvider,
-					FilePropertyCache,
-				),
-				PromisingRateLimiter(1),
-			),
+			freshLibraryFileProperties,
 		)
 	}
 
@@ -217,7 +221,7 @@ class BrowserActivity :
 		NowPlayingFilePropertiesViewModel(
 			messageBus,
 			nowPlayingState,
-			libraryFilePropertiesProvider,
+			freshLibraryFileProperties,
 			UrlKeyProvider(libraryConnectionProvider),
 			filePropertiesStorage,
 			connectionAuthenticationChecker,
