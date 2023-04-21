@@ -29,7 +29,7 @@ fun LabeledSelection(
 
 		Text(
 			text = label,
-			modifier = Modifier.padding(start = Dimensions.ViewPadding * 4),
+			modifier = Modifier.padding(start = Dimensions.viewPaddingUnit * 4),
 		)
 	}
 }

@@ -12,7 +12,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -27,7 +26,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackSer
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import kotlinx.coroutines.launch
 
-private val bottomAppBarHeight = Dimensions.AppBarHeight
+private val bottomAppBarHeight = Dimensions.appBarHeight
 
 @Composable
 @OptIn(ExperimentalMaterialApi::class)
@@ -151,7 +150,7 @@ fun LibraryMenu(
 		}
 	}
 
-	val rowHeight = dimensionResource(id = R.dimen.standard_row_height)
+	val rowHeight = Dimensions.standardRowHeight
 	ProvideTextStyle(value = MaterialTheme.typography.subtitle1) {
 		Row(
 			modifier = Modifier
@@ -229,7 +228,7 @@ fun LibraryMenu(
 					modifier = Modifier
 						.align(Alignment.Center)
 						.padding(start = 16.dp, end = 16.dp)
-						.size(Dimensions.MenuIconSize)
+						.size(Dimensions.menuIconSize)
 				)
 			}
 

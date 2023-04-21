@@ -53,7 +53,6 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
@@ -82,7 +81,7 @@ import me.onebone.toolbar.ScrollStrategy
 import me.onebone.toolbar.rememberCollapsingToolbarScaffoldState
 import kotlin.math.pow
 
-private val viewPadding = Dimensions.ViewPadding
+private val viewPadding = Dimensions.viewPaddingUnit
 
 @Composable
 private fun StaticFileMenu(viewModel: FileDetailsViewModel, coverArtColorState: MediaStylePalette) {
@@ -90,14 +89,14 @@ private fun StaticFileMenu(viewModel: FileDetailsViewModel, coverArtColorState: 
 
 	Row(
 		modifier = Modifier
-			.height(dimensionResource(id = R.dimen.standard_row_height))
+			.height(Dimensions.menuHeight)
 			.padding(
 				top = padding,
 			)
 	) {
 		val iconColor = coverArtColorState.secondaryTextColor
 		ProvideTextStyle(value = TextStyle(color = iconColor)) {
-			val iconSize = Dimensions.MenuIconSize
+			val iconSize = Dimensions.menuIconSize
 
 			val addFileToPlaybackLabel = stringResource(id = R.string.btn_add_file_to_playback)
 			val colorFilter = ColorFilter.tint(iconColor)
@@ -470,7 +469,7 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 				}
 
 				val expandedTitlePadding = coverArtContainerHeight + coverArtBottomPadding
-				val expandedIconSize = Dimensions.MenuHeight
+				val expandedIconSize = Dimensions.menuHeight
 				val expandedMenuVerticalPadding = 12.dp
 				val titleFontSize = MaterialTheme.typography.h5.fontSize
 				val subTitleFontSize = MaterialTheme.typography.h6.fontSize
@@ -514,7 +513,7 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 							.width(menuWidth)
 							.align(Alignment.TopEnd)
 					) {
-						val iconSize = Dimensions.MenuIconSize
+						val iconSize = Dimensions.menuIconSize
 						val chevronRotation by remember { derivedStateOf { 180 * headerHidingProgress } }
 						val isCollapsed by remember { derivedStateOf { headerHidingProgress > .98f } }
 

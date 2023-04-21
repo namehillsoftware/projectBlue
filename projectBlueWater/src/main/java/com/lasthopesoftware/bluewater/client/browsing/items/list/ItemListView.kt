@@ -51,7 +51,7 @@ import kotlin.math.pow
 import kotlin.math.roundToInt
 
 const val expandedTitleHeight = 84
-val appBarHeight = Dimensions.AppBarHeight.value
+val appBarHeight = Dimensions.appBarHeight.value
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -68,7 +68,7 @@ fun ItemListView(
 ) {
 	val playingFile by nowPlayingViewModel.nowPlayingFile.collectAsState()
 	val files by fileListViewModel.files.collectAsState()
-	val rowHeight = dimensionResource(id = R.dimen.standard_row_height)
+	val rowHeight = Dimensions.standardRowHeight
 	val rowFontSize = LocalDensity.current.run { dimensionResource(id = R.dimen.row_font_size).toSp() }
 	val hapticFeedback = LocalHapticFeedback.current
 	val itemValue by itemListViewModel.itemValue.collectAsState()
@@ -301,7 +301,7 @@ fun ItemListView(
 		// Treat the files not being loaded as isAnyFiles being false to trick the CollapsingToolbarScaffold
 		// into measuring the expanded size correctly.
 		val isAnyFiles by remember { derivedStateOf { !isFilesLoaded || files.any() } }
-		val expandedIconSize by remember { derivedStateOf { if (isAnyFiles) Dimensions.MenuHeight.value else 0f } }
+		val expandedIconSize by remember { derivedStateOf { if (isAnyFiles) Dimensions.menuHeight.value else 0f } }
 		val expandedMenuVerticalPadding by remember { derivedStateOf { if (isAnyFiles) 12 else 0 } }
 		val boxHeight by remember {
 			derivedStateOf {
@@ -378,7 +378,7 @@ fun ItemListView(
 								.width(menuWidth)
 								.align(Alignment.TopEnd)
 						) {
-							val iconSize = Dimensions.MenuIconSize
+							val iconSize = Dimensions.menuIconSize
 							val textModifier = Modifier.alpha(acceleratedToolbarStateProgress)
 
 							val playButtonLabel = stringResource(id = R.string.btn_play)

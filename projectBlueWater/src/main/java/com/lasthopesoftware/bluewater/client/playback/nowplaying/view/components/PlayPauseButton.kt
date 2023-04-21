@@ -19,6 +19,7 @@ fun PlayPauseButton(
 	nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel,
 	playbackServiceController: ControlPlaybackService,
 	modifier: Modifier = Modifier,
+	alpha: Float = 1f
 ) {
 	val isPlaying by nowPlayingFilePropertiesViewModel.isPlaying.collectAsState()
 	if (isPlaying) {
@@ -31,7 +32,8 @@ fun PlayPauseButton(
 				onClick = {
 					playbackServiceController.pause()
 					nowPlayingFilePropertiesViewModel.togglePlaying(false)
-				})
+				}),
+			alpha = alpha,
 		)
 	} else {
 		Image(
@@ -43,7 +45,8 @@ fun PlayPauseButton(
 				onClick = {
 					playbackServiceController.play()
 					nowPlayingFilePropertiesViewModel.togglePlaying(true)
-				})
+				}),
+			alpha = alpha,
 		)
 	}
 }

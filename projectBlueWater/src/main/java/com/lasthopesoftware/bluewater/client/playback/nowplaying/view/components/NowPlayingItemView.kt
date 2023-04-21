@@ -13,9 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -40,8 +38,7 @@ fun NowPlayingItemView(
 ) {
 
 	val hapticFeedback = LocalHapticFeedback.current
-	val rowHeight = dimensionResource(id = R.dimen.standard_row_height)
-	val rowFontSize = LocalDensity.current.run { dimensionResource(id = R.dimen.row_font_size).toSp() }
+	val rowHeight = Dimensions.twoLineRowHeight
 
 	if (!isHiddenMenuShown) {
 		Row(
@@ -58,30 +55,27 @@ fun NowPlayingItemView(
 					onClick = onItemClick
 				)
 				.height(rowHeight)
-				.fillMaxSize(),
+				.fillMaxSize()
+				.padding(8.dp),
 			verticalAlignment = Alignment.CenterVertically,
 		) {
 			Column(
 				modifier = Modifier.weight(1f),
 			) {
-				ProvideTextStyle(value = MaterialTheme.typography.h5) {
+				ProvideTextStyle(value = MaterialTheme.typography.h6) {
 					Text(
 						text = itemName,
-						fontSize = rowFontSize,
 						overflow = TextOverflow.Ellipsis,
 						maxLines = 1,
 						fontWeight = if (isActive) FontWeight.Bold else FontWeight.Normal,
-						modifier = Modifier.padding(12.dp),
 					)
 				}
 
 				ProvideTextStyle(value = MaterialTheme.typography.subtitle1) {
 					Text(
 						text = artist,
-						fontSize = rowFontSize,
 						overflow = TextOverflow.Ellipsis,
 						maxLines = 1,
-						modifier = Modifier.padding(start = 12.dp),
 					)
 				}
 			}
@@ -90,7 +84,7 @@ fun NowPlayingItemView(
 				Image(
 					painter = painterResource(id = R.drawable.drag),
 					contentDescription = stringResource(id = R.string.drag_item),
-					modifier = Modifier.padding(Dimensions.ViewPadding),
+					modifier = Modifier.padding(Dimensions.viewPaddingUnit),
 				)
 			}
 		}

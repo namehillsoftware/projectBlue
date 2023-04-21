@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity
 
 import android.os.Bundle
 import android.os.Handler
-import androidx.activity.addCallback
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import com.lasthopesoftware.bluewater.ActivityApplicationNavigation
@@ -133,7 +132,7 @@ class NowPlayingActivity :
 			connectionAuthenticationChecker,
 			PlaybackServiceController(this),
 			PollConnectionServiceProxy(this),
-			StringResources(this),
+			stringResources,
 		)
 	}
 
@@ -185,13 +184,6 @@ class NowPlayingActivity :
 		}
 
 		activityScopedMessageBus.registerReceiver(this)
-
-		onBackPressedDispatcher.addCallback {
-			when {
-				playlistViewModel.isEditingPlaylist -> playlistViewModel.finishPlaylistEdit()
-				else -> finish()
-			}
-		}
 	}
 
 	override fun onStart() {

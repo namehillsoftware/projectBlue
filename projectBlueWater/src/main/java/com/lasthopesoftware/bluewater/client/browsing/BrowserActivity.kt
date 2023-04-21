@@ -526,7 +526,7 @@ private class GraphDependencies(
 	}
 }
 
-private val bottomAppBarHeight = Dimensions.AppBarHeight
+private val bottomAppBarHeight = Dimensions.appBarHeight
 
 @Composable
 @OptIn(ExperimentalMaterialApi::class)

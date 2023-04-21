@@ -179,7 +179,7 @@ fun NowPlayingView(
 									alpha = .8f,
 									contentDescription = stringResource(if (isScreenOnEnabled) R.string.screen_is_on else R.string.screen_is_off),
 									modifier = Modifier
-										.padding(Dimensions.ViewPadding)
+										.padding(Dimensions.viewPaddingUnit)
 										.clickable(onClick = screenOnState::toggleScreenOn),
 								)
 
@@ -188,7 +188,7 @@ fun NowPlayingView(
 									alpha = .8f,
 									contentDescription = stringResource(R.string.btn_view_files),
 									modifier = Modifier
-										.padding(Dimensions.ViewPadding)
+										.padding(Dimensions.viewPaddingUnit)
 										.clickable(onClick = {
 											scope.launch {
 												pagerState.scrollToPage(1)
@@ -225,7 +225,7 @@ fun NowPlayingView(
 							backgroundColor = Color.White.copy(alpha = .6f),
 							modifier = Modifier
 								.fillMaxWidth()
-								.padding(top = 16.dp)
+								.padding(top = 16.dp, bottom = 16.dp)
 						)
 
 						Row(
@@ -311,7 +311,11 @@ fun NowPlayingView(
 								)
 							}
 
-							PlayPauseButton(nowPlayingFilePropertiesViewModel, playbackServiceController)
+							PlayPauseButton(
+								nowPlayingFilePropertiesViewModel,
+								playbackServiceController,
+								alpha = .8f
+							)
 
 							Image(
 								painter = painterResource(R.drawable.chevron_up_white_36dp),

@@ -154,7 +154,7 @@ private fun LazyListScope.settingsList(
 				text = library.accessCode ?: "",
 				modifier = Modifier
 					.weight(1f)
-					.padding(Dimensions.ViewPadding),
+					.padding(Dimensions.viewPaddingUnit),
 				maxLines = 1,
 				overflow = TextOverflow.Ellipsis,
 				fontWeight = if (library.libraryId == selectedLibraryId) FontWeight.Bold else FontWeight.Normal,
@@ -166,13 +166,13 @@ private fun LazyListScope.settingsList(
 				contentDescription = stringResource(id = R.string.settings),
 				modifier = Modifier
 					.clickable { applicationNavigation.viewServerSettings(library.libraryId) }
-					.padding(Dimensions.ViewPadding),
+					.padding(Dimensions.viewPaddingUnit),
 			)
 
 			Row(
 				modifier = Modifier
 					.clickable { applicationNavigation.viewLibrary(library.libraryId) }
-					.padding(Dimensions.ViewPadding),
+					.padding(Dimensions.viewPaddingUnit),
 				verticalAlignment = Alignment.CenterVertically,
 			) {
 				Text(
@@ -224,7 +224,7 @@ private fun ApplicationSettingsViewVertical(
 	applicationNavigation: NavigateApplication,
 	playbackService: ControlPlaybackService,
 ) {
-	val rowHeight = dimensionResource(id = R.dimen.standard_row_height)
+	val rowHeight = Dimensions.standardRowHeight
 	val rowFontSize = LocalDensity.current.run { dimensionResource(id = R.dimen.row_font_size).toSp() }
 
 	val standardRowModifier = Modifier
@@ -240,7 +240,7 @@ private fun ApplicationSettingsViewVertical(
 	) {
 		item {
 			Box(
-				modifier = Modifier.fillMaxWidth().padding(Dimensions.ViewPadding * 8)
+				modifier = Modifier.fillMaxWidth().padding(Dimensions.viewPaddingUnit * 8)
 			) {
 				ApplicationLogo(modifier = Modifier
 					.fillMaxWidth(.5f)
@@ -275,7 +275,7 @@ fun ApplicationSettingsViewHorizontal(
 			.align(Alignment.CenterVertically)
 		)
 
-		val rowHeight = dimensionResource(id = R.dimen.standard_row_height)
+		val rowHeight = Dimensions.standardRowHeight
 		val rowFontSize = LocalDensity.current.run { dimensionResource(id = R.dimen.row_font_size).toSp() }
 
 		val standardRowModifier = Modifier
@@ -288,7 +288,7 @@ fun ApplicationSettingsViewHorizontal(
 		LazyColumn(
 			modifier = Modifier
 				.fillMaxHeight()
-				.padding(start = Dimensions.ViewPadding * 2)
+				.padding(start = Dimensions.viewPaddingUnit * 2)
 		) {
 			settingsList(
 				standardRowModifier,
@@ -315,7 +315,7 @@ fun ApplicationSettingsView(
 	Surface {
 		BoxWithConstraints(modifier = Modifier
 			.fillMaxSize()
-			.padding(Dimensions.ViewPadding)
+			.padding(Dimensions.viewPaddingUnit)
 		) {
 			if (maxWidth < maxHeight) ApplicationSettingsViewVertical(applicationSettingsViewModel, applicationNavigation, playbackService)
 			else ApplicationSettingsViewHorizontal(applicationSettingsViewModel, applicationNavigation, playbackService)
