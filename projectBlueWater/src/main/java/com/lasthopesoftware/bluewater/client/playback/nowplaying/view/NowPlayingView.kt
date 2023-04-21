@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -117,8 +118,18 @@ fun NowPlayingView(
 	) {
 		NowPlayingCoverArtView(nowPlayingCoverArtViewModel = nowPlayingCoverArtViewModel)
 
-		val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
 		val pagerState = rememberPagerState()
+
+		val scope = rememberCoroutineScope()
+		BackHandler(pagerState.currentPage > 0) {
+			when {
+				itemListMenuBackPressedHandler.hideAllMenus() -> {}
+				playlistViewModel.isEditingPlaylist -> playlistViewModel.finishPlaylistEdit()
+				pagerState.currentPage == 1 -> scope.launch { pagerState.animateScrollToPage(0) }
+			}
+		}
+
+		val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
 		VerticalPager(
 			pageSize = PageSize.Fill,
 			pageCount = 2,
@@ -128,7 +139,6 @@ fun NowPlayingView(
 				.background(SharedColors.OverlayDark)
 				.padding(systemBarsPadding),
 		) { page ->
-			val scope = rememberCoroutineScope()
 			val filePosition by nowPlayingFilePropertiesViewModel.filePosition.collectAsState()
 			val fileDuration by nowPlayingFilePropertiesViewModel.fileDuration.collectAsState()
 			val fileProgress by remember { derivedStateOf { filePosition / fileDuration.toFloat() } }
@@ -191,7 +201,7 @@ fun NowPlayingView(
 										.padding(Dimensions.viewPaddingUnit)
 										.clickable(onClick = {
 											scope.launch {
-												pagerState.scrollToPage(1)
+												pagerState.animateScrollToPage(1)
 											}
 										}),
 								)
@@ -324,7 +334,7 @@ fun NowPlayingView(
 								modifier = Modifier
 									.clickable(onClick = {
 										scope.launch {
-											pagerState.scrollToPage(0)
+											pagerState.animateScrollToPage(0)
 										}
 									})
 									.rotate(180f),
