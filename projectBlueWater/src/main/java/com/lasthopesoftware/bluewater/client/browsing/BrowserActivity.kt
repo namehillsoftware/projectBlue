@@ -63,7 +63,6 @@ import com.lasthopesoftware.bluewater.client.playback.engine.selection.SelectedP
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.defaults.DefaultPlaybackEngineLookup
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingView
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.playlist.NowPlayingPlaylistMessage
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.playlist.NowPlayingPlaylistViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.InMemoryNowPlayingDisplaySettings
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingCoverArtViewModel
@@ -310,8 +309,6 @@ class BrowserActivity :
 		).apply { loadSelectedLibraryId() }
 	}
 
-	override val nowPlayingTypedMessageBus by buildViewModelLazily { ViewModelMessageBus<NowPlayingPlaylistMessage>() }
-
 	override val pollForConnections by lazy { PollConnectionServiceProxy(this) }
 
 	override val nowPlayingCoverArtViewModel by buildViewModelLazily {
@@ -329,7 +326,6 @@ class BrowserActivity :
 		NowPlayingPlaylistViewModel(
 			messageBus,
 			nowPlayingState,
-			nowPlayingTypedMessageBus,
 		)
 	}
 

@@ -21,7 +21,6 @@ import com.lasthopesoftware.bluewater.client.connection.selected.ProvideSelected
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.LookupSelectedPlaybackEngineType
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.playlist.NowPlayingPlaylistMessage
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.playlist.NowPlayingPlaylistViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingCoverArtViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
@@ -71,7 +70,6 @@ interface BrowserViewDependencies {
 	val nowPlayingState: GetNowPlayingState
 	val selectedConnectionProvider: ProvideSelectedConnection
 	val pollForConnections: PollForConnections
-	val nowPlayingTypedMessageBus: ViewModelMessageBus<NowPlayingPlaylistMessage>
 	val nowPlayingCoverArtViewModel: NowPlayingCoverArtViewModel
 	val nowPlayingPlaylistViewModel: NowPlayingPlaylistViewModel
 }

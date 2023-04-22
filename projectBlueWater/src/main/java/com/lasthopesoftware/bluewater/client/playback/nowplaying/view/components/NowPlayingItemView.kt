@@ -21,6 +21,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
+import org.burnoutcrew.reorderable.ReorderableLazyListState
+import org.burnoutcrew.reorderable.detectReorder
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -30,6 +32,7 @@ fun NowPlayingItemView(
 	isActive: Boolean = false,
 	isEditingPlaylist: Boolean = false,
 	isHiddenMenuShown: Boolean = false,
+	reorderableState: ReorderableLazyListState? = null,
 	onItemClick: () -> Unit = {},
 	onHiddenMenuClick: () -> Unit = {},
 	onRemoveFromNowPlayingClick: () -> Unit = {},
@@ -80,11 +83,13 @@ fun NowPlayingItemView(
 				}
 			}
 
-			if (isEditingPlaylist) {
+			if (isEditingPlaylist && reorderableState != null) {
 				Image(
 					painter = painterResource(id = R.drawable.drag),
 					contentDescription = stringResource(id = R.string.drag_item),
-					modifier = Modifier.padding(Dimensions.viewPaddingUnit),
+					modifier = Modifier
+						.padding(Dimensions.viewPaddingUnit)
+						.detectReorder(reorderableState),
 				)
 			}
 		}

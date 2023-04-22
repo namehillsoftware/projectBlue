@@ -4,27 +4,26 @@ import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage.PlaylistChanged
-import com.lasthopesoftware.bluewater.shared.messages.SendTypedMessages
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 class NowPlayingPlaylistViewModel(
-	private val applicationMessages: RegisterForApplicationMessages,
-	private val nowPlayingRepository: GetNowPlayingState,
-	private val typedMessageBus: SendTypedMessages<NowPlayingPlaylistMessage>
+	applicationMessages: RegisterForApplicationMessages,
+	private val nowPlayingRepository: GetNowPlayingState
 ) :
 	ViewModel(),
 	ControlPlaylistEdits,
 	HasEditPlaylistState,
 	(PlaylistChanged) -> Unit
 {
+	private val playlistChangedSubscription = applicationMessages.registerReceiver(this)
+
 	private val mutableEditingPlaylistState = MutableStateFlow(false)
 	private val nowPlayingListState = MutableStateFlow(emptyList<PositionedFile>())
 
 	init {
-		applicationMessages.registerReceiver(this)
 		updateViewFromRepository()
 	}
 
@@ -36,12 +35,16 @@ class NowPlayingPlaylistViewModel(
 
 	override fun editPlaylist() {
 		mutableEditingPlaylistState.value = true
-		typedMessageBus.sendMessage(EditPlaylist)
 	}
 
 	override fun finishPlaylistEdit() {
 		mutableEditingPlaylistState.value = false
-		typedMessageBus.sendMessage(FinishEditPlaylist)
+	}
+
+	fun swapFiles(from: Int, to: Int) {
+		nowPlayingListState.value = nowPlayingListState.value.toMutableList().apply {
+			add(to, removeAt(from))
+		}
 	}
 
 	override fun invoke(p1: PlaylistChanged) {
@@ -49,7 +52,7 @@ class NowPlayingPlaylistViewModel(
 	}
 
 	override fun onCleared() {
-		applicationMessages.unregisterReceiver(this)
+		playlistChangedSubscription.close()
 	}
 
 	private fun updateViewFromRepository() {

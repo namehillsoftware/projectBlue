@@ -19,6 +19,7 @@ class PlaybackServiceController(private val context: Context) : ControlPlaybackS
 
 	override fun previous() = PlaybackService.previous(context)
 	override fun seekTo(position: Int) = PlaybackService.seekTo(context, position)
+	override fun moveFile(dragFrom: Int, dragTo: Int) = PlaybackService.moveFile(context, dragFrom, dragTo)
 
 	override fun startPlaylist(fileStringList: String, position: Int) {
 		PlaybackService.launchMusicService(context, position, fileStringList)

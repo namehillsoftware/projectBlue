@@ -27,7 +27,6 @@ import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnect
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingView
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.playlist.NowPlayingPlaylistMessage
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.playlist.NowPlayingPlaylistViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.InMemoryNowPlayingDisplaySettings
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingCoverArtViewModel
@@ -108,8 +107,6 @@ class NowPlayingActivity :
 
 	private val nowPlayingLookup by lazy { LiveNowPlayingLookup.getInstance() }
 
-	private val viewModelMessageBus by buildViewModelLazily { ViewModelMessageBus<NowPlayingPlaylistMessage>() }
-
 	private val menuMessageBus by buildViewModelLazily { ViewModelMessageBus<ItemListMenuMessage>() }
 
 	private val itemListMenuBackPressedHandler by lazyScoped { ItemListMenuBackPressedHandler(menuMessageBus) }
@@ -150,8 +147,7 @@ class NowPlayingActivity :
 	private val playlistViewModel by buildViewModelLazily {
 		NowPlayingPlaylistViewModel(
 			applicationMessageBus,
-			LiveNowPlayingLookup.getInstance(),
-			viewModelMessageBus
+			LiveNowPlayingLookup.getInstance()
 		)
 	}
 

@@ -16,6 +16,8 @@ interface ControlPlaybackService {
 
 	fun seekTo(position: Int)
 
+	fun moveFile(dragFrom: Int, dragTo: Int)
+
 	fun startPlaylist(fileStringList: String, position: Int = 0)
 
 	fun startPlaylist(serviceFiles: List<ServiceFile>, position: Int = 0)
