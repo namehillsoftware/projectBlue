@@ -55,9 +55,19 @@ import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessio
 import com.lasthopesoftware.bluewater.client.playback.caching.AudioCacheConfiguration
 import com.lasthopesoftware.bluewater.client.playback.caching.datasource.DiskFileCacheSourceFactory
 import com.lasthopesoftware.bluewater.client.playback.caching.uri.CachedAudioFileUriProvider
-import com.lasthopesoftware.bluewater.client.playback.engine.*
+import com.lasthopesoftware.bluewater.client.playback.engine.AudioManagingPlaybackStateChanger
+import com.lasthopesoftware.bluewater.client.playback.engine.ChangePlaybackContinuity
+import com.lasthopesoftware.bluewater.client.playback.engine.ChangePlaybackState
+import com.lasthopesoftware.bluewater.client.playback.engine.ChangePlaylistFiles
+import com.lasthopesoftware.bluewater.client.playback.engine.ChangePlaylistPosition
+import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
-import com.lasthopesoftware.bluewater.client.playback.engine.events.*
+import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlaybackCompleted
+import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlaybackInterrupted
+import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlaybackPaused
+import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlaybackStarted
+import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlayingFileChanged
+import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlaylistReset
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparationException
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueFeederBuilder
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
@@ -565,14 +575,18 @@ open class PlaybackService :
 				.eventually { it?.let(::initializePlaybackPlaylistStateManagerSerially) ?: Promise.empty() }
 				.eventually { it?.let { actOnIntent(intent) } ?: Promise(UninitializedPlaybackEngineException()) }
 				.must {
-					promisedTimeout.excuse {
-						// ignored - handle to avoid logging
-					}
 					promisedTimeout.cancel()
 				}
 
 			val timeoutResponse =
-				promisedTimeout.then<Unit> { throw TimeoutException("Timed out after $playbackStartTimeout") }
+				promisedTimeout.then(
+					{ throw TimeoutException("Timed out after $playbackStartTimeout") },
+					{
+						// avoid logging cancellation exceptions
+						if (it !is CancellationException)
+							throw it
+					}
+				)
 			Promise.whenAny(promisedIntentHandling, timeoutResponse).excuse(unhandledRejectionHandler)
 		}
 

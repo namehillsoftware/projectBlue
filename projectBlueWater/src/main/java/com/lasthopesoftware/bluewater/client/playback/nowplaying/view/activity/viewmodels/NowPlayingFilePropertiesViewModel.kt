@@ -157,19 +157,22 @@ class NowPlayingFilePropertiesViewModel(
 
 	@Synchronized
 	fun showNowPlayingControls() {
-		controlsShownPromise.excuse {
-			// ignored - handle to avoid logging
-		}
 		controlsShownPromise.cancel()
 
 		isScreenControlsVisibleState.value = true
 		controlsShownPromise = CancellableProxyPromise { cp ->
-			val promisedDelay = PromiseDelay.delay<Any?>(screenControlVisibilityTime)
-			promisedDelay.then {
-				if (!cp.isCancelled)
-					isScreenControlsVisibleState.value = false
-			}
-			promisedDelay
+			PromiseDelay
+				.delay<Any?>(screenControlVisibilityTime)
+				.also(cp::doCancel)
+				.then(
+					{
+						if (!cp.isCancelled)
+							isScreenControlsVisibleState.value = false
+					},
+					{
+						// ignored - handle to avoid excessive logging
+					}
+				)
 		}
 	}
 
