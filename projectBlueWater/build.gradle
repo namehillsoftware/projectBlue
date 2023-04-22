@@ -22,8 +22,6 @@ if (!hasAndroidStorePassword()) {
 
 def isSignedExternally = { hasKeyStorePassword() && hasAndroidStorePassword() }
 
-def compose_version = '1.4.1'
-
 android {
 	compileSdk 33
 	buildToolsVersion '33.0.0'
@@ -145,7 +143,8 @@ def getGeneratedVersionCode() {
 }
 
 dependencies {
-	def exoplayer_version = '2.18.5'
+	def compose_version = '1.4.2'
+	def exoplayer_version = '2.18.6'
 	def lifecycle_version = '2.6.1'
 	def junit5_version = '5.9.2'
 
@@ -177,8 +176,8 @@ dependencies {
 	implementation "androidx.compose.ui:ui-tooling:$compose_version"
 	implementation 'com.google.accompanist:accompanist-systemuicontroller:0.27.0'
 	implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.1'
-	implementation 'androidx.activity:activity-compose:1.7.0'
-	implementation 'androidx.compose.compiler:compiler:1.4.4'
+	implementation 'androidx.activity:activity-compose:1.7.1'
+	implementation 'androidx.compose.compiler:compiler:1.4.6'
 	implementation 'me.onebone:toolbar-compose:2.3.5'
 	implementation "dev.olshevski.navigation:reimagined:1.4.0"
 	debugImplementation "androidx.compose.ui:ui-tooling:$compose_version"
