@@ -1,7 +1,7 @@
-package com.lasthopesoftware.bluewater.client.playback.file.buffering;
+package com.lasthopesoftware.bluewater.client.playback.file.buffering
 
-import com.namehillsoftware.handoff.promises.Promise;
+import com.namehillsoftware.handoff.promises.Promise
 
-public interface IBufferingPlaybackFile {
-	Promise<IBufferingPlaybackFile> promiseBufferedPlaybackFile();
+interface IBufferingPlaybackFile {
+    fun promiseBufferedPlaybackFile(): Promise<IBufferingPlaybackFile>
 }

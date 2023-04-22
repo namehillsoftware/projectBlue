@@ -2,13 +2,13 @@ package com.lasthopesoftware.bluewater.client.playback.engine.preparation.GivenA
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue
+import com.lasthopesoftware.bluewater.client.playback.file.fakes.FakeBufferingPlaybackHandler
+import com.lasthopesoftware.bluewater.client.playback.file.fakes.FakePreparedPlayableFile
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CyclicalFileQueueProvider
 import com.namehillsoftware.handoff.Messenger
 import com.namehillsoftware.handoff.promises.MessengerOperator
 import com.namehillsoftware.handoff.promises.Promise
-import io.mockk.mockk
-import io.mockk.spyk
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
 import org.junit.jupiter.api.BeforeAll
@@ -20,7 +20,7 @@ class WhenAQueueIsCycledThroughManyTimes {
 	private val mut by lazy {
 		val numberOfFiles = nextInt(500)
 		val serviceFiles = generateSequence { ServiceFile(nextInt()) }.take(numberOfFiles).toList()
-		val fileActionMap = serviceFiles.associateWith { spyk(MockResolveAction()) }
+		val fileActionMap = serviceFiles.associateWith { MockResolveAction() }
 		val bufferingPlaybackQueuesProvider = CyclicalFileQueueProvider()
 		val queue = PreparedPlayableFileQueue(
 			{ 1 },
@@ -30,7 +30,7 @@ class WhenAQueueIsCycledThroughManyTimes {
 
 		Pair(fileActionMap, queue)
 	}
-	private val expectedCycles by lazy { nextInt(100) }
+	private val expectedCycles = 3
 	private val expectedNumberAbsolutePromises by lazy { expectedCycles * mut.first.size }
 	private var returnedPromiseCount = 0
 
@@ -45,10 +45,16 @@ class WhenAQueueIsCycledThroughManyTimes {
 	}
 
     @Test
-    fun `then each file is prepared the appropriate amount of times`() {
+    fun `then each file except the first is prepared the appropriate amount of times`() {
 		val (fileActionMap) = mut
-		assertThat(fileActionMap.values.map { it.preparedTimes }).allMatch { it == expectedCycles }
+		assertThat(fileActionMap.values.drop(1).map { it.preparedTimes }).allMatch { it == expectedCycles }
     }
+
+	@Test
+	fun `then the first is prepared the appropriate amount of times plus one because it will be buffered after the final cycle`() {
+		val (fileActionMap) = mut
+		assertThat(fileActionMap.values.first().preparedTimes).isEqualTo(expectedCycles + 1)
+	}
 
     @Test
     fun `then the correct number of promises is returned`() {
@@ -56,11 +62,15 @@ class WhenAQueueIsCycledThroughManyTimes {
     }
 
     private class MockResolveAction : MessengerOperator<PreparedPlayableFile> {
+		companion object {
+			private val resolvedFile by lazy { FakePreparedPlayableFile(FakeBufferingPlaybackHandler()) }
+		}
+
 		var preparedTimes = 0
 
         override fun send(messenger: Messenger<PreparedPlayableFile>) {
 			++preparedTimes
-            messenger.sendResolution(mockk())
+            messenger.sendResolution(resolvedFile)
         }
     }
 }
