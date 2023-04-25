@@ -75,6 +75,8 @@ class NestedScrollableHost : FrameLayout {
 
 	private fun handleInterceptTouchEvent(e: MotionEvent) {
 		val orientation = parentViewPager?.orientation ?: return
+		e.orientation
+
 
 		// Early return if child can't scroll in same direction as parent
 		if (!canChildScroll(orientation, -1f) && !canChildScroll(orientation, 1f)) {

@@ -22,6 +22,9 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.viewinterop.AndroidView
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewPlaylistFileItem
@@ -36,10 +39,10 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.RatingBar
-import com.lasthopesoftware.bluewater.shared.android.ui.components.draggable.DragDropLazyColumn
 import com.lasthopesoftware.bluewater.shared.android.ui.components.draggable.rememberDragDropListState
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.SharedColors
+import com.lasthopesoftware.bluewater.shared.android.view.ComposeRecyclerViewAdapter
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 import kotlinx.coroutines.launch
 
@@ -431,16 +434,34 @@ fun NowPlayingView(
 							}
 						}
 
-						DragDropLazyColumn(
-							nowPlayingFiles,
-							{ f, _ -> f },
+						AndroidView(
+							factory = { context ->
+								RecyclerView(context).apply {
+									clipToOutline = true
+
+									layoutParams = RecyclerView.LayoutParams(
+										RecyclerView.LayoutParams.MATCH_PARENT,
+										RecyclerView.LayoutParams.MATCH_PARENT
+									)
+
+									layoutManager = LinearLayoutManager(context)
+
+									isNestedScrollingEnabled = true
+
+									adapter = ComposeRecyclerViewAdapter<PositionedFile>(context) { f ->
+										NowPlayingFileView(positionedFile = f)
+									}
+								}
+							},
 							modifier = Modifier
 								.weight(1f)
 								.background(SharedColors.OverlayDark),
-							dragDropListState = reorderableState,
-						) { f, _ ->
-							NowPlayingFileView(f)
-						}
+							{ recyclerView ->
+								recyclerView.adapter
+									?.let { it as? ComposeRecyclerViewAdapter<PositionedFile> }
+									?.updateListEventually(nowPlayingFiles)
+							}
+						)
 					}
 				}
 			}
