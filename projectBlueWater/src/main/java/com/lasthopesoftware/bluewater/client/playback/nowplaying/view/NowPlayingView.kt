@@ -7,8 +7,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
@@ -38,13 +36,12 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.RatingBar
+import com.lasthopesoftware.bluewater.shared.android.ui.components.draggable.DragDropLazyColumn
+import com.lasthopesoftware.bluewater.shared.android.ui.components.draggable.rememberDragDropListState
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.SharedColors
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 import kotlinx.coroutines.launch
-import org.burnoutcrew.reorderable.ReorderableItem
-import org.burnoutcrew.reorderable.rememberReorderableLazyListState
-import org.burnoutcrew.reorderable.reorderable
 
 @Composable
 private fun NowPlayingCoverArtView(
@@ -123,17 +120,18 @@ fun NowPlayingView(
 		val pagerState = rememberPagerState()
 
 		val scope = rememberCoroutineScope()
-		BackHandler(pagerState.currentPage > 0) {
+		BackHandler(pagerState.settledPage > 0) {
 			when {
 				itemListMenuBackPressedHandler.hideAllMenus() -> {}
 				playlistViewModel.isEditingPlaylist -> playlistViewModel.finishPlaylistEdit()
-				pagerState.currentPage == 1 -> {
+				pagerState.settledPage == 1 -> {
 					playlistViewModel.finishPlaylistEdit()
 					scope.launch { pagerState.animateScrollToPage(0) }
 				}
 			}
 		}
 
+		val isEditingPlaylist by playlistViewModel.isEditingPlaylistState.collectAsState()
 		val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
 		VerticalPager(
 			pageSize = PageSize.Fill,
@@ -143,6 +141,8 @@ fun NowPlayingView(
 				.fillMaxSize()
 				.background(SharedColors.OverlayDark)
 				.padding(systemBarsPadding),
+			userScrollEnabled = !isEditingPlaylist,
+			beyondBoundsPageCount = 1
 		) { page ->
 			val filePosition by nowPlayingFilePropertiesViewModel.filePosition.collectAsState()
 			val fileDuration by nowPlayingFilePropertiesViewModel.fileDuration.collectAsState()
@@ -274,7 +274,6 @@ fun NowPlayingView(
 				}
 			} else {
 				Box {
-					val isEditingPlaylist by playlistViewModel.isEditingPlaylistState.collectAsState()
 					Column(
 						modifier = Modifier.fillMaxSize()
 					) {
@@ -356,14 +355,13 @@ fun NowPlayingView(
 								.padding(0.dp)
 						)
 
-
 						val nowPlayingFiles by playlistViewModel.nowPlayingList.collectAsState()
 						val playlist by remember { derivedStateOf { nowPlayingFiles.map { p -> p.serviceFile } } }
 						val playingFile by nowPlayingFilePropertiesViewModel.nowPlayingFile.collectAsState()
 
-						val reorderableState = rememberReorderableLazyListState(
+						val reorderableState = rememberDragDropListState(
 							onMove = { from, to ->
-								playlistViewModel.swapFiles(from.index, to.index)
+								playlistViewModel.swapFiles(from, to)
 							},
 							onDragEnd = { from, to ->
 								playbackServiceController.moveFile(from, to)
@@ -407,7 +405,7 @@ fun NowPlayingView(
 								isEditingPlaylist = isEditingPlaylist,
 								isHiddenMenuShown = isMenuShown,
 								onItemClick = viewFilesClickHandler,
-								reorderableState = reorderableState,
+								dragDropListState = reorderableState,
 								onHiddenMenuClick = {
 									if (!isEditingPlaylist) {
 										itemListMenuBackPressedHandler.hideAllMenus()
@@ -428,23 +426,20 @@ fun NowPlayingView(
 						if (pagerState.currentPage == 0) {
 							playingFile?.apply {
 								scope.launch {
-									reorderableState.listState.scrollToItem(playlistPosition)
+									reorderableState.lazyListState.scrollToItem(playlistPosition)
 								}
 							}
 						}
 
-						LazyColumn(
+						DragDropLazyColumn(
+							nowPlayingFiles,
+							{ f, _ -> f },
 							modifier = Modifier
 								.weight(1f)
-								.background(SharedColors.OverlayDark)
-								.reorderable(reorderableState),
-							state = reorderableState.listState,
-						) {
-							items(nowPlayingFiles, { it }) { f ->
-								ReorderableItem(reorderableState = reorderableState, key = f) {
-									NowPlayingFileView(f)
-								}
-							}
+								.background(SharedColors.OverlayDark),
+							dragDropListState = reorderableState,
+						) { f, _ ->
+							NowPlayingFileView(f)
 						}
 					}
 				}

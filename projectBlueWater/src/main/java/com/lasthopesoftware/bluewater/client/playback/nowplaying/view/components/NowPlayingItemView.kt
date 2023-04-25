@@ -20,9 +20,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.R
+import com.lasthopesoftware.bluewater.shared.android.ui.components.draggable.DragDropListState
+import com.lasthopesoftware.bluewater.shared.android.ui.components.draggable.signalDrag
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
-import org.burnoutcrew.reorderable.ReorderableLazyListState
-import org.burnoutcrew.reorderable.detectReorder
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -32,7 +32,7 @@ fun NowPlayingItemView(
 	isActive: Boolean = false,
 	isEditingPlaylist: Boolean = false,
 	isHiddenMenuShown: Boolean = false,
-	reorderableState: ReorderableLazyListState? = null,
+	dragDropListState: DragDropListState? = null,
 	onItemClick: () -> Unit = {},
 	onHiddenMenuClick: () -> Unit = {},
 	onRemoveFromNowPlayingClick: () -> Unit = {},
@@ -83,13 +83,13 @@ fun NowPlayingItemView(
 				}
 			}
 
-			if (isEditingPlaylist && reorderableState != null) {
+			if (isEditingPlaylist && dragDropListState != null) {
 				Image(
 					painter = painterResource(id = R.drawable.drag),
 					contentDescription = stringResource(id = R.string.drag_item),
 					modifier = Modifier
 						.padding(Dimensions.viewPaddingUnit)
-						.detectReorder(reorderableState),
+						.signalDrag(dragDropListState),
 				)
 			}
 		}
