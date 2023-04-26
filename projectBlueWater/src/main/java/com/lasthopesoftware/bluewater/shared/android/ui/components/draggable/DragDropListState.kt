@@ -1,6 +1,10 @@
 package com.lasthopesoftware.bluewater.shared.android.ui.components.draggable
 
-import androidx.compose.foundation.gestures.animateScrollBy
+import android.util.Log
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.lazy.LazyListItemInfo
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -14,6 +18,9 @@ import androidx.compose.ui.geometry.Offset
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlin.math.ceil
+import kotlin.math.floor
+import kotlin.math.roundToInt
 
 @Composable
 fun rememberDragDropListState(
@@ -31,44 +38,53 @@ class DragDropListState(
 	private val onMove: (Int, Int) -> Unit,
 	private val onDragEnd: ((Int, Int) -> Unit)? = null
 ) {
-	var draggedDistance by mutableStateOf(0f)
+	companion object {
+		private const val logTag = "DragDropListState"
+	}
+
+	private var scrollToNextIndexJob: Job? = null
+	private var overscrollJob: Job? = null
+
+	private var draggedDistance by mutableStateOf(0f)
 
 	// used to obtain initial offsets on drag start
-	var initiallyDraggedElement by mutableStateOf<LazyListItemInfo?>(null)
+	private var initiallyDraggedElementIndex: Int? = null
+	private var initiallyDraggedElementOffset by mutableStateOf(0)
 
 	var currentIndexOfDraggedItem by mutableStateOf<Int?>(null)
-
-	var isDragEnabled by mutableStateOf(false)
-
-	val initialOffsets: Pair<Int, Int>?
-		get() = initiallyDraggedElement?.let { Pair(it.offset, it.offsetEnd) }
-
-	val elementDisplacement: Float?
-		get() = currentElement
-			?.let { item -> (initiallyDraggedElement?.offset ?: 0f).toFloat() + draggedDistance - item.offset }
-
-	internal var previousIndexOfDraggedItem by mutableStateOf<Int?>(null)
 		private set
 
-	val currentElement: LazyListItemInfo?
+	val draggingItemOffset: Float
+		get() = currentElement
+			?.let { item -> initiallyDraggedElementOffset + draggedDistance - item.offset }
+			?: 0f
+
+	var previousIndexOfDraggedItem by mutableStateOf<Int?>(null)
+		private set
+	var previousItemOffset = Animatable(0f)
+		private set
+
+	private val currentElement: LazyListItemInfo?
 		get() = currentIndexOfDraggedItem?.let {
 			lazyListState.getVisibleItemInfoFor(absoluteIndex = it)
 		}
 
-	var overscrollJob by mutableStateOf<Job?>(null)
-
-	fun onDragStart(offset: Offset) {
+	fun onDragStart(key: Any) {
 		val draggedItem = lazyListState.layoutInfo
 			.visibleItemsInfo
-			.firstOrNull { item -> offset.y.toInt() in item.offset..(item.offset + item.size) }
+			.firstOrNull { item -> item.key == key }
 			?: return
 
+		Log.d(logTag, "draggedItem.index=${draggedItem.index}")
+
+		draggedDistance = 0f
 		currentIndexOfDraggedItem = draggedItem.index
-		initiallyDraggedElement = draggedItem
+		initiallyDraggedElementIndex = draggedItem.index
+		initiallyDraggedElementOffset = draggedItem.offset
 	}
 
 	fun onDragEnd() {
-		initiallyDraggedElement?.index?.also { initialPosition ->
+		initiallyDraggedElementIndex?.also { initialPosition ->
 			currentIndexOfDraggedItem?.also { finalPosition ->
 				onDragEnd?.invoke(initialPosition, finalPosition)
 			}
@@ -77,62 +93,98 @@ class DragDropListState(
 	}
 
 	fun onDragInterrupted() {
+		Log.d(logTag, "onDragInterrupted")
 		currentIndexOfDraggedItem?.also { current ->
-			previousIndexOfDraggedItem = current
+			scope.launch {
+				try {
+					overscrollJob?.join()
+					scrollToNextIndexJob?.join()
+				} catch (e: Throwable) {
+					// ignored
+				}
+
+				previousIndexOfDraggedItem = current
+				val startOffset = draggingItemOffset
+
+				previousItemOffset.snapTo(startOffset)
+				previousItemOffset.animateTo(
+					0f,
+					spring(
+						stiffness = Spring.StiffnessMediumLow,
+						visibilityThreshold = 1f
+					)
+				)
+				previousIndexOfDraggedItem = null
+			}
 		}
 		draggedDistance = 0f
 		currentIndexOfDraggedItem = null
-		initiallyDraggedElement = null
+		initiallyDraggedElementIndex = null
+		initiallyDraggedElementOffset = 0
 		overscrollJob?.cancel()
 	}
 
 	fun onDrag(offset: Offset) {
-		draggedDistance += offset.y
+		Log.d(logTag, "onDrag")
 
-		initialOffsets?.also { (topOffset, bottomOffset) ->
-			val startOffset = topOffset + draggedDistance
-			val endOffset = bottomOffset + draggedDistance
+		val newDistanceTraveled = offset.y
+		draggedDistance += newDistanceTraveled
 
-			currentElement?.also { hovered ->
-				lazyListState.layoutInfo.visibleItemsInfo
-					.filterNot { item -> item.offsetEnd < startOffset || item.offset > endOffset || hovered.index == item.index }
-					.firstOrNull { item ->
-						val delta = startOffset - hovered.offset
-						when {
-							delta > 0 -> (endOffset > item.offsetEnd)
-							else -> (startOffset < item.offset)
-						}
-					}
-					?.also { item ->
-						currentIndexOfDraggedItem?.also { current -> onMove.invoke(current, item.index) }
-						currentIndexOfDraggedItem = item.index
-					}
+		val draggingElement = currentElement ?: return
+		val startOffset = draggingElement.offset + draggingItemOffset
+		val middleOffset = draggingElement.size / 2 + startOffset
+		val middleOffsetInt = when {
+			newDistanceTraveled > 0 -> ceil(middleOffset).toInt()
+			newDistanceTraveled < 0 -> floor(middleOffset).toInt()
+			else -> middleOffset.roundToInt()
+		}
+
+		val targetItem = lazyListState.layoutInfo.visibleItemsInfo
+			.firstOrNull { item ->
+				draggingElement.index != item.index && middleOffsetInt in item.offset..item.offsetEnd
 			}
+
+		if (targetItem != null) {
+			val scrollToNextItem = when (lazyListState.firstVisibleItemIndex) {
+				targetItem.index -> draggingElement
+				draggingElement.index -> targetItem
+				else -> null
+			}
+
+			Log.d(logTag, "scrollToNextIndex=$scrollToNextItem")
+
+			if (scrollToNextItem != null) {
+				scrollToNextIndexJob?.cancel()
+				scrollToNextIndexJob = scope.launch {
+					Log.d(logTag, "scrollToNextIndexJob begin")
+					// this is needed to neutralize automatic keeping the first item first.
+					lazyListState.scrollBy(scrollToNextItem.offset.toFloat())
+					onMove(draggingElement.index, targetItem.index)
+					Log.d(logTag, "scrollToNextIndexJob end")
+				}
+			} else {
+				onMove(draggingElement.index, targetItem.index)
+			}
+
+			currentIndexOfDraggedItem = targetItem.index
+			return
 		}
 
 		if (overscrollJob?.isActive == true) return
 
-		val overScroll = checkForOverScroll()
+		val endOffset = startOffset + draggingElement.size
+		val overScroll = with (lazyListState.layoutInfo) {
+			when {
+				draggedDistance > 0 -> (endOffset - viewportEndOffset).coerceAtLeast(0f)
+				draggedDistance < 0 -> (startOffset - viewportStartOffset).coerceAtMost(0f)
+				else -> 0f
+			}
+		}
 		if (overScroll == 0f) {
 			overscrollJob?.cancel()
 			return
 		}
 
-		overscrollJob = scope.launch { lazyListState.animateScrollBy(overScroll) }
-	}
-
-	private fun checkForOverScroll(): Float {
-		return initiallyDraggedElement?.let {
-			val startOffset = it.offset + draggedDistance
-			val endOffset = it.offsetEnd + draggedDistance
-
-			with (lazyListState.layoutInfo) {
-				when {
-					draggedDistance > 0 -> (endOffset - viewportEndOffset).takeIf { diff -> diff > 0 }
-					draggedDistance < 0 -> (startOffset - viewportStartOffset).takeIf { diff -> diff < 0 }
-					else -> null
-				}
-			}
-		} ?: 0f
+		overscrollJob = scope.launch { lazyListState.scrollBy(overScroll) }
 	}
 }

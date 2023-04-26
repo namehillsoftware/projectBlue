@@ -20,13 +20,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.R
+import com.lasthopesoftware.bluewater.shared.android.ui.components.draggable.DragDropItemScope
 import com.lasthopesoftware.bluewater.shared.android.ui.components.draggable.DragDropListState
-import com.lasthopesoftware.bluewater.shared.android.ui.components.draggable.signalDrag
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun NowPlayingItemView(
+fun DragDropItemScope.NowPlayingItemView(
 	itemName: String,
 	artist: String,
 	isActive: Boolean = false,
@@ -89,7 +89,7 @@ fun NowPlayingItemView(
 					contentDescription = stringResource(id = R.string.drag_item),
 					modifier = Modifier
 						.padding(Dimensions.viewPaddingUnit)
-						.signalDrag(dragDropListState),
+						.detectDrag(),
 				)
 			}
 		}
