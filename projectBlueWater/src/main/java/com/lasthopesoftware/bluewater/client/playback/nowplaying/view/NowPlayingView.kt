@@ -230,7 +230,7 @@ fun NowPlayingView(
 								backgroundColor = Color.White.copy(alpha = .1f),
 								modifier = Modifier
 									.fillMaxWidth()
-									.height(64.dp),
+									.height(Dimensions.menuHeight),
 								onRatingSelected = { nowPlayingFilePropertiesViewModel.updateRating(it.toFloat()) }
 							)
 						}

@@ -34,7 +34,6 @@ import androidx.compose.material.ProvideTextStyle
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
-import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.Composable
@@ -219,7 +218,7 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 									color = coverArtColorState.primaryTextColor,
 									backgroundColor = coverArtColorState.primaryTextColor.copy(.1f),
 									modifier = Modifier
-										.height(TextFieldDefaults.MinHeight)
+										.height(36.dp)
 										.align(Alignment.Center),
 									onRatingSelected = if (isEditing) {
 										{ fileProperty.updateValue(it.toString()) }
