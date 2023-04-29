@@ -18,12 +18,11 @@ import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryR
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
 import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
-import com.lasthopesoftware.bluewater.client.connection.polling.ConnectionLostNotification
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionServiceProxy
-import com.lasthopesoftware.bluewater.client.connection.polling.WaitForConnectionDialog
 import com.lasthopesoftware.bluewater.client.connection.selected.InstantiateSelectedConnectionActivity.Companion.restoreSelectedConnection
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.session.ConnectionLostViewModel
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingView
@@ -34,12 +33,11 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.v
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingScreenViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
+import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToasterResponse
 import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
-import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
-import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRateLimiter
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
@@ -47,16 +45,11 @@ import com.lasthopesoftware.resources.closables.lazyScoped
 import com.lasthopesoftware.resources.strings.StringResources
 import com.namehillsoftware.handoff.promises.Promise
 
-class NowPlayingActivity :
-	AppCompatActivity(),
-	(ConnectionLostNotification) -> Unit
+class NowPlayingActivity : AppCompatActivity()
 {
-
 	private val messageHandler by lazy { Handler(mainLooper) }
 
 	private val applicationMessageBus by lazy { getApplicationMessageBus() }
-
-	private val activityScopedMessageBus by lazyScoped { applicationMessageBus.getScopedMessageBus() }
 
 	private val imageProvider by lazy { CachedImageProvider.getInstance(this) }
 
@@ -161,25 +154,33 @@ class NowPlayingActivity :
 		)
 	}
 
+	private val connectionLostViewModel by buildViewModelLazily {
+		ConnectionLostViewModel(
+			applicationMessageBus,
+			PollConnectionServiceProxy(this)
+		)
+	}
+
 	private val applicationNavigation by lazy { ActivityApplicationNavigation(this, com.lasthopesoftware.bluewater.shared.android.intents.IntentBuilder(this)) }
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
 		setContent {
-			NowPlayingView(
-				nowPlayingCoverArtViewModel = nowPlayingCoverArtViewModel,
-				nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
-				screenOnState = nowPlayingScreenViewModel,
-				playbackServiceController = PlaybackServiceController(this),
-				playlistViewModel = playlistViewModel,
-				childItemViewModelProvider = childViewItemProvider,
-				applicationNavigation = applicationNavigation,
-				itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
-			)
+			ProjectBlueTheme {
+				NowPlayingView(
+					nowPlayingCoverArtViewModel = nowPlayingCoverArtViewModel,
+					nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
+					screenOnState = nowPlayingScreenViewModel,
+					playbackServiceController = PlaybackServiceController(this),
+					playlistViewModel = playlistViewModel,
+					childItemViewModelProvider = childViewItemProvider,
+					applicationNavigation = applicationNavigation,
+					itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
+					connectionLostViewModel = connectionLostViewModel,
+				)
+			}
 		}
-
-		activityScopedMessageBus.registerReceiver(this)
 	}
 
 	override fun onStart() {
@@ -195,6 +196,8 @@ class NowPlayingActivity :
 			.eventually { np ->
 				np?.libraryId
 					?.let { libraryId ->
+						connectionLostViewModel.watchLibraryConnection(libraryId)
+
 						Promise.whenAll(
 							nowPlayingFilePropertiesViewModel.initializeViewModel().keepPromise(Unit),
 							nowPlayingCoverArtViewModel.initializeViewModel().keepPromise(Unit)
@@ -209,14 +212,5 @@ class NowPlayingActivity :
 			}
 			.eventuallyExcuse(LoopedInPromise.response(UnexpectedExceptionToasterResponse(this), messageHandler))
 			.then { finish() }
-	}
-
-	override fun invoke(p1: ConnectionLostNotification) {
-		nowPlayingLookup.promiseNowPlaying().eventually(
-			LoopedInPromise.response({ np ->
-				np?.libraryId?.also { libraryId ->
-					WaitForConnectionDialog.show(this, libraryId)
-				}
-			}, messageHandler))
 	}
 }

@@ -55,6 +55,7 @@ import com.lasthopesoftware.bluewater.client.connection.authentication.Connectio
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionServiceProxy
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.session.ConnectionLostViewModel
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.*
 import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettingsLookup
@@ -326,6 +327,12 @@ class BrowserActivity :
 		NowPlayingPlaylistViewModel(
 			messageBus,
 			nowPlayingState,
+		)
+	}
+	override val connectionLostViewModel by buildViewModelLazily {
+		ConnectionLostViewModel(
+			messageBus,
+			pollForConnections,
 		)
 	}
 
@@ -896,6 +903,7 @@ private fun BrowserView(
 								},
 								applicationNavigation = applicationNavigation,
 								itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
+								connectionLostViewModel = connectionLostViewModel,
 							)
 						}
 					}
