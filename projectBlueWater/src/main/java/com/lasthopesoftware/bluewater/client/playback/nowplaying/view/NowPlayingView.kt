@@ -22,6 +22,7 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewPlaylistFileItem
@@ -482,10 +483,22 @@ fun NowPlayingView(
 				title = { Text(text = stringResource(id = R.string.lbl_connection_lost_title)) },
 				text = { Text(text = stringResource(id = R.string.lbl_attempting_to_reconnect, stringResource(id = R.string.app_name))) },
 				buttons = {
-					Button(onClick = { connectionLostViewModel.cancelLibraryConnectionPolling() }) {
-						Text(text = stringResource(id = R.string.btn_cancel))
+					Row(
+						modifier = Modifier.fillMaxWidth().padding(Dimensions.viewPaddingUnit),
+						horizontalArrangement = Arrangement.Center,
+					) {
+						Button(
+							onClick = {
+								connectionLostViewModel.cancelLibraryConnectionPolling()
+						  	},
+						) {
+							Text(text = stringResource(id = R.string.btn_cancel))
+						}
 					}
-				}
+				},
+				properties = DialogProperties(
+					dismissOnBackPress = true,
+				)
 			)
 		}
 	}

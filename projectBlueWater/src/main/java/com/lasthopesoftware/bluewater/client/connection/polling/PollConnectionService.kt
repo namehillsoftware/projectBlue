@@ -37,7 +37,9 @@ class PollConnectionService : Service() {
 				.eventually {  s ->
 					s.service
 						.promiseTestedLibrary(libraryId, withNotification)
-						.must { context.unbindService(s.serviceConnection) }
+						.apply {
+							must { context.unbindService(s.serviceConnection) }
+						}
 				}
 		}
 	}
