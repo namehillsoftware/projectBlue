@@ -233,18 +233,26 @@ fun NowPlayingView(
 								backgroundColor = Color.White.copy(alpha = .1f),
 								modifier = Modifier
 									.fillMaxWidth()
-									.height(Dimensions.menuHeight),
+									.height(Dimensions.menuHeight)
+									.padding(bottom = 16.dp),
 								onRatingSelected = { nowPlayingFilePropertiesViewModel.updateRating(it.toFloat()) }
 							)
+
+							val isReadOnly by nowPlayingFilePropertiesViewModel.isReadOnly.collectAsState()
+							if (isReadOnly) {
+								ProvideTextStyle(value = MaterialTheme.typography.caption) {
+									Text(
+										text = stringResource(id = R.string.readOnlyConnection)
+									)
+								}
+							}
 						}
 
 						LinearProgressIndicator(
 							progress = fileProgress,
 							color = Color.White,
 							backgroundColor = Color.White.copy(alpha = .6f),
-							modifier = Modifier
-								.fillMaxWidth()
-								.padding(top = 16.dp, bottom = 16.dp)
+							modifier = Modifier.fillMaxWidth()
 						)
 
 						Row(
@@ -484,7 +492,9 @@ fun NowPlayingView(
 				text = { Text(text = stringResource(id = R.string.lbl_attempting_to_reconnect, stringResource(id = R.string.app_name))) },
 				buttons = {
 					Row(
-						modifier = Modifier.fillMaxWidth().padding(Dimensions.viewPaddingUnit),
+						modifier = Modifier
+							.fillMaxWidth()
+							.padding(Dimensions.viewPaddingUnit),
 						horizontalArrangement = Arrangement.Center,
 					) {
 						Button(
