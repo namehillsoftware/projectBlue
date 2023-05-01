@@ -100,6 +100,16 @@ private fun KeepScreenOn(keepScreenOn: Boolean) {
 }
 
 @Composable
+private fun NowPlayingProgressIndicator(fileProgress: Float) {
+	LinearProgressIndicator(
+		progress = fileProgress,
+		color = Color.White,
+		backgroundColor = Color.White.copy(alpha = .2f),
+		modifier = Modifier.fillMaxWidth()
+	)
+}
+
+@Composable
 @OptIn(ExperimentalFoundationApi::class)
 fun NowPlayingView(
 	nowPlayingCoverArtViewModel: NowPlayingCoverArtViewModel,
@@ -225,35 +235,34 @@ fun NowPlayingView(
 						horizontalAlignment = Alignment.CenterHorizontally,
 					) {
 						if (isScreenControlsVisible) {
-							val rating by nowPlayingFilePropertiesViewModel.songRating.collectAsState()
-							val ratingInt by remember { derivedStateOf { rating.toInt() } }
-							RatingBar(
-								rating = ratingInt,
-								color = Color.White,
-								backgroundColor = Color.White.copy(alpha = .1f),
-								modifier = Modifier
-									.fillMaxWidth()
-									.height(Dimensions.menuHeight)
-									.padding(bottom = 16.dp),
-								onRatingSelected = { nowPlayingFilePropertiesViewModel.updateRating(it.toFloat()) }
-							)
+							Box(modifier = Modifier
+								.fillMaxWidth()
+								.padding(Dimensions.viewPaddingUnit)
+							) {
+								val rating by nowPlayingFilePropertiesViewModel.songRating.collectAsState()
+								val ratingInt by remember { derivedStateOf { rating.toInt() } }
+								RatingBar(
+									rating = ratingInt,
+									color = Color.White,
+									backgroundColor = Color.White.copy(alpha = .1f),
+									modifier = Modifier
+										.fillMaxWidth()
+										.height(Dimensions.menuHeight),
+									onRatingSelected = { nowPlayingFilePropertiesViewModel.updateRating(it.toFloat()) }
+								)
 
-							val isReadOnly by nowPlayingFilePropertiesViewModel.isReadOnly.collectAsState()
-							if (isReadOnly) {
-								ProvideTextStyle(value = MaterialTheme.typography.caption) {
-									Text(
-										text = stringResource(id = R.string.readOnlyConnection)
-									)
+								val isReadOnly by nowPlayingFilePropertiesViewModel.isReadOnly.collectAsState()
+								if (isReadOnly) {
+									ProvideTextStyle(value = MaterialTheme.typography.caption) {
+										Text(
+											text = stringResource(id = R.string.readOnlyConnection)
+										)
+									}
 								}
 							}
 						}
 
-						LinearProgressIndicator(
-							progress = fileProgress,
-							color = Color.White,
-							backgroundColor = Color.White.copy(alpha = .6f),
-							modifier = Modifier.fillMaxWidth()
-						)
+						NowPlayingProgressIndicator(fileProgress = fileProgress)
 
 						Row(
 							modifier = Modifier
@@ -358,14 +367,7 @@ fun NowPlayingView(
 							)
 						}
 
-						LinearProgressIndicator(
-							progress = fileProgress,
-							color = Color.White,
-							backgroundColor = Color.White.copy(alpha = .6f),
-							modifier = Modifier
-								.fillMaxWidth()
-								.padding(0.dp)
-						)
+						NowPlayingProgressIndicator(fileProgress = fileProgress)
 
 						val nowPlayingFiles by playlistViewModel.nowPlayingList.collectAsState()
 						val playlist by remember { derivedStateOf { nowPlayingFiles.map { p -> p.serviceFile } } }

@@ -187,20 +187,22 @@ fun ItemListView(
 
 		val isMenuShown by fileItemViewModel.isMenuShown.collectAsState()
 		val fileName by fileItemViewModel.title.collectAsState()
-		val isPlaying by remember { derivedStateOf { playingFile?.serviceFile == serviceFile } }
+		val isPlaying by remember(serviceFile) { derivedStateOf { playingFile?.serviceFile == serviceFile } }
 
-		val viewFilesClickHandler = {
-			itemListViewModel.loadedLibraryId?.also {
-				applicationNavigation.viewFileDetails(it, files, position)
+		val viewFileDetailsClickHandler = remember(position) {
+			{
+				itemListViewModel.loadedLibraryId?.also {
+					applicationNavigation.viewFileDetails(it, files, position)
+				}
+				Unit
 			}
-			Unit
 		}
 
 		TrackHeaderItemView(
 			itemName = fileName,
 			isActive = isPlaying,
 			isHiddenMenuShown = isMenuShown,
-			onItemClick = viewFilesClickHandler,
+			onItemClick = viewFileDetailsClickHandler,
 			onHiddenMenuClick = {
 				itemListMenuBackPressedHandler.hideAllMenus()
 				fileItemViewModel.showMenu()
@@ -208,7 +210,7 @@ fun ItemListView(
 			onAddToNowPlayingClick = {
 				 playbackServiceController.addToPlaylist(serviceFile)
 			},
-			onViewFilesClick = viewFilesClickHandler,
+			onViewFilesClick = viewFileDetailsClickHandler,
 			onPlayClick = {
 				fileItemViewModel.hideMenu()
 				playbackServiceController.startPlaylist(files, position)
