@@ -238,8 +238,8 @@ fun NowPlayingView(
 				) {
 					if (isScreenControlsVisible) {
 						Box(modifier = Modifier
-								.fillMaxWidth()
-								.padding(Dimensions.viewPaddingUnit)
+							.fillMaxWidth()
+							.padding(Dimensions.viewPaddingUnit)
 							) {
 								val rating by nowPlayingFilePropertiesViewModel.songRating.collectAsState()
 								val ratingInt by remember { derivedStateOf { rating.toInt() } }
@@ -476,12 +476,10 @@ fun NowPlayingView(
 //							}
 //						)
 
-					DragDropLazyColumn(
-						items = nowPlayingFiles,
-						keyFactory = { _, f -> f },
-						dragDropListState = reorderableState,
-					) { _, f ->
-						NowPlayingFileView(positionedFile = f)
+					DragDropLazyColumn(dragDropListState = reorderableState) {
+						DragDropItems(items = nowPlayingFiles, keyFactory = { _, f -> f }) { _, f ->
+							NowPlayingFileView(positionedFile = f)
+						}
 					}
 				}
 			}
