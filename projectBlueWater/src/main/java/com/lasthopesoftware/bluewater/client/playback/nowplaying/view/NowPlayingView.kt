@@ -9,16 +9,18 @@ import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -41,6 +43,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.RatingBar
 import com.lasthopesoftware.bluewater.shared.android.ui.components.draggable.DragDropItemScope
 import com.lasthopesoftware.bluewater.shared.android.ui.components.draggable.DragDropLazyColumn
+import com.lasthopesoftware.bluewater.shared.android.ui.components.draggable.getVisibleItemInfoFor
 import com.lasthopesoftware.bluewater.shared.android.ui.components.draggable.rememberDragDropListState
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.SharedColors
@@ -110,6 +113,9 @@ private fun NowPlayingProgressIndicator(fileProgress: Float) {
 	)
 }
 
+private val expandedControlsHeight =
+	Dimensions.viewPaddingUnit * 2 + Dimensions.menuHeight + ProgressIndicatorDefaults.StrokeWidth + 64.dp
+
 @Composable
 @OptIn(ExperimentalFoundationApi::class)
 fun NowPlayingView(
@@ -132,16 +138,17 @@ fun NowPlayingView(
 	) {
 		NowPlayingCoverArtView(nowPlayingCoverArtViewModel = nowPlayingCoverArtViewModel)
 
-		val pagerState = rememberPagerState()
+		val lazyListState = rememberLazyListState()
+		val isNotSettledOnFirstPage by remember { derivedStateOf { lazyListState.firstVisibleItemIndex != 0 || lazyListState.firstVisibleItemScrollOffset != 0 } }
 
 		val scope = rememberCoroutineScope()
-		BackHandler(pagerState.settledPage > 0) {
+		BackHandler(isNotSettledOnFirstPage) {
 			when {
 				itemListMenuBackPressedHandler.hideAllMenus() -> {}
 				playlistViewModel.isEditingPlaylist -> playlistViewModel.finishPlaylistEdit()
-				pagerState.settledPage == 1 -> {
+				isNotSettledOnFirstPage -> {
 					playlistViewModel.finishPlaylistEdit()
-					scope.launch { pagerState.animateScrollToPage(0) }
+					scope.launch { lazyListState.scrollToItem(0) }
 				}
 			}
 		}
@@ -164,101 +171,210 @@ fun NowPlayingView(
 			val fileDuration by nowPlayingFilePropertiesViewModel.fileDuration.collectAsState()
 			val fileProgress by remember { derivedStateOf { filePosition / fileDuration.toFloat() } }
 
-			Box(
-				modifier = Modifier
-					.fillMaxWidth()
-					.height(maxHeight)
-					.clickable(
-						interactionSource = remember { MutableInteractionSource() },
-						indication = null,
-						onClick = { nowPlayingFilePropertiesViewModel.showNowPlayingControls() }
-					),
-			) {
-				val isScreenControlsVisible by nowPlayingFilePropertiesViewModel.isScreenControlsVisible.collectAsState()
+			val reorderableState = rememberDragDropListState(
+				onMove = { from, to ->
+					playlistViewModel.swapFiles(from, to)
+				},
+				onDragEnd = { from, to ->
+					playbackServiceController.moveFile(from, to)
+				}
+			)
 
-				Row(
-					modifier = Modifier.fillMaxWidth(),
-					horizontalArrangement = Arrangement.SpaceBetween,
-					verticalAlignment = Alignment.CenterVertically
-				) {
-					Column(
-						modifier = Modifier.weight(1f)
+			val isScreenControlsVisible by nowPlayingFilePropertiesViewModel.isScreenControlsVisible.collectAsState()
+			val nowPlayingFiles by playlistViewModel.nowPlayingList.collectAsState()
+			val playlist by remember { derivedStateOf { nowPlayingFiles.map { p -> p.serviceFile } } }
+			val playingFile by nowPlayingFilePropertiesViewModel.nowPlayingFile.collectAsState()
+
+//			if (!isNotSettledOnFirstPage) {
+//				playingFile?.apply {
+//					scope.launch {
+//						reorderableState.lazyListState.scrollToItem(playlistPosition)
+//					}
+//				}
+//			}
+
+			DragDropLazyColumn(dragDropListState = reorderableState) {
+				item {
+					Box(
+						modifier = Modifier
+							.fillMaxWidth()
+							.height(maxHeight - expandedControlsHeight)
+							.clickable(
+								interactionSource = remember { MutableInteractionSource() },
+								indication = null,
+								onClick = { nowPlayingFilePropertiesViewModel.showNowPlayingControls() }
+							),
 					) {
-						ProvideTextStyle(value = MaterialTheme.typography.h5) {
-							val title by nowPlayingFilePropertiesViewModel.title.collectAsState()
+						Row(
+							modifier = Modifier.fillMaxWidth(),
+							horizontalArrangement = Arrangement.SpaceBetween,
+							verticalAlignment = Alignment.CenterVertically
+						) {
+							Column(
+								modifier = Modifier.weight(1f)
+							) {
+								ProvideTextStyle(value = MaterialTheme.typography.h5) {
+									val title by nowPlayingFilePropertiesViewModel.title.collectAsState()
 
-							MarqueeText(
-								text = title,
-								gradientEdgeColor = Color.Transparent,
-							)
-						}
+									MarqueeText(
+										text = title,
+										gradientEdgeColor = Color.Transparent,
+									)
+								}
 
-						ProvideTextStyle(value = MaterialTheme.typography.subtitle1) {
-							val artist by nowPlayingFilePropertiesViewModel.artist.collectAsState()
-							MarqueeText(
-								text = artist,
-								gradientEdgeColor = Color.Transparent,
-							)
-						}
-					}
+								ProvideTextStyle(value = MaterialTheme.typography.subtitle1) {
+									val artist by nowPlayingFilePropertiesViewModel.artist.collectAsState()
+									MarqueeText(
+										text = artist,
+										gradientEdgeColor = Color.Transparent,
+									)
+								}
+							}
 
-					if (isScreenControlsVisible) {
-						Row(modifier = Modifier.wrapContentWidth()) {
-							val isScreenOnEnabled by screenOnState.isScreenOnEnabled.collectAsState()
-							Image(
-								painter = painterResource(if (isScreenOnEnabled) R.drawable.ic_screen_on_white_36dp else R.drawable.ic_screen_off_white_36dp),
-								alpha = .8f,
-								contentDescription = stringResource(if (isScreenOnEnabled) R.string.screen_is_on else R.string.screen_is_off),
-								modifier = Modifier
-									.padding(Dimensions.viewPaddingUnit)
-									.clickable(onClick = screenOnState::toggleScreenOn),
-							)
+							if (isScreenControlsVisible) {
+								Row(modifier = Modifier.wrapContentWidth()) {
+									val isScreenOnEnabled by screenOnState.isScreenOnEnabled.collectAsState()
+									Image(
+										painter = painterResource(if (isScreenOnEnabled) R.drawable.ic_screen_on_white_36dp else R.drawable.ic_screen_off_white_36dp),
+										alpha = .8f,
+										contentDescription = stringResource(if (isScreenOnEnabled) R.string.screen_is_on else R.string.screen_is_off),
+										modifier = Modifier
+											.padding(Dimensions.viewPaddingUnit)
+											.clickable(onClick = screenOnState::toggleScreenOn),
+									)
 
-							Image(
-								painter = painterResource(R.drawable.chevron_up_white_36dp),
-								alpha = .8f,
-								contentDescription = stringResource(R.string.btn_view_files),
-								modifier = Modifier
-									.padding(Dimensions.viewPaddingUnit)
-									.clickable(onClick = {
-										scope.launch {
-											pagerState.animateScrollToPage(1)
-										}
-									}),
-							)
+									Image(
+										painter = painterResource(R.drawable.chevron_up_white_36dp),
+										alpha = .8f,
+										contentDescription = stringResource(R.string.btn_view_files),
+										modifier = Modifier
+											.padding(Dimensions.viewPaddingUnit)
+											.clickable(onClick = {
+												scope.launch {
+													lazyListState.animateScrollToItem(1)
+												}
+											}),
+									)
+								}
+							}
 						}
 					}
 				}
 
-				Column(
-					modifier = Modifier
-						.align(Alignment.BottomCenter)
-						.fillMaxWidth(),
-					horizontalAlignment = Alignment.CenterHorizontally,
-				) {
-					if (isScreenControlsVisible) {
-						Box(modifier = Modifier
+				stickyHeader {
+					Column(
+						modifier = Modifier
 							.fillMaxWidth()
-							.padding(Dimensions.viewPaddingUnit)
+							.height(expandedControlsHeight),
+						horizontalAlignment = Alignment.CenterHorizontally,
+					) {
+						Box {
+							val expandedControlsHeightPixels = LocalDensity.current.run { expandedControlsHeight.roundToPx() }
+
+							val showPlaylistProgress by remember {
+								derivedStateOf {
+									(expandedControlsHeightPixels - (lazyListState.getVisibleItemInfoFor(1)?.offset ?: 0)).toFloat() / expandedControlsHeightPixels
+								}
+							}
+
+							val doubleProgress by remember { derivedStateOf { (showPlaylistProgress * 2).coerceIn(0f, 1f) } }
+
+							Row(
+								modifier = Modifier
+									.height(56.dp)
+									.alpha(showPlaylistProgress)
+									.fillMaxWidth(),
+								horizontalArrangement = Arrangement.SpaceAround,
+								verticalAlignment = Alignment.CenterVertically,
 							) {
-								val rating by nowPlayingFilePropertiesViewModel.songRating.collectAsState()
-								val ratingInt by remember { derivedStateOf { rating.toInt() } }
-								RatingBar(
-									rating = ratingInt,
-									color = Color.White,
-									backgroundColor = Color.White.copy(alpha = .1f),
+								if (isEditingPlaylist) {
+									Image(
+										painter = painterResource(id = R.drawable.ic_remove_item_white_36dp),
+										contentDescription = stringResource(id = R.string.finish_edit_now_playing_list),
+										modifier = Modifier.clickable {
+											playlistViewModel.finishPlaylistEdit()
+										},
+										alpha = .8f,
+									)
+								} else {
+									Image(
+										painter = painterResource(id = R.drawable.pencil),
+										contentDescription = stringResource(id = R.string.edit_now_playing_list),
+										modifier = Modifier.clickable {
+											playlistViewModel.editPlaylist()
+										},
+										alpha = .8f,
+									)
+								}
+
+								val isRepeating by nowPlayingFilePropertiesViewModel.isRepeating.collectAsState()
+								if (isRepeating) {
+									Image(
+										painter = painterResource(id = R.drawable.av_repeat_white),
+										contentDescription = stringResource(id = R.string.btn_complete_playlist),
+										modifier = Modifier.clickable {
+											nowPlayingFilePropertiesViewModel.toggleRepeating()
+										},
+										alpha = .8f,
+									)
+								} else {
+									Image(
+										painter = painterResource(id = R.drawable.av_no_repeat_white),
+										contentDescription = stringResource(id = R.string.btn_repeat_playlist),
+										modifier = Modifier.clickable {
+											nowPlayingFilePropertiesViewModel.toggleRepeating()
+										},
+										alpha = .8f,
+									)
+								}
+
+								PlayPauseButton(
+									nowPlayingFilePropertiesViewModel,
+									playbackServiceController,
+									alpha = .8f
+								)
+
+								Image(
+									painter = painterResource(R.drawable.chevron_up_white_36dp),
+									alpha = .8f,
+									contentDescription = stringResource(R.string.btn_hide_files),
+									modifier = Modifier
+										.clickable(onClick = {
+											playlistViewModel.finishPlaylistEdit()
+											scope.launch {
+												lazyListState.animateScrollToItem(0)
+											}
+										})
+										.rotate(180f * showPlaylistProgress),
+								)
+							}
+
+							if (isScreenControlsVisible) {
+								Box(
 									modifier = Modifier
 										.fillMaxWidth()
-										.height(Dimensions.menuHeight),
-									onRatingSelected = { nowPlayingFilePropertiesViewModel.updateRating(it.toFloat()) }
-								)
+										.padding(Dimensions.viewPaddingUnit)
+										.alpha(1 - doubleProgress)
+								) {
+									val rating by nowPlayingFilePropertiesViewModel.songRating.collectAsState()
+									val ratingInt by remember { derivedStateOf { rating.toInt() } }
+									RatingBar(
+										rating = ratingInt,
+										color = Color.White,
+										backgroundColor = Color.White.copy(alpha = .1f),
+										modifier = Modifier
+											.fillMaxWidth()
+											.height(Dimensions.menuHeight),
+										onRatingSelected = { nowPlayingFilePropertiesViewModel.updateRating(it.toFloat()) }
+									)
 
-								val isReadOnly by nowPlayingFilePropertiesViewModel.isReadOnly.collectAsState()
-								if (isReadOnly) {
-									ProvideTextStyle(value = MaterialTheme.typography.caption) {
-										Text(
-											text = stringResource(id = R.string.readOnlyConnection)
-										)
+									val isReadOnly by nowPlayingFilePropertiesViewModel.isReadOnly.collectAsState()
+									if (isReadOnly) {
+										ProvideTextStyle(value = MaterialTheme.typography.caption) {
+											Text(
+												text = stringResource(id = R.string.readOnlyConnection)
+											)
+										}
 									}
 								}
 							}
@@ -266,186 +382,90 @@ fun NowPlayingView(
 
 						NowPlayingProgressIndicator(fileProgress = fileProgress)
 
-					Row(
-						modifier = Modifier
-							.fillMaxWidth()
-							.height(64.dp),
-						horizontalArrangement = Arrangement.SpaceEvenly,
-						verticalAlignment = Alignment.CenterVertically,
-					) {
-						if (isScreenControlsVisible) {
-							Image(
-								painter = painterResource(id = R.drawable.av_previous_white),
-								contentDescription = stringResource(id = R.string.btn_previous),
-								modifier = Modifier.clickable {
-									playbackServiceController.previous()
-								}
-							)
+						Row(
+							modifier = Modifier
+								.fillMaxWidth()
+								.height(64.dp),
+							horizontalArrangement = Arrangement.SpaceEvenly,
+							verticalAlignment = Alignment.CenterVertically,
+						) {
+							if (isScreenControlsVisible) {
+								Image(
+									painter = painterResource(id = R.drawable.av_previous_white),
+									contentDescription = stringResource(id = R.string.btn_previous),
+									modifier = Modifier.clickable {
+										playbackServiceController.previous()
+									}
+								)
 
-							PlayPauseButton(nowPlayingFilePropertiesViewModel, playbackServiceController)
+								PlayPauseButton(nowPlayingFilePropertiesViewModel, playbackServiceController)
 
-							Image(
-								painter = painterResource(id = R.drawable.av_next_white),
-								contentDescription = stringResource(id = R.string.btn_next),
-								modifier = Modifier.clickable {
-									playbackServiceController.next()
-								}
-							)
+								Image(
+									painter = painterResource(id = R.drawable.av_next_white),
+									contentDescription = stringResource(id = R.string.btn_next),
+									modifier = Modifier.clickable {
+										playbackServiceController.next()
+									}
+								)
+							}
 						}
 					}
 				}
-			}
 
-			Box {
-				Column(
-					modifier = Modifier.fillMaxSize()
-				) {
-					Row(
-						modifier = Modifier
-							.height(56.dp)
-							.fillMaxWidth(),
-						horizontalArrangement = Arrangement.SpaceAround,
-						verticalAlignment = Alignment.CenterVertically,
-					) {
-						if (isEditingPlaylist) {
-							Image(
-								painter = painterResource(id = R.drawable.ic_remove_item_white_36dp),
-								contentDescription = stringResource(id = R.string.finish_edit_now_playing_list),
-								modifier = Modifier.clickable {
-									playlistViewModel.finishPlaylistEdit()
-								},
-								alpha = .8f,
-							)
-						} else {
-							Image(
-								painter = painterResource(id = R.drawable.pencil),
-								contentDescription = stringResource(id = R.string.edit_now_playing_list),
-								modifier = Modifier.clickable {
-									playlistViewModel.editPlaylist()
-								},
-								alpha = .8f,
-							)
+				@Composable
+				fun DragDropItemScope.NowPlayingFileView(positionedFile: PositionedFile) {
+					val fileItemViewModel = remember(childItemViewModelProvider::getViewModel)
+
+					DisposableEffect(positionedFile) {
+						nowPlayingFilePropertiesViewModel.activeLibraryId?.also {
+							fileItemViewModel.promiseUpdate(it, positionedFile.serviceFile)
 						}
 
-						val isRepeating by nowPlayingFilePropertiesViewModel.isRepeating.collectAsState()
-						if (isRepeating) {
-							Image(
-								painter = painterResource(id = R.drawable.av_repeat_white),
-								contentDescription = stringResource(id = R.string.btn_complete_playlist),
-								modifier = Modifier.clickable {
-									nowPlayingFilePropertiesViewModel.toggleRepeating()
-								},
-								alpha = .8f,
-							)
-						} else {
-							Image(
-								painter = painterResource(id = R.drawable.av_no_repeat_white),
-								contentDescription = stringResource(id = R.string.btn_repeat_playlist),
-								modifier = Modifier.clickable {
-									nowPlayingFilePropertiesViewModel.toggleRepeating()
-								},
-								alpha = .8f,
-							)
+						onDispose {
+							fileItemViewModel.reset()
 						}
-
-						PlayPauseButton(
-							nowPlayingFilePropertiesViewModel,
-							playbackServiceController,
-							alpha = .8f
-						)
-
-						Image(
-							painter = painterResource(R.drawable.chevron_up_white_36dp),
-							alpha = .8f,
-							contentDescription = stringResource(R.string.btn_hide_files),
-							modifier = Modifier
-								.clickable(onClick = {
-									playlistViewModel.finishPlaylistEdit()
-									scope.launch {
-										pagerState.animateScrollToPage(0)
-									}
-								})
-								.rotate(180f),
-						)
 					}
 
-						NowPlayingProgressIndicator(fileProgress = fileProgress)
+					val isMenuShown by fileItemViewModel.isMenuShown.collectAsState()
+					val fileName by fileItemViewModel.title.collectAsState()
+					val artist by fileItemViewModel.artist.collectAsState()
+					val isPlaying by remember { derivedStateOf { playingFile == positionedFile } }
 
-					val nowPlayingFiles by playlistViewModel.nowPlayingList.collectAsState()
-					val playlist by remember { derivedStateOf { nowPlayingFiles.map { p -> p.serviceFile } } }
-					val playingFile by nowPlayingFilePropertiesViewModel.nowPlayingFile.collectAsState()
+					val viewFilesClickHandler = {
+						nowPlayingFilePropertiesViewModel.activeLibraryId?.also {
+							applicationNavigation.viewFileDetails(
+								it,
+								playlist,
+								positionedFile.playlistPosition
+							)
+						}
+						Unit
+					}
 
-					val reorderableState = rememberDragDropListState(
-						onMove = { from, to ->
-							playlistViewModel.swapFiles(from, to)
+					NowPlayingItemView(
+						itemName = fileName,
+						artist = artist,
+						isActive = isPlaying,
+						isEditingPlaylist = isEditingPlaylist,
+						isHiddenMenuShown = isMenuShown,
+						onItemClick = viewFilesClickHandler,
+						dragDropListState = reorderableState,
+						onHiddenMenuClick = {
+							if (!isEditingPlaylist) {
+								itemListMenuBackPressedHandler.hideAllMenus()
+								fileItemViewModel.showMenu()
+							}
 						},
-						onDragEnd = { from, to ->
-							playbackServiceController.moveFile(from, to)
+						onRemoveFromNowPlayingClick = {
+							playbackServiceController.removeFromPlaylistAtPosition(positionedFile.playlistPosition)
+						},
+						onViewFilesClick = viewFilesClickHandler,
+						onPlayClick = {
+							fileItemViewModel.hideMenu()
+							playbackServiceController.seekTo(positionedFile.playlistPosition)
 						}
 					)
-
-					@Composable
-					fun DragDropItemScope.NowPlayingFileView(positionedFile: PositionedFile) {
-						val fileItemViewModel = remember(childItemViewModelProvider::getViewModel)
-
-						DisposableEffect(positionedFile) {
-							nowPlayingFilePropertiesViewModel.activeLibraryId?.also {
-								fileItemViewModel.promiseUpdate(it, positionedFile.serviceFile)
-							}
-
-							onDispose {
-								fileItemViewModel.reset()
-							}
-						}
-
-						val isMenuShown by fileItemViewModel.isMenuShown.collectAsState()
-						val fileName by fileItemViewModel.title.collectAsState()
-						val artist by fileItemViewModel.artist.collectAsState()
-						val isPlaying by remember { derivedStateOf { playingFile == positionedFile } }
-
-						val viewFilesClickHandler = {
-							nowPlayingFilePropertiesViewModel.activeLibraryId?.also {
-								applicationNavigation.viewFileDetails(
-									it,
-									playlist,
-									positionedFile.playlistPosition
-								)
-							}
-							Unit
-						}
-
-						NowPlayingItemView(
-							itemName = fileName,
-							artist = artist,
-							isActive = isPlaying,
-							isEditingPlaylist = isEditingPlaylist,
-							isHiddenMenuShown = isMenuShown,
-							onItemClick = viewFilesClickHandler,
-							dragDropListState = reorderableState,
-							onHiddenMenuClick = {
-								if (!isEditingPlaylist) {
-									itemListMenuBackPressedHandler.hideAllMenus()
-									fileItemViewModel.showMenu()
-								}
-							},
-							onRemoveFromNowPlayingClick = {
-								playbackServiceController.removeFromPlaylistAtPosition(positionedFile.playlistPosition)
-							},
-							onViewFilesClick = viewFilesClickHandler,
-							onPlayClick = {
-								fileItemViewModel.hideMenu()
-								playbackServiceController.seekTo(positionedFile.playlistPosition)
-							}
-						)
-					}
-
-					if (pagerState.currentPage == 0) {
-						playingFile?.apply {
-							scope.launch {
-								reorderableState.lazyListState.scrollToItem(playlistPosition)
-							}
-						}
-					}
+				}
 
 //						AndroidView(
 //							factory = { context ->
@@ -476,12 +496,9 @@ fun NowPlayingView(
 //							}
 //						)
 
-					DragDropLazyColumn(dragDropListState = reorderableState) {
-						DragDropItems(items = nowPlayingFiles, keyFactory = { _, f -> f }) { _, f ->
-							NowPlayingFileView(positionedFile = f)
-						}
+					DragDropItems(items = nowPlayingFiles, keyFactory = { _, f -> f }) { _, f ->
+						NowPlayingFileView(positionedFile = f)
 					}
-				}
 			}
 		}
 
@@ -490,7 +507,14 @@ fun NowPlayingView(
 			AlertDialog(
 				onDismissRequest = { connectionLostViewModel.cancelLibraryConnectionPolling() },
 				title = { Text(text = stringResource(id = R.string.lbl_connection_lost_title)) },
-				text = { Text(text = stringResource(id = R.string.lbl_attempting_to_reconnect, stringResource(id = R.string.app_name))) },
+				text = {
+					Text(
+						text = stringResource(
+							id = R.string.lbl_attempting_to_reconnect,
+							stringResource(id = R.string.app_name)
+						)
+					)
+				},
 				buttons = {
 					Row(
 						modifier = Modifier
@@ -501,7 +525,7 @@ fun NowPlayingView(
 						Button(
 							onClick = {
 								connectionLostViewModel.cancelLibraryConnectionPolling()
-						  	},
+							},
 						) {
 							Text(text = stringResource(id = R.string.btn_cancel))
 						}
