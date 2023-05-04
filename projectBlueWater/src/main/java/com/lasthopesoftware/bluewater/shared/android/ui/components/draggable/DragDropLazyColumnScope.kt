@@ -12,8 +12,7 @@ import androidx.compose.ui.zIndex
 class DragDropLazyColumnScope(private val inner: LazyListScope, private val dragDropListState: DragDropListState) : LazyListScope by inner {
 
 	@OptIn(ExperimentalFoundationApi::class)
-	@Composable
-	fun <T> DragDropItems(items: List<T>, keyFactory: ((Int, T) -> Any), content: @Composable DragDropItemScope.(Int, T) -> Unit) {
+	fun <T> dragDropItems(items: List<T>, keyFactory: ((Int, T) -> Any), content: @Composable DragDropItemScope.(Int, T) -> Unit) {
 		itemsIndexed(items, keyFactory) { index, item ->
 			val dragModifier = with (this@DragDropLazyColumnScope.dragDropListState) {
 				@Suppress("IntroduceWhenSubject")

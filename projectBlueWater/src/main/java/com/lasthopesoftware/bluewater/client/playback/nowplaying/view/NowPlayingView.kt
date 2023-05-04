@@ -496,7 +496,7 @@ fun NowPlayingView(
 //							}
 //						)
 
-					DragDropItems(items = nowPlayingFiles, keyFactory = { _, f -> f }) { _, f ->
+					dragDropItems(items = nowPlayingFiles, keyFactory = { _, f -> f }) { _, f ->
 						NowPlayingFileView(positionedFile = f)
 					}
 			}

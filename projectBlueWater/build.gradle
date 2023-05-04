@@ -175,7 +175,6 @@ dependencies {
 	implementation 'androidx.compose.compiler:compiler:1.4.7'
 	implementation 'me.onebone:toolbar-compose:2.3.5'
 	implementation "dev.olshevski.navigation:reimagined:1.4.0"
-	implementation "org.burnoutcrew.composereorderable:reorderable:0.9.6"
 	debugImplementation "androidx.compose.ui:ui-tooling:$compose_version"
 	testImplementation 'androidx.test.ext:junit:1.1.5'
 	testImplementation 'junit:junit:4.13.2'
