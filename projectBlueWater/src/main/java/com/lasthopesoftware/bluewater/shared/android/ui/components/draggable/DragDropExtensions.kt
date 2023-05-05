@@ -21,10 +21,11 @@ val LazyListItemInfo.offsetEnd: Int
 /*
    Moving element in the list
 */
-fun <T> MutableList<T>.move(from: Int, to: Int) {
-	if (from == to)
-		return
+fun <T> MutableList<T>.move(from: Int, to: Int): MutableList<T> {
+	if (from == to) return this
 
-	val element = this.removeAt(from) ?: return
+	val element = this.removeAt(from) ?: return this
 	this.add(to, element)
+
+	return this
 }
