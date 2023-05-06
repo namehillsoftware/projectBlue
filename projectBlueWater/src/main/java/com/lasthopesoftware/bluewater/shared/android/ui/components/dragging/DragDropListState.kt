@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.shared.android.ui.components.draggable
+package com.lasthopesoftware.bluewater.shared.android.ui.components.dragging
 
 import android.util.Log
 import androidx.compose.animation.core.Animatable

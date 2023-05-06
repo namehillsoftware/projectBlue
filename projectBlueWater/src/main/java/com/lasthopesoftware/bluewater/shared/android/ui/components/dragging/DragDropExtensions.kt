@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.shared.android.ui.components.draggable
+package com.lasthopesoftware.bluewater.shared.android.ui.components.dragging
 
 import androidx.compose.foundation.lazy.LazyListItemInfo
 import androidx.compose.foundation.lazy.LazyListState
