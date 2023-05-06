@@ -5,10 +5,12 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.snapping.SnapLayoutInfoProvider
+import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.pager.PageSize
-import androidx.compose.foundation.pager.VerticalPager
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.*
 import androidx.compose.runtime.*
@@ -38,9 +40,9 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.RatingBar
-import com.lasthopesoftware.bluewater.shared.android.ui.components.draggable.DragDropItemScope
-import com.lasthopesoftware.bluewater.shared.android.ui.components.draggable.DragDropLazyColumn
-import com.lasthopesoftware.bluewater.shared.android.ui.components.draggable.rememberDragDropListState
+import com.lasthopesoftware.bluewater.shared.android.ui.components.dragging.DragDropItemScope
+import com.lasthopesoftware.bluewater.shared.android.ui.components.dragging.DragDropLazyColumn
+import com.lasthopesoftware.bluewater.shared.android.ui.components.dragging.rememberDragDropListState
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.SharedColors
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
@@ -147,22 +149,23 @@ fun NowPlayingView(
 
 		val isEditingPlaylist by playlistViewModel.isEditingPlaylistState.collectAsState()
 		val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
-		VerticalPager(
-			pageSize = PageSize.Fill,
-			pageCount = 2,
-			state = pagerState,
+
+		val lazyListState = rememberLazyListState()
+		val snappingLayout = remember(lazyListState) { SnapLayoutInfoProvider(lazyListState) { _, _ -> 0f } }
+
+		val filePosition by nowPlayingFilePropertiesViewModel.filePosition.collectAsState()
+		val fileDuration by nowPlayingFilePropertiesViewModel.fileDuration.collectAsState()
+		val fileProgress by remember { derivedStateOf { filePosition / fileDuration.toFloat() } }
+
+		LazyColumn(
+			flingBehavior = rememberSnapFlingBehavior(snappingLayout),
 			modifier = Modifier
 				.fillMaxSize()
 				.background(SharedColors.OverlayDark)
 				.padding(systemBarsPadding),
 			userScrollEnabled = !isEditingPlaylist,
-			beyondBoundsPageCount = 1
-		) { page ->
-			val filePosition by nowPlayingFilePropertiesViewModel.filePosition.collectAsState()
-			val fileDuration by nowPlayingFilePropertiesViewModel.fileDuration.collectAsState()
-			val fileProgress by remember { derivedStateOf { filePosition / fileDuration.toFloat() } }
-
-			if (page == 0) {
+		) {
+			item {
 				Box(
 					modifier = Modifier
 						.fillMaxSize()
@@ -294,7 +297,9 @@ fun NowPlayingView(
 						}
 					}
 				}
-			} else {
+			}
+
+			item {
 				Box {
 					Column(
 						modifier = Modifier.fillMaxSize()
@@ -486,6 +491,347 @@ fun NowPlayingView(
 					}
 				}
 			}
+		}
+
+//		VerticalPager(
+//			pageSize = PageSize.Fill,
+//			pageCount = 2,
+//			state = pagerState,
+//			modifier = Modifier
+//				.fillMaxSize()
+//				.background(SharedColors.OverlayDark)
+//				.padding(systemBarsPadding),
+//			userScrollEnabled = !isEditingPlaylist,
+//			beyondBoundsPageCount = 1
+//		) { page ->
+//			val filePosition by nowPlayingFilePropertiesViewModel.filePosition.collectAsState()
+//			val fileDuration by nowPlayingFilePropertiesViewModel.fileDuration.collectAsState()
+//			val fileProgress by remember { derivedStateOf { filePosition / fileDuration.toFloat() } }
+//
+//			if (page == 0) {
+//				Box(
+//					modifier = Modifier
+//						.fillMaxSize()
+//						.clickable(
+//							interactionSource = remember { MutableInteractionSource() },
+//							indication = null,
+//							onClick = { nowPlayingFilePropertiesViewModel.showNowPlayingControls() }
+//						),
+//				) {
+//					val isScreenControlsVisible by nowPlayingFilePropertiesViewModel.isScreenControlsVisible.collectAsState()
+//
+//					Row(
+//						modifier = Modifier.fillMaxWidth(),
+//						horizontalArrangement = Arrangement.SpaceBetween,
+//						verticalAlignment = Alignment.CenterVertically
+//					) {
+//						Column(
+//							modifier = Modifier.weight(1f)
+//						) {
+//							ProvideTextStyle(value = MaterialTheme.typography.h5) {
+//								val title by nowPlayingFilePropertiesViewModel.title.collectAsState()
+//
+//								MarqueeText(
+//									text = title,
+//									gradientEdgeColor = Color.Transparent,
+//								)
+//							}
+//
+//							ProvideTextStyle(value = MaterialTheme.typography.subtitle1) {
+//								val artist by nowPlayingFilePropertiesViewModel.artist.collectAsState()
+//								MarqueeText(
+//									text = artist,
+//									gradientEdgeColor = Color.Transparent,
+//								)
+//							}
+//						}
+//
+//						if (isScreenControlsVisible) {
+//							Row(modifier = Modifier.wrapContentWidth()) {
+//								val isScreenOnEnabled by screenOnState.isScreenOnEnabled.collectAsState()
+//								Image(
+//									painter = painterResource(if (isScreenOnEnabled) R.drawable.ic_screen_on_white_36dp else R.drawable.ic_screen_off_white_36dp),
+//									alpha = .8f,
+//									contentDescription = stringResource(if (isScreenOnEnabled) R.string.screen_is_on else R.string.screen_is_off),
+//									modifier = Modifier
+//										.padding(Dimensions.viewPaddingUnit)
+//										.clickable(onClick = screenOnState::toggleScreenOn),
+//								)
+//
+//								Image(
+//									painter = painterResource(R.drawable.chevron_up_white_36dp),
+//									alpha = .8f,
+//									contentDescription = stringResource(R.string.btn_view_files),
+//									modifier = Modifier
+//										.padding(Dimensions.viewPaddingUnit)
+//										.clickable(onClick = {
+//											scope.launch {
+//												pagerState.animateScrollToPage(1)
+//											}
+//										}),
+//								)
+//							}
+//						}
+//					}
+//
+//					Column(
+//						modifier = Modifier
+//							.align(Alignment.BottomCenter)
+//							.fillMaxWidth(),
+//						horizontalAlignment = Alignment.CenterHorizontally,
+//					) {
+//						if (isScreenControlsVisible) {
+//							Box(
+//								modifier = Modifier
+//									.fillMaxWidth()
+//									.padding(Dimensions.viewPaddingUnit)
+//							) {
+//								val rating by nowPlayingFilePropertiesViewModel.songRating.collectAsState()
+//								val ratingInt by remember { derivedStateOf { rating.toInt() } }
+//								RatingBar(
+//									rating = ratingInt,
+//									color = Color.White,
+//									backgroundColor = Color.White.copy(alpha = .1f),
+//									modifier = Modifier
+//										.fillMaxWidth()
+//										.height(Dimensions.menuHeight),
+//									onRatingSelected = { nowPlayingFilePropertiesViewModel.updateRating(it.toFloat()) }
+//								)
+//
+//								val isReadOnly by nowPlayingFilePropertiesViewModel.isReadOnly.collectAsState()
+//								if (isReadOnly) {
+//									ProvideTextStyle(value = MaterialTheme.typography.caption) {
+//										Text(
+//											text = stringResource(id = R.string.readOnlyConnection)
+//										)
+//									}
+//								}
+//							}
+//						}
+//
+//						NowPlayingProgressIndicator(fileProgress = fileProgress)
+//
+//						Row(
+//							modifier = Modifier
+//								.fillMaxWidth()
+//								.height(64.dp),
+//							horizontalArrangement = Arrangement.SpaceEvenly,
+//							verticalAlignment = Alignment.CenterVertically,
+//						) {
+//							if (isScreenControlsVisible) {
+//								Image(
+//									painter = painterResource(id = R.drawable.av_previous_white),
+//									contentDescription = stringResource(id = R.string.btn_previous),
+//									modifier = Modifier.clickable {
+//										playbackServiceController.previous()
+//									}
+//								)
+//
+//								PlayPauseButton(nowPlayingFilePropertiesViewModel, playbackServiceController)
+//
+//								Image(
+//									painter = painterResource(id = R.drawable.av_next_white),
+//									contentDescription = stringResource(id = R.string.btn_next),
+//									modifier = Modifier.clickable {
+//										playbackServiceController.next()
+//									}
+//								)
+//							}
+//						}
+//					}
+//				}
+//			} else {
+//				Box {
+//					Column(
+//						modifier = Modifier.fillMaxSize()
+//					) {
+//						Row(
+//							modifier = Modifier
+//								.height(56.dp)
+//								.fillMaxWidth(),
+//							horizontalArrangement = Arrangement.SpaceAround,
+//							verticalAlignment = Alignment.CenterVertically,
+//						) {
+//							if (isEditingPlaylist) {
+//								Image(
+//									painter = painterResource(id = R.drawable.ic_remove_item_white_36dp),
+//									contentDescription = stringResource(id = R.string.finish_edit_now_playing_list),
+//									modifier = Modifier.clickable {
+//										playlistViewModel.finishPlaylistEdit()
+//									},
+//									alpha = .8f,
+//								)
+//							} else {
+//								Image(
+//									painter = painterResource(id = R.drawable.pencil),
+//									contentDescription = stringResource(id = R.string.edit_now_playing_list),
+//									modifier = Modifier.clickable {
+//										playlistViewModel.editPlaylist()
+//									},
+//									alpha = .8f,
+//								)
+//							}
+//
+//							val isRepeating by nowPlayingFilePropertiesViewModel.isRepeating.collectAsState()
+//							if (isRepeating) {
+//								Image(
+//									painter = painterResource(id = R.drawable.av_repeat_white),
+//									contentDescription = stringResource(id = R.string.btn_complete_playlist),
+//									modifier = Modifier.clickable {
+//										nowPlayingFilePropertiesViewModel.toggleRepeating()
+//									},
+//									alpha = .8f,
+//								)
+//							} else {
+//								Image(
+//									painter = painterResource(id = R.drawable.av_no_repeat_white),
+//									contentDescription = stringResource(id = R.string.btn_repeat_playlist),
+//									modifier = Modifier.clickable {
+//										nowPlayingFilePropertiesViewModel.toggleRepeating()
+//									},
+//									alpha = .8f,
+//								)
+//							}
+//
+//							PlayPauseButton(
+//								nowPlayingFilePropertiesViewModel,
+//								playbackServiceController,
+//								alpha = .8f
+//							)
+//
+//							Image(
+//								painter = painterResource(R.drawable.chevron_up_white_36dp),
+//								alpha = .8f,
+//								contentDescription = stringResource(R.string.btn_hide_files),
+//								modifier = Modifier
+//									.clickable(onClick = {
+//										playlistViewModel.finishPlaylistEdit()
+//										scope.launch {
+//											pagerState.animateScrollToPage(0)
+//										}
+//									})
+//									.rotate(180f),
+//							)
+//						}
+//
+//						NowPlayingProgressIndicator(fileProgress = fileProgress)
+//
+//						val nowPlayingFiles by playlistViewModel.nowPlayingList.collectAsState()
+//						val playlist by remember { derivedStateOf { nowPlayingFiles.map { p -> p.serviceFile } } }
+//						val playingFile by nowPlayingFilePropertiesViewModel.nowPlayingFile.collectAsState()
+//
+//						val reorderableState = rememberDragDropListState(
+//							onMove = { from, to ->
+//								playlistViewModel.swapFiles(from, to)
+//							},
+//							onDragEnd = { from, to ->
+//								playbackServiceController.moveFile(from, to)
+//							}
+//						)
+//
+//						@Composable
+//						fun DragDropItemScope.NowPlayingFileView(positionedFile: PositionedFile) {
+//							val fileItemViewModel = remember(childItemViewModelProvider::getViewModel)
+//
+//							DisposableEffect(positionedFile) {
+//								nowPlayingFilePropertiesViewModel.activeLibraryId?.also {
+//									fileItemViewModel.promiseUpdate(it, positionedFile.serviceFile)
+//								}
+//
+//								onDispose {
+//									fileItemViewModel.reset()
+//								}
+//							}
+//
+//							val isMenuShown by fileItemViewModel.isMenuShown.collectAsState()
+//							val fileName by fileItemViewModel.title.collectAsState()
+//							val artist by fileItemViewModel.artist.collectAsState()
+//							val isPlaying by remember { derivedStateOf { playingFile == positionedFile } }
+//
+//							val viewFilesClickHandler = {
+//								nowPlayingFilePropertiesViewModel.activeLibraryId?.also {
+//									applicationNavigation.viewFileDetails(
+//										it,
+//										playlist,
+//										positionedFile.playlistPosition
+//									)
+//								}
+//								Unit
+//							}
+//
+//							NowPlayingItemView(
+//								itemName = fileName,
+//								artist = artist,
+//								isActive = isPlaying,
+//								isEditingPlaylist = isEditingPlaylist,
+//								isHiddenMenuShown = isMenuShown,
+//								onItemClick = viewFilesClickHandler,
+//								dragDropListState = reorderableState,
+//								onHiddenMenuClick = {
+//									if (!isEditingPlaylist) {
+//										itemListMenuBackPressedHandler.hideAllMenus()
+//										fileItemViewModel.showMenu()
+//									}
+//								},
+//								onRemoveFromNowPlayingClick = {
+//									playbackServiceController.removeFromPlaylistAtPosition(positionedFile.playlistPosition)
+//								},
+//								onViewFilesClick = viewFilesClickHandler,
+//								onPlayClick = {
+//									fileItemViewModel.hideMenu()
+//									playbackServiceController.seekTo(positionedFile.playlistPosition)
+//								}
+//							)
+//						}
+//
+//						if (pagerState.currentPage == 0) {
+//							playingFile?.apply {
+//								scope.launch {
+//									reorderableState.lazyListState.scrollToItem(playlistPosition)
+//								}
+//							}
+//						}
+//
+////						AndroidView(
+////							factory = { context ->
+////								RecyclerView(context).apply {
+////									clipToOutline = true
+////
+////									layoutParams = RecyclerView.LayoutParams(
+////										RecyclerView.LayoutParams.MATCH_PARENT,
+////										RecyclerView.LayoutParams.MATCH_PARENT
+////									)
+////
+////									layoutManager = LinearLayoutManager(context)
+////
+////									isNestedScrollingEnabled = true
+////
+////									adapter = ComposeRecyclerViewAdapter<PositionedFile>(context) { f ->
+////										NowPlayingFileView(positionedFile = f)
+////									}
+////								}
+////							},
+////							modifier = Modifier
+////								.weight(1f)
+////								.background(SharedColors.OverlayDark),
+////							{ recyclerView ->
+////								recyclerView.adapter
+////									?.let { it as? ComposeRecyclerViewAdapter<PositionedFile> }
+////									?.updateListEventually(nowPlayingFiles)
+////							}
+////						)
+//
+//						DragDropLazyColumn(
+//							dragDropListState = reorderableState,
+//							modifier = Modifier.background(SharedColors.OverlayDark),
+//						) {
+//							dragDropItems(items = nowPlayingFiles, keyFactory = { _, f -> f }) { _, f ->
+//								NowPlayingFileView(positionedFile = f)
+//							}
+//						}
+//					}
+//				}
+//			}
 
 			val isConnectionLost by connectionLostViewModel.isCheckingConnection.collectAsState()
 			if (isConnectionLost) {
@@ -523,4 +869,4 @@ fun NowPlayingView(
 			}
 		}
 	}
-}
+

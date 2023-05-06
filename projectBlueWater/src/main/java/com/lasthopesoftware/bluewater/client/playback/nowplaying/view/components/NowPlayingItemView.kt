@@ -20,8 +20,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.R
-import com.lasthopesoftware.bluewater.shared.android.ui.components.draggable.DragDropItemScope
-import com.lasthopesoftware.bluewater.shared.android.ui.components.draggable.DragDropListState
+import com.lasthopesoftware.bluewater.shared.android.ui.components.dragging.DragDropItemScope
+import com.lasthopesoftware.bluewater.shared.android.ui.components.dragging.DragDropListState
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 
 @OptIn(ExperimentalFoundationApi::class)
