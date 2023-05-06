@@ -17,12 +17,17 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import com.lasthopesoftware.bluewater.NavigateApplication
@@ -111,6 +116,22 @@ private fun NowPlayingProgressIndicator(fileProgress: Float) {
 	)
 }
 
+private object ConsumeAllVerticalFlingScrollConnection : NestedScrollConnection {
+
+	override fun onPostScroll(
+		consumed: Offset,
+		available: Offset,
+		source: NestedScrollSource
+	): Offset {
+		return when (source) {
+			NestedScrollSource.Fling -> available.copy(x = 0f)
+			else -> Offset.Zero
+		}
+	}
+
+	override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity = available.copy(x = 0f)
+}
+
 @Composable
 @OptIn(ExperimentalFoundationApi::class)
 fun NowPlayingView(
@@ -172,6 +193,7 @@ fun NowPlayingView(
 						modifier = Modifier
 							.fillMaxWidth()
 							.height(maxHeight)
+							.nestedScroll(ConsumeAllVerticalFlingScrollConnection)
 							.clickable(
 								interactionSource = remember { MutableInteractionSource() },
 								indication = null,
