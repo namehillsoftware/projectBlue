@@ -9,7 +9,11 @@ import androidx.compose.foundation.lazy.LazyListState
     this returns LazyListItemInfo corresponding to it
 */
 fun LazyListState.getVisibleItemInfoFor(absoluteIndex: Int): LazyListItemInfo? {
-	return this.layoutInfo.visibleItemsInfo.getOrNull(absoluteIndex - (this.layoutInfo.visibleItemsInfo.firstOrNull()?.index ?: 0))
+	return this.layoutInfo.visibleItemsInfo.getVisibleItemInfoFor(absoluteIndex)
+}
+
+fun List<LazyListItemInfo>.getVisibleItemInfoFor(absoluteIndex: Int): LazyListItemInfo? {
+	return this.getOrNull(absoluteIndex - (firstOrNull()?.index ?: 0))
 }
 
 /*
