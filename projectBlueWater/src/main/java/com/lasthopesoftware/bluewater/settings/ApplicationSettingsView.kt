@@ -22,7 +22,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
-import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
@@ -309,9 +308,6 @@ fun ApplicationSettingsView(
 	applicationNavigation: NavigateApplication,
 	playbackService: ControlPlaybackService,
 ) {
-	val systemUiController = rememberSystemUiController()
-	systemUiController.setStatusBarColor(MaterialTheme.colors.surface)
-
 	Surface {
 		BoxWithConstraints(modifier = Modifier
 			.fillMaxSize()

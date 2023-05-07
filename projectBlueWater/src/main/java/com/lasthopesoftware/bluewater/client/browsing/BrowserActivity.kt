@@ -11,11 +11,13 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import browsableItemListView
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.lasthopesoftware.bluewater.ActivityApplicationNavigation
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
@@ -92,6 +94,7 @@ import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBu
 import com.lasthopesoftware.bluewater.shared.android.permissions.ManagePermissions
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
+import com.lasthopesoftware.bluewater.shared.android.ui.theme.SharedColors
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider
@@ -543,6 +546,9 @@ private fun LibraryDestination.Navigate(
 ) {
 	with(browserViewDependencies) {
 		if (this@Navigate is NowPlayingScreen) {
+			val systemUiController = rememberSystemUiController()
+			systemUiController.setSystemBarsColor(SharedColors.OverlayDark)
+
 			NowPlayingView(
 				nowPlayingCoverArtViewModel = nowPlayingCoverArtViewModel,
 				nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
@@ -769,6 +775,8 @@ private fun BrowserView(
 	browserViewDependencies: BrowserViewDependencies,
 	initialDestination: Destination? = null
 ) {
+	val systemUiController = rememberSystemUiController()
+
 	val navController = rememberNavController(
 		if (initialDestination == null) listOf(ApplicationSettingsScreen, SelectedLibraryReRouter)
 		else listOf(ApplicationSettingsScreen)
@@ -817,71 +825,95 @@ private fun BrowserView(
 
 	BackHandler { graphDependencies.applicationNavigation.backOut() }
 
-	val screenPadding = PaddingValues() // WindowInsets.systemBars.asPaddingValues()
+	val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
 
-	Box(modifier = Modifier
-		.fillMaxSize()
-		.padding(screenPadding)) {
+	Surface {
+		NavHost(navController) { destination ->
+			systemUiController.setStatusBarColor(MaterialTheme.colors.surface)
+			systemUiController.setNavigationBarColor(Color.Black)
 
-		val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
-
-		Surface {
-			NavHost(navController) { destination ->
-				when (destination) {
-					is SelectedLibraryReRouter -> {
-						graphDependencies.apply {
-							LaunchedEffect(key1 = Unit) {
-								try {
-									val settings =
-										applicationSettingsRepository.promiseApplicationSettings().suspend()
-									if (settings.chosenLibraryId > -1) {
-										val libraryId = LibraryId(settings.chosenLibraryId)
-										applicationNavigation.viewLibrary(libraryId).suspend()
-										return@LaunchedEffect
-									}
-								} catch (e: Throwable) {
-									logger.error("An error occurred initializing the library", e)
+			when (destination) {
+				is SelectedLibraryReRouter -> {
+					graphDependencies.apply {
+						LaunchedEffect(key1 = Unit) {
+							try {
+								val settings =
+									applicationSettingsRepository.promiseApplicationSettings().suspend()
+								if (settings.chosenLibraryId > -1) {
+									val libraryId = LibraryId(settings.chosenLibraryId)
+									applicationNavigation.viewLibrary(libraryId).suspend()
+									return@LaunchedEffect
 								}
-
-								applicationNavigation.backOut().suspend()
+							} catch (e: Throwable) {
+								logger.error("An error occurred initializing the library", e)
 							}
+
+							applicationNavigation.backOut().suspend()
 						}
 					}
-					is ActiveLibraryDownloadsScreen -> {
-						graphDependencies.apply {
-							LaunchedEffect(key1 = Unit) {
-								try {
-									val settings =
-										applicationSettingsRepository.promiseApplicationSettings().suspend()
-									if (settings.chosenLibraryId > -1) {
-										val libraryId = LibraryId(settings.chosenLibraryId)
-										applicationNavigation.viewLibrary(libraryId).suspend()
-										applicationNavigation.viewActiveDownloads(libraryId).suspend()
-										return@LaunchedEffect
-									}
-								} catch (e: Throwable) {
-									logger.error("An error occurred initializing the library", e)
+				}
+				is ActiveLibraryDownloadsScreen -> {
+					graphDependencies.apply {
+						LaunchedEffect(key1 = Unit) {
+							try {
+								val settings =
+									applicationSettingsRepository.promiseApplicationSettings().suspend()
+								if (settings.chosenLibraryId > -1) {
+									val libraryId = LibraryId(settings.chosenLibraryId)
+									applicationNavigation.viewLibrary(libraryId).suspend()
+									applicationNavigation.viewActiveDownloads(libraryId).suspend()
+									return@LaunchedEffect
 								}
-
-								applicationNavigation.backOut().suspend()
+							} catch (e: Throwable) {
+								logger.error("An error occurred initializing the library", e)
 							}
+
+							applicationNavigation.backOut().suspend()
 						}
 					}
-					is LibraryDestination -> {
-						destination.Navigate(
-							graphDependencies,
-							scaffoldState,
-							coroutineScope,
+				}
+				is LibraryDestination -> {
+					destination.Navigate(
+						graphDependencies,
+						scaffoldState,
+						coroutineScope,
+					)
+				}
+				is ApplicationSettingsScreen -> {
+					val viewModel = viewModel {
+						ApplicationSettingsViewModel(
+							graphDependencies.applicationSettingsRepository,
+							graphDependencies.selectedPlaybackEngineTypeAccess,
+							graphDependencies.libraryProvider,
+							graphDependencies.messageBus,
+							graphDependencies.syncScheduler,
 						)
 					}
-					is ApplicationSettingsScreen -> {
+
+					Box(
+						modifier = Modifier
+							.fillMaxSize()
+							.padding(systemBarsPadding)
+					) {
+						ApplicationSettingsView(
+							applicationSettingsViewModel = viewModel,
+							applicationNavigation = graphDependencies.applicationNavigation,
+							playbackService = graphDependencies.playbackServiceController,
+						)
+					}
+
+					viewModel.loadSettings()
+				}
+				is NewConnectionSettingsScreen -> {
+					with(graphDependencies) {
 						val viewModel = viewModel {
-							ApplicationSettingsViewModel(
-								graphDependencies.applicationSettingsRepository,
-								graphDependencies.selectedPlaybackEngineTypeAccess,
-								graphDependencies.libraryProvider,
-								graphDependencies.messageBus,
-								graphDependencies.syncScheduler,
+							LibrarySettingsViewModel(
+								libraryProvider = libraryProvider,
+								libraryStorage = libraryStorage,
+								libraryRemoval = libraryRemoval,
+								applicationReadPermissionsRequirementsProvider = readPermissionsRequirements,
+								applicationWritePermissionsRequirementsProvider = writePermissionsRequirements,
+								permissionsManager = permissionsManager,
 							)
 						}
 
@@ -890,61 +922,33 @@ private fun BrowserView(
 								.fillMaxSize()
 								.padding(systemBarsPadding)
 						) {
-							ApplicationSettingsView(
-								applicationSettingsViewModel = viewModel,
-								applicationNavigation = graphDependencies.applicationNavigation,
-								playbackService = graphDependencies.playbackServiceController,
+							LibrarySettingsView(
+								librarySettingsViewModel = viewModel,
+								navigateApplication = applicationNavigation,
+								stringResources = stringResources
 							)
 						}
-
-						viewModel.loadSettings()
 					}
-					is NewConnectionSettingsScreen -> {
-						with(graphDependencies) {
-							val viewModel = viewModel {
-								LibrarySettingsViewModel(
-									libraryProvider = libraryProvider,
-									libraryStorage = libraryStorage,
-									libraryRemoval = libraryRemoval,
-									applicationReadPermissionsRequirementsProvider = readPermissionsRequirements,
-									applicationWritePermissionsRequirementsProvider = writePermissionsRequirements,
-									permissionsManager = permissionsManager,
-								)
-							}
-
-							Box(
-								modifier = Modifier
-									.fillMaxSize()
-									.padding(systemBarsPadding)
-							) {
-								LibrarySettingsView(
-									librarySettingsViewModel = viewModel,
-									navigateApplication = applicationNavigation,
-									stringResources = stringResources
-								)
-							}
-						}
-					}
-					is AboutScreen -> {
-						AboutView(graphDependencies.applicationNavigation)
-					}
-					is HiddenSettingsScreen -> {
-						HiddenSettingsView(viewModel {
-							HiddenSettingsViewModel(graphDependencies.applicationSettingsRepository)
-						})
-					}
+				}
+				is AboutScreen -> {
+					AboutView(graphDependencies.applicationNavigation)
+				}
+				is HiddenSettingsScreen -> {
+					HiddenSettingsView(viewModel {
+						HiddenSettingsViewModel(graphDependencies.applicationSettingsRepository)
+					})
 				}
 			}
+		}
 
-			val isCheckingConnection by connectionStatusViewModel.isGettingConnection.collectAsState()
-			if (isCheckingConnection) {
-				Box(
-					modifier = Modifier
-						.fillMaxSize()
-						.padding(systemBarsPadding)
-				) {
-					ConnectionUpdatesView(connectionViewModel = connectionStatusViewModel)
-				}
+		val isCheckingConnection by connectionStatusViewModel.isGettingConnection.collectAsState()
+		if (isCheckingConnection) {
+			Box(
+				modifier = Modifier
+					.fillMaxSize()
+					.padding(systemBarsPadding)
+			) {
+				ConnectionUpdatesView(connectionViewModel = connectionStatusViewModel)
 			}
 		}
 	}

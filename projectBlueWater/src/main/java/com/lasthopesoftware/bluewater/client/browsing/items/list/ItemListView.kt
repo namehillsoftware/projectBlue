@@ -26,7 +26,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
@@ -293,9 +292,6 @@ fun ItemListView(
 			}
 		}
 	}
-
-	val systemUiController = rememberSystemUiController()
-	systemUiController.setStatusBarColor(MaterialTheme.colors.surface)
 
 	val isFilesLoaded by fileListViewModel.isLoaded.collectAsState()
 
