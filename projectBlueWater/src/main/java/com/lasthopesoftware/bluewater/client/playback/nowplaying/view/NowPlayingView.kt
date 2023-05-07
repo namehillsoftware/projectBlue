@@ -119,6 +119,81 @@ private fun NowPlayingProgressIndicator(fileProgress: Float) {
 	)
 }
 
+@Composable
+private fun PlaylistControls(
+	modifier: Modifier = Modifier,
+	nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel,
+	playlistViewModel: NowPlayingPlaylistViewModel,
+	playbackServiceController: ControlPlaybackService,
+	onHide: () -> Unit
+) {
+	Row(
+		modifier = modifier,
+		horizontalArrangement = Arrangement.SpaceAround,
+		verticalAlignment = Alignment.CenterVertically,
+	) {
+		val isEditingPlaylist by playlistViewModel.isEditingPlaylistState.collectAsState()
+		if (isEditingPlaylist) {
+			Image(
+				painter = painterResource(id = R.drawable.ic_remove_item_white_36dp),
+				contentDescription = stringResource(id = R.string.finish_edit_now_playing_list),
+				modifier = Modifier.clickable {
+					playlistViewModel.finishPlaylistEdit()
+				},
+				alpha = .8f,
+			)
+		} else {
+			Image(
+				painter = painterResource(id = R.drawable.pencil),
+				contentDescription = stringResource(id = R.string.edit_now_playing_list),
+				modifier = Modifier.clickable {
+					playlistViewModel.editPlaylist()
+				},
+				alpha = .8f,
+			)
+		}
+
+		val isRepeating by nowPlayingFilePropertiesViewModel.isRepeating.collectAsState()
+		if (isRepeating) {
+			Image(
+				painter = painterResource(id = R.drawable.av_repeat_white),
+				contentDescription = stringResource(id = R.string.btn_complete_playlist),
+				modifier = Modifier.clickable {
+					nowPlayingFilePropertiesViewModel.toggleRepeating()
+				},
+				alpha = .8f,
+			)
+		} else {
+			Image(
+				painter = painterResource(id = R.drawable.av_no_repeat_white),
+				contentDescription = stringResource(id = R.string.btn_repeat_playlist),
+				modifier = Modifier.clickable {
+					nowPlayingFilePropertiesViewModel.toggleRepeating()
+				},
+				alpha = .8f,
+			)
+		}
+
+		PlayPauseButton(
+			nowPlayingFilePropertiesViewModel,
+			playbackServiceController,
+			alpha = .8f
+		)
+
+		Image(
+			painter = painterResource(R.drawable.chevron_up_white_36dp),
+			alpha = .8f,
+			contentDescription = stringResource(R.string.btn_hide_files),
+			modifier = Modifier
+				.clickable(onClick = {
+					playlistViewModel.finishPlaylistEdit()
+					onHide()
+				})
+				.rotate(180f),
+		)
+	}
+}
+
 private object ConsumeAllVerticalFlingScrollConnection : NestedScrollConnection {
 
 	override fun onPostScroll(
@@ -334,73 +409,17 @@ fun NowPlayingView(
 										}
 									}
 								} else {
-									Row(
+									PlaylistControls(
 										modifier = Modifier
 											.alpha(1 - firstPageShownProgress)
 											.fillMaxWidth(),
-										horizontalArrangement = Arrangement.SpaceAround,
-										verticalAlignment = Alignment.CenterVertically,
+										nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
+										playlistViewModel = playlistViewModel,
+										playbackServiceController = playbackServiceController,
 									) {
-										if (isEditingPlaylist) {
-											Image(
-												painter = painterResource(id = R.drawable.ic_remove_item_white_36dp),
-												contentDescription = stringResource(id = R.string.finish_edit_now_playing_list),
-												modifier = Modifier.clickable {
-													playlistViewModel.finishPlaylistEdit()
-												},
-												alpha = .8f,
-											)
-										} else {
-											Image(
-												painter = painterResource(id = R.drawable.pencil),
-												contentDescription = stringResource(id = R.string.edit_now_playing_list),
-												modifier = Modifier.clickable {
-													playlistViewModel.editPlaylist()
-												},
-												alpha = .8f,
-											)
+										scope.launch {
+											lazyListState.animateScrollToItem(0)
 										}
-
-										val isRepeating by nowPlayingFilePropertiesViewModel.isRepeating.collectAsState()
-										if (isRepeating) {
-											Image(
-												painter = painterResource(id = R.drawable.av_repeat_white),
-												contentDescription = stringResource(id = R.string.btn_complete_playlist),
-												modifier = Modifier.clickable {
-													nowPlayingFilePropertiesViewModel.toggleRepeating()
-												},
-												alpha = .8f,
-											)
-										} else {
-											Image(
-												painter = painterResource(id = R.drawable.av_no_repeat_white),
-												contentDescription = stringResource(id = R.string.btn_repeat_playlist),
-												modifier = Modifier.clickable {
-													nowPlayingFilePropertiesViewModel.toggleRepeating()
-												},
-												alpha = .8f,
-											)
-										}
-
-										PlayPauseButton(
-											nowPlayingFilePropertiesViewModel,
-											playbackServiceController,
-											alpha = .8f
-										)
-
-										Image(
-											painter = painterResource(R.drawable.chevron_up_white_36dp),
-											alpha = .8f,
-											contentDescription = stringResource(R.string.btn_hide_files),
-											modifier = Modifier
-												.clickable(onClick = {
-													playlistViewModel.finishPlaylistEdit()
-													scope.launch {
-														lazyListState.animateScrollToItem(0)
-													}
-												})
-												.rotate(180f),
-										)
 									}
 								}
 							}
