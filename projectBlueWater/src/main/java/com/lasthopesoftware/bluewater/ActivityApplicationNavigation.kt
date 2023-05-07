@@ -27,7 +27,7 @@ class ActivityApplicationNavigation(
 		componentActivity.startActivity(intentBuilder.buildFileDetailsIntent(libraryId, playlist, position))
 	}
 
-	override fun viewNowPlaying() = loopInOperation {
+	override fun viewNowPlaying(libraryId: LibraryId) = loopInOperation {
 		componentActivity.startActivity(intentBuilder.buildNowPlayingIntent())
 	}
 

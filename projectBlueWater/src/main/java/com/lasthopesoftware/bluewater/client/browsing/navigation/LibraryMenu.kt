@@ -45,7 +45,7 @@ fun LibraryMenu(
 		.height(bottomAppBarHeight)
 
 	if (isNowPlayingFileSet)
-		rowModifier = rowModifier.clickable(onClick = applicationNavigation::viewNowPlaying)
+		rowModifier = rowModifier.clickable(onClick = { applicationNavigation.viewNowPlaying(libraryId) })
 
 	Row(
 		modifier = rowModifier
