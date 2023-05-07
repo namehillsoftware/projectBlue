@@ -479,7 +479,9 @@ private class GraphNavigation(
 	override fun viewNowPlaying(libraryId: LibraryId) = coroutineScope.launch {
 		hideBottomSheet()
 
-		navController.navigate(NowPlayingScreen(libraryId))
+		if (!navController.moveToTop { it is NowPlayingScreen }) {
+			navController.navigate(NowPlayingScreen(libraryId))
+		}
 	}.toPromise()
 
 	override fun launchAboutActivity() = coroutineScope.launch {
