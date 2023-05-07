@@ -192,138 +192,6 @@ fun NowPlayingView(
 				.background(SharedColors.OverlayDark)
 				.padding(systemBarsPadding),
 		) {
-			Box(
-				modifier = Modifier
-					.fillMaxWidth()
-					.height(maxHeight)
-					.nestedScroll(ConsumeAllVerticalFlingScrollConnection)
-					.clickable(
-						interactionSource = remember { MutableInteractionSource() },
-						indication = null,
-						onClick = { nowPlayingFilePropertiesViewModel.showNowPlayingControls() }
-					),
-			) {
-				Row(
-					modifier = Modifier.fillMaxWidth(),
-					horizontalArrangement = Arrangement.SpaceBetween,
-					verticalAlignment = Alignment.CenterVertically
-				) {
-					Column(
-						modifier = Modifier.weight(1f)
-					) {
-						ProvideTextStyle(value = MaterialTheme.typography.h5) {
-							val title by nowPlayingFilePropertiesViewModel.title.collectAsState()
-
-							MarqueeText(
-								text = title,
-								gradientEdgeColor = Color.Transparent,
-							)
-						}
-
-						ProvideTextStyle(value = MaterialTheme.typography.subtitle1) {
-							val artist by nowPlayingFilePropertiesViewModel.artist.collectAsState()
-							MarqueeText(
-								text = artist,
-								gradientEdgeColor = Color.Transparent,
-							)
-						}
-					}
-
-					if (isScreenControlsVisible) {
-						Row(modifier = Modifier.wrapContentWidth()) {
-							val isScreenOnEnabled by screenOnState.isScreenOnEnabled.collectAsState()
-							Image(
-								painter = painterResource(if (isScreenOnEnabled) R.drawable.ic_screen_on_white_36dp else R.drawable.ic_screen_off_white_36dp),
-								alpha = .8f,
-								contentDescription = stringResource(if (isScreenOnEnabled) R.string.screen_is_on else R.string.screen_is_off),
-								modifier = Modifier
-									.padding(Dimensions.viewPaddingUnit)
-									.clickable(onClick = screenOnState::toggleScreenOn),
-							)
-
-							Image(
-								painter = painterResource(R.drawable.chevron_up_white_36dp),
-								alpha = .8f,
-								contentDescription = stringResource(R.string.btn_view_files),
-								modifier = Modifier
-									.padding(Dimensions.viewPaddingUnit)
-									.clickable(onClick = {
-										scope.launch {
-											lazyListState.animateScrollToItem(1)
-										}
-									}),
-							)
-						}
-					}
-				}
-
-				if (isSettledOnFirstPage) {
-					Column(
-						modifier = Modifier.align(Alignment.BottomCenter),
-						horizontalAlignment = Alignment.CenterHorizontally,
-					) {
-						if (isScreenControlsVisible) {
-							Column(
-								modifier = Modifier
-									.fillMaxWidth()
-									.padding(Dimensions.viewPaddingUnit)
-							) {
-								val rating by nowPlayingFilePropertiesViewModel.songRating.collectAsState()
-								val ratingInt by remember { derivedStateOf { rating.toInt() } }
-								RatingBar(
-									rating = ratingInt,
-									color = Color.White,
-									backgroundColor = Color.White.copy(alpha = .1f),
-									modifier = Modifier
-										.fillMaxWidth()
-										.height(Dimensions.menuHeight),
-									onRatingSelected = { nowPlayingFilePropertiesViewModel.updateRating(it.toFloat()) }
-								)
-
-								val isReadOnly by nowPlayingFilePropertiesViewModel.isReadOnly.collectAsState()
-								if (isReadOnly) {
-									ProvideTextStyle(value = MaterialTheme.typography.caption) {
-										Text(
-											text = stringResource(id = R.string.readOnlyConnection)
-										)
-									}
-								}
-							}
-						}
-
-						Spacer(modifier = Modifier.height(ProgressIndicatorDefaults.StrokeWidth))
-
-						Row(
-							modifier = Modifier
-								.fillMaxWidth()
-								.height(controlRowHeight),
-							horizontalArrangement = Arrangement.SpaceEvenly,
-							verticalAlignment = Alignment.CenterVertically,
-						) {
-							if (isScreenControlsVisible) {
-								Image(
-									painter = painterResource(id = R.drawable.av_previous_white),
-									contentDescription = stringResource(id = R.string.btn_previous),
-									modifier = Modifier.clickable {
-										playbackServiceController.previous()
-									}
-								)
-
-								PlayPauseButton(nowPlayingFilePropertiesViewModel, playbackServiceController)
-
-								Image(
-									painter = painterResource(id = R.drawable.av_next_white),
-									contentDescription = stringResource(id = R.string.btn_next),
-									modifier = Modifier.clickable {
-										playbackServiceController.next()
-									}
-								)
-							}
-						}
-					}
-				}
-			}
-
 			val filePropertiesHeight = maxHeight - expandedControlsHeight
 
 			val filePropertiesHeightPx = LocalDensity.current.run { filePropertiesHeight.toPx() }
@@ -344,7 +212,69 @@ fun NowPlayingView(
 				userScrollEnabled = !isEditingPlaylist,
 			) {
 				item {
-					Spacer(modifier = Modifier.height(filePropertiesHeight))
+					Box(
+						modifier = Modifier.height(filePropertiesHeight)
+							.nestedScroll(ConsumeAllVerticalFlingScrollConnection)
+							.clickable(
+								interactionSource = remember { MutableInteractionSource() },
+								indication = null,
+								onClick = { nowPlayingFilePropertiesViewModel.showNowPlayingControls() }
+							),
+					) {
+						Row(
+							modifier = Modifier.fillMaxWidth(),
+							horizontalArrangement = Arrangement.SpaceBetween,
+							verticalAlignment = Alignment.CenterVertically
+						) {
+							Column(
+								modifier = Modifier.weight(1f)
+							) {
+								ProvideTextStyle(value = MaterialTheme.typography.h5) {
+									val title by nowPlayingFilePropertiesViewModel.title.collectAsState()
+
+									MarqueeText(
+										text = title,
+										gradientEdgeColor = Color.Transparent,
+									)
+								}
+
+								ProvideTextStyle(value = MaterialTheme.typography.subtitle1) {
+									val artist by nowPlayingFilePropertiesViewModel.artist.collectAsState()
+									MarqueeText(
+										text = artist,
+										gradientEdgeColor = Color.Transparent,
+									)
+								}
+							}
+
+							if (isScreenControlsVisible) {
+								Row(modifier = Modifier.wrapContentWidth()) {
+									val isScreenOnEnabled by screenOnState.isScreenOnEnabled.collectAsState()
+									Image(
+										painter = painterResource(if (isScreenOnEnabled) R.drawable.ic_screen_on_white_36dp else R.drawable.ic_screen_off_white_36dp),
+										alpha = .8f,
+										contentDescription = stringResource(if (isScreenOnEnabled) R.string.screen_is_on else R.string.screen_is_off),
+										modifier = Modifier
+											.padding(Dimensions.viewPaddingUnit)
+											.clickable(onClick = screenOnState::toggleScreenOn),
+									)
+
+									Image(
+										painter = painterResource(R.drawable.chevron_up_white_36dp),
+										alpha = .8f,
+										contentDescription = stringResource(R.string.btn_view_files),
+										modifier = Modifier
+											.padding(Dimensions.viewPaddingUnit)
+											.clickable(onClick = {
+												scope.launch {
+													lazyListState.animateScrollToItem(1)
+												}
+											}),
+									)
+								}
+							}
+						}
+					}
 				}
 
 				item {
@@ -373,6 +303,35 @@ fun NowPlayingView(
 								modifier = Modifier.height(Dimensions.appBarHeight),
 								contentAlignment = Alignment.Center,
 							) {
+								if (isSettledOnFirstPage && isScreenControlsVisible) {
+									Column(
+										modifier = Modifier
+											.fillMaxWidth()
+											.padding(Dimensions.viewPaddingUnit)
+									) {
+										val rating by nowPlayingFilePropertiesViewModel.songRating.collectAsState()
+										val ratingInt by remember { derivedStateOf { rating.toInt() } }
+										RatingBar(
+											rating = ratingInt,
+											color = Color.White,
+											backgroundColor = Color.White.copy(alpha = .1f),
+											modifier = Modifier
+												.fillMaxWidth()
+												.height(Dimensions.menuHeight),
+											onRatingSelected = { nowPlayingFilePropertiesViewModel.updateRating(it.toFloat()) }
+										)
+
+										val isReadOnly by nowPlayingFilePropertiesViewModel.isReadOnly.collectAsState()
+										if (isReadOnly) {
+											ProvideTextStyle(value = MaterialTheme.typography.caption) {
+												Text(
+													text = stringResource(id = R.string.readOnlyConnection)
+												)
+											}
+										}
+									}
+								}
+
 								if (firstPageShownProgress < .9f) {
 									Row(
 										modifier = Modifier
@@ -446,6 +405,34 @@ fun NowPlayingView(
 							}
 
 							NowPlayingProgressIndicator(fileProgress = fileProgress)
+
+							Row(
+								modifier = Modifier
+									.fillMaxWidth()
+									.height(controlRowHeight),
+								horizontalArrangement = Arrangement.SpaceEvenly,
+								verticalAlignment = Alignment.CenterVertically,
+							) {
+								if (isSettledOnFirstPage && isScreenControlsVisible) {
+									Image(
+										painter = painterResource(id = R.drawable.av_previous_white),
+										contentDescription = stringResource(id = R.string.btn_previous),
+										modifier = Modifier.clickable {
+											playbackServiceController.previous()
+										}
+									)
+
+									PlayPauseButton(nowPlayingFilePropertiesViewModel, playbackServiceController)
+
+									Image(
+										painter = painterResource(id = R.drawable.av_next_white),
+										contentDescription = stringResource(id = R.string.btn_next),
+										modifier = Modifier.clickable {
+											playbackServiceController.next()
+										}
+									)
+								}
+							}
 						}
 
 						val nowPlayingFiles by playlistViewModel.nowPlayingList.collectAsState()
