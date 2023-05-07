@@ -48,16 +48,6 @@
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".client.browsing.BrowserActivity" />
         </activity>
-        <activity
-            android:name=".client.playback.nowplaying.view.activity.NowPlayingActivity"
-            android:label="@string/title_activity_view_now_playing"
-            android:theme="@style/NowPlayingTheme"
-            android:launchMode="singleTop"
-            android:parentActivityName=".client.browsing.BrowserActivity">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value=".client.browsing.BrowserActivity" />
-        </activity>
 
         <receiver
             android:name=".client.playback.service.receivers.AudioBecomingNoisyReceiver"
