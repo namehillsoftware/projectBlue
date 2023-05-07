@@ -213,7 +213,8 @@ fun NowPlayingView(
 			) {
 				item {
 					Box(
-						modifier = Modifier.height(filePropertiesHeight)
+						modifier = Modifier
+							.height(filePropertiesHeight)
 							.nestedScroll(ConsumeAllVerticalFlingScrollConnection)
 							.clickable(
 								interactionSource = remember { MutableInteractionSource() },
@@ -303,36 +304,36 @@ fun NowPlayingView(
 								modifier = Modifier.height(Dimensions.appBarHeight),
 								contentAlignment = Alignment.Center,
 							) {
-								if (isSettledOnFirstPage && isScreenControlsVisible) {
-									Column(
-										modifier = Modifier
-											.fillMaxWidth()
-											.padding(Dimensions.viewPaddingUnit)
-									) {
-										val rating by nowPlayingFilePropertiesViewModel.songRating.collectAsState()
-										val ratingInt by remember { derivedStateOf { rating.toInt() } }
-										RatingBar(
-											rating = ratingInt,
-											color = Color.White,
-											backgroundColor = Color.White.copy(alpha = .1f),
+								if (isSettledOnFirstPage) {
+									if (isScreenControlsVisible) {
+										Column(
 											modifier = Modifier
 												.fillMaxWidth()
-												.height(Dimensions.menuHeight),
-											onRatingSelected = { nowPlayingFilePropertiesViewModel.updateRating(it.toFloat()) }
-										)
+												.padding(Dimensions.viewPaddingUnit)
+										) {
+											val rating by nowPlayingFilePropertiesViewModel.songRating.collectAsState()
+											val ratingInt by remember { derivedStateOf { rating.toInt() } }
+											RatingBar(
+												rating = ratingInt,
+												color = Color.White,
+												backgroundColor = Color.White.copy(alpha = .1f),
+												modifier = Modifier
+													.fillMaxWidth()
+													.height(Dimensions.menuHeight),
+												onRatingSelected = { nowPlayingFilePropertiesViewModel.updateRating(it.toFloat()) }
+											)
 
-										val isReadOnly by nowPlayingFilePropertiesViewModel.isReadOnly.collectAsState()
-										if (isReadOnly) {
-											ProvideTextStyle(value = MaterialTheme.typography.caption) {
-												Text(
-													text = stringResource(id = R.string.readOnlyConnection)
-												)
+											val isReadOnly by nowPlayingFilePropertiesViewModel.isReadOnly.collectAsState()
+											if (isReadOnly) {
+												ProvideTextStyle(value = MaterialTheme.typography.caption) {
+													Text(
+														text = stringResource(id = R.string.readOnlyConnection)
+													)
+												}
 											}
 										}
 									}
-								}
-
-								if (firstPageShownProgress < .9f) {
+								} else {
 									Row(
 										modifier = Modifier
 											.alpha(1 - firstPageShownProgress)
