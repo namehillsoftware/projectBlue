@@ -19,9 +19,6 @@ object NewConnectionSettingsScreen : Destination
 @Parcelize
 object HiddenSettingsScreen : Destination
 
-@Parcelize
-object NowPlayingScreen : Destination
-
 sealed interface ConnectingDestination : Destination
 
 @Parcelize
@@ -48,3 +45,6 @@ class ConnectionSettingsScreen(override val libraryId: LibraryId) : LibraryDesti
 
 @Parcelize
 class SearchScreen(override val libraryId: LibraryId) : LibraryDestination
+
+@Parcelize
+class NowPlayingScreen(override val libraryId: LibraryId) : LibraryDestination

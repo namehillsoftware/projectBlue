@@ -31,6 +31,7 @@ class DestinationApplicationNavigation(
 			is ConnectionSettingsScreen -> viewServerSettings(destination.libraryId)
 			is ApplicationSettingsScreen -> viewApplicationSettings()
 			is LibraryScreen -> viewLibrary(destination.libraryId)
+			is NowPlayingScreen -> viewNowPlaying()
 			else -> navController.navigate(destination)
 		}
 	}

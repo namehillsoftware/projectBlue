@@ -13,9 +13,9 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
+import androidx.core.view.WindowCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import browsableItemListView
-import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.lasthopesoftware.bluewater.ActivityApplicationNavigation
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
@@ -353,6 +353,8 @@ class BrowserActivity :
 			}
 		}
 
+		WindowCompat.setDecorFitsSystemWindows(window, false)
+
 		setContent {
 			ProjectBlueTheme {
 				BrowserView(this, getDestination(intent))
@@ -471,10 +473,11 @@ private class GraphNavigation(
 		return inner.viewFileDetails(libraryId, playlist, position)
 	}
 
-	override fun viewNowPlaying(): Promise<Unit> {
+	override fun viewNowPlaying(libraryId: LibraryId) = coroutineScope.launch {
 		hideBottomSheet()
-		return inner.viewNowPlaying()
-	}
+
+		navController.navigate(NowPlayingScreen(libraryId))
+	}.toPromise()
 
 	override fun launchAboutActivity() = coroutineScope.launch {
 		navController.navigate(AboutScreen)
@@ -539,10 +542,47 @@ private fun LibraryDestination.Navigate(
 	coroutineScope: CoroutineScope,
 ) {
 	with(browserViewDependencies) {
+		if (this@Navigate is NowPlayingScreen) {
+			NowPlayingView(
+				nowPlayingCoverArtViewModel = nowPlayingCoverArtViewModel,
+				nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
+				screenOnState = viewModel {
+					NowPlayingScreenViewModel(
+						messageBus,
+						InMemoryNowPlayingDisplaySettings,
+						playbackServiceController,
+					)
+				},
+				playbackServiceController = playbackServiceController,
+				playlistViewModel = nowPlayingPlaylistViewModel,
+				childItemViewModelProvider = viewModel {
+					ReusablePlaylistFileItemViewModelProvider(
+						libraryFilePropertiesProvider,
+						urlKeyProvider,
+						stringResources,
+						menuMessageBus,
+						messageBus,
+					)
+				},
+				applicationNavigation = applicationNavigation,
+				itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
+				connectionLostViewModel = connectionLostViewModel,
+			)
+
+			connectionLostViewModel.watchLibraryConnection(libraryId)
+
+			return
+		}
+
 		val selectedLibraryId by selectedLibraryViewModel.selectedLibraryId.collectAsState()
 		val isSelectedLibrary by remember { derivedStateOf { selectedLibraryId == libraryId } }
 
+		val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
+
 		BottomSheetScaffold(
+			modifier = Modifier
+				.fillMaxSize()
+				.padding(systemBarsPadding),
 			scaffoldState = scaffoldState,
 			sheetPeekHeight = if (isSelectedLibrary) bottomAppBarHeight else 0.dp,
 			sheetElevation = 16.dp,
@@ -716,6 +756,7 @@ private fun LibraryDestination.Navigate(
 							}
 						}
 					}
+					is NowPlayingScreen -> {}
 				}
 			}
 		}
@@ -728,9 +769,6 @@ private fun BrowserView(
 	browserViewDependencies: BrowserViewDependencies,
 	initialDestination: Destination? = null
 ) {
-	val systemUiController = rememberSystemUiController()
-	systemUiController.setStatusBarColor(MaterialTheme.colors.surface)
-
 	val navController = rememberNavController(
 		if (initialDestination == null) listOf(ApplicationSettingsScreen, SelectedLibraryReRouter)
 		else listOf(ApplicationSettingsScreen)
@@ -781,7 +819,12 @@ private fun BrowserView(
 
 	val screenPadding = PaddingValues() // WindowInsets.systemBars.asPaddingValues()
 
-	Box(modifier = Modifier.fillMaxSize().padding(screenPadding)) {
+	Box(modifier = Modifier
+		.fillMaxSize()
+		.padding(screenPadding)) {
+
+		val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
+
 		Surface {
 			NavHost(navController) { destination ->
 				when (destination) {
@@ -842,11 +885,17 @@ private fun BrowserView(
 							)
 						}
 
-						ApplicationSettingsView(
-							applicationSettingsViewModel = viewModel,
-							applicationNavigation = graphDependencies.applicationNavigation,
-							playbackService = graphDependencies.playbackServiceController,
-						)
+						Box(
+							modifier = Modifier
+								.fillMaxSize()
+								.padding(systemBarsPadding)
+						) {
+							ApplicationSettingsView(
+								applicationSettingsViewModel = viewModel,
+								applicationNavigation = graphDependencies.applicationNavigation,
+								playbackService = graphDependencies.playbackServiceController,
+							)
+						}
 
 						viewModel.loadSettings()
 					}
@@ -863,11 +912,17 @@ private fun BrowserView(
 								)
 							}
 
-							LibrarySettingsView(
-								librarySettingsViewModel = viewModel,
-								navigateApplication = applicationNavigation,
-								stringResources = stringResources
-							)
+							Box(
+								modifier = Modifier
+									.fillMaxSize()
+									.padding(systemBarsPadding)
+							) {
+								LibrarySettingsView(
+									librarySettingsViewModel = viewModel,
+									navigateApplication = applicationNavigation,
+									stringResources = stringResources
+								)
+							}
 						}
 					}
 					is AboutScreen -> {
@@ -878,41 +933,18 @@ private fun BrowserView(
 							HiddenSettingsViewModel(graphDependencies.applicationSettingsRepository)
 						})
 					}
-					is NowPlayingScreen -> {
-						with (graphDependencies) {
-							NowPlayingView(
-								nowPlayingCoverArtViewModel = nowPlayingCoverArtViewModel,
-								nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
-								screenOnState = viewModel {
-									NowPlayingScreenViewModel(
-										messageBus,
-										InMemoryNowPlayingDisplaySettings,
-										playbackServiceController,
-									)
-								},
-								playbackServiceController = playbackServiceController,
-								playlistViewModel = nowPlayingPlaylistViewModel,
-								childItemViewModelProvider = viewModel {
-									ReusablePlaylistFileItemViewModelProvider(
-										libraryFilePropertiesProvider,
-										urlKeyProvider,
-										stringResources,
-										menuMessageBus,
-										messageBus,
-									)
-								},
-								applicationNavigation = applicationNavigation,
-								itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
-								connectionLostViewModel = connectionLostViewModel,
-							)
-						}
-					}
 				}
 			}
 
 			val isCheckingConnection by connectionStatusViewModel.isGettingConnection.collectAsState()
 			if (isCheckingConnection) {
-				ConnectionUpdatesView(connectionViewModel = connectionStatusViewModel)
+				Box(
+					modifier = Modifier
+						.fillMaxSize()
+						.padding(systemBarsPadding)
+				) {
+					ConnectionUpdatesView(connectionViewModel = connectionStatusViewModel)
+				}
 			}
 		}
 	}
