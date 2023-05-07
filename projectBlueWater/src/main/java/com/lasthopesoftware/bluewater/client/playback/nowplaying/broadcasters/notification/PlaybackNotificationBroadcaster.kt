@@ -97,17 +97,25 @@ class PlaybackNotificationBroadcaster(
 		synchronized(notificationSync) {
 			this.serviceFile = serviceFile
 
-			if (!isNotificationStarted && !isPlaying) return
-
-			val loadingBuilderNotification =
-				nowPlayingNotificationContentBuilder.getLoadingNotification(isPlaying).build()
-
-			notify(loadingBuilderNotification)
+			fun isValidForNotification() = serviceFile == this.serviceFile && (isNotificationStarted || isPlaying)
 
 			nowPlayingNotificationContentBuilder
-				.promiseNowPlayingNotification(serviceFile, isPlaying)
-				.then { builder ->
-					synchronized(notificationSync) { notify(builder.build()) }
+				.promiseLoadingNotification(isPlaying)
+				.then { loadingBuilderNotification ->
+					synchronized(notificationSync) {
+						if (isValidForNotification()) {
+							notify(loadingBuilderNotification.build())
+
+							nowPlayingNotificationContentBuilder
+								.promiseNowPlayingNotification(serviceFile, isPlaying)
+								.then { builder ->
+									synchronized(notificationSync) {
+										if (isValidForNotification())
+											notify(builder.build())
+									}
+								}
+						}
+					}
 				}
 		}
 	}

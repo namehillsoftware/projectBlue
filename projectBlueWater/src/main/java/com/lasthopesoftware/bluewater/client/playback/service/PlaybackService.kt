@@ -362,6 +362,7 @@ open class PlaybackService :
 		PlaybackStartingNotificationBuilder(
 			this,
 			NotificationBuilderProducer(this),
+			selectedLibraryIdentifierProvider,
 			playbackNotificationsConfiguration,
 			intentBuilder,
 		)
@@ -677,7 +678,13 @@ open class PlaybackService :
 					Duration.ZERO)
 			}
 			.then {
-				startActivity(intentBuilder.buildNowPlayingIntent())
+				selectedLibraryIdentifierProvider
+					.promiseSelectedLibraryId()
+					.then {
+						it?.also {
+							startActivity(intentBuilder.buildNowPlayingIntent(it))
+						}
+					}
 				applicationMessageBus.value.sendMessage(PlaybackMessage.PlaylistChanged)
 			}
 	}
@@ -753,6 +760,7 @@ open class PlaybackService :
 						this,
 						mediaStyleNotificationSetup,
 						scopedUrlKeyProvider,
+						selectedLibraryIdentifierProvider,
 						cachedSessionFilePropertiesProvider,
 						imageProvider
 					)

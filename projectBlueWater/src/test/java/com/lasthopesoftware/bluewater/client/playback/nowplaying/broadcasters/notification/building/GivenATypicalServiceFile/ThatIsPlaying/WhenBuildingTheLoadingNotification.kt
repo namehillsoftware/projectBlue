@@ -7,15 +7,17 @@ import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideImages
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FakeFilePropertiesContainerRepository
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ScopedCachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ScopedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeScopedRevisionProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.FakeFileConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.ScopedUrlKeyProvider
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building.NowPlayingNotificationBuilder
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -27,7 +29,7 @@ import org.junit.Test
 class WhenBuildingTheLoadingNotification : AndroidContext() {
 
 	companion object {
-		private val expectedBitmap = lazy {
+		private val expectedBitmap by lazy {
 			val conf = Bitmap.Config.ARGB_8888 // see other conf types
 			Bitmap.createBitmap(1, 1, conf)
 		}
@@ -46,12 +48,17 @@ class WhenBuildingTheLoadingNotification : AndroidContext() {
 			ServiceFile(3),
 			mapOf(Pair(KnownFileProperties.Artist, "test-artist"), Pair(KnownFileProperties.Name, "song")))
 		val containerRepository = FakeFilePropertiesContainerRepository()
-		val imageProvider = mockk<ProvideImages>()
-		every { imageProvider.promiseFileBitmap(any()) } returns Promise(expectedBitmap.value)
+
+		val libraryId = LibraryId(13)
 		val npBuilder = NowPlayingNotificationBuilder(
 			ApplicationProvider.getApplicationContext(),
-			{ spiedBuilder },
+			mockk {
+				every { getMediaStyleNotification(libraryId) } returns spiedBuilder
+			},
 			ScopedUrlKeyProvider(connectionProvider),
+			mockk {
+				every { promiseSelectedLibraryId() } returns libraryId.toPromise()
+			},
 			ScopedCachedFilePropertiesProvider(
 				connectionProvider,
 				containerRepository,
@@ -61,9 +68,11 @@ class WhenBuildingTheLoadingNotification : AndroidContext() {
 					containerRepository
 				)
 			),
-			imageProvider
+			mockk {
+				every { promiseFileBitmap(any()) } returns Promise(expectedBitmap)
+			}
 		)
-		builder = npBuilder.getLoadingNotification(true)
+		builder = npBuilder.promiseLoadingNotification(true).toExpiringFuture().get()
 	}
 
 	@Test

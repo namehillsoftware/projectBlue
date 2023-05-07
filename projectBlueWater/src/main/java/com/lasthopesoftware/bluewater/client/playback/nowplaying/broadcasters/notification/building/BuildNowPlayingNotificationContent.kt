@@ -7,5 +7,5 @@ import com.namehillsoftware.handoff.promises.Promise
 interface BuildNowPlayingNotificationContent {
     fun promiseNowPlayingNotification(serviceFile: ServiceFile, isPlaying: Boolean): Promise<NotificationCompat.Builder>
 
-    fun getLoadingNotification(isPlaying: Boolean): NotificationCompat.Builder
+    fun promiseLoadingNotification(isPlaying: Boolean): Promise<NotificationCompat.Builder>
 }

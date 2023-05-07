@@ -17,9 +17,9 @@ interface BuildIntents {
 
 	fun buildFileDetailsIntent(libraryId: LibraryId, playlist: Collection<ServiceFile>, position: Int): Intent
 
-	fun buildNowPlayingIntent(): Intent
+	fun buildNowPlayingIntent(libraryId: LibraryId): Intent
 
-	fun buildPendingNowPlayingIntent(): PendingIntent
+	fun buildPendingNowPlayingIntent(libraryId: LibraryId): PendingIntent
 
 	fun buildPendingShowDownloadsIntent(): PendingIntent
 }

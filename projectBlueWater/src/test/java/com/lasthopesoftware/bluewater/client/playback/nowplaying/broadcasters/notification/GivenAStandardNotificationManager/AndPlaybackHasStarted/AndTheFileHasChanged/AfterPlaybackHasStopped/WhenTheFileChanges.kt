@@ -42,7 +42,7 @@ class WhenTheFileChanges : AndroidContext() {
 		val secondNotificationPromise = PromiseMessenger<NotificationCompat.Builder>()
 
 		val notificationContentBuilder = mockk<BuildNowPlayingNotificationContent> {
-			every { getLoadingNotification(any()) } returns newFakeBuilder(context, Notification())
+			every { promiseLoadingNotification(any()) } returns newFakeBuilder(context, Notification()).toPromise()
 			every { promiseNowPlayingNotification(any(), any()) } returns newFakeBuilder(context, Notification()).toPromise()
 			every { promiseNowPlayingNotification(ServiceFile(2), any()) } returns secondNotificationPromise
 		}

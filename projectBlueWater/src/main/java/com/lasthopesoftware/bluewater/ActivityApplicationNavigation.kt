@@ -28,7 +28,7 @@ class ActivityApplicationNavigation(
 	}
 
 	override fun viewNowPlaying(libraryId: LibraryId) = loopInOperation {
-		componentActivity.startActivity(intentBuilder.buildNowPlayingIntent())
+		componentActivity.startActivity(intentBuilder.buildNowPlayingIntent(libraryId))
 	}
 
 	override fun navigateUp() = loopInOperation { componentActivity.finish(); true }

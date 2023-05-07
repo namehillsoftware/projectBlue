@@ -5,6 +5,7 @@ import android.support.v4.media.session.MediaSessionCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.lasthopesoftware.bluewater.R
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.NotificationsConfiguration
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Companion.pendingKillService
 import com.lasthopesoftware.bluewater.shared.android.intents.BuildIntents
@@ -17,9 +18,9 @@ class MediaStyleNotificationSetup(
 	private val mediaSessionCompat: MediaSessionCompat,
 	private val intentBuilder: BuildIntents,
 ) : SetupMediaStyleNotifications {
-	override fun getMediaStyleNotification(): NotificationCompat.Builder {
+	override fun getMediaStyleNotification(libraryId: LibraryId): NotificationCompat.Builder {
 		val builder = produceNotificationBuilders.getNotificationBuilder(configuration.notificationChannel)
-		val intent = intentBuilder.buildPendingNowPlayingIntent()
+		val intent = intentBuilder.buildPendingNowPlayingIntent(libraryId)
 		return builder
 			.setStyle(
 				androidx.media.app.NotificationCompat.MediaStyle()
