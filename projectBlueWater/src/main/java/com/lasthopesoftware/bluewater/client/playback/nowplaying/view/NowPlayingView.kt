@@ -533,8 +533,8 @@ fun NowPlayingView(
 							}
 
 							if (!isNotSettledOnFirstPage) {
-								playingFile?.apply {
-									scope.launch {
+								LaunchedEffect(key1 = playingFile) {
+									playingFile?.apply {
 										reorderableState.lazyListState.scrollToItem(playlistPosition)
 									}
 								}
