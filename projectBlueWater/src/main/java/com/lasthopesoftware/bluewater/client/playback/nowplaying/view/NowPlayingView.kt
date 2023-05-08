@@ -212,7 +212,7 @@ private object ConsumeAllVerticalFlingScrollConnection : NestedScrollConnection 
 	override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity = available.copy(x = 0f)
 }
 
-private val controlRowHeight = 64.dp
+private val controlRowHeight = 72.dp
 
 private val collapsedControlsHeight = ProgressIndicatorDefaults.StrokeWidth + Dimensions.appBarHeight
 private val expandedControlsHeight = controlRowHeight + collapsedControlsHeight
@@ -361,6 +361,7 @@ fun NowPlayingView(
 					item {
 						Column(
 							modifier = Modifier
+								.nestedScroll(ConsumeAllVerticalFlingScrollConnection)
 								.fillMaxSize()
 								.height(maxHeight),
 						) {
@@ -384,40 +385,7 @@ fun NowPlayingView(
 									modifier = Modifier.height(Dimensions.appBarHeight),
 									contentAlignment = Alignment.Center,
 								) {
-									if (isSettledOnFirstPage) {
-										if (isScreenControlsVisible) {
-											Column(
-												modifier = Modifier
-													.fillMaxWidth()
-													.padding(Dimensions.viewPaddingUnit)
-											) {
-												val rating by nowPlayingFilePropertiesViewModel.songRating.collectAsState()
-												val ratingInt by remember { derivedStateOf { rating.toInt() } }
-												RatingBar(
-													rating = ratingInt,
-													color = Color.White,
-													backgroundColor = Color.White.copy(alpha = .1f),
-													modifier = Modifier
-														.fillMaxWidth()
-														.height(Dimensions.menuHeight),
-													onRatingSelected = {
-														nowPlayingFilePropertiesViewModel.updateRating(
-															it.toFloat()
-														)
-													}
-												)
-
-												val isReadOnly by nowPlayingFilePropertiesViewModel.isReadOnly.collectAsState()
-												if (isReadOnly) {
-													ProvideTextStyle(value = MaterialTheme.typography.caption) {
-														Text(
-															text = stringResource(id = R.string.readOnlyConnection)
-														)
-													}
-												}
-											}
-										}
-									} else {
+									 if (isNotSettledOnFirstPage) {
 										PlaylistControls(
 											modifier = Modifier
 												.alpha(1 - firstPageShownProgress)
@@ -434,34 +402,6 @@ fun NowPlayingView(
 								}
 
 								NowPlayingProgressIndicator(fileProgress = fileProgress)
-
-								Row(
-									modifier = Modifier
-										.fillMaxWidth()
-										.height(controlRowHeight),
-									horizontalArrangement = Arrangement.SpaceEvenly,
-									verticalAlignment = Alignment.CenterVertically,
-								) {
-									if (isSettledOnFirstPage && isScreenControlsVisible) {
-										Image(
-											painter = painterResource(id = R.drawable.av_previous_white),
-											contentDescription = stringResource(id = R.string.btn_previous),
-											modifier = Modifier.clickable {
-												playbackServiceController.previous()
-											}
-										)
-
-										PlayPauseButton(nowPlayingFilePropertiesViewModel, playbackServiceController)
-
-										Image(
-											painter = painterResource(id = R.drawable.av_next_white),
-											contentDescription = stringResource(id = R.string.btn_next),
-											modifier = Modifier.clickable {
-												playbackServiceController.next()
-											}
-										)
-									}
-								}
 							}
 
 							val nowPlayingFiles by playlistViewModel.nowPlayingList.collectAsState()
@@ -532,7 +472,7 @@ fun NowPlayingView(
 								)
 							}
 
-							if (!isNotSettledOnFirstPage) {
+							if (isSettledOnFirstPage) {
 								LaunchedEffect(key1 = playingFile) {
 									playingFile?.apply {
 										reorderableState.lazyListState.scrollToItem(playlistPosition)
@@ -553,6 +493,73 @@ fun NowPlayingView(
 								}
 							}
 						}
+					}
+				}
+			}
+
+			if (isSettledOnFirstPage && isScreenControlsVisible) {
+				Column(modifier = Modifier
+					.align(Alignment.BottomCenter)
+					.fillMaxWidth()
+				) {
+					Column(
+						modifier = Modifier
+							.fillMaxWidth()
+							.height(controlRowHeight),
+						verticalArrangement = Arrangement.Center,
+					) {
+						val rating by nowPlayingFilePropertiesViewModel.songRating.collectAsState()
+						val ratingInt by remember { derivedStateOf { rating.toInt() } }
+						RatingBar(
+							rating = ratingInt,
+							color = Color.White,
+							backgroundColor = Color.White.copy(alpha = .1f),
+							modifier = Modifier
+								.fillMaxWidth()
+								.height(Dimensions.menuHeight),
+							onRatingSelected = {
+								nowPlayingFilePropertiesViewModel.updateRating(
+									it.toFloat()
+								)
+							}
+						)
+
+						val isReadOnly by nowPlayingFilePropertiesViewModel.isReadOnly.collectAsState()
+						if (isReadOnly) {
+							ProvideTextStyle(value = MaterialTheme.typography.caption) {
+								Text(
+									text = stringResource(id = R.string.readOnlyConnection)
+								)
+							}
+						}
+					}
+
+					Spacer(modifier = Modifier.height(ProgressIndicatorDefaults.StrokeWidth))
+
+					Row(
+						modifier = Modifier
+							.fillMaxWidth()
+							.height(controlRowHeight),
+						horizontalArrangement = Arrangement.SpaceEvenly,
+						verticalAlignment = Alignment.CenterVertically,
+					) {
+						Image(
+							painter = painterResource(id = R.drawable.av_previous_white),
+							contentDescription = stringResource(id = R.string.btn_previous),
+							modifier = Modifier.clickable {
+								playbackServiceController.previous()
+							}
+						)
+
+						PlayPauseButton(nowPlayingFilePropertiesViewModel, playbackServiceController)
+
+						Image(
+							painter = painterResource(id = R.drawable.av_next_white),
+							contentDescription = stringResource(id = R.string.btn_next),
+							modifier = Modifier.clickable {
+								playbackServiceController.next()
+							}
+						)
 					}
 				}
 			}
