@@ -20,8 +20,8 @@ import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.components.PlayPauseButton
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import kotlinx.coroutines.launch
@@ -31,11 +31,11 @@ private val bottomAppBarHeight = Dimensions.appBarHeight
 @Composable
 @OptIn(ExperimentalMaterialApi::class)
 fun LibraryMenu(
-	applicationNavigation: NavigateApplication,
-	nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel,
-	playbackServiceController: ControlPlaybackService,
-	bottomSheetState: BottomSheetState,
-	libraryId: LibraryId,
+    applicationNavigation: NavigateApplication,
+    nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel,
+    playbackServiceController: ControlPlaybackService,
+    bottomSheetState: BottomSheetState,
+    libraryId: LibraryId,
 ) {
 	val nowPlayingFile by nowPlayingFilePropertiesViewModel.nowPlayingFile.collectAsState()
 	val isNowPlayingFileSet by remember { derivedStateOf { nowPlayingFile != null } }

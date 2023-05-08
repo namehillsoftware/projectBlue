@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels
+package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels
 
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile

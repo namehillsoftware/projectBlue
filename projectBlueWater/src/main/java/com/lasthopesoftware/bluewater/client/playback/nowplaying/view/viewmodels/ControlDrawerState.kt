@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels
+package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels
 
 interface ControlDrawerState {
 	fun showDrawer()

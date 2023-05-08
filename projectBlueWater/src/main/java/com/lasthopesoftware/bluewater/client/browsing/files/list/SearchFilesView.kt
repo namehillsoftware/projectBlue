@@ -54,7 +54,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ConnectionLostView
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberCalculatedKnobHeight
 import com.lasthopesoftware.bluewater.shared.android.ui.components.scrollbar
@@ -71,12 +71,12 @@ import kotlin.math.pow
 
 @Composable
 fun SearchFilesView(
-	searchFilesViewModel: SearchFilesViewModel,
-	nowPlayingViewModel: NowPlayingFilePropertiesViewModel,
-	trackHeadlineViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
-	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
-	applicationNavigation: NavigateApplication,
-	playbackServiceController: ControlPlaybackService,
+    searchFilesViewModel: SearchFilesViewModel,
+    nowPlayingViewModel: NowPlayingFilePropertiesViewModel,
+    trackHeadlineViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
+    itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
+    applicationNavigation: NavigateApplication,
+    playbackServiceController: ControlPlaybackService,
 ) {
 	val files by searchFilesViewModel.files.collectAsState()
 	val playingFile by nowPlayingViewModel.nowPlayingFile.collectAsState()

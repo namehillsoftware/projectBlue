@@ -11,15 +11,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import com.lasthopesoftware.bluewater.R
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 
 @Composable
 fun PlayPauseButton(
-	nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel,
-	playbackServiceController: ControlPlaybackService,
-	modifier: Modifier = Modifier,
-	alpha: Float = 1f
+    nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel,
+    playbackServiceController: ControlPlaybackService,
+    modifier: Modifier = Modifier,
+    alpha: Float = 1f
 ) {
 	val isPlaying by nowPlayingFilePropertiesViewModel.isPlaying.collectAsState()
 	if (isPlaying) {

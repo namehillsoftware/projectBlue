@@ -12,6 +12,7 @@ import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.core.view.WindowCompat
@@ -52,6 +53,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.Sel
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.browsing.navigation.*
+import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostRetryHandler
 import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
@@ -66,11 +68,11 @@ import com.lasthopesoftware.bluewater.client.playback.engine.selection.SelectedP
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.defaults.DefaultPlaybackEngineLookup
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingView
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.playlist.NowPlayingPlaylistViewModel
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.InMemoryNowPlayingDisplaySettings
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingCoverArtViewModel
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingScreenViewModel
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.InMemoryNowPlayingDisplaySettings
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingCoverArtViewModel
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingScreenViewModel
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.playlist.NowPlayingPlaylistViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsView
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsViewModel
@@ -97,6 +99,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.SharedColors
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 import com.lasthopesoftware.bluewater.shared.cls
+import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToaster
 import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
@@ -231,7 +234,7 @@ class BrowserActivity :
 			playbackServiceController,
 			PollConnectionServiceProxy(applicationContext),
 			stringResources,
-		).apply { initializeViewModel() }
+		)
 	}
 
 	override val storedItemAccess by lazy {
@@ -277,20 +280,26 @@ class BrowserActivity :
 	}
 
 	override val readPermissionsRequirements by lazy { ApplicationReadPermissionsRequirementsProvider(applicationContext) }
+
 	override val writePermissionsRequirements by lazy {
 		ApplicationWritePermissionsRequirementsProvider(
 			applicationContext
 		)
 	}
+
 	override val permissionsManager = this
+
 	override val navigationMessages by buildViewModelLazily { ViewModelMessageBus<NavigationMessage>() }
+
 	override val applicationSettingsRepository by lazy { applicationContext.getApplicationSettingsRepository() }
+
 	override val selectedPlaybackEngineTypeAccess by lazy {
 		SelectedPlaybackEngineTypeAccess(
 			applicationSettingsRepository,
 			DefaultPlaybackEngineLookup
 		)
 	}
+
 	override val libraryBrowserSelection by lazy {
 		BrowserLibrarySelection(
 			applicationSettingsRepository,
@@ -323,7 +332,7 @@ class BrowserActivity :
 			defaultImageProvider,
 			imageProvider,
 			pollForConnections,
-		).apply { initializeViewModel() }
+		)
 	}
 
 	override val nowPlayingPlaylistViewModel by buildViewModelLazily {
@@ -332,6 +341,7 @@ class BrowserActivity :
 			nowPlayingState,
 		)
 	}
+
 	override val connectionLostViewModel by buildViewModelLazily {
 		ConnectionLostViewModel(
 			messageBus,
@@ -577,7 +587,22 @@ private fun LibraryDestination.Navigate(
 				connectionLostViewModel = connectionLostViewModel,
 			)
 
-			connectionLostViewModel.watchLibraryConnection(libraryId)
+			val context = LocalContext.current
+			LaunchedEffect(key1 = libraryId) {
+				try {
+					connectionLostViewModel.watchLibraryConnection(libraryId)
+
+					Promise.whenAll(
+						nowPlayingFilePropertiesViewModel.initializeViewModel(),
+						nowPlayingCoverArtViewModel.initializeViewModel()
+					).suspend()
+				} catch (e: Throwable) {
+					if (ConnectionLostExceptionFilter.isConnectionLostException(e))
+						pollForConnections.pollConnection(libraryId)
+					else
+						UnexpectedExceptionToaster.announce(context, e)
+				}
+			}
 
 			return
 		}
@@ -603,6 +628,18 @@ private fun LibraryDestination.Navigate(
 						bottomSheetState = scaffoldState.bottomSheetState,
 						libraryId = libraryId,
 					)
+
+					val context = LocalContext.current
+					LaunchedEffect(key1 = libraryId) {
+						try {
+							nowPlayingFilePropertiesViewModel.initializeViewModel().suspend()
+						} catch (e: Throwable) {
+							if (ConnectionLostExceptionFilter.isConnectionLostException(e))
+								pollForConnections.pollConnection(libraryId)
+							else
+								UnexpectedExceptionToaster.announce(context, e)
+						}
+					}
 				}
 			}
 		) { paddingValues ->

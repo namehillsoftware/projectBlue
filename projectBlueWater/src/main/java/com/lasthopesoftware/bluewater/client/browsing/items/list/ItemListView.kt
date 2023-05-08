@@ -34,7 +34,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.list.TrackHeaderItem
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewPlaylistFileItem
 import com.lasthopesoftware.bluewater.client.browsing.items.*
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
@@ -55,15 +55,15 @@ val appBarHeight = Dimensions.appBarHeight.value
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ItemListView(
-	itemListViewModel: ItemListViewModel,
-	fileListViewModel: FileListViewModel,
-	nowPlayingViewModel: NowPlayingFilePropertiesViewModel,
-	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
-	trackHeadlineViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
-	childItemViewModelProvider: PooledCloseablesViewModel<ReusableChildItemViewModel>,
-	applicationNavigation: NavigateApplication,
-	playbackLibraryItems: PlaybackLibraryItems,
-	playbackServiceController: ControlPlaybackService,
+    itemListViewModel: ItemListViewModel,
+    fileListViewModel: FileListViewModel,
+    nowPlayingViewModel: NowPlayingFilePropertiesViewModel,
+    itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
+    trackHeadlineViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
+    childItemViewModelProvider: PooledCloseablesViewModel<ReusableChildItemViewModel>,
+    applicationNavigation: NavigateApplication,
+    playbackLibraryItems: PlaybackLibraryItems,
+    playbackServiceController: ControlPlaybackService,
 ) {
 	val playingFile by nowPlayingViewModel.nowPlayingFile.collectAsState()
 	val files by fileListViewModel.files.collectAsState()
