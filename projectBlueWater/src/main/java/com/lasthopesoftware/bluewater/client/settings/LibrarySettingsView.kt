@@ -54,11 +54,11 @@ import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
+import com.lasthopesoftware.bluewater.shared.android.ui.components.ColumnMenuIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.shared.android.ui.components.LabeledSelection
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.StandardTextField
-import com.lasthopesoftware.bluewater.shared.android.ui.theme.ColumnMenuIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.collectAsMutableState
 import com.lasthopesoftware.bluewater.shared.promises.extensions.suspend
@@ -162,7 +162,7 @@ fun LibrarySettingsView(
 						.height(boxHeight)
 						.padding(top = topPadding)
 				) {
-					val iconSize = Dimensions.menuIconSize
+					val iconSize = Dimensions.topMenuIconSize
 					val acceleratedToolbarStateProgress by remember {
 						derivedStateOf {
 							toolbarState.toolbarState.progress.pow(

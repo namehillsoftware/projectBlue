@@ -1,10 +1,11 @@
 package com.lasthopesoftware.bluewater.client.stored.library.sync
 
-import androidx.compose.foundation.Image
+import androidx.compose.material.Icon
+import androidx.compose.material.LocalContentAlpha
+import androidx.compose.material.LocalContentColor
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import com.lasthopesoftware.bluewater.R
@@ -15,11 +16,10 @@ fun SyncIcon(
 	modifier: Modifier = Modifier,
 	contentDescription: String = stringResource(id = R.string.btn_sync_item)
 ) {
-
-	Image(
+	Icon(
 		painter = painterResource(id = R.drawable.ic_sync_36dp),
 		contentDescription = contentDescription,
-		colorFilter = if (isActive) ColorFilter.tint(MaterialTheme.colors.primary) else null,
+		tint = if (isActive) MaterialTheme.colors.primary else LocalContentColor.current.copy(alpha = LocalContentAlpha.current),
 		modifier = modifier,
 	)
 }

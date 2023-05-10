@@ -228,7 +228,7 @@ fun LibraryMenu(
 					modifier = Modifier
 						.align(Alignment.Center)
 						.padding(start = 16.dp, end = 16.dp)
-						.size(Dimensions.menuIconSize)
+						.size(Dimensions.topMenuIconSize)
 				)
 			}
 

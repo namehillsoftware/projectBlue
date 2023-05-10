@@ -66,10 +66,10 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePrope
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.shared.android.colors.MediaStylePalette
 import com.lasthopesoftware.bluewater.shared.android.colors.MediaStylePaletteProvider
+import com.lasthopesoftware.bluewater.shared.android.ui.components.ColumnMenuIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.RatingBar
-import com.lasthopesoftware.bluewater.shared.android.ui.theme.ColumnMenuIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.promises.extensions.suspend
 import kotlinx.coroutines.flow.map
@@ -95,7 +95,7 @@ private fun StaticFileMenu(viewModel: FileDetailsViewModel, coverArtColorState: 
 	) {
 		val iconColor = coverArtColorState.secondaryTextColor
 		ProvideTextStyle(value = TextStyle(color = iconColor)) {
-			val iconSize = Dimensions.menuIconSize
+			val iconSize = Dimensions.topMenuIconSize
 
 			val addFileToPlaybackLabel = stringResource(id = R.string.btn_add_file_to_playback)
 			val colorFilter = ColorFilter.tint(iconColor)
@@ -512,7 +512,7 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 							.width(menuWidth)
 							.align(Alignment.TopEnd)
 					) {
-						val iconSize = Dimensions.menuIconSize
+						val iconSize = Dimensions.topMenuIconSize
 						val chevronRotation by remember { derivedStateOf { 180 * headerHidingProgress } }
 						val isCollapsed by remember { derivedStateOf { headerHidingProgress > .98f } }
 

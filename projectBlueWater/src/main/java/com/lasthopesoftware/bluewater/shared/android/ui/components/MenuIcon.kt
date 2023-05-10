@@ -1,10 +1,12 @@
-package com.lasthopesoftware.bluewater.shared.android.ui.theme
+package com.lasthopesoftware.bluewater.shared.android.ui.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.material.Icon
 import androidx.compose.material.LocalContentColor
 import androidx.compose.material.Text
 import androidx.compose.material.ripple.rememberRipple
@@ -13,6 +15,38 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.painter.Painter
+import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
+
+@Composable
+fun RowScope.ColumnMenuIcon(
+	onClick: () -> Unit,
+	iconPainter: Painter,
+	contentDescription: String,
+	modifier: Modifier = Modifier,
+	label: String? = null,
+	labelColor: Color = LocalContentColor.current,
+	labelModifier: Modifier = Modifier,
+	labelMaxLines: Int = 1,
+) {
+	MenuIcon(
+		onClick = onClick,
+		icon = {
+			Icon(
+				painter = iconPainter,
+				contentDescription = contentDescription,
+				modifier = Modifier.size(Dimensions.topMenuIconSize)
+			)
+		},
+		modifier = Modifier
+			.weight(1f)
+			.then(modifier),
+		label = label,
+		labelColor = labelColor,
+		labelModifier = labelModifier,
+		labelMaxLines = labelMaxLines,
+	)
+}
 
 @Composable
 fun RowScope.ColumnMenuIcon(
@@ -27,7 +61,9 @@ fun RowScope.ColumnMenuIcon(
 	MenuIcon(
 		onClick = onClick,
 		icon = icon,
-		modifier = Modifier.weight(1f).then(modifier),
+		modifier = Modifier
+			.weight(1f)
+			.then(modifier),
 		label = label,
 		labelColor = labelColor,
 		labelModifier = labelModifier,

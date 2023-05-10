@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.LocalContentColor
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.ProvideTextStyle
 import androidx.compose.material.Text
@@ -20,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.R
+import com.lasthopesoftware.bluewater.shared.android.ui.components.ListItemIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.components.dragging.DragDropItemScope
 import com.lasthopesoftware.bluewater.shared.android.ui.components.dragging.DragDropListState
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
@@ -94,38 +96,40 @@ fun DragDropItemScope.NowPlayingItemView(
 			}
 		}
 	} else {
-		Row(modifier = Modifier
-			.height(rowHeight)
-			.padding(8.dp)
+		Row(
+			modifier = Modifier
+				.height(rowHeight)
+				.padding(8.dp),
+			verticalAlignment = Alignment.CenterVertically,
 		) {
-			Image(
+			ListItemIcon(
 				painter = painterResource(id = R.drawable.ic_remove_item_white_36dp),
 				contentDescription = stringResource(id = R.string.btn_remove_file),
 				modifier = Modifier
 					.fillMaxWidth()
 					.weight(1f)
-					.clickable { onRemoveFromNowPlayingClick() }
-					.align(Alignment.CenterVertically),
+					.clickable { onRemoveFromNowPlayingClick() },
+				tint = LocalContentColor.current,
 			)
 
-			Image(
+			ListItemIcon(
 				painter = painterResource(id = R.drawable.ic_menu_36dp),
 				contentDescription = stringResource(id = R.string.btn_view_files),
 				modifier = Modifier
 					.fillMaxWidth()
-					.clickable { onViewFilesClick() }
 					.weight(1f)
-					.align(Alignment.CenterVertically),
+					.clickable { onViewFilesClick() },
+				tint = LocalContentColor.current,
 			)
 
-			Image(
+			ListItemIcon(
 				painter = painterResource(id = R.drawable.av_play),
 				contentDescription = stringResource(id = R.string.btn_play),
 				modifier = Modifier
 					.fillMaxWidth()
 					.weight(1f)
-					.clickable { onPlayClick() }
-					.align(Alignment.CenterVertically),
+					.clickable { onPlayClick() },
+				tint = LocalContentColor.current,
 			)
 		}
 	}

@@ -37,6 +37,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.h
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncIcon
+import com.lasthopesoftware.bluewater.shared.android.ui.components.ColumnMenuIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberCalculatedKnobHeight
@@ -49,8 +50,10 @@ import me.onebone.toolbar.rememberCollapsingToolbarScaffoldState
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
-const val expandedTitleHeight = 84
-val appBarHeight = Dimensions.appBarHeight.value
+private const val expandedTitleHeight = 84
+private val appBarHeight = Dimensions.appBarHeight.value
+private val iconSize = Dimensions.topMenuIconSize
+private val minimumMenuWidth = iconSize * 3
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -321,7 +324,6 @@ fun ItemListView(
 						.height(boxHeight.dp)
 						.padding(top = topPadding)
 				) {
-					val minimumMenuWidth by remember { derivedStateOf { (3 * expandedIconSize).dp } }
 					val acceleratedToolbarStateProgress by remember {
 						derivedStateOf {
 							toolbarState.toolbarState.progress.pow(
@@ -334,7 +336,7 @@ fun ItemListView(
 					}
 					ProvideTextStyle(MaterialTheme.typography.h5) {
 						val startPadding by remember { derivedStateOf { (4 + 48 * headerHidingProgress).dp } }
-						val endPadding by remember { derivedStateOf { 4.dp + minimumMenuWidth * acceleratedHeaderHidingProgress } }
+						val endPadding by remember { derivedStateOf { Dimensions.viewPaddingUnit + minimumMenuWidth * acceleratedHeaderHidingProgress } }
 						val maxLines by remember { derivedStateOf { (2 - headerHidingProgress).roundToInt() } }
 						if (maxLines > 1) {
 							Text(
@@ -376,19 +378,13 @@ fun ItemListView(
 								.width(menuWidth)
 								.align(Alignment.TopEnd)
 						) {
-							val iconSize = Dimensions.menuIconSize
 							val textModifier = Modifier.alpha(acceleratedToolbarStateProgress)
 
 							val playButtonLabel = stringResource(id = R.string.btn_play)
 							ColumnMenuIcon(
 								onClick = { playbackServiceController.startPlaylist(files) },
-								icon = {
-									Image(
-										painter = painterResource(id = R.drawable.av_play),
-										contentDescription = playButtonLabel,
-										modifier = Modifier.size(iconSize)
-									)
-								},
+								iconPainter = painterResource(id = R.drawable.av_play),
+								contentDescription = playButtonLabel,
 								label = if (acceleratedHeaderHidingProgress < 1) playButtonLabel else null,
 								labelModifier = textModifier,
 								labelMaxLines = 1,
@@ -415,13 +411,8 @@ fun ItemListView(
 							val shuffleButtonLabel = stringResource(R.string.btn_shuffle_files)
 							ColumnMenuIcon(
 								onClick = { playbackServiceController.shuffleAndStartPlaylist(files) },
-								icon = {
-									Image(
-										painter = painterResource(id = R.drawable.av_shuffle),
-										contentDescription = shuffleButtonLabel,
-										modifier = Modifier.size(iconSize)
-									)
-								},
+								iconPainter = painterResource(id = R.drawable.av_shuffle),
+								contentDescription = shuffleButtonLabel,
 								label = if (acceleratedHeaderHidingProgress < 1) shuffleButtonLabel else null,
 								labelModifier = textModifier,
 								labelMaxLines = 1,
