@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
+import com.lasthopesoftware.bluewater.shared.android.ui.theme.LocalControlColor
 
 @Composable
 fun RowScope.ColumnMenuIcon(
@@ -35,7 +36,8 @@ fun RowScope.ColumnMenuIcon(
 			Icon(
 				painter = iconPainter,
 				contentDescription = contentDescription,
-				modifier = Modifier.size(Dimensions.topMenuIconSize)
+				modifier = Modifier.size(Dimensions.topMenuIconSize),
+				tint = LocalControlColor.current
 			)
 		},
 		modifier = Modifier

@@ -54,6 +54,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.components.dragging.getV
 import com.lasthopesoftware.bluewater.shared.android.ui.components.dragging.rememberDragDropListState
 import com.lasthopesoftware.bluewater.shared.android.ui.linearInterpolation
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
+import com.lasthopesoftware.bluewater.shared.android.ui.theme.LocalControlColor
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.SharedColors
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 import kotlinx.coroutines.launch
@@ -266,7 +267,7 @@ fun NowPlayingView(
 		BoxWithConstraints(
 			modifier = Modifier
 				.fillMaxSize()
-				.background(SharedColors.OverlayDark)
+				.background(SharedColors.overlayDark)
 				.padding(systemBarsPadding),
 		) {
 			val filePropertiesHeight = maxHeight - expandedControlsHeight
@@ -284,7 +285,8 @@ fun NowPlayingView(
 			val snappingLayout = remember(lazyListState) { SnapLayoutInfoProvider(lazyListState) { _, _ -> 0f } }
 
 			CompositionLocalProvider(
-				LocalOverscrollConfiguration provides null
+				LocalOverscrollConfiguration provides null,
+				LocalControlColor provides Color.White,
 			) {
 				LazyColumn(
 					flingBehavior = rememberSnapFlingBehavior(snappingLayout),
@@ -485,7 +487,7 @@ fun NowPlayingView(
 							) {
 								DragDropLazyColumn(
 									dragDropListState = reorderableState,
-									modifier = Modifier.background(SharedColors.OverlayDark),
+									modifier = Modifier.background(SharedColors.overlayDark),
 								) {
 									dragDropItems(items = nowPlayingFiles, keyFactory = { _, f -> f }) { _, f ->
 										NowPlayingFileView(positionedFile = f)

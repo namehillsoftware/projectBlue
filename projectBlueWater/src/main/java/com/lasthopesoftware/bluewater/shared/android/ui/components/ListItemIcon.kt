@@ -3,13 +3,13 @@ package com.lasthopesoftware.bluewater.shared.android.ui.components
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
-import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.LocalContentColor
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
+import com.lasthopesoftware.bluewater.shared.android.ui.theme.LocalControlColor
 
 /**
  * An icon component that draws [painter] using [tint], with a default value
@@ -33,7 +33,7 @@ fun ListItemIcon(
 	painter: Painter,
 	contentDescription: String,
 	modifier: Modifier = Modifier,
-	tint: Color = LocalContentColor.current.copy(alpha = LocalContentAlpha.current),
+	tint: Color = LocalControlColor.current,
 ) {
 	Icon(
 		painter = painter,

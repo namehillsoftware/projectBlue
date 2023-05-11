@@ -2,8 +2,12 @@ package com.lasthopesoftware.bluewater.shared.android.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
+object SharedAlphas {
+	const val controlAlpha = 0.6f
+}
+
 object SharedColors {
-	val OverlayDark = Color(0x66000000)
+	val overlayDark = Color(0x66000000)
 }
 
 object Light {

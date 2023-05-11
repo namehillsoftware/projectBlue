@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.list
 
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -20,6 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.R
+import com.lasthopesoftware.bluewater.shared.android.ui.components.ListItemIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -71,7 +71,7 @@ fun TrackHeaderItemView(
 			.height(rowHeight)
 			.padding(8.dp)
 		) {
-			Image(
+			ListItemIcon(
 				painter = painterResource(id = R.drawable.ic_add_item_36dp),
 				contentDescription = stringResource(id = R.string.btn_add_file_to_playback),
 				modifier = Modifier
@@ -81,7 +81,7 @@ fun TrackHeaderItemView(
 					.align(Alignment.CenterVertically),
 			)
 
-			Image(
+			ListItemIcon(
 				painter = painterResource(id = R.drawable.ic_menu_36dp),
 				contentDescription = stringResource(id = R.string.btn_view_files),
 				modifier = Modifier
@@ -91,7 +91,7 @@ fun TrackHeaderItemView(
 					.align(Alignment.CenterVertically),
 			)
 
-			Image(
+			ListItemIcon(
 				painter = painterResource(id = R.drawable.av_play),
 				contentDescription = stringResource(id = R.string.btn_play),
 				modifier = Modifier

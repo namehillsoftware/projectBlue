@@ -139,9 +139,7 @@ class BrowserActivity :
 
 	private val libraryFileStringListProvider by lazy { LibraryFileStringListProvider(libraryConnectionProvider) }
 
-	private val connectionAuthenticationChecker by lazy {
-		ConnectionAuthenticationChecker(libraryConnectionProvider)
-	}
+	private val connectionAuthenticationChecker by lazy { ConnectionAuthenticationChecker(libraryConnectionProvider) }
 
 	private val revisionProvider by lazy { LibraryRevisionProvider(libraryConnectionProvider) }
 
@@ -559,7 +557,7 @@ private fun LibraryDestination.Navigate(
 	with(browserViewDependencies) {
 		if (this@Navigate is NowPlayingScreen) {
 			val systemUiController = rememberSystemUiController()
-			systemUiController.setSystemBarsColor(SharedColors.OverlayDark)
+			systemUiController.setSystemBarsColor(SharedColors.overlayDark)
 
 			NowPlayingView(
 				nowPlayingCoverArtViewModel = nowPlayingCoverArtViewModel,

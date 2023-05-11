@@ -6,7 +6,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.LocalContentColor
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.ProvideTextStyle
 import androidx.compose.material.Text
@@ -109,7 +108,6 @@ fun DragDropItemScope.NowPlayingItemView(
 					.fillMaxWidth()
 					.weight(1f)
 					.clickable { onRemoveFromNowPlayingClick() },
-				tint = LocalContentColor.current,
 			)
 
 			ListItemIcon(
@@ -119,17 +117,15 @@ fun DragDropItemScope.NowPlayingItemView(
 					.fillMaxWidth()
 					.weight(1f)
 					.clickable { onViewFilesClick() },
-				tint = LocalContentColor.current,
 			)
 
 			ListItemIcon(
-				painter = painterResource(id = R.drawable.av_play),
+				painter = painterResource(id = R.drawable.av_play_white),
 				contentDescription = stringResource(id = R.string.btn_play),
 				modifier = Modifier
 					.fillMaxWidth()
 					.weight(1f)
 					.clickable { onPlayClick() },
-				tint = LocalContentColor.current,
 			)
 		}
 	}
