@@ -53,8 +53,8 @@ import com.lasthopesoftware.bluewater.shared.android.ui.components.dragging.Drag
 import com.lasthopesoftware.bluewater.shared.android.ui.components.dragging.getVisibleItemInfoFor
 import com.lasthopesoftware.bluewater.shared.android.ui.components.dragging.rememberDragDropListState
 import com.lasthopesoftware.bluewater.shared.android.ui.linearInterpolation
+import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
-import com.lasthopesoftware.bluewater.shared.android.ui.theme.LocalControlColor
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.SharedColors
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 import kotlinx.coroutines.launch
@@ -234,9 +234,10 @@ fun NowPlayingView(
 	val isScreenOn by screenOnState.isScreenOn.collectAsState()
 	KeepScreenOn(isScreenOn)
 
-	Surface(
+	ControlSurface(
 		color = Color.Transparent,
 		contentColor = Color.White,
+		controlColor = Color.White,
 	) {
 		NowPlayingCoverArtView(nowPlayingCoverArtViewModel = nowPlayingCoverArtViewModel)
 
@@ -285,8 +286,7 @@ fun NowPlayingView(
 			val snappingLayout = remember(lazyListState) { SnapLayoutInfoProvider(lazyListState) { _, _ -> 0f } }
 
 			CompositionLocalProvider(
-				LocalOverscrollConfiguration provides null,
-				LocalControlColor provides Color.White,
+				LocalOverscrollConfiguration provides null
 			) {
 				LazyColumn(
 					flingBehavior = rememberSnapFlingBehavior(snappingLayout),

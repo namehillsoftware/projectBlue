@@ -94,6 +94,7 @@ import com.lasthopesoftware.bluewater.shared.android.intents.IntentBuilder
 import com.lasthopesoftware.bluewater.shared.android.intents.safelyGetParcelableExtra
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
 import com.lasthopesoftware.bluewater.shared.android.permissions.ManagePermissions
+import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.SharedColors
@@ -864,7 +865,7 @@ private fun BrowserView(
 
 	val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
 
-	Surface {
+	ControlSurface {
 		NavHost(navController) { destination ->
 			systemUiController.setStatusBarColor(MaterialTheme.colors.surface)
 			systemUiController.setNavigationBarColor(Color.Black)

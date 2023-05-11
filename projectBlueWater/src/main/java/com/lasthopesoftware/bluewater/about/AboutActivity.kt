@@ -4,7 +4,6 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.material.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -15,10 +14,11 @@ import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.shared.android.ui.components.ApplicationInfoText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.ApplicationLogo
+import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 
 @Composable
 fun AboutView(applicationNavigation: NavigateApplication) {
-	Surface {
+	ControlSurface {
 		BoxWithConstraints(modifier = Modifier
 			.fillMaxSize()
 			.padding(12.dp)
@@ -85,7 +85,9 @@ fun AboutViewHorizontal(applicationNavigation: NavigateApplication) {
 		)
 
 		ApplicationInfoText(
-			modifier = Modifier.fillMaxSize().align(Alignment.CenterVertically)
+			modifier = Modifier
+				.fillMaxSize()
+				.align(Alignment.CenterVertically)
 		)
 	}
 }

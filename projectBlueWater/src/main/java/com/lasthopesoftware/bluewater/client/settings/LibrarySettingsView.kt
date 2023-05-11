@@ -28,7 +28,6 @@ import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.ProvideTextStyle
 import androidx.compose.material.RadioButton
-import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -59,6 +58,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.shared.android.ui.components.LabeledSelection
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.StandardTextField
+import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.collectAsMutableState
 import com.lasthopesoftware.bluewater.shared.promises.extensions.suspend
@@ -95,7 +95,7 @@ fun LibrarySettingsView(
 	navigateApplication: NavigateApplication,
 	stringResources: GetStringResources,
 ) {
-	Surface {
+	ControlSurface {
 		var accessCodeState by librarySettingsViewModel.accessCode.collectAsMutableState()
 
 		val scope = rememberCoroutineScope()

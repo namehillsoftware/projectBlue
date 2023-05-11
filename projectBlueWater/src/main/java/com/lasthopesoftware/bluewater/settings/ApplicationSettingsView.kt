@@ -30,6 +30,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackSer
 import com.lasthopesoftware.bluewater.shared.android.ui.components.ApplicationInfoText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.ApplicationLogo
 import com.lasthopesoftware.bluewater.shared.android.ui.components.LabeledSelection
+import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 
 private val optionsPadding = PaddingValues(start = 32.dp, end = 32.dp)
@@ -46,7 +47,9 @@ private fun LazyListScope.settingsList(
 ) {
 	stickyHeader {
 		Row(
-			modifier = Modifier.fillMaxWidth().background(MaterialTheme.colors.surface)
+			modifier = Modifier
+				.fillMaxWidth()
+				.background(MaterialTheme.colors.surface)
 		) {
 			ProvideTextStyle(MaterialTheme.typography.h5) {
 				Text(text = stringResource(id = R.string.app_name))
@@ -239,7 +242,9 @@ private fun ApplicationSettingsViewVertical(
 	) {
 		item {
 			Box(
-				modifier = Modifier.fillMaxWidth().padding(Dimensions.viewPaddingUnit * 8)
+				modifier = Modifier
+					.fillMaxWidth()
+					.padding(Dimensions.viewPaddingUnit * 8)
 			) {
 				ApplicationLogo(modifier = Modifier
 					.fillMaxWidth(.5f)
@@ -308,7 +313,7 @@ fun ApplicationSettingsView(
 	applicationNavigation: NavigateApplication,
 	playbackService: ControlPlaybackService,
 ) {
-	Surface {
+	ControlSurface {
 		BoxWithConstraints(modifier = Modifier
 			.fillMaxSize()
 			.padding(Dimensions.viewPaddingUnit)

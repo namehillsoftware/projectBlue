@@ -298,7 +298,7 @@ fun ItemListView(
 
 	val isFilesLoaded by fileListViewModel.isLoaded.collectAsState()
 
-	Surface {
+	ControlSurface {
 		// Treat the files not being loaded as isAnyFiles being false to trick the CollapsingToolbarScaffold
 		// into measuring the expanded size correctly.
 		val isAnyFiles by remember { derivedStateOf { !isFilesLoaded || files.any() } }
