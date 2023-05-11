@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.list
 
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -39,6 +38,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackSer
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.components.ColumnMenuIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
+import com.lasthopesoftware.bluewater.shared.android.ui.components.ListItemIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberCalculatedKnobHeight
 import com.lasthopesoftware.bluewater.shared.android.ui.components.scrollbar
@@ -133,7 +133,7 @@ fun ItemListView(
 				.height(rowHeight)
 				.padding(8.dp)
 		) {
-			Image(
+			ListItemIcon(
 				painter = painterResource(id = R.drawable.av_play),
 				contentDescription = stringResource(id = R.string.btn_play),
 				modifier = Modifier
@@ -157,7 +157,7 @@ fun ItemListView(
 					.align(Alignment.CenterVertically),
 			)
 
-			Image(
+			ListItemIcon(
 				painter = painterResource(id = R.drawable.av_shuffle),
 				contentDescription = stringResource(id = R.string.btn_shuffle_files),
 				modifier = Modifier
