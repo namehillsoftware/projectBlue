@@ -27,8 +27,8 @@ class ActivityApplicationNavigation(
 		componentActivity.startActivity(intentBuilder.buildFileDetailsIntent(libraryId, playlist, position))
 	}
 
-	override fun viewNowPlaying() = loopInOperation {
-		componentActivity.startActivity(intentBuilder.buildNowPlayingIntent())
+	override fun viewNowPlaying(libraryId: LibraryId) = loopInOperation {
+		componentActivity.startActivity(intentBuilder.buildNowPlayingIntent(libraryId))
 	}
 
 	override fun navigateUp() = loopInOperation { componentActivity.finish(); true }

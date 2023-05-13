@@ -1,12 +1,12 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.actvity.viewmodels.GivenAPlayingFile
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideFreshLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfConnectionIsReadOnly
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.MaintainNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay
@@ -53,7 +53,7 @@ class WhenInitializingTheNowPlayingFilePropertiesViewModel {
 			)
 		}
 
-		val filePropertiesProvider = mockk<ProvideLibraryFileProperties> {
+		val filePropertiesProvider = mockk<ProvideFreshLibraryFileProperties> {
 			val delayedPromise by lazy { PromiseDelay.delay<Any>(Duration.standardSeconds(1)) }
 			every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } answers {
 				delayedPromise.then {

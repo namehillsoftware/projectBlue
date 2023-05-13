@@ -9,14 +9,14 @@ import com.google.android.exoplayer2.source.MediaSource
 import com.google.android.exoplayer2.source.MediaSourceEventListener
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.PromisingExoPlayer
 import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackFile
+import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.namehillsoftware.handoff.promises.Promise
-import org.slf4j.LoggerFactory
 import java.io.IOException
 
 class BufferingExoPlayer(handler: Handler, private val mediaSource: MediaSource, private val exoPlayer: PromisingExoPlayer) : Promise<IBufferingPlaybackFile>(), IBufferingPlaybackFile, MediaSourceEventListener, Player.Listener {
 
 	companion object {
-		private val logger by lazy { LoggerFactory.getLogger(BufferingExoPlayer::class.java) }
+		private val logger by lazyLogger<BufferingExoPlayer>()
 	}
 
 	init {

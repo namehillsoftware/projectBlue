@@ -3,15 +3,18 @@ package com.lasthopesoftware.bluewater.shared.android.intents
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import androidx.core.app.TaskStackBuilder
 import com.lasthopesoftware.bluewater.client.browsing.BrowserActivity
 import com.lasthopesoftware.bluewater.client.browsing.destinationAction
 import com.lasthopesoftware.bluewater.client.browsing.destinationProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsActivity
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.browsing.navigation.*
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.NowPlayingActivity
+import com.lasthopesoftware.bluewater.client.browsing.navigation.ActiveLibraryDownloadsScreen
+import com.lasthopesoftware.bluewater.client.browsing.navigation.ApplicationSettingsScreen
+import com.lasthopesoftware.bluewater.client.browsing.navigation.ConnectionSettingsScreen
+import com.lasthopesoftware.bluewater.client.browsing.navigation.Destination
+import com.lasthopesoftware.bluewater.client.browsing.navigation.LibraryScreen
+import com.lasthopesoftware.bluewater.client.browsing.navigation.NowPlayingScreen
 import com.lasthopesoftware.bluewater.shared.android.makePendingIntentImmutable
 
 class IntentBuilder(private val context: Context) : BuildIntents {
@@ -32,16 +35,11 @@ class IntentBuilder(private val context: Context) : BuildIntents {
 		putExtra(FileDetailsActivity.playlist, playlist.map { it.key }.toIntArray())
 	}
 
-	override fun buildNowPlayingIntent() = context.getIntent<NowPlayingActivity>().apply {
-		flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
-	}
+	override fun buildNowPlayingIntent(libraryId: LibraryId) = getBrowserActivityIntent(NowPlayingScreen(libraryId))
 
-	override fun buildPendingNowPlayingIntent(): PendingIntent {
-		val intent = buildNowPlayingIntent()
-		val taskStackBuilder = TaskStackBuilder.create(context)
-		taskStackBuilder.addNextIntentWithParentStack(intent)
-
-		return taskStackBuilder.getPendingIntent(0, 0.makePendingIntentImmutable())!!
+	override fun buildPendingNowPlayingIntent(libraryId: LibraryId): PendingIntent {
+		val intent = buildNowPlayingIntent(libraryId)
+		return PendingIntent.getActivity(context, 0, intent, 0.makePendingIntentImmutable())
 	}
 
 	override fun buildPendingShowDownloadsIntent(): PendingIntent {

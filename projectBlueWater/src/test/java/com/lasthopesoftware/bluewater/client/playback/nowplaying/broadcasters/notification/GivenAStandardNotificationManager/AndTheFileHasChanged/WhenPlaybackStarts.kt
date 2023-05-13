@@ -30,7 +30,7 @@ class WhenPlaybackStarts : AndroidContext() {
 		val context = ApplicationProvider.getApplicationContext<Context>()
 
 		val notificationContentBuilder = mockk<BuildNowPlayingNotificationContent> {
-			every { getLoadingNotification(any()) } returns newFakeBuilder(context, loadingNotification)
+			every { promiseLoadingNotification(any()) } returns newFakeBuilder(context, loadingNotification).toPromise()
 			every { promiseNowPlayingNotification(ServiceFile(1), true) } returns newFakeBuilder(context, startedNotification).toPromise()
 		}
 

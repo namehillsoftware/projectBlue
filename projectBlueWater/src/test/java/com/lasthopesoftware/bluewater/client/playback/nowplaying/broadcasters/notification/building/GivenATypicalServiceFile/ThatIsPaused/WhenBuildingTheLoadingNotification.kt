@@ -13,9 +13,12 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ScopedCachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ScopedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeScopedRevisionProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.FakeFileConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.ScopedUrlKeyProvider
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building.NowPlayingNotificationBuilder
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -54,10 +57,16 @@ class WhenBuildingTheLoadingNotification : AndroidContext() {
 		val imageProvider = mockk<ProvideImages>()
 		every { imageProvider.promiseFileBitmap(any()) } returns Promise(expectedBitmap.value)
 
+		val libraryId = LibraryId(605)
 		val npBuilder = NowPlayingNotificationBuilder(
 			ApplicationProvider.getApplicationContext(),
-			{ spiedBuilder },
+			mockk {
+				every { getMediaStyleNotification(libraryId) } returns spiedBuilder
+			},
 			ScopedUrlKeyProvider(connectionProvider),
+			mockk {
+				every { promiseSelectedLibraryId() } returns libraryId.toPromise()
+			},
 			ScopedCachedFilePropertiesProvider(
 				connectionProvider,
 				containerRepository,
@@ -69,7 +78,7 @@ class WhenBuildingTheLoadingNotification : AndroidContext() {
 			),
 			imageProvider
 		)
-		builder = npBuilder.getLoadingNotification(false)
+		builder = npBuilder.promiseLoadingNotification(false).toExpiringFuture().get()
 	}
 
 	@Test

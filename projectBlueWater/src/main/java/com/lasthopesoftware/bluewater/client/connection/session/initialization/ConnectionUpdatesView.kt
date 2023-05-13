@@ -4,7 +4,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.*
+import androidx.compose.material.Button
+import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.ProvideTextStyle
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -13,12 +17,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.R
+import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 
 @Composable
 fun ConnectionUpdatesView(
 	connectionViewModel: ConnectionStatusViewModel
 ) {
-	Surface {
+	ControlSurface {
 		Box(modifier = Modifier.fillMaxSize()) {
 			Column(modifier = Modifier.align(Alignment.Center)) {
 				ProvideTextStyle(MaterialTheme.typography.h5) {

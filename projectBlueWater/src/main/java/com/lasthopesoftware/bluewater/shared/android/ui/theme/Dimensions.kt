@@ -3,8 +3,11 @@ package com.lasthopesoftware.bluewater.shared.android.ui.theme
 import androidx.compose.ui.unit.dp
 
 object Dimensions {
-	val AppBarHeight = 56.dp
-	val MenuIconSize = 24.dp
-	val MenuHeight = 48.dp
-	val ViewPadding = 4.dp
+	val standardRowHeight = 60.dp
+	val twoLineRowHeight = 64.dp
+	val appBarHeight = 56.dp
+	val topMenuIconSize = 24.dp
+	val listItemMenuIconSize = 36.dp
+	val menuHeight = 48.dp
+	val viewPaddingUnit = 4.dp
 }

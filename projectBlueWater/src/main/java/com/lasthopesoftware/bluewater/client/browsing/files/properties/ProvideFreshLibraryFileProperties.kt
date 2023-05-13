@@ -1,0 +1,3 @@
+package com.lasthopesoftware.bluewater.client.browsing.files.properties
+
+interface ProvideFreshLibraryFileProperties : ProvideLibraryFileProperties

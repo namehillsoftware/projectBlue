@@ -29,7 +29,7 @@ class WhenTheFileChanges : AndroidContext() {
 		val context = ApplicationProvider.getApplicationContext<Context>()
 
 		with(notificationContentBuilder) {
-			every { getLoadingNotification(any()) } returns newFakeBuilder(context, Notification())
+			every { promiseLoadingNotification(any()) } returns newFakeBuilder(context, Notification()).toPromise()
 			every { promiseNowPlayingNotification(any(), any()) } returns newFakeBuilder(context, Notification()).toPromise()
 		}
 

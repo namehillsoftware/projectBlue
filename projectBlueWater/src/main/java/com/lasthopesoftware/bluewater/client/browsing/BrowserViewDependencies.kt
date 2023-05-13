@@ -16,9 +16,15 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.Sel
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedLibraryViewModel
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NavigationMessage
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideUrlKey
+import com.lasthopesoftware.bluewater.client.connection.polling.PollForConnections
+import com.lasthopesoftware.bluewater.client.connection.selected.ProvideSelectedConnection
+import com.lasthopesoftware.bluewater.client.connection.session.ConnectionLostViewModel
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.LookupSelectedPlaybackEngineType
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingCoverArtViewModel
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.playlist.NowPlayingPlaylistViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.client.stored.library.items.StateChangeBroadcastingStoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
@@ -62,4 +68,10 @@ interface BrowserViewDependencies {
 	val selectedPlaybackEngineTypeAccess: LookupSelectedPlaybackEngineType
 	val libraryBrowserSelection: SelectBrowserLibrary
 	val playbackLibraryItems: PlaybackLibraryItems
+	val nowPlayingState: GetNowPlayingState
+	val selectedConnectionProvider: ProvideSelectedConnection
+	val pollForConnections: PollForConnections
+	val nowPlayingCoverArtViewModel: NowPlayingCoverArtViewModel
+	val nowPlayingPlaylistViewModel: NowPlayingPlaylistViewModel
+	val connectionLostViewModel: ConnectionLostViewModel
 }

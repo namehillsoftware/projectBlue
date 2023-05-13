@@ -35,5 +35,7 @@
     public static final ** CREATOR;
 }
 
+-keepclassmembers class ch.qos.logback.core.rolling.helper.* { <init>(); }
+
 # -printseeds /home/david/sandbox/projectBlue/projectBlueWater/release/seeds.txt # print out classes that are kept
 # -printusage /home/david/sandbox/projectBlue/projectBlueWater/release/usage.txt # print out classes that are obfuscated

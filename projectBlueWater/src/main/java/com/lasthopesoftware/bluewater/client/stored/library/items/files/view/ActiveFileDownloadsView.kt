@@ -1,22 +1,46 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.view
 
-import androidx.compose.animation.core.*
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.*
+import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material.Divider
+import androidx.compose.material.Icon
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.ProvideTextStyle
+import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.referentialEqualityPolicy
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.structuralEqualityPolicy
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -30,10 +54,11 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.reposito
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
+import com.lasthopesoftware.bluewater.shared.android.ui.components.MenuIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberCalculatedKnobHeight
 import com.lasthopesoftware.bluewater.shared.android.ui.components.scrollbar
+import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
-import com.lasthopesoftware.bluewater.shared.android.ui.theme.MenuIcon
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 import me.onebone.toolbar.CollapsingToolbarScaffold
 import me.onebone.toolbar.ScrollStrategy
@@ -43,7 +68,7 @@ import kotlin.math.pow
 private const val expandedTitleHeight = 84
 private const val expandedIconSize = 44
 private const val expandedMenuVerticalPadding = 8
-private val appBarHeight = Dimensions.AppBarHeight.value
+private val appBarHeight = Dimensions.appBarHeight.value
 
 @Composable
 fun ActiveFileDownloadsView(
@@ -74,7 +99,7 @@ fun ActiveFileDownloadsView(
 		)
 	}
 
-	Surface {
+	ControlSurface {
 		val toolbarState = rememberCollapsingToolbarScaffoldState()
 		val headerHidingProgress by remember { derivedStateOf(structuralEqualityPolicy()) { 1 - toolbarState.toolbarState.progress } }
 		val isLoading by activeFileDownloadsViewModel.isLoading.collectAsState()
@@ -204,7 +229,7 @@ fun ActiveFileDownloadsView(
 				}
 			} else {
 				BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-					val rowHeight = dimensionResource(id = R.dimen.standard_row_height)
+					val rowHeight = Dimensions.standardRowHeight
 					val fileMap by activeFileDownloadsViewModel.downloadingFiles.collectAsState()
 					val files by remember { derivedStateOf(referentialEqualityPolicy()) { fileMap.values.toList() } }
 					val lazyListState = rememberLazyListState()

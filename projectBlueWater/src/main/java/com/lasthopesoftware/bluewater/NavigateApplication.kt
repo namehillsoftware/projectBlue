@@ -25,7 +25,7 @@ interface NavigateApplication {
 
 	fun viewItem(libraryId: LibraryId, item: IItem) = Unit.toPromise()
 
-	fun viewNowPlaying() = Unit.toPromise()
+	fun viewNowPlaying(libraryId: LibraryId) = Unit.toPromise()
 
 	fun viewActiveDownloads(libraryId: LibraryId) = Unit.toPromise()
 

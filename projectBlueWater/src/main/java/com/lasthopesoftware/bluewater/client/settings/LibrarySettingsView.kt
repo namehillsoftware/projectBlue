@@ -3,19 +3,46 @@ package com.lasthopesoftware.bluewater.client.settings
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.*
+import androidx.compose.material.AlertDialog
+import androidx.compose.material.Button
+import androidx.compose.material.Checkbox
+import androidx.compose.material.Icon
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.ProvideTextStyle
+import androidx.compose.material.RadioButton
+import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.structuralEqualityPolicy
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -26,11 +53,12 @@ import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
+import com.lasthopesoftware.bluewater.shared.android.ui.components.ColumnMenuIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.shared.android.ui.components.LabeledSelection
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.StandardTextField
-import com.lasthopesoftware.bluewater.shared.android.ui.theme.ColumnMenuIcon
+import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.collectAsMutableState
 import com.lasthopesoftware.bluewater.shared.promises.extensions.suspend
@@ -42,19 +70,19 @@ import me.onebone.toolbar.rememberCollapsingToolbarScaffoldState
 import kotlin.math.pow
 
 private val expandedTitleHeight = 84.dp
-private val expandedIconSize = Dimensions.MenuHeight
-private val expandedMenuVerticalPadding = Dimensions.ViewPadding * 2
+private val expandedIconSize = Dimensions.menuHeight
+private val expandedMenuVerticalPadding = Dimensions.viewPaddingUnit * 2
 private val collapsedTopRowPadding = 6.dp
-private val appBarHeight = Dimensions.AppBarHeight
+private val appBarHeight = Dimensions.appBarHeight
 private val boxHeight = expandedTitleHeight + expandedIconSize + expandedMenuVerticalPadding * 2 + appBarHeight
-private val innerGroupPadding = Dimensions.ViewPadding * 2
+private val innerGroupPadding = Dimensions.viewPaddingUnit * 2
 
 @Composable
 private fun SpacedOutRow(content: @Composable (RowScope.() -> Unit)) {
 	Row(
 		modifier = Modifier
 			.fillMaxWidth(.8f)
-			.height(dimensionResource(id = R.dimen.standard_row_height)),
+			.height(Dimensions.standardRowHeight),
 		verticalAlignment = Alignment.CenterVertically,
 	) {
 		content()
@@ -67,7 +95,7 @@ fun LibrarySettingsView(
 	navigateApplication: NavigateApplication,
 	stringResources: GetStringResources,
 ) {
-	Surface {
+	ControlSurface {
 		var accessCodeState by librarySettingsViewModel.accessCode.collectAsMutableState()
 
 		val scope = rememberCoroutineScope()
@@ -79,7 +107,7 @@ fun LibrarySettingsView(
 					Row(
 						modifier = Modifier
 							.fillMaxWidth()
-							.padding(Dimensions.ViewPadding),
+							.padding(Dimensions.viewPaddingUnit),
 						horizontalArrangement = Arrangement.SpaceEvenly,
 					) {
 						Button(
@@ -108,7 +136,7 @@ fun LibrarySettingsView(
 				text = {
 					Box(
 						modifier = Modifier
-							.padding(Dimensions.ViewPadding)
+							.padding(Dimensions.viewPaddingUnit)
 							.fillMaxWidth()
 							.heightIn(100.dp, 300.dp),
 						contentAlignment = Alignment.Center
@@ -134,7 +162,7 @@ fun LibrarySettingsView(
 						.height(boxHeight)
 						.padding(top = topPadding)
 				) {
-					val iconSize = Dimensions.MenuIconSize
+					val iconSize = Dimensions.topMenuIconSize
 					val acceleratedToolbarStateProgress by remember {
 						derivedStateOf {
 							toolbarState.toolbarState.progress.pow(

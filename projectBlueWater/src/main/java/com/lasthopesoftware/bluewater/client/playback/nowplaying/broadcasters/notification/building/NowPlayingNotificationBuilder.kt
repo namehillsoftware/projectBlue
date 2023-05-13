@@ -8,6 +8,8 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideImages
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ScopedCachedFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideScopedUrlKey
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Companion.pendingNextIntent
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Companion.pendingPauseIntent
@@ -22,22 +24,11 @@ class NowPlayingNotificationBuilder(
 	private val context: Context,
 	private val mediaStyleNotificationSetup: SetupMediaStyleNotifications,
 	private val scopedUrlKeys: ProvideScopedUrlKey,
+	private val libraryIdProvider: ProvideSelectedLibraryId,
 	private val scopedCachedFilePropertiesProvider: ScopedCachedFilePropertiesProvider,
 	private val imageProvider: ProvideImages,
 ) : BuildNowPlayingNotificationContent, AutoCloseable {
 	private val notificationSync = Any()
-
-	private val lazyPlayingLoadingNotification by lazy {
-		addButtons(mediaStyleNotificationSetup.mediaStyleNotification, true)
-			.setOngoing(true)
-			.setContentTitle(context.getString(R.string.lbl_loading))
-	}
-
-	private val lazyNotPlayingLoadingNotification by lazy {
-		addButtons(mediaStyleNotificationSetup.mediaStyleNotification, false)
-			.setOngoing(false)
-			.setContentTitle(context.getString(R.string.lbl_loading))
-	}
 
 	private var viewStructure: ViewStructure? = null
 
@@ -50,7 +41,12 @@ class NowPlayingNotificationBuilder(
 					viewStructure = null
 				}
 
-				if (urlKeyHolder == null) return@eventually mediaStyleNotificationSetup.mediaStyleNotification.toPromise()
+				val promisedSelectedLibraryId = libraryIdProvider.promiseSelectedLibraryId()
+
+				if (urlKeyHolder == null) {
+					return@eventually promisedSelectedLibraryId
+						.then { it?.let(mediaStyleNotificationSetup::getMediaStyleNotification) }
+				}
 
 				val viewStructure = viewStructure ?: ViewStructure(urlKeyHolder).also { viewStructure = it }
 				viewStructure.promisedNowPlayingImage =
@@ -61,14 +57,21 @@ class NowPlayingNotificationBuilder(
 					.eventually { fileProperties ->
 						val artist = fileProperties[KnownFileProperties.Artist]
 						val name = fileProperties[KnownFileProperties.Name]
-						val builder = addButtons(mediaStyleNotificationSetup.mediaStyleNotification, isPlaying)
-							.setOngoing(isPlaying)
-							.setContentTitle(name)
-							.setContentText(artist)
-						if (viewStructure.urlKeyHolder != urlKeyHolder) Promise(builder)
+						promisedSelectedLibraryId
+							.then {
+								it
+									?.let(mediaStyleNotificationSetup::getMediaStyleNotification)
+									?.let { builder -> addButtons(builder, isPlaying) }
+									?.setOngoing(isPlaying)
+									?.setContentTitle(name)
+									?.setContentText(artist)
+							}
+					}
+					.eventually { builder ->
+						if (viewStructure.urlKeyHolder != urlKeyHolder) builder.toPromise()
 						else viewStructure.promisedNowPlayingImage
 							?.then(
-								{ bitmap -> bitmap?.let(builder::setLargeIcon) },
+								{ bitmap -> bitmap?.let{ builder?.setLargeIcon(it) } },
 								{ builder }
 							)
 							.keepPromise(builder)
@@ -76,10 +79,28 @@ class NowPlayingNotificationBuilder(
 			}
 	}
 
-	override fun getLoadingNotification(isPlaying: Boolean): NotificationCompat.Builder =
-		if (isPlaying) lazyPlayingLoadingNotification else lazyNotPlayingLoadingNotification
+	override fun promiseLoadingNotification(isPlaying: Boolean): Promise<NotificationCompat.Builder> =
+		libraryIdProvider
+			.promiseSelectedLibraryId()
+			.then {
+				it?.let { l ->
+					if (isPlaying) getPlayingLoadingNotification(l) else getNotPlayingLoadingNotification(l)
+				}
+			}
 
 	override fun close() { viewStructure?.release() }
+
+	private fun getPlayingLoadingNotification(libraryId: LibraryId): NotificationCompat.Builder {
+		return addButtons(mediaStyleNotificationSetup.getMediaStyleNotification(libraryId), true)
+			.setOngoing(true)
+			.setContentTitle(context.getString(R.string.lbl_loading))
+	}
+
+	private fun getNotPlayingLoadingNotification(libraryId: LibraryId): NotificationCompat.Builder {
+		return addButtons(mediaStyleNotificationSetup.getMediaStyleNotification(libraryId), false)
+			.setOngoing(false)
+			.setContentTitle(context.getString(R.string.lbl_loading))
+	}
 
 	private fun addButtons(builder: NotificationCompat.Builder, isPlaying: Boolean): NotificationCompat.Builder =
 		builder

@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.client.browsing.navigation
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -13,7 +12,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -22,21 +20,22 @@ import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.components.PlayPauseButton
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import kotlinx.coroutines.launch
 
-private val bottomAppBarHeight = Dimensions.AppBarHeight
+private val bottomAppBarHeight = Dimensions.appBarHeight
 
 @Composable
 @OptIn(ExperimentalMaterialApi::class)
 fun LibraryMenu(
-	applicationNavigation: NavigateApplication,
-	nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel,
-	playbackServiceController: ControlPlaybackService,
-	bottomSheetState: BottomSheetState,
-	libraryId: LibraryId,
+    applicationNavigation: NavigateApplication,
+    nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel,
+    playbackServiceController: ControlPlaybackService,
+    bottomSheetState: BottomSheetState,
+    libraryId: LibraryId,
 ) {
 	val nowPlayingFile by nowPlayingFilePropertiesViewModel.nowPlayingFile.collectAsState()
 	val isNowPlayingFileSet by remember { derivedStateOf { nowPlayingFile != null } }
@@ -46,7 +45,7 @@ fun LibraryMenu(
 		.height(bottomAppBarHeight)
 
 	if (isNowPlayingFileSet)
-		rowModifier = rowModifier.clickable(onClick = applicationNavigation::viewNowPlaying)
+		rowModifier = rowModifier.clickable(onClick = { applicationNavigation.viewNowPlaying(libraryId) })
 
 	Row(
 		modifier = rowModifier
@@ -97,8 +96,7 @@ fun LibraryMenu(
 
 					ProvideTextStyle(MaterialTheme.typography.subtitle1) {
 						Text(
-							text = songTitle
-								?: stringResource(id = R.string.lbl_loading),
+							text = songTitle,
 							maxLines = 1,
 							overflow = TextOverflow.Ellipsis,
 							fontWeight = FontWeight.Medium,
@@ -109,8 +107,7 @@ fun LibraryMenu(
 					val songArtist by nowPlayingFilePropertiesViewModel.artist.collectAsState()
 					ProvideTextStyle(MaterialTheme.typography.body2) {
 						Text(
-							text = songArtist
-								?: stringResource(id = R.string.lbl_loading),
+							text = songArtist,
 							maxLines = 1,
 							overflow = TextOverflow.Ellipsis,
 							color = MaterialTheme.colors.onSecondary,
@@ -119,21 +116,10 @@ fun LibraryMenu(
 				}
 
 				if (isNowPlayingFileSet) {
-					val isPlaying by nowPlayingFilePropertiesViewModel.isPlaying.collectAsState()
-					Image(
-						painter = painterResource(id = if (!isPlaying) R.drawable.av_play_white else R.drawable.av_pause_white),
-						contentDescription = stringResource(id = R.string.btn_play),
+					PlayPauseButton(
+						nowPlayingFilePropertiesViewModel,
+						playbackServiceController,
 						modifier = Modifier
-							.clickable(
-								interactionSource = remember { MutableInteractionSource() },
-								indication = null,
-								onClick = {
-									if (!isPlaying) playbackServiceController.play()
-									else playbackServiceController.pause()
-
-									nowPlayingFilePropertiesViewModel.togglePlaying(!isPlaying)
-								}
-							)
 							.padding(start = 8.dp, end = 8.dp)
 							.align(Alignment.CenterVertically)
 							.size(24.dp),
@@ -164,7 +150,7 @@ fun LibraryMenu(
 		}
 	}
 
-	val rowHeight = dimensionResource(id = R.dimen.standard_row_height)
+	val rowHeight = Dimensions.standardRowHeight
 	ProvideTextStyle(value = MaterialTheme.typography.subtitle1) {
 		Row(
 			modifier = Modifier
@@ -242,7 +228,7 @@ fun LibraryMenu(
 					modifier = Modifier
 						.align(Alignment.Center)
 						.padding(start = 16.dp, end = 16.dp)
-						.size(Dimensions.MenuIconSize)
+						.size(Dimensions.topMenuIconSize)
 				)
 			}
 

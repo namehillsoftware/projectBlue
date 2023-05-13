@@ -3,22 +3,45 @@ package com.lasthopesoftware.bluewater.client.browsing.files.list
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.*
+import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material.Divider
+import androidx.compose.material.Icon
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.ProvideTextStyle
+import androidx.compose.material.Text
+import androidx.compose.material.TextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -30,11 +53,12 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ConnectionLostView
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
+import com.lasthopesoftware.bluewater.shared.android.ui.components.ColumnMenuIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberCalculatedKnobHeight
 import com.lasthopesoftware.bluewater.shared.android.ui.components.scrollbar
-import com.lasthopesoftware.bluewater.shared.android.ui.theme.ColumnMenuIcon
+import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 import com.lasthopesoftware.bluewater.shared.promises.extensions.suspend
@@ -47,12 +71,12 @@ import kotlin.math.pow
 
 @Composable
 fun SearchFilesView(
-	searchFilesViewModel: SearchFilesViewModel,
-	nowPlayingViewModel: NowPlayingFilePropertiesViewModel,
-	trackHeadlineViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
-	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
-	applicationNavigation: NavigateApplication,
-	playbackServiceController: ControlPlaybackService,
+    searchFilesViewModel: SearchFilesViewModel,
+    nowPlayingViewModel: NowPlayingFilePropertiesViewModel,
+    trackHeadlineViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
+    itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
+    applicationNavigation: NavigateApplication,
+    playbackServiceController: ControlPlaybackService,
 ) {
 	val files by searchFilesViewModel.files.collectAsState()
 	val playingFile by nowPlayingViewModel.nowPlayingFile.collectAsState()
@@ -103,7 +127,7 @@ fun SearchFilesView(
 		)
 	}
 
-	Surface {
+	ControlSurface {
 		val toolbarState = rememberCollapsingToolbarScaffoldState()
 		val headerHidingProgress by remember { derivedStateOf { 1 - toolbarState.toolbarState.progress } }
 		val isLoading by searchFilesViewModel.isLoading.collectAsState()
@@ -114,12 +138,12 @@ fun SearchFilesView(
 			scrollStrategy = ScrollStrategy.ExitUntilCollapsed,
 			modifier = Modifier.fillMaxSize(),
 			toolbar = {
-				val appBarHeight = Dimensions.AppBarHeight
+				val appBarHeight = Dimensions.appBarHeight
 				val searchFieldPadding = 16.dp
 				val minimumMenuWidth = (2 * 32).dp
 
 				val expandedMenuVerticalPadding = 4.dp
-				val boxHeight = appBarHeight + Dimensions.MenuHeight + expandedMenuVerticalPadding * 2 + searchFieldPadding * 2
+				val boxHeight = appBarHeight + Dimensions.menuHeight + expandedMenuVerticalPadding * 2 + searchFieldPadding * 2
 
 				val acceleratedToolbarStateProgress by remember {
 					derivedStateOf {
@@ -139,7 +163,7 @@ fun SearchFilesView(
 				) {
 					if (files.any()) {
 
-						val iconSize = Dimensions.MenuIconSize
+						val iconSize = Dimensions.topMenuIconSize
 						val menuWidth by remember { derivedStateOf { (maxWidth - (maxWidth - minimumMenuWidth) * acceleratedHeaderHidingProgress) } }
 						val expandedTopRowPadding = appBarHeight + expandedMenuVerticalPadding + searchFieldPadding * 2
 						val collapsedTopRowPadding = searchFieldPadding + appBarHeight / 2 - iconSize / 2
@@ -262,7 +286,7 @@ fun SearchFilesView(
 				}
 				files.any() -> {
 					BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-						val rowHeight = dimensionResource(id = R.dimen.standard_row_height)
+						val rowHeight = Dimensions.standardRowHeight
 						val lazyListState = rememberLazyListState()
 						val knobHeight by rememberCalculatedKnobHeight(lazyListState, rowHeight)
 						LazyColumn(

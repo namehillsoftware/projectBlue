@@ -199,26 +199,29 @@ open class MainApplication : Application() {
 			if (externalFilesDir != null) {
 				val logDir = File(externalFilesDir.path + File.separator + "logs")
 				if (!logDir.exists()) logDir.mkdirs()
-				val filePle = PatternLayoutEncoder()
-				filePle.pattern = "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
-				filePle.context = lc
-				filePle.start()
-
-				val rollingFileAppender = RollingFileAppender<ILoggingEvent>()
-				rollingFileAppender.lazy = true
-				rollingFileAppender.isAppend = true
-				rollingFileAppender.context = lc
-				rollingFileAppender.encoder = filePle
-
-				rollingFileAppender.rollingPolicy = TimeBasedRollingPolicy<ILoggingEvent>().apply {
-					fileNamePattern = File(logDir, "%d{yyyy-MM-dd}.log").absolutePath
-					maxHistory = 30
-					setParent(rollingFileAppender) // parent and context required!
+				val rollingFileAppender = RollingFileAppender<ILoggingEvent>().apply {
+					lazy = true
+					isAppend = true
 					context = lc
+					file = File(logDir, "log.log").absolutePath
+
+					rollingPolicy = TimeBasedRollingPolicy<ILoggingEvent>()
+						.also { it.setParent(this) }
+						.apply {
+							fileNamePattern = File(logDir, "%d{yyyy-MM-dd}.log").absolutePath
+							maxHistory = 30
+							context = lc
+							start()
+						}
+
+					encoder = PatternLayoutEncoder().apply {
+						pattern = "%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+						context = lc
+						start()
+					}
+
 					start()
 				}
-
-				rollingFileAppender.start()
 
 				asyncAppender.addAppender(rollingFileAppender)
 			}

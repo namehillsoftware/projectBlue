@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.list
 
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -26,7 +25,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
@@ -35,10 +33,12 @@ import com.lasthopesoftware.bluewater.client.browsing.files.list.TrackHeaderItem
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewPlaylistFileItem
 import com.lasthopesoftware.bluewater.client.browsing.items.*
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.activity.viewmodels.NowPlayingFilePropertiesViewModel
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncIcon
+import com.lasthopesoftware.bluewater.shared.android.ui.components.ColumnMenuIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
+import com.lasthopesoftware.bluewater.shared.android.ui.components.ListItemIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberCalculatedKnobHeight
 import com.lasthopesoftware.bluewater.shared.android.ui.components.scrollbar
@@ -50,25 +50,27 @@ import me.onebone.toolbar.rememberCollapsingToolbarScaffoldState
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
-const val expandedTitleHeight = 84
-val appBarHeight = Dimensions.AppBarHeight.value
+private const val expandedTitleHeight = 84
+private val appBarHeight = Dimensions.appBarHeight.value
+private val iconSize = Dimensions.topMenuIconSize
+private val minimumMenuWidth = iconSize * 3
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ItemListView(
-	itemListViewModel: ItemListViewModel,
-	fileListViewModel: FileListViewModel,
-	nowPlayingViewModel: NowPlayingFilePropertiesViewModel,
-	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
-	trackHeadlineViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
-	childItemViewModelProvider: PooledCloseablesViewModel<ReusableChildItemViewModel>,
-	applicationNavigation: NavigateApplication,
-	playbackLibraryItems: PlaybackLibraryItems,
-	playbackServiceController: ControlPlaybackService,
+    itemListViewModel: ItemListViewModel,
+    fileListViewModel: FileListViewModel,
+    nowPlayingViewModel: NowPlayingFilePropertiesViewModel,
+    itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
+    trackHeadlineViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
+    childItemViewModelProvider: PooledCloseablesViewModel<ReusableChildItemViewModel>,
+    applicationNavigation: NavigateApplication,
+    playbackLibraryItems: PlaybackLibraryItems,
+    playbackServiceController: ControlPlaybackService,
 ) {
 	val playingFile by nowPlayingViewModel.nowPlayingFile.collectAsState()
 	val files by fileListViewModel.files.collectAsState()
-	val rowHeight = dimensionResource(id = R.dimen.standard_row_height)
+	val rowHeight = Dimensions.standardRowHeight
 	val rowFontSize = LocalDensity.current.run { dimensionResource(id = R.dimen.row_font_size).toSp() }
 	val hapticFeedback = LocalHapticFeedback.current
 	val itemValue by itemListViewModel.itemValue.collectAsState()
@@ -131,7 +133,7 @@ fun ItemListView(
 				.height(rowHeight)
 				.padding(8.dp)
 		) {
-			Image(
+			ListItemIcon(
 				painter = painterResource(id = R.drawable.av_play),
 				contentDescription = stringResource(id = R.string.btn_play),
 				modifier = Modifier
@@ -155,7 +157,7 @@ fun ItemListView(
 					.align(Alignment.CenterVertically),
 			)
 
-			Image(
+			ListItemIcon(
 				painter = painterResource(id = R.drawable.av_shuffle),
 				contentDescription = stringResource(id = R.string.btn_shuffle_files),
 				modifier = Modifier
@@ -187,20 +189,22 @@ fun ItemListView(
 
 		val isMenuShown by fileItemViewModel.isMenuShown.collectAsState()
 		val fileName by fileItemViewModel.title.collectAsState()
-		val isPlaying by remember { derivedStateOf { playingFile?.serviceFile == serviceFile } }
+		val isPlaying by remember(serviceFile) { derivedStateOf { playingFile?.serviceFile == serviceFile } }
 
-		val viewFilesClickHandler = {
-			itemListViewModel.loadedLibraryId?.also {
-				applicationNavigation.viewFileDetails(it, files, position)
+		val viewFileDetailsClickHandler = remember(position) {
+			{
+				itemListViewModel.loadedLibraryId?.also {
+					applicationNavigation.viewFileDetails(it, files, position)
+				}
+				Unit
 			}
-			Unit
 		}
 
 		TrackHeaderItemView(
 			itemName = fileName,
 			isActive = isPlaying,
 			isHiddenMenuShown = isMenuShown,
-			onItemClick = viewFilesClickHandler,
+			onItemClick = viewFileDetailsClickHandler,
 			onHiddenMenuClick = {
 				itemListMenuBackPressedHandler.hideAllMenus()
 				fileItemViewModel.showMenu()
@@ -208,7 +212,7 @@ fun ItemListView(
 			onAddToNowPlayingClick = {
 				 playbackServiceController.addToPlaylist(serviceFile)
 			},
-			onViewFilesClick = viewFilesClickHandler,
+			onViewFilesClick = viewFileDetailsClickHandler,
 			onPlayClick = {
 				fileItemViewModel.hideMenu()
 				playbackServiceController.startPlaylist(files, position)
@@ -292,16 +296,13 @@ fun ItemListView(
 		}
 	}
 
-	val systemUiController = rememberSystemUiController()
-	systemUiController.setStatusBarColor(MaterialTheme.colors.surface)
-
 	val isFilesLoaded by fileListViewModel.isLoaded.collectAsState()
 
-	Surface {
+	ControlSurface {
 		// Treat the files not being loaded as isAnyFiles being false to trick the CollapsingToolbarScaffold
 		// into measuring the expanded size correctly.
 		val isAnyFiles by remember { derivedStateOf { !isFilesLoaded || files.any() } }
-		val expandedIconSize by remember { derivedStateOf { if (isAnyFiles) Dimensions.MenuHeight.value else 0f } }
+		val expandedIconSize by remember { derivedStateOf { if (isAnyFiles) Dimensions.menuHeight.value else 0f } }
 		val expandedMenuVerticalPadding by remember { derivedStateOf { if (isAnyFiles) 12 else 0 } }
 		val boxHeight by remember {
 			derivedStateOf {
@@ -323,7 +324,6 @@ fun ItemListView(
 						.height(boxHeight.dp)
 						.padding(top = topPadding)
 				) {
-					val minimumMenuWidth by remember { derivedStateOf { (3 * expandedIconSize).dp } }
 					val acceleratedToolbarStateProgress by remember {
 						derivedStateOf {
 							toolbarState.toolbarState.progress.pow(
@@ -336,7 +336,7 @@ fun ItemListView(
 					}
 					ProvideTextStyle(MaterialTheme.typography.h5) {
 						val startPadding by remember { derivedStateOf { (4 + 48 * headerHidingProgress).dp } }
-						val endPadding by remember { derivedStateOf { 4.dp + minimumMenuWidth * acceleratedHeaderHidingProgress } }
+						val endPadding by remember { derivedStateOf { Dimensions.viewPaddingUnit + minimumMenuWidth * acceleratedHeaderHidingProgress } }
 						val maxLines by remember { derivedStateOf { (2 - headerHidingProgress).roundToInt() } }
 						if (maxLines > 1) {
 							Text(
@@ -378,19 +378,13 @@ fun ItemListView(
 								.width(menuWidth)
 								.align(Alignment.TopEnd)
 						) {
-							val iconSize = Dimensions.MenuIconSize
 							val textModifier = Modifier.alpha(acceleratedToolbarStateProgress)
 
 							val playButtonLabel = stringResource(id = R.string.btn_play)
 							ColumnMenuIcon(
 								onClick = { playbackServiceController.startPlaylist(files) },
-								icon = {
-									Image(
-										painter = painterResource(id = R.drawable.av_play),
-										contentDescription = playButtonLabel,
-										modifier = Modifier.size(iconSize)
-									)
-								},
+								iconPainter = painterResource(id = R.drawable.av_play),
+								contentDescription = playButtonLabel,
 								label = if (acceleratedHeaderHidingProgress < 1) playButtonLabel else null,
 								labelModifier = textModifier,
 								labelMaxLines = 1,
@@ -417,13 +411,8 @@ fun ItemListView(
 							val shuffleButtonLabel = stringResource(R.string.btn_shuffle_files)
 							ColumnMenuIcon(
 								onClick = { playbackServiceController.shuffleAndStartPlaylist(files) },
-								icon = {
-									Image(
-										painter = painterResource(id = R.drawable.av_shuffle),
-										contentDescription = shuffleButtonLabel,
-										modifier = Modifier.size(iconSize)
-									)
-								},
+								iconPainter = painterResource(id = R.drawable.av_shuffle),
+								contentDescription = shuffleButtonLabel,
 								label = if (acceleratedHeaderHidingProgress < 1) shuffleButtonLabel else null,
 								labelModifier = textModifier,
 								labelMaxLines = 1,
