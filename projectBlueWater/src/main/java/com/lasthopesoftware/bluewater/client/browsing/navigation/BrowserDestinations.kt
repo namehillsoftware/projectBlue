@@ -32,19 +32,21 @@ sealed interface LibraryDestination : Destination {
 }
 
 @Parcelize
-class LibraryScreen(override val libraryId: LibraryId) : LibraryDestination
-
-@Parcelize
-class ItemScreen(override val libraryId: LibraryId, val item: Item) : LibraryDestination
-
-@Parcelize
-class DownloadsScreen(override val libraryId: LibraryId) : LibraryDestination
-
-@Parcelize
 class ConnectionSettingsScreen(override val libraryId: LibraryId) : LibraryDestination
 
 @Parcelize
-class SearchScreen(override val libraryId: LibraryId) : LibraryDestination
+class NowPlayingScreen(override val libraryId: LibraryId) : LibraryDestination
+
+sealed interface BrowserLibraryDestination : LibraryDestination
 
 @Parcelize
-class NowPlayingScreen(override val libraryId: LibraryId) : LibraryDestination
+class LibraryScreen(override val libraryId: LibraryId) : BrowserLibraryDestination
+
+@Parcelize
+class ItemScreen(override val libraryId: LibraryId, val item: Item) : BrowserLibraryDestination
+
+@Parcelize
+class DownloadsScreen(override val libraryId: LibraryId) : BrowserLibraryDestination
+
+@Parcelize
+class SearchScreen(override val libraryId: LibraryId) : BrowserLibraryDestination

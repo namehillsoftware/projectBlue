@@ -550,62 +550,11 @@ private val bottomAppBarHeight = Dimensions.appBarHeight
 
 @Composable
 @OptIn(ExperimentalMaterialApi::class)
-private fun LibraryDestination.Navigate(
+private fun BrowserLibraryDestination.Navigate(
 	browserViewDependencies: BrowserViewDependencies,
 	scaffoldState: BottomSheetScaffoldState,
-	coroutineScope: CoroutineScope,
 ) {
 	with(browserViewDependencies) {
-		if (this@Navigate is NowPlayingScreen) {
-			val systemUiController = rememberSystemUiController()
-			systemUiController.setSystemBarsColor(SharedColors.overlayDark)
-
-			NowPlayingView(
-				nowPlayingCoverArtViewModel = nowPlayingCoverArtViewModel,
-				nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
-				screenOnState = viewModel {
-					NowPlayingScreenViewModel(
-						messageBus,
-						InMemoryNowPlayingDisplaySettings,
-						playbackServiceController,
-					)
-				},
-				playbackServiceController = playbackServiceController,
-				playlistViewModel = nowPlayingPlaylistViewModel,
-				childItemViewModelProvider = viewModel {
-					ReusablePlaylistFileItemViewModelProvider(
-						libraryFilePropertiesProvider,
-						urlKeyProvider,
-						stringResources,
-						menuMessageBus,
-						messageBus,
-					)
-				},
-				applicationNavigation = applicationNavigation,
-				itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
-				connectionLostViewModel = connectionLostViewModel,
-			)
-
-			val context = LocalContext.current
-			LaunchedEffect(key1 = libraryId) {
-				try {
-					connectionLostViewModel.watchLibraryConnection(libraryId)
-
-					Promise.whenAll(
-						nowPlayingFilePropertiesViewModel.initializeViewModel(),
-						nowPlayingCoverArtViewModel.initializeViewModel()
-					).suspend()
-				} catch (e: Throwable) {
-					if (ConnectionLostExceptionFilter.isConnectionLostException(e))
-						pollForConnections.pollConnection(libraryId)
-					else
-						UnexpectedExceptionToaster.announce(context, e)
-				}
-			}
-
-			return
-		}
-
 		val selectedLibraryId by selectedLibraryViewModel.selectedLibraryId.collectAsState()
 		val isSelectedLibrary by remember { derivedStateOf { selectedLibraryId == libraryId } }
 
@@ -768,39 +717,110 @@ private fun LibraryDestination.Navigate(
 							playbackServiceController = playbackServiceController,
 						)
 					}
-					is ConnectionSettingsScreen -> {
-						val viewModel = viewModel {
-							LibrarySettingsViewModel(
-								libraryProvider = libraryProvider,
-								libraryStorage = libraryStorage,
-								libraryRemoval = libraryRemoval,
-								applicationReadPermissionsRequirementsProvider = readPermissionsRequirements,
-								applicationWritePermissionsRequirementsProvider = writePermissionsRequirements,
-								permissionsManager = permissionsManager,
-							)
+				}
+			}
+		}
+	}
+}
+
+@Composable
+@OptIn(ExperimentalMaterialApi::class)
+private fun LibraryDestination.Navigate(
+	browserViewDependencies: BrowserViewDependencies,
+	scaffoldState: BottomSheetScaffoldState,
+	coroutineScope: CoroutineScope,
+) {
+	with(browserViewDependencies) {
+		when (this@Navigate) {
+			is BrowserLibraryDestination -> this@Navigate.Navigate(
+				browserViewDependencies = browserViewDependencies,
+				scaffoldState = scaffoldState,
+			)
+			is ConnectionSettingsScreen -> {
+				val viewModel = viewModel {
+					LibrarySettingsViewModel(
+						libraryProvider = libraryProvider,
+						libraryStorage = libraryStorage,
+						libraryRemoval = libraryRemoval,
+						applicationReadPermissionsRequirementsProvider = readPermissionsRequirements,
+						applicationWritePermissionsRequirementsProvider = writePermissionsRequirements,
+						permissionsManager = permissionsManager,
+					)
+				}
+
+				val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
+
+				Box(
+					modifier = Modifier
+						.fillMaxSize()
+						.padding(systemBarsPadding)
+				) {
+					LibrarySettingsView(
+						librarySettingsViewModel = viewModel,
+						navigateApplication = applicationNavigation,
+						stringResources = stringResources
+					)
+				}
+
+				viewModel.loadLibrary(libraryId)
+
+				DisposableEffect(key1 = Unit) {
+					val registration =
+						messageBus.registerReceiver(coroutineScope) { m: ObservableConnectionSettingsLibraryStorage.ConnectionSettingsUpdated ->
+							if (libraryId == m.libraryId)
+								applicationNavigation.viewLibrary(libraryId)
 						}
 
-						LibrarySettingsView(
-							librarySettingsViewModel = viewModel,
-							navigateApplication = applicationNavigation,
-							stringResources = stringResources
-						)
-
-						viewModel.loadLibrary(libraryId)
-
-						DisposableEffect(key1 = Unit) {
-							val registration =
-								messageBus.registerReceiver(coroutineScope) { m: ObservableConnectionSettingsLibraryStorage.ConnectionSettingsUpdated ->
-									if (libraryId == m.libraryId)
-										applicationNavigation.viewLibrary(libraryId)
-								}
-
-							onDispose {
-								registration.close()
-							}
-						}
+					onDispose {
+						registration.close()
 					}
-					is NowPlayingScreen -> {}
+				}
+			}
+			is NowPlayingScreen -> {
+				val systemUiController = rememberSystemUiController()
+				systemUiController.setSystemBarsColor(SharedColors.overlayDark)
+
+				NowPlayingView(
+					nowPlayingCoverArtViewModel = nowPlayingCoverArtViewModel,
+					nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
+					screenOnState = viewModel {
+						NowPlayingScreenViewModel(
+							messageBus,
+							InMemoryNowPlayingDisplaySettings,
+							playbackServiceController,
+						)
+					},
+					playbackServiceController = playbackServiceController,
+					playlistViewModel = nowPlayingPlaylistViewModel,
+					childItemViewModelProvider = viewModel {
+						ReusablePlaylistFileItemViewModelProvider(
+							libraryFilePropertiesProvider,
+							urlKeyProvider,
+							stringResources,
+							menuMessageBus,
+							messageBus,
+						)
+					},
+					applicationNavigation = applicationNavigation,
+					itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
+					connectionLostViewModel = connectionLostViewModel,
+				)
+
+				val context = LocalContext.current
+				LaunchedEffect(key1 = libraryId) {
+					try {
+						connectionLostViewModel.watchLibraryConnection(libraryId)
+
+						Promise.whenAll(
+							nowPlayingFilePropertiesViewModel.initializeViewModel(),
+							nowPlayingCoverArtViewModel.initializeViewModel()
+						).suspend()
+					} catch (e: Throwable) {
+						if (ConnectionLostExceptionFilter.isConnectionLostException(e))
+							pollForConnections.pollConnection(libraryId)
+						else
+							UnexpectedExceptionToaster.announce(context, e)
+					}
 				}
 			}
 		}
@@ -969,7 +989,13 @@ private fun BrowserView(
 					}
 				}
 				is AboutScreen -> {
-					AboutView(graphDependencies.applicationNavigation)
+					Box(
+						modifier = Modifier
+							.fillMaxSize()
+							.padding(systemBarsPadding)
+					) {
+						AboutView(graphDependencies.applicationNavigation)
+					}
 				}
 				is HiddenSettingsScreen -> {
 					HiddenSettingsView(viewModel {
