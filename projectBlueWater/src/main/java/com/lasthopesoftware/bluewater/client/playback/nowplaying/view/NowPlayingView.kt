@@ -513,6 +513,7 @@ fun NowPlayingView(
 					) {
 						val rating by nowPlayingFilePropertiesViewModel.songRating.collectAsState()
 						val ratingInt by remember { derivedStateOf { rating.toInt() } }
+						val isRatingEnabled by nowPlayingFilePropertiesViewModel.isSongRatingEnabled.collectAsState()
 						RatingBar(
 							rating = ratingInt,
 							color = Color.White,
@@ -520,11 +521,13 @@ fun NowPlayingView(
 							modifier = Modifier
 								.fillMaxWidth()
 								.height(Dimensions.menuHeight),
-							onRatingSelected = {
-								nowPlayingFilePropertiesViewModel.updateRating(
-									it.toFloat()
-								)
-							}
+							onRatingSelected = if (isRatingEnabled) {
+								{
+									nowPlayingFilePropertiesViewModel.updateRating(
+										it.toFloat()
+									)
+								}
+							} else null
 						)
 
 						val isReadOnly by nowPlayingFilePropertiesViewModel.isReadOnly.collectAsState()
