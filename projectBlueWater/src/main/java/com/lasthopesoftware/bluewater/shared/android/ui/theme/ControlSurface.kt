@@ -27,15 +27,14 @@ fun ControlSurface(
 	elevation: Dp = 0.dp,
 	content: @Composable () -> Unit
 ) {
-	CompositionLocalProvider(LocalControlColor provides controlColor) {
-		Surface(
-			modifier = modifier,
-			shape = shape,
-			color = color,
-			contentColor = contentColor,
-			border = border,
-			elevation = elevation,
-			content = content,
-		)
+	Surface(
+		modifier = modifier,
+		shape = shape,
+		color = color,
+		contentColor = contentColor,
+		border = border,
+		elevation = elevation
+	) {
+		CompositionLocalProvider(LocalControlColor provides controlColor, content = content)
 	}
 }

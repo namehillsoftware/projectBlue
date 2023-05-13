@@ -409,6 +409,7 @@ fun NowPlayingView(
 							val nowPlayingFiles by playlistViewModel.nowPlayingList.collectAsState()
 							val playlist by remember { derivedStateOf { nowPlayingFiles.map { p -> p.serviceFile } } }
 							val playingFile by nowPlayingFilePropertiesViewModel.nowPlayingFile.collectAsState()
+							val activeLibraryId by nowPlayingFilePropertiesViewModel.activeLibraryId.collectAsState()
 
 							val reorderableState = rememberDragDropListState(
 								onMove = { from, to ->
@@ -423,8 +424,8 @@ fun NowPlayingView(
 							fun DragDropItemScope.NowPlayingFileView(positionedFile: PositionedFile) {
 								val fileItemViewModel = remember(childItemViewModelProvider::getViewModel)
 
-								DisposableEffect(positionedFile) {
-									nowPlayingFilePropertiesViewModel.activeLibraryId?.also {
+								DisposableEffect(activeLibraryId, positionedFile) {
+									activeLibraryId?.also {
 										fileItemViewModel.promiseUpdate(it, positionedFile.serviceFile)
 									}
 
@@ -439,7 +440,7 @@ fun NowPlayingView(
 								val isPlaying by remember { derivedStateOf { playingFile == positionedFile } }
 
 								val viewFilesClickHandler = {
-									nowPlayingFilePropertiesViewModel.activeLibraryId?.also {
+									activeLibraryId?.also {
 										applicationNavigation.viewFileDetails(
 											it,
 											playlist,

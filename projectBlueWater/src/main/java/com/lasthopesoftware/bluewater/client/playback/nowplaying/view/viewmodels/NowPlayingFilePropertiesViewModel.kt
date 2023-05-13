@@ -91,6 +91,7 @@ class NowPlayingFilePropertiesViewModel(
 	private val isScreenControlsVisibleState = MutableStateFlow(false)
 	private val isRepeatingState = MutableStateFlow(false)
 	private val unexpectedErrorState = MutableStateFlow<Throwable?>(null)
+	private val activeLibraryIdState = MutableStateFlow<LibraryId?>(null)
 
 	val filePosition = filePositionState.asStateFlow()
 	val fileDuration = fileDurationState.asStateFlow()
@@ -104,8 +105,7 @@ class NowPlayingFilePropertiesViewModel(
 	val isScreenControlsVisible = isScreenControlsVisibleState.asStateFlow()
 	val isRepeating = isRepeatingState.asStateFlow()
 	val unexpectedError = unexpectedErrorState.asStateFlow()
-	val activeLibraryId: LibraryId?
-		get() = cachedPromises?.libraryId
+	val activeLibraryId = activeLibraryIdState.asStateFlow()
 
 	override fun onCleared() {
 		cachedPromises?.close()
@@ -240,8 +240,10 @@ class NowPlayingFilePropertiesViewModel(
 			false
 		}
 
-	private fun setView(libraryId: LibraryId, serviceFile: ServiceFile, initialFilePosition: Number) =
-		provideUrlKey
+	private fun setView(libraryId: LibraryId, serviceFile: ServiceFile, initialFilePosition: Number): Promise<Unit> {
+		activeLibraryIdState.value = libraryId
+
+		return provideUrlKey
 			.promiseUrlKey(libraryId, serviceFile)
 			.eventually { key ->
 				key ?: return@eventually Unit.toPromise()
@@ -281,6 +283,7 @@ class NowPlayingFilePropertiesViewModel(
 					handleException(it)
 				}
 			}
+	}
 
 	private fun handleFilePropertyUpdates(message: FilePropertiesUpdatedMessage) {
 		cachedPromises?.let { promises ->
