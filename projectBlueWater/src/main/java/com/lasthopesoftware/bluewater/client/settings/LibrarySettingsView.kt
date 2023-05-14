@@ -404,6 +404,16 @@ fun LibrarySettingsView(
 								enabled = syncedFileLocationState == Library.SyncedFileLocation.CUSTOM,
 							)
 						}
+
+						val isStoragePermissionsNeeded by isStoragePermissionsNeeded.collectAsState()
+						if (isStoragePermissionsNeeded) {
+							ProvideTextStyle(value = MaterialTheme.typography.caption) {
+								Text(
+									text = stringResource(R.string.permissions_must_be_granted_for_settings),
+									color = MaterialTheme.colors.error
+								)
+							}
+						}
 					}
 
 					SpacedOutRow {

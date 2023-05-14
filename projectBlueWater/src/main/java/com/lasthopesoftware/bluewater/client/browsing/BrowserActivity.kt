@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.client.browsing
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
@@ -21,7 +20,6 @@ import browsableItemListView
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.lasthopesoftware.bluewater.ActivityApplicationNavigation
 import com.lasthopesoftware.bluewater.NavigateApplication
-import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.about.AboutView
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.CachedItemFileProvider
@@ -405,17 +403,7 @@ class BrowserActivity :
 				grantResults
 					.zip(permissions)
 					.associate { (r, p) -> Pair(p, r == PackageManager.PERMISSION_GRANTED) }
-					.apply {
-						if (values.any { !it }) {
-							Toast
-								.makeText(
-									this@BrowserActivity,
-									R.string.permissions_must_be_granted_for_settings,
-									Toast.LENGTH_LONG
-								)
-								.show()
-						}
-					})
+			)
 	}
 
 	private fun getDestination(intent: Intent?) =
