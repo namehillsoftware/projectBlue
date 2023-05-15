@@ -2,18 +2,18 @@ package com.lasthopesoftware.bluewater.permissions.read
 
 import android.content.Context
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.permissions.storage.read.ILibraryStorageReadPermissionsRequirementsProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.permissions.storage.read.CheckLibraryStorageReadPermissionRequirements
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.permissions.storage.read.LibraryStorageReadPermissionsRequirementsProvider
-import com.lasthopesoftware.storage.read.permissions.ExternalStorageReadPermissionsArbitratorForOs
-import com.lasthopesoftware.storage.read.permissions.IStorageReadPermissionArbitratorForOs
+import com.lasthopesoftware.bluewater.shared.android.permissions.CheckOsPermissions
+import com.lasthopesoftware.bluewater.shared.android.permissions.OsPermissionsChecker
 
 class ApplicationReadPermissionsRequirementsProvider(
-    private val libraryStorageReadPermissionsRequirementsProvider: ILibraryStorageReadPermissionsRequirementsProvider,
-    private val storageReadPermissionArbitratorForOs: IStorageReadPermissionArbitratorForOs
+	private val libraryStorageReadPermissionsRequirementsProvider: CheckLibraryStorageReadPermissionRequirements,
+	private val storageReadPermissionArbitratorForOs: CheckOsPermissions
 ) : ProvideReadPermissionsRequirements {
     constructor(context: Context) : this(
-        LibraryStorageReadPermissionsRequirementsProvider(),
-        ExternalStorageReadPermissionsArbitratorForOs(context)
+        LibraryStorageReadPermissionsRequirementsProvider,
+        OsPermissionsChecker(context)
     )
 
 	override fun isReadPermissionsRequiredForLibrary(library: Library): Boolean {

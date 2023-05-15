@@ -1,8 +1,7 @@
-package com.lasthopesoftware.storage.read.permissions;
+package com.lasthopesoftware.bluewater.shared.android.permissions
 
-/**
- * Created by david on 6/13/16.
- */
-public interface IStorageReadPermissionArbitratorForOs {
-	boolean isReadPermissionGranted();
+interface CheckOsPermissions {
+    val isReadPermissionGranted: Boolean
+	val isWritePermissionGranted: Boolean
+	val isNotificationsPermissionGranted: Boolean
 }

@@ -4,14 +4,14 @@ import android.database.Cursor
 import android.provider.MediaStore
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.storage.read.permissions.IStorageReadPermissionArbitratorForOs
+import com.lasthopesoftware.bluewater.shared.android.permissions.CheckOsPermissions
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import org.slf4j.LoggerFactory
 
 class MediaFileIdProvider(
 	private val mediaQueryCursorProvider: IMediaQueryCursorProvider,
-	private val externalStorageReadPermissionsArbitrator: IStorageReadPermissionArbitratorForOs
+	private val externalStorageReadPermissionsArbitrator: CheckOsPermissions
 ) : ImmediateResponse<Cursor?, Int>, ProvideMediaFileIds {
 	override fun getMediaId(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Int> =
 		if (!externalStorageReadPermissionsArbitrator.isReadPermissionGranted) Promise(-1)

@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.library.repository
 
 import androidx.annotation.Keep
-import java.util.*
+import java.util.Collections
 
 @Keep
 data class Library(
@@ -134,11 +134,7 @@ data class Library(
 		EXTERNAL, INTERNAL, CUSTOM;
 
 		companion object {
-			@JvmField
-			val ExternalDiskAccessSyncLocations: Set<SyncedFileLocation> = Collections.unmodifiableSet(
-				HashSet(
-					listOf(EXTERNAL,
-						CUSTOM)))
+			val ExternalDiskAccessSyncLocations: Set<SyncedFileLocation> = Collections.unmodifiableSet(setOf(EXTERNAL, CUSTOM))
 		}
 	}
 

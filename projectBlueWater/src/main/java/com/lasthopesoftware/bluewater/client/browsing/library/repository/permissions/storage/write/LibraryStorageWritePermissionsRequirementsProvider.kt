@@ -1,13 +1,10 @@
-package com.lasthopesoftware.bluewater.client.browsing.library.repository.permissions.storage.write;
+package com.lasthopesoftware.bluewater.client.browsing.library.repository.permissions.storage.write
 
-import androidx.annotation.NonNull;
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
-
-public final class LibraryStorageWritePermissionsRequirementsProvider implements ILibraryStorageWritePermissionsRequirementsProvider {
-
-	@Override
-	public boolean isWritePermissionsRequiredForLibrary(@NonNull Library library) {
-		return Library.SyncedFileLocation.ExternalDiskAccessSyncLocations.contains(library.getSyncedFileLocation());
-	}
+object LibraryStorageWritePermissionsRequirementsProvider :
+    CheckLibraryStorageWritePermissionsRequirements {
+    override fun isWritePermissionsRequiredForLibrary(library: Library): Boolean {
+        return Library.SyncedFileLocation.ExternalDiskAccessSyncLocations.contains(library.syncedFileLocation)
+    }
 }

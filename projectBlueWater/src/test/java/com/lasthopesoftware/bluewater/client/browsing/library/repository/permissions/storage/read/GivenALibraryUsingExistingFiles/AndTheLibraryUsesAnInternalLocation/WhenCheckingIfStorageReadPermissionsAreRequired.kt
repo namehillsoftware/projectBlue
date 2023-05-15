@@ -14,9 +14,8 @@ class WhenCheckingIfStorageReadPermissionsAreRequired {
 		val libraryRequiringExistingFiles = Library()
 		libraryRequiringExistingFiles.setIsUsingExistingFiles(true)
 		libraryRequiringExistingFiles.setSyncedFileLocation(Library.SyncedFileLocation.INTERNAL)
-		val libraryStorageReadPermissionsRequirementsProvider = LibraryStorageReadPermissionsRequirementsProvider()
 		isReadPermissionsRequired =
-			libraryStorageReadPermissionsRequirementsProvider.isReadPermissionsRequiredForLibrary(
+			LibraryStorageReadPermissionsRequirementsProvider.isReadPermissionsRequiredForLibrary(
 				libraryRequiringExistingFiles
 			)
 	}

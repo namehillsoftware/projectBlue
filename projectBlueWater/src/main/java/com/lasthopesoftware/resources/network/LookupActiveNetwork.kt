@@ -1,7 +1,7 @@
-package com.lasthopesoftware.resources.network;
+package com.lasthopesoftware.resources.network
 
-import android.net.NetworkInfo;
+import android.net.NetworkInfo
 
-public interface LookupActiveNetwork {
-	NetworkInfo getActiveNetworkInfo();
+interface LookupActiveNetwork {
+    val activeNetworkInfo: NetworkInfo?
 }

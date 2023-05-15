@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test
 
 class WhenCheckingIfStorageReadPermissionsAreRequired {
 	private val libraryStorageReadPermissionsRequirementsProvider by lazy {
-		LibraryStorageReadPermissionsRequirementsProvider()
+		LibraryStorageReadPermissionsRequirementsProvider
 	}
 
 	private var isReadPermissionsRequired = false

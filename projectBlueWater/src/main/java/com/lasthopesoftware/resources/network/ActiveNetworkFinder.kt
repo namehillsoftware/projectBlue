@@ -1,21 +1,14 @@
-package com.lasthopesoftware.resources.network;
+package com.lasthopesoftware.resources.network
 
-import android.content.Context;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
-import com.namehillsoftware.lazyj.CreateAndHold;
-import com.namehillsoftware.lazyj.Lazy;
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkInfo
 
-public class ActiveNetworkFinder implements LookupActiveNetwork {
-
-	private final CreateAndHold<ConnectivityManager> lazyConnectivityManager;
-
-	public ActiveNetworkFinder(Context context) {
-		lazyConnectivityManager = new Lazy<>(() -> (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE));
+class ActiveNetworkFinder(context: Context) : LookupActiveNetwork {
+    private val lazyConnectivityManager by lazy {
+		context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
 	}
 
-	@Override
-	public NetworkInfo getActiveNetworkInfo() {
-		return lazyConnectivityManager.getObject().getActiveNetworkInfo();
-	}
+    override val activeNetworkInfo: NetworkInfo?
+        get() = lazyConnectivityManager.activeNetworkInfo
 }

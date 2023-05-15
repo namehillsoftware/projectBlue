@@ -2,14 +2,21 @@ package com.lasthopesoftware.bluewater.permissions.write.GivenLibraryNotRequesti
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.permissions.write.ApplicationWritePermissionsRequirementsProvider
+import io.mockk.every
+import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class WhenGrantingOsPermissions {
 	private val isPermissionGranted by lazy {
 		val applicationWritePermissionsRequirementsProvider = ApplicationWritePermissionsRequirementsProvider(
-			{ false }
-		) { true }
+			mockk {
+				every { isWritePermissionsRequiredForLibrary(any()) } returns false
+			},
+			mockk {
+				every { isWritePermissionGranted } returns true
+			}
+		)
 
 		applicationWritePermissionsRequirementsProvider.isWritePermissionsRequiredForLibrary(Library())
 	}

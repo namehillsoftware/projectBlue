@@ -1,13 +1,12 @@
-package com.lasthopesoftware.bluewater.client.browsing.library.repository.permissions.storage.read;
+package com.lasthopesoftware.bluewater.client.browsing.library.repository.permissions.storage.read
 
-import androidx.annotation.NonNull;
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
-
-public final class LibraryStorageReadPermissionsRequirementsProvider implements ILibraryStorageReadPermissionsRequirementsProvider {
-
-	@Override
-	public boolean isReadPermissionsRequiredForLibrary(@NonNull Library library) {
-		return library.isUsingExistingFiles() || Library.SyncedFileLocation.ExternalDiskAccessSyncLocations.contains(library.getSyncedFileLocation());
-	}
+object LibraryStorageReadPermissionsRequirementsProvider :
+    CheckLibraryStorageReadPermissionRequirements {
+    override fun isReadPermissionsRequiredForLibrary(library: Library): Boolean {
+        return library.isUsingExistingFiles || Library.SyncedFileLocation.ExternalDiskAccessSyncLocations.contains(
+            library.syncedFileLocation
+        )
+    }
 }

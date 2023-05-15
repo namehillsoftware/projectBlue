@@ -180,6 +180,8 @@ class BrowserActivity :
 		)
 	}
 
+	private val osPermissionChecker by lazy { OsPermissionsChecker(applicationContext) }
+
 	override val libraryFilePropertiesProvider by lazy {
 		CachedFilePropertiesProvider(
 			libraryConnectionProvider,

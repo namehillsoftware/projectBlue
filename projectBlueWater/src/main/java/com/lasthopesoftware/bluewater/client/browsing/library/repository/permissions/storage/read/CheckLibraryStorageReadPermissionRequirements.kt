@@ -1,12 +1,7 @@
-package com.lasthopesoftware.bluewater.client.browsing.library.repository.permissions.storage.read;
+package com.lasthopesoftware.bluewater.client.browsing.library.repository.permissions.storage.read
 
-import androidx.annotation.NonNull;
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library;
-
-/**
- * Created by david on 7/3/16.
- */
-public interface ILibraryStorageReadPermissionsRequirementsProvider {
-	boolean isReadPermissionsRequiredForLibrary(@NonNull Library library);
+interface CheckLibraryStorageReadPermissionRequirements {
+    fun isReadPermissionsRequiredForLibrary(library: Library): Boolean
 }

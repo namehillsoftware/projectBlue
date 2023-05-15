@@ -114,6 +114,7 @@ import com.lasthopesoftware.bluewater.shared.android.notifications.NotificationB
 import com.lasthopesoftware.bluewater.shared.android.notifications.control.NotificationsController
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.NotificationChannelActivator
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.SharedChannelProperties
+import com.lasthopesoftware.bluewater.shared.android.permissions.OsPermissionsChecker
 import com.lasthopesoftware.bluewater.shared.android.services.GenericBinder
 import com.lasthopesoftware.bluewater.shared.android.services.promiseBoundService
 import com.lasthopesoftware.bluewater.shared.cls
@@ -132,7 +133,6 @@ import com.lasthopesoftware.bluewater.shared.resilience.TimedCountdownLatch
 import com.lasthopesoftware.resources.closables.AutoCloseableManager
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.lasthopesoftware.resources.loopers.HandlerThreadCreator
-import com.lasthopesoftware.storage.read.permissions.ExternalStorageReadPermissionsArbitratorForOs
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import io.reactivex.Observable
@@ -332,7 +332,7 @@ open class PlaybackService :
 		)
 	}
 
-	private val arbitratorForOs by lazy { ExternalStorageReadPermissionsArbitratorForOs(this) }
+	private val arbitratorForOs by lazy { OsPermissionsChecker(this) }
 
 	private val lazyMediaSessionService = lazy { promiseBoundService<MediaSessionService>() }
 
