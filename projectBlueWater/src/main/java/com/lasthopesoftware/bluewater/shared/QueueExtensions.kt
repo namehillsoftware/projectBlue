@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.shared
 
-import java.util.*
+import java.util.Queue
 
 fun <T> Queue<T>.drainQueue(): Iterable<T> {
 	val queue = this

@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing
 
+import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
@@ -92,6 +93,7 @@ import com.lasthopesoftware.bluewater.shared.android.intents.IntentBuilder
 import com.lasthopesoftware.bluewater.shared.android.intents.safelyGetParcelableExtra
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
 import com.lasthopesoftware.bluewater.shared.android.permissions.ManagePermissions
+import com.lasthopesoftware.bluewater.shared.android.permissions.OsPermissionsChecker
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
@@ -363,6 +365,10 @@ class BrowserActivity :
 				finish()
 				return
 			}
+		}
+
+		if (!osPermissionChecker.isNotificationsPermissionGranted) {
+			requestPermissions(listOf(Manifest.permission.POST_NOTIFICATIONS))
 		}
 
 		WindowCompat.setDecorFitsSystemWindows(window, false)
