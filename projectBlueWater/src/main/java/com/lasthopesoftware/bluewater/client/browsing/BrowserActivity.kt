@@ -1,9 +1,9 @@
 package com.lasthopesoftware.bluewater.client.browsing
 
+import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
@@ -21,7 +21,6 @@ import browsableItemListView
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.lasthopesoftware.bluewater.ActivityApplicationNavigation
 import com.lasthopesoftware.bluewater.NavigateApplication
-import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.about.AboutView
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.CachedItemFileProvider
@@ -94,6 +93,7 @@ import com.lasthopesoftware.bluewater.shared.android.intents.IntentBuilder
 import com.lasthopesoftware.bluewater.shared.android.intents.safelyGetParcelableExtra
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
 import com.lasthopesoftware.bluewater.shared.android.permissions.ManagePermissions
+import com.lasthopesoftware.bluewater.shared.android.permissions.OsPermissionsChecker
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
@@ -181,6 +181,8 @@ class BrowserActivity :
 			PromisingRateLimiter(1),
 		)
 	}
+
+	private val osPermissionChecker by lazy { OsPermissionsChecker(applicationContext) }
 
 	override val libraryFilePropertiesProvider by lazy {
 		CachedFilePropertiesProvider(
@@ -365,6 +367,10 @@ class BrowserActivity :
 			}
 		}
 
+		if (!osPermissionChecker.isNotificationsPermissionGranted) {
+			requestPermissions(listOf(Manifest.permission.POST_NOTIFICATIONS))
+		}
+
 		WindowCompat.setDecorFitsSystemWindows(window, false)
 
 		setContent {
@@ -405,17 +411,7 @@ class BrowserActivity :
 				grantResults
 					.zip(permissions)
 					.associate { (r, p) -> Pair(p, r == PackageManager.PERMISSION_GRANTED) }
-					.apply {
-						if (values.any { !it }) {
-							Toast
-								.makeText(
-									this@BrowserActivity,
-									R.string.permissions_must_be_granted_for_settings,
-									Toast.LENGTH_LONG
-								)
-								.show()
-						}
-					})
+			)
 	}
 
 	private fun getDestination(intent: Intent?) =

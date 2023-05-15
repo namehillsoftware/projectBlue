@@ -76,7 +76,7 @@ class WhenSavingTheLibrarySettings {
 
 	@Test
 	fun `then permissions are not required`() {
-		assertThat(services.isPermissionsNeeded.value).isFalse
+		assertThat(services.isStoragePermissionsNeeded.value).isFalse
 	}
 
     @Test

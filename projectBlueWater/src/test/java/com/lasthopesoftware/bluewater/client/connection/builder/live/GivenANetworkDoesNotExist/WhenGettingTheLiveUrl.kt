@@ -23,7 +23,9 @@ class WhenGettingTheLiveUrl {
 		}
 
 		val liveUrlProvider = LiveUrlProvider(
-			{ null },
+			mockk {
+				every { activeNetworkInfo } returns null
+		  	},
 			urlProviderBuilder
 		)
 		liveUrlProvider.promiseLiveUrl(LibraryId(23)).toExpiringFuture().get()

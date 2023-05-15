@@ -11,7 +11,7 @@ import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
-import java.util.*
+import java.util.LinkedList
 
 class WhenReceivingTheNotification {
 	private val requestedWritePermissionLibraries: MutableList<LibraryId> = LinkedList()
@@ -23,7 +23,9 @@ class WhenReceivingTheNotification {
 		}
 
 		val storedFileWritePermissionsReceiver = StoredFileWritePermissionsReceiver(
-			{ false },
+			mockk {
+				every { isWritePermissionGranted } returns false
+			},
 			{ e -> requestedWritePermissionLibraries.add(e) },
 			storedFileAccess
 		)

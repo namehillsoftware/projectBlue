@@ -2,14 +2,21 @@ package com.lasthopesoftware.bluewater.permissions.read.GivenLibraryRequestingSt
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermissionsRequirementsProvider
+import io.mockk.every
+import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class WhenGrantingOsPermissions {
 	private val isPermissionGranted by lazy {
 		val applicationReadPermissionsRequirementsProvider = ApplicationReadPermissionsRequirementsProvider(
-			{ true }
-		) { true }
+			mockk {
+				every { isReadPermissionsRequiredForLibrary(any()) } returns true
+			},
+			mockk {
+				every { isReadPermissionGranted } returns true
+			}
+		)
 
 		applicationReadPermissionsRequirementsProvider.isReadPermissionsRequiredForLibrary(Library())
 	}

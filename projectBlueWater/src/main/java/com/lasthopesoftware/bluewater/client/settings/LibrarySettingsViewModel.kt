@@ -49,7 +49,7 @@ class LibrarySettingsViewModel(
 	val isSyncLocalConnectionsOnly = MutableStateFlow(false)
 	override val isLoading = mutableIsLoading.asStateFlow()
 	val isSaving = mutableIsSaving.asStateFlow()
-	val isPermissionsNeeded = mutableIsPermissionsNeeded.asStateFlow()
+	val isStoragePermissionsNeeded = mutableIsPermissionsNeeded.asStateFlow()
 	val isRemovalRequested = mutableIsRemovalRequested.asStateFlow()
 
 	fun loadLibrary(libraryId: LibraryId): Promise<*> {
@@ -128,7 +128,7 @@ class LibrarySettingsViewModel(
 
 		return libraryStorage
 			.saveLibrary(localLibrary)
-			.then { l -> l != null }
+			.then { true }
 	}
 
 	override fun act() {

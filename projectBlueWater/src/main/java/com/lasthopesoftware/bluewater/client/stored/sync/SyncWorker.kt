@@ -50,10 +50,15 @@ import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncDirectoryLo
 import com.lasthopesoftware.bluewater.client.stored.sync.notifications.PostSyncNotification
 import com.lasthopesoftware.bluewater.client.stored.sync.notifications.SyncChannelProperties
 import com.lasthopesoftware.bluewater.client.stored.sync.receivers.SyncStartedReceiver
-import com.lasthopesoftware.bluewater.client.stored.sync.receivers.file.*
+import com.lasthopesoftware.bluewater.client.stored.sync.receivers.file.StoredFileBroadcastReceiver
+import com.lasthopesoftware.bluewater.client.stored.sync.receivers.file.StoredFileDownloadingNotifier
+import com.lasthopesoftware.bluewater.client.stored.sync.receivers.file.StoredFileMediaScannerNotifier
+import com.lasthopesoftware.bluewater.client.stored.sync.receivers.file.StoredFileReadPermissionsReceiver
+import com.lasthopesoftware.bluewater.client.stored.sync.receivers.file.StoredFileWritePermissionsReceiver
 import com.lasthopesoftware.bluewater.shared.android.intents.IntentBuilder
 import com.lasthopesoftware.bluewater.shared.android.notifications.NoOpChannelActivator
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.NotificationChannelActivator
+import com.lasthopesoftware.bluewater.shared.android.permissions.OsPermissionsChecker
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
@@ -65,9 +70,7 @@ import com.lasthopesoftware.resources.io.FileStreamWriter
 import com.lasthopesoftware.storage.FreeSpaceLookup
 import com.lasthopesoftware.storage.directories.PrivateDirectoryLookup
 import com.lasthopesoftware.storage.directories.PublicDirectoryLookup
-import com.lasthopesoftware.storage.read.permissions.ExternalStorageReadPermissionsArbitratorForOs
 import com.lasthopesoftware.storage.read.permissions.FileReadPossibleArbitrator
-import com.lasthopesoftware.storage.write.permissions.ExternalStorageWritePermissionsArbitratorForOs
 import com.lasthopesoftware.storage.write.permissions.FileWritePossibleArbitrator
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
@@ -90,7 +93,7 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 
 	private val applicationMessageBus by lazy { getApplicationMessageBus().getScopedMessageBus() }
 	private val storedFileAccess by lazy { StoredFileAccess(context) }
-	private val readPermissionArbitratorForOs by lazy { ExternalStorageReadPermissionsArbitratorForOs(context) }
+	private val readPermissionArbitratorForOs by lazy { OsPermissionsChecker(context) }
 	private val libraryIdentifierProvider by lazy { context.getCachedSelectedLibraryIdProvider() }
 	private val libraryConnections by lazy { ConnectionSessionManager.get(context) }
 	private val cachingPolicyFactory by lazy { CachingPolicyFactory() }
@@ -186,7 +189,7 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 			StorageReadPermissionsRequestedBroadcaster(applicationMessageBus),
 			storedFileAccess)
 		val storedFileWritePermissionsReceiver = StoredFileWritePermissionsReceiver(
-			ExternalStorageWritePermissionsArbitratorForOs(context),
+			OsPermissionsChecker(context),
 			StorageWritePermissionsRequestedBroadcaster(applicationMessageBus),
 			storedFileAccess)
 
