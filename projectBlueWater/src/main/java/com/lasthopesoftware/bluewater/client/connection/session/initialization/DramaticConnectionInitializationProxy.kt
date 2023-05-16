@@ -23,10 +23,10 @@ class DramaticConnectionInitializationProxy(
 	override fun promiseInitializedConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?> =
 		object : ProgressingPromiseProxy<BuildingConnectionStatus, IConnectionProvider?>() {
 			init {
-				val promisedConnection = manageConnectionSessions.promiseLibraryConnection(libraryId)
+				val promisedConnection = manageConnectionSessions.promiseTestedLibraryConnection(libraryId)
 				val isConnectionAlreadyActive = manageConnectionSessions.isConnectionActive(libraryId)
 				if (isConnectionAlreadyActive) {
-					proxySuccess(promisedConnection)
+					proxy(promisedConnection)
 				} else {
 					proxyUpdates(promisedConnection)
 					doCancel(promisedConnection)
