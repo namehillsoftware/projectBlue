@@ -55,7 +55,7 @@ class WhenTestingIfTheConnectionIsActive {
 			cancellationException = e.cause as? CancellationException ?: throw e
 		}
 
-		isActive = mut.isConnectionActive(libraryId)
+		isActive = mut.promiseIsConnectionActive(libraryId).toExpiringFuture().get() ?: false
 	}
 
 	@Test

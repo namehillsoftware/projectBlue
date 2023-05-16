@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.connection.session.GivenANullLibra
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.PromisedConnectionsRepository
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
@@ -18,7 +19,7 @@ class WhenTestingIfTheConnectionIsActive {
 
 	@BeforeAll
 	fun act() {
-		isActive = mut.isConnectionActive(LibraryId(2))
+		isActive = mut.promiseIsConnectionActive(LibraryId(2)).toExpiringFuture().get() ?: false
 	}
 
 	@Test

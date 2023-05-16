@@ -60,7 +60,7 @@ class WhenTestingIfTheConnectionIsActive {
 				exception = e.cause as IOException?
 			}
 		}
-		isActive = connectionSessionManager.isConnectionActive(LibraryId(2))
+		isActive = connectionSessionManager.promiseIsConnectionActive(LibraryId(2)).toExpiringFuture().get() ?: false
 	}
 
 	@Test

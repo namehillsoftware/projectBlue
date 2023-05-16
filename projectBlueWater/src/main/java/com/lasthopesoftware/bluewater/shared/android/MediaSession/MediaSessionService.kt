@@ -10,7 +10,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.Li
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.MediaSessionCallbackReceiver
-import com.lasthopesoftware.bluewater.shared.android.makePendingIntentImmutable
+import com.lasthopesoftware.bluewater.shared.android.intents.makePendingIntentImmutable
 import com.lasthopesoftware.bluewater.shared.android.services.GenericBinder
 
 class MediaSessionService : Service() {

@@ -14,7 +14,7 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.resources.strings.EncodeToBase64
 import com.namehillsoftware.handoff.promises.Promise
 import java.net.URL
-import java.util.*
+import java.util.LinkedList
 
 class UrlScanner(
 	private val base64: EncodeToBase64,
@@ -99,7 +99,7 @@ class UrlScanner(
 
 	companion object {
 		private fun ConnectionSettings.isUserCredentialsValid(): Boolean =
-				userName != null && userName.isNotEmpty() && password != null && password.isNotEmpty()
+				!userName.isNullOrEmpty() && !password.isNullOrEmpty()
 
 		private fun parseAccessCode(accessCode: String): URL {
 			var url = accessCode

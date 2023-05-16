@@ -24,7 +24,7 @@ class `when initializing its connection` {
 			deferredProgressingPromise,
             ConnectionInitializationErrorController(
                 mockk {
-                    every { promiseInitializedConnection(LibraryId(libraryId)) } returns deferredProgressingPromise
+                    every { promiseLibraryConnection(LibraryId(libraryId)) } returns deferredProgressingPromise
                 },
 				mockk {
 					every { viewApplicationSettings() } answers {
@@ -43,7 +43,7 @@ class `when initializing its connection` {
 	fun act() {
 		val (deferredPromise, controller) = mut
 		val promisedConnection = controller
-			.promiseInitializedConnection(LibraryId(libraryId))
+			.promiseLibraryConnection(LibraryId(libraryId))
 			.apply { updates(recordedUpdates::add) }
 
 		deferredPromise.sendProgressUpdates(

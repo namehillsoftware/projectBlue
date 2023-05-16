@@ -50,10 +50,10 @@ class WhenRetrievingTheLibraryConnection {
 				.promiseLibraryConnection(LibraryId(3))
 				.toExpiringFuture()
 
-		isActiveBeforeGettingConnection = connectionSessionManager.isConnectionActive(LibraryId(3))
+		isActiveBeforeGettingConnection = connectionSessionManager.promiseIsConnectionActive(LibraryId(3)).toExpiringFuture().get() ?: false
 		deferredConnectionProvider.sendResolution(expectedConnectionProvider)
 		connectionProvider = futureConnectionProvider.get()
-		isActiveAfterGettingConnection = connectionSessionManager.isConnectionActive(LibraryId(3))
+		isActiveAfterGettingConnection = connectionSessionManager.promiseIsConnectionActive(LibraryId(3)).toExpiringFuture().get() ?: false
 	}
 
 	@Test

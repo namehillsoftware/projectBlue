@@ -15,7 +15,6 @@ import com.lasthopesoftware.bluewater.client.browsing.navigation.ConnectionSetti
 import com.lasthopesoftware.bluewater.client.browsing.navigation.Destination
 import com.lasthopesoftware.bluewater.client.browsing.navigation.LibraryScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NowPlayingScreen
-import com.lasthopesoftware.bluewater.shared.android.makePendingIntentImmutable
 
 class IntentBuilder(private val context: Context) : BuildIntents {
 

@@ -16,10 +16,10 @@ class ConnectionInitializationErrorController(
 	private val applicationNavigation: NavigateApplication
 ) : ControlConnectionInitialization {
 
-	override fun promiseInitializedConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?> =
+	override fun promiseLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?> =
 		object : ProgressingPromiseProxy<BuildingConnectionStatus, IConnectionProvider?>() {
 			init {
-			    val promisedConnection = inner.promiseInitializedConnection(libraryId)
+			    val promisedConnection = inner.promiseLibraryConnection(libraryId)
 				doCancel(promisedConnection)
 				proxyUpdates(promisedConnection)
 				promisedConnection.then(

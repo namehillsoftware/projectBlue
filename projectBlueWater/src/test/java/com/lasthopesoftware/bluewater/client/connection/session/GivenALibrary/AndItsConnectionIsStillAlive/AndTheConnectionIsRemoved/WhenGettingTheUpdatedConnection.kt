@@ -48,7 +48,7 @@ class WhenGettingTheUpdatedConnection {
 
 		mut.removeConnection(libraryId)
 
-		isActive = mut.isConnectionActive(libraryId)
+		isActive = mut.promiseIsConnectionActive(libraryId).toExpiringFuture().get() ?: false
 
 		newConnection =
 			mut.promiseLibraryConnection(libraryId).toExpiringFuture()[30, TimeUnit.SECONDS]

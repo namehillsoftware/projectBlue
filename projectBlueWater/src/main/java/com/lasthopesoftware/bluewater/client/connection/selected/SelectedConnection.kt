@@ -37,11 +37,6 @@ class SelectedConnection(
 				.keepPromise()
 		}
 
-	fun isSessionConnectionActive(): Promise<Boolean> =
-		selectedLibraryIdentifierProvider.promiseSelectedLibraryId().then { id ->
-			id?.let(libraryConnections::isConnectionActive) ?: false
-		}
-
 	fun promiseSessionConnection(): Promise<IConnectionProvider?> =
 		selectedLibraryIdentifierProvider.promiseSelectedLibraryId().eventually { selectedLibraryId ->
 			selectedLibraryId

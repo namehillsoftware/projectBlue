@@ -28,8 +28,8 @@ class `when ensuring a different connection is working` {
 			ConnectionStatusViewModel(
 				FakeStringResources(),
 				mockk {
-					every { promiseInitializedConnection(LibraryId(originalLibraryId)) } returns ProgressingPromise(FakeConnectionProvider())
-					every { promiseInitializedConnection(LibraryId(libraryId)) } returns deferredProgressingPromise
+					every { promiseLibraryConnection(LibraryId(originalLibraryId)) } returns ProgressingPromise(FakeConnectionProvider())
+					every { promiseLibraryConnection(LibraryId(libraryId)) } returns deferredProgressingPromise
 				}
 			)
 		)

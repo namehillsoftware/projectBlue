@@ -27,7 +27,7 @@ class `when cancelling the validation` {
             ConnectionStatusViewModel(
                 FakeStringResources(),
                 mockk {
-                    every { promiseInitializedConnection(LibraryId(libraryId)) } returns deferredProgressingPromise
+                    every { promiseLibraryConnection(LibraryId(libraryId)) } returns deferredProgressingPromise
                 },
             )
 		)

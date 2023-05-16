@@ -22,8 +22,10 @@ import com.lasthopesoftware.bluewater.client.connection.waking.ServerAlarm
 import com.lasthopesoftware.bluewater.client.connection.waking.ServerWakeSignal
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromiseProxy
+import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.resources.network.ActiveNetworkFinder
 import com.lasthopesoftware.resources.strings.Base64Encoder
+import com.namehillsoftware.handoff.promises.Promise
 
 class ConnectionSessionManager(
 	private val connectionTester: TestConnections,
@@ -76,8 +78,8 @@ class ConnectionSessionManager(
 		holdConnections.removeConnection(libraryId)?.cancel()
 	}
 
-	override fun isConnectionActive(libraryId: LibraryId): Boolean =
-		holdConnections.getPromisedResolvedConnection(libraryId) != null
+	override fun promiseIsConnectionActive(libraryId: LibraryId): Promise<Boolean> =
+		holdConnections.getPromisedResolvedConnection(libraryId)?.then { c -> c != null }.keepPromise(false)
 
 	companion object Instance {
 		private val connectionRepository by lazy { PromisedConnectionsRepository() }

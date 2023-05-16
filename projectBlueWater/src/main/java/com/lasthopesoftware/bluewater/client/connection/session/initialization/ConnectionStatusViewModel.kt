@@ -36,7 +36,7 @@ class ConnectionStatusViewModel(
 		mutableConnectionStatus.value = stringResources.connecting
 
 		val promiseIsConnected = CancellableProxyPromise { cp ->
-			val promisedConnection = connectionInitializationController.promiseInitializedConnection(libraryId)
+			val promisedConnection = connectionInitializationController.promiseLibraryConnection(libraryId)
 			promisedConnection.progress.then { p ->
 				if (p != null) invoke(p)
 				promisedConnection.updates(this)

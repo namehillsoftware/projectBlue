@@ -41,7 +41,7 @@ class WhenTestingIfTheConnectionIsActive {
 	@BeforeAll
 	fun act() {
 		mut.promiseLibraryConnection(libraryId).toExpiringFuture()[30, TimeUnit.SECONDS]
-		isActive = mut.isConnectionActive(libraryId)
+		isActive = mut.promiseIsConnectionActive(libraryId).toExpiringFuture().get() ?: false
 	}
 
 	@Test

@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.shared.android.intents
 
+import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Build
@@ -15,3 +16,7 @@ inline fun <reified T : Parcelable> Intent.safelyGetParcelableExtra(name: String
 		@Suppress("DEPRECATION")
 		getParcelableExtra(name)
 	}
+
+fun Int.makePendingIntentImmutable(): Int =
+	if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) this or PendingIntent.FLAG_IMMUTABLE
+	else this
