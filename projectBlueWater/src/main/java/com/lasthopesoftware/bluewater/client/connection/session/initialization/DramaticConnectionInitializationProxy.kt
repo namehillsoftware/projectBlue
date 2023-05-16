@@ -36,7 +36,8 @@ class DramaticConnectionInitializationProxy(
 								.delay<Any?>(dramaticPause)
 								.also(::doCancel)
 								.must {
-									proxy(promisedConnection)
+									proxySuccess(promisedConnection)
+									proxyRejection(promisedConnection)
 								}
 						}
 					}

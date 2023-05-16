@@ -67,7 +67,11 @@ class ConnectionSessionManager(
 			object : ProgressingPromiseProxy<BuildingConnectionStatus, IConnectionProvider?>() {
 				init {
 					promised
-						?.also(::proxySuccess)
+						?.also {
+							doCancel(it)
+							proxyUpdates(it)
+							proxySuccess(it)
+						}
 						?.excuse { proxy(libraryConnections.promiseLibraryConnection(l)) }
 						?: proxy(libraryConnections.promiseLibraryConnection(l))
 				}
