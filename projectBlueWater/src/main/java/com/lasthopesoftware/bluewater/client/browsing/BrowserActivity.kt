@@ -855,6 +855,7 @@ private fun BrowserView(
 			DramaticConnectionInitializationController(
 				browserViewDependencies.libraryConnectionProvider,
 				graphNavigation,
+				browserViewDependencies.messageBus,
 			),
 		)
 	}

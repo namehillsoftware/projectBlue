@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.connection.session.GivenALibrary.AndTheConnectionIsNotAlive
+package com.lasthopesoftware.bluewater.client.connection.session.GivenALibrary.AndItsConnectionIsStillAlive
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
@@ -15,9 +15,9 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.util.concurrent.TimeUnit
 
-private const val libraryId = 148
+private const val libraryId = 176
 
-class `When initializing the connection dramatically` {
+class `When initializing the connection` {
 
 	private val mut by lazy {
 		val deferredProgressingPromise =
@@ -27,12 +27,12 @@ class `When initializing the connection dramatically` {
 			deferredProgressingPromise,
             DramaticConnectionInitializationController(
                 mockk {
-					every { promiseIsConnectionActive(LibraryId(libraryId)) } returns false.toPromise()
-                    every { promiseTestedLibraryConnection(LibraryId(libraryId)) } returns deferredProgressingPromise
+                    every { promiseIsConnectionActive(LibraryId(libraryId)) } returns true.toPromise()
+                    every { promiseLibraryConnection(LibraryId(libraryId)) } returns deferredProgressingPromise
                 },
 				mockk(),
 				RecordingApplicationMessageBus(),
-			)
+            )
 		)
 	}
 
@@ -55,16 +55,12 @@ class `When initializing the connection dramatically` {
 
 		initializedConnection = isInitializedPromise
 			.toExpiringFuture()
-			.get(3, TimeUnit.SECONDS)!!
+			.get(1, TimeUnit.SECONDS)!! // Expect an immediate return
 	}
 
 	@Test
-    fun `then the updates are correct`() {
-		assertThat(recordedUpdates).containsExactly(
-            BuildingConnectionStatus.BuildingConnection,
-            BuildingConnectionStatus.GettingLibrary,
-            BuildingConnectionStatus.SendingWakeSignal,
-		)
+	fun `then no updates are recorded`() {
+		assertThat(recordedUpdates).isEmpty()
 	}
 
 	@Test

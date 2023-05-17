@@ -129,6 +129,7 @@ class FileDetailsActivity : ComponentActivity() {
 			DramaticConnectionInitializationController(
 				libraryConnections,
 				applicationNavigation,
+				ApplicationMessageBus.getApplicationMessageBus(),
 			),
 		)
 	}
