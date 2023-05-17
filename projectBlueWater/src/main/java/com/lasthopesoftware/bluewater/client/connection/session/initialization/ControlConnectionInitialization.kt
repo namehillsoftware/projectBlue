@@ -1,5 +1,10 @@
 package com.lasthopesoftware.bluewater.client.connection.session.initialization
 
-import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
+import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
+import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise
 
-interface ControlConnectionInitialization : ProvideLibraryConnections
+interface ControlConnectionInitialization {
+	fun promiseActiveLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>
+}

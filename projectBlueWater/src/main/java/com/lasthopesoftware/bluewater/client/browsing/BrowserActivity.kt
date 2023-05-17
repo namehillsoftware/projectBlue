@@ -852,10 +852,8 @@ private fun BrowserView(
 	val connectionStatusViewModel = viewModel {
 		ConnectionStatusViewModel(
 			browserViewDependencies.stringResources,
-			ConnectionInitializationErrorController(
-				DramaticConnectionInitializationProxy(
-					browserViewDependencies.libraryConnectionProvider,
-				),
+			DramaticConnectionInitializationController(
+				browserViewDependencies.libraryConnectionProvider,
 				graphNavigation,
 			),
 		)

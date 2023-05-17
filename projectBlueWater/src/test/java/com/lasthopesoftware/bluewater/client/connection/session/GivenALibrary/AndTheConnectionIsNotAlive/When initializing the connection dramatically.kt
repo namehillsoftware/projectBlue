@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.connection.session.GivenALibrary.A
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.session.initialization.DramaticConnectionInitializationProxy
+import com.lasthopesoftware.bluewater.client.connection.session.initialization.DramaticConnectionInitializationController
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredProgressingPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
@@ -24,12 +24,13 @@ class `When initializing the connection dramatically` {
 
 		Pair(
 			deferredProgressingPromise,
-            DramaticConnectionInitializationProxy(
+            DramaticConnectionInitializationController(
                 mockk {
 					every { promiseIsConnectionActive(LibraryId(libraryId)) } returns false.toPromise()
                     every { promiseTestedLibraryConnection(LibraryId(libraryId)) } returns deferredProgressingPromise
                 },
-            )
+				mockk(),
+			)
 		)
 	}
 
@@ -40,7 +41,7 @@ class `When initializing the connection dramatically` {
 	fun act() {
 		val (deferredPromise, controller) = mut
 		val isInitializedPromise = controller
-			.promiseLibraryConnection(LibraryId(libraryId))
+			.promiseActiveLibraryConnection(LibraryId(libraryId))
 			.apply { updates(recordedUpdates::add) }
 
 		deferredPromise.sendProgressUpdates(
