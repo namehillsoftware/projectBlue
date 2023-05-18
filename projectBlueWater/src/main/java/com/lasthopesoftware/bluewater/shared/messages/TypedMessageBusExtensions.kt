@@ -40,7 +40,7 @@ inline fun <S : TypedMessage, reified M : S> RegisterForTypedMessages<S>.promise
 	override fun invoke(p1: M) {
 		if (predicate(p1)) {
 			resolve(p1)
-			unregisterReceiver(this)
+			closeable.close()
 		}
 	}
 

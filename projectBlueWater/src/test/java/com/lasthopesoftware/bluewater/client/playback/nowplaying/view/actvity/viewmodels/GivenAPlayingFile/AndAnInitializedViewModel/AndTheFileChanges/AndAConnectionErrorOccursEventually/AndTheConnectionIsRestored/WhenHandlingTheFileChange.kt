@@ -77,6 +77,7 @@ class WhenHandlingTheFileChange {
                     )
                 } returnsMany listOf(
 					Promise(EOFException("Oof")),
+					Promise(EOFException("Uff")),
 					mapOf(
 						Pair(KnownFileProperties.Artist, "cow"),
 						Pair(KnownFileProperties.Name, "spill"),
@@ -125,13 +126,21 @@ class WhenHandlingTheFileChange {
 
 	@BeforeAll
 	fun act() {
-		val (messageBus, _) = mut
+		val (messageBus, vm) = mut
 		messageBus.sendMessage(
             PlaybackMessage.TrackChanged(
                 LibraryId(libraryId),
                 PositionedFile(5, ServiceFile(secondServiceFileId))
             )
 		)
+
+		try {
+			// Add another initialize to catch edge cases where this would happen and cancel the connection changed promise
+			// (but not reset the promise).
+			vm.initializeViewModel().toExpiringFuture().get()
+		} catch(e: Throwable) {
+			// ignored
+		}
 
 		messageBus.sendMessage(LibraryConnectionChangedMessage(LibraryId(libraryId)))
 	}

@@ -190,14 +190,6 @@ class NowPlayingFilePropertiesViewModel(
 		}
 	}
 
-	private fun resetCacheAndUpdateView(): Promise<Unit> {
-		synchronized(cachedPromiseSync) {
-			cachedPromises?.close()
-			cachedPromises = null
-		}
-		return updateViewFromRepository()
-	}
-
 	private fun updateViewFromRepository(): Promise<Unit> {
 		promisedConnectionChanged.cancel()
 		return nowPlayingRepository.promiseNowPlaying()
@@ -238,18 +230,24 @@ class NowPlayingFilePropertiesViewModel(
 		if (!isIoException) return
 
 		val libraryId = cachedPromises?.libraryId ?: return
+
+		synchronized(cachedPromiseSync) {
+			cachedPromises?.close()
+			cachedPromises = null
+		}
+
 		pollConnections
 			.pollConnection(libraryId)
 			.then(
 				{
-					resetCacheAndUpdateView()
+					updateViewFromRepository()
 				},
 				{
 					promisedConnectionChanged =
 						applicationMessages
 							.promiseReceivedMessage<LibraryConnectionChangedMessage> { m -> m.libraryId == libraryId }
 							.apply {
-								then { resetCacheAndUpdateView() }
+								then { updateViewFromRepository() }
 							}
 				})
 	}
