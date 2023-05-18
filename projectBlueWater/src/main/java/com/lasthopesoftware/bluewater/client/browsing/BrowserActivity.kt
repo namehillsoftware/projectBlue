@@ -548,6 +548,7 @@ private val bottomAppBarHeight = Dimensions.appBarHeight
 @OptIn(ExperimentalMaterialApi::class)
 private fun BrowserLibraryDestination.Navigate(
 	browserViewDependencies: BrowserViewDependencies,
+	connectionStatusViewModel: ConnectionStatusViewModel,
 	scaffoldState: BottomSheetScaffoldState,
 ) {
 	with(browserViewDependencies) {
@@ -624,6 +625,7 @@ private fun BrowserLibraryDestination.Navigate(
 							applicationNavigation = applicationNavigation,
 							playbackLibraryItems = playbackLibraryItems,
 							playbackServiceController = playbackServiceController,
+							connectionStatusViewModel = connectionStatusViewModel,
 						)
 
 						view(libraryId, null)
@@ -663,6 +665,7 @@ private fun BrowserLibraryDestination.Navigate(
 							applicationNavigation = applicationNavigation,
 							playbackLibraryItems = playbackLibraryItems,
 							playbackServiceController = playbackServiceController,
+							connectionStatusViewModel = connectionStatusViewModel,
 						)
 
 						view(libraryId, item)
@@ -723,6 +726,7 @@ private fun BrowserLibraryDestination.Navigate(
 @OptIn(ExperimentalMaterialApi::class)
 private fun LibraryDestination.Navigate(
 	browserViewDependencies: BrowserViewDependencies,
+	connectionStatusViewModel: ConnectionStatusViewModel,
 	scaffoldState: BottomSheetScaffoldState,
 	coroutineScope: CoroutineScope,
 ) {
@@ -731,6 +735,7 @@ private fun LibraryDestination.Navigate(
 			is BrowserLibraryDestination -> this@Navigate.Navigate(
 				browserViewDependencies = browserViewDependencies,
 				scaffoldState = scaffoldState,
+				connectionStatusViewModel = connectionStatusViewModel,
 			)
 			is ConnectionSettingsScreen -> {
 				val viewModel = viewModel {
@@ -928,6 +933,7 @@ private fun BrowserView(
 				is LibraryDestination -> {
 					destination.Navigate(
 						graphDependencies,
+						connectionStatusViewModel,
 						scaffoldState,
 						coroutineScope,
 					)

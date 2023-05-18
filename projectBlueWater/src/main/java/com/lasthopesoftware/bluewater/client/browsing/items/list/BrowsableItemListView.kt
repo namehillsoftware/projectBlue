@@ -16,6 +16,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.ReusableChildIt
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
+import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionStatusViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
@@ -34,13 +35,17 @@ fun browsableItemListView(
     applicationNavigation: NavigateApplication,
     playbackLibraryItems: PlaybackLibraryItems,
     playbackServiceController: ControlPlaybackService,
+	connectionStatusViewModel: ConnectionStatusViewModel,
 ): @Composable (LibraryId, Item?) -> Unit {
 	var isConnectionLost by remember { mutableStateOf(false) }
+	var reinitializeConnection by remember { mutableStateOf(false) }
 
 	if (isConnectionLost) {
 		ConnectionLostView(
 			onCancel = { applicationNavigation.viewApplicationSettings() },
-			onRetry = { isConnectionLost = false }
+			onRetry = {
+				reinitializeConnection = true
+			}
 		)
 	} else {
 		ItemListView(
@@ -57,6 +62,13 @@ fun browsableItemListView(
 	}
 
 	return { libraryId: LibraryId, item: Item? ->
+		if (reinitializeConnection) {
+			LaunchedEffect(key1 = Unit) {
+				isConnectionLost = !connectionStatusViewModel.initializeConnection(libraryId).suspend()
+				reinitializeConnection = false
+			}
+		}
+
 		if (!isConnectionLost) {
 			LaunchedEffect(item) {
 				try {
