@@ -7,7 +7,6 @@ import com.lasthopesoftware.bluewater.client.connection.session.initialization.D
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredProgressingPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
-import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -31,7 +30,6 @@ class `When initializing the connection` {
                     every { promiseLibraryConnection(LibraryId(libraryId)) } returns deferredProgressingPromise
                 },
 				mockk(),
-				RecordingApplicationMessageBus(),
             )
 		)
 	}

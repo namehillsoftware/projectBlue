@@ -58,8 +58,8 @@ import com.lasthopesoftware.bluewater.client.connection.authentication.Connectio
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionServiceProxy
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.session.ConnectionLostViewModel
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
+import com.lasthopesoftware.bluewater.client.connection.session.ConnectionWatcherViewModel
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.*
 import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettingsLookup
 import com.lasthopesoftware.bluewater.client.connection.settings.changes.ObservableConnectionSettingsLibraryStorage
@@ -343,9 +343,10 @@ class BrowserActivity :
 		)
 	}
 
-	override val connectionLostViewModel by buildViewModelLazily {
-		ConnectionLostViewModel(
+	override val connectionWatcherViewModel by buildViewModelLazily {
+		ConnectionWatcherViewModel(
 			messageBus,
+			libraryConnectionProvider,
 			pollForConnections,
 		)
 	}
@@ -804,13 +805,13 @@ private fun LibraryDestination.Navigate(
 					},
 					applicationNavigation = applicationNavigation,
 					itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
-					connectionLostViewModel = connectionLostViewModel,
+					connectionWatcherViewModel = connectionWatcherViewModel,
 				)
 
 				val context = LocalContext.current
 				LaunchedEffect(key1 = libraryId) {
 					try {
-						connectionLostViewModel.watchLibraryConnection(libraryId)
+						connectionWatcherViewModel.watchLibraryConnection(libraryId)
 
 						Promise.whenAll(
 							nowPlayingFilePropertiesViewModel.initializeViewModel(),
@@ -860,7 +861,6 @@ private fun BrowserView(
 			DramaticConnectionInitializationController(
 				browserViewDependencies.libraryConnectionProvider,
 				graphNavigation,
-				browserViewDependencies.messageBus,
 			),
 		)
 	}

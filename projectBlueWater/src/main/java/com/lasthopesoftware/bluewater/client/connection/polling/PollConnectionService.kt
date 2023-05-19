@@ -68,7 +68,6 @@ class PollConnectionService : Service() {
 
 	private val libraryConnectionPoller by lazy {
 		LibraryConnectionPollingSessions(
-			messageBus,
 			LibraryConnectionPoller(libraryConnectionProvider),
 		)
 	}

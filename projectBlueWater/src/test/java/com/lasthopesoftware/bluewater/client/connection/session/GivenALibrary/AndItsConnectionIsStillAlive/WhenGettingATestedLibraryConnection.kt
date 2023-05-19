@@ -2,14 +2,17 @@ package com.lasthopesoftware.bluewater.client.connection.session.GivenALibrary.A
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
+import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.PromisedConnectionsRepository
+import com.lasthopesoftware.bluewater.client.connection.session.initialization.LibraryConnectionChangedMessage
 import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredProgressingPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -19,7 +22,7 @@ import java.util.concurrent.TimeUnit
 
 class WhenGettingATestedLibraryConnection {
 
-	private val libraryId = LibraryId(2)
+	private val libraryId = LibraryId(722)
 
 	private val mut by lazy {
 		val connectionsTester = mockk<TestConnections>()
@@ -32,18 +35,20 @@ class WhenGettingATestedLibraryConnection {
 
 		val libraryConnectionProvider = mockk<ProvideLibraryConnections>()
 		every {
-			libraryConnectionProvider.promiseLibraryConnection(LibraryId(2))
+			libraryConnectionProvider.promiseLibraryConnection(libraryId)
 		} returns firstDeferredConnectionProvider andThen secondDeferredConnectionProvider
 
 		val connectionSessionManager = ConnectionSessionManager(
 			connectionsTester,
 			libraryConnectionProvider,
-			PromisedConnectionsRepository()
+			PromisedConnectionsRepository(),
+			recordingApplicationMessageBus,
 		)
 
 		Triple(firstDeferredConnectionProvider, secondDeferredConnectionProvider, connectionSessionManager)
 	}
 
+	private val recordingApplicationMessageBus = RecordingApplicationMessageBus()
 	private val statuses: MutableList<BuildingConnectionStatus> = ArrayList()
 	private var connectionProvider: IConnectionProvider? = null
 	private var secondConnectionProvider: IConnectionProvider? = null
@@ -65,7 +70,7 @@ class WhenGettingATestedLibraryConnection {
 				BuildingConnectionStatus.BuildingConnectionComplete
 			)
 
-			sendResolution(mockk())
+			sendResolution(FakeConnectionProvider())
 		}
 
 		connectionProvider = futureConnectionProvider[30, TimeUnit.SECONDS]
@@ -83,7 +88,7 @@ class WhenGettingATestedLibraryConnection {
 				BuildingConnectionStatus.BuildingConnectionComplete
 			)
 
-			sendResolution(mockk())
+			sendResolution(FakeConnectionProvider())
 		}
 
 		secondConnectionProvider = secondFutureConnectionProvider.get()
@@ -102,5 +107,12 @@ class WhenGettingATestedLibraryConnection {
 				BuildingConnectionStatus.BuildingConnection,
 				BuildingConnectionStatus.BuildingConnectionComplete
 			)
+	}
+
+	@Test
+	fun `then a connection changed notification is sent`() {
+		assertThat(recordingApplicationMessageBus.recordedMessages).containsExactly(
+			LibraryConnectionChangedMessage(libraryId)
+		)
 	}
 }

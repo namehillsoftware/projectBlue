@@ -243,12 +243,12 @@ class NowPlayingFilePropertiesViewModel(
 					updateViewFromRepository()
 				},
 				{
-					promisedConnectionChanged =
+					promisedConnectionChanged = CancellableProxyPromise { cp ->
 						applicationMessages
 							.promiseReceivedMessage<LibraryConnectionChangedMessage> { m -> m.libraryId == libraryId }
-							.apply {
-								then { updateViewFromRepository() }
-							}
+							.also(cp::doCancel)
+							.eventually { updateViewFromRepository() }
+					}
 				})
 	}
 

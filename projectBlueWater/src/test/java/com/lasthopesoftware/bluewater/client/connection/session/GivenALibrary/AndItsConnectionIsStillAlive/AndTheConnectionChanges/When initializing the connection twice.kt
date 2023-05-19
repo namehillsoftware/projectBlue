@@ -5,12 +5,10 @@ import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.DramaticConnectionInitializationController
-import com.lasthopesoftware.bluewater.client.connection.session.initialization.LibraryConnectionChangedMessage
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredProgressingPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
-import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -37,12 +35,10 @@ class `When initializing the connection twice` {
 					)
                 },
                 mockk(),
-                recordingApplicationMessageBus,
             )
 		)
 	}
 
-	private val recordingApplicationMessageBus = RecordingApplicationMessageBus()
 	private val recordedUpdates = mutableListOf<BuildingConnectionStatus>()
 	private var firstConnection: IConnectionProvider? = null
 	private var secondConnection: IConnectionProvider? = null
@@ -84,14 +80,5 @@ class `When initializing the connection twice` {
 	@Test
 	fun `then the second connection is not the same as the first`() {
 		assertThat(secondConnection).isNotEqualTo(firstConnection)
-	}
-
-	@Test
-	fun `then two library connection changed updates are sent`() {
-		assertThat(recordingApplicationMessageBus.recordedMessages)
-			.containsExactly(
-				LibraryConnectionChangedMessage(LibraryId(libraryId)),
-				LibraryConnectionChangedMessage(LibraryId(libraryId))
-			)
 	}
 }

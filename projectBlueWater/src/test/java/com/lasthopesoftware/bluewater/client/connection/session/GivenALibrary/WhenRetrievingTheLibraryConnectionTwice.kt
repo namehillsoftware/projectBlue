@@ -8,6 +8,7 @@ import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnect
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.PromisedConnectionsRepository
+import com.lasthopesoftware.bluewater.client.connection.session.initialization.LibraryConnectionChangedMessage
 import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.ValidateConnectionSettings
@@ -16,11 +17,14 @@ import com.lasthopesoftware.bluewater.client.connection.waking.NoopServerAlarm
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
+
+private const val libraryId = 405
 
 class WhenRetrievingTheLibraryConnectionTwice {
 
@@ -34,11 +38,11 @@ class WhenRetrievingTheLibraryConnectionTwice {
 
 		val lookupConnection = mockk<LookupConnectionSettings>()
 		every {
-			lookupConnection.lookupConnectionSettings(LibraryId(2))
+			lookupConnection.lookupConnectionSettings(LibraryId(libraryId))
 		} returns deferredConnectionSettings
 
 		val liveUrlProvider = mockk<ProvideLiveUrl>()
-		every { liveUrlProvider.promiseLiveUrl(LibraryId(2)) } returns firstUrlProvider.toPromise()
+		every { liveUrlProvider.promiseLiveUrl(LibraryId(libraryId)) } returns firstUrlProvider.toPromise()
 
 		val libraryConnectionProvider = LibraryConnectionProvider(
 			validateConnectionSettings,
@@ -51,12 +55,14 @@ class WhenRetrievingTheLibraryConnectionTwice {
 		val connectionSessionManager = ConnectionSessionManager(
 			mockk(),
 			libraryConnectionProvider,
-			PromisedConnectionsRepository()
+			PromisedConnectionsRepository(),
+			recordingApplicationMessageBus,
 		)
 
 		Pair(deferredConnectionSettings, connectionSessionManager)
 	}
 
+	private val recordingApplicationMessageBus = RecordingApplicationMessageBus()
 	private val statuses: MutableList<BuildingConnectionStatus> = ArrayList()
 	private var connectionProvider: IConnectionProvider? = null
 	private var secondConnectionProvider: IConnectionProvider? = null
@@ -67,7 +73,7 @@ class WhenRetrievingTheLibraryConnectionTwice {
 
 		val futureConnectionProvider =
 			connectionSessionManager
-				.promiseLibraryConnection(LibraryId(2))
+				.promiseLibraryConnection(LibraryId(libraryId))
 				.apply {
 					progress.then { if (it != null) statuses.add(it) }
 					updates(statuses::add)
@@ -80,7 +86,7 @@ class WhenRetrievingTheLibraryConnectionTwice {
 
 		val secondFutureConnectionProvider =
 			connectionSessionManager
-				.promiseLibraryConnection(LibraryId(2))
+				.promiseLibraryConnection(LibraryId(libraryId))
 				.apply {
 					progress.then { if (it != null) statuses.add(it) }
 					updates(statuses::add)
@@ -104,5 +110,12 @@ class WhenRetrievingTheLibraryConnectionTwice {
 				BuildingConnectionStatus.BuildingConnectionComplete,
 				BuildingConnectionStatus.BuildingConnectionComplete
 			)
+	}
+
+	@Test
+	fun `then a connection changed notification is sent`() {
+		assertThat(recordingApplicationMessageBus.recordedMessages).containsExactly(LibraryConnectionChangedMessage(
+			LibraryId(libraryId)
+		))
 	}
 }

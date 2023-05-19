@@ -2,12 +2,10 @@ package com.lasthopesoftware.bluewater.client.connection.polling
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
-import com.lasthopesoftware.bluewater.shared.messages.application.SendApplicationMessages
 import com.namehillsoftware.handoff.promises.Promise
 import java.util.concurrent.ConcurrentHashMap
 
 class LibraryConnectionPollingSessions(
-	private val messageBus: SendApplicationMessages,
 	private val inner: PollForLibraryConnections,
 	private val connectionPollerLookup: ConcurrentHashMap<LibraryId, Lazy<Promise<IConnectionProvider>>> = sharedConnectionPollerLookup
 ) : PollForLibraryConnections {
@@ -20,7 +18,6 @@ class LibraryConnectionPollingSessions(
 		connectionPollerLookup
 			.getOrPut(libraryId) {
 				lazy {
-					messageBus.sendMessage(ConnectionLostNotification(libraryId))
 					inner.pollConnection(libraryId)
 				}
 			}

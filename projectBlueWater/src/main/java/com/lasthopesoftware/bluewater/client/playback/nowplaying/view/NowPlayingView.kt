@@ -37,7 +37,7 @@ import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewPlaylistFileItem
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
-import com.lasthopesoftware.bluewater.client.connection.session.ConnectionLostViewModel
+import com.lasthopesoftware.bluewater.client.connection.session.ConnectionWatcherViewModel
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.components.NowPlayingItemView
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.components.PlayPauseButton
@@ -229,7 +229,7 @@ fun NowPlayingView(
 	childItemViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
 	applicationNavigation: NavigateApplication,
 	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
-	connectionLostViewModel: ConnectionLostViewModel
+	connectionWatcherViewModel: ConnectionWatcherViewModel
 ) {
 	val isScreenOn by screenOnState.isScreenOn.collectAsState()
 	KeepScreenOn(isScreenOn)
@@ -571,10 +571,10 @@ fun NowPlayingView(
 			}
 		}
 
-		val isConnectionLost by connectionLostViewModel.isCheckingConnection.collectAsState()
+		val isConnectionLost by connectionWatcherViewModel.isCheckingConnection.collectAsState()
 		if (isConnectionLost) {
 			AlertDialog(
-				onDismissRequest = { connectionLostViewModel.cancelLibraryConnectionPolling() },
+				onDismissRequest = { connectionWatcherViewModel.cancelLibraryConnectionPolling() },
 				title = { Text(text = stringResource(id = R.string.lbl_connection_lost_title)) },
 				text = {
 					Text(
@@ -593,7 +593,7 @@ fun NowPlayingView(
 					) {
 						Button(
 							onClick = {
-								connectionLostViewModel.cancelLibraryConnectionPolling()
+								connectionWatcherViewModel.cancelLibraryConnectionPolling()
 							},
 						) {
 							Text(text = stringResource(id = R.string.btn_cancel))

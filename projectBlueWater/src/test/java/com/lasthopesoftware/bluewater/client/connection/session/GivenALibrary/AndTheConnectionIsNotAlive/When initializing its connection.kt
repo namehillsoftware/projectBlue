@@ -4,11 +4,9 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.DramaticConnectionInitializationController
-import com.lasthopesoftware.bluewater.client.connection.session.initialization.LibraryConnectionChangedMessage
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredProgressingPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
-import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -36,12 +34,10 @@ class `when initializing its connection` {
 						Unit.toPromise()
 					}
 				},
-				recordingApplicationMessageBus,
             )
 		)
 	}
 
-	private val recordingApplicationMessageBus = RecordingApplicationMessageBus()
 	private val recordedUpdates = mutableListOf<BuildingConnectionStatus>()
 	private var initializedConnection: IConnectionProvider? = null
 	private var isSettingsLaunched = false
@@ -82,11 +78,5 @@ class `when initializing its connection` {
 	@Test
 	fun `then the settings are not launched`() {
 		assertThat(isSettingsLaunched).isFalse
-	}
-
-	@Test
-	fun `then a library connection changed update is sent`() {
-		assertThat(recordingApplicationMessageBus.recordedMessages)
-			.containsExactly(LibraryConnectionChangedMessage(LibraryId(libraryId)))
 	}
 }
