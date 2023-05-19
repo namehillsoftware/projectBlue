@@ -11,8 +11,9 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
 import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfConnectionIsReadOnly
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideUrlKey
+import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyNotReturnedException
 import com.lasthopesoftware.bluewater.client.connection.polling.PollForConnections
-import com.lasthopesoftware.bluewater.client.connection.session.initialization.LibraryConnectionChangedMessage
+import com.lasthopesoftware.bluewater.client.connection.session.LibraryConnectionChangedMessage
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
@@ -23,6 +24,7 @@ import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.promiseReceivedMessage
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
+import com.lasthopesoftware.bluewater.shared.promises.ForwardedResponse.Companion.forward
 import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay
 import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
@@ -196,18 +198,19 @@ class NowPlayingFilePropertiesViewModel(
 			.eventually { np ->
 				nowPlayingFileState.value = np?.playingFile
 				np?.playingFile?.let { positionedFile ->
+					activeLibraryIdState.value = np.libraryId
 					provideUrlKey
-						.promiseUrlKey(np.libraryId, positionedFile.serviceFile)
+						.promiseGuaranteedUrlKey(np.libraryId, positionedFile.serviceFile)
 						.eventually { key ->
-							key
-								?.let {
-									if (cachedPromises?.key == key) filePositionState.value
-									else np.filePosition
-								}
-								?.let { filePosition ->
-									setView(np.libraryId, positionedFile.serviceFile, filePosition)
-								}
-								.keepPromise(Unit)
+							val filePosition =
+								if (cachedPromises?.key == key) filePositionState.value
+								else np.filePosition
+
+							setView(np.libraryId, positionedFile.serviceFile, filePosition)
+						}
+						.then(forward()) { e ->
+							setTrackProgress(0)
+							handleException(e)
 						}
 				}.keepPromise(Unit)
 			}
@@ -229,7 +232,7 @@ class NowPlayingFilePropertiesViewModel(
 		val isIoException = handleIoException(exception)
 		if (!isIoException) return
 
-		val libraryId = cachedPromises?.libraryId ?: return
+		val libraryId = activeLibraryId.value ?: return
 
 		synchronized(cachedPromiseSync) {
 			cachedPromises?.close()
@@ -253,20 +256,16 @@ class NowPlayingFilePropertiesViewModel(
 	}
 
 	private fun handleIoException(exception: Throwable) =
-		if (ConnectionLostExceptionFilter.isConnectionLostException(exception)) true
+		if (exception is UrlKeyNotReturnedException || ConnectionLostExceptionFilter.isConnectionLostException(exception)) true
 		else {
 			unexpectedErrorState.value = exception
 			false
 		}
 
 	private fun setView(libraryId: LibraryId, serviceFile: ServiceFile, initialFilePosition: Number): Promise<Unit> {
-		activeLibraryIdState.value = libraryId
-
 		return provideUrlKey
-			.promiseUrlKey(libraryId, serviceFile)
+			.promiseGuaranteedUrlKey(libraryId, serviceFile)
 			.eventually { key ->
-				key ?: return@eventually Unit.toPromise()
-
 				val currentCachedPromises = synchronized(cachedPromiseSync) {
 					if (cachedPromises?.key == key) return@eventually Unit.toPromise()
 
@@ -295,12 +294,6 @@ class NowPlayingFilePropertiesViewModel(
 						}
 					}
 					.then { showNowPlayingControls() }
-			}
-			.apply {
-				excuse {
-					setTrackProgress(0)
-					handleException(it)
-				}
 			}
 	}
 

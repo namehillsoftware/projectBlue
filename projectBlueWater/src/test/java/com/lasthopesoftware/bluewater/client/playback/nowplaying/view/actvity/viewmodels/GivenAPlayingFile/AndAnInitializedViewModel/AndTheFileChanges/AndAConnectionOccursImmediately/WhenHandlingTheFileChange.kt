@@ -66,7 +66,7 @@ class WhenHandlingTheFileChange {
 				every { promiseFileProperties(LibraryId(libraryId), ServiceFile(secondServiceFileId)) } throws ConnectException("Couldn't Connect!")
 			},
             mockk {
-                every { promiseUrlKey(LibraryId(libraryId), any<ServiceFile>()) } answers {
+                every { promiseGuaranteedUrlKey(LibraryId(libraryId), any<ServiceFile>()) } answers {
 					UrlKeyHolder(
 						URL("http://plan"),
 						lastArg<ServiceFile>()
@@ -76,8 +76,8 @@ class WhenHandlingTheFileChange {
             mockk(),
             checkAuthentication,
             playbackService,
-            mockk(),
-            mockk(relaxed = true),
+			mockk(),
+			mockk(relaxed = true),
 		)
 
 		nowPlayingViewModel.initializeViewModel().toExpiringFuture().get()

@@ -7,8 +7,8 @@ import com.lasthopesoftware.bluewater.client.connection.builder.live.ProvideLive
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
+import com.lasthopesoftware.bluewater.client.connection.session.LibraryConnectionChangedMessage
 import com.lasthopesoftware.bluewater.client.connection.session.PromisedConnectionsRepository
-import com.lasthopesoftware.bluewater.client.connection.session.initialization.LibraryConnectionChangedMessage
 import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.ValidateConnectionSettings
@@ -114,8 +114,10 @@ class WhenRetrievingTheLibraryConnectionTwice {
 
 	@Test
 	fun `then a connection changed notification is sent`() {
-		assertThat(recordingApplicationMessageBus.recordedMessages).containsExactly(LibraryConnectionChangedMessage(
+		assertThat(recordingApplicationMessageBus.recordedMessages).containsExactly(
+			LibraryConnectionChangedMessage(
 			LibraryId(libraryId)
-		))
+		)
+		)
 	}
 }

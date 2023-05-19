@@ -4,7 +4,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfConnectionIsReadOnly
-import com.lasthopesoftware.bluewater.client.connection.session.initialization.LibraryConnectionChangedMessage
+import com.lasthopesoftware.bluewater.client.connection.session.LibraryConnectionChangedMessage
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.MaintainNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
@@ -86,7 +86,7 @@ class WhenHandlingTheFileChange {
 				)
             },
             mockk {
-                every { promiseUrlKey(LibraryId(libraryId), any<ServiceFile>()) } answers {
+                every { promiseGuaranteedUrlKey(LibraryId(libraryId), any<ServiceFile>()) } answers {
                     UrlKeyHolder(
                         URL("http://plan"),
                         lastArg<ServiceFile>()
@@ -96,10 +96,10 @@ class WhenHandlingTheFileChange {
             mockk(),
             checkAuthentication,
             playbackService,
-            mockk {
+			mockk {
 				every { pollConnection(LibraryId(libraryId)) } returns Promise(Exception("fail"))
 			},
-            mockk(relaxed = true),
+			mockk(relaxed = true),
         )
 
 		nowPlayingViewModel.initializeViewModel().toExpiringFuture().get()

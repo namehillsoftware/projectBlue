@@ -6,4 +6,6 @@ import com.namehillsoftware.handoff.promises.Promise
 
 interface ProvideUrlKey {
 	fun <Key> promiseUrlKey(libraryId: LibraryId, key: Key): Promise<UrlKeyHolder<Key>?>
+
+	fun <Key> promiseGuaranteedUrlKey(libraryId: LibraryId, key: Key): Promise<UrlKeyHolder<Key>>
 }

@@ -233,8 +233,8 @@ class BrowserActivity :
 			filePropertiesStorage,
 			connectionAuthenticationChecker,
 			playbackServiceController,
-			PollConnectionServiceProxy(applicationContext),
-			stringResources,
+			pollForConnections,
+            stringResources,
 		)
 	}
 

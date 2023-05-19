@@ -88,7 +88,7 @@ class WhenTheRatingPropertyChangesConcurrently {
             nowPlayingRepository,
             filePropertiesProvider,
             mockk {
-                every { promiseUrlKey(LibraryId(libraryId), serviceFile) } returns Promise(
+                every { promiseGuaranteedUrlKey(LibraryId(libraryId), serviceFile) } returns Promise(
                     UrlKeyHolder(URL("http://77Q8Tq2h/"), serviceFile)
                 )
             },
@@ -97,8 +97,8 @@ class WhenTheRatingPropertyChangesConcurrently {
 			},
             checkAuthentication,
             playbackService,
-            mockk(),
-            mockk(relaxed = true),
+			mockk(),
+			mockk(relaxed = true),
 		)
 
 		Pair(messageBus, nowPlayingViewModel)

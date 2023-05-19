@@ -76,7 +76,7 @@ class WhenInitializingTheNowPlayingFilePropertiesViewModel {
             nowPlayingRepository,
             filePropertiesProvider,
             mockk {
-                every { promiseUrlKey(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns UrlKeyHolder(
+                every { promiseGuaranteedUrlKey(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns UrlKeyHolder(
 					URL("http://plan"),
 					ServiceFile(serviceFileId)
 				).toPromise()
@@ -84,8 +84,8 @@ class WhenInitializingTheNowPlayingFilePropertiesViewModel {
             mockk(),
             checkAuthentication,
             playbackService,
-            mockk(),
-            mockk(relaxed = true),
+			mockk(),
+			mockk(relaxed = true),
 		)
 
 		nowPlayingViewModel

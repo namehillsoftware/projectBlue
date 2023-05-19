@@ -83,15 +83,15 @@ class WhenItsPropertiesChanges {
             nowPlayingRepository,
             filePropertiesProvider,
             mockk {
-                every { promiseUrlKey(LibraryId(libraryId), playlist[playlistPosition]) } returns Promise(
+                every { promiseGuaranteedUrlKey(LibraryId(libraryId), playlist[playlistPosition]) } returns Promise(
                     UrlKeyHolder(URL("http://77Q8Tq2h/"), playlist[playlistPosition])
                 )
             },
             mockk(),
             checkAuthentication,
             playbackService,
-            mockk(),
-            mockk(relaxed = true),
+			mockk(),
+			mockk(relaxed = true),
 		)
 
 		Pair(messageBus, nowPlayingViewModel)
