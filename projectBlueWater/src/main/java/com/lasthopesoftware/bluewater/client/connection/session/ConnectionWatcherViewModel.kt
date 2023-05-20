@@ -5,7 +5,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
-import com.lasthopesoftware.bluewater.client.connection.polling.PollForConnections
+import com.lasthopesoftware.bluewater.client.connection.polling.PollForLibraryConnections
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.asStateFlow
 class ConnectionWatcherViewModel(
 	messageBus: RegisterForApplicationMessages,
 	private val libraryConnections: ProvideLibraryConnections,
-	private val pollConnections: PollForConnections,
+	private val pollLibraryConnections: PollForLibraryConnections,
 ) : ViewModel(), (ConnectionLostNotification) -> Unit {
 	private var promisedConnection = Promise.empty<IConnectionProvider?>()
 
@@ -55,7 +55,7 @@ class ConnectionWatcherViewModel(
 
 		mutableIsCheckingConnection.value = true
 		promisedConnection = CancellableProxyPromise { cp ->
-			pollConnections
+			pollLibraryConnections
 				.pollConnection(libraryId)
 				.also(cp::doCancel)
 				.must {

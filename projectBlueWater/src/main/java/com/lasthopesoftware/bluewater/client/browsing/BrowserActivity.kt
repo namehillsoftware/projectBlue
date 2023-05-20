@@ -56,7 +56,8 @@ import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionF
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostRetryHandler
 import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
-import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionServiceProxy
+import com.lasthopesoftware.bluewater.client.connection.polling.LibraryConnectionPoller
+import com.lasthopesoftware.bluewater.client.connection.polling.LibraryConnectionPollingSessions
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionWatcherViewModel
@@ -323,7 +324,9 @@ class BrowserActivity :
 		).apply { loadSelectedLibraryId() }
 	}
 
-	override val pollForConnections by lazy { PollConnectionServiceProxy(this) }
+	override val pollForConnections by lazy {
+		LibraryConnectionPollingSessions(LibraryConnectionPoller(libraryConnectionProvider))
+	}
 
 	override val nowPlayingCoverArtViewModel by buildViewModelLazily {
 		NowPlayingCoverArtViewModel(

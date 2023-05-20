@@ -23,7 +23,7 @@ import com.lasthopesoftware.bluewater.shared.android.notifications.notificationc
 import com.lasthopesoftware.bluewater.shared.android.services.GenericBinder
 import com.lasthopesoftware.bluewater.shared.android.services.promiseBoundService
 import com.lasthopesoftware.bluewater.shared.cls
-import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
+import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
 import com.namehillsoftware.handoff.promises.Promise
 
 class PollConnectionService : Service() {
@@ -32,14 +32,14 @@ class PollConnectionService : Service() {
 		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(cls<PollConnectionService>()) }
 
 		private val stopWaitingForConnectionAction by lazy { magicPropertyBuilder.buildProperty("stopWaitingForConnection") }
-		fun pollSessionConnection(context: Context, libraryId: LibraryId, withNotification: Boolean = false): Promise<IConnectionProvider> {
-			return context.promiseBoundService<PollConnectionService>()
+		fun pollSessionConnection(context: Context, libraryId: LibraryId): Promise<IConnectionProvider> = CancellableProxyPromise { cp ->
+			context.promiseBoundService<PollConnectionService>()
+				.also(cp::doCancel)
 				.eventually {  s ->
 					s.service
-						.promiseTestedLibrary(libraryId, withNotification)
-						.apply {
-							must { context.unbindService(s.serviceConnection) }
-						}
+						.promiseTestedLibrary(libraryId)
+						.also(cp::doCancel)
+						.must { context.unbindService(s.serviceConnection) }
 				}
 		}
 	}
@@ -62,8 +62,6 @@ class PollConnectionService : Service() {
 
 	private val lazyNotificationController = lazy { NotificationsController(this, notificationManager) }
 
-	private val messageBus by lazy { ApplicationMessageBus.getApplicationMessageBus() }
-
 	private val libraryConnectionProvider by lazy { ConnectionSessionManager.get(this) }
 
 	private val libraryConnectionPoller by lazy {
@@ -81,9 +79,8 @@ class PollConnectionService : Service() {
 		return START_NOT_STICKY
 	}
 
-	private fun promiseTestedLibrary(libraryId: LibraryId, withNotification: Boolean): Promise<IConnectionProvider> {
-		if (withNotification)
-			beginNotification()
+	private fun promiseTestedLibrary(libraryId: LibraryId): Promise<IConnectionProvider> {
+		beginNotification()
 
 		return libraryConnectionPoller.pollConnection(libraryId)
 	}

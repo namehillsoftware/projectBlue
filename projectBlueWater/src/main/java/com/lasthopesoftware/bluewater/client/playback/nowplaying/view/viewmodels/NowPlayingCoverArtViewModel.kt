@@ -6,7 +6,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideImages
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
-import com.lasthopesoftware.bluewater.client.connection.polling.PollForConnections
+import com.lasthopesoftware.bluewater.client.connection.polling.PollForLibraryConnections
 import com.lasthopesoftware.bluewater.client.connection.selected.ProvideSelectedConnection
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage.PlaylistChanged
@@ -32,7 +32,7 @@ class NowPlayingCoverArtViewModel(
 	private val selectedConnectionProvider: ProvideSelectedConnection,
 	private val defaultImageProvider: ProvideDefaultImage,
 	private val imageProvider: ProvideImages,
-	private val pollConnections: PollForConnections,
+	private val pollConnections: PollForLibraryConnections,
 ) : ViewModel(), (ApplicationMessage) -> Unit {
 	private var cachedPromises: CachedPromises? = null
 

@@ -16,7 +16,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.Sel
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedLibraryViewModel
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NavigationMessage
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideUrlKey
-import com.lasthopesoftware.bluewater.client.connection.polling.PollForConnections
+import com.lasthopesoftware.bluewater.client.connection.polling.PollForLibraryConnections
 import com.lasthopesoftware.bluewater.client.connection.selected.ProvideSelectedConnection
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionWatcherViewModel
@@ -70,7 +70,7 @@ interface BrowserViewDependencies {
 	val playbackLibraryItems: PlaybackLibraryItems
 	val nowPlayingState: GetNowPlayingState
 	val selectedConnectionProvider: ProvideSelectedConnection
-	val pollForConnections: PollForConnections
+	val pollForConnections: PollForLibraryConnections
 	val nowPlayingCoverArtViewModel: NowPlayingCoverArtViewModel
 	val nowPlayingPlaylistViewModel: NowPlayingPlaylistViewModel
 	val connectionWatcherViewModel: ConnectionWatcherViewModel

@@ -48,7 +48,7 @@ import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.ScopedUrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
-import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService.Companion.pollSessionConnection
+import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionServiceProxy
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionSettingsChangeReceiver
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
@@ -400,6 +400,7 @@ open class PlaybackService :
 	private val disconnectionLatch by lazy { TimedCountdownLatch(numberOfDisconnects, disconnectResetDuration) }
 	private val errorLatch by lazy { TimedCountdownLatch(numberOfErrors, errorLatchResetDuration) }
 	private val intentBuilder by lazy { IntentBuilder(this) }
+	private val pollConnectionServiceProxy by lazy { PollConnectionServiceProxy(this) }
 
 	private val connectionRegainedListener by lazy { ImmediateResponse<IConnectionProvider, Unit> { closeAndRestartPlaylistManager() } }
 	private val onPollingCancelledListener by lazy { ImmediateResponse<Throwable?, Unit> { e ->
@@ -942,7 +943,8 @@ open class PlaybackService :
 				.promiseSelectedLibraryId()
 				.then {
 					it?.also { libraryId ->
-						pollSessionConnection(this, libraryId, true)
+						pollConnectionServiceProxy
+							.pollConnection(libraryId)
 							.then(connectionRegainedListener, onPollingCancelledListener)
 					}
 				}

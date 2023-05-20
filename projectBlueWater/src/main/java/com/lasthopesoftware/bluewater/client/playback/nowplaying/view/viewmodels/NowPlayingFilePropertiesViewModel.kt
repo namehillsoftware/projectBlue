@@ -12,7 +12,7 @@ import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionF
 import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfConnectionIsReadOnly
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideUrlKey
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyNotReturnedException
-import com.lasthopesoftware.bluewater.client.connection.polling.PollForConnections
+import com.lasthopesoftware.bluewater.client.connection.polling.PollForLibraryConnections
 import com.lasthopesoftware.bluewater.client.connection.session.LibraryConnectionChangedMessage
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
@@ -47,7 +47,7 @@ class NowPlayingFilePropertiesViewModel(
 	private val updateFileProperties: UpdateFileProperties,
 	private val checkAuthentication: CheckIfConnectionIsReadOnly,
 	private val playbackService: ControlPlaybackService,
-	private val pollConnections: PollForConnections,
+	private val pollConnections: PollForLibraryConnections,
 	private val stringResources: GetStringResources,
 ) : ViewModel()
 {
