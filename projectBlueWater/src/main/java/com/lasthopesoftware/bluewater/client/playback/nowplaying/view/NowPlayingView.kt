@@ -546,25 +546,36 @@ fun NowPlayingView(
 						modifier = Modifier
 							.fillMaxWidth()
 							.height(controlRowHeight),
-						horizontalArrangement = Arrangement.SpaceEvenly,
 						verticalAlignment = Alignment.CenterVertically,
 					) {
 						Image(
 							painter = painterResource(id = R.drawable.av_previous_white),
 							contentDescription = stringResource(id = R.string.btn_previous),
-							modifier = Modifier.clickable {
-								playbackServiceController.previous()
-							}
+							modifier = Modifier
+								.weight(1f)
+								.clickable(
+									interactionSource = remember { MutableInteractionSource() },
+									indication = null,
+									onClick = playbackServiceController::previous
+								),
 						)
 
-						PlayPauseButton(nowPlayingFilePropertiesViewModel, playbackServiceController)
+						PlayPauseButton(
+							nowPlayingFilePropertiesViewModel,
+							playbackServiceController,
+							modifier = Modifier.weight(1f),
+						)
 
 						Image(
 							painter = painterResource(id = R.drawable.av_next_white),
 							contentDescription = stringResource(id = R.string.btn_next),
-							modifier = Modifier.clickable {
-								playbackServiceController.next()
-							}
+							modifier = Modifier
+								.weight(1f)
+								.clickable(
+									interactionSource = remember { MutableInteractionSource() },
+									indication = null,
+									onClick = playbackServiceController::next
+								)
 						)
 					}
 				}
