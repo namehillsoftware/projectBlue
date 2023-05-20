@@ -241,8 +241,8 @@ fun NowPlayingView(
 	) {
 		NowPlayingCoverArtView(nowPlayingCoverArtViewModel = nowPlayingCoverArtViewModel)
 
-		val lazyListState = rememberLazyListState()
-		val isSettledOnFirstPage by remember { derivedStateOf { lazyListState.firstVisibleItemIndex == 0 && lazyListState.firstVisibleItemScrollOffset == 0 } }
+		val pagerState = rememberLazyListState()
+		val isSettledOnFirstPage by remember { derivedStateOf { pagerState.firstVisibleItemIndex == 0 && pagerState.firstVisibleItemScrollOffset == 0 } }
 		val isNotSettledOnFirstPage by remember { derivedStateOf { !isSettledOnFirstPage } }
 
 		val scope = rememberCoroutineScope()
@@ -252,7 +252,7 @@ fun NowPlayingView(
 				playlistViewModel.isEditingPlaylist -> playlistViewModel.finishPlaylistEdit()
 				isNotSettledOnFirstPage -> {
 					playlistViewModel.finishPlaylistEdit()
-					scope.launch { lazyListState.animateScrollToItem(0) }
+					scope.launch { pagerState.animateScrollToItem(0) }
 				}
 			}
 		}
@@ -277,20 +277,20 @@ fun NowPlayingView(
 
 			val firstPageShownProgress by remember {
 				derivedStateOf {
-					lazyListState
+					pagerState
 						.getVisibleItemInfoFor(0)
-						?.run { (filePropertiesHeightPx + offset) / filePropertiesHeightPx }?.coerceIn(0f, 1f) ?: 0f
+						?.run { (filePropertiesHeightPx + offset) / filePropertiesHeightPx }?.coerceIn(0f, 1f) ?: 1f
 				}
 			}
 
-			val snappingLayout = remember(lazyListState) { SnapLayoutInfoProvider(lazyListState) { _, _ -> 0f } }
+			val snappingLayout = remember(pagerState) { SnapLayoutInfoProvider(pagerState) { _, _ -> 0f } }
 
 			CompositionLocalProvider(
 				LocalOverscrollConfiguration provides null
 			) {
 				LazyColumn(
 					flingBehavior = rememberSnapFlingBehavior(snappingLayout),
-					state = lazyListState,
+					state = pagerState,
 					userScrollEnabled = !isEditingPlaylist,
 				) {
 					item {
@@ -350,7 +350,7 @@ fun NowPlayingView(
 												.padding(Dimensions.viewPaddingUnit)
 												.clickable(onClick = {
 													scope.launch {
-														lazyListState.animateScrollToItem(1)
+														pagerState.animateScrollToItem(1)
 													}
 												}),
 										)
@@ -397,7 +397,7 @@ fun NowPlayingView(
 											playbackServiceController = playbackServiceController,
 										) {
 											scope.launch {
-												lazyListState.animateScrollToItem(0)
+												pagerState.animateScrollToItem(0)
 											}
 										}
 									}
@@ -546,25 +546,36 @@ fun NowPlayingView(
 						modifier = Modifier
 							.fillMaxWidth()
 							.height(controlRowHeight),
-						horizontalArrangement = Arrangement.SpaceEvenly,
 						verticalAlignment = Alignment.CenterVertically,
 					) {
 						Image(
 							painter = painterResource(id = R.drawable.av_previous_white),
 							contentDescription = stringResource(id = R.string.btn_previous),
-							modifier = Modifier.clickable {
-								playbackServiceController.previous()
-							}
+							modifier = Modifier
+								.weight(1f)
+								.clickable(
+									interactionSource = remember { MutableInteractionSource() },
+									indication = null,
+									onClick = playbackServiceController::previous
+								),
 						)
 
-						PlayPauseButton(nowPlayingFilePropertiesViewModel, playbackServiceController)
+						PlayPauseButton(
+							nowPlayingFilePropertiesViewModel,
+							playbackServiceController,
+							modifier = Modifier.weight(1f),
+						)
 
 						Image(
 							painter = painterResource(id = R.drawable.av_next_white),
 							contentDescription = stringResource(id = R.string.btn_next),
-							modifier = Modifier.clickable {
-								playbackServiceController.next()
-							}
+							modifier = Modifier
+								.weight(1f)
+								.clickable(
+									interactionSource = remember { MutableInteractionSource() },
+									indication = null,
+									onClick = playbackServiceController::next
+								)
 						)
 					}
 				}
