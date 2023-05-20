@@ -5,7 +5,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.namehillsoftware.handoff.promises.Promise
 
 interface BuildNowPlayingNotificationContent {
-    fun promiseNowPlayingNotification(serviceFile: ServiceFile, isPlaying: Boolean): Promise<NotificationCompat.Builder>
+    fun promiseNowPlayingNotification(serviceFile: ServiceFile, isPlaying: Boolean): Promise<NotificationCompat.Builder?>
 
-    fun promiseLoadingNotification(isPlaying: Boolean): Promise<NotificationCompat.Builder>
+    fun promiseLoadingNotification(isPlaying: Boolean): Promise<NotificationCompat.Builder?>
 }

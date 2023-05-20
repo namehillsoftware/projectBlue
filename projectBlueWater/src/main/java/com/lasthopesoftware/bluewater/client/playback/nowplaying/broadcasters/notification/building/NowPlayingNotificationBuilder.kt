@@ -32,7 +32,7 @@ class NowPlayingNotificationBuilder(
 
 	private var viewStructure: ViewStructure? = null
 
-	override fun promiseNowPlayingNotification(serviceFile: ServiceFile, isPlaying: Boolean): Promise<NotificationCompat.Builder> = synchronized(notificationSync) {
+	override fun promiseNowPlayingNotification(serviceFile: ServiceFile, isPlaying: Boolean): Promise<NotificationCompat.Builder?> = synchronized(notificationSync) {
 		return scopedUrlKeys
 			.promiseUrlKey(serviceFile)
 			.eventually { urlKeyHolder ->
@@ -79,7 +79,7 @@ class NowPlayingNotificationBuilder(
 			}
 	}
 
-	override fun promiseLoadingNotification(isPlaying: Boolean): Promise<NotificationCompat.Builder> =
+	override fun promiseLoadingNotification(isPlaying: Boolean): Promise<NotificationCompat.Builder?> =
 		libraryIdProvider
 			.promiseSelectedLibraryId()
 			.then {
