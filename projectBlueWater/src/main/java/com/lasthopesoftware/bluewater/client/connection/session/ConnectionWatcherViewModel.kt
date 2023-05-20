@@ -59,7 +59,7 @@ class ConnectionWatcherViewModel(
 				.pollConnection(libraryId)
 				.also(cp::doCancel)
 				.must {
-					if (!cp.isCancelled && libraryId == watchedLibraryId)
+					if (libraryId == watchedLibraryId)
 						mutableIsCheckingConnection.value = false
 				}
 		}
