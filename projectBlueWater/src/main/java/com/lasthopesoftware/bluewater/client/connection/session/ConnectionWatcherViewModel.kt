@@ -2,18 +2,21 @@ package com.lasthopesoftware.bluewater.client.connection.session
 
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.polling.ConnectionLostNotification
-import com.lasthopesoftware.bluewater.client.connection.polling.PollForConnections
+import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
+import com.lasthopesoftware.bluewater.client.connection.polling.PollForLibraryConnections
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
+import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
 import com.namehillsoftware.handoff.promises.Promise
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-class ConnectionLostViewModel(
+class ConnectionWatcherViewModel(
 	messageBus: RegisterForApplicationMessages,
-	private val pollConnections: PollForConnections,
+	private val libraryConnections: ProvideLibraryConnections,
+	private val pollLibraryConnections: PollForLibraryConnections,
 ) : ViewModel(), (ConnectionLostNotification) -> Unit {
 	private var promisedConnection = Promise.empty<IConnectionProvider?>()
 
@@ -27,6 +30,12 @@ class ConnectionLostViewModel(
 
 	fun watchLibraryConnection(libraryId: LibraryId) {
 		watchedLibraryId = libraryId
+		libraryConnections
+			.promiseLibraryConnection(libraryId)
+			.then(
+				{ if (it == null) maybePollConnection(libraryId) },
+				{ e -> if (ConnectionLostExceptionFilter.isConnectionLostException(e)) maybePollConnection(libraryId) }
+			)
 	}
 
 	fun cancelLibraryConnectionPolling() {
@@ -38,11 +47,21 @@ class ConnectionLostViewModel(
 	}
 
 	override fun invoke(message: ConnectionLostNotification) {
-		if (message.libraryId != watchedLibraryId) return
+		maybePollConnection(message.libraryId)
+	}
+
+	private fun maybePollConnection(libraryId: LibraryId) {
+		if (libraryId != watchedLibraryId) return
 
 		mutableIsCheckingConnection.value = true
-		promisedConnection = pollConnections.pollConnection(message.libraryId).apply {
-			must { mutableIsCheckingConnection.value = false }
+		promisedConnection = CancellableProxyPromise { cp ->
+			pollLibraryConnections
+				.pollConnection(libraryId)
+				.also(cp::doCancel)
+				.must {
+					if (libraryId == watchedLibraryId)
+						mutableIsCheckingConnection.value = false
+				}
 		}
 	}
 }

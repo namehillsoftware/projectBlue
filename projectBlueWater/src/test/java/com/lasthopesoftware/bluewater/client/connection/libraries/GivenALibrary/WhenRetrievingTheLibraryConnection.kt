@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.client.connection.session.PromisedConnecti
 import com.lasthopesoftware.bluewater.client.connection.settings.ValidateConnectionSettings
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredProgressingPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -31,7 +32,8 @@ class WhenRetrievingTheLibraryConnection {
 		val connectionSessionManager = ConnectionSessionManager(
 			mockk(),
 			libraryConnectionProvider,
-			PromisedConnectionsRepository()
+			PromisedConnectionsRepository(),
+			RecordingApplicationMessageBus()
 		)
 
 		Pair(deferredConnectionProvider, connectionSessionManager)
@@ -50,10 +52,10 @@ class WhenRetrievingTheLibraryConnection {
 				.promiseLibraryConnection(LibraryId(3))
 				.toExpiringFuture()
 
-		isActiveBeforeGettingConnection = connectionSessionManager.isConnectionActive(LibraryId(3))
+		isActiveBeforeGettingConnection = connectionSessionManager.promiseIsConnectionActive(LibraryId(3)).toExpiringFuture().get() ?: false
 		deferredConnectionProvider.sendResolution(expectedConnectionProvider)
 		connectionProvider = futureConnectionProvider.get()
-		isActiveAfterGettingConnection = connectionSessionManager.isConnectionActive(LibraryId(3))
+		isActiveAfterGettingConnection = connectionSessionManager.promiseIsConnectionActive(LibraryId(3)).toExpiringFuture().get() ?: false
 	}
 
 	@Test

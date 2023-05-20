@@ -50,8 +50,10 @@ class PlaybackNotificationBroadcaster(
 
 		nowPlayingNotificationContentBuilder
 			.promiseNowPlayingNotification(serviceFile, false.also { isPlaying = false })
-			.then { builder ->
-				notificationsController.notifyBackground(builder.build(), notificationId)
+			.then {
+				it?.apply {
+					notificationsController.notifyBackground(build(), notificationId)
+				}
 			}
 	}
 
@@ -64,8 +66,10 @@ class PlaybackNotificationBroadcaster(
 
 		nowPlayingNotificationContentBuilder
 			.promiseNowPlayingNotification(serviceFile, false.also { isPlaying = it })
-			.then { builder ->
-				notificationsController.notifyForeground(builder.build(), notificationId)
+			.then {
+				it?.apply {
+					notificationsController.notifyForeground(build(), notificationId)
+				}
 			}
 	}
 
@@ -104,14 +108,16 @@ class PlaybackNotificationBroadcaster(
 				.then { loadingBuilderNotification ->
 					synchronized(notificationSync) {
 						if (isValidForNotification()) {
-							notify(loadingBuilderNotification.build())
+							loadingBuilderNotification?.apply { notify(build()) }
 
 							nowPlayingNotificationContentBuilder
 								.promiseNowPlayingNotification(serviceFile, isPlaying)
-								.then { builder ->
-									synchronized(notificationSync) {
-										if (isValidForNotification())
-											notify(builder.build())
+								.then {
+									it?.apply {
+										synchronized(notificationSync) {
+											if (isValidForNotification())
+												notify(build())
+										}
 									}
 								}
 						}

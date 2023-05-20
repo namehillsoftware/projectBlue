@@ -35,18 +35,10 @@ open class ProgressingPromiseProxy<Progress, Resolution> protected constructor()
 	}
 
 	protected fun proxySuccess(source: ProgressingPromise<Progress, Resolution>) {
-		doCancel(source)
-
-		proxyUpdates(source)
-
 		source.then(proxyResolution)
 	}
 
 	protected fun proxyRejection(source: ProgressingPromise<Progress, Resolution>) {
-		doCancel(source)
-
-		proxyUpdates(source)
-
 		source.excuse(proxyRejection)
 	}
 

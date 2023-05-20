@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -30,7 +31,8 @@ class WhenTestingIfTheConnectionIsActive {
 		val connectionSessionManager = ConnectionSessionManager(
 			connectionsTester,
 			libraryConnectionProvider,
-			PromisedConnectionsRepository()
+			PromisedConnectionsRepository(),
+			RecordingApplicationMessageBus()
 		)
 
 		connectionSessionManager
@@ -41,7 +43,7 @@ class WhenTestingIfTheConnectionIsActive {
 	@BeforeAll
 	fun act() {
 		mut.promiseLibraryConnection(libraryId).toExpiringFuture()[30, TimeUnit.SECONDS]
-		isActive = mut.isConnectionActive(libraryId)
+		isActive = mut.promiseIsConnectionActive(libraryId).toExpiringFuture().get() ?: false
 	}
 
 	@Test

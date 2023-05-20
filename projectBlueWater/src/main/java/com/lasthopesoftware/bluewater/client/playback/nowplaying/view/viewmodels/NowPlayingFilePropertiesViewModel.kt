@@ -11,7 +11,9 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
 import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfConnectionIsReadOnly
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideUrlKey
-import com.lasthopesoftware.bluewater.client.connection.polling.PollForConnections
+import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyNotReturnedException
+import com.lasthopesoftware.bluewater.client.connection.polling.PollForLibraryConnections
+import com.lasthopesoftware.bluewater.client.connection.session.LibraryConnectionChangedMessage
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
@@ -20,7 +22,9 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messa
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
+import com.lasthopesoftware.bluewater.shared.messages.promiseReceivedMessage
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
+import com.lasthopesoftware.bluewater.shared.promises.ForwardedResponse.Companion.forward
 import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay
 import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
@@ -36,14 +40,14 @@ import kotlin.math.roundToInt
 private val screenControlVisibilityTime by lazy { Duration.standardSeconds(5) }
 
 class NowPlayingFilePropertiesViewModel(
-	applicationMessages: RegisterForApplicationMessages,
+	private val applicationMessages: RegisterForApplicationMessages,
 	private val nowPlayingRepository: GetNowPlayingState,
 	private val fileProperties: ProvideFreshLibraryFileProperties,
 	private val provideUrlKey: ProvideUrlKey,
 	private val updateFileProperties: UpdateFileProperties,
 	private val checkAuthentication: CheckIfConnectionIsReadOnly,
 	private val playbackService: ControlPlaybackService,
-	private val pollConnections: PollForConnections,
+	private val pollConnections: PollForLibraryConnections,
 	private val stringResources: GetStringResources,
 ) : ViewModel()
 {
@@ -52,6 +56,7 @@ class NowPlayingFilePropertiesViewModel(
 	private var activeSongRatingUpdates = 0
 	private var cachedPromises: CachedPromises? = null
 	private var controlsShownPromise = Promise.empty<Any?>()
+	private var promisedConnectionChanged: Promise<*> = Promise.empty<Any?>()
 
 	private val onPlaybackStartedSubscription =
 		applicationMessages.registerReceiver { _: PlaybackMessage.PlaybackStarted -> togglePlaying(true) }
@@ -117,6 +122,7 @@ class NowPlayingFilePropertiesViewModel(
 		onPlaybackStoppedSubscription.close()
 		onPropertiesChangedSubscription.close()
 
+		promisedConnectionChanged.cancel()
 		controlsShownPromise.cancel()
 	}
 
@@ -186,26 +192,29 @@ class NowPlayingFilePropertiesViewModel(
 		}
 	}
 
-	private fun updateViewFromRepository(): Promise<Unit> =
-		nowPlayingRepository.promiseNowPlaying()
+	private fun updateViewFromRepository(): Promise<Unit> {
+		promisedConnectionChanged.cancel()
+		return nowPlayingRepository.promiseNowPlaying()
 			.eventually { np ->
 				nowPlayingFileState.value = np?.playingFile
 				np?.playingFile?.let { positionedFile ->
+					activeLibraryIdState.value = np.libraryId
 					provideUrlKey
-						.promiseUrlKey(np.libraryId, positionedFile.serviceFile)
+						.promiseGuaranteedUrlKey(np.libraryId, positionedFile.serviceFile)
 						.eventually { key ->
-							key
-								?.let {
-									if (cachedPromises?.key == key) filePositionState.value
-									else np.filePosition
-								}
-								?.let { filePosition ->
-									setView(np.libraryId, positionedFile.serviceFile, filePosition)
-								}
-								.keepPromise(Unit)
+							val filePosition =
+								if (cachedPromises?.key == key) filePositionState.value
+								else np.filePosition
+
+							setView(np.libraryId, positionedFile.serviceFile, filePosition)
+						}
+						.then(forward()) { e ->
+							setTrackProgress(0)
+							handleException(e)
 						}
 				}.keepPromise(Unit)
 			}
+	}
 
 	private fun resetView() {
 		titleState.value = stringResources.loading
@@ -223,31 +232,40 @@ class NowPlayingFilePropertiesViewModel(
 		val isIoException = handleIoException(exception)
 		if (!isIoException) return
 
-		val libraryId = cachedPromises?.libraryId ?: return
-		pollConnections.pollConnection(libraryId).then {
-			synchronized(cachedPromiseSync) {
-				cachedPromises?.close()
-				cachedPromises = null
-			}
-			updateViewFromRepository()
+		val libraryId = activeLibraryId.value ?: return
+
+		synchronized(cachedPromiseSync) {
+			cachedPromises?.close()
+			cachedPromises = null
 		}
+
+		pollConnections
+			.pollConnection(libraryId)
+			.then(
+				{
+					updateViewFromRepository()
+				},
+				{
+					promisedConnectionChanged = CancellableProxyPromise { cp ->
+						applicationMessages
+							.promiseReceivedMessage<LibraryConnectionChangedMessage> { m -> m.libraryId == libraryId }
+							.also(cp::doCancel)
+							.eventually { updateViewFromRepository() }
+					}
+				})
 	}
 
 	private fun handleIoException(exception: Throwable) =
-		if (ConnectionLostExceptionFilter.isConnectionLostException(exception)) true
+		if (exception is UrlKeyNotReturnedException || ConnectionLostExceptionFilter.isConnectionLostException(exception)) true
 		else {
 			unexpectedErrorState.value = exception
 			false
 		}
 
 	private fun setView(libraryId: LibraryId, serviceFile: ServiceFile, initialFilePosition: Number): Promise<Unit> {
-		activeLibraryIdState.value = libraryId
-
 		return provideUrlKey
-			.promiseUrlKey(libraryId, serviceFile)
+			.promiseGuaranteedUrlKey(libraryId, serviceFile)
 			.eventually { key ->
-				key ?: return@eventually Unit.toPromise()
-
 				val currentCachedPromises = synchronized(cachedPromiseSync) {
 					if (cachedPromises?.key == key) return@eventually Unit.toPromise()
 
@@ -277,44 +295,39 @@ class NowPlayingFilePropertiesViewModel(
 					}
 					.then { showNowPlayingControls() }
 			}
-			.apply {
-				excuse {
-					setTrackProgress(0)
-					handleException(it)
-				}
-			}
 	}
 
 	private fun handleFilePropertyUpdates(message: FilePropertiesUpdatedMessage) {
-		cachedPromises?.let { promises ->
-			val key = message.urlServiceKey
-			val libraryId = promises.libraryId
-			val serviceFile = promises.serviceFile
+		val promises = cachedPromises ?: return
 
-			if (promises.key == message.urlServiceKey) {
-				val currentCachedPromises = synchronized(cachedPromiseSync) {
-					cachedPromises?.close()
-					CachedPromises(
-						key,
-						promises.libraryId,
-						promises.serviceFile,
-						checkAuthentication.promiseIsReadOnly(libraryId),
-						fileProperties.promiseFileProperties(libraryId, serviceFile),
-					).also { cachedPromises = it }
-				}
-
-				currentCachedPromises
-					.promisedProperties
-					.eventually { fileProperties ->
-						if (cachedPromises?.key != key) Unit.toPromise()
-						else currentCachedPromises.promisedIsReadOnly.then { isReadOnly ->
-							if (cachedPromises?.key == key)
-								setFileProperties(fileProperties, isReadOnly)
-						}
-					}
-					.excuse(::handleException)
-			}
+		val key = message.urlServiceKey
+		if (promises.key == message.urlServiceKey) {
+			updateFileProperties(key, promises.libraryId, promises.serviceFile)
 		}
+	}
+
+	private fun updateFileProperties(key: UrlKeyHolder<ServiceFile>, libraryId: LibraryId, serviceFile: ServiceFile) {
+		val currentCachedPromises = synchronized(cachedPromiseSync) {
+			cachedPromises?.close()
+			CachedPromises(
+				key,
+				libraryId,
+				serviceFile,
+				checkAuthentication.promiseIsReadOnly(libraryId),
+				fileProperties.promiseFileProperties(libraryId, serviceFile),
+			).also { cachedPromises = it }
+		}
+
+		currentCachedPromises
+			.promisedProperties
+			.eventually { fileProperties ->
+				if (cachedPromises?.key != key) Unit.toPromise()
+				else currentCachedPromises.promisedIsReadOnly.then { isReadOnly ->
+					if (cachedPromises?.key == key)
+						setFileProperties(fileProperties, isReadOnly)
+				}
+			}
+			.excuse(::handleException)
 	}
 
 	private fun setFileProperties(fileProperties: Map<String, String>, isReadOnly: Boolean) {
@@ -349,8 +362,7 @@ class NowPlayingFilePropertiesViewModel(
 		val serviceFile: ServiceFile,
 		val promisedIsReadOnly: Promise<Boolean>,
 		val promisedProperties: Promise<Map<String, String>>,
-	)
-		: AutoCloseable
+	) : AutoCloseable
 	{
 		override fun close() {
 			promisedIsReadOnly.cancel()

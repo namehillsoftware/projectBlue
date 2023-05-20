@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.connection.session.GivenALibrary.AndGettingTheLibraryFaults
+package com.lasthopesoftware.bluewater.client.connection.session.GivenALibrary.AndGettingTheConnectionFaults
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
@@ -8,6 +8,7 @@ import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessio
 import com.lasthopesoftware.bluewater.client.connection.session.PromisedConnectionsRepository
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredProgressingPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -30,12 +31,14 @@ class WhenTestingIfTheConnectionIsActive {
 		val connectionSessionManager = ConnectionSessionManager(
 			mockk(),
 			libraryConnectionProvider,
-			PromisedConnectionsRepository()
+			PromisedConnectionsRepository(),
+			recordingApplicationMessageBus
 		)
 
 		Pair(deferredConnectionProvider, connectionSessionManager)
 	}
 
+	private val recordingApplicationMessageBus = RecordingApplicationMessageBus()
 	private var exception: IOException? = null
 	private var isActive = false
 
@@ -60,7 +63,7 @@ class WhenTestingIfTheConnectionIsActive {
 				exception = e.cause as IOException?
 			}
 		}
-		isActive = connectionSessionManager.isConnectionActive(LibraryId(2))
+		isActive = connectionSessionManager.promiseIsConnectionActive(LibraryId(2)).toExpiringFuture().get() ?: false
 	}
 
 	@Test
@@ -71,5 +74,10 @@ class WhenTestingIfTheConnectionIsActive {
 	@Test
 	fun `then an IOException is returned`() {
 		assertThat(exception).isNotNull
+	}
+
+	@Test
+	fun `then no messages are sent`() {
+		assertThat(recordingApplicationMessageBus.recordedMessages).isEmpty()
 	}
 }

@@ -108,21 +108,17 @@ class WhenTheServiceFileChangesConcurrently {
             nowPlayingRepository,
             filePropertiesProvider,
             mockk {
-                every { promiseUrlKey(LibraryId(libraryId), firstServiceFile) } returns Promise(
-                    UrlKeyHolder(URL("http://77Q8Tq2h/"), firstServiceFile)
-                )
-
-				every { promiseUrlKey(LibraryId(libraryId), secondServiceFile) } returns Promise(
-					UrlKeyHolder(URL("http://77Q8Tq2h/"), secondServiceFile)
-				)
+                every { promiseGuaranteedUrlKey(LibraryId(libraryId), any<ServiceFile>()) } answers {
+					Promise(UrlKeyHolder(URL("http://77Q8Tq2h/"), lastArg()))
+				}
             },
             mockk {
 				every { promiseFileUpdate(LibraryId(libraryId), firstServiceFile, KnownFileProperties.Rating, any(), any()) } returns deferredFilePropertiesPromise
 			},
             checkAuthentication,
             playbackService,
-            mockk(),
-            mockk(relaxed = true),
+			mockk(),
+			mockk(relaxed = true),
 		)
 
 		Pair(messageBus, nowPlayingViewModel)

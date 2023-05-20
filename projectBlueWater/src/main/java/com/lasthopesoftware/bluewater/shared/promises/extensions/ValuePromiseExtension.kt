@@ -40,8 +40,12 @@ fun <T> Deferred<T>.toPromise(): Promise<T> = PromiseDeferred(this)
 fun <T> T.toPromise(): Promise<T> = when (this) {
 	null -> Promise.empty()
 	is Unit -> UnitPromise as Promise<T>
+	is Boolean -> (if (this) TruePromise else FalsePromise) as Promise<T>
 	else -> Promise(this)
 }
+
+private object TruePromise : Promise<Boolean>(true)
+private object FalsePromise: Promise<Boolean>(false)
 
 private object UnitPromise : Promise<Unit>(Unit)
 

@@ -5,6 +5,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTuple
 import com.lasthopesoftware.bluewater.client.connection.FakeLibraryConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibraryConnectionProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
@@ -36,7 +37,7 @@ class GivenALibrary {
 		val fakeLibraryConnectionProvider = FakeLibraryConnectionProvider(
 			mapOf(Pair(LibraryId(libraryId), fakeConnectionProvider))
 		)
-		ItemProvider(fakeLibraryConnectionProvider)
+		ItemProvider(GuaranteedLibraryConnectionProvider(fakeLibraryConnectionProvider))
 	}
 
 	private var exception: IOException? = null

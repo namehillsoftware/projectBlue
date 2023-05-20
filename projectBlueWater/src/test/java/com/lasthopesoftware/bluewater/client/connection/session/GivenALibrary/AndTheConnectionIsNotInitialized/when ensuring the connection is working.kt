@@ -25,7 +25,7 @@ class `when ensuring the connection is working` {
             ConnectionStatusViewModel(
                 FakeStringResources(),
 				mockk {
-					every { promiseInitializedConnection(LibraryId(libraryId)) } returns deferredProgressingPromise
+					every { promiseActiveLibraryConnection(LibraryId(libraryId)) } returns deferredProgressingPromise
 				}
             )
 		)

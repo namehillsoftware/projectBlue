@@ -20,15 +20,20 @@ import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections
 import com.lasthopesoftware.bluewater.client.connection.waking.AlarmConfiguration
 import com.lasthopesoftware.bluewater.client.connection.waking.ServerAlarm
 import com.lasthopesoftware.bluewater.client.connection.waking.ServerWakeSignal
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
+import com.lasthopesoftware.bluewater.shared.messages.application.SendApplicationMessages
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromiseProxy
+import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.resources.network.ActiveNetworkFinder
 import com.lasthopesoftware.resources.strings.Base64Encoder
+import com.namehillsoftware.handoff.promises.Promise
 
 class ConnectionSessionManager(
 	private val connectionTester: TestConnections,
 	private val libraryConnections: ProvideLibraryConnections,
-	private val holdConnections: HoldPromisedConnections
+	private val holdConnections: HoldPromisedConnections,
+	private val sendApplicationMessages: SendApplicationMessages,
 ) : ManageConnectionSessions, ProvideLibraryConnections {
 
 	override fun promiseTestedLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?> =
@@ -56,7 +61,7 @@ class ConnectionSessionManager(
 						?: updateCachedConnection()
 				}
 
-				private fun updateCachedConnection() = proxy(libraryConnections.promiseLibraryConnection(l))
+				private fun updateCachedConnection() = proxy(promiseUpdatedLibraryConnection(promised, l))
 			}
 		}
 
@@ -65,9 +70,13 @@ class ConnectionSessionManager(
 			object : ProgressingPromiseProxy<BuildingConnectionStatus, IConnectionProvider?>() {
 				init {
 					promised
-						?.also(::proxySuccess)
-						?.excuse { proxy(libraryConnections.promiseLibraryConnection(l)) }
-						?: proxy(libraryConnections.promiseLibraryConnection(l))
+						?.also {
+							doCancel(it)
+							proxyUpdates(it)
+							proxySuccess(it)
+						}
+						?.excuse { proxy(promiseUpdatedLibraryConnection(promised, l)) }
+						?: proxy(promiseUpdatedLibraryConnection(promised, l))
 				}
 			}
 		}
@@ -76,8 +85,37 @@ class ConnectionSessionManager(
 		holdConnections.removeConnection(libraryId)?.cancel()
 	}
 
-	override fun isConnectionActive(libraryId: LibraryId): Boolean =
-		holdConnections.getPromisedResolvedConnection(libraryId) != null
+	override fun promiseIsConnectionActive(libraryId: LibraryId): Promise<Boolean> =
+		holdConnections.getPromisedResolvedConnection(libraryId)?.then { c -> c != null }.keepPromise(false)
+
+	private fun promiseUpdatedLibraryConnection(promised: ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>?, libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?> =
+		libraryConnections
+			.promiseLibraryConnection(libraryId)
+			.apply {
+				then(
+					{ newConnection ->
+						promised
+							?.then { oldConnection ->
+								if (oldConnection != newConnection) {
+									sendApplicationMessages.sendMessage(
+										if (newConnection != null) LibraryConnectionChangedMessage(libraryId)
+										else ConnectionLostNotification(libraryId)
+									)
+								}
+							}
+							?: run {
+								if (newConnection != null)
+									sendApplicationMessages.sendMessage(LibraryConnectionChangedMessage(libraryId))
+							}
+					},
+					{
+						promised?.then { oldConnection ->
+							if (oldConnection != null)
+								sendApplicationMessages.sendMessage(ConnectionLostNotification(libraryId))
+						}
+					}
+				)
+			}
 
 	companion object Instance {
 		private val connectionRepository by lazy { PromisedConnectionsRepository() }
@@ -108,7 +146,8 @@ class ConnectionSessionManager(
 					),
 					OkHttpFactory
 				),
-				connectionRepository
+				connectionRepository,
+				ApplicationMessageBus.getApplicationMessageBus(),
 			)
 		}
 	}

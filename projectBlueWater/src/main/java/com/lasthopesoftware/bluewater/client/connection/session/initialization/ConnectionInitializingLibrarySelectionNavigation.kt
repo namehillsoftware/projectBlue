@@ -25,6 +25,9 @@ class ConnectionInitializingLibrarySelectionNavigation(
 	override fun viewFileDetails(libraryId: LibraryId, playlist: List<ServiceFile>, position: Int): Promise<Unit> =
 		selectConnection(libraryId) { inner.viewFileDetails(libraryId, playlist, position) }
 
+	override fun viewNowPlaying(libraryId: LibraryId): Promise<Unit> =
+		selectConnection(libraryId) { inner.viewNowPlaying(libraryId) }
+
 	private fun selectConnection(libraryId: LibraryId, onConnectionInitialized: () -> Promise<Unit>) =
 		selectedLibraryViewModel
 			.selectLibrary(libraryId)

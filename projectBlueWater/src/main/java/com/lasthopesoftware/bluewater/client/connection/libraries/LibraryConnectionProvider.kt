@@ -35,14 +35,14 @@ class LibraryConnectionProvider(
 				reportProgress(BuildingConnectionStatus.GettingLibrary)
 				lookupConnectionSettings
 					.lookupConnectionSettings(libraryId)
-					.eventually({ c ->
+					.eventually({ settings ->
 						when {
-							c == null || !validateConnectionSettings.isValid(c) -> {
+							settings == null || !validateConnectionSettings.isValid(settings) -> {
 								reportProgress(BuildingConnectionStatus.GettingLibraryFailed)
 								resolve(null)
 								empty()
 							}
-							c.isWakeOnLanEnabled -> wakeAndBuildConnection()
+							settings.isWakeOnLanEnabled -> wakeAndBuildConnection()
 							else -> buildConnection()
 						}
 					}, {

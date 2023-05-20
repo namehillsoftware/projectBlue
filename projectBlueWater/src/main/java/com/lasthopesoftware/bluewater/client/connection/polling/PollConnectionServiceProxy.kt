@@ -5,7 +5,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.namehillsoftware.handoff.promises.Promise
 
-class PollConnectionServiceProxy(private val context: Context) : PollForConnections {
-	override fun pollConnection(libraryId: LibraryId, withNotification: Boolean): Promise<IConnectionProvider> =
-		PollConnectionService.pollSessionConnection(context, libraryId, withNotification)
+class PollConnectionServiceProxy(private val context: Context) : PollForLibraryConnections {
+	override fun pollConnection(libraryId: LibraryId): Promise<IConnectionProvider> =
+		PollConnectionService.pollSessionConnection(context, libraryId)
 }

@@ -56,10 +56,11 @@ import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionF
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostRetryHandler
 import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
-import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionServiceProxy
+import com.lasthopesoftware.bluewater.client.connection.polling.LibraryConnectionPoller
+import com.lasthopesoftware.bluewater.client.connection.polling.LibraryConnectionPollingSessions
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.session.ConnectionLostViewModel
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
+import com.lasthopesoftware.bluewater.client.connection.session.ConnectionWatcherViewModel
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.*
 import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettingsLookup
 import com.lasthopesoftware.bluewater.client.connection.settings.changes.ObservableConnectionSettingsLibraryStorage
@@ -233,8 +234,8 @@ class BrowserActivity :
 			filePropertiesStorage,
 			connectionAuthenticationChecker,
 			playbackServiceController,
-			PollConnectionServiceProxy(applicationContext),
-			stringResources,
+			pollForConnections,
+            stringResources,
 		)
 	}
 
@@ -323,7 +324,9 @@ class BrowserActivity :
 		).apply { loadSelectedLibraryId() }
 	}
 
-	override val pollForConnections by lazy { PollConnectionServiceProxy(this) }
+	override val pollForConnections by lazy {
+		LibraryConnectionPollingSessions(LibraryConnectionPoller(libraryConnectionProvider))
+	}
 
 	override val nowPlayingCoverArtViewModel by buildViewModelLazily {
 		NowPlayingCoverArtViewModel(
@@ -343,9 +346,10 @@ class BrowserActivity :
 		)
 	}
 
-	override val connectionLostViewModel by buildViewModelLazily {
-		ConnectionLostViewModel(
+	override val connectionWatcherViewModel by buildViewModelLazily {
+		ConnectionWatcherViewModel(
 			messageBus,
+			libraryConnectionProvider,
 			pollForConnections,
 		)
 	}
@@ -548,6 +552,7 @@ private val bottomAppBarHeight = Dimensions.appBarHeight
 @OptIn(ExperimentalMaterialApi::class)
 private fun BrowserLibraryDestination.Navigate(
 	browserViewDependencies: BrowserViewDependencies,
+	connectionStatusViewModel: ConnectionStatusViewModel,
 	scaffoldState: BottomSheetScaffoldState,
 ) {
 	with(browserViewDependencies) {
@@ -624,6 +629,7 @@ private fun BrowserLibraryDestination.Navigate(
 							applicationNavigation = applicationNavigation,
 							playbackLibraryItems = playbackLibraryItems,
 							playbackServiceController = playbackServiceController,
+							connectionStatusViewModel = connectionStatusViewModel,
 						)
 
 						view(libraryId, null)
@@ -663,6 +669,7 @@ private fun BrowserLibraryDestination.Navigate(
 							applicationNavigation = applicationNavigation,
 							playbackLibraryItems = playbackLibraryItems,
 							playbackServiceController = playbackServiceController,
+							connectionStatusViewModel = connectionStatusViewModel,
 						)
 
 						view(libraryId, item)
@@ -723,6 +730,7 @@ private fun BrowserLibraryDestination.Navigate(
 @OptIn(ExperimentalMaterialApi::class)
 private fun LibraryDestination.Navigate(
 	browserViewDependencies: BrowserViewDependencies,
+	connectionStatusViewModel: ConnectionStatusViewModel,
 	scaffoldState: BottomSheetScaffoldState,
 	coroutineScope: CoroutineScope,
 ) {
@@ -731,6 +739,7 @@ private fun LibraryDestination.Navigate(
 			is BrowserLibraryDestination -> this@Navigate.Navigate(
 				browserViewDependencies = browserViewDependencies,
 				scaffoldState = scaffoldState,
+				connectionStatusViewModel = connectionStatusViewModel,
 			)
 			is ConnectionSettingsScreen -> {
 				val viewModel = viewModel {
@@ -799,13 +808,13 @@ private fun LibraryDestination.Navigate(
 					},
 					applicationNavigation = applicationNavigation,
 					itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
-					connectionLostViewModel = connectionLostViewModel,
+					connectionWatcherViewModel = connectionWatcherViewModel,
 				)
 
 				val context = LocalContext.current
 				LaunchedEffect(key1 = libraryId) {
 					try {
-						connectionLostViewModel.watchLibraryConnection(libraryId)
+						connectionWatcherViewModel.watchLibraryConnection(libraryId)
 
 						Promise.whenAll(
 							nowPlayingFilePropertiesViewModel.initializeViewModel(),
@@ -852,10 +861,8 @@ private fun BrowserView(
 	val connectionStatusViewModel = viewModel {
 		ConnectionStatusViewModel(
 			browserViewDependencies.stringResources,
-			ConnectionInitializationErrorController(
-				DramaticConnectionInitializationProxy(
-					browserViewDependencies.libraryConnectionProvider,
-				),
+			DramaticConnectionInitializationController(
+				browserViewDependencies.libraryConnectionProvider,
 				graphNavigation,
 			),
 		)
@@ -929,6 +936,7 @@ private fun BrowserView(
 				is LibraryDestination -> {
 					destination.Navigate(
 						graphDependencies,
+						connectionStatusViewModel,
 						scaffoldState,
 						coroutineScope,
 					)
