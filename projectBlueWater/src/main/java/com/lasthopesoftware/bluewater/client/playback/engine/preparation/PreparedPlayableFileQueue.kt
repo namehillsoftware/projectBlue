@@ -10,7 +10,7 @@ import com.namehillsoftware.handoff.promises.Promise
 import org.joda.time.Duration
 import org.slf4j.LoggerFactory
 import java.io.Closeable
-import java.util.*
+import java.util.LinkedList
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.locks.ReentrantReadWriteLock
 
@@ -118,7 +118,7 @@ class PreparedPlayableFileQueue(
 		val writeLock = queueUpdateLock.writeLock()
 		writeLock.lock()
 		try {
-			if (bufferingMediaPlayerPromises.size >= configuration.maxQueueSize) return
+			if (bufferingMediaPlayerPromises.size >= configuration.getMaxQueueSize()) return
 			val nextPreparingMediaPlayerPromise = getNextUnfaultingPreparingMediaPlayerPromise() ?: return
 			bufferingMediaPlayerPromises.offer(nextPreparingMediaPlayerPromise)
 		} finally {

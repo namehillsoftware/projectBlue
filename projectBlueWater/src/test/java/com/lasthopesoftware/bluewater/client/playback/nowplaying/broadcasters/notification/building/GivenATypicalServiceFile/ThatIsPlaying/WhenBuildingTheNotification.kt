@@ -17,7 +17,6 @@ import com.lasthopesoftware.bluewater.client.connection.FakeFileConnectionProvid
 import com.lasthopesoftware.bluewater.client.connection.libraries.ScopedUrlKeyProvider
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building.NowPlayingNotificationBuilder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ExpiringFuturePromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -58,10 +57,7 @@ class WhenBuildingTheNotification : AndroidContext() {
 				every { getMediaStyleNotification(libraryId) } returns spiedBuilder
 			},
 			ScopedUrlKeyProvider(connectionProvider),
-			mockk {
-				every { promiseSelectedLibraryId() } returns libraryId.toPromise()
-			},
-			ScopedCachedFilePropertiesProvider(
+            ScopedCachedFilePropertiesProvider(
 				connectionProvider,
 				containerRepository,
 				ScopedFilePropertiesProvider(

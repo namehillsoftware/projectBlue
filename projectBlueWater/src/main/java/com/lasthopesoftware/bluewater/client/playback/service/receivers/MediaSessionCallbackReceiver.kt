@@ -1,12 +1,10 @@
 package com.lasthopesoftware.bluewater.client.playback.service.receivers
 
 import android.content.Context
-import android.os.Build
 import android.os.Bundle
 import android.support.v4.media.MediaDescriptionCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
-import androidx.annotation.RequiresApi
 import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.ProvideFileStringListForItem
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
@@ -15,7 +13,6 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.Pro
 import com.lasthopesoftware.bluewater.client.browsing.remote.RemoteBrowserService
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 
-@RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
 class MediaSessionCallbackReceiver(
 	private val context: Context,
 	private val selectedLibraryId: ProvideSelectedLibraryId,
@@ -59,9 +56,9 @@ class MediaSessionCallbackReceiver(
 					.promiseFileStringList(libraryId, ItemId(itemId), FileListParameters.Options.None)
 
 				if (ids.size < 2) {
-					promisedFileStringList.then(LaunchPlaybackFromResult(context))
+					promisedFileStringList.then(LaunchPlaybackFromResult(context, libraryId))
 				} else {
-					promisedFileStringList.then { sl -> PlaybackService.launchMusicService(context, ids[1], sl) }
+					promisedFileStringList.then { sl -> PlaybackService.launchMusicService(context, libraryId, ids[1], sl) }
 				}
 			}
 		}

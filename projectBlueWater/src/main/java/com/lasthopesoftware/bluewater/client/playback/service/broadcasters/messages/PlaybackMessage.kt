@@ -11,7 +11,7 @@ interface PlaybackMessage : ApplicationMessage {
 
 	data class TrackCompleted(val libraryId: LibraryId, val completedFile: ServiceFile) : PlaybackMessage
 
-	class TrackStarted(val startedFile: ServiceFile) : PlaybackMessage
+	class TrackStarted(val libraryId: LibraryId, val startedFile: ServiceFile) : PlaybackMessage
 
 	object PlaylistChanged : PlaybackMessage
 

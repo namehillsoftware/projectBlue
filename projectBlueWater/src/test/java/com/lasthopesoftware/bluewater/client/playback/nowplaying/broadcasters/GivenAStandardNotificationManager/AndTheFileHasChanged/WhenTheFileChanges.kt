@@ -5,7 +5,6 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.NotifyOfPlaybackEvents
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.PlaybackNotificationRouter
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
@@ -25,27 +24,12 @@ class WhenTheFileChanges {
 			mockNotifier,
 			mockk(relaxed = true),
 			mockk {
-				every { promiseUrlKey(any<ServiceFile>()) } answers {
+				every { promiseUrlKey(any(), any<ServiceFile>()) } answers {
 					UrlKeyHolder(
 						URL("http://test"),
-						firstArg<ServiceFile>()
+						lastArg<ServiceFile>()
 					).toPromise()
 				}
-			},
-			mockk {
-				every { promiseNowPlaying() } returns NowPlaying(
-					LibraryId(1),
-					listOf(ServiceFile(860)),
-					0,
-					0L,
-					false
-				).toPromise() andThen NowPlaying(
-					LibraryId(1),
-					listOf(ServiceFile(660)),
-					0,
-					0L,
-					false
-				).toPromise()
 			},
 		)
 		playbackNotificationRouter
@@ -59,6 +43,6 @@ class WhenTheFileChanges {
 
 	@Test
 	fun `then notification are correctly sent to update the playing file`() {
-		verify(exactly = 2) { mockNotifier.notifyPlayingFileUpdated() }
+		verify(exactly = 2) { mockNotifier.notifyPlayingFileUpdated(LibraryId(1)) }
 	}
 }

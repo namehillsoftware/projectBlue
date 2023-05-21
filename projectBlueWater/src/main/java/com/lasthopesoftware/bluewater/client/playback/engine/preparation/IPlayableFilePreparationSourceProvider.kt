@@ -1,7 +1,7 @@
-package com.lasthopesoftware.bluewater.client.playback.engine.preparation;
+package com.lasthopesoftware.bluewater.client.playback.engine.preparation
 
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource;
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource
 
-public interface IPlayableFilePreparationSourceProvider extends IPreparedPlaybackQueueConfiguration {
-	PlayableFilePreparationSource providePlayableFilePreparationSource();
+interface IPlayableFilePreparationSourceProvider : IPreparedPlaybackQueueConfiguration {
+    fun providePlayableFilePreparationSource(): PlayableFilePreparationSource
 }

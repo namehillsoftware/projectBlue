@@ -1,8 +1,16 @@
 package com.lasthopesoftware.bluewater.client.playback.engine
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.IStartPlayback
-import com.lasthopesoftware.bluewater.client.playback.engine.events.*
+import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlaybackCompleted
+import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlaybackInterrupted
+import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlaybackPaused
+import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlaybackStarted
+import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlayingFileChanged
+import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlaylistError
+import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlaylistReset
+import com.lasthopesoftware.bluewater.client.playback.engine.events.RegisterPlaybackEngineEvents
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.ManagePlaybackQueues
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparationException
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue
@@ -34,7 +42,7 @@ private fun getNextPosition(startingPosition: Int, playlist: Collection<ServiceF
 private fun getPreviousPosition(startingPosition: Int): Int = max(startingPosition - 1, 0)
 
 class PlaybackEngine(
-    managePlaybackQueues: ManagePlaybackQueues,
+    private val preparedPlaybackQueueResourceManagement: ManagePlaybackQueues,
     positionedFileQueueProviders: Iterable<IPositionedFileQueueProvider>,
     private val nowPlayingRepository: MaintainNowPlayingState,
     private val playbackBootstrapper: IStartPlayback,
@@ -47,12 +55,12 @@ class PlaybackEngine(
 	RegisterPlaybackEngineEvents,
 	AutoCloseable
 {
-	private val preparedPlaybackQueueResourceManagement = managePlaybackQueues
 	private val positionedFileQueueProviders = positionedFileQueueProviders.associateBy({ it.isRepeating }, { it })
 
 	var isPlaying = false
 		private set
 
+	private var libraryId: LibraryId? = null
 	private var playlist = mutableListOf<ServiceFile>()
 	private var isRepeating = false
 	private var playlistPosition = 0
@@ -68,8 +76,9 @@ class PlaybackEngine(
 	private var onPlaybackCompleted: OnPlaybackCompleted? = null
 	private var onPlaylistReset: OnPlaylistReset? = null
 
-	override fun restoreFromSavedState(): Promise<PositionedProgressedFile?> =
-		nowPlayingRepository.promiseNowPlaying()
+	override fun restoreFromSavedState(libraryId: LibraryId): Promise<PositionedProgressedFile?> {
+		this.libraryId = libraryId
+		return nowPlayingRepository.promiseNowPlaying(libraryId)
 			.then { np ->
 				playlist = np?.playlist?.toMutableList() ?: mutableListOf()
 				np?.playingFile
@@ -80,8 +89,9 @@ class PlaybackEngine(
 						PositionedProgressedFile(positionedFile.playlistPosition, positionedFile.serviceFile, filePosition)
 					}
 			}
+	}
 
-	override fun startPlaylist(playlist: List<ServiceFile>, playlistPosition: Int, filePosition: Duration): Promise<Unit> {
+	override fun startPlaylist(libraryId: LibraryId, playlist: List<ServiceFile>, playlistPosition: Int, filePosition: Duration): Promise<Unit> {
 		logger.info("Starting playback")
 		this.playlist = playlist.toMutableList()
 		this.playlistPosition = playlistPosition
@@ -222,10 +232,10 @@ class PlaybackEngine(
 	}
 
 	override fun moveFile(position: Int, newPosition: Int): Promise<NowPlaying?> {
-		if (position < 0 || newPosition < 0) return nowPlayingRepository.promiseNowPlaying()
+		if (position < 0 || newPosition < 0) return getActiveNowPlaying()
 
 		with (playlist) {
-			if (position >= size || newPosition >= size) return nowPlayingRepository.promiseNowPlaying()
+			if (position >= size || newPosition >= size) return getActiveNowPlaying()
 		}
 
 		val removedFile = playlist.removeAt(position)
@@ -241,6 +251,8 @@ class PlaybackEngine(
 		updatePreparedFileQueueUsingState()
 		return saveState()
 	}
+
+	private fun getActiveNowPlaying() = libraryId?.let(nowPlayingRepository::promiseNowPlaying).keepPromise()
 
 	private fun pausePlayback(): Promise<NowPlaying> {
 		val promisedPause = activePlayer?.pause() ?: Unit.toPromise()
@@ -304,8 +316,7 @@ class PlaybackEngine(
 	}
 
 	private fun saveState(): Promise<NowPlaying?> {
-		return nowPlayingRepository
-			.promiseNowPlaying()
+		return getActiveNowPlaying()
 			.eventually { np ->
 				np?.let {
 					fileProgress.progress.eventually {
