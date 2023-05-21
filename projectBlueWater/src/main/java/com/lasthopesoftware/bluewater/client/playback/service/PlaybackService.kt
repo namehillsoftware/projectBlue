@@ -37,19 +37,17 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.repositor
 import com.lasthopesoftware.bluewater.client.browsing.files.uri.BestMatchUriProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.uri.RemoteFileUriProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
-import com.lasthopesoftware.bluewater.client.browsing.library.access.SpecificLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedBrowserLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.libraries.ScopedUrlKeyProvider
+import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionServiceProxy
-import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionSettingsChangeReceiver
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.caching.AudioCacheConfiguration
@@ -83,13 +81,13 @@ import com.lasthopesoftware.bluewater.client.playback.file.volume.MaxFileVolumeP
 import com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.MaxFileVolumePreparationProvider
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.ExtendedPlaybackNotificationRouter
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.PlaybackNotificationRouter
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.NotificationsConfiguration
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.PlaybackNotificationBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building.MediaStyleNotificationSetup
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building.NowPlayingNotificationBuilder
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building.PlaybackStartingNotificationBuilder
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.remote.MediaSessionBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.InMemoryNowPlayingState
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.MaintainNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Action.Bag
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaybackStartedBroadcaster
@@ -109,6 +107,7 @@ import com.lasthopesoftware.bluewater.shared.android.MediaSession.MediaSessionSe
 import com.lasthopesoftware.bluewater.shared.android.audiofocus.AudioFocusManagement
 import com.lasthopesoftware.bluewater.shared.android.intents.IntentBuilder
 import com.lasthopesoftware.bluewater.shared.android.intents.makePendingIntentImmutable
+import com.lasthopesoftware.bluewater.shared.android.intents.safelyGetParcelableExtra
 import com.lasthopesoftware.bluewater.shared.android.notifications.NoOpChannelActivator
 import com.lasthopesoftware.bluewater.shared.android.notifications.NotificationBuilderProducer
 import com.lasthopesoftware.bluewater.shared.android.notifications.control.NotificationsController
@@ -119,10 +118,10 @@ import com.lasthopesoftware.bluewater.shared.android.services.GenericBinder
 import com.lasthopesoftware.bluewater.shared.android.services.promiseBoundService
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToaster
+import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
-import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.observables.toMaybeObservable
 import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay.Companion.delay
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
@@ -139,7 +138,6 @@ import io.reactivex.Observable
 import io.reactivex.disposables.Disposable
 import io.reactivex.internal.schedulers.ExecutorScheduler
 import org.joda.time.Duration
-import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.util.concurrent.CancellationException
 import java.util.concurrent.TimeUnit
@@ -154,9 +152,8 @@ open class PlaybackService :
 	OnPlaybackCompleted,
 	OnPlaylistReset
 {
-
 	companion object {
-		private val logger = LoggerFactory.getLogger(PlaybackService::class.java)
+		private val logger by lazyLogger<PlaybackService>()
 
 		private const val playingNotificationId = 42
 		private const val connectingNotificationId = 70
@@ -172,11 +169,12 @@ open class PlaybackService :
 		fun initialize(context: Context) =
 			context.safelyStartService(getNewSelfIntent(context, Action.initialize))
 
-		fun launchMusicService(context: Context, serializedFileList: String) =
-			launchMusicService(context, 0, serializedFileList)
+		fun launchMusicService(context: Context, libraryId: LibraryId, serializedFileList: String) =
+			launchMusicService(context, libraryId, 0, serializedFileList)
 
-		fun launchMusicService(context: Context, filePos: Int, serializedFileList: String) {
+		fun launchMusicService(context: Context, libraryId: LibraryId, filePos: Int, serializedFileList: String) {
 			val svcIntent = getNewSelfIntent(context, Action.launchMusicService)
+			svcIntent.putExtra(Bag.libraryId, libraryId)
 			svcIntent.putExtra(Bag.playlistPosition, filePos)
 			svcIntent.putExtra(Bag.filePlaylist, serializedFileList)
 			context.safelyStartServiceInForeground(svcIntent)
@@ -316,7 +314,6 @@ open class PlaybackService :
 	private val audioManager by lazy { getSystemService(AUDIO_SERVICE) as AudioManager }
 	private val applicationMessageBus = lazy { getApplicationMessageBus().getScopedMessageBus() }
 	private val applicationSettings by lazy { getApplicationSettingsRepository() }
-	private val selectedLibraryIdentifierProvider by lazy { getCachedSelectedLibraryIdProvider() }
 	private val playbackStartedBroadcaster by lazy { PlaybackStartedBroadcaster(applicationMessageBus.value) }
 	private val libraryRepository by lazy { LibraryRepository(this) }
 	private val playlistVolumeManager by lazy { PlaylistVolumeManager(1.0f) }
@@ -326,7 +323,7 @@ open class PlaybackService :
 	private val playbackNotificationsConfiguration by lazy {
 		val notificationChannelActivator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) NotificationChannelActivator(notificationManager) else NoOpChannelActivator()
 		val channelName = notificationChannelActivator.activateChannel(channelConfiguration)
-		com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.NotificationsConfiguration(
+		NotificationsConfiguration(
 			channelName,
 			playingNotificationId
 		)
@@ -418,20 +415,35 @@ open class PlaybackService :
 		}
 	}
 
-	private val buildSessionReceiver = { message : SelectedConnection.BuildSessionConnectionBroadcast ->
-			handleBuildConnectionStatusChange(message.buildingConnectionStatus)
-		}
+	private val nowPlayingRepository by lazy {
+		NowPlayingRepository(
+			libraryRepository,
+			libraryRepository,
+			InMemoryNowPlayingState,
+		)
+	}
+
+	private val revisionProvider by lazy { LibraryRevisionProvider(libraryConnectionProvider) }
+
+	private val freshLibraryFileProperties by lazy {
+		FilePropertiesProvider(
+			libraryConnectionProvider,
+			revisionProvider,
+			FilePropertyCache,
+		)
+	}
+
+	private val libraryFilePropertiesProvider by lazy {
+		CachedFilePropertiesProvider(
+			libraryConnectionProvider,
+			FilePropertyCache,
+			freshLibraryFileProperties,
+		)
+	}
 
 	private val unhandledRejectionHandler = ImmediateResponse<Throwable, Unit>(::uncaughtExceptionHandler)
 
-	private val sessionConnection: Promise<IConnectionProvider?>
-		get() {
-			applicationMessageBus.value.registerReceiver(buildSessionReceiver)
-			return SelectedConnection.getInstance(this).promiseSessionConnection().must {
-				applicationMessageBus.value.unregisterReceiver(buildSessionReceiver)
-				lazyNotificationController.value.removeNotification(connectingNotificationId)
-			}
-		}
+	private val libraryConnectionProvider by lazy { ConnectionSessionManager.get(this) }
 
 	private var isMarkedForPlay = false
 	private var areListenersRegistered = false
@@ -449,18 +461,6 @@ open class PlaybackService :
 	private var startId = 0
 	private var trackPositionBroadcaster: TrackPositionBroadcaster? = null
 	private var isDestroyed = false
-
-	private fun getNewNowPlayingRepository(): Promise<MaintainNowPlayingState?> =
-		selectedLibraryIdentifierProvider.promiseSelectedLibraryId()
-			.then { l ->
-				l?.let {
-                    NowPlayingRepository(
-                        SpecificLibraryProvider(l, libraryRepository),
-                        libraryRepository,
-						InMemoryNowPlayingState,
-                    )
-				}
-			}
 
 	private fun stopNotificationIfNotPlaying() {
 		if (!isMarkedForPlay) lazyNotificationController.value.removeNotification(playingNotificationId)
@@ -518,7 +518,9 @@ open class PlaybackService :
 
 					val playlistString = intent.getStringExtra(Bag.filePlaylist) ?: return Unit.toPromise()
 
-					return startNewPlaylist(playlistString, playlistPosition)
+					val libraryId = intent.safelyGetParcelableExtra<LibraryId>(Bag.libraryId) ?: return Unit.toPromise()
+
+					return startNewPlaylist(libraryId, playlistString, playlistPosition)
 				}
 				Action.seekTo -> {
 					val playlistPosition = intent.getIntExtra(Bag.playlistPosition, -1)
@@ -666,7 +668,7 @@ open class PlaybackService :
 			throw UnsupportedOperationException("Cannot create PlaybackService after onDestroy is called")
 	}
 
-	private fun startNewPlaylist(playlistString: String, playlistPosition: Int): Promise<Unit> {
+	private fun startNewPlaylist(libraryId: LibraryId, playlistString: String, playlistPosition: Int): Promise<Unit> {
 		val playbackState = playbackState ?: return Unit.toPromise()
 
 		isMarkedForPlay = true
@@ -674,6 +676,7 @@ open class PlaybackService :
 			.promiseParsedFileStringList(playlistString)
 			.eventually { playlist ->
 				playbackState.startPlaylist(
+					libraryId,
 					playlist.toMutableList(),
 					playlistPosition,
 					Duration.ZERO)
@@ -713,7 +716,7 @@ open class PlaybackService :
 	private fun initializePlaybackEngine(library: Library): Promise<PlaybackEngine?> {
 		playbackEngineCloseables.close()
 
-		return sessionConnection.eventually { connectionProvider ->
+		return promiseLibraryConnection(library.libraryId).eventually { connectionProvider ->
 			if (connectionProvider == null) throw PlaybackEngineInitializationException("connectionProvider was null!")
 
 			val scopedRevisionProvider = ScopedRevisionProvider(connectionProvider)
@@ -730,26 +733,26 @@ open class PlaybackService :
 
 			val imageProvider = CachedImageProvider.getInstance(this)
 
-			val scopedUrlKeyProvider = ScopedUrlKeyProvider(connectionProvider)
+			val urlKeyProvider = UrlKeyProvider(libraryConnectionProvider)
 			val nowPlayingRepository = NowPlayingRepository(
-				SpecificLibraryProvider(library.libraryId, libraryRepository),
+				libraryRepository,
 				libraryRepository,
 				InMemoryNowPlayingState,
 			)
 			val promisedMediaBroadcaster = promisedMediaSession.then { mediaSession ->
 				val broadcaster = MediaSessionBroadcaster(
 					nowPlayingRepository,
-					cachedSessionFilePropertiesProvider,
+					libraryFilePropertiesProvider,
 					imageProvider,
 					MediaSessionController(mediaSession),
 				)
+
 				ExtendedPlaybackNotificationRouter(
 					broadcaster,
 					PlaybackNotificationRouter(
 						broadcaster,
 						applicationMessageBus.value,
-						scopedUrlKeyProvider,
-						nowPlayingRepository,
+						urlKeyProvider,
 					).also(playbackEngineCloseables::manage),
 					applicationMessageBus.value,
 				).also(playbackEngineCloseables::manage)
@@ -760,9 +763,8 @@ open class PlaybackService :
 					NowPlayingNotificationBuilder(
 						this,
 						mediaStyleNotificationSetup,
-						scopedUrlKeyProvider,
-						selectedLibraryIdentifierProvider,
-						cachedSessionFilePropertiesProvider,
+						urlKeyProvider,
+						libraryFilePropertiesProvider,
 						imageProvider
 					)
 					.also(playbackEngineCloseables::manage)
@@ -773,11 +775,9 @@ open class PlaybackService :
 								playbackNotificationsConfiguration,
 								builder,
 								playbackStartingNotificationBuilder,
-								nowPlayingRepository,
 							),
 							applicationMessageBus.value,
-							scopedUrlKeyProvider,
-							nowPlayingRepository,
+							urlKeyProvider,
 						).also(playbackEngineCloseables::manage)
 					}
 			}
@@ -848,25 +848,20 @@ open class PlaybackService :
 						playbackQueues = it
 					}
 			}
-			.eventually { queues ->
+			.then { queues ->
 				PlaylistPlaybackBootstrapper(playlistVolumeManager)
 					.also {
 						playbackEngineCloseables.manage(it)
 						playlistPlaybackBootstrapper = it
 					}
 					.let { bootstrapper ->
-						getNewNowPlayingRepository()
-							.then { r ->
-								r?.let {
-									PlaybackEngine(
-										queues,
-										QueueProviders.providers(),
-										r,
-										bootstrapper
-									)
-								}
-							}
-				}
+						PlaybackEngine(
+							queues,
+							QueueProviders.providers(),
+							nowPlayingRepository,
+							bootstrapper
+						)
+					}
 			}
 			.eventually { engine ->
 				engine
@@ -891,7 +886,7 @@ open class PlaybackService :
 						playlistFiles = it
 						playbackContinuity = it
 					}
-					?.restoreFromSavedState()
+					?.restoreFromSavedState(library.libraryId)
 					?.then { file ->
 						file?.apply {
 							broadcastChangedFile(PositionedFile(playlistPosition, serviceFile))
@@ -902,6 +897,11 @@ open class PlaybackService :
 					.keepPromise()
 			}
 	}
+
+	private fun promiseLibraryConnection(libraryId: LibraryId) =
+		libraryConnectionProvider.promiseLibraryConnection(libraryId).apply {
+			updates(::handleBuildConnectionStatusChange)
+		}
 
 	private fun handleBuildConnectionStatusChange(status: BuildingConnectionStatus) {
 		val notifyBuilder = NotificationCompat.Builder(this, playbackNotificationsConfiguration.notificationChannel)
@@ -1160,6 +1160,7 @@ open class PlaybackService :
 			private val magicPropertyBuilder by lazy { MagicPropertyBuilder(Bag::class.java) }
 
 			/* Bag constants */
+			val libraryId by lazy { magicPropertyBuilder.buildProperty("libraryId") }
 			val playlistPosition by lazy { magicPropertyBuilder.buildProperty("playlistPosition") }
 			val filePlaylist by lazy { magicPropertyBuilder.buildProperty("filePlaylist") }
 			val startPos by lazy { magicPropertyBuilder.buildProperty("startPos") }

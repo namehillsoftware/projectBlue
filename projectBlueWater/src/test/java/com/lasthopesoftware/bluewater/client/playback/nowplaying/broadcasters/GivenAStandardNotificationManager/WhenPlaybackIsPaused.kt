@@ -1,10 +1,8 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.GivenAStandardNotificationManager
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.NotifyOfPlaybackEvents
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.PlaybackNotificationRouter
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
@@ -31,16 +29,7 @@ class WhenPlaybackIsPaused {
 					).toPromise()
 				}
 			},
-			mockk {
-				every { promiseNowPlaying() } returns NowPlaying(
-					LibraryId(1),
-					listOf(ServiceFile(156)),
-					0,
-					0L,
-					false
-				).toPromise()
-			},
-		)
+        )
 		playbackNotificationRouter
 	}
 

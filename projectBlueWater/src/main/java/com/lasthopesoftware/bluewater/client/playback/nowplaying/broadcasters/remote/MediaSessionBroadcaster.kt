@@ -9,7 +9,8 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideImages
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.ScopedCachedFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.NotifyOfPlaybackEvents
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.NotifyOfTrackPositionUpdates
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
@@ -28,7 +29,7 @@ private const val standardCapabilities = PlaybackStateCompat.ACTION_PLAY_PAUSE o
 
 class MediaSessionBroadcaster(
 	private val nowPlayingProvider: GetNowPlayingState,
-	private val scopedCachedFilePropertiesProvider: ScopedCachedFilePropertiesProvider,
+	private val filePropertiesProvider: ProvideLibraryFileProperties,
 	private val imageProvider: ProvideImages,
 	private val mediaSession: ControlMediaSession
 ) : NotifyOfPlaybackEvents, NotifyOfTrackPositionUpdates {
@@ -87,12 +88,8 @@ class MediaSessionBroadcaster(
 		notifyPaused()
 	}
 
-	override fun notifyPlayingFileUpdated() {
-		nowPlayingProvider
-			.promiseNowPlaying()
-			.then {
-				it?.playingFile?.serviceFile?.also(::updateNowPlaying)
-			}
+	override fun notifyPlayingFileUpdated(libraryId: LibraryId, serviceFile: ServiceFile) {
+		updateNowPlaying(libraryId, serviceFile)
 	}
 
 	override fun updateTrackPosition(trackPosition: Long) {
@@ -117,11 +114,11 @@ class MediaSessionBroadcaster(
 		remoteClientBitmap = null
 	}
 
-	private fun updateNowPlaying(serviceFile: ServiceFile) {
+	private fun updateNowPlaying(libraryId: LibraryId, serviceFile: ServiceFile) {
 		val promisedBitmap = imageProvider.promiseFileBitmap(serviceFile)
 
-		scopedCachedFilePropertiesProvider
-			.promiseFileProperties(serviceFile)
+		filePropertiesProvider
+			.promiseFileProperties(libraryId, serviceFile)
 			.eventually { fileProperties ->
 				val artist = fileProperties[KnownFileProperties.Artist]
 				val name = fileProperties[KnownFileProperties.Name]

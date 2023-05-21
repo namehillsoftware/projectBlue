@@ -44,8 +44,7 @@ class WhenPlaybackIsPaused : AndroidContext() {
 			),
 			notificationContentBuilder,
 			{ Promise(newFakeBuilder(context, Notification())) },
-			mockk(),
-		)
+        )
 
 		playbackNotificationBroadcaster.notifyPaused()
     }

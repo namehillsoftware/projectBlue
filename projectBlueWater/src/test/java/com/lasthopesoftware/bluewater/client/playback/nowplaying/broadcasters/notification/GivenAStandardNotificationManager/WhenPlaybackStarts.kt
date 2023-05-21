@@ -38,7 +38,6 @@ class WhenPlaybackStarts : AndroidContext() {
                         )
                     )
                 },
-                mockk(),
             )
 		playbackNotificationBroadcaster.notifyPlaying()
 	}

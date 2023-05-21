@@ -1,5 +1,5 @@
-package com.lasthopesoftware.bluewater.client.playback.engine.preparation;
+package com.lasthopesoftware.bluewater.client.playback.engine.preparation
 
-public interface IPreparedPlaybackQueueConfiguration {
-	int getMaxQueueSize();
+interface IPreparedPlaybackQueueConfiguration {
+	fun getMaxQueueSize(): Int
 }

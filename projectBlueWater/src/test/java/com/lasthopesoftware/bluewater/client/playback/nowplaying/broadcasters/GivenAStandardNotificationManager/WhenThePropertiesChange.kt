@@ -2,10 +2,8 @@ package com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.G
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.NotifyOfPlaybackEvents
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.PlaybackNotificationRouter
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import io.mockk.every
@@ -31,16 +29,7 @@ class WhenThePropertiesChange {
 						).toPromise()
 				}
 			},
-			mockk {
-				every { promiseNowPlaying() } returns NowPlaying(
-					LibraryId(1),
-					listOf(ServiceFile(635)),
-					0,
-					0L,
-					false
-				).toPromise()
-			},
-		)
+        )
 		playbackNotificationRouter
 	}
 

@@ -4,9 +4,9 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ScopedCachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.settings.volumeleveling.IVolumeLevelSettings
+import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
-import org.slf4j.LoggerFactory
 import kotlin.math.pow
 
 class MaxFileVolumeProvider(
@@ -15,7 +15,7 @@ class MaxFileVolumeProvider(
 ) : ProvideMaxFileVolume {
 
 	companion object {
-		private val logger = LoggerFactory.getLogger(MaxFileVolumeProvider::class.java)
+		private val logger by lazyLogger<MaxFileVolumeProvider>()
 		private const val UnityVolume = 1.0f
 		private val promisedUnityVolume = UnityVolume.toPromise()
 	}

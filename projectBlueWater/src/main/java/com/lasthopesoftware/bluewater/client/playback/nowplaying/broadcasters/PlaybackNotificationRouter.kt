@@ -2,65 +2,59 @@ package com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
-import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideScopedUrlKey
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideUrlKey
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
-import com.lasthopesoftware.bluewater.shared.cls
-import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
-import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
+import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
+import com.lasthopesoftware.resources.closables.AutoCloseableManager
 
 class PlaybackNotificationRouter(
 	private val playbackNotificationBroadcaster: NotifyOfPlaybackEvents,
 	private val registerApplicationMessages: RegisterForApplicationMessages,
-	private val scopedUrlKeys: ProvideScopedUrlKey,
-	private val nowPlayingProvider: GetNowPlayingState,
-) :
-	(ApplicationMessage) -> Unit,
-	AutoCloseable
+	private val urlKeys: ProvideUrlKey,
+) : AutoCloseable
 {
-	init {
-		registerApplicationMessages.registerForClass(cls<PlaybackMessage.TrackChanged>(), this)
-		registerApplicationMessages.registerForClass(cls<PlaybackMessage.PlaybackStarted>(), this)
-		registerApplicationMessages.registerForClass(cls<PlaybackMessage.PlaybackPaused>(), this)
-		registerApplicationMessages.registerForClass(cls<PlaybackMessage.PlaybackInterrupted>(), this)
-		registerApplicationMessages.registerForClass(cls<PlaybackMessage.PlaybackStopped>(), this)
-		registerApplicationMessages.registerForClass(cls<FilePropertiesUpdatedMessage>(), this)
-	}
+	private val autoCloseableManager = AutoCloseableManager()
+	private var state: Pair<LibraryId, ServiceFile>? = null
 
-	override fun invoke(message: ApplicationMessage) {
-		when (message) {
-			is PlaybackMessage.TrackChanged -> playbackNotificationBroadcaster.notifyPlayingFileUpdated()
-			is PlaybackMessage.PlaybackStarted -> playbackNotificationBroadcaster.notifyPlaying()
-			is PlaybackMessage.PlaybackPaused -> playbackNotificationBroadcaster.notifyPaused()
-			is PlaybackMessage.PlaybackInterrupted -> playbackNotificationBroadcaster.notifyInterrupted()
-			is PlaybackMessage.PlaybackStopped -> playbackNotificationBroadcaster.notifyStopped()
-			is FilePropertiesUpdatedMessage -> updatePlayingFilePropertiesIfNecessary(message.urlServiceKey)
+	init {
+		with (playbackNotificationBroadcaster) {
+			autoCloseableManager.manage(registerApplicationMessages.registerReceiver { m: PlaybackMessage.TrackChanged ->
+				state = Pair(m.libraryId, m.positionedFile.serviceFile)
+				notifyPlayingFileUpdated(m.libraryId, m.positionedFile.serviceFile)
+			})
+			autoCloseableManager.manage(registerApplicationMessages.registerReceiver { _: PlaybackMessage.PlaybackStarted ->
+				notifyPlaying()
+			})
+			autoCloseableManager.manage(registerApplicationMessages.registerReceiver { _: PlaybackMessage.PlaybackPaused ->
+				notifyPaused()
+			})
+			autoCloseableManager.manage(registerApplicationMessages.registerReceiver { _: PlaybackMessage.PlaybackInterrupted ->
+				notifyInterrupted()
+			})
+			autoCloseableManager.manage(registerApplicationMessages.registerReceiver { _: PlaybackMessage.PlaybackStopped ->
+				notifyStopped()
+			})
+			autoCloseableManager.manage(registerApplicationMessages.registerReceiver { m: FilePropertiesUpdatedMessage ->
+				updatePlayingFilePropertiesIfNecessary(m.urlServiceKey)
+			})
 		}
 	}
 
 	override fun close() {
-		registerApplicationMessages.unregisterReceiver(this)
+		autoCloseableManager.close()
 	}
 
 	private fun updatePlayingFilePropertiesIfNecessary(urlKeyHolder: UrlKeyHolder<ServiceFile>) {
-		promiseNowPlayingUrlKeyHolder()
-			.then { nowPlayingUrlKeyHolder ->
-				if (urlKeyHolder == nowPlayingUrlKeyHolder) {
-					playbackNotificationBroadcaster.notifyPlayingFileUpdated()
+		state?.also { (libraryId, serviceFile) ->
+			urlKeys
+				.promiseUrlKey(libraryId, serviceFile)
+				.then { currentUrlKeyHolder ->
+					if (urlKeyHolder == currentUrlKeyHolder)
+						playbackNotificationBroadcaster.notifyPlayingFileUpdated(libraryId, serviceFile)
 				}
-			}
+		}
 	}
-
-	private fun promiseNowPlayingUrlKeyHolder() =
-		nowPlayingProvider
-			.promiseNowPlaying()
-			.eventually { nowPlaying ->
-				nowPlaying
-					?.playingFile
-					?.serviceFile
-					?.let { scopedUrlKeys.promiseUrlKey(it) }
-					.keepPromise()
-			}
 }
