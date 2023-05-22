@@ -29,7 +29,7 @@ class WhenUpdatingTheFile : AndroidContext() {
 
 	override fun before() {
 		val mediaFileUriProvider = mockk<MediaFileUriProvider>()
-		every { mediaFileUriProvider.promiseFileUri(ServiceFile(4)) } returns Promise(Uri.fromFile(File("/custom-root/a-file.mp3")))
+		every { mediaFileUriProvider.promiseUri(ServiceFile(4)) } returns Promise(Uri.fromFile(File("/custom-root/a-file.mp3")))
 
 		val mediaFileIdProvider = mockk<ProvideMediaFileIds>()
 		every { mediaFileIdProvider.getMediaId(LibraryId(14), ServiceFile(4)) } returns Promise(12)

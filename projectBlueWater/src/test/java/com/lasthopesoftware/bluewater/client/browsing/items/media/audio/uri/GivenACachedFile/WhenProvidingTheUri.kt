@@ -25,7 +25,7 @@ class WhenProvidingTheUri {
 		private val cachedFileUri by lazy {
 			val remoteUri = Uri.parse("http://a-url/file?key=1")
 			val remoteFileUriProvider = mockk<RemoteFileUriProvider>().apply {
-				every { promiseFileUri(ServiceFile(10)) } returns Promise(remoteUri)
+				every { promiseUri(ServiceFile(10)) } returns Promise(remoteUri)
 			}
 
 			val cachedFilesProvider = mockk<CacheFiles>().apply {
@@ -38,7 +38,7 @@ class WhenProvidingTheUri {
 			)
 
 			cachedAudioFileUriProvider
-				.promiseFileUri(ServiceFile(10))
+				.promiseUri(ServiceFile(10))
 				.toExpiringFuture()
 				.get()
 		}

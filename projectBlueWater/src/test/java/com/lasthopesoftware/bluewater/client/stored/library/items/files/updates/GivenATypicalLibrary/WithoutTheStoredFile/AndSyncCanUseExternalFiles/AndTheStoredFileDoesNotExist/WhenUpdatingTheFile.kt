@@ -27,7 +27,7 @@ class WhenUpdatingTheFile {
 		private val storedFile = Lazy {
 
 			val mediaFileUriProvider = mockk<MediaFileUriProvider>()
-			every { mediaFileUriProvider.promiseFileUri(ServiceFile(4)) } returns Promise.empty()
+			every { mediaFileUriProvider.promiseUri(ServiceFile(4)) } returns Promise.empty()
 
 			val mediaFileIdProvider = mockk<ProvideMediaFileIds>()
 			every { mediaFileIdProvider.getMediaId(LibraryId(14), ServiceFile(4)) } returns Promise.empty()
