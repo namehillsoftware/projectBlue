@@ -1,9 +1,9 @@
-package com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building;
+package com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building
 
-import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationCompat
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.namehillsoftware.handoff.promises.Promise
 
-import com.namehillsoftware.handoff.promises.Promise;
-
-public interface BuildPlaybackStartingNotification {
-	Promise<NotificationCompat.Builder> promisePreparedPlaybackStartingNotification();
+interface BuildPlaybackStartingNotification {
+    fun promisePreparedPlaybackStartingNotification(libraryId: LibraryId): Promise<NotificationCompat.Builder>
 }

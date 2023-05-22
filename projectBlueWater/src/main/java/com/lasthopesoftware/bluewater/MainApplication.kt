@@ -98,17 +98,11 @@ open class MainApplication : Application() {
 	private fun registerAppBroadcastReceivers() {
 		applicationMessageBus.registerReceiver { mediaFileFound : MediaFileUriProvider.MediaFileFound ->
 			mediaFileFound.mediaId ?: return@registerReceiver
-			libraryRepository
-				.promiseLibrary(mediaFileFound.libraryId)
-				.then { library ->
-					if (library != null) {
-						storedFileAccess.addMediaFile(
-							library,
-							mediaFileFound.serviceFile,
-							mediaFileFound.mediaId,
-							mediaFileFound.systemFile.path)
-					}
-				}
+			storedFileAccess.addMediaFile(
+				mediaFileFound.libraryId,
+				mediaFileFound.serviceFile,
+				mediaFileFound.mediaId,
+				mediaFileFound.systemFile.path)
 		}
 
 		applicationMessageBus.registerReceiver { readPermissionsNeeded : StorageReadPermissionsRequestedBroadcaster.ReadPermissionsNeeded ->

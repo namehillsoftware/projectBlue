@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.file.volume.preparation
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile
 import com.lasthopesoftware.bluewater.client.playback.file.volume.ProvideMaxFileVolume
@@ -12,10 +13,10 @@ class MaxFileVolumePreparer(
 	private val playableFilePreparationSource: PlayableFilePreparationSource,
 	private val provideMaxFileVolume: ProvideMaxFileVolume
 ) : PlayableFilePreparationSource {
-	override fun promisePreparedPlaybackFile(serviceFile: ServiceFile, preparedAt: Duration): Promise<PreparedPlayableFile?> {
+	override fun promisePreparedPlaybackFile(libraryId: LibraryId, serviceFile: ServiceFile, preparedAt: Duration): Promise<PreparedPlayableFile?> {
 		val promisedMaxFileVolume = provideMaxFileVolume.promiseMaxFileVolume(serviceFile)
 		return playableFilePreparationSource
-			.promisePreparedPlaybackFile(serviceFile, preparedAt)
+			.promisePreparedPlaybackFile(libraryId, serviceFile, preparedAt)
 			.then { ppf ->
 				ppf ?: return@then null
 

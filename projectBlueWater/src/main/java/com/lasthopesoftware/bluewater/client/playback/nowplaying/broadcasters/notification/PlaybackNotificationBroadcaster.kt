@@ -20,17 +20,21 @@ class PlaybackNotificationBroadcaster(
 	private var isPlaying = false
 
 	private var isNotificationStarted = false
-	private var state: Pair<LibraryId, ServiceFile>? = null
+	private var libraryId: LibraryId? = null
+	private var serviceFile: ServiceFile? = null
 
 	override fun notifyPlaying() {
 		isPlaying = true
 
-		state?.also { (libraryId, serviceFile) ->
-			updateNowPlaying(libraryId, serviceFile)
+		val currentLibraryId = libraryId ?: return
+
+		serviceFile?.also { serviceFile ->
+			updateNowPlaying(currentLibraryId, serviceFile)
 			return
 		}
 
-		playbackStartingNotification.promisePreparedPlaybackStartingNotification()
+		playbackStartingNotification
+			.promisePreparedPlaybackStartingNotification(currentLibraryId)
 			.then { builder ->
 				synchronized(notificationSync) {
 					if (isNotificationStarted) return@then
@@ -41,15 +45,15 @@ class PlaybackNotificationBroadcaster(
 	}
 
 	override fun notifyPaused() {
-		val currentState = state
-		if (currentState == null) {
+		val currentServiceFile = serviceFile
+		val libraryId = libraryId
+		if (currentServiceFile == null || libraryId == null) {
 			notificationsController.stopForegroundNotification(notificationId)
 			return
 		}
 
-		val (libraryId, serviceFile) = currentState
 		nowPlayingNotificationContentBuilder
-			.promiseNowPlayingNotification(libraryId, serviceFile, false.also { isPlaying = false })
+			.promiseNowPlayingNotification(libraryId, currentServiceFile, false.also { isPlaying = false })
 			.then {
 				it?.apply {
 					notificationsController.notifyBackground(build(), notificationId)
@@ -58,15 +62,15 @@ class PlaybackNotificationBroadcaster(
 	}
 
 	override fun notifyInterrupted() {
-		val currentState = state
-		if (currentState == null) {
+		val currentServiceFile = serviceFile
+		val libraryId = libraryId
+		if (currentServiceFile == null || libraryId == null) {
 			notificationsController.stopForegroundNotification(notificationId)
 			return
 		}
 
-		val (libraryId, serviceFile) = currentState
 		nowPlayingNotificationContentBuilder
-			.promiseNowPlayingNotification(libraryId, serviceFile, false.also { isPlaying = it })
+			.promiseNowPlayingNotification(libraryId, currentServiceFile, false.also { isPlaying = it })
 			.then {
 				it?.apply {
 					notificationsController.notifyForeground(build(), notificationId)
@@ -100,9 +104,10 @@ class PlaybackNotificationBroadcaster(
 		}
 
 		synchronized(notificationSync) {
-			state = Pair(libraryId, serviceFile)
+			this.serviceFile = serviceFile
+			this.libraryId = libraryId
 
-			fun isValidForNotification() = serviceFile == this.state?.second && (isNotificationStarted || isPlaying)
+			fun isValidForNotification() = serviceFile == this.serviceFile && libraryId == this.libraryId && (isNotificationStarted || isPlaying)
 
 			nowPlayingNotificationContentBuilder
 				.promiseLoadingNotification(libraryId, isPlaying)

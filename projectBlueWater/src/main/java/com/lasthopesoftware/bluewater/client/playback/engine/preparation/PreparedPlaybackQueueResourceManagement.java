@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.preparation;
 
 
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.IPositionedFileQueue;
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.PositionedFileQueue;
 
 public class PreparedPlaybackQueueResourceManagement implements ManagePlaybackQueues {
 	private final IPlayableFilePreparationSourceProvider playbackPreparerProvider;
@@ -15,7 +15,7 @@ public class PreparedPlaybackQueueResourceManagement implements ManagePlaybackQu
 	}
 
 	@Override
-	public PreparedPlayableFileQueue initializePreparedPlaybackQueue(IPositionedFileQueue positionedFileQueue) {
+	public PreparedPlayableFileQueue initializePreparedPlaybackQueue(PositionedFileQueue positionedFileQueue) {
 		close();
 
 		return preparedPlaybackQueue =
@@ -26,7 +26,7 @@ public class PreparedPlaybackQueueResourceManagement implements ManagePlaybackQu
 	}
 
 	@Override
-	public boolean tryUpdateQueue(IPositionedFileQueue positionedFileQueue) {
+	public boolean tryUpdateQueue(PositionedFileQueue positionedFileQueue) {
 		if (preparedPlaybackQueue == null) return false;
 
 		preparedPlaybackQueue.updateQueue(positionedFileQueue);

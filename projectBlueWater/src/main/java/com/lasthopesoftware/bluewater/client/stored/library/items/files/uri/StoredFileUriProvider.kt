@@ -1,44 +1,29 @@
-package com.lasthopesoftware.bluewater.client.stored.library.items.files.uri;
+package com.lasthopesoftware.bluewater.client.stored.library.items.files.uri
 
-import android.net.Uri;
-import android.os.Environment;
+import android.net.Uri
+import android.os.Environment
+import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.uri.ProvideFileUrisForLibrary
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.AccessStoredFiles
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
+import com.lasthopesoftware.bluewater.shared.android.permissions.CheckOsPermissions
+import com.namehillsoftware.handoff.promises.Promise
+import java.io.File
 
-import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.browsing.files.uri.IFileUriProvider;
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ISelectedBrowserLibraryProvider;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.AccessStoredFiles;
-import com.lasthopesoftware.bluewater.shared.android.permissions.CheckOsPermissions;
-import com.namehillsoftware.handoff.promises.Promise;
-
-import java.io.File;
-
-public class StoredFileUriProvider implements IFileUriProvider {
-	private final AccessStoredFiles storedFileAccess;
-	private final ISelectedBrowserLibraryProvider selectedBrowserLibraryProvider;
-	private final CheckOsPermissions externalStorageReadPermissionsArbitrator;
-
-	public StoredFileUriProvider(ISelectedBrowserLibraryProvider selectedBrowserLibraryProvider, AccessStoredFiles storedFileAccess, CheckOsPermissions externalStorageReadPermissionsArbitrator) {
-		this.selectedBrowserLibraryProvider = selectedBrowserLibraryProvider;
-		this.externalStorageReadPermissionsArbitrator = externalStorageReadPermissionsArbitrator;
-		this.storedFileAccess = storedFileAccess;
-	}
-
-	@Override
-	public Promise<Uri> promiseFileUri(ServiceFile serviceFile) {
-		return selectedBrowserLibraryProvider
-			.getBrowserLibrary()
-			.eventually(library -> storedFileAccess.getStoredFile(library, serviceFile))
-			.then(storedFile -> {
-				if (storedFile == null || !storedFile.isDownloadComplete() || storedFile.getPath() == null || storedFile.getPath().isEmpty()) return null;
-
-				final File systemFile = new File(storedFile.getPath());
-				if (systemFile.getAbsolutePath().contains(Environment.getExternalStorageDirectory().getAbsolutePath()) && !this.externalStorageReadPermissionsArbitrator.isReadPermissionGranted())
-					return null;
-
-				if (systemFile.exists())
-					return Uri.fromFile(systemFile);
-
-				return null;
-			});
-	}
+class StoredFileUriProvider(
+	private val storedFileAccess: AccessStoredFiles,
+	private val externalStorageReadPermissionsArbitrator: CheckOsPermissions
+) : ProvideFileUrisForLibrary {
+    override fun promiseUri(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Uri?> {
+        return storedFileAccess
+			.getStoredFile(libraryId, serviceFile)
+            .then { storedFile: StoredFile? ->
+                if (storedFile == null || !storedFile.isDownloadComplete || storedFile.path == null || storedFile.path.isEmpty()) return@then null
+                val systemFile = File(storedFile.path)
+                if (systemFile.absolutePath.contains(Environment.getExternalStorageDirectory().absolutePath) && !externalStorageReadPermissionsArbitrator.isReadPermissionGranted) return@then null
+                if (systemFile.exists()) return@then Uri.fromFile(systemFile)
+                null
+            }
+    }
 }

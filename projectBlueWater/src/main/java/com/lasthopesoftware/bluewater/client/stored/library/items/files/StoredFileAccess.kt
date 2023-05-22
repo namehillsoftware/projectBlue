@@ -3,8 +3,8 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.files
 import android.content.Context
 import android.database.SQLException
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityInformation
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFileEntityInformation
 import com.lasthopesoftware.bluewater.repository.InsertBuilder.Companion.fromTable
@@ -25,8 +25,8 @@ class StoredFileAccess(private val context: Context) : AccessStoredFiles {
 			}
 		}
 
-	override fun getStoredFile(library: Library, serviceFile: ServiceFile): Promise<StoredFile?> =
-		getStoredFileTask(library, serviceFile)
+	override fun getStoredFile(libraryId: LibraryId, serviceFile: ServiceFile): Promise<StoredFile?> =
+		getStoredFileTask(libraryId, serviceFile)
 
 	override fun promiseDanglingFiles(): Promise<Collection<StoredFile>> =
 		promiseTableMessage<Collection<StoredFile>, StoredFile> {
@@ -42,11 +42,11 @@ class StoredFileAccess(private val context: Context) : AccessStoredFiles {
 			}
 		}
 
-	private fun getStoredFileTask(library: Library, serviceFile: ServiceFile): Promise<StoredFile?> =
+	private fun getStoredFileTask(libraryId: LibraryId, serviceFile: ServiceFile): Promise<StoredFile?> =
 		promiseTableMessage<StoredFile?, StoredFile> {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				getStoredFile(
-					library,
+					libraryId,
 					repositoryAccessHelper,
 					serviceFile
 				)
@@ -85,12 +85,12 @@ class StoredFileAccess(private val context: Context) : AccessStoredFiles {
 			storedFile.setIsDownloadComplete(true)
 		}
 
-	override fun addMediaFile(library: Library, serviceFile: ServiceFile, mediaFileId: Int, filePath: String): Promise<Unit> =
+	override fun addMediaFile(libraryId: LibraryId, serviceFile: ServiceFile, mediaFileId: Int, filePath: String): Promise<Unit> =
 		promiseTableMessage<Unit, StoredFile> {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
-				val storedFile = getStoredFile(library, repositoryAccessHelper, serviceFile) ?: run {
-					createStoredFile(library, repositoryAccessHelper, serviceFile)
-					getStoredFile(library, repositoryAccessHelper, serviceFile)
+				val storedFile = getStoredFile(libraryId, repositoryAccessHelper, serviceFile) ?: run {
+					createStoredFile(libraryId, repositoryAccessHelper, serviceFile)
+					getStoredFile(libraryId, repositoryAccessHelper, serviceFile)
 						?.setIsOwner(false)
 						?.setIsDownloadComplete(true)
 						?.setPath(filePath)
@@ -100,7 +100,7 @@ class StoredFileAccess(private val context: Context) : AccessStoredFiles {
 			}
 		}
 
-	private fun getStoredFile(library: Library, helper: RepositoryAccessHelper, serviceFile: ServiceFile): StoredFile? =
+	private fun getStoredFile(library: LibraryId, helper: RepositoryAccessHelper, serviceFile: ServiceFile): StoredFile? =
 		helper.beginNonExclusiveTransaction().use {
 			helper
 				.mapSql(
@@ -122,12 +122,12 @@ class StoredFileAccess(private val context: Context) : AccessStoredFiles {
 				.fetchFirst()
 		}
 
-	private fun createStoredFile(library: Library, repositoryAccessHelper: RepositoryAccessHelper, serviceFile: ServiceFile) =
+	private fun createStoredFile(libraryId: LibraryId, repositoryAccessHelper: RepositoryAccessHelper, serviceFile: ServiceFile) =
 		repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
 			repositoryAccessHelper
 				.mapSql(insertSql)
 				.addParameter(StoredFileEntityInformation.serviceIdColumnName, serviceFile.key)
-				.addParameter(StoredFileEntityInformation.libraryIdColumnName, library.id)
+				.addParameter(StoredFileEntityInformation.libraryIdColumnName, libraryId.id)
 				.addParameter(StoredFileEntityInformation.isOwnerColumnName, true)
 				.execute()
 			closeableTransaction.setTransactionSuccessful()

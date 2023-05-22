@@ -1,10 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.storage
 
 import android.app.Application
-import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
-import com.lasthopesoftware.bluewater.client.browsing.library.access.SpecificLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedLibraryIdProvider
@@ -16,14 +13,12 @@ import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicat
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageRegistrations
 import com.lasthopesoftware.bluewater.shared.messages.application.HaveApplicationMessageRegistrations
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
-import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.namehillsoftware.handoff.promises.Promise
 import java.util.concurrent.atomic.AtomicReference
 
 class LiveNowPlayingLookup private constructor(
 	selectedLibraryIdentifierProvider: ProvideSelectedLibraryId,
-	private val libraryProvider: ILibraryProvider,
-	private val libraryStorage: ILibraryStorage,
+	private val inner: GetNowPlayingState,
 	registrations: HaveApplicationMessageRegistrations,
 ) : GetNowPlayingState {
 
@@ -38,8 +33,11 @@ class LiveNowPlayingLookup private constructor(
 			val libraryRepository = LibraryRepository(application)
 			instance = LiveNowPlayingLookup(
 				SelectedLibraryIdProvider(application.getApplicationSettingsRepository()),
-				libraryRepository,
-				libraryRepository,
+				NowPlayingRepository(
+					libraryRepository,
+					libraryRepository,
+					InMemoryNowPlayingState,
+				),
 				ApplicationMessageRegistrations,
 			)
 
@@ -51,10 +49,8 @@ class LiveNowPlayingLookup private constructor(
 			else throw IllegalStateException("Instance should be initialized in application root")
 	}
 
-	private val mutableNowPlayingState = AtomicReference<PositionedFile?>(null)
-
-	@Volatile
-	private var inner: GetNowPlayingState? = null
+	private val activeLibraryId = AtomicReference<LibraryId?>(null)
+	private val activePositionedFile = AtomicReference<PositionedFile?>(null)
 
 	@Volatile
 	private var trackedPosition: Long? = null
@@ -66,31 +62,38 @@ class LiveNowPlayingLookup private constructor(
 		registrations.registerReceiver { message: TrackPositionUpdate -> trackedPosition = message.filePosition.millis }
 		registrations.registerReceiver { message: PlaybackMessage.TrackChanged ->
 			trackedPosition = null
-			mutableNowPlayingState.set(message.positionedFile)
+			activeLibraryId.updateIfDifferent(message.libraryId)
+			activePositionedFile.updateIfDifferent(message.positionedFile)
 		}
 	}
 
-	override fun promiseNowPlaying(): Promise<NowPlaying?> =
+	override fun promiseNowPlaying(libraryId: LibraryId): Promise<NowPlaying?> =
 		inner
-			?.promiseNowPlaying()
-			?.then { np ->
-				if (mutableNowPlayingState.run { compareAndSet(get(), np?.playingFile) }) {
-					trackedPosition = null
-				}
+			.promiseNowPlaying(libraryId)
+			.then { nowPlaying ->
+				nowPlaying
+					?.takeIf { activeLibraryId.get() == it.libraryId }
+					?.let { activeNowPlaying ->
+						if (activePositionedFile.updateIfDifferent(activeNowPlaying.playingFile)) {
+							trackedPosition = null
+						}
 
-				np?.let {
-					trackedPosition?.let { p -> it.copy(filePosition = p) } ?: it
-				}
+						trackedPosition?.let { p -> activeNowPlaying.copy(filePosition = p) } ?: activeNowPlaying
+					}
+					?: nowPlaying
 			}
-			.keepPromise()
 
 	private fun updateInner(libraryId: LibraryId) {
-		inner = NowPlayingRepository(SpecificLibraryProvider(libraryId, libraryProvider), libraryStorage, InMemoryNowPlayingState).apply {
-				promiseNowPlaying()
-					.then {
-						mutableNowPlayingState.set(it?.playingFile)
-						trackedPosition = it?.filePosition
-					}
-		}
+		activeLibraryId.updateIfDifferent(libraryId)
+		promiseNowPlaying(libraryId)
+	}
+
+	private fun <T> AtomicReference<T>.updateIfDifferent(newValue: T): Boolean {
+		do {
+			val prev = get()
+			if (prev == newValue) return false
+		} while (!compareAndSet(prev, newValue))
+
+		return true
 	}
 }
