@@ -1,12 +1,14 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.playlist
 
 import androidx.lifecycle.ViewModel
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage.PlaylistChanged
 import com.lasthopesoftware.bluewater.shared.android.ui.components.dragging.move
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
+import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
@@ -19,6 +21,7 @@ class NowPlayingPlaylistViewModel(
 	HasEditPlaylistState,
 	(PlaylistChanged) -> Unit
 {
+	private var activeLibraryId: LibraryId? = null
 	private val playlistChangedSubscription = applicationMessages.registerReceiver(this)
 
 	private val mutableEditingPlaylistState = MutableStateFlow(false)
@@ -30,6 +33,10 @@ class NowPlayingPlaylistViewModel(
 
 	val isEditingPlaylistState = mutableEditingPlaylistState.asStateFlow()
 	val nowPlayingList = nowPlayingListState.asStateFlow()
+
+	fun initializeView(libraryId: LibraryId) {
+		activeLibraryId = libraryId
+	}
 
 	override val isEditingPlaylist: Boolean
 		get() = isEditingPlaylistState.value
@@ -55,8 +62,9 @@ class NowPlayingPlaylistViewModel(
 	}
 
 	private fun updateViewFromRepository() {
-		nowPlayingRepository
-			.promiseNowPlaying()
+		activeLibraryId
+			?.let(nowPlayingRepository::promiseNowPlaying)
+			.keepPromise()
 			.then { np ->
 				nowPlayingListState.value = np?.playlist?.mapIndexed(::PositionedFile) ?: emptyList()
 			}

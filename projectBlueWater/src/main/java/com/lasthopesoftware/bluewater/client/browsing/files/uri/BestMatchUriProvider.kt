@@ -2,7 +2,8 @@ package com.lasthopesoftware.bluewater.client.browsing.files.uri
 
 import android.net.Uri
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
+import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.caching.uri.CachedAudioFileUriProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.uri.StoredFileUriProvider
@@ -10,30 +11,36 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 
 open class BestMatchUriProvider(
-    private val library: Library,
+    private val libraryProvider: ILibraryProvider,
     private val storedFileUriProvider: StoredFileUriProvider,
 	private val cachedAudioFileUriProvider: CachedAudioFileUriProvider,
     private val mediaFileUriProvider: MediaFileUriProvider,
     private val remoteFileUriProvider: RemoteFileUriProvider
-) : IFileUriProvider {
-    override fun promiseFileUri(serviceFile: ServiceFile): Promise<Uri?> =
+) : ProvideFileUrisForLibrary {
+    override fun promiseUri(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Uri?> =
         storedFileUriProvider
-            .promiseFileUri(serviceFile)
+            .promiseUri(libraryId, serviceFile)
             .eventually { storedFileUri ->
-				when {
-					storedFileUri != null -> storedFileUri.toPromise()
-					!library.isUsingExistingFiles -> cachedOrRemoteUri(serviceFile)
-					else -> mediaFileUriProvider
-						.promiseFileUri(serviceFile)
-						.eventually { mediaFileUri ->
-							mediaFileUri?.toPromise() ?: cachedOrRemoteUri(serviceFile)
+				storedFileUri
+					?.toPromise()
+					?: libraryProvider
+						.promiseLibrary(libraryId)
+						.eventually { library ->
+							when {
+								library == null -> Promise.empty()
+								!library.isUsingExistingFiles -> cachedOrRemoteUri(libraryId, serviceFile)
+								else -> mediaFileUriProvider
+									.promiseUri(libraryId, serviceFile)
+									.eventually { mediaFileUri ->
+										mediaFileUri?.toPromise() ?: cachedOrRemoteUri(libraryId, serviceFile)
+									}
+							}
 						}
-				}
 			}
 
-	private fun cachedOrRemoteUri(serviceFile: ServiceFile) =
-		cachedAudioFileUriProvider.promiseFileUri(serviceFile)
+	private fun cachedOrRemoteUri(libraryId: LibraryId, serviceFile: ServiceFile) =
+		cachedAudioFileUriProvider.promiseUri(libraryId, serviceFile)
 			.eventually {
-				it?.toPromise() ?: remoteFileUriProvider.promiseFileUri(serviceFile)
+				it?.toPromise() ?: remoteFileUriProvider.promiseUri(libraryId, serviceFile)
 			}
 }

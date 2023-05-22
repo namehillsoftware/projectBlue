@@ -4,11 +4,11 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.IPositionedFileQueue
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.PositionedFileQueue
 import com.lasthopesoftware.bluewater.shared.drainQueue
+import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.namehillsoftware.handoff.promises.Promise
 import org.joda.time.Duration
-import org.slf4j.LoggerFactory
 import java.io.Closeable
 import java.util.LinkedList
 import java.util.concurrent.ConcurrentLinkedQueue
@@ -17,17 +17,17 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 class PreparedPlayableFileQueue(
 	private val configuration: IPreparedPlaybackQueueConfiguration,
 	private val playbackPreparer: PlayableFilePreparationSource,
-	private var positionedFileQueue: IPositionedFileQueue) : SupplyQueuedPreparedFiles, Closeable {
+	private var positionedFileQueue: PositionedFileQueue) : SupplyQueuedPreparedFiles, Closeable {
 
 	companion object {
-		private val logger by lazy { LoggerFactory.getLogger(PreparedPlayableFileQueue::class.java) }
+		private val logger by lazyLogger<PreparedPlayableFileQueue>()
 	}
 
 	private val queueUpdateLock = ReentrantReadWriteLock()
 	private val bufferingMediaPlayerPromises = ConcurrentLinkedQueue<ProvidePreparedPlaybackFile>()
 	private var currentPreparingPlaybackHandlerPromise: ProvidePreparedPlaybackFile? = null
 
-	fun updateQueue(newPositionedFileQueue: IPositionedFileQueue): PreparedPlayableFileQueue {
+	fun updateQueue(newPositionedFileQueue: PositionedFileQueue): PreparedPlayableFileQueue {
 		val writeLock = queueUpdateLock.writeLock()
 		writeLock.lock()
 		return try {
@@ -96,7 +96,7 @@ class PreparedPlayableFileQueue(
 		}?.let {
 			PositionedUnfaultingPreparingFile(
 				it,
-				playbackPreparer.promisePreparedPlaybackFile(it.serviceFile, Duration.ZERO))
+				playbackPreparer.promisePreparedPlaybackFile(positionedFileQueue.libraryId, it.serviceFile, Duration.ZERO))
 		}
 	}
 
@@ -110,7 +110,7 @@ class PreparedPlayableFileQueue(
 		}?.let {
 			PositionedPreparingFile(
 				it,
-				playbackPreparer.promisePreparedPlaybackFile(it.serviceFile, preparedAt))
+				playbackPreparer.promisePreparedPlaybackFile(positionedFileQueue.libraryId, it.serviceFile, preparedAt))
 		}
 	}
 
@@ -118,7 +118,7 @@ class PreparedPlayableFileQueue(
 		val writeLock = queueUpdateLock.writeLock()
 		writeLock.lock()
 		try {
-			if (bufferingMediaPlayerPromises.size >= configuration.getMaxQueueSize()) return
+			if (bufferingMediaPlayerPromises.size >= configuration.maxQueueSize) return
 			val nextPreparingMediaPlayerPromise = getNextUnfaultingPreparingMediaPlayerPromise() ?: return
 			bufferingMediaPlayerPromises.offer(nextPreparingMediaPlayerPromise)
 		} finally {
@@ -148,7 +148,7 @@ class PreparedPlayableFileQueue(
 		currentPreparingPlaybackHandlerPromise?.preparedPlaybackFilePromise?.cancel()
 		return PositionedPreparingFile(
 			positionedFile,
-			playbackPreparer.promisePreparedPlaybackFile(positionedFile.serviceFile, Duration.ZERO)).also {
+			playbackPreparer.promisePreparedPlaybackFile(positionedFileQueue.libraryId, positionedFile.serviceFile, Duration.ZERO)).also {
 				currentPreparingPlaybackHandlerPromise = it
 		}.promisePositionedPreparedPlaybackFile()
 	}

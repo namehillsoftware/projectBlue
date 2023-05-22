@@ -1,9 +1,10 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.GivenAPlayingPlaybackEngine
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.library.access.PassThroughLibraryStorage
-import com.lasthopesoftware.bluewater.client.browsing.library.access.PassThroughSpecificLibraryProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
+import com.lasthopesoftware.bluewater.client.browsing.library.access.FakePlaybackQueueConfiguration
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
@@ -20,23 +21,23 @@ import org.joda.time.Duration
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
+private const val libraryId = 960
+
 class WhenPlaybackIsPausedAndRestarted {
 	private val mut by lazy {
 		val fakePlaybackPreparerProvider = FakeDeferredPlayableFilePreparationSourceProvider()
 		val library = Library()
-		library.setId(1)
-		val libraryProvider = PassThroughSpecificLibraryProvider(library)
-		val libraryStorage = PassThroughLibraryStorage()
+		library.setId(libraryId)
+		val libraryProvider = FakeLibraryRepository(library)
 		val nowPlayingRepository =
 			NowPlayingRepository(
 				libraryProvider,
-				libraryStorage,
+				libraryProvider,
 				FakeNowPlayingState(),
 			)
 		val playbackEngine = PlaybackEngine(
-			PreparedPlaybackQueueResourceManagement(
-				fakePlaybackPreparerProvider
-			) { 1 }, listOf(CompletingFileQueueProvider()),
+			PreparedPlaybackQueueResourceManagement(fakePlaybackPreparerProvider, FakePlaybackQueueConfiguration()),
+			listOf(CompletingFileQueueProvider()),
 			nowPlayingRepository,
 			PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
 		)
@@ -54,9 +55,10 @@ class WhenPlaybackIsPausedAndRestarted {
 		val (fakePlaybackPreparerProvider, nowPlayingRepository, playbackEngine) = mut
 		playbackEngine
 			.setOnPlaybackStarted { ++playbackStartedCount }
-			.setOnPlayingFileChanged { f -> changedFiles.add(f.serviceFile) }
+			.setOnPlayingFileChanged { _, f -> changedFiles.add(f.serviceFile) }
 		playbackEngine
 			.startPlaylist(
+				LibraryId(libraryId),
 				listOf(
 					ServiceFile(1),
 					ServiceFile(2),
@@ -70,9 +72,9 @@ class WhenPlaybackIsPausedAndRestarted {
 		playingPlaybackHandler.resolve()
 		resolvablePlaybackHandler?.setCurrentPosition(30)
 		playbackEngine.pause().toExpiringFuture().get()
-		nowPlaying = nowPlayingRepository.promiseNowPlaying().toExpiringFuture().get()
+		nowPlaying = nowPlayingRepository.promiseNowPlaying(LibraryId(libraryId)).toExpiringFuture().get()
 		playbackEngine.resume().toExpiringFuture().get()
-		nowPlaying = nowPlayingRepository.promiseNowPlaying().toExpiringFuture().get()
+		nowPlaying = nowPlayingRepository.promiseNowPlaying(LibraryId(libraryId)).toExpiringFuture().get()
 	}
 
 	@Test

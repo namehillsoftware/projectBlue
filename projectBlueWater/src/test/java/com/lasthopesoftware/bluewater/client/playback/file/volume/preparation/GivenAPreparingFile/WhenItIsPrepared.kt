@@ -1,10 +1,10 @@
 package com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.GivenAPreparingFile
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.file.EmptyPlaybackHandler
 import com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.FakeFilePreparer
 import com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.MaxFileVolumePreparer
-import com.lasthopesoftware.bluewater.shared.promises.extensions.ExpiringFuturePromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
 import org.assertj.core.api.AssertionsForClassTypes.assertThat
@@ -17,9 +17,11 @@ class WhenItIsPrepared {
 	private val returnedFile by lazy {
 		val fakeFilePreparer = FakeFilePreparer(emptyPlaybackHandler, emptyPlaybackHandler)
 		val maxFileVolumePreparer = MaxFileVolumePreparer(fakeFilePreparer) { Promise(.89f) }
-		ExpiringFuturePromise(maxFileVolumePreparer.promisePreparedPlaybackFile(
+		maxFileVolumePreparer.promisePreparedPlaybackFile(
+			LibraryId(388),
 			ServiceFile(5),
-			Duration.ZERO)).get()
+			Duration.ZERO
+		).toExpiringFuture().get()
 	}
 
 	@Test

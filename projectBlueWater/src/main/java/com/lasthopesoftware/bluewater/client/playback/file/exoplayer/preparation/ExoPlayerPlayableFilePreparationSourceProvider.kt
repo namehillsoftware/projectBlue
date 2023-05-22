@@ -44,7 +44,7 @@ class ExoPlayerPlayableFilePreparationSourceProvider(
 		)
 	}
 
-	override fun getMaxQueueSize() = 1
+    override val maxQueueSize get() = 1
 
 	override fun providePlayableFilePreparationSource() = ExoPlayerPlaybackPreparer(
 		mediaSourceProvider,

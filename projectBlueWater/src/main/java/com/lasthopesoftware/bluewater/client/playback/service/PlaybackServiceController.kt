@@ -3,13 +3,15 @@ package com.lasthopesoftware.bluewater.client.playback.service
 import android.content.Context
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.FileStringListUtilities
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 
 class PlaybackServiceController(private val context: Context) : ControlPlaybackService {
-	override fun promiseIsMarkedForPlay(): Promise<Boolean> = PlaybackService.promiseIsMarkedForPlay(context)
+	override fun promiseIsMarkedForPlay(libraryId: LibraryId): Promise<Boolean> =
+		PlaybackService.promiseIsMarkedForPlay(context, libraryId)
 
 	override fun play() = PlaybackService.play(context)
 
@@ -21,19 +23,19 @@ class PlaybackServiceController(private val context: Context) : ControlPlaybackS
 	override fun seekTo(position: Int) = PlaybackService.seekTo(context, position)
 	override fun moveFile(dragFrom: Int, dragTo: Int) = PlaybackService.moveFile(context, dragFrom, dragTo)
 
-	override fun startPlaylist(fileStringList: String, position: Int) {
-		PlaybackService.launchMusicService(context, position, fileStringList)
+	override fun startPlaylist(libraryId: LibraryId, fileStringList: String, position: Int) {
+		PlaybackService.launchMusicService(context, libraryId, position, fileStringList)
 	}
 
-	override fun startPlaylist(serviceFiles: List<ServiceFile>, position: Int) {
+	override fun startPlaylist(libraryId: LibraryId, serviceFiles: List<ServiceFile>, position: Int) {
 		FileStringListUtilities
 			.promiseSerializedFileStringList(serviceFiles)
-			.then { startPlaylist(it, position) }
+			.then { startPlaylist(libraryId, it, position) }
 	}
 
-	override fun shuffleAndStartPlaylist(serviceFiles: List<ServiceFile>) {
+	override fun shuffleAndStartPlaylist(libraryId: LibraryId, serviceFiles: List<ServiceFile>) {
 		QueuedPromise(MessageWriter {
-			startPlaylist(serviceFiles.shuffled())
+			startPlaylist(libraryId, serviceFiles.shuffled())
 		}, ThreadPools.compute)
 	}
 

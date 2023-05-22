@@ -20,6 +20,9 @@ inline fun <S : TypedMessage, reified M : S> RegisterForTypedMessages<S>.registe
 inline fun <S : TypedMessage, reified M : S> RegisterForTypedMessages<S>.registerReceiver(noinline receiver: (M) -> Unit): AutoCloseable =
 	registerForClass(M::class.java, receiver)
 
+inline fun <reified M : ApplicationMessage> RegisterForApplicationMessages.registerReceiver(noinline receiver: (M) -> Unit): AutoCloseable =
+	registerReceiver<ApplicationMessage, M>(receiver)
+
 inline fun <S : TypedMessage, reified M : S> RegisterForTypedMessages<S>.registerReceiver(scope: CoroutineScope, noinline receiver: (M) -> Unit): AutoCloseable =
 	registerForClass(M::class.java) {
 		scope.launch {

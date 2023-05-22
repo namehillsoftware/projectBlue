@@ -122,7 +122,9 @@ fun SearchFilesView(
 			onViewFilesClick = viewFilesClickHandler,
 			onPlayClick = {
 				fileItemViewModel.hideMenu()
-				playbackServiceController.startPlaylist(files, position)
+				searchFilesViewModel.libraryId?.also {
+					playbackServiceController.startPlaylist(it, files, position)
+				}
 			}
 		)
 	}
@@ -183,7 +185,11 @@ fun SearchFilesView(
 
 							val playLabel = stringResource(id = R.string.btn_play)
 							ColumnMenuIcon(
-								onClick = { playbackServiceController.startPlaylist(files, 0) },
+								onClick = {
+									searchFilesViewModel.libraryId?.also {
+										playbackServiceController.startPlaylist(it, files, 0)
+									}
+							  	},
 								icon = {
 									Image(
 										painter = painterResource(id = R.drawable.av_play),
@@ -198,7 +204,11 @@ fun SearchFilesView(
 
 							val shuffleLabel = stringResource(id = R.string.btn_shuffle_files)
 							ColumnMenuIcon(
-								onClick = { playbackServiceController.shuffleAndStartPlaylist(files) },
+								onClick = {
+									searchFilesViewModel.libraryId?.also {
+										playbackServiceController.shuffleAndStartPlaylist(it, files)
+									}
+							  	},
 								icon = {
 									Image(
 										painter = painterResource(id = R.drawable.av_shuffle),

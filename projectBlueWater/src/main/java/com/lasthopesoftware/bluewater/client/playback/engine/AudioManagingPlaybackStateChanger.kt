@@ -5,6 +5,7 @@ import androidx.media.AudioAttributesCompat
 import androidx.media.AudioFocusRequestCompat
 import androidx.media.AudioManagerCompat
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.volume.IVolumeManagement
 import com.lasthopesoftware.bluewater.shared.android.audiofocus.ControlAudioFocus
 import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay.Companion.delay
@@ -39,10 +40,10 @@ class AudioManagingPlaybackStateChanger(
 	private var audioFocusPromise: Promise<AudioFocusRequestCompat> = Promise.empty()
 	private var isPlaying = false
 
-	override fun startPlaylist(playlist: List<ServiceFile>, playlistPosition: Int, filePosition: Duration): Promise<Unit> {
+	override fun startPlaylist(libraryId: LibraryId, playlist: List<ServiceFile>, playlistPosition: Int, filePosition: Duration): Promise<Unit> {
 		isPlaying = true
 		return getNewAudioFocusRequest()
-			.eventually { innerPlaybackState.startPlaylist(playlist, playlistPosition, filePosition) }
+			.eventually { innerPlaybackState.startPlaylist(libraryId, playlist, playlistPosition, filePosition) }
 	}
 
 	override fun resume(): Promise<Unit> {

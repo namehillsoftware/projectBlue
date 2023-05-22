@@ -3,16 +3,13 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.files.system.
 import android.net.Uri
 import android.provider.MediaStore
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.uri.IFileUriProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.uri.ProvideFileUrisForLibrary
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.IMediaQueryCursorProvider
 import com.lasthopesoftware.bluewater.shared.IoCommon
 import com.lasthopesoftware.bluewater.shared.android.permissions.CheckOsPermissions
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
 import com.lasthopesoftware.bluewater.shared.messages.application.SendApplicationMessages
-import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.namehillsoftware.handoff.promises.Promise
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -20,14 +17,9 @@ import java.io.File
 class MediaFileUriProvider(
 	private val mediaQueryCursorProvider: IMediaQueryCursorProvider,
 	private val externalStorageReadPermissionsArbitrator: CheckOsPermissions,
-	private val libraryIdentifierProvider: ProvideSelectedLibraryId,
 	private val isSilent: Boolean,
 	private val sendApplicationMessages: SendApplicationMessages
-) : IFileUriProvider, ProvideFileUrisForLibrary {
-    override fun promiseFileUri(serviceFile: ServiceFile): Promise<Uri?> =
-		libraryIdentifierProvider.promiseSelectedLibraryId().eventually {
-			it?.let { promiseUri(it, serviceFile) }.keepPromise()
-		}
+) : ProvideFileUrisForLibrary {
 
     override fun promiseUri(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Uri?> =
 		if (!externalStorageReadPermissionsArbitrator.isReadPermissionGranted) Promise.empty()

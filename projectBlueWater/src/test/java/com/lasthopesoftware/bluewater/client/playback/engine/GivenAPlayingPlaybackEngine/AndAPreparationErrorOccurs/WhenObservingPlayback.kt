@@ -1,10 +1,9 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.GivenAPlayingPlaybackEngine.AndAPreparationErrorOccurs
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryStorage
-import com.lasthopesoftware.bluewater.client.browsing.library.access.ISpecificLibraryProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.access.PassThroughLibraryStorage
+import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlayableFilePreparationSourceProvider
@@ -22,12 +21,12 @@ import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManag
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.Messenger
 import com.namehillsoftware.handoff.promises.Promise
-import io.mockk.every
-import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
+
+private const val libraryId = 668
 
 class WhenObservingPlayback {
 	private val mut by lazy {
@@ -38,21 +37,19 @@ class WhenObservingPlayback {
 					return deferredErrorPlaybackPreparer
 				}
 
-				override fun getMaxQueueSize(): Int {
-					return 1
-				}
+                override val maxQueueSize: Int
+                    get() {
+                        return 1
+                    }
 			}
 
-		val libraryProvider = mockk<ISpecificLibraryProvider>().also {
-			val library = Library()
-			library.setId(1)
-			every { it.promiseLibrary() } returns Promise(library)
-		}
+		val library = Library()
+		library.setId(libraryId)
+		val libraryProvider = FakeLibraryRepository(library)
 
-		val libraryStorage: ILibraryStorage = PassThroughLibraryStorage()
 		val nowPlayingRepository = NowPlayingRepository(
 			libraryProvider,
-			libraryStorage,
+			libraryProvider,
 			FakeNowPlayingState(),
 		)
 
@@ -80,6 +77,7 @@ class WhenObservingPlayback {
 				if (e is PreparationException) error = e
 			}
 			.startPlaylist(
+				LibraryId(libraryId),
 				listOf(
 					ServiceFile(1),
 					ServiceFile(2),
@@ -94,7 +92,7 @@ class WhenObservingPlayback {
 			.get()
 		deferredErrorPlaybackPreparer.resolve().resolve()
 		deferredErrorPlaybackPreparer.reject()
-		nowPlaying = nowPlayingRepository.promiseNowPlaying().toExpiringFuture().get()
+		nowPlaying = nowPlayingRepository.promiseNowPlaying(LibraryId(libraryId)).toExpiringFuture().get()
 	}
 
 	@Test
@@ -123,6 +121,7 @@ class WhenObservingPlayback {
 		}
 
 		override fun promisePreparedPlaybackFile(
+			libraryId: LibraryId,
 			serviceFile: ServiceFile,
 			preparedAt: Duration
 		): Promise<PreparedPlayableFile?> {

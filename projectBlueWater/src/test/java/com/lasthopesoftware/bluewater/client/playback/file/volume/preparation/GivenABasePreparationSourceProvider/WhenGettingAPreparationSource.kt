@@ -17,7 +17,7 @@ class WhenGettingAPreparationSource {
         val maxFileVolumePreparationProvider =
             MaxFileVolumePreparationProvider(object : IPlayableFilePreparationSourceProvider {
                 override fun providePlayableFilePreparationSource(): PlayableFilePreparationSource {
-                    return PlayableFilePreparationSource { _, _ ->
+                    return PlayableFilePreparationSource { _, _, _ ->
                         Promise(PreparedPlayableFile(
                             EmptyPlaybackHandler(0),
                             mockk(),
@@ -30,9 +30,10 @@ class WhenGettingAPreparationSource {
                     }
                 }
 
-                override fun getMaxQueueSize(): Int {
-                    return 13
-                }
+                override val maxQueueSize: Int
+                    get() {
+                        return 13
+                    }
             }, mockk())
         maxFileVolumePreparationProvider.providePlayableFilePreparationSource()
     }

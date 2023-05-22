@@ -6,8 +6,8 @@ import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.Fi
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertiesContainer
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.IFilePropertiesContainerRepository
-import com.lasthopesoftware.bluewater.client.browsing.library.access.ISpecificLibraryProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.access.PassThroughLibraryStorage
+import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
+import com.lasthopesoftware.bluewater.client.browsing.library.access.FakePlaybackQueueConfiguration
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
@@ -21,8 +21,6 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlay
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
-import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -33,7 +31,7 @@ class WhenRestoringEngineStateAndResumingPlayback {
 	private val restoredState by lazy {
 		val fakePlaybackPreparerProvider = FakeDeferredPlayableFilePreparationSourceProvider()
 		val library = Library()
-		library.setId(1)
+		library.setId(35)
 		library.setSavedTracksString(
 			FileStringListUtilities.promiseSerializedFileStringList(
 				listOf(
@@ -47,11 +45,7 @@ class WhenRestoringEngineStateAndResumingPlayback {
 		)
 		library.setNowPlayingProgress(893)
 		library.setNowPlayingId(3)
-		val libraryProvider = object : ISpecificLibraryProvider {
-            override fun promiseLibrary(): Promise<Library?> = library.toPromise()
-		}
-
-		val libraryStorage = PassThroughLibraryStorage()
+		val libraryProvider = FakeLibraryRepository(library)
 
 		val filePropertiesContainerRepository = mockk<IFilePropertiesContainerRepository>()
 		every {
@@ -66,18 +60,18 @@ class WhenRestoringEngineStateAndResumingPlayback {
 		val repository =
 			NowPlayingRepository(
 				libraryProvider,
-				libraryStorage,
+				libraryProvider,
 				FakeNowPlayingState(),
 			)
 		val playbackEngine = PlaybackEngine(
-			PreparedPlaybackQueueResourceManagement(fakePlaybackPreparerProvider) { 1 },
+			PreparedPlaybackQueueResourceManagement(fakePlaybackPreparerProvider, FakePlaybackQueueConfiguration()),
 			listOf(CompletingFileQueueProvider(), CyclicalFileQueueProvider()),
 			repository,
 			PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
 		)
-		val restoredState = playbackEngine.restoreFromSavedState().toExpiringFuture().get()
+		val restoredState = playbackEngine.restoreFromSavedState(library.libraryId).toExpiringFuture().get()
 
-		playbackEngine.setOnPlayingFileChanged { c -> positionedPlayingFile = c	}
+		playbackEngine.setOnPlayingFileChanged { _, c -> positionedPlayingFile = c	}
 		val promisedResumption = playbackEngine.resume()
 		fakePlaybackPreparerProvider.deferredResolution.resolve()
 		promisedResumption.toExpiringFuture().get()

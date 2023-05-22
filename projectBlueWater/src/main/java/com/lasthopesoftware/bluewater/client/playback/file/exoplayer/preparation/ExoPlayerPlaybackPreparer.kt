@@ -2,7 +2,8 @@ package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparatio
 
 import android.os.Handler
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.uri.IFileUriProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.uri.ProvideFileUrisForLibrary
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.ProvideExoPlayers
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.SpawnMediaSources
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource
@@ -15,12 +16,12 @@ class ExoPlayerPlaybackPreparer(
 	private val mediaSourceProvider: SpawnMediaSources,
 	private val provideExoPlayers: ProvideExoPlayers,
 	private val eventHandler: Handler,
-	private val uriProvider: IFileUriProvider
+	private val uriProvider: ProvideFileUrisForLibrary
 ) : PlayableFilePreparationSource {
 
-	override fun promisePreparedPlaybackFile(serviceFile: ServiceFile, preparedAt: Duration): Promise<PreparedPlayableFile?> =
+	override fun promisePreparedPlaybackFile(libraryId: LibraryId, serviceFile: ServiceFile, preparedAt: Duration): Promise<PreparedPlayableFile?> =
 		uriProvider
-			.promiseFileUri(serviceFile)
+			.promiseUri(libraryId, serviceFile)
 			.eventually { uri ->
 				uri?.let {
 					PreparedExoPlayerPromise(

@@ -20,8 +20,7 @@ class WhenThePropertiesChange {
 	private val mut by lazy {
 		val playbackNotificationRouter = PlaybackNotificationRouter(
 			mockNotifier,
-			mockk(relaxed = true),
-			mockk {
+            mockk {
 				every { promiseUrlKey(any<ServiceFile>()) } answers {
 					UrlKeyHolder(
 						URL("http://test"),

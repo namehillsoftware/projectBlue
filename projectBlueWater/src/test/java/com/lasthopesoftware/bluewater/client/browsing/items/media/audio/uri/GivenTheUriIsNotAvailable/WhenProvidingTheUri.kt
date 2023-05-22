@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.browsing.items.media.audio.uri.Giv
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.CacheFiles
 import com.lasthopesoftware.bluewater.client.browsing.files.uri.RemoteFileUriProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.caching.uri.CachedAudioFileUriProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
@@ -14,13 +15,15 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import java.io.File
 
+private const val libraryId = 297
+
 @RunWith(RobolectricTestRunner::class)
 class WhenProvidingTheUri {
 
 	companion object {
 		private val cachedFileUri by lazy {
 			val remoteFileUriProvider = mockk<RemoteFileUriProvider>().apply {
-				every { promiseFileUri(ServiceFile(10)) } returns Promise.empty()
+				every { promiseUri(LibraryId(libraryId), ServiceFile(10)) } returns Promise.empty()
 			}
 
 			val cachedFilesProvider = mockk<CacheFiles>().apply {
@@ -33,7 +36,7 @@ class WhenProvidingTheUri {
             )
 
 			cachedAudioFileUriProvider
-				.promiseFileUri(ServiceFile(10))
+				.promiseUri(LibraryId(libraryId), ServiceFile(10))
 				.toExpiringFuture()
 				.get()
 		}

@@ -1,6 +1,8 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.preparation.GivenAStandardQueue
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.library.access.FakePlaybackQueueConfiguration
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
@@ -14,6 +16,8 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import kotlin.random.Random.Default.nextInt
 
+private const val libraryId = 261
+
 class WhenTheQueueIsConsumed {
 
 	private val expectedNumberOfFiles by lazy { nextInt(1, 501) }
@@ -23,9 +27,9 @@ class WhenTheQueueIsConsumed {
 		val fileActionMap = serviceFiles.associateWith { MockResolveAction() }
 		val bufferingPlaybackQueuesProvider = CompletingFileQueueProvider()
 		val queue = PreparedPlayableFileQueue(
-			{ 1 },
-			{ file, _ -> Promise(fileActionMap[file]) },
-			bufferingPlaybackQueuesProvider.provideQueue(serviceFiles, 0)
+			FakePlaybackQueueConfiguration(),
+			{ _, file, _ -> Promise(fileActionMap[file]) },
+			bufferingPlaybackQueuesProvider.provideQueue(LibraryId(libraryId), serviceFiles, 0)
 		)
 		Pair(fileActionMap, queue)
 	}

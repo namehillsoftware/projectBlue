@@ -15,7 +15,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.ScopedFil
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeScopedRevisionProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.FakeFileConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.libraries.ScopedUrlKeyProvider
+import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building.NowPlayingNotificationBuilder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
@@ -62,7 +62,7 @@ class WhenBuildingTheLoadingNotification : AndroidContext() {
 			mockk {
 				every { getMediaStyleNotification(libraryId) } returns spiedBuilder
 			},
-			ScopedUrlKeyProvider(connectionProvider),
+			UrlKeyProvider(connectionProvider),
             ScopedCachedFilePropertiesProvider(
 				connectionProvider,
 				containerRepository,

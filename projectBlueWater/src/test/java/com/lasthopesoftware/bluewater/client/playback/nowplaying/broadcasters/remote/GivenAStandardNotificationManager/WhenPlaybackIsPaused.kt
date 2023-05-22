@@ -15,8 +15,7 @@ class WhenPlaybackIsPaused : AndroidContext() {
 
     override fun before() {
 		val playbackNotificationBroadcaster = MediaSessionBroadcaster(
-                mockk(),
-                mockk(),
+            mockk(),
                 mockk(),
                 mediaSessionCompat,
 			)

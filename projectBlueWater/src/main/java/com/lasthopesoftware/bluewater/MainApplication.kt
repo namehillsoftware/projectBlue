@@ -19,6 +19,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.rolling.RollingFileAppender
 import ch.qos.logback.core.rolling.TimeBasedRollingPolicy
 import ch.qos.logback.core.util.StatusPrinter
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.UpdatePlayStatsOnPlaybackCompleteReceiver
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.factory.LibraryPlaystatsUpdateSelector
@@ -34,13 +35,13 @@ import com.lasthopesoftware.bluewater.client.browsing.library.request.write.Stor
 import com.lasthopesoftware.bluewater.client.browsing.library.request.write.StorageWritePermissionsRequestedBroadcaster
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
-import com.lasthopesoftware.bluewater.client.connection.receivers.SessionConnectionRegistrationsMaintainer
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionSettingsChangeReceiver
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionSettingsChangeReceiver
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
-import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble.PlaybackFileStartedScrobblerRegistration
-import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble.PlaybackFileStoppedScrobblerRegistration
+import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble.PlaybackFileStartedScrobbleDroidProxy
+import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble.PlaybackFileStoppedScrobbleDroidProxy
+import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble.ScrobbleIntentProvider
 import com.lasthopesoftware.bluewater.client.servers.version.LibraryServerVersionProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
@@ -64,8 +65,22 @@ open class MainApplication : Application() {
 	private val libraryConnections by lazy { ConnectionSessionManager.get(this) }
 	private val libraryRevisionProvider by lazy { LibraryRevisionProvider(libraryConnections) }
 	private val libraryRepository by lazy { LibraryRepository(this) }
+	private val freshLibraryFileProperties by lazy {
+		FilePropertiesProvider(
+			libraryConnections,
+			libraryRevisionProvider,
+			FilePropertyCache,
+		)
+	}
+	private val cachedLibraryFileProperties by lazy {
+		CachedFilePropertiesProvider(
+			libraryConnections,
+			FilePropertyCache,
+			freshLibraryFileProperties,
+		)
+	}
 	private val storedFileAccess by lazy { StoredFileAccess(this) }
-	private val notificationManagerLazy by lazy { getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager }
+	private val notificationManager by lazy { getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager }
 	private val storageReadPermissionsRequestNotificationBuilder by lazy { StorageReadPermissionsRequestNotificationBuilder(this) }
 	private val storageWritePermissionsRequestNotificationBuilder by lazy { StorageWritePermissionsRequestNotificationBuilder(this) }
 	private val applicationMessageBus by lazy { getApplicationMessageBus() }
@@ -98,28 +113,22 @@ open class MainApplication : Application() {
 	private fun registerAppBroadcastReceivers() {
 		applicationMessageBus.registerReceiver { mediaFileFound : MediaFileUriProvider.MediaFileFound ->
 			mediaFileFound.mediaId ?: return@registerReceiver
-			libraryRepository
-				.promiseLibrary(mediaFileFound.libraryId)
-				.then { library ->
-					if (library != null) {
-						storedFileAccess.addMediaFile(
-							library,
-							mediaFileFound.serviceFile,
-							mediaFileFound.mediaId,
-							mediaFileFound.systemFile.path)
-					}
-				}
+			storedFileAccess.addMediaFile(
+				mediaFileFound.libraryId,
+				mediaFileFound.serviceFile,
+				mediaFileFound.mediaId,
+				mediaFileFound.systemFile.path)
 		}
 
 		applicationMessageBus.registerReceiver { readPermissionsNeeded : StorageReadPermissionsRequestedBroadcaster.ReadPermissionsNeeded ->
-			notificationManagerLazy.notify(
+			notificationManager.notify(
 				336,
 				storageReadPermissionsRequestNotificationBuilder
 					.buildReadPermissionsRequestNotification(readPermissionsNeeded.libraryId.id))
 		}
 
 		applicationMessageBus.registerReceiver { writePermissionsNeeded : StorageWritePermissionsRequestedBroadcaster.WritePermissionsNeeded ->
-			notificationManagerLazy.notify(
+			notificationManager.notify(
 				396,
 				storageWritePermissionsRequestNotificationBuilder
 					.buildWritePermissionsRequestNotification(writePermissionsNeeded.libraryId.id)
@@ -134,9 +143,17 @@ open class MainApplication : Application() {
 			)
 		)
 
-		val connectionDependentReceiverRegistrations = listOf(
-			PlaybackFileStartedScrobblerRegistration(this),
-			PlaybackFileStoppedScrobblerRegistration(this))
+		applicationMessageBus.registerReceiver(
+			PlaybackFileStartedScrobbleDroidProxy(
+			this,
+				cachedLibraryFileProperties,
+				ScrobbleIntentProvider,
+			)
+		)
+
+		applicationMessageBus.registerReceiver(
+			PlaybackFileStoppedScrobbleDroidProxy(this, ScrobbleIntentProvider)
+		)
 
 		applicationMessageBus.registerReceiver(
 			UpdatePlayStatsOnPlaybackCompleteReceiver(
@@ -146,11 +163,7 @@ open class MainApplication : Application() {
 						libraryConnections
 					),
 					FilePropertiesPlayStatsUpdater(
-						FilePropertiesProvider(
-							libraryConnections,
-							libraryRevisionProvider,
-							FilePropertyCache,
-						),
+						freshLibraryFileProperties,
 						FilePropertyStorage(
 							libraryConnections,
 							ConnectionAuthenticationChecker(libraryConnections),
@@ -162,12 +175,6 @@ open class MainApplication : Application() {
 				)
 			)
 		)
-
-		applicationMessageBus.registerReceiver(SessionConnectionRegistrationsMaintainer(
-			this,
-			applicationMessageBus,
-			connectionDependentReceiverRegistrations
-		))
 
 		applicationMessageBus.registerReceiver(SyncItemStateChangedListener(syncScheduler))
 	}

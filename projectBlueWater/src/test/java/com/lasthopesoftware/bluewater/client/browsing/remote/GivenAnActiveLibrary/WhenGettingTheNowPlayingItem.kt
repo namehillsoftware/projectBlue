@@ -18,6 +18,8 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
+private const val libraryId = 861
+
 @RunWith(RobolectricTestRunner::class)
 class `When Getting The Now Playing Item` {
 	companion object {
@@ -36,9 +38,9 @@ class `When Getting The Now Playing Item` {
 
 		private val mediaItem by lazy {
 			val nowPlaying = mockk<MaintainNowPlayingState>()
-			every { nowPlaying.promiseNowPlaying() } returns Promise(
+			every { nowPlaying.promiseNowPlaying(LibraryId(libraryId)) } returns Promise(
 				NowPlaying(
-					LibraryId(861),
+					LibraryId(libraryId),
 					listOf(ServiceFile(89), ServiceFile(393), ServiceFile(714), ServiceFile(760)),
 					1,
 					561L,
@@ -50,6 +52,9 @@ class `When Getting The Now Playing Item` {
 			every { serviceFiles.promiseMediaItemWithImage(ServiceFile(393)) } returns expectedMediaItem.toPromise()
 
 			val mediaItemsBrowser = NowPlayingMediaItemLookup(
+				mockk {
+					every { promiseSelectedLibraryId() } returns LibraryId(libraryId).toPromise()
+				},
 				nowPlaying,
 				serviceFiles,
 			)

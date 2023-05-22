@@ -1,41 +1,27 @@
-package com.lasthopesoftware.bluewater.client.playback.engine.preparation;
+package com.lasthopesoftware.bluewater.client.playback.engine.preparation
 
+import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.PositionedFileQueue
 
-import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.IPositionedFileQueue;
+class PreparedPlaybackQueueResourceManagement(
+    private val playbackPreparerProvider: IPlayableFilePreparationSourceProvider,
+    private val preparedPlaybackQueueConfiguration: IPreparedPlaybackQueueConfiguration
+) : ManagePlaybackQueues {
+    private var preparedPlaybackQueue: PreparedPlayableFileQueue? = null
 
-public class PreparedPlaybackQueueResourceManagement implements ManagePlaybackQueues {
-	private final IPlayableFilePreparationSourceProvider playbackPreparerProvider;
-	private final IPreparedPlaybackQueueConfiguration preparedPlaybackQueueConfiguration;
+    override fun initializePreparedPlaybackQueue(positionedFileQueue: PositionedFileQueue): PreparedPlayableFileQueue {
+        close()
+        return PreparedPlayableFileQueue(
+            preparedPlaybackQueueConfiguration,
+            playbackPreparerProvider.providePlayableFilePreparationSource(),
+            positionedFileQueue
+        ).also { preparedPlaybackQueue = it }
+    }
 
-	private PreparedPlayableFileQueue preparedPlaybackQueue;
+    override fun tryUpdateQueue(positionedFileQueue: PositionedFileQueue): Boolean {
+		return preparedPlaybackQueue?.updateQueue(positionedFileQueue)?.let { true } ?: false
+    }
 
-	public PreparedPlaybackQueueResourceManagement(IPlayableFilePreparationSourceProvider playbackPreparerProvider, IPreparedPlaybackQueueConfiguration preparedPlaybackQueueConfiguration) {
-		this.playbackPreparerProvider = playbackPreparerProvider;
-		this.preparedPlaybackQueueConfiguration = preparedPlaybackQueueConfiguration;
-	}
-
-	@Override
-	public PreparedPlayableFileQueue initializePreparedPlaybackQueue(IPositionedFileQueue positionedFileQueue) {
-		close();
-
-		return preparedPlaybackQueue =
-			new PreparedPlayableFileQueue(
-				preparedPlaybackQueueConfiguration,
-				this.playbackPreparerProvider.providePlayableFilePreparationSource(),
-				positionedFileQueue);
-	}
-
-	@Override
-	public boolean tryUpdateQueue(IPositionedFileQueue positionedFileQueue) {
-		if (preparedPlaybackQueue == null) return false;
-
-		preparedPlaybackQueue.updateQueue(positionedFileQueue);
-		return true;
-	}
-
-	@Override
-	public void close() {
-		if (preparedPlaybackQueue != null)
-			preparedPlaybackQueue.close();
-	}
+    override fun close() {
+        preparedPlaybackQueue?.close()
+    }
 }

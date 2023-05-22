@@ -10,6 +10,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideEd
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.getFormattedValue
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.UpdateScopedFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfScopedConnectionIsReadOnly
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideScopedUrlKey
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
@@ -119,7 +120,7 @@ class FileDetailsViewModel(
 
 	fun play() {
 		val positionedFile = activePositionedFile ?: return
-		controlPlayback.startPlaylist(associatedPlaylist, positionedFile.playlistPosition)
+		controlPlayback.startPlaylist(LibraryId(-1), associatedPlaylist, positionedFile.playlistPosition)
 	}
 
 	private fun loadFileProperties(serviceFile: ServiceFile): Promise<Unit> =

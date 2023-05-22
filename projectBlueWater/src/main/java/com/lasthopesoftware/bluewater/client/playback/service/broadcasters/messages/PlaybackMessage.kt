@@ -7,19 +7,23 @@ import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMes
 
 interface PlaybackMessage : ApplicationMessage {
 
-	class TrackChanged(val libraryId: LibraryId, val positionedFile: PositionedFile) : PlaybackMessage
-
-	data class TrackCompleted(val libraryId: LibraryId, val completedFile: ServiceFile) : PlaybackMessage
-
-	class TrackStarted(val libraryId: LibraryId, val startedFile: ServiceFile) : PlaybackMessage
-
-	object PlaylistChanged : PlaybackMessage
-
-	object PlaybackStarted : PlaybackMessage
-
 	object PlaybackPaused : PlaybackMessage
 
 	object PlaybackInterrupted : PlaybackMessage
 
 	object PlaybackStopped : PlaybackMessage
+}
+
+interface LibraryPlaybackMessage : PlaybackMessage {
+	val libraryId: LibraryId
+
+	class TrackChanged(override val libraryId: LibraryId, val positionedFile: PositionedFile) : LibraryPlaybackMessage
+
+	data class TrackCompleted(override val libraryId: LibraryId, val completedFile: ServiceFile) : LibraryPlaybackMessage
+
+	class TrackStarted(override val libraryId: LibraryId, val startedFile: ServiceFile) : LibraryPlaybackMessage
+
+	class PlaylistChanged(override val libraryId: LibraryId) : LibraryPlaybackMessage
+
+	class PlaybackStarted(override val libraryId: LibraryId) : LibraryPlaybackMessage
 }

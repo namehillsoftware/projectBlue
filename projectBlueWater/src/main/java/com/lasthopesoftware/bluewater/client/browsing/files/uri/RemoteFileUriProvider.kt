@@ -3,17 +3,18 @@ package com.lasthopesoftware.bluewater.client.browsing.files.uri
 import android.net.Uri
 import com.lasthopesoftware.bluewater.client.browsing.files.IServiceFileUriQueryParamsProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
+import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.namehillsoftware.handoff.promises.Promise
-import org.slf4j.LoggerFactory
 
-private val logger by lazy { LoggerFactory.getLogger(RemoteFileUriProvider::class.java) }
+private val logger by lazyLogger<RemoteFileUriProvider>()
 
 class RemoteFileUriProvider(
-    private val connectionProvider: IConnectionProvider,
+    private val libraryConnections: ProvideLibraryConnections,
     private val serviceFileUriQueryParamsProvider: IServiceFileUriQueryParamsProvider
-) : IFileUriProvider {
-    override fun promiseFileUri(serviceFile: ServiceFile): Promise<Uri?> {
+) : ProvideFileUrisForLibrary {
+    override fun promiseUri(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Uri?> {
         logger.debug("Returning URL from server.")
 
         /* Playback:
@@ -21,8 +22,8 @@ class RemoteFileUriProvider(
 		 * 1: Real-time playback with update of playback statistics, Scrobbling, etc.;
 		 * 2: Real-time playback, no playback statistics handling (default: )
 		 */
-        val itemUrl = connectionProvider.urlProvider
-            .getUrl(*serviceFileUriQueryParamsProvider.getServiceFileUriQueryParams(serviceFile))
-        return Promise(Uri.parse(itemUrl))
+        return libraryConnections
+			.promiseLibraryConnection(libraryId)
+			.then { c -> c?.urlProvider?.getUrl(*serviceFileUriQueryParamsProvider.getServiceFileUriQueryParams(serviceFile))?.let(Uri::parse) }
     }
 }

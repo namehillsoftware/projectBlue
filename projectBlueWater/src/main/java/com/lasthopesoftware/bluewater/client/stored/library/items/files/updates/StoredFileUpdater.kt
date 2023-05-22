@@ -100,7 +100,7 @@ class StoredFileUpdater(
 						?.takeUnless { it.isUsingExistingFiles && storedFile.path == null }
 						?.let { Promise(storedFile) }
 						?: mediaFileUriProvider
-						.promiseFileUri(serviceFile)
+						.promiseUri(libraryId, serviceFile)
 						.eventually { localUri ->
 							localUri
 								?.let { u ->

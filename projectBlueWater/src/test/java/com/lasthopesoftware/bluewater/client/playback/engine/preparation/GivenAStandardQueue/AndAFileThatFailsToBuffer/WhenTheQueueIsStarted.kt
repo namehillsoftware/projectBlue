@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.preparation.GivenAStandardQueue.AndAFileThatFailsToBuffer
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue
 import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackFile
 import com.lasthopesoftware.bluewater.client.playback.file.fakes.FakeBufferingPlaybackHandler
@@ -16,6 +17,8 @@ import org.joda.time.Duration
 import org.junit.jupiter.api.Test
 import java.io.IOException
 
+private const val libraryId = 607
+
 class WhenTheQueueIsStarted {
 
 	private val expectedPlaybackHandler = FakeBufferingPlaybackHandler()
@@ -23,23 +26,25 @@ class WhenTheQueueIsStarted {
 	private val returnedPlaybackHandler by lazy {
 		val serviceFiles = (0..2).map { key -> ServiceFile(key) }
 		val playbackPreparer = mockk<PlayableFilePreparationSource>().apply {
-			every { promisePreparedPlaybackFile(ServiceFile(0), Duration.ZERO) } returns Promise(
+			every { promisePreparedPlaybackFile(LibraryId(libraryId), ServiceFile(0), Duration.ZERO) } returns Promise(
 				FakePreparedPlayableFile<FakeBufferingPlaybackHandler>(object : FakeBufferingPlaybackHandler() {
 					override fun promiseBufferedPlaybackFile(): Promise<IBufferingPlaybackFile> =
 						Promise(IOException())
 				})
 			)
 
-			every { promisePreparedPlaybackFile(ServiceFile(1), Duration.ZERO) } returns Promise(
+			every { promisePreparedPlaybackFile(LibraryId(libraryId), ServiceFile(1), Duration.ZERO) } returns Promise(
 				FakePreparedPlayableFile(expectedPlaybackHandler)
 			)
 		}
 
 		val startPosition = 0
 		val queue = PreparedPlayableFileQueue(
-			{ 2 },
+			mockk {
+				every { maxQueueSize } returns 2
+			},
 			playbackPreparer,
-			CompletingFileQueueProvider().provideQueue(serviceFiles, startPosition)
+			CompletingFileQueueProvider().provideQueue(LibraryId(libraryId), serviceFiles, startPosition)
 		)
 
 		queue.promiseNextPreparedPlaybackFile(Duration.ZERO)

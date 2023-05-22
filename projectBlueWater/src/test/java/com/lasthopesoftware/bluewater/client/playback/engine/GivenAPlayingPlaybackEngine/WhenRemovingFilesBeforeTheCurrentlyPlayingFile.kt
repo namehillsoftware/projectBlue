@@ -2,9 +2,10 @@ package com.lasthopesoftware.bluewater.client.playback.engine.GivenAPlayingPlayb
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.FileStringListUtilities
-import com.lasthopesoftware.bluewater.client.browsing.library.access.ISpecificLibraryProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.access.PassThroughLibraryStorage
+import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
+import com.lasthopesoftware.bluewater.client.browsing.library.access.FakePlaybackQueueConfiguration
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
@@ -16,77 +17,69 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlay
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
-import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
-import io.mockk.mockk
 import io.mockk.spyk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.util.concurrent.TimeUnit
 
+private const val libraryId = 411
+
 class WhenRemovingFilesBeforeTheCurrentlyPlayingFile {
 
 	private val mut by lazy {
 		val fakePlaybackPreparerProvider = FakeDeferredPlayableFilePreparationSourceProvider()
-		library.setId(1)
-		library.setSavedTracksString(
-			FileStringListUtilities.promiseSerializedFileStringList(
-				listOf(
-					ServiceFile(1),
-					ServiceFile(2),
-					ServiceFile(3),
-					ServiceFile(4),
-					ServiceFile(5)
-				)
-			).toExpiringFuture().get()
-		)
-		library.setNowPlayingProgress(35)
-		library.setNowPlayingId(2)
-
-		val libraryProvider = mockk<ISpecificLibraryProvider>()
-		every { libraryProvider.promiseLibrary() } returns Promise(library)
-
-		val libraryStorage = PassThroughLibraryStorage()
 
 		val nowPlayingState = FakeNowPlayingState()
 		val repository =
 			NowPlayingRepository(
 				libraryProvider,
-				libraryStorage,
+				libraryProvider,
 				nowPlayingState,
 			)
 		val playbackEngine =
 			PlaybackEngine(
-				PreparedPlaybackQueueResourceManagement(
-					fakePlaybackPreparerProvider
-				) { 1 },
+				PreparedPlaybackQueueResourceManagement(fakePlaybackPreparerProvider, FakePlaybackQueueConfiguration()),
 				listOf(spyk(CompletingFileQueueProvider()).apply {
-					every { provideQueue(any(), any()) } answers {
-						queueStart = secondArg()
+					every { provideQueue(any(), any(), any()) } answers {
+						queueStart = lastArg()
 						callOriginal()
 					}
 				}),
-				NowPlayingRepository(
-					libraryProvider,
-					libraryStorage,
-					nowPlayingState,
-				),
+				repository,
 				PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
 			)
 		Triple(fakePlaybackPreparerProvider, repository, playbackEngine)
 	}
 
+	private val library by lazy {
+		Library()
+			.setId(1)
+			.setSavedTracksString(
+				FileStringListUtilities.promiseSerializedFileStringList(
+					listOf(
+						ServiceFile(1),
+						ServiceFile(2),
+						ServiceFile(3),
+						ServiceFile(4),
+						ServiceFile(5)
+					)
+				).toExpiringFuture().get()
+			)
+			.setNowPlayingProgress(35)
+			.setNowPlayingId(2)
+	}
+	private val libraryProvider by lazy { FakeLibraryRepository(library) }
 	private var initialState: PositionedProgressedFile? = null
 	private var queueStart = 0
-	private val library = Library()
 	private var nowPlaying: NowPlaying? = null
 
 	@BeforeAll
 	fun before() {
 		val (fakePlaybackPreparerProvider, repository, playbackEngine) = mut
 
-		initialState = playbackEngine.restoreFromSavedState().toExpiringFuture().get()
+		initialState = playbackEngine.restoreFromSavedState(LibraryId(libraryId)).toExpiringFuture().get()
 		playbackEngine.resume().toExpiringFuture()[1, TimeUnit.SECONDS]
 
 		val resolvablePlaybackHandler =	fakePlaybackPreparerProvider.deferredResolution.resolve()
@@ -94,12 +87,12 @@ class WhenRemovingFilesBeforeTheCurrentlyPlayingFile {
 		resolvablePlaybackHandler.setCurrentPosition(92)
 		playbackEngine.pause().toExpiringFuture().get()
 
-		nowPlaying = repository.promiseNowPlaying().toExpiringFuture().get()
+		nowPlaying = repository.promiseNowPlaying(LibraryId(libraryId)).toExpiringFuture().get()
 	}
 
 	@Test
 	fun `then the currently playing file shifts`() {
-		assertThat(library.nowPlayingId).isEqualTo(1)
+		assertThat(libraryProvider.promiseLibrary(LibraryId(1)).toExpiringFuture().get()!!.nowPlayingId).isEqualTo(1)
 	}
 
 	@Test

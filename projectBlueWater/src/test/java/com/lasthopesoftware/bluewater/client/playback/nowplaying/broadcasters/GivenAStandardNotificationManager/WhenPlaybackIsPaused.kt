@@ -6,6 +6,7 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.Pl
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -18,24 +19,24 @@ class WhenPlaybackIsPaused {
 	private val mockNotifier by lazy { mockk<NotifyOfPlaybackEvents>(relaxUnitFun = true) }
 
 	private val mut by lazy {
+		val recordingApplicationMessageBus = RecordingApplicationMessageBus()
 		val playbackNotificationRouter = PlaybackNotificationRouter(
 			mockNotifier,
-			mockk(relaxed = true),
 			mockk {
-				every { promiseUrlKey(any<ServiceFile>()) } answers {
+				every { promiseUrlKey(any(), any<ServiceFile>()) } answers {
 					UrlKeyHolder(
 						URL("http://test"),
-						firstArg<ServiceFile>()
+						lastArg<ServiceFile>()
 					).toPromise()
 				}
 			},
         )
-		playbackNotificationRouter
+		recordingApplicationMessageBus
 	}
 
 	@BeforeAll
 	fun act() {
-		mut(PlaybackMessage.PlaybackPaused)
+		mut.sendMessage(PlaybackMessage.PlaybackPaused)
 	}
 
 	@Test
