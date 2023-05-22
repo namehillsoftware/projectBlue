@@ -581,7 +581,7 @@ private fun BrowserLibraryDestination.Navigate(
 					val context = LocalContext.current
 					LaunchedEffect(key1 = libraryId) {
 						try {
-							nowPlayingFilePropertiesViewModel.initializeViewModel().suspend()
+							nowPlayingFilePropertiesViewModel.initializeViewModel(libraryId).suspend()
 						} catch (e: Throwable) {
 							if (ConnectionLostExceptionFilter.isConnectionLostException(e))
 								pollForConnections.pollConnection(libraryId)
@@ -785,16 +785,18 @@ private fun LibraryDestination.Navigate(
 				val systemUiController = rememberSystemUiController()
 				systemUiController.setSystemBarsColor(SharedColors.overlayDark)
 
+				val screenViewModel = viewModel {
+					NowPlayingScreenViewModel(
+						messageBus,
+						InMemoryNowPlayingDisplaySettings,
+						playbackServiceController,
+					)
+				}
+
 				NowPlayingView(
 					nowPlayingCoverArtViewModel = nowPlayingCoverArtViewModel,
 					nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
-					screenOnState = viewModel {
-						NowPlayingScreenViewModel(
-							messageBus,
-							InMemoryNowPlayingDisplaySettings,
-							playbackServiceController,
-						)
-					},
+					screenOnState = screenViewModel,
 					playbackServiceController = playbackServiceController,
 					playlistViewModel = nowPlayingPlaylistViewModel,
 					childItemViewModelProvider = viewModel {
@@ -817,8 +819,9 @@ private fun LibraryDestination.Navigate(
 						connectionWatcherViewModel.watchLibraryConnection(libraryId)
 
 						Promise.whenAll(
-							nowPlayingFilePropertiesViewModel.initializeViewModel(),
-							nowPlayingCoverArtViewModel.initializeViewModel()
+							screenViewModel.initializeViewModel(libraryId),
+							nowPlayingFilePropertiesViewModel.initializeViewModel(libraryId),
+							nowPlayingCoverArtViewModel.initializeViewModel(libraryId)
 						).suspend()
 					} catch (e: Throwable) {
 						if (ConnectionLostExceptionFilter.isConnectionLostException(e))

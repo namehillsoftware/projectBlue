@@ -68,13 +68,17 @@ class NowPlayingFilePropertiesViewModel(
 		registerForClass(cls<PlaybackMessage.PlaybackStopped>(), onPlaybackStopped)
 	}
 
-	private val onTrackChangedSubscription = applicationMessages.registerReceiver { _: PlaybackMessage.TrackChanged ->
-		updateViewFromRepository()
-		showNowPlayingControls()
+	private val onTrackChangedSubscription = applicationMessages.registerReceiver { m: PlaybackMessage.TrackChanged ->
+		if (m.libraryId == activeLibraryId.value) {
+			updateViewFromRepository(m.libraryId)
+			showNowPlayingControls()
+		}
 	}
 
 	private val onPlaylistChangedSubscription =
-		applicationMessages.registerReceiver { _: PlaybackMessage.PlaylistChanged -> updateViewFromRepository(); Unit }
+		applicationMessages.registerReceiver { m: PlaybackMessage.PlaylistChanged ->
+			activeLibraryId.value?.apply(::updateViewFromRepository)
+		}
 
 	private val onTrackPositionChangedSubscription = applicationMessages.registerReceiver { update: TrackPositionUpdate ->
 		setTrackDuration(update.fileDuration.millis)
@@ -126,15 +130,17 @@ class NowPlayingFilePropertiesViewModel(
 		controlsShownPromise.cancel()
 	}
 
-	fun initializeViewModel(): Promise<Unit> {
+	fun initializeViewModel(libraryId: LibraryId): Promise<Unit> {
+		activeLibraryIdState.value = libraryId
+
 		togglePlaying(false)
 		val nowPlayingPromise = nowPlayingRepository
-			.promiseNowPlaying()
+			.promiseNowPlaying(libraryId)
 			.then { np -> isRepeatingState.value = np?.isRepeating ?: false }
 
-		val promisedViewUpdate = updateViewFromRepository()
+		val promisedViewUpdate = updateViewFromRepository(libraryId)
 
-		val promisedTogglePlayingUpdate = playbackService.promiseIsMarkedForPlay().then(::togglePlaying)
+		val promisedTogglePlayingUpdate = playbackService.promiseIsMarkedForPlay(libraryId).then(::togglePlaying)
 
 		return Promise.whenAll(nowPlayingPromise, promisedViewUpdate, promisedTogglePlayingUpdate).unitResponse()
 	}
@@ -192,13 +198,12 @@ class NowPlayingFilePropertiesViewModel(
 		}
 	}
 
-	private fun updateViewFromRepository(): Promise<Unit> {
+	private fun updateViewFromRepository(libraryId: LibraryId): Promise<Unit> {
 		promisedConnectionChanged.cancel()
-		return nowPlayingRepository.promiseNowPlaying()
+		return nowPlayingRepository.promiseNowPlaying(libraryId)
 			.eventually { np ->
 				nowPlayingFileState.value = np?.playingFile
 				np?.playingFile?.let { positionedFile ->
-					activeLibraryIdState.value = np.libraryId
 					provideUrlKey
 						.promiseGuaranteedUrlKey(np.libraryId, positionedFile.serviceFile)
 						.eventually { key ->
@@ -243,14 +248,14 @@ class NowPlayingFilePropertiesViewModel(
 			.pollConnection(libraryId)
 			.then(
 				{
-					updateViewFromRepository()
+					updateViewFromRepository(libraryId)
 				},
 				{
 					promisedConnectionChanged = CancellableProxyPromise { cp ->
 						applicationMessages
 							.promiseReceivedMessage<LibraryConnectionChangedMessage> { m -> m.libraryId == libraryId }
 							.also(cp::doCancel)
-							.eventually { updateViewFromRepository() }
+							.eventually { m -> updateViewFromRepository(m.libraryId) }
 					}
 				})
 	}

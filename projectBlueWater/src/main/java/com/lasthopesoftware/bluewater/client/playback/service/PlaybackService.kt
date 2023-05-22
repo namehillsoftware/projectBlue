@@ -8,6 +8,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.media.AudioManager
 import android.os.Build
+import android.os.Bundle
 import android.os.Handler
 import android.os.PowerManager
 import android.os.PowerManager.WakeLock
@@ -264,8 +265,8 @@ open class PlaybackService :
 				getNewSelfIntent(context, Action.killMusicService),
 				PendingIntent.FLAG_UPDATE_CURRENT.makePendingIntentImmutable())
 
-		fun promiseIsMarkedForPlay(context: Context): Promise<Boolean> =
-			context.promiseBoundService<PlaybackService>()
+		fun promiseIsMarkedForPlay(context: Context, libraryId: LibraryId): Promise<Boolean> =
+			context.promiseBoundService<PlaybackService>(Bundle().apply { putParcelable(Bag.libraryId, libraryId) })
 				.then { h ->
 					val isPlaying = h.service.isMarkedForPlay
 					context.unbindService(h.serviceConnection)
@@ -435,7 +436,7 @@ open class PlaybackService :
 
 	private val unhandledRejectionHandler = ImmediateResponse<Throwable, Unit>(::uncaughtExceptionHandler)
 
-	private lateinit var activeLibraryId: LibraryId
+	private var activeLibraryId: LibraryId? = null
 	private var isMarkedForPlay = false
 	private var areListenersRegistered = false
 	private var playbackEngineSync = Any()
@@ -490,7 +491,7 @@ open class PlaybackService :
 	}
 
 	override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-		fun actOnIntent(intent: Intent): Promise<Unit> {
+		fun actOnIntent(libraryId: LibraryId, intent: Intent): Promise<Unit> {
 			var action = intent.action ?: return Unit.toPromise()
 			val playbackPosition = playlistPosition ?: return Unit.toPromise()
 
@@ -509,7 +510,7 @@ open class PlaybackService :
 
 					val playlistString = intent.getStringExtra(Bag.filePlaylist) ?: return Unit.toPromise()
 
-					return startNewPlaylist(activeLibraryId, playlistString, playlistPosition)
+					return startNewPlaylist(libraryId, playlistString, playlistPosition)
 				}
 				Action.seekTo -> {
 					val playlistPosition = intent.getIntExtra(Bag.playlistPosition, -1)
@@ -527,7 +528,7 @@ open class PlaybackService :
 					val fileKey = intent.getIntExtra(Bag.playlistPosition, -1)
 					return if (fileKey < 0) Unit.toPromise() else playlistFiles
 						.addFile(ServiceFile(fileKey))
-						.then { applicationMessageBus.value.sendMessage(PlaybackMessage.PlaylistChanged) }
+						.then { applicationMessageBus.value.sendMessage(PlaybackMessage.PlaylistChanged(libraryId)) }
 						.eventually(LoopedInPromise.response({
 							Toast.makeText(this, getText(R.string.lbl_song_added_to_now_playing), Toast.LENGTH_SHORT).show()
 						}, this))
@@ -539,7 +540,7 @@ open class PlaybackService :
 					return if (filePosition < 0) Unit.toPromise() else playlistFiles
 						.removeFileAtPosition(filePosition)
 						.then {
-							applicationMessageBus.value.sendMessage(PlaybackMessage.PlaylistChanged)
+							applicationMessageBus.value.sendMessage(PlaybackMessage.PlaylistChanged(libraryId))
 						}
 						.unitResponse()
 				}
@@ -551,7 +552,7 @@ open class PlaybackService :
 					return if (filePosition < 0 || newPosition < 0) Unit.toPromise()
 					else playlistFiles.moveFile(filePosition, newPosition)
 						.then {
-							applicationMessageBus.value.sendMessage(PlaybackMessage.PlaylistChanged)
+							applicationMessageBus.value.sendMessage(PlaybackMessage.PlaylistChanged(libraryId))
 						}
 						.unitResponse()
 				}
@@ -559,14 +560,14 @@ open class PlaybackService :
 			}
 		}
 
-		fun initializeEngineAndActOnIntent(intent: Intent) {
+		fun initializeEngineAndActOnIntent(libraryId: LibraryId, intent: Intent) {
 			logger.debug("initializeEngineAndActOnIntent({})", intent)
 
 			val promisedTimeout = delay<Any?>(playbackStartTimeout)
 
-			val promisedIntentHandling = libraryRepository.promiseLibrary(activeLibraryId)
+			val promisedIntentHandling = libraryRepository.promiseLibrary(libraryId)
 				.eventually { it?.let(::initializePlaybackPlaylistStateManagerSerially) ?: Promise.empty() }
-				.eventually { it?.let { actOnIntent(intent) } ?: Promise(UninitializedPlaybackEngineException()) }
+				.eventually { it?.let { actOnIntent(libraryId, intent) } ?: Promise(UninitializedPlaybackEngineException()) }
 				.must {
 					promisedTimeout.cancel()
 				}
@@ -591,7 +592,8 @@ open class PlaybackService :
 			return START_NOT_STICKY
 		}
 
-		activeLibraryId = intent.safelyGetParcelableExtra(Bag.libraryId) ?: return START_NOT_STICKY
+		val libraryId = intent.safelyGetParcelableExtra(Bag.libraryId) ?: activeLibraryId ?: return START_NOT_STICKY
+		activeLibraryId = libraryId
 
 		val action = intent.action
 		if (Action.killMusicService == action || !Action.validActions.contains(action)) {
@@ -604,11 +606,11 @@ open class PlaybackService :
 				{ engine ->
 					engine
 						?.let {
-							actOnIntent(intent).excuse(unhandledRejectionHandler)
+							actOnIntent(libraryId, intent).excuse(unhandledRejectionHandler)
 						}
-						?: initializeEngineAndActOnIntent(intent)
+						?: initializeEngineAndActOnIntent(libraryId, intent)
 				},
-				{ initializeEngineAndActOnIntent(intent) }
+				{ initializeEngineAndActOnIntent(libraryId, intent) }
 			)
 		}
 
@@ -670,7 +672,7 @@ open class PlaybackService :
 			}
 			.then {
 				startActivity(intentBuilder.buildNowPlayingIntent(libraryId))
-				applicationMessageBus.value.sendMessage(PlaybackMessage.PlaylistChanged)
+				applicationMessageBus.value.sendMessage(PlaybackMessage.PlaylistChanged(libraryId))
 			}
 	}
 
@@ -871,7 +873,7 @@ open class PlaybackService :
 					?.restoreFromSavedState(library.libraryId)
 					?.then { file ->
 						file?.apply {
-							broadcastChangedFile(activeLibraryId, PositionedFile(playlistPosition, serviceFile))
+							broadcastChangedFile(library.libraryId, PositionedFile(playlistPosition, serviceFile))
 							trackPositionBroadcaster?.broadcastProgress(this)
 						}
 						engine
@@ -922,9 +924,11 @@ open class PlaybackService :
 
 			logger.warn("Number of disconnections has not surpassed $numberOfDisconnects in less than $disconnectResetDuration. Checking for disconnections.")
 
-			pollConnectionServiceProxy
-				.pollConnection(activeLibraryId)
-				.then(connectionRegainedListener, onPollingCancelledListener)
+			activeLibraryId?.also {
+				pollConnectionServiceProxy
+					.pollConnection(it)
+					.then(connectionRegainedListener, onPollingCancelledListener)
+			}
 		}
 
 		fun handlePlaybackEngineInitializationException(exception: PlaybackEngineInitializationException) {
@@ -1017,8 +1021,8 @@ open class PlaybackService :
 			return
 		}
 
-		libraryRepository
-			.promiseLibrary(activeLibraryId)
+		activeLibraryId
+			?.let(libraryRepository::promiseLibrary).keepPromise()
 			.eventually { library ->
 				library?.let(::initializePlaybackPlaylistStateManagerSerially).keepPromise()
 			}
