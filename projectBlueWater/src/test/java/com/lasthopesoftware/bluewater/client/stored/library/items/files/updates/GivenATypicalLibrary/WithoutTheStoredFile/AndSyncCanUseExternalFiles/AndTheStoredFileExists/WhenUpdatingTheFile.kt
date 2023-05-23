@@ -4,7 +4,7 @@ import android.net.Uri
 import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
@@ -34,7 +34,7 @@ class WhenUpdatingTheFile : AndroidContext() {
 		val mediaFileIdProvider = mockk<ProvideMediaFileIds>()
 		every { mediaFileIdProvider.getMediaId(LibraryId(14), ServiceFile(4)) } returns Promise(12)
 
-		val fakeLibraryProvider = FakeLibraryProvider(
+		val fakeLibraryRepository = FakeLibraryRepository(
 			Library()
 				.setIsUsingExistingFiles(true)
 				.setId(14)
@@ -49,7 +49,7 @@ class WhenUpdatingTheFile : AndroidContext() {
 			mediaFileUriProvider,
 			mediaFileIdProvider,
 			StoredFileQuery(ApplicationProvider.getApplicationContext()),
-			fakeLibraryProvider,
+			fakeLibraryRepository,
 			lookupStoredFilePaths
 		)
 		storedFile =

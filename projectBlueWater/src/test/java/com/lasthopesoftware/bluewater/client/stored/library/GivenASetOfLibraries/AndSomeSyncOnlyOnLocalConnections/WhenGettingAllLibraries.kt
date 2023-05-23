@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.stored.library.GivenASetOfLibraries.AndSomeSyncOnlyOnLocalConnections
 
-import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.stored.library.SyncLibraryProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ExpiringFuturePromise
@@ -18,7 +18,7 @@ class WhenGettingAllLibraries {
 
 	private val libraries by lazy {
 		val syncLibraryProvider = SyncLibraryProvider(
-			FakeLibraryProvider(
+			FakeLibraryRepository(
 				Library().setId(5).setIsSyncLocalConnectionsOnly(true),
 				Library().setId(4),
 				Library().setId(8),

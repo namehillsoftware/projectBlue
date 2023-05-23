@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.preparation.GivenTwoQueuesThatEventuallyDiverge
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.library.access.FakePlaybackQueueConfiguration
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.file.fakes.FakeBufferingPlaybackHandler
@@ -27,8 +28,8 @@ class WhenSwitchingQueuesAndTheNextQueueIsEmpty {
 		}
 
 		val queue = PreparedPlayableFileQueue(
-			{ 1 },
-			{ _, _ ->
+			FakePlaybackQueueConfiguration(),
+			{ _, _, _ ->
 				Promise(
 					FakePreparedPlayableFile(
 						FakeBufferingPlaybackHandler()

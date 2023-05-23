@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.settings.GivenALibraryId
 
-import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsViewModel
@@ -16,7 +16,7 @@ class WhenLoadingTheLibrarySettings {
 
     private val services by lazy {
         LibrarySettingsViewModel(
-            FakeLibraryProvider(
+            FakeLibraryRepository(
                 Library(
                     _id = libraryId.id,
                     _accessCode = "r64HLI",

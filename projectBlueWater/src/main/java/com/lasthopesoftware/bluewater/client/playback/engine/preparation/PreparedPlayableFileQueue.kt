@@ -118,7 +118,7 @@ class PreparedPlayableFileQueue(
 		val writeLock = queueUpdateLock.writeLock()
 		writeLock.lock()
 		try {
-			if (bufferingMediaPlayerPromises.size >= configuration.getMaxQueueSize()) return
+			if (bufferingMediaPlayerPromises.size >= configuration.maxQueueSize) return
 			val nextPreparingMediaPlayerPromise = getNextUnfaultingPreparingMediaPlayerPromise() ?: return
 			bufferingMediaPlayerPromises.offer(nextPreparingMediaPlayerPromise)
 		} finally {

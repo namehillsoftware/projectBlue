@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.stored.library.sync.GivenLibrariesToSync
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.CheckForAnyStoredFiles
@@ -39,7 +39,7 @@ class WhenCheckingIfSyncIsNecessary {
 		}
 
 		SyncChecker(
-			FakeLibraryProvider(
+			FakeLibraryRepository(
 				Library().setId(3),
 				Library().setId(11),
 				Library().setId(10),

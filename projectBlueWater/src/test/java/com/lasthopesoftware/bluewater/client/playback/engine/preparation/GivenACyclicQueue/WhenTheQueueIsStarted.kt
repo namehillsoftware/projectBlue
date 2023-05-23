@@ -1,6 +1,8 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.preparation.GivenACyclicQueue
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.library.access.FakePlaybackQueueConfiguration
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile
@@ -26,11 +28,11 @@ class WhenTheQueueIsStarted {
 		val bufferingPlaybackQueuesProvider = CyclicalFileQueueProvider()
 		val startPosition = nextInt(1, numberOfFiles)
 		val queue = PreparedPlayableFileQueue(
-			{ 1 },
-			{ file, _ ->
+			FakePlaybackQueueConfiguration(),
+			{ _, file, _ ->
 				Promise(fileActionMap[file])
 			},
-			bufferingPlaybackQueuesProvider.provideQueue(serviceFiles, startPosition)
+			bufferingPlaybackQueuesProvider.provideQueue(LibraryId(682), serviceFiles, startPosition)
 		)
 		Pair(startPosition, queue)
 	}

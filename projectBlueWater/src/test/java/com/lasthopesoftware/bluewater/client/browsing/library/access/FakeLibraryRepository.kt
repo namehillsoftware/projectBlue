@@ -5,8 +5,8 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 
-class FakeLibraryProvider(vararg libraries: Library) : ILibraryProvider, ILibraryStorage {
-	private val libraries = libraries.associateBy { l -> l.id }.toMutableMap()
+class FakeLibraryRepository(vararg libraries: Library) : ILibraryProvider, ILibraryStorage {
+	val libraries = libraries.associateBy { l -> l.id }.toMutableMap()
 
     override fun promiseLibrary(libraryId: LibraryId): Promise<Library?> = Promise(libraries[libraryId.id])
 

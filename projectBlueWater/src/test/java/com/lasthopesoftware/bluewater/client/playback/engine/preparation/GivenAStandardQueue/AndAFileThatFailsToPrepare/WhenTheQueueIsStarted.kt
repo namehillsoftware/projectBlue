@@ -1,6 +1,8 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.preparation.GivenAStandardQueue.AndAFileThatFailsToPrepare
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.library.access.FakePlaybackQueueConfiguration
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparationException
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue
 import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile
@@ -19,13 +21,15 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.util.concurrent.ExecutionException
 
+private const val libraryId = 34
+
 class WhenTheQueueIsStarted {
 
 	private val mut by lazy {
 		val serviceFiles = (0..2).map { key -> ServiceFile(key) }
 		val playbackPreparer = mockk<PlayableFilePreparationSource>().apply {
-			every { promisePreparedPlaybackFile(ServiceFile(0), Duration.ZERO) } returns Promise(expectedException)
-			every { promisePreparedPlaybackFile(ServiceFile(1), Duration.ZERO) } returns Promise(
+			every { promisePreparedPlaybackFile(LibraryId(libraryId), ServiceFile(0), Duration.ZERO) } returns Promise(expectedException)
+			every { promisePreparedPlaybackFile(LibraryId(libraryId), ServiceFile(1), Duration.ZERO) } returns Promise(
 				FakePreparedPlayableFile(FakeBufferingPlaybackHandler())
 			)
 		}
@@ -33,9 +37,9 @@ class WhenTheQueueIsStarted {
 		val bufferingPlaybackQueuesProvider = CompletingFileQueueProvider()
 		val startPosition = 0
 		PreparedPlayableFileQueue(
-			{ 2 },
+			FakePlaybackQueueConfiguration(2),
 			playbackPreparer,
-			bufferingPlaybackQueuesProvider.provideQueue(serviceFiles, startPosition)
+			bufferingPlaybackQueuesProvider.provideQueue(LibraryId(libraryId), serviceFiles, startPosition)
 		)
 	}
 	private val expectedException = Exception()

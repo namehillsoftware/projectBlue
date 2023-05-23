@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.preparation.GivenTwoQueuesThatEventuallyDiverge
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.library.access.FakePlaybackQueueConfiguration
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue
 import com.lasthopesoftware.bluewater.client.playback.file.NoTransformVolumeManager
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
@@ -21,7 +22,7 @@ import org.junit.jupiter.api.Test
 class WhenSwitchingQueuesAndGettingTheNextFile {
 
 	private val queue by lazy {
-		val originalFileQueue = mockk<PositionedFileQueue>().apply {
+		val originalFileQueue = mockk<PositionedFileQueue> {
 			every { poll() } returnsMany listOf(
 				PositionedFile(1, ServiceFile(1)),
 				PositionedFile(2, ServiceFile(2)),
@@ -33,8 +34,8 @@ class WhenSwitchingQueuesAndGettingTheNextFile {
 		}
 
 		PreparedPlayableFileQueue(
-			{ 3 },
-			{ _, _ -> Promise<PreparedPlayableFile?>(FakePreparedPlayableFile(FakeBufferingPlaybackHandler())) },
+			FakePlaybackQueueConfiguration(3),
+			{ _, _, _ -> Promise<PreparedPlayableFile?>(FakePreparedPlayableFile(FakeBufferingPlaybackHandler())) },
 			originalFileQueue)
 	}
 	private val playedFiles = ArrayList<PositionedPlayableFile>()

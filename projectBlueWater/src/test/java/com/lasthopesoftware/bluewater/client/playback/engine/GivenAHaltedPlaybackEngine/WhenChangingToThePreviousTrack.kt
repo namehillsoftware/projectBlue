@@ -6,10 +6,9 @@ import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.Fi
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertiesContainer
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.IFilePropertiesContainerRepository
-import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryStorage
-import com.lasthopesoftware.bluewater.client.browsing.library.access.ISpecificLibraryProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.access.PassThroughLibraryStorage
+import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
@@ -21,7 +20,6 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlay
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
-import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -29,13 +27,15 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.util.concurrent.TimeUnit
 
+private const val libraryId = 224
+
 class WhenChangingToThePreviousTrack {
 
 	private val mut by lazy {
 		val libraryUnderTest = Library()
 
 		val fakePlaybackPreparerProvider = FakeDeferredPlayableFilePreparationSourceProvider()
-		libraryUnderTest.setId(1)
+		libraryUnderTest.setId(libraryId)
 		libraryUnderTest.setSavedTracksString(
 			FileStringListUtilities.promiseSerializedFileStringList(
 				listOf(
@@ -49,11 +49,7 @@ class WhenChangingToThePreviousTrack {
 		)
 		libraryUnderTest.setNowPlayingId(4)
 
-		val libraryProvider = object : ISpecificLibraryProvider {
-            override fun promiseLibrary(): Promise<Library?> = Promise(libraryUnderTest)
-		}
-
-		val libraryStorage: ILibraryStorage = PassThroughLibraryStorage()
+		val libraryProvider = FakeLibraryRepository(libraryUnderTest)
 		val filePropertiesContainerRepository = mockk<IFilePropertiesContainerRepository>()
 		every {
 			filePropertiesContainerRepository.getFilePropertiesContainer(UrlKeyHolder(EmptyUrl.url,	ServiceFile(4)))
@@ -62,12 +58,15 @@ class WhenChangingToThePreviousTrack {
 		val playbackEngine =
 			PlaybackEngine(
 				PreparedPlaybackQueueResourceManagement(
-					fakePlaybackPreparerProvider
-				) { 1 },
+					fakePlaybackPreparerProvider,
+					mockk {
+						every { maxQueueSize } returns 1
+					}
+				),
 				listOf(CompletingFileQueueProvider()),
 				NowPlayingRepository(
 					libraryProvider,
-					libraryStorage,
+					libraryProvider,
 					FakeNowPlayingState(),
 				),
 				PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
@@ -80,9 +79,9 @@ class WhenChangingToThePreviousTrack {
 	@BeforeAll
 	fun act() {
 		val (_, playbackEngine) = mut
-		playbackEngine.restoreFromSavedState().toExpiringFuture().get()
+		playbackEngine.restoreFromSavedState(LibraryId(libraryId)).toExpiringFuture().get()
 
-		nextSwitchedFile = playbackEngine.skipToPrevious().toExpiringFuture().get(1, TimeUnit.SECONDS)
+		nextSwitchedFile = playbackEngine.skipToPrevious().toExpiringFuture().get(1, TimeUnit.SECONDS)?.second
 	}
 
 	@Test

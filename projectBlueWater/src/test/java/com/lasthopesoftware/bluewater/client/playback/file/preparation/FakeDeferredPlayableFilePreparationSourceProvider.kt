@@ -12,15 +12,16 @@ class FakeDeferredPlayableFilePreparationSourceProvider : IPlayableFilePreparati
 	val deferredResolution = DeferredResolution()
 
     override fun providePlayableFilePreparationSource(): PlayableFilePreparationSource {
-        return PlayableFilePreparationSource { _, preparedAt ->
+        return PlayableFilePreparationSource { _, _, preparedAt ->
 			deferredResolution.preparedAt = preparedAt
 			Promise(deferredResolution)
         }
     }
 
-    override fun getMaxQueueSize(): Int {
-        return 1
-    }
+    override val maxQueueSize: Int
+        get() {
+            return 1
+        }
 
     class DeferredResolution : MessengerOperator<PreparedPlayableFile> {
         private var resolve: Messenger<PreparedPlayableFile>? = null

@@ -1,9 +1,9 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.GivenAPlayingPlaybackEngine.AndAnErrorOccurs
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.library.access.PassThroughLibraryStorage
-import com.lasthopesoftware.bluewater.client.browsing.library.access.PassThroughSpecificLibraryProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlayableFilePreparationSourceProvider
@@ -21,6 +21,8 @@ import org.joda.time.Duration
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
+private const val libraryId = 617
+
 class WhenObservingPlayback {
 
 	private val mut by lazy {
@@ -30,20 +32,21 @@ class WhenObservingPlayback {
 				override fun providePlayableFilePreparationSource(): PlayableFilePreparationSource =
 					deferredErrorPlaybackPreparer
 
-				override fun getMaxQueueSize(): Int = 1
+                override val maxQueueSize: Int
+                    get() = 1
 			}
 		val library = Library()
-		library.setId(1)
-		val libraryProvider = PassThroughSpecificLibraryProvider(library)
-		val libraryStorage = PassThroughLibraryStorage()
+		library.setId(libraryId)
+		val libraryProvider = FakeLibraryRepository(library)
 		val playbackEngine = PlaybackEngine(
 			PreparedPlaybackQueueResourceManagement(
 				fakePlaybackPreparerProvider,
 				fakePlaybackPreparerProvider
-			), listOf(CompletingFileQueueProvider()),
+			),
+			listOf(CompletingFileQueueProvider()),
 			NowPlayingRepository(
 				libraryProvider,
-				libraryStorage,
+				libraryProvider,
 				FakeNowPlayingState(),
 			),
 			PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
@@ -61,13 +64,16 @@ class WhenObservingPlayback {
 		playbackEngine
 			.setOnPlaylistError { e -> error = e }
 			.startPlaylist(
+				LibraryId(libraryId),
 				listOf(
 					ServiceFile(1),
 					ServiceFile(2),
 					ServiceFile(3),
 					ServiceFile(4),
 					ServiceFile(5)
-				), 0, Duration.ZERO
+				),
+				0,
+				Duration.ZERO
 			)
 		deferredErrorPlaybackPreparer.resolve()
 	}
@@ -85,6 +91,7 @@ class WhenObservingPlayback {
 		}
 
 		override fun promisePreparedPlaybackFile(
+			libraryId: LibraryId,
 			serviceFile: ServiceFile,
 			preparedAt: Duration
 		): Promise<PreparedPlayableFile?> {

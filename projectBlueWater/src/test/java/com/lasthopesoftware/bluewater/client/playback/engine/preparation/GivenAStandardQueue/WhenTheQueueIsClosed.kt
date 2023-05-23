@@ -1,6 +1,8 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.preparation.GivenAStandardQueue
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.library.access.FakePlaybackQueueConfiguration
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
@@ -10,6 +12,8 @@ import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
+
+private const val libraryId = 471
 
 class WhenTheQueueIsClosed {
 
@@ -22,9 +26,9 @@ class WhenTheQueueIsClosed {
 		}
 
 		PreparedPlayableFileQueue(
-			{ 1 },
-			{ _, _ -> cancelRecordingPromise },
-			bufferingPlaybackQueuesProvider.provideQueue(listOf(ServiceFile(1)), 0)
+			FakePlaybackQueueConfiguration(1),
+			{ _, _, _ -> cancelRecordingPromise },
+			bufferingPlaybackQueuesProvider.provideQueue(LibraryId(libraryId), listOf(ServiceFile(1)), 0)
 		)
 	}
 
