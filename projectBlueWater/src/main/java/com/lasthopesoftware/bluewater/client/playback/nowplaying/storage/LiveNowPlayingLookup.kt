@@ -13,6 +13,7 @@ import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicat
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageRegistrations
 import com.lasthopesoftware.bluewater.shared.messages.application.HaveApplicationMessageRegistrations
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
+import com.lasthopesoftware.bluewater.shared.updateIfDifferent
 import com.namehillsoftware.handoff.promises.Promise
 import java.util.concurrent.atomic.AtomicReference
 
@@ -86,14 +87,5 @@ class LiveNowPlayingLookup private constructor(
 	private fun updateInner(libraryId: LibraryId) {
 		activeLibraryId.updateIfDifferent(libraryId)
 		promiseNowPlaying(libraryId)
-	}
-
-	private fun <T> AtomicReference<T>.updateIfDifferent(newValue: T): Boolean {
-		do {
-			val prev = get()
-			if (prev == newValue) return false
-		} while (!compareAndSet(prev, newValue))
-
-		return true
 	}
 }

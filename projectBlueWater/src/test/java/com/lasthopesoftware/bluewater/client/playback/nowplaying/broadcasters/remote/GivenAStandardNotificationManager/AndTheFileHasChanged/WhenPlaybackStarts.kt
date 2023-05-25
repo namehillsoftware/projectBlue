@@ -7,14 +7,19 @@ import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.remote.MediaSessionBroadcaster
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.LibraryPlaybackMessage
 import com.lasthopesoftware.bluewater.shared.android.MediaSession.ControlMediaSession
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import org.junit.Test
+
+private const val libraryId = 746
+private const val serviceFileId = 150
 
 class WhenPlaybackStarts : AndroidContext() {
 	companion object {
@@ -22,19 +27,14 @@ class WhenPlaybackStarts : AndroidContext() {
 	}
 
 	override fun before() {
+		val recordingApplicationMessageBus = RecordingApplicationMessageBus()
 		val playbackNotificationBroadcaster =
             MediaSessionBroadcaster(
 				mockk {
-					every { promiseNowPlaying() } returns NowPlaying(
-						LibraryId(1),
-						listOf(ServiceFile(559)),
-						0,
-						0L,
-						false
-					).toPromise()
+					every { promiseNowPlaying(LibraryId(libraryId)) }
 				},
-				mockk {
-					every { promiseFileProperties(ServiceFile(559)) } returns mapOf(
+                mockk {
+					every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns mapOf(
 						Pair(KnownFileProperties.Name, "leaf"),
 						Pair(KnownFileProperties.Rating, "895"),
 						Pair(KnownFileProperties.Artist, "worry"),
@@ -49,9 +49,15 @@ class WhenPlaybackStarts : AndroidContext() {
 						.toPromise()
 				},
 				mediaSessionCompat,
+				recordingApplicationMessageBus,
             )
-		playbackNotificationBroadcaster.notifyPlayingFileUpdated()
-		playbackNotificationBroadcaster.notifyPlaying()
+		recordingApplicationMessageBus.sendMessage(
+			LibraryPlaybackMessage.TrackChanged(
+				LibraryId(libraryId),
+				PositionedFile(0, ServiceFile(serviceFileId))
+			)
+		)
+		recordingApplicationMessageBus.sendMessage(LibraryPlaybackMessage.PlaybackStarted(LibraryId(libraryId)))
 	}
 
 	@Test

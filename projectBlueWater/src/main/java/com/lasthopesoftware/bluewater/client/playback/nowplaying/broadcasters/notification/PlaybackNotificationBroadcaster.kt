@@ -2,18 +2,26 @@ package com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.n
 
 import android.app.Notification
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.NotifyOfPlaybackEvents
+import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideUrlKey
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.PlaybackNotificationRouter
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building.BuildNowPlayingNotificationContent
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building.BuildPlaybackStartingNotification
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
 import com.lasthopesoftware.bluewater.shared.android.notifications.control.ControlNotifications
+import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
+import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 
 class PlaybackNotificationBroadcaster(
+	private val nowPlayingState: GetNowPlayingState,
+	registerApplicationMessages: RegisterForApplicationMessages,
+	private val urlKeys: ProvideUrlKey,
 	private val notificationsController: ControlNotifications,
 	notificationsConfiguration: NotificationsConfiguration,
 	private val nowPlayingNotificationContentBuilder: BuildNowPlayingNotificationContent,
 	private val playbackStartingNotification: BuildPlaybackStartingNotification,
-) : NotifyOfPlaybackEvents {
+) : PlaybackNotificationRouter(registerApplicationMessages), AutoCloseable {
 
 	private val notificationId = notificationsConfiguration.notificationId
 	private val notificationSync = Any()
@@ -22,6 +30,28 @@ class PlaybackNotificationBroadcaster(
 	private var isNotificationStarted = false
 	private var libraryId: LibraryId? = null
 	private var serviceFile: ServiceFile? = null
+
+	private val filePropertiesUpdateSubscription = registerApplicationMessages.registerReceiver { m: FilePropertiesUpdatedMessage ->
+		libraryId?.also { l ->
+			serviceFile?.also { s ->
+				urlKeys
+					.promiseUrlKey(l, s)
+					.then { currentUrlKeyHolder ->
+						if (m.urlServiceKey == currentUrlKeyHolder)
+							updateNowPlaying(l, s)
+					}
+			}
+		}
+	}
+
+	override fun close() {
+		filePropertiesUpdateSubscription.close()
+		super.close()
+	}
+
+	override fun updateLibrary(libraryId: LibraryId) {
+		this.libraryId = libraryId
+	}
 
 	override fun notifyPlaying() {
 		isPlaying = true
@@ -86,8 +116,12 @@ class PlaybackNotificationBroadcaster(
 		}
 	}
 
-	override fun notifyPlayingFileUpdated(libraryId: LibraryId, serviceFile: ServiceFile) {
-		updateNowPlaying(libraryId, serviceFile)
+	override fun notifyPlayingFileUpdated() {
+		libraryId?.also {
+			nowPlayingState.promiseNowPlaying(it).then { np ->
+				np?.playingFile?.serviceFile?.also { sf -> updateNowPlaying(it, sf) }
+			}
+		}
 	}
 
 	private fun updateNowPlaying(libraryId: LibraryId, serviceFile: ServiceFile) {
@@ -105,7 +139,6 @@ class PlaybackNotificationBroadcaster(
 
 		synchronized(notificationSync) {
 			this.serviceFile = serviceFile
-			this.libraryId = libraryId
 
 			fun isValidForNotification() = serviceFile == this.serviceFile && libraryId == this.libraryId && (isNotificationStarted || isPlaying)
 

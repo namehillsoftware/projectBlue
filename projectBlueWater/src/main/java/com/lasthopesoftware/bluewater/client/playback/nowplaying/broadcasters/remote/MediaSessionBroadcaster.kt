@@ -11,11 +11,13 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePrope
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.NotifyOfPlaybackEvents
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.NotifyOfTrackPositionUpdates
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.PlaybackNotificationRouter
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.TrackPositionUpdate
 import com.lasthopesoftware.bluewater.shared.android.MediaSession.ControlMediaSession
 import com.lasthopesoftware.bluewater.shared.lazyLogger
+import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
+import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 
 private val logger by lazyLogger<MediaSessionBroadcaster>()
 private const val playbackSpeed = 1.0f
@@ -28,11 +30,17 @@ private const val standardCapabilities = PlaybackStateCompat.ACTION_PLAY_PAUSE o
 	PlaybackStateCompat.ACTION_PLAY_FROM_SEARCH
 
 class MediaSessionBroadcaster(
-	private val nowPlayingProvider: GetNowPlayingState,
+	private val nowPlayingState: GetNowPlayingState,
 	private val filePropertiesProvider: ProvideLibraryFileProperties,
 	private val imageProvider: ProvideImages,
-	private val mediaSession: ControlMediaSession
-) : NotifyOfPlaybackEvents, NotifyOfTrackPositionUpdates {
+	private val mediaSession: ControlMediaSession,
+	applicationMessages: RegisterForApplicationMessages,
+) : PlaybackNotificationRouter(applicationMessages) {
+
+	private val trackPositionUpdatesSubscription = applicationMessages.registerReceiver { m: TrackPositionUpdate ->
+		updateTrackPosition(m.filePosition.millis)
+	}
+
 	@Volatile
 	private var playbackState = PlaybackStateCompat.STATE_STOPPED
 
@@ -48,6 +56,18 @@ class MediaSessionBroadcaster(
 
 	@Volatile
 	private var isPlaying = false
+
+	@Volatile
+	private var libraryId: LibraryId? = null
+
+	override fun close() {
+		trackPositionUpdatesSubscription.close()
+		super.close()
+	}
+
+	override fun updateLibrary(libraryId: LibraryId) {
+		this.libraryId = libraryId
+	}
 
 	override fun notifyPlaying() {
 		isPlaying = true
@@ -88,11 +108,15 @@ class MediaSessionBroadcaster(
 		notifyPaused()
 	}
 
-	override fun notifyPlayingFileUpdated(libraryId: LibraryId, serviceFile: ServiceFile) {
-		updateNowPlaying(libraryId, serviceFile)
+	override fun notifyPlayingFileUpdated() {
+		libraryId?.also {
+			nowPlayingState.promiseNowPlaying(it).then { np ->
+				np?.playingFile?.serviceFile?.also { sf -> updateNowPlaying(it, sf) }
+			}
+		}
 	}
 
-	override fun updateTrackPosition(trackPosition: Long) {
+	private fun updateTrackPosition(trackPosition: Long) {
 		val builder = PlaybackStateCompat.Builder()
 		builder.setActions(capabilities)
 		builder.setState(

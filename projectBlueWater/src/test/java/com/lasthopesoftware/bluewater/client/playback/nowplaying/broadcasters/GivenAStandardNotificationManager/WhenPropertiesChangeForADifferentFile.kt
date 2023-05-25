@@ -3,9 +3,10 @@ package com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.G
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.NotifyOfPlaybackEvents
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.PlaybackNotificationRouter
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.PlaybackNotificationBroadcaster
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -18,28 +19,30 @@ class WhenPropertiesChangeForADifferentFile {
 	private val mockNotifier by lazy { mockk<NotifyOfPlaybackEvents>(relaxUnitFun = true) }
 
 	private val mut by lazy {
-		val playbackNotificationRouter = PlaybackNotificationRouter(
-			mockNotifier,
-			mockk(relaxed = true),
+		val recordingApplicationMessageBus = RecordingApplicationMessageBus()
+		PlaybackNotificationBroadcaster(
+			recordingApplicationMessageBus,
 			mockk {
-				every { promiseUrlKey(any<ServiceFile>()) } answers {
+				every { promiseUrlKey(any(), any<ServiceFile>()) } answers {
 					UrlKeyHolder(
 						URL("http://test"),
-						firstArg<ServiceFile>()
-						).toPromise()
+						lastArg<ServiceFile>()
+					).toPromise()
 				}
 			},
-        )
-		playbackNotificationRouter
+			mockNotifier,
+
+		)
+		recordingApplicationMessageBus
 	}
 
 	@BeforeAll
     fun act() {
-		mut(FilePropertiesUpdatedMessage(UrlKeyHolder(URL("http://test"), ServiceFile(825))))
+		mut.sendMessage(FilePropertiesUpdatedMessage(UrlKeyHolder(URL("http://test"), ServiceFile(825))))
     }
 
 	@Test
-	fun `then notification are correctly sent to update the playing file`() {
-		verify(exactly = 0) { mockNotifier.notifyPlayingFileUpdated() }
+	fun `then notifications are sent correctly`() {
+		verify(exactly = 0) { mockNotifier.notifyPlayingFileUpdated(ServiceFile(825)) }
 	}
 }

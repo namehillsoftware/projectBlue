@@ -79,8 +79,6 @@ import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.QueueProviders
 import com.lasthopesoftware.bluewater.client.playback.file.volume.MaxFileVolumeProvider
 import com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.MaxFileVolumePreparationProvider
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.PlaybackNotificationRouter
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.TrackPositionNotificationRouter
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.NotificationsConfiguration
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.PlaybackNotificationBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building.MediaStyleNotificationSetup
@@ -92,6 +90,7 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlay
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Action.Bag
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaybackStartedBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.LibraryPlaybackMessage
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.AudioBecomingNoisyReceiver
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
@@ -528,7 +527,7 @@ open class PlaybackService :
 					val fileKey = intent.getIntExtra(Bag.playlistPosition, -1)
 					return if (fileKey < 0) Unit.toPromise() else playlistFiles
 						.addFile(ServiceFile(fileKey))
-						.then { applicationMessageBus.value.sendMessage(PlaybackMessage.PlaylistChanged(libraryId)) }
+						.then { applicationMessageBus.value.sendMessage(LibraryPlaybackMessage.PlaylistChanged(libraryId)) }
 						.eventually(LoopedInPromise.response({
 							Toast.makeText(this, getText(R.string.lbl_song_added_to_now_playing), Toast.LENGTH_SHORT).show()
 						}, this))
@@ -540,7 +539,7 @@ open class PlaybackService :
 					return if (filePosition < 0) Unit.toPromise() else playlistFiles
 						.removeFileAtPosition(filePosition)
 						.then {
-							applicationMessageBus.value.sendMessage(PlaybackMessage.PlaylistChanged(libraryId))
+							applicationMessageBus.value.sendMessage(LibraryPlaybackMessage.PlaylistChanged(libraryId))
 						}
 						.unitResponse()
 				}
@@ -552,7 +551,7 @@ open class PlaybackService :
 					return if (filePosition < 0 || newPosition < 0) Unit.toPromise()
 					else playlistFiles.moveFile(filePosition, newPosition)
 						.then {
-							applicationMessageBus.value.sendMessage(PlaybackMessage.PlaylistChanged(libraryId))
+							applicationMessageBus.value.sendMessage(LibraryPlaybackMessage.PlaylistChanged(libraryId))
 						}
 						.unitResponse()
 				}
@@ -643,7 +642,7 @@ open class PlaybackService :
 	}
 
 	override fun onPlaylistReset(libraryId: LibraryId, positionedFile: PositionedFile) {
-		applicationMessageBus.value.sendMessage(PlaybackMessage.TrackChanged(libraryId, positionedFile))
+		applicationMessageBus.value.sendMessage(LibraryPlaybackMessage.TrackChanged(libraryId, positionedFile))
 	}
 
 	override fun onPlayingFileChanged(libraryId: LibraryId, positionedPlayingFile: PositionedPlayingFile) {
@@ -672,7 +671,7 @@ open class PlaybackService :
 			}
 			.then {
 				startActivity(intentBuilder.buildNowPlayingIntent(libraryId))
-				applicationMessageBus.value.sendMessage(PlaybackMessage.PlaylistChanged(libraryId))
+				applicationMessageBus.value.sendMessage(LibraryPlaybackMessage.PlaylistChanged(libraryId))
 			}
 	}
 
@@ -717,32 +716,14 @@ open class PlaybackService :
 			val imageProvider = CachedImageProvider.getInstance(this)
 
 			val urlKeyProvider = UrlKeyProvider(libraryConnectionProvider)
-			val nowPlayingRepository = NowPlayingRepository(
-				libraryRepository,
-				libraryRepository,
-				InMemoryNowPlayingState,
-			)
 			val promisedMediaBroadcaster = promisedMediaSession.then { mediaSession ->
-				val broadcaster = MediaSessionBroadcaster(
+				MediaSessionBroadcaster(
 					nowPlayingRepository,
 					libraryFilePropertiesProvider,
 					imageProvider,
 					MediaSessionController(mediaSession),
-				)
-
-				TrackPositionNotificationRouter(
-					broadcaster,
-					applicationMessageBus.value,
+					applicationMessageBus.value
 				).also(playbackEngineCloseables::manage)
-
-
-				PlaybackNotificationRouter(
-					broadcaster,
-					applicationMessageBus.value,
-					urlKeyProvider,
-				).also(playbackEngineCloseables::manage)
-
-				Unit
 			}
 
 			val promisedMediaNotificationSetup = mediaStyleNotificationSetup.then { mediaStyleNotificationSetup ->
@@ -755,15 +736,14 @@ open class PlaybackService :
 					)
 					.also(playbackEngineCloseables::manage)
 					.let { builder ->
-						PlaybackNotificationRouter(
-							PlaybackNotificationBroadcaster(
-								lazyNotificationController.value,
-								playbackNotificationsConfiguration,
-								builder,
-								playbackStartingNotificationBuilder,
-							),
+						PlaybackNotificationBroadcaster(
+							nowPlayingRepository,
 							applicationMessageBus.value,
 							urlKeyProvider,
+							lazyNotificationController.value,
+							playbackNotificationsConfiguration,
+							builder,
+							playbackStartingNotificationBuilder,
 						).also(playbackEngineCloseables::manage)
 					}
 			}
@@ -822,7 +802,7 @@ open class PlaybackService :
 			}
 
 			Promise
-				.whenAll(promisedMediaBroadcaster, promisedMediaNotificationSetup.unitResponse())
+				.whenAll(promisedMediaBroadcaster.unitResponse(), promisedMediaNotificationSetup.unitResponse())
 				.eventually { promisedPreparationSourceProvider }
 			}
 			.then { preparationSourceProvider ->
@@ -1037,7 +1017,7 @@ open class PlaybackService :
 		if (playingFile is EmptyPlaybackHandler) return
 
 		broadcastChangedFile(libraryId, positionedPlayingFile.asPositionedFile())
-		applicationMessageBus.value.sendMessage(PlaybackMessage.TrackStarted(libraryId, positionedPlayingFile.serviceFile))
+		applicationMessageBus.value.sendMessage(LibraryPlaybackMessage.TrackStarted(libraryId, positionedPlayingFile.serviceFile))
 
 		val promisedPlayedFile = playingFile.promisePlayedFile()
 		val localSubscription = trackPositionBroadcaster?.run {
@@ -1050,7 +1030,7 @@ open class PlaybackService :
 		promisedPlayedFile
 			.then {
 				applicationMessageBus.value.sendMessage(
-					PlaybackMessage.TrackCompleted(libraryId, positionedPlayingFile.serviceFile)
+					LibraryPlaybackMessage.TrackCompleted(libraryId, positionedPlayingFile.serviceFile)
 				)
 
 				localSubscription?.dispose()
@@ -1062,7 +1042,7 @@ open class PlaybackService :
 	}
 
 	private fun broadcastChangedFile(libraryId: LibraryId, positionedFile: PositionedFile) {
-		applicationMessageBus.value.sendMessage(PlaybackMessage.TrackChanged(libraryId, positionedFile))
+		applicationMessageBus.value.sendMessage(LibraryPlaybackMessage.TrackChanged(libraryId, positionedFile))
 	}
 
 	override fun onDestroy() {

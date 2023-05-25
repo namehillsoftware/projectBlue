@@ -22,8 +22,7 @@ class WhenTheFileChanges {
 	private val mut by lazy {
 		val playbackNotificationRouter = PlaybackNotificationRouter(
 			mockNotifier,
-			mockk(relaxed = true),
-			mockk {
+            mockk {
 				every { promiseUrlKey(ServiceFile(860)) } returns UrlKeyHolder(
 					URL("http://test"),
 					ServiceFile(860)

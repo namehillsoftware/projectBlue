@@ -24,8 +24,7 @@ class WhenTheFileChanges {
 		val recordingApplicationMessageBus = RecordingApplicationMessageBus()
 		val playbackNotificationRouter = PlaybackNotificationRouter(
 			mockNotifier,
-			recordingApplicationMessageBus,
-			mockk {
+            mockk {
 				every { promiseUrlKey(any(), any<ServiceFile>()) } answers {
 					UrlKeyHolder(
 						URL("http://test"),

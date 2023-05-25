@@ -4,9 +4,10 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 
 interface NotifyOfPlaybackEvents {
+	fun updateLibrary(libraryId: LibraryId)
     fun notifyPlaying()
     fun notifyPaused()
     fun notifyInterrupted()
     fun notifyStopped()
-    fun notifyPlayingFileUpdated(libraryId: LibraryId, serviceFile: ServiceFile)
+    fun notifyPlayingFileUpdated(serviceFile: ServiceFile)
 }
