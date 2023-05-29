@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.playback.engine.preparation.GivenT
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakePlaybackQueueConfiguration
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.file.fakes.FakeBufferingPlaybackHandler
@@ -17,6 +18,7 @@ import org.junit.jupiter.api.Test
 class WhenSwitchingQueuesAndTheNextQueueIsEmpty {
 	private val nextPreparedPlaybackFilePromise by lazy {
 		val positionedFileQueue = mockk<PositionedFileQueue>().apply {
+			every { libraryId } returns LibraryId(168)
 			every { poll() } returnsMany listOf(
 				PositionedFile(1, ServiceFile(1)),
 				PositionedFile(2, ServiceFile(2)),
@@ -41,6 +43,7 @@ class WhenSwitchingQueuesAndTheNextQueueIsEmpty {
 		queue.promiseNextPreparedPlaybackFile(Duration.ZERO)
 		queue.promiseNextPreparedPlaybackFile(Duration.ZERO)
 		val newPositionedFileQueue = mockk<PositionedFileQueue>().apply {
+			every { libraryId } returns LibraryId(39)
 			every { peek() } returns null
 			every { poll() } returns null
 		}

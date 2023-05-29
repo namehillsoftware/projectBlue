@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.playback.engine.preparation.GivenT
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakePlaybackQueueConfiguration
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue
 import com.lasthopesoftware.bluewater.client.playback.file.NoTransformVolumeManager
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
@@ -23,6 +24,7 @@ class WhenSwitchingQueuesAndGettingTheNextFile {
 
 	private val queue by lazy {
 		val originalFileQueue = mockk<PositionedFileQueue> {
+			every { libraryId } returns LibraryId(237)
 			every { poll() } returnsMany listOf(
 				PositionedFile(1, ServiceFile(1)),
 				PositionedFile(2, ServiceFile(2)),
@@ -52,6 +54,7 @@ class WhenSwitchingQueuesAndGettingTheNextFile {
 		queue.promiseNextPreparedPlaybackFile(Duration.ZERO)
 
 		val newPositionedFileQueue = mockk<PositionedFileQueue>().apply {
+			every { libraryId } returns LibraryId(119)
 			every { peek() } returns null
 			every { poll() } returnsMany listOf(
 				PositionedFile(3, ServiceFile(3)),

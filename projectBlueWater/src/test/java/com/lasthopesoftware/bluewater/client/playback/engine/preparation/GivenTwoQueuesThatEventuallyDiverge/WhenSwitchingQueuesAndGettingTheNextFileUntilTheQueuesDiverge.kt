@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.playback.engine.preparation.GivenT
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakePlaybackQueueConfiguration
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue
 import com.lasthopesoftware.bluewater.client.playback.file.NoTransformVolumeManager
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
@@ -15,6 +16,7 @@ import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
 class WhenSwitchingQueuesAndGettingTheNextFileUntilTheQueuesDiverge {
@@ -25,8 +27,9 @@ class WhenSwitchingQueuesAndGettingTheNextFileUntilTheQueuesDiverge {
 		ServiceFile(6)
 	)
 
-	private val positionedPlayableFile by lazy {
+	private val mut by lazy {
 		val positionedFileQueue = mockk<PositionedFileQueue>().apply {
+			every { libraryId } returns LibraryId(732)
 			every { poll() } returnsMany listOf(
 				PositionedFile(1, ServiceFile(1)),
 				PositionedFile(2, ServiceFile(2)),
@@ -39,7 +42,9 @@ class WhenSwitchingQueuesAndGettingTheNextFileUntilTheQueuesDiverge {
 
 		val queue = PreparedPlayableFileQueue(
 			FakePlaybackQueueConfiguration(),
-			{ _, _, _ ->
+			{ l, _, _ ->
+				queueLibraryIds.add(l)
+
 				Promise(
 					FakePreparedPlayableFile(
 						FakeBufferingPlaybackHandler()
@@ -48,10 +53,9 @@ class WhenSwitchingQueuesAndGettingTheNextFileUntilTheQueuesDiverge {
 			},
 			positionedFileQueue
 		)
-		queue.promiseNextPreparedPlaybackFile(Duration.ZERO)
-		queue.promiseNextPreparedPlaybackFile(Duration.ZERO)
 
 		val newPositionedFileQueue = mockk<PositionedFileQueue>().apply {
+			every { libraryId } returns LibraryId(954)
 			every { peek() } returns null
 			every { poll() } returnsMany listOf(
 				PositionedFile(3, ServiceFile(3)),
@@ -59,9 +63,26 @@ class WhenSwitchingQueuesAndGettingTheNextFileUntilTheQueuesDiverge {
 				null
 			)
 		}
+
+		Pair(queue, newPositionedFileQueue)
+	}
+
+	private val queueLibraryIds = mutableListOf<LibraryId>()
+	private var positionedPlayableFile: PositionedPlayableFile? = null
+
+	@BeforeAll
+	fun act() {
+		val (queue, newPositionedFileQueue) = mut
+		queue.promiseNextPreparedPlaybackFile(Duration.ZERO)
+		queue.promiseNextPreparedPlaybackFile(Duration.ZERO)
 		queue.updateQueue(newPositionedFileQueue)
 		queue.promiseNextPreparedPlaybackFile(Duration.ZERO)
-		queue.promiseNextPreparedPlaybackFile(Duration.ZERO)?.toExpiringFuture()?.get()
+		positionedPlayableFile = queue.promiseNextPreparedPlaybackFile(Duration.ZERO)?.toExpiringFuture()?.get()
+	}
+
+	@Test
+	fun `then the queue library ids are correct`() {
+		assertThat(queueLibraryIds.map { it.id }.distinct()).containsExactly(732, 954)
 	}
 
     @Test

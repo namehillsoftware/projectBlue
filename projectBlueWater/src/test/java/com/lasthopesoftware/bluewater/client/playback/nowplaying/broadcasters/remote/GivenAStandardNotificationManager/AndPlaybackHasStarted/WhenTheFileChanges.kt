@@ -8,14 +8,14 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.FakeNowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.remote.MediaSessionBroadcaster
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.singleNowPlaying
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.LibraryPlaybackMessage
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage
 import com.lasthopesoftware.bluewater.shared.android.MediaSession.ControlMediaSession
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
-import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -32,17 +32,7 @@ class WhenTheFileChanges : AndroidContext() {
 	override fun before() {
 		val recordingApplicationMessageBus = RecordingApplicationMessageBus()
 		MediaSessionBroadcaster(
-			mockk {
-				every { promiseNowPlaying(LibraryId(libraryId)) } returns Promise(
-					NowPlaying(
-						LibraryId(libraryId),
-						listOf(ServiceFile(serviceFileId)),
-						playlistPosition = 0,
-						filePosition = 0,
-						isRepeating = false,
-					)
-				)
-			},
+			FakeNowPlayingRepository(singleNowPlaying(LibraryId(libraryId), ServiceFile(serviceFileId))),
             mockk {
 				every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns mapOf(
 					Pair(KnownFileProperties.Name, "stiff"),
