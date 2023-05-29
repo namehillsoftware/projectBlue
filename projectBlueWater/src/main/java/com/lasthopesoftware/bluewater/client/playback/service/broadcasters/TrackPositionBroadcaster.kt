@@ -23,7 +23,7 @@ class TrackPositionBroadcaster(
 					?.let { duration ->
 						positionedProgressedFile.progress
 							.then { progress ->
-								sendApplicationMessages.sendMessage(TrackPositionUpdate(progress, Duration.millis(duration.toLong())))
+								sendApplicationMessages.sendMessage(TrackPositionUpdate(progress, Duration.millis(duration)))
 							}
 					}
 			}
