@@ -7,12 +7,17 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.NotificationsConfiguration
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.PlaybackNotificationBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building.BuildNowPlayingNotificationContent
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.singleNowPlaying
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.LibraryPlaybackMessage
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage
 import com.lasthopesoftware.bluewater.shared.android.notifications.control.NotificationsController
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import com.lasthopesoftware.resources.notifications.FakeNotificationCompatBuilder.Companion.newFakeBuilder
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
@@ -21,6 +26,9 @@ import io.mockk.spyk
 import io.mockk.verify
 import org.junit.Test
 import org.robolectric.Robolectric
+
+private const val libraryId = 510
+private const val serviceFileId = 249
 
 class WhenTheFileChanges : AndroidContext() {
 	companion object {
@@ -35,31 +43,45 @@ class WhenTheFileChanges : AndroidContext() {
 		val context = ApplicationProvider.getApplicationContext<Context>()
 
 		val notificationContentBuilder = mockk<BuildNowPlayingNotificationContent> {
-			every { promiseLoadingNotification(any()) } returns newFakeBuilder(context, Notification()).toPromise()
-			every { promiseNowPlayingNotification(any(), any()) } returns newFakeBuilder(
+			every { promiseLoadingNotification(LibraryId(libraryId), any()) } returns newFakeBuilder(context, Notification()).toPromise()
+			every { promiseNowPlayingNotification(LibraryId(libraryId), any(), any()) } returns newFakeBuilder(
 				context,
 				Notification()
 			).toPromise()
-			every { promiseNowPlayingNotification(ServiceFile(2), any()) } returns newFakeBuilder(
+			every { promiseNowPlayingNotification(LibraryId(libraryId), ServiceFile(serviceFileId), any()) } returns newFakeBuilder(
 				context,
 				secondNotification
 			).toPromise()
 		}
 
-		val playbackNotificationBroadcaster =
-            PlaybackNotificationBroadcaster(
-                NotificationsController(service, notificationManager),
-                NotificationsConfiguration(
-                    "",
-                    43
-                ),
-                notificationContentBuilder,
-                { Promise(newFakeBuilder(context, Notification())) },
-            )
-		playbackNotificationBroadcaster.notifyPlaying()
-		playbackNotificationBroadcaster.notifyPlayingFileUpdated()
-		playbackNotificationBroadcaster.notifyStopped()
-		playbackNotificationBroadcaster.notifyPlayingFileUpdated()
+		val nowPlaying = singleNowPlaying(
+			LibraryId(libraryId),
+			ServiceFile(serviceFileId)
+		)
+
+		val messageBus = RecordingApplicationMessageBus()
+		PlaybackNotificationBroadcaster(
+			mockk {
+				every { promiseActiveNowPlaying() } returns nowPlaying.toPromise()
+			},
+			messageBus,
+			mockk(),
+			NotificationsController(service, notificationManager),
+			NotificationsConfiguration("", 43),
+			notificationContentBuilder,
+			mockk {
+				every { promisePreparedPlaybackStartingNotification(LibraryId(libraryId)) } returns  Promise(
+					newFakeBuilder(
+						ApplicationProvider.getApplicationContext(),
+						Notification()
+					)
+				)
+			},
+		)
+		messageBus.sendMessage(PlaybackMessage.PlaybackStarted)
+		messageBus.sendMessage(LibraryPlaybackMessage.TrackChanged(LibraryId(libraryId), nowPlaying.playingFile!!))
+		messageBus.sendMessage(PlaybackMessage.PlaybackStopped)
+		messageBus.sendMessage(LibraryPlaybackMessage.TrackChanged(LibraryId(libraryId), nowPlaying.playingFile!!))
 	}
 
 	@Test

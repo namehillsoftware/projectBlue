@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage.PlaylistChanged
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.LibraryPlaybackMessage
 import com.lasthopesoftware.bluewater.shared.android.ui.components.dragging.move
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
@@ -19,7 +19,7 @@ class NowPlayingPlaylistViewModel(
 	ViewModel(),
 	ControlPlaylistEdits,
 	HasEditPlaylistState,
-	(PlaylistChanged) -> Unit
+	(LibraryPlaybackMessage.PlaylistChanged) -> Unit
 {
 	private var activeLibraryId: LibraryId? = null
 	private val playlistChangedSubscription = applicationMessages.registerReceiver(this)
@@ -53,7 +53,7 @@ class NowPlayingPlaylistViewModel(
 		nowPlayingListState.value = nowPlayingListState.value.toMutableList().move(from, to)
 	}
 
-	override fun invoke(p1: PlaylistChanged) {
+	override fun invoke(p1: LibraryPlaybackMessage.PlaylistChanged) {
 		updateViewFromRepository()
 	}
 

@@ -5,16 +5,23 @@ import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.Fi
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.FileStringListUtilities.promiseSerializedFileStringList
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryStorage
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 
 class NowPlayingRepository(
+	private val selectedLibraryId: ProvideSelectedLibraryId,
 	private val libraryProvider: ILibraryProvider,
 	private val libraryRepository: ILibraryStorage,
 	private val holdNowPlayingState: HoldNowPlayingState
 ) : MaintainNowPlayingState {
+
+	override fun promiseActiveNowPlaying(): Promise<NowPlaying?> =
+		selectedLibraryId
+			.promiseSelectedLibraryId()
+			.eventually { it?.let(::promiseNowPlaying).keepPromise() }
 
 	override fun promiseNowPlaying(libraryId: LibraryId): Promise<NowPlaying?> =
 		holdNowPlayingState[libraryId]?.toPromise()

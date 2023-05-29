@@ -5,10 +5,15 @@ import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.NotificationsConfiguration
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.PlaybackNotificationBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building.BuildNowPlayingNotificationContent
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage
 import com.lasthopesoftware.bluewater.shared.android.notifications.control.ControlNotifications
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import com.lasthopesoftware.resources.notifications.FakeNotificationCompatBuilder.Companion.newFakeBuilder
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
@@ -16,6 +21,9 @@ import io.mockk.mockk
 import io.mockk.verify
 import org.junit.AfterClass
 import org.junit.Test
+
+private const val libraryId = 869
+private const val serviceFileId = 585
 
 class WhenPlaybackIsPaused : AndroidContext() {
 	companion object {
@@ -32,21 +40,35 @@ class WhenPlaybackIsPaused : AndroidContext() {
     override fun before() {
 		val context = ApplicationProvider.getApplicationContext<Context>()
 		val notificationContentBuilder = mockk<BuildNowPlayingNotificationContent> {
-			every { promiseNowPlayingNotification(ServiceFile(1), true) } returns Promise(newFakeBuilder(context, Notification()))
-			every { promiseNowPlayingNotification(ServiceFile(1), false) } returns Promise(newFakeBuilder(context, pausedNotification))
+			every { promiseNowPlayingNotification(LibraryId(libraryId), ServiceFile(serviceFileId), true) } returns Promise(newFakeBuilder(context, Notification()))
+			every { promiseNowPlayingNotification(LibraryId(libraryId), ServiceFile(serviceFileId), false) } returns Promise(newFakeBuilder(context, pausedNotification))
 		}
 
-		val playbackNotificationBroadcaster = PlaybackNotificationBroadcaster(
+		val messageBus = RecordingApplicationMessageBus()
+		PlaybackNotificationBroadcaster(
+			mockk {
+				every { promiseActiveNowPlaying() } returns NowPlaying(
+					LibraryId(libraryId),
+					listOf(ServiceFile(serviceFileId)),
+					0,
+					0L,
+					false
+				).toPromise()
+			},
+			messageBus,
+			mockk(),
 			controlNotifications ?: return,
 			NotificationsConfiguration(
 				"",
 				43
 			),
 			notificationContentBuilder,
-			{ Promise(newFakeBuilder(context, Notification())) },
+			mockk {
+				every { promisePreparedPlaybackStartingNotification(LibraryId(libraryId)) } returns Promise(newFakeBuilder(context, Notification()))
+			}
         )
 
-		playbackNotificationBroadcaster.notifyPaused()
+		messageBus.sendMessage(PlaybackMessage.PlaybackPaused)
     }
 
     @Test

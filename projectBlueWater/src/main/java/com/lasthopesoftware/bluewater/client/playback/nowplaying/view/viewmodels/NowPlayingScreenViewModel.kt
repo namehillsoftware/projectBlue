@@ -18,7 +18,7 @@ class NowPlayingScreenViewModel(
 	private val playbackService: ControlPlaybackService,
 ) : ViewModel(), ControlDrawerState, ControlScreenOnState
 {
-	private val onPlaybackStartedSubscription = applicationMessages.registerReceiver { m: PlaybackMessage.PlaybackStarted ->
+	private val onPlaybackStartedSubscription = applicationMessages.registerReceiver { _: PlaybackMessage.PlaybackStarted ->
 		togglePlaying(true)
 	}
 	private val onPlaybackStoppedReceiver: (ApplicationMessage) -> Unit

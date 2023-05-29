@@ -9,12 +9,12 @@ import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideImages
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FakeFilePropertiesContainerRepository
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.ScopedCachedFilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.ScopedFilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeScopedRevisionProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeRevisionProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.FakeFileConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.FakeLibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building.NowPlayingNotificationBuilder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -57,24 +57,21 @@ class WhenBuildingTheLoadingNotification : AndroidContext() {
 		every { imageProvider.promiseFileBitmap(any()) } returns Promise(expectedBitmap.value)
 
 		val libraryId = LibraryId(605)
+		val fakeLibraryConnectionProvider = FakeLibraryConnectionProvider(mapOf(Pair(libraryId, connectionProvider)))
 		val npBuilder = NowPlayingNotificationBuilder(
 			ApplicationProvider.getApplicationContext(),
 			mockk {
 				every { getMediaStyleNotification(libraryId) } returns spiedBuilder
 			},
-			UrlKeyProvider(connectionProvider),
-            ScopedCachedFilePropertiesProvider(
-				connectionProvider,
+			UrlKeyProvider(fakeLibraryConnectionProvider),
+            FilePropertiesProvider(
+				fakeLibraryConnectionProvider,
+				FakeRevisionProvider(1),
 				containerRepository,
-				ScopedFilePropertiesProvider(
-					connectionProvider,
-					FakeScopedRevisionProvider(1),
-					containerRepository
-				)
 			),
 			imageProvider
 		)
-		builder = npBuilder.promiseLoadingNotification(false).toExpiringFuture().get()
+		builder = npBuilder.promiseLoadingNotification(libraryId, false).toExpiringFuture().get()
 	}
 
 	@Test

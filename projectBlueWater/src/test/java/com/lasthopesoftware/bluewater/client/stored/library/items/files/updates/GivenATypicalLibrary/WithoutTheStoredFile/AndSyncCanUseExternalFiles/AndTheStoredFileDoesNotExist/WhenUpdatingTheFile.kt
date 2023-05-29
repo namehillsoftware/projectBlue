@@ -12,7 +12,6 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFileUpdater
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.lazyj.Lazy
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.AssertionsForClassTypes.assertThat
@@ -20,14 +19,16 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 
+private const val libraryId = 814
+
 @RunWith(RobolectricTestRunner::class)
 class WhenUpdatingTheFile {
 
 	companion object {
-		private val storedFile = Lazy {
+		private val storedFile by lazy {
 
 			val mediaFileUriProvider = mockk<MediaFileUriProvider>()
-			every { mediaFileUriProvider.promiseUri(ServiceFile(4)) } returns Promise.empty()
+			every { mediaFileUriProvider.promiseUri(LibraryId(libraryId), ServiceFile(4)) } returns Promise.empty()
 
 			val mediaFileIdProvider = mockk<ProvideMediaFileIds>()
 			every { mediaFileIdProvider.getMediaId(LibraryId(14), ServiceFile(4)) } returns Promise.empty()
@@ -57,11 +58,11 @@ class WhenUpdatingTheFile {
 
 	@Test
 	fun thenTheFileIsOwnedByTheLibrary() {
-		assertThat(storedFile.`object`?.isOwner).isTrue
+		assertThat(storedFile?.isOwner).isTrue
 	}
 
 	@Test
 	fun thenTheFilePathIsCorrect() {
-		assertThat(storedFile.`object`?.path).isEqualTo("/my-public-drive/14/artist/album/my-filename.mp3")
+		assertThat(storedFile?.path).isEqualTo("/my-public-drive/14/artist/album/my-filename.mp3")
 	}
 }

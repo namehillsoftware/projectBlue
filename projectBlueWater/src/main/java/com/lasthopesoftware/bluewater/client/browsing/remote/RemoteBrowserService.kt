@@ -102,6 +102,7 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 
 		val repository =
 			NowPlayingRepository(
+				selectedLibraryIdProvider,
 				libraryRepository,
 				libraryRepository,
 				InMemoryNowPlayingState,

@@ -25,14 +25,15 @@ class WhenUpdatingTheFile : AndroidContext() {
 
 	companion object {
 		private var storedFile: StoredFile? = null
+		private val libraryId = LibraryId(14)
 	}
 
 	override fun before() {
 		val mediaFileUriProvider = mockk<MediaFileUriProvider>()
-		every { mediaFileUriProvider.promiseUri(ServiceFile(4)) } returns Promise(Uri.fromFile(File("/custom-root/a-file.mp3")))
+		every { mediaFileUriProvider.promiseUri(libraryId, ServiceFile(4)) } returns Promise(Uri.fromFile(File("/custom-root/a-file.mp3")))
 
 		val mediaFileIdProvider = mockk<ProvideMediaFileIds>()
-		every { mediaFileIdProvider.getMediaId(LibraryId(14), ServiceFile(4)) } returns Promise(12)
+		every { mediaFileIdProvider.getMediaId(libraryId, ServiceFile(4)) } returns Promise(12)
 
 		val fakeLibraryRepository = FakeLibraryRepository(
 			Library()
@@ -42,7 +43,7 @@ class WhenUpdatingTheFile : AndroidContext() {
 		)
 
 		val lookupStoredFilePaths = mockk<GetStoredFilePaths>()
-		every { lookupStoredFilePaths.promiseStoredFilePath(LibraryId(14), ServiceFile(4)) } returns Promise("/my-public-drive/busy/sweeten.mp3")
+		every { lookupStoredFilePaths.promiseStoredFilePath(libraryId, ServiceFile(4)) } returns Promise("/my-public-drive/busy/sweeten.mp3")
 
 		val storedFileUpdater = StoredFileUpdater(
 			ApplicationProvider.getApplicationContext(),
@@ -53,7 +54,7 @@ class WhenUpdatingTheFile : AndroidContext() {
 			lookupStoredFilePaths
 		)
 		storedFile =
-			storedFileUpdater.promiseStoredFileUpdate(LibraryId(14), ServiceFile(4)).toExpiringFuture().get()
+			storedFileUpdater.promiseStoredFileUpdate(libraryId, ServiceFile(4)).toExpiringFuture().get()
 	}
 
 	@Test

@@ -42,7 +42,7 @@ class WhenItsPropertiesChanges {
 
 	private val services by lazy {
 		val nowPlayingRepository = mockk<MaintainNowPlayingState> {
-			every { promiseNowPlaying() } returns Promise(
+			every { promiseNowPlaying(LibraryId(libraryId)) } returns Promise(
 				NowPlaying(
 					LibraryId(libraryId),
 					playlist,
@@ -82,7 +82,7 @@ class WhenItsPropertiesChanges {
                 every { promiseIsReadOnly(LibraryId(libraryId)) } returns true.toPromise()
             },
             mockk {
-                every { promiseIsMarkedForPlay() } returns false.toPromise()
+                every { promiseIsMarkedForPlay(LibraryId(libraryId)) } returns false.toPromise()
             },
 			mockk(),
 			mockk(relaxed = true),
@@ -97,7 +97,7 @@ class WhenItsPropertiesChanges {
 	@BeforeAll
 	fun act() {
 		val (messageBus, viewModel) = services
-		viewModel.initializeViewModel().toExpiringFuture().get()
+		viewModel.initializeViewModel(LibraryId(libraryId)).toExpiringFuture().get()
 		messageBus.sendMessage(FilePropertiesUpdatedMessage(UrlKeyHolder(URL("http://test"), playlist[playlistPosition])))
 	}
 

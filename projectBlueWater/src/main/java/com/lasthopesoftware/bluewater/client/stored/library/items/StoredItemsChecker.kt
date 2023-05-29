@@ -1,23 +1,17 @@
-package com.lasthopesoftware.bluewater.client.stored.library.items;
+package com.lasthopesoftware.bluewater.client.stored.library.items
 
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.CheckForAnyStoredFiles;
-import com.namehillsoftware.handoff.promises.Promise;
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.CheckForAnyStoredFiles
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.namehillsoftware.handoff.promises.Promise
 
-public class StoredItemsChecker implements CheckIfAnyStoredItemsExist {
-	private final AccessStoredItems storedItemAccess;
-	private final CheckForAnyStoredFiles checkForAnyStoredFiles;
-
-	public StoredItemsChecker(AccessStoredItems storedItemAccess, CheckForAnyStoredFiles checkForAnyStoredFiles) {
-		this.storedItemAccess = storedItemAccess;
-		this.checkForAnyStoredFiles = checkForAnyStoredFiles;
-	}
-
-	@Override
-	public Promise<Boolean> promiseIsAnyStoredItemsOrFiles(LibraryId libraryId) {
-		return storedItemAccess.promiseStoredItems(libraryId)
-			.eventually(items -> !items.isEmpty()
-				? new Promise<>(true)
-				: checkForAnyStoredFiles.promiseIsAnyStoredFiles(libraryId));
-	}
+class StoredItemsChecker(
+    private val storedItemAccess: AccessStoredItems,
+    private val checkForAnyStoredFiles: CheckForAnyStoredFiles
+) : CheckIfAnyStoredItemsExist {
+    override fun promiseIsAnyStoredItemsOrFiles(libraryId: LibraryId): Promise<Boolean> =
+		storedItemAccess.promiseStoredItems(libraryId)
+			.eventually { items ->
+				if (!items.isEmpty()) true.toPromise() else checkForAnyStoredFiles.promiseIsAnyStoredFiles(libraryId)
+			}
 }

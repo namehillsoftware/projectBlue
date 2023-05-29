@@ -11,6 +11,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.remote.MediaSessionBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.LibraryPlaybackMessage
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage
 import com.lasthopesoftware.bluewater.shared.android.MediaSession.ControlMediaSession
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
@@ -60,7 +61,7 @@ class WhenTheFileChanges : AndroidContext() {
 			mediaSessionCompat,
 			recordingApplicationMessageBus
 		)
-		recordingApplicationMessageBus.sendMessage(LibraryPlaybackMessage.PlaybackStarted(LibraryId(libraryId)))
+		recordingApplicationMessageBus.sendMessage(PlaybackMessage.PlaybackStarted)
 		recordingApplicationMessageBus.sendMessage(
 			LibraryPlaybackMessage.TrackChanged(
 				LibraryId(libraryId),

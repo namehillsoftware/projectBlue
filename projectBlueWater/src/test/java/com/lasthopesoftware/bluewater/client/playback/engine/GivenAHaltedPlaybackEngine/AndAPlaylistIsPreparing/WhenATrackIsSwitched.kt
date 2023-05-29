@@ -40,6 +40,7 @@ class WhenATrackIsSwitched {
 				),
 				listOf(CompletingFileQueueProvider()),
 				NowPlayingRepository(
+					mockk(),
 					libraryProvider,
 					libraryProvider,
 					FakeNowPlayingState(),

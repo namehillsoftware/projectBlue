@@ -2,9 +2,8 @@ package com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.r
 
 import android.support.v4.media.session.PlaybackStateCompat
 import com.lasthopesoftware.AndroidContext
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.remote.MediaSessionBroadcaster
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.LibraryPlaybackMessage
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage
 import com.lasthopesoftware.bluewater.shared.android.MediaSession.ControlMediaSession
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import io.mockk.mockk
@@ -26,7 +25,7 @@ class WhenPlaybackStarts : AndroidContext() {
 			mediaSessionCompat,
 			recordingApplicationMessageBus,
 		)
-		recordingApplicationMessageBus.sendMessage(LibraryPlaybackMessage.PlaybackStarted(LibraryId(19)))
+		recordingApplicationMessageBus.sendMessage(PlaybackMessage.PlaybackStarted)
 	}
 
 	@Test

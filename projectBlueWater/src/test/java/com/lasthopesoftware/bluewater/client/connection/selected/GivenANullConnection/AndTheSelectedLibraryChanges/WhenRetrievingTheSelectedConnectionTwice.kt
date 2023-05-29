@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.connection.selected.GivenANullConnection.AndTheSelectedLibraryChanges
 
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
@@ -12,7 +11,6 @@ import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
-import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -51,11 +49,5 @@ class WhenRetrievingTheSelectedConnectionTwice {
 	@Test
 	fun `then the connection is correct`() {
 		assertThat(connectionProvider!!.urlProvider).isEqualTo(firstUrlProvider)
-	}
-
-	private class FakeSelectedLibraryProvider : ProvideSelectedLibraryId {
-		var libraryId = LibraryId(0)
-
-        override fun promiseSelectedLibraryId(): Promise<LibraryId?> = Promise(libraryId)
 	}
 }

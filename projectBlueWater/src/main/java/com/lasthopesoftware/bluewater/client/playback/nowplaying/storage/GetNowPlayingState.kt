@@ -4,5 +4,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.namehillsoftware.handoff.promises.Promise
 
 interface GetNowPlayingState {
+	fun promiseActiveNowPlaying(): Promise<NowPlaying?>
+
 	fun promiseNowPlaying(libraryId: LibraryId): Promise<NowPlaying?>
 }
