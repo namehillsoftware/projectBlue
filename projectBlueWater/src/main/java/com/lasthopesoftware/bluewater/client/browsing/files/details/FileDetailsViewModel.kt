@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.browsing.files.details
 import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideImages
+import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideScopedImages
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideEditableScopedFileProperties
@@ -30,7 +30,7 @@ class FileDetailsViewModel(
 	private val scopedFilePropertiesProvider: ProvideEditableScopedFileProperties,
 	private val updateFileProperties: UpdateScopedFileProperties,
 	defaultImageProvider: ProvideDefaultImage,
-	private val imageProvider: ProvideImages,
+	private val imageProvider: ProvideScopedImages,
 	private val controlPlayback: ControlPlaybackService,
 	registerForApplicationMessages: RegisterForApplicationMessages,
 	private val scopedUrlKeyProvider: ProvideScopedUrlKey,

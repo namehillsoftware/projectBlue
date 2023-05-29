@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodel
 import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideImages
+import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideLibraryImages
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
 import com.lasthopesoftware.bluewater.client.connection.polling.PollForLibraryConnections
@@ -25,12 +25,12 @@ import java.util.concurrent.CancellationException
 private val logger by lazyLogger<NowPlayingCoverArtViewModel>()
 
 class NowPlayingCoverArtViewModel(
-	applicationMessage: RegisterForApplicationMessages,
-	private val nowPlayingRepository: GetNowPlayingState,
-	private val selectedConnectionProvider: ProvideSelectedConnection,
-	private val defaultImageProvider: ProvideDefaultImage,
-	private val imageProvider: ProvideImages,
-	private val pollConnections: PollForLibraryConnections,
+    applicationMessage: RegisterForApplicationMessages,
+    private val nowPlayingRepository: GetNowPlayingState,
+    private val selectedConnectionProvider: ProvideSelectedConnection,
+    private val defaultImageProvider: ProvideDefaultImage,
+    private val imageProvider: ProvideLibraryImages,
+    private val pollConnections: PollForLibraryConnections,
 ) : ViewModel() {
 
 	private val trackChangedSubscription = applicationMessage.registerReceiver { m: LibraryPlaybackMessage.TrackChanged ->
@@ -130,7 +130,7 @@ class NowPlayingCoverArtViewModel(
 
 				val currentCachedPromises = CachedPromises(
 					urlKeyHolder,
-					imageProvider.promiseFileBitmap(serviceFile)
+					imageProvider.promiseFileBitmap(libraryId, serviceFile)
 				).also { cachedPromises = it }
 				setNowPlayingImage(currentCachedPromises)
 			}

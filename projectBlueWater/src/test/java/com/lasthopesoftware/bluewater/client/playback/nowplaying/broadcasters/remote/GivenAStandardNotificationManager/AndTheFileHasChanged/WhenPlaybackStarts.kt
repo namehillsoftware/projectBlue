@@ -44,7 +44,7 @@ class WhenPlaybackStarts : AndroidContext() {
 				).toPromise()
 			},
 			mockk {
-				every { promiseFileBitmap(ServiceFile(559)) } returns BitmapFactory
+				every { promiseFileBitmap(LibraryId(libraryId), ServiceFile(559)) } returns BitmapFactory
 					.decodeByteArray(byteArrayOf((912 % 128).toByte(), (368 % 128).toByte(), (395 % 128).toByte()), 0, 3)
 					.toPromise()
 			},

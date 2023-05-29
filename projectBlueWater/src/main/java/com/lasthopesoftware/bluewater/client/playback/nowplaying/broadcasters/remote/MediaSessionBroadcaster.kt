@@ -6,7 +6,7 @@ import android.media.session.PlaybackState
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideImages
+import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideLibraryImages
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
@@ -30,11 +30,11 @@ private const val standardCapabilities = PlaybackStateCompat.ACTION_PLAY_PAUSE o
 	PlaybackStateCompat.ACTION_PLAY_FROM_SEARCH
 
 class MediaSessionBroadcaster(
-	private val nowPlayingState: GetNowPlayingState,
-	private val filePropertiesProvider: ProvideLibraryFileProperties,
-	private val imageProvider: ProvideImages,
-	private val mediaSession: ControlMediaSession,
-	applicationMessages: RegisterForApplicationMessages,
+    private val nowPlayingState: GetNowPlayingState,
+    private val filePropertiesProvider: ProvideLibraryFileProperties,
+    private val imageProvider: ProvideLibraryImages,
+    private val mediaSession: ControlMediaSession,
+    applicationMessages: RegisterForApplicationMessages,
 ) : PlaybackNotificationRouter(applicationMessages) {
 
 	private val trackPositionUpdatesSubscription = applicationMessages.registerReceiver { m: TrackPositionUpdate ->
@@ -130,7 +130,7 @@ class MediaSessionBroadcaster(
 	}
 
 	private fun updateNowPlaying(libraryId: LibraryId, serviceFile: ServiceFile) {
-		val promisedBitmap = imageProvider.promiseFileBitmap(serviceFile)
+		val promisedBitmap = imageProvider.promiseFileBitmap(libraryId, serviceFile)
 
 		filePropertiesProvider
 			.promiseFileProperties(libraryId, serviceFile)

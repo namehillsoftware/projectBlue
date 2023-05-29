@@ -13,6 +13,7 @@ import androidx.compose.runtime.setValue
 import com.lasthopesoftware.bluewater.ActivityApplicationNavigation
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.image.CachedImageProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.image.SelectedLibraryImageProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableScopedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.SelectedLibraryFilePropertiesProvider
@@ -113,7 +114,7 @@ class FileDetailsActivity : ComponentActivity() {
 			filePropertiesProvider,
 			scopedFilePropertyUpdates,
 			defaultImageProvider,
-			imageProvider,
+			SelectedLibraryImageProvider(selectedLibraryIdProvider, imageProvider),
 			PlaybackServiceController(this),
 			ApplicationMessageBus.getApplicationMessageBus(),
 			SelectedLibraryUrlKeyProvider(selectedLibraryIdProvider, UrlKeyProvider(libraryConnections)),

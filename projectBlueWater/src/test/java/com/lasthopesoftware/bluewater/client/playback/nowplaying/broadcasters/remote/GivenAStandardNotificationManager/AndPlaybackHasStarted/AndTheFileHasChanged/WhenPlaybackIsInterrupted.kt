@@ -44,7 +44,7 @@ class WhenPlaybackIsInterrupted : AndroidContext() {
 				).toPromise()
 			},
 			mockk {
-				every { promiseFileBitmap(ServiceFile(serviceFileId)) } returns BitmapFactory
+				every { promiseFileBitmap(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns BitmapFactory
 					.decodeByteArray(byteArrayOf((912 % 128).toByte(), (368 % 128).toByte(), (395 % 128).toByte()), 0, 3)
 					.toPromise()
 			},

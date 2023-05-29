@@ -42,7 +42,7 @@ class WhenTheFileChanges : AndroidContext() {
 				).toPromise()
 			},
 			mockk {
-				every { promiseFileBitmap(ServiceFile(serviceFile)) } returns BitmapFactory
+				every { promiseFileBitmap(LibraryId(libraryId), ServiceFile(serviceFile)) } returns BitmapFactory
 					.decodeByteArray(byteArrayOf((912 % 128).toByte(), (368 % 128).toByte(), (395 % 128).toByte()), 0, 3)
 					.toPromise()
 			},

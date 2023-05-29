@@ -69,7 +69,7 @@ class WhenBuildingTheLoadingNotification : AndroidContext() {
 				)
 			),
 			mockk {
-				every { promiseFileBitmap(any()) } returns Promise(expectedBitmap)
+				every { promiseFileBitmap(libraryId, any()) } returns Promise(expectedBitmap)
 			}
 		)
 		builder = npBuilder.promiseLoadingNotification(libraryId, true).toExpiringFuture().get()

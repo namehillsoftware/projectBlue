@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.browsing.remote.GivenADifferentSer
 import android.graphics.BitmapFactory
 import android.support.v4.media.MediaBrowserCompat
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideImages
+import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideScopedImages
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FakeScopedCachedFilesPropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.remote.MediaItemServiceFileLookup
@@ -32,7 +32,7 @@ class `When Looking Up The Media Item` {
 				)
 			)
 
-			val imageProvider = mockk<ProvideImages>()
+			val imageProvider = mockk<ProvideScopedImages>()
 			every { imageProvider.promiseFileBitmap(ServiceFile(703)) } returns Promise(
 				BitmapFactory.decodeByteArray(
 				byteArrayOf(3, 4), 0, 2))

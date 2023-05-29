@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.browsing.files.image
 import android.content.Context
 import android.graphics.Bitmap
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.resources.executors.ThreadPools
@@ -14,15 +15,15 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
 
-class ScaledImageProvider(private val inner: ProvideImages, private val context: Context) : ProvideImages {
+class ScaledImageProvider(private val inner: ProvideLibraryImages, private val context: Context) : ProvideLibraryImages {
 	private val maximumScreenDimension by lazy {
 		val dm = context.resources.displayMetrics
 		max(dm.heightPixels, dm.widthPixels)
 	}
 
-	override fun promiseFileBitmap(serviceFile: ServiceFile): Promise<Bitmap?> =
+	override fun promiseFileBitmap(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Bitmap?> =
 		CancellableProxyPromise { cp ->
-			inner.promiseFileBitmap(serviceFile)
+			inner.promiseFileBitmap(libraryId, serviceFile)
 				.also(cp::doCancel)
 				.eventually { image ->
 					if (cp.isCancelled) Promise(cancellationException())

@@ -4,27 +4,22 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.image.bytes.GetRawImages
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken
-import kotlin.coroutines.cancellation.CancellationException
+import java.util.concurrent.CancellationException
 
-class ImageProvider(private val selectedLibraryId: ProvideSelectedLibraryId, private val rawImages: GetRawImages) : ProvideImages {
-	override fun promiseFileBitmap(serviceFile: ServiceFile): Promise<Bitmap?> =
-		CancellableProxyPromise { cp ->
-			selectedLibraryId.promiseSelectedLibraryId()
-				.eventually { libraryId ->
-					libraryId
-						?.let { l -> rawImages.promiseImageBytes(l, serviceFile).also(cp::doCancel) }
-						?.eventually { bytes -> QueuedPromise(BitmapWriter(bytes), ThreadPools.compute) }
-						.keepPromise()
-				}
-		}
+class LibraryImageProvider(private val rawImages: GetRawImages) : ProvideLibraryImages {
+	override fun promiseFileBitmap(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Bitmap?> = CancellableProxyPromise { cp ->
+		rawImages
+			.promiseImageBytes(libraryId, serviceFile)
+			.also(cp::doCancel)
+			.eventually { bytes -> QueuedPromise(BitmapWriter(bytes), ThreadPools.compute) }
+	}
 
 	private class BitmapWriter(private val imageBytes: ByteArray) : CancellableMessageWriter<Bitmap?> {
 		override fun prepareMessage(cancellationToken: CancellationToken): Bitmap? =

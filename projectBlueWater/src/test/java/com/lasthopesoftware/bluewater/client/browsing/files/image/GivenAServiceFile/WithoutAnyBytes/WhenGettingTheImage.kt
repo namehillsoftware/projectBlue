@@ -3,7 +3,8 @@ package com.lasthopesoftware.bluewater.client.browsing.files.image.GivenAService
 import android.graphics.Bitmap
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.image.ImageProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.image.LibraryImageProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.image.SelectedLibraryImageProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.image.bytes.GetRawImages
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -27,21 +28,22 @@ class WhenGettingTheImage : AndroidContext() {
 		}
 	}
 
-    override fun before() {
+	override fun before() {
 		val selectedLibraryProvider = mockk<ProvideSelectedLibraryId>()
 		every { selectedLibraryProvider.promiseSelectedLibraryId() } returns Promise(LibraryId(2))
 
 		val getRawImages = mockk<GetRawImages>()
 		every { getRawImages.promiseImageBytes(LibraryId(2), ServiceFile(34)) } returns Promise(ByteArray(0))
 
-        val imageProvider = ImageProvider(
-            selectedLibraryProvider,
-            getRawImages)
-        bitmap = imageProvider.promiseFileBitmap(ServiceFile(34)).toExpiringFuture().get()
-    }
+		val selectedLibraryImageProvider = SelectedLibraryImageProvider(
+			selectedLibraryProvider,
+			LibraryImageProvider(getRawImages)
+		)
+		bitmap = selectedLibraryImageProvider.promiseFileBitmap(ServiceFile(34)).toExpiringFuture().get()
+	}
 
-    @Test
-    fun thenTheBitmapIsNull() {
-        assertThat(bitmap).isNull()
-    }
+	@Test
+	fun thenTheBitmapIsNull() {
+		assertThat(bitmap).isNull()
+	}
 }
