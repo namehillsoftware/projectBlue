@@ -6,8 +6,8 @@ import androidx.core.app.NotificationCompat
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideImages
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideUrlKey
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Companion.pendingNextIntent
@@ -23,7 +23,7 @@ class NowPlayingNotificationBuilder(
 	private val context: Context,
 	private val mediaStyleNotificationSetup: SetupMediaStyleNotifications,
 	private val urlKeyProvider: ProvideUrlKey,
-	private val cachedFilePropertiesProvider: CachedFilePropertiesProvider,
+	private val cachedFilePropertiesProvider: ProvideLibraryFileProperties,
 	private val imageProvider: ProvideImages,
 ) : BuildNowPlayingNotificationContent, AutoCloseable {
 	private val notificationSync = Any()

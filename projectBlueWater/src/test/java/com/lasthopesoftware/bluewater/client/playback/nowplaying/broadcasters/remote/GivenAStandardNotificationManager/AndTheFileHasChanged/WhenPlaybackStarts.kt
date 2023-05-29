@@ -10,6 +10,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.remote.MediaSessionBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.LibraryPlaybackMessage
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage
 import com.lasthopesoftware.bluewater.shared.android.MediaSession.ControlMediaSession
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
@@ -28,36 +29,36 @@ class WhenPlaybackStarts : AndroidContext() {
 
 	override fun before() {
 		val recordingApplicationMessageBus = RecordingApplicationMessageBus()
-		val playbackNotificationBroadcaster =
-            MediaSessionBroadcaster(
-				mockk {
-					every { promiseNowPlaying(LibraryId(libraryId)) }
-				},
-                mockk {
-					every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns mapOf(
-						Pair(KnownFileProperties.Name, "leaf"),
-						Pair(KnownFileProperties.Rating, "895"),
-						Pair(KnownFileProperties.Artist, "worry"),
-						Pair(KnownFileProperties.Album, "screw"),
-						Pair(KnownFileProperties.Duration, "247346"),
-						Pair(KnownFileProperties.Track, "622"),
-					).toPromise()
-				},
-				mockk {
-					every { promiseFileBitmap(ServiceFile(559)) } returns BitmapFactory
-						.decodeByteArray(byteArrayOf((912 % 128).toByte(), (368 % 128).toByte(), (395 % 128).toByte()), 0, 3)
-						.toPromise()
-				},
-				mediaSessionCompat,
-				recordingApplicationMessageBus,
-            )
+		MediaSessionBroadcaster(
+			mockk {
+				every { promiseNowPlaying(LibraryId(libraryId)) }
+			},
+			mockk {
+				every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns mapOf(
+					Pair(KnownFileProperties.Name, "leaf"),
+					Pair(KnownFileProperties.Rating, "895"),
+					Pair(KnownFileProperties.Artist, "worry"),
+					Pair(KnownFileProperties.Album, "screw"),
+					Pair(KnownFileProperties.Duration, "247346"),
+					Pair(KnownFileProperties.Track, "622"),
+				).toPromise()
+			},
+			mockk {
+				every { promiseFileBitmap(ServiceFile(559)) } returns BitmapFactory
+					.decodeByteArray(byteArrayOf((912 % 128).toByte(), (368 % 128).toByte(), (395 % 128).toByte()), 0, 3)
+					.toPromise()
+			},
+			mediaSessionCompat,
+			recordingApplicationMessageBus,
+		)
+
 		recordingApplicationMessageBus.sendMessage(
 			LibraryPlaybackMessage.TrackChanged(
 				LibraryId(libraryId),
 				PositionedFile(0, ServiceFile(serviceFileId))
 			)
 		)
-		recordingApplicationMessageBus.sendMessage(LibraryPlaybackMessage.PlaybackStarted(LibraryId(libraryId)))
+		recordingApplicationMessageBus.sendMessage(PlaybackMessage.PlaybackStarted)
 	}
 
 	@Test

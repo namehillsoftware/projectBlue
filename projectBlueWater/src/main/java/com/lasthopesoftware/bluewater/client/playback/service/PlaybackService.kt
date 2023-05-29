@@ -39,6 +39,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.uri.BestMatchUriProv
 import com.lasthopesoftware.bluewater.client.browsing.files.uri.RemoteFileUriProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
@@ -88,7 +89,6 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.re
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.InMemoryNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Action.Bag
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.PlaybackStartedBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.LibraryPlaybackMessage
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage
@@ -313,7 +313,6 @@ open class PlaybackService :
 	private val audioManager by lazy { getSystemService(AUDIO_SERVICE) as AudioManager }
 	private val applicationMessageBus = lazy { getApplicationMessageBus().getScopedMessageBus() }
 	private val applicationSettings by lazy { getApplicationSettingsRepository() }
-	private val playbackStartedBroadcaster by lazy { PlaybackStartedBroadcaster(applicationMessageBus.value) }
 	private val libraryRepository by lazy { LibraryRepository(this) }
 	private val playlistVolumeManager by lazy { PlaylistVolumeManager(1.0f) }
 	private val volumeLevelSettings by lazy { VolumeLevelSettings(applicationSettings) }
@@ -409,6 +408,7 @@ open class PlaybackService :
 
 	private val nowPlayingRepository by lazy {
 		NowPlayingRepository(
+			getCachedSelectedLibraryIdProvider(),
 			libraryRepository,
 			libraryRepository,
 			InMemoryNowPlayingState,
@@ -638,7 +638,7 @@ open class PlaybackService :
 
 	override fun onPlaybackStarted() {
 		isMarkedForPlay = true
-		playbackStartedBroadcaster.broadcastPlaybackStarted()
+		applicationMessageBus.value.sendMessage(PlaybackMessage.PlaybackStarted)
 	}
 
 	override fun onPlaylistReset(libraryId: LibraryId, positionedFile: PositionedFile) {

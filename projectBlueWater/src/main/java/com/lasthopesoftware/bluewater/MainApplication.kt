@@ -159,9 +159,7 @@ open class MainApplication : Application() {
 			UpdatePlayStatsOnPlaybackCompleteReceiver(
 				LibraryPlaystatsUpdateSelector(
 					LibraryServerVersionProvider(libraryConnections),
-					PlayedFilePlayStatsUpdater(
-						libraryConnections
-					),
+					PlayedFilePlayStatsUpdater(libraryConnections),
 					FilePropertiesPlayStatsUpdater(
 						freshLibraryFileProperties,
 						FilePropertyStorage(

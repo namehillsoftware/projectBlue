@@ -10,7 +10,7 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.Maintai
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.LibraryPlaybackMessage
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
@@ -32,7 +32,7 @@ class WhenHandlingTheFileChange {
 
 	private val mut by lazy {
 		val nowPlayingRepository = mockk<MaintainNowPlayingState> {
-            every { promiseNowPlaying() } returns Promise(
+            every { promiseNowPlaying(LibraryId(libraryId)) } returns Promise(
                 NowPlaying(
                     LibraryId(libraryId),
                     listOf(
@@ -55,7 +55,7 @@ class WhenHandlingTheFileChange {
         }
 
 		val playbackService = mockk<ControlPlaybackService> {
-            every { promiseIsMarkedForPlay() } returns true.toPromise()
+            every { promiseIsMarkedForPlay(LibraryId(libraryId)) } returns true.toPromise()
         }
 
 		val messageBus = RecordingApplicationMessageBus()
@@ -102,9 +102,9 @@ class WhenHandlingTheFileChange {
 			mockk(relaxed = true),
         )
 
-		nowPlayingViewModel.initializeViewModel().toExpiringFuture().get()
+		nowPlayingViewModel.initializeViewModel(LibraryId(libraryId)).toExpiringFuture().get()
 
-		every { nowPlayingRepository.promiseNowPlaying() } returns Promise(
+		every { nowPlayingRepository.promiseNowPlaying(LibraryId(libraryId)) } returns Promise(
             NowPlaying(
                 LibraryId(libraryId),
                 listOf(
@@ -128,7 +128,7 @@ class WhenHandlingTheFileChange {
 	fun act() {
 		val (messageBus, vm) = mut
 		messageBus.sendMessage(
-            PlaybackMessage.TrackChanged(
+            LibraryPlaybackMessage.TrackChanged(
                 LibraryId(libraryId),
                 PositionedFile(5, ServiceFile(secondServiceFileId))
             )
@@ -137,7 +137,7 @@ class WhenHandlingTheFileChange {
 		try {
 			// Add another initialize to catch edge cases where this would happen and cancel the connection changed promise
 			// (but not reset the promise).
-			vm.initializeViewModel().toExpiringFuture().get()
+			vm.initializeViewModel(LibraryId(libraryId)).toExpiringFuture().get()
 		} catch(e: Throwable) {
 			// ignored
 		}

@@ -10,7 +10,7 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.Maintai
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.LibraryPlaybackMessage
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -50,7 +50,7 @@ class WhenTheServiceFileChangesConcurrently {
 
 	private val services by lazy {
 		val nowPlayingRepository = mockk<MaintainNowPlayingState> {
-			every { promiseNowPlaying() } returns Promise(
+			every { promiseNowPlaying(LibraryId(libraryId)) } returns Promise(
 				NowPlaying(
 					LibraryId(libraryId),
 					playlist,
@@ -98,7 +98,7 @@ class WhenTheServiceFileChangesConcurrently {
 		}
 
 		val playbackService = mockk<ControlPlaybackService> {
-			every { promiseIsMarkedForPlay() } returns true.toPromise()
+			every { promiseIsMarkedForPlay(LibraryId(libraryId)) } returns true.toPromise()
 		}
 
 		val messageBus = RecordingApplicationMessageBus()
@@ -130,9 +130,9 @@ class WhenTheServiceFileChangesConcurrently {
 	@BeforeAll
 	fun act() {
 		val (messageBus, viewModel) = services
-		viewModel.initializeViewModel().toExpiringFuture().get()
+		viewModel.initializeViewModel(LibraryId(libraryId)).toExpiringFuture().get()
 		viewModel.updateRating(201.64f)
-		messageBus.sendMessage(PlaybackMessage.TrackChanged(LibraryId(libraryId), PositionedFile(secondPlaylistPosition, secondServiceFile)))
+		messageBus.sendMessage(LibraryPlaybackMessage.TrackChanged(LibraryId(libraryId), PositionedFile(secondPlaylistPosition, secondServiceFile)))
 		deferredFilePropertiesPromise.resolve()
 	}
 

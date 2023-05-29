@@ -6,14 +6,21 @@ import android.support.v4.media.session.PlaybackStateCompat
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.FakeNowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.remote.MediaSessionBroadcaster
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.singleNowPlaying
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.LibraryPlaybackMessage
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage
 import com.lasthopesoftware.bluewater.shared.android.MediaSession.ControlMediaSession
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import org.junit.Test
 
+private const val libraryId = 958
 private const val serviceFileId = 654
 
 class WhenPlaybackIsInterrupted : AndroidContext() {
@@ -22,9 +29,12 @@ class WhenPlaybackIsInterrupted : AndroidContext() {
 	}
 
 	override fun before() {
-		val playbackNotificationBroadcaster = MediaSessionBroadcaster(
-            mockk {
-				every { promiseFileProperties(ServiceFile(serviceFileId)) } returns mapOf(
+		val messageBus = RecordingApplicationMessageBus()
+		val nowPlaying = singleNowPlaying(LibraryId(libraryId), ServiceFile(serviceFileId))
+		MediaSessionBroadcaster(
+			FakeNowPlayingRepository(nowPlaying),
+			mockk {
+				every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns mapOf(
 					Pair(KnownFileProperties.Name, "kill"),
 					Pair(KnownFileProperties.Rating, "861"),
 					Pair(KnownFileProperties.Artist, "minister"),
@@ -39,10 +49,12 @@ class WhenPlaybackIsInterrupted : AndroidContext() {
 					.toPromise()
 			},
 			mediaSessionCompat,
+			messageBus
 		)
-		playbackNotificationBroadcaster.notifyPlaying()
-		playbackNotificationBroadcaster.notifyPlayingFileUpdated()
-		playbackNotificationBroadcaster.notifyInterrupted()
+
+		messageBus.sendMessage(PlaybackMessage.PlaybackStarted)
+		messageBus.sendMessage(LibraryPlaybackMessage.TrackChanged(LibraryId(libraryId), nowPlaying.playingFile!!))
+		messageBus.sendMessage(PlaybackMessage.PlaybackPaused)
 	}
 
 	@Test

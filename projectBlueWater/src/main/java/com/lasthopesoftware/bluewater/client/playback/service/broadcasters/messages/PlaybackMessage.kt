@@ -12,6 +12,8 @@ interface PlaybackMessage : ApplicationMessage {
 	object PlaybackInterrupted : PlaybackMessage
 
 	object PlaybackStopped : PlaybackMessage
+
+	object PlaybackStarted : PlaybackMessage
 }
 
 interface LibraryPlaybackMessage : PlaybackMessage {
@@ -24,6 +26,4 @@ interface LibraryPlaybackMessage : PlaybackMessage {
 	class TrackStarted(override val libraryId: LibraryId, val startedFile: ServiceFile) : LibraryPlaybackMessage
 
 	class PlaylistChanged(override val libraryId: LibraryId) : LibraryPlaybackMessage
-
-	class PlaybackStarted(override val libraryId: LibraryId) : LibraryPlaybackMessage
 }

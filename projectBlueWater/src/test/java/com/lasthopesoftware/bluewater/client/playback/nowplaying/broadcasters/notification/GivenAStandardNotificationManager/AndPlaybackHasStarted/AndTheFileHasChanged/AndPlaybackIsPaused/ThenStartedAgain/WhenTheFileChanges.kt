@@ -4,16 +4,25 @@ import android.app.Notification
 import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.NotificationsConfiguration
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.PlaybackNotificationBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building.BuildNowPlayingNotificationContent
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.singleNowPlaying
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.LibraryPlaybackMessage
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage
 import com.lasthopesoftware.bluewater.shared.android.notifications.control.ControlNotifications
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import com.lasthopesoftware.resources.notifications.FakeNotificationCompatBuilder
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import org.junit.Test
+
+private const val libraryId = 197
+private const val serviceFileId = 97
 
 class WhenTheFileChanges : AndroidContext() {
 
@@ -27,42 +36,52 @@ class WhenTheFileChanges : AndroidContext() {
 	}
 
 	override fun before() {
-		every { notificationContentBuilder.promiseLoadingNotification(any()) } returns Promise(FakeNotificationCompatBuilder.newFakeBuilder(
+		every { notificationContentBuilder.promiseLoadingNotification(LibraryId(libraryId), any()) } returns Promise(FakeNotificationCompatBuilder.newFakeBuilder(
             ApplicationProvider.getApplicationContext(),
             loadingNotification
         ))
-		every { notificationContentBuilder.promiseNowPlayingNotification(ServiceFile(1), any()) } returns Promise(FakeNotificationCompatBuilder.newFakeBuilder(
+		every { notificationContentBuilder.promiseNowPlayingNotification(LibraryId(libraryId), ServiceFile(1), any()) } returns Promise(FakeNotificationCompatBuilder.newFakeBuilder(
             ApplicationProvider.getApplicationContext(),
             firstNotification
         ))
-		every { notificationContentBuilder.promiseNowPlayingNotification(ServiceFile(2), any()) } returns Promise(FakeNotificationCompatBuilder.newFakeBuilder(
+		every { notificationContentBuilder.promiseNowPlayingNotification(LibraryId(libraryId), ServiceFile(serviceFileId), any()) } returns Promise(FakeNotificationCompatBuilder.newFakeBuilder(
             ApplicationProvider.getApplicationContext(),
             secondNotification
         ))
 
-		val playbackNotificationBroadcaster =
-            PlaybackNotificationBroadcaster(
-                notificationController,
-                NotificationsConfiguration(
-                    "",
-                    43
-                ),
-                notificationContentBuilder,
-                {
-                    Promise(
-                        FakeNotificationCompatBuilder.newFakeBuilder(
-                            ApplicationProvider.getApplicationContext(),
-                            startingNotification
-                        )
-                    )
-                }
-            )
+		val nowPlaying = singleNowPlaying(
+			LibraryId(libraryId),
+			ServiceFile(serviceFileId)
+		)
 
-		playbackNotificationBroadcaster.notifyPlaying()
-		playbackNotificationBroadcaster.notifyPlayingFileUpdated()
-		playbackNotificationBroadcaster.notifyPaused()
-		playbackNotificationBroadcaster.notifyPlayingFileUpdated()
-		playbackNotificationBroadcaster.notifyPlaying()
+		val messageBus = RecordingApplicationMessageBus()
+		PlaybackNotificationBroadcaster(
+			mockk {
+				every { promiseActiveNowPlaying() } returnsMany listOf(
+					singleNowPlaying(LibraryId(libraryId), ServiceFile(1)).toPromise(),
+					nowPlaying.toPromise()
+				)
+			},
+			messageBus,
+			mockk(),
+			notificationController,
+			NotificationsConfiguration("", 43),
+			notificationContentBuilder,
+			mockk {
+				every { promisePreparedPlaybackStartingNotification(LibraryId(libraryId)) } returns Promise(
+					FakeNotificationCompatBuilder.newFakeBuilder(
+						ApplicationProvider.getApplicationContext(),
+						startingNotification
+					)
+				)
+			}
+		)
+
+		messageBus.sendMessage(PlaybackMessage.PlaybackStarted)
+		messageBus.sendMessage(LibraryPlaybackMessage.TrackChanged(LibraryId(libraryId), nowPlaying.playingFile!!))
+		messageBus.sendMessage(PlaybackMessage.PlaybackPaused)
+		messageBus.sendMessage(LibraryPlaybackMessage.TrackChanged(LibraryId(libraryId), nowPlaying.playingFile!!))
+		messageBus.sendMessage(PlaybackMessage.PlaybackStarted)
 	}
 
 	@Test

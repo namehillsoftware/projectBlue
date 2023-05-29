@@ -38,7 +38,7 @@ class WhenInitializingTheNowPlayingFilePropertiesViewModel {
 		val nowPlayingViewModel = NowPlayingFilePropertiesViewModel(
 			messageBus,
 			mockk {
-				every { promiseNowPlaying() } returns Promise(
+				every { promiseNowPlaying(LibraryId(libraryId)) } returns Promise(
 					NowPlaying(
 						LibraryId(libraryId),
 						listOf(
@@ -73,7 +73,7 @@ class WhenInitializingTheNowPlayingFilePropertiesViewModel {
 				every { promiseIsReadOnly(LibraryId(libraryId)) } returns true.toPromise()
 			},
 			mockk {
-				every { promiseIsMarkedForPlay() } returns true.toPromise()
+				every { promiseIsMarkedForPlay(LibraryId(libraryId)) } returns true.toPromise()
 			},
 			mockk {
 				every { pollConnection(LibraryId(libraryId)) } returns Promise(CancellationException("reject"))
@@ -88,7 +88,7 @@ class WhenInitializingTheNowPlayingFilePropertiesViewModel {
 	fun act() {
 		val (bus, vm) = mut
 
-		vm.initializeViewModel().toExpiringFuture().get()
+		vm.initializeViewModel(LibraryId(libraryId)).toExpiringFuture().get()
 
 		bus.sendMessage(LibraryConnectionChangedMessage(LibraryId(libraryId)))
 	}

@@ -3,5 +3,6 @@ package com.lasthopesoftware.bluewater.client.browsing.library.repository
 import android.os.Parcelable
 import kotlinx.parcelize.Parcelize
 
+@JvmInline
 @Parcelize
-data class LibraryId(val id: Int) : Parcelable
+value class LibraryId(val id: Int) : Parcelable

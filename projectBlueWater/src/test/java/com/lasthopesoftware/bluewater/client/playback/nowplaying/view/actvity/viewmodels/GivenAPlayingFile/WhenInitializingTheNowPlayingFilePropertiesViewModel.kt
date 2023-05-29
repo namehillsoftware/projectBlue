@@ -36,7 +36,7 @@ class WhenInitializingTheNowPlayingFilePropertiesViewModel {
 
 	private val nowPlayingViewModel by lazy {
 		val nowPlayingRepository = mockk<MaintainNowPlayingState> {
-			every { promiseNowPlaying() } returns Promise(
+			every { promiseNowPlaying(LibraryId(libraryId)) } returns Promise(
 				NowPlaying(
 					LibraryId(libraryId),
 					listOf(
@@ -68,7 +68,7 @@ class WhenInitializingTheNowPlayingFilePropertiesViewModel {
 		}
 
 		val playbackService = mockk<ControlPlaybackService> {
-			every { promiseIsMarkedForPlay() } returns true.toPromise()
+			every { promiseIsMarkedForPlay(LibraryId(libraryId)) } returns true.toPromise()
 		}
 
 		val nowPlayingViewModel = NowPlayingFilePropertiesViewModel(
@@ -93,7 +93,7 @@ class WhenInitializingTheNowPlayingFilePropertiesViewModel {
 
 	@BeforeAll
 	fun act() {
-		nowPlayingViewModel.initializeViewModel().toExpiringFuture().get()
+		nowPlayingViewModel.initializeViewModel(LibraryId(libraryId)).toExpiringFuture().get()
 	}
 
 	@Test

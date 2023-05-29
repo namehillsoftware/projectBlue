@@ -9,8 +9,7 @@ import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionF
 import com.lasthopesoftware.bluewater.client.connection.polling.PollForLibraryConnections
 import com.lasthopesoftware.bluewater.client.connection.selected.ProvideSelectedConnection
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage.PlaylistChanged
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage.TrackChanged
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.LibraryPlaybackMessage
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.images.ProvideDefaultImage
 import com.lasthopesoftware.bluewater.shared.lazyLogger
@@ -34,11 +33,11 @@ class NowPlayingCoverArtViewModel(
 	private val pollConnections: PollForLibraryConnections,
 ) : ViewModel() {
 
-	private val trackChangedSubscription = applicationMessage.registerReceiver { m: TrackChanged ->
+	private val trackChangedSubscription = applicationMessage.registerReceiver { m: LibraryPlaybackMessage.TrackChanged ->
 		setViewIfLibraryIsCorrect(m.libraryId)
 	}
 
-	private val playlistChangedSubscription = applicationMessage.registerReceiver { m: PlaylistChanged ->
+	private val playlistChangedSubscription = applicationMessage.registerReceiver { m: LibraryPlaybackMessage.PlaylistChanged ->
 		setViewIfLibraryIsCorrect(m.libraryId)
 	}
 

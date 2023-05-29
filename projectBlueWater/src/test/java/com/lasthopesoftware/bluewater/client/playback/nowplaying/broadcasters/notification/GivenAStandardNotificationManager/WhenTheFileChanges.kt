@@ -10,6 +10,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.NotificationsConfiguration
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.PlaybackNotificationBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building.BuildNowPlayingNotificationContent
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.LibraryPlaybackMessage
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.android.notifications.control.ControlNotifications
@@ -24,6 +25,7 @@ import org.junit.Test
 import java.net.URL
 
 private const val libraryId = 818
+private const val serviceFileId = 225
 
 class WhenTheFileChanges : AndroidContext() {
 	companion object {
@@ -42,11 +44,20 @@ class WhenTheFileChanges : AndroidContext() {
 		val applicationMessages = RecordingApplicationMessageBus()
 
 		PlaybackNotificationBroadcaster(
+			mockk {
+				every { promiseActiveNowPlaying() } returns NowPlaying(
+					LibraryId(libraryId),
+					listOf(ServiceFile(serviceFileId)),
+					0,
+					0L,
+					false
+				).toPromise()
+			},
 			applicationMessages,
 			mockk {
-				every { promiseUrlKey(LibraryId(libraryId), ServiceFile(860)) } returns UrlKeyHolder(
+				every { promiseUrlKey(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns UrlKeyHolder(
 					URL("http://test"),
-					ServiceFile(860)
+					ServiceFile(serviceFileId)
 				).toPromise()
 			},
 			notificationController,

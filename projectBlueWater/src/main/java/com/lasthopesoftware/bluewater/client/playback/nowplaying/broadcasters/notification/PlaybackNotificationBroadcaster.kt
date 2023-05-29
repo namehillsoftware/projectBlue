@@ -49,27 +49,31 @@ class PlaybackNotificationBroadcaster(
 		super.close()
 	}
 
-	override fun updateLibrary(libraryId: LibraryId) {
-		this.libraryId = libraryId
-	}
-
 	override fun notifyPlaying() {
 		isPlaying = true
 
-		val currentLibraryId = libraryId ?: return
-
-		serviceFile?.also { serviceFile ->
-			updateNowPlaying(currentLibraryId, serviceFile)
-			return
+		libraryId?.also { libraryId ->
+			serviceFile?.also { serviceFile ->
+				updateNowPlaying(libraryId, serviceFile)
+				return
+			}
 		}
 
-		playbackStartingNotification
-			.promisePreparedPlaybackStartingNotification(currentLibraryId)
-			.then { builder ->
-				synchronized(notificationSync) {
-					if (isNotificationStarted) return@then
-					isNotificationStarted = true
-					notificationsController.notifyForeground(builder.build(), notificationId)
+		nowPlayingState
+			.promiseActiveNowPlaying()
+			.then { np ->
+				np?.libraryId?.also { libraryId ->
+					this.libraryId = libraryId
+					playbackStartingNotification
+						.promisePreparedPlaybackStartingNotification(libraryId)
+						.then { builder ->
+							synchronized(notificationSync) {
+								if (!isNotificationStarted) {
+									isNotificationStarted = true
+									notificationsController.notifyForeground(builder.build(), notificationId)
+								}
+							}
+						}
 				}
 			}
 	}

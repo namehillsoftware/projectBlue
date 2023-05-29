@@ -5,6 +5,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibrary
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakePlaybackQueueConfiguration
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.connection.selected.GivenANullConnection.AndTheSelectedLibraryChanges.FakeSelectedLibraryProvider
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
@@ -32,6 +33,7 @@ class WhenPlaybackIsPaused {
 		val libraryProvider = FakeLibraryRepository(library)
 		val nowPlayingRepository =
 			NowPlayingRepository(
+				FakeSelectedLibraryProvider(),
 				libraryProvider,
 				libraryProvider,
 				FakeNowPlayingState(),

@@ -17,6 +17,7 @@ import com.lasthopesoftware.bluewater.client.connection.session.LibraryConnectio
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.LibraryPlaybackMessage
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.TrackPositionUpdate
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
@@ -68,7 +69,7 @@ class NowPlayingFilePropertiesViewModel(
 		registerForClass(cls<PlaybackMessage.PlaybackStopped>(), onPlaybackStopped)
 	}
 
-	private val onTrackChangedSubscription = applicationMessages.registerReceiver { m: PlaybackMessage.TrackChanged ->
+	private val onTrackChangedSubscription = applicationMessages.registerReceiver { m: LibraryPlaybackMessage.TrackChanged ->
 		if (m.libraryId == activeLibraryId.value) {
 			updateViewFromRepository(m.libraryId)
 			showNowPlayingControls()
@@ -76,7 +77,7 @@ class NowPlayingFilePropertiesViewModel(
 	}
 
 	private val onPlaylistChangedSubscription =
-		applicationMessages.registerReceiver { m: PlaybackMessage.PlaylistChanged ->
+		applicationMessages.registerReceiver { m: LibraryPlaybackMessage.PlaylistChanged ->
 			activeLibraryId.value?.apply(::updateViewFromRepository)
 		}
 

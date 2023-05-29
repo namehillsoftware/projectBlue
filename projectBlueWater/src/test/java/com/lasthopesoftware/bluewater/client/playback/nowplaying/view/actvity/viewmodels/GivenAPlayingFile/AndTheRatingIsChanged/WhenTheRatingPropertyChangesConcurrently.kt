@@ -47,7 +47,7 @@ class WhenTheRatingPropertyChangesConcurrently {
 
 	private val services by lazy {
 		val nowPlayingRepository = mockk<MaintainNowPlayingState> {
-			every { promiseNowPlaying() } returns Promise(
+			every { promiseNowPlaying(LibraryId(libraryId)) } returns Promise(
 				NowPlaying(
 					LibraryId(libraryId),
 					playlist,
@@ -78,7 +78,7 @@ class WhenTheRatingPropertyChangesConcurrently {
 		}
 
 		val playbackService = mockk<ControlPlaybackService> {
-			every { promiseIsMarkedForPlay() } returns true.toPromise()
+			every { promiseIsMarkedForPlay(LibraryId(libraryId)) } returns true.toPromise()
 		}
 
 		val messageBus = RecordingApplicationMessageBus()
@@ -110,7 +110,7 @@ class WhenTheRatingPropertyChangesConcurrently {
 	@BeforeAll
 	fun act() {
 		val (messageBus, viewModel) = services
-		viewModel.initializeViewModel().toExpiringFuture().get()
+		viewModel.initializeViewModel(LibraryId(libraryId)).toExpiringFuture().get()
 		viewModel.updateRating(201.64f)
 		viewModel.updateRating(694.34f)
 		messageBus.sendMessage(FilePropertiesUpdatedMessage(UrlKeyHolder(URL("http://77Q8Tq2h/"), serviceFile)))

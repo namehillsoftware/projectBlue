@@ -65,11 +65,7 @@ class MediaSessionBroadcaster(
 		super.close()
 	}
 
-	override fun updateLibrary(libraryId: LibraryId) {
-		this.libraryId = libraryId
-	}
-
-	override fun notifyPlaying() {
+    override fun notifyPlaying() {
 		isPlaying = true
 		val builder = PlaybackStateCompat.Builder()
 		capabilities = PlaybackStateCompat.ACTION_PAUSE or standardCapabilities

@@ -3,16 +3,18 @@ package com.lasthopesoftware.bluewater.client.playback.nowplaying.storage
 import android.app.Application
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.LibraryPlaybackMessage
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.TrackPositionUpdate
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageRegistrations
 import com.lasthopesoftware.bluewater.shared.messages.application.HaveApplicationMessageRegistrations
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
+import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.bluewater.shared.updateIfDifferent
 import com.namehillsoftware.handoff.promises.Promise
 import java.util.concurrent.atomic.AtomicReference
@@ -35,6 +37,7 @@ class LiveNowPlayingLookup private constructor(
 			instance = LiveNowPlayingLookup(
 				SelectedLibraryIdProvider(application.getApplicationSettingsRepository()),
 				NowPlayingRepository(
+					application.getCachedSelectedLibraryIdProvider(),
 					libraryRepository,
 					libraryRepository,
 					InMemoryNowPlayingState,
@@ -61,12 +64,26 @@ class LiveNowPlayingLookup private constructor(
 
 		registrations.registerReceiver { message: BrowserLibrarySelection.LibraryChosenMessage -> updateInner(message.chosenLibraryId) }
 		registrations.registerReceiver { message: TrackPositionUpdate -> trackedPosition = message.filePosition.millis }
-		registrations.registerReceiver { message: PlaybackMessage.TrackChanged ->
+		registrations.registerReceiver { message: LibraryPlaybackMessage.TrackChanged ->
 			trackedPosition = null
 			activeLibraryId.updateIfDifferent(message.libraryId)
 			activePositionedFile.updateIfDifferent(message.positionedFile)
 		}
 	}
+
+	override fun promiseActiveNowPlaying(): Promise<NowPlaying?> =
+		inner
+			.promiseActiveNowPlaying()
+			.then { np ->
+				if (activeLibraryId.updateIfDifferent(np?.libraryId) || activePositionedFile.updateIfDifferent(np?.playingFile)) {
+					trackedPosition = null
+				}
+
+				np?.let {
+					trackedPosition?.let { p -> it.copy(filePosition = p) } ?: it
+				}
+			}
+			.keepPromise()
 
 	override fun promiseNowPlaying(libraryId: LibraryId): Promise<NowPlaying?> =
 		inner
