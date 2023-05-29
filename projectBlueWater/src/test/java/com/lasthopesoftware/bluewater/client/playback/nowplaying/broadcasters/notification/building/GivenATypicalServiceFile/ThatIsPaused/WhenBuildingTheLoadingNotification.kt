@@ -7,7 +7,6 @@ import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideImages
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FakeFilePropertiesContainerRepository
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
@@ -53,8 +52,6 @@ class WhenBuildingTheLoadingNotification : AndroidContext() {
 				}
 			})
 		val containerRepository = FakeFilePropertiesContainerRepository()
-		val imageProvider = mockk<ProvideImages>()
-		every { imageProvider.promiseFileBitmap(any()) } returns Promise(expectedBitmap.value)
 
 		val libraryId = LibraryId(605)
 		val fakeLibraryConnectionProvider = FakeLibraryConnectionProvider(mapOf(Pair(libraryId, connectionProvider)))
@@ -69,7 +66,9 @@ class WhenBuildingTheLoadingNotification : AndroidContext() {
 				FakeRevisionProvider(1),
 				containerRepository,
 			),
-			imageProvider
+			mockk {
+				every { promiseFileBitmap(libraryId, any()) } returns Promise(expectedBitmap.value)
+			}
 		)
 		builder = npBuilder.promiseLoadingNotification(libraryId, false).toExpiringFuture().get()
 	}

@@ -73,7 +73,7 @@ class WhenBuildingTheNotification : AndroidContext() {
 				)
 			),
 			mockk {
-				every { promiseFileBitmap(any()) } returns Promise(expectedBitmap)
+				every { promiseFileBitmap(libraryId, any()) } returns Promise(expectedBitmap)
 			}
 		)
 		builder =

@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.access.CachedItemFil
 import com.lasthopesoftware.bluewater.client.browsing.files.access.LibraryFileProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.LibraryFileStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.image.CachedImageProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.image.SelectedLibraryImageProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.RateControlledFilePropertiesProvider
@@ -93,7 +94,7 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 	private val mediaItemServiceFileLookup by lazy {
 		MediaItemServiceFileLookup(
 			filePropertiesProvider,
-			imageProvider
+			SelectedLibraryImageProvider(selectedLibraryIdProvider, imageProvider),
 		)
 	}
 

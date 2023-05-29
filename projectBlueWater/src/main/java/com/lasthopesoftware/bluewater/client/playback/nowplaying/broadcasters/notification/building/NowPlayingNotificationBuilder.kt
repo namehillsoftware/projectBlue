@@ -5,7 +5,7 @@ import android.graphics.Bitmap
 import androidx.core.app.NotificationCompat
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideImages
+import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideLibraryImages
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -20,11 +20,11 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 
 class NowPlayingNotificationBuilder(
-	private val context: Context,
-	private val mediaStyleNotificationSetup: SetupMediaStyleNotifications,
-	private val urlKeyProvider: ProvideUrlKey,
-	private val cachedFilePropertiesProvider: ProvideLibraryFileProperties,
-	private val imageProvider: ProvideImages,
+    private val context: Context,
+    private val mediaStyleNotificationSetup: SetupMediaStyleNotifications,
+    private val urlKeyProvider: ProvideUrlKey,
+    private val cachedFilePropertiesProvider: ProvideLibraryFileProperties,
+    private val imageProvider: ProvideLibraryImages,
 ) : BuildNowPlayingNotificationContent, AutoCloseable {
 	private val notificationSync = Any()
 
@@ -45,7 +45,7 @@ class NowPlayingNotificationBuilder(
 
 				val viewStructure = viewStructure ?: ViewStructure(urlKeyHolder).also { viewStructure = it }
 				viewStructure.promisedNowPlayingImage =
-					viewStructure.promisedNowPlayingImage ?: imageProvider.promiseFileBitmap(serviceFile)
+					viewStructure.promisedNowPlayingImage ?: imageProvider.promiseFileBitmap(libraryId, serviceFile)
 
 				cachedFilePropertiesProvider
 					.promiseFileProperties(libraryId, serviceFile)
