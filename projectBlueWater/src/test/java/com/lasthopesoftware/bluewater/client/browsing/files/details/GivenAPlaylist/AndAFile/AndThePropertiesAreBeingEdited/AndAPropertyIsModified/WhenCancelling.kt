@@ -6,6 +6,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.libraries.PassThroughScopedUrlKeyProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
@@ -81,7 +82,7 @@ class WhenCancelling {
 		@BeforeClass
 		fun act() {
 			viewModel?.value?.apply {
-				loadFromList(listOf(ServiceFile(serviceFileId)), 0).toExpiringFuture().get()
+				loadFromList(LibraryId(287), listOf(ServiceFile(serviceFileId)), 0).toExpiringFuture().get()
 				fileProperties.value.first { it.property == KnownFileProperties.Track }.apply {
 					updateValue("141")
 					cancel()
