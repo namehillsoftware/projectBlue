@@ -57,9 +57,6 @@ class MediaSessionBroadcaster(
 	@Volatile
 	private var isPlaying = false
 
-	@Volatile
-	private var libraryId: LibraryId? = null
-
 	override fun close() {
 		trackPositionUpdatesSubscription.close()
 		super.close()
@@ -105,10 +102,8 @@ class MediaSessionBroadcaster(
 	}
 
 	override fun notifyPlayingFileUpdated() {
-		libraryId?.also {
-			nowPlayingState.promiseNowPlaying(it).then { np ->
-				np?.playingFile?.serviceFile?.also { sf -> updateNowPlaying(it, sf) }
-			}
+		nowPlayingState.promiseActiveNowPlaying().then { np ->
+			np?.playingFile?.serviceFile?.also { sf -> updateNowPlaying(np.libraryId, sf) }
 		}
 	}
 
