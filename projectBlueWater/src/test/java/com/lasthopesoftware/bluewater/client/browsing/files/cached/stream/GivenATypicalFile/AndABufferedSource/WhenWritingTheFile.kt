@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.GivenATypicalFile.AndABufferedSource
 
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.CachedFileOutputStream
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import io.mockk.mockk
 import okio.Buffer
@@ -9,7 +10,7 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.io.File
 import java.io.FileInputStream
-import java.util.*
+import java.util.Random
 
 class WhenWritingTheFile {
 	private val file by lazy {
@@ -20,7 +21,7 @@ class WhenWritingTheFile {
 
     @BeforeAll
     fun before() {
-        val cachedFileOutputStream = CachedFileOutputStream("unique-test", file, mockk())
+        val cachedFileOutputStream = CachedFileOutputStream(LibraryId(886),"unique-test", file, mockk())
         val buffer = Buffer()
         buffer.write(bytes)
         cachedFileOutputStream.promiseTransfer(buffer).toExpiringFuture().get()

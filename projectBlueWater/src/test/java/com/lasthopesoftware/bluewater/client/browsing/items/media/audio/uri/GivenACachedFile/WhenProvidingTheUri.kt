@@ -31,8 +31,8 @@ class WhenProvidingTheUri {
 				every { promiseUri(LibraryId(libraryId), ServiceFile(10)) } returns Promise(remoteUri)
 			}
 
-			val cachedFilesProvider = mockk<CacheFiles>().apply {
-				every { promiseCachedFile(remoteUri.path + "?" + remoteUri.query) } returns Promise(file)
+			val cachedFilesProvider = mockk<CacheFiles> {
+				every { promiseCachedFile(LibraryId(libraryId), remoteUri.path + "?" + remoteUri.query) } returns Promise(file)
 			}
 
 			val cachedAudioFileUriProvider = CachedAudioFileUriProvider(

@@ -28,7 +28,7 @@ class WhenPreparing {
 		val listeners = ConcurrentLinkedQueue<Player.Listener>()
 
 		val preparer = ExoPlayerPlaybackPreparer(
-			{
+			{ _, _ ->
 				mockk<BaseMediaSource>(relaxUnitFun = true).toPromise()
 			},
 			mockk<ProvideExoPlayers>().apply {

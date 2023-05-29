@@ -8,7 +8,9 @@ import com.google.android.exoplayer2.upstream.HttpDataSource
 import com.google.android.exoplayer2.upstream.TransferListener
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.CacheOutputStream
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.supplier.SupplyCacheStreams
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.drainQueue
+import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRateLimiter
 import com.lasthopesoftware.bluewater.shared.promises.ForwardedResponse.Companion.forward
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
@@ -16,16 +18,16 @@ import com.lasthopesoftware.resources.uri.PathAndQuery.pathAndQuery
 import com.namehillsoftware.handoff.promises.Promise
 import okhttp3.internal.closeQuietly
 import okio.Buffer
-import org.slf4j.LoggerFactory
 import java.util.concurrent.ConcurrentLinkedQueue
 
 class EntireFileCachedDataSource(
+	private val libraryId: LibraryId,
 	private val innerDataSource: HttpDataSource,
 	private val cacheStreamSupplier: SupplyCacheStreams
 ) : DataSource {
 
 	companion object {
-		private val logger by lazy { LoggerFactory.getLogger(EntireFileCachedDataSource::class.java) }
+		private val logger by lazyLogger<EntireFileCachedDataSource>()
 	}
 
 	private var expectedFileSize = C.LENGTH_UNSET.toLong()
@@ -47,10 +49,12 @@ class EntireFileCachedDataSource(
 		val key = dataSpec.uri.pathAndQuery()
 
 		cacheWriter?.clear()
-		cacheWriter = CacheWriter(cacheStreamSupplier.promiseCachedFileOutputStream(key).then(forward()) {
-			logger.warn("There was an error opening the cache output stream for key $key", it)
-			null
-		})
+		cacheWriter = CacheWriter(
+			cacheStreamSupplier.promiseCachedFileOutputStream(libraryId, key)
+				.then(forward()) {
+					logger.warn("There was an error opening the cache output stream for key $key", it)
+					null
+				})
 
 		return openedFileSize
 	}
@@ -174,10 +178,12 @@ class EntireFileCachedDataSource(
 	}
 
 	class Factory(
+		private val libraryId: LibraryId,
 		private val httpDataSourceFactory: HttpDataSource.Factory,
 		private val cacheStreamSupplier: SupplyCacheStreams
 	) : DataSource.Factory {
 		override fun createDataSource(): DataSource = EntireFileCachedDataSource(
+			libraryId,
 			httpDataSourceFactory.createDataSource(),
 			cacheStreamSupplier
 		)

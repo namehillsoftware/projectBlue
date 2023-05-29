@@ -28,6 +28,7 @@ class ExoPlayerPlaybackPreparer(
 						mediaSourceProvider,
 						eventHandler,
 						provideExoPlayers,
+						libraryId,
 						it,
 						preparedAt
 					)

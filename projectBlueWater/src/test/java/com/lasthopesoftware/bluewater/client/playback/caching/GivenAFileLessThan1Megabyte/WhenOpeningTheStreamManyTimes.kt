@@ -7,6 +7,7 @@ import com.google.android.exoplayer2.upstream.HttpDataSource
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.repository.CachedFile
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.CacheOutputStream
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.supplier.SupplyCacheStreams
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.caching.datasource.EntireFileCachedDataSource
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
@@ -24,6 +25,8 @@ import java.util.*
 @RunWith(RobolectricTestRunner::class)
 class WhenOpeningTheStreamManyTimes {
 	companion object {
+		private const val libraryId = 634
+		private var writtenLibraryId: LibraryId? = null
 		private val bytesWritten = ByteArray(512 * 1024)
 		private val bytes by lazy { ByteArray(512 * 1024).also { Random().nextBytes(it) } }
 		private val committedOutputStreams = ArrayList<CacheOutputStream>()
@@ -33,7 +36,8 @@ class WhenOpeningTheStreamManyTimes {
 		fun context() {
 			val fakeCacheStreamSupplier =
 				object : SupplyCacheStreams {
-					override fun promiseCachedFileOutputStream(uniqueKey: String): Promise<CacheOutputStream> {
+					override fun promiseCachedFileOutputStream(libraryId: LibraryId, uniqueKey: String): Promise<CacheOutputStream> {
+						writtenLibraryId = libraryId
 						return Promise<CacheOutputStream>(object : CacheOutputStream {
 							var numberOfBytesWritten = 0
 							override fun promiseWrite(
@@ -97,6 +101,7 @@ class WhenOpeningTheStreamManyTimes {
 			}
 
 			val diskFileCacheDataSource = EntireFileCachedDataSource(
+				LibraryId(libraryId),
 				dataSource,
 				fakeCacheStreamSupplier,
 			)
@@ -122,7 +127,12 @@ class WhenOpeningTheStreamManyTimes {
 	}
 
 	@Test
-	fun thenTheEntireFileIsWritten() {
+	fun `then the correct library is written to`() {
+		assertThat(writtenLibraryId?.id).isEqualTo(libraryId)
+	}
+
+	@Test
+	fun `then the entire file is written`() {
 		assertArrayEquals(bytes, bytesWritten)
 	}
 

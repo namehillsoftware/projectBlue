@@ -22,12 +22,12 @@ class WhenProvidingTheUri {
 
 	companion object {
 		private val cachedFileUri by lazy {
-			val remoteFileUriProvider = mockk<RemoteFileUriProvider>().apply {
+			val remoteFileUriProvider = mockk<RemoteFileUriProvider> {
 				every { promiseUri(LibraryId(libraryId), ServiceFile(10)) } returns Promise.empty()
 			}
 
-			val cachedFilesProvider = mockk<CacheFiles>().apply {
-				every { promiseCachedFile("file?key=1") } returns Promise(mockk<File>())
+			val cachedFilesProvider = mockk<CacheFiles> {
+				every { promiseCachedFile(LibraryId(libraryId), "file?key=1") } returns Promise(mockk<File>())
 			}
 
 			val cachedAudioFileUriProvider = CachedAudioFileUriProvider(

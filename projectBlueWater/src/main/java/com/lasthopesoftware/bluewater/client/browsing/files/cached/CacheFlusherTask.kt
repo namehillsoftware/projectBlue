@@ -45,9 +45,10 @@ class CacheFlusherTask  /*
 
 			// Remove any files in the cache dir but not in the database
 			val filesInCacheDir = diskCacheDirectory
-				.getDiskCacheDirectory(diskFileCacheConfiguration)
+				.getRootDiskCacheDirectory()
 				?.takeIf { it.exists() }
-				?.listFiles() ?: return
+				?.listFiles()
+				?.flatMap { dir -> dir.listFiles()?.asSequence() ?: emptySequence() }?: return
 
 			// If the # of files in the cache dir is equal to the database size, then
 			// hypothetically (and good enough for our purposes), they are in sync and we don't need

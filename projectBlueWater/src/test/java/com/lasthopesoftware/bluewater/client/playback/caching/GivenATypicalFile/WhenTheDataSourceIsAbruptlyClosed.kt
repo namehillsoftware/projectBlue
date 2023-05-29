@@ -7,6 +7,7 @@ import com.google.android.exoplayer2.upstream.HttpDataSource
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.repository.CachedFile
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.CacheOutputStream
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.supplier.SupplyCacheStreams
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.caching.datasource.EntireFileCachedDataSource
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
@@ -32,7 +33,7 @@ class WhenTheDataSourceIsAbruptlyClosed {
 		fun context() {
 			val fakeCacheStreamSupplier =
 				object : SupplyCacheStreams {
-					override fun promiseCachedFileOutputStream(uniqueKey: String): Promise<CacheOutputStream> {
+					override fun promiseCachedFileOutputStream(libraryId: LibraryId, uniqueKey: String): Promise<CacheOutputStream> {
 						return Promise<CacheOutputStream>(object : CacheOutputStream {
 							var numberOfBytesWritten = 0
 							val bytesWritten = ByteArray(7 * 1024 * 1024)
@@ -88,6 +89,7 @@ class WhenTheDataSourceIsAbruptlyClosed {
 			}
 
 			val diskFileCacheDataSource = EntireFileCachedDataSource(
+				LibraryId(697),
 				dataSource,
 				fakeCacheStreamSupplier
 			)

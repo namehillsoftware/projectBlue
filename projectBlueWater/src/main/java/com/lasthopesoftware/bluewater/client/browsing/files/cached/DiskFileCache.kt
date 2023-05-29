@@ -9,15 +9,15 @@ import com.lasthopesoftware.bluewater.client.browsing.files.cached.persistence.I
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.repository.CachedFile
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.CacheOutputStream
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.supplier.SupplyCacheStreams
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
-import com.lasthopesoftware.bluewater.shared.cls
+import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.lasthopesoftware.resources.executors.ThreadPools.promiseTableMessage
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
-import org.slf4j.LoggerFactory
 import java.io.File
 import java.io.IOException
 
@@ -25,10 +25,10 @@ class DiskFileCache(private val context: Context, private val diskCacheDirectory
 
 	private val expirationTime = diskFileCacheConfiguration.cacheItemLifetime?.millis ?: -1
 
-	override fun put(uniqueKey: String, fileData: ByteArray): Promise<CachedFile?> {
+	override fun put(libraryId: LibraryId, uniqueKey: String, fileData: ByteArray): Promise<CachedFile?> {
 		val putPromise = cacheStreamSupplier
-			.promiseCachedFileOutputStream(uniqueKey)
-			.eventually { cachedFileOutputStream -> writeCachedFileWithRetries(uniqueKey, cachedFileOutputStream, fileData) }
+			.promiseCachedFileOutputStream(libraryId, uniqueKey)
+			.eventually { cachedFileOutputStream -> writeCachedFileWithRetries(libraryId, uniqueKey, cachedFileOutputStream, fileData) }
 
 		putPromise.excuse { e ->
 			logger.error("There was an error putting the cached file with the unique key $uniqueKey into the cache.", e)
@@ -36,7 +36,7 @@ class DiskFileCache(private val context: Context, private val diskCacheDirectory
 		return putPromise
 	}
 
-	private fun writeCachedFileWithRetries(uniqueKey: String, cachedFileOutputStream: CacheOutputStream, fileData: ByteArray): Promise<CachedFile?> {
+	private fun writeCachedFileWithRetries(libraryId: LibraryId, uniqueKey: String, cachedFileOutputStream: CacheOutputStream, fileData: ByteArray): Promise<CachedFile?> {
 		return cachedFileOutputStream
 			.promiseWrite(fileData, 0, fileData.size)
 			.eventually { obj -> obj.flush() }
@@ -56,7 +56,7 @@ class DiskFileCache(private val context: Context, private val diskCacheDirectory
 								CacheFlusherTask
 									.promisedCacheFlushing(context, diskCacheDirectory, diskFileCacheConfiguration, targetSize)
 									.eventually {
-										if (freeDiskSpace > fileData.size) put(uniqueKey, fileData)
+										if (freeDiskSpace > fileData.size) put(libraryId, uniqueKey, fileData)
 										else Promise.empty()
 									}
 							}
@@ -68,9 +68,9 @@ class DiskFileCache(private val context: Context, private val diskCacheDirectory
 			.must { cachedFileOutputStream.close() }
 	}
 
-	override fun promiseCachedFile(uniqueKey: String): Promise<File?> {
+	override fun promiseCachedFile(libraryId: LibraryId, uniqueKey: String): Promise<File?> {
 		return cachedFilesProvider
-			.promiseCachedFile(uniqueKey)
+			.promiseCachedFile(libraryId, uniqueKey)
 			.then { cachedFile ->
 				cachedFile?.fileName?.let { fileName ->
 					try {
@@ -144,10 +144,10 @@ class DiskFileCache(private val context: Context, private val diskCacheDirectory
 		}
 
 	private val freeDiskSpace: Long
-		get() = diskCacheDirectory.getDiskCacheDirectory(diskFileCacheConfiguration).usableSpace
+		get() = diskCacheDirectory.getRootDiskCacheDirectory()?.usableSpace ?: 0L
 
 	companion object {
-		private val logger by lazy { LoggerFactory.getLogger(cls<DiskFileCache>()) }
+		private val logger by lazyLogger<DiskFileCache>()
 
 		private fun getTotalCachedFileCount(repositoryAccessHelper: RepositoryAccessHelper): Long {
 			return repositoryAccessHelper.mapSql("SELECT COUNT(*) FROM " + CachedFile.tableName).execute()

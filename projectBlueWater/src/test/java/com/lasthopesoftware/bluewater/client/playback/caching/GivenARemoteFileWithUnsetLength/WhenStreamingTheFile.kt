@@ -4,6 +4,7 @@ import android.net.Uri
 import com.google.android.exoplayer2.C
 import com.google.android.exoplayer2.upstream.DataSpec
 import com.google.android.exoplayer2.upstream.HttpDataSource
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.caching.datasource.EntireFileCachedDataSource
 import io.mockk.every
 import io.mockk.mockk
@@ -50,7 +51,8 @@ class WhenStreamingTheFile {
 				}
 			}
 			val diskFileCacheDataSource = EntireFileCachedDataSource(
-                dataSource,
+                LibraryId(647),
+				dataSource,
                 mockk(), // Use a strict stream supplier mock to ensure a cache is never opened
 			)
 			diskFileCacheDataSource.open(

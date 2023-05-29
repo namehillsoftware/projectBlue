@@ -20,7 +20,7 @@ class CachedAudioFileUriProvider(
 			.eventually { uri ->
 				uri
 					?.pathAndQuery()
-					?.let(cachedFilesProvider::promiseCachedFile)
+					?.let { cachedFilesProvider.promiseCachedFile(libraryId, it) }
 					?.then { cachedFile -> cachedFile?.let(Uri::fromFile) }
 					.keepPromise()
 			}

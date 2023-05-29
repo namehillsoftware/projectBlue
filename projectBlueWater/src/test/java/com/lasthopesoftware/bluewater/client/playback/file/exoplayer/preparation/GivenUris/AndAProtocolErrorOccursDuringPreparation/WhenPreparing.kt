@@ -31,7 +31,7 @@ class WhenPreparing {
 		var listener: Player.Listener? = null
 
 		val preparer = ExoPlayerPlaybackPreparer(
-			{
+			{ _, _ ->
 				mockk<BaseMediaSource>(relaxUnitFun = true).toPromise()
 			},
 			mockk<ProvideExoPlayers>().apply {

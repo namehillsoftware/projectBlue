@@ -381,7 +381,7 @@ open class PlaybackService :
 	}
 	private val diskFileAccessTimeUpdater by lazy { DiskFileAccessTimeUpdater(this) }
 
-	private val diskCachedDirectoryProvider by lazy { AndroidDiskCacheDirectoryProvider(this) }
+	private val audioDiskCacheDirectoryProvider by lazy { AndroidDiskCacheDirectoryProvider(this, AudioCacheConfiguration) }
 	private val lifecycleCloseableManager by lazyScoped { AutoCloseableManager() }
 	private val playbackEngineCloseables = AutoCloseableManager()
 	private val lazyAudioBecomingNoisyReceiver = lazy { AudioBecomingNoisyReceiver() }
@@ -762,17 +762,16 @@ open class PlaybackService :
 				cachedSessionFilePropertiesProvider
 			)
 
-			val cacheConfiguration = AudioCacheConfiguration(library)
+			val cacheConfiguration = AudioCacheConfiguration
 			val cachedFilesProvider = CachedFilesProvider(this, cacheConfiguration)
 			val remoteFileUriProvider = RemoteFileUriProvider(libraryConnectionProvider, ServiceFileUriQueryParamsProvider)
 
 			val cacheStreamSupplier by lazy {
 				DiskFileCacheStreamSupplier(
-					diskCachedDirectoryProvider,
-					cacheConfiguration,
+					audioDiskCacheDirectoryProvider,
 					DiskFileCachePersistence(
 						this,
-						diskCachedDirectoryProvider,
+						audioDiskCacheDirectoryProvider,
 						cacheConfiguration,
 						cachedFilesProvider,
 						diskFileAccessTimeUpdater
@@ -780,7 +779,7 @@ open class PlaybackService :
 					cachedFilesProvider
 				)
 			}
-			val audioCache = DiskFileCache(this, diskCachedDirectoryProvider, cacheConfiguration, cacheStreamSupplier, cachedFilesProvider, diskFileAccessTimeUpdater)
+			val audioCache = DiskFileCache(this, audioDiskCacheDirectoryProvider, cacheConfiguration, cacheStreamSupplier, cachedFilesProvider, diskFileAccessTimeUpdater)
 			val bestMatchUriProvider = BestMatchUriProvider(
 				libraryRepository,
 				StoredFileUriProvider(
@@ -793,7 +792,8 @@ open class PlaybackService :
 					false,
 					applicationMessageBus
 				),
-				remoteFileUriProvider)
+				remoteFileUriProvider
+			)
 
 			val httpDataSourceFactory = HttpDataSourceFactoryProvider(this, connectionProvider, OkHttpFactory)
 			val promisedPreparationSourceProvider = playbackHandler.value.then { ph ->

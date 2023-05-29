@@ -22,7 +22,7 @@ class ImageDiskFileCacheFactory private constructor(private val context: Context
 			.then { library -> library?.let(::buildNewCache) }
 
 	private fun buildNewCache(library: Library): CacheFiles {
-		val imageCacheConfiguration = ImageCacheConfiguration(library)
+		val imageCacheConfiguration = ImageCacheConfiguration
 		val cachedFilesProvider = CachedFilesProvider(context, imageCacheConfiguration)
 		val diskFileAccessTimeUpdater = DiskFileAccessTimeUpdater(context)
 
@@ -32,7 +32,6 @@ class ImageDiskFileCacheFactory private constructor(private val context: Context
 			imageCacheConfiguration,
 			DiskFileCacheStreamSupplier(
 				diskCacheDirectoryProvider,
-				imageCacheConfiguration,
 				DiskFileCachePersistence(
 					context,
 					diskCacheDirectoryProvider,
@@ -49,7 +48,7 @@ class ImageDiskFileCacheFactory private constructor(private val context: Context
 
 		fun getInstance(context: Context): ImageDiskFileCacheFactory {
 			val libraryProvider = LibraryRepository(context)
-			val diskCacheDirectoryProvider = AndroidDiskCacheDirectoryProvider(context)
+			val diskCacheDirectoryProvider = AndroidDiskCacheDirectoryProvider(context, ImageCacheConfiguration)
 			return ImageDiskFileCacheFactory(context, libraryProvider, diskCacheDirectoryProvider)
 		}
 	}
