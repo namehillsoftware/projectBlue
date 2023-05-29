@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.FakeNowPlayingR
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.NotificationsConfiguration
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.PlaybackNotificationBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building.BuildNowPlayingNotificationContent
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.singleNowPlaying
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.LibraryPlaybackMessage
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage
 import com.lasthopesoftware.bluewater.shared.android.notifications.control.ControlNotifications
@@ -48,14 +48,19 @@ class WhenTheFileChanges : AndroidContext() {
             secondNotification
         ))
 
-		val nowPlaying = singleNowPlaying(
+		val nowPlaying = NowPlaying(
 			LibraryId(libraryId),
-			ServiceFile(serviceFileId)
+			listOf(ServiceFile(179), ServiceFile(serviceFileId)),
+			0,
+			0,
+			false
 		)
+
+		val nowPlayingRepository = FakeNowPlayingRepository(nowPlaying)
 
 		val messageBus = RecordingApplicationMessageBus()
 		PlaybackNotificationBroadcaster(
-			FakeNowPlayingRepository(nowPlaying),
+			nowPlayingRepository,
 			messageBus,
 			mockk(),
 			notificationController,
@@ -76,6 +81,7 @@ class WhenTheFileChanges : AndroidContext() {
 		messageBus.sendMessage(PlaybackMessage.PlaybackStarted)
 		messageBus.sendMessage(LibraryPlaybackMessage.TrackChanged(LibraryId(libraryId), nowPlaying.playingFile!!))
 		messageBus.sendMessage(PlaybackMessage.PlaybackPaused)
+		nowPlayingRepository.updateNowPlaying(nowPlaying.copy(playlistPosition = 1))
 		messageBus.sendMessage(LibraryPlaybackMessage.TrackChanged(LibraryId(libraryId), nowPlaying.playingFile!!))
 	}
 
