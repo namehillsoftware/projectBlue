@@ -1,9 +1,8 @@
-package com.lasthopesoftware.bluewater.client.browsing.files.cached.disk;
+package com.lasthopesoftware.bluewater.client.browsing.files.cached.disk
 
-import com.lasthopesoftware.bluewater.client.browsing.files.cached.configuration.IDiskFileCacheConfiguration;
+import com.lasthopesoftware.bluewater.client.browsing.files.cached.configuration.IDiskFileCacheConfiguration
+import java.io.File
 
-import java.io.File;
-
-public interface IDiskCacheDirectoryProvider {
-	File getDiskCacheDirectory(IDiskFileCacheConfiguration diskFileCacheConfiguration);
+interface IDiskCacheDirectoryProvider {
+    fun getDiskCacheDirectory(diskFileCacheConfiguration: IDiskFileCacheConfiguration): File?
 }

@@ -1,35 +1,26 @@
-package com.lasthopesoftware.bluewater.client.browsing.files.cached.disk;
+package com.lasthopesoftware.bluewater.client.browsing.files.cached.disk
 
-import android.content.Context;
-import android.os.Environment;
+import android.content.Context
+import android.os.Environment
+import com.lasthopesoftware.bluewater.client.browsing.files.cached.configuration.IDiskFileCacheConfiguration
+import java.io.File
 
-import com.lasthopesoftware.bluewater.client.browsing.files.cached.configuration.IDiskFileCacheConfiguration;
-
-import java.io.File;
-
-public class AndroidDiskCacheDirectoryProvider implements IDiskCacheDirectoryProvider {
-	private final Context context;
-
-	public AndroidDiskCacheDirectoryProvider(Context context) {
-		this.context = context;
+class AndroidDiskCacheDirectoryProvider(private val context: Context) : IDiskCacheDirectoryProvider {
+	override fun getDiskCacheDirectory(diskFileCacheConfiguration: IDiskFileCacheConfiguration): File? {
+		val cacheDir = File(
+			getDiskCacheDir(context, diskFileCacheConfiguration.cacheName),
+			diskFileCacheConfiguration.library.id.toString()
+		)
+		return if (cacheDir.exists() || cacheDir.mkdirs()) cacheDir else null
 	}
 
-	@Override
-	public File getDiskCacheDirectory(IDiskFileCacheConfiguration diskFileCacheConfiguration) {
-		final File cacheDir = new File(getDiskCacheDir(context, diskFileCacheConfiguration.getCacheName()), String.valueOf(diskFileCacheConfiguration.getLibrary().getId()));
-		return cacheDir.exists() || cacheDir.mkdirs()
-			? cacheDir
-			: null;
-	}
-
-	private static java.io.File getDiskCacheDir(final Context context, final String uniqueName) {
-		// Check if media is mounted or storage is built-in, if so, try and use external cache dir
-		// otherwise use internal cache dir
-		final File cacheDir =
-			Environment.MEDIA_MOUNTED.equals(Environment.getExternalStorageState()) ?
-				context.getExternalCacheDir() :
-				context.getCacheDir();
-
-		return new File(cacheDir, uniqueName);
+	companion object {
+		private fun getDiskCacheDir(context: Context, uniqueName: String): File {
+			// Check if media is mounted or storage is built-in, if so, try and use external cache dir
+			// otherwise use internal cache dir
+			val cacheDir =
+				if (Environment.MEDIA_MOUNTED == Environment.getExternalStorageState()) context.externalCacheDir else context.cacheDir
+			return File(cacheDir, uniqueName)
+		}
 	}
 }
