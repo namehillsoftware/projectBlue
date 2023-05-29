@@ -20,7 +20,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.repositor
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertyStorage
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.SelectedLibraryFilePropertyStorage
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ConnectionLostView
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.KnownLibraryIdProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.LibraryIdProviderViewModel
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
@@ -64,13 +64,11 @@ class FileDetailsActivity : ComponentActivity() {
 		}
 	}
 
-	private lateinit var parsedLibraryId: LibraryId
-
 	private val imageProvider by lazy { CachedImageProvider.getInstance(this) }
 
 	private val defaultImageProvider by lazy { DefaultImageProvider(this) }
 
-	private val selectedLibraryIdProvider by lazy { KnownLibraryIdProvider(parsedLibraryId) }
+	private val selectedLibraryIdProvider by buildViewModelLazily { LibraryIdProviderViewModel() }
 
 	private val libraryConnections by lazy { buildNewConnectionSessionManager() }
 
@@ -144,7 +142,7 @@ class FileDetailsActivity : ComponentActivity() {
 			return
 		}
 
-		parsedLibraryId = libraryId
+		selectedLibraryIdProvider.updateLibraryId(libraryId)
 
 		setContent {
 			ProjectBlueTheme {
