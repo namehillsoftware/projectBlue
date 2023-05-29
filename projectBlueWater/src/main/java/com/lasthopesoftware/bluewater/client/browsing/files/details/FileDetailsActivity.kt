@@ -142,7 +142,7 @@ class FileDetailsActivity : ComponentActivity() {
 			return
 		}
 
-		selectedLibraryIdProvider.updateLibraryId(libraryId)
+		selectedLibraryIdProvider.selectLibraryId(libraryId)
 
 		setContent {
 			ProjectBlueTheme {
