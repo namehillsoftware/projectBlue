@@ -55,7 +55,7 @@ class WhenTheFileChanges : AndroidContext() {
 		with (messageBus) {
 			sendMessage(PlaybackMessage.PlaybackStarted)
 			sendMessage(LibraryPlaybackMessage.TrackChanged(LibraryId(libraryId), nowPlaying.playingFile!!))
-			sendMessage(PlaybackMessage.PlaybackStarted)
+			sendMessage(PlaybackMessage.PlaybackStopped)
 			sendMessage(LibraryPlaybackMessage.TrackChanged(LibraryId(libraryId), nowPlaying.playingFile!!))
 		}
 	}

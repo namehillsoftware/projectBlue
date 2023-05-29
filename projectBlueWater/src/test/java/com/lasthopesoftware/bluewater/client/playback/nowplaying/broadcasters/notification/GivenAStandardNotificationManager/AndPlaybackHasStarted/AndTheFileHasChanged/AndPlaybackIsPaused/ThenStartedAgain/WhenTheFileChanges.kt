@@ -5,14 +5,14 @@ import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.FakeNowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.NotificationsConfiguration
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.PlaybackNotificationBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building.BuildNowPlayingNotificationContent
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.singleNowPlaying
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.LibraryPlaybackMessage
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage
 import com.lasthopesoftware.bluewater.shared.android.notifications.control.ControlNotifications
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import com.lasthopesoftware.resources.notifications.FakeNotificationCompatBuilder
 import com.namehillsoftware.handoff.promises.Promise
@@ -49,19 +49,19 @@ class WhenTheFileChanges : AndroidContext() {
             secondNotification
         ))
 
-		val nowPlaying = singleNowPlaying(
+		val nowPlaying = NowPlaying(
 			LibraryId(libraryId),
-			ServiceFile(serviceFileId)
+			listOf(ServiceFile(1), ServiceFile(serviceFileId)),
+			0,
+			0,
+			false
 		)
+
+		val nowPlayingRepository = FakeNowPlayingRepository(nowPlaying)
 
 		val messageBus = RecordingApplicationMessageBus()
 		PlaybackNotificationBroadcaster(
-			mockk {
-				every { promiseActiveNowPlaying() } returnsMany listOf(
-					singleNowPlaying(LibraryId(libraryId), ServiceFile(1)).toPromise(),
-					nowPlaying.toPromise()
-				)
-			},
+			nowPlayingRepository,
 			messageBus,
 			mockk(),
 			notificationController,
@@ -80,6 +80,7 @@ class WhenTheFileChanges : AndroidContext() {
 		messageBus.sendMessage(PlaybackMessage.PlaybackStarted)
 		messageBus.sendMessage(LibraryPlaybackMessage.TrackChanged(LibraryId(libraryId), nowPlaying.playingFile!!))
 		messageBus.sendMessage(PlaybackMessage.PlaybackPaused)
+		nowPlayingRepository.updateNowPlaying(nowPlaying.copy(playlistPosition = 1))
 		messageBus.sendMessage(LibraryPlaybackMessage.TrackChanged(LibraryId(libraryId), nowPlaying.playingFile!!))
 		messageBus.sendMessage(PlaybackMessage.PlaybackStarted)
 	}
