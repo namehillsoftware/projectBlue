@@ -39,7 +39,7 @@ class WhenTheFileChanges : AndroidContext() {
 		val context = ApplicationProvider.getApplicationContext<Context>()
 		every { notificationContentBuilder.promiseLoadingNotification(LibraryId(libraryId), any()) } returns newFakeBuilder(context, Notification()).toPromise()
 		every { notificationContentBuilder.promiseNowPlayingNotification(LibraryId(libraryId), ServiceFile(1), any()) } returns Promise(newFakeBuilder(context, firstNotification))
-		every { notificationContentBuilder.promiseNowPlayingNotification(LibraryId(libraryId), ServiceFile(2), false) } returns Promise(newFakeBuilder(context, secondNotification))
+		every { notificationContentBuilder.promiseNowPlayingNotification(LibraryId(libraryId), ServiceFile(serviceFileId), false) } returns Promise(newFakeBuilder(context, secondNotification))
 
 		val nowPlaying = NowPlaying(
 			LibraryId(libraryId),

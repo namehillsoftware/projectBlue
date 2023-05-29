@@ -44,7 +44,7 @@ class WhenTheFileChanges : AndroidContext() {
             ApplicationProvider.getApplicationContext(),
             firstNotification
         ))
-		every { notificationContentBuilder.promiseNowPlayingNotification(LibraryId(libraryId), ServiceFile(2), any()) } returns Promise(FakeNotificationCompatBuilder.newFakeBuilder(
+		every { notificationContentBuilder.promiseNowPlayingNotification(LibraryId(libraryId), ServiceFile(serviceFileId), any()) } returns Promise(FakeNotificationCompatBuilder.newFakeBuilder(
             ApplicationProvider.getApplicationContext(),
             secondNotification
         ))
@@ -89,23 +89,23 @@ class WhenTheFileChanges : AndroidContext() {
 	}
 
 	@Test
-	fun thenTheLoadingNotificationIsShownManyTimes() {
+	fun `then the loading notification is shown many times`() {
 		verify(exactly = 2) { notificationController.notifyForeground(loadingNotification, 43) }
 		verify(exactly = 1) { notificationController.notifyEither(loadingNotification, 43) }
 	}
 
 	@Test
-	fun thenTheServiceIsStartedOnTheFirstServiceItem() {
+	fun `then the service is started on the first service item`() {
 		verify(exactly = 1) { notificationController.notifyForeground(startingNotification, 43) }
 	}
 
 	@Test
-	fun thenTheNotificationIsSetToThePausedNotification() {
+	fun `then the notification is set to the paused notification`() {
 		verify { notificationController.notifyEither(secondNotification, 43) }
 	}
 
 	@Test
-	fun thenTheServiceIsStartedOnTheSecondServiceItem() {
+	fun `then the service is started on the second service item`() {
 		verify { notificationController.notifyForeground(secondNotification, 43) }
 	}
 

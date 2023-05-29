@@ -8,7 +8,6 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.media.AudioManager
 import android.os.Build
-import android.os.Bundle
 import android.os.Handler
 import android.os.PowerManager
 import android.os.PowerManager.WakeLock
@@ -265,9 +264,9 @@ open class PlaybackService :
 				PendingIntent.FLAG_UPDATE_CURRENT.makePendingIntentImmutable())
 
 		fun promiseIsMarkedForPlay(context: Context, libraryId: LibraryId): Promise<Boolean> =
-			context.promiseBoundService<PlaybackService>(Bundle().apply { putParcelable(Bag.libraryId, libraryId) })
+			context.promiseBoundService<PlaybackService>()
 				.then { h ->
-					val isPlaying = h.service.isMarkedForPlay
+					val isPlaying = h.service.run { activeLibraryId == libraryId && isMarkedForPlay }
 					context.unbindService(h.serviceConnection)
 					isPlaying
 				}

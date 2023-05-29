@@ -140,6 +140,7 @@ class PlaybackNotificationBroadcaster(
 		}
 
 		synchronized(notificationSync) {
+			this.libraryId = libraryId
 			this.serviceFile = serviceFile
 
 			fun isValidForNotification() = serviceFile == this.serviceFile && libraryId == this.libraryId && (isNotificationStarted || isPlaying)
