@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.browsing.files.cached.stream
 
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.persistence.IDiskFileCachePersistence
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.repository.CachedFile
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.MessageWriter
@@ -48,8 +49,8 @@ class CachedFileOutputStream(
         }, ThreadPools.io)
     }
 
-    override fun commitToCache(): Promise<CachedFile> =
-		if (!isClosed) diskFileCachePersistence.putIntoDatabase(uniqueKey, file)
+    override fun commitToCache(libraryId: LibraryId): Promise<CachedFile> =
+		if (!isClosed) diskFileCachePersistence.putIntoDatabase(libraryId, uniqueKey, file)
 		else Promise.empty()
 
 	override fun close() {

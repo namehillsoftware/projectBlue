@@ -22,7 +22,7 @@ class WhenCommittingTheFileToCache {
 			"unique-test",
 			mockedFile,
 			mockk<IDiskFileCachePersistence>().apply {
-				every { putIntoDatabase(any(), any()) } answers {
+				every { putIntoDatabase(, any(), any()) } answers {
 					persistedKey = firstArg()
 					persistedFile = lastArg()
 					Promise.empty()

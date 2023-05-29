@@ -9,6 +9,7 @@ import com.google.android.exoplayer2.upstream.TransferListener
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.CacheOutputStream
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.supplier.SupplyCacheStreams
 import com.lasthopesoftware.bluewater.shared.drainQueue
+import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRateLimiter
 import com.lasthopesoftware.bluewater.shared.promises.ForwardedResponse.Companion.forward
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
@@ -16,7 +17,6 @@ import com.lasthopesoftware.resources.uri.PathAndQuery.pathAndQuery
 import com.namehillsoftware.handoff.promises.Promise
 import okhttp3.internal.closeQuietly
 import okio.Buffer
-import org.slf4j.LoggerFactory
 import java.util.concurrent.ConcurrentLinkedQueue
 
 class EntireFileCachedDataSource(
@@ -25,7 +25,7 @@ class EntireFileCachedDataSource(
 ) : DataSource {
 
 	companion object {
-		private val logger by lazy { LoggerFactory.getLogger(EntireFileCachedDataSource::class.java) }
+		private val logger by lazyLogger<EntireFileCachedDataSource>()
 	}
 
 	private var expectedFileSize = C.LENGTH_UNSET.toLong()
