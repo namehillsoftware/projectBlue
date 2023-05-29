@@ -31,7 +31,7 @@ class WhenUpdatingTheFile {
 			every { mediaFileUriProvider.promiseUri(LibraryId(libraryId), ServiceFile(4)) } returns Promise.empty()
 
 			val mediaFileIdProvider = mockk<ProvideMediaFileIds>()
-			every { mediaFileIdProvider.getMediaId(LibraryId(14), ServiceFile(4)) } returns Promise.empty()
+			every { mediaFileIdProvider.getMediaId(LibraryId(libraryId), ServiceFile(4)) } returns Promise.empty()
 
 			val fakeLibraryRepository = FakeLibraryRepository(
 				Library()
@@ -41,7 +41,7 @@ class WhenUpdatingTheFile {
 			)
 
 			val lookupStoredFilePaths = mockk<GetStoredFilePaths>()
-			every { lookupStoredFilePaths.promiseStoredFilePath(LibraryId(14), ServiceFile(4)) } returns Promise("/my-public-drive/14/artist/album/my-filename.mp3")
+			every { lookupStoredFilePaths.promiseStoredFilePath(LibraryId(libraryId), ServiceFile(4)) } returns Promise("/my-public-drive/14/artist/album/my-filename.mp3")
 
 			val storedFileUpdater = StoredFileUpdater(
 				ApplicationProvider.getApplicationContext(),
@@ -52,7 +52,7 @@ class WhenUpdatingTheFile {
 				lookupStoredFilePaths
 			)
 
-			storedFileUpdater.promiseStoredFileUpdate(LibraryId(14), ServiceFile(4)).toExpiringFuture().get()
+			storedFileUpdater.promiseStoredFileUpdate(LibraryId(libraryId), ServiceFile(4)).toExpiringFuture().get()
 		}
 	}
 

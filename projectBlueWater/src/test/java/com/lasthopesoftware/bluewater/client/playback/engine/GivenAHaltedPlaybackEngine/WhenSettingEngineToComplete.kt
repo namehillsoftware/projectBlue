@@ -66,6 +66,7 @@ class WhenSettingEngineToComplete {
 				repository,
 				PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
 			)
+		playbackEngine.restoreFromSavedState(library.libraryId).toExpiringFuture().get()
 		playbackEngine.playToCompletion().toExpiringFuture().get()
 		repository.promiseNowPlaying(library.libraryId).toExpiringFuture().get()
 	}

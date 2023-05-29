@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAPlaylist.AndAFile
 
 import android.graphics.BitmapFactory
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
@@ -14,8 +15,10 @@ import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.BeforeAll
-import org.junit.jupiter.api.Test
+import org.junit.AfterClass
+import org.junit.BeforeClass
+import org.junit.Test
+import org.junit.runner.RunWith
 import java.net.URL
 
 private const val libraryId = 591
@@ -24,9 +27,12 @@ private const val serviceFileId = 338
 private lateinit var startedList: List<ServiceFile>
 private var startedPosition = -1
 
+// Needed for image bytes
+@RunWith(AndroidJUnit4::class)
 class WhenPlayingFromFileDetails {
+	companion object {
 
-		private val mut by lazy {
+		private var mut: Lazy<FileDetailsViewModel>? = lazy {
 			FileDetailsViewModel(
 				mockk {
 					every { promiseIsReadOnly() } returns false.toPromise()
@@ -68,26 +74,32 @@ class WhenPlayingFromFileDetails {
 			)
 		}
 
-		@BeforeAll
-		fun act() {
-			mut.apply {
-				loadFromList(
-					listOf(
-						ServiceFile(830),
-						ServiceFile(serviceFileId),
-						ServiceFile(628),
-						ServiceFile(537),
-						ServiceFile(284),
-						ServiceFile(419),
-						ServiceFile(36),
-						ServiceFile(396),
-					),
-					1
-				).toExpiringFuture().get()
+		@BeforeClass
+		@JvmStatic
+		fun act(): Unit = mut?.value?.run {
+			loadFromList(
+				listOf(
+					ServiceFile(830),
+					ServiceFile(serviceFileId),
+					ServiceFile(628),
+					ServiceFile(537),
+					ServiceFile(284),
+					ServiceFile(419),
+					ServiceFile(36),
+					ServiceFile(396),
+				),
+				1
+			).toExpiringFuture().get()
 
-				play()
-			}
+			play()
+		} ?: Unit
+
+		@AfterClass
+		@JvmStatic
+		fun cleanup() {
+			mut = null
 		}
+	}
 
 	@Test
 	fun `then the correct playlist is started`() {
@@ -110,22 +122,22 @@ class WhenPlayingFromFileDetails {
 
 	@Test
 	fun `then the artist is correct`() {
-		assertThat(mut.artist.value).isEqualTo("load")
+		assertThat(mut?.value?.artist?.value).isEqualTo("load")
 	}
 
 	@Test
 	fun `then the rating is correct`() {
-		assertThat(mut.rating.value).isEqualTo(4)
+		assertThat(mut?.value?.rating?.value).isEqualTo(4)
 	}
 
 	@Test
 	fun `then the file name is correct`() {
-		assertThat(mut.fileName.value).isEqualTo("toward")
+		assertThat(mut?.value?.fileName?.value).isEqualTo("toward")
 	}
 
 	@Test
 	fun `then the file properties are correct`() {
-		assertThat(mut.fileProperties.value.map { Pair(it.property, it.committedValue.value) }).containsExactlyInAnyOrder(
+		assertThat(mut?.value?.fileProperties?.value?.map { Pair(it.property, it.committedValue.value) }).containsExactlyInAnyOrder(
 			Pair(KnownFileProperties.Name, "toward"),
 			Pair(KnownFileProperties.Artist, "load"),
 			Pair(KnownFileProperties.Album, "square"),

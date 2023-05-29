@@ -57,7 +57,7 @@ class WhenRemovingFilesBeforeTheCurrentlyPlayingFile {
 
 	private val library by lazy {
 		Library()
-			.setId(1)
+			.setId(libraryId)
 			.setSavedTracksString(
 				FileStringListUtilities.promiseSerializedFileStringList(
 					listOf(
@@ -94,7 +94,7 @@ class WhenRemovingFilesBeforeTheCurrentlyPlayingFile {
 
 	@Test
 	fun `then the currently playing file shifts`() {
-		assertThat(libraryProvider.promiseLibrary(LibraryId(1)).toExpiringFuture().get()!!.nowPlayingId).isEqualTo(1)
+		assertThat(libraryProvider.promiseLibrary(LibraryId(libraryId)).toExpiringFuture().get()!!.nowPlayingId).isEqualTo(1)
 	}
 
 	@Test

@@ -8,6 +8,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.repositor
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.IFilePropertiesContainerRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakePlaybackQueueConfiguration
+import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.selected.GivenANullConnection.AndTheSelectedLibraryChanges.FakeSelectedLibraryProvider
@@ -23,6 +24,7 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlay
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -36,6 +38,7 @@ class WhenRemovingTheCurrentlyPlayingFile {
 
 	private val mut by lazy {
 		val fakePlaybackPreparerProvider = FakeDeferredPlayableFilePreparationSourceProvider()
+		val library = Library()
 		library.setId(libraryId)
 		library.setSavedTracksString(
 			FileStringListUtilities.promiseSerializedFileStringList(
@@ -52,6 +55,17 @@ class WhenRemovingTheCurrentlyPlayingFile {
 		)
 		library.setNowPlayingId(5)
 		val libraryProvider = FakeLibraryRepository(library)
+		val savedLibrary = object : Promise<Library>() {
+			val libraryStorage = mockk<ILibraryStorage> {
+				every { saveLibrary(any()) } answers {
+					libraryProvider.saveLibrary(firstArg()).then {
+						if (it.savedTracksString != library.savedTracksString)
+							resolve(it)
+						it
+					}
+				}
+			}
+		}
 
 		val filePropertiesContainerRepository = mockk<IFilePropertiesContainerRepository>()
 		every {
@@ -65,21 +79,21 @@ class WhenRemovingTheCurrentlyPlayingFile {
 				NowPlayingRepository(
 					FakeSelectedLibraryProvider(),
 					libraryProvider,
-					libraryProvider,
+					savedLibrary.libraryStorage,
 					FakeNowPlayingState(),
 				),
 				PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
 			)
-		Pair(fakePlaybackPreparerProvider, playbackEngine)
+		Triple(fakePlaybackPreparerProvider, savedLibrary, playbackEngine)
 	}
 
 	private var initialState: PositionedProgressedFile? = null
-	private val library = Library()
+	private var savedLibrary: Library? = null
 	private var positionedPlayingFile: PositionedPlayingFile? = null
 
 	@BeforeAll
 	fun act() {
-		val (fakePlaybackPreparerProvider, playbackEngine) = mut
+		val (fakePlaybackPreparerProvider, promisedSave, playbackEngine) = mut
 
 		initialState = playbackEngine.restoreFromSavedState(LibraryId(libraryId)).toExpiringFuture().get()
 		playbackEngine.resume().toExpiringFuture()[1, TimeUnit.SECONDS]
@@ -88,11 +102,12 @@ class WhenRemovingTheCurrentlyPlayingFile {
 		val futurePlaying = playbackEngine.removeFileAtPosition(5).toExpiringFuture()
 		fakePlaybackPreparerProvider.deferredResolution.resolve()
 		futurePlaying[1, TimeUnit.SECONDS]
+		savedLibrary = promisedSave.toExpiringFuture().get()
 	}
 
 	@Test
 	fun `then the currently playing file position is the same`() {
-		assertThat(library.nowPlayingId).isEqualTo(5)
+		assertThat(savedLibrary?.nowPlayingId).isEqualTo(5)
 	}
 
 	@Test

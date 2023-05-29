@@ -93,6 +93,7 @@ class PlaybackEngine(
 
 	override fun startPlaylist(libraryId: LibraryId, playlist: List<ServiceFile>, playlistPosition: Int, filePosition: Duration): Promise<Unit> {
 		logger.info("Starting playback")
+		this.activeLibraryId = libraryId
 		this.playlist = playlist.toMutableList()
 		this.playlistPosition = playlistPosition
 		this.fileProgress = StaticProgressedFile(filePosition.toPromise())

@@ -5,6 +5,7 @@ import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.FakeNowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.NotificationsConfiguration
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.PlaybackNotificationBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building.BuildNowPlayingNotificationContent
@@ -54,9 +55,7 @@ class WhenTheFileChanges : AndroidContext() {
 
 		val messageBus = RecordingApplicationMessageBus()
 		PlaybackNotificationBroadcaster(
-			mockk {
-				every { promiseActiveNowPlaying() } returns nowPlaying.toPromise()
-			},
+			FakeNowPlayingRepository(nowPlaying),
 			messageBus,
 			mockk(),
 			notificationController,
