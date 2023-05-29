@@ -20,8 +20,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.repositor
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertyStorage
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.SelectedLibraryFilePropertyStorage
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ConnectionLostView
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.StaticLibraryIdentifierProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.KnownLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
@@ -65,11 +64,13 @@ class FileDetailsActivity : ComponentActivity() {
 		}
 	}
 
+	private lateinit var parsedLibraryId: LibraryId
+
 	private val imageProvider by lazy { CachedImageProvider.getInstance(this) }
 
 	private val defaultImageProvider by lazy { DefaultImageProvider(this) }
 
-	private val selectedLibraryIdProvider by lazy { StaticLibraryIdentifierProvider(getCachedSelectedLibraryIdProvider()) }
+	private val selectedLibraryIdProvider by lazy { KnownLibraryIdProvider(parsedLibraryId) }
 
 	private val libraryConnections by lazy { buildNewConnectionSessionManager() }
 
@@ -143,6 +144,8 @@ class FileDetailsActivity : ComponentActivity() {
 			return
 		}
 
+		parsedLibraryId = libraryId
+
 		setContent {
 			ProjectBlueTheme {
 				val isGettingConnection by connectionStatusViewModel.isGettingConnection.collectAsState()
@@ -176,7 +179,7 @@ class FileDetailsActivity : ComponentActivity() {
 							}
 							val playlist = intent.getIntArrayExtra(playlist)?.map(::ServiceFile) ?: emptyList()
 
-							vm.loadFromList(playlist, position).suspend()
+							vm.loadFromList(libraryId, playlist, position).suspend()
 						} catch (e: IOException) {
 							if (ConnectionLostExceptionFilter.isConnectionLostException(e))
 								isConnectionLost = true

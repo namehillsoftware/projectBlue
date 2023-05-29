@@ -8,6 +8,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableF
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyType
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.libraries.PassThroughScopedUrlKeyProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
@@ -86,7 +87,7 @@ class WhenAnotherPropertyIsEdited {
 		@BeforeClass
 		fun act() {
 			viewModel?.value?.apply {
-				loadFromList(listOf(ServiceFile(serviceFileId)), 0).toExpiringFuture().get()
+				loadFromList(LibraryId(620), listOf(ServiceFile(serviceFileId)), 0).toExpiringFuture().get()
 				propertyToEdit.apply {
 					highlight()
 					edit()

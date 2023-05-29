@@ -24,13 +24,14 @@ import java.net.URL
 private const val libraryId = 591
 private const val serviceFileId = 338
 
-private lateinit var startedList: List<ServiceFile>
-private var startedPosition = -1
-
 // Needed for image bytes
 @RunWith(AndroidJUnit4::class)
 class WhenPlayingFromFileDetails {
 	companion object {
+
+		private lateinit var startedLibraryId: LibraryId
+		private lateinit var startedList: List<ServiceFile>
+		private var startedPosition = -1
 
 		private var mut: Lazy<FileDetailsViewModel>? = lazy {
 			FileDetailsViewModel(
@@ -63,7 +64,8 @@ class WhenPlayingFromFileDetails {
 				},
 				mockk {
 					every { startPlaylist(LibraryId(libraryId), any<List<ServiceFile>>(), any()) } answers {
-						startedList = firstArg()
+						startedLibraryId = firstArg()
+						startedList = secondArg()
 						startedPosition = lastArg()
 					}
 				},
@@ -78,6 +80,7 @@ class WhenPlayingFromFileDetails {
 		@JvmStatic
 		fun act(): Unit = mut?.value?.run {
 			loadFromList(
+				LibraryId(libraryId),
 				listOf(
 					ServiceFile(830),
 					ServiceFile(serviceFileId),
@@ -99,6 +102,11 @@ class WhenPlayingFromFileDetails {
 		fun cleanup() {
 			mut = null
 		}
+	}
+
+	@Test
+	fun `then the started library id is correct`() {
+		assertThat(startedLibraryId).isEqualTo(LibraryId(libraryId))
 	}
 
 	@Test

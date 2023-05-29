@@ -44,7 +44,7 @@ class WhenPlaybackStarts : AndroidContext() {
 			mockk(),
 			mockk {
 				every { notifyForeground(any(), any()) } answers {
-
+					foregroundNotifications.add(Pair(firstArg(), secondArg()))
 				}
 			},
 			NotificationsConfiguration(

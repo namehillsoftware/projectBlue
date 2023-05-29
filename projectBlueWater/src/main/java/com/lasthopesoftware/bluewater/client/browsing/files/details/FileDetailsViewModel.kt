@@ -55,6 +55,7 @@ class FileDetailsViewModel(
 	private var associatedUrlKey: UrlKeyHolder<ServiceFile>? = null
 	private var associatedPlaylist = emptyList<ServiceFile>()
 	private var activePositionedFile: PositionedFile? = null
+	private var activeLibraryId: LibraryId? = null
 	private val propertyUpdateRegistrations = registerForApplicationMessages.registerReceiver { message: FilePropertiesUpdatedMessage ->
 		if (message.urlServiceKey == associatedUrlKey)
 			activePositionedFile?.serviceFile?.apply(::loadFileProperties)
@@ -88,8 +89,9 @@ class FileDetailsViewModel(
 		super.onCleared()
 	}
 
-	fun loadFromList(playlist: List<ServiceFile>, position: Int): Promise<Unit> {
+	fun loadFromList(libraryId: LibraryId, playlist: List<ServiceFile>, position: Int): Promise<Unit> {
 		val serviceFile = playlist[position]
+		activeLibraryId = libraryId
 		activePositionedFile = PositionedFile(position, serviceFile)
 		associatedPlaylist = playlist
 
@@ -120,7 +122,8 @@ class FileDetailsViewModel(
 
 	fun play() {
 		val positionedFile = activePositionedFile ?: return
-		controlPlayback.startPlaylist(LibraryId(-1), associatedPlaylist, positionedFile.playlistPosition)
+		val libraryId = activeLibraryId ?: return
+		controlPlayback.startPlaylist(libraryId, associatedPlaylist, positionedFile.playlistPosition)
 	}
 
 	private fun loadFileProperties(serviceFile: ServiceFile): Promise<Unit> =
