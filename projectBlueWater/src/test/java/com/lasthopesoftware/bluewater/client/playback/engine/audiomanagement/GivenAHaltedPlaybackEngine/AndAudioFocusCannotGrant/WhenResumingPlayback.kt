@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.playback.engine.audiomanagement.Gi
 
 import androidx.media.AudioFocusRequestCompat
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.engine.AudioManagingPlaybackStateChanger
 import com.lasthopesoftware.bluewater.client.playback.engine.ChangePlaybackState
 import com.lasthopesoftware.bluewater.shared.android.audiofocus.ControlAudioFocus
@@ -26,6 +27,7 @@ class WhenResumingPlayback {
 	private val mut by lazy {
 		val innerPlaybackState = object : ChangePlaybackState {
 			override fun startPlaylist(
+				libraryId: LibraryId,
 				playlist: List<ServiceFile>,
 				playlistPosition: Int,
 				filePosition: Duration

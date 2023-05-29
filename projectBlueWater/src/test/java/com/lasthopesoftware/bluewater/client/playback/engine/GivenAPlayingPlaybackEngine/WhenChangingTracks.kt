@@ -17,11 +17,11 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.FakeNow
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.namehillsoftware.handoff.promises.Promise
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
-import java.util.concurrent.CountDownLatch
 
 private const val libraryId = 265
 
@@ -55,13 +55,14 @@ class WhenChangingTracks {
 	fun act() {
 		val (fakePlaybackPreparerProvider, playbackEngine) = mut
 
-		val countDownLatch = CountDownLatch(1)
-		playbackEngine
-			.setOnPlayingFileChanged { _, p ->
+		val promisedChangedFile = Promise { m ->
+			playbackEngine.setOnPlayingFileChanged { _, p ->
 				startedFiles.add(p)
-				latestFile = p
-				countDownLatch.countDown()
+				m.sendResolution(p)
 			}
+		}
+
+		playbackEngine
 			.startPlaylist(
 				LibraryId(libraryId),
 				listOf(
@@ -80,7 +81,7 @@ class WhenChangingTracks {
 		fakePlaybackPreparerProvider.deferredResolution.resolve()
 		playingPlaybackHandler.resolve()
 
-		countDownLatch.await()
+		latestFile = promisedChangedFile.toExpiringFuture().get()
 		nextSwitchedFile = futurePositionChange.get()?.second
 	}
 

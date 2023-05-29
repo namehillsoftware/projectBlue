@@ -121,10 +121,8 @@ class PlaybackNotificationBroadcaster(
 	}
 
 	override fun notifyPlayingFileUpdated() {
-		libraryId?.also {
-			nowPlayingState.promiseNowPlaying(it).then { np ->
-				np?.playingFile?.serviceFile?.also { sf -> updateNowPlaying(it, sf) }
-			}
+		nowPlayingState.promiseActiveNowPlaying().then { np ->
+			np?.playingFile?.serviceFile?.also { sf -> updateNowPlaying(np.libraryId, sf) }
 		}
 	}
 
