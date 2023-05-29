@@ -144,7 +144,7 @@ class DiskFileCache(private val context: Context, private val diskCacheDirectory
 		}
 
 	private val freeDiskSpace: Long
-		get() = diskCacheDirectory.getDiskCacheDirectory(diskFileCacheConfiguration).usableSpace
+		get() = diskCacheDirectory.getDiskCacheDirectory(diskFileCacheConfiguration)?.usableSpace ?: 0L
 
 	companion object {
 		private val logger by lazy { LoggerFactory.getLogger(cls<DiskFileCache>()) }
