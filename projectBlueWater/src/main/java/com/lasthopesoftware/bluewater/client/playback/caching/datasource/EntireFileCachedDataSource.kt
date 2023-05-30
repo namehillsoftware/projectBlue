@@ -2,12 +2,18 @@ package com.lasthopesoftware.bluewater.client.playback.caching.datasource
 
 import android.net.Uri
 import com.google.android.exoplayer2.C
+import com.google.android.exoplayer2.MediaItem
+import com.google.android.exoplayer2.source.BaseMediaSource
+import com.google.android.exoplayer2.source.MediaPeriod
+import com.google.android.exoplayer2.source.MediaSource
+import com.google.android.exoplayer2.upstream.Allocator
 import com.google.android.exoplayer2.upstream.DataSource
 import com.google.android.exoplayer2.upstream.DataSpec
 import com.google.android.exoplayer2.upstream.HttpDataSource
 import com.google.android.exoplayer2.upstream.TransferListener
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.CacheOutputStream
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.supplier.SupplyCacheStreams
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.drainQueue
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRateLimiter
@@ -40,6 +46,8 @@ class EntireFileCachedDataSource(
 		val openedFileSize = innerDataSource.open(dataSpec)
 		if (openedFileSize == C.LENGTH_UNSET.toLong()) return openedFileSize
 
+		val libraryId = dataSpec.customData as? LibraryId ?: return openedFileSize
+
 		if (dataSpec.run { position != 0L || length != C.LENGTH_UNSET.toLong() }) return openedFileSize
 
 		expectedFileSize = openedFileSize
@@ -47,7 +55,7 @@ class EntireFileCachedDataSource(
 		val key = dataSpec.uri.pathAndQuery()
 
 		cacheWriter?.clear()
-		cacheWriter = CacheWriter(cacheStreamSupplier.promiseCachedFileOutputStream(key).then(forward()) {
+		cacheWriter = CacheWriter(cacheStreamSupplier.promiseCachedFileOutputStream(libraryId, key).then(forward()) {
 			logger.warn("There was an error opening the cache output stream for key $key", it)
 			null
 		})
@@ -181,5 +189,31 @@ class EntireFileCachedDataSource(
 			httpDataSourceFactory.createDataSource(),
 			cacheStreamSupplier
 		)
+	}
+}
+
+class CacheMediaSource() : BaseMediaSource() {
+	override fun getMediaItem(): MediaItem {
+		TODO("Not yet implemented")
+	}
+
+	override fun maybeThrowSourceInfoRefreshError() {
+		TODO("Not yet implemented")
+	}
+
+	override fun createPeriod(id: MediaSource.MediaPeriodId, allocator: Allocator, startPositionUs: Long): MediaPeriod {
+		TODO("Not yet implemented")
+	}
+
+	override fun releasePeriod(mediaPeriod: MediaPeriod) {
+		TODO("Not yet implemented")
+	}
+
+	override fun prepareSourceInternal(mediaTransferListener: TransferListener?) {
+		TODO("Not yet implemented")
+	}
+
+	override fun releaseSourceInternal() {
+		TODO("Not yet implemented")
 	}
 }
