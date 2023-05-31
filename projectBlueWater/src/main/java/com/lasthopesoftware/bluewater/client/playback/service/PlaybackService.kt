@@ -76,6 +76,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.Qu
 import com.lasthopesoftware.bluewater.client.playback.file.volume.MaxFileVolumeProvider
 import com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.MaxFileVolumePreparationProvider
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.NotificationsConfiguration
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.NotifyingLibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.PlaybackNotificationBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building.MediaStyleNotificationSetup
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building.NowPlayingNotificationBuilder
@@ -127,6 +128,7 @@ import com.lasthopesoftware.resources.closables.AutoCloseableManager
 import com.lasthopesoftware.resources.closables.lazyScoped
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.lasthopesoftware.resources.loopers.HandlerThreadCreator
+import com.lasthopesoftware.resources.strings.StringResources
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import io.reactivex.Observable
@@ -358,7 +360,16 @@ open class PlaybackService :
 		)
 	}
 
-	private val libraryConnectionProvider by lazy { ConnectionSessionManager.get(this) }
+	private val connectionSessionManager by lazy { ConnectionSessionManager.get(this) }
+	private val libraryConnectionProvider by lazy {
+		NotifyingLibraryConnectionProvider(
+			NotificationBuilderProducer(this),
+			connectionSessionManager,
+			playbackNotificationsConfiguration,
+			lazyNotificationController.value,
+			StringResources(this),
+		)
+	}
 
 	private val guaranteedLibraryConnectionProvider by lazy { GuaranteedLibraryConnectionProvider(libraryConnectionProvider) }
 

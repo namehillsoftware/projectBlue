@@ -1,0 +1,62 @@
+package com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification
+
+import androidx.core.app.NotificationCompat
+import com.lasthopesoftware.bluewater.R
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
+import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
+import com.lasthopesoftware.bluewater.shared.android.notifications.ProduceNotificationBuilders
+import com.lasthopesoftware.bluewater.shared.android.notifications.control.ControlNotifications
+import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromiseProxy
+import com.lasthopesoftware.resources.strings.GetStringResources
+
+private const val connectingNotificationId = 70
+
+class NotifyingLibraryConnectionProvider(
+	private val notificationBuilders: ProduceNotificationBuilders,
+	private val inner: ProvideLibraryConnections,
+	private val notificationsConfiguration: NotificationsConfiguration,
+	private val notifications: ControlNotifications,
+	private val stringResources: GetStringResources,
+) : ProvideLibraryConnections {
+	override fun promiseLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?> = object : ProgressingPromiseProxy<BuildingConnectionStatus, IConnectionProvider?>() {
+		init {
+		    val promisedConnection = inner.promiseLibraryConnection(libraryId)
+			proxy(promisedConnection)
+			promisedConnection.updates(::handleBuildConnectionStatusChange)
+		}
+	}
+
+	private fun handleBuildConnectionStatusChange(status: BuildingConnectionStatus) {
+		val notifyBuilder = notificationBuilders.getNotificationBuilder(notificationsConfiguration.notificationChannel)
+		notifyBuilder
+			.setOngoing(false)
+			.setContentTitle(stringResources.connectingToServerTitle)
+
+		when (status) {
+			BuildingConnectionStatus.GettingLibrary -> notifyBuilder.setContentText(stringResources.gettingLibrary)
+			BuildingConnectionStatus.GettingLibraryFailed -> {
+				return
+			}
+			BuildingConnectionStatus.SendingWakeSignal -> notifyBuilder.setContentText(stringResources.sendingWakeSignal)
+			BuildingConnectionStatus.BuildingConnection -> notifyBuilder.setContentText(stringResources.connectingToServerLibrary)
+			BuildingConnectionStatus.BuildingConnectionFailed -> {
+				return
+			}
+			BuildingConnectionStatus.BuildingConnectionComplete -> notifyBuilder.setContentText(stringResources.connected)
+		}
+
+		notifications.notifyForeground(
+			buildFullNotification(notifyBuilder),
+			connectingNotificationId
+		)
+	}
+
+	private fun buildFullNotification(notificationBuilder: NotificationCompat.Builder) =
+		notificationBuilder
+			.setSmallIcon(R.drawable.now_playing_status_icon_white)
+			.setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+			.build()
+}

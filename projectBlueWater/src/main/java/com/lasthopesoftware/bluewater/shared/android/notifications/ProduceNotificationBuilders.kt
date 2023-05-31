@@ -1,7 +1,7 @@
-package com.lasthopesoftware.bluewater.shared.android.notifications;
+package com.lasthopesoftware.bluewater.shared.android.notifications
 
-import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationCompat
 
-public interface ProduceNotificationBuilders {
-	NotificationCompat.Builder getNotificationBuilder(String notificationChannel);
+interface ProduceNotificationBuilders {
+    fun getNotificationBuilder(notificationChannel: String): NotificationCompat.Builder
 }

@@ -1,19 +1,10 @@
-package com.lasthopesoftware.bluewater.shared.android.notifications;
+package com.lasthopesoftware.bluewater.shared.android.notifications
 
-import android.content.Context;
+import android.content.Context
+import androidx.core.app.NotificationCompat
 
-import androidx.core.app.NotificationCompat;
-
-public class NotificationBuilderProducer implements ProduceNotificationBuilders {
-
-	private final Context context;
-
-	public NotificationBuilderProducer(Context context) {
-		this.context = context;
-	}
-
-	@Override
-	public NotificationCompat.Builder getNotificationBuilder(String notificationChannel) {
-		return new NotificationCompat.Builder(context, notificationChannel);
-	}
+class NotificationBuilderProducer(private val context: Context) : ProduceNotificationBuilders {
+    override fun getNotificationBuilder(notificationChannel: String): NotificationCompat.Builder {
+        return NotificationCompat.Builder(context, notificationChannel)
+    }
 }

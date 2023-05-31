@@ -29,4 +29,6 @@ interface GetStringResources {
 		get() = ""
 	val removeServer: String
 		get() = ""
+	val connectingToServerTitle: String
+		get() = ""
 }
