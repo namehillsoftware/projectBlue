@@ -81,7 +81,7 @@ class WhenRemovingFilesBeforeTheCurrentlyPlayingFile {
 	fun before() {
 		val (fakePlaybackPreparerProvider, repository, playbackEngine) = mut
 
-		initialState = playbackEngine.restoreFromSavedState(LibraryId(libraryId)).toExpiringFuture().get()
+		initialState = playbackEngine.restoreFromSavedState(LibraryId(libraryId)).toExpiringFuture().get()?.second
 		playbackEngine.resume().toExpiringFuture()[1, TimeUnit.SECONDS]
 
 		val resolvablePlaybackHandler =	fakePlaybackPreparerProvider.deferredResolution.resolve()

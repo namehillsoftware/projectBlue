@@ -74,7 +74,7 @@ class WhenChangingTracks {
 	@BeforeAll
 	fun before() {
 		val (_, playbackEngine) = mut
-		initialState = playbackEngine.restoreFromSavedState(LibraryId(libraryId)).toExpiringFuture().get()
+		initialState = playbackEngine.restoreFromSavedState(LibraryId(libraryId)).toExpiringFuture().get()?.second
 		nextSwitchedFile = playbackEngine.changePosition(3, Duration.ZERO).toExpiringFuture()[1, TimeUnit.SECONDS]?.second
 	}
 

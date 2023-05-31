@@ -95,7 +95,7 @@ class WhenRemovingTheCurrentlyPlayingFile {
 	fun act() {
 		val (fakePlaybackPreparerProvider, promisedSave, playbackEngine) = mut
 
-		initialState = playbackEngine.restoreFromSavedState(LibraryId(libraryId)).toExpiringFuture().get()
+		initialState = playbackEngine.restoreFromSavedState(LibraryId(libraryId)).toExpiringFuture().get()?.second
 		playbackEngine.resume().toExpiringFuture()[1, TimeUnit.SECONDS]
 		fakePlaybackPreparerProvider.deferredResolution.resolve()
 		playbackEngine.setOnPlayingFileChanged { _, c -> positionedPlayingFile = c	}

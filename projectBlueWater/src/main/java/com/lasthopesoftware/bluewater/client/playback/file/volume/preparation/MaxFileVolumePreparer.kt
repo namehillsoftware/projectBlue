@@ -14,7 +14,7 @@ class MaxFileVolumePreparer(
 	private val provideMaxFileVolume: ProvideMaxFileVolume
 ) : PlayableFilePreparationSource {
 	override fun promisePreparedPlaybackFile(libraryId: LibraryId, serviceFile: ServiceFile, preparedAt: Duration): Promise<PreparedPlayableFile?> {
-		val promisedMaxFileVolume = provideMaxFileVolume.promiseMaxFileVolume(serviceFile)
+		val promisedMaxFileVolume = provideMaxFileVolume.promiseMaxFileVolume(libraryId, serviceFile)
 		return playableFilePreparationSource
 			.promisePreparedPlaybackFile(libraryId, serviceFile, preparedAt)
 			.then { ppf ->

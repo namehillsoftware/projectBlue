@@ -8,6 +8,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.repositor
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakePlaybackQueueConfiguration
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.selected.GivenANullConnection.AndTheSelectedLibraryChanges.FakeSelectedLibraryProvider
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
@@ -65,7 +66,7 @@ class WhenRestoringEngineStateAndResumingPlayback {
 	}
 
 	@Test
-	fun `then the restored state is null`() {
-		assertThat(restoredState).isNull()
+	fun `then the restored state is correct`() {
+		assertThat(restoredState).isEqualTo(Pair(LibraryId(598), null))
 	}
 }

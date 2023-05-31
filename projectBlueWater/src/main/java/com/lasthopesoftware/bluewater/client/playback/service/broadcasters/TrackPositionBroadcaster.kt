@@ -1,7 +1,8 @@
 package com.lasthopesoftware.bluewater.client.playback.service.broadcasters
 
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideScopedFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedProgressedFile
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.TrackPositionUpdate
@@ -11,12 +12,12 @@ import org.joda.time.Duration
 
 class TrackPositionBroadcaster(
 	private val sendApplicationMessages: SendApplicationMessages,
-	private val fileProperties: ProvideScopedFileProperties
+	private val fileProperties: ProvideLibraryFileProperties
 ) {
 
-	fun broadcastProgress(positionedProgressedFile: PositionedProgressedFile) {
+	fun broadcastProgress(libraryId: LibraryId, positionedProgressedFile: PositionedProgressedFile) {
 		fileProperties
-			.promiseFileProperties(positionedProgressedFile.serviceFile)
+			.promiseFileProperties(libraryId, positionedProgressedFile.serviceFile)
 			.then { p ->
 				FilePropertyHelpers.parseDurationIntoMilliseconds(p)
 					.takeIf { it > -1 }

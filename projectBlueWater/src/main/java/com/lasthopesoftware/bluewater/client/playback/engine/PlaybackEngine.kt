@@ -76,7 +76,7 @@ class PlaybackEngine(
 	private var onPlaybackCompleted: OnPlaybackCompleted? = null
 	private var onPlaylistReset: OnPlaylistReset? = null
 
-	override fun restoreFromSavedState(libraryId: LibraryId): Promise<PositionedProgressedFile?> {
+	override fun restoreFromSavedState(libraryId: LibraryId): Promise<Pair<LibraryId, PositionedProgressedFile?>> {
 		this.activeLibraryId = libraryId
 		return nowPlayingRepository.promiseNowPlaying(libraryId)
 			.then { np ->
@@ -86,8 +86,9 @@ class PlaybackEngine(
 						playlistPosition = positionedFile.playlistPosition
 						val filePosition = Duration.millis(np.filePosition)
 						fileProgress = StaticProgressedFile(filePosition.toPromise())
-						PositionedProgressedFile(positionedFile.playlistPosition, positionedFile.serviceFile, filePosition)
+						Pair(libraryId, PositionedProgressedFile(positionedFile.playlistPosition, positionedFile.serviceFile, filePosition))
 					}
+					?: Pair(libraryId, null)
 			}
 	}
 

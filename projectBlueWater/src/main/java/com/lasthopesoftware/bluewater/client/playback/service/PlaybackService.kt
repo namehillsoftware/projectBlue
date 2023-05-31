@@ -18,7 +18,6 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleService
 import com.google.android.exoplayer2.ExoPlaybackException
 import com.google.android.exoplayer2.upstream.HttpDataSource.InvalidResponseCodeException
-import com.google.android.exoplayer2.upstream.cache.SimpleCache
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFileUriQueryParamsProvider
@@ -32,20 +31,17 @@ import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.suppli
 import com.lasthopesoftware.bluewater.client.browsing.files.image.CachedImageProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.ScopedCachedFilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.ScopedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.files.uri.BestMatchUriProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.uri.RemoteFileUriProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.revisions.ScopedRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionServiceProxy
@@ -58,7 +54,6 @@ import com.lasthopesoftware.bluewater.client.playback.engine.AudioManagingPlayba
 import com.lasthopesoftware.bluewater.client.playback.engine.ChangePlaybackContinuity
 import com.lasthopesoftware.bluewater.client.playback.engine.ChangePlaybackState
 import com.lasthopesoftware.bluewater.client.playback.engine.ChangePlaylistFiles
-import com.lasthopesoftware.bluewater.client.playback.engine.ChangePlaylistPosition
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
 import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlaybackCompleted
@@ -68,13 +63,13 @@ import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlaybackSt
 import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlayingFileChanged
 import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlaylistReset
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparationException
-import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueFeederBuilder
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.broadcast.PlaybackEngineTypeChangedBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.file.EmptyPlaybackHandler
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile
 import com.lasthopesoftware.bluewater.client.playback.file.error.PlaybackException
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.ExoPlayerPlayableFilePreparationSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.HttpDataSourceFactoryProvider
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.MediaSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.QueueProviders
@@ -122,9 +117,9 @@ import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMes
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
 import com.lasthopesoftware.bluewater.shared.observables.toMaybeObservable
+import com.lasthopesoftware.bluewater.shared.policies.retries.RetryOnRejectionLazyPromise
 import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay.Companion.delay
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.lasthopesoftware.bluewater.shared.resilience.TimedCountdownLatch
@@ -308,6 +303,7 @@ open class PlaybackService :
 
 	/* End streamer intent helpers */
 
+	private val lifecycleCloseableManager = AutoCloseableManager()
 	private val lazyObservationScheduler = lazy { ExecutorScheduler(ThreadPools.compute, true) }
 	private val binder by lazy { GenericBinder(this) }
 	private val notificationManager by lazy { getSystemService(NOTIFICATION_SERVICE) as NotificationManager }
@@ -317,6 +313,7 @@ open class PlaybackService :
 	private val libraryRepository by lazy { LibraryRepository(this) }
 	private val playlistVolumeManager by lazy { PlaylistVolumeManager(1.0f) }
 	private val volumeLevelSettings by lazy { VolumeLevelSettings(applicationSettings) }
+
 	private val channelConfiguration by lazy { SharedChannelProperties(this) }
 
 	private val playbackNotificationsConfiguration by lazy {
@@ -346,13 +343,11 @@ open class PlaybackService :
 			}
 		}
 
-	private val playbackThread = lazy {
+	private val playbackThread = RetryOnRejectionLazyPromise {
 		HandlerThreadCreator.promiseNewHandlerThread(
 			"Playback",
 			Process.THREAD_PRIORITY_AUDIO)
 	}
-
-	private val playbackHandler = lazy { playbackThread.value.then { h -> Handler(h.looper) } }
 
 	private val playbackStartingNotificationBuilder by lazy {
 		PlaybackStartingNotificationBuilder(
@@ -364,6 +359,8 @@ open class PlaybackService :
 	}
 
 	private val libraryConnectionProvider by lazy { ConnectionSessionManager.get(this) }
+
+	private val guaranteedLibraryConnectionProvider by lazy { GuaranteedLibraryConnectionProvider(libraryConnectionProvider) }
 
 	private val fileProperties by lazy {
 		FilePropertiesProvider(
@@ -379,11 +376,9 @@ open class PlaybackService :
 			FilePropertyCache,
 			fileProperties)
 	}
-	private val diskFileAccessTimeUpdater by lazy { DiskFileAccessTimeUpdater(this) }
 
+	private val diskFileAccessTimeUpdater by lazy { DiskFileAccessTimeUpdater(this) }
 	private val audioDiskCacheDirectoryProvider by lazy { AndroidDiskCacheDirectoryProvider(this, AudioCacheConfiguration) }
-	private val lifecycleCloseableManager by lazyScoped { AutoCloseableManager() }
-	private val playbackEngineCloseables = AutoCloseableManager()
 	private val lazyAudioBecomingNoisyReceiver = lazy { AudioBecomingNoisyReceiver() }
 	private val lazyNotificationController = lazy { NotificationsController(this, notificationManager) }
 	private val disconnectionLatch by lazy { TimedCountdownLatch(numberOfDisconnects, disconnectResetDuration) }
@@ -475,24 +470,130 @@ open class PlaybackService :
 		}
 	}
 
+	private val trackPositionBroadcaster by lazy {
+		TrackPositionBroadcaster(
+			applicationMessageBus,
+			libraryFilePropertiesProvider
+		)
+	}
+
+	private val remoteFileUriProvider by lazy {
+		RemoteFileUriProvider(
+			libraryConnectionProvider,
+			ServiceFileUriQueryParamsProvider
+		)
+	}
+
+	private val audioCacheFilesProvider by lazy { CachedFilesProvider(this, AudioCacheConfiguration) }
+
+	private val audioCacheStreamSupplier by lazy {
+		DiskFileCacheStreamSupplier(
+			audioDiskCacheDirectoryProvider,
+			DiskFileCachePersistence(
+				this,
+				audioDiskCacheDirectoryProvider,
+				AudioCacheConfiguration,
+				audioCacheFilesProvider,
+				diskFileAccessTimeUpdater
+			),
+			audioCacheFilesProvider
+		)
+	}
+
+	private val bestMatchUriProvider by lazy {
+		val audioCache = DiskFileCache(this, audioDiskCacheDirectoryProvider, AudioCacheConfiguration, audioCacheStreamSupplier, audioCacheFilesProvider, diskFileAccessTimeUpdater)
+		BestMatchUriProvider(
+			libraryRepository,
+			StoredFileUriProvider(
+				StoredFileAccess(this),
+				arbitratorForOs),
+			CachedAudioFileUriProvider(remoteFileUriProvider, audioCache),
+			MediaFileUriProvider(
+				MediaQueryCursorProvider(this, cachedFileProperties),
+				arbitratorForOs,
+				false,
+				applicationMessageBus
+			),
+			remoteFileUriProvider
+		)
+	}
+
+	private val playlistPlaybackBootstrapper by lazyScoped { PlaylistPlaybackBootstrapper(playlistVolumeManager) }
+
+	private val promisedPlaybackEngine by RetryOnRejectionLazyPromise {
+		val httpDataSourceFactory = HttpDataSourceFactoryProvider(
+			this,
+			guaranteedLibraryConnectionProvider,
+			OkHttpFactory
+		)
+
+		playbackThread.value
+			.then { h -> Handler(h.looper) }
+			.then { ph ->
+				MaxFileVolumePreparationProvider(
+					ExoPlayerPlayableFilePreparationSourceProvider(
+						this,
+						ph,
+						Handler(mainLooper),
+						MediaSourceProvider(
+							DiskFileCacheSourceFactory(
+								httpDataSourceFactory,
+								audioCacheStreamSupplier
+							),
+							guaranteedLibraryConnectionProvider,
+						),
+						bestMatchUriProvider
+					),
+					MaxFileVolumeProvider(volumeLevelSettings, libraryFilePropertiesProvider)
+				)
+			}
+			.then { preparationSourceProvider ->
+				PreparedPlaybackQueueResourceManagement(preparationSourceProvider, preparationSourceProvider)
+					.also(lifecycleCloseableManager::manage)
+			}
+			.then { preparedPlaybackQueueResourceManagement ->
+				val engine = PlaybackEngine(
+					preparedPlaybackQueueResourceManagement,
+					QueueProviders.providers(),
+					nowPlayingRepository,
+					playlistPlaybackBootstrapper
+				)
+
+				engine
+					.also {
+						lifecycleCloseableManager.manage(engine)
+						playbackState = AudioManagingPlaybackStateChanger(
+							engine,
+							engine,
+							AudioFocusManagement(audioManager),
+							playlistVolumeManager
+						).also(lifecycleCloseableManager::manage)
+					}
+					.setOnPlaybackStarted(this)
+					.setOnPlaybackPaused(this)
+					.setOnPlaybackInterrupted(this)
+					.setOnPlayingFileChanged(this)
+					.setOnPlaylistError(::uncaughtExceptionHandler)
+					.setOnPlaybackCompleted(this)
+					.setOnPlaylistReset(this)
+					.also {
+						playlistFiles = it
+						playbackContinuity = it
+					}
+			}
+	}
+
 	private val unhandledRejectionHandler = ImmediateResponse<Throwable, Unit>(::uncaughtExceptionHandler)
 
 	private var activeLibraryId: LibraryId? = null
 	private var isMarkedForPlay = false
 	private var areListenersRegistered = false
-	private var playbackEngineSync = Any()
-	private var playbackEnginePromise = Promise.empty<PlaybackEngine?>()
 	private var playbackContinuity: ChangePlaybackContinuity? = null
 	private var playlistFiles: ChangePlaylistFiles? = null
 	private var playbackState: ChangePlaybackState? = null
-	private var playlistPosition: ChangePlaylistPosition? = null
-	private var playbackQueues: PreparedPlaybackQueueResourceManagement? = null
 	private var filePositionSubscription: Disposable? = null
-	private var playlistPlaybackBootstrapper: PlaylistPlaybackBootstrapper? = null
 	private var wakeLock: WakeLock? = null
-	private var cache: SimpleCache? = null
 	private var startId = 0
-	private var trackPositionBroadcaster: TrackPositionBroadcaster? = null
 	private var isDestroyed = false
 
 	private fun stopNotificationIfNotPlaying() {
@@ -536,20 +637,35 @@ open class PlaybackService :
 	override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
 		super.onStartCommand(intent, flags, startId)
 
-		fun actOnIntent(libraryId: LibraryId, intent: Intent): Promise<Unit> {
+		fun getLibraryId(intent: Intent) = intent.safelyGetParcelableExtra<LibraryId>(Bag.libraryId)
+
+		fun actOnIntent(intent: Intent): Promise<Unit> {
 			var action = intent.action ?: return Unit.toPromise()
-			val playbackPosition = playlistPosition ?: return Unit.toPromise()
 
 			if (action == Action.togglePlayPause) action = if (isMarkedForPlay) Action.pause else Action.play
 			if (!Action.playbackStartingActions.contains(action)) stopNotificationIfNotPlaying()
 			when (action) {
-				Action.play -> return resumePlayback()
+				Action.play -> return resumePlayback(getLibraryId(intent) ?: return Unit.toPromise())
 				Action.pause, Action.initialize -> return pausePlayback()
 				Action.repeating -> return playbackContinuity?.playRepeatedly() ?: Unit.toPromise()
 				Action.completing -> return playbackContinuity?.playToCompletion() ?: Unit.toPromise()
-				Action.previous -> return playbackPosition.skipToPrevious().then { (l, p) -> broadcastChangedFile(l, p) }
-				Action.next -> return playbackPosition.skipToNext().then { (l, p) -> broadcastChangedFile(l, p) }
+				Action.previous -> {
+					val libraryId = getLibraryId(intent) ?: return Unit.toPromise()
+
+					return restorePlaybackEngine(libraryId)
+						.eventually { it.skipToPrevious() }
+						.then { (l, p) -> broadcastChangedFile(l, p) }
+				}
+				Action.next -> {
+					val libraryId = getLibraryId(intent) ?: return Unit.toPromise()
+
+					return restorePlaybackEngine(libraryId)
+						.eventually { it.skipToNext() }
+						.then { (l, p) -> broadcastChangedFile(l, p) }
+				}
 				Action.launchMusicService -> {
+					val libraryId = getLibraryId(intent) ?: return Unit.toPromise()
+
 					val playlistPosition = intent.getIntExtra(Bag.playlistPosition, -1)
 					if (playlistPosition < 0) return Unit.toPromise()
 
@@ -558,44 +674,47 @@ open class PlaybackService :
 					return startNewPlaylist(libraryId, playlistString, playlistPosition)
 				}
 				Action.seekTo -> {
+					val libraryId = getLibraryId(intent) ?: return Unit.toPromise()
+
 					val playlistPosition = intent.getIntExtra(Bag.playlistPosition, -1)
 					if (playlistPosition < 0) return Unit.toPromise()
 
 					val filePosition = intent.getIntExtra(Bag.startPos, -1)
 					if (filePosition < 0) return Unit.toPromise()
-					return playbackPosition
-						.changePosition(playlistPosition, Duration.millis(filePosition.toLong()))
+					return restorePlaybackEngine(libraryId)
+						.eventually { it.changePosition(playlistPosition, Duration.millis(filePosition.toLong())) }
 						.then { (l, p) -> broadcastChangedFile(l, p) }
 				}
 				Action.addFileToPlaylist -> {
-					val playlistFiles = playlistFiles ?: return Unit.toPromise()
+					val libraryId = getLibraryId(intent) ?: return Unit.toPromise()
 
 					val fileKey = intent.getIntExtra(Bag.playlistPosition, -1)
-					return if (fileKey < 0) Unit.toPromise() else playlistFiles
-						.addFile(ServiceFile(fileKey))
+					return if (fileKey < 0) Unit.toPromise() else restorePlaybackEngine(libraryId)
+						.eventually { it.addFile(ServiceFile(fileKey)) }
 						.then { applicationMessageBus.sendMessage(LibraryPlaybackMessage.PlaylistChanged(libraryId)) }
 						.eventually(LoopedInPromise.response({
 							Toast.makeText(this, getText(R.string.lbl_song_added_to_now_playing), Toast.LENGTH_SHORT).show()
 						}, this))
 				}
 				Action.removeFileAtPositionFromPlaylist -> {
-					val playlistFiles = playlistFiles ?: return Unit.toPromise()
+					val libraryId = getLibraryId(intent) ?: return Unit.toPromise()
 
 					val filePosition = intent.getIntExtra(Bag.filePosition, -1)
-					return if (filePosition < 0) Unit.toPromise() else playlistFiles
-						.removeFileAtPosition(filePosition)
+					return if (filePosition < 0) Unit.toPromise() else restorePlaybackEngine(libraryId)
+						.eventually { it.removeFileAtPosition(filePosition) }
 						.then {
 							applicationMessageBus.sendMessage(LibraryPlaybackMessage.PlaylistChanged(libraryId))
 						}
 						.unitResponse()
 				}
 				Action.moveFile -> {
-					val playlistFiles = playlistFiles ?: return Unit.toPromise()
+					val libraryId = getLibraryId(intent) ?: return Unit.toPromise()
 
 					val filePosition = intent.getIntExtra(Bag.filePosition, -1)
 					val newPosition = intent.getIntExtra(Bag.newPosition, -1)
 					return if (filePosition < 0 || newPosition < 0) Unit.toPromise()
-					else playlistFiles.moveFile(filePosition, newPosition)
+					else  restorePlaybackEngine(libraryId)
+						.eventually { it.moveFile(filePosition, newPosition) }
 						.then {
 							applicationMessageBus.sendMessage(LibraryPlaybackMessage.PlaylistChanged(libraryId))
 						}
@@ -605,14 +724,12 @@ open class PlaybackService :
 			}
 		}
 
-		fun initializeEngineAndActOnIntent(libraryId: LibraryId, intent: Intent) {
+		fun timedActOnIntent(intent: Intent) {
 			logger.debug("initializeEngineAndActOnIntent({})", intent)
 
 			val promisedTimeout = delay<Any?>(playbackStartTimeout)
 
-			val promisedIntentHandling = libraryRepository.promiseLibrary(libraryId)
-				.eventually { it?.let(::initializePlaybackPlaylistStateManagerSerially) ?: Promise.empty() }
-				.eventually { it?.let { actOnIntent(libraryId, intent) } ?: Promise(UninitializedPlaybackEngineException()) }
+			val promisedIntentHandling = actOnIntent(intent)
 				.must {
 					promisedTimeout.cancel()
 				}
@@ -637,27 +754,13 @@ open class PlaybackService :
 			return START_NOT_STICKY
 		}
 
-		val libraryId = intent.safelyGetParcelableExtra(Bag.libraryId) ?: activeLibraryId ?: return START_NOT_STICKY
-		activeLibraryId = libraryId
-
 		val action = intent.action
 		if (Action.killMusicService == action || !Action.validActions.contains(action)) {
 			stopSelf(startId)
 			return START_NOT_STICKY
 		}
 
-		synchronized(playbackEngineSync) {
-			playbackEnginePromise.then(
-				{ engine ->
-					engine
-						?.let {
-							actOnIntent(libraryId, intent).excuse(unhandledRejectionHandler)
-						}
-						?: initializeEngineAndActOnIntent(libraryId, intent)
-				},
-				{ initializeEngineAndActOnIntent(libraryId, intent) }
-			)
-		}
+		timedActOnIntent(intent)
 
 		return START_STICKY
 	}
@@ -706,17 +809,21 @@ open class PlaybackService :
 	}
 
 	private fun startNewPlaylist(libraryId: LibraryId, playlistString: String, playlistPosition: Int): Promise<Unit> {
-		val playbackState = playbackState ?: return Unit.toPromise()
+		activeLibraryId = libraryId
+		val playbackState = initializePlaybackEngine()
 
 		isMarkedForPlay = true
 		return FileStringListUtilities
 			.promiseParsedFileStringList(playlistString)
 			.eventually { playlist ->
-				playbackState.startPlaylist(
-					libraryId,
-					playlist.toMutableList(),
-					playlistPosition,
-					Duration.ZERO)
+				playbackState.eventually {
+					it.startPlaylist(
+						libraryId,
+						playlist.toMutableList(),
+						playlistPosition,
+						Duration.ZERO
+					)
+				}
 			}
 			.then {
 				startActivity(intentBuilder.buildNowPlayingIntent(libraryId))
@@ -724,11 +831,11 @@ open class PlaybackService :
 			}
 	}
 
-	private fun resumePlayback(): Promise<Unit> {
+	private fun resumePlayback(libraryId: LibraryId): Promise<Unit> {
 		isMarkedForPlay = true
-		return playbackState?.resume()?.then {
+		return restorePlaybackEngine(libraryId).eventually { it.resume() }.then {
 			if (!areListenersRegistered) registerListeners()
-		} ?: Unit.toPromise()
+		}
 	}
 
 	private fun pausePlayback(): Promise<Unit> {
@@ -737,142 +844,24 @@ open class PlaybackService :
 		return playbackState?.pause() ?: Unit.toPromise()
 	}
 
-	private fun initializePlaybackPlaylistStateManagerSerially(library: Library): Promise<PlaybackEngine?> =
-		synchronized(playbackEngineSync) {
-			playbackEnginePromise.eventually(
-				{ initializePlaybackEngine(library) },
-				{ initializePlaybackEngine(library) }).also { playbackEnginePromise = it }
-		}
-
-	private fun initializePlaybackEngine(library: Library): Promise<PlaybackEngine?> {
-		playbackEngineCloseables.close()
-
-		return promiseLibraryConnection(library.libraryId).eventually { connectionProvider ->
-			if (connectionProvider == null) throw PlaybackEngineInitializationException("connectionProvider was null!")
-
-			val scopedRevisionProvider = ScopedRevisionProvider(connectionProvider)
-
-			val cachedSessionFilePropertiesProvider = ScopedCachedFilePropertiesProvider(
-				connectionProvider,
-				FilePropertyCache,
-				ScopedFilePropertiesProvider(connectionProvider, scopedRevisionProvider, FilePropertyCache))
-
-			trackPositionBroadcaster = TrackPositionBroadcaster(
-				applicationMessageBus,
-				cachedSessionFilePropertiesProvider
-			)
-
-			val cacheConfiguration = AudioCacheConfiguration
-			val cachedFilesProvider = CachedFilesProvider(this, cacheConfiguration)
-			val remoteFileUriProvider = RemoteFileUriProvider(libraryConnectionProvider, ServiceFileUriQueryParamsProvider)
-
-			val cacheStreamSupplier by lazy {
-				DiskFileCacheStreamSupplier(
-					audioDiskCacheDirectoryProvider,
-					DiskFileCachePersistence(
-						this,
-						audioDiskCacheDirectoryProvider,
-						cacheConfiguration,
-						cachedFilesProvider,
-						diskFileAccessTimeUpdater
-					),
-					cachedFilesProvider
-				)
-			}
-			val audioCache = DiskFileCache(this, audioDiskCacheDirectoryProvider, cacheConfiguration, cacheStreamSupplier, cachedFilesProvider, diskFileAccessTimeUpdater)
-			val bestMatchUriProvider = BestMatchUriProvider(
-				libraryRepository,
-				StoredFileUriProvider(
-					StoredFileAccess(this),
-					arbitratorForOs),
-				CachedAudioFileUriProvider(remoteFileUriProvider, audioCache),
-				MediaFileUriProvider(
-					MediaQueryCursorProvider(this, cachedFileProperties),
-					arbitratorForOs,
-					false,
-					applicationMessageBus
-				),
-				remoteFileUriProvider
-			)
-
-			val httpDataSourceFactory = HttpDataSourceFactoryProvider(this, connectionProvider, OkHttpFactory)
-			val promisedPreparationSourceProvider = playbackHandler.value.then { ph ->
-				val playbackEngineBuilder = PreparedPlaybackQueueFeederBuilder(
-					this,
-					ph,
-					Handler(mainLooper),
-					MediaSourceProvider(
-						DiskFileCacheSourceFactory(
-                            httpDataSourceFactory,
-                            cacheStreamSupplier
-                        ),
-					),
-					bestMatchUriProvider
-				)
-
-				MaxFileVolumePreparationProvider(
-					playbackEngineBuilder.build(library),
-					MaxFileVolumeProvider(volumeLevelSettings, cachedSessionFilePropertiesProvider))
-			}
-
-			Promise
-				.whenAll(promisedMediaBroadcaster.unitResponse(), promisedMediaNotificationSetup.unitResponse())
-				.eventually { promisedPreparationSourceProvider }
-			}
-			.then { preparationSourceProvider ->
-				PreparedPlaybackQueueResourceManagement(preparationSourceProvider, preparationSourceProvider)
-					.also {
-						playbackEngineCloseables.manage(it)
-						playbackQueues = it
-					}
-			}
-			.then { queues ->
-				PlaylistPlaybackBootstrapper(playlistVolumeManager)
-					.also {
-						playbackEngineCloseables.manage(it)
-						playlistPlaybackBootstrapper = it
-					}
-					.let { bootstrapper ->
-						PlaybackEngine(
-							queues,
-							QueueProviders.providers(),
-							nowPlayingRepository,
-							bootstrapper
-						)
-					}
-			}
+	private fun restorePlaybackEngine(libraryId: LibraryId): Promise<PlaybackEngine> =
+		initializePlaybackEngine()
 			.eventually { engine ->
 				engine
-					.also {
-						playbackEngineCloseables.manage(engine)
-						playbackState = AudioManagingPlaybackStateChanger(
-							engine,
-							engine,
-							AudioFocusManagement(audioManager),
-							playlistVolumeManager
-						).also(playbackEngineCloseables::manage)
-					}
-					.setOnPlaybackStarted(this)
-					.setOnPlaybackPaused(this)
-					.setOnPlaybackInterrupted(this)
-					.setOnPlayingFileChanged(this)
-					.setOnPlaylistError(::uncaughtExceptionHandler)
-					.setOnPlaybackCompleted(this)
-					.setOnPlaylistReset(this)
-					.also {
-						playlistPosition = it
-						playlistFiles = it
-						playbackContinuity = it
-					}
-					.restoreFromSavedState(library.libraryId)
-					.then { file ->
-						file?.apply {
-							broadcastChangedFile(library.libraryId, PositionedFile(playlistPosition, serviceFile))
-							trackPositionBroadcaster?.broadcastProgress(this)
+					.restoreFromSavedState(libraryId)
+					.then { (libraryId, file) ->
+						file?.also {
+							broadcastChangedFile(libraryId, PositionedFile(it.playlistPosition, it.serviceFile))
+							trackPositionBroadcaster.broadcastProgress(libraryId, it)
 						}
 						engine
 					}
 			}
+
+	private fun initializePlaybackEngine(): Promise<PlaybackEngine> {
+		return Promise
+			.whenAll(promisedMediaBroadcaster.unitResponse(), promisedMediaNotificationSetup.unitResponse())
+			.eventually { promisedPlaybackEngine }
 	}
 
 	private fun promiseLibraryConnection(libraryId: LibraryId) =
@@ -1007,19 +996,10 @@ open class PlaybackService :
 	}
 
 	private fun closeAndRestartPlaylistManager() {
-		try {
-			playbackEngineCloseables.close()
-		} catch (e: Exception) {
-			uncaughtExceptionHandler(e)
-			return
-		}
-
-		activeLibraryId
-			?.let(libraryRepository::promiseLibrary).keepPromise()
-			.eventually { library ->
-				library?.let(::initializePlaybackPlaylistStateManagerSerially).keepPromise()
-			}
-			.then { if (isMarkedForPlay) resumePlayback() }
+		val libraryId = activeLibraryId ?: return
+		promisedPlaybackEngine
+			.eventually { engine -> engine.interrupt() }
+			.eventually { if (isMarkedForPlay) resumePlayback(libraryId).unitResponse() else Unit.toPromise() }
 			.excuse(unhandledRejectionHandler)
 	}
 
@@ -1033,7 +1013,7 @@ open class PlaybackService :
 		applicationMessageBus.sendMessage(LibraryPlaybackMessage.TrackStarted(libraryId, positionedPlayingFile.serviceFile))
 
 		val promisedPlayedFile = playingFile.promisePlayedFile()
-		val localSubscription = trackPositionBroadcaster?.run {
+		val localSubscription = trackPositionBroadcaster.run {
 			Observable.interval(1, TimeUnit.SECONDS, lazyObservationScheduler.value)
 				.flatMapMaybe { promisedPlayedFile.progress.toMaybeObservable() }
 				.distinctUntilChanged()
@@ -1059,8 +1039,6 @@ open class PlaybackService :
 	}
 
 	override fun onDestroy() {
-		super.onDestroy()
-
 		isDestroyed = true
 		isMarkedForPlay = false
 
@@ -1075,13 +1053,13 @@ open class PlaybackService :
 		if (lazyObservationScheduler.isInitialized()) lazyObservationScheduler.value.shutdown()
 
 		pausePlayback()
-			.must {
-				playbackEngineCloseables.close()
-
-				if (playbackThread.isInitialized()) playbackThread.value.then { it.quitSafely() }
-
-				cache?.release()
+			.inevitably {
+				if (playbackThread.isInitializing()) playbackThread.value.then { it.quitSafely() }
+				else Unit.toPromise()
 			}
+			.must { lifecycleCloseableManager.close() }
+
+		super.onDestroy()
 	}
 
 	/* End Binder Code */

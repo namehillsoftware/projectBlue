@@ -11,9 +11,15 @@ import java.security.KeyManagementException
 import java.security.KeyStore
 import java.security.KeyStoreException
 import java.security.NoSuchAlgorithmException
-import java.util.*
+import java.util.Arrays
 import java.util.concurrent.TimeUnit
-import javax.net.ssl.*
+import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.HttpsURLConnection
+import javax.net.ssl.SSLContext
+import javax.net.ssl.SSLSocketFactory
+import javax.net.ssl.TrustManager
+import javax.net.ssl.TrustManagerFactory
+import javax.net.ssl.X509TrustManager
 
 object OkHttpFactory : ProvideOkHttpClients {
 	private val buildConnectionTime = Duration.standardSeconds(10)
@@ -23,7 +29,7 @@ object OkHttpFactory : ProvideOkHttpClients {
             .addNetworkInterceptor { chain ->
                 val requestBuilder = chain.request().newBuilder()
                 val authCode = urlProvider.authCode
-                if (authCode != null && authCode.isNotEmpty()) requestBuilder.addHeader(
+                if (!authCode.isNullOrEmpty()) requestBuilder.addHeader(
                     "Authorization",
                     "basic ${urlProvider.authCode}"
                 )

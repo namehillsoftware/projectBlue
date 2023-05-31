@@ -7,6 +7,8 @@ import com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.Fa
 import com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.MaxFileVolumePreparer
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
+import io.mockk.every
+import io.mockk.mockk
 import org.assertj.core.api.AssertionsForClassTypes.assertThat
 import org.joda.time.Duration
 import org.junit.jupiter.api.Test
@@ -16,7 +18,12 @@ class WhenItIsPrepared {
 	private val emptyPlaybackHandler = EmptyPlaybackHandler(0)
 	private val returnedFile by lazy {
 		val fakeFilePreparer = FakeFilePreparer(emptyPlaybackHandler, emptyPlaybackHandler)
-		val maxFileVolumePreparer = MaxFileVolumePreparer(fakeFilePreparer) { Promise(.89f) }
+		val maxFileVolumePreparer = MaxFileVolumePreparer(
+			fakeFilePreparer,
+			mockk {
+				every { promiseMaxFileVolume(LibraryId(388), ServiceFile(5)) } returns Promise(.89f)
+			}
+		)
 		maxFileVolumePreparer.promisePreparedPlaybackFile(
 			LibraryId(388),
 			ServiceFile(5),

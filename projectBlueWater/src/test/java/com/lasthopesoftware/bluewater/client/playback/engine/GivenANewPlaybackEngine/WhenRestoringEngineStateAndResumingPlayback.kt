@@ -83,17 +83,17 @@ class WhenRestoringEngineStateAndResumingPlayback {
 
 	@Test
 	fun `then the playlist position is correct`() {
-		assertThat(restoredState?.playlistPosition).isEqualTo(3)
+		assertThat(restoredState?.second?.playlistPosition).isEqualTo(3)
 	}
 
 	@Test
 	fun `then the service file is correct`() {
-		assertThat(restoredState?.serviceFile).isEqualTo(ServiceFile(915))
+		assertThat(restoredState?.second?.serviceFile).isEqualTo(ServiceFile(915))
 	}
 
 	@Test
 	fun `then the file progress is correct`() {
-		assertThat(restoredState?.progress?.toExpiringFuture()?.get()?.millis).isEqualTo(893)
+		assertThat(restoredState?.second?.progress?.toExpiringFuture()?.get()?.millis).isEqualTo(893)
 	}
 
 	@Test

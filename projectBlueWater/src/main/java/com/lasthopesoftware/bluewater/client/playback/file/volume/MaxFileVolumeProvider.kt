@@ -2,7 +2,8 @@ package com.lasthopesoftware.bluewater.client.playback.file.volume
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.ScopedCachedFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.settings.volumeleveling.IVolumeLevelSettings
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
@@ -11,7 +12,7 @@ import kotlin.math.pow
 
 class MaxFileVolumeProvider(
 	private val volumeLevelSettings: IVolumeLevelSettings,
-	private val scopedCachedFilePropertiesProvider: ScopedCachedFilePropertiesProvider
+	private val libraryFileProperties: ProvideLibraryFileProperties,
 ) : ProvideMaxFileVolume {
 
 	companion object {
@@ -20,11 +21,11 @@ class MaxFileVolumeProvider(
 		private val promisedUnityVolume = UnityVolume.toPromise()
 	}
 
-	override fun promiseMaxFileVolume(serviceFile: ServiceFile): Promise<Float> =
+	override fun promiseMaxFileVolume(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Float> =
 		volumeLevelSettings.isVolumeLevellingEnabled.eventually { isEnabled ->
 			if (!isEnabled) promisedUnityVolume
-			else scopedCachedFilePropertiesProvider
-				.promiseFileProperties(serviceFile)
+			else libraryFileProperties
+				.promiseFileProperties(libraryId, serviceFile)
 				.then { fileProperties ->
 					fileProperties[KnownFileProperties.VolumeLevelReplayGain]
 						?.let { peakGainString ->
