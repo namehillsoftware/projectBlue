@@ -125,7 +125,6 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.lasthopesoftware.bluewater.shared.resilience.TimedCountdownLatch
 import com.lasthopesoftware.resources.closables.AutoCloseableManager
-import com.lasthopesoftware.resources.closables.lazyScoped
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.lasthopesoftware.resources.loopers.HandlerThreadCreator
 import com.lasthopesoftware.resources.strings.StringResources
@@ -339,7 +338,7 @@ open class PlaybackService :
 	private val binder by lazy { GenericBinder(this) }
 	private val notificationManager by lazy { getSystemService(NOTIFICATION_SERVICE) as NotificationManager }
 	private val audioManager by lazy { getSystemService(AUDIO_SERVICE) as AudioManager }
-	private val applicationMessageBus by lazyScoped { getApplicationMessageBus().getScopedMessageBus() }
+	private val applicationMessageBus by lazy { getApplicationMessageBus().getScopedMessageBus().also(lifecycleCloseableManager::manage) }
 	private val applicationSettings by lazy { getApplicationSettingsRepository() }
 	private val libraryRepository by lazy { LibraryRepository(this) }
 	private val playlistVolumeManager by lazy { PlaylistVolumeManager(1.0f) }
@@ -558,7 +557,7 @@ open class PlaybackService :
 		)
 	}
 
-	private val playlistPlaybackBootstrapper by lazyScoped { PlaylistPlaybackBootstrapper(playlistVolumeManager) }
+	private val playlistPlaybackBootstrapper by lazy { PlaylistPlaybackBootstrapper(playlistVolumeManager).also(lifecycleCloseableManager::manage) }
 
 	private val promisedPlaybackEngine by RetryOnRejectionLazyPromise {
 		val httpDataSourceFactory = HttpDataSourceFactoryProvider(
