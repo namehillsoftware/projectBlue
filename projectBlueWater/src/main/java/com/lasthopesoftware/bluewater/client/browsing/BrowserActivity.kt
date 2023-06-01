@@ -821,7 +821,8 @@ private fun LibraryDestination.Navigate(
 						Promise.whenAll(
 							screenViewModel.initializeViewModel(libraryId),
 							nowPlayingFilePropertiesViewModel.initializeViewModel(libraryId),
-							nowPlayingCoverArtViewModel.initializeViewModel(libraryId)
+							nowPlayingCoverArtViewModel.initializeViewModel(libraryId),
+							nowPlayingPlaylistViewModel.initializeView(libraryId),
 						).suspend()
 					} catch (e: Throwable) {
 						if (ConnectionLostExceptionFilter.isConnectionLostException(e))

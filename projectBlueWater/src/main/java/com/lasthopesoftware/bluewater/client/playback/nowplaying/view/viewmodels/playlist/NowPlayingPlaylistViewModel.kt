@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.components.dragging.move
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
+import com.namehillsoftware.handoff.promises.Promise
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
@@ -34,8 +35,9 @@ class NowPlayingPlaylistViewModel(
 	val isEditingPlaylistState = mutableEditingPlaylistState.asStateFlow()
 	val nowPlayingList = nowPlayingListState.asStateFlow()
 
-	fun initializeView(libraryId: LibraryId) {
+	fun initializeView(libraryId: LibraryId): Promise<Unit> {
 		activeLibraryId = libraryId
+		return updateViewFromRepository()
 	}
 
 	override val isEditingPlaylist: Boolean
@@ -61,12 +63,11 @@ class NowPlayingPlaylistViewModel(
 		playlistChangedSubscription.close()
 	}
 
-	private fun updateViewFromRepository() {
+	private fun updateViewFromRepository() =
 		activeLibraryId
 			?.let(nowPlayingRepository::promiseNowPlaying)
 			.keepPromise()
 			.then { np ->
 				nowPlayingListState.value = np?.playlist?.mapIndexed(::PositionedFile) ?: emptyList()
 			}
-	}
 }
