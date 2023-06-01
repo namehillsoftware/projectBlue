@@ -102,7 +102,7 @@ class PlaybackEngine(
 						fileProgress = StaticProgressedFile(filePosition.toPromise())
 						Pair(np.libraryId, PositionedProgressedFile(positionedFile.playlistPosition, positionedFile.serviceFile, filePosition))
 					}
-					?: Pair(libraryId, null)
+					?: Pair(activeLibraryId.get(), null)
 			}
 	}
 
