@@ -117,7 +117,9 @@ class FileDetailsViewModel(
 	}
 
 	fun addToNowPlaying() {
-		activePositionedFile?.serviceFile?.let(controlPlayback::addToPlaylist)
+		val serviceFile = activePositionedFile?.serviceFile ?: return
+		val libraryId = activeLibraryId ?: return
+		controlPlayback.addToPlaylist(libraryId, serviceFile)
 	}
 
 	fun play() {

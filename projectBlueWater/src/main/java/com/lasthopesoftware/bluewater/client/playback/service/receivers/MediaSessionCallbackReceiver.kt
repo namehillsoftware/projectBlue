@@ -20,15 +20,27 @@ class MediaSessionCallbackReceiver(
 ) : MediaSessionCompat.Callback() {
 	override fun onPrepare() = PlaybackService.initialize(context)
 
-    override fun onPlay() = PlaybackService.play(context)
+    override fun onPlay() {
+		selectedLibraryId
+			.promiseSelectedLibraryId()
+			.then { it?.also { l -> PlaybackService.play(context, l) } }
+	}
 
-    override fun onStop() = PlaybackService.pause(context)
+	override fun onStop() = PlaybackService.pause(context)
 
     override fun onPause() = PlaybackService.pause(context)
 
-    override fun onSkipToNext() = PlaybackService.next(context)
+    override fun onSkipToNext() {
+		selectedLibraryId
+			.promiseSelectedLibraryId()
+			.then { it?.also { l -> PlaybackService.next(context, l) } }
+	}
 
-    override fun onSkipToPrevious() = PlaybackService.previous(context)
+	override fun onSkipToPrevious() {
+		selectedLibraryId
+			.promiseSelectedLibraryId()
+			.then { it?.also { l -> PlaybackService.previous(context, l) } }
+	}
 
 	override fun onSetRepeatMode(repeatMode: Int) =
 		when (repeatMode) {
@@ -38,7 +50,9 @@ class MediaSessionCallbackReceiver(
 
 	override fun onAddQueueItem(description: MediaDescriptionCompat?) {
 		val fileId = description?.mediaId?.toIntOrNull() ?: return
-		PlaybackService.addFileToPlaylist(context, fileId)
+		selectedLibraryId
+			.promiseSelectedLibraryId()
+			.then { it?.also { l -> PlaybackService.addFileToPlaylist(context, l, fileId) } }
 	}
 
 	override fun onPlayFromMediaId(mediaId: String?, extras: Bundle?) {

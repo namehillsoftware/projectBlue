@@ -210,7 +210,9 @@ fun ItemListView(
 				fileItemViewModel.showMenu()
 			},
 			onAddToNowPlayingClick = {
-				 playbackServiceController.addToPlaylist(serviceFile)
+				itemListViewModel.loadedLibraryId?.also {
+					playbackServiceController.addToPlaylist(it, serviceFile)
+				}
 			},
 			onViewFilesClick = viewFileDetailsClickHandler,
 			onPlayClick = {

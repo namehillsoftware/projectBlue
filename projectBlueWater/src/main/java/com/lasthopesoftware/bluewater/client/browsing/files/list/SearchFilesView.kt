@@ -117,7 +117,9 @@ fun SearchFilesView(
 				fileItemViewModel.showMenu()
 			},
 			onAddToNowPlayingClick = {
-				playbackServiceController.addToPlaylist(serviceFile)
+				searchFilesViewModel.libraryId?.also {
+					playbackServiceController.addToPlaylist(it, serviceFile)
+				}
 			},
 			onViewFilesClick = viewFilesClickHandler,
 			onPlayClick = {

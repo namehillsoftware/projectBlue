@@ -52,7 +52,7 @@ class NowPlayingNotificationBuilder(
 					.then { fileProperties ->
 						val artist = fileProperties[KnownFileProperties.Artist]
 						val name = fileProperties[KnownFileProperties.Name]
-						addButtons(mediaStyleNotificationSetup.getMediaStyleNotification(libraryId), isPlaying)
+						addButtons(mediaStyleNotificationSetup.getMediaStyleNotification(libraryId), libraryId, isPlaying)
 							.setOngoing(isPlaying)
 							.setContentTitle(name)
 							.setContentText(artist)
@@ -75,42 +75,42 @@ class NowPlayingNotificationBuilder(
 	override fun close() { viewStructure?.release() }
 
 	private fun getPlayingLoadingNotification(libraryId: LibraryId): NotificationCompat.Builder {
-		return addButtons(mediaStyleNotificationSetup.getMediaStyleNotification(libraryId), true)
+		return addButtons(mediaStyleNotificationSetup.getMediaStyleNotification(libraryId), libraryId, true)
 			.setOngoing(true)
 			.setContentTitle(context.getString(R.string.lbl_loading))
 	}
 
 	private fun getNotPlayingLoadingNotification(libraryId: LibraryId): NotificationCompat.Builder {
-		return addButtons(mediaStyleNotificationSetup.getMediaStyleNotification(libraryId), false)
+		return addButtons(mediaStyleNotificationSetup.getMediaStyleNotification(libraryId), libraryId, false)
 			.setOngoing(false)
 			.setContentTitle(context.getString(R.string.lbl_loading))
 	}
 
-	private fun addButtons(builder: NotificationCompat.Builder, isPlaying: Boolean): NotificationCompat.Builder =
+	private fun addButtons(builder: NotificationCompat.Builder, libraryId: LibraryId, isPlaying: Boolean): NotificationCompat.Builder =
 		builder
 			.addAction(
 				NotificationCompat.Action(
 					R.drawable.av_previous_white,
 					context.getString(R.string.btn_previous),
-					pendingPreviousIntent(context)
+					pendingPreviousIntent(context, libraryId)
 				)
 			)
 			.addAction(
 				if (isPlaying) NotificationCompat.Action(
 					R.drawable.av_pause_white,
 					context.getString(R.string.btn_pause),
-					pendingPauseIntent(context)
+					pendingPauseIntent(context, libraryId)
 				) else NotificationCompat.Action(
 					R.drawable.av_play_white,
 					context.getString(R.string.btn_play),
-					pendingPlayingIntent(context)
+					pendingPlayingIntent(context, libraryId)
 				)
 			)
 			.addAction(
 				NotificationCompat.Action(
 					R.drawable.av_next_white,
 					context.getString(R.string.btn_next),
-					pendingNextIntent(context)
+					pendingNextIntent(context, libraryId)
 				)
 			)
 

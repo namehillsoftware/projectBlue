@@ -170,8 +170,7 @@ open class PlaybackService :
 			launchMusicService(context, libraryId, 0, serializedFileList)
 
 		fun launchMusicService(context: Context, libraryId: LibraryId, filePos: Int, serializedFileList: String) {
-			val svcIntent = getNewSelfIntent(context, Action.launchMusicService)
-			svcIntent.putExtra(Bag.libraryId, libraryId)
+			val svcIntent = getNewLibrarySelfIntent(context, libraryId, Action.launchMusicService)
 			svcIntent.putExtra(Bag.playlistPosition, filePos)
 			svcIntent.putExtra(Bag.filePlaylist, serializedFileList)
 			context.safelyStartServiceInForeground(svcIntent)
@@ -179,73 +178,78 @@ open class PlaybackService :
 
 		@JvmOverloads
 		@JvmStatic
-		fun seekTo(context: Context, filePos: Int, fileProgress: Int = 0) {
-			val svcIntent = getNewSelfIntent(context, Action.seekTo)
+		fun seekTo(context: Context, libraryId: LibraryId, filePos: Int, fileProgress: Int = 0) {
+			val svcIntent = getNewLibrarySelfIntent(context, libraryId, Action.seekTo)
 			svcIntent.putExtra(Bag.playlistPosition, filePos)
 			svcIntent.putExtra(Bag.startPos, fileProgress)
 			context.safelyStartService(svcIntent)
 		}
 
-		fun play(context: Context) = context.safelyStartServiceInForeground(getNewSelfIntent(context, Action.play))
+		fun play(context: Context, libraryId: LibraryId) = context.safelyStartServiceInForeground(getNewLibrarySelfIntent(context, libraryId, Action.play))
 
-		fun pendingPlayingIntent(context: Context): PendingIntent =
+		fun pendingPlayingIntent(context: Context, libraryId: LibraryId): PendingIntent =
 			PendingIntent.getService(
 				context,
 				0,
-				getNewSelfIntent(
+				getNewLibrarySelfIntent(
 					context,
+					libraryId,
 					Action.play),
 				PendingIntent.FLAG_UPDATE_CURRENT.makePendingIntentImmutable())
 
 		@JvmStatic
-		fun pause(context: Context) = context.safelyStartService(getNewSelfIntent(context, Action.pause))
+		fun pause(context: Context) =
+			context.safelyStartService(getNewSelfIntent(context, Action.pause))
 
 		@JvmStatic
-		fun pendingPauseIntent(context: Context): PendingIntent =
+		fun pendingPauseIntent(context: Context, libraryId: LibraryId): PendingIntent =
 			PendingIntent.getService(
 				context,
 				0,
-				getNewSelfIntent(context, Action.pause),
+				getNewLibrarySelfIntent(context, libraryId, Action.pause),
 				PendingIntent.FLAG_UPDATE_CURRENT.makePendingIntentImmutable())
 
-		fun togglePlayPause(context: Context) = context.safelyStartService(getNewSelfIntent(context, Action.togglePlayPause))
+		fun togglePlayPause(context: Context, libraryId: LibraryId) =
+			context.safelyStartService(getNewLibrarySelfIntent(context, libraryId, Action.togglePlayPause))
 
-		fun next(context: Context) = context.safelyStartService(getNewSelfIntent(context, Action.next))
+		fun next(context: Context, libraryId: LibraryId) =
+			context.safelyStartService(getNewLibrarySelfIntent(context, libraryId, Action.next))
 
-		fun pendingNextIntent(context: Context): PendingIntent =
+		fun pendingNextIntent(context: Context, libraryId: LibraryId): PendingIntent =
 			PendingIntent.getService(
 				context,
 				0,
-				getNewSelfIntent(context, Action.next),
+				getNewLibrarySelfIntent(context, libraryId, Action.next),
 				PendingIntent.FLAG_UPDATE_CURRENT.makePendingIntentImmutable())
 
-		fun previous(context: Context) = context.safelyStartService(getNewSelfIntent(context, Action.previous))
+		fun previous(context: Context, libraryId: LibraryId) =
+			context.safelyStartService(getNewLibrarySelfIntent(context, libraryId, Action.previous))
 
-		fun pendingPreviousIntent(context: Context): PendingIntent =
+		fun pendingPreviousIntent(context: Context, libraryId: LibraryId): PendingIntent =
 			PendingIntent.getService(
 				context,
 				0,
-				getNewSelfIntent(context, Action.previous),
+				getNewLibrarySelfIntent(context, libraryId, Action.previous),
 				PendingIntent.FLAG_UPDATE_CURRENT.makePendingIntentImmutable())
 
 		fun setRepeating(context: Context) = context.safelyStartService(getNewSelfIntent(context, Action.repeating))
 
 		fun setCompleting(context: Context) = context.safelyStartService(getNewSelfIntent(context, Action.completing))
 
-		fun addFileToPlaylist(context: Context, fileKey: Int) {
-			val intent = getNewSelfIntent(context, Action.addFileToPlaylist)
+		fun addFileToPlaylist(context: Context, libraryId: LibraryId, fileKey: Int) {
+			val intent = getNewLibrarySelfIntent(context, libraryId, Action.addFileToPlaylist)
 			intent.putExtra(Bag.playlistPosition, fileKey)
 			context.safelyStartService(intent)
 		}
 
-		fun removeFileAtPositionFromPlaylist(context: Context, filePosition: Int) {
-			val intent = getNewSelfIntent(context, Action.removeFileAtPositionFromPlaylist)
+		fun removeFileAtPositionFromPlaylist(context: Context, libraryId: LibraryId, filePosition: Int) {
+			val intent = getNewLibrarySelfIntent(context, libraryId, Action.removeFileAtPositionFromPlaylist)
 			intent.putExtra(Bag.filePosition, filePosition)
 			context.safelyStartService(intent)
 		}
 
-		fun moveFile(context: Context, filePosition: Int, newPosition: Int) {
-			val intent = getNewSelfIntent(context, Action.moveFile).apply {
+		fun moveFile(context: Context, libraryId: LibraryId, filePosition: Int, newPosition: Int) {
+			val intent = getNewLibrarySelfIntent(context, libraryId, Action.moveFile).apply {
 				putExtra(Bag.filePosition, filePosition)
 				putExtra(Bag.newPosition, newPosition)
 			}
@@ -269,6 +273,12 @@ open class PlaybackService :
 					context.unbindService(h.serviceConnection)
 					isPlaying
 				}
+
+		private fun getNewLibrarySelfIntent(context: Context, libraryId: LibraryId, action: String): Intent {
+			val newIntent = getNewSelfIntent(context, action)
+			newIntent.putExtra(Bag.libraryId, libraryId)
+			return newIntent
+		}
 
 		private fun getNewSelfIntent(context: Context, action: String): Intent {
 			val newIntent = Intent(context, PlaybackService::class.java)

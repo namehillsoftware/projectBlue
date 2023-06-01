@@ -13,15 +13,16 @@ class PlaybackServiceController(private val context: Context) : ControlPlaybackS
 	override fun promiseIsMarkedForPlay(libraryId: LibraryId): Promise<Boolean> =
 		PlaybackService.promiseIsMarkedForPlay(context, libraryId)
 
-	override fun play() = PlaybackService.play(context)
+	override fun play(libraryId: LibraryId) = PlaybackService.play(context, libraryId)
 
 	override fun pause() = PlaybackService.pause(context)
 
-	override fun next() = PlaybackService.next(context)
+	override fun next(libraryId: LibraryId) = PlaybackService.next(context, libraryId)
 
-	override fun previous() = PlaybackService.previous(context)
-	override fun seekTo(position: Int) = PlaybackService.seekTo(context, position)
-	override fun moveFile(dragFrom: Int, dragTo: Int) = PlaybackService.moveFile(context, dragFrom, dragTo)
+	override fun previous(libraryId: LibraryId) = PlaybackService.previous(context, libraryId)
+	override fun seekTo(libraryId: LibraryId, position: Int) = PlaybackService.seekTo(context, libraryId, position)
+	override fun moveFile(libraryId: LibraryId, dragFrom: Int, dragTo: Int) =
+		PlaybackService.moveFile(context, libraryId, dragFrom, dragTo)
 
 	override fun startPlaylist(libraryId: LibraryId, fileStringList: String, position: Int) {
 		PlaybackService.launchMusicService(context, libraryId, position, fileStringList)
@@ -39,12 +40,12 @@ class PlaybackServiceController(private val context: Context) : ControlPlaybackS
 		}, ThreadPools.compute)
 	}
 
-	override fun addToPlaylist(serviceFile: ServiceFile) {
-		PlaybackService.addFileToPlaylist(context, serviceFile.key)
+	override fun addToPlaylist(libraryId: LibraryId, serviceFile: ServiceFile) {
+		PlaybackService.addFileToPlaylist(context, libraryId, serviceFile.key)
 	}
 
-	override fun removeFromPlaylistAtPosition(position: Int) {
-		PlaybackService.removeFileAtPositionFromPlaylist(context, position)
+	override fun removeFromPlaylistAtPosition(libraryId: LibraryId, position: Int) {
+		PlaybackService.removeFileAtPositionFromPlaylist(context, libraryId, position)
 	}
 
 	override fun setRepeating() = PlaybackService.setRepeating(context)

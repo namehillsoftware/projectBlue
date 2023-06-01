@@ -7,17 +7,17 @@ import com.namehillsoftware.handoff.promises.Promise
 interface ControlPlaybackService {
 	fun promiseIsMarkedForPlay(libraryId: LibraryId): Promise<Boolean>
 
-	fun play()
+	fun play(libraryId: LibraryId)
 
 	fun pause()
 
-	fun next()
+	fun next(libraryId: LibraryId)
 
-	fun previous()
+	fun previous(libraryId: LibraryId)
 
-	fun seekTo(position: Int)
+	fun seekTo(libraryId: LibraryId, position: Int)
 
-	fun moveFile(dragFrom: Int, dragTo: Int)
+	fun moveFile(libraryId: LibraryId, dragFrom: Int, dragTo: Int)
 
 	fun startPlaylist(libraryId: LibraryId, fileStringList: String, position: Int = 0)
 
@@ -25,9 +25,9 @@ interface ControlPlaybackService {
 
 	fun shuffleAndStartPlaylist(libraryId: LibraryId, serviceFiles: List<ServiceFile>)
 
-	fun addToPlaylist(serviceFile: ServiceFile)
+	fun addToPlaylist(libraryId: LibraryId, serviceFile: ServiceFile)
 
-	fun removeFromPlaylistAtPosition(position: Int)
+	fun removeFromPlaylistAtPosition(libraryId: LibraryId, position: Int)
 
 	fun setRepeating()
 
