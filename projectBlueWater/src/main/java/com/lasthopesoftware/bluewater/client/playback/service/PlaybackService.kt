@@ -13,7 +13,6 @@ import android.os.PowerManager
 import android.os.PowerManager.WakeLock
 import android.os.Process
 import android.widget.Toast
-import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleService
 import com.google.android.exoplayer2.ExoPlaybackException
@@ -39,7 +38,6 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.Bro
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
-import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
@@ -305,12 +303,6 @@ open class PlaybackService :
 				logger.warn("A security exception occurred while trying to start the service", e)
 			}
 		}
-
-		private fun buildFullNotification(notificationBuilder: NotificationCompat.Builder) =
-			notificationBuilder
-				.setSmallIcon(R.drawable.now_playing_status_icon_white)
-				.setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-				.build()
 	}
 
 	/* End streamer intent helpers */
@@ -339,9 +331,9 @@ open class PlaybackService :
 
 	private val arbitratorForOs by lazy { OsPermissionsChecker(this) }
 
-	private val lazyMediaSessionService = lazy { promiseBoundService<MediaSessionService>() }
+	private val lazyMediaSessionService = RetryOnRejectionLazyPromise { promiseBoundService<MediaSessionService>() }
 
-	private val promisedMediaSession by lazy { lazyMediaSessionService.value.then { c -> c.service.mediaSession } }
+	private val promisedMediaSession by RetryOnRejectionLazyPromise { lazyMediaSessionService.value.then { c -> c.service.mediaSession } }
 
 	private val mediaStyleNotificationSetup by lazy {
 			promisedMediaSession.then { mediaSession ->
@@ -453,7 +445,9 @@ open class PlaybackService :
 
 	private	val imageProvider by lazy { CachedImageProvider.getInstance(this) }
 
-	private val promisedMediaBroadcaster by lazy {
+	private val urlKeyProvider by lazy { UrlKeyProvider(libraryConnectionProvider) }
+
+	private val promisedMediaBroadcaster by RetryOnRejectionLazyPromise {
 		promisedMediaSession.then { mediaSession ->
 			MediaSessionBroadcaster(
 				nowPlayingRepository,
@@ -465,9 +459,7 @@ open class PlaybackService :
 		}
 	}
 
-	private val urlKeyProvider by lazy { UrlKeyProvider(libraryConnectionProvider) }
-
-	private	val promisedMediaNotificationSetup by lazy {
+	private	val promisedMediaNotificationSetup by RetryOnRejectionLazyPromise {
 		mediaStyleNotificationSetup.then { mediaStyleNotificationSetup ->
 			NowPlayingNotificationBuilder(
 				this,
@@ -548,7 +540,7 @@ open class PlaybackService :
 			OkHttpFactory
 		)
 
-		playbackThread.value
+		val promisedEngine = playbackThread.value
 			.then { h -> Handler(h.looper) }
 			.then { ph ->
 				MaxFileVolumePreparationProvider(
@@ -602,6 +594,10 @@ open class PlaybackService :
 						playbackContinuity = it
 					}
 			}
+
+		Promise
+			.whenAll(promisedMediaBroadcaster.unitResponse(), promisedMediaNotificationSetup.unitResponse())
+			.eventually { promisedEngine }
 	}
 
 	private val unhandledRejectionHandler = ImmediateResponse<Throwable, Unit>(::uncaughtExceptionHandler)
@@ -831,7 +827,7 @@ open class PlaybackService :
 
 	private fun startNewPlaylist(libraryId: LibraryId, playlistString: String, playlistPosition: Int): Promise<Unit> {
 		activeLibraryId = libraryId
-		val playbackState = initializePlaybackEngine()
+		val playbackState = promisedPlaybackEngine
 
 		isMarkedForPlay = true
 		return FileStringListUtilities
@@ -866,7 +862,7 @@ open class PlaybackService :
 	}
 
 	private fun restorePlaybackEngine(libraryId: LibraryId): Promise<PlaybackEngine> =
-		initializePlaybackEngine()
+		promisedPlaybackEngine
 			.eventually { engine ->
 				engine
 					.restoreFromSavedState(libraryId)
@@ -878,43 +874,6 @@ open class PlaybackService :
 						engine
 					}
 			}
-
-	private fun initializePlaybackEngine(): Promise<PlaybackEngine> {
-		return Promise
-			.whenAll(promisedMediaBroadcaster.unitResponse(), promisedMediaNotificationSetup.unitResponse())
-			.eventually { promisedPlaybackEngine }
-	}
-
-	private fun promiseLibraryConnection(libraryId: LibraryId) =
-		libraryConnectionProvider.promiseLibraryConnection(libraryId).apply {
-			updates(::handleBuildConnectionStatusChange)
-		}
-
-	private fun handleBuildConnectionStatusChange(status: BuildingConnectionStatus) {
-		val notifyBuilder = NotificationCompat.Builder(this, playbackNotificationsConfiguration.notificationChannel)
-		notifyBuilder
-			.setOngoing(false)
-			.setContentTitle(getText(R.string.title_svc_connecting_to_server))
-
-		when (status) {
-			BuildingConnectionStatus.GettingLibrary -> notifyBuilder.setContentText(getText(R.string.lbl_getting_library_details))
-			BuildingConnectionStatus.GettingLibraryFailed -> {
-				Toast.makeText(this, getText(R.string.lbl_please_connect_to_valid_server), Toast.LENGTH_SHORT).show()
-				return
-			}
-			BuildingConnectionStatus.SendingWakeSignal -> notifyBuilder.setContentText(getString(R.string.sending_wake_signal))
-			BuildingConnectionStatus.BuildingConnection -> notifyBuilder.setContentText(getText(R.string.lbl_connecting_to_server_library))
-			BuildingConnectionStatus.BuildingConnectionFailed -> {
-				Toast.makeText(this, getText(R.string.lbl_error_connecting_try_again), Toast.LENGTH_SHORT).show()
-				return
-			}
-			BuildingConnectionStatus.BuildingConnectionComplete -> notifyBuilder.setContentText(getString(R.string.lbl_connected))
-		}
-
-		lazyNotificationController.value.notifyForeground(
-			buildFullNotification(notifyBuilder),
-			connectingNotificationId)
-	}
 
 	private fun uncaughtExceptionHandler(exception: Throwable?) {
 		fun handleDisconnection() {
@@ -1069,7 +1028,7 @@ open class PlaybackService :
 
 		filePositionSubscription?.dispose()
 
-		if (lazyMediaSessionService.isInitialized()) lazyMediaSessionService.value.then { unbindService(it.serviceConnection) }
+		if (lazyMediaSessionService.isInitializing()) lazyMediaSessionService.value.then { unbindService(it.serviceConnection) }
 
 		if (lazyObservationScheduler.isInitialized()) lazyObservationScheduler.value.shutdown()
 
