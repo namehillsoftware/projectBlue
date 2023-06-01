@@ -9,6 +9,7 @@ import android.media.AudioManager
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
+import android.os.Parcelable
 import android.os.PowerManager
 import android.os.PowerManager.WakeLock
 import android.os.Process
@@ -99,6 +100,7 @@ import com.lasthopesoftware.bluewater.shared.android.MediaSession.MediaSessionCo
 import com.lasthopesoftware.bluewater.shared.android.MediaSession.MediaSessionService
 import com.lasthopesoftware.bluewater.shared.android.audiofocus.AudioFocusManagement
 import com.lasthopesoftware.bluewater.shared.android.intents.IntentBuilder
+import com.lasthopesoftware.bluewater.shared.android.intents.getIntent
 import com.lasthopesoftware.bluewater.shared.android.intents.makePendingIntentImmutable
 import com.lasthopesoftware.bluewater.shared.android.intents.safelyGetParcelableExtra
 import com.lasthopesoftware.bluewater.shared.android.notifications.NoOpChannelActivator
@@ -132,6 +134,7 @@ import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import io.reactivex.Observable
 import io.reactivex.disposables.Disposable
 import io.reactivex.internal.schedulers.ExecutorScheduler
+import kotlinx.parcelize.Parcelize
 import org.joda.time.Duration
 import java.io.IOException
 import java.util.concurrent.CancellationException
@@ -151,7 +154,6 @@ open class PlaybackService :
 		private val logger by lazyLogger<PlaybackService>()
 
 		private const val playingNotificationId = 42
-		private const val connectingNotificationId = 70
 
 		private const val numberOfDisconnects = 3
 		private val disconnectResetDuration = Duration.standardMinutes(1)
@@ -162,106 +164,136 @@ open class PlaybackService :
 		private val playbackStartTimeout = Duration.standardMinutes(2)
 
 		fun initialize(context: Context) =
-			context.safelyStartService(getNewSelfIntent(context, Action.initialize))
+			context.safelyStartService(getNewSelfIntent(context, PlaybackEngineAction.Initialize))
 
 		fun launchMusicService(context: Context, libraryId: LibraryId, serializedFileList: String) =
 			launchMusicService(context, libraryId, 0, serializedFileList)
 
 		fun launchMusicService(context: Context, libraryId: LibraryId, filePos: Int, serializedFileList: String) {
-			val svcIntent = getNewLibrarySelfIntent(context, libraryId, Action.launchMusicService)
-			svcIntent.putExtra(Bag.playlistPosition, filePos)
-			svcIntent.putExtra(Bag.filePlaylist, serializedFileList)
-			context.safelyStartServiceInForeground(svcIntent)
+			context.safelyStartServiceInForeground(
+				getNewSelfIntent(
+					context,
+					PlaybackStartingAction.StartPlaylist(libraryId, filePos, serializedFileList)
+				)
+			)
 		}
 
-		@JvmOverloads
-		@JvmStatic
 		fun seekTo(context: Context, libraryId: LibraryId, filePos: Int, fileProgress: Int = 0) {
-			val svcIntent = getNewLibrarySelfIntent(context, libraryId, Action.seekTo)
-			svcIntent.putExtra(Bag.playlistPosition, filePos)
-			svcIntent.putExtra(Bag.startPos, fileProgress)
-			context.safelyStartService(svcIntent)
+			context.safelyStartService(
+				getNewSelfIntent(
+					context,
+					PlaybackEngineAction.Seek(libraryId, filePos, fileProgress)
+				)
+			)
 		}
 
-		fun play(context: Context, libraryId: LibraryId) = context.safelyStartServiceInForeground(getNewLibrarySelfIntent(context, libraryId, Action.play))
+		fun play(context: Context, libraryId: LibraryId) =
+			context.safelyStartServiceInForeground(
+				getNewSelfIntent(
+					context,
+					PlaybackStartingAction.Play(libraryId)
+				)
+			)
 
 		fun pendingPlayingIntent(context: Context, libraryId: LibraryId): PendingIntent =
 			PendingIntent.getService(
 				context,
 				0,
-				getNewLibrarySelfIntent(
+				getNewSelfIntent(
 					context,
-					libraryId,
-					Action.play),
+					PlaybackStartingAction.Play(libraryId)
+				),
 				PendingIntent.FLAG_UPDATE_CURRENT.makePendingIntentImmutable())
 
 		@JvmStatic
 		fun pause(context: Context) =
-			context.safelyStartService(getNewSelfIntent(context, Action.pause))
+			context.safelyStartService(getNewSelfIntent(context, PlaybackEngineAction.Pause))
 
 		@JvmStatic
-		fun pendingPauseIntent(context: Context, libraryId: LibraryId): PendingIntent =
+		fun pendingPauseIntent(context: Context): PendingIntent =
 			PendingIntent.getService(
 				context,
 				0,
-				getNewLibrarySelfIntent(context, libraryId, Action.pause),
+				getNewSelfIntent(context, PlaybackEngineAction.Pause),
 				PendingIntent.FLAG_UPDATE_CURRENT.makePendingIntentImmutable())
 
 		fun togglePlayPause(context: Context, libraryId: LibraryId) =
-			context.safelyStartService(getNewLibrarySelfIntent(context, libraryId, Action.togglePlayPause))
+			context.safelyStartService(
+				getNewSelfIntent(
+					context,
+					PlaybackEngineAction.TogglePlayPause(libraryId)
+				)
+			)
 
 		fun next(context: Context, libraryId: LibraryId) =
-			context.safelyStartService(getNewLibrarySelfIntent(context, libraryId, Action.next))
+			context.safelyStartService(
+				getNewSelfIntent(
+					context,
+					PlaybackEngineAction.Next(libraryId)
+				)
+			)
 
 		fun pendingNextIntent(context: Context, libraryId: LibraryId): PendingIntent =
 			PendingIntent.getService(
 				context,
 				0,
-				getNewLibrarySelfIntent(context, libraryId, Action.next),
+				getNewSelfIntent(context, PlaybackEngineAction.Next(libraryId)),
 				PendingIntent.FLAG_UPDATE_CURRENT.makePendingIntentImmutable())
 
 		fun previous(context: Context, libraryId: LibraryId) =
-			context.safelyStartService(getNewLibrarySelfIntent(context, libraryId, Action.previous))
+			context.safelyStartService(
+				getNewSelfIntent(
+					context,
+					PlaybackEngineAction.Previous(libraryId)
+				)
+			)
 
 		fun pendingPreviousIntent(context: Context, libraryId: LibraryId): PendingIntent =
 			PendingIntent.getService(
 				context,
 				0,
-				getNewLibrarySelfIntent(context, libraryId, Action.previous),
+				getNewSelfIntent(context, PlaybackEngineAction.Previous(libraryId)),
 				PendingIntent.FLAG_UPDATE_CURRENT.makePendingIntentImmutable())
 
-		fun setRepeating(context: Context) = context.safelyStartService(getNewSelfIntent(context, Action.repeating))
+		fun setRepeating(context: Context) = context.safelyStartService(getNewSelfIntent(context, PlaybackEngineAction.RepeatPlaylist))
 
-		fun setCompleting(context: Context) = context.safelyStartService(getNewSelfIntent(context, Action.completing))
+		fun setCompleting(context: Context) = context.safelyStartService(getNewSelfIntent(context, PlaybackEngineAction.CompletePlaylist))
 
-		fun addFileToPlaylist(context: Context, libraryId: LibraryId, fileKey: Int) {
-			val intent = getNewLibrarySelfIntent(context, libraryId, Action.addFileToPlaylist)
-			intent.putExtra(Bag.playlistPosition, fileKey)
-			context.safelyStartService(intent)
+		fun addFileToPlaylist(context: Context, libraryId: LibraryId, serviceFile: ServiceFile) {
+			context.safelyStartService(
+				getNewSelfIntent(
+					context,
+					PlaybackEngineAction.AddFileToPlaylist(libraryId, serviceFile)
+				)
+			)
 		}
 
 		fun removeFileAtPositionFromPlaylist(context: Context, libraryId: LibraryId, filePosition: Int) {
-			val intent = getNewLibrarySelfIntent(context, libraryId, Action.removeFileAtPositionFromPlaylist)
-			intent.putExtra(Bag.filePosition, filePosition)
-			context.safelyStartService(intent)
+			context.safelyStartService(
+				getNewSelfIntent(
+					context,
+					PlaybackEngineAction.RemoveFileAtPosition(libraryId, filePosition)
+				)
+			)
 		}
 
 		fun moveFile(context: Context, libraryId: LibraryId, filePosition: Int, newPosition: Int) {
-			val intent = getNewLibrarySelfIntent(context, libraryId, Action.moveFile).apply {
-				putExtra(Bag.filePosition, filePosition)
-				putExtra(Bag.newPosition, newPosition)
-			}
-			context.safelyStartService(intent)
+			context.safelyStartService(
+				getNewSelfIntent(
+					context,
+					PlaybackEngineAction.MoveFile(libraryId, filePosition, newPosition)
+				)
+			)
 		}
 
 		fun killService(context: Context) =
-			context.safelyStartService(getNewSelfIntent(context, Action.killMusicService))
+			context.safelyStartService(getNewSelfIntent(context, ParcelableAction.KillPlaybackService))
 
 		fun pendingKillService(context: Context): PendingIntent =
 			PendingIntent.getService(
 				context,
 				0,
-				getNewSelfIntent(context, Action.killMusicService),
+				getNewSelfIntent(context, ParcelableAction.KillPlaybackService),
 				PendingIntent.FLAG_UPDATE_CURRENT.makePendingIntentImmutable())
 
 		fun promiseIsMarkedForPlay(context: Context, libraryId: LibraryId): Promise<Boolean> =
@@ -272,15 +304,10 @@ open class PlaybackService :
 					isPlaying
 				}
 
-		private fun getNewLibrarySelfIntent(context: Context, libraryId: LibraryId, action: String): Intent {
-			val newIntent = getNewSelfIntent(context, action)
-			newIntent.putExtra(Bag.libraryId, libraryId)
-			return newIntent
-		}
-
-		private fun getNewSelfIntent(context: Context, action: String): Intent {
-			val newIntent = Intent(context, PlaybackService::class.java)
-			newIntent.action = action
+		private fun getNewSelfIntent(context: Context, parcelableAction: ParcelableAction): Intent {
+			val newIntent = context.getIntent<PlaybackService>()
+			newIntent.action = Action.handleParcelable
+			newIntent.putExtra(Bag.parcelableAction, parcelableAction)
 			return newIntent
 		}
 
@@ -654,99 +681,82 @@ open class PlaybackService :
 	override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
 		super.onStartCommand(intent, flags, startId)
 
-		fun getLibraryId(intent: Intent) = intent.safelyGetParcelableExtra<LibraryId>(Bag.libraryId)
+		fun handlePlaybackStartingAction(playbackStartingAction: PlaybackStartingAction): Promise<Unit> {
+			stopNotificationIfNotPlaying()
+			return when (playbackStartingAction) {
+				is PlaybackStartingAction.Play -> resumePlayback(playbackStartingAction.libraryId)
+				is PlaybackStartingAction.StartPlaylist -> {
+					val (libraryId, playlistPosition, playlistString) = playbackStartingAction
 
-		fun actOnIntent(intent: Intent): Promise<Unit> {
-			var action = intent.action ?: return Unit.toPromise()
+					startNewPlaylist(libraryId, playlistString, playlistPosition)
+				}
+			}
+		}
 
-			if (action == Action.togglePlayPause) action = if (isMarkedForPlay) Action.pause else Action.play
-			if (!Action.playbackStartingActions.contains(action)) stopNotificationIfNotPlaying()
-			when (action) {
-				Action.play -> return resumePlayback(getLibraryId(intent) ?: return Unit.toPromise())
-				Action.pause, Action.initialize -> return pausePlayback()
-				Action.repeating -> return playbackContinuity?.playRepeatedly() ?: Unit.toPromise()
-				Action.completing -> return playbackContinuity?.playToCompletion() ?: Unit.toPromise()
-				Action.previous -> {
-					val libraryId = getLibraryId(intent) ?: return Unit.toPromise()
-
-					return restorePlaybackEngine(libraryId)
+		fun handlePlaybackEngineAction(playbackEngineAction: PlaybackEngineAction): Promise<Unit> {
+			return when (playbackEngineAction) {
+				is PlaybackStartingAction -> handlePlaybackStartingAction(playbackEngineAction)
+				is PlaybackEngineAction.TogglePlayPause -> {
+					if (isMarkedForPlay) handlePlaybackEngineAction(PlaybackEngineAction.Pause)
+					else handlePlaybackStartingAction(PlaybackStartingAction.Play(playbackEngineAction.libraryId))
+				}
+				is PlaybackEngineAction.Pause, PlaybackEngineAction.Initialize -> pausePlayback()
+				is PlaybackEngineAction.RepeatPlaylist -> playbackContinuity?.playRepeatedly() ?: Unit.toPromise()
+				is PlaybackEngineAction.CompletePlaylist -> playbackContinuity?.playToCompletion() ?: Unit.toPromise()
+				is PlaybackEngineAction.Previous -> {
+					restorePlaybackEngine(playbackEngineAction.libraryId)
 						.eventually { it.skipToPrevious() }
 						.then { (l, p) -> broadcastChangedFile(l, p) }
 				}
-				Action.next -> {
-					val libraryId = getLibraryId(intent) ?: return Unit.toPromise()
-
-					return restorePlaybackEngine(libraryId)
+				is PlaybackEngineAction.Next -> {
+					restorePlaybackEngine(playbackEngineAction.libraryId)
 						.eventually { it.skipToNext() }
 						.then { (l, p) -> broadcastChangedFile(l, p) }
 				}
-				Action.launchMusicService -> {
-					val libraryId = getLibraryId(intent) ?: return Unit.toPromise()
-
-					val playlistPosition = intent.getIntExtra(Bag.playlistPosition, -1)
-					if (playlistPosition < 0) return Unit.toPromise()
-
-					val playlistString = intent.getStringExtra(Bag.filePlaylist) ?: return Unit.toPromise()
-
-					return startNewPlaylist(libraryId, playlistString, playlistPosition)
-				}
-				Action.seekTo -> {
-					val libraryId = getLibraryId(intent) ?: return Unit.toPromise()
-
-					val playlistPosition = intent.getIntExtra(Bag.playlistPosition, -1)
-					if (playlistPosition < 0) return Unit.toPromise()
-
-					val filePosition = intent.getIntExtra(Bag.startPos, -1)
-					if (filePosition < 0) return Unit.toPromise()
-					return restorePlaybackEngine(libraryId)
+				is PlaybackEngineAction.Seek -> {
+					val (libraryId, playlistPosition, filePosition) = playbackEngineAction
+					restorePlaybackEngine(libraryId)
 						.eventually { it.changePosition(playlistPosition, Duration.millis(filePosition.toLong())) }
 						.then { (l, p) -> broadcastChangedFile(l, p) }
 				}
-				Action.addFileToPlaylist -> {
-					val libraryId = getLibraryId(intent) ?: return Unit.toPromise()
-
-					val fileKey = intent.getIntExtra(Bag.playlistPosition, -1)
-					return if (fileKey < 0) Unit.toPromise() else restorePlaybackEngine(libraryId)
-						.eventually { it.addFile(ServiceFile(fileKey)) }
+				is PlaybackEngineAction.AddFileToPlaylist -> {
+					val (libraryId, serviceFile) = playbackEngineAction
+					restorePlaybackEngine(libraryId)
+						.eventually { it.addFile(serviceFile) }
 						.then { applicationMessageBus.sendMessage(LibraryPlaybackMessage.PlaylistChanged(libraryId)) }
 						.eventually(LoopedInPromise.response({
 							Toast.makeText(this, getText(R.string.lbl_song_added_to_now_playing), Toast.LENGTH_SHORT).show()
 						}, this))
 				}
-				Action.removeFileAtPositionFromPlaylist -> {
-					val libraryId = getLibraryId(intent) ?: return Unit.toPromise()
+				is PlaybackEngineAction.RemoveFileAtPosition -> {
+					val (libraryId, filePosition) = playbackEngineAction
 
-					val filePosition = intent.getIntExtra(Bag.filePosition, -1)
-					return if (filePosition < 0) Unit.toPromise() else restorePlaybackEngine(libraryId)
+					restorePlaybackEngine(libraryId)
 						.eventually { it.removeFileAtPosition(filePosition) }
 						.then {
 							applicationMessageBus.sendMessage(LibraryPlaybackMessage.PlaylistChanged(libraryId))
 						}
 						.unitResponse()
 				}
-				Action.moveFile -> {
-					val libraryId = getLibraryId(intent) ?: return Unit.toPromise()
+				is PlaybackEngineAction.MoveFile -> {
+					val (libraryId, filePosition, newPosition) = playbackEngineAction
 
-					val filePosition = intent.getIntExtra(Bag.filePosition, -1)
-					val newPosition = intent.getIntExtra(Bag.newPosition, -1)
-					return if (filePosition < 0 || newPosition < 0) Unit.toPromise()
-					else  restorePlaybackEngine(libraryId)
+					restorePlaybackEngine(libraryId)
 						.eventually { it.moveFile(filePosition, newPosition) }
 						.then {
 							applicationMessageBus.sendMessage(LibraryPlaybackMessage.PlaylistChanged(libraryId))
 						}
 						.unitResponse()
 				}
-				else -> return Unit.toPromise()
 			}
 		}
 
-		fun timedActOnIntent(intent: Intent) {
+		fun handlePlaybackEngineActionOnDeadline(playbackEngineAction: PlaybackEngineAction) {
 			logger.debug("initializeEngineAndActOnIntent({})", intent)
 
 			val promisedTimeout = delay<Any?>(playbackStartTimeout)
 
-			val promisedIntentHandling = actOnIntent(intent)
+			val promisedIntentHandling = handlePlaybackEngineAction(playbackEngineAction)
 				.must {
 					promisedTimeout.cancel()
 				}
@@ -766,18 +776,27 @@ open class PlaybackService :
 		guardDestroyedService()
 
 		this.startId = startId
-		if (intent?.action == null) {
+
+		if (intent?.action == null || intent.action != Action.handleParcelable) {
 			stopSelf(startId)
 			return START_NOT_STICKY
 		}
 
-		val action = intent.action
-		if (Action.killMusicService == action || !Action.validActions.contains(action)) {
+		val parcelableAction = intent.safelyGetParcelableExtra<ParcelableAction>(Bag.parcelableAction)
+		if (parcelableAction == null) {
 			stopSelf(startId)
 			return START_NOT_STICKY
 		}
 
-		timedActOnIntent(intent)
+		when (parcelableAction) {
+			is ParcelableAction.KillPlaybackService -> {
+				stopSelf(startId)
+				return START_NOT_STICKY
+			}
+			is PlaybackEngineAction -> {
+				handlePlaybackEngineActionOnDeadline(parcelableAction)
+			}
+		}
 
 		return START_STICKY
 	}
@@ -861,8 +880,9 @@ open class PlaybackService :
 		return playbackState?.pause() ?: Unit.toPromise()
 	}
 
-	private fun restorePlaybackEngine(libraryId: LibraryId): Promise<PlaybackEngine> =
-		promisedPlaybackEngine
+	private fun restorePlaybackEngine(libraryId: LibraryId): Promise<PlaybackEngine> {
+		activeLibraryId = libraryId
+		return promisedPlaybackEngine
 			.eventually { engine ->
 				engine
 					.restoreFromSavedState(libraryId)
@@ -874,6 +894,7 @@ open class PlaybackService :
 						engine
 					}
 			}
+	}
 
 	private fun uncaughtExceptionHandler(exception: Throwable?) {
 		fun handleDisconnection() {
@@ -1043,53 +1064,67 @@ open class PlaybackService :
 	}
 
 	/* End Binder Code */
+
+	private sealed interface ParcelableAction : Parcelable {
+
+		@Parcelize
+		object KillPlaybackService : ParcelableAction
+	}
+
+	private sealed interface PlaybackEngineAction : ParcelableAction {
+		@Parcelize
+		object Initialize : PlaybackEngineAction
+
+		@Parcelize
+		object RepeatPlaylist : PlaybackEngineAction
+
+		@Parcelize
+		object CompletePlaylist : PlaybackEngineAction
+
+		@Parcelize
+		object Pause : PlaybackEngineAction
+
+		@Parcelize
+		data class TogglePlayPause(val libraryId: LibraryId) : PlaybackEngineAction
+
+		@Parcelize
+		data class Previous(val libraryId: LibraryId) : PlaybackEngineAction
+
+		@Parcelize
+		data class Next(val libraryId: LibraryId) : PlaybackEngineAction
+
+		@Parcelize
+		data class Seek(val libraryId: LibraryId, val playlistPosition: Int, val filePosition: Int) : PlaybackEngineAction
+
+		@Parcelize
+		data class AddFileToPlaylist(val libraryId: LibraryId, val serviceFile: ServiceFile) : PlaybackEngineAction
+
+		@Parcelize
+		data class RemoveFileAtPosition(val libraryId: LibraryId, val position: Int) : PlaybackEngineAction
+
+		@Parcelize
+		data class MoveFile(val libraryId: LibraryId, val from: Int, val to: Int) : PlaybackEngineAction
+	}
+
+	private sealed interface PlaybackStartingAction : PlaybackEngineAction {
+		@Parcelize
+		data class StartPlaylist(val libraryId: LibraryId, val playlistPosition: Int, val serializedPlaylist: String) : PlaybackStartingAction
+
+		@Parcelize
+		data class Play(val libraryId: LibraryId) : PlaybackStartingAction
+	}
+
 	private object Action {
 		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(Action::class.java) }
 
 		/* String constant actions */
-		val initialize by lazy { magicPropertyBuilder.buildProperty("initialize") }
-		val launchMusicService by lazy { magicPropertyBuilder.buildProperty("launchMusicService") }
-		val play by lazy { magicPropertyBuilder.buildProperty("play") }
-		val pause by lazy { magicPropertyBuilder.buildProperty("pause") }
-		val togglePlayPause by lazy { magicPropertyBuilder.buildProperty("togglePlayPause") }
-		val repeating by lazy { magicPropertyBuilder.buildProperty("repeating") }
-		val completing by lazy { magicPropertyBuilder.buildProperty("completing") }
-		val previous by lazy { magicPropertyBuilder.buildProperty("previous") }
-		val next by lazy { magicPropertyBuilder.buildProperty("next") }
-		val seekTo by lazy { magicPropertyBuilder.buildProperty("seekTo") }
-		val addFileToPlaylist by lazy { magicPropertyBuilder.buildProperty("addFileToPlaylist") }
-		val removeFileAtPositionFromPlaylist by lazy { magicPropertyBuilder.buildProperty("removeFileAtPositionFromPlaylist") }
-		val moveFile by lazy { magicPropertyBuilder.buildProperty("moveFile") }
-		val killMusicService by lazy { magicPropertyBuilder.buildProperty("killMusicService") }
-		val validActions by lazy {
-			setOf(
-				initialize,
-				launchMusicService,
-				play,
-				pause,
-				togglePlayPause,
-				previous,
-				next,
-				seekTo,
-				repeating,
-				completing,
-				addFileToPlaylist,
-				removeFileAtPositionFromPlaylist,
-				moveFile
-			)
-		}
-		val playbackStartingActions by lazy { setOf(launchMusicService, play, togglePlayPause) }
+		val handleParcelable by lazy { magicPropertyBuilder.buildProperty("handleParcelable") }
 
 		object Bag {
 			private val magicPropertyBuilder by lazy { MagicPropertyBuilder(Bag::class.java) }
 
 			/* Bag constants */
-			val libraryId by lazy { magicPropertyBuilder.buildProperty("libraryId") }
-			val playlistPosition by lazy { magicPropertyBuilder.buildProperty("playlistPosition") }
-			val filePlaylist by lazy { magicPropertyBuilder.buildProperty("filePlaylist") }
-			val startPos by lazy { magicPropertyBuilder.buildProperty("startPos") }
-			val filePosition by lazy { magicPropertyBuilder.buildProperty("filePosition") }
-			val newPosition by lazy { magicPropertyBuilder.buildProperty("newPosition") }
+			val parcelableAction by lazy { magicPropertyBuilder.buildProperty("parcelableAction") }
 		}
 	}
 

@@ -41,7 +41,7 @@ class PlaybackServiceController(private val context: Context) : ControlPlaybackS
 	}
 
 	override fun addToPlaylist(libraryId: LibraryId, serviceFile: ServiceFile) {
-		PlaybackService.addFileToPlaylist(context, libraryId, serviceFile.key)
+		PlaybackService.addFileToPlaylist(context, libraryId, serviceFile)
 	}
 
 	override fun removeFromPlaylistAtPosition(libraryId: LibraryId, position: Int) {

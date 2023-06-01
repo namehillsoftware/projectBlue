@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.support.v4.media.MediaDescriptionCompat
 import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
+import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.ProvideFileStringListForItem
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
@@ -52,7 +53,7 @@ class MediaSessionCallbackReceiver(
 		val fileId = description?.mediaId?.toIntOrNull() ?: return
 		selectedLibraryId
 			.promiseSelectedLibraryId()
-			.then { it?.also { l -> PlaybackService.addFileToPlaylist(context, l, fileId) } }
+			.then { it?.also { l -> PlaybackService.addFileToPlaylist(context, l, ServiceFile(fileId)) } }
 	}
 
 	override fun onPlayFromMediaId(mediaId: String?, extras: Bundle?) {

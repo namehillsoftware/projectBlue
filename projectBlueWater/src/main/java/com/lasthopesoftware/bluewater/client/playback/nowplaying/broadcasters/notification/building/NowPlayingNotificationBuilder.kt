@@ -99,7 +99,7 @@ class NowPlayingNotificationBuilder(
 				if (isPlaying) NotificationCompat.Action(
 					R.drawable.av_pause_white,
 					context.getString(R.string.btn_pause),
-					pendingPauseIntent(context, libraryId)
+					pendingPauseIntent(context)
 				) else NotificationCompat.Action(
 					R.drawable.av_play_white,
 					context.getString(R.string.btn_play),
