@@ -83,8 +83,11 @@ class PlaybackEngine(
 		if (libraryId == currentActiveLibraryId) {
 			return fileProgress
 				.progress
-				.then {
-					Pair(libraryId, PositionedProgressedFile(playlistPosition, playlist[playlistPosition], it))
+				.then { duration ->
+					playlist
+						.getOrNull(playlistPosition)
+						?.let { Pair(libraryId, PositionedProgressedFile(playlistPosition, it, duration)) }
+						?: Pair(libraryId, null)
 				}
 		}
 
