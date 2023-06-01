@@ -782,23 +782,17 @@ open class PlaybackService :
 			return START_NOT_STICKY
 		}
 
-		val parcelableAction = intent.safelyGetParcelableExtra<ParcelableAction>(Bag.parcelableAction)
-		if (parcelableAction == null) {
-			stopSelf(startId)
-			return START_NOT_STICKY
-		}
-
-		when (parcelableAction) {
-			is ParcelableAction.KillPlaybackService -> {
+		return when (val parcelableAction = intent.safelyGetParcelableExtra<ParcelableAction>(Bag.parcelableAction)) {
+			null, is ParcelableAction.KillPlaybackService -> {
 				stopSelf(startId)
-				return START_NOT_STICKY
+				START_NOT_STICKY
 			}
+
 			is PlaybackEngineAction -> {
 				handlePlaybackEngineActionOnDeadline(parcelableAction)
+				if (parcelableAction is PlaybackEngineAction.Pause) START_NOT_STICKY else START_STICKY
 			}
 		}
-
-		return START_STICKY
 	}
 
 	override fun onPlaybackPaused() {
