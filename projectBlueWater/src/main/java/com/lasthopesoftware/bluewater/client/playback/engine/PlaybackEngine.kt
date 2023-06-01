@@ -81,14 +81,16 @@ class PlaybackEngine(
 		val currentActiveLibraryId = activeLibraryId.get()
 
 		if (libraryId == currentActiveLibraryId) {
-			return fileProgress
-				.progress
-				.then { duration ->
-					playlist
-						.getOrNull(playlistPosition)
-						?.let { Pair(libraryId, PositionedProgressedFile(playlistPosition, it, duration)) }
-						?: Pair(libraryId, null)
+			return playlist
+				.getOrNull(playlistPosition)
+				?.let { serviceFile ->
+					fileProgress
+						.progress
+						.then { p ->
+							Pair(libraryId, PositionedProgressedFile(playlistPosition, serviceFile, p))
+						}
 				}
+				?: Pair(libraryId, null).toPromise()
 		}
 
 		return pausePlayback()
