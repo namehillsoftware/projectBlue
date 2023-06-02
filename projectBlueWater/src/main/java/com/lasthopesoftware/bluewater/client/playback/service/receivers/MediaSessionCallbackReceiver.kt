@@ -11,6 +11,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.Pr
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.menu.handlers.access.LaunchPlaybackFromResult
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.remote.RemoteBrowserService
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 
@@ -19,12 +20,12 @@ class MediaSessionCallbackReceiver(
 	private val selectedLibraryId: ProvideSelectedLibraryId,
 	private val fileStringListProvider: ProvideFileStringListForItem,
 ) : MediaSessionCompat.Callback() {
-	override fun onPrepare() = PlaybackService.initialize(context)
+	override fun onPrepare() {
+		withSelectedLibraryId { PlaybackService.initialize(context, it) }
+	}
 
     override fun onPlay() {
-		selectedLibraryId
-			.promiseSelectedLibraryId()
-			.then { it?.also { l -> PlaybackService.play(context, l) } }
+		withSelectedLibraryId { l -> PlaybackService.play(context, l) }
 	}
 
 	override fun onStop() = PlaybackService.pause(context)
@@ -32,28 +33,25 @@ class MediaSessionCallbackReceiver(
     override fun onPause() = PlaybackService.pause(context)
 
     override fun onSkipToNext() {
-		selectedLibraryId
-			.promiseSelectedLibraryId()
-			.then { it?.also { l -> PlaybackService.next(context, l) } }
+		withSelectedLibraryId { l -> PlaybackService.next(context, l) }
 	}
 
 	override fun onSkipToPrevious() {
-		selectedLibraryId
-			.promiseSelectedLibraryId()
-			.then { it?.also { l -> PlaybackService.previous(context, l) } }
+		withSelectedLibraryId { l -> PlaybackService.previous(context, l) }
 	}
 
-	override fun onSetRepeatMode(repeatMode: Int) =
-		when (repeatMode) {
-			PlaybackStateCompat.REPEAT_MODE_ALL -> PlaybackService.setRepeating(context)
-			else -> PlaybackService.setCompleting(context)
+	override fun onSetRepeatMode(repeatMode: Int) {
+		withSelectedLibraryId { l ->
+			when (repeatMode) {
+				PlaybackStateCompat.REPEAT_MODE_ALL -> PlaybackService.setRepeating(context, l)
+				else -> PlaybackService.setCompleting(context, l)
+			}
 		}
+	}
 
 	override fun onAddQueueItem(description: MediaDescriptionCompat?) {
 		val fileId = description?.mediaId?.toIntOrNull() ?: return
-		selectedLibraryId
-			.promiseSelectedLibraryId()
-			.then { it?.also { l -> PlaybackService.addFileToPlaylist(context, l, ServiceFile(fileId)) } }
+		withSelectedLibraryId { l -> PlaybackService.addFileToPlaylist(context, l, ServiceFile(fileId)) }
 	}
 
 	override fun onPlayFromMediaId(mediaId: String?, extras: Bundle?) {
@@ -65,17 +63,20 @@ class MediaSessionCallbackReceiver(
 		val ids = itemIdParts.drop(1).mapNotNull { id -> id.toIntOrNull() }
 		val itemId = ids.firstOrNull() ?: return
 
-		selectedLibraryId.promiseSelectedLibraryId().then {
-			it?.also { libraryId ->
-				val promisedFileStringList = fileStringListProvider
-					.promiseFileStringList(libraryId, ItemId(itemId), FileListParameters.Options.None)
+		withSelectedLibraryId { libraryId ->
+			val promisedFileStringList = fileStringListProvider
+				.promiseFileStringList(libraryId, ItemId(itemId), FileListParameters.Options.None)
 
-				if (ids.size < 2) {
-					promisedFileStringList.then(LaunchPlaybackFromResult(context, libraryId))
-				} else {
-					promisedFileStringList.then { sl -> PlaybackService.launchMusicService(context, libraryId, ids[1], sl) }
-				}
+			if (ids.size < 2) {
+				promisedFileStringList.then(LaunchPlaybackFromResult(context, libraryId))
+			} else {
+				promisedFileStringList.then { sl -> PlaybackService.launchMusicService(context, libraryId, ids[1], sl) }
 			}
 		}
 	}
+
+	private fun withSelectedLibraryId(action: (LibraryId) -> Unit) =
+		selectedLibraryId.promiseSelectedLibraryId().then {
+			it?.also(action)
+		}
 }

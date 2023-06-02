@@ -48,8 +48,8 @@ class PlaybackServiceController(private val context: Context) : ControlPlaybackS
 		PlaybackService.removeFileAtPositionFromPlaylist(context, libraryId, position)
 	}
 
-	override fun setRepeating() = PlaybackService.setRepeating(context)
+	override fun setRepeating(libraryId: LibraryId) = PlaybackService.setRepeating(context, libraryId)
 
-	override fun setCompleting() = PlaybackService.setCompleting(context)
+	override fun setCompleting(libraryId: LibraryId) = PlaybackService.setCompleting(context, libraryId)
 	override fun kill() = PlaybackService.killService(context)
 }

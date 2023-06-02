@@ -162,8 +162,8 @@ open class PlaybackService :
 
 		private val playbackStartTimeout = Duration.standardMinutes(2)
 
-		fun initialize(context: Context) =
-			context.safelyStartService(getNewSelfIntent(context, PlaybackEngineAction.Initialize))
+		fun initialize(context: Context, libraryId: LibraryId) =
+			context.safelyStartService(getNewSelfIntent(context, PlaybackEngineAction.Initialize(libraryId)))
 
 		fun launchMusicService(context: Context, libraryId: LibraryId, serializedFileList: String) =
 			launchMusicService(context, libraryId, 0, serializedFileList)
@@ -206,14 +206,14 @@ open class PlaybackService :
 
 		@JvmStatic
 		fun pause(context: Context) =
-			context.safelyStartService(getNewSelfIntent(context, PlaybackEngineAction.Pause))
+			context.safelyStartService(getNewSelfIntent(context, PlaybackServiceAction.Pause))
 
 		@JvmStatic
 		fun pendingPauseIntent(context: Context): PendingIntent =
 			PendingIntent.getService(
 				context,
 				0,
-				getNewSelfIntent(context, PlaybackEngineAction.Pause),
+				getNewSelfIntent(context, PlaybackServiceAction.Pause),
 				PendingIntent.FLAG_UPDATE_CURRENT.makePendingIntentImmutable())
 
 		fun togglePlayPause(context: Context, libraryId: LibraryId) =
@@ -254,9 +254,11 @@ open class PlaybackService :
 				getNewSelfIntent(context, PlaybackEngineAction.Previous(libraryId)),
 				PendingIntent.FLAG_UPDATE_CURRENT.makePendingIntentImmutable())
 
-		fun setRepeating(context: Context) = context.safelyStartService(getNewSelfIntent(context, PlaybackEngineAction.RepeatPlaylist))
+		fun setRepeating(context: Context, libraryId: LibraryId) =
+			context.safelyStartService(getNewSelfIntent(context, PlaybackEngineAction.RepeatPlaylist(libraryId)))
 
-		fun setCompleting(context: Context) = context.safelyStartService(getNewSelfIntent(context, PlaybackEngineAction.CompletePlaylist))
+		fun setCompleting(context: Context, libraryId: LibraryId) =
+			context.safelyStartService(getNewSelfIntent(context, PlaybackEngineAction.CompletePlaylist(libraryId)))
 
 		fun addFileToPlaylist(context: Context, libraryId: LibraryId, serviceFile: ServiceFile) {
 			context.safelyStartService(
@@ -286,13 +288,13 @@ open class PlaybackService :
 		}
 
 		fun killService(context: Context) =
-			context.safelyStartService(getNewSelfIntent(context, ParcelableAction.KillPlaybackService))
+			context.safelyStartService(getNewSelfIntent(context, PlaybackServiceAction.KillPlaybackService))
 
 		fun pendingKillService(context: Context): PendingIntent =
 			PendingIntent.getService(
 				context,
 				0,
-				getNewSelfIntent(context, ParcelableAction.KillPlaybackService),
+				getNewSelfIntent(context, PlaybackServiceAction.KillPlaybackService),
 				PendingIntent.FLAG_UPDATE_CURRENT.makePendingIntentImmutable())
 
 		fun promiseIsMarkedForPlay(context: Context, libraryId: LibraryId): Promise<Boolean> =
@@ -303,10 +305,10 @@ open class PlaybackService :
 					isPlaying
 				}
 
-		private fun getNewSelfIntent(context: Context, parcelableAction: ParcelableAction): Intent {
+		private fun getNewSelfIntent(context: Context, playbackServiceAction: PlaybackServiceAction): Intent {
 			val newIntent = context.getIntent<PlaybackService>()
 			newIntent.action = Action.handleParcelable
-			newIntent.putExtra(Bag.parcelableAction, parcelableAction)
+			newIntent.putExtra(Bag.parcelableAction, playbackServiceAction)
 			return newIntent
 		}
 
@@ -696,12 +698,16 @@ open class PlaybackService :
 			return when (playbackEngineAction) {
 				is PlaybackStartingAction -> handlePlaybackStartingAction(playbackEngineAction)
 				is PlaybackEngineAction.TogglePlayPause -> {
-					if (isMarkedForPlay) handlePlaybackEngineAction(PlaybackEngineAction.Pause)
+					if (isMarkedForPlay) pausePlayback()
 					else handlePlaybackStartingAction(PlaybackStartingAction.Play(playbackEngineAction.libraryId))
 				}
-				is PlaybackEngineAction.Pause, PlaybackEngineAction.Initialize -> pausePlayback()
-				is PlaybackEngineAction.RepeatPlaylist -> playbackContinuity?.playRepeatedly() ?: Unit.toPromise()
-				is PlaybackEngineAction.CompletePlaylist -> playbackContinuity?.playToCompletion() ?: Unit.toPromise()
+				is PlaybackEngineAction.Initialize -> restorePlaybackEngine(playbackEngineAction.libraryId).unitResponse()
+				is PlaybackEngineAction.RepeatPlaylist -> {
+					restorePlaybackEngine(playbackEngineAction.libraryId).eventually { it.playRepeatedly() }
+				}
+				is PlaybackEngineAction.CompletePlaylist -> {
+					restorePlaybackEngine(playbackEngineAction.libraryId).eventually { it.playToCompletion() }
+				}
 				is PlaybackEngineAction.Previous -> {
 					restorePlaybackEngine(playbackEngineAction.libraryId)
 						.eventually { it.skipToPrevious() }
@@ -750,7 +756,7 @@ open class PlaybackService :
 			}
 		}
 
-		fun handlePlaybackEngineActionOnDeadline(playbackEngineAction: PlaybackEngineAction) {
+		fun processPlaybackEngineActionOnDeadline(playbackEngineAction: PlaybackEngineAction) {
 			logger.debug("initializeEngineAndActOnIntent({})", intent)
 
 			val promisedTimeout = delay<Any?>(playbackStartTimeout)
@@ -772,6 +778,24 @@ open class PlaybackService :
 			Promise.whenAny(promisedIntentHandling, timeoutResponse).excuse(unhandledRejectionHandler)
 		}
 
+		fun processPlaybackServiceAction(playbackServiceAction: PlaybackServiceAction?): Int =
+			when (playbackServiceAction) {
+				null, is PlaybackServiceAction.KillPlaybackService -> {
+					stopSelf(startId)
+					START_NOT_STICKY
+				}
+
+				is PlaybackServiceAction.Pause -> {
+					pausePlayback()
+					START_NOT_STICKY
+				}
+
+				is PlaybackEngineAction -> {
+					processPlaybackEngineActionOnDeadline(playbackServiceAction)
+					START_STICKY
+				}
+			}
+
 		guardDestroyedService()
 
 		this.startId = startId
@@ -781,17 +805,7 @@ open class PlaybackService :
 			return START_NOT_STICKY
 		}
 
-		return when (val parcelableAction = intent.safelyGetParcelableExtra<ParcelableAction>(Bag.parcelableAction)) {
-			null, is ParcelableAction.KillPlaybackService -> {
-				stopSelf(startId)
-				START_NOT_STICKY
-			}
-
-			is PlaybackEngineAction -> {
-				handlePlaybackEngineActionOnDeadline(parcelableAction)
-				if (parcelableAction is PlaybackEngineAction.Pause) START_NOT_STICKY else START_STICKY
-			}
-		}
+		return processPlaybackServiceAction(intent.safelyGetParcelableExtra(Bag.parcelableAction))
 	}
 
 	override fun onPlaybackPaused() {
@@ -1058,53 +1072,56 @@ open class PlaybackService :
 
 	/* End Binder Code */
 
-	private sealed interface ParcelableAction : Parcelable {
+	private sealed interface PlaybackServiceAction : Parcelable {
 
 		@Parcelize
-		object KillPlaybackService : ParcelableAction
+		object KillPlaybackService : PlaybackServiceAction
+
+		@Parcelize
+		object Pause : PlaybackServiceAction
 	}
 
-	private sealed interface PlaybackEngineAction : ParcelableAction {
-		@Parcelize
-		object Initialize : PlaybackEngineAction
+	private sealed interface PlaybackEngineAction : PlaybackServiceAction {
+
+		val libraryId: LibraryId
 
 		@Parcelize
-		object RepeatPlaylist : PlaybackEngineAction
+		data class Initialize(override val libraryId: LibraryId) : PlaybackEngineAction
 
 		@Parcelize
-		object CompletePlaylist : PlaybackEngineAction
+		data class RepeatPlaylist(override val libraryId: LibraryId) : PlaybackEngineAction
 
 		@Parcelize
-		object Pause : PlaybackEngineAction
+		data class CompletePlaylist(override val libraryId: LibraryId) : PlaybackEngineAction
 
 		@Parcelize
-		data class TogglePlayPause(val libraryId: LibraryId) : PlaybackEngineAction
+		data class TogglePlayPause(override val libraryId: LibraryId) : PlaybackEngineAction
 
 		@Parcelize
-		data class Previous(val libraryId: LibraryId) : PlaybackEngineAction
+		data class Previous(override val libraryId: LibraryId) : PlaybackEngineAction
 
 		@Parcelize
-		data class Next(val libraryId: LibraryId) : PlaybackEngineAction
+		data class Next(override val libraryId: LibraryId) : PlaybackEngineAction
 
 		@Parcelize
-		data class Seek(val libraryId: LibraryId, val playlistPosition: Int, val filePosition: Int) : PlaybackEngineAction
+		data class Seek(override val libraryId: LibraryId, val playlistPosition: Int, val filePosition: Int) : PlaybackEngineAction
 
 		@Parcelize
-		data class AddFileToPlaylist(val libraryId: LibraryId, val serviceFile: ServiceFile) : PlaybackEngineAction
+		data class AddFileToPlaylist(override val libraryId: LibraryId, val serviceFile: ServiceFile) : PlaybackEngineAction
 
 		@Parcelize
-		data class RemoveFileAtPosition(val libraryId: LibraryId, val position: Int) : PlaybackEngineAction
+		data class RemoveFileAtPosition(override val libraryId: LibraryId, val position: Int) : PlaybackEngineAction
 
 		@Parcelize
-		data class MoveFile(val libraryId: LibraryId, val from: Int, val to: Int) : PlaybackEngineAction
+		data class MoveFile(override val libraryId: LibraryId, val from: Int, val to: Int) : PlaybackEngineAction
 	}
 
 	private sealed interface PlaybackStartingAction : PlaybackEngineAction {
 		@Parcelize
-		data class StartPlaylist(val libraryId: LibraryId, val playlistPosition: Int, val serializedPlaylist: String) : PlaybackStartingAction
+		data class StartPlaylist(override val libraryId: LibraryId, val playlistPosition: Int, val serializedPlaylist: String) : PlaybackStartingAction
 
 		@Parcelize
-		data class Play(val libraryId: LibraryId) : PlaybackStartingAction
+		data class Play(override val libraryId: LibraryId) : PlaybackStartingAction
 	}
 
 	private object Action {

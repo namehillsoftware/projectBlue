@@ -29,9 +29,9 @@ interface ControlPlaybackService {
 
 	fun removeFromPlaylistAtPosition(libraryId: LibraryId, position: Int)
 
-	fun setRepeating()
+	fun setRepeating(libraryId: LibraryId)
 
-	fun setCompleting()
+	fun setCompleting(libraryId: LibraryId)
 
 	fun kill()
 }

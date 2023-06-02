@@ -194,8 +194,11 @@ class NowPlayingFilePropertiesViewModel(
 	fun toggleRepeating() {
 		with (isRepeatingState) {
 			value = !value
-			if (value) playbackService.setRepeating()
-			else playbackService.setCompleting()
+
+			activeLibraryId.value?.also {
+				if (value) playbackService.setRepeating(it)
+				else playbackService.setCompleting(it)
+			}
 		}
 	}
 
