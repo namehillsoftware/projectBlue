@@ -11,8 +11,7 @@ import com.lasthopesoftware.bluewater.shared.android.notifications.control.Contr
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromiseProxy
 import com.lasthopesoftware.resources.strings.GetStringResources
-
-private const val connectingNotificationId = 70
+import com.namehillsoftware.handoff.promises.response.ImmediateAction
 
 class NotifyingLibraryConnectionProvider(
 	private val notificationBuilders: ProduceNotificationBuilders,
@@ -20,16 +19,17 @@ class NotifyingLibraryConnectionProvider(
 	private val notificationsConfiguration: NotificationsConfiguration,
 	private val notifications: ControlNotifications,
 	private val stringResources: GetStringResources,
-) : ProvideLibraryConnections {
+) : ProvideLibraryConnections, (BuildingConnectionStatus) -> Unit, ImmediateAction {
 	override fun promiseLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?> = object : ProgressingPromiseProxy<BuildingConnectionStatus, IConnectionProvider?>() {
 		init {
 		    val promisedConnection = inner.promiseLibraryConnection(libraryId)
 			proxy(promisedConnection)
-			promisedConnection.updates(::handleBuildConnectionStatusChange)
+			promisedConnection.updates(this@NotifyingLibraryConnectionProvider)
+			promisedConnection.must(this@NotifyingLibraryConnectionProvider)
 		}
 	}
 
-	private fun handleBuildConnectionStatusChange(status: BuildingConnectionStatus) {
+	override fun invoke(status: BuildingConnectionStatus) {
 		val notifyBuilder = notificationBuilders.getNotificationBuilder(notificationsConfiguration.notificationChannel)
 		notifyBuilder
 			.setOngoing(false)
@@ -37,20 +37,17 @@ class NotifyingLibraryConnectionProvider(
 
 		when (status) {
 			BuildingConnectionStatus.GettingLibrary -> notifyBuilder.setContentText(stringResources.gettingLibrary)
-			BuildingConnectionStatus.GettingLibraryFailed -> {
-				return
-			}
 			BuildingConnectionStatus.SendingWakeSignal -> notifyBuilder.setContentText(stringResources.sendingWakeSignal)
 			BuildingConnectionStatus.BuildingConnection -> notifyBuilder.setContentText(stringResources.connectingToServerLibrary)
-			BuildingConnectionStatus.BuildingConnectionFailed -> {
+			BuildingConnectionStatus.BuildingConnectionComplete -> notifyBuilder.setContentText(stringResources.connected)
+			BuildingConnectionStatus.GettingLibraryFailed, BuildingConnectionStatus.BuildingConnectionFailed -> {
 				return
 			}
-			BuildingConnectionStatus.BuildingConnectionComplete -> notifyBuilder.setContentText(stringResources.connected)
 		}
 
 		notifications.notifyForeground(
 			buildFullNotification(notifyBuilder),
-			connectingNotificationId
+			notificationsConfiguration.notificationId
 		)
 	}
 
@@ -59,4 +56,8 @@ class NotifyingLibraryConnectionProvider(
 			.setSmallIcon(R.drawable.now_playing_status_icon_white)
 			.setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
 			.build()
+
+	override fun act() {
+		notifications.removeNotification(notificationsConfiguration.notificationId)
+	}
 }
