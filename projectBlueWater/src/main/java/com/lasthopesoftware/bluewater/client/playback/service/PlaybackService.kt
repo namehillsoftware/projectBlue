@@ -153,6 +153,7 @@ open class PlaybackService :
 		private val logger by lazyLogger<PlaybackService>()
 
 		private const val playingNotificationId = 42
+		private const val connectingNotificationId = 70
 
 		private const val numberOfDisconnects = 3
 		private val disconnectResetDuration = Duration.standardMinutes(1)
@@ -335,12 +336,12 @@ open class PlaybackService :
 
 	/* End streamer intent helpers */
 
-	private val lifecycleCloseableManager = AutoCloseableManager()
+	private val playbackEngineCloseables = AutoCloseableManager()
 	private val lazyObservationScheduler = lazy { ExecutorScheduler(ThreadPools.compute, true) }
 	private val binder by lazy { GenericBinder(this) }
 	private val notificationManager by lazy { getSystemService(NOTIFICATION_SERVICE) as NotificationManager }
 	private val audioManager by lazy { getSystemService(AUDIO_SERVICE) as AudioManager }
-	private val applicationMessageBus by lazy { getApplicationMessageBus().getScopedMessageBus().also(lifecycleCloseableManager::manage) }
+	private val applicationMessageBus by lazy { getApplicationMessageBus().getScopedMessageBus().also(playbackEngineCloseables::manage) }
 	private val applicationSettings by lazy { getApplicationSettingsRepository() }
 	private val libraryRepository by lazy { LibraryRepository(this) }
 	private val playlistVolumeManager by lazy { PlaylistVolumeManager(1.0f) }
@@ -348,12 +349,24 @@ open class PlaybackService :
 
 	private val channelConfiguration by lazy { SharedChannelProperties(this) }
 
+	private val activatedPlaybackNotificationChannelName by lazy {
+		val notificationChannelActivator =
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) NotificationChannelActivator(notificationManager)
+			else NoOpChannelActivator()
+		notificationChannelActivator.activateChannel(channelConfiguration)
+	}
+
 	private val playbackNotificationsConfiguration by lazy {
-		val notificationChannelActivator = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) NotificationChannelActivator(notificationManager) else NoOpChannelActivator()
-		val channelName = notificationChannelActivator.activateChannel(channelConfiguration)
 		NotificationsConfiguration(
-			channelName,
+			activatedPlaybackNotificationChannelName,
 			playingNotificationId
+		)
+	}
+
+	private val connectionNotificationsConfiguration by lazy {
+		NotificationsConfiguration(
+			activatedPlaybackNotificationChannelName,
+			connectingNotificationId
 		)
 	}
 
@@ -395,7 +408,7 @@ open class PlaybackService :
 		NotifyingLibraryConnectionProvider(
 			NotificationBuilderProducer(this),
 			connectionSessionManager,
-			playbackNotificationsConfiguration,
+			connectionNotificationsConfiguration,
 			lazyNotificationController.value,
 			StringResources(this),
 		)
@@ -483,7 +496,7 @@ open class PlaybackService :
 				imageProvider,
 				MediaSessionController(mediaSession),
 				applicationMessageBus
-			).also(lifecycleCloseableManager::manage)
+			).also(playbackEngineCloseables::manage)
 		}
 	}
 
@@ -496,7 +509,7 @@ open class PlaybackService :
 				libraryFilePropertiesProvider,
 				imageProvider
 			)
-				.also(lifecycleCloseableManager::manage)
+				.also(playbackEngineCloseables::manage)
 				.let { builder ->
 					PlaybackNotificationBroadcaster(
 						nowPlayingRepository,
@@ -506,7 +519,7 @@ open class PlaybackService :
 						playbackNotificationsConfiguration,
 						builder,
 						playbackStartingNotificationBuilder,
-					).also(lifecycleCloseableManager::manage)
+					).also(playbackEngineCloseables::manage)
 				}
 		}
 	}
@@ -559,7 +572,7 @@ open class PlaybackService :
 		)
 	}
 
-	private val playlistPlaybackBootstrapper by lazy { PlaylistPlaybackBootstrapper(playlistVolumeManager).also(lifecycleCloseableManager::manage) }
+	private val playlistPlaybackBootstrapper by lazy { PlaylistPlaybackBootstrapper(playlistVolumeManager).also(playbackEngineCloseables::manage) }
 
 	private val promisedPlaybackEngine by RetryOnRejectionLazyPromise {
 		val httpDataSourceFactory = HttpDataSourceFactoryProvider(
@@ -590,7 +603,7 @@ open class PlaybackService :
 			}
 			.then { preparationSourceProvider ->
 				PreparedPlaybackQueueResourceManagement(preparationSourceProvider, preparationSourceProvider)
-					.also(lifecycleCloseableManager::manage)
+					.also(playbackEngineCloseables::manage)
 			}
 			.then { preparedPlaybackQueueResourceManagement ->
 				val engine = PlaybackEngine(
@@ -602,13 +615,13 @@ open class PlaybackService :
 
 				engine
 					.also {
-						lifecycleCloseableManager.manage(engine)
+						playbackEngineCloseables.manage(engine)
 						playbackState = AudioManagingPlaybackStateChanger(
 							engine,
 							engine,
 							AudioFocusManagement(audioManager),
 							playlistVolumeManager
-						).also(lifecycleCloseableManager::manage)
+						).also(playbackEngineCloseables::manage)
 					}
 					.setOnPlaybackStarted(this)
 					.setOnPlaybackPaused(this)
@@ -791,8 +804,10 @@ open class PlaybackService :
 				}
 
 				is PlaybackEngineAction -> {
+					val wasMarkedForPlay = isMarkedForPlay
 					processPlaybackEngineActionOnDeadline(playbackServiceAction)
-					START_STICKY
+					if (!wasMarkedForPlay || playbackServiceAction !is PlaybackEngineAction.TogglePlayPause) START_STICKY
+					else START_NOT_STICKY
 				}
 			}
 
@@ -1065,7 +1080,7 @@ open class PlaybackService :
 				if (playbackThread.isInitializing()) playbackThread.value.then { it.quitSafely() }
 				else Unit.toPromise()
 			}
-			.must { lifecycleCloseableManager.close() }
+			.must { playbackEngineCloseables.close() }
 
 		super.onDestroy()
 	}
