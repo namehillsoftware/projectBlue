@@ -47,16 +47,19 @@ class WhenATrackIsSwitched {
 				),
 				PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
 			)
-		playbackEngine.startPlaylist(
-			LibraryId(libraryId),
-			mutableListOf(
-				ServiceFile(1),
-				ServiceFile(2),
-				ServiceFile(3),
-				ServiceFile(4),
-				ServiceFile(5)
-			), 0, Duration.ZERO
-		)
+		playbackEngine
+			.startPlaylist(
+				LibraryId(libraryId),
+				mutableListOf(
+					ServiceFile(1),
+					ServiceFile(2),
+					ServiceFile(3),
+					ServiceFile(4),
+					ServiceFile(5)
+				), 0, Duration.ZERO
+			)
+			.toExpiringFuture()
+			.get()
 		val futurePositionedFile = playbackEngine.changePosition(3, Duration.ZERO).toExpiringFuture()
 		fakePlaybackPreparerProvider.deferredResolution.resolve()
 		futurePositionedFile.get()

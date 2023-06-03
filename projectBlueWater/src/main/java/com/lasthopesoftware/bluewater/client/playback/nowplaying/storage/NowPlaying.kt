@@ -12,7 +12,11 @@ data class NowPlaying(
     val isRepeating: Boolean
 ) {
 
-	val playingFile: PositionedFile?
-		get() =
-			playlistPosition.takeIf { it > -1 && it < playlist.size }?.let { PositionedFile(it, playlist[it]) }
+	val playingFile by lazy {
+		playlistPosition.takeIf { it > -1 && it < playlist.size }?.let { PositionedFile(it, playlist[it]) }
+	}
+
+	val positionedPlaylist by lazy {
+		playlist.mapIndexed(::PositionedFile)
+	}
 }

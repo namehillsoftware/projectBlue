@@ -57,6 +57,8 @@ class WhenATrackIsSwitchedTwice {
 				0,
 				Duration.ZERO
 			)
+			.toExpiringFuture()
+			.get()
 		fakePlaybackPreparerProvider.deferredResolution.resolve()
 		playbackEngine.changePosition(3, Duration.ZERO).toExpiringFuture()
 

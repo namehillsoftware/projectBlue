@@ -13,21 +13,23 @@ abstract class PlaybackNotificationRouter(
 	private val autoCloseableManager = AutoCloseableManager()
 
 	init {
-		autoCloseableManager.manage(registerApplicationMessages.registerReceiver { _: LibraryPlaybackMessage.TrackChanged ->
-			notifyPlayingFileUpdated()
-		})
-		autoCloseableManager.manage(registerApplicationMessages.registerReceiver { _: PlaybackMessage.PlaybackStarted ->
-			notifyPlaying()
-		})
-		autoCloseableManager.manage(registerApplicationMessages.registerReceiver<PlaybackMessage.PlaybackPaused> {
-			notifyPaused()
-		})
-		autoCloseableManager.manage(registerApplicationMessages.registerReceiver<PlaybackMessage.PlaybackInterrupted> {
-			notifyInterrupted()
-		})
-		autoCloseableManager.manage(registerApplicationMessages.registerReceiver<PlaybackMessage.PlaybackStopped> {
-			notifyStopped()
-		})
+		with(autoCloseableManager) {
+			manage(registerApplicationMessages.registerReceiver<LibraryPlaybackMessage.TrackChanged> {
+				notifyPlayingFileUpdated()
+			})
+			manage(registerApplicationMessages.registerReceiver<PlaybackMessage.PlaybackStarted> {
+				notifyPlaying()
+			})
+			manage(registerApplicationMessages.registerReceiver<PlaybackMessage.PlaybackPaused> {
+				notifyPaused()
+			})
+			manage(registerApplicationMessages.registerReceiver<PlaybackMessage.PlaybackInterrupted> {
+				notifyInterrupted()
+			})
+			manage(registerApplicationMessages.registerReceiver<PlaybackMessage.PlaybackStopped> {
+				notifyStopped()
+			})
+		}
 	}
 
 	protected abstract fun notifyPlaying()

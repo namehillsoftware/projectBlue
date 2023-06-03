@@ -13,6 +13,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.Co
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.FakeNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
 import org.junit.jupiter.api.Test
@@ -48,6 +49,8 @@ class WhenNotObservingPlayback {
 					ServiceFile(5)
 				), 0, Duration.ZERO
 			)
+			.toExpiringFuture()
+			.get()
 		val resolvablePlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve()
 		fakePlaybackPreparerProvider.deferredResolution.resolve()
 		resolvablePlaybackHandler.resolve()

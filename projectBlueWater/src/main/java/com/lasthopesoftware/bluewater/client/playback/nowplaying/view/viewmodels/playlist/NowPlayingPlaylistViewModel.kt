@@ -80,7 +80,7 @@ class NowPlayingPlaylistViewModel(
 			?.let(nowPlayingRepository::promiseNowPlaying)
 			.keepPromise()
 			.then { np ->
-				nowPlayingListState.value = np?.playlist?.mapIndexed(::PositionedFile) ?: emptyList()
+				nowPlayingListState.value = np?.positionedPlaylist ?: emptyList()
 				isRepeatingState.value = np?.isRepeating ?: false
 			}
 }

@@ -1,10 +1,9 @@
-package com.lasthopesoftware.bluewater.client.playback.engine.GivenANewPlaybackEngine.AndAnEmptyPlaylist
+package com.lasthopesoftware.bluewater.client.playback.engine.GivenANewPlaybackEngine.AndStateIsBeingRestored
 
-import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
+import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakePlaybackQueueConfiguration
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.selected.GivenANullConnection.AndTheSelectedLibraryChanges.FakeSelectedLibraryProvider
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
@@ -12,17 +11,20 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedProgressedF
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.FakeDeferredPlayableFilePreparationSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CompletingFileQueueProvider
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.CyclicalFileQueueProvider
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.FakeNowPlayingState
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
+import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import io.mockk.every
+import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
+import org.joda.time.Duration
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
-private const val libraryId = 55
+private const val libraryId = 858
 
-class WhenRestoringEngineStateAndResumingPlayback {
+class WhenResumingPlayback {
 	private val mut by lazy {
 		val fakePlaybackPreparerProvider = FakeDeferredPlayableFilePreparationSourceProvider()
 		val library = Library()
@@ -30,34 +32,46 @@ class WhenRestoringEngineStateAndResumingPlayback {
 		library.setNowPlayingProgress(543)
 		library.setNowPlayingId(586)
 
-		val libraryProvider = FakeLibraryRepository(library)
-
-		val repository =
-			NowPlayingRepository(
-				FakeSelectedLibraryProvider(),
-				libraryProvider,
-				libraryProvider,
-				FakeNowPlayingState(),
+		val deferredNowPlaying = DeferredPromise<NowPlaying?>(
+			NowPlaying(
+				libraryId = LibraryId(libraryId),
+				playlist = listOf(ServiceFile(312), ServiceFile(982), ServiceFile(83)),
+				playlistPosition = 0,
+				filePosition = 556,
+				isRepeating = false
 			)
-		PlaybackEngine(
+		)
+
+		val engine = PlaybackEngine(
 			PreparedPlaybackQueueResourceManagement(fakePlaybackPreparerProvider, FakePlaybackQueueConfiguration()),
 			listOf(CompletingFileQueueProvider(), CyclicalFileQueueProvider()),
-			repository,
+			mockk {
+				every { promiseNowPlaying(library.libraryId) } returns deferredNowPlaying
+			},
 			PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
 		)
+
+		Pair(deferredNowPlaying, engine)
 	}
 
 	private var restoredState: Pair<LibraryId, PositionedProgressedFile?>? = null
 
 	@BeforeAll
 	fun act() {
-		restoredState = mut.restoreFromSavedState(LibraryId(libraryId)).toExpiringFuture().get()
+		val (deferredNowPlaying, engine) = mut
 
-		mut.resume().toExpiringFuture().get()
+		val futureRestoredState = engine.restoreFromSavedState(LibraryId(libraryId)).toExpiringFuture()
+
+		val futureResume = engine.resume().toExpiringFuture()
+
+		deferredNowPlaying.resolve()
+
+		restoredState = futureRestoredState.get()
+		futureResume.get()
 	}
 
 	@Test
 	fun `then the restored state is correct`() {
-		assertThat(restoredState).isEqualTo(Pair(LibraryId(libraryId), null))
+		assertThat(restoredState).isEqualTo(Pair(LibraryId(libraryId), PositionedProgressedFile(0, ServiceFile(312), Duration.millis(556))))
 	}
 }

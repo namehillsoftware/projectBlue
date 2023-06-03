@@ -14,6 +14,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.Co
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.FakeNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -84,6 +85,8 @@ class WhenObservingPlayback {
 				0,
 				Duration.ZERO
 			)
+			.toExpiringFuture()
+			.get()
 		var playingPlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve()
 		for (i in 0..3) {
 			val newPlayingPlaybackHandler =
