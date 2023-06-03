@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.actvity.viewmodels.GivenAPlayingFile.AndTheLibraryConnectionIsReadOnly
+package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.fileproperties.GivenAPlayingFile.AndTheLibraryConnectionIsReadOnly
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
@@ -119,10 +119,5 @@ class WhenItsPropertiesChanges {
 	@Test
 	fun `then the properties are read only`() {
 		assertThat(viewModel.isReadOnly.value).isTrue
-	}
-
-	@Test
-	fun `then playback is marked as repeating`() {
-		assertThat(viewModel.isRepeating.value).isTrue
 	}
 }

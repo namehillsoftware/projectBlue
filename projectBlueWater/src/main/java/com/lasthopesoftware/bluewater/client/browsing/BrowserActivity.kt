@@ -343,6 +343,7 @@ class BrowserActivity :
 		NowPlayingPlaylistViewModel(
 			messageBus,
 			nowPlayingState,
+			playbackServiceController,
 		)
 	}
 

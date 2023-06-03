@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.actvity.viewmodels.GivenAPlayingFile.AndAnInitializedViewModel.AndTheFileChanges.AndAConnectionErrorOccursEventually.AndTheConnectionIsRestored
+package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.fileproperties.GivenAPlayingFile.AndAnInitializedViewModel.AndTheFileChanges.AndAConnectionErrorOccursEventually.AndTheConnectionIsRestored
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties

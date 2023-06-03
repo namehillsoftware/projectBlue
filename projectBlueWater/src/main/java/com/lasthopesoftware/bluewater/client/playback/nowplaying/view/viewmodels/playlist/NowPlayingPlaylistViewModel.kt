@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
+import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.LibraryPlaybackMessage
 import com.lasthopesoftware.bluewater.shared.android.ui.components.dragging.move
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
@@ -15,7 +16,8 @@ import kotlinx.coroutines.flow.asStateFlow
 
 class NowPlayingPlaylistViewModel(
 	applicationMessages: RegisterForApplicationMessages,
-	private val nowPlayingRepository: GetNowPlayingState
+	private val nowPlayingRepository: GetNowPlayingState,
+	private val playbackService: ControlPlaybackService,
 ) :
 	ViewModel(),
 	ControlPlaylistEdits,
@@ -25,13 +27,11 @@ class NowPlayingPlaylistViewModel(
 	private var activeLibraryId: LibraryId? = null
 	private val playlistChangedSubscription = applicationMessages.registerReceiver(this)
 
+	private val isRepeatingState = MutableStateFlow(false)
 	private val mutableEditingPlaylistState = MutableStateFlow(false)
 	private val nowPlayingListState = MutableStateFlow(emptyList<PositionedFile>())
 
-	init {
-		updateViewFromRepository()
-	}
-
+	val isRepeating = isRepeatingState.asStateFlow()
 	val isEditingPlaylistState = mutableEditingPlaylistState.asStateFlow()
 	val nowPlayingList = nowPlayingListState.asStateFlow()
 
@@ -55,8 +55,20 @@ class NowPlayingPlaylistViewModel(
 		nowPlayingListState.value = nowPlayingListState.value.toMutableList().move(from, to)
 	}
 
+	fun toggleRepeating() {
+		with (isRepeatingState) {
+			value = !value
+
+			activeLibraryId?.also {
+				if (value) playbackService.setRepeating(it)
+				else playbackService.setCompleting(it)
+			}
+		}
+	}
+
 	override fun invoke(p1: LibraryPlaybackMessage.PlaylistChanged) {
-		updateViewFromRepository()
+		if (p1.libraryId == activeLibraryId)
+			updateViewFromRepository()
 	}
 
 	override fun onCleared() {
@@ -69,5 +81,6 @@ class NowPlayingPlaylistViewModel(
 			.keepPromise()
 			.then { np ->
 				nowPlayingListState.value = np?.playlist?.mapIndexed(::PositionedFile) ?: emptyList()
+				isRepeatingState.value = np?.isRepeating ?: false
 			}
 }

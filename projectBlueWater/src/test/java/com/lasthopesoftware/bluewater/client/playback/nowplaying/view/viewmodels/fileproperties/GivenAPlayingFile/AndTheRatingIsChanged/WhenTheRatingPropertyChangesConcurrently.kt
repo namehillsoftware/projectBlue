@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.actvity.viewmodels.GivenAPlayingFile.AndTheRatingIsChanged
+package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.fileproperties.GivenAPlayingFile.AndTheRatingIsChanged
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
@@ -135,11 +135,6 @@ class WhenTheRatingPropertyChangesConcurrently {
 	@Test
 	fun `then the properties are NOT read only`() {
 		assertThat(viewModel.isReadOnly.value).isFalse
-	}
-
-	@Test
-	fun `then playback is NOT marked as repeating`() {
-		assertThat(viewModel.isRepeating.value).isFalse
 	}
 
 	@Test

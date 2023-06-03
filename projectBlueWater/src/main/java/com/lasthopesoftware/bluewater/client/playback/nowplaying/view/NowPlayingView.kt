@@ -159,13 +159,13 @@ private fun PlaylistControls(
 			)
 		}
 
-		val isRepeating by nowPlayingFilePropertiesViewModel.isRepeating.collectAsState()
+		val isRepeating by playlistViewModel.isRepeating.collectAsState()
 		if (isRepeating) {
 			Image(
 				painter = painterResource(id = R.drawable.av_repeat_white),
 				contentDescription = stringResource(id = R.string.btn_complete_playlist),
 				modifier = Modifier.clickable {
-					nowPlayingFilePropertiesViewModel.toggleRepeating()
+					playlistViewModel.toggleRepeating()
 				},
 				alpha = .8f,
 			)
@@ -174,7 +174,7 @@ private fun PlaylistControls(
 				painter = painterResource(id = R.drawable.av_no_repeat_white),
 				contentDescription = stringResource(id = R.string.btn_repeat_playlist),
 				modifier = Modifier.clickable {
-					nowPlayingFilePropertiesViewModel.toggleRepeating()
+					playlistViewModel.toggleRepeating()
 				},
 				alpha = .8f,
 			)
@@ -247,12 +247,13 @@ fun NowPlayingView(
 		val pagerState = rememberLazyListState()
 		val isSettledOnFirstPage by remember { derivedStateOf { pagerState.firstVisibleItemIndex == 0 && pagerState.firstVisibleItemScrollOffset == 0 } }
 		val isNotSettledOnFirstPage by remember { derivedStateOf { !isSettledOnFirstPage } }
+		val isEditingPlaylist by playlistViewModel.isEditingPlaylistState.collectAsState()
 
 		val scope = rememberCoroutineScope()
 		BackHandler(isNotSettledOnFirstPage) {
 			when {
 				itemListMenuBackPressedHandler.hideAllMenus() -> {}
-				playlistViewModel.isEditingPlaylist -> playlistViewModel.finishPlaylistEdit()
+				isEditingPlaylist -> playlistViewModel.finishPlaylistEdit()
 				isNotSettledOnFirstPage -> {
 					playlistViewModel.finishPlaylistEdit()
 					scope.launch { pagerState.animateScrollToItem(0) }
@@ -260,7 +261,6 @@ fun NowPlayingView(
 			}
 		}
 
-		val isEditingPlaylist by playlistViewModel.isEditingPlaylistState.collectAsState()
 		val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
 
 		val filePosition by nowPlayingFilePropertiesViewModel.filePosition.collectAsState()

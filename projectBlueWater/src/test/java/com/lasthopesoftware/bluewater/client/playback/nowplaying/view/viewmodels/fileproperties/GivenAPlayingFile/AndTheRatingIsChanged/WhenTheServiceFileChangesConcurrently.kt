@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.actvity.viewmodels.GivenAPlayingFile.AndTheRatingIsChanged
+package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.fileproperties.GivenAPlayingFile.AndTheRatingIsChanged
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
@@ -6,7 +6,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideFr
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfConnectionIsReadOnly
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.MaintainNowPlayingState
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.FakeNowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
@@ -49,33 +49,15 @@ class WhenTheServiceFileChangesConcurrently {
 	private val deferredFilePropertiesPromise = DeferredPromise(Unit)
 
 	private val services by lazy {
-		val nowPlayingRepository = mockk<MaintainNowPlayingState> {
-			every { promiseNowPlaying(LibraryId(libraryId)) } returns Promise(
-				NowPlaying(
-					LibraryId(libraryId),
-					playlist,
-					firstPlaylistPosition,
-					439774,
-					false
-				)
-			) andThen Promise(
-				NowPlaying(
-					LibraryId(libraryId),
-					playlist,
-					firstPlaylistPosition,
-					439774,
-					false
-				)
-			) andThen Promise(
-				NowPlaying(
-					LibraryId(libraryId),
-					playlist,
-					secondPlaylistPosition,
-					558,
-					false
-				)
-			)
-		}
+		val nowPlaying = NowPlaying(
+			LibraryId(libraryId),
+			playlist,
+			firstPlaylistPosition,
+			439774,
+			false
+		)
+
+		val nowPlayingRepository = FakeNowPlayingRepository(nowPlaying)
 
 		val filePropertiesProvider = mockk<ProvideFreshLibraryFileProperties> {
 			every { promiseFileProperties(LibraryId(libraryId), firstServiceFile) } returns
@@ -121,17 +103,18 @@ class WhenTheServiceFileChangesConcurrently {
 			mockk(relaxed = true),
 		)
 
-		Pair(messageBus, nowPlayingViewModel)
+		Triple(messageBus, nowPlayingRepository, nowPlayingViewModel)
 	}
 
 	private val viewModel
-		get() = services.second
+		get() = services.third
 
 	@BeforeAll
 	fun act() {
-		val (messageBus, viewModel) = services
+		val (messageBus, nowPlayingRepository, viewModel) = services
 		viewModel.initializeViewModel(LibraryId(libraryId)).toExpiringFuture().get()
 		viewModel.updateRating(201.64f)
+		nowPlayingRepository.updateNowPlaying(nowPlayingRepository.promiseNowPlaying(LibraryId(libraryId)).toExpiringFuture().get()!!.copy(playlistPosition = secondPlaylistPosition, filePosition = 558))
 		messageBus.sendMessage(LibraryPlaybackMessage.TrackChanged(LibraryId(libraryId), PositionedFile(secondPlaylistPosition, secondServiceFile)))
 		deferredFilePropertiesPromise.resolve()
 	}
@@ -154,11 +137,6 @@ class WhenTheServiceFileChangesConcurrently {
 	@Test
 	fun `then the properties are NOT read only`() {
 		assertThat(viewModel.isReadOnly.value).isFalse
-	}
-
-	@Test
-	fun `then playback is NOT marked as repeating`() {
-		assertThat(viewModel.isRepeating.value).isFalse
 	}
 
 	@Test

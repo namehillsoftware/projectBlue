@@ -99,7 +99,6 @@ class NowPlayingFilePropertiesViewModel(
 	private val isSongRatingEnabledState = MutableStateFlow(false)
 	private val nowPlayingFileState = MutableStateFlow<PositionedFile?>(null)
 	private val isScreenControlsVisibleState = MutableStateFlow(false)
-	private val isRepeatingState = MutableStateFlow(false)
 	private val unexpectedErrorState = MutableStateFlow<Throwable?>(null)
 	private val activeLibraryIdState = MutableStateFlow<LibraryId?>(null)
 
@@ -113,7 +112,6 @@ class NowPlayingFilePropertiesViewModel(
 	val isSongRatingEnabled = isSongRatingEnabledState.asStateFlow()
 	val nowPlayingFile = nowPlayingFileState.asStateFlow()
 	val isScreenControlsVisible = isScreenControlsVisibleState.asStateFlow()
-	val isRepeating = isRepeatingState.asStateFlow()
 	val unexpectedError = unexpectedErrorState.asStateFlow()
 	val activeLibraryId = activeLibraryIdState.asStateFlow()
 
@@ -135,15 +133,12 @@ class NowPlayingFilePropertiesViewModel(
 		activeLibraryIdState.value = libraryId
 
 		togglePlaying(false)
-		val nowPlayingPromise = nowPlayingRepository
-			.promiseNowPlaying(libraryId)
-			.then { np -> isRepeatingState.value = np?.isRepeating ?: false }
 
 		val promisedViewUpdate = updateViewFromRepository(libraryId)
 
 		val promisedTogglePlayingUpdate = playbackService.promiseIsMarkedForPlay(libraryId).then(::togglePlaying)
 
-		return Promise.whenAll(nowPlayingPromise, promisedViewUpdate, promisedTogglePlayingUpdate).unitResponse()
+		return Promise.whenAll(promisedViewUpdate, promisedTogglePlayingUpdate).unitResponse()
 	}
 
 	fun togglePlaying(isPlaying: Boolean) {
@@ -188,17 +183,6 @@ class NowPlayingFilePropertiesViewModel(
 						// ignored - handle to avoid excessive logging
 					}
 				)
-		}
-	}
-
-	fun toggleRepeating() {
-		with (isRepeatingState) {
-			value = !value
-
-			activeLibraryId.value?.also {
-				if (value) playbackService.setRepeating(it)
-				else playbackService.setCompleting(it)
-			}
 		}
 	}
 
