@@ -771,8 +771,6 @@ open class PlaybackService :
 		}
 
 		fun processPlaybackEngineActionOnDeadline(playbackEngineAction: PlaybackEngineAction) {
-			logger.debug("initializeEngineAndActOnIntent({})", intent)
-
 			val promisedTimeout = delay<Any?>(playbackStartTimeout)
 
 			val promisedIntentHandling = handlePlaybackEngineAction(playbackEngineAction)
@@ -792,8 +790,9 @@ open class PlaybackService :
 			Promise.whenAny(promisedIntentHandling, timeoutResponse).excuse(unhandledRejectionHandler)
 		}
 
-		fun processPlaybackServiceAction(playbackServiceAction: PlaybackServiceAction?): Int =
-			when (playbackServiceAction) {
+		fun processPlaybackServiceAction(playbackServiceAction: PlaybackServiceAction?): Int {
+			logger.debug("processPlaybackServiceAction({})", playbackServiceAction)
+			return when (playbackServiceAction) {
 				null, is PlaybackServiceAction.KillPlaybackService -> {
 					stopSelf(startId)
 					START_NOT_STICKY
@@ -811,6 +810,7 @@ open class PlaybackService :
 					else START_NOT_STICKY
 				}
 			}
+		}
 
 		guardDestroyedService()
 
@@ -820,6 +820,8 @@ open class PlaybackService :
 			stopSelf(startId)
 			return START_NOT_STICKY
 		}
+
+		logger.debug("onStartCommand({}, {}, {})", intent, flags, startId)
 
 		return processPlaybackServiceAction(intent.safelyGetParcelableExtra(Bag.parcelableAction))
 	}

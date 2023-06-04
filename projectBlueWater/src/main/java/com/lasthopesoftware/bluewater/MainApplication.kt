@@ -214,7 +214,7 @@ open class MainApplication : Application() {
 						.also { it.setParent(this) }
 						.apply {
 							fileNamePattern = File(logDir, "%d{yyyy-MM-dd}.log").absolutePath
-							maxHistory = 30
+							maxHistory = 5
 							context = lc
 							start()
 						}
