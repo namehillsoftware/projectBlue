@@ -128,7 +128,7 @@ private val magicPropertyBuilder by lazy { MagicPropertyBuilder(cls<BrowserActiv
 private val cachedDestinationActions = ConcurrentHashMap<Class<*>, String>()
 
 val destinationProperty by lazy { magicPropertyBuilder.buildProperty("destination") }
-fun destinationAction(destination: Destination): String = cachedDestinationActions.getOrPut(destination.javaClass) { "$destinationProperty(${destination.javaClass.name})" }
+fun destinationAction(destination: Destination): String = cachedDestinationActions.getOrPut(destination.javaClass) { "$destinationProperty/${destination.javaClass.name}" }
 
 class BrowserActivity :
 	AppCompatActivity(),

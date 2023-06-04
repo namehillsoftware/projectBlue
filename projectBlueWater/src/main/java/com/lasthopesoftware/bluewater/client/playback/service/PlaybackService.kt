@@ -138,6 +138,7 @@ import kotlinx.parcelize.Parcelize
 import org.joda.time.Duration
 import java.io.IOException
 import java.util.concurrent.CancellationException
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
@@ -164,11 +165,10 @@ open class PlaybackService :
 
 		private val playbackStartTimeout = Duration.standardMinutes(2)
 
+		private val uniqueActions = ConcurrentHashMap<Class<*>, String>()
+
 		fun initialize(context: Context, libraryId: LibraryId) =
 			context.safelyStartService(getNewSelfIntent(context, PlaybackEngineAction.Initialize(libraryId)))
-
-		fun launchMusicService(context: Context, libraryId: LibraryId, serializedFileList: String) =
-			launchMusicService(context, libraryId, 0, serializedFileList)
 
 		fun launchMusicService(context: Context, libraryId: LibraryId, filePos: Int, serializedFileList: String) {
 			context.safelyStartServiceInForeground(
@@ -309,10 +309,13 @@ open class PlaybackService :
 
 		private fun getNewSelfIntent(context: Context, playbackServiceAction: PlaybackServiceAction): Intent {
 			val newIntent = context.getIntent<PlaybackService>()
-			newIntent.action = Action.handleParcelable
-			newIntent.putExtra(Bag.parcelableAction, playbackServiceAction)
+			newIntent.action = buildUniqueAction(playbackServiceAction)
+			newIntent.putExtra(Bag.playbackServiceAction, playbackServiceAction)
 			return newIntent
 		}
+
+		private fun buildUniqueAction(playbackServiceAction: PlaybackServiceAction): String =
+			uniqueActions.getOrPut(playbackServiceAction.javaClass) { "${Action.parsePlaybackServiceAction}/${playbackServiceAction.javaClass}" }
 
 		private fun Context.safelyStartService(intent: Intent) {
 			try {
@@ -816,14 +819,15 @@ open class PlaybackService :
 
 		this.startId = startId
 
-		if (intent?.action == null || intent.action != Action.handleParcelable) {
+		val parcelableAction = intent?.safelyGetParcelableExtra<PlaybackServiceAction>(Bag.playbackServiceAction)
+		if (parcelableAction == null) {
 			stopSelf(startId)
 			return START_NOT_STICKY
 		}
 
 		logger.debug("onStartCommand({}, {}, {})", intent, flags, startId)
 
-		return processPlaybackServiceAction(intent.safelyGetParcelableExtra(Bag.parcelableAction))
+		return processPlaybackServiceAction(parcelableAction)
 	}
 
 	override fun onPlaybackPaused() {
@@ -1146,13 +1150,13 @@ open class PlaybackService :
 		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(Action::class.java) }
 
 		/* String constant actions */
-		val handleParcelable by lazy { magicPropertyBuilder.buildProperty("handleParcelable") }
+		val parsePlaybackServiceAction by lazy { magicPropertyBuilder.buildProperty("parsePlaybackServiceAction") }
 
 		object Bag {
 			private val magicPropertyBuilder by lazy { MagicPropertyBuilder(Bag::class.java) }
 
 			/* Bag constants */
-			val parcelableAction by lazy { magicPropertyBuilder.buildProperty("parcelableAction") }
+			val playbackServiceAction by lazy { magicPropertyBuilder.buildProperty("playbackServiceAction") }
 		}
 	}
 
