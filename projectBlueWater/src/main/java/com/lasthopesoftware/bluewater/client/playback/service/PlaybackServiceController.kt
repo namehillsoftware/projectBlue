@@ -10,6 +10,8 @@ import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 
 class PlaybackServiceController(private val context: Context) : ControlPlaybackService {
+	override fun initialize(libraryId: LibraryId) = PlaybackService.initialize(context, libraryId)
+
 	override fun promiseIsMarkedForPlay(libraryId: LibraryId): Promise<Boolean> =
 		PlaybackService.promiseIsMarkedForPlay(context, libraryId)
 

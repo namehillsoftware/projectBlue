@@ -5,6 +5,9 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.namehillsoftware.handoff.promises.Promise
 
 interface ControlPlaybackService {
+
+	fun initialize(libraryId: LibraryId)
+
 	fun promiseIsMarkedForPlay(libraryId: LibraryId): Promise<Boolean>
 
 	fun play(libraryId: LibraryId)

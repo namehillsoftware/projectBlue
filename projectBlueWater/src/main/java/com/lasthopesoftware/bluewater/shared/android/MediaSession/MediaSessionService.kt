@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.It
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.LibraryFileStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
+import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.MediaSessionCallbackReceiver
 import com.lasthopesoftware.bluewater.shared.android.intents.makePendingIntentImmutable
 import com.lasthopesoftware.bluewater.shared.android.services.GenericBinder
@@ -21,7 +22,7 @@ class MediaSessionService : Service() {
 		val connectionProvider = ConnectionSessionManager.get(this)
 		newMediaSession.setCallback(
 			MediaSessionCallbackReceiver(
-				this,
+				PlaybackServiceController(this),
 				getCachedSelectedLibraryIdProvider(),
 				ItemStringListProvider(
 					FileListParameters,
