@@ -80,7 +80,6 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.no
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building.MediaStyleNotificationSetup
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building.NowPlayingNotificationBuilder
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building.PlaybackStartingNotificationBuilder
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.remote.MediaSessionBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.InMemoryNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Action.Bag
@@ -96,7 +95,6 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.uri.Stor
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.settings.volumeleveling.VolumeLevelSettings
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
-import com.lasthopesoftware.bluewater.shared.android.MediaSession.MediaSessionController
 import com.lasthopesoftware.bluewater.shared.android.MediaSession.MediaSessionService
 import com.lasthopesoftware.bluewater.shared.android.audiofocus.AudioFocusManagement
 import com.lasthopesoftware.bluewater.shared.android.intents.IntentBuilder
@@ -380,7 +378,7 @@ open class PlaybackService :
 
 	private val promisedMediaSession by RetryOnRejectionLazyPromise { lazyMediaSessionService.value.then { c -> c.service.mediaSession } }
 
-	private val mediaStyleNotificationSetup by lazy {
+	private val mediaStyleNotificationSetup by RetryOnRejectionLazyPromise {
 			promisedMediaSession.then { mediaSession ->
 				MediaStyleNotificationSetup(
 					this,
@@ -492,18 +490,6 @@ open class PlaybackService :
 
 	private val urlKeyProvider by lazy { UrlKeyProvider(libraryConnectionProvider) }
 
-	private val promisedMediaBroadcaster by RetryOnRejectionLazyPromise {
-		promisedMediaSession.then { mediaSession ->
-			MediaSessionBroadcaster(
-				nowPlayingRepository,
-				libraryFilePropertiesProvider,
-				imageProvider,
-				MediaSessionController(mediaSession),
-				applicationMessageBus
-			).also(playbackEngineCloseables::manage)
-		}
-	}
-
 	private	val promisedMediaNotificationSetup by RetryOnRejectionLazyPromise {
 		mediaStyleNotificationSetup.then { mediaStyleNotificationSetup ->
 			NowPlayingNotificationBuilder(
@@ -579,6 +565,9 @@ open class PlaybackService :
 	private val playlistPlaybackBootstrapper by lazy { PlaylistPlaybackBootstrapper(playlistVolumeManager).also(playbackEngineCloseables::manage) }
 
 	private val promisedPlaybackEngine by RetryOnRejectionLazyPromise {
+		// Call the value to initialize the lazy promise
+		val hotPromisedMediaNotificationSetup = promisedMediaNotificationSetup
+
 		val httpDataSourceFactory = HttpDataSourceFactoryProvider(
 			this,
 			guaranteedLibraryConnectionProvider,
@@ -640,9 +629,7 @@ open class PlaybackService :
 					}
 			}
 
-		Promise
-			.whenAll(promisedMediaBroadcaster.unitResponse(), promisedMediaNotificationSetup.unitResponse())
-			.eventually { promisedEngine }
+		hotPromisedMediaNotificationSetup.eventually { promisedEngine }
 	}
 
 	private val unhandledRejectionHandler = ImmediateResponse<Throwable, Unit>(::uncaughtExceptionHandler)

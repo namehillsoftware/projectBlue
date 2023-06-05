@@ -7,15 +7,58 @@ import android.support.v4.media.session.MediaSessionCompat
 import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.ItemStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.LibraryFileStringListProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.image.CachedImageProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
+import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.remote.MediaSessionBroadcaster
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.InMemoryNowPlayingState
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.MediaSessionCallbackReceiver
 import com.lasthopesoftware.bluewater.shared.android.intents.makePendingIntentImmutable
 import com.lasthopesoftware.bluewater.shared.android.services.GenericBinder
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
 
 class MediaSessionService : Service() {
 	private val binder by lazy { GenericBinder(this) }
+
+	private val nowPlayingRepository by lazy {
+		val libraryRepository = LibraryRepository(this)
+
+		NowPlayingRepository(
+			getCachedSelectedLibraryIdProvider(),
+			libraryRepository,
+			libraryRepository,
+			InMemoryNowPlayingState,
+		)
+	}
+
+	private val libraryConnectionProvider by lazy { ConnectionSessionManager.get(this) }
+
+	private val revisionProvider by lazy { LibraryRevisionProvider(libraryConnectionProvider) }
+
+	private val freshLibraryFileProperties by lazy {
+		FilePropertiesProvider(
+			libraryConnectionProvider,
+			revisionProvider,
+			FilePropertyCache,
+		)
+	}
+
+	private val libraryFilePropertiesProvider by lazy {
+		CachedFilePropertiesProvider(
+			libraryConnectionProvider,
+			FilePropertyCache,
+			freshLibraryFileProperties,
+		)
+	}
+
+	private	val imageProvider by lazy { CachedImageProvider.getInstance(this) }
 
 	private val lazyMediaSession = lazy {
 		val newMediaSession = MediaSessionCompat(this, MediaSessionConstants.mediaSessionTag)
@@ -31,25 +74,35 @@ class MediaSessionService : Service() {
 			)
 		)
 
+		val broadcaster = MediaSessionBroadcaster(
+			nowPlayingRepository,
+			libraryFilePropertiesProvider,
+			imageProvider,
+			MediaSessionController(newMediaSession),
+			ApplicationMessageBus.getApplicationMessageBus()
+		)
+
 		val mediaButtonIntent = Intent(Intent.ACTION_MEDIA_BUTTON)
 
 		val mediaPendingIntent = PendingIntent.getBroadcast(this, 0, mediaButtonIntent, 0.makePendingIntentImmutable())
 		newMediaSession.setMediaButtonReceiver(mediaPendingIntent)
-		newMediaSession
+		Pair(broadcaster, newMediaSession)
 	}
 
 	val mediaSession
-		get() = lazyMediaSession.value
+		get() = lazyMediaSession.value.second
 
 	override fun onBind(intent: Intent) = binder
 
 	override fun onCreate() {
-		lazyMediaSession.value.isActive = true
+		lazyMediaSession.value.second.isActive = true
 	}
 
 	override fun onDestroy() {
 		if (lazyMediaSession.isInitialized()) {
-			with (lazyMediaSession.value) {
+			val (broadcaster, mediaSession) = lazyMediaSession.value
+			broadcaster.close()
+			with (mediaSession) {
 				isActive = false
 				release()
 			}
