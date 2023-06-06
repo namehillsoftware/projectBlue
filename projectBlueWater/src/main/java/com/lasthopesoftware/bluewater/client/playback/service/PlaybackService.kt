@@ -52,7 +52,9 @@ import com.lasthopesoftware.bluewater.client.playback.caching.uri.CachedAudioFil
 import com.lasthopesoftware.bluewater.client.playback.engine.AudioManagingPlaybackStateChanger
 import com.lasthopesoftware.bluewater.client.playback.engine.ChangePlaybackContinuity
 import com.lasthopesoftware.bluewater.client.playback.engine.ChangePlaybackState
+import com.lasthopesoftware.bluewater.client.playback.engine.ChangePlaybackStateForSystem
 import com.lasthopesoftware.bluewater.client.playback.engine.ChangePlaylistFiles
+import com.lasthopesoftware.bluewater.client.playback.engine.ChangePlaylistPosition
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
 import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlaybackCompleted
@@ -564,7 +566,7 @@ open class PlaybackService :
 
 	private val playlistPlaybackBootstrapper by lazy { PlaylistPlaybackBootstrapper(playlistVolumeManager).also(playbackEngineCloseables::manage) }
 
-	private val promisedPlaybackEngine by RetryOnRejectionLazyPromise {
+	private val promisedPlaybackServices = RetryOnRejectionLazyPromise {
 		// Call the value to initialize the lazy promise
 		val hotPromisedMediaNotificationSetup = promisedMediaNotificationSetup
 
@@ -609,12 +611,6 @@ open class PlaybackService :
 				engine
 					.also {
 						playbackEngineCloseables.manage(engine)
-						playbackState = AudioManagingPlaybackStateChanger(
-							engine,
-							engine,
-							AudioFocusManagement(audioManager),
-							playlistVolumeManager
-						).also(playbackEngineCloseables::manage)
 					}
 					.setOnPlaybackStarted(this)
 					.setOnPlaybackPaused(this)
@@ -623,9 +619,19 @@ open class PlaybackService :
 					.setOnPlaylistError(::uncaughtExceptionHandler)
 					.setOnPlaybackCompleted(this)
 					.setOnPlaylistReset(this)
-					.also {
-						playlistFiles = it
-						playbackContinuity = it
+					.let {
+						PlaybackServices(
+							playbackState = AudioManagingPlaybackStateChanger(
+								engine,
+								engine,
+								AudioFocusManagement(audioManager),
+								playlistVolumeManager
+							).also(playbackEngineCloseables::manage),
+							systemPlaybackState = it,
+							playlistFiles = it,
+							playbackContinuity = it,
+							playlistPosition = it,
+						)
 					}
 			}
 
@@ -637,9 +643,6 @@ open class PlaybackService :
 	private var activeLibraryId: LibraryId? = null
 	private var isMarkedForPlay = false
 	private var areListenersRegistered = false
-	private var playbackContinuity: ChangePlaybackContinuity? = null
-	private var playlistFiles: ChangePlaylistFiles? = null
-	private var playbackState: ChangePlaybackState? = null
 	private var filePositionSubscription: Disposable? = null
 	private var wakeLock: WakeLock? = null
 	private var startId = 0
@@ -705,33 +708,33 @@ open class PlaybackService :
 					if (isMarkedForPlay) pausePlayback()
 					else handlePlaybackStartingAction(PlaybackStartingAction.Play(playbackEngineAction.libraryId))
 				}
-				is PlaybackEngineAction.Initialize -> restorePlaybackEngine(playbackEngineAction.libraryId).unitResponse()
+				is PlaybackEngineAction.Initialize -> restorePlaybackServices(playbackEngineAction.libraryId).unitResponse()
 				is PlaybackEngineAction.RepeatPlaylist -> {
-					restorePlaybackEngine(playbackEngineAction.libraryId).eventually { it.playRepeatedly() }
+					restorePlaybackServices(playbackEngineAction.libraryId).eventually { it.playbackContinuity.playRepeatedly() }
 				}
 				is PlaybackEngineAction.CompletePlaylist -> {
-					restorePlaybackEngine(playbackEngineAction.libraryId).eventually { it.playToCompletion() }
+					restorePlaybackServices(playbackEngineAction.libraryId).eventually { it.playbackContinuity.playToCompletion() }
 				}
 				is PlaybackEngineAction.Previous -> {
-					restorePlaybackEngine(playbackEngineAction.libraryId)
-						.eventually { it.skipToPrevious() }
+					restorePlaybackServices(playbackEngineAction.libraryId)
+						.eventually { it.playlistPosition.skipToPrevious() }
 						.then { (l, p) -> broadcastChangedFile(l, p) }
 				}
 				is PlaybackEngineAction.Next -> {
-					restorePlaybackEngine(playbackEngineAction.libraryId)
-						.eventually { it.skipToNext() }
+					restorePlaybackServices(playbackEngineAction.libraryId)
+						.eventually { it.playlistPosition.skipToNext() }
 						.then { (l, p) -> broadcastChangedFile(l, p) }
 				}
 				is PlaybackEngineAction.Seek -> {
 					val (libraryId, playlistPosition, filePosition) = playbackEngineAction
-					restorePlaybackEngine(libraryId)
-						.eventually { it.changePosition(playlistPosition, Duration.millis(filePosition.toLong())) }
+					restorePlaybackServices(libraryId)
+						.eventually { it.playlistPosition.changePosition(playlistPosition, Duration.millis(filePosition.toLong())) }
 						.then { (l, p) -> broadcastChangedFile(l, p) }
 				}
 				is PlaybackEngineAction.AddFileToPlaylist -> {
 					val (libraryId, serviceFile) = playbackEngineAction
-					restorePlaybackEngine(libraryId)
-						.eventually { it.addFile(serviceFile) }
+					restorePlaybackServices(libraryId)
+						.eventually { it.playlistFiles.addFile(serviceFile) }
 						.then { applicationMessageBus.sendMessage(LibraryPlaybackMessage.PlaylistChanged(libraryId)) }
 						.eventually(LoopedInPromise.response({
 							Toast.makeText(this, getText(R.string.lbl_song_added_to_now_playing), Toast.LENGTH_SHORT).show()
@@ -740,8 +743,8 @@ open class PlaybackService :
 				is PlaybackEngineAction.RemoveFileAtPosition -> {
 					val (libraryId, filePosition) = playbackEngineAction
 
-					restorePlaybackEngine(libraryId)
-						.eventually { it.removeFileAtPosition(filePosition) }
+					restorePlaybackServices(libraryId)
+						.eventually { it.playlistFiles.removeFileAtPosition(filePosition) }
 						.then {
 							applicationMessageBus.sendMessage(LibraryPlaybackMessage.PlaylistChanged(libraryId))
 						}
@@ -750,8 +753,8 @@ open class PlaybackService :
 				is PlaybackEngineAction.MoveFile -> {
 					val (libraryId, filePosition, newPosition) = playbackEngineAction
 
-					restorePlaybackEngine(libraryId)
-						.eventually { it.moveFile(filePosition, newPosition) }
+					restorePlaybackServices(libraryId)
+						.eventually { it.playlistFiles.moveFile(filePosition, newPosition) }
 						.then {
 							applicationMessageBus.sendMessage(LibraryPlaybackMessage.PlaylistChanged(libraryId))
 						}
@@ -862,14 +865,16 @@ open class PlaybackService :
 
 	private fun startNewPlaylist(libraryId: LibraryId, playlistString: String, playlistPosition: Int): Promise<Unit> {
 		activeLibraryId = libraryId
-		val playbackState = promisedPlaybackEngine
+		val playbackState = promisedPlaybackServices
 
 		isMarkedForPlay = true
 		return FileStringListUtilities
 			.promiseParsedFileStringList(playlistString)
 			.eventually { playlist ->
-				playbackState.eventually {
-					it.startPlaylist(
+				if (!areListenersRegistered) registerListeners()
+
+				playbackState.value.eventually {
+					it.playbackState.startPlaylist(
 						libraryId,
 						playlist.toMutableList(),
 						playlistPosition,
@@ -885,29 +890,33 @@ open class PlaybackService :
 
 	private fun resumePlayback(libraryId: LibraryId): Promise<Unit> {
 		isMarkedForPlay = true
-		return restorePlaybackEngine(libraryId).eventually { it.resume() }.then {
-			if (!areListenersRegistered) registerListeners()
-		}
+		if (!areListenersRegistered) registerListeners()
+		return restorePlaybackServices(libraryId).eventually { it.playbackState.resume() }
 	}
 
 	private fun pausePlayback(): Promise<Unit> {
 		isMarkedForPlay = false
+
 		if (areListenersRegistered) unregisterListeners()
-		return playbackState?.pause() ?: Unit.toPromise()
+
+		return if (promisedPlaybackServices.isInitializing()) promisedPlaybackServices.value.eventually { it.playbackState.pause() }
+		else Unit.toPromise()
 	}
 
-	private fun restorePlaybackEngine(libraryId: LibraryId): Promise<PlaybackEngine> {
+	private fun restorePlaybackServices(libraryId: LibraryId): Promise<PlaybackServices> {
 		activeLibraryId = libraryId
-		return promisedPlaybackEngine
-			.eventually { engine ->
-				engine
+		return promisedPlaybackServices
+			.value
+			.eventually { services ->
+				services
+					.systemPlaybackState
 					.restoreFromSavedState(libraryId)
 					.then { (libraryId, file) ->
 						file?.also {
 							broadcastChangedFile(libraryId, PositionedFile(it.playlistPosition, it.serviceFile))
 							trackPositionBroadcaster.broadcastProgress(libraryId, it)
 						}
-						engine
+						services
 					}
 			}
 	}
@@ -1014,8 +1023,9 @@ open class PlaybackService :
 
 	private fun closeAndRestartPlaylistManager() {
 		val libraryId = activeLibraryId ?: return
-		promisedPlaybackEngine
-			.eventually { engine -> engine.interrupt() }
+		promisedPlaybackServices
+			.value
+			.eventually { engine -> engine.systemPlaybackState.interrupt() }
 			.eventually { if (isMarkedForPlay) resumePlayback(libraryId).unitResponse() else Unit.toPromise() }
 			.excuse(unhandledRejectionHandler)
 	}
@@ -1078,6 +1088,14 @@ open class PlaybackService :
 
 		super.onDestroy()
 	}
+
+	private data class PlaybackServices(
+		val playbackContinuity: ChangePlaybackContinuity,
+		val playlistFiles: ChangePlaylistFiles,
+		val playbackState: ChangePlaybackState,
+		val systemPlaybackState: ChangePlaybackStateForSystem,
+		val playlistPosition: ChangePlaylistPosition,
+	)
 
 	/* End Binder Code */
 
