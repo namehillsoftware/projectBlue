@@ -140,7 +140,7 @@ def getGeneratedVersionCode() {
 dependencies {
     implementation 'androidx.lifecycle:lifecycle-service:2.6.1'
     def compose_version = '1.4.3'
-	def exoplayer_version = '2.18.6'
+	def exoplayer_version = '2.18.7'
 	def lifecycle_version = '2.6.1'
 	def junit5_version = '5.9.3'
 
@@ -172,7 +172,7 @@ dependencies {
 	implementation "androidx.compose.ui:ui-tooling:$compose_version"
 	implementation 'com.google.accompanist:accompanist-systemuicontroller:0.27.0'
 	implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.1'
-	implementation 'androidx.activity:activity-compose:1.7.1'
+	implementation 'androidx.activity:activity-compose:1.7.2'
 	implementation 'androidx.compose.compiler:compiler:1.4.7'
 	implementation 'me.onebone:toolbar-compose:2.3.5'
 	implementation "dev.olshevski.navigation:reimagined:1.4.0"
@@ -185,7 +185,7 @@ dependencies {
 	testImplementation 'commons-codec:commons-codec:1.15'
 	testImplementation 'androidx.test:core:1.5.0'
 	testImplementation 'io.mockk:mockk:1.13.5'
-	testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.0'
+	testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.1'
 	testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:$junit5_version"
 	testRuntimeOnly "org.junit.vintage:junit-vintage-engine:$junit5_version"
 	androidTestImplementation "androidx.compose.ui:ui-test-junit4:$compose_version"
