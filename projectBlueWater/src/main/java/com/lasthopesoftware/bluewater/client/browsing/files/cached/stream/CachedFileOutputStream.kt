@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.browsing.files.cached.stream
 
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.persistence.IDiskFileCachePersistence
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.repository.CachedFile
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.MessageWriter
@@ -12,6 +13,7 @@ import java.io.File
 import java.io.FileOutputStream
 
 class CachedFileOutputStream(
+	private val libraryId: LibraryId,
     private val uniqueKey: String,
     private val file: File,
     private val diskFileCachePersistence: IDiskFileCachePersistence
@@ -49,7 +51,7 @@ class CachedFileOutputStream(
     }
 
     override fun commitToCache(): Promise<CachedFile> =
-		if (!isClosed) diskFileCachePersistence.putIntoDatabase(uniqueKey, file)
+		if (!isClosed) diskFileCachePersistence.putIntoDatabase(libraryId, uniqueKey, file)
 		else Promise.empty()
 
 	override fun close() {

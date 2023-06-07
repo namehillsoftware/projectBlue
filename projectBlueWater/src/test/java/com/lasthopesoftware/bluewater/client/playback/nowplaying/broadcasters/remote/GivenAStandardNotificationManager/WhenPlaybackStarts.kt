@@ -3,7 +3,9 @@ package com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.r
 import android.support.v4.media.session.PlaybackStateCompat
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.remote.MediaSessionBroadcaster
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage
 import com.lasthopesoftware.bluewater.shared.android.MediaSession.ControlMediaSession
+import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import io.mockk.mockk
 import io.mockk.verify
 import org.junit.Test
@@ -15,14 +17,15 @@ class WhenPlaybackStarts : AndroidContext() {
 	}
 
 	override fun before() {
-		val playbackNotificationBroadcaster =
-            MediaSessionBroadcaster(
-				mockk(),
-				mockk(),
-				mockk(),
-				mediaSessionCompat
-            )
-		playbackNotificationBroadcaster.notifyPlaying()
+		val recordingApplicationMessageBus = RecordingApplicationMessageBus()
+		MediaSessionBroadcaster(
+			mockk(),
+			mockk(),
+			mockk(),
+			mediaSessionCompat,
+			recordingApplicationMessageBus,
+		)
+		recordingApplicationMessageBus.sendMessage(PlaybackMessage.PlaybackStarted)
 	}
 
 	@Test

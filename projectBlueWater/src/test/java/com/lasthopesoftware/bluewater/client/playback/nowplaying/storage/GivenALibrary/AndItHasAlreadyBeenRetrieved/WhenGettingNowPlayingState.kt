@@ -9,19 +9,25 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlay
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
+private const val libraryId = 814
+
 class WhenGettingNowPlayingState {
 
 	private val mut by lazy {
 		NowPlayingRepository(
 			mockk {
-				every { promiseLibrary() } returns Library(
-					_id = 521,
+				every { promiseSelectedLibraryId() } returns Promise(LibraryId(libraryId))
+			},
+			mockk {
+				every { promiseLibrary(LibraryId(libraryId)) } returns Library(
+					_id = libraryId,
 					_nowPlayingProgress = 435,
 					_nowPlayingId = 2,
 					_savedTracksString = "2;-1;130;32;22;",
@@ -31,9 +37,9 @@ class WhenGettingNowPlayingState {
 			mockk(),
 			FakeNowPlayingState().apply {
 				set(
-					LibraryId(521),
+					LibraryId(libraryId),
 					NowPlaying(
-						LibraryId(521),
+						LibraryId(libraryId),
 						listOf(ServiceFile(780), ServiceFile(979), ServiceFile(655)),
 						1,
 						672,
@@ -48,7 +54,7 @@ class WhenGettingNowPlayingState {
 
 	@BeforeAll
 	fun act() {
-		nowPlaying = mut.promiseNowPlaying().toExpiringFuture().get()
+		nowPlaying = mut.promiseActiveNowPlaying().toExpiringFuture().get()
 	}
 
 	@Test
@@ -60,7 +66,7 @@ class WhenGettingNowPlayingState {
 	fun `then now playing is correct`() {
 		assertThat(nowPlaying).isEqualTo(
 			NowPlaying(
-				LibraryId(521),
+				LibraryId(libraryId),
 				listOf(ServiceFile(780), ServiceFile(979), ServiceFile(655)),
 				1,
 				672,

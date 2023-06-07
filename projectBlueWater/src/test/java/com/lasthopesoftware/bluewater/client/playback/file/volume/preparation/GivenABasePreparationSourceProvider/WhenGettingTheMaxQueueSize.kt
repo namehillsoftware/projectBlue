@@ -15,9 +15,10 @@ class WhenGettingTheMaxQueueSize {
 					return mockk()
 				}
 
-				override fun getMaxQueueSize(): Int {
-					return 13
-				}
+                override val maxQueueSize: Int
+                    get() {
+                        return 13
+                    }
 			}, mockk())
 		maxFileVolumePreparationProvider.maxQueueSize
 	}

@@ -138,8 +138,7 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
             MediaFileUriProvider(
 				cursorProvider,
 				readPermissionArbitratorForOs,
-				libraryIdentifierProvider,
-				true,
+                true,
 				applicationMessageBus
 			),
             MediaFileIdProvider(cursorProvider, readPermissionArbitratorForOs),

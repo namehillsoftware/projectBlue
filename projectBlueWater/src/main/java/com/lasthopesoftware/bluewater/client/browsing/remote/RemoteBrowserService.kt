@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.access.CachedItemFil
 import com.lasthopesoftware.bluewater.client.browsing.files.access.LibraryFileProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.LibraryFileStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.image.CachedImageProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.image.SelectedLibraryImageProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.RateControlledFilePropertiesProvider
@@ -17,7 +18,6 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.repositor
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.access.CachedItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
-import com.lasthopesoftware.bluewater.client.browsing.library.access.SpecificLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
@@ -94,28 +94,26 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 	private val mediaItemServiceFileLookup by lazy {
 		MediaItemServiceFileLookup(
 			filePropertiesProvider,
-			imageProvider
+			SelectedLibraryImageProvider(selectedLibraryIdProvider, imageProvider),
 		)
 	}
 
 	private val nowPlayingMediaItemLookup by lazy {
 		val libraryRepository = LibraryRepository(this)
-		selectedLibraryIdProvider.promiseSelectedLibraryId()
-			.then {
-				it?.let { l ->
-					val repository =
-                        NowPlayingRepository(
-                            SpecificLibraryProvider(l, libraryRepository),
-                            libraryRepository,
-							InMemoryNowPlayingState,
-                        )
 
-					NowPlayingMediaItemLookup(
-						repository,
-						mediaItemServiceFileLookup
-					)
-				}
-			}
+		val repository =
+			NowPlayingRepository(
+				selectedLibraryIdProvider,
+				libraryRepository,
+				libraryRepository,
+				InMemoryNowPlayingState,
+			)
+
+		NowPlayingMediaItemLookup(
+			selectedLibraryIdProvider,
+			repository,
+			mediaItemServiceFileLookup
+		)
 	}
 
 	private val mediaItemBrowser by lazy {
@@ -166,7 +164,7 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 
 		if (parentId == recentRoot) {
 			nowPlayingMediaItemLookup
-				.eventually { lookup -> lookup?.promiseNowPlayingItem().keepPromise() }
+				.promiseNowPlayingItem().keepPromise()
 				.then { it?.let { mutableListOf(it) }.apply(result::sendResult) }
 				.excuse { e -> result.sendError(Bundle().apply { putString(error, e.message) }) }
 			return

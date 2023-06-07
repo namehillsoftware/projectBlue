@@ -2,8 +2,9 @@ package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparatio
 
 import android.net.Uri
 import com.google.android.exoplayer2.source.MediaSource
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.namehillsoftware.handoff.promises.Promise
 
 fun interface SpawnMediaSources {
-	fun promiseNewMediaSource(uri: Uri): Promise<MediaSource>
+	fun promiseNewMediaSource(libraryId: LibraryId, uri: Uri): Promise<MediaSource>
 }

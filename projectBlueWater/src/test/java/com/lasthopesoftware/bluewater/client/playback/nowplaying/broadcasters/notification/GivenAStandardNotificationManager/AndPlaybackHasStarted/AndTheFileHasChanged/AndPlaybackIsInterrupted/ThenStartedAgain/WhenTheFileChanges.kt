@@ -5,18 +5,24 @@ import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.FakeNowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.NotificationsConfiguration
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.PlaybackNotificationBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building.BuildNowPlayingNotificationContent
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.LibraryPlaybackMessage
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage
 import com.lasthopesoftware.bluewater.shared.android.notifications.control.ControlNotifications
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import com.lasthopesoftware.resources.notifications.FakeNotificationCompatBuilder
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import org.junit.Test
+
+private const val libraryId = 5
+private const val serviceFileId = 615
 
 class WhenTheFileChanges : AndroidContext() {
 
@@ -30,77 +36,76 @@ class WhenTheFileChanges : AndroidContext() {
 	}
 
 	override fun before() {
-		every { notificationContentBuilder.promiseLoadingNotification(any()) } returns Promise(FakeNotificationCompatBuilder.newFakeBuilder(
+		every { notificationContentBuilder.promiseLoadingNotification(LibraryId(libraryId), any()) } returns Promise(FakeNotificationCompatBuilder.newFakeBuilder(
             ApplicationProvider.getApplicationContext(),
             loadingNotification
         ))
-		every { notificationContentBuilder.promiseNowPlayingNotification(ServiceFile(1), any()) } returns Promise(FakeNotificationCompatBuilder.newFakeBuilder(
+		every { notificationContentBuilder.promiseNowPlayingNotification(LibraryId(libraryId), ServiceFile(1), any()) } returns Promise(FakeNotificationCompatBuilder.newFakeBuilder(
             ApplicationProvider.getApplicationContext(),
             firstNotification
         ))
-		every { notificationContentBuilder.promiseNowPlayingNotification(ServiceFile(2), any()) } returns Promise(FakeNotificationCompatBuilder.newFakeBuilder(
+		every { notificationContentBuilder.promiseNowPlayingNotification(LibraryId(libraryId), ServiceFile(serviceFileId), any()) } returns Promise(FakeNotificationCompatBuilder.newFakeBuilder(
             ApplicationProvider.getApplicationContext(),
             secondNotification
         ))
 
-		val playbackNotificationBroadcaster =
-            PlaybackNotificationBroadcaster(
-                notificationController,
-                NotificationsConfiguration(
-                    "",
-                    43
-                ),
-                notificationContentBuilder,
-                {
-                    Promise(
-                        FakeNotificationCompatBuilder.newFakeBuilder(
-                            ApplicationProvider.getApplicationContext(),
-                            startingNotification,
-                        ),
-                    )
-                },
-                mockk {
-                    every { promiseNowPlaying() } returns NowPlaying(
-                        LibraryId(223),
-                        listOf(ServiceFile(1)),
-                        0,
-                        0L,
-                        false,
-                    ).toPromise() andThen NowPlaying(
-                        LibraryId(223),
-                        listOf(ServiceFile(2)),
-                        0,
-                        0L,
-                        false,
-                    ).toPromise()
-                }
-            )
+		val nowPlaying = NowPlaying(
+			LibraryId(libraryId),
+			listOf(ServiceFile(1), ServiceFile(serviceFileId)),
+			0,
+			0,
+			false,
+		)
 
-		playbackNotificationBroadcaster.notifyPlaying()
-		playbackNotificationBroadcaster.notifyPlayingFileUpdated()
-		playbackNotificationBroadcaster.notifyInterrupted()
-		playbackNotificationBroadcaster.notifyPlayingFileUpdated()
-		playbackNotificationBroadcaster.notifyPlaying()
+		val nowPlayingRepository = FakeNowPlayingRepository(nowPlaying)
+
+		val messageBus = RecordingApplicationMessageBus()
+		PlaybackNotificationBroadcaster(
+			nowPlayingRepository,
+			messageBus,
+			mockk(),
+			notificationController,
+			NotificationsConfiguration(
+				"",
+				43
+			),
+			notificationContentBuilder,
+			mockk {
+				every { promisePreparedPlaybackStartingNotification(LibraryId(libraryId)) } returns Promise(
+					FakeNotificationCompatBuilder.newFakeBuilder(
+						ApplicationProvider.getApplicationContext(),
+						startingNotification,
+					),
+				)
+			}
+		)
+
+		messageBus.sendMessage(PlaybackMessage.PlaybackStarted)
+		messageBus.sendMessage(LibraryPlaybackMessage.TrackChanged(LibraryId(libraryId), nowPlaying.playingFile!!))
+		nowPlayingRepository.updateNowPlaying(nowPlaying.copy(playlistPosition = 1))
+		messageBus.sendMessage(PlaybackMessage.PlaybackInterrupted)
+		messageBus.sendMessage(LibraryPlaybackMessage.TrackChanged(LibraryId(libraryId), nowPlaying.playingFile!!))
+		messageBus.sendMessage(PlaybackMessage.PlaybackStarted)
 	}
 
 	@Test
-	fun thenTheLoadingNotificationIsShownManyTimes() {
+	fun `then the loading notification is shown many times`() {
 		verify(exactly = 2) { notificationController.notifyForeground(loadingNotification, 43) }
 		verify(exactly = 1) { notificationController.notifyEither(loadingNotification, 43) }
 	}
 
 	@Test
-	fun thenTheServiceIsStartedOnTheFirstServiceItem() {
+	fun `then the service is started on the first service item`() {
 		verify(exactly = 1) { notificationController.notifyForeground(startingNotification, 43) }
 	}
 
 	@Test
-	fun thenTheNotificationIsSetToThePausedNotification() {
+	fun `then the notification is set to the paused notification`() {
 		verify { notificationController.notifyEither(secondNotification, 43) }
 	}
 
 	@Test
-	fun thenTheServiceIsStartedOnTheSecondServiceItem() {
+	fun `then the service is started on the second service item`() {
 		verify { notificationController.notifyForeground(secondNotification, 43) }
 	}
 

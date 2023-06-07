@@ -4,6 +4,7 @@ import android.net.Uri
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.source.BaseMediaSource
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.PromisingExoPlayer
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.ProvideExoPlayers
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler
@@ -19,13 +20,15 @@ import org.joda.time.Duration
 import org.junit.jupiter.api.Test
 import java.util.concurrent.ConcurrentLinkedQueue
 
+private const val libraryId = 303
+
 class WhenPreparing {
 
 	private val preparedFile by lazy {
 		val listeners = ConcurrentLinkedQueue<Player.Listener>()
 
 		val preparer = ExoPlayerPlaybackPreparer(
-			{
+			{ _, _ ->
 				mockk<BaseMediaSource>(relaxUnitFun = true).toPromise()
 			},
 			mockk<ProvideExoPlayers>().apply {
@@ -43,9 +46,13 @@ class WhenPreparing {
 					every { release() } returns selfPromise
 				}
 			},
-			mockk()
-		) { Promise(mockk<Uri>()) }
+			mockk(),
+			mockk {
+				every { promiseUri(LibraryId(libraryId), ServiceFile(1)) } returns Promise(mockk<Uri>())
+			}
+		)
 		val promisedPreparedFile = preparer.promisePreparedPlaybackFile(
+			LibraryId(libraryId),
 			ServiceFile(1),
 			Duration.ZERO
 		)

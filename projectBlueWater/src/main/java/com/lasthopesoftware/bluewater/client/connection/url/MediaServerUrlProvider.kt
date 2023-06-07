@@ -50,6 +50,26 @@ class MediaServerUrlProvider private constructor(
 		return urlBuilder.toString()
 	}
 
+	override fun equals(other: Any?): Boolean {
+		if (this === other) return true
+		if (javaClass != other?.javaClass) return false
+
+		other as MediaServerUrlProvider
+
+		if (authCode != other.authCode) return false
+		if (!certificateFingerprint.contentEquals(other.certificateFingerprint)) return false
+		if (baseURL != other.baseURL) return false
+
+		return true
+	}
+
+	override fun hashCode(): Int {
+		var result = authCode?.hashCode() ?: 0
+		result = 31 * result + certificateFingerprint.contentHashCode()
+		result = 31 * result + baseURL.hashCode()
+		return result
+	}
+
 	companion object {
 		private fun encodeParameter(parameter: String): String {
 			return try {

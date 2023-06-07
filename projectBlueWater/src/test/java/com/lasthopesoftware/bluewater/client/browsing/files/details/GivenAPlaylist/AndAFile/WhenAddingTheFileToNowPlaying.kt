@@ -4,6 +4,7 @@ import android.graphics.BitmapFactory
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
@@ -18,12 +19,14 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import java.net.URL
 
+private const val libraryId = 275
 private const val serviceFileId = 860
 
 @RunWith(AndroidJUnit4::class)
 class WhenAddingTheFileToNowPlaying {
 	companion object {
 
+		private var addedLibraryId: LibraryId? = null
 		private var addedServiceFile: ServiceFile? = null
 
 		private var viewModel: Lazy<FileDetailsViewModel>? = lazy {
@@ -46,8 +49,9 @@ class WhenAddingTheFileToNowPlaying {
 						.toPromise()
 				},
 				mockk {
-					every { addToPlaylist(any()) } answers {
-						addedServiceFile = firstArg()
+					every { addToPlaylist(any(), any()) } answers {
+						addedLibraryId = firstArg()
+						addedServiceFile = lastArg()
 					}
 				},
 				RecordingApplicationMessageBus(),
@@ -61,6 +65,7 @@ class WhenAddingTheFileToNowPlaying {
 		@BeforeClass
 		fun act() {
 			viewModel?.value?.loadFromList(
+				LibraryId(libraryId),
 				listOf(
 					ServiceFile(291),
 					ServiceFile(312),
@@ -82,6 +87,11 @@ class WhenAddingTheFileToNowPlaying {
 			viewModel = null
 			addedServiceFile = null
 		}
+	}
+
+	@Test
+	fun `then the file is added with the correct library id`() {
+		assertThat(addedLibraryId).isEqualTo(LibraryId(libraryId))
 	}
 
 	@Test

@@ -5,15 +5,17 @@ import com.google.android.exoplayer2.ext.okhttp.OkHttpDataSource
 import com.google.android.exoplayer2.upstream.HttpDataSource
 import com.google.android.exoplayer2.util.Util
 import com.lasthopesoftware.bluewater.R
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideGuaranteedLibraryConnections
 import com.lasthopesoftware.bluewater.client.connection.okhttp.ProvideOkHttpClients
 import com.lasthopesoftware.resources.executors.ThreadPools
+import com.namehillsoftware.handoff.promises.Promise
 import okhttp3.Dispatcher
 import java.util.concurrent.TimeUnit
 
 class HttpDataSourceFactoryProvider(
 	private val context: Context,
-	private val connectionProvider: IConnectionProvider,
+	private val connectionProvider: ProvideGuaranteedLibraryConnections,
 	private val okHttpClients: ProvideOkHttpClients
 ) : ProvideHttpDataSourceFactory {
 
@@ -23,15 +25,17 @@ class HttpDataSourceFactoryProvider(
 		}
 	}
 
-	private val factory by lazy {
-		OkHttpDataSource.Factory(
-			okHttpClients.getOkHttpClient(connectionProvider.urlProvider).newBuilder()
-				.readTimeout(45, TimeUnit.SECONDS)
-				.retryOnConnectionFailure(false)
-				.dispatcher(constrainedDispatcher)
-				.build())
-			.setUserAgent(Util.getUserAgent(context, context.getString(R.string.app_name)))
-	}
-
-	override fun getHttpDataSourceFactory(): HttpDataSource.Factory = factory
+	override fun promiseHttpDataSourceFactory(libraryId: LibraryId): Promise<HttpDataSource.Factory> =
+		connectionProvider
+			.promiseLibraryConnection(libraryId)
+			.then {
+				OkHttpDataSource.Factory(
+					okHttpClients.getOkHttpClient(it.urlProvider)
+						.newBuilder()
+						.readTimeout(45, TimeUnit.SECONDS)
+						.retryOnConnectionFailure(false)
+						.dispatcher(constrainedDispatcher)
+						.build())
+					.setUserAgent(Util.getUserAgent(context, context.getString(R.string.app_name)))
+			}
 }

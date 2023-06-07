@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.stored.library.sync.GivenAnExternalStoragePreference
 
-import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncDirectoryLookup
@@ -22,7 +22,7 @@ class WhenLookingUpTheSyncDrive {
 		fakePrivateDirectoryLookup.addDirectory("fake-private-path", 3)
 		fakePrivateDirectoryLookup.addDirectory("/fake-private-path", 5)
 		val syncDirectoryLookup = SyncDirectoryLookup(
-			FakeLibraryProvider(
+			FakeLibraryRepository(
 				Library().setSyncedFileLocation(Library.SyncedFileLocation.EXTERNAL).setId(14)
 			),
 			publicDrives,

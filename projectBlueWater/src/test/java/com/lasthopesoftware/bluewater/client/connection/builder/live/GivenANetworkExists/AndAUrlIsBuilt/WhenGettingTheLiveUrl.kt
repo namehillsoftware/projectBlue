@@ -24,7 +24,7 @@ class WhenGettingTheLiveUrl {
 
 		val liveUrlProvider = LiveUrlProvider(
 			mockk {
-				every { activeNetworkInfo } returns mockk()
+				every { isNetworkActive } returns true
 			},
 			urlProviderBuilder
 		)

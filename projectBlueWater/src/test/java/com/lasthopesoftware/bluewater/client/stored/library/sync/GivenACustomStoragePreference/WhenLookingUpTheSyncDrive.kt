@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.stored.library.sync.GivenACustomStoragePreference
 
-import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncDirectoryLookup
@@ -20,7 +20,7 @@ class WhenLookingUpTheSyncDrive {
 		val fakePrivateDirectoryLookup = FakePrivateDirectoryLookup()
 		fakePrivateDirectoryLookup.addDirectory("fake-private-path", 3)
 		fakePrivateDirectoryLookup.addDirectory("/fake-private-path", 5)
-		val fakeLibraryProvider = FakeLibraryProvider(
+		val fakeLibraryRepository = FakeLibraryRepository(
 			Library()
 				.setId(14)
 				.setSyncedFileLocation(Library.SyncedFileLocation.CUSTOM)
@@ -28,7 +28,7 @@ class WhenLookingUpTheSyncDrive {
 		)
 
 		val syncDirectoryLookup = SyncDirectoryLookup(
-			fakeLibraryProvider,
+			fakeLibraryRepository,
 			publicDrives,
 			fakePrivateDirectoryLookup
 		) { 0 }

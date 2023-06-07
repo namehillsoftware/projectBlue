@@ -6,6 +6,7 @@ import com.google.android.exoplayer2.ParserException
 import com.google.android.exoplayer2.PlaybackException
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.upstream.HttpDataSource
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.PromisingExoPlayer
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.ProvideExoPlayers
 import com.lasthopesoftware.bluewater.client.playback.file.EmptyPlaybackHandler
@@ -15,10 +16,10 @@ import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile
 import com.lasthopesoftware.bluewater.client.playback.volume.AudioTrackVolumeManager
 import com.lasthopesoftware.bluewater.client.playback.volume.PassthroughVolumeManager
+import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken
 import org.joda.time.Duration
-import org.slf4j.LoggerFactory
 import java.net.ProtocolException
 import java.util.concurrent.CancellationException
 
@@ -26,6 +27,7 @@ internal class PreparedExoPlayerPromise(
 	private val mediaSourceProvider: SpawnMediaSources,
 	private val eventHandler: Handler,
 	private val exoPlayers: ProvideExoPlayers,
+	private val libraryId: LibraryId,
 	private val uri: Uri,
 	private val prepareAt: Duration
 ) :
@@ -34,7 +36,7 @@ internal class PreparedExoPlayerPromise(
 	Runnable {
 
 	companion object {
-		private val logger by lazy { LoggerFactory.getLogger(PreparedExoPlayerPromise::class.java) }
+		private val logger by lazyLogger<PreparedExoPlayerPromise>()
 	}
 
 	private val cancellationToken = CancellationToken()
@@ -67,7 +69,7 @@ internal class PreparedExoPlayerPromise(
 					empty()
 				} else {
 					mediaSourceProvider
-						.promiseNewMediaSource(uri)
+						.promiseNewMediaSource(libraryId, uri)
 						.eventually { mediaSource ->
 							val newBufferingExoPlayer = BufferingExoPlayer(eventHandler, mediaSource, it)
 							bufferingExoPlayer = newBufferingExoPlayer

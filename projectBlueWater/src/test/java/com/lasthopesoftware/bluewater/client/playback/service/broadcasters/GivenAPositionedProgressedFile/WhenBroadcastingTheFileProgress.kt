@@ -1,8 +1,9 @@
 package com.lasthopesoftware.bluewater.client.playback.service.broadcasters.GivenAPositionedProgressedFile
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.FakeScopedCachedFilesPropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FakeFilesPropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedProgressedFile
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.TrackPositionBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.TrackPositionUpdate
@@ -15,13 +16,15 @@ class WhenBroadcastingTheFileProgress {
 
 	private val receivedMessage by lazy {
 		val appMessageBus = RecordingApplicationMessageBus()
-		val fileProperties = FakeScopedCachedFilesPropertiesProvider()
+		val fileProperties = FakeFilesPropertiesProvider()
 		fileProperties.addFilePropertiesToCache(
 			ServiceFile(880),
+			LibraryId(758),
 			mapOf(Pair(KnownFileProperties.Duration, ".389"))
 		)
 		val trackPositionBroadcaster = TrackPositionBroadcaster(appMessageBus, fileProperties)
 		trackPositionBroadcaster.broadcastProgress(
+			LibraryId(758),
 			PositionedProgressedFile(
 				313,
 				ServiceFile(880),

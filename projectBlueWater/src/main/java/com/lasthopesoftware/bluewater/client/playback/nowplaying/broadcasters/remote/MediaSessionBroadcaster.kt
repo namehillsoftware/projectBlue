@@ -6,15 +6,18 @@ import android.media.session.PlaybackState
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideImages
+import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideLibraryImages
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.ScopedCachedFilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.NotifyOfPlaybackEvents
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.NotifyOfTrackPositionUpdates
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.PlaybackNotificationRouter
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.TrackPositionUpdate
 import com.lasthopesoftware.bluewater.shared.android.MediaSession.ControlMediaSession
 import com.lasthopesoftware.bluewater.shared.lazyLogger
+import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
+import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 
 private val logger by lazyLogger<MediaSessionBroadcaster>()
 private const val playbackSpeed = 1.0f
@@ -27,11 +30,17 @@ private const val standardCapabilities = PlaybackStateCompat.ACTION_PLAY_PAUSE o
 	PlaybackStateCompat.ACTION_PLAY_FROM_SEARCH
 
 class MediaSessionBroadcaster(
-	private val nowPlayingProvider: GetNowPlayingState,
-	private val scopedCachedFilePropertiesProvider: ScopedCachedFilePropertiesProvider,
-	private val imageProvider: ProvideImages,
-	private val mediaSession: ControlMediaSession
-) : NotifyOfPlaybackEvents, NotifyOfTrackPositionUpdates {
+    private val nowPlayingState: GetNowPlayingState,
+    private val filePropertiesProvider: ProvideLibraryFileProperties,
+    private val imageProvider: ProvideLibraryImages,
+    private val mediaSession: ControlMediaSession,
+    applicationMessages: RegisterForApplicationMessages,
+) : PlaybackNotificationRouter(applicationMessages) {
+
+	private val trackPositionUpdatesSubscription = applicationMessages.registerReceiver { m: TrackPositionUpdate ->
+		updateTrackPosition(m.filePosition.millis)
+	}
+
 	@Volatile
 	private var playbackState = PlaybackStateCompat.STATE_STOPPED
 
@@ -48,7 +57,12 @@ class MediaSessionBroadcaster(
 	@Volatile
 	private var isPlaying = false
 
-	override fun notifyPlaying() {
+	override fun close() {
+		trackPositionUpdatesSubscription.close()
+		super.close()
+	}
+
+    override fun notifyPlaying() {
 		isPlaying = true
 		val builder = PlaybackStateCompat.Builder()
 		capabilities = PlaybackStateCompat.ACTION_PAUSE or standardCapabilities
@@ -88,14 +102,12 @@ class MediaSessionBroadcaster(
 	}
 
 	override fun notifyPlayingFileUpdated() {
-		nowPlayingProvider
-			.promiseNowPlaying()
-			.then {
-				it?.playingFile?.serviceFile?.also(::updateNowPlaying)
-			}
+		nowPlayingState.promiseActiveNowPlaying().then { np ->
+			np?.playingFile?.serviceFile?.also { sf -> updateNowPlaying(np.libraryId, sf) }
+		}
 	}
 
-	override fun updateTrackPosition(trackPosition: Long) {
+	private fun updateTrackPosition(trackPosition: Long) {
 		val builder = PlaybackStateCompat.Builder()
 		builder.setActions(capabilities)
 		builder.setState(
@@ -117,11 +129,11 @@ class MediaSessionBroadcaster(
 		remoteClientBitmap = null
 	}
 
-	private fun updateNowPlaying(serviceFile: ServiceFile) {
-		val promisedBitmap = imageProvider.promiseFileBitmap(serviceFile)
+	private fun updateNowPlaying(libraryId: LibraryId, serviceFile: ServiceFile) {
+		val promisedBitmap = imageProvider.promiseFileBitmap(libraryId, serviceFile)
 
-		scopedCachedFilePropertiesProvider
-			.promiseFileProperties(serviceFile)
+		filePropertiesProvider
+			.promiseFileProperties(libraryId, serviceFile)
 			.eventually { fileProperties ->
 				val artist = fileProperties[KnownFileProperties.Artist]
 				val name = fileProperties[KnownFileProperties.Name]

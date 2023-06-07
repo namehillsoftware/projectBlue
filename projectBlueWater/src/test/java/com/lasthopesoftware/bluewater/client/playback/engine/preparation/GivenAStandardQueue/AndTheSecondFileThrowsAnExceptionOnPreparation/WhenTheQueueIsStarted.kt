@@ -1,6 +1,8 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.preparation.GivenAStandardQueue.AndTheSecondFileThrowsAnExceptionOnPreparation
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.library.access.FakePlaybackQueueConfiguration
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue
 import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile
 import com.lasthopesoftware.bluewater.client.playback.file.fakes.FakeBufferingPlaybackHandler
@@ -17,6 +19,8 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.util.concurrent.ExecutionException
 
+private const val libraryId = 161
+
 class WhenTheQueueIsStarted {
 
 	private val expectedPlaybackHandler = FakeBufferingPlaybackHandler()
@@ -24,16 +28,16 @@ class WhenTheQueueIsStarted {
 		val serviceFiles = (0..2).map(::ServiceFile)
 
 		val playbackPreparer = mockk<PlayableFilePreparationSource>().apply {
-			every { promisePreparedPlaybackFile(ServiceFile(0), Duration.ZERO) } returns Promise(FakePreparedPlayableFile(FakeBufferingPlaybackHandler()))
-			every { promisePreparedPlaybackFile(ServiceFile(1), Duration.ZERO) } returns Promise(Exception())
+			every { promisePreparedPlaybackFile(LibraryId(libraryId), ServiceFile(0), Duration.ZERO) } returns Promise(FakePreparedPlayableFile(FakeBufferingPlaybackHandler()))
+			every { promisePreparedPlaybackFile(LibraryId(libraryId), ServiceFile(1), Duration.ZERO) } returns Promise(Exception())
 		}
 
 		val bufferingPlaybackQueuesProvider = CompletingFileQueueProvider()
 		val startPosition = 0
 		PreparedPlayableFileQueue(
-			{ 2 },
+			FakePlaybackQueueConfiguration(2),
 			playbackPreparer,
-			bufferingPlaybackQueuesProvider.provideQueue(serviceFiles, startPosition))
+			bufferingPlaybackQueuesProvider.provideQueue(LibraryId(libraryId), serviceFiles, startPosition))
 	}
 
 	private var returnedPlaybackHandler: PlayableFile? = null

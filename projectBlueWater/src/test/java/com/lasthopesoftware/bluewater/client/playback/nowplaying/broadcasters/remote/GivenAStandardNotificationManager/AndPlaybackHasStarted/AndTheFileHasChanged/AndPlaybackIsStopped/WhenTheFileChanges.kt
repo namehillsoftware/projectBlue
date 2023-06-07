@@ -7,35 +7,34 @@ import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.FakeNowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.remote.MediaSessionBroadcaster
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.singleNowPlaying
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.LibraryPlaybackMessage
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage
 import com.lasthopesoftware.bluewater.shared.android.MediaSession.ControlMediaSession
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
 import org.junit.Test
 
-private const val serviceFileId = 654
+private const val libraryId = 152
+private const val serviceFileId = 667
 
 class WhenTheFileChanges : AndroidContext() {
 	companion object {
-		private val mediaSessionCompat = mockk<ControlMediaSession>(relaxUnitFun = true)
+		private val mediaSessionCompat by lazy { mockk<ControlMediaSession>(relaxUnitFun = true) }
 	}
 
 	override fun before() {
-		val playbackNotificationBroadcaster = MediaSessionBroadcaster(
-			mockk {
-				every { promiseNowPlaying() } returns NowPlaying(
-					LibraryId(1),
-					listOf(ServiceFile(serviceFileId)),
-					0,
-					0L,
-					false
-				).toPromise()
-			},
-			mockk {
-				every { promiseFileProperties(ServiceFile(serviceFileId)) } returns mapOf(
+		val messageBus = RecordingApplicationMessageBus()
+		val nowPlaying = singleNowPlaying(LibraryId(libraryId), ServiceFile(serviceFileId))
+		MediaSessionBroadcaster(
+			FakeNowPlayingRepository(nowPlaying),
+            mockk {
+				every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns mapOf(
 					Pair(KnownFileProperties.Name, "kill"),
 					Pair(KnownFileProperties.Rating, "861"),
 					Pair(KnownFileProperties.Artist, "minister"),
@@ -45,16 +44,20 @@ class WhenTheFileChanges : AndroidContext() {
 				).toPromise()
 			},
 			mockk {
-				every { promiseFileBitmap(ServiceFile(serviceFileId)) } returns BitmapFactory
+				every { promiseFileBitmap(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns BitmapFactory
 					.decodeByteArray(byteArrayOf((912 % 128).toByte(), (368 % 128).toByte(), (395 % 128).toByte()), 0, 3)
 					.toPromise()
 			},
 			mediaSessionCompat,
+			messageBus,
 		)
-		playbackNotificationBroadcaster.notifyPlaying()
-		playbackNotificationBroadcaster.notifyPlayingFileUpdated()
-		playbackNotificationBroadcaster.notifyStopped()
-		playbackNotificationBroadcaster.notifyPlayingFileUpdated()
+
+		with (messageBus) {
+			sendMessage(PlaybackMessage.PlaybackStarted)
+			sendMessage(LibraryPlaybackMessage.TrackChanged(LibraryId(libraryId), nowPlaying.playingFile!!))
+			sendMessage(PlaybackMessage.PlaybackStopped)
+			sendMessage(LibraryPlaybackMessage.TrackChanged(LibraryId(libraryId), nowPlaying.playingFile!!))
+		}
 	}
 
 	@Test

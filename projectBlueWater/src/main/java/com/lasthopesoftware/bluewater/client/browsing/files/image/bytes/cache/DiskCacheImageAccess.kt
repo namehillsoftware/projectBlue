@@ -16,7 +16,11 @@ import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMess
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken
 import org.apache.commons.io.IOUtils
 import org.slf4j.LoggerFactory
-import java.io.*
+import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.FileInputStream
+import java.io.FileNotFoundException
+import java.io.IOException
 
 class DiskCacheImageAccess(private val sourceImages: GetRawImages, private val imageCacheKeys: LookupImageCacheKey, private val caches: IProvideCaches) : GetRawImages {
 
@@ -54,7 +58,7 @@ class DiskCacheImageAccess(private val sourceImages: GetRawImages, private val i
 					caches.promiseCache(libraryId)
 						.eventually { cache ->
 							cache
-								?.promiseCachedFile(uniqueKey)
+								?.promiseCachedFile(libraryId, uniqueKey)
 								?.also(cancellationProxy::doCancel)
 								?.eventually { imageFile ->
 									imageFile
@@ -65,7 +69,7 @@ class DiskCacheImageAccess(private val sourceImages: GetRawImages, private val i
 									bytes?.toPromise() ?: sourceImages.promiseImageBytes(libraryId, serviceFile)
 										.also { p ->
 											cancellationProxy.doCancel(p)
-											p.then { cache.put(uniqueKey, it) }.excuse { ioe -> logger.error("Error writing cached file!", ioe) }
+											p.then { cache.put(libraryId, uniqueKey, it) }.excuse { ioe -> logger.error("Error writing cached file!", ioe) }
 										}
 								}
 								.keepPromise()

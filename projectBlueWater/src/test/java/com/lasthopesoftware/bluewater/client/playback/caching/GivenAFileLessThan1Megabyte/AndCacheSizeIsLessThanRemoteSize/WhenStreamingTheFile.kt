@@ -7,6 +7,7 @@ import com.google.android.exoplayer2.upstream.HttpDataSource
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.repository.CachedFile
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.CacheOutputStream
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.supplier.SupplyCacheStreams
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.caching.datasource.EntireFileCachedDataSource
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.namehillsoftware.handoff.promises.Promise
@@ -40,7 +41,7 @@ class WhenStreamingTheFile {
 			val fakeCacheStreamSupplier = object : SupplyCacheStreams {
 				private var committedToCache = false
 
-				override fun promiseCachedFileOutputStream(uniqueKey: String): Promise<CacheOutputStream> {
+				override fun promiseCachedFileOutputStream(libraryId: LibraryId, uniqueKey: String): Promise<CacheOutputStream> {
 					return Promise<CacheOutputStream>(object : CacheOutputStream {
 						var numberOfBytesWritten = 0
 
@@ -99,6 +100,7 @@ class WhenStreamingTheFile {
 				}
 			}
 			val diskFileCacheDataSource = EntireFileCachedDataSource(
+				LibraryId(868),
                 dataSource,
                 fakeCacheStreamSupplier,
 			)

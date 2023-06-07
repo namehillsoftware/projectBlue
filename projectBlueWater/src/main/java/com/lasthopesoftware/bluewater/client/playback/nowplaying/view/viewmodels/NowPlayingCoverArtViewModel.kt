@@ -3,20 +3,18 @@ package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodel
 import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideImages
+import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideLibraryImages
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
 import com.lasthopesoftware.bluewater.client.connection.polling.PollForLibraryConnections
 import com.lasthopesoftware.bluewater.client.connection.selected.ProvideSelectedConnection
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage.PlaylistChanged
-import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage.TrackChanged
+import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.LibraryPlaybackMessage
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
-import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.images.ProvideDefaultImage
 import com.lasthopesoftware.bluewater.shared.lazyLogger
-import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
+import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.namehillsoftware.handoff.promises.Promise
@@ -27,52 +25,58 @@ import java.util.concurrent.CancellationException
 private val logger by lazyLogger<NowPlayingCoverArtViewModel>()
 
 class NowPlayingCoverArtViewModel(
-	private val applicationMessage: RegisterForApplicationMessages,
-	private val nowPlayingRepository: GetNowPlayingState,
-	private val selectedConnectionProvider: ProvideSelectedConnection,
-	private val defaultImageProvider: ProvideDefaultImage,
-	private val imageProvider: ProvideImages,
-	private val pollConnections: PollForLibraryConnections,
-) : ViewModel(), (ApplicationMessage) -> Unit {
-	private var cachedPromises: CachedPromises? = null
+    applicationMessage: RegisterForApplicationMessages,
+    private val nowPlayingRepository: GetNowPlayingState,
+    private val selectedConnectionProvider: ProvideSelectedConnection,
+    private val defaultImageProvider: ProvideDefaultImage,
+    private val imageProvider: ProvideLibraryImages,
+    private val pollConnections: PollForLibraryConnections,
+) : ViewModel() {
+
+	private val trackChangedSubscription = applicationMessage.registerReceiver { m: LibraryPlaybackMessage.TrackChanged ->
+		setViewIfLibraryIsCorrect(m.libraryId)
+	}
+
+	private val playlistChangedSubscription = applicationMessage.registerReceiver { m: LibraryPlaybackMessage.PlaylistChanged ->
+		setViewIfLibraryIsCorrect(m.libraryId)
+	}
 
 	private val promisedDefaultImage by lazy { defaultImageProvider.promiseFileBitmap() }
-
 	private val isNowPlayingImageLoadingState = MutableStateFlow(false)
 	private val defaultImageState = MutableStateFlow<Bitmap?>(null)
 	private val nowPlayingImageState = MutableStateFlow<Bitmap?>(null)
 	private val unexpectedErrorState = MutableStateFlow<Throwable?>(null)
+
+	private var activeLibraryId: LibraryId? = null
+	private var cachedPromises: CachedPromises? = null
 
 	val isNowPlayingImageLoading = isNowPlayingImageLoadingState.asStateFlow()
 	val nowPlayingImage = nowPlayingImageState.asStateFlow()
 	val defaultImage = defaultImageState.asStateFlow()
 	val unexpectedError = unexpectedErrorState.asStateFlow()
 
-	init {
-		applicationMessage.registerForClass(cls<TrackChanged>(), this)
-		applicationMessage.registerForClass(cls<PlaylistChanged>(), this)
-	}
-
-	override fun invoke(p1: ApplicationMessage) {
-		setView()
-	}
-
 	override fun onCleared() {
 		cachedPromises?.close()
-		applicationMessage.unregisterReceiver(this)
+		trackChangedSubscription.close()
+		playlistChangedSubscription.close()
 	}
 
-	fun initializeViewModel(): Promise<Unit> {
-
+	fun initializeViewModel(libraryId: LibraryId): Promise<Unit> {
+		activeLibraryId = libraryId
 		return Promise.whenAll(
-			setView(),
+			setView(libraryId),
 			promisedDefaultImage.then { defaultImageState.value = it }
 		).unitResponse()
 	}
 
-	private fun setView(): Promise<Unit> {
+	private fun setViewIfLibraryIsCorrect(libraryId: LibraryId) {
+		if (activeLibraryId == libraryId)
+			setView(libraryId)
+	}
+
+	private fun setView(libraryId: LibraryId): Promise<Unit> {
 		val promisedSetView = nowPlayingRepository
-			.promiseNowPlaying()
+			.promiseNowPlaying(libraryId)
 			.eventually { np ->
 				np?.playingFile?.run { setView(np.libraryId, serviceFile) }.keepPromise(Unit)
 			}
@@ -81,13 +85,6 @@ class NowPlayingCoverArtViewModel(
 
 		return promisedSetView
 	}
-
-	private fun handleIoException(exception: Throwable) =
-		if (ConnectionLostExceptionFilter.isConnectionLostException(exception)) true
-		else {
-			unexpectedErrorState.value = exception
-			false
-		}
 
 	private fun setView(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Unit> {
 
@@ -99,7 +96,7 @@ class NowPlayingCoverArtViewModel(
 			pollConnections.pollConnection(libraryId).then {
 				cachedPromises?.close()
 				cachedPromises = null
-				setView()
+				activeLibraryId?.apply(::setView)
 			}
 		}
 
@@ -133,11 +130,18 @@ class NowPlayingCoverArtViewModel(
 
 				val currentCachedPromises = CachedPromises(
 					urlKeyHolder,
-					imageProvider.promiseFileBitmap(serviceFile)
+					imageProvider.promiseFileBitmap(libraryId, serviceFile)
 				).also { cachedPromises = it }
 				setNowPlayingImage(currentCachedPromises)
 			}
 	}
+
+	private fun handleIoException(exception: Throwable) =
+		if (ConnectionLostExceptionFilter.isConnectionLostException(exception)) true
+		else {
+			unexpectedErrorState.value = exception
+			false
+		}
 
 	private class CachedPromises(
 		val urlKeyHolder: UrlKeyHolder<ServiceFile>,

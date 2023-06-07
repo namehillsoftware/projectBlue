@@ -1,9 +1,11 @@
 package com.lasthopesoftware.resources.closables
 
+import androidx.annotation.MainThread
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 
+@MainThread
 fun <T : AutoCloseable> LifecycleOwner.lazyScoped(factory: () -> T): Lazy<T> = lazy {
 	factory().also { LifecycleAutoCloser(this, it) }
 }

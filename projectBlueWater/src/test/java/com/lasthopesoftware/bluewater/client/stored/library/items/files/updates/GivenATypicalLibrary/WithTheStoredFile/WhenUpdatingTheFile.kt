@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.files.updates
 
 import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFileQuery
@@ -25,12 +25,12 @@ class WhenUpdatingTheFile {
 	companion object {
 		private val storedFile by lazy {
 			val mediaFileUriProvider = mockk<MediaFileUriProvider>()
-			every { mediaFileUriProvider.promiseFileUri(any()) } returns Promise.empty()
+			every { mediaFileUriProvider.promiseUri(any(), any()) } returns Promise.empty()
 
 			val mediaFileIdProvider = mockk<ProvideMediaFileIds>()
 			every { mediaFileIdProvider.getMediaId(any(), any()) } returns Promise.empty()
 
-			val fakeLibraryProvider = FakeLibraryProvider(
+			val fakeLibraryRepository = FakeLibraryRepository(
 				Library().setId(14).setSyncedFileLocation(Library.SyncedFileLocation.EXTERNAL)
 			)
 
@@ -42,7 +42,7 @@ class WhenUpdatingTheFile {
 				mediaFileUriProvider,
 				mediaFileIdProvider,
 				StoredFileQuery(ApplicationProvider.getApplicationContext()),
-				fakeLibraryProvider,
+				fakeLibraryRepository,
 				lookupStoredFilePaths
 			)
 			storedFileUpdater.promiseStoredFileUpdate(LibraryId(14), ServiceFile(4)).toExpiringFuture().get()

@@ -1,9 +1,10 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.GivenAPlayingPlaybackEngine
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryStorage
-import com.lasthopesoftware.bluewater.client.browsing.library.access.ISpecificLibraryProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
+import com.lasthopesoftware.bluewater.client.browsing.library.access.FakePlaybackQueueConfiguration
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
+import com.lasthopesoftware.bluewater.client.connection.selected.GivenANullConnection.AndTheSelectedLibraryChanges.FakeSelectedLibraryProvider
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
@@ -12,38 +13,34 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.Co
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.FakeNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
-import com.namehillsoftware.handoff.promises.Promise
-import io.mockk.every
-import io.mockk.mockk
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
 import org.junit.jupiter.api.Test
 
 class WhenNotObservingPlayback {
 
-	private val library = Library(_id = 1, _nowPlayingId = 5)
-	private val playbackEngine by lazy {
+	private val mut by lazy {
 		val fakePlaybackPreparerProvider = FakeDeferredPlayableFilePreparationSourceProvider()
 
-		val libraryProvider = mockk<ISpecificLibraryProvider>()
-		every { libraryProvider.promiseLibrary() } returns Promise(library)
+		val library = Library(_id = 1, _nowPlayingId = 5)
 
-		val libraryStorage = mockk<ILibraryStorage>()
-		every { libraryStorage.saveLibrary(any()) } returns	Promise(library)
+		val libraryProvider = FakeLibraryRepository(library)
 
 		val playbackEngine = PlaybackEngine(
-			PreparedPlaybackQueueResourceManagement(
-				fakePlaybackPreparerProvider
-			) { 1 }, listOf(CompletingFileQueueProvider()),
+			PreparedPlaybackQueueResourceManagement(fakePlaybackPreparerProvider, FakePlaybackQueueConfiguration()),
+			listOf(CompletingFileQueueProvider()),
 			NowPlayingRepository(
+				FakeSelectedLibraryProvider(),
 				libraryProvider,
-				libraryStorage,
+				libraryProvider,
 				FakeNowPlayingState(),
 			),
 			PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
 		)
 		playbackEngine
 			.startPlaylist(
+				library.libraryId,
 				listOf(
 					ServiceFile(1),
 					ServiceFile(2),
@@ -52,19 +49,21 @@ class WhenNotObservingPlayback {
 					ServiceFile(5)
 				), 0, Duration.ZERO
 			)
+			.toExpiringFuture()
+			.get()
 		val resolvablePlaybackHandler = fakePlaybackPreparerProvider.deferredResolution.resolve()
 		fakePlaybackPreparerProvider.deferredResolution.resolve()
 		resolvablePlaybackHandler.resolve()
-		playbackEngine
+		Pair(libraryProvider, playbackEngine)
 	}
 
 	@Test
 	fun thenTheSavedTrackPositionIsOne() {
-		assertThat(library.nowPlayingId).isEqualTo(1)
+		assertThat(mut.first.libraries[1]!!.nowPlayingId).isEqualTo(1)
 	}
 
 	@Test
 	fun thenTheManagerIsPlaying() {
-		assertThat(playbackEngine.isPlaying).isTrue
+		assertThat(mut.second.isPlaying).isTrue
 	}
 }

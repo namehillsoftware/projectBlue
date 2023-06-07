@@ -7,6 +7,7 @@ import com.google.android.exoplayer2.upstream.HttpDataSource
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.repository.CachedFile
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.CacheOutputStream
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.supplier.SupplyCacheStreams
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.caching.datasource.EntireFileCachedDataSource
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -24,6 +25,8 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import java.util.*
 
+private const val libraryId = 568
+
 @RunWith(RobolectricTestRunner::class)
 class WhenStreamingTheFileInOddChunks {
     companion object {
@@ -39,7 +42,7 @@ class WhenStreamingTheFileInOddChunks {
 
 			val fakeCacheStreamSupplier =
 				object : SupplyCacheStreams {
-					override fun promiseCachedFileOutputStream(uniqueKey: String): Promise<CacheOutputStream> {
+					override fun promiseCachedFileOutputStream(libraryId: LibraryId, uniqueKey: String): Promise<CacheOutputStream> {
 						cacheKey = uniqueKey
 						return Promise<CacheOutputStream>(object : CacheOutputStream {
 							var numberOfBytesWritten = 0
@@ -97,6 +100,7 @@ class WhenStreamingTheFileInOddChunks {
 				}
 			}
             val diskFileCacheDataSource = EntireFileCachedDataSource(
+				LibraryId(libraryId),
 				dataSource,
 				fakeCacheStreamSupplier
 			)

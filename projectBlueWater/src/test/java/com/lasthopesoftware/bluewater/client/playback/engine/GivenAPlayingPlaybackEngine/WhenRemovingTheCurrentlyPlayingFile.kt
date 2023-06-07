@@ -6,9 +6,12 @@ import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.Fi
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertiesContainer
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.IFilePropertiesContainerRepository
-import com.lasthopesoftware.bluewater.client.browsing.library.access.ISpecificLibraryProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.access.PassThroughLibraryStorage
+import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
+import com.lasthopesoftware.bluewater.client.browsing.library.access.FakePlaybackQueueConfiguration
+import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.connection.selected.GivenANullConnection.AndTheSelectedLibraryChanges.FakeSelectedLibraryProvider
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
@@ -29,11 +32,14 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.util.concurrent.TimeUnit
 
+private const val libraryId = 837
+
 class WhenRemovingTheCurrentlyPlayingFile {
 
 	private val mut by lazy {
 		val fakePlaybackPreparerProvider = FakeDeferredPlayableFilePreparationSourceProvider()
-		library.setId(1)
+		val library = Library()
+		library.setId(libraryId)
 		library.setSavedTracksString(
 			FileStringListUtilities.promiseSerializedFileStringList(
 				listOf(
@@ -48,10 +54,19 @@ class WhenRemovingTheCurrentlyPlayingFile {
 			).toExpiringFuture().get()
 		)
 		library.setNowPlayingId(5)
-		val libraryProvider = mockk<ISpecificLibraryProvider>()
-		every { libraryProvider.promiseLibrary() } returns Promise(library)
+		val libraryProvider = FakeLibraryRepository(library)
+		val savedLibrary = object : Promise<Library>() {
+			val libraryStorage = mockk<ILibraryStorage> {
+				every { saveLibrary(any()) } answers {
+					libraryProvider.saveLibrary(firstArg()).then {
+						if (it.savedTracksString != library.savedTracksString)
+							resolve(it)
+						it
+					}
+				}
+			}
+		}
 
-		val libraryStorage = PassThroughLibraryStorage()
 		val filePropertiesContainerRepository = mockk<IFilePropertiesContainerRepository>()
 		every {
 			filePropertiesContainerRepository.getFilePropertiesContainer(UrlKeyHolder(EmptyUrl.url, ServiceFile(5)))
@@ -59,40 +74,40 @@ class WhenRemovingTheCurrentlyPlayingFile {
 
 		val playbackEngine =
 			PlaybackEngine(
-				PreparedPlaybackQueueResourceManagement(
-					fakePlaybackPreparerProvider
-				) { 1 },
+				PreparedPlaybackQueueResourceManagement(fakePlaybackPreparerProvider, FakePlaybackQueueConfiguration()),
 				listOf(CompletingFileQueueProvider()),
 				NowPlayingRepository(
+					FakeSelectedLibraryProvider(),
 					libraryProvider,
-					libraryStorage,
+					savedLibrary.libraryStorage,
 					FakeNowPlayingState(),
 				),
 				PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
 			)
-		Pair(fakePlaybackPreparerProvider, playbackEngine)
+		Triple(fakePlaybackPreparerProvider, savedLibrary, playbackEngine)
 	}
 
 	private var initialState: PositionedProgressedFile? = null
-	private val library = Library()
+	private var savedLibrary: Library? = null
 	private var positionedPlayingFile: PositionedPlayingFile? = null
 
 	@BeforeAll
 	fun act() {
-		val (fakePlaybackPreparerProvider, playbackEngine) = mut
+		val (fakePlaybackPreparerProvider, promisedSave, playbackEngine) = mut
 
-		initialState = playbackEngine.restoreFromSavedState().toExpiringFuture().get()
+		initialState = playbackEngine.restoreFromSavedState(LibraryId(libraryId)).toExpiringFuture().get()?.second
 		playbackEngine.resume().toExpiringFuture()[1, TimeUnit.SECONDS]
 		fakePlaybackPreparerProvider.deferredResolution.resolve()
-		playbackEngine.setOnPlayingFileChanged { c -> positionedPlayingFile = c	}
+		playbackEngine.setOnPlayingFileChanged { _, c -> positionedPlayingFile = c	}
 		val futurePlaying = playbackEngine.removeFileAtPosition(5).toExpiringFuture()
 		fakePlaybackPreparerProvider.deferredResolution.resolve()
 		futurePlaying[1, TimeUnit.SECONDS]
+		savedLibrary = promisedSave.toExpiringFuture().get()
 	}
 
 	@Test
 	fun `then the currently playing file position is the same`() {
-		assertThat(library.nowPlayingId).isEqualTo(5)
+		assertThat(savedLibrary?.nowPlayingId).isEqualTo(5)
 	}
 
 	@Test

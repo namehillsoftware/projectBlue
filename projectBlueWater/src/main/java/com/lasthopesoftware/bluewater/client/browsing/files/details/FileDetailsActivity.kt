@@ -13,6 +13,7 @@ import androidx.compose.runtime.setValue
 import com.lasthopesoftware.bluewater.ActivityApplicationNavigation
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.image.CachedImageProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.image.SelectedLibraryImageProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableScopedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.SelectedLibraryFilePropertiesProvider
@@ -20,8 +21,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.repositor
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertyStorage
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.SelectedLibraryFilePropertyStorage
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ConnectionLostView
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.StaticLibraryIdentifierProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.session.LibraryIdProviderViewModel
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
@@ -69,7 +69,7 @@ class FileDetailsActivity : ComponentActivity() {
 
 	private val defaultImageProvider by lazy { DefaultImageProvider(this) }
 
-	private val selectedLibraryIdProvider by lazy { StaticLibraryIdentifierProvider(getCachedSelectedLibraryIdProvider()) }
+	private val selectedLibraryIdProvider by buildViewModelLazily { LibraryIdProviderViewModel() }
 
 	private val libraryConnections by lazy { buildNewConnectionSessionManager() }
 
@@ -114,7 +114,7 @@ class FileDetailsActivity : ComponentActivity() {
 			filePropertiesProvider,
 			scopedFilePropertyUpdates,
 			defaultImageProvider,
-			imageProvider,
+			SelectedLibraryImageProvider(selectedLibraryIdProvider, imageProvider),
 			PlaybackServiceController(this),
 			ApplicationMessageBus.getApplicationMessageBus(),
 			SelectedLibraryUrlKeyProvider(selectedLibraryIdProvider, UrlKeyProvider(libraryConnections)),
@@ -142,6 +142,8 @@ class FileDetailsActivity : ComponentActivity() {
 			finish()
 			return
 		}
+
+		selectedLibraryIdProvider.selectLibraryId(libraryId)
 
 		setContent {
 			ProjectBlueTheme {
@@ -176,7 +178,7 @@ class FileDetailsActivity : ComponentActivity() {
 							}
 							val playlist = intent.getIntArrayExtra(playlist)?.map(::ServiceFile) ?: emptyList()
 
-							vm.loadFromList(playlist, position).suspend()
+							vm.loadFromList(libraryId, playlist, position).suspend()
 						} catch (e: IOException) {
 							if (ConnectionLostExceptionFilter.isConnectionLostException(e))
 								isConnectionLost = true

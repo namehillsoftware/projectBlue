@@ -7,6 +7,7 @@ import com.google.android.exoplayer2.source.BaseMediaSource
 import com.google.android.exoplayer2.upstream.DataSpec
 import com.google.android.exoplayer2.upstream.HttpDataSource
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.PromisingExoPlayer
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.ProvideExoPlayers
 import com.lasthopesoftware.bluewater.client.playback.file.EmptyPlaybackHandler
@@ -22,13 +23,15 @@ import org.joda.time.Duration
 import org.junit.jupiter.api.Test
 import java.net.ProtocolException
 
+private const val libraryId = 470
+
 class WhenPreparing {
 
 	private val preparedPlayer by lazy {
 		var listener: Player.Listener? = null
 
 		val preparer = ExoPlayerPlaybackPreparer(
-			{
+			{ _, _ ->
 				mockk<BaseMediaSource>(relaxUnitFun = true).toPromise()
 			},
 			mockk<ProvideExoPlayers>().apply {
@@ -45,10 +48,13 @@ class WhenPreparing {
 					every { release() } returns selfPromise
 				}
 			},
-			mockk()
-		) { Promise(mockk<Uri>()) }
+			mockk(),
+			mockk {
+				every { promiseUri(LibraryId(libraryId), ServiceFile(1)) } returns Promise(mockk<Uri>())
+			}
+		)
 
-		val futurePreparation = preparer.promisePreparedPlaybackFile(ServiceFile(1), Duration.ZERO).toExpiringFuture()
+		val futurePreparation = preparer.promisePreparedPlaybackFile(LibraryId(libraryId), ServiceFile(1), Duration.ZERO).toExpiringFuture()
 
 		listener?.onPlayerError(
 			PlaybackException(

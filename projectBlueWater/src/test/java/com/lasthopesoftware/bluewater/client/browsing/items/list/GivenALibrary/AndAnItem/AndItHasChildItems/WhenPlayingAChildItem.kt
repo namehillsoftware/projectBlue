@@ -28,8 +28,8 @@ class WhenPlayingAChildItem {
 		}
 
 		val controlNowPlaying = mockk<ControlPlaybackService>().apply {
-			every { startPlaylist(any<String>(), any()) } answers {
-				playedFileList = firstArg()
+			every { startPlaylist(LibraryId(libraryId), any<String>(), any()) } answers {
+				playedFileList = arg(1)
 			}
 		}
 

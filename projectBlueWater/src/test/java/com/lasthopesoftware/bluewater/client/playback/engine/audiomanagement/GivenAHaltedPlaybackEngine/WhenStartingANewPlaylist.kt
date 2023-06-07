@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.playback.engine.audiomanagement.Gi
 
 import androidx.media.AudioFocusRequestCompat
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.engine.AudioManagingPlaybackStateChanger
 import com.lasthopesoftware.bluewater.client.playback.engine.ChangePlaybackState
 import com.lasthopesoftware.bluewater.shared.android.audiofocus.ControlAudioFocus
@@ -21,7 +22,7 @@ class WhenStartingANewPlaylist {
 
 	private val mut by lazy {
 		val innerPlaybackState = object : ChangePlaybackState {
-			override fun startPlaylist(playlist: List<ServiceFile>, playlistPosition: Int, filePosition: Duration): Promise<Unit> {
+			override fun startPlaylist(libraryId: LibraryId, playlist: List<ServiceFile>, playlistPosition: Int, filePosition: Duration): Promise<Unit> {
 				isStarted = true
 				return Unit.toPromise()
 			}
@@ -51,7 +52,7 @@ class WhenStartingANewPlaylist {
 
 	@BeforeAll
 	fun act() {
-		mut.startPlaylist(ArrayList(), 0, Duration.ZERO)
+		mut.startPlaylist(LibraryId(215), ArrayList(), 0, Duration.ZERO)
 			.toExpiringFuture()
 			.get(20, TimeUnit.SECONDS)
 	}

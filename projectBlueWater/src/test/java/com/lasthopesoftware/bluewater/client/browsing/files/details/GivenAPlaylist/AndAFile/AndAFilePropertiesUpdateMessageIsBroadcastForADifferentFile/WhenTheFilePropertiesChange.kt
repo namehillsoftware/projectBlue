@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsV
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
@@ -21,6 +22,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import java.net.URL
 
+private const val libraryId = 798
 private const val serviceFileId = 783
 
 @RunWith(AndroidJUnit4::class)
@@ -85,6 +87,7 @@ class WhenTheFilePropertiesChange {
 			val (messageBus, viewModel) = services?.value ?: return
 
 			viewModel.loadFromList(
+				LibraryId(libraryId),
 				listOf(
 					ServiceFile(291),
 					ServiceFile(312),

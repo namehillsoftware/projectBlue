@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.GivenATypicalFile
 
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.CachedFileOutputStream
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -8,7 +9,7 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.io.File
 import java.io.FileInputStream
-import java.util.*
+import java.util.Random
 
 class WhenWritingTheFile {
     private val file by lazy { File.createTempFile("ladder", ".tmp").apply { deleteOnExit() } }
@@ -17,7 +18,7 @@ class WhenWritingTheFile {
 
     @BeforeAll
     fun act() {
-        val cachedFileOutputStream = CachedFileOutputStream("unique-test", file, mockk())
+        val cachedFileOutputStream = CachedFileOutputStream(LibraryId(100), "unique-test", file, mockk())
         cachedFileOutputStream.promiseWrite(bytes, 0, bytes.size).toExpiringFuture().get()
 		FileInputStream(file).use { fis ->
 			fis.read(bytesWritten, 0, bytes.size)

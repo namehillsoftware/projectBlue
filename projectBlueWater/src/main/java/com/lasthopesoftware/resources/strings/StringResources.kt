@@ -20,4 +20,5 @@ class StringResources(context: Context): GetStringResources {
 	override val errorConnectingTryAgain by lazy { context.getString(R.string.lbl_error_connecting_try_again) }
 	override val connected by lazy { context.getString(R.string.lbl_connected) }
 	override val removeServer by lazy { context.getString(R.string.removeServer) }
+	override val connectingToServerTitle by lazy { context.getString(R.string.title_svc_connecting_to_server) }
 }

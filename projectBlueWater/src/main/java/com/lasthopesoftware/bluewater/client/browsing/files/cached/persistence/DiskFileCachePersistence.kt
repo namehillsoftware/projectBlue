@@ -15,6 +15,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.cached.repository.Ca
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.repository.CachedFile.Companion.LIBRARY_ID
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.repository.CachedFile.Companion.UNIQUE_KEY
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.repository.CachedFile.Companion.tableName
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.repository.DatabasePromise
 import com.lasthopesoftware.bluewater.repository.InsertBuilder.Companion.fromTable
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
@@ -31,7 +32,7 @@ class DiskFileCachePersistence(
 	private val cachedFilesProvider: ICachedFilesProvider,
 	private val diskFileAccessTimeUpdater: IDiskFileAccessTimeUpdater
 ) : IDiskFileCachePersistence {
-	override fun putIntoDatabase(uniqueKey: String, file: File): Promise<CachedFile> {
+	override fun putIntoDatabase(libraryId: LibraryId, uniqueKey: String, file: File): Promise<CachedFile> {
 		val canonicalFilePath = try {
 			file.canonicalPath
 		} catch (e: IOException) {
@@ -40,7 +41,7 @@ class DiskFileCachePersistence(
 		}
 
 		return cachedFilesProvider
-			.promiseCachedFile(uniqueKey)
+			.promiseCachedFile(libraryId, uniqueKey)
 			.eventually { cachedFile ->
 				cachedFile
 					?.let {
@@ -59,7 +60,7 @@ class DiskFileCachePersistence(
 												.addParameter(FILE_NAME, canonicalFilePath)
 												.addParameter(CACHE_NAME, diskFileCacheConfiguration.cacheName)
 												.addParameter(FILE_SIZE, file.length())
-												.addParameter(LIBRARY_ID, diskFileCacheConfiguration.library.id)
+												.addParameter(LIBRARY_ID, libraryId.id)
 												.addParameter(UNIQUE_KEY, uniqueKey)
 												.addParameter(CREATED_TIME, currentTimeMillis)
 												.addParameter(LAST_ACCESSED_TIME, currentTimeMillis)
@@ -74,7 +75,7 @@ class DiskFileCachePersistence(
 						} finally {
 							CacheFlusherTask.promisedCacheFlushing(context, diskCacheDirectoryProvider, diskFileCacheConfiguration, diskFileCacheConfiguration.maxSize)
 						}
-					}.eventually { cachedFilesProvider.promiseCachedFile(uniqueKey) }
+					}.eventually { cachedFilesProvider.promiseCachedFile(libraryId, uniqueKey) }
 			}
 	}
 

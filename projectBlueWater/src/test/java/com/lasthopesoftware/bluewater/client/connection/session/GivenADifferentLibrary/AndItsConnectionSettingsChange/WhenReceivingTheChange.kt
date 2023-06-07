@@ -11,7 +11,7 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
 class WhenReceivingTheChange {
-	private lateinit var removedLibraryConnection: LibraryId
+	private var removedLibraryConnection: LibraryId? = null
 
 	private val mut by lazy {
 		val connectionSessions = mockk<ManageConnectionSessions>().apply {
@@ -29,6 +29,6 @@ class WhenReceivingTheChange {
 
 	@Test
 	fun `then the connection is removed`() {
-		assertThat(removedLibraryConnection).isEqualTo(LibraryId(53))
+		assertThat(removedLibraryConnection!!).isEqualTo(LibraryId(53))
 	}
 }

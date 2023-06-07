@@ -4,7 +4,7 @@ import android.net.Uri
 import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
@@ -25,16 +25,17 @@ class WhenUpdatingTheFile : AndroidContext() {
 
 	companion object {
 		private var storedFile: StoredFile? = null
+		private val libraryId = LibraryId(14)
 	}
 
 	override fun before() {
 		val mediaFileUriProvider = mockk<MediaFileUriProvider>()
-		every { mediaFileUriProvider.promiseFileUri(ServiceFile(4)) } returns Promise(Uri.fromFile(File("/custom-root/a-file.mp3")))
+		every { mediaFileUriProvider.promiseUri(libraryId, ServiceFile(4)) } returns Promise(Uri.fromFile(File("/custom-root/a-file.mp3")))
 
 		val mediaFileIdProvider = mockk<ProvideMediaFileIds>()
-		every { mediaFileIdProvider.getMediaId(LibraryId(14), ServiceFile(4)) } returns Promise(12)
+		every { mediaFileIdProvider.getMediaId(libraryId, ServiceFile(4)) } returns Promise(12)
 
-		val fakeLibraryProvider = FakeLibraryProvider(
+		val fakeLibraryRepository = FakeLibraryRepository(
 			Library()
 				.setIsUsingExistingFiles(true)
 				.setId(14)
@@ -42,18 +43,18 @@ class WhenUpdatingTheFile : AndroidContext() {
 		)
 
 		val lookupStoredFilePaths = mockk<GetStoredFilePaths>()
-		every { lookupStoredFilePaths.promiseStoredFilePath(LibraryId(14), ServiceFile(4)) } returns Promise("/my-public-drive/busy/sweeten.mp3")
+		every { lookupStoredFilePaths.promiseStoredFilePath(libraryId, ServiceFile(4)) } returns Promise("/my-public-drive/busy/sweeten.mp3")
 
 		val storedFileUpdater = StoredFileUpdater(
 			ApplicationProvider.getApplicationContext(),
 			mediaFileUriProvider,
 			mediaFileIdProvider,
 			StoredFileQuery(ApplicationProvider.getApplicationContext()),
-			fakeLibraryProvider,
+			fakeLibraryRepository,
 			lookupStoredFilePaths
 		)
 		storedFile =
-			storedFileUpdater.promiseStoredFileUpdate(LibraryId(14), ServiceFile(4)).toExpiringFuture().get()
+			storedFileUpdater.promiseStoredFileUpdate(libraryId, ServiceFile(4)).toExpiringFuture().get()
 	}
 
 	@Test

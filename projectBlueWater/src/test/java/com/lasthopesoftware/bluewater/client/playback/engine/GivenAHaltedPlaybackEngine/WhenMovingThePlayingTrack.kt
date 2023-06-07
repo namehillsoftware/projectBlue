@@ -2,9 +2,9 @@ package com.lasthopesoftware.bluewater.client.playback.engine.GivenAHaltedPlayba
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.FileStringListUtilities
-import com.lasthopesoftware.bluewater.client.browsing.library.access.ISpecificLibraryProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.access.PassThroughLibraryStorage
+import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
+import com.lasthopesoftware.bluewater.client.connection.selected.GivenANullConnection.AndTheSelectedLibraryChanges.FakeSelectedLibraryProvider
 import com.lasthopesoftware.bluewater.client.playback.engine.PlaybackEngine
 import com.lasthopesoftware.bluewater.client.playback.engine.bootstrap.PlaylistPlaybackBootstrapper
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlaybackQueueResourceManagement
@@ -14,7 +14,6 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.FakeNow
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
-import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -40,22 +39,26 @@ class WhenMovingThePlayingTrack {
 			.setNowPlayingId(3)
 
 		val fakePlaybackPreparerProvider = FakeDeferredPlayableFilePreparationSourceProvider()
-		val libraryProvider = mockk<ISpecificLibraryProvider>().apply {
-			every { promiseLibrary() } returns Promise(storedLibrary)
-		}
+		val libraryProvider = FakeLibraryRepository(storedLibrary)
 
 		val playbackEngine = PlaybackEngine(
-			PreparedPlaybackQueueResourceManagement(fakePlaybackPreparerProvider) { 1 },
+			PreparedPlaybackQueueResourceManagement(
+				fakePlaybackPreparerProvider,
+				mockk {
+					every { maxQueueSize } returns 1
+				}
+			),
 			listOf(CompletingFileQueueProvider()),
 			NowPlayingRepository(
+				FakeSelectedLibraryProvider(),
 				libraryProvider,
-				PassThroughLibraryStorage(),
+				libraryProvider,
 				FakeNowPlayingState(),
 			),
 			PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
 		)
 
-		playbackEngine.restoreFromSavedState().toExpiringFuture().get()
+		playbackEngine.restoreFromSavedState(storedLibrary.libraryId).toExpiringFuture().get()
 		playbackEngine.moveFile(3, 1).toExpiringFuture()[1, TimeUnit.SECONDS]
 	}
 

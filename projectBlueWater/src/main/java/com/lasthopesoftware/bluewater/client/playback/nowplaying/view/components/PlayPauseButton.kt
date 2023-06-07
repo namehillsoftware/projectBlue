@@ -43,7 +43,7 @@ fun PlayPauseButton(
 				interactionSource = remember { MutableInteractionSource() },
 				indication = null,
 				onClick = {
-					playbackServiceController.play()
+					nowPlayingFilePropertiesViewModel.activeLibraryId.value?.also(playbackServiceController::play)
 					nowPlayingFilePropertiesViewModel.togglePlaying(true)
 				}),
 			alpha = alpha,

@@ -7,6 +7,7 @@ import com.google.android.exoplayer2.upstream.HttpDataSource
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.repository.CachedFile
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.CacheOutputStream
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.supplier.SupplyCacheStreams
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.caching.datasource.EntireFileCachedDataSource
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -26,6 +27,8 @@ import java.util.*
 @RunWith(RobolectricTestRunner::class)
 class WhenStreamingTheFileInOddChunks {
 	companion object {
+		private const val libraryId = 393
+		private var writtenLibraryId: LibraryId? = null
 		private val bytesWritten = ByteArray(512 * 1024)
 		private val bytes by lazy { ByteArray(512 * 1024).also { Random().nextBytes(it) } }
 		private var committedToCache = false
@@ -37,7 +40,8 @@ class WhenStreamingTheFileInOddChunks {
 
 			val fakeCacheStreamSupplier =
 				object : SupplyCacheStreams {
-					override fun promiseCachedFileOutputStream(uniqueKey: String): Promise<CacheOutputStream> {
+					override fun promiseCachedFileOutputStream(libraryId: LibraryId, uniqueKey: String): Promise<CacheOutputStream> {
+						writtenLibraryId = libraryId
 						return Promise<CacheOutputStream>(object : CacheOutputStream {
 							var numberOfBytesWritten = 0
 							override fun promiseWrite(
@@ -96,6 +100,7 @@ class WhenStreamingTheFileInOddChunks {
 				}
 			}
 			val diskFileCacheDataSource = EntireFileCachedDataSource(
+				LibraryId(libraryId),
 				dataSource,
 				fakeCacheStreamSupplier,
 			)
@@ -116,6 +121,11 @@ class WhenStreamingTheFileInOddChunks {
 
 			deferredCommit.toExpiringFuture().get()
 		}
+	}
+
+	@Test
+	fun `then the correct library is written to`() {
+		assertThat(writtenLibraryId?.id).isEqualTo(libraryId)
 	}
 
 	@Test

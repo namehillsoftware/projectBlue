@@ -159,13 +159,13 @@ private fun PlaylistControls(
 			)
 		}
 
-		val isRepeating by nowPlayingFilePropertiesViewModel.isRepeating.collectAsState()
+		val isRepeating by playlistViewModel.isRepeating.collectAsState()
 		if (isRepeating) {
 			Image(
 				painter = painterResource(id = R.drawable.av_repeat_white),
 				contentDescription = stringResource(id = R.string.btn_complete_playlist),
 				modifier = Modifier.clickable {
-					nowPlayingFilePropertiesViewModel.toggleRepeating()
+					playlistViewModel.toggleRepeating()
 				},
 				alpha = .8f,
 			)
@@ -174,7 +174,7 @@ private fun PlaylistControls(
 				painter = painterResource(id = R.drawable.av_no_repeat_white),
 				contentDescription = stringResource(id = R.string.btn_repeat_playlist),
 				modifier = Modifier.clickable {
-					nowPlayingFilePropertiesViewModel.toggleRepeating()
+					playlistViewModel.toggleRepeating()
 				},
 				alpha = .8f,
 			)
@@ -247,12 +247,13 @@ fun NowPlayingView(
 		val pagerState = rememberLazyListState()
 		val isSettledOnFirstPage by remember { derivedStateOf { pagerState.firstVisibleItemIndex == 0 && pagerState.firstVisibleItemScrollOffset == 0 } }
 		val isNotSettledOnFirstPage by remember { derivedStateOf { !isSettledOnFirstPage } }
+		val isEditingPlaylist by playlistViewModel.isEditingPlaylistState.collectAsState()
 
 		val scope = rememberCoroutineScope()
 		BackHandler(isNotSettledOnFirstPage) {
 			when {
 				itemListMenuBackPressedHandler.hideAllMenus() -> {}
-				playlistViewModel.isEditingPlaylist -> playlistViewModel.finishPlaylistEdit()
+				isEditingPlaylist -> playlistViewModel.finishPlaylistEdit()
 				isNotSettledOnFirstPage -> {
 					playlistViewModel.finishPlaylistEdit()
 					scope.launch { pagerState.animateScrollToItem(0) }
@@ -260,13 +261,14 @@ fun NowPlayingView(
 			}
 		}
 
-		val isEditingPlaylist by playlistViewModel.isEditingPlaylistState.collectAsState()
 		val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
 
 		val filePosition by nowPlayingFilePropertiesViewModel.filePosition.collectAsState()
 		val fileDuration by nowPlayingFilePropertiesViewModel.fileDuration.collectAsState()
 		val fileProgress by remember { derivedStateOf { filePosition / fileDuration.toFloat() } }
 		val isScreenControlsVisible by nowPlayingFilePropertiesViewModel.isScreenControlsVisible.collectAsState()
+
+		val activeLibraryId by nowPlayingFilePropertiesViewModel.activeLibraryId.collectAsState()
 
 		BoxWithConstraints(
 			modifier = Modifier
@@ -413,14 +415,15 @@ fun NowPlayingView(
 							val nowPlayingFiles by playlistViewModel.nowPlayingList.collectAsState()
 							val playlist by remember { derivedStateOf { nowPlayingFiles.map { p -> p.serviceFile } } }
 							val playingFile by nowPlayingFilePropertiesViewModel.nowPlayingFile.collectAsState()
-							val activeLibraryId by nowPlayingFilePropertiesViewModel.activeLibraryId.collectAsState()
 
 							val reorderableState = rememberDragDropListState(
 								onMove = { from, to ->
 									playlistViewModel.swapFiles(from, to)
 								},
 								onDragEnd = { from, to ->
-									playbackServiceController.moveFile(from, to)
+									activeLibraryId?.also {
+										playbackServiceController.moveFile(it, from, to)
+									}
 								}
 							)
 
@@ -469,12 +472,17 @@ fun NowPlayingView(
 										}
 									},
 									onRemoveFromNowPlayingClick = {
-										playbackServiceController.removeFromPlaylistAtPosition(positionedFile.playlistPosition)
+										activeLibraryId?.also {
+											playbackServiceController
+												.removeFromPlaylistAtPosition(it, positionedFile.playlistPosition)
+										}
 									},
 									onViewFilesClick = viewFilesClickHandler,
 									onPlayClick = {
 										fileItemViewModel.hideMenu()
-										playbackServiceController.seekTo(positionedFile.playlistPosition)
+										activeLibraryId?.also {
+											playbackServiceController.seekTo(it, positionedFile.playlistPosition)
+										}
 									}
 								)
 							}
@@ -559,9 +567,10 @@ fun NowPlayingView(
 								.weight(1f)
 								.clickable(
 									interactionSource = remember { MutableInteractionSource() },
-									indication = null,
-									onClick = playbackServiceController::previous
-								),
+									indication = null
+								) {
+									activeLibraryId?.also(playbackServiceController::previous)
+							  	},
 						)
 
 						PlayPauseButton(
@@ -577,9 +586,10 @@ fun NowPlayingView(
 								.weight(1f)
 								.clickable(
 									interactionSource = remember { MutableInteractionSource() },
-									indication = null,
-									onClick = playbackServiceController::next
-								)
+									indication = null
+								) {
+									activeLibraryId?.also(playbackServiceController::next)
+								}
 						)
 					}
 				}

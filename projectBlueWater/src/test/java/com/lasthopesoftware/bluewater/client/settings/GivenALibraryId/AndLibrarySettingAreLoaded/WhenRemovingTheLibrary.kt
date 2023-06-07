@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.settings.GivenALibraryId.AndLibrarySettingAreLoaded
 
-import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsViewModel
@@ -16,7 +16,7 @@ class WhenRemovingTheLibrary {
 
 	private val libraryId = LibraryId(354)
     private val services by lazy {
-		val libraryRepository = FakeLibraryProvider(
+		val libraryRepository = FakeLibraryRepository(
 			Library(
 				_id = libraryId.id,
 				_accessCode = "b2q",

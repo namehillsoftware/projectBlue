@@ -3,50 +3,55 @@ package com.lasthopesoftware.bluewater.client.playback.service
 import android.content.Context
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.FileStringListUtilities
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 
 class PlaybackServiceController(private val context: Context) : ControlPlaybackService {
-	override fun promiseIsMarkedForPlay(): Promise<Boolean> = PlaybackService.promiseIsMarkedForPlay(context)
+	override fun initialize(libraryId: LibraryId) = PlaybackService.initialize(context, libraryId)
 
-	override fun play() = PlaybackService.play(context)
+	override fun promiseIsMarkedForPlay(libraryId: LibraryId): Promise<Boolean> =
+		PlaybackService.promiseIsMarkedForPlay(context, libraryId)
+
+	override fun play(libraryId: LibraryId) = PlaybackService.play(context, libraryId)
 
 	override fun pause() = PlaybackService.pause(context)
 
-	override fun next() = PlaybackService.next(context)
+	override fun next(libraryId: LibraryId) = PlaybackService.next(context, libraryId)
 
-	override fun previous() = PlaybackService.previous(context)
-	override fun seekTo(position: Int) = PlaybackService.seekTo(context, position)
-	override fun moveFile(dragFrom: Int, dragTo: Int) = PlaybackService.moveFile(context, dragFrom, dragTo)
+	override fun previous(libraryId: LibraryId) = PlaybackService.previous(context, libraryId)
+	override fun seekTo(libraryId: LibraryId, position: Int) = PlaybackService.seekTo(context, libraryId, position)
+	override fun moveFile(libraryId: LibraryId, dragFrom: Int, dragTo: Int) =
+		PlaybackService.moveFile(context, libraryId, dragFrom, dragTo)
 
-	override fun startPlaylist(fileStringList: String, position: Int) {
-		PlaybackService.launchMusicService(context, position, fileStringList)
+	override fun startPlaylist(libraryId: LibraryId, fileStringList: String, position: Int) {
+		PlaybackService.launchMusicService(context, libraryId, position, fileStringList)
 	}
 
-	override fun startPlaylist(serviceFiles: List<ServiceFile>, position: Int) {
+	override fun startPlaylist(libraryId: LibraryId, serviceFiles: List<ServiceFile>, position: Int) {
 		FileStringListUtilities
 			.promiseSerializedFileStringList(serviceFiles)
-			.then { startPlaylist(it, position) }
+			.then { startPlaylist(libraryId, it, position) }
 	}
 
-	override fun shuffleAndStartPlaylist(serviceFiles: List<ServiceFile>) {
+	override fun shuffleAndStartPlaylist(libraryId: LibraryId, serviceFiles: List<ServiceFile>) {
 		QueuedPromise(MessageWriter {
-			startPlaylist(serviceFiles.shuffled())
+			startPlaylist(libraryId, serviceFiles.shuffled())
 		}, ThreadPools.compute)
 	}
 
-	override fun addToPlaylist(serviceFile: ServiceFile) {
-		PlaybackService.addFileToPlaylist(context, serviceFile.key)
+	override fun addToPlaylist(libraryId: LibraryId, serviceFile: ServiceFile) {
+		PlaybackService.addFileToPlaylist(context, libraryId, serviceFile)
 	}
 
-	override fun removeFromPlaylistAtPosition(position: Int) {
-		PlaybackService.removeFileAtPositionFromPlaylist(context, position)
+	override fun removeFromPlaylistAtPosition(libraryId: LibraryId, position: Int) {
+		PlaybackService.removeFileAtPositionFromPlaylist(context, libraryId, position)
 	}
 
-	override fun setRepeating() = PlaybackService.setRepeating(context)
+	override fun setRepeating(libraryId: LibraryId) = PlaybackService.setRepeating(context, libraryId)
 
-	override fun setCompleting() = PlaybackService.setCompleting(context)
+	override fun setCompleting(libraryId: LibraryId) = PlaybackService.setCompleting(context, libraryId)
 	override fun kill() = PlaybackService.killService(context)
 }

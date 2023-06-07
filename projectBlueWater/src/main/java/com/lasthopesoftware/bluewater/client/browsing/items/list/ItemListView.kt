@@ -210,12 +210,16 @@ fun ItemListView(
 				fileItemViewModel.showMenu()
 			},
 			onAddToNowPlayingClick = {
-				 playbackServiceController.addToPlaylist(serviceFile)
+				itemListViewModel.loadedLibraryId?.also {
+					playbackServiceController.addToPlaylist(it, serviceFile)
+				}
 			},
 			onViewFilesClick = viewFileDetailsClickHandler,
 			onPlayClick = {
 				fileItemViewModel.hideMenu()
-				playbackServiceController.startPlaylist(files, position)
+				itemListViewModel.loadedLibraryId?.also {
+					playbackServiceController.startPlaylist(it, files, position)
+				}
 			}
 		)
 	}
@@ -382,7 +386,11 @@ fun ItemListView(
 
 							val playButtonLabel = stringResource(id = R.string.btn_play)
 							ColumnMenuIcon(
-								onClick = { playbackServiceController.startPlaylist(files) },
+								onClick = {
+									itemListViewModel.loadedLibraryId?.also {
+										playbackServiceController.startPlaylist(it, files)
+									}
+							  	},
 								iconPainter = painterResource(id = R.drawable.av_play),
 								contentDescription = playButtonLabel,
 								label = if (acceleratedHeaderHidingProgress < 1) playButtonLabel else null,
@@ -410,7 +418,11 @@ fun ItemListView(
 
 							val shuffleButtonLabel = stringResource(R.string.btn_shuffle_files)
 							ColumnMenuIcon(
-								onClick = { playbackServiceController.shuffleAndStartPlaylist(files) },
+								onClick = {
+									itemListViewModel.loadedLibraryId?.also {
+										playbackServiceController.shuffleAndStartPlaylist(it, files)
+									}
+							  	},
 								iconPainter = painterResource(id = R.drawable.av_shuffle),
 								contentDescription = shuffleButtonLabel,
 								label = if (acceleratedHeaderHidingProgress < 1) shuffleButtonLabel else null,

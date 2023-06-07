@@ -6,6 +6,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
@@ -20,14 +21,17 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import java.net.URL
 
+private const val libraryId = 591
 private const val serviceFileId = 338
 
-private lateinit var startedList: List<ServiceFile>
-private var startedPosition = -1
-
+// Needed for image bytes
 @RunWith(AndroidJUnit4::class)
 class WhenPlayingFromFileDetails {
 	companion object {
+
+		private lateinit var startedLibraryId: LibraryId
+		private lateinit var startedList: List<ServiceFile>
+		private var startedPosition = -1
 
 		private var mut: Lazy<FileDetailsViewModel>? = lazy {
 			FileDetailsViewModel(
@@ -59,8 +63,9 @@ class WhenPlayingFromFileDetails {
 						.toPromise()
 				},
 				mockk {
-					every { startPlaylist(any<List<ServiceFile>>(), any()) } answers {
-						startedList = firstArg()
+					every { startPlaylist(LibraryId(libraryId), any<List<ServiceFile>>(), any()) } answers {
+						startedLibraryId = firstArg()
+						startedList = secondArg()
 						startedPosition = lastArg()
 					}
 				},
@@ -75,6 +80,7 @@ class WhenPlayingFromFileDetails {
 		@JvmStatic
 		fun act(): Unit = mut?.value?.run {
 			loadFromList(
+				LibraryId(libraryId),
 				listOf(
 					ServiceFile(830),
 					ServiceFile(serviceFileId),
@@ -96,6 +102,11 @@ class WhenPlayingFromFileDetails {
 		fun cleanup() {
 			mut = null
 		}
+	}
+
+	@Test
+	fun `then the started library id is correct`() {
+		assertThat(startedLibraryId).isEqualTo(LibraryId(libraryId))
 	}
 
 	@Test
