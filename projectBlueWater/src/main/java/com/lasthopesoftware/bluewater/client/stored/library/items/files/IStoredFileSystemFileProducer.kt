@@ -4,5 +4,5 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.reposito
 import java.io.File
 
 interface IStoredFileSystemFileProducer {
-    fun getFile(storedFile: StoredFile): File
+    fun getFile(storedFile: StoredFile): File?
 }

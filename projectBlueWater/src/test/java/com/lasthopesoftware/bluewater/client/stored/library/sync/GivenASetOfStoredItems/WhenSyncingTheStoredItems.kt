@@ -88,13 +88,11 @@ class WhenSyncingTheStoredItems {
 					Observable.fromIterable(jobs).flatMap { (_, _, storedFile) ->
 						Observable.just(
 							StoredFileJobStatus(
-								mockk(),
-								storedFile,
+                                storedFile,
 								StoredFileJobState.Downloading
 							),
 							StoredFileJobStatus(
-								mockk(),
-								storedFile,
+                                storedFile,
 								StoredFileJobState.Downloaded
 							)
 						)

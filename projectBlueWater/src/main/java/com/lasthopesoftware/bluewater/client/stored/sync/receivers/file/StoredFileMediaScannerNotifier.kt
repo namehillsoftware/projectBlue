@@ -20,8 +20,8 @@ class StoredFileMediaScannerNotifier(
 		setOf(cls<StoredFileMessage.FileDownloading>())
 
 	override fun respond(storedFile: StoredFile?) {
-		storedFile?.apply {
-			mediaFileBroadcaster.sendScanMediaFileBroadcastForFile(File(path))
+		storedFile?.path?.also {
+			mediaFileBroadcaster.sendScanMediaFileBroadcastForFile(File(it))
 		}
 	}
 }

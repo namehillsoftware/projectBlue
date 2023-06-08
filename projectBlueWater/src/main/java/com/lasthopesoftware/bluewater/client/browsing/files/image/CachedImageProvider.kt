@@ -3,9 +3,15 @@ package com.lasthopesoftware.bluewater.client.browsing.files.image
 import android.content.Context
 import android.graphics.Bitmap
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.cached.ImageDiskFileCacheFactory
+import com.lasthopesoftware.bluewater.client.browsing.files.cached.DiskFileCache
+import com.lasthopesoftware.bluewater.client.browsing.files.cached.access.CachedFilesProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.cached.disk.AndroidDiskCacheDirectoryProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.cached.persistence.DiskFileAccessTimeUpdater
+import com.lasthopesoftware.bluewater.client.browsing.files.cached.persistence.DiskFileCachePersistence
+import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.supplier.DiskFileCacheStreamSupplier
 import com.lasthopesoftware.bluewater.client.browsing.files.image.bytes.RemoteImageAccess
 import com.lasthopesoftware.bluewater.client.browsing.files.image.bytes.cache.DiskCacheImageAccess
+import com.lasthopesoftware.bluewater.client.browsing.files.image.bytes.cache.ImageCacheConfiguration
 import com.lasthopesoftware.bluewater.client.browsing.files.image.bytes.cache.ImageCacheKeyLookup
 import com.lasthopesoftware.bluewater.client.browsing.files.image.bytes.cache.LookupImageCacheKey
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
@@ -39,9 +45,15 @@ class CachedImageProvider(
 					FilePropertiesProvider(
 						libraryConnectionProvider,
 						LibraryRevisionProvider(libraryConnectionProvider),
-						filePropertiesCache)
+						filePropertiesCache
+					)
 				)
 			)
+
+			val imageCacheConfiguration = ImageCacheConfiguration
+			val cachedFilesProvider = CachedFilesProvider(context, imageCacheConfiguration)
+			val diskFileAccessTimeUpdater = DiskFileAccessTimeUpdater(context)
+			val diskCacheDirectoryProvider = AndroidDiskCacheDirectoryProvider(context, imageCacheConfiguration)
 
 			return CachedImageProvider(
 				ScaledImageProvider(
@@ -49,9 +61,28 @@ class CachedImageProvider(
 						DiskCacheImageAccess(
 							RemoteImageAccess(libraryConnectionProvider),
 							imageCacheKeyLookup,
-							ImageDiskFileCacheFactory.getInstance(context))
+							DiskFileCache(
+								context,
+								diskCacheDirectoryProvider,
+								imageCacheConfiguration,
+								DiskFileCacheStreamSupplier(
+									diskCacheDirectoryProvider,
+									DiskFileCachePersistence(
+										context,
+										diskCacheDirectoryProvider,
+										imageCacheConfiguration,
+										cachedFilesProvider,
+										diskFileAccessTimeUpdater
+									),
+									cachedFilesProvider
+								),
+								cachedFilesProvider,
+								diskFileAccessTimeUpdater
+							)
+						)
 					),
-					context),
+					context
+				),
 				imageCacheKeyLookup,
 				cache
 			)

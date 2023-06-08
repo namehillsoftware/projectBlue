@@ -62,9 +62,9 @@ class WhenSynchronizationIsDisposing {
 				.flatMap { f ->
 					Observable.concat(
 						Observable.just(
-							StoredFileJobStatus(mockk(), f, StoredFileJobState.Queued),
-							StoredFileJobStatus(mockk(), f, StoredFileJobState.Downloading),
-							StoredFileJobStatus(mockk(), f, StoredFileJobState.Downloaded)
+							StoredFileJobStatus(f, StoredFileJobState.Queued),
+							StoredFileJobStatus(f, StoredFileJobState.Downloading),
+							StoredFileJobStatus(f, StoredFileJobState.Downloaded)
 						),
 						Observable.never()
 					)
