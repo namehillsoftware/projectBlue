@@ -87,19 +87,22 @@ class WhenProcessingTheQueue {
 			)
 		})
 		val storedFileJobProcessor = StoredFileJobProcessor(
-			{
-				mockk {
+			mockk {
+				every { getFile(any()) } returns mockk {
 					every { exists() } returns false
 					every { parentFile } returns null
 				}
 			},
 			storedFilesAccess,
-			{ _, f ->
-				if (expectedDownloadedStoredFiles.contains(f)) Promise(ByteArrayInputStream(ByteArray(0)))
-				else DeferredPromise(ByteArrayInputStream(ByteArray(0)))
+			mockk {
+				every { promiseDownload(any(), any()) } answers {
+					val f = lastArg<StoredFile>()
+					if (expectedDownloadedStoredFiles.contains(f)) Promise(ByteArrayInputStream(ByteArray(0)))
+					else DeferredPromise(ByteArrayInputStream(ByteArray(0)))
+				}
 			},
-			{ false },
-			{ true },
+			mockk { every { isFileReadPossible(any()) } returns false },
+			mockk { every { isFileWritePossible(any()) } returns true },
 			mockk(relaxUnitFun = true)
 		)
 		storedFileStatuses = storedFileJobProcessor

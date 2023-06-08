@@ -80,8 +80,8 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 		return positionedPlayableFile
 			?.let {
 				it.playableFile
-					?.promisePlayback()
-					?.then { p ->
+					.promisePlayback()
+					.then { p ->
 						PositionedPlayingFile(p, it.playableFileVolumeManager, it.asPositionedFile()).apply {
 							positionedPlayingFile = this
 							positionedPlayableFile = null

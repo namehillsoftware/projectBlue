@@ -356,7 +356,7 @@ open class PlaybackService :
 	private val activatedPlaybackNotificationChannelName by lazy {
 		val notificationChannelActivator =
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) NotificationChannelActivator(notificationManager)
-			else NoOpChannelActivator()
+			else NoOpChannelActivator
 		notificationChannelActivator.activateChannel(channelConfiguration)
 	}
 
@@ -849,7 +849,7 @@ open class PlaybackService :
 		applicationMessageBus.sendMessage(LibraryPlaybackMessage.TrackChanged(libraryId, positionedFile))
 	}
 
-	override fun onPlayingFileChanged(libraryId: LibraryId, positionedPlayingFile: PositionedPlayingFile) {
+	override fun onPlayingFileChanged(libraryId: LibraryId, positionedPlayingFile: PositionedPlayingFile?) {
 		changePositionedPlaybackFile(libraryId, positionedPlayingFile)
 	}
 
@@ -925,7 +925,10 @@ open class PlaybackService :
 		fun handleDisconnection() {
 			if (disconnectionLatch.trigger()) {
 				logger.error("Unable to re-connect after $numberOfDisconnects in less than $disconnectResetDuration, stopping the playback service.")
-				UnexpectedExceptionToaster.announce(this, exception)
+
+				if (exception != null)
+					UnexpectedExceptionToaster.announce(this, exception)
+
 				stopSelf(startId)
 				return
 			}
@@ -1004,7 +1007,8 @@ open class PlaybackService :
 			is TimeoutException -> handleTimeoutException(exception)
 			else -> {
 				logger.error("An unexpected error has occurred!", exception)
-				UnexpectedExceptionToaster.announce(this, exception)
+				if (exception != null)
+					UnexpectedExceptionToaster.announce(this, exception)
 				stopSelf(startId)
 			}
 		}
@@ -1030,9 +1034,10 @@ open class PlaybackService :
 			.excuse(unhandledRejectionHandler)
 	}
 
-	private fun changePositionedPlaybackFile(libraryId: LibraryId, positionedPlayingFile: PositionedPlayingFile) {
-		val playingFile = positionedPlayingFile.playingFile
+	private fun changePositionedPlaybackFile(libraryId: LibraryId, positionedPlayingFile: PositionedPlayingFile?) {
 		filePositionSubscription?.dispose()
+
+		val playingFile = positionedPlayingFile?.playingFile ?: return
 
 		if (playingFile is EmptyPlaybackHandler) return
 

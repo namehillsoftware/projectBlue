@@ -50,7 +50,7 @@ class WhenChangingTracks {
 
 	private var nextSwitchedFile: PositionedFile? = null
 	private var latestFile: PositionedPlayingFile? = null
-	private val startedFiles: MutableList<PositionedPlayingFile> = ArrayList()
+	private val startedFiles: MutableList<PositionedPlayingFile?> = ArrayList()
 
 	@BeforeAll
 	fun act() {
@@ -97,13 +97,13 @@ class WhenChangingTracks {
 
 	@Test
 	fun `then the first started file is correct`() {
-		assertThat(startedFiles[0].asPositionedFile())
+		assertThat(startedFiles[0]?.asPositionedFile())
 			.isEqualTo(PositionedFile(0, ServiceFile(1)))
 	}
 
 	@Test
 	fun `then the changed started file is correct`() {
-		assertThat(startedFiles[1].asPositionedFile())
+		assertThat(startedFiles[1]?.asPositionedFile())
 			.isEqualTo(PositionedFile(3, ServiceFile(4)))
 	}
 

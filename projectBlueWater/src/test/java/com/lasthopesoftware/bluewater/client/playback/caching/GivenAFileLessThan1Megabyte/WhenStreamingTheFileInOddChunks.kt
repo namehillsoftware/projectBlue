@@ -36,7 +36,7 @@ class WhenStreamingTheFileInOddChunks {
 		@BeforeClass
 		@JvmStatic
 		fun context() {
-			val deferredCommit = DeferredPromise(CachedFile())
+			val deferredCommit = DeferredPromise(CachedFile() as CachedFile?)
 
 			val fakeCacheStreamSupplier =
 				object : SupplyCacheStreams {
@@ -64,7 +64,7 @@ class WhenStreamingTheFileInOddChunks {
 								return Promise<CacheOutputStream>(this)
 							}
 
-							override fun commitToCache(): Promise<CachedFile> {
+							override fun commitToCache(): Promise<CachedFile?> {
 								committedToCache = true
 								deferredCommit.resolve()
 								return deferredCommit

@@ -18,19 +18,20 @@ class WhenProcessingTheJob {
     private val storedFile = StoredFile(LibraryId(4), 1, ServiceFile(1), "test-path", true)
     private val jobStates by lazy {
         val storedFileJobProcessor = StoredFileJobProcessor(
-            {
-				mockk {
-					every { exists() } returns false
-					every { parentFile } returns mockk {
+            mockk {
+				every { getFile(any()) } returns
+					mockk {
 						every { exists() } returns false
-						every { mkdirs() } returns true
+						every { parentFile } returns mockk {
+							every { exists() } returns false
+							every { mkdirs() } returns true
+						}
 					}
-				}
 			},
             mockk(),
-            { _, _ -> Promise(IOException()) },
-            { false },
-            { true },
+            mockk { every { promiseDownload(any(), any()) } returns Promise(IOException()) },
+            mockk { every { isFileReadPossible(any()) } returns false },
+			mockk { every { isFileWritePossible(any()) } returns true },
             mockk(relaxUnitFun = true))
         storedFileJobProcessor
 			.observeStoredFileDownload(

@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.image.bytes.cache
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.cached.IProvideCaches
+import com.lasthopesoftware.bluewater.client.browsing.files.cached.CacheFiles
 import com.lasthopesoftware.bluewater.client.browsing.files.image.bytes.GetRawImages
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.cls
@@ -22,7 +22,11 @@ import java.io.FileInputStream
 import java.io.FileNotFoundException
 import java.io.IOException
 
-class DiskCacheImageAccess(private val sourceImages: GetRawImages, private val imageCacheKeys: LookupImageCacheKey, private val caches: IProvideCaches) : GetRawImages {
+class DiskCacheImageAccess(
+	private val sourceImages: GetRawImages,
+	private val imageCacheKeys: LookupImageCacheKey,
+	private val fileCache: CacheFiles,
+) : GetRawImages {
 
 	companion object {
 		private val logger by lazy { LoggerFactory.getLogger(cls<DiskCacheImageAccess>()) }
@@ -55,24 +59,20 @@ class DiskCacheImageAccess(private val sourceImages: GetRawImages, private val i
 			imageCacheKeys.promiseImageCacheKey(libraryId, serviceFile)
 				.also(cancellationProxy::doCancel)
 				.eventually { uniqueKey ->
-					caches.promiseCache(libraryId)
-						.eventually { cache ->
-							cache
-								?.promiseCachedFile(libraryId, uniqueKey)
-								?.also(cancellationProxy::doCancel)
-								?.eventually { imageFile ->
-									imageFile
-										?.let { f -> QueuedPromise(ImageDiskCacheWriter(f), ThreadPools.io).also(cancellationProxy::doCancel) }
-										.keepPromise()
-								}
-								?.eventually { bytes ->
-									bytes?.toPromise() ?: sourceImages.promiseImageBytes(libraryId, serviceFile)
-										.also { p ->
-											cancellationProxy.doCancel(p)
-											p.then { cache.put(libraryId, uniqueKey, it) }.excuse { ioe -> logger.error("Error writing cached file!", ioe) }
-										}
-								}
+					fileCache
+						.promiseCachedFile(libraryId, uniqueKey)
+						.also(cancellationProxy::doCancel)
+						.eventually { imageFile ->
+							imageFile
+								?.let { f -> QueuedPromise(ImageDiskCacheWriter(f), ThreadPools.io).also(cancellationProxy::doCancel) }
 								.keepPromise()
+						}
+						.eventually { bytes ->
+							bytes?.toPromise() ?: sourceImages.promiseImageBytes(libraryId, serviceFile)
+								.also { p ->
+									cancellationProxy.doCancel(p)
+									p.then { fileCache.put(libraryId, uniqueKey, it) }.excuse { ioe -> logger.error("Error writing cached file!", ioe) }
+								}
 						}
 				}
 	}

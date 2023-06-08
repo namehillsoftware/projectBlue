@@ -95,7 +95,7 @@ class StoredFileAccess(private val context: Context) : AccessStoredFiles {
 						?.setIsDownloadComplete(true)
 						?.setPath(filePath)
 				}
-				storedFile?.storedMediaId = mediaFileId
+				storedFile?.setStoredMediaId(mediaFileId)
 				updateStoredFile(repositoryAccessHelper, storedFile)
 			}
 		}

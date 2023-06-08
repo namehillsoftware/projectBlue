@@ -50,7 +50,7 @@ class CachedFileOutputStream(
         }, ThreadPools.io)
     }
 
-    override fun commitToCache(): Promise<CachedFile> =
+    override fun commitToCache(): Promise<CachedFile?> =
 		if (!isClosed) diskFileCachePersistence.putIntoDatabase(libraryId, uniqueKey, file)
 		else Promise.empty()
 

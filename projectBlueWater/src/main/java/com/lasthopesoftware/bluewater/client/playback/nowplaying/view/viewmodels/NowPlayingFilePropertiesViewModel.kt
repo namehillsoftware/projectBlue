@@ -77,7 +77,7 @@ class NowPlayingFilePropertiesViewModel(
 	}
 
 	private val onPlaylistChangedSubscription =
-		applicationMessages.registerReceiver { m: LibraryPlaybackMessage.PlaylistChanged ->
+		applicationMessages.registerReceiver { _: LibraryPlaybackMessage.PlaylistChanged ->
 			activeLibraryId.value?.apply(::updateViewFromRepository)
 		}
 

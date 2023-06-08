@@ -51,9 +51,9 @@ class WhenSynchronizing {
 				.filter { f -> f.serviceId != 7 }
 				.flatMap { f ->
 					Observable.just(
-						StoredFileJobStatus(mockk(), f, StoredFileJobState.Queued),
-						StoredFileJobStatus(mockk(), f, StoredFileJobState.Downloading),
-						StoredFileJobStatus(mockk(), f, StoredFileJobState.Downloaded)
+						StoredFileJobStatus(f, StoredFileJobState.Queued),
+						StoredFileJobStatus(f, StoredFileJobState.Downloading),
+						StoredFileJobStatus(f, StoredFileJobState.Downloaded)
 					)
 				},
 			Observable
@@ -62,8 +62,8 @@ class WhenSynchronizing {
 				.flatMap({ f ->
 					Observable.concat(
 						Observable.just(
-							StoredFileJobStatus(mockk(), f, StoredFileJobState.Queued),
-							StoredFileJobStatus(mockk(), f, StoredFileJobState.Downloading),
+							StoredFileJobStatus(f, StoredFileJobState.Queued),
+							StoredFileJobStatus(f, StoredFileJobState.Downloading),
 						),
 						Observable.error(
 							StoredFileWriteException(mockk(), f)

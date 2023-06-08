@@ -50,7 +50,7 @@ class WhenPlaybackIsPausedAndPositionIsChangedAndRestarted {
 	}
 
 	private var nowPlaying: NowPlaying? = null
-	private val positionedFiles: MutableList<PositionedPlayingFile> = ArrayList()
+	private val positionedFiles: MutableList<PositionedPlayingFile?> = ArrayList()
 
 	@BeforeAll
 	fun before() {
@@ -109,14 +109,14 @@ class WhenPlaybackIsPausedAndPositionIsChangedAndRestarted {
 
 	@Test
 	fun `then the observed file is correct`() {
-		assertThat(positionedFiles.last().playlistPosition).isEqualTo(3)
+		assertThat(positionedFiles.last()?.playlistPosition).isEqualTo(3)
 	}
 
 	@Test
 	fun `then the first skipped file is only observed once`() {
 		assertThat(
 			positionedFiles
-				.map { it.asPositionedFile() })
+				.map { it?.asPositionedFile() })
 			.containsOnlyOnce(PositionedFile(1, ServiceFile(2)))
 	}
 
@@ -124,7 +124,7 @@ class WhenPlaybackIsPausedAndPositionIsChangedAndRestarted {
 	fun `then the second skipped file is not observed`() {
 		assertThat(
 			positionedFiles
-				.map { it.asPositionedFile() })
+				.map { it?.asPositionedFile() })
 			.doesNotContain(PositionedFile(2, ServiceFile(3)))
 	}
 }

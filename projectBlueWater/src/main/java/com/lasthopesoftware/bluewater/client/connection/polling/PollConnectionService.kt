@@ -54,7 +54,7 @@ class PollConnectionService : Service() {
 	private val notificationsConfiguration by lazy {
 		val notificationChannelActivator =
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) NotificationChannelActivator(notificationManager)
-			else NoOpChannelActivator()
+			else NoOpChannelActivator
 
 		val channelName = notificationChannelActivator.activateChannel(channelConfiguration)
 		NotificationsConfiguration(channelName, notificationId)

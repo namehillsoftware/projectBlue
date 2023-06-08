@@ -47,7 +47,7 @@ class WhenPlaybackIsPausedAndRestarted {
 		Triple(fakePlaybackPreparerProvider, nowPlayingRepository, playbackEngine)
 	}
 
-	private val changedFiles: MutableList<ServiceFile> = ArrayList()
+	private val changedFiles: MutableList<ServiceFile?> = ArrayList()
 	private var nowPlaying: NowPlaying? = null
 	private var resolvablePlaybackHandler: ResolvablePlaybackHandler? = null
 	private var playbackStartedCount = 0
@@ -57,7 +57,7 @@ class WhenPlaybackIsPausedAndRestarted {
 		val (fakePlaybackPreparerProvider, nowPlayingRepository, playbackEngine) = mut
 		playbackEngine
 			.setOnPlaybackStarted { ++playbackStartedCount }
-			.setOnPlayingFileChanged { _, f -> changedFiles.add(f.serviceFile) }
+			.setOnPlayingFileChanged { _, f -> changedFiles.add(f?.serviceFile) }
 		playbackEngine
 			.startPlaylist(
 				LibraryId(libraryId),

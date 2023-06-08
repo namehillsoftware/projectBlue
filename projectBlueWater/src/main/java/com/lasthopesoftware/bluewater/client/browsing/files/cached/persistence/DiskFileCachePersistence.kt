@@ -32,7 +32,7 @@ class DiskFileCachePersistence(
 	private val cachedFilesProvider: ICachedFilesProvider,
 	private val diskFileAccessTimeUpdater: IDiskFileAccessTimeUpdater
 ) : IDiskFileCachePersistence {
-	override fun putIntoDatabase(libraryId: LibraryId, uniqueKey: String, file: File): Promise<CachedFile> {
+	override fun putIntoDatabase(libraryId: LibraryId, uniqueKey: String, file: File): Promise<CachedFile?> {
 		val canonicalFilePath = try {
 			file.canonicalPath
 		} catch (e: IOException) {
@@ -42,7 +42,7 @@ class DiskFileCachePersistence(
 
 		return cachedFilesProvider
 			.promiseCachedFile(libraryId, uniqueKey)
-			.eventually { cachedFile ->
+			.eventually<CachedFile?> { cachedFile ->
 				cachedFile
 					?.let {
 						if (it.fileName == canonicalFilePath) diskFileAccessTimeUpdater.promiseFileAccessedUpdate(it)
@@ -75,7 +75,7 @@ class DiskFileCachePersistence(
 						} finally {
 							CacheFlusherTask.promisedCacheFlushing(context, diskCacheDirectoryProvider, diskFileCacheConfiguration, diskFileCacheConfiguration.maxSize)
 						}
-					}.eventually { cachedFilesProvider.promiseCachedFile(libraryId, uniqueKey) }
+					}.eventually<CachedFile?> { cachedFilesProvider.promiseCachedFile(libraryId, uniqueKey) }
 			}
 	}
 

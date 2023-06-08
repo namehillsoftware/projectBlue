@@ -15,16 +15,16 @@ import org.junit.jupiter.api.Test
 class WhenProcessingTheJob {
 	private val jobStates by lazy {
 		val storedFileJobProcessor = StoredFileJobProcessor(
-			{
-				mockk {
+			mockk {
+				every { getFile(any()) } returns mockk {
 					every { exists() } returns true
 					every { parentFile } returns null
 				}
 			},
 			mockk(),
-			{ _, _ -> Promise.empty() },
-			{ false },
-			{ false },
+			mockk { every { promiseDownload(any(), any()) } returns Promise.empty() },
+			mockk { every { isFileReadPossible(any()) } returns false },
+			mockk { every { isFileWritePossible(any()) } returns false },
 			mockk(relaxUnitFun = true)
 		)
 		storedFileJobProcessor

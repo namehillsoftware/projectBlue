@@ -46,7 +46,7 @@ class WhenTheFileChanges : AndroidContext() {
     override fun before() {
 		val context = ApplicationProvider.getApplicationContext<Context>()
 
-		val secondNotificationPromise = PromiseMessenger<NotificationCompat.Builder>()
+		val secondNotificationPromise = PromiseMessenger<NotificationCompat.Builder?>()
 
 		val notificationContentBuilder = mockk<BuildNowPlayingNotificationContent> {
 			every { promiseLoadingNotification(LibraryId(libraryId), any()) } returns newFakeBuilder(context, Notification()).toPromise()

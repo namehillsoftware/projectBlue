@@ -10,7 +10,6 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Stor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
-import com.lasthopesoftware.resources.io.WriteFileStreams
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -18,7 +17,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.io.ByteArrayInputStream
-import java.io.File
 import java.io.IOException
 
 class WhenProcessingTheQueue {
@@ -76,18 +74,23 @@ class WhenProcessingTheQueue {
 	@BeforeAll
 	fun before() {
 		val storedFileJobProcessor = StoredFileJobProcessor(
-			{ storedFile ->
-				mockk<File>().apply {
-					every { parentFile } returns null
-					every { exists() } returns storedFile.isDownloadComplete
-					every { path } returns if (storedFile.serviceId == 2) "write-failure" else ""
+			mockk {
+				every { getFile(any()) } answers {
+					val storedFile = firstArg<StoredFile>()
+					mockk {
+						every { parentFile } returns null
+						every { exists() } returns storedFile.isDownloadComplete
+						every { path } returns if (storedFile.serviceId == 2) "write-failure" else ""
+					}
 				}
 			},
 			storedFilesAccess,
-			{ _, _ -> Promise(ByteArrayInputStream(ByteArray(0))) },
-			{ true },
-			{ true },
-			mockk<WriteFileStreams>(relaxUnitFun = true).apply {
+			mockk {
+				every { promiseDownload(any(), any()) } returns Promise(ByteArrayInputStream(ByteArray(0)))
+			},
+			mockk { every { isFileReadPossible(any()) } returns true },
+			mockk { every { isFileWritePossible(any()) } returns true },
+			mockk(relaxUnitFun = true) {
 				every { writeStreamToFile(any(), any()) } returns Unit
 				every { writeStreamToFile(any(), match { it.path == "write-failure" }) } throws IOException()
 			})

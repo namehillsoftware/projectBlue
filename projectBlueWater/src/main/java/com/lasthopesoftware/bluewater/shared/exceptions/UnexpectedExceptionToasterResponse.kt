@@ -9,6 +9,7 @@ private val logger by lazyLogger<UnexpectedExceptionToasterResponse>()
 class UnexpectedExceptionToasterResponse(private val context: Context) : ImmediateResponse<Throwable?, Unit> {
     override fun respond(error: Throwable?) {
 		logger.error("An unexpected exception occurred, announcing it.", error)
-        UnexpectedExceptionToaster.announce(context, error)
+		if (error != null)
+        	UnexpectedExceptionToaster.announce(context, error)
     }
 }

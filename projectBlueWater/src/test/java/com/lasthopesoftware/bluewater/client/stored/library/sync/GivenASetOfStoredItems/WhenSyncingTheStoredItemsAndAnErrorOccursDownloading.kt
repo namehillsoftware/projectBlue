@@ -82,12 +82,12 @@ class WhenSyncingTheStoredItemsAndAnErrorOccursDownloading {
 			StoredFileJobProcessor(
 				StoredFileSystemFileProducer(),
 				accessStoredFiles,
-				{ _, f ->
-					if (f.serviceId == 2) Promise(IOException())
-					else Promise(ByteArrayInputStream(ByteArray(0)))
+				mockk {
+					every { promiseDownload(any(), any()) } returns Promise(ByteArrayInputStream(ByteArray(0)))
+					every { promiseDownload(any(), match { it.serviceId == 2 }) } returns Promise(IOException())
 				},
-				{ true },
-				{ true },
+				mockk { every { isFileReadPossible(any()) } returns true },
+				mockk { every { isFileWritePossible(any()) } returns true },
 				mockk(relaxUnitFun = true)
 			)
 		)

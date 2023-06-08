@@ -79,8 +79,7 @@ class StoredFileUpdater(
 	override fun promiseStoredFileUpdate(libraryId: LibraryId, serviceFile: ServiceFile): Promise<StoredFile?> {
 		fun storedFileWithFilePath(storedFile: StoredFile): Promise<StoredFile?> =
 			if (storedFile.path != null) Promise(storedFile)
-			else lookupStoredFilePaths.promiseStoredFilePath(libraryId, serviceFile)
-				.then { p -> storedFile.apply { path = p } }
+			else lookupStoredFilePaths.promiseStoredFilePath(libraryId, serviceFile).then(storedFile::setPath)
 
 		val promisedLibrary = libraryProvider.promiseLibrary(libraryId)
 		return storedFiles.promiseStoredFile(libraryId, serviceFile)
@@ -104,15 +103,12 @@ class StoredFileUpdater(
 						.eventually { localUri ->
 							localUri
 								?.let { u ->
-									storedFile.path = u.path
+									storedFile.setPath(u.path)
 									storedFile.setIsDownloadComplete(true)
 									storedFile.setIsOwner(false)
 									mediaFileIdProvider
 										.getMediaId(libraryId, serviceFile)
-										.then { mediaId ->
-											storedFile.storedMediaId = mediaId
-											storedFile
-										}
+										.then(storedFile::setStoredMediaId)
 								}
 								.keepPromise(storedFile)
 						}

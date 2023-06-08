@@ -16,9 +16,8 @@ import io.reactivex.Observable
 import io.reactivex.Observer
 import io.reactivex.disposables.Disposable
 import org.slf4j.LoggerFactory
-import java.io.File
 import java.io.IOException
-import java.util.*
+import java.util.LinkedList
 
 class StoredFileJobProcessor(
 	private val storedFileFileProvider: IStoredFileSystemFileProducer,
@@ -52,8 +51,7 @@ class StoredFileJobProcessor(
 			observer.onSubscribe(this)
 			for (job in jobs.distinct()) {
 				val storedFile = job.storedFile
-				val file = storedFileFileProvider.getFile(storedFile)
-				observer.onNext(StoredFileJobStatus(file, storedFile, StoredFileJobState.Queued))
+				observer.onNext(StoredFileJobStatus(storedFile, StoredFileJobState.Queued))
 				jobsQueue.offer(job)
 			}
 
@@ -68,15 +66,15 @@ class StoredFileJobProcessor(
 
 			val (libraryId, _, storedFile) = jobsQueue.poll() ?: return Promise.empty()
 
-			val file = storedFileFileProvider.getFile(storedFile)
+			val file = storedFileFileProvider.getFile(storedFile) ?: return Promise.empty()
 			if (file.exists()) {
 				if (!fileReadPossibleArbitrator.isFileReadPossible(file)) {
-					observer.onNext(StoredFileJobStatus(file, storedFile, StoredFileJobState.Unreadable))
+					observer.onNext(StoredFileJobStatus(storedFile, StoredFileJobState.Unreadable))
 					return processQueue()
 				}
 
 				if (storedFile.isDownloadComplete) {
-					observer.onNext(StoredFileJobStatus(file, storedFile, StoredFileJobState.Downloaded))
+					observer.onNext(StoredFileJobStatus(storedFile, StoredFileJobState.Downloaded))
 					return processQueue()
 				}
 			}
@@ -93,32 +91,32 @@ class StoredFileJobProcessor(
 			}
 
 			if (cancellationProxy.isCancelled) {
-				observer.onNext(getCancelledStoredFileJobResult(file, storedFile))
+				observer.onNext(getCancelledStoredFileJobResult(storedFile))
 				return Promise.empty()
 			}
 
-			observer.onNext(StoredFileJobStatus(file, storedFile, StoredFileJobState.Downloading))
+			observer.onNext(StoredFileJobStatus(storedFile, StoredFileJobState.Downloading))
 			return storedFiles.promiseDownload(libraryId, storedFile)
 				.also(cancellationProxy::doCancel)
 				.then(
 				{ inputStream ->
 						try {
-							if (cancellationProxy.isCancelled) getCancelledStoredFileJobResult(file, storedFile)
+							if (cancellationProxy.isCancelled) getCancelledStoredFileJobResult(storedFile)
 							else inputStream.use { s ->
 								fileStreamWriter.writeStreamToFile(s, file)
 								storedFileAccess.markStoredFileAsDownloaded(storedFile)
-								StoredFileJobStatus(file, storedFile, StoredFileJobState.Downloaded)
+								StoredFileJobStatus(storedFile, StoredFileJobState.Downloaded)
 							}
 						} catch (ioe: IOException) {
 							logger.error("Error writing file!", ioe)
-							StoredFileJobStatus(file, storedFile, StoredFileJobState.Queued)
+							StoredFileJobStatus(storedFile, StoredFileJobState.Queued)
 						} catch (t: Throwable) {
 							throw StoredFileJobException(storedFile, t)
 						}
 					},
 					{ error ->
 						when (error) {
-							is IOException -> StoredFileJobStatus(file, storedFile, StoredFileJobState.Queued)
+							is IOException -> StoredFileJobStatus(storedFile, StoredFileJobState.Queued)
 							is StoredFileJobException -> throw error
 							else -> throw StoredFileJobException(storedFile, error)
 						}
@@ -137,7 +135,7 @@ class StoredFileJobProcessor(
 	companion object {
 		private val logger by lazy { LoggerFactory.getLogger(StoredFileJobProcessor::class.java) }
 
-		private fun getCancelledStoredFileJobResult(file: File, storedFile: StoredFile): StoredFileJobStatus =
-			StoredFileJobStatus(file, storedFile, StoredFileJobState.Cancelled)
+		private fun getCancelledStoredFileJobResult(storedFile: StoredFile): StoredFileJobStatus =
+			StoredFileJobStatus(storedFile, StoredFileJobState.Cancelled)
 	}
 }

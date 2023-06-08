@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredIt
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.PruneStoredFiles
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
@@ -80,23 +81,25 @@ class WhenSyncingTheStoredItems {
 				fileListParameters
 			),
 			storedFileAccess,
-			storedFilesUpdater
-		) { jobs ->
-			Observable.fromIterable(jobs).flatMap { (_, _, storedFile) ->
-				Observable.just(
-					StoredFileJobStatus(
-						mockk(),
-						storedFile,
-						StoredFileJobState.Downloading
-					),
-					StoredFileJobStatus(
-						mockk(),
-						storedFile,
-						StoredFileJobState.Downloaded
-					)
-				)
+			storedFilesUpdater,
+			mockk {
+				every { observeStoredFileDownload(any()) } answers {
+					val jobs = firstArg<Iterable<StoredFileJob>>()
+					Observable.fromIterable(jobs).flatMap { (_, _, storedFile) ->
+						Observable.just(
+							StoredFileJobStatus(
+                                storedFile,
+								StoredFileJobState.Downloading
+							),
+							StoredFileJobStatus(
+                                storedFile,
+								StoredFileJobState.Downloaded
+							)
+						)
+					}
+				}
 			}
-		}
+		)
 	}
 
 	@BeforeAll

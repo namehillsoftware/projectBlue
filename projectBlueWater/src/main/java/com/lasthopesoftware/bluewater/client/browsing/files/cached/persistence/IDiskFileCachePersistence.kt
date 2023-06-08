@@ -6,5 +6,5 @@ import com.namehillsoftware.handoff.promises.Promise
 import java.io.File
 
 interface IDiskFileCachePersistence {
-    fun putIntoDatabase(libraryId: LibraryId, uniqueKey: String, file: File): Promise<CachedFile>
+    fun putIntoDatabase(libraryId: LibraryId, uniqueKey: String, file: File): Promise<CachedFile?>
 }

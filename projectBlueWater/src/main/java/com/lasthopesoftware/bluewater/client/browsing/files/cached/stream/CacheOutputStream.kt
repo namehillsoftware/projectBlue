@@ -8,6 +8,6 @@ import java.io.Closeable
 interface CacheOutputStream : Closeable {
     fun promiseWrite(buffer: ByteArray, offset: Int, length: Int): Promise<CacheOutputStream>
     fun promiseTransfer(bufferedSource: BufferedSource): Promise<CacheOutputStream>
-    fun commitToCache(): Promise<CachedFile>
+    fun commitToCache(): Promise<CachedFile?>
     fun flush(): Promise<CacheOutputStream>
 }
