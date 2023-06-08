@@ -207,7 +207,7 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 	private val activeNotificationChannelId by lazy {
 		val notificationChannelActivator =
 			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) NotificationChannelActivator(notificationManager)
-			else NoOpChannelActivator()
+			else NoOpChannelActivator
 		notificationChannelActivator.activateChannel(channelConfiguration)
 	}
 

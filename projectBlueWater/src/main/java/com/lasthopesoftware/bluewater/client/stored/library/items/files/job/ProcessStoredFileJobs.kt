@@ -1,7 +1,7 @@
-package com.lasthopesoftware.bluewater.client.stored.library.items.files.job;
+package com.lasthopesoftware.bluewater.client.stored.library.items.files.job
 
-import io.reactivex.Observable;
+import io.reactivex.Observable
 
-public interface ProcessStoredFileJobs {
-	Observable<StoredFileJobStatus> observeStoredFileDownload(Iterable<StoredFileJob> jobs);
+interface ProcessStoredFileJobs {
+    fun observeStoredFileDownload(jobs: Iterable<StoredFileJob>): Observable<StoredFileJobStatus>
 }

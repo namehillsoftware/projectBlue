@@ -9,8 +9,7 @@ class SyncChecker(
 	private val libraryProvider: ILibraryProvider,
 	private val serviceFilesForSync: CollectServiceFilesForSync,
 	private val checkForAnyStoredFiles: CheckForAnyStoredFiles,
-) :
-CheckForSync {
+) : CheckForSync {
 	override fun promiseIsSyncNeeded(): Promise<Boolean> {
 		return libraryProvider.allLibraries
 			.eventually { libraries ->

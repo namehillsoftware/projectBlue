@@ -1,20 +1,13 @@
-package com.lasthopesoftware.resources.strings;
+package com.lasthopesoftware.resources.strings
 
-import android.content.Context;
-import androidx.annotation.StringRes;
+import android.content.Context
+import androidx.annotation.StringRes
 
 /**
  * Created by david on 7/3/16.
  */
-public class StringResourceProvider implements IStringResourceProvider {
-	private final Context context;
-
-	public StringResourceProvider(Context context) {
-		this.context = context;
-	}
-
-	@Override
-	public String getString(@StringRes int stringResourceId) {
-		return context.getString(stringResourceId);
-	}
+class StringResourceProvider(private val context: Context) : IStringResourceProvider {
+    override fun getString(@StringRes stringResourceId: Int): String {
+        return context.getString(stringResourceId)
+    }
 }

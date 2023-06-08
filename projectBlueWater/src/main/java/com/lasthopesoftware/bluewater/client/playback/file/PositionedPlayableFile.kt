@@ -1,57 +1,42 @@
-package com.lasthopesoftware.bluewater.client.playback.file;
+package com.lasthopesoftware.bluewater.client.playback.file
 
-import androidx.annotation.NonNull;
+import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.playback.file.volume.ManagePlayableFileVolume
 
-import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.playback.file.volume.ManagePlayableFileVolume;
+class PositionedPlayableFile(
+    val playableFile: PlayableFile,
+    val playableFileVolumeManager: ManagePlayableFileVolume,
+    private val positionedFile: PositionedFile
+) : Comparable<PositionedPlayableFile> {
+    constructor(
+        playlistPosition: Int,
+        playbackHandler: PlayableFile,
+        playableFileVolumeManager: ManagePlayableFileVolume,
+        serviceFile: ServiceFile?
+    ) : this(
+        playbackHandler,
+        playableFileVolumeManager,
+        PositionedFile(playlistPosition, serviceFile!!)
+    )
 
-public final class PositionedPlayableFile implements Comparable<PositionedPlayableFile> {
-	private final PlayableFile playbackHandler;
-	private final ManagePlayableFileVolume playableFileVolumeManager;
-	private final PositionedFile positionedFile;
+    val playlistPosition: Int
+        get() = positionedFile.playlistPosition
+    val serviceFile: ServiceFile
+        get() = positionedFile.serviceFile
 
-	public PositionedPlayableFile(int playlistPosition, PlayableFile playbackHandler, ManagePlayableFileVolume playableFileVolumeManager, ServiceFile serviceFile) {
-		this(playbackHandler, playableFileVolumeManager, new PositionedFile(playlistPosition, serviceFile));
-	}
+    override fun compareTo(other: PositionedPlayableFile): Int {
+        return positionedFile.compareTo(other.positionedFile)
+    }
 
-	public PositionedPlayableFile(PlayableFile playbackHandler, ManagePlayableFileVolume playableFileVolumeManager, PositionedFile positionedFile) {
-		this.playableFileVolumeManager = playableFileVolumeManager;
-		this.positionedFile = positionedFile;
-		this.playbackHandler = playbackHandler;
-	}
+    override fun equals(other: Any?): Boolean {
+        return other is PositionedPlayableFile && compareTo((other as PositionedPlayableFile?)!!) == 0
+    }
 
-	public int getPlaylistPosition() {
-		return positionedFile.getPlaylistPosition();
-	}
+    override fun hashCode(): Int {
+        return positionedFile.hashCode()
+    }
 
-	public ServiceFile getServiceFile() {
-		return positionedFile.getServiceFile();
-	}
-
-	public PlayableFile getPlayableFile() {
-		return playbackHandler;
-	}
-
-	public ManagePlayableFileVolume getPlayableFileVolumeManager() {
-		return playableFileVolumeManager;
-	}
-
-	@Override
-	public int compareTo(@NonNull PositionedPlayableFile other) {
-		return positionedFile.compareTo(other.positionedFile);
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		return obj instanceof PositionedPlayableFile && compareTo((PositionedPlayableFile)obj) == 0;
-	}
-
-	@Override
-	public int hashCode() {
-		return positionedFile.hashCode();
-	}
-
-	public PositionedFile asPositionedFile() {
-		return positionedFile;
-	}
+    fun asPositionedFile(): PositionedFile {
+        return positionedFile
+    }
 }

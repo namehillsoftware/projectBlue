@@ -4,5 +4,5 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile
 
 fun interface OnPlayingFileChanged {
-    fun onPlayingFileChanged(libraryId: LibraryId, positionedPlayingFile: PositionedPlayingFile)
+    fun onPlayingFileChanged(libraryId: LibraryId, positionedPlayingFile: PositionedPlayingFile?)
 }

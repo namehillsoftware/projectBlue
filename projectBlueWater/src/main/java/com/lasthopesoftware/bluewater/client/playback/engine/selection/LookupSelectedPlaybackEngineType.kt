@@ -1,7 +1,7 @@
-package com.lasthopesoftware.bluewater.client.playback.engine.selection;
+package com.lasthopesoftware.bluewater.client.playback.engine.selection
 
-import com.namehillsoftware.handoff.promises.Promise;
+import com.namehillsoftware.handoff.promises.Promise
 
-public interface LookupSelectedPlaybackEngineType {
-	Promise<PlaybackEngineType> promiseSelectedPlaybackEngineType();
+interface LookupSelectedPlaybackEngineType {
+    fun promiseSelectedPlaybackEngineType(): Promise<PlaybackEngineType>
 }

@@ -1,10 +1,14 @@
-package com.lasthopesoftware.bluewater.shared.exceptions;
+package com.lasthopesoftware.bluewater.shared.exceptions
 
-import android.content.Context;
-import android.widget.Toast;
+import android.content.Context
+import android.widget.Toast
 
-public class UnexpectedExceptionToaster {
-	public static void announce(Context context, Throwable error) {
-		Toast.makeText(context, "An unexpected error occurred! The error was " + error.getClass().getName(), Toast.LENGTH_SHORT).show();
-	}
+object UnexpectedExceptionToaster {
+    fun announce(context: Context?, error: Throwable) {
+        Toast.makeText(
+            context,
+            "An unexpected error occurred! The error was " + error.javaClass.name,
+            Toast.LENGTH_SHORT
+        ).show()
+    }
 }

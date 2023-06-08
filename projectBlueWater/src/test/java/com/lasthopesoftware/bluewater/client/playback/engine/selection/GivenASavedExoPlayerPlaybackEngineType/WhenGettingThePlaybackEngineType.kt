@@ -25,7 +25,7 @@ class WhenGettingThePlaybackEngineType {
 			PlaybackEngineTypeChangedBroadcaster(RecordingApplicationMessageBus())
 		)
 		playbackEngineTypeSelectionPersistence.selectPlaybackEngine(PlaybackEngineType.ExoPlayer)
-		val selectedPlaybackEngineTypeAccess = SelectedPlaybackEngineTypeAccess(applicationSettings) { Promise.empty() }
+		val selectedPlaybackEngineTypeAccess = SelectedPlaybackEngineTypeAccess(applicationSettings, mockk())
 		selectedPlaybackEngineTypeAccess.promiseSelectedPlaybackEngineType().toExpiringFuture().get()
 	}
 

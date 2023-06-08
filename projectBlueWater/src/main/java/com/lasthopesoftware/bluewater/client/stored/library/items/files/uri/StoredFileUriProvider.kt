@@ -19,11 +19,15 @@ class StoredFileUriProvider(
         return storedFileAccess
 			.getStoredFile(libraryId, serviceFile)
             .then { storedFile: StoredFile? ->
-                if (storedFile == null || !storedFile.isDownloadComplete || storedFile.path == null || storedFile.path.isEmpty()) return@then null
-                val systemFile = File(storedFile.path)
-                if (systemFile.absolutePath.contains(Environment.getExternalStorageDirectory().absolutePath) && !externalStorageReadPermissionsArbitrator.isReadPermissionGranted) return@then null
-                if (systemFile.exists()) return@then Uri.fromFile(systemFile)
-                null
+				storedFile
+					?.takeUnless { !it.isDownloadComplete || it.path.isNullOrEmpty() }
+					?.path
+					?.let(::File)
+					?.takeUnless {
+						it.absolutePath.contains(Environment.getExternalStorageDirectory().absolutePath) && !externalStorageReadPermissionsArbitrator.isReadPermissionGranted
+					}
+					?.takeIf { it.exists() }
+					?.let(Uri::fromFile)
             }
     }
 }

@@ -1,5 +1,5 @@
-package com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel;
+package com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel
 
-public interface ActivateChannel {
-	String activateChannel(ChannelConfiguration channelConfiguration);
+interface ActivateChannel {
+    fun activateChannel(channelConfiguration: ChannelConfiguration): String
 }

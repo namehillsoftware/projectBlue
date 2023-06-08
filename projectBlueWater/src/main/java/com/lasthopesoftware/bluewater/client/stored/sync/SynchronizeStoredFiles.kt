@@ -1,7 +1,7 @@
-package com.lasthopesoftware.bluewater.client.stored.sync;
+package com.lasthopesoftware.bluewater.client.stored.sync
 
-import io.reactivex.Completable;
+import io.reactivex.Completable
 
-public interface SynchronizeStoredFiles {
-	Completable streamFileSynchronization();
+interface SynchronizeStoredFiles {
+    fun streamFileSynchronization(): Completable?
 }

@@ -53,7 +53,7 @@ class WhenTheDataSourceIsAbruptlyClosed {
 								return Promise<CacheOutputStream>(this)
 							}
 
-							override fun commitToCache(): Promise<CachedFile> {
+							override fun commitToCache(): Promise<CachedFile?> {
 								committedToCache = true
 								return Promise(CachedFile())
 							}

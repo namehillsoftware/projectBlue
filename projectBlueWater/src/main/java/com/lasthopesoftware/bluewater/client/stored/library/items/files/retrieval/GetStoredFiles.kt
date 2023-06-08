@@ -1,10 +1,10 @@
-package com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval;
+package com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval
 
-import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
-import com.namehillsoftware.handoff.promises.Promise;
+import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
+import com.namehillsoftware.handoff.promises.Promise
 
-public interface GetStoredFiles {
-	Promise<StoredFile> promiseStoredFile(LibraryId libraryId, ServiceFile serviceFile);
+interface GetStoredFiles {
+    fun promiseStoredFile(libraryId: LibraryId, serviceFile: ServiceFile): Promise<StoredFile>
 }

@@ -31,19 +31,21 @@ class WhenProcessingTheJob {
 		@BeforeClass
 		fun before() {
 			val storedFileJobProcessor = StoredFileJobProcessor(
-				{
-					val file = mockk<File>(relaxed = true)
-					val parentFile = mockk<File>(relaxed = true).apply {
-						every { exists() } returns false
-						every { mkdirs() } returns true
+				mockk {
+					every { getFile(any()) } answers {
+						val file = mockk<File>(relaxed = true)
+						val parentFile = mockk<File>(relaxed = true).apply {
+							every { exists() } returns false
+							every { mkdirs() } returns true
+						}
+						every { file.parentFile } returns parentFile
+						file
 					}
-					every { file.parentFile } returns parentFile
-					file
 				},
 				mockk(),
-				{ _, _ -> Promise(ByteArrayInputStream(ByteArray(0))) },
-				{ false },
-				{ true },
+				mockk { every { promiseDownload(any(), any()) } returns Promise(ByteArrayInputStream(ByteArray(0))) },
+				mockk { every { isFileReadPossible(any()) } returns false },
+				mockk { every { isFileWritePossible(any()) } returns true },
 				mockk<WriteFileStreams>().apply { every { writeStreamToFile(any(), any()) } throws IOException() })
 			storedFileJobProcessor.observeStoredFileDownload(
 				setOf(

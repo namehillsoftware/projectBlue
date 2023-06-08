@@ -1,5 +1,5 @@
-package com.lasthopesoftware.bluewater.client.browsing.library.views;
+package com.lasthopesoftware.bluewater.client.browsing.library.views
 
-public class KnownViews {
-	public static final String Playlists = "Playlists";
+object KnownViews {
+    const val Playlists = "Playlists"
 }

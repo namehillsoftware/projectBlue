@@ -1,122 +1,99 @@
-package com.lasthopesoftware.bluewater.client.stored.library.items.files.repository;
+package com.lasthopesoftware.bluewater.client.stored.library.items.files.repository
 
-import androidx.annotation.Keep;
-
-import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile;
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
-import com.lasthopesoftware.bluewater.repository.Entity;
-
-import java.util.Objects;
+import androidx.annotation.Keep
+import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.repository.Entity
+import java.util.Objects
 
 @Keep
-public final class StoredFile implements Entity {
+class StoredFile : Entity {
+    var id = 0
+        private set
+    var libraryId = 0
+        private set
+    var storedMediaId = 0
+        private set
+    var serviceId = 0
+        private set
+    var isDownloadComplete = false
+        private set
+    var path: String? = null
+        private set
+    var isOwner = false
+        private set
 
-	private int id;
-	private int libraryId;
-	private int storedMediaId;
-	private int serviceId;
-	private boolean isDownloadComplete;
-	private String path;
-	private boolean isOwner;
+    constructor()
+    constructor(
+        libraryId: LibraryId,
+        storedMediaId: Int,
+        serviceFile: ServiceFile,
+        path: String?,
+        isOwner: Boolean
+    ) {
+        this.libraryId = libraryId.id
+        this.storedMediaId = storedMediaId
+        serviceId = serviceFile.key
+        this.path = path
+        this.isOwner = isOwner
+    }
 
-	public StoredFile() {}
+    fun setId(id: Int): StoredFile {
+        this.id = id
+        return this
+    }
 
-	public StoredFile(LibraryId libraryId, int storedMediaId, ServiceFile serviceFile, String path, boolean isOwner) {
-		this.libraryId = libraryId.getId();
-		this.storedMediaId = storedMediaId;
-		this.serviceId = serviceFile.getKey();
-		this.path = path;
-		this.isOwner = isOwner;
-	}
+    fun setLibraryId(libraryId: Int): StoredFile {
+        this.libraryId = libraryId
+        return this
+    }
 
-	public StoredFile setId(int id) {
-		this.id = id;
-		return this;
-	}
+    fun setStoredMediaId(storedMediaId: Int): StoredFile {
+        this.storedMediaId = storedMediaId
+        return this
+    }
 
-	public int getId() {
-		return id;
-	}
+    fun setServiceId(serviceId: Int): StoredFile {
+        this.serviceId = serviceId
+        return this
+    }
 
-	public int getLibraryId() {
-		return libraryId;
-	}
+    fun setIsDownloadComplete(isDownloadComplete: Boolean): StoredFile {
+        this.isDownloadComplete = isDownloadComplete
+        return this
+    }
 
-	public StoredFile setLibraryId(int libraryId) {
-		this.libraryId = libraryId;
-		return this;
-	}
+    fun setPath(path: String?): StoredFile {
+        this.path = path
+        return this
+    }
 
-	public int getStoredMediaId() {
-		return storedMediaId;
-	}
+    fun setIsOwner(isOwner: Boolean): StoredFile {
+        this.isOwner = isOwner
+        return this
+    }
 
-	public StoredFile setStoredMediaId(int storedMediaId) {
-		this.storedMediaId = storedMediaId;
-		return this;
-	}
+    override fun equals(o: Any?): Boolean {
+        if (this === o) return true
+        if (o == null || javaClass != o.javaClass) return false
+        val that = o as StoredFile
+        return libraryId == that.libraryId &&
+                serviceId == that.serviceId
+    }
 
-	public int getServiceId() {
-		return serviceId;
-	}
+    override fun hashCode(): Int {
+        return Objects.hash(libraryId, serviceId)
+    }
 
-	public StoredFile setServiceId(int serviceId) {
-		this.serviceId = serviceId;
-		return this;
-	}
-
-	public boolean isDownloadComplete() {
-		return isDownloadComplete;
-	}
-
-	public StoredFile setIsDownloadComplete(boolean isDownloadComplete) {
-		this.isDownloadComplete = isDownloadComplete;
-		return this;
-	}
-
-	public String getPath() {
-		return path;
-	}
-
-	public StoredFile setPath(String path) {
-		this.path = path;
-		return this;
-	}
-
-	public boolean isOwner() {
-		return isOwner;
-	}
-
-	public StoredFile setIsOwner(boolean isOwner) {
-		this.isOwner = isOwner;
-		return this;
-	}
-
-
-	@Override
-	public final boolean equals(Object o) {
-		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
-		StoredFile that = (StoredFile) o;
-		return libraryId == that.libraryId &&
-			serviceId == that.serviceId;
-	}
-
-	@Override
-	public final int hashCode() {
-		return Objects.hash(libraryId, serviceId);
-	}
-
-	@Override
-	public String toString() {
-		return "StoredFile{" +
-			"id=" + id +
-			", libraryId=" + libraryId +
-			", storedMediaId=" + storedMediaId +
-			", serviceId=" + serviceId +
-			", isDownloadComplete=" + isDownloadComplete +
-			", path='" + path + '\'' +
-			", isOwner=" + isOwner +
-			'}';
-	}
+    override fun toString(): String {
+        return "StoredFile{" +
+                "id=" + id +
+                ", libraryId=" + libraryId +
+                ", storedMediaId=" + storedMediaId +
+                ", serviceId=" + serviceId +
+                ", isDownloadComplete=" + isDownloadComplete +
+                ", path='" + path + '\'' +
+                ", isOwner=" + isOwner +
+                '}'
+    }
 }

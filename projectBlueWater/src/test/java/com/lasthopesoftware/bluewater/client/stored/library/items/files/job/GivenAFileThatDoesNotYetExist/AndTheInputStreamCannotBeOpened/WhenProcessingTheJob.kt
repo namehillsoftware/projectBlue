@@ -21,8 +21,8 @@ class WhenProcessingTheJob {
 	@BeforeAll
 	fun before() {
 		val storedFileJobProcessor = StoredFileJobProcessor(
-			{
-				mockk {
+			mockk {
+				every { getFile(any()) } returns mockk {
 					every { exists() } returns false
 					every { parentFile } returns mockk {
 						every { exists() } returns false
@@ -31,9 +31,9 @@ class WhenProcessingTheJob {
 				}
 			},
 			mockk(relaxed = true),
-			{ _, _ -> Promise(IOException()) },
-			{ false },
-			{ true },
+			mockk { every { promiseDownload(any(), any()) } returns Promise(IOException()) },
+			mockk { every { isFileReadPossible(any()) } returns false },
+			mockk { every { isFileWritePossible(any()) } returns true },
 			mockk(relaxUnitFun = true)
 		)
 

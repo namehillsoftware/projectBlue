@@ -1,14 +1,13 @@
-package com.lasthopesoftware.bluewater.client.connection.builder.lookup;
+package com.lasthopesoftware.bluewater.client.connection.builder.lookup
 
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId;
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 
-public class ServerDiscoveryException extends Exception {
+class ServerDiscoveryException : Exception {
+    internal constructor(
+        library: LibraryId,
+        serverMessage: String
+    ) : super("Unable to find server for library " + library.id + ", the server responded with: \"" + serverMessage + "\"") {
+    }
 
-	ServerDiscoveryException(LibraryId library, String serverMessage) {
-		super("Unable to find server for library " + library.getId() + ", the server responded with: \"" + serverMessage + "\"");
-	}
-
-	ServerDiscoveryException(LibraryId library) {
-		super("Unable to find server for library " + library.getId());
-	}
+    internal constructor(library: LibraryId) : super("Unable to find server for library " + library.id) {}
 }

@@ -19,8 +19,10 @@ class WhenGettingThePlaybackEngineType {
 		every { applicationSettings.promiseUpdatedSettings(any()) } answers { Promise(firstArg<ApplicationSettings>()) }
 
 		val selectedPlaybackEngineTypeAccess = SelectedPlaybackEngineTypeAccess(
-			applicationSettings
-		) { Promise(PlaybackEngineType.ExoPlayer) }
+			applicationSettings,
+			mockk {
+				every { promiseDefaultEngineType() } returns Promise(PlaybackEngineType.ExoPlayer)
+			})
 
 		selectedPlaybackEngineTypeAccess.promiseSelectedPlaybackEngineType().toExpiringFuture().get()
 	}

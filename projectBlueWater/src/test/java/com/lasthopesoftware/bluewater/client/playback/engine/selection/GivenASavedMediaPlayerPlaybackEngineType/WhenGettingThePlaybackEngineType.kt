@@ -7,6 +7,8 @@ import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
 import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
+import io.mockk.every
+import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 
@@ -17,8 +19,10 @@ class WhenGettingThePlaybackEngineType : AndroidContext() {
 	}
 
     override fun before() {
-		val selectedPlaybackEngineTypeAccess = SelectedPlaybackEngineTypeAccess(applicationSettings)
-			{ Promise(PlaybackEngineType.ExoPlayer) }
+		val selectedPlaybackEngineTypeAccess = SelectedPlaybackEngineTypeAccess(applicationSettings,
+			mockk {
+				every { promiseDefaultEngineType() } returns Promise(PlaybackEngineType.ExoPlayer)
+			})
 
 		playbackEngineType = selectedPlaybackEngineTypeAccess.promiseSelectedPlaybackEngineType().toExpiringFuture().get()
     }

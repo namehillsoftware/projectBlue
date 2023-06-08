@@ -1,10 +1,10 @@
-package com.lasthopesoftware.resources.strings;
+package com.lasthopesoftware.resources.strings
 
-import androidx.annotation.StringRes;
+import androidx.annotation.StringRes
 
 /**
  * Created by david on 7/3/16.
  */
-public interface IStringResourceProvider {
-	String getString(@StringRes int stringResourceId);
+interface IStringResourceProvider {
+    fun getString(@StringRes stringResourceId: Int): String
 }

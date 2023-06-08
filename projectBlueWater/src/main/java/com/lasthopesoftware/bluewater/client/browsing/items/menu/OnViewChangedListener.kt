@@ -1,10 +1,10 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.menu;
+package com.lasthopesoftware.bluewater.client.browsing.items.menu
 
-import android.widget.ViewAnimator;
+import android.widget.ViewAnimator
 
 /**
  * Created by david on 3/29/15.
  */
-public interface OnViewChangedListener {
-    void onViewChanged(ViewAnimator viewAnimator);
+interface OnViewChangedListener {
+    fun onViewChanged(viewAnimator: ViewAnimator?)
 }

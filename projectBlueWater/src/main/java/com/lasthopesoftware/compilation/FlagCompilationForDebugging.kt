@@ -1,5 +1,5 @@
-package com.lasthopesoftware.compilation;
+package com.lasthopesoftware.compilation
 
-public interface FlagCompilationForDebugging {
-	boolean isDebugCompilation();
+interface FlagCompilationForDebugging {
+    val isDebugCompilation: Boolean
 }

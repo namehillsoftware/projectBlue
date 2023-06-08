@@ -1,10 +1,10 @@
-package com.lasthopesoftware.bluewater.client.browsing.library.request.read;
+package com.lasthopesoftware.bluewater.client.browsing.library.request.read
 
-import android.app.Notification;
+import android.app.Notification
 
 /**
  * Created by david on 7/3/16.
  */
-public interface IStorageReadPermissionsRequestNotificationBuilder {
-	Notification buildReadPermissionsRequestNotification(int libraryId);
+interface IStorageReadPermissionsRequestNotificationBuilder {
+    fun buildReadPermissionsRequestNotification(libraryId: Int): Notification?
 }

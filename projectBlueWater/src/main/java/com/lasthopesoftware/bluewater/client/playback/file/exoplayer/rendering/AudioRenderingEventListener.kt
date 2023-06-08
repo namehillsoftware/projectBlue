@@ -1,39 +1,36 @@
-package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.rendering;
+package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.rendering
 
-import com.google.android.exoplayer2.audio.AudioRendererEventListener;
-import com.google.android.exoplayer2.decoder.DecoderCounters;
+import com.google.android.exoplayer2.audio.AudioRendererEventListener
+import com.google.android.exoplayer2.decoder.DecoderCounters
+import org.slf4j.LoggerFactory
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+class AudioRenderingEventListener : AudioRendererEventListener {
+    override fun onAudioEnabled(counters: DecoderCounters) {
+        if (!logger.isDebugEnabled) return
+        logger.debug("Audio decoder counters updated")
+    }
 
-public final class AudioRenderingEventListener
-implements
-	AudioRendererEventListener {
+    override fun onAudioDecoderInitialized(
+        decoderName: String, initializedTimestampMs: Long,
+        initializationDurationMs: Long
+    ) {
+        if (!logger.isDebugEnabled) return
+        logger.debug(
+            "Audio decoder initialized. " +
+                    "decoderName=" + decoderName + ", " +
+                    "initializedTimestampMs=" + initializedTimestampMs + ", " +
+                    "initializationDurationMs=" + initializationDurationMs
+        )
+    }
 
-	private static final Logger logger = LoggerFactory.getLogger(AudioRenderingEventListener.class);
+    override fun onAudioDisabled(counters: DecoderCounters) {
+        if (!logger.isDebugEnabled) return
+        logger.debug("Audio disabled.")
+    }
 
-	@Override
-	public void onAudioEnabled(DecoderCounters counters) {
-		if (!logger.isDebugEnabled()) return;
-
-		logger.debug("Audio decoder counters updated");
-	}
-
-	@Override
-	public void onAudioDecoderInitialized(String decoderName, long initializedTimestampMs,
-										  long initializationDurationMs) {
-		if (!logger.isDebugEnabled()) return;
-
-		logger.debug("Audio decoder initialized. " +
-			"decoderName=" + decoderName + ", " +
-			"initializedTimestampMs=" + initializedTimestampMs + ", " +
-			"initializationDurationMs=" + initializationDurationMs);
-	}
-
-	@Override
-	public void onAudioDisabled(DecoderCounters counters) {
-		if (!logger.isDebugEnabled()) return;
-
-		logger.debug("Audio disabled.");
-	}
+    companion object {
+        private val logger = LoggerFactory.getLogger(
+            AudioRenderingEventListener::class.java
+        )
+    }
 }

@@ -1,21 +1,18 @@
-package com.lasthopesoftware.bluewater.shared.promises.extensions;
+package com.lasthopesoftware.bluewater.shared.promises.extensions
 
-import com.namehillsoftware.handoff.Messenger;
-import com.namehillsoftware.handoff.promises.Promise;
+import com.namehillsoftware.handoff.Messenger
+import com.namehillsoftware.handoff.promises.Promise
 
-public class PromiseMessenger<Resolution> extends Promise<Resolution> implements Messenger<Resolution> {
-	@Override
-	public void sendResolution(Resolution resolution) {
-		resolve(resolution);
-	}
+class PromiseMessenger<Resolution> : Promise<Resolution>(), Messenger<Resolution> {
+    override fun sendResolution(resolution: Resolution) {
+        resolve(resolution)
+    }
 
-	@Override
-	public void sendRejection(Throwable error) {
-		reject(error);
-	}
+    override fun sendRejection(error: Throwable) {
+        reject(error)
+    }
 
-	@Override
-	public void cancellationRequested(Runnable response) {
-		respondToCancellation(response);
-	}
+    override fun cancellationRequested(response: Runnable) {
+        respondToCancellation(response)
+    }
 }

@@ -15,8 +15,9 @@ class PlaylistPlaybackBootstrapper(private val volumeManagement: PlaylistVolumeM
 
     override fun startPlayback(preparedPlaybackQueue: PreparedPlayableFileQueue, filePosition: Duration): IActivePlayer {
         close()
-        playlistPlayer = PlaylistPlayer(preparedPlaybackQueue, filePosition)
-        return ActivePlayer(playlistPlayer, volumeManagement).also { activePlayer = it }
+		val newPlayer = PlaylistPlayer(preparedPlaybackQueue, filePosition)
+        playlistPlayer = newPlayer
+        return ActivePlayer(newPlayer, volumeManagement).also { activePlayer = it }
     }
 
     override fun close() {

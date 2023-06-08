@@ -36,7 +36,7 @@ class WhenStreamingTheFile {
 		@BeforeClass
 		@JvmStatic
 		fun context() {
-			val deferredCommit = DeferredPromise(CachedFile())
+			val deferredCommit = DeferredPromise(CachedFile() as CachedFile?)
 
 			val fakeCacheStreamSupplier = object : SupplyCacheStreams {
 				private var committedToCache = false
@@ -63,7 +63,7 @@ class WhenStreamingTheFile {
 							return Promise<CacheOutputStream>(this)
 						}
 
-						override fun commitToCache(): Promise<CachedFile> {
+						override fun commitToCache(): Promise<CachedFile?> {
 							committedToCache = true
 							deferredCommit.resolve()
 							return deferredCommit

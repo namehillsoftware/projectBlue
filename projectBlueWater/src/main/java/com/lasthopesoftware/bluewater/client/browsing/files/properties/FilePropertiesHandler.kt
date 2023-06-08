@@ -1,42 +1,35 @@
-package com.lasthopesoftware.bluewater.client.browsing.files.properties;
+package com.lasthopesoftware.bluewater.client.browsing.files.properties
 
-import com.lasthopesoftware.bluewater.shared.XmlParsingHelpers;
+import com.lasthopesoftware.bluewater.shared.XmlParsingHelpers
+import org.xml.sax.Attributes
+import org.xml.sax.helpers.DefaultHandler
+import java.util.TreeMap
 
-import org.xml.sax.Attributes;
-import org.xml.sax.helpers.DefaultHandler;
+internal class FilePropertiesHandler : DefaultHandler() {
+    /**
+     * @return the response
+     */
+    val properties = TreeMap<String?, String>(java.lang.String.CASE_INSENSITIVE_ORDER)
+    private var currentSb: StringBuilder? = null
+    private var currentKey: String? = null
+    override fun startElement(
+        uri: String,
+        localName: String,
+        qName: String,
+        attributes: Attributes
+    ) {
+        currentSb = StringBuilder()
+        if (qName.equals("field", ignoreCase = true)) currentKey = attributes.getValue("Name")
+    }
 
-import java.util.TreeMap;
+    override fun characters(ch: CharArray, start: Int, length: Int) {
+        XmlParsingHelpers.handleBadXml(currentSb, ch, start, length)
+    }
 
-class FilePropertiesHandler extends DefaultHandler {
-
-	private final TreeMap<String, String> properties = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-	private StringBuilder currentSb = null;
-	private String currentKey;
-
-	public void startElement(String uri, String localName, String qName, Attributes attributes) {
-		currentSb = new StringBuilder();
-		if (qName.equalsIgnoreCase("field"))
-			currentKey = attributes.getValue("Name");
-	}
-
-	public void characters(char[] ch, int start, int length) {
-		XmlParsingHelpers.HandleBadXml(currentSb, ch, start, length);
-	}
-
-	public void endElement(String uri, String localName, String qName) {
+    override fun endElement(uri: String, localName: String, qName: String) {
 //		if (sb != null) currentValue = sb.toString();
-
-		if (qName.equalsIgnoreCase("field")) {
-			properties.put(currentKey, currentSb.toString());
-		}
-
-	}
-
-
-	/**
-	 * @return the response
-	 */
-	public TreeMap<String, String> getProperties() {
-		return properties;
-	}
+        if (qName.equals("field", ignoreCase = true)) {
+            properties[currentKey] = currentSb.toString()
+        }
+    }
 }

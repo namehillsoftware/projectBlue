@@ -2,6 +2,7 @@ package com.lasthopesoftware.resources.executors
 
 import com.google.common.util.concurrent.MoreExecutors
 import com.lasthopesoftware.bluewater.repository.Entity
+import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import java.util.concurrent.Executor
@@ -36,6 +37,6 @@ object ThreadPools {
 		databaseThreadCache.getOrPut(cls) { MoreExecutors.newSequentialExecutor(io) }
 	}
 
-	inline fun <T, reified Table : Entity> promiseTableMessage(messageWriter: MessageWriter<T>) =
+	inline fun <T, reified Table : Entity> promiseTableMessage(messageWriter: MessageWriter<T>): Promise<T> =
 		QueuedPromise(messageWriter, databaseTableExecutor(Table::class.java))
 }

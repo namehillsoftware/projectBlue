@@ -1,9 +1,7 @@
-package com.lasthopesoftware.bluewater.shared;
+package com.lasthopesoftware.bluewater.shared
 
-
-public class XmlParsingHelpers {
-	
-	public static void HandleBadXml(StringBuilder currentSb, char[] ch, int start, int length) {
-		currentSb.append(ch, start, length);
-	}
+object XmlParsingHelpers {
+    fun handleBadXml(currentSb: StringBuilder?, ch: CharArray?, start: Int, length: Int) {
+        currentSb?.append(ch, start, length)
+    }
 }

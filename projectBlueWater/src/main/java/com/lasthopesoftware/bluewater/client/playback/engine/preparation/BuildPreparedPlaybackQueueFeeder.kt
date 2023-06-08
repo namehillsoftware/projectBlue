@@ -1,5 +1,5 @@
-package com.lasthopesoftware.bluewater.client.playback.engine.preparation;
+package com.lasthopesoftware.bluewater.client.playback.engine.preparation
 
-public interface BuildPreparedPlaybackQueueFeeder {
-	IPlayableFilePreparationSourceProvider build();
+interface BuildPreparedPlaybackQueueFeeder {
+    fun build(): IPlayableFilePreparationSourceProvider?
 }

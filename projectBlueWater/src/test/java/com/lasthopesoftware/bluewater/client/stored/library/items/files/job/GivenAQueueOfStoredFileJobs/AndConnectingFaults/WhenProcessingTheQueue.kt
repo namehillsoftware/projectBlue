@@ -73,25 +73,25 @@ class WhenProcessingTheQueue {
 	@BeforeAll
 	fun act() {
 		val storedFileJobProcessor = StoredFileJobProcessor(
-			{ storedFile ->
-				mockk {
-					every { parentFile } returns null
-					every { exists() } returns storedFile.isDownloadComplete
-					if (storedFile.serviceId == 2) {
-						every { path } returns "write-failure"
+			mockk {
+				every { getFile(any()) } answers {
+					val storedFile = firstArg<StoredFile>()
+					mockk {
+						every { parentFile } returns null
+						every { exists() } returns storedFile.isDownloadComplete
+						if (storedFile.serviceId == 2) {
+							every { path } returns "write-failure"
+						}
 					}
 				}
 			},
 			storedFilesAccess,
-			{ _, f ->
-				if (f.serviceId != 2) Promise(
-					ByteArrayInputStream(
-						ByteArray(0)
-					)
-				) else Promise(IOException())
+			mockk {
+				every { promiseDownload(any(), any()) } returns Promise(ByteArrayInputStream(ByteArray(0)))
+				every { promiseDownload(any(), match { it.serviceId == 2 }) } returns Promise(IOException())
 			},
-			{ true },
-			{ true },
+			mockk { every { isFileReadPossible(any()) } returns true },
+			mockk { every { isFileWritePossible(any()) } returns true },
 			mockk(relaxed = true)
 		)
 		storedFileStatuses =

@@ -1,9 +1,9 @@
-package com.lasthopesoftware.bluewater.client.playback.file.initialization;
+package com.lasthopesoftware.bluewater.client.playback.file.initialization
 
-import android.net.Uri;
+import android.net.Uri
+import java.io.IOException
 
-import java.io.IOException;
-
-public interface IPlaybackInitialization<TMediaPlayer> {
-	TMediaPlayer initializeMediaPlayer(Uri fileUri) throws IOException;
+interface IPlaybackInitialization<TMediaPlayer> {
+    @Throws(IOException::class)
+    fun initializeMediaPlayer(fileUri: Uri?): TMediaPlayer
 }

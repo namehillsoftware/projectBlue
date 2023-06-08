@@ -21,16 +21,16 @@ class WhenProcessingTheJob {
 		val storedFile = StoredFile(LibraryId(1), 1, ServiceFile(1), "test-path", true)
 		storedFile.setIsDownloadComplete(true)
 		val storedFileJobProcessor = StoredFileJobProcessor(
-			{
-				mockk {
+			mockk {
+				every { getFile(any()) } returns mockk {
 					every { parentFile } returns null
 					every { exists() } returns false
 				}
 			},
 			mockk(),
-			{ _, _ -> Promise.empty() },
-			{ false },
-			{ false },
+			mockk { every { promiseDownload(any(), any()) } returns Promise.empty() },
+			mockk { every { isFileReadPossible(any()) } returns false },
+			mockk { every { isFileWritePossible(any()) } returns false },
 			mockk(relaxUnitFun = true)
 		)
 

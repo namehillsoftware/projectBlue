@@ -59,7 +59,7 @@ class WhenProcessingTheQueue {
 			)
 		)
 	)
-	private val expectedStoredFiles = arrayOf<StoredFile>(
+	private val expectedStoredFiles = arrayOf(
 		StoredFile().setServiceId(1).setLibraryId(1),
 		StoredFile().setServiceId(2).setLibraryId(1)
 	)
@@ -71,23 +71,28 @@ class WhenProcessingTheQueue {
 	@BeforeAll
 	fun act() {
 		val storedFileJobProcessor = StoredFileJobProcessor(
-			{ storedFile ->
-				mockk {
-					every { parentFile } returns null
-					every { exists() } returns storedFile.isDownloadComplete
-					if (storedFile.serviceId == 4) {
-						every { path } returns "write-failure"
+			mockk {
+				every { getFile(any()) } answers {
+					val storedFile = firstArg<StoredFile>()
+
+					mockk {
+						every { parentFile } returns null
+						every { exists() } returns storedFile.isDownloadComplete
+						if (storedFile.serviceId == 4) {
+							every { path } returns "write-failure"
+						}
 					}
 				}
 			},
 			storedFilesAccess,
-			{ _, f ->
-				if (f.serviceId != 4) Promise(ByteArrayInputStream(ByteArray(0)))
-				else Promise(UnexpectedException())
+			mockk {
+				every { promiseDownload(any(), any()) } returns Promise(ByteArrayInputStream(ByteArray(0)))
+				every { promiseDownload(any(), match { it.serviceId == 4 }) } returns Promise(UnexpectedException())
 			},
-			{ true },
-			{ true },
-			mockk(relaxed = true))
+			mockk { every { isFileReadPossible(any()) } returns true },
+			mockk { every { isFileWritePossible(any()) } returns true },
+			mockk(relaxed = true)
+		)
 
 		storedFileJobProcessor.observeStoredFileDownload(storedFileJobs).blockingSubscribe(
 			storedFileStatuses::add

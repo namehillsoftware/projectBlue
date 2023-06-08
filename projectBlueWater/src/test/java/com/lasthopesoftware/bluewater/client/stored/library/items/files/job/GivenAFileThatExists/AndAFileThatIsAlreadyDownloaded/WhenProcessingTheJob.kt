@@ -13,22 +13,23 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
 class WhenProcessingTheJob {
-    private val storedFileJobStatus by lazy {
-        val storedFile = StoredFile(LibraryId(10), 1, ServiceFile(1), "test-path", true)
-        storedFile.setIsDownloadComplete(true)
-        val storedFileJobProcessor = StoredFileJobProcessor(
-            {
-				mockk {
+	private val storedFileJobStatus by lazy {
+		val storedFile = StoredFile(LibraryId(10), 1, ServiceFile(1), "test-path", true)
+		storedFile.setIsDownloadComplete(true)
+		val storedFileJobProcessor = StoredFileJobProcessor(
+			mockk {
+				every { getFile(any()) } returns mockk {
 					every { exists() } returns true
 				}
-            },
-            mockk(),
-			{ _, _ -> Promise.empty() },
-            { true },
-            mockk(),
-            mockk(relaxUnitFun = true))
+			},
+			mockk(),
+			mockk { every { promiseDownload(any(), any()) } returns Promise.empty() },
+			mockk { every { isFileReadPossible(any()) } returns true },
+			mockk(),
+			mockk(relaxUnitFun = true)
+		)
 
-        storedFileJobProcessor
+		storedFileJobProcessor
 			.observeStoredFileDownload(
 				setOf(
 					StoredFileJob(
@@ -38,13 +39,13 @@ class WhenProcessingTheJob {
 					)
 				)
 			)
-            .map { f -> f.storedFileJobState }
+			.map { f -> f.storedFileJobState }
 			.toList().blockingGet()
-    }
+	}
 
-    @Test
-    fun `then an already exists result is returned`() {
-        assertThat(storedFileJobStatus)
-            .containsExactly(StoredFileJobState.Queued, StoredFileJobState.Downloaded)
-    }
+	@Test
+	fun `then an already exists result is returned`() {
+		assertThat(storedFileJobStatus)
+			.containsExactly(StoredFileJobState.Queued, StoredFileJobState.Downloaded)
+	}
 }

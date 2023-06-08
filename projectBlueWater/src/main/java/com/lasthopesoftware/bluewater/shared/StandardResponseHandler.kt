@@ -1,41 +1,40 @@
-package com.lasthopesoftware.bluewater.shared;
+package com.lasthopesoftware.bluewater.shared
 
-import org.xml.sax.Attributes;
-import org.xml.sax.SAXException;
-import org.xml.sax.helpers.DefaultHandler;
+import org.xml.sax.Attributes
+import org.xml.sax.SAXException
+import org.xml.sax.helpers.DefaultHandler
 
-class StandardResponseHandler extends DefaultHandler {
-	
-	private StandardRequest response;
-	private String currentValue;
-	private String currentKey;
-	
-	public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException
-	{
-		currentValue = "";
-		currentKey = "";
-		if (qName.equalsIgnoreCase("response"))
-			response = new StandardRequest(attributes.getValue("Status"));
-		
-		if (qName.equalsIgnoreCase("item")) {
-			currentKey = attributes.getValue("Name");
-			
-		}
-	}
-	
-	public void characters(char[] ch, int start, int length) throws SAXException {
-		currentValue = new String(ch,start,length);
-	}
-	
-	public void endElement(String uri, String localName, String qName) throws SAXException {
-		if (qName.equalsIgnoreCase("item"))
-			response.items.put(currentKey, currentValue);
-	}
-	
-	/**
-	 * @return the response
-	 */
-	public StandardRequest getResponse() {
-		return response;
-	}
+internal class StandardResponseHandler : DefaultHandler() {
+    /**
+     * @return the response
+     */
+    var response: StandardRequest? = null
+        private set
+    private var currentValue: String? = null
+    private var currentKey: String? = null
+    @Throws(SAXException::class)
+    override fun startElement(
+        uri: String,
+        localName: String,
+        qName: String,
+        attributes: Attributes
+    ) {
+        currentValue = ""
+        currentKey = ""
+        if (qName.equals("response", ignoreCase = true)) response =
+            StandardRequest(attributes.getValue("Status"))
+        if (qName.equals("item", ignoreCase = true)) {
+            currentKey = attributes.getValue("Name")
+        }
+    }
+
+    @Throws(SAXException::class)
+    override fun characters(ch: CharArray, start: Int, length: Int) {
+        currentValue = String(ch, start, length)
+    }
+
+    @Throws(SAXException::class)
+    override fun endElement(uri: String, localName: String, qName: String) {
+        if (qName.equals("item", ignoreCase = true)) response!!.items[currentKey] = currentValue
+    }
 }

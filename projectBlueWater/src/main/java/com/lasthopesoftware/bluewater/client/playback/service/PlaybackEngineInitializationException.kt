@@ -1,7 +1,3 @@
-package com.lasthopesoftware.bluewater.client.playback.service;
+package com.lasthopesoftware.bluewater.client.playback.service
 
-class PlaybackEngineInitializationException extends Exception {
-	PlaybackEngineInitializationException(String message) {
-		super(message);
-	}
-}
+internal open class PlaybackEngineInitializationException(message: String?) : Exception(message)

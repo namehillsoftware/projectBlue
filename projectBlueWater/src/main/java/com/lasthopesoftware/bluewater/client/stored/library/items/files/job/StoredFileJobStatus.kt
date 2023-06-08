@@ -1,36 +1,23 @@
-package com.lasthopesoftware.bluewater.client.stored.library.items.files.job;
+package com.lasthopesoftware.bluewater.client.stored.library.items.files.job
 
-import androidx.annotation.NonNull;
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile;
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
+import java.io.File
 
-import java.io.File;
+class StoredFileJobStatus(
+    val downloadedFile: File,
+    val storedFile: StoredFile,
+    val storedFileJobState: StoredFileJobState
+) {
+    override fun equals(o: Any?): Boolean {
+        if (this === o) return true
+        if (o == null || javaClass != o.javaClass) return false
+        val that = o as StoredFileJobStatus
+        return storedFile == that.storedFile && storedFileJobState == that.storedFileJobState
+    }
 
-public class StoredFileJobStatus {
-	public final File downloadedFile;
-	public final StoredFile storedFile;
-	public final StoredFileJobState storedFileJobState;
-
-	public StoredFileJobStatus(@NonNull File downloadedFile, @NonNull StoredFile storedFile, @NonNull StoredFileJobState storedFileJobState) {
-		this.downloadedFile = downloadedFile;
-		this.storedFile = storedFile;
-		this.storedFileJobState = storedFileJobState;
-	}
-
-	@Override
-	public boolean equals(Object o) {
-		if (this == o) return true;
-		if (o == null || getClass() != o.getClass()) return false;
-
-		StoredFileJobStatus that = (StoredFileJobStatus) o;
-
-		return storedFile.equals(that.storedFile) && storedFileJobState == that.storedFileJobState;
-
-	}
-
-	@Override
-	public int hashCode() {
-		int result = storedFile.hashCode();
-		result = 31 * result + storedFileJobState.hashCode();
-		return result;
-	}
+    override fun hashCode(): Int {
+        var result = storedFile.hashCode()
+        result = 31 * result + storedFileJobState.hashCode()
+        return result
+    }
 }
