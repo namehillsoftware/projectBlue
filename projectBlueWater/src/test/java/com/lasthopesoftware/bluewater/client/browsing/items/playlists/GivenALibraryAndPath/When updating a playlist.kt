@@ -7,7 +7,7 @@ import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTuple
 import com.lasthopesoftware.bluewater.client.connection.FakeLibraryConnectionProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
-import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
@@ -64,7 +64,7 @@ class `When updating a playlist` {
                     )
 				},
 				"Playlists",
-				"Add?Type=Playlist&Path=bold&CreateMode=Overwrite"
+				"Add?Type=Playlist&Path=bold\\voyage&CreateMode=Overwrite"
 			)
 
 			mapResponse(
@@ -79,16 +79,18 @@ class `When updating a playlist` {
 			)
 		}
 
-		Pair(fakeConnectionProvider, PlaylistsStorage(
-            FakeLibraryConnectionProvider(
-                mapOf(
-                    Pair(
-                        LibraryId(libraryId),
-                        fakeConnectionProvider
-                    )
-                )
-            )
-        )
+		Pair(
+			fakeConnectionProvider,
+			PlaylistsStorage(
+				FakeLibraryConnectionProvider(
+					mapOf(
+						Pair(
+							LibraryId(libraryId),
+							fakeConnectionProvider
+						)
+					)
+				)
+			)
         )
 	}
 
@@ -97,7 +99,7 @@ class `When updating a playlist` {
 		mut.second
 			.promiseStoredPlaylist(
                 LibraryId(libraryId),
-				"bold",
+				"bold\\voyage",
 				listOf(
                     ServiceFile(885),
                     ServiceFile(481),
@@ -111,9 +113,9 @@ class `When updating a playlist` {
 
 	@Test
 	fun `then the playlist is created correctly`() {
-		Assertions.assertThat(mut.first.recordedRequests.flatMap { it.asIterable() }).containsExactly(
+		assertThat(mut.first.recordedRequests.flatMap { it.asIterable() }).containsExactly(
 			"Playlists",
-			"Add?Type=Playlist&Path=bold&CreateMode=Overwrite",
+			"Add?Type=Playlist&Path=bold\\voyage&CreateMode=Overwrite",
 			"Playlist",
 			"AddFiles?PlaylistType=ID&Playlist=38981873&Keys=885,481,139,935",
 		)

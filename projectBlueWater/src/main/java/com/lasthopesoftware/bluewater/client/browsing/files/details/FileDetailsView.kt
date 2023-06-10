@@ -255,7 +255,7 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 								Image(
 									painter = painterResource(id = R.drawable.ic_save_white_36dp),
 									colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
-									contentDescription = stringResource(id = R.string.btn_save),
+									contentDescription = stringResource(id = R.string.save),
 									modifier = Modifier
 										.fillMaxWidth()
 										.weight(1f)

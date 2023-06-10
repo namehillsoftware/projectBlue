@@ -11,6 +11,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.components.dragging.move
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.namehillsoftware.handoff.promises.Promise
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -27,21 +28,25 @@ class NowPlayingPlaylistViewModel(
 	(LibraryPlaybackMessage.PlaylistChanged) -> Unit
 {
 	private var activeLibraryId: LibraryId? = null
+	private var lastSavedPlaylistPath = ""
+
 	private val playlistChangedSubscription = applicationMessages.registerReceiver(this)
 
 	private val isRepeatingState = MutableStateFlow(false)
 	private val mutableEditingPlaylistState = MutableStateFlow(false)
 	private val nowPlayingListState = MutableStateFlow(emptyList<PositionedFile>())
 	private val playlistPathsState = MutableStateFlow(emptyList<String>())
+	private val mutableIsSavingPlaylistActive = MutableStateFlow(false)
 
 	val isRepeating = isRepeatingState.asStateFlow()
 	val isEditingPlaylistState = mutableEditingPlaylistState.asStateFlow()
 	val nowPlayingList = nowPlayingListState.asStateFlow()
 	val playlistPaths = playlistPathsState.asStateFlow()
+	val isSavingPlaylistActive = mutableIsSavingPlaylistActive.asStateFlow()
 
 	fun initializeView(libraryId: LibraryId): Promise<Unit> {
 		activeLibraryId = libraryId
-		return updateViewFromRepository()
+		return updateViewFromRepository().unitResponse()
 	}
 
 	override val isEditingPlaylist: Boolean
@@ -55,9 +60,16 @@ class NowPlayingPlaylistViewModel(
 		mutableEditingPlaylistState.value = false
 	}
 
-	fun savePlaylist(path: String): Promise<*> = activeLibraryId?.let { libraryId ->
-		playlistStorage.promiseStoredPlaylist(libraryId, path, nowPlayingList.value.map { it.serviceFile })
-	}.keepPromise()
+	fun enableSavingPlaylist() {
+		mutableIsSavingPlaylistActive.value = true
+	}
+
+	fun savePlaylist(path: String): Promise<*> {
+		lastSavedPlaylistPath = path
+		return activeLibraryId?.let { libraryId ->
+			playlistStorage.promiseStoredPlaylist(libraryId, path, nowPlayingList.value.map { it.serviceFile })
+		}.keepPromise()
+	}
 
 	fun swapFiles(from: Int, to: Int) {
 		nowPlayingListState.value = nowPlayingListState.value.toMutableList().move(from, to)
@@ -74,8 +86,8 @@ class NowPlayingPlaylistViewModel(
 		}
 	}
 
-	override fun invoke(p1: LibraryPlaybackMessage.PlaylistChanged) {
-		if (p1.libraryId == activeLibraryId)
+	override fun invoke(message: LibraryPlaybackMessage.PlaylistChanged) {
+		if (message.libraryId == activeLibraryId)
 			updateViewFromRepository()
 	}
 
@@ -85,10 +97,20 @@ class NowPlayingPlaylistViewModel(
 
 	private fun updateViewFromRepository() =
 		activeLibraryId
-			?.let(nowPlayingRepository::promiseNowPlaying)
-			.keepPromise()
-			.then { np ->
-				nowPlayingListState.value = np?.positionedPlaylist ?: emptyList()
-				isRepeatingState.value = np?.isRepeating ?: false
+			?.let {
+				val promisedNowPlayingPlaylistUpdate = nowPlayingRepository.promiseNowPlaying(it)
+					.then { np ->
+						nowPlayingListState.value = np?.positionedPlaylist ?: emptyList()
+						isRepeatingState.value = np?.isRepeating ?: false
+					}
+
+				val promisedPlaylistPathsUpdate = playlistStorage
+					.promiseAudioPlaylistPaths(it)
+					.then { paths ->
+						playlistPathsState.value = paths
+					}
+
+				Promise.whenAll(promisedNowPlayingPlaylistUpdate, promisedPlaylistPathsUpdate)
 			}
+			.keepPromise()
 }

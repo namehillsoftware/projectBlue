@@ -458,7 +458,7 @@ fun LibrarySettingsView(
 						},
 						enabled = !isSavingState && !isSaved,
 					) {
-						Text(text = if (isSaved) stringResource(id = R.string.btn_saved) else stringResource(id = R.string.btn_save))
+						Text(text = if (isSaved) stringResource(id = R.string.saved) else stringResource(id = R.string.save))
 					}
 				}
 			}

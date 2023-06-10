@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
+import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -38,6 +39,9 @@ class `When saving the now playing playlist` {
             ),
             mockk(),
 			mockk {
+				every { promiseAudioPlaylistPaths(LibraryId(libraryId)) } returns Promise(
+					listOf("country", "hardly", "company\\pretense")
+				)
 				every { promiseStoredPlaylist(LibraryId(libraryId), any(), any()) } answers {
 					savedPlaylistPath = secondArg()
 					savedFiles.addAll(lastArg())
@@ -54,6 +58,13 @@ class `When saving the now playing playlist` {
 	fun act() {
 		mut.initializeView(LibraryId(libraryId)).toExpiringFuture().get()
 		mut.savePlaylist("bribe").toExpiringFuture().get()
+	}
+
+	@Test
+	fun `then the playlist paths are loaded`() {
+		assertThat(mut.playlistPaths.value).containsExactly(
+			"country", "hardly", "company\\pretense"
+		)
 	}
 
 	@Test

@@ -125,13 +125,16 @@ private fun NowPlayingProgressIndicator(fileProgress: Float) {
 	)
 }
 
+private const val playlistControlAlpha = .8f
+
 @Composable
 private fun PlaylistControls(
 	modifier: Modifier = Modifier,
 	nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel,
 	playlistViewModel: NowPlayingPlaylistViewModel,
 	playbackServiceController: ControlPlaybackService,
-	onHide: () -> Unit
+	onHide: () -> Unit,
+	onSavePlaylist: () -> Unit
 ) {
 	Row(
 		modifier = modifier,
@@ -146,7 +149,7 @@ private fun PlaylistControls(
 				modifier = Modifier.clickable {
 					playlistViewModel.finishPlaylistEdit()
 				},
-				alpha = .8f,
+				alpha = playlistControlAlpha,
 			)
 		} else {
 			Image(
@@ -155,7 +158,7 @@ private fun PlaylistControls(
 				modifier = Modifier.clickable {
 					playlistViewModel.editPlaylist()
 				},
-				alpha = .8f,
+				alpha = playlistControlAlpha,
 			)
 		}
 
@@ -167,7 +170,7 @@ private fun PlaylistControls(
 				modifier = Modifier.clickable {
 					playlistViewModel.toggleRepeating()
 				},
-				alpha = .8f,
+				alpha = playlistControlAlpha,
 			)
 		} else {
 			Image(
@@ -176,19 +179,30 @@ private fun PlaylistControls(
 				modifier = Modifier.clickable {
 					playlistViewModel.toggleRepeating()
 				},
-				alpha = .8f,
+				alpha = playlistControlAlpha,
 			)
 		}
 
-		PlayPauseButton(
-			nowPlayingFilePropertiesViewModel,
-			playbackServiceController,
-			alpha = .8f
-		)
+		if (isEditingPlaylist) {
+			Image(
+				painter = painterResource(id = R.drawable.ic_save_white_36dp),
+				contentDescription = stringResource(id = R.string.save_playlist),
+				modifier = Modifier.clickable {
+					playlistViewModel.enableSavingPlaylist()
+				},
+				alpha = playlistControlAlpha,
+			)
+		} else {
+			PlayPauseButton(
+				nowPlayingFilePropertiesViewModel,
+				playbackServiceController,
+				alpha = playlistControlAlpha
+			)
+		}
 
 		Image(
 			painter = painterResource(R.drawable.chevron_up_white_36dp),
-			alpha = .8f,
+			alpha = playlistControlAlpha,
 			contentDescription = stringResource(R.string.btn_hide_files),
 			modifier = Modifier
 				.clickable(onClick = {
@@ -401,11 +415,15 @@ fun NowPlayingView(
 											nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
 											playlistViewModel = playlistViewModel,
 											playbackServiceController = playbackServiceController,
-										) {
-											scope.launch {
-												pagerState.animateScrollToItem(0)
+											onHide = {
+												scope.launch {
+													pagerState.animateScrollToItem(0)
+												}
+											},
+											onSavePlaylist = {
+
 											}
-										}
+										)
 									}
 								}
 
@@ -570,7 +588,7 @@ fun NowPlayingView(
 									indication = null
 								) {
 									activeLibraryId?.also(playbackServiceController::previous)
-							  	},
+								},
 						)
 
 						PlayPauseButton(

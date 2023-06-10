@@ -7,6 +7,8 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.FakeNowPlayingR
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.playlist.NowPlayingPlaylistViewModel
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
+import com.namehillsoftware.handoff.promises.Promise
+import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
@@ -33,13 +35,24 @@ class `When initializing the now playing playlist view model` {
 				)
 			),
 			mockk(),
-			mockk(),
+			mockk {
+				every { promiseAudioPlaylistPaths(LibraryId(libraryId)) } returns Promise(
+					listOf("salesman", "help", "standard")
+				)
+			},
 		)
 	}
 
 	@BeforeAll
 	fun act() {
 		mut.initializeView(LibraryId(libraryId))
+	}
+
+	@Test
+	fun `then the playlist paths are loaded`() {
+		assertThat(mut.playlistPaths.value).containsExactly(
+			"salesman", "help", "standard"
+		)
 	}
 
 	@Test
