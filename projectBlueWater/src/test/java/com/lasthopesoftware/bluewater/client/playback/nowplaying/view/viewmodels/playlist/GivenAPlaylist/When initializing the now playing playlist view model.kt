@@ -33,6 +33,7 @@ class `When initializing the now playing playlist view model` {
 				)
 			),
 			mockk(),
+			mockk(),
 		)
 	}
 

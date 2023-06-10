@@ -12,7 +12,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePrope
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeRevisionProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.FakeFileConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.FakeLibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building.NowPlayingNotificationBuilder
@@ -42,7 +42,7 @@ class WhenBuildingTheLoadingNotification : AndroidContext() {
 	}
 
 	override fun before() {
-		val connectionProvider = FakeFileConnectionProvider()
+		val connectionProvider = FakeConnectionProvider()
 		connectionProvider.setupFile(
 			ServiceFile(3),
 			object : HashMap<String, String>() {

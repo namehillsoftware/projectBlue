@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.playlist
 
 import androidx.lifecycle.ViewModel
+import com.lasthopesoftware.bluewater.client.browsing.items.playlists.StorePlaylists
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
@@ -18,6 +19,7 @@ class NowPlayingPlaylistViewModel(
 	applicationMessages: RegisterForApplicationMessages,
 	private val nowPlayingRepository: GetNowPlayingState,
 	private val playbackService: ControlPlaybackService,
+	private val playlistStorage: StorePlaylists,
 ) :
 	ViewModel(),
 	ControlPlaylistEdits,
@@ -30,10 +32,12 @@ class NowPlayingPlaylistViewModel(
 	private val isRepeatingState = MutableStateFlow(false)
 	private val mutableEditingPlaylistState = MutableStateFlow(false)
 	private val nowPlayingListState = MutableStateFlow(emptyList<PositionedFile>())
+	private val playlistPathsState = MutableStateFlow(emptyList<String>())
 
 	val isRepeating = isRepeatingState.asStateFlow()
 	val isEditingPlaylistState = mutableEditingPlaylistState.asStateFlow()
 	val nowPlayingList = nowPlayingListState.asStateFlow()
+	val playlistPaths = playlistPathsState.asStateFlow()
 
 	fun initializeView(libraryId: LibraryId): Promise<Unit> {
 		activeLibraryId = libraryId
@@ -50,6 +54,10 @@ class NowPlayingPlaylistViewModel(
 	override fun finishPlaylistEdit() {
 		mutableEditingPlaylistState.value = false
 	}
+
+	fun savePlaylist(path: String): Promise<*> = activeLibraryId?.let { libraryId ->
+		playlistStorage.promiseStoredPlaylist(libraryId, path, nowPlayingList.value.map { it.serviceFile })
+	}.keepPromise()
 
 	fun swapFiles(from: Int, to: Int) {
 		nowPlayingListState.value = nowPlayingListState.value.toMutableList().move(from, to)

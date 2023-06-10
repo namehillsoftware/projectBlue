@@ -5,7 +5,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePrope
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
-import com.lasthopesoftware.bluewater.client.connection.FakeFileConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.FakeLibraryConnectionProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import io.mockk.mockk
@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test
 
 class WhenGettingFileProperties {
 	private val fileProperties by lazy {
-        val fakeFileConnectionProvider = FakeFileConnectionProvider()
+        val fakeFileConnectionProvider = FakeConnectionProvider()
         fakeFileConnectionProvider.setupFile(
 			ServiceFile(15),
 			mapOf(Pair(KnownFileProperties.Key, "45")))
