@@ -17,7 +17,7 @@ class PlaylistsStorage(private val libraryConnections: ProvideLibraryConnections
 			.promiseLibraryConnection(libraryId)
 			.eventually { connectionProvider ->
 				connectionProvider
-					?.promiseResponse("Playlists", "List?IncludeMediaTypes=1")
+					?.promiseResponse("Playlists/List", "IncludeMediaTypes=1")
 					?.then { response ->
 						response.body
 							?.use { body -> Xmlwise.createXml(body.string()) }
@@ -45,7 +45,7 @@ class PlaylistsStorage(private val libraryConnections: ProvideLibraryConnections
 			.promiseLibraryConnection(libraryId)
 			.eventually { connectionProvider ->
 				connectionProvider?.run {
-					promiseResponse("Playlists", "Add?Type=Playlist&Path=$playlistPath&CreateMode=Overwrite")
+					promiseResponse("Playlists/Add", "Type=Playlist", "Path=$playlistPath", "CreateMode=Overwrite")
 						.then { it?.use { r -> r.body?.byteStream()?.use(StandardResponse::fromInputStream) } }
 						.then { it?.items?.get("PlaylistID") }
 						.eventually {
@@ -53,8 +53,10 @@ class PlaylistsStorage(private val libraryConnections: ProvideLibraryConnections
 								QueuedPromise(MessageWriter{ playlist.map { sf -> sf.key }.joinToString(",") }, ThreadPools.compute)
 									.eventually { keys ->
 										promiseResponse(
-											"Playlist",
-											"AddFiles?PlaylistType=ID&Playlist=$playlistId&Keys=$keys"
+											"Playlist/AddFiles",
+											"PlaylistType=ID",
+											"Playlist=$playlistId",
+											"Keys=$keys",
 										)
 									}
 							}.keepPromise()

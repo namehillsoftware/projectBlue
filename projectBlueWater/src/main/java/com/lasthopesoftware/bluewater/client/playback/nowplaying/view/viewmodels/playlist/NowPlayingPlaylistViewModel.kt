@@ -28,8 +28,6 @@ class NowPlayingPlaylistViewModel(
 	(LibraryPlaybackMessage.PlaylistChanged) -> Unit
 {
 	private var activeLibraryId: LibraryId? = null
-	private var lastSavedPlaylistPath = ""
-
 	private val playlistChangedSubscription = applicationMessages.registerReceiver(this)
 
 	private val isRepeatingState = MutableStateFlow(false)
@@ -43,6 +41,7 @@ class NowPlayingPlaylistViewModel(
 	val nowPlayingList = nowPlayingListState.asStateFlow()
 	val playlistPaths = playlistPathsState.asStateFlow()
 	val isSavingPlaylistActive = mutableIsSavingPlaylistActive.asStateFlow()
+	val selectedPlaylistPath = MutableStateFlow("")
 
 	fun initializeView(libraryId: LibraryId): Promise<Unit> {
 		activeLibraryId = libraryId
@@ -60,14 +59,17 @@ class NowPlayingPlaylistViewModel(
 		mutableEditingPlaylistState.value = false
 	}
 
+	fun cancelSavingPlaylist() {
+		mutableIsSavingPlaylistActive.value = false
+	}
+
 	fun enableSavingPlaylist() {
 		mutableIsSavingPlaylistActive.value = true
 	}
 
-	fun savePlaylist(path: String): Promise<*> {
-		lastSavedPlaylistPath = path
+	fun savePlaylist(): Promise<*> {
 		return activeLibraryId?.let { libraryId ->
-			playlistStorage.promiseStoredPlaylist(libraryId, path, nowPlayingList.value.map { it.serviceFile })
+			playlistStorage.promiseStoredPlaylist(libraryId, selectedPlaylistPath.value, nowPlayingList.value.map { it.serviceFile })
 		}.keepPromise()
 	}
 

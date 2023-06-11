@@ -63,8 +63,8 @@ class `When loading the audio playlist paths` {
 </Response>""").toByteArray()
 					)
 				},
-				"Playlists",
-				"List?IncludeMediaTypes=1"
+				"Playlists/List",
+				"IncludeMediaTypes=1"
 			)
 		}
 

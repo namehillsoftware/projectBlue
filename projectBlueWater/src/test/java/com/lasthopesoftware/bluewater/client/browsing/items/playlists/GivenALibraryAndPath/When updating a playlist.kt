@@ -63,8 +63,10 @@ class `When updating a playlist` {
 </Response>""").toByteArray()
                     )
 				},
-				"Playlists",
-				"Add?Type=Playlist&Path=bold\\voyage&CreateMode=Overwrite"
+				"Playlists/Add",
+				"Type=Playlist",
+				"Path=bold\\voyage",
+				"CreateMode=Overwrite"
 			)
 
 			mapResponse(
@@ -74,8 +76,10 @@ class `When updating a playlist` {
                         ("""<Response Status="OK" />""").toByteArray()
                     )
 				},
-				"Playlist",
-				"AddFiles?PlaylistType=ID&Playlist=38981873&Keys=885,481,139,935"
+				"Playlist/AddFiles",
+				"PlaylistType=ID",
+				"Playlist=38981873",
+				"Keys=885,481,139,935",
 			)
 		}
 
@@ -114,10 +118,14 @@ class `When updating a playlist` {
 	@Test
 	fun `then the playlist is created correctly`() {
 		assertThat(mut.first.recordedRequests.flatMap { it.asIterable() }).containsExactly(
-			"Playlists",
-			"Add?Type=Playlist&Path=bold\\voyage&CreateMode=Overwrite",
-			"Playlist",
-			"AddFiles?PlaylistType=ID&Playlist=38981873&Keys=885,481,139,935",
+			"Playlists/Add",
+			"Type=Playlist",
+			"Path=bold\\voyage",
+			"CreateMode=Overwrite",
+			"Playlist/AddFiles",
+			"PlaylistType=ID",
+			"Playlist=38981873",
+			"Keys=885,481,139,935",
 		)
 	}
 }

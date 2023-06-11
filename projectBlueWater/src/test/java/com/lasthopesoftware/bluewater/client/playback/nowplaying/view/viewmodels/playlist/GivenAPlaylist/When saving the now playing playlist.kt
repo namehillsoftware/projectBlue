@@ -57,7 +57,8 @@ class `When saving the now playing playlist` {
 	@BeforeAll
 	fun act() {
 		mut.initializeView(LibraryId(libraryId)).toExpiringFuture().get()
-		mut.savePlaylist("bribe").toExpiringFuture().get()
+		mut.selectedPlaylistPath.value = "bribe"
+		mut.savePlaylist().toExpiringFuture().get()
 	}
 
 	@Test
