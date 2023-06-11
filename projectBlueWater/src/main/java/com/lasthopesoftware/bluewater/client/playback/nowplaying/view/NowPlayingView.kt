@@ -12,6 +12,7 @@ import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.*
 import androidx.compose.runtime.*
@@ -30,8 +31,10 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
@@ -57,6 +60,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.SharedColors
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
+import com.lasthopesoftware.bluewater.shared.android.viewmodels.collectAsMutableState
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -133,8 +137,7 @@ private fun PlaylistControls(
 	nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel,
 	playlistViewModel: NowPlayingPlaylistViewModel,
 	playbackServiceController: ControlPlaybackService,
-	onHide: () -> Unit,
-	onSavePlaylist: () -> Unit
+	onHide: () -> Unit
 ) {
 	Row(
 		modifier = modifier,
@@ -185,7 +188,7 @@ private fun PlaylistControls(
 
 		if (isEditingPlaylist) {
 			Image(
-				painter = painterResource(id = R.drawable.ic_save_white_36dp),
+				painter = painterResource(id = R.drawable.upload_36dp),
 				contentDescription = stringResource(id = R.string.save_playlist),
 				modifier = Modifier.clickable {
 					playlistViewModel.enableSavingPlaylist()
@@ -251,6 +254,9 @@ fun NowPlayingView(
 	val isScreenOn by screenOnState.isScreenOn.collectAsState()
 	KeepScreenOn(isScreenOn)
 
+	val isSavingPlaylistActive by playlistViewModel.isSavingPlaylistActive.collectAsState()
+	var selectedPlaylistPath by playlistViewModel.selectedPlaylistPath.collectAsMutableState()
+
 	ControlSurface(
 		color = Color.Transparent,
 		contentColor = Color.White,
@@ -267,6 +273,8 @@ fun NowPlayingView(
 		BackHandler(isNotSettledOnFirstPage) {
 			when {
 				itemListMenuBackPressedHandler.hideAllMenus() -> {}
+				selectedPlaylistPath.isNotEmpty() -> selectedPlaylistPath = ""
+				isSavingPlaylistActive -> playlistViewModel.cancelSavingPlaylist()
 				isEditingPlaylist -> playlistViewModel.finishPlaylistEdit()
 				isNotSettledOnFirstPage -> {
 					playlistViewModel.finishPlaylistEdit()
@@ -419,9 +427,6 @@ fun NowPlayingView(
 												scope.launch {
 													pagerState.animateScrollToItem(0)
 												}
-											},
-											onSavePlaylist = {
-
 											}
 										)
 									}
@@ -613,40 +618,102 @@ fun NowPlayingView(
 				}
 			}
 		}
+	}
 
-		val isConnectionLost by connectionWatcherViewModel.isCheckingConnection.collectAsState()
-		if (isConnectionLost) {
-			AlertDialog(
-				onDismissRequest = { connectionWatcherViewModel.cancelLibraryConnectionPolling() },
-				title = { Text(text = stringResource(id = R.string.lbl_connection_lost_title)) },
-				text = {
-					Text(
-						text = stringResource(
-							id = R.string.lbl_attempting_to_reconnect,
-							stringResource(id = R.string.app_name)
-						)
+	if (isSavingPlaylistActive) {
+		Dialog(onDismissRequest = { playlistViewModel.cancelSavingPlaylist() }) {
+			ControlSurface {
+				Column(
+					modifier = Modifier
+						.padding(Dimensions.viewPaddingUnit * 2)
+						.fillMaxWidth(),
+				) {
+					TextField(
+						value = selectedPlaylistPath,
+						onValueChange = { selectedPlaylistPath = it },
+						modifier = Modifier.fillMaxWidth(),
+						placeholder = { Text(stringResource(R.string.new_or_existing_playlist_path)) }
 					)
-				},
-				buttons = {
+
+					val playlistPaths by playlistViewModel.playlistPaths.collectAsState()
+					val filteredPlaylistPaths by remember {
+						derivedStateOf {
+							playlistPaths.filter {
+								selectedPlaylistPath.isBlank() || it.startsWith(selectedPlaylistPath)
+							}
+						}
+					}
+
+					ProvideTextStyle(value = MaterialTheme.typography.h6.copy(fontWeight = FontWeight.Normal)) {
+						LazyColumn(
+							modifier = Modifier.fillMaxWidth()
+						) {
+							items(filteredPlaylistPaths) { playlistPath ->
+								Row(
+									modifier = Modifier
+										.height(Dimensions.standardRowHeight)
+										.fillMaxWidth()
+										.clickable { selectedPlaylistPath = playlistPath },
+									verticalAlignment = Alignment.CenterVertically,
+								) {
+									Text(text = playlistPath)
+								}
+							}
+						}
+					}
+
 					Row(
 						modifier = Modifier
 							.fillMaxWidth()
-							.padding(Dimensions.viewPaddingUnit),
-						horizontalArrangement = Arrangement.Center,
+							.padding(Dimensions.viewPaddingUnit)
 					) {
-						Button(
-							onClick = {
-								connectionWatcherViewModel.cancelLibraryConnectionPolling()
-							},
-						) {
-							Text(text = stringResource(id = R.string.btn_cancel))
-						}
+						Icon(
+							painter = painterResource(id = R.drawable.ic_save_white_36dp),
+							contentDescription = stringResource(id = R.string.save),
+							modifier = Modifier
+								.fillMaxWidth()
+								.weight(1f)
+								.clickable { playlistViewModel.savePlaylist() }
+								.align(Alignment.CenterVertically),
+						)
 					}
-				},
-				properties = DialogProperties(
-					dismissOnBackPress = true,
-				)
-			)
+				}
+			}
 		}
+	}
+
+	val isConnectionLost by connectionWatcherViewModel.isCheckingConnection.collectAsState()
+	if (isConnectionLost) {
+		AlertDialog(
+			onDismissRequest = { connectionWatcherViewModel.cancelLibraryConnectionPolling() },
+			title = { Text(text = stringResource(id = R.string.lbl_connection_lost_title)) },
+			text = {
+				Text(
+					text = stringResource(
+						id = R.string.lbl_attempting_to_reconnect,
+						stringResource(id = R.string.app_name)
+					)
+				)
+			},
+			buttons = {
+				Row(
+					modifier = Modifier
+						.fillMaxWidth()
+						.padding(Dimensions.viewPaddingUnit),
+					horizontalArrangement = Arrangement.Center,
+				) {
+					Button(
+						onClick = {
+							connectionWatcherViewModel.cancelLibraryConnectionPolling()
+						},
+					) {
+						Text(text = stringResource(id = R.string.btn_cancel))
+					}
+				}
+			},
+			properties = DialogProperties(
+				dismissOnBackPress = true,
+			)
+		)
 	}
 }

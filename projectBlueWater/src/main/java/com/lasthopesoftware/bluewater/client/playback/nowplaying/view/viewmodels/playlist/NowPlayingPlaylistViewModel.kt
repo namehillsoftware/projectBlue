@@ -70,7 +70,9 @@ class NowPlayingPlaylistViewModel(
 	fun savePlaylist(): Promise<*> {
 		return activeLibraryId?.let { libraryId ->
 			playlistStorage.promiseStoredPlaylist(libraryId, selectedPlaylistPath.value, nowPlayingList.value.map { it.serviceFile })
-		}.keepPromise()
+		}.keepPromise().must {
+			mutableIsSavingPlaylistActive.value = false
+		}
 	}
 
 	fun swapFiles(from: Int, to: Int) {

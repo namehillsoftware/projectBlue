@@ -123,4 +123,5 @@
     <string name="hide_menu">Hide Menu</string>
     <string name="retry">Retry</string>
     <string name="connection_lost_retry_prompt">The connection has been lost! Try again?</string>
+    <string name="new_or_existing_playlist_path">New or Existing Playlist Path</string>
 </resources>
