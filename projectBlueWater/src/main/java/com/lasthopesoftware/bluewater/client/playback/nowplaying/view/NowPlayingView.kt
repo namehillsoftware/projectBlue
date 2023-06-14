@@ -523,7 +523,7 @@ fun NowPlayingView(
 							) {
 								DragDropLazyColumn(
 									dragDropListState = reorderableState,
-									modifier = Modifier.background(SharedColors.overlayDark),
+									modifier = Modifier.background(SharedColors.overlayDark).fillMaxHeight(),
 								) {
 									dragDropItems(items = nowPlayingFiles, keyFactory = { _, f -> f }) { _, f ->
 										NowPlayingFileView(positionedFile = f)
