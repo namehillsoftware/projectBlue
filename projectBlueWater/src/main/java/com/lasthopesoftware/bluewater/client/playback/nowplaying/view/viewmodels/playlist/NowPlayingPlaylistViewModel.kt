@@ -57,9 +57,10 @@ class NowPlayingPlaylistViewModel(
 
 	override fun finishPlaylistEdit() {
 		mutableEditingPlaylistState.value = false
+		disableSavingPlaylist()
 	}
 
-	fun cancelSavingPlaylist() {
+	fun disableSavingPlaylist() {
 		mutableIsSavingPlaylistActive.value = false
 	}
 

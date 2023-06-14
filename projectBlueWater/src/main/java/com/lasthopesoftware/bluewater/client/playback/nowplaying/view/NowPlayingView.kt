@@ -254,9 +254,6 @@ fun NowPlayingView(
 	val isScreenOn by screenOnState.isScreenOn.collectAsState()
 	KeepScreenOn(isScreenOn)
 
-	val isSavingPlaylistActive by playlistViewModel.isSavingPlaylistActive.collectAsState()
-	var selectedPlaylistPath by playlistViewModel.selectedPlaylistPath.collectAsMutableState()
-
 	ControlSurface(
 		color = Color.Transparent,
 		contentColor = Color.White,
@@ -273,8 +270,6 @@ fun NowPlayingView(
 		BackHandler(isNotSettledOnFirstPage) {
 			when {
 				itemListMenuBackPressedHandler.hideAllMenus() -> {}
-				selectedPlaylistPath.isNotEmpty() -> selectedPlaylistPath = ""
-				isSavingPlaylistActive -> playlistViewModel.cancelSavingPlaylist()
 				isEditingPlaylist -> playlistViewModel.finishPlaylistEdit()
 				isNotSettledOnFirstPage -> {
 					playlistViewModel.finishPlaylistEdit()
@@ -523,7 +518,9 @@ fun NowPlayingView(
 							) {
 								DragDropLazyColumn(
 									dragDropListState = reorderableState,
-									modifier = Modifier.background(SharedColors.overlayDark).fillMaxHeight(),
+									modifier = Modifier
+										.background(SharedColors.overlayDark)
+										.fillMaxHeight(),
 								) {
 									dragDropItems(items = nowPlayingFiles, keyFactory = { _, f -> f }) { _, f ->
 										NowPlayingFileView(positionedFile = f)
@@ -620,8 +617,15 @@ fun NowPlayingView(
 		}
 	}
 
+	val isSavingPlaylistActive by playlistViewModel.isSavingPlaylistActive.collectAsState()
 	if (isSavingPlaylistActive) {
-		Dialog(onDismissRequest = { playlistViewModel.cancelSavingPlaylist() }) {
+		Dialog(onDismissRequest = { playlistViewModel.disableSavingPlaylist() }) {
+			var selectedPlaylistPath by playlistViewModel.selectedPlaylistPath.collectAsMutableState()
+
+			BackHandler(selectedPlaylistPath.isNotEmpty()) {
+				selectedPlaylistPath = ""
+			}
+
 			ControlSurface {
 				Column(
 					modifier = Modifier
