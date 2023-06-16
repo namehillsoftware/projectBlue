@@ -40,7 +40,7 @@ class `When saving the now playing playlist` {
             mockk(),
 			mockk {
 				every { promiseAudioPlaylistPaths(LibraryId(libraryId)) } returns Promise(
-					listOf("country", "hardly", "company\\pretense")
+					listOf("country", "hardly", "company\\pretense", "briBery\\new")
 				)
 				every { promiseStoredPlaylist(LibraryId(libraryId), any(), any()) } answers {
 					savedPlaylistPath = secondArg()
@@ -57,15 +57,13 @@ class `When saving the now playing playlist` {
 	@BeforeAll
 	fun act() {
 		mut.initializeView(LibraryId(libraryId)).toExpiringFuture().get()
-		mut.selectedPlaylistPath.value = "bribe"
+		mut.updateSelectedPlaylistPath("bribe")
 		mut.savePlaylist().toExpiringFuture().get()
 	}
 
 	@Test
 	fun `then the playlist paths are loaded`() {
-		assertThat(mut.playlistPaths.value).containsExactly(
-			"country", "hardly", "company\\pretense"
-		)
+		assertThat(mut.filteredPlaylistPaths.value).containsExactly("briBery\\new")
 	}
 
 	@Test

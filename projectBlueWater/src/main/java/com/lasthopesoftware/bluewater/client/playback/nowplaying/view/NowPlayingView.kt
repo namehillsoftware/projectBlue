@@ -60,7 +60,6 @@ import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.SharedColors
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
-import com.lasthopesoftware.bluewater.shared.android.viewmodels.collectAsMutableState
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -622,10 +621,10 @@ fun NowPlayingView(
 		Dialog(
 			onDismissRequest = { playlistViewModel.disableSavingPlaylist() },
 		) {
-			var selectedPlaylistPath by playlistViewModel.selectedPlaylistPath.collectAsMutableState()
+			val selectedPlaylistPath by playlistViewModel.selectedPlaylistPath.collectAsState()
 
 			BackHandler(selectedPlaylistPath.isNotEmpty()) {
-				selectedPlaylistPath = ""
+				playlistViewModel.updateSelectedPlaylistPath("")
 			}
 
 			ControlSurface {
@@ -658,19 +657,12 @@ fun NowPlayingView(
 
 					TextField(
 						value = selectedPlaylistPath,
-						onValueChange = { selectedPlaylistPath = it },
+						onValueChange = playlistViewModel::updateSelectedPlaylistPath,
 						modifier = Modifier.fillMaxWidth(),
 						placeholder = { Text(stringResource(R.string.new_or_existing_playlist_path)) }
 					)
 
-					val playlistPaths by playlistViewModel.playlistPaths.collectAsState()
-					val filteredPlaylistPaths by remember {
-						derivedStateOf {
-							playlistPaths.filter {
-								selectedPlaylistPath.isBlank() || it.startsWith(selectedPlaylistPath)
-							}
-						}
-					}
+					val filteredPlaylistPaths by playlistViewModel.filteredPlaylistPaths.collectAsState()
 
 					ProvideTextStyle(value = MaterialTheme.typography.h6.copy(fontWeight = FontWeight.Normal)) {
 						LazyColumn(
@@ -681,7 +673,7 @@ fun NowPlayingView(
 									modifier = Modifier
 										.height(Dimensions.standardRowHeight)
 										.fillMaxWidth()
-										.clickable { selectedPlaylistPath = playlistPath },
+										.clickable { playlistViewModel.updateSelectedPlaylistPath(playlistPath) },
 									verticalAlignment = Alignment.CenterVertically,
 								) {
 									Text(text = playlistPath)

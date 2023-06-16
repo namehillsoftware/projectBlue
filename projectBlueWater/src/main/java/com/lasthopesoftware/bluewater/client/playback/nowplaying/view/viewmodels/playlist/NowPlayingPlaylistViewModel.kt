@@ -28,20 +28,22 @@ class NowPlayingPlaylistViewModel(
 	(LibraryPlaybackMessage.PlaylistChanged) -> Unit
 {
 	private var activeLibraryId: LibraryId? = null
+	private var loadedPlaylistPaths = emptyList<String>()
 	private val playlistChangedSubscription = applicationMessages.registerReceiver(this)
 
 	private val isRepeatingState = MutableStateFlow(false)
 	private val mutableEditingPlaylistState = MutableStateFlow(false)
 	private val nowPlayingListState = MutableStateFlow(emptyList<PositionedFile>())
-	private val playlistPathsState = MutableStateFlow(emptyList<String>())
+	private val mutableFilteredPlaylistPaths = MutableStateFlow(emptyList<String>())
 	private val mutableIsSavingPlaylistActive = MutableStateFlow(false)
+	private val mutableSelectedPlaylistPath = MutableStateFlow("")
 
 	val isRepeating = isRepeatingState.asStateFlow()
 	val isEditingPlaylistState = mutableEditingPlaylistState.asStateFlow()
 	val nowPlayingList = nowPlayingListState.asStateFlow()
-	val playlistPaths = playlistPathsState.asStateFlow()
+	val filteredPlaylistPaths = mutableFilteredPlaylistPaths.asStateFlow()
 	val isSavingPlaylistActive = mutableIsSavingPlaylistActive.asStateFlow()
-	val selectedPlaylistPath = MutableStateFlow("")
+	val selectedPlaylistPath = mutableSelectedPlaylistPath.asStateFlow()
 
 	fun initializeView(libraryId: LibraryId): Promise<Unit> {
 		activeLibraryId = libraryId
@@ -66,6 +68,13 @@ class NowPlayingPlaylistViewModel(
 
 	fun enableSavingPlaylist() {
 		mutableIsSavingPlaylistActive.value = true
+	}
+
+	fun updateSelectedPlaylistPath(updatedPath: String) {
+		mutableSelectedPlaylistPath.value = updatedPath
+		mutableFilteredPlaylistPaths.value =
+			if (updatedPath.isEmpty()) loadedPlaylistPaths
+			else loadedPlaylistPaths.filter { it.startsWith(updatedPath, true) }
 	}
 
 	fun savePlaylist(): Promise<*> {
@@ -112,7 +121,8 @@ class NowPlayingPlaylistViewModel(
 				val promisedPlaylistPathsUpdate = playlistStorage
 					.promiseAudioPlaylistPaths(it)
 					.then { paths ->
-						playlistPathsState.value = paths
+						loadedPlaylistPaths = paths
+						mutableFilteredPlaylistPaths.value = paths
 					}
 
 				Promise.whenAll(promisedNowPlayingPlaylistUpdate, promisedPlaylistPathsUpdate)
