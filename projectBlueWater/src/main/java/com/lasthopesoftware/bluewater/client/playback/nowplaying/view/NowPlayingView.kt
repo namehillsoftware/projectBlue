@@ -635,7 +635,7 @@ fun NowPlayingView(
 						.fillMaxHeight(.8f),
 				) {
 					Row(
-						modifier = Modifier.fillMaxWidth().padding(bottom = Dimensions.viewPaddingUnit * 2)
+						modifier = Modifier.fillMaxWidth().padding(bottom = Dimensions.viewPaddingUnit * 4)
 					) {
 						ProvideTextStyle(MaterialTheme.typography.h5) {
 							Text(
@@ -659,7 +659,8 @@ fun NowPlayingView(
 						value = selectedPlaylistPath,
 						onValueChange = playlistViewModel::updateSelectedPlaylistPath,
 						modifier = Modifier.fillMaxWidth(),
-						placeholder = { Text(stringResource(R.string.new_or_existing_playlist_path)) }
+						placeholder = { Text(stringResource(R.string.new_or_existing_playlist_path)) },
+						singleLine = true,
 					)
 
 					val filteredPlaylistPaths by playlistViewModel.filteredPlaylistPaths.collectAsState()
