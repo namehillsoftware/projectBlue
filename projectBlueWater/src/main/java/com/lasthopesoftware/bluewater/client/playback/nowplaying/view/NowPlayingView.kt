@@ -619,7 +619,9 @@ fun NowPlayingView(
 
 	val isSavingPlaylistActive by playlistViewModel.isSavingPlaylistActive.collectAsState()
 	if (isSavingPlaylistActive) {
-		Dialog(onDismissRequest = { playlistViewModel.disableSavingPlaylist() }) {
+		Dialog(
+			onDismissRequest = { playlistViewModel.disableSavingPlaylist() },
+		) {
 			var selectedPlaylistPath by playlistViewModel.selectedPlaylistPath.collectAsMutableState()
 
 			BackHandler(selectedPlaylistPath.isNotEmpty()) {
@@ -630,8 +632,30 @@ fun NowPlayingView(
 				Column(
 					modifier = Modifier
 						.padding(Dimensions.viewPaddingUnit * 2)
-						.fillMaxWidth(),
+						.fillMaxWidth()
+						.fillMaxHeight(.8f),
 				) {
+					Row(
+						modifier = Modifier.fillMaxWidth().padding(bottom = Dimensions.viewPaddingUnit * 2)
+					) {
+						ProvideTextStyle(MaterialTheme.typography.h5) {
+							Text(
+								text = stringResource(id = R.string.save_playlist),
+								modifier = Modifier
+									.weight(1f)
+									.align(Alignment.CenterVertically),
+							)
+						}
+
+						Icon(
+							painter = painterResource(id = R.drawable.ic_remove_item_white_36dp),
+							contentDescription = stringResource(id = R.string.btn_cancel),
+							modifier = Modifier
+								.clickable { playlistViewModel.disableSavingPlaylist() }
+								.align(Alignment.CenterVertically),
+						)
+					}
+
 					TextField(
 						value = selectedPlaylistPath,
 						onValueChange = { selectedPlaylistPath = it },
