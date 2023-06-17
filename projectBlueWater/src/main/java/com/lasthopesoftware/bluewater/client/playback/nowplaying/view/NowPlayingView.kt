@@ -526,6 +526,105 @@ fun NowPlayingView(
 									}
 								}
 							}
+
+							val isSavingPlaylistActive by playlistViewModel.isSavingPlaylistActive.collectAsState()
+							if (isSavingPlaylistActive) {
+								Dialog(
+									onDismissRequest = { playlistViewModel.disableSavingPlaylist() },
+								) {
+									val selectedPlaylistPath by playlistViewModel.selectedPlaylistPath.collectAsState()
+
+									BackHandler(selectedPlaylistPath.isNotEmpty()) {
+										playlistViewModel.updateSelectedPlaylistPath("")
+									}
+
+									ControlSurface {
+										Column(
+											modifier = Modifier
+												.padding(Dimensions.viewPaddingUnit * 2)
+												.fillMaxWidth()
+												.fillMaxHeight(.8f),
+										) {
+											Row(
+												modifier = Modifier
+													.fillMaxWidth()
+													.padding(bottom = Dimensions.viewPaddingUnit * 4)
+											) {
+												ProvideTextStyle(MaterialTheme.typography.h5) {
+													Text(
+														text = stringResource(id = R.string.save_playlist),
+														modifier = Modifier
+															.weight(1f)
+															.align(Alignment.CenterVertically),
+													)
+												}
+
+												Icon(
+													painter = painterResource(id = R.drawable.ic_remove_item_white_36dp),
+													contentDescription = stringResource(id = R.string.btn_cancel),
+													modifier = Modifier
+														.clickable { playlistViewModel.disableSavingPlaylist() }
+														.align(Alignment.CenterVertically),
+												)
+											}
+
+											TextField(
+												value = selectedPlaylistPath,
+												onValueChange = playlistViewModel::updateSelectedPlaylistPath,
+												modifier = Modifier.fillMaxWidth(),
+												placeholder = { Text(stringResource(R.string.new_or_existing_playlist_path)) },
+												singleLine = true,
+											)
+
+											val filteredPlaylistPaths by playlistViewModel.filteredPlaylistPaths.collectAsState()
+
+											Box(
+												modifier = Modifier
+													.fillMaxWidth()
+													.weight(1f)
+											) {
+												ProvideTextStyle(value = MaterialTheme.typography.h6.copy(fontWeight = FontWeight.Normal)) {
+													LazyColumn(
+														modifier = Modifier.fillMaxWidth()
+													) {
+														items(filteredPlaylistPaths) { playlistPath ->
+															Row(
+																modifier = Modifier
+																	.height(Dimensions.standardRowHeight)
+																	.fillMaxWidth()
+																	.clickable { playlistViewModel.updateSelectedPlaylistPath(playlistPath) },
+																verticalAlignment = Alignment.CenterVertically,
+															) {
+																Text(text = playlistPath)
+															}
+														}
+													}
+												}
+											}
+
+											val isPlaylistPathValid by playlistViewModel.isPlaylistPathValid.collectAsState()
+
+											if (isPlaylistPathValid) {
+												Row(
+													modifier = Modifier
+														.fillMaxWidth()
+														.padding(Dimensions.viewPaddingUnit)
+												) {
+													Icon(
+														painter = painterResource(id = R.drawable.ic_save_white_36dp),
+														contentDescription = stringResource(id = R.string.save),
+														modifier = Modifier
+															.fillMaxWidth()
+															.weight(1f)
+															.clickable { playlistViewModel.savePlaylist() }
+															.align(Alignment.CenterVertically),
+													)
+												}
+											}
+										}
+									}
+								}
+							}
 						}
 					}
 				}
@@ -609,93 +708,6 @@ fun NowPlayingView(
 								) {
 									activeLibraryId?.also(playbackServiceController::next)
 								}
-						)
-					}
-				}
-			}
-		}
-	}
-
-	val isSavingPlaylistActive by playlistViewModel.isSavingPlaylistActive.collectAsState()
-	if (isSavingPlaylistActive) {
-		Dialog(
-			onDismissRequest = { playlistViewModel.disableSavingPlaylist() },
-		) {
-			val selectedPlaylistPath by playlistViewModel.selectedPlaylistPath.collectAsState()
-
-			BackHandler(selectedPlaylistPath.isNotEmpty()) {
-				playlistViewModel.updateSelectedPlaylistPath("")
-			}
-
-			ControlSurface {
-				Column(
-					modifier = Modifier
-						.padding(Dimensions.viewPaddingUnit * 2)
-						.fillMaxWidth()
-						.fillMaxHeight(.8f),
-				) {
-					Row(
-						modifier = Modifier.fillMaxWidth().padding(bottom = Dimensions.viewPaddingUnit * 4)
-					) {
-						ProvideTextStyle(MaterialTheme.typography.h5) {
-							Text(
-								text = stringResource(id = R.string.save_playlist),
-								modifier = Modifier
-									.weight(1f)
-									.align(Alignment.CenterVertically),
-							)
-						}
-
-						Icon(
-							painter = painterResource(id = R.drawable.ic_remove_item_white_36dp),
-							contentDescription = stringResource(id = R.string.btn_cancel),
-							modifier = Modifier
-								.clickable { playlistViewModel.disableSavingPlaylist() }
-								.align(Alignment.CenterVertically),
-						)
-					}
-
-					TextField(
-						value = selectedPlaylistPath,
-						onValueChange = playlistViewModel::updateSelectedPlaylistPath,
-						modifier = Modifier.fillMaxWidth(),
-						placeholder = { Text(stringResource(R.string.new_or_existing_playlist_path)) },
-						singleLine = true,
-					)
-
-					val filteredPlaylistPaths by playlistViewModel.filteredPlaylistPaths.collectAsState()
-
-					ProvideTextStyle(value = MaterialTheme.typography.h6.copy(fontWeight = FontWeight.Normal)) {
-						LazyColumn(
-							modifier = Modifier.fillMaxWidth()
-						) {
-							items(filteredPlaylistPaths) { playlistPath ->
-								Row(
-									modifier = Modifier
-										.height(Dimensions.standardRowHeight)
-										.fillMaxWidth()
-										.clickable { playlistViewModel.updateSelectedPlaylistPath(playlistPath) },
-									verticalAlignment = Alignment.CenterVertically,
-								) {
-									Text(text = playlistPath)
-								}
-							}
-						}
-					}
-
-					Row(
-						modifier = Modifier
-							.fillMaxWidth()
-							.padding(Dimensions.viewPaddingUnit)
-					) {
-						Icon(
-							painter = painterResource(id = R.drawable.ic_save_white_36dp),
-							contentDescription = stringResource(id = R.string.save),
-							modifier = Modifier
-								.fillMaxWidth()
-								.weight(1f)
-								.clickable { playlistViewModel.savePlaylist() }
-								.align(Alignment.CenterVertically),
 						)
 					}
 				}

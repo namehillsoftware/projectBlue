@@ -49,6 +49,11 @@ class `When initializing the now playing playlist view model` {
 	}
 
 	@Test
+	fun `then the playlist path is not valid`() {
+		assertThat(mut.isPlaylistPathValid.value).isFalse
+	}
+
+	@Test
 	fun `then the playlist paths are loaded`() {
 		assertThat(mut.filteredPlaylistPaths.value).containsExactly(
 			"salesman", "help", "standard"

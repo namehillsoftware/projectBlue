@@ -62,6 +62,11 @@ class `When saving the now playing playlist` {
 	}
 
 	@Test
+	fun `then the playlist path is valid`() {
+		assertThat(mut.isPlaylistPathValid.value).isTrue
+	}
+
+	@Test
 	fun `then the playlist paths are loaded`() {
 		assertThat(mut.filteredPlaylistPaths.value).containsExactly("briBery\\new")
 	}

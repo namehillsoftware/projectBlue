@@ -37,6 +37,7 @@ class NowPlayingPlaylistViewModel(
 	private val mutableFilteredPlaylistPaths = MutableStateFlow(emptyList<String>())
 	private val mutableIsSavingPlaylistActive = MutableStateFlow(false)
 	private val mutableSelectedPlaylistPath = MutableStateFlow("")
+	private val mutableIsPlaylistPathValid = MutableStateFlow(false)
 
 	val isRepeating = isRepeatingState.asStateFlow()
 	val isEditingPlaylistState = mutableEditingPlaylistState.asStateFlow()
@@ -44,6 +45,7 @@ class NowPlayingPlaylistViewModel(
 	val filteredPlaylistPaths = mutableFilteredPlaylistPaths.asStateFlow()
 	val isSavingPlaylistActive = mutableIsSavingPlaylistActive.asStateFlow()
 	val selectedPlaylistPath = mutableSelectedPlaylistPath.asStateFlow()
+	val isPlaylistPathValid = mutableIsPlaylistPathValid.asStateFlow()
 
 	fun initializeView(libraryId: LibraryId): Promise<Unit> {
 		activeLibraryId = libraryId
@@ -75,14 +77,13 @@ class NowPlayingPlaylistViewModel(
 		mutableFilteredPlaylistPaths.value =
 			if (updatedPath.isEmpty()) loadedPlaylistPaths
 			else loadedPlaylistPaths.filter { it.startsWith(updatedPath, true) }
+		mutableIsPlaylistPathValid.value = updatedPath.isNotEmpty()
 	}
 
-	fun savePlaylist(): Promise<*> {
-		return activeLibraryId?.let { libraryId ->
-			playlistStorage.promiseStoredPlaylist(libraryId, selectedPlaylistPath.value, nowPlayingList.value.map { it.serviceFile })
-		}.keepPromise().must {
-			mutableIsSavingPlaylistActive.value = false
-		}
+	fun savePlaylist(): Promise<*> = activeLibraryId?.let { libraryId ->
+		playlistStorage.promiseStoredPlaylist(libraryId, selectedPlaylistPath.value, nowPlayingList.value.map { it.serviceFile })
+	}.keepPromise().must {
+		mutableIsSavingPlaylistActive.value = false
 	}
 
 	fun swapFiles(from: Int, to: Int) {
