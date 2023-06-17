@@ -45,6 +45,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemPlayback
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ReusableChildItemViewModelProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
+import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistsStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.access.*
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
@@ -344,6 +345,7 @@ class BrowserActivity :
 			messageBus,
 			nowPlayingState,
 			playbackServiceController,
+			PlaylistsStorage(libraryConnectionProvider),
 		)
 	}
 

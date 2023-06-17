@@ -13,8 +13,9 @@
     <string name="lbl_library_name">Optional Name</string>
     <string name="lbl_password">Password</string>
     <string name="lbl_local_only">Local Connections Only</string>
-    <string name="btn_save">Save</string>
-    <string name="btn_saved">Saved</string>
+    <string name="save">Save</string>
+    <string name="save_playlist">Save Playlist</string>
+    <string name="saved">Saved</string>
     <string name="lbl_connected">Connected!</string>
     <string name="lbl_connecting">Connecting…</string>
     <string name="title_activity_file_view">File View</string>
@@ -122,4 +123,5 @@
     <string name="hide_menu">Hide Menu</string>
     <string name="retry">Retry</string>
     <string name="connection_lost_retry_prompt">The connection has been lost! Try again?</string>
+    <string name="new_or_existing_playlist_path">New or Existing Playlist Path</string>
 </resources>

@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.servers.version
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
-import com.lasthopesoftware.bluewater.shared.StandardRequest
+import com.lasthopesoftware.bluewater.shared.StandardResponse
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.namehillsoftware.handoff.promises.Promise
 
@@ -17,7 +17,7 @@ class LibraryServerVersionProvider(private val libraryConnections: ProvideLibrar
 			}
 			.then { response ->
 				response?.body
-					?.use { body -> body.byteStream().use(StandardRequest::fromInputStream) }
+					?.use { body -> body.byteStream().use(StandardResponse::fromInputStream) }
 					?.let { standardRequest -> standardRequest.items["ProgramVersion"] }
 					?.let { semVerString ->
 						val semVerParts = semVerString.split(".")

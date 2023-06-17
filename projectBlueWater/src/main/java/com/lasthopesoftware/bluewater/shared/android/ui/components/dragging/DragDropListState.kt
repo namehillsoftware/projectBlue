@@ -84,12 +84,15 @@ class DragDropListState(
 	}
 
 	fun onDragEnd() {
-		initiallyDraggedElementIndex?.also { initialPosition ->
-			currentIndexOfDraggedItem?.also { finalPosition ->
-				onDragEnd?.invoke(initialPosition, finalPosition)
-			}
-		}
+		val initialPosition = initiallyDraggedElementIndex
+		val finalPosition = currentIndexOfDraggedItem
+
 		onDragInterrupted()
+
+		initialPosition ?: return
+		finalPosition ?: return
+
+		onDragEnd?.invoke(initialPosition, finalPosition)
 	}
 
 	fun onDragInterrupted() {

@@ -1,10 +1,9 @@
 package com.lasthopesoftware.bluewater.shared
 
-import org.slf4j.LoggerFactory
 import java.io.InputStream
 import javax.xml.parsers.SAXParserFactory
 
-class StandardRequest internal constructor(status: String?) {
+class StandardResponse internal constructor(status: String?) {
     /**
      * @return the status
      */
@@ -16,14 +15,16 @@ class StandardRequest internal constructor(status: String?) {
     }
 
     companion object {
-        fun fromInputStream(`is`: InputStream?): StandardRequest? {
+		private val logger by lazyLogger<StandardResponse>()
+
+        fun fromInputStream(`is`: InputStream?): StandardResponse? {
             try {
                 val sp = SAXParserFactory.newInstance().newSAXParser()
                 val jrResponseHandler = StandardResponseHandler()
                 sp.parse(`is`, jrResponseHandler)
                 return jrResponseHandler.response
             } catch (e: Exception) {
-                LoggerFactory.getLogger(StandardRequest::class.java).error(e.toString(), e)
+                logger.error("An error occurred parsing the input stream", e)
             }
             return null
         }

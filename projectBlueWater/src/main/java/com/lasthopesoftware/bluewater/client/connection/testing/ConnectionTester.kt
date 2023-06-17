@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.connection.testing
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
-import com.lasthopesoftware.bluewater.shared.StandardRequest
+import com.lasthopesoftware.bluewater.shared.StandardResponse
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
 import okhttp3.Response
@@ -28,7 +28,7 @@ object ConnectionTester : TestConnections {
 	private fun testResponse(response: Response): Boolean {
 		response.body?.use { body ->
 			try {
-				return body.byteStream().use(StandardRequest::fromInputStream)?.isStatus ?: false
+				return body.byteStream().use(StandardResponse::fromInputStream)?.isStatus ?: false
 			} catch (e: IOException) {
 				logger.error("Error closing connection, device failure?", e)
 			} catch (e: IllegalArgumentException) {

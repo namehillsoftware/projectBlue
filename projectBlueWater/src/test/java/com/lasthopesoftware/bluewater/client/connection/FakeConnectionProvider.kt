@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.connection
 
+import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
 import com.lasthopesoftware.bluewater.client.connection.url.MediaServerUrlProvider
 import com.namehillsoftware.handoff.promises.Promise
@@ -17,6 +18,46 @@ open class FakeConnectionProvider : IConnectionProvider {
 
 	val recordedRequests: List<Array<out String>>
 		get() = requests
+
+	init {
+		mapResponse(
+			{ FakeConnectionResponseTuple(200, ByteArray(0)) },
+			"File/GetFile",
+			"File=.*",
+			"Quality=medium",
+			"Conversion=Android",
+			"Playback=0"
+		)
+	}
+
+	fun setupFile(serviceFile: ServiceFile, fileProperties: Map<String, String>) {
+		mapResponse(
+			{
+				val returnXml = StringBuilder(
+					"""<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<MPL Version="2.0" Title="MCWS - Files - 10936" PathSeparator="\">
+<Item>
+<Field Name="Key">${serviceFile.key}</Field>
+<Field Name="Media Type">Audio</Field>
+"""
+				)
+				for ((key, value) in fileProperties) returnXml.append("<Field Name=\"").append(key)
+					.append("\">").append(
+						value
+					).append("</Field>\n")
+				returnXml.append(
+					"""
+    </Item>
+    </MPL>
+
+    """.trimIndent()
+				)
+				FakeConnectionResponseTuple(200, returnXml.toString().toByteArray())
+			},
+			"File/GetInfo",
+			"File=" + serviceFile.key
+		)
+	}
 
 	fun mapResponse(response: (Array<out String>) -> FakeConnectionResponseTuple, vararg params: String) {
 		val paramsSet = setOf(*params)

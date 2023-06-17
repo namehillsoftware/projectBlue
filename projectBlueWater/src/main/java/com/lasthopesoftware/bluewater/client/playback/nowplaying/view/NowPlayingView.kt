@@ -12,6 +12,7 @@ import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.*
 import androidx.compose.runtime.*
@@ -30,8 +31,10 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
@@ -125,6 +128,8 @@ private fun NowPlayingProgressIndicator(fileProgress: Float) {
 	)
 }
 
+private const val playlistControlAlpha = .8f
+
 @Composable
 private fun PlaylistControls(
 	modifier: Modifier = Modifier,
@@ -146,7 +151,7 @@ private fun PlaylistControls(
 				modifier = Modifier.clickable {
 					playlistViewModel.finishPlaylistEdit()
 				},
-				alpha = .8f,
+				alpha = playlistControlAlpha,
 			)
 		} else {
 			Image(
@@ -155,7 +160,7 @@ private fun PlaylistControls(
 				modifier = Modifier.clickable {
 					playlistViewModel.editPlaylist()
 				},
-				alpha = .8f,
+				alpha = playlistControlAlpha,
 			)
 		}
 
@@ -167,7 +172,7 @@ private fun PlaylistControls(
 				modifier = Modifier.clickable {
 					playlistViewModel.toggleRepeating()
 				},
-				alpha = .8f,
+				alpha = playlistControlAlpha,
 			)
 		} else {
 			Image(
@@ -176,19 +181,30 @@ private fun PlaylistControls(
 				modifier = Modifier.clickable {
 					playlistViewModel.toggleRepeating()
 				},
-				alpha = .8f,
+				alpha = playlistControlAlpha,
 			)
 		}
 
-		PlayPauseButton(
-			nowPlayingFilePropertiesViewModel,
-			playbackServiceController,
-			alpha = .8f
-		)
+		if (isEditingPlaylist) {
+			Image(
+				painter = painterResource(id = R.drawable.upload_36dp),
+				contentDescription = stringResource(id = R.string.save_playlist),
+				modifier = Modifier.clickable {
+					playlistViewModel.enableSavingPlaylist()
+				},
+				alpha = playlistControlAlpha,
+			)
+		} else {
+			PlayPauseButton(
+				nowPlayingFilePropertiesViewModel,
+				playbackServiceController,
+				alpha = playlistControlAlpha
+			)
+		}
 
 		Image(
 			painter = painterResource(R.drawable.chevron_up_white_36dp),
-			alpha = .8f,
+			alpha = playlistControlAlpha,
 			contentDescription = stringResource(R.string.btn_hide_files),
 			modifier = Modifier
 				.clickable(onClick = {
@@ -401,11 +417,12 @@ fun NowPlayingView(
 											nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
 											playlistViewModel = playlistViewModel,
 											playbackServiceController = playbackServiceController,
-										) {
-											scope.launch {
-												pagerState.animateScrollToItem(0)
+											onHide = {
+												scope.launch {
+													pagerState.animateScrollToItem(0)
+												}
 											}
-										}
+										)
 									}
 								}
 
@@ -500,10 +517,111 @@ fun NowPlayingView(
 							) {
 								DragDropLazyColumn(
 									dragDropListState = reorderableState,
-									modifier = Modifier.background(SharedColors.overlayDark),
+									modifier = Modifier
+										.background(SharedColors.overlayDark)
+										.fillMaxHeight(),
 								) {
 									dragDropItems(items = nowPlayingFiles, keyFactory = { _, f -> f }) { _, f ->
 										NowPlayingFileView(positionedFile = f)
+									}
+								}
+							}
+
+							val isSavingPlaylistActive by playlistViewModel.isSavingPlaylistActive.collectAsState()
+							if (isSavingPlaylistActive) {
+								Dialog(
+									onDismissRequest = { playlistViewModel.disableSavingPlaylist() },
+								) {
+									val selectedPlaylistPath by playlistViewModel.selectedPlaylistPath.collectAsState()
+
+									BackHandler(selectedPlaylistPath.isNotEmpty()) {
+										playlistViewModel.updateSelectedPlaylistPath("")
+									}
+
+									ControlSurface {
+										Column(
+											modifier = Modifier
+												.padding(Dimensions.viewPaddingUnit * 2)
+												.fillMaxWidth()
+												.fillMaxHeight(.8f),
+										) {
+											Row(
+												modifier = Modifier
+													.fillMaxWidth()
+													.padding(bottom = Dimensions.viewPaddingUnit * 4)
+											) {
+												ProvideTextStyle(MaterialTheme.typography.h5) {
+													Text(
+														text = stringResource(id = R.string.save_playlist),
+														modifier = Modifier
+															.weight(1f)
+															.align(Alignment.CenterVertically),
+													)
+												}
+
+												Icon(
+													painter = painterResource(id = R.drawable.ic_remove_item_white_36dp),
+													contentDescription = stringResource(id = R.string.btn_cancel),
+													modifier = Modifier
+														.clickable { playlistViewModel.disableSavingPlaylist() }
+														.align(Alignment.CenterVertically),
+												)
+											}
+
+											TextField(
+												value = selectedPlaylistPath,
+												onValueChange = playlistViewModel::updateSelectedPlaylistPath,
+												modifier = Modifier.fillMaxWidth(),
+												placeholder = { Text(stringResource(R.string.new_or_existing_playlist_path)) },
+												singleLine = true,
+											)
+
+											val filteredPlaylistPaths by playlistViewModel.filteredPlaylistPaths.collectAsState()
+
+											Box(
+												modifier = Modifier
+													.fillMaxWidth()
+													.weight(1f)
+											) {
+												ProvideTextStyle(value = MaterialTheme.typography.h6.copy(fontWeight = FontWeight.Normal)) {
+													LazyColumn(
+														modifier = Modifier.fillMaxWidth()
+													) {
+														items(filteredPlaylistPaths) { playlistPath ->
+															Row(
+																modifier = Modifier
+																	.height(Dimensions.standardRowHeight)
+																	.fillMaxWidth()
+																	.clickable { playlistViewModel.updateSelectedPlaylistPath(playlistPath) },
+																verticalAlignment = Alignment.CenterVertically,
+															) {
+																Text(text = playlistPath)
+															}
+														}
+													}
+												}
+											}
+
+											val isPlaylistPathValid by playlistViewModel.isPlaylistPathValid.collectAsState()
+
+											if (isPlaylistPathValid) {
+												Row(
+													modifier = Modifier
+														.fillMaxWidth()
+														.padding(Dimensions.viewPaddingUnit)
+												) {
+													Icon(
+														painter = painterResource(id = R.drawable.ic_save_white_36dp),
+														contentDescription = stringResource(id = R.string.save),
+														modifier = Modifier
+															.fillMaxWidth()
+															.weight(1f)
+															.clickable { playlistViewModel.savePlaylist() }
+															.align(Alignment.CenterVertically),
+													)
+												}
+											}
+										}
 									}
 								}
 							}
@@ -570,7 +688,7 @@ fun NowPlayingView(
 									indication = null
 								) {
 									activeLibraryId?.also(playbackServiceController::previous)
-							  	},
+								},
 						)
 
 						PlayPauseButton(
@@ -595,40 +713,40 @@ fun NowPlayingView(
 				}
 			}
 		}
+	}
 
-		val isConnectionLost by connectionWatcherViewModel.isCheckingConnection.collectAsState()
-		if (isConnectionLost) {
-			AlertDialog(
-				onDismissRequest = { connectionWatcherViewModel.cancelLibraryConnectionPolling() },
-				title = { Text(text = stringResource(id = R.string.lbl_connection_lost_title)) },
-				text = {
-					Text(
-						text = stringResource(
-							id = R.string.lbl_attempting_to_reconnect,
-							stringResource(id = R.string.app_name)
-						)
+	val isConnectionLost by connectionWatcherViewModel.isCheckingConnection.collectAsState()
+	if (isConnectionLost) {
+		AlertDialog(
+			onDismissRequest = { connectionWatcherViewModel.cancelLibraryConnectionPolling() },
+			title = { Text(text = stringResource(id = R.string.lbl_connection_lost_title)) },
+			text = {
+				Text(
+					text = stringResource(
+						id = R.string.lbl_attempting_to_reconnect,
+						stringResource(id = R.string.app_name)
 					)
-				},
-				buttons = {
-					Row(
-						modifier = Modifier
-							.fillMaxWidth()
-							.padding(Dimensions.viewPaddingUnit),
-						horizontalArrangement = Arrangement.Center,
-					) {
-						Button(
-							onClick = {
-								connectionWatcherViewModel.cancelLibraryConnectionPolling()
-							},
-						) {
-							Text(text = stringResource(id = R.string.btn_cancel))
-						}
-					}
-				},
-				properties = DialogProperties(
-					dismissOnBackPress = true,
 				)
+			},
+			buttons = {
+				Row(
+					modifier = Modifier
+						.fillMaxWidth()
+						.padding(Dimensions.viewPaddingUnit),
+					horizontalArrangement = Arrangement.Center,
+				) {
+					Button(
+						onClick = {
+							connectionWatcherViewModel.cancelLibraryConnectionPolling()
+						},
+					) {
+						Text(text = stringResource(id = R.string.btn_cancel))
+					}
+				}
+			},
+			properties = DialogProperties(
+				dismissOnBackPress = true,
 			)
-		}
+		)
 	}
 }
