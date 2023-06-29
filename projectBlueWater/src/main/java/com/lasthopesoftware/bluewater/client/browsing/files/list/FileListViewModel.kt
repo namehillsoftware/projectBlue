@@ -20,7 +20,7 @@ class FileListViewModel(
 	private val storedItemAccess: AccessStoredItems,
 ) : ViewModel(), TrackLoadedViewState {
 
-	private val mutableIsLoading = MutableStateFlow(false)
+	private val mutableIsLoading = MutableStateFlow(true)
 	private val mutableFiles = MutableStateFlow(emptyList<ServiceFile>())
 	private val mutableItemValue = MutableStateFlow("")
 	private val mutableIsSynced = MutableStateFlow(false)
