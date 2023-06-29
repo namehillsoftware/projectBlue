@@ -186,6 +186,8 @@ class BrowserActivity :
 
 	private val osPermissionChecker by lazy { OsPermissionsChecker(applicationContext) }
 
+	private val menuMessageBus by buildViewModelLazily { ViewModelMessageBus<ItemListMenuMessage>() }
+
 	override val libraryFilePropertiesProvider by lazy {
 		CachedFilePropertiesProvider(
 			libraryConnectionProvider,
@@ -197,8 +199,6 @@ class BrowserActivity :
 	override val selectedLibraryIdProvider by lazy { getCachedSelectedLibraryIdProvider() }
 
 	override val messageBus by lazy { getApplicationMessageBus().getScopedMessageBus().also(viewModelScope::manage) }
-
-	override val menuMessageBus by buildViewModelLazily { ViewModelMessageBus<ItemListMenuMessage>() }
 
 	override val itemListMenuBackPressedHandler by lazyScoped { ItemListMenuBackPressedHandler(menuMessageBus) }
 
@@ -354,6 +354,38 @@ class BrowserActivity :
 			messageBus,
 			libraryConnectionProvider,
 			pollForConnections,
+		)
+	}
+
+	override val itemListViewModel by buildViewModelLazily {
+		ItemListViewModel(
+			itemProvider,
+			messageBus,
+			libraryProvider,
+		)
+	}
+
+	override val fileListViewModel by buildViewModelLazily {
+		FileListViewModel(
+			itemFileProvider,
+			storedItemAccess,
+		)
+	}
+
+	override val reusablePlaylistFileItemViewModelProvider by buildViewModelLazily {
+		ReusablePlaylistFileItemViewModelProvider(
+			libraryFilePropertiesProvider,
+			urlKeyProvider,
+			stringResources,
+			menuMessageBus,
+			messageBus,
+		)
+	}
+
+	override val reusableChildItemViewModelProvider by buildViewModelLazily {
+		ReusableChildItemViewModelProvider(
+			storedItemAccess,
+			menuMessageBus,
 		)
 	}
 
@@ -599,36 +631,12 @@ private fun BrowserLibraryDestination.Navigate(
 				when (this@Navigate) {
 					is LibraryScreen -> {
 						val view = browsableItemListView(
-							itemListViewModel = viewModel {
-								ItemListViewModel(
-									itemProvider,
-									messageBus,
-									libraryProvider,
-								)
-							},
-							fileListViewModel = viewModel {
-								FileListViewModel(
-									itemFileProvider,
-									storedItemAccess,
-								)
-							},
+							itemListViewModel = itemListViewModel,
+							fileListViewModel = fileListViewModel,
 							nowPlayingViewModel = nowPlayingFilePropertiesViewModel,
 							itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
-							reusablePlaylistFileItemViewModelProvider = viewModel {
-								ReusablePlaylistFileItemViewModelProvider(
-									libraryFilePropertiesProvider,
-									urlKeyProvider,
-									stringResources,
-									menuMessageBus,
-									messageBus,
-								)
-							},
-							childItemViewModelProvider = viewModel {
-								ReusableChildItemViewModelProvider(
-									storedItemAccess,
-									menuMessageBus,
-								)
-							},
+							reusablePlaylistFileItemViewModelProvider = reusablePlaylistFileItemViewModelProvider,
+							childItemViewModelProvider = reusableChildItemViewModelProvider,
 							applicationNavigation = applicationNavigation,
 							playbackLibraryItems = playbackLibraryItems,
 							playbackServiceController = playbackServiceController,
@@ -639,36 +647,12 @@ private fun BrowserLibraryDestination.Navigate(
 					}
 					is ItemScreen -> {
 						val view = browsableItemListView(
-							itemListViewModel = viewModel {
-								ItemListViewModel(
-									itemProvider,
-									messageBus,
-									libraryProvider,
-								)
-							},
-							fileListViewModel = viewModel {
-								FileListViewModel(
-									itemFileProvider,
-									storedItemAccess,
-								)
-							},
+							itemListViewModel = itemListViewModel,
+							fileListViewModel = fileListViewModel,
 							nowPlayingViewModel = nowPlayingFilePropertiesViewModel,
 							itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
-							reusablePlaylistFileItemViewModelProvider = viewModel {
-								ReusablePlaylistFileItemViewModelProvider(
-									libraryFilePropertiesProvider,
-									urlKeyProvider,
-									stringResources,
-									menuMessageBus,
-									messageBus,
-								)
-							},
-							childItemViewModelProvider = viewModel {
-								ReusableChildItemViewModelProvider(
-									storedItemAccess,
-									menuMessageBus,
-								)
-							},
+							reusablePlaylistFileItemViewModelProvider = reusablePlaylistFileItemViewModelProvider,
+							childItemViewModelProvider = reusableChildItemViewModelProvider,
 							applicationNavigation = applicationNavigation,
 							playbackLibraryItems = playbackLibraryItems,
 							playbackServiceController = playbackServiceController,
@@ -709,15 +693,7 @@ private fun BrowserLibraryDestination.Navigate(
 						SearchFilesView(
 							searchFilesViewModel = searchFilesViewModel,
 							nowPlayingViewModel = nowPlayingFilePropertiesViewModel,
-							trackHeadlineViewModelProvider = viewModel {
-								ReusablePlaylistFileItemViewModelProvider(
-									libraryFilePropertiesProvider,
-									urlKeyProvider,
-									stringResources,
-									menuMessageBus,
-									messageBus,
-								)
-							},
+							trackHeadlineViewModelProvider = reusablePlaylistFileItemViewModelProvider,
 							itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
 							applicationNavigation = applicationNavigation,
 							playbackServiceController = playbackServiceController,
@@ -802,15 +778,7 @@ private fun LibraryDestination.Navigate(
 					screenOnState = screenViewModel,
 					playbackServiceController = playbackServiceController,
 					playlistViewModel = nowPlayingPlaylistViewModel,
-					childItemViewModelProvider = viewModel {
-						ReusablePlaylistFileItemViewModelProvider(
-							libraryFilePropertiesProvider,
-							urlKeyProvider,
-							stringResources,
-							menuMessageBus,
-							messageBus,
-						)
-					},
+					childItemViewModelProvider = reusablePlaylistFileItemViewModelProvider,
 					applicationNavigation = applicationNavigation,
 					itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
 					connectionWatcherViewModel = connectionWatcherViewModel,

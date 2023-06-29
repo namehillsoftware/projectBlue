@@ -3,10 +3,13 @@ package com.lasthopesoftware.bluewater.client.browsing
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.client.browsing.files.access.LibraryFileProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideItemFiles
+import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
+import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusablePlaylistFileItemViewModelProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
+import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.list.PlaybackLibraryItems
-import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
+import com.lasthopesoftware.bluewater.client.browsing.items.list.ReusableChildItemViewModelProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryStorage
@@ -32,7 +35,6 @@ import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
 import com.lasthopesoftware.bluewater.permissions.read.ProvideReadPermissionsRequirements
 import com.lasthopesoftware.bluewater.permissions.write.ProvideWritePermissionsRequirements
 import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
-import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
 import com.lasthopesoftware.bluewater.shared.android.permissions.ManagePermissions
 import com.lasthopesoftware.bluewater.shared.messages.RegisterForTypedMessages
 import com.lasthopesoftware.bluewater.shared.messages.application.ScopedApplicationMessageBus
@@ -47,7 +49,6 @@ interface BrowserViewDependencies {
 	val storedItemAccess: StateChangeBroadcastingStoredItemAccess
 	val playbackServiceController: PlaybackServiceController
 	val itemFileProvider: ProvideItemFiles
-	val menuMessageBus: ViewModelMessageBus<ItemListMenuMessage>
 	val itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler
 	val libraryFilePropertiesProvider: ProvideLibraryFileProperties
 	val urlKeyProvider: ProvideUrlKey
@@ -74,4 +75,8 @@ interface BrowserViewDependencies {
 	val nowPlayingCoverArtViewModel: NowPlayingCoverArtViewModel
 	val nowPlayingPlaylistViewModel: NowPlayingPlaylistViewModel
 	val connectionWatcherViewModel: ConnectionWatcherViewModel
+	val itemListViewModel: ItemListViewModel
+	val fileListViewModel: FileListViewModel
+	val reusablePlaylistFileItemViewModelProvider: ReusablePlaylistFileItemViewModelProvider
+	val reusableChildItemViewModelProvider: ReusableChildItemViewModelProvider
 }
