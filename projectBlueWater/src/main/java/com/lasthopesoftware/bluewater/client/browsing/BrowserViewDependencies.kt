@@ -3,9 +3,13 @@ package com.lasthopesoftware.bluewater.client.browsing
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.client.browsing.files.access.LibraryFileProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideItemFiles
+import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
+import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusablePlaylistFileItemViewModelProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
+import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.list.PlaybackLibraryItems
+import com.lasthopesoftware.bluewater.client.browsing.items.list.ReusableChildItemViewModelProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
@@ -74,4 +78,8 @@ interface BrowserViewDependencies {
 	val nowPlayingCoverArtViewModel: NowPlayingCoverArtViewModel
 	val nowPlayingPlaylistViewModel: NowPlayingPlaylistViewModel
 	val connectionWatcherViewModel: ConnectionWatcherViewModel
+	val itemListViewModel: ItemListViewModel
+	val fileListViewModel: FileListViewModel
+	val reusablePlaylistFileItemViewModelProvider: ReusablePlaylistFileItemViewModelProvider
+	val reusableChildItemViewModelProvider: ReusableChildItemViewModelProvider
 }
