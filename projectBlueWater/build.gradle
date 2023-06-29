@@ -143,6 +143,7 @@ dependencies {
 	def exoplayer_version = '2.18.7'
 	def lifecycle_version = '2.6.1'
 	def junit5_version = '5.9.3'
+	def tv_compose = '1.0.0-alpha06'
 
 	implementation 'androidx.core:core-ktx:1.10.1'
 	implementation 'androidx.annotation:annotation:1.6.0'
@@ -176,6 +177,10 @@ dependencies {
 	implementation 'androidx.compose.compiler:compiler:1.4.7'
 	implementation 'me.onebone:toolbar-compose:2.3.5'
 	implementation "dev.olshevski.navigation:reimagined:1.4.0"
+
+	implementation "androidx.tv:tv-foundation:$tv_compose"
+	implementation "androidx.tv:tv-material:$tv_compose"
+
 	debugImplementation "androidx.compose.ui:ui-tooling:$compose_version"
 	testImplementation 'androidx.test.ext:junit:1.1.5'
 	testImplementation 'junit:junit:4.13.2'

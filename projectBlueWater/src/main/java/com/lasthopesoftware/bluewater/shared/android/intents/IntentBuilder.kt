@@ -4,8 +4,6 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import com.lasthopesoftware.bluewater.client.browsing.BrowserActivity
-import com.lasthopesoftware.bluewater.client.browsing.destinationAction
-import com.lasthopesoftware.bluewater.client.browsing.destinationProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsActivity
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -15,6 +13,8 @@ import com.lasthopesoftware.bluewater.client.browsing.navigation.ConnectionSetti
 import com.lasthopesoftware.bluewater.client.browsing.navigation.Destination
 import com.lasthopesoftware.bluewater.client.browsing.navigation.LibraryScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NowPlayingScreen
+import com.lasthopesoftware.bluewater.client.destinationAction
+import com.lasthopesoftware.bluewater.client.destinationProperty
 
 class IntentBuilder(private val context: Context) : BuildIntents {
 

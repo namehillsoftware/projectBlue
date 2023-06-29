@@ -1,9 +1,10 @@
-package com.lasthopesoftware.bluewater.client.browsing
+package com.lasthopesoftware.bluewater.client
 
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.os.PersistableBundle
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
@@ -19,102 +20,50 @@ import androidx.core.view.WindowCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import browsableItemListView
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
-import com.lasthopesoftware.bluewater.ActivityApplicationNavigation
+import com.lasthopesoftware.bluewater.ActivityDependencies
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.about.AboutView
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.access.CachedItemFileProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.access.DelegatingItemFileProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.access.LibraryFileProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
-import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.ItemStringListProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.LibraryFileStringListProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.image.CachedImageProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.list.*
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.RateControlledFilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertyStorage
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
-import com.lasthopesoftware.bluewater.client.browsing.items.access.CachedItemProvider
-import com.lasthopesoftware.bluewater.client.browsing.items.access.DelegatingItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
-import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemPlayback
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ReusableChildItemViewModelProvider
-import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
-import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistsStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.access.*
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedLibraryViewModel
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.browsing.navigation.*
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
-import com.lasthopesoftware.bluewater.client.connection.ConnectionLostRetryHandler
-import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
-import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
-import com.lasthopesoftware.bluewater.client.connection.polling.LibraryConnectionPoller
-import com.lasthopesoftware.bluewater.client.connection.polling.LibraryConnectionPollingSessions
-import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
-import com.lasthopesoftware.bluewater.client.connection.session.ConnectionWatcherViewModel
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.*
-import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettingsLookup
 import com.lasthopesoftware.bluewater.client.connection.settings.changes.ObservableConnectionSettingsLibraryStorage
-import com.lasthopesoftware.bluewater.client.playback.engine.selection.SelectedPlaybackEngineTypeAccess
-import com.lasthopesoftware.bluewater.client.playback.engine.selection.defaults.DefaultPlaybackEngineLookup
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingView
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.InMemoryNowPlayingDisplaySettings
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingCoverArtViewModel
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingScreenViewModel
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.playlist.NowPlayingPlaylistViewModel
-import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsView
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsViewModel
-import com.lasthopesoftware.bluewater.client.stored.library.items.StateChangeBroadcastingStoredItemAccess
-import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
+import com.lasthopesoftware.bluewater.client.settings.PermissionsDependencies
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.view.ActiveFileDownloadsView
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.view.ActiveFileDownloadsViewModel
-import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
 import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermissionsRequirementsProvider
 import com.lasthopesoftware.bluewater.permissions.write.ApplicationWritePermissionsRequirementsProvider
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsView
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsViewModel
 import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsView
 import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsViewModel
-import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
-import com.lasthopesoftware.bluewater.shared.android.intents.IntentBuilder
 import com.lasthopesoftware.bluewater.shared.android.intents.safelyGetParcelableExtra
-import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
 import com.lasthopesoftware.bluewater.shared.android.permissions.ManagePermissions
 import com.lasthopesoftware.bluewater.shared.android.permissions.OsPermissionsChecker
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.SharedColors
-import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToaster
-import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider
 import com.lasthopesoftware.bluewater.shared.lazyLogger
-import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
-import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
-import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRateLimiter
-import com.lasthopesoftware.bluewater.shared.policies.retries.RetryExecutionPolicy
 import com.lasthopesoftware.bluewater.shared.promises.extensions.*
 import com.lasthopesoftware.resources.closables.AutoCloseableManager
-import com.lasthopesoftware.resources.closables.ViewModelCloseableManager
-import com.lasthopesoftware.resources.closables.lazyScoped
-import com.lasthopesoftware.resources.strings.StringResources
 import com.namehillsoftware.handoff.Messenger
 import com.namehillsoftware.handoff.promises.Promise
 import dev.olshevski.navigation.reimagined.*
@@ -124,163 +73,22 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
 
-private val logger by lazyLogger<BrowserActivity>()
-private val magicPropertyBuilder by lazy { MagicPropertyBuilder(cls<BrowserActivity>()) }
+private val logger by lazyLogger<MobileActivity>()
+private val magicPropertyBuilder by lazy { MagicPropertyBuilder(cls<MobileActivity>()) }
 private val cachedDestinationActions = ConcurrentHashMap<Class<*>, String>()
 
 val destinationProperty by lazy { magicPropertyBuilder.buildProperty("destination") }
 fun destinationAction(destination: Destination): String = cachedDestinationActions.getOrPut(destination.javaClass) { "$destinationProperty/${destination.javaClass.name}" }
 
-class BrowserActivity :
+class MobileActivity :
 	AppCompatActivity(),
-	BrowserViewDependencies,
+	PermissionsDependencies,
 	ActivityCompat.OnRequestPermissionsResultCallback,
 	ManagePermissions
 {
-
-	private val viewModelScope by buildViewModelLazily { ViewModelCloseableManager() }
-
-	private val libraryFileStringListProvider by lazy { LibraryFileStringListProvider(libraryConnectionProvider) }
-
-	private val connectionAuthenticationChecker by lazy { ConnectionAuthenticationChecker(libraryConnectionProvider) }
-
-	private val revisionProvider by lazy { LibraryRevisionProvider(libraryConnectionProvider) }
-
-	private val filePropertiesStorage by lazy {
-		FilePropertyStorage(
-			libraryConnectionProvider,
-			connectionAuthenticationChecker,
-			revisionProvider,
-			FilePropertyCache,
-			messageBus
-		)
-	}
-
-	private val itemListProvider by lazy {
-		ItemStringListProvider(
-			FileListParameters,
-			libraryFileStringListProvider
-		)
-	}
-
-	private val connectionLostRetryPolicy by lazy {
-		RetryExecutionPolicy(ConnectionLostRetryHandler)
-	}
-
-	private val libraryRepository by lazy { LibraryRepository(applicationContext) }
-
-	private val defaultImageProvider by lazy { DefaultImageProvider(applicationContext) }
-
-	private val imageProvider by lazy { CachedImageProvider.getInstance(applicationContext) }
-
-	private val freshLibraryFileProperties by lazy {
-		RateControlledFilePropertiesProvider(
-			FilePropertiesProvider(
-				libraryConnectionProvider,
-				revisionProvider,
-				FilePropertyCache,
-			),
-			PromisingRateLimiter(1),
-		)
-	}
-
 	private val osPermissionChecker by lazy { OsPermissionsChecker(applicationContext) }
 
-	override val libraryFilePropertiesProvider by lazy {
-		CachedFilePropertiesProvider(
-			libraryConnectionProvider,
-			FilePropertyCache,
-			freshLibraryFileProperties,
-		)
-	}
-
-	override val selectedLibraryIdProvider by lazy { getCachedSelectedLibraryIdProvider() }
-
-	override val messageBus by lazy { getApplicationMessageBus().getScopedMessageBus().also(viewModelScope::manage) }
-
-	override val menuMessageBus by buildViewModelLazily { ViewModelMessageBus<ItemListMenuMessage>() }
-
-	override val itemListMenuBackPressedHandler by lazyScoped { ItemListMenuBackPressedHandler(menuMessageBus) }
-
-	override val itemProvider by lazy {
-		DelegatingItemProvider(
-			CachedItemProvider.getInstance(applicationContext),
-			connectionLostRetryPolicy
-		)
-	}
-
-	override val itemFileProvider by lazy {
-		DelegatingItemFileProvider(
-			CachedItemFileProvider.getInstance(applicationContext),
-			connectionLostRetryPolicy,
-		)
-	}
-
-	override val urlKeyProvider by lazy { UrlKeyProvider(libraryConnectionProvider) }
-
-	override val libraryConnectionProvider by lazy { buildNewConnectionSessionManager() }
-
-	override val playbackServiceController by lazy { PlaybackServiceController(this) }
-
-	override val nowPlayingState by lazy { LiveNowPlayingLookup.getInstance() }
-
-	override val selectedConnectionProvider by lazy { SelectedConnectionProvider(this) }
-
-	override val nowPlayingFilePropertiesViewModel by buildViewModelLazily {
-		NowPlayingFilePropertiesViewModel(
-			messageBus,
-			nowPlayingState,
-			freshLibraryFileProperties,
-			UrlKeyProvider(libraryConnectionProvider),
-			filePropertiesStorage,
-			connectionAuthenticationChecker,
-			playbackServiceController,
-			pollForConnections,
-            stringResources,
-		)
-	}
-
-	override val storedItemAccess by lazy {
-		StateChangeBroadcastingStoredItemAccess(StoredItemAccess(applicationContext), messageBus)
-	}
-
-	override val storedFileAccess by lazy { StoredFileAccess(applicationContext) }
-
-	override val stringResources by lazy { StringResources(applicationContext) }
-
-	override val libraryFilesProvider by lazy {
-		LibraryFileProvider(LibraryFileStringListProvider(libraryConnectionProvider))
-	}
-
-	override val applicationNavigation: NavigateApplication by lazy {
-		ActivityApplicationNavigation(
-			this,
-			IntentBuilder(applicationContext),
-		)
-	}
-
-	override val syncScheduler by lazy { SyncScheduler(applicationContext) }
-
-	override val libraryProvider: ILibraryProvider
-		get() = libraryRepository
-
-	override val libraryStorage by lazy {
-		ObservableConnectionSettingsLibraryStorage(
-			libraryRepository,
-			ConnectionSettingsLookup(libraryProvider),
-			messageBus
-		)
-	}
-
-	override val libraryRemoval by lazy {
-		LibraryRemoval(
-			storedItemAccess,
-			libraryRepository,
-			selectedLibraryIdProvider,
-			libraryRepository,
-			BrowserLibrarySelection(applicationSettingsRepository, messageBus, libraryProvider),
-		)
-	}
+	private val browserViewDependencies by lazy { ActivityDependencies(this) }
 
 	override val readPermissionsRequirements by lazy { ApplicationReadPermissionsRequirementsProvider(applicationContext) }
 
@@ -292,75 +100,10 @@ class BrowserActivity :
 
 	override val permissionsManager = this
 
-	override val navigationMessages by buildViewModelLazily { ViewModelMessageBus<NavigationMessage>() }
-
-	override val applicationSettingsRepository by lazy { applicationContext.getApplicationSettingsRepository() }
-
-	override val selectedPlaybackEngineTypeAccess by lazy {
-		SelectedPlaybackEngineTypeAccess(
-			applicationSettingsRepository,
-			DefaultPlaybackEngineLookup
-		)
-	}
-
-	override val libraryBrowserSelection by lazy {
-		BrowserLibrarySelection(
-			applicationSettingsRepository,
-			messageBus,
-			libraryProvider,
-		)
-	}
-
-	override val playbackLibraryItems by lazy {
-		ItemPlayback(
-			itemListProvider,
-			playbackServiceController
-		)
-	}
-
-	override val selectedLibraryViewModel by buildViewModelLazily {
-		SelectedLibraryViewModel(
-			selectedLibraryIdProvider,
-			libraryBrowserSelection,
-		).apply { loadSelectedLibraryId() }
-	}
-
-	override val pollForConnections by lazy {
-		LibraryConnectionPollingSessions(LibraryConnectionPoller(libraryConnectionProvider))
-	}
-
-	override val nowPlayingCoverArtViewModel by buildViewModelLazily {
-		NowPlayingCoverArtViewModel(
-			messageBus,
-			nowPlayingState,
-			selectedConnectionProvider,
-			defaultImageProvider,
-			imageProvider,
-			pollForConnections,
-		)
-	}
-
-	override val nowPlayingPlaylistViewModel by buildViewModelLazily {
-		NowPlayingPlaylistViewModel(
-			messageBus,
-			nowPlayingState,
-			playbackServiceController,
-			PlaylistsStorage(libraryConnectionProvider),
-		)
-	}
-
-	override val connectionWatcherViewModel by buildViewModelLazily {
-		ConnectionWatcherViewModel(
-			messageBus,
-			libraryConnectionProvider,
-			pollForConnections,
-		)
-	}
-
 	private val permissionsRequests = ConcurrentHashMap<Int, Messenger<Map<String, Boolean>>>()
 
-	public override fun onCreate(savedInstanceState: Bundle?) {
-		super.onCreate(savedInstanceState)
+	override fun onCreate(savedInstanceState: Bundle?, persistentState: PersistableBundle?) {
+		super.onCreate(savedInstanceState, persistentState)
 
 		// Ensure that this task is only started when it's the task root. A workaround for an Android bug.
 		// See http://stackoverflow.com/a/7748416
@@ -382,7 +125,11 @@ class BrowserActivity :
 
 		setContent {
 			ProjectBlueTheme {
-				BrowserView(this, getDestination(intent))
+				BrowserView(
+					browserViewDependencies,
+					this,
+					getDestination(intent)
+				)
 			}
 		}
 	}
@@ -392,7 +139,7 @@ class BrowserActivity :
 
 		this.intent = intent
 
-		getDestination(intent)?.also { navigationMessages.sendMessage(NavigationMessage(it)) }
+		getDestination(intent)?.also { browserViewDependencies.navigationMessages.sendMessage(NavigationMessage(it)) }
 	}
 
 	override fun requestPermissions(permissions: List<String>): Promise<Map<String, Boolean>> {
@@ -521,11 +268,11 @@ private class GraphNavigation(
 }
 
 private class GraphDependencies(
-	inner: BrowserViewDependencies,
-	graphNavigation: GraphNavigation,
-	connectionStatusViewModel: ConnectionStatusViewModel,
-	navController: NavController<Destination>,
-	initialDestination: Destination?
+    inner: BrowserViewDependencies,
+    graphNavigation: GraphNavigation,
+    connectionStatusViewModel: ConnectionStatusViewModel,
+    navController: NavController<Destination>,
+    initialDestination: Destination?
 ) : BrowserViewDependencies by inner, AutoCloseable {
 	private val closeableManager = AutoCloseableManager()
 
@@ -554,9 +301,9 @@ private val bottomAppBarHeight = Dimensions.appBarHeight
 @Composable
 @OptIn(ExperimentalMaterialApi::class)
 private fun BrowserLibraryDestination.Navigate(
-	browserViewDependencies: BrowserViewDependencies,
-	connectionStatusViewModel: ConnectionStatusViewModel,
-	scaffoldState: BottomSheetScaffoldState,
+    browserViewDependencies: BrowserViewDependencies,
+    connectionStatusViewModel: ConnectionStatusViewModel,
+    scaffoldState: BottomSheetScaffoldState,
 ) {
 	with(browserViewDependencies) {
 		val selectedLibraryId by selectedLibraryViewModel.selectedLibraryId.collectAsState()
@@ -732,10 +479,11 @@ private fun BrowserLibraryDestination.Navigate(
 @Composable
 @OptIn(ExperimentalMaterialApi::class)
 private fun LibraryDestination.Navigate(
-	browserViewDependencies: BrowserViewDependencies,
-	connectionStatusViewModel: ConnectionStatusViewModel,
-	scaffoldState: BottomSheetScaffoldState,
-	coroutineScope: CoroutineScope,
+    browserViewDependencies: BrowserViewDependencies,
+	permissionsDependencies: PermissionsDependencies,
+    connectionStatusViewModel: ConnectionStatusViewModel,
+    scaffoldState: BottomSheetScaffoldState,
+    coroutineScope: CoroutineScope,
 ) {
 	with(browserViewDependencies) {
 		when (this@Navigate) {
@@ -746,14 +494,16 @@ private fun LibraryDestination.Navigate(
 			)
 			is ConnectionSettingsScreen -> {
 				val viewModel = viewModel {
-					LibrarySettingsViewModel(
-						libraryProvider = libraryProvider,
-						libraryStorage = libraryStorage,
-						libraryRemoval = libraryRemoval,
-						applicationReadPermissionsRequirementsProvider = readPermissionsRequirements,
-						applicationWritePermissionsRequirementsProvider = writePermissionsRequirements,
-						permissionsManager = permissionsManager,
-					)
+					with (permissionsDependencies) {
+						LibrarySettingsViewModel(
+							libraryProvider = libraryProvider,
+							libraryStorage = libraryStorage,
+							libraryRemoval = libraryRemoval,
+							applicationReadPermissionsRequirementsProvider = readPermissionsRequirements,
+							applicationWritePermissionsRequirementsProvider = writePermissionsRequirements,
+							permissionsManager = permissionsManager,
+						)
+					}
 				}
 
 				val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
@@ -842,8 +592,9 @@ private fun LibraryDestination.Navigate(
 @Composable
 @OptIn(ExperimentalMaterialApi::class)
 private fun BrowserView(
-	browserViewDependencies: BrowserViewDependencies,
-	initialDestination: Destination? = null
+    browserViewDependencies: BrowserViewDependencies,
+	permissionsDependencies: PermissionsDependencies,
+    initialDestination: Destination? = null
 ) {
 	val systemUiController = rememberSystemUiController()
 
@@ -943,6 +694,7 @@ private fun BrowserView(
 				is LibraryDestination -> {
 					destination.Navigate(
 						graphDependencies,
+						permissionsDependencies,
 						connectionStatusViewModel,
 						scaffoldState,
 						coroutineScope,
@@ -975,15 +727,17 @@ private fun BrowserView(
 				}
 				is NewConnectionSettingsScreen -> {
 					with(graphDependencies) {
-						val viewModel = viewModel {
-							LibrarySettingsViewModel(
-								libraryProvider = libraryProvider,
-								libraryStorage = libraryStorage,
-								libraryRemoval = libraryRemoval,
-								applicationReadPermissionsRequirementsProvider = readPermissionsRequirements,
-								applicationWritePermissionsRequirementsProvider = writePermissionsRequirements,
-								permissionsManager = permissionsManager,
-							)
+						val viewModel = with (permissionsDependencies) {
+							viewModel {
+								LibrarySettingsViewModel(
+									libraryProvider = libraryProvider,
+									libraryStorage = libraryStorage,
+									libraryRemoval = libraryRemoval,
+									applicationReadPermissionsRequirementsProvider = readPermissionsRequirements,
+									applicationWritePermissionsRequirementsProvider = writePermissionsRequirements,
+									permissionsManager = permissionsManager,
+								)
+							}
 						}
 
 						Box(
