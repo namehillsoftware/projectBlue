@@ -40,7 +40,7 @@ class ItemListViewModel(
 	}
 
 	fun loadItem(libraryId: LibraryId, item: Item? = null): Promise<Unit> {
-		mutableIsLoading.value = true
+		mutableIsLoading.value = loadedLibraryId != libraryId || loadedItem != item
 		mutableItemValue.value = item?.value ?: ""
 		loadedLibraryId = libraryId
 

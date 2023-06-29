@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.list
 
 import androidx.lifecycle.ViewModel
+import com.lasthopesoftware.bluewater.client.browsing.TrackLoadedViewState
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideItemFiles
 import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
@@ -17,9 +18,9 @@ import kotlinx.coroutines.flow.asStateFlow
 class FileListViewModel(
 	private val itemFileProvider: ProvideItemFiles,
 	private val storedItemAccess: AccessStoredItems,
-) : ViewModel() {
+) : ViewModel(), TrackLoadedViewState {
 
-	private val mutableIsLoaded = MutableStateFlow(false)
+	private val mutableIsLoading = MutableStateFlow(false)
 	private val mutableFiles = MutableStateFlow(emptyList<ServiceFile>())
 	private val mutableItemValue = MutableStateFlow("")
 	private val mutableIsSynced = MutableStateFlow(false)
@@ -27,13 +28,13 @@ class FileListViewModel(
 	private var loadedItem: IItem? = null
 	private var loadedLibraryId: LibraryId? = null
 
-	val isLoaded = mutableIsLoaded.asStateFlow()
+	override val isLoading = mutableIsLoading.asStateFlow()
 	val files = mutableFiles.asStateFlow()
 	val itemValue = mutableItemValue.asStateFlow()
 	val isSynced = mutableIsSynced.asStateFlow()
 
 	fun loadItem(libraryId: LibraryId, item: IItem? = null): Promise<Unit> {
-		mutableIsLoaded.value = false
+		mutableIsLoading.value = libraryId != loadedLibraryId || item != loadedItem
 		mutableItemValue.value = item?.value ?: ""
 		mutableIsSynced.value = false
 		loadedLibraryId = libraryId
@@ -57,7 +58,7 @@ class FileListViewModel(
 				loadedItem = item
 			}
 			.must {
-				mutableIsLoaded.value = true
+				mutableIsLoading.value = false
 			}
 	}
 

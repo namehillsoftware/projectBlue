@@ -54,8 +54,8 @@ class WhenLoadingTheFiles {
 	}
 
 	@Test
-	fun thenIsLoadedIsTrue() {
-		assertThat(viewModel.isLoaded.value).isTrue
+	fun `then is loaded is correct`() {
+		assertThat(viewModel.isLoading.value).isFalse
 	}
 
 	@Test

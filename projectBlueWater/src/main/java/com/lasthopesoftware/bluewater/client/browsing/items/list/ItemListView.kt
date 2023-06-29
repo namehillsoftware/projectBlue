@@ -300,12 +300,12 @@ fun ItemListView(
 		}
 	}
 
-	val isFilesLoaded by fileListViewModel.isLoaded.collectAsState()
+	val isFilesLoading by fileListViewModel.isLoading.collectAsState()
 
 	ControlSurface {
 		// Treat the files not being loaded as isAnyFiles being false to trick the CollapsingToolbarScaffold
 		// into measuring the expanded size correctly.
-		val isAnyFiles by remember { derivedStateOf { !isFilesLoaded || files.any() } }
+		val isAnyFiles by remember { derivedStateOf { isFilesLoading || files.any() } }
 		val expandedIconSize by remember { derivedStateOf { if (isAnyFiles) Dimensions.menuHeight.value else 0f } }
 		val expandedMenuVerticalPadding by remember { derivedStateOf { if (isAnyFiles) 12 else 0 } }
 		val boxHeight by remember {
@@ -452,7 +452,7 @@ fun ItemListView(
 		) {
 			BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
 				val isItemsLoading by itemListViewModel.isLoading.collectAsState()
-				val isLoaded = !isItemsLoading && isFilesLoaded
+				val isLoaded = !isItemsLoading && !isFilesLoading
 
 				if (isLoaded) LoadedItemListView()
 				else CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))

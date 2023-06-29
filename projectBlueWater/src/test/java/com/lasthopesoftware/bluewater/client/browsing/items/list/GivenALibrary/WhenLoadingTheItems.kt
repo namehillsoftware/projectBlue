@@ -19,7 +19,7 @@ private const val libraryId = 780
 
 class WhenLoadingTheItems {
 	private val viewModel by lazy {
-		val itemProvider = mockk<ProvideItems>().apply {
+		val itemProvider = mockk<ProvideItems> {
 			every { promiseItems(LibraryId(libraryId)) } returns listOf(
                 Item(226),
                 Item(877),
@@ -59,7 +59,7 @@ class WhenLoadingTheItems {
 	}
 
 	@Test
-	fun `then the loaded files are correct`() {
+	fun `then the loaded items are correct`() {
 		assertThat(viewModel.items.value)
 			.hasSameElementsAs(
 				listOf(
