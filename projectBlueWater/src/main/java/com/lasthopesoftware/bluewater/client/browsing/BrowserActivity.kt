@@ -186,6 +186,8 @@ class BrowserActivity :
 
 	private val osPermissionChecker by lazy { OsPermissionsChecker(applicationContext) }
 
+	private val menuMessageBus by buildViewModelLazily { ViewModelMessageBus<ItemListMenuMessage>() }
+
 	override val libraryFilePropertiesProvider by lazy {
 		CachedFilePropertiesProvider(
 			libraryConnectionProvider,
@@ -197,8 +199,6 @@ class BrowserActivity :
 	override val selectedLibraryIdProvider by lazy { getCachedSelectedLibraryIdProvider() }
 
 	override val messageBus by lazy { getApplicationMessageBus().getScopedMessageBus().also(viewModelScope::manage) }
-
-	override val menuMessageBus by buildViewModelLazily { ViewModelMessageBus<ItemListMenuMessage>() }
 
 	override val itemListMenuBackPressedHandler by lazyScoped { ItemListMenuBackPressedHandler(menuMessageBus) }
 
@@ -778,15 +778,7 @@ private fun LibraryDestination.Navigate(
 					screenOnState = screenViewModel,
 					playbackServiceController = playbackServiceController,
 					playlistViewModel = nowPlayingPlaylistViewModel,
-					childItemViewModelProvider = viewModel {
-						ReusablePlaylistFileItemViewModelProvider(
-							libraryFilePropertiesProvider,
-							urlKeyProvider,
-							stringResources,
-							menuMessageBus,
-							messageBus,
-						)
-					},
+					childItemViewModelProvider = reusablePlaylistFileItemViewModelProvider,
 					applicationNavigation = applicationNavigation,
 					itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
 					connectionWatcherViewModel = connectionWatcherViewModel,
