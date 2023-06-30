@@ -6,8 +6,8 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideLibraryImages
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
+import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
 import com.lasthopesoftware.bluewater.client.connection.polling.PollForLibraryConnections
-import com.lasthopesoftware.bluewater.client.connection.selected.ProvideSelectedConnection
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.LibraryPlaybackMessage
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
@@ -27,7 +27,7 @@ private val logger by lazyLogger<NowPlayingCoverArtViewModel>()
 class NowPlayingCoverArtViewModel(
     applicationMessage: RegisterForApplicationMessages,
     private val nowPlayingRepository: GetNowPlayingState,
-    private val selectedConnectionProvider: ProvideSelectedConnection,
+    private val libraryConnectionProvider: ProvideLibraryConnections,
     private val defaultImageProvider: ProvideDefaultImage,
     private val imageProvider: ProvideLibraryImages,
     private val pollConnections: PollForLibraryConnections,
@@ -119,7 +119,8 @@ class NowPlayingCoverArtViewModel(
 				}
 		}
 
-		return selectedConnectionProvider.promiseSessionConnection()
+		return libraryConnectionProvider
+			.promiseLibraryConnection(libraryId)
 			.then { connectionProvider ->
 				val baseUrl = connectionProvider?.urlProvider?.baseUrl ?: return@then
 
