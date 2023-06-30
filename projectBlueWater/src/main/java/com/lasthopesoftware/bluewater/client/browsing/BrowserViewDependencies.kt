@@ -20,18 +20,19 @@ import com.lasthopesoftware.bluewater.client.browsing.navigation.NavigationMessa
 import com.lasthopesoftware.bluewater.client.connection.polling.PollForLibraryConnections
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionWatcherViewModel
-import com.lasthopesoftware.bluewater.client.playback.engine.selection.LookupSelectedPlaybackEngineType
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingCoverArtViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.playlist.NowPlayingPlaylistViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
+import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsViewModel
 import com.lasthopesoftware.bluewater.client.stored.library.items.StateChangeBroadcastingStoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.view.ActiveFileDownloadsViewModel
 import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
 import com.lasthopesoftware.bluewater.permissions.read.ProvideReadPermissionsRequirements
 import com.lasthopesoftware.bluewater.permissions.write.ProvideWritePermissionsRequirements
+import com.lasthopesoftware.bluewater.settings.ApplicationSettingsViewModel
 import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
 import com.lasthopesoftware.bluewater.shared.android.permissions.ManagePermissions
 import com.lasthopesoftware.bluewater.shared.messages.RegisterForTypedMessages
@@ -61,7 +62,6 @@ interface BrowserViewDependencies {
 	val permissionsManager: ManagePermissions
 	val navigationMessages: RegisterForTypedMessages<NavigationMessage>
 	val applicationSettingsRepository: HoldApplicationSettings
-	val selectedPlaybackEngineTypeAccess: LookupSelectedPlaybackEngineType
 	val playbackLibraryItems: PlaybackLibraryItems
 	val nowPlayingState: GetNowPlayingState
 	val pollForConnections: PollForLibraryConnections
@@ -71,6 +71,7 @@ interface BrowserViewDependencies {
 	val reusablePlaylistFileItemViewModelProvider: ReusablePlaylistFileItemViewModelProvider
 	val reusableChildItemViewModelProvider: ReusableChildItemViewModelProvider
 	val reusableFileItemViewModelProvider: ReusableFileItemViewModelProvider
+	val applicationSettingsViewModel: ApplicationSettingsViewModel
 }
 
 /**
@@ -81,4 +82,5 @@ interface ScopedBrowserViewDependencies : BrowserViewDependencies {
 	val fileListViewModel: FileListViewModel
 	val activeFileDownloadsViewModel: ActiveFileDownloadsViewModel
 	val searchFilesViewModel: SearchFilesViewModel
+	val librarySettingsViewModel: LibrarySettingsViewModel
 }

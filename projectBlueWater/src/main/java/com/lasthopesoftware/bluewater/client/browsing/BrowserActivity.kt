@@ -16,7 +16,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.core.view.WindowCompat
-import androidx.lifecycle.ViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import browsableItemListView
@@ -42,7 +41,6 @@ import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.access.CachedItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.access.DelegatingItemProvider
-import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemPlayback
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ReusableChildItemViewModelProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
@@ -77,12 +75,10 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.playlist.NowPlayingPlaylistViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsView
-import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsViewModel
 import com.lasthopesoftware.bluewater.client.stored.library.items.StateChangeBroadcastingStoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.view.ActiveFileDownloadsView
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.view.ActiveFileDownloadsViewModel
 import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
 import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermissionsRequirementsProvider
 import com.lasthopesoftware.bluewater.permissions.write.ApplicationWritePermissionsRequirementsProvider
@@ -209,6 +205,13 @@ class BrowserActivity :
 		)
 	}
 
+	private val selectedPlaybackEngineTypeAccess by lazy {
+		SelectedPlaybackEngineTypeAccess(
+			applicationSettingsRepository,
+			DefaultPlaybackEngineLookup
+		)
+	}
+
 	override val messageBus by lazy { getApplicationMessageBus().getScopedMessageBus().also(viewModelScope::manage) }
 
 	override val itemListMenuBackPressedHandler by lazyScoped { ItemListMenuBackPressedHandler(menuMessageBus) }
@@ -303,13 +306,6 @@ class BrowserActivity :
 
 	override val applicationSettingsRepository by lazy { applicationContext.getApplicationSettingsRepository() }
 
-	override val selectedPlaybackEngineTypeAccess by lazy {
-		SelectedPlaybackEngineTypeAccess(
-			applicationSettingsRepository,
-			DefaultPlaybackEngineLookup
-		)
-	}
-
 	override val playbackLibraryItems by lazy {
 		ItemPlayback(
 			itemListProvider,
@@ -379,6 +375,16 @@ class BrowserActivity :
 			urlKeyProvider,
 			stringResources,
 			messageBus,
+		)
+	}
+
+	override val applicationSettingsViewModel by buildViewModelLazily {
+		ApplicationSettingsViewModel(
+			applicationSettingsRepository,
+			selectedPlaybackEngineTypeAccess,
+			libraryProvider,
+			messageBus,
+			syncScheduler,
 		)
 	}
 
@@ -574,36 +580,6 @@ private class GraphDependencies(
 	}
 }
 
-private class ScopedViewModelDependencies(inner: BrowserViewDependencies, viewModelStoreOwner: ViewModelStoreOwner) : ScopedBrowserViewDependencies, BrowserViewDependencies by inner {
-
-	override val itemListViewModel by viewModelStoreOwner.buildViewModelLazily {
-		ItemListViewModel(
-			itemProvider,
-			messageBus,
-			libraryProvider,
-		)
-	}
-
-	override val fileListViewModel by viewModelStoreOwner.buildViewModelLazily {
-		FileListViewModel(
-			itemFileProvider,
-			storedItemAccess,
-		)
-	}
-
-	override val activeFileDownloadsViewModel by viewModelStoreOwner.buildViewModelLazily {
-		ActiveFileDownloadsViewModel(
-			storedFileAccess,
-			messageBus,
-			syncScheduler,
-		)
-	}
-
-	override val searchFilesViewModel by viewModelStoreOwner.buildViewModelLazily {
-		SearchFilesViewModel(libraryFilesProvider)
-	}
-}
-
 private val bottomAppBarHeight = Dimensions.appBarHeight
 
 @Composable
@@ -727,16 +703,7 @@ private fun LibraryDestination.Navigate(
 				connectionStatusViewModel = connectionStatusViewModel,
 			)
 			is ConnectionSettingsScreen -> {
-				val viewModel = viewModel {
-					LibrarySettingsViewModel(
-						libraryProvider = libraryProvider,
-						libraryStorage = libraryStorage,
-						libraryRemoval = libraryRemoval,
-						applicationReadPermissionsRequirementsProvider = readPermissionsRequirements,
-						applicationWritePermissionsRequirementsProvider = writePermissionsRequirements,
-						permissionsManager = permissionsManager,
-					)
-				}
+				val viewModel = librarySettingsViewModel
 
 				val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
 
@@ -925,55 +892,38 @@ private fun BrowserView(
 					}
 				}
 				is ApplicationSettingsScreen -> {
-					val viewModel = viewModel {
-						ApplicationSettingsViewModel(
-							graphDependencies.applicationSettingsRepository,
-							graphDependencies.selectedPlaybackEngineTypeAccess,
-							graphDependencies.libraryProvider,
-							graphDependencies.messageBus,
-							graphDependencies.syncScheduler,
-						)
-					}
-
 					Box(
 						modifier = Modifier
 							.fillMaxSize()
 							.padding(systemBarsPadding)
 					) {
 						ApplicationSettingsView(
-							applicationSettingsViewModel = viewModel,
+							applicationSettingsViewModel = graphDependencies.applicationSettingsViewModel,
 							applicationNavigation = graphDependencies.applicationNavigation,
 							playbackService = graphDependencies.playbackServiceController,
 						)
 					}
 
-					viewModel.loadSettings()
+					graphDependencies.applicationSettingsViewModel.loadSettings()
 				}
 				is NewConnectionSettingsScreen -> {
-					with(graphDependencies) {
-						val viewModel = viewModel {
-							LibrarySettingsViewModel(
-								libraryProvider = libraryProvider,
-								libraryStorage = libraryStorage,
-								libraryRemoval = libraryRemoval,
-								applicationReadPermissionsRequirementsProvider = readPermissionsRequirements,
-								applicationWritePermissionsRequirementsProvider = writePermissionsRequirements,
-								permissionsManager = permissionsManager,
-							)
+					LocalViewModelStoreOwner.current
+						?.let {
+							ScopedViewModelDependencies(graphDependencies, it)
 						}
-
-						Box(
-							modifier = Modifier
-								.fillMaxSize()
-								.padding(systemBarsPadding)
-						) {
-							LibrarySettingsView(
-								librarySettingsViewModel = viewModel,
-								navigateApplication = applicationNavigation,
-								stringResources = stringResources
-							)
+						?.apply {
+							Box(
+								modifier = Modifier
+									.fillMaxSize()
+									.padding(systemBarsPadding)
+							) {
+								LibrarySettingsView(
+									librarySettingsViewModel = librarySettingsViewModel,
+									navigateApplication = applicationNavigation,
+									stringResources = stringResources
+								)
+							}
 						}
-					}
 				}
 				is AboutScreen -> {
 					Box(
