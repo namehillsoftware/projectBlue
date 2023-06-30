@@ -6,7 +6,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideItemFi
 import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusableFileItemViewModelProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusablePlaylistFileItemViewModelProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.list.SearchFilesViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.list.PlaybackLibraryItems
@@ -15,13 +15,9 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.h
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.access.RemoveLibraries
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectBrowserLibrary
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedLibraryViewModel
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NavigationMessage
-import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideUrlKey
 import com.lasthopesoftware.bluewater.client.connection.polling.PollForLibraryConnections
-import com.lasthopesoftware.bluewater.client.connection.selected.ProvideSelectedConnection
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionWatcherViewModel
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.LookupSelectedPlaybackEngineType
@@ -32,6 +28,7 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.client.stored.library.items.StateChangeBroadcastingStoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.view.ActiveFileDownloadsViewModel
 import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
 import com.lasthopesoftware.bluewater.permissions.read.ProvideReadPermissionsRequirements
 import com.lasthopesoftware.bluewater.permissions.write.ProvideWritePermissionsRequirements
@@ -44,15 +41,12 @@ import com.lasthopesoftware.resources.strings.StringResources
 interface BrowserViewDependencies {
 	val selectedLibraryViewModel: SelectedLibraryViewModel
 	val nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel
-	val selectedLibraryIdProvider: CachedSelectedLibraryIdProvider
 	val itemProvider: ProvideItems
 	val messageBus: ScopedApplicationMessageBus
 	val storedItemAccess: StateChangeBroadcastingStoredItemAccess
 	val playbackServiceController: PlaybackServiceController
 	val itemFileProvider: ProvideItemFiles
 	val itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler
-	val libraryFilePropertiesProvider: ProvideLibraryFileProperties
-	val urlKeyProvider: ProvideUrlKey
 	val stringResources: StringResources
 	val libraryFilesProvider: LibraryFileProvider
 	val applicationNavigation: NavigateApplication
@@ -68,10 +62,8 @@ interface BrowserViewDependencies {
 	val navigationMessages: RegisterForTypedMessages<NavigationMessage>
 	val applicationSettingsRepository: HoldApplicationSettings
 	val selectedPlaybackEngineTypeAccess: LookupSelectedPlaybackEngineType
-	val libraryBrowserSelection: SelectBrowserLibrary
 	val playbackLibraryItems: PlaybackLibraryItems
 	val nowPlayingState: GetNowPlayingState
-	val selectedConnectionProvider: ProvideSelectedConnection
 	val pollForConnections: PollForLibraryConnections
 	val nowPlayingCoverArtViewModel: NowPlayingCoverArtViewModel
 	val nowPlayingPlaylistViewModel: NowPlayingPlaylistViewModel
@@ -81,7 +73,12 @@ interface BrowserViewDependencies {
 	val reusableFileItemViewModelProvider: ReusableFileItemViewModelProvider
 }
 
+/**
+ * View Models that work best when declared with a local ViewModelOwner
+ */
 interface ScopedBrowserViewDependencies : BrowserViewDependencies {
 	val itemListViewModel: ItemListViewModel
 	val fileListViewModel: FileListViewModel
+	val activeFileDownloadsViewModel: ActiveFileDownloadsViewModel
+	val searchFilesViewModel: SearchFilesViewModel
 }

@@ -61,7 +61,6 @@ import com.lasthopesoftware.bluewater.client.connection.authentication.Connectio
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.polling.LibraryConnectionPoller
 import com.lasthopesoftware.bluewater.client.connection.polling.LibraryConnectionPollingSessions
-import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionWatcherViewModel
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.*
@@ -190,7 +189,9 @@ class BrowserActivity :
 
 	private val menuMessageBus by buildViewModelLazily { ViewModelMessageBus<ItemListMenuMessage>() }
 
-	override val libraryFilePropertiesProvider by lazy {
+	private val selectedLibraryIdProvider by lazy { getCachedSelectedLibraryIdProvider() }
+
+	private val libraryFilePropertiesProvider by lazy {
 		CachedFilePropertiesProvider(
 			libraryConnectionProvider,
 			FilePropertyCache,
@@ -198,7 +199,15 @@ class BrowserActivity :
 		)
 	}
 
-	override val selectedLibraryIdProvider by lazy { getCachedSelectedLibraryIdProvider() }
+	private val urlKeyProvider by lazy { UrlKeyProvider(libraryConnectionProvider) }
+
+	private val libraryBrowserSelection by lazy {
+		BrowserLibrarySelection(
+			applicationSettingsRepository,
+			messageBus,
+			libraryProvider,
+		)
+	}
 
 	override val messageBus by lazy { getApplicationMessageBus().getScopedMessageBus().also(viewModelScope::manage) }
 
@@ -218,15 +227,11 @@ class BrowserActivity :
 		)
 	}
 
-	override val urlKeyProvider by lazy { UrlKeyProvider(libraryConnectionProvider) }
-
 	override val libraryConnectionProvider by lazy { buildNewConnectionSessionManager() }
 
 	override val playbackServiceController by lazy { PlaybackServiceController(this) }
 
 	override val nowPlayingState by lazy { LiveNowPlayingLookup.getInstance() }
-
-	override val selectedConnectionProvider by lazy { SelectedConnectionProvider(this) }
 
 	override val nowPlayingFilePropertiesViewModel by buildViewModelLazily {
 		NowPlayingFilePropertiesViewModel(
@@ -305,14 +310,6 @@ class BrowserActivity :
 		)
 	}
 
-	override val libraryBrowserSelection by lazy {
-		BrowserLibrarySelection(
-			applicationSettingsRepository,
-			messageBus,
-			libraryProvider,
-		)
-	}
-
 	override val playbackLibraryItems by lazy {
 		ItemPlayback(
 			itemListProvider,
@@ -335,7 +332,7 @@ class BrowserActivity :
 		NowPlayingCoverArtViewModel(
 			messageBus,
 			nowPlayingState,
-			selectedConnectionProvider,
+			libraryConnectionProvider,
 			defaultImageProvider,
 			imageProvider,
 			pollForConnections,
@@ -593,6 +590,18 @@ private class ScopedViewModelDependencies(inner: BrowserViewDependencies, viewMo
 			storedItemAccess,
 		)
 	}
+
+	override val activeFileDownloadsViewModel by viewModelStoreOwner.buildViewModelLazily {
+		ActiveFileDownloadsViewModel(
+			storedFileAccess,
+			messageBus,
+			syncScheduler,
+		)
+	}
+
+	override val searchFilesViewModel by viewModelStoreOwner.buildViewModelLazily {
+		SearchFilesViewModel(libraryFilesProvider)
+	}
 }
 
 private val bottomAppBarHeight = Dimensions.appBarHeight
@@ -676,14 +685,6 @@ private fun BrowserLibraryDestination.Navigate(
 						view(libraryId, item)
 					}
 					is DownloadsScreen -> {
-						val activeFileDownloadsViewModel = viewModel {
-							ActiveFileDownloadsViewModel(
-								storedFileAccess,
-								messageBus,
-								syncScheduler,
-							)
-						}
-
 						ActiveFileDownloadsView(
 							activeFileDownloadsViewModel = activeFileDownloadsViewModel,
 							trackHeadlineViewModelProvider = reusableFileItemViewModelProvider,
@@ -693,8 +694,6 @@ private fun BrowserLibraryDestination.Navigate(
 						activeFileDownloadsViewModel.loadActiveDownloads(libraryId)
 					}
 					is SearchScreen -> {
-						val searchFilesViewModel = viewModel { SearchFilesViewModel(libraryFilesProvider) }
-
 						searchFilesViewModel.setActiveLibraryId(libraryId)
 
 						SearchFilesView(
