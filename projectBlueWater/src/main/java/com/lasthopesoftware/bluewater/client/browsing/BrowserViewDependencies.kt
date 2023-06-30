@@ -4,6 +4,7 @@ import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.client.browsing.files.access.LibraryFileProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideItemFiles
 import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
+import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusableFileItemViewModelProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusablePlaylistFileItemViewModelProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
@@ -75,8 +76,12 @@ interface BrowserViewDependencies {
 	val nowPlayingCoverArtViewModel: NowPlayingCoverArtViewModel
 	val nowPlayingPlaylistViewModel: NowPlayingPlaylistViewModel
 	val connectionWatcherViewModel: ConnectionWatcherViewModel
-	val itemListViewModel: ItemListViewModel
-	val fileListViewModel: FileListViewModel
 	val reusablePlaylistFileItemViewModelProvider: ReusablePlaylistFileItemViewModelProvider
 	val reusableChildItemViewModelProvider: ReusableChildItemViewModelProvider
+	val reusableFileItemViewModelProvider: ReusableFileItemViewModelProvider
+}
+
+interface ScopedBrowserViewDependencies : BrowserViewDependencies {
+	val itemListViewModel: ItemListViewModel
+	val fileListViewModel: FileListViewModel
 }

@@ -16,6 +16,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.core.view.WindowCompat
+import androidx.lifecycle.ViewModelStoreOwner
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import browsableItemListView
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
@@ -357,21 +359,6 @@ class BrowserActivity :
 		)
 	}
 
-	override val itemListViewModel by buildViewModelLazily {
-		ItemListViewModel(
-			itemProvider,
-			messageBus,
-			libraryProvider,
-		)
-	}
-
-	override val fileListViewModel by buildViewModelLazily {
-		FileListViewModel(
-			itemFileProvider,
-			storedItemAccess,
-		)
-	}
-
 	override val reusablePlaylistFileItemViewModelProvider by buildViewModelLazily {
 		ReusablePlaylistFileItemViewModelProvider(
 			libraryFilePropertiesProvider,
@@ -386,6 +373,15 @@ class BrowserActivity :
 		ReusableChildItemViewModelProvider(
 			storedItemAccess,
 			menuMessageBus,
+		)
+	}
+
+	override val reusableFileItemViewModelProvider by buildViewModelLazily {
+		ReusableFileItemViewModelProvider(
+			libraryFilePropertiesProvider,
+			urlKeyProvider,
+			stringResources,
+			messageBus,
 		)
 	}
 
@@ -581,12 +577,30 @@ private class GraphDependencies(
 	}
 }
 
+private class ScopedViewModelDependencies(inner: BrowserViewDependencies, viewModelStoreOwner: ViewModelStoreOwner) : ScopedBrowserViewDependencies, BrowserViewDependencies by inner {
+
+	override val itemListViewModel by viewModelStoreOwner.buildViewModelLazily {
+		ItemListViewModel(
+			itemProvider,
+			messageBus,
+			libraryProvider,
+		)
+	}
+
+	override val fileListViewModel by viewModelStoreOwner.buildViewModelLazily {
+		FileListViewModel(
+			itemFileProvider,
+			storedItemAccess,
+		)
+	}
+}
+
 private val bottomAppBarHeight = Dimensions.appBarHeight
 
 @Composable
 @OptIn(ExperimentalMaterialApi::class)
 private fun BrowserLibraryDestination.Navigate(
-	browserViewDependencies: BrowserViewDependencies,
+	browserViewDependencies: ScopedBrowserViewDependencies,
 	connectionStatusViewModel: ConnectionStatusViewModel,
 	scaffoldState: BottomSheetScaffoldState,
 ) {
@@ -672,14 +686,7 @@ private fun BrowserLibraryDestination.Navigate(
 
 						ActiveFileDownloadsView(
 							activeFileDownloadsViewModel = activeFileDownloadsViewModel,
-							trackHeadlineViewModelProvider = viewModel {
-								ReusableFileItemViewModelProvider(
-									libraryFilePropertiesProvider,
-									urlKeyProvider,
-									stringResources,
-									messageBus,
-								)
-							},
+							trackHeadlineViewModelProvider = reusableFileItemViewModelProvider,
 							applicationNavigation,
 						)
 
@@ -708,7 +715,7 @@ private fun BrowserLibraryDestination.Navigate(
 @Composable
 @OptIn(ExperimentalMaterialApi::class)
 private fun LibraryDestination.Navigate(
-	browserViewDependencies: BrowserViewDependencies,
+	browserViewDependencies: ScopedBrowserViewDependencies,
 	connectionStatusViewModel: ConnectionStatusViewModel,
 	scaffoldState: BottomSheetScaffoldState,
 	coroutineScope: CoroutineScope,
@@ -909,12 +916,14 @@ private fun BrowserView(
 					}
 				}
 				is LibraryDestination -> {
-					destination.Navigate(
-						graphDependencies,
-						connectionStatusViewModel,
-						scaffoldState,
-						coroutineScope,
-					)
+					LocalViewModelStoreOwner.current?.also {
+						destination.Navigate(
+							ScopedViewModelDependencies(graphDependencies, it),
+							connectionStatusViewModel,
+							scaffoldState,
+							coroutineScope,
+						)
+					}
 				}
 				is ApplicationSettingsScreen -> {
 					val viewModel = viewModel {
