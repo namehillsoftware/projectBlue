@@ -97,6 +97,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.SharedColors
+import com.lasthopesoftware.bluewater.shared.android.viewmodels.ViewModelInitAction
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToaster
@@ -642,7 +643,9 @@ private fun BrowserLibraryDestination.Navigate(
 							connectionStatusViewModel = connectionStatusViewModel,
 						)
 
-						view(libraryId, null)
+						ViewModelInitAction {
+							view(libraryId, null)
+						}
 					}
 					is ItemScreen -> {
 						val view = browsableItemListView(
@@ -658,7 +661,9 @@ private fun BrowserLibraryDestination.Navigate(
 							connectionStatusViewModel = connectionStatusViewModel,
 						)
 
-						view(libraryId, item)
+						ViewModelInitAction {
+							view(libraryId, item)
+						}
 					}
 					is DownloadsScreen -> {
 						ActiveFileDownloadsView(
