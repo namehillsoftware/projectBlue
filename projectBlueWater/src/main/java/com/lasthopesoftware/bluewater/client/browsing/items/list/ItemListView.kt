@@ -12,7 +12,6 @@ import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -38,12 +37,11 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.h
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncIcon
-import com.lasthopesoftware.bluewater.shared.android.ui.components.CollapsibleHeight
-import com.lasthopesoftware.bluewater.shared.android.ui.components.CollapsibleSaver
 import com.lasthopesoftware.bluewater.shared.android.ui.components.ColumnMenuIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.shared.android.ui.components.ListItemIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
+import com.lasthopesoftware.bluewater.shared.android.ui.components.memorableScrollConnectedScaler
 import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberCalculatedKnobHeight
 import com.lasthopesoftware.bluewater.shared.android.ui.components.scrollbar
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.*
@@ -322,9 +320,7 @@ fun ItemListView(
 		val collapsedHeightPx = LocalDensity.current.run { appBarHeight.dp.toPx() }
 // now, let's create connection to the nested scroll system and listen to the scroll
 // happening inside child LazyColumn
-		val nestedScrollConnection = rememberSaveable(saver = CollapsibleSaver(boxHeightPx, collapsedHeightPx)) {
-			CollapsibleHeight(boxHeightPx, collapsedHeightPx)
-		}
+		val nestedScrollConnection = memorableScrollConnectedScaler(boxHeightPx, collapsedHeightPx)
 
 		Column(
 			modifier = Modifier
@@ -334,7 +330,7 @@ fun ItemListView(
 			Box(
 				modifier = Modifier
 					.fillMaxWidth()
-					.height(LocalDensity.current.run { nestedScrollConnection.height.toDp() })
+					.height(LocalDensity.current.run { nestedScrollConnection.value.toDp() })
 			) {
 				Icon(
 					Icons.Default.ArrowBack,
