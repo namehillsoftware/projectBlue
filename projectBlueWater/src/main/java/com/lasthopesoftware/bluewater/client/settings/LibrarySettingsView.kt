@@ -177,9 +177,11 @@ fun LibrarySettingsView(
 							).coerceIn(0f, 1f)
 						}
 					}
+
 					val acceleratedHeaderHidingProgress by remember {
 						derivedStateOf { 1 - acceleratedToolbarStateProgress }
 					}
+
 					ProvideTextStyle(MaterialTheme.typography.h5) {
 						val iconClearance = 48
 						val startPadding by remember {  derivedStateOf(structuralEqualityPolicy()) { (4 + iconClearance * headerHidingProgress).dp } }
@@ -254,7 +256,7 @@ fun LibrarySettingsView(
 					tint = MaterialTheme.colors.onSurface,
 					modifier = Modifier
 						.padding(16.dp)
-						.align(Alignment.TopCenter)
+						.align(Alignment.TopStart)
 						.clickable(
 							interactionSource = remember { MutableInteractionSource() },
 							indication = null,
