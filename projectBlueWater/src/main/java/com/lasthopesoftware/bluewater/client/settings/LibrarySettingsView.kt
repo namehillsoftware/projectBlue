@@ -43,6 +43,8 @@ import androidx.compose.runtime.structuralEqualityPolicy
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -58,15 +60,13 @@ import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.shared.android.ui.components.LabeledSelection
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.StandardTextField
+import com.lasthopesoftware.bluewater.shared.android.ui.components.memorableScrollConnectedScaler
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.collectAsMutableState
 import com.lasthopesoftware.bluewater.shared.promises.extensions.suspend
 import com.lasthopesoftware.resources.strings.GetStringResources
 import kotlinx.coroutines.launch
-import me.onebone.toolbar.CollapsingToolbarScaffold
-import me.onebone.toolbar.ScrollStrategy
-import me.onebone.toolbar.rememberCollapsingToolbarScaffoldState
 import kotlin.math.pow
 
 private val expandedTitleHeight = 84.dp
@@ -147,15 +147,22 @@ fun LibrarySettingsView(
 			)
 		}
 
-		val toolbarState = rememberCollapsingToolbarScaffoldState()
-		val headerHidingProgress by remember { derivedStateOf(structuralEqualityPolicy()) { 1 - toolbarState.toolbarState.progress } }
+		val boxHeightPx = LocalDensity.current.run { boxHeight.toPx() }
+		val collapsedHeightPx = LocalDensity.current.run { appBarHeight.toPx() }
+		val nestedScrollConnection = memorableScrollConnectedScaler(boxHeightPx, collapsedHeightPx)
 
-		CollapsingToolbarScaffold(
-			enabled = true,
-			state = toolbarState,
-			scrollStrategy = ScrollStrategy.ExitUntilCollapsed,
-			modifier = Modifier.fillMaxSize(),
-			toolbar = {
+		Column(
+			modifier = Modifier
+				.fillMaxSize()
+				.nestedScroll(nestedScrollConnection)
+		) {
+			Box(
+				modifier = Modifier
+					.fillMaxWidth()
+					.height(LocalDensity.current.run { nestedScrollConnection.value.toDp() })
+			) {
+				val headerHidingProgress by remember { derivedStateOf { nestedScrollConnection.progress } }
+				val headerExpandingProgress by remember { derivedStateOf { 1 - headerHidingProgress } }
 				val topPadding by remember { derivedStateOf(structuralEqualityPolicy()) { (appBarHeight - 46.dp * headerHidingProgress) } }
 				BoxWithConstraints(
 					modifier = Modifier
@@ -165,7 +172,7 @@ fun LibrarySettingsView(
 					val iconSize = Dimensions.topMenuIconSize
 					val acceleratedToolbarStateProgress by remember {
 						derivedStateOf {
-							toolbarState.toolbarState.progress.pow(
+							headerExpandingProgress.pow(
 								3
 							).coerceIn(0f, 1f)
 						}
@@ -241,24 +248,21 @@ fun LibrarySettingsView(
 					}
 				}
 
-				// Always draw box to help the collapsing toolbar measure minimum size
-				Box(modifier = Modifier.height(appBarHeight)) {
-					Icon(
-						Icons.Default.ArrowBack,
-						contentDescription = "",
-						tint = MaterialTheme.colors.onSurface,
-						modifier = Modifier
-							.padding(16.dp)
-							.align(Alignment.CenterStart)
-							.clickable(
-								interactionSource = remember { MutableInteractionSource() },
-								indication = null,
-								onClick = navigateApplication::navigateUp
-							)
-					)
-				}
-			},
-		) {
+				Icon(
+					Icons.Default.ArrowBack,
+					contentDescription = "",
+					tint = MaterialTheme.colors.onSurface,
+					modifier = Modifier
+						.padding(16.dp)
+						.align(Alignment.TopCenter)
+						.clickable(
+							interactionSource = remember { MutableInteractionSource() },
+							indication = null,
+							onClick = navigateApplication::navigateUp
+						)
+				)
+			}
+
 			Column(
 				modifier = Modifier
 					.fillMaxSize()

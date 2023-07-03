@@ -313,13 +313,9 @@ fun ItemListView(
 			}
 		}
 
-		// here we use LazyColumn that has build-in nested scroll, but we want to act like a
-// parent for this LazyColumn and participate in its nested scroll.
-// Let's make a collapsing toolbar for LazyColumn
 		val boxHeightPx = LocalDensity.current.run { boxHeight.dp.toPx() }
 		val collapsedHeightPx = LocalDensity.current.run { appBarHeight.dp.toPx() }
-// now, let's create connection to the nested scroll system and listen to the scroll
-// happening inside child LazyColumn
+
 		val nestedScrollConnection = memorableScrollConnectedScaler(boxHeightPx, collapsedHeightPx)
 
 		Column(
@@ -357,9 +353,11 @@ fun ItemListView(
 							).coerceIn(0f, 1f)
 						}
 					}
+
 					val acceleratedToolbarStateProgress by remember {
 						derivedStateOf { 1 - acceleratedHeaderHidingProgress }
 					}
+
 					ProvideTextStyle(MaterialTheme.typography.h5) {
 						val startPadding by remember { derivedStateOf { (4 + 48 * nestedScrollConnection.progress).dp } }
 						val endPadding by remember { derivedStateOf { Dimensions.viewPaddingUnit + minimumMenuWidth * acceleratedHeaderHidingProgress } }
