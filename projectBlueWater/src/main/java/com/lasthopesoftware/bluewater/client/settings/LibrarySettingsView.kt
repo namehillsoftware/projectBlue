@@ -61,7 +61,6 @@ import com.lasthopesoftware.bluewater.shared.android.ui.components.LabeledSelect
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.StandardTextField
 import com.lasthopesoftware.bluewater.shared.android.ui.components.memorableScrollConnectedScaler
-import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberProgress
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.collectAsMutableState
@@ -157,10 +156,11 @@ fun LibrarySettingsView(
 				.fillMaxSize()
 				.nestedScroll(heightScaler)
 		) {
+			val heightValue by heightScaler.rememberValue()
 			Box(
 				modifier = Modifier
 					.fillMaxWidth()
-					.height(LocalDensity.current.run { heightScaler.value.toDp() })
+					.height(LocalDensity.current.run { heightValue.toDp() })
 			) {
 				val headerHidingProgress by heightScaler.rememberProgress()
 				val headerExpandingProgress by remember { derivedStateOf { 1 - headerHidingProgress } }

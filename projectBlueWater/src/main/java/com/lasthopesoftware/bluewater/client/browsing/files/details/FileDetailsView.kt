@@ -72,7 +72,6 @@ import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.RatingBar
 import com.lasthopesoftware.bluewater.shared.android.ui.components.memorableScrollConnectedScaler
-import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberProgress
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.promises.extensions.suspend
@@ -417,10 +416,11 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 				.fillMaxSize()
 				.nestedScroll(heightScaler)
 		) {
+			val heightValue by heightScaler.rememberValue()
 			Box(
 				modifier = Modifier
 					.fillMaxWidth()
-					.height(LocalDensity.current.run { heightScaler.value.toDp() })
+					.height(LocalDensity.current.run { heightValue.toDp() })
 			) {
 				val coverArtTopPadding = viewPadding + appBarHeight
 

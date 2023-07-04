@@ -43,7 +43,6 @@ import com.lasthopesoftware.bluewater.shared.android.ui.components.ListItemIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.memorableScrollConnectedScaler
 import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberCalculatedKnobHeight
-import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberProgress
 import com.lasthopesoftware.bluewater.shared.android.ui.components.scrollbar
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.*
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
@@ -324,10 +323,11 @@ fun ItemListView(
 				.fillMaxSize()
 				.nestedScroll(heightScaler)
 		) {
+			val heightValue by heightScaler.rememberValue()
 			Box(
 				modifier = Modifier
 					.fillMaxWidth()
-					.height(LocalDensity.current.run { heightScaler.value.toDp() })
+					.height(LocalDensity.current.run { heightValue.toDp() })
 			) {
 				Icon(
 					Icons.Default.ArrowBack,
