@@ -2,14 +2,17 @@ package com.lasthopesoftware.bluewater.shared.android.ui.components
 
 import android.util.Log
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rxjava2.subscribeAsState
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.SaverScope
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
-import io.reactivex.subjects.BehaviorSubject
 
 private const val logTag = "ScrollConnectedScaler"
 
@@ -26,32 +29,26 @@ class ScrollConnectedScalerSaver(private val max: Float, private val min: Float)
 	override fun restore(value: Float): ScrollConnectedScaler =
 		ScrollConnectedScaler(max, min, value)
 
-	override fun SaverScope.save(value: ScrollConnectedScaler): Float = value.progress.blockingFirst()
+	override fun SaverScope.save(value: ScrollConnectedScaler): Float = value.state.progress
 }
 
 class ScrollConnectedScaler(private val max: Float, private val min: Float, initialProgress: Float = 0f) : NestedScrollConnection {
 
 	private val fullDistance = max - min
 
-	private val valueState = BehaviorSubject.createDefault(max - (fullDistance * initialProgress))
-
-	val progress = valueState
-		.map { newValue -> (max - newValue) / fullDistance }
-		.replay(1)
-		.publish()
-		.refCount()
+	var state by mutableStateOf(ScrollConnectedScalerState(max - (fullDistance * initialProgress), initialProgress))
+		private set
 
 	override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
 		// try to consume before LazyColumn to collapse toolbar if needed, hence pre-scroll
 		val delta = available.y
-		val originalValue = valueState.value ?: 0f
+		val originalValue = state.value
 		val newOffset = originalValue + delta
 		val newValue = newOffset.coerceIn(min, max)
 
-		if (newValue != valueState.value)
-			valueState.onNext(newValue)
+		state = ScrollConnectedScalerState(newValue, (max - newValue) / fullDistance)
 
-		Log.d(logTag, "newValue: $newValue")
+		Log.d(logTag, "state: $state")
 
 		// here's the catch: let's pretend we consumed 0 in any case, since we want
 		// LazyColumn to scroll anyway for good UX
@@ -60,16 +57,22 @@ class ScrollConnectedScaler(private val max: Float, private val min: Float, init
 	}
 
 	@Composable
-	fun rememberProgress() = progress.subscribeAsState(initial = (max - (valueState.value ?: 0f)) / fullDistance)
+	fun rememberProgress() = remember {
+		derivedStateOf { state.progress }
+	}
 
 	@Composable
-	fun rememberValue() = valueState.subscribeAsState(initial = valueState.value ?: 0f)
+	fun rememberValue() = remember {
+		derivedStateOf { state.value }
+	}
 
 	fun goToMax() {
-		valueState.onNext(max)
+		state = ScrollConnectedScalerState(max, 1f)
 	}
 
 	fun goToMin() {
-		valueState.onNext(min)
+		state = ScrollConnectedScalerState(min, 0f)
 	}
 }
+
+data class ScrollConnectedScalerState(val value: Float, val progress: Float)
