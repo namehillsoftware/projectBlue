@@ -61,6 +61,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.components.LabeledSelect
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.StandardTextField
 import com.lasthopesoftware.bluewater.shared.android.ui.components.memorableScrollConnectedScaler
+import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberProgress
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.collectAsMutableState
@@ -149,19 +150,19 @@ fun LibrarySettingsView(
 
 		val boxHeightPx = LocalDensity.current.run { boxHeight.toPx() }
 		val collapsedHeightPx = LocalDensity.current.run { appBarHeight.toPx() }
-		val nestedScrollConnection = memorableScrollConnectedScaler(boxHeightPx, collapsedHeightPx)
+		val heightScaler = memorableScrollConnectedScaler(boxHeightPx, collapsedHeightPx)
 
 		Column(
 			modifier = Modifier
 				.fillMaxSize()
-				.nestedScroll(nestedScrollConnection)
+				.nestedScroll(heightScaler)
 		) {
 			Box(
 				modifier = Modifier
 					.fillMaxWidth()
-					.height(LocalDensity.current.run { nestedScrollConnection.value.toDp() })
+					.height(LocalDensity.current.run { heightScaler.value.toDp() })
 			) {
-				val headerHidingProgress by remember { derivedStateOf { nestedScrollConnection.progress } }
+				val headerHidingProgress by heightScaler.rememberProgress()
 				val headerExpandingProgress by remember { derivedStateOf { 1 - headerHidingProgress } }
 				val topPadding by remember { derivedStateOf(structuralEqualityPolicy()) { (appBarHeight - 46.dp * headerHidingProgress) } }
 				BoxWithConstraints(

@@ -43,6 +43,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.components.ListItemIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.memorableScrollConnectedScaler
 import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberCalculatedKnobHeight
+import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberProgress
 import com.lasthopesoftware.bluewater.shared.android.ui.components.scrollbar
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.*
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
@@ -316,17 +317,17 @@ fun ItemListView(
 		val boxHeightPx = LocalDensity.current.run { boxHeight.dp.toPx() }
 		val collapsedHeightPx = LocalDensity.current.run { appBarHeight.dp.toPx() }
 
-		val nestedScrollConnection = memorableScrollConnectedScaler(boxHeightPx, collapsedHeightPx)
+		val heightScaler = memorableScrollConnectedScaler(boxHeightPx, collapsedHeightPx)
 
 		Column(
 			modifier = Modifier
 				.fillMaxSize()
-				.nestedScroll(nestedScrollConnection)
+				.nestedScroll(heightScaler)
 		) {
 			Box(
 				modifier = Modifier
 					.fillMaxWidth()
-					.height(LocalDensity.current.run { nestedScrollConnection.value.toDp() })
+					.height(LocalDensity.current.run { heightScaler.value.toDp() })
 			) {
 				Icon(
 					Icons.Default.ArrowBack,
@@ -342,13 +343,14 @@ fun ItemListView(
 						)
 				)
 
-				val topPadding by remember { derivedStateOf { (appBarHeight - 46 * nestedScrollConnection.progress).dp } }
+				val headerCollapseProgress by heightScaler.rememberProgress()
+				val topPadding by remember { derivedStateOf { (appBarHeight - 46 * headerCollapseProgress).dp } }
 				BoxWithConstraints(
 					modifier = Modifier.padding(top = topPadding)
 				) {
 					val acceleratedHeaderHidingProgress by remember {
 						derivedStateOf {
-							nestedScrollConnection.progress.pow(
+							headerCollapseProgress.pow(
 								.33f
 							).coerceIn(0f, 1f)
 						}
@@ -359,9 +361,9 @@ fun ItemListView(
 					}
 
 					ProvideTextStyle(MaterialTheme.typography.h5) {
-						val startPadding by remember { derivedStateOf { (4 + 48 * nestedScrollConnection.progress).dp } }
+						val startPadding by remember { derivedStateOf { (4 + 48 * headerCollapseProgress).dp } }
 						val endPadding by remember { derivedStateOf { Dimensions.viewPaddingUnit + minimumMenuWidth * acceleratedHeaderHidingProgress } }
-						val maxLines by remember { derivedStateOf { (2 - nestedScrollConnection.progress).roundToInt() } }
+						val maxLines by remember { derivedStateOf { (2 - headerCollapseProgress).roundToInt() } }
 						if (maxLines > 1) {
 							Text(
 								text = itemValue,
@@ -389,7 +391,7 @@ fun ItemListView(
 						val menuWidth by remember { derivedStateOf { (maxWidth - (maxWidth - minimumMenuWidth) * acceleratedHeaderHidingProgress) } }
 						val expandedTopRowPadding = expandedTitleHeight + expandedMenuVerticalPadding
 						val collapsedTopRowPadding = 6
-						val topRowPadding by remember { derivedStateOf { (expandedTopRowPadding - (expandedTopRowPadding - collapsedTopRowPadding) * nestedScrollConnection.progress).dp } }
+						val topRowPadding by remember { derivedStateOf { (expandedTopRowPadding - (expandedTopRowPadding - collapsedTopRowPadding) * headerCollapseProgress).dp } }
 
 						Row(
 							modifier = Modifier

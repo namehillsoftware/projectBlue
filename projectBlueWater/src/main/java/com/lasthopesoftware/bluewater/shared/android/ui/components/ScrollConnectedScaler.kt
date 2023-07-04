@@ -2,8 +2,10 @@ package com.lasthopesoftware.bluewater.shared.android.ui.components
 
 import android.util.Log
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.SaverScope
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -27,17 +29,14 @@ class ScrollConnectedScalerSaver(private val max: Float, private val min: Float)
 	override fun restore(value: Float): ScrollConnectedScaler =
 		ScrollConnectedScaler(max, min, value)
 
-	override fun SaverScope.save(value: ScrollConnectedScaler): Float = value.progress
+	override fun SaverScope.save(value: ScrollConnectedScaler): Float = value.progress()
 }
 
-class ScrollConnectedScaler(private val max: Float, private val min: Float, initialProgress: Float = 0f) : NestedScrollConnection {
+class ScrollConnectedScaler(val max: Float, val min: Float, initialProgress: Float = 0f) : NestedScrollConnection {
 
-	private val fullDistance = max - min
+	val fullDistance = max - min
 
 	var value by mutableStateOf(max - (fullDistance * initialProgress))
-		private set
-
-	var progress by mutableStateOf(initialProgress)
 		private set
 
 	override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
@@ -46,9 +45,8 @@ class ScrollConnectedScaler(private val max: Float, private val min: Float, init
 		val newOffset = value + delta
 		val originalValue = value
 		value = newOffset.coerceIn(min, max)
-		progress = (max - value) / fullDistance
 
-		Log.d(logTag, "height: $value, progress: $progress")
+		Log.d(logTag, "value: $value")
 
 		// here's the catch: let's pretend we consumed 0 in any case, since we want
 		// LazyColumn to scroll anyway for good UX
@@ -58,11 +56,14 @@ class ScrollConnectedScaler(private val max: Float, private val min: Float, init
 
 	fun goToMax() {
 		value = max
-		progress = 1f
 	}
 
 	fun goToMin() {
 		value = min
-		progress = 0f
 	}
 }
+
+fun ScrollConnectedScaler.progress() = (max - value) / fullDistance
+
+@Composable
+fun ScrollConnectedScaler.rememberProgress() = remember { derivedStateOf { progress() } }

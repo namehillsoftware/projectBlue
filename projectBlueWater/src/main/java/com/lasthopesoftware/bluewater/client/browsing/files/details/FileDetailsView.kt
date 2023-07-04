@@ -72,6 +72,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.RatingBar
 import com.lasthopesoftware.bluewater.shared.android.ui.components.memorableScrollConnectedScaler
+import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberProgress
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.promises.extensions.suspend
@@ -409,8 +410,6 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 		val heightScaler = LocalDensity.current.run {
 			memorableScrollConnectedScaler(max = boxHeight.toPx(), min = appBarHeight.toPx())
 		}
-		val headerCollapseProgress by remember { derivedStateOf { heightScaler.progress } }
-		val headerExpandProgress by remember { derivedStateOf { 1 - headerCollapseProgress } }
 		val lazyListState = rememberLazyListState()
 
 		Column(
@@ -425,6 +424,7 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 			) {
 				val coverArtTopPadding = viewPadding + appBarHeight
 
+				val headerCollapseProgress by heightScaler.rememberProgress()
 				val coverArtScrollOffset by remember { derivedStateOf { -coverArtContainerHeight * headerCollapseProgress } }
 				Box(
 					modifier = Modifier
@@ -483,6 +483,7 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 					)
 				}
 
+				val headerExpandProgress by remember { derivedStateOf { 1 - headerCollapseProgress } }
 				val topTitlePadding by remember { derivedStateOf { expandedTitlePadding * headerExpandProgress } }
 				BoxWithConstraints(
 					modifier = Modifier
