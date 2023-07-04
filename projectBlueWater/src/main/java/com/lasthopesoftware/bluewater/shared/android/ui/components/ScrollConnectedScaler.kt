@@ -44,6 +44,7 @@ class ScrollConnectedScaler(private val max: Float, private val min: Float, init
 		// try to consume before LazyColumn to collapse toolbar if needed, hence pre-scroll
 		val delta = available.y
 		val newOffset = value + delta
+		val originalValue = value
 		value = newOffset.coerceIn(min, max)
 		progress = (max - value) / fullDistance
 
@@ -52,7 +53,7 @@ class ScrollConnectedScaler(private val max: Float, private val min: Float, init
 		// here's the catch: let's pretend we consumed 0 in any case, since we want
 		// LazyColumn to scroll anyway for good UX
 		// We're basically watching scroll without taking it
-		return Offset.Zero
+		return Offset.Zero.copy(y = value - originalValue)
 	}
 
 	fun goToMax() {
