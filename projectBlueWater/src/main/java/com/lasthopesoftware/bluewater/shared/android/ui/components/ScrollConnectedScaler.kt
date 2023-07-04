@@ -26,19 +26,24 @@ class ScrollConnectedScalerSaver(private val max: Float, private val min: Float)
 	override fun restore(value: Float): ScrollConnectedScaler =
 		ScrollConnectedScaler(max, min, value)
 
-	override fun SaverScope.save(value: ScrollConnectedScaler): Float = value.calculateProgress(value.valueState.value ?: 0f)
+	override fun SaverScope.save(value: ScrollConnectedScaler): Float = value.currentProgress()
 }
 
 class ScrollConnectedScaler(private val max: Float, private val min: Float, initialProgress: Float = 0f) : NestedScrollConnection {
 
 	private val fullDistance = max - min
 
-	internal val valueState = BehaviorSubject.createDefault(max - (fullDistance * initialProgress))
+	private val initialValue = max - (fullDistance * initialProgress)
 
-	val progress = valueState
+	private val valueState = BehaviorSubject.createDefault(initialValue)
+
+	private val progress = valueState
 		.map(::calculateProgress)
 		.replay(1)
 		.refCount()
+
+	private val currentValue: Float
+		get() = valueState.value ?: initialValue
 
 	override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
 		// try to consume before LazyColumn to collapse toolbar if needed, hence pre-scroll
@@ -58,11 +63,13 @@ class ScrollConnectedScaler(private val max: Float, private val min: Float, init
 		return Offset.Zero.copy(y = newValue - originalValue)
 	}
 
-	@Composable
-	fun rememberProgress() = progress.subscribeAsState(initial = (max - (valueState.value ?: 0f)) / fullDistance)
+	fun currentProgress(): Float = calculateProgress(currentValue)
 
 	@Composable
-	fun rememberValue() = valueState.subscribeAsState(initial = valueState.value ?: 0f)
+	fun rememberProgress() = progress.subscribeAsState(initial = calculateProgress(currentValue))
+
+	@Composable
+	fun rememberValue() = valueState.subscribeAsState(initial = currentValue)
 
 	fun goToMax() {
 		valueState.onNext(max)
@@ -72,5 +79,5 @@ class ScrollConnectedScaler(private val max: Float, private val min: Float, init
 		valueState.onNext(min)
 	}
 
-	internal fun calculateProgress(value: Float) = (max - value) / fullDistance
+	private fun calculateProgress(value: Float) = (max - value) / fullDistance
 }
