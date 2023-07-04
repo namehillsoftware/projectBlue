@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -48,6 +49,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -69,15 +71,12 @@ import com.lasthopesoftware.bluewater.shared.android.ui.components.ColumnMenuIco
 import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.RatingBar
+import com.lasthopesoftware.bluewater.shared.android.ui.components.memorableScrollConnectedScaler
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.promises.extensions.suspend
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
-import me.onebone.toolbar.CollapsingToolbarScaffold
-import me.onebone.toolbar.ExperimentalToolbarApi
-import me.onebone.toolbar.ScrollStrategy
-import me.onebone.toolbar.rememberCollapsingToolbarScaffoldState
 import kotlin.math.pow
 
 private val viewPadding = Dimensions.viewPaddingUnit
@@ -134,7 +133,7 @@ private fun StaticFileMenu(viewModel: FileDetailsViewModel, coverArtColorState: 
 }
 
 @Composable
-@OptIn(ExperimentalFoundationApi::class, ExperimentalToolbarApi::class)
+@OptIn(ExperimentalFoundationApi::class)
 internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 	val activity = LocalContext.current as? Activity ?: return
 
@@ -394,25 +393,42 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 	fun fileDetailsSingleColumn() {
 		val fileProperties by viewModel.fileProperties.collectAsState()
 
-		val toolbarState = rememberCollapsingToolbarScaffoldState()
-		val headerHidingProgress by remember { derivedStateOf { 1 - toolbarState.toolbarState.progress } }
+		val coverArtContainerHeight = 300.dp
+		val appBarHeight = Dimensions.appBarHeight
+		val coverArtBottomPadding = viewPadding + 8.dp
+		val expandedTitlePadding = coverArtContainerHeight + coverArtBottomPadding
+		val titleFontSize = MaterialTheme.typography.h5.fontSize
+		val subTitleFontSize = MaterialTheme.typography.h6.fontSize
+		val guessedRowSpacing = Dimensions.viewPaddingUnit
+		val titleHeight =
+			LocalDensity.current.run { titleFontSize.toDp() + subTitleFontSize.toDp() } + guessedRowSpacing * 3
+		val expandedIconSize = Dimensions.menuHeight
+		val expandedMenuVerticalPadding = Dimensions.viewPaddingUnit * 3
+		val boxHeight =
+			expandedTitlePadding + titleHeight + expandedIconSize + expandedMenuVerticalPadding * 2
+		val heightScaler = LocalDensity.current.run {
+			memorableScrollConnectedScaler(max = boxHeight.toPx(), min = appBarHeight.toPx())
+		}
+		val headerCollapseProgress by remember { derivedStateOf { heightScaler.progress } }
+		val headerExpandProgress by remember { derivedStateOf { 1 - headerCollapseProgress } }
 		val lazyListState = rememberLazyListState()
 
-		CollapsingToolbarScaffold(
-			enabled = true,
-			state = toolbarState,
-			scrollStrategy = ScrollStrategy.ExitUntilCollapsed,
-			modifier = Modifier.fillMaxSize(),
-			toolbar = {
-				val appBarHeight = 56.dp
+		Column(
+			modifier = Modifier
+				.fillMaxSize()
+				.nestedScroll(heightScaler)
+		) {
+			Box(
+				modifier = Modifier
+					.fillMaxWidth()
+					.height(LocalDensity.current.run { heightScaler.value.toDp() })
+			) {
 				val coverArtTopPadding = viewPadding + appBarHeight
-				val coverArtBottomPadding = viewPadding + 8.dp
-				val coverArtContainerHeight = 300.dp
 
-				val coverArtScrollOffset by remember { derivedStateOf { -coverArtContainerHeight * headerHidingProgress } }
+				val coverArtScrollOffset by remember { derivedStateOf { -coverArtContainerHeight * headerCollapseProgress } }
 				Box(
 					modifier = Modifier
-						.height(coverArtContainerHeight)
+						.requiredHeight(coverArtContainerHeight)
 						.padding(
 							top = coverArtTopPadding,
 							start = viewPadding + 40.dp,
@@ -467,18 +483,7 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 					)
 				}
 
-				val expandedTitlePadding = coverArtContainerHeight + coverArtBottomPadding
-				val expandedIconSize = Dimensions.menuHeight
-				val expandedMenuVerticalPadding = 12.dp
-				val titleFontSize = MaterialTheme.typography.h5.fontSize
-				val subTitleFontSize = MaterialTheme.typography.h6.fontSize
-				val guessedRowSpacing = 4.dp
-				val titleHeight =
-					LocalDensity.current.run { titleFontSize.toDp() + subTitleFontSize.toDp() } + guessedRowSpacing * 3
-				val boxHeight =
-					expandedTitlePadding + titleHeight + expandedIconSize + expandedMenuVerticalPadding * 2
-
-				val topTitlePadding by remember { derivedStateOf { expandedTitlePadding * toolbarState.toolbarState.progress } }
+				val topTitlePadding by remember { derivedStateOf { expandedTitlePadding * headerExpandProgress } }
 				BoxWithConstraints(
 					modifier = Modifier
 						.height(boxHeight)
@@ -489,13 +494,13 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 
 					val acceleratedToolbarStateProgress by remember {
 						derivedStateOf {
-							toolbarState.toolbarState.progress.pow(3).coerceIn(0f, 1f)
+							headerExpandProgress.pow(3).coerceIn(0f, 1f)
 						}
 					}
 
 					val acceleratedHeaderHidingProgress by remember { derivedStateOf { 1 - acceleratedToolbarStateProgress } }
 
-					val startPadding by remember { derivedStateOf { viewPadding + 48.dp * headerHidingProgress } }
+					val startPadding by remember { derivedStateOf { viewPadding + 48.dp * headerCollapseProgress } }
 					val endPadding by remember { derivedStateOf { viewPadding + minimumMenuWidth * acceleratedHeaderHidingProgress } }
 					filePropertyHeader(
 						modifier = Modifier.padding(start = startPadding, end = endPadding),
@@ -505,7 +510,7 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 
 					val menuWidth by remember { derivedStateOf { (maxWidth - (maxWidth - minimumMenuWidth) * acceleratedHeaderHidingProgress) } }
 					val expandedTopRowPadding = titleHeight + expandedMenuVerticalPadding
-					val topRowPadding by remember { derivedStateOf { expandedTopRowPadding - (expandedTopRowPadding - 14.dp) * headerHidingProgress } }
+					val topRowPadding by remember { derivedStateOf { expandedTopRowPadding - (expandedTopRowPadding - 14.dp) * headerCollapseProgress } }
 					Row(
 						modifier = Modifier
 							.padding(top = topRowPadding, start = 8.dp, end = 8.dp)
@@ -513,16 +518,16 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 							.align(Alignment.TopEnd)
 					) {
 						val iconSize = Dimensions.topMenuIconSize
-						val chevronRotation by remember { derivedStateOf { 180 * headerHidingProgress } }
-						val isCollapsed by remember { derivedStateOf { headerHidingProgress > .98f } }
+						val chevronRotation by remember { derivedStateOf { 180 * headerCollapseProgress } }
+						val isCollapsed by remember { derivedStateOf { headerCollapseProgress > .98f } }
 
 						val chevronLabel = stringResource(id = if (isCollapsed) R.string.expand else R.string.collapse)
 						val scope = rememberCoroutineScope()
 						ColumnMenuIcon(
 							onClick = {
 								scope.launch {
-									if (isCollapsed) toolbarState.toolbarState.expand()
-									else toolbarState.toolbarState.collapse()
+									if (isCollapsed) heightScaler.goToMax()
+									else heightScaler.goToMin()
 								}
 							},
 							icon = {
@@ -577,7 +582,7 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 					}
 				}
 			}
-		) {
+
 			LazyColumn(modifier = Modifier.fillMaxSize(), state = lazyListState) {
 				items(fileProperties) {
 					filePropertyRow(it)

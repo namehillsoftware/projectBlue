@@ -15,7 +15,7 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 private const val logTag = "ScrollConnectedScaler"
 
 /**
- * Will scale a value based on a nested scroll, sourced from Android examples on this page:
+ * Will scale a value based on a nested **vertical** scroll, sourced from Android examples on this page:
  * https://developer.android.com/reference/kotlin/androidx/compose/ui/input/nestedscroll/package-summary#extension-functions
  */
 @Composable
