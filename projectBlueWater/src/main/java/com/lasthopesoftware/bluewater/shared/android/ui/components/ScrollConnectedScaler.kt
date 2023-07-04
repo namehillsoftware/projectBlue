@@ -26,19 +26,18 @@ class ScrollConnectedScalerSaver(private val max: Float, private val min: Float)
 	override fun restore(value: Float): ScrollConnectedScaler =
 		ScrollConnectedScaler(max, min, value)
 
-	override fun SaverScope.save(value: ScrollConnectedScaler): Float = value.progress.blockingFirst()
+	override fun SaverScope.save(value: ScrollConnectedScaler): Float = value.calculateProgress(value.valueState.value ?: 0f)
 }
 
 class ScrollConnectedScaler(private val max: Float, private val min: Float, initialProgress: Float = 0f) : NestedScrollConnection {
 
 	private val fullDistance = max - min
 
-	private val valueState = BehaviorSubject.createDefault(max - (fullDistance * initialProgress))
+	internal val valueState = BehaviorSubject.createDefault(max - (fullDistance * initialProgress))
 
 	val progress = valueState
-		.map { newValue -> (max - newValue) / fullDistance }
+		.map(::calculateProgress)
 		.replay(1)
-		.publish()
 		.refCount()
 
 	override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
@@ -72,4 +71,6 @@ class ScrollConnectedScaler(private val max: Float, private val min: Float, init
 	fun goToMin() {
 		valueState.onNext(min)
 	}
+
+	internal fun calculateProgress(value: Float) = (max - value) / fullDistance
 }
