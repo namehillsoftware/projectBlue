@@ -175,7 +175,6 @@ dependencies {
 	implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.1'
 	implementation 'androidx.activity:activity-compose:1.7.2'
 	implementation 'androidx.compose.compiler:compiler:1.4.8'
-	implementation 'me.onebone:toolbar-compose:2.3.5'
 	implementation "dev.olshevski.navigation:reimagined:1.4.0"
 	debugImplementation "androidx.compose.ui:ui-tooling:$compose_version"
 	testImplementation 'androidx.test.ext:junit:1.1.5'

@@ -9,6 +9,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -41,6 +42,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -55,14 +58,12 @@ import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MenuIcon
+import com.lasthopesoftware.bluewater.shared.android.ui.components.memorableScrollConnectedScaler
 import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberCalculatedKnobHeight
 import com.lasthopesoftware.bluewater.shared.android.ui.components.scrollbar
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
-import me.onebone.toolbar.CollapsingToolbarScaffold
-import me.onebone.toolbar.ScrollStrategy
-import me.onebone.toolbar.rememberCollapsingToolbarScaffoldState
 import kotlin.math.pow
 
 private const val expandedTitleHeight = 84
@@ -100,19 +101,30 @@ fun ActiveFileDownloadsView(
 	}
 
 	ControlSurface {
-		val toolbarState = rememberCollapsingToolbarScaffoldState()
-		val headerHidingProgress by remember { derivedStateOf(structuralEqualityPolicy()) { 1 - toolbarState.toolbarState.progress } }
 		val isLoading by activeFileDownloadsViewModel.isLoading.collectAsState()
 
-		CollapsingToolbarScaffold(
-			enabled = true,
-			state = toolbarState,
-			scrollStrategy = ScrollStrategy.ExitUntilCollapsed,
-			modifier = Modifier.fillMaxSize(),
-			toolbar = {
-				val topPadding by remember { derivedStateOf(structuralEqualityPolicy()) { (appBarHeight - 46 * headerHidingProgress).dp } }
-				val boxHeight =
-					expandedTitleHeight + expandedIconSize + expandedMenuVerticalPadding * 2 + appBarHeight
+		val boxHeight =
+			expandedTitleHeight + expandedIconSize + expandedMenuVerticalPadding * 2 + appBarHeight
+
+		val heightScaler = LocalDensity.current.run {
+			memorableScrollConnectedScaler(max = boxHeight.dp.toPx(), min = appBarHeight.dp.toPx())
+		}
+
+		Column(
+			modifier = Modifier
+				.fillMaxSize()
+				.nestedScroll(heightScaler)
+		) {
+			val heightValue by heightScaler.rememberValue()
+			val headerCollapsingProgress by heightScaler.rememberProgress()
+			val headerExpandingProgress by remember { derivedStateOf { 1 - headerCollapsingProgress } }
+			Box(
+				modifier = Modifier
+					.fillMaxWidth()
+					.height(LocalDensity.current.run { heightValue.toDp() })
+			) {
+				val topPadding by remember { derivedStateOf(structuralEqualityPolicy()) { (appBarHeight - 46 * headerCollapsingProgress).dp } }
+
 				BoxWithConstraints(
 					modifier = Modifier
 						.height(boxHeight.dp)
@@ -121,12 +133,12 @@ fun ActiveFileDownloadsView(
 					val minimumMenuWidth = (3 * 32).dp
 					val acceleratedProgress by remember {
 						derivedStateOf(structuralEqualityPolicy()) {
-							1 - toolbarState.toolbarState.progress.pow(3).coerceIn(0f, 1f)
+							1 - headerExpandingProgress.pow(3).coerceIn(0f, 1f)
 						}
 					}
 					ProvideTextStyle(MaterialTheme.typography.h5) {
 						val iconClearance = 48
-						val startPadding by remember {  derivedStateOf(structuralEqualityPolicy()) { (4 + iconClearance * headerHidingProgress).dp } }
+						val startPadding by remember {  derivedStateOf(structuralEqualityPolicy()) { (4 + iconClearance * headerCollapsingProgress).dp } }
 						val endPadding by remember { derivedStateOf(structuralEqualityPolicy()) { 4.dp + minimumMenuWidth * acceleratedProgress } }
 						val header = stringResource(id = R.string.activeDownloads)
 						MarqueeText(
@@ -143,7 +155,7 @@ fun ActiveFileDownloadsView(
 					val menuWidth by remember { derivedStateOf(structuralEqualityPolicy()) { (maxWidth - (maxWidth - minimumMenuWidth) * acceleratedProgress) } }
 					val expandedTopRowPadding = expandedTitleHeight + expandedMenuVerticalPadding
 					val collapsedTopRowPadding = 6
-					val topRowPadding by remember { derivedStateOf(structuralEqualityPolicy()) { (expandedTopRowPadding - (expandedTopRowPadding - collapsedTopRowPadding) * headerHidingProgress).dp } }
+					val topRowPadding by remember { derivedStateOf(structuralEqualityPolicy()) { (expandedTopRowPadding - (expandedTopRowPadding - collapsedTopRowPadding) * headerCollapsingProgress).dp } }
 					Row(
 						modifier = Modifier
 							.padding(
@@ -221,8 +233,8 @@ fun ActiveFileDownloadsView(
 							)
 					)
 				}
-			},
-		) {
+			}
+
 			if (isLoading) {
 				Box(modifier = Modifier.fillMaxSize()) {
 					CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))

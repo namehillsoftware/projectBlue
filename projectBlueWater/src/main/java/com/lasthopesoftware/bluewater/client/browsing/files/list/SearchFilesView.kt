@@ -6,6 +6,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -42,6 +43,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -56,6 +59,7 @@ import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionF
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.shared.android.ui.components.ColumnMenuIcon
+import com.lasthopesoftware.bluewater.shared.android.ui.components.memorableScrollConnectedScaler
 import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberCalculatedKnobHeight
 import com.lasthopesoftware.bluewater.shared.android.ui.components.scrollbar
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
@@ -63,9 +67,6 @@ import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 import com.lasthopesoftware.bluewater.shared.promises.extensions.suspend
 import kotlinx.coroutines.launch
-import me.onebone.toolbar.CollapsingToolbarScaffold
-import me.onebone.toolbar.ScrollStrategy
-import me.onebone.toolbar.rememberCollapsingToolbarScaffoldState
 import java.io.IOException
 import kotlin.math.pow
 
@@ -132,27 +133,36 @@ fun SearchFilesView(
 	}
 
 	ControlSurface {
-		val toolbarState = rememberCollapsingToolbarScaffoldState()
-		val headerHidingProgress by remember { derivedStateOf { 1 - toolbarState.toolbarState.progress } }
 		val isLoading by searchFilesViewModel.isLoading.collectAsState()
 
-		CollapsingToolbarScaffold(
-			enabled = true,
-			state = toolbarState,
-			scrollStrategy = ScrollStrategy.ExitUntilCollapsed,
-			modifier = Modifier.fillMaxSize(),
-			toolbar = {
-				val appBarHeight = Dimensions.appBarHeight
-				val searchFieldPadding = 16.dp
-				val minimumMenuWidth = (2 * 32).dp
+		val appBarHeight = Dimensions.appBarHeight
+		val searchFieldPadding = 16.dp
+		val minimumMenuWidth = (2 * 32).dp
 
-				val expandedMenuVerticalPadding = 4.dp
-				val boxHeight = appBarHeight + Dimensions.menuHeight + expandedMenuVerticalPadding * 2 + searchFieldPadding * 2
+		val expandedMenuVerticalPadding = 4.dp
+		val boxHeight = appBarHeight + Dimensions.menuHeight + expandedMenuVerticalPadding * 2 + searchFieldPadding * 2
 
+		val heightScaler = LocalDensity.current.run {
+			memorableScrollConnectedScaler(max = boxHeight.toPx(), min = appBarHeight.toPx())
+		}
+
+		Column(
+			modifier = Modifier
+				.fillMaxSize()
+				.nestedScroll(heightScaler)
+		) {
+			val heightValue by heightScaler.rememberValue()
+			val headerCollapsingProgress by heightScaler.rememberProgress()
+
+			Box(
+				modifier = Modifier
+					.fillMaxWidth()
+					.height(LocalDensity.current.run { heightValue.toDp() })
+			) {
 				val acceleratedToolbarStateProgress by remember {
 					derivedStateOf {
-						toolbarState.toolbarState.progress.pow(
-							5
+						headerCollapsingProgress.pow(
+							.2f
 						).coerceIn(0f, 1f)
 					}
 				}
@@ -171,7 +181,7 @@ fun SearchFilesView(
 						val menuWidth by remember { derivedStateOf { (maxWidth - (maxWidth - minimumMenuWidth) * acceleratedHeaderHidingProgress) } }
 						val expandedTopRowPadding = appBarHeight + expandedMenuVerticalPadding + searchFieldPadding * 2
 						val collapsedTopRowPadding = searchFieldPadding + appBarHeight / 2 - iconSize / 2
-						val topRowPadding by remember { derivedStateOf { (expandedTopRowPadding - (expandedTopRowPadding - collapsedTopRowPadding) * headerHidingProgress) } }
+						val topRowPadding by remember { derivedStateOf { (expandedTopRowPadding - (expandedTopRowPadding - collapsedTopRowPadding) * headerCollapsingProgress) } }
 						Row(
 							modifier = Modifier
 								.padding(
@@ -191,7 +201,7 @@ fun SearchFilesView(
 									searchFilesViewModel.libraryId?.also {
 										playbackServiceController.startPlaylist(it, files, 0)
 									}
-							  	},
+								},
 								icon = {
 									Image(
 										painter = painterResource(id = R.drawable.av_play),
@@ -210,7 +220,7 @@ fun SearchFilesView(
 									searchFilesViewModel.libraryId?.also {
 										playbackServiceController.shuffleAndStartPlaylist(it, files)
 									}
-							  	},
+								},
 								icon = {
 									Image(
 										painter = painterResource(id = R.drawable.av_shuffle),
@@ -273,8 +283,7 @@ fun SearchFilesView(
 							.weight(1f)
 					)
 				}
-			},
-		) {
+			}
 
 			when {
 				isLoading -> {
