@@ -42,34 +42,31 @@ class ScrollConnectedScaler(private val max: Float, private val min: Float, init
 		.replay(1)
 		.refCount()
 
-	private val currentValue: Float
-		get() = valueState.value ?: initialValue
+	private var totalDistanceTraveled = 0f
 
 	override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
 		// try to consume before LazyColumn to collapse toolbar if needed, hence pre-scroll
 		val delta = available.y
-		val originalValue = valueState.value ?: 0f
-		val newOffset = originalValue + delta
-		val newValue = newOffset.coerceIn(min, max)
+		totalDistanceTraveled += delta
+		val newValue = totalDistanceTraveled.coerceIn(min, max)
 
-		if (newValue != valueState.value)
+		val originalValue = currentValue()
+		if (newValue != originalValue)
 			valueState.onNext(newValue)
 
 		Log.d(logTag, "newValue: $newValue")
 
-		// here's the catch: let's pretend we consumed 0 in any case, since we want
-		// LazyColumn to scroll anyway for good UX
-		// We're basically watching scroll without taking it
-		return Offset.Zero.copy(y = newValue - originalValue)
+		val remainingDelta = newValue - originalValue
+		return Offset.Zero.copy(y = remainingDelta)
 	}
 
-	fun currentProgress(): Float = calculateProgress(currentValue)
+	fun currentProgress(): Float = calculateProgress(currentValue())
 
 	@Composable
-	fun rememberProgress() = progress.subscribeAsState(initial = calculateProgress(currentValue))
+	fun rememberProgress() = progress.subscribeAsState(initial = calculateProgress(currentValue()))
 
 	@Composable
-	fun rememberValue() = valueState.subscribeAsState(initial = currentValue)
+	fun rememberValue() = valueState.subscribeAsState(initial = currentValue())
 
 	fun goToMax() {
 		valueState.onNext(max)
@@ -78,6 +75,8 @@ class ScrollConnectedScaler(private val max: Float, private val min: Float, init
 	fun goToMin() {
 		valueState.onNext(min)
 	}
+
+	private fun currentValue(): Float = valueState.value ?: initialValue
 
 	private fun calculateProgress(value: Float) = (max - value) / fullDistance
 }
