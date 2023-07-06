@@ -385,6 +385,8 @@ fun ItemListView(
 						}
 					}
 
+					if (isFilesLoading) return@BoxWithConstraints
+
 					val menuWidth by remember { derivedStateOf { linearInterpolation(maxWidth, minimumMenuWidth, acceleratedHeaderHidingProgress) } }
 					val expandedTopRowPadding = expandedTitleHeight + expandedMenuVerticalPadding
 					val collapsedTopRowPadding = 6
