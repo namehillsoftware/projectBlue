@@ -302,11 +302,8 @@ fun ItemListView(
 	val isFilesLoading by fileListViewModel.isLoading.collectAsState()
 
 	ControlSurface {
-		// Treat the files not being loaded as isAnyFiles being false to trick the CollapsingToolbarScaffold
-		// into measuring the expanded size correctly.
-		val isAnyFiles by remember { derivedStateOf { isFilesLoading || files.any() } }
-		val expandedIconSize by remember { derivedStateOf { if (isAnyFiles) Dimensions.menuHeight.value else 0f } }
-		val expandedMenuVerticalPadding by remember { derivedStateOf { if (isAnyFiles) 12 else 0 } }
+		val expandedIconSize = Dimensions.menuHeight.value
+		val expandedMenuVerticalPadding = 12
 		val boxHeight by remember {
 			derivedStateOf {
 				expandedTitleHeight + appBarHeight + expandedIconSize + expandedMenuVerticalPadding * 2
@@ -350,8 +347,8 @@ fun ItemListView(
 				) {
 					val acceleratedHeaderHidingProgress by remember {
 						derivedStateOf {
-							headerCollapseProgress.pow(
-								.33f
+							(1 - headerCollapseProgress).pow(
+								3
 							).coerceIn(0f, 1f)
 						}
 					}
@@ -387,25 +384,24 @@ fun ItemListView(
 						}
 					}
 
-					if (files.any()) {
-						val menuWidth by remember { derivedStateOf { (maxWidth - (maxWidth - minimumMenuWidth) * acceleratedHeaderHidingProgress) } }
-						val expandedTopRowPadding = expandedTitleHeight + expandedMenuVerticalPadding
-						val collapsedTopRowPadding = 6
-						val topRowPadding by remember { derivedStateOf { (expandedTopRowPadding - (expandedTopRowPadding - collapsedTopRowPadding) * headerCollapseProgress).dp } }
+					val menuWidth by remember { derivedStateOf { (maxWidth - (maxWidth - minimumMenuWidth) * acceleratedHeaderHidingProgress) } }
+					val expandedTopRowPadding = expandedTitleHeight + expandedMenuVerticalPadding
+					val collapsedTopRowPadding = 6
+					val topRowPadding by remember { derivedStateOf { (expandedTopRowPadding - (expandedTopRowPadding - collapsedTopRowPadding) * headerCollapseProgress).dp } }
+					val textModifier = Modifier.alpha(acceleratedToolbarStateProgress)
 
-						Row(
-							modifier = Modifier
-								.padding(
-									top = topRowPadding,
-									bottom = expandedMenuVerticalPadding.dp,
-									start = 8.dp,
-									end = 8.dp
-								)
-								.width(menuWidth)
-								.align(Alignment.TopEnd)
-						) {
-							val textModifier = Modifier.alpha(acceleratedToolbarStateProgress)
-
+					Row(
+						modifier = Modifier
+							.padding(
+								top = topRowPadding,
+								bottom = expandedMenuVerticalPadding.dp,
+								start = 8.dp,
+								end = 8.dp
+							)
+							.width(menuWidth)
+							.align(Alignment.TopEnd)
+					) {
+						if (files.any()) {
 							val playButtonLabel = stringResource(id = R.string.btn_play)
 							ColumnMenuIcon(
 								onClick = {
@@ -448,6 +444,48 @@ fun ItemListView(
 								iconPainter = painterResource(id = R.drawable.av_shuffle),
 								contentDescription = shuffleButtonLabel,
 								label = if (acceleratedHeaderHidingProgress < 1) shuffleButtonLabel else null,
+								labelModifier = textModifier,
+								labelMaxLines = 1,
+							)
+						} else {
+							val downloadButtonLabel = stringResource(id = R.string.activeDownloads)
+							ColumnMenuIcon(
+								onClick = {
+									itemListViewModel.loadedLibraryId?.also {
+										applicationNavigation.viewActiveDownloads(it)
+									}
+								},
+								iconPainter = painterResource(id = R.drawable.ic_water),
+								contentDescription = downloadButtonLabel,
+								label = if (acceleratedHeaderHidingProgress < 1) downloadButtonLabel else null,
+								labelModifier = textModifier,
+								labelMaxLines = 1,
+							)
+
+							val searchButtonLabel = stringResource(id = R.string.search)
+							ColumnMenuIcon(
+								onClick = {
+									itemListViewModel.loadedLibraryId?.also {
+										applicationNavigation.launchSearch(it)
+									}
+								},
+								iconPainter = painterResource(id = R.drawable.ic_water),
+								contentDescription = searchButtonLabel,
+								label = if (acceleratedHeaderHidingProgress < 1) searchButtonLabel else null,
+								labelMaxLines = 1,
+								labelModifier = textModifier,
+							)
+
+							val settingsButtonLabel = stringResource(id = R.string.settings)
+							ColumnMenuIcon(
+								onClick = {
+									itemListViewModel.loadedLibraryId?.also {
+										applicationNavigation.viewServerSettings(it)
+									}
+								},
+								iconPainter = painterResource(id = R.drawable.ic_action_settings),
+								contentDescription = settingsButtonLabel,
+								label = if (acceleratedHeaderHidingProgress < 1) settingsButtonLabel else null,
 								labelModifier = textModifier,
 								labelMaxLines = 1,
 							)

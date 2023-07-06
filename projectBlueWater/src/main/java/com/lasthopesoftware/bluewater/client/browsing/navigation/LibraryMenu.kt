@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -195,7 +194,7 @@ fun LibraryMenu(
 					.fillMaxHeight()
 			) {
 				Icon(
-					Icons.Default.Search,
+					painter = painterResource(id = R.drawable.search_36dp),
 					contentDescription = stringResource(id = R.string.search),
 					modifier = Modifier
 						.align(Alignment.Center)
