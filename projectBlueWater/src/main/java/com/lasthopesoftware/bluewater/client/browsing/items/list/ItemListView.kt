@@ -345,7 +345,7 @@ fun ItemListView(
 				BoxWithConstraints(
 					modifier = Modifier.padding(top = topPadding)
 				) {
-					val acceleratedHeaderHidingProgress by remember {
+					val acceleratedToolbarStateProgress by remember {
 						derivedStateOf {
 							(1 - headerCollapseProgress).pow(
 								3
@@ -353,8 +353,8 @@ fun ItemListView(
 						}
 					}
 
-					val acceleratedToolbarStateProgress by remember {
-						derivedStateOf { 1 - acceleratedHeaderHidingProgress }
+					val acceleratedHeaderHidingProgress by remember {
+						derivedStateOf { 1 - acceleratedToolbarStateProgress }
 					}
 
 					ProvideTextStyle(MaterialTheme.typography.h5) {
@@ -469,7 +469,7 @@ fun ItemListView(
 										applicationNavigation.launchSearch(it)
 									}
 								},
-								iconPainter = painterResource(id = R.drawable.ic_water),
+								iconPainter = painterResource(id = R.drawable.search_36dp),
 								contentDescription = searchButtonLabel,
 								label = if (acceleratedHeaderHidingProgress < 1) searchButtonLabel else null,
 								labelMaxLines = 1,

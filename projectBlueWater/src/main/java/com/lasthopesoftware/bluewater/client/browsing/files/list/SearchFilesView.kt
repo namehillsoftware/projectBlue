@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.list
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -13,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -71,6 +69,13 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.suspend
 import kotlinx.coroutines.launch
 import java.io.IOException
 import kotlin.math.pow
+
+private val searchFieldPadding = Dimensions.viewPaddingUnit * 4
+private val topBarHeight = TextFieldDefaults.MinHeight + searchFieldPadding * 2
+private val minimumMenuWidth = (2 * 32).dp
+
+private val expandedMenuVerticalPadding = Dimensions.viewPaddingUnit
+private val boxHeight = topBarHeight + Dimensions.menuHeight + expandedMenuVerticalPadding * 2
 
 @Composable
 fun SearchFilesView(
@@ -137,13 +142,6 @@ fun SearchFilesView(
 	ControlSurface {
 		val isLoading by searchFilesViewModel.isLoading.collectAsState()
 
-		val searchFieldPadding = Dimensions.viewPaddingUnit * 4
-		val topBarHeight = TextFieldDefaults.MinHeight + searchFieldPadding * 2
-		val minimumMenuWidth = (2 * 32).dp
-
-		val expandedMenuVerticalPadding = 4.dp
-		val boxHeight = topBarHeight + Dimensions.menuHeight + expandedMenuVerticalPadding * 2
-
 		val heightScaler = LocalDensity.current.run {
 			memorableScrollConnectedScaler(max = boxHeight.toPx(), min = topBarHeight.toPx())
 		}
@@ -204,13 +202,8 @@ fun SearchFilesView(
 										playbackServiceController.startPlaylist(it, files, 0)
 									}
 								},
-								icon = {
-									Image(
-										painter = painterResource(id = R.drawable.av_play),
-										contentDescription = playLabel,
-										modifier = Modifier.size(iconSize)
-									)
-								},
+								iconPainter = painterResource(id = R.drawable.av_play),
+								contentDescription = playLabel,
 								label = if (acceleratedHeaderCollapsingProgress < 1) playLabel else null,
 								labelModifier = textModifier,
 								labelMaxLines = 1,
@@ -223,13 +216,8 @@ fun SearchFilesView(
 										playbackServiceController.shuffleAndStartPlaylist(it, files)
 									}
 								},
-								icon = {
-									Image(
-										painter = painterResource(id = R.drawable.av_shuffle),
-										contentDescription = shuffleLabel,
-										modifier = Modifier.size(iconSize)
-									)
-								},
+								iconPainter = painterResource(id = R.drawable.av_shuffle),
+								contentDescription = shuffleLabel,
 								label = if (acceleratedHeaderCollapsingProgress < 1) shuffleLabel else null,
 								labelModifier = textModifier,
 								labelMaxLines = 1,
