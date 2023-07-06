@@ -27,6 +27,7 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.ProvideTextStyle
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
+import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Search
@@ -135,15 +136,15 @@ fun SearchFilesView(
 	ControlSurface {
 		val isLoading by searchFilesViewModel.isLoading.collectAsState()
 
-		val appBarHeight = Dimensions.appBarHeight
-		val searchFieldPadding = 16.dp
+		val searchFieldPadding = Dimensions.viewPaddingUnit * 4
+		val topBarHeight = TextFieldDefaults.MinHeight + searchFieldPadding * 2
 		val minimumMenuWidth = (2 * 32).dp
 
 		val expandedMenuVerticalPadding = 4.dp
-		val boxHeight = appBarHeight + Dimensions.menuHeight + expandedMenuVerticalPadding * 2 + searchFieldPadding * 2
+		val boxHeight = topBarHeight + Dimensions.menuHeight + expandedMenuVerticalPadding * 2
 
 		val heightScaler = LocalDensity.current.run {
-			memorableScrollConnectedScaler(max = boxHeight.toPx(), min = appBarHeight.toPx())
+			memorableScrollConnectedScaler(max = boxHeight.toPx(), min = topBarHeight.toPx())
 		}
 
 		Column(
@@ -179,8 +180,8 @@ fun SearchFilesView(
 
 						val iconSize = Dimensions.topMenuIconSize
 						val menuWidth by remember { derivedStateOf { (maxWidth - (maxWidth - minimumMenuWidth) * acceleratedHeaderCollapsingProgress) } }
-						val expandedTopRowPadding = appBarHeight + expandedMenuVerticalPadding + searchFieldPadding * 2
-						val collapsedTopRowPadding = searchFieldPadding + appBarHeight / 2 - iconSize / 2
+						val expandedTopRowPadding = topBarHeight + expandedMenuVerticalPadding + searchFieldPadding * 2
+						val collapsedTopRowPadding = searchFieldPadding + topBarHeight / 2 - iconSize / 2
 						val topRowPadding by remember { derivedStateOf { (expandedTopRowPadding - (expandedTopRowPadding - collapsedTopRowPadding) * headerCollapsingProgress) } }
 						Row(
 							modifier = Modifier
@@ -240,7 +241,7 @@ fun SearchFilesView(
 					modifier = Modifier
 						.fillMaxWidth()
 						.padding(searchFieldPadding)
-						.height(appBarHeight),
+						.height(topBarHeight),
 					horizontalArrangement = Arrangement.Center,
 				) {
 					Icon(
