@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -166,17 +167,17 @@ fun SearchFilesView(
 						).coerceIn(0f, 1f)
 					}
 				}
+
 				val acceleratedToolbarExpandingProgress by remember {
 					derivedStateOf { 1 - acceleratedHeaderCollapsingProgress }
 				}
 
-				BoxWithConstraints(
-					modifier = Modifier
-						.height(boxHeight)
-						.fillMaxWidth()
-				) {
-					if (files.any()) {
-
+				if (files.any()) {
+					BoxWithConstraints(
+						modifier = Modifier
+							.height(boxHeight)
+							.fillMaxWidth()
+					) {
 						val iconSize = Dimensions.topMenuIconSize
 						val menuWidth by remember { derivedStateOf { linearInterpolation(maxWidth, minimumMenuWidth, acceleratedHeaderCollapsingProgress) } }
 						val expandedTopRowPadding = topBarHeight + expandedMenuVerticalPadding
@@ -230,8 +231,10 @@ fun SearchFilesView(
 					modifier = Modifier
 						.fillMaxWidth()
 						.padding(searchFieldPadding)
-						.height(topBarHeight),
+						.requiredHeight(topBarHeight)
+						.align(Alignment.TopStart),
 					horizontalArrangement = Arrangement.Center,
+					verticalAlignment = Alignment.CenterVertically,
 				) {
 					Icon(
 						Icons.Default.ArrowBack,
@@ -239,7 +242,6 @@ fun SearchFilesView(
 						tint = MaterialTheme.colors.onSurface,
 						modifier = Modifier
 							.padding(end = 16.dp)
-							.align(Alignment.CenterVertically)
 							.clickable(
 								interactionSource = remember { MutableInteractionSource() },
 								indication = null,
