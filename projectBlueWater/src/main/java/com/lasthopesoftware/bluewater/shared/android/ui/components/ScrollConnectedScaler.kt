@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.shared.android.ui.components
 import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rxjava2.subscribeAsState
-import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.SaverScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.geometry.Offset
@@ -18,11 +17,11 @@ private const val logTag = "ScrollConnectedScaler"
  * https://developer.android.com/reference/kotlin/androidx/compose/ui/input/nestedscroll/package-summary#extension-functions
  */
 @Composable
-fun memorableScrollConnectedScaler(max: Float, min: Float) = rememberSaveable(saver = ScrollConnectedScaler(max, min)) {
+fun memorableScrollConnectedScaler(max: Float, min: Float) = rememberSaveable(saver = ScrollConnectedScaler.Saver) {
 	ScrollConnectedScaler(max, min)
 }
 
-class ScrollConnectedScaler private constructor(private val max: Float, private val min: Float, initialDistanceTraveled: Float) : NestedScrollConnection, Saver<ScrollConnectedScaler, Float> {
+class ScrollConnectedScaler private constructor(private val max: Float, private val min: Float, initialDistanceTraveled: Float) : NestedScrollConnection {
 
 	constructor(max: Float, min: Float): this(max, min, 0f)
 
@@ -80,8 +79,11 @@ class ScrollConnectedScaler private constructor(private val max: Float, private 
 
 	private fun calculateProgress(value: Float) = (max - value) / fullDistance
 
-	override fun restore(value: Float): ScrollConnectedScaler =
-		ScrollConnectedScaler(max, min, value)
+	object Saver : androidx.compose.runtime.saveable.Saver<ScrollConnectedScaler, Triple<Float, Float, Float>> {
+		override fun restore(value: Triple<Float, Float, Float>): ScrollConnectedScaler =
+			ScrollConnectedScaler(value.first, value.second, value.third)
 
-	override fun SaverScope.save(value: ScrollConnectedScaler): Float = value.totalDistanceTraveled
+		override fun SaverScope.save(value: ScrollConnectedScaler): Triple<Float, Float, Float> =
+			Triple(value.max, value.min, value.totalDistanceTraveled)
+	}
 }
