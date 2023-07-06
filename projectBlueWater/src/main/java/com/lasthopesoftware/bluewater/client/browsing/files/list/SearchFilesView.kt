@@ -63,6 +63,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.components.ColumnMenuIco
 import com.lasthopesoftware.bluewater.shared.android.ui.components.memorableScrollConnectedScaler
 import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberCalculatedKnobHeight
 import com.lasthopesoftware.bluewater.shared.android.ui.components.scrollbar
+import com.lasthopesoftware.bluewater.shared.android.ui.linearInterpolation
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
@@ -179,10 +180,10 @@ fun SearchFilesView(
 					if (files.any()) {
 
 						val iconSize = Dimensions.topMenuIconSize
-						val menuWidth by remember { derivedStateOf { (maxWidth - (maxWidth - minimumMenuWidth) * acceleratedHeaderCollapsingProgress) } }
-						val expandedTopRowPadding = topBarHeight + expandedMenuVerticalPadding + searchFieldPadding * 2
+						val menuWidth by remember { derivedStateOf { linearInterpolation(maxWidth, minimumMenuWidth, acceleratedHeaderCollapsingProgress) } }
+						val expandedTopRowPadding = topBarHeight + expandedMenuVerticalPadding
 						val collapsedTopRowPadding = searchFieldPadding + topBarHeight / 2 - iconSize / 2
-						val topRowPadding by remember { derivedStateOf { (expandedTopRowPadding - (expandedTopRowPadding - collapsedTopRowPadding) * headerCollapsingProgress) } }
+						val topRowPadding by remember { derivedStateOf { linearInterpolation(expandedTopRowPadding, collapsedTopRowPadding, headerCollapsingProgress) } }
 						Row(
 							modifier = Modifier
 								.padding(
