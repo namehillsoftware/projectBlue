@@ -451,7 +451,6 @@ fun ItemListView(
 								labelMaxLines = 1,
 							)
 						} else {
-							val downloadButtonLabel = stringResource(id = R.string.activeDownloads)
 							ColumnMenuIcon(
 								onClick = {
 									itemListViewModel.loadedLibraryId?.also {
@@ -459,8 +458,8 @@ fun ItemListView(
 									}
 								},
 								iconPainter = painterResource(id = R.drawable.ic_water),
-								contentDescription = downloadButtonLabel,
-								label = if (acceleratedHeaderHidingProgress < 1) downloadButtonLabel else null,
+								contentDescription = stringResource(id = R.string.activeDownloads),
+								label = if (acceleratedHeaderHidingProgress < 1) stringResource(id = R.string.downloads) else null,
 								labelModifier = textModifier,
 								labelMaxLines = 1,
 							)
