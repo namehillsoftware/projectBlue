@@ -159,15 +159,15 @@ fun SearchFilesView(
 					.fillMaxWidth()
 					.height(LocalDensity.current.run { heightValue.toDp() })
 			) {
-				val acceleratedToolbarStateProgress by remember {
+				val acceleratedHeaderCollapsingProgress by remember {
 					derivedStateOf {
 						headerCollapsingProgress.pow(
 							.2f
 						).coerceIn(0f, 1f)
 					}
 				}
-				val acceleratedHeaderHidingProgress by remember {
-					derivedStateOf { 1 - acceleratedToolbarStateProgress }
+				val acceleratedToolbarExpandingProgress by remember {
+					derivedStateOf { 1 - acceleratedHeaderCollapsingProgress }
 				}
 
 				BoxWithConstraints(
@@ -178,7 +178,7 @@ fun SearchFilesView(
 					if (files.any()) {
 
 						val iconSize = Dimensions.topMenuIconSize
-						val menuWidth by remember { derivedStateOf { (maxWidth - (maxWidth - minimumMenuWidth) * acceleratedHeaderHidingProgress) } }
+						val menuWidth by remember { derivedStateOf { (maxWidth - (maxWidth - minimumMenuWidth) * acceleratedHeaderCollapsingProgress) } }
 						val expandedTopRowPadding = appBarHeight + expandedMenuVerticalPadding + searchFieldPadding * 2
 						val collapsedTopRowPadding = searchFieldPadding + appBarHeight / 2 - iconSize / 2
 						val topRowPadding by remember { derivedStateOf { (expandedTopRowPadding - (expandedTopRowPadding - collapsedTopRowPadding) * headerCollapsingProgress) } }
@@ -193,7 +193,7 @@ fun SearchFilesView(
 								.width(menuWidth)
 								.align(Alignment.TopEnd)
 						) {
-							val textModifier = Modifier.alpha(acceleratedToolbarStateProgress)
+							val textModifier = Modifier.alpha(acceleratedToolbarExpandingProgress)
 
 							val playLabel = stringResource(id = R.string.btn_play)
 							ColumnMenuIcon(
@@ -209,7 +209,7 @@ fun SearchFilesView(
 										modifier = Modifier.size(iconSize)
 									)
 								},
-								label = if (acceleratedHeaderHidingProgress < 1) playLabel else null,
+								label = if (acceleratedHeaderCollapsingProgress < 1) playLabel else null,
 								labelModifier = textModifier,
 								labelMaxLines = 1,
 							)
@@ -228,7 +228,7 @@ fun SearchFilesView(
 										modifier = Modifier.size(iconSize)
 									)
 								},
-								label = if (acceleratedHeaderHidingProgress < 1) shuffleLabel else null,
+								label = if (acceleratedHeaderCollapsingProgress < 1) shuffleLabel else null,
 								labelModifier = textModifier,
 								labelMaxLines = 1,
 							)
@@ -257,7 +257,7 @@ fun SearchFilesView(
 							)
 					)
 
-					val endPadding by remember { derivedStateOf { 4.dp + minimumMenuWidth * acceleratedHeaderHidingProgress } }
+					val endPadding by remember { derivedStateOf { 4.dp + minimumMenuWidth * acceleratedHeaderCollapsingProgress } }
 					val query by searchFilesViewModel.query.collectAsState()
 					val isLibraryIdActive by searchFilesViewModel.isLibraryIdActive.collectAsState()
 
