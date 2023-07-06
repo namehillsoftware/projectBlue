@@ -44,6 +44,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.memorableScrollConnectedScaler
 import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberCalculatedKnobHeight
 import com.lasthopesoftware.bluewater.shared.android.ui.components.scrollbar
+import com.lasthopesoftware.bluewater.shared.android.ui.linearInterpolation
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.*
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 import kotlin.math.pow
@@ -384,10 +385,10 @@ fun ItemListView(
 						}
 					}
 
-					val menuWidth by remember { derivedStateOf { (maxWidth - (maxWidth - minimumMenuWidth) * acceleratedHeaderHidingProgress) } }
+					val menuWidth by remember { derivedStateOf { linearInterpolation(maxWidth, minimumMenuWidth, acceleratedHeaderHidingProgress) } }
 					val expandedTopRowPadding = expandedTitleHeight + expandedMenuVerticalPadding
 					val collapsedTopRowPadding = 6
-					val topRowPadding by remember { derivedStateOf { (expandedTopRowPadding - (expandedTopRowPadding - collapsedTopRowPadding) * headerCollapseProgress).dp } }
+					val topRowPadding by remember { derivedStateOf { linearInterpolation(expandedTopRowPadding.toFloat(), collapsedTopRowPadding.toFloat(), headerCollapseProgress).dp } }
 					val textModifier = Modifier.alpha(acceleratedToolbarStateProgress)
 
 					Row(
