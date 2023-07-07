@@ -406,9 +406,9 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 		val expandedMenuVerticalPadding = Dimensions.viewPaddingUnit * 3
 		val boxHeight =
 			expandedTitlePadding + titleHeight + expandedIconSize + expandedMenuVerticalPadding * 2
-		val heightScaler = LocalDensity.current.run {
-			memorableScrollConnectedScaler(max = boxHeight.toPx(), min = appBarHeight.toPx())
-		}
+		val boxHeightPx = LocalDensity.current.run { boxHeight.toPx() }
+		val heightScaler =
+			memorableScrollConnectedScaler(max = boxHeightPx, min = LocalDensity.current.run { appBarHeight.toPx() })
 		val lazyListState = rememberLazyListState()
 
 		Column(
@@ -527,8 +527,8 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 						ColumnMenuIcon(
 							onClick = {
 								scope.launch {
-									if (isCollapsed) heightScaler.goToMax()
-									else heightScaler.goToMin()
+									if (isCollapsed) lazyListState.scroll { scrollBy(boxHeightPx) }
+									else lazyListState.scrollToItem(0)
 								}
 							},
 							icon = {
