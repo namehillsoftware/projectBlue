@@ -72,7 +72,8 @@ import java.io.IOException
 import kotlin.math.pow
 
 private val searchFieldPadding = Dimensions.viewPaddingUnit * 4
-private val topBarHeight = TextFieldDefaults.MinHeight + searchFieldPadding * 2
+private val textFieldHeight = TextFieldDefaults.MinHeight + TextFieldDefaults.FocusedBorderThickness * 2
+private val topBarHeight = textFieldHeight + searchFieldPadding * 2
 private val minimumMenuWidth = (2 * 32).dp
 
 private val expandedMenuVerticalPadding = Dimensions.viewPaddingUnit
