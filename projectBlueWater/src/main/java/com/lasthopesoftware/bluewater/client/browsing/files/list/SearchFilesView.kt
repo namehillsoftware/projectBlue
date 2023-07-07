@@ -72,7 +72,7 @@ import java.io.IOException
 import kotlin.math.pow
 
 private val searchFieldPadding = Dimensions.viewPaddingUnit * 4
-private val textFieldHeight = TextFieldDefaults.MinHeight + TextFieldDefaults.FocusedBorderThickness * 2
+private val textFieldHeight = TextFieldDefaults.MinHeight + TextFieldDefaults.FocusedBorderThickness * 4
 private val topBarHeight = textFieldHeight + searchFieldPadding * 2
 private val minimumMenuWidth = (2 * 32).dp
 
@@ -182,7 +182,7 @@ fun SearchFilesView(
 						val iconSize = Dimensions.topMenuIconSize
 						val menuWidth by remember { derivedStateOf { linearInterpolation(maxWidth, minimumMenuWidth, acceleratedHeaderCollapsingProgress) } }
 						val expandedTopRowPadding = topBarHeight + expandedMenuVerticalPadding
-						val collapsedTopRowPadding = searchFieldPadding + topBarHeight / 2 - iconSize / 2
+						val collapsedTopRowPadding = topBarHeight / 2 - iconSize / 2
 						val topRowPadding by remember { derivedStateOf { linearInterpolation(expandedTopRowPadding, collapsedTopRowPadding, headerCollapsingProgress) } }
 						Row(
 							modifier = Modifier
