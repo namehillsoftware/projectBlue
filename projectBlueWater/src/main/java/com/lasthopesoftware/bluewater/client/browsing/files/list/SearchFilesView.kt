@@ -72,12 +72,12 @@ import java.io.IOException
 import kotlin.math.pow
 
 private val searchFieldPadding = Dimensions.viewPaddingUnit * 4
-private val textFieldHeight = TextFieldDefaults.MinHeight + TextFieldDefaults.FocusedBorderThickness * 4
-private val topBarHeight = textFieldHeight + searchFieldPadding * 2
+private val textFieldHeight = TextFieldDefaults.MinHeight + TextFieldDefaults.FocusedBorderThickness * 2
+private val topBarHeight = textFieldHeight
 private val minimumMenuWidth = (2 * 32).dp
 
-private val expandedMenuVerticalPadding = Dimensions.viewPaddingUnit
-private val boxHeight = topBarHeight + Dimensions.menuHeight + expandedMenuVerticalPadding * 2
+private val expandedMenuVerticalPadding = searchFieldPadding
+private val boxHeight = topBarHeight + Dimensions.menuHeight + expandedMenuVerticalPadding
 
 @Composable
 fun SearchFilesView(
@@ -159,6 +159,7 @@ fun SearchFilesView(
 			Box(
 				modifier = Modifier
 					.fillMaxWidth()
+					.padding(searchFieldPadding)
 					.height(LocalDensity.current.run { heightValue.toDp() })
 			) {
 				val acceleratedHeaderCollapsingProgress by remember {
@@ -187,10 +188,7 @@ fun SearchFilesView(
 						Row(
 							modifier = Modifier
 								.padding(
-									top = topRowPadding,
-									bottom = expandedMenuVerticalPadding,
-									start = 8.dp,
-									end = 8.dp
+									top = topRowPadding
 								)
 								.width(menuWidth)
 								.align(Alignment.TopEnd)
@@ -231,7 +229,6 @@ fun SearchFilesView(
 				Row(
 					modifier = Modifier
 						.fillMaxWidth()
-						.padding(searchFieldPadding)
 						.requiredHeight(topBarHeight)
 						.align(Alignment.TopStart),
 					horizontalArrangement = Arrangement.Center,
@@ -250,7 +247,7 @@ fun SearchFilesView(
 							)
 					)
 
-					val endPadding by remember { derivedStateOf { 4.dp + minimumMenuWidth * acceleratedHeaderCollapsingProgress } }
+					val endPadding by remember { derivedStateOf { 4.dp + (minimumMenuWidth + 12.dp) * acceleratedHeaderCollapsingProgress } }
 					val query by searchFilesViewModel.query.collectAsState()
 					val isLibraryIdActive by searchFilesViewModel.isLibraryIdActive.collectAsState()
 
