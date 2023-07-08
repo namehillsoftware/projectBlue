@@ -8,6 +8,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import com.lasthopesoftware.compilation.DebugFlag
 import io.reactivex.subjects.BehaviorSubject
 
 private const val logTag = "ScrollConnectedScaler"
@@ -37,6 +38,7 @@ class ScrollConnectedScaler private constructor(private val max: Float, private 
 	val fullDistance = max - min
 
 	var totalDistanceTraveled = initialDistanceTraveled
+		private set
 
 	override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
 		// try to consume before LazyColumn to collapse toolbar if needed, hence pre-scroll
@@ -45,18 +47,26 @@ class ScrollConnectedScaler private constructor(private val max: Float, private 
 		val newValue = (max + totalDistanceTraveled).coerceIn(min, max)
 
 		val originalValue = currentValue()
-		if (newValue != originalValue)
+		val remainingDelta = newValue - originalValue
+		if (remainingDelta != 0f)
 			valueState.onNext(newValue)
 
-		Log.d(logTag, "totalDistanceTraveled: $totalDistanceTraveled")
-		Log.d(logTag, "newValue: $newValue")
+		if (DebugFlag.isDebugCompilation) {
+			Log.d(logTag, "totalDistanceTraveled: $totalDistanceTraveled")
+			Log.d(logTag, "newValue: $newValue")
+		}
 
-		val remainingDelta = newValue - originalValue
-		return Offset.Zero.copy(y = remainingDelta)
+		return available.copy(y = remainingDelta)
 	}
 
 	override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
 		totalDistanceTraveled -= available.y
+
+		if (DebugFlag.isDebugCompilation) {
+			Log.d(logTag, "totalDistanceTraveled: $totalDistanceTraveled")
+			Log.d(logTag, "consumed: ${consumed.y}")
+			Log.d(logTag, "available: ${available.y}")
+		}
 
 		return super.onPostScroll(consumed, available, source)
 	}
