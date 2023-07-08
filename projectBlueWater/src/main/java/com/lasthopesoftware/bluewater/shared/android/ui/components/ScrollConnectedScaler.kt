@@ -25,11 +25,7 @@ class ScrollConnectedScaler private constructor(private val max: Float, private 
 
 	constructor(max: Float, min: Float): this(max, min, 0f)
 
-	private val fullDistance = max - min
-
-	private var totalDistanceTraveled = initialDistanceTraveled
-
-	private val initialValue = (max + totalDistanceTraveled).coerceIn(min, max)
+	private val initialValue = (max + initialDistanceTraveled).coerceIn(min, max)
 
 	private val valueState = BehaviorSubject.createDefault(initialValue)
 
@@ -37,6 +33,10 @@ class ScrollConnectedScaler private constructor(private val max: Float, private 
 		.map(::calculateProgress)
 		.replay(1)
 		.refCount()
+
+	val fullDistance = max - min
+
+	var totalDistanceTraveled = initialDistanceTraveled
 
 	override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
 		// try to consume before LazyColumn to collapse toolbar if needed, hence pre-scroll
