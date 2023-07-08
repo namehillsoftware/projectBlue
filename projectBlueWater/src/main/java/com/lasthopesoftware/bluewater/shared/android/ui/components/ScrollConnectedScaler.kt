@@ -60,7 +60,7 @@ class ScrollConnectedScaler private constructor(private val max: Float, private 
 	}
 
 	override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
-		totalDistanceTraveled -= available.y
+		totalDistanceTraveled -= (consumed.y + available.y)
 
 		if (DebugFlag.isDebugCompilation) {
 			Log.d(logTag, "totalDistanceTraveled: $totalDistanceTraveled")
