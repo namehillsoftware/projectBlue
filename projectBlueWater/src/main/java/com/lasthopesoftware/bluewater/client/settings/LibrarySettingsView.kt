@@ -10,12 +10,14 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -44,7 +46,6 @@ import androidx.compose.runtime.structuralEqualityPolicy
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
@@ -163,10 +164,11 @@ fun LibrarySettingsView(
 			Column(
 				modifier = Modifier
 					.fillMaxSize()
-					.verticalScroll(rememberScrollState())
-					.padding(top = LocalDensity.current.run { heightValue.toDp() }),
+					.verticalScroll(rememberScrollState()),
 				horizontalAlignment = Alignment.CenterHorizontally,
 			) {
+				Spacer(modifier = Modifier.requiredHeight(boxHeight).fillMaxWidth())
+
 				librarySettingsViewModel.apply {
 					SpacedOutRow {
 						StandardTextField(
@@ -368,8 +370,8 @@ fun LibrarySettingsView(
 			Box(
 				modifier = Modifier
 					.fillMaxWidth()
-					.background(Color.White)
 					.align(Alignment.TopStart)
+					.background(MaterialTheme.colors.surface)
 					.height(LocalDensity.current.run { heightValue.toDp() })
 			) {
 				val headerHidingProgress by heightScaler.rememberProgress()
