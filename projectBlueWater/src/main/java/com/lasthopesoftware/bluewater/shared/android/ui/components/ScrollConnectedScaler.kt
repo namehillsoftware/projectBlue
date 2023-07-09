@@ -46,9 +46,7 @@ class ScrollConnectedScaler private constructor(private val max: Float, private 
 		totalDistanceTraveled += delta
 		val newValue = (max + totalDistanceTraveled).coerceIn(min, max)
 
-		val originalValue = currentValue()
-		val remainingDelta = newValue - originalValue
-		if (remainingDelta != 0f)
+		if (newValue != currentValue())
 			valueState.onNext(newValue)
 
 		if (DebugFlag.isDebugCompilation) {

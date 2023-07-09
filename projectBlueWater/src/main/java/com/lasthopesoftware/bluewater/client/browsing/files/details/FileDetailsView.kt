@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.BoxWithConstraintsScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -409,17 +410,30 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 		val boxHeightPx = LocalDensity.current.run { boxHeight.toPx() }
 		val heightScaler =
 			memorableScrollConnectedScaler(max = boxHeightPx, min = LocalDensity.current.run { appBarHeight.toPx() })
-		val lazyListState = rememberLazyListState()
 
-		Column(
+		Box(
 			modifier = Modifier
 				.fillMaxSize()
 				.nestedScroll(heightScaler)
 		) {
+			val lazyListState = rememberLazyListState()
+
+			LazyColumn(modifier = Modifier.fillMaxSize(), state = lazyListState) {
+				item {
+					Spacer(modifier = Modifier.requiredHeight(boxHeight).fillMaxWidth())
+				}
+
+				items(fileProperties) {
+					filePropertyRow(it)
+				}
+			}
+
 			val heightValue by heightScaler.rememberValue()
 			Box(
 				modifier = Modifier
 					.fillMaxWidth()
+					.align(Alignment.TopStart)
+					.background(MaterialTheme.colors.surface)
 					.height(LocalDensity.current.run { heightValue.toDp() })
 			) {
 				val coverArtTopPadding = viewPadding + appBarHeight
@@ -581,12 +595,6 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 							labelMaxLines = 1,
 						)
 					}
-				}
-			}
-
-			LazyColumn(modifier = Modifier.fillMaxSize(), state = lazyListState) {
-				items(fileProperties) {
-					filePropertyRow(it)
 				}
 			}
 		}
