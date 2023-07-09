@@ -546,8 +546,7 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 									if (isCollapsed) {
 										lazyListState.scrollToItem(0)
 										heightScaler.goToMax()
-									}
-									else {
+									} else {
 										lazyListState.scrollToItem(1)
 										heightScaler.goToMin()
 									}

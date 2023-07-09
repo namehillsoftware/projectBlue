@@ -27,38 +27,32 @@ class ScrollConnectedScaler private constructor(private val max: Float, private 
 
 	constructor(max: Float, min: Float): this(max, min, 0f)
 
-	private val initialValue = (max + initialDistanceTraveled).coerceIn(min, max)
+	private val fullDistance = max - min
 
-	private val valueState = mutableStateOf(initialValue)
+	private val totalDistanceTraveled = mutableStateOf(initialDistanceTraveled)
+
+	private val valueState = derivedStateOf { (max + totalDistanceTraveled.value).coerceIn(min, max) }
 
 	private val progress = derivedStateOf { calculateProgress(valueState.value) }
-
-	val fullDistance = max - min
-
-	var totalDistanceTraveled = initialDistanceTraveled
-		private set
 
 	override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
 		// try to consume before LazyColumn to collapse toolbar if needed, hence pre-scroll
 		val delta = available.y
-		totalDistanceTraveled += delta
-		val newValue = (max + totalDistanceTraveled).coerceIn(min, max)
-
-		valueState.value = newValue
+		totalDistanceTraveled.value += delta
 
 		if (DebugFlag.isDebugCompilation) {
-			Log.d(logTag, "totalDistanceTraveled: $totalDistanceTraveled")
-			Log.d(logTag, "newValue: $newValue")
+			Log.d(logTag, "totalDistanceTraveled: ${totalDistanceTraveled.value}")
+			Log.d(logTag, "valueState.value: ${valueState.value}")
 		}
 
 		return Offset.Zero
 	}
 
 	override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
-		totalDistanceTraveled -= available.y
+		totalDistanceTraveled.value -= available.y
 
 		if (DebugFlag.isDebugCompilation) {
-			Log.d(logTag, "totalDistanceTraveled: $totalDistanceTraveled")
+			Log.d(logTag, "totalDistanceTraveled: ${totalDistanceTraveled.value}")
 			Log.d(logTag, "consumed: ${consumed.y}")
 			Log.d(logTag, "available: ${available.y}")
 		}
@@ -71,11 +65,11 @@ class ScrollConnectedScaler private constructor(private val max: Float, private 
 	fun getValueState(): State<Float> = valueState
 
 	fun goToMax() {
-		valueState.value = max
+		totalDistanceTraveled.value = 0f
 	}
 
 	fun goToMin() {
-		valueState.value = min
+		totalDistanceTraveled.value = -fullDistance
 	}
 
 	private fun calculateProgress(value: Float) = (max - value) / fullDistance
@@ -85,6 +79,6 @@ class ScrollConnectedScaler private constructor(private val max: Float, private 
 			ScrollConnectedScaler(value.first, value.second, value.third)
 
 		override fun SaverScope.save(value: ScrollConnectedScaler): Triple<Float, Float, Float> =
-			Triple(value.max, value.min, value.totalDistanceTraveled)
+			Triple(value.max, value.min, value.totalDistanceTraveled.value)
 	}
 }
