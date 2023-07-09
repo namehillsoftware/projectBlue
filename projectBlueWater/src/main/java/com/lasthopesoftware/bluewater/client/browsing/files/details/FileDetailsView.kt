@@ -428,7 +428,7 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 				}
 			}
 
-			val heightValue by heightScaler.rememberValue()
+			val heightValue by heightScaler.getValueState()
 			Box(
 				modifier = Modifier
 					.fillMaxWidth()
@@ -438,7 +438,7 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 			) {
 				val coverArtTopPadding = viewPadding + appBarHeight
 
-				val headerCollapseProgress by heightScaler.rememberProgress()
+				val headerCollapseProgress by heightScaler.getProgressState()
 				val coverArtScrollOffset by remember { derivedStateOf { -coverArtContainerHeight * headerCollapseProgress } }
 				Box(
 					modifier = Modifier
@@ -541,8 +541,8 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 						ColumnMenuIcon(
 							onClick = {
 								scope.launch {
-									if (isCollapsed) lazyListState.scroll { scrollBy(-heightScaler.fullDistance) }
-									else lazyListState.scroll { scrollBy(heightScaler.totalDistanceTraveled) }
+									if (isCollapsed) lazyListState.scrollToItem(0)
+									else lazyListState.scrollToItem(1)
 								}
 							},
 							icon = {

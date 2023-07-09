@@ -2,14 +2,15 @@ package com.lasthopesoftware.bluewater.shared.android.ui.components
 
 import android.util.Log
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rxjava2.subscribeAsState
+import androidx.compose.runtime.State
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.SaverScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import com.lasthopesoftware.compilation.DebugFlag
-import io.reactivex.subjects.BehaviorSubject
 
 private const val logTag = "ScrollConnectedScaler"
 
@@ -28,12 +29,9 @@ class ScrollConnectedScaler private constructor(private val max: Float, private 
 
 	private val initialValue = (max + initialDistanceTraveled).coerceIn(min, max)
 
-	private val valueState = BehaviorSubject.createDefault(initialValue)
+	private val valueState = mutableStateOf(initialValue)
 
-	private val progress = valueState
-		.map(::calculateProgress)
-		.replay(1)
-		.refCount()
+	private val progress = derivedStateOf { calculateProgress(valueState.value) }
 
 	val fullDistance = max - min
 
@@ -46,8 +44,7 @@ class ScrollConnectedScaler private constructor(private val max: Float, private 
 		totalDistanceTraveled += delta
 		val newValue = (max + totalDistanceTraveled).coerceIn(min, max)
 
-		if (newValue != currentValue())
-			valueState.onNext(newValue)
+		valueState.value = newValue
 
 		if (DebugFlag.isDebugCompilation) {
 			Log.d(logTag, "totalDistanceTraveled: $totalDistanceTraveled")
@@ -69,21 +66,17 @@ class ScrollConnectedScaler private constructor(private val max: Float, private 
 		return super.onPostScroll(consumed, available, source)
 	}
 
-	@Composable
-	fun rememberProgress() = progress.subscribeAsState(initial = calculateProgress(currentValue()))
+	fun getProgressState(): State<Float> = progress
 
-	@Composable
-	fun rememberValue() = valueState.subscribeAsState(initial = currentValue())
+	fun getValueState(): State<Float> = valueState
 
 	fun goToMax() {
-		valueState.onNext(max)
+		valueState.value = max
 	}
 
 	fun goToMin() {
-		valueState.onNext(min)
+		valueState.value = min
 	}
-
-	private fun currentValue(): Float = valueState.value ?: initialValue
 
 	private fun calculateProgress(value: Float) = (max - value) / fullDistance
 

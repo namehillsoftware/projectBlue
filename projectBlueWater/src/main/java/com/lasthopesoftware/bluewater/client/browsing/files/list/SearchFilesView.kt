@@ -153,8 +153,8 @@ fun SearchFilesView(
 				.fillMaxSize()
 				.nestedScroll(heightScaler)
 		) {
-			val heightValue by heightScaler.rememberValue()
-			val headerCollapsingProgress by heightScaler.rememberProgress()
+			val heightValue by heightScaler.getValueState()
+			val headerCollapsingProgress by heightScaler.getProgressState()
 
 			Box(
 				modifier = Modifier

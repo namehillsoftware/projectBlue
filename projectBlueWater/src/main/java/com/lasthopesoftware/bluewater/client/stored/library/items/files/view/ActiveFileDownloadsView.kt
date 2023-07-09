@@ -115,8 +115,8 @@ fun ActiveFileDownloadsView(
 				.fillMaxSize()
 				.nestedScroll(heightScaler)
 		) {
-			val heightValue by heightScaler.rememberValue()
-			val headerCollapsingProgress by heightScaler.rememberProgress()
+			val heightValue by heightScaler.getValueState()
+			val headerCollapsingProgress by heightScaler.getProgressState()
 			val headerExpandingProgress by remember { derivedStateOf { 1 - headerCollapsingProgress } }
 			Box(
 				modifier = Modifier

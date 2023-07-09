@@ -159,7 +159,7 @@ fun LibrarySettingsView(
 				.fillMaxSize()
 				.nestedScroll(heightScaler)
 		) {
-			val heightValue by heightScaler.rememberValue()
+			val heightValue by heightScaler.getValueState()
 
 			Column(
 				modifier = Modifier
@@ -374,7 +374,7 @@ fun LibrarySettingsView(
 					.background(MaterialTheme.colors.surface)
 					.height(LocalDensity.current.run { heightValue.toDp() })
 			) {
-				val headerHidingProgress by heightScaler.rememberProgress()
+				val headerHidingProgress by heightScaler.getProgressState()
 				val headerExpandingProgress by remember { derivedStateOf { 1 - headerHidingProgress } }
 				val topPadding by remember { derivedStateOf(structuralEqualityPolicy()) { (appBarHeight - 46.dp * headerHidingProgress) } }
 				BoxWithConstraints(
