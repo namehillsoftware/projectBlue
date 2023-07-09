@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.list
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -25,6 +26,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
@@ -227,7 +229,7 @@ fun ItemListView(
 	val lazyListState = rememberLazyListState()
 
 	@Composable
-	fun BoxWithConstraintsScope.LoadedItemListView() {
+	fun BoxWithConstraintsScope.LoadedItemListView(headerHeight: Dp) {
 		val items by itemListViewModel.items.collectAsState()
 
 		val knobHeight by rememberCalculatedKnobHeight(lazyListState, rowHeight)
@@ -244,6 +246,10 @@ fun ItemListView(
 					fixedKnobRatio = knobHeight,
 				)
 		) {
+			item {
+				Spacer(modifier = Modifier.requiredHeight(headerHeight).fillMaxWidth())
+			}
+
 			if (items.any()) {
 				item {
 					Box(
@@ -305,26 +311,31 @@ fun ItemListView(
 	ControlSurface {
 		val expandedIconSize = Dimensions.menuHeight.value
 		val expandedMenuVerticalPadding = 12
-		val boxHeight by remember {
-			derivedStateOf {
-				expandedTitleHeight + appBarHeight + expandedIconSize + expandedMenuVerticalPadding * 2
-			}
-		}
+		val boxHeight = (expandedTitleHeight + appBarHeight + expandedIconSize + expandedMenuVerticalPadding * 2).dp
 
-		val boxHeightPx = LocalDensity.current.run { boxHeight.dp.toPx() }
+		val boxHeightPx = LocalDensity.current.run { boxHeight.toPx() }
 		val collapsedHeightPx = LocalDensity.current.run { appBarHeight.dp.toPx() }
 
 		val heightScaler = memorableScrollConnectedScaler(boxHeightPx, collapsedHeightPx)
 
-		Column(
+		Box(
 			modifier = Modifier
 				.fillMaxSize()
 				.nestedScroll(heightScaler)
 		) {
+			BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+				val isItemsLoading by itemListViewModel.isLoading.collectAsState()
+				val isLoaded = !isItemsLoading && !isFilesLoading
+
+				if (isLoaded) LoadedItemListView(boxHeight)
+				else CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+			}
+
 			val heightValue by heightScaler.rememberValue()
 			Box(
 				modifier = Modifier
 					.fillMaxWidth()
+					.background(MaterialTheme.colors.surface)
 					.height(LocalDensity.current.run { heightValue.toDp() })
 			) {
 				Icon(
@@ -494,14 +505,6 @@ fun ItemListView(
 						}
 					}
 				}
-			}
-
-			BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-				val isItemsLoading by itemListViewModel.isLoading.collectAsState()
-				val isLoaded = !isItemsLoading && !isFilesLoading
-
-				if (isLoaded) LoadedItemListView()
-				else CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
 			}
 		}
 	}
