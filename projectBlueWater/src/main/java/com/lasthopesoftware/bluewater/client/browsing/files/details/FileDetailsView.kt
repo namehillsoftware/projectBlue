@@ -527,8 +527,8 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 						ColumnMenuIcon(
 							onClick = {
 								scope.launch {
-									if (isCollapsed) lazyListState.scroll { scrollBy(heightScaler.fullDistance) }
-									else lazyListState.scroll { scrollBy(-heightScaler.totalDistanceTraveled) }
+									if (isCollapsed) lazyListState.scroll { scrollBy(-heightScaler.fullDistance) }
+									else lazyListState.scroll { scrollBy(heightScaler.totalDistanceTraveled) }
 								}
 							},
 							icon = {
