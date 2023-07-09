@@ -433,7 +433,7 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 				modifier = Modifier
 					.fillMaxWidth()
 					.align(Alignment.TopStart)
-					.background(MaterialTheme.colors.surface)
+					.background(coverArtColorState.backgroundColor)
 					.height(LocalDensity.current.run { heightValue.toDp() })
 			) {
 				val coverArtTopPadding = viewPadding + appBarHeight
