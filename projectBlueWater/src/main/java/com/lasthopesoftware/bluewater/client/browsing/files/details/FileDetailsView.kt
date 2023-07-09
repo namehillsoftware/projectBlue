@@ -420,7 +420,9 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 
 			LazyColumn(modifier = Modifier.fillMaxSize(), state = lazyListState) {
 				item {
-					Spacer(modifier = Modifier.requiredHeight(boxHeight).fillMaxWidth())
+					Spacer(modifier = Modifier
+						.requiredHeight(boxHeight)
+						.fillMaxWidth())
 				}
 
 				items(fileProperties) {
@@ -541,8 +543,14 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 						ColumnMenuIcon(
 							onClick = {
 								scope.launch {
-									if (isCollapsed) lazyListState.scrollToItem(0)
-									else lazyListState.scrollToItem(1)
+									if (isCollapsed) {
+										lazyListState.scrollToItem(0)
+										heightScaler.goToMax()
+									}
+									else {
+										lazyListState.scrollToItem(1)
+										heightScaler.goToMin()
+									}
 								}
 							},
 							icon = {
