@@ -421,7 +421,13 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 			LazyColumn(modifier = Modifier.fillMaxSize(), state = lazyListState) {
 				item {
 					Spacer(modifier = Modifier
-						.requiredHeight(boxHeight)
+						.requiredHeight(boxHeight - appBarHeight)
+						.fillMaxWidth())
+				}
+
+				stickyHeader {
+					Spacer(modifier = Modifier
+						.requiredHeight(appBarHeight)
 						.fillMaxWidth())
 				}
 
@@ -544,11 +550,11 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 							onClick = {
 								scope.launch {
 									if (isCollapsed) {
-										lazyListState.scrollToItem(0)
 										heightScaler.goToMax()
+										lazyListState.scrollToItem(0)
 									} else {
-										lazyListState.scrollToItem(1)
 										heightScaler.goToMin()
+										lazyListState.scrollToItem(1)
 									}
 								}
 							},
