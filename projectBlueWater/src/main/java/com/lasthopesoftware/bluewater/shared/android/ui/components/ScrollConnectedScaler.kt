@@ -60,7 +60,9 @@ class ScrollConnectedScaler private constructor(private val max: Float, private 
 	}
 
 	override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
-		totalDistanceTraveled -= (consumed.y + available.y)
+		// Only observe if some scroll was left available
+		if (available.y != 0f)
+			totalDistanceTraveled -= (consumed.y + available.y)
 
 		if (DebugFlag.isDebugCompilation) {
 			Log.d(logTag, "totalDistanceTraveled: $totalDistanceTraveled")
