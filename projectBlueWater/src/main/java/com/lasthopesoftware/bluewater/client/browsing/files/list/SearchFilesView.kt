@@ -1,11 +1,11 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.list
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -148,17 +148,91 @@ fun SearchFilesView(
 			memorableScrollConnectedScaler(max = boxHeight.toPx(), min = topBarHeight.toPx())
 		}
 
-		Column(
+		Box(
 			modifier = Modifier
 				.fillMaxSize()
 				.nestedScroll(heightScaler)
 		) {
+			when {
+				isLoading -> {
+					Box(modifier = Modifier.fillMaxSize()) {
+						CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+					}
+				}
+				isConnectionLost -> {
+					ConnectionLostView(
+						onCancel = { isConnectionLost = false },
+						onRetry = {
+							scope.launch {
+								try {
+									searchFilesViewModel.findFiles().suspend()
+								} catch (e: IOException) {
+									isConnectionLost = ConnectionLostExceptionFilter.isConnectionLostException(e)
+								}
+							}
+						}
+					)
+				}
+				files.any() -> {
+					BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+						val rowHeight = Dimensions.standardRowHeight
+						val lazyListState = rememberLazyListState()
+						val knobHeight by rememberCalculatedKnobHeight(lazyListState, rowHeight)
+						LazyColumn(
+							state = lazyListState,
+							modifier = Modifier
+								.scrollbar(
+									lazyListState,
+									horizontal = false,
+									knobColor = MaterialTheme.colors.onSurface,
+									trackColor = Color.Transparent,
+									visibleAlpha = .4f,
+									knobCornerRadius = 1.dp,
+									fixedKnobRatio = knobHeight,
+								),
+						) {
+							item {
+								Spacer(modifier = Modifier.fillMaxWidth().height(boxHeight))
+							}
+
+							item {
+								Box(
+									modifier = Modifier
+										.padding(4.dp)
+										.height(48.dp)
+								) {
+									ProvideTextStyle(MaterialTheme.typography.h5) {
+										Text(
+											text = stringResource(R.string.file_count_label, files.size),
+											fontWeight = FontWeight.Bold,
+											modifier = Modifier
+												.padding(4.dp)
+												.align(Alignment.CenterStart)
+										)
+									}
+								}
+							}
+
+							itemsIndexed(files) { i, f ->
+								RenderTrackHeaderItem(i, f)
+
+								if (i < files.lastIndex)
+									Divider()
+							}
+						}
+					}
+				}
+				else -> {
+					Spacer(modifier = Modifier.fillMaxSize())
+				}
+			}
+
 			val heightValue by heightScaler.getValueState()
 			val headerCollapsingProgress by heightScaler.getProgressState()
-
 			Box(
 				modifier = Modifier
 					.fillMaxWidth()
+					.background(MaterialTheme.colors.surface)
 					.padding(searchFieldPadding)
 					.height(LocalDensity.current.run { heightValue.toDp() })
 			) {
@@ -272,76 +346,6 @@ fun SearchFilesView(
 							.padding(end = endPadding)
 							.weight(1f)
 					)
-				}
-			}
-
-			when {
-				isLoading -> {
-					Box(modifier = Modifier.fillMaxSize()) {
-						CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-					}
-				}
-				isConnectionLost -> {
-					ConnectionLostView(
-						onCancel = { isConnectionLost = false },
-						onRetry = {
-							scope.launch {
-								try {
-									searchFilesViewModel.findFiles().suspend()
-								} catch (e: IOException) {
-									isConnectionLost = ConnectionLostExceptionFilter.isConnectionLostException(e)
-								}
-							}
-						}
-					)
-				}
-				files.any() -> {
-					BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-						val rowHeight = Dimensions.standardRowHeight
-						val lazyListState = rememberLazyListState()
-						val knobHeight by rememberCalculatedKnobHeight(lazyListState, rowHeight)
-						LazyColumn(
-							state = lazyListState,
-							modifier = Modifier
-								.scrollbar(
-									lazyListState,
-									horizontal = false,
-									knobColor = MaterialTheme.colors.onSurface,
-									trackColor = Color.Transparent,
-									visibleAlpha = .4f,
-									knobCornerRadius = 1.dp,
-									fixedKnobRatio = knobHeight,
-								),
-						) {
-							item {
-								Box(
-									modifier = Modifier
-										.padding(4.dp)
-										.height(48.dp)
-								) {
-									ProvideTextStyle(MaterialTheme.typography.h5) {
-										Text(
-											text = stringResource(R.string.file_count_label, files.size),
-											fontWeight = FontWeight.Bold,
-											modifier = Modifier
-												.padding(4.dp)
-												.align(Alignment.CenterStart)
-										)
-									}
-								}
-							}
-
-							itemsIndexed(files) { i, f ->
-								RenderTrackHeaderItem(i, f)
-
-								if (i < files.lastIndex)
-									Divider()
-							}
-						}
-					}
-				}
-				else -> {
-					Spacer(modifier = Modifier.fillMaxSize())
 				}
 			}
 		}

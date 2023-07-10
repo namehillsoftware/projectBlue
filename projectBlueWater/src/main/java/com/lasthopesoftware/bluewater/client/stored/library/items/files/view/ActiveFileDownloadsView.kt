@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -104,10 +105,10 @@ fun ActiveFileDownloadsView(
 		val isLoading by activeFileDownloadsViewModel.isLoading.collectAsState()
 
 		val boxHeight =
-			expandedTitleHeight + expandedIconSize + expandedMenuVerticalPadding * 2 + appBarHeight
+			(expandedTitleHeight + expandedIconSize + expandedMenuVerticalPadding * 2 + appBarHeight).dp
 
 		val heightScaler = LocalDensity.current.run {
-			memorableScrollConnectedScaler(max = boxHeight.dp.toPx(), min = appBarHeight.dp.toPx())
+			memorableScrollConnectedScaler(max = boxHeight.toPx(), min = appBarHeight.dp.toPx())
 		}
 
 		Column(
@@ -115,22 +116,80 @@ fun ActiveFileDownloadsView(
 				.fillMaxSize()
 				.nestedScroll(heightScaler)
 		) {
-			val heightValue by heightScaler.getValueState()
 			val headerCollapsingProgress by heightScaler.getProgressState()
-			val headerExpandingProgress by remember { derivedStateOf { 1 - headerCollapsingProgress } }
+
+			if (isLoading) {
+				Box(modifier = Modifier.fillMaxSize()) {
+					CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+				}
+			} else {
+				BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+					val rowHeight = Dimensions.standardRowHeight
+					val fileMap by activeFileDownloadsViewModel.downloadingFiles.collectAsState()
+					val files by remember { derivedStateOf(referentialEqualityPolicy()) { fileMap.values.toList() } }
+					val lazyListState = rememberLazyListState()
+					val knobHeight by rememberCalculatedKnobHeight(lazyListState, rowHeight)
+
+					LazyColumn(
+						state = lazyListState,
+						modifier = Modifier
+							.scrollbar(
+								lazyListState,
+								horizontal = false,
+								knobColor = MaterialTheme.colors.onSurface,
+								trackColor = Color.Transparent,
+								visibleAlpha = .4f,
+								knobCornerRadius = 1.dp,
+								fixedKnobRatio = knobHeight,
+							),
+					) {
+						item {
+							Spacer(modifier = Modifier.fillMaxWidth().height(boxHeight))
+						}
+
+						item {
+							Box(
+								modifier = Modifier
+									.padding(4.dp)
+									.height(48.dp)
+							) {
+								ProvideTextStyle(MaterialTheme.typography.h5) {
+									Text(
+										text = stringResource(R.string.file_count_label, files.size),
+										fontWeight = FontWeight.Bold,
+										modifier = Modifier
+											.padding(4.dp)
+											.align(Alignment.CenterStart)
+									)
+								}
+							}
+						}
+
+						itemsIndexed(files, { _, f -> f.id }) { i, f ->
+							RenderTrackHeaderItem(f)
+
+							if (i < files.lastIndex)
+								Divider()
+						}
+					}
+				}
+			}
+
+			val heightValue by heightScaler.getValueState()
 			Box(
 				modifier = Modifier
 					.fillMaxWidth()
 					.height(LocalDensity.current.run { heightValue.toDp() })
-			) {
+				) {
 				val topPadding by remember { derivedStateOf(structuralEqualityPolicy()) { (appBarHeight - 46 * headerCollapsingProgress).dp } }
 
 				BoxWithConstraints(
 					modifier = Modifier
-						.height(boxHeight.dp)
+						.height(boxHeight)
 						.padding(top = topPadding)
 				) {
 					val minimumMenuWidth = (3 * 32).dp
+					val headerExpandingProgress by remember { derivedStateOf { 1 - headerCollapsingProgress } }
 					val acceleratedProgress by remember {
 						derivedStateOf(structuralEqualityPolicy()) {
 							1 - headerExpandingProgress.pow(3).coerceIn(0f, 1f)
@@ -232,59 +291,6 @@ fun ActiveFileDownloadsView(
 								onClick = applicationNavigation::backOut
 							)
 					)
-				}
-			}
-
-			if (isLoading) {
-				Box(modifier = Modifier.fillMaxSize()) {
-					CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-				}
-			} else {
-				BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-					val rowHeight = Dimensions.standardRowHeight
-					val fileMap by activeFileDownloadsViewModel.downloadingFiles.collectAsState()
-					val files by remember { derivedStateOf(referentialEqualityPolicy()) { fileMap.values.toList() } }
-					val lazyListState = rememberLazyListState()
-					val knobHeight by rememberCalculatedKnobHeight(lazyListState, rowHeight)
-
-					LazyColumn(
-						state = lazyListState,
-						modifier = Modifier
-							.scrollbar(
-								lazyListState,
-								horizontal = false,
-								knobColor = MaterialTheme.colors.onSurface,
-								trackColor = Color.Transparent,
-								visibleAlpha = .4f,
-								knobCornerRadius = 1.dp,
-								fixedKnobRatio = knobHeight,
-							),
-					) {
-						item {
-							Box(
-								modifier = Modifier
-									.padding(4.dp)
-									.height(48.dp)
-							) {
-								ProvideTextStyle(MaterialTheme.typography.h5) {
-									Text(
-										text = stringResource(R.string.file_count_label, files.size),
-										fontWeight = FontWeight.Bold,
-										modifier = Modifier
-											.padding(4.dp)
-											.align(Alignment.CenterStart)
-									)
-								}
-							}
-						}
-
-						itemsIndexed(files, { _, f -> f.id }) { i, f ->
-							RenderTrackHeaderItem(f)
-
-							if (i < files.lastIndex)
-								Divider()
-						}
-					}
 				}
 			}
 		}
