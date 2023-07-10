@@ -12,11 +12,10 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import com.lasthopesoftware.compilation.DebugFlag
 
-private const val logTag = "ScrollConnectedScaler"
+private const val logTag = "ScrollTravelDistance"
 
 /**
- * Will scale a value based on a nested **vertical** scroll, sourced from Android examples on this page:
- * https://developer.android.com/reference/kotlin/androidx/compose/ui/input/nestedscroll/package-summary#extension-functions
+ * Tracks the unconsumed travel distance of a scroller
  */
 @Composable
 fun rememberScrollTravelDistance() = rememberSaveable(saver = ScrollTravelDistanceMonitor.Saver) {
@@ -68,5 +67,5 @@ fun State<Float>.boundedValue(min: Float, max: Float) = derivedStateOf { value.c
 
 fun State<Float>.progress(min: Float, max: Float): State<Float> {
 	val totalDistance = max - min
-	return derivedStateOf { ((max - value) / totalDistance).coerceIn(0f, 1f) }
+	return derivedStateOf { ((max - value).coerceIn(min, max) / totalDistance).coerceIn(0f, 1f) }
 }
