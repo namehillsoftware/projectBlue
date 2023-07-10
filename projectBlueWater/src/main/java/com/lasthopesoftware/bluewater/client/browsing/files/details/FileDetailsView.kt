@@ -48,8 +48,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.input.nestedscroll.NestedScrollDispatcher
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -72,7 +75,9 @@ import com.lasthopesoftware.bluewater.shared.android.ui.components.ColumnMenuIco
 import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.RatingBar
-import com.lasthopesoftware.bluewater.shared.android.ui.components.memorableScrollConnectedScaler
+import com.lasthopesoftware.bluewater.shared.android.ui.components.boundedValue
+import com.lasthopesoftware.bluewater.shared.android.ui.components.progress
+import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberScrollTravelDistance
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.promises.extensions.suspend
@@ -408,13 +413,15 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 		val boxHeight =
 			expandedTitlePadding + titleHeight + expandedIconSize + expandedMenuVerticalPadding * 2
 		val boxHeightPx = LocalDensity.current.run { boxHeight.toPx() }
+		val appBarPx = LocalDensity.current.run { appBarHeight.toPx() }
 		val heightScaler =
-			memorableScrollConnectedScaler(max = boxHeightPx, min = LocalDensity.current.run { appBarHeight.toPx() })
+			rememberScrollTravelDistance()
+		val nestedScrollDispatcher = NestedScrollDispatcher()
 
 		Box(
 			modifier = Modifier
 				.fillMaxSize()
-				.nestedScroll(heightScaler)
+				.nestedScroll(heightScaler, nestedScrollDispatcher)
 		) {
 			val lazyListState = rememberLazyListState()
 
@@ -436,7 +443,7 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 				}
 			}
 
-			val heightValue by heightScaler.getValueState()
+			val heightValue by remember { heightScaler.totalDistanceTraveled.boundedValue(appBarPx, boxHeightPx) }
 			Box(
 				modifier = Modifier
 					.fillMaxWidth()
@@ -446,7 +453,7 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 			) {
 				val coverArtTopPadding = viewPadding + appBarHeight
 
-				val headerCollapseProgress by heightScaler.getProgressState()
+				val headerCollapseProgress by remember { heightScaler.totalDistanceTraveled.progress(appBarPx, boxHeightPx) }
 				val coverArtScrollOffset by remember { derivedStateOf { -coverArtContainerHeight * headerCollapseProgress } }
 				Box(
 					modifier = Modifier
@@ -550,10 +557,16 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 							onClick = {
 								scope.launch {
 									if (isCollapsed) {
-										heightScaler.goToMax()
+										nestedScrollDispatcher.dispatchPreScroll(
+											Offset(x = 0f, y = -heightScaler.totalDistanceTraveled.value),
+											NestedScrollSource.Fling
+										)
 										lazyListState.scrollToItem(0)
 									} else {
-										heightScaler.goToMin()
+										nestedScrollDispatcher.dispatchPreScroll(
+											Offset(x = 0f, y = appBarPx - boxHeightPx),
+											NestedScrollSource.Fling
+										)
 										lazyListState.scrollToItem(1)
 									}
 								}

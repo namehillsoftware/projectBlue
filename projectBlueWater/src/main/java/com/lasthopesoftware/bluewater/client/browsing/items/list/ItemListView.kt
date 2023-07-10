@@ -43,8 +43,10 @@ import com.lasthopesoftware.bluewater.shared.android.ui.components.ColumnMenuIco
 import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.shared.android.ui.components.ListItemIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
-import com.lasthopesoftware.bluewater.shared.android.ui.components.memorableScrollConnectedScaler
+import com.lasthopesoftware.bluewater.shared.android.ui.components.boundedValue
+import com.lasthopesoftware.bluewater.shared.android.ui.components.progress
 import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberCalculatedKnobHeight
+import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberScrollTravelDistance
 import com.lasthopesoftware.bluewater.shared.android.ui.components.scrollbar
 import com.lasthopesoftware.bluewater.shared.android.ui.linearInterpolation
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.*
@@ -247,7 +249,9 @@ fun ItemListView(
 				),
 		) {
 			item {
-				Spacer(modifier = Modifier.requiredHeight(headerHeight).fillMaxWidth())
+				Spacer(modifier = Modifier
+					.requiredHeight(headerHeight)
+					.fillMaxWidth())
 			}
 
 			if (items.any()) {
@@ -316,7 +320,7 @@ fun ItemListView(
 		val boxHeightPx = LocalDensity.current.run { boxHeight.toPx() }
 		val collapsedHeightPx = LocalDensity.current.run { appBarHeight.dp.toPx() }
 
-		val heightScaler = memorableScrollConnectedScaler(boxHeightPx, collapsedHeightPx)
+		val heightScaler = rememberScrollTravelDistance()
 
 		Box(
 			modifier = Modifier
@@ -331,7 +335,7 @@ fun ItemListView(
 				else CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
 			}
 
-			val heightValue by heightScaler.getValueState()
+			val heightValue by remember { heightScaler.totalDistanceTraveled.boundedValue(collapsedHeightPx, boxHeightPx) }
 			Box(
 				modifier = Modifier
 					.fillMaxWidth()
@@ -352,7 +356,7 @@ fun ItemListView(
 						)
 				)
 
-				val headerCollapseProgress by heightScaler.getProgressState()
+				val headerCollapseProgress by remember { heightScaler.totalDistanceTraveled.progress(collapsedHeightPx, boxHeightPx) }
 				val topPadding by remember { derivedStateOf { (appBarHeight - 46 * headerCollapseProgress).dp } }
 				BoxWithConstraints(
 					modifier = Modifier.padding(top = topPadding)

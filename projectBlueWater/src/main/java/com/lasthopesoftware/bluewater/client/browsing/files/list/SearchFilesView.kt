@@ -59,8 +59,10 @@ import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionF
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.shared.android.ui.components.ColumnMenuIcon
-import com.lasthopesoftware.bluewater.shared.android.ui.components.memorableScrollConnectedScaler
+import com.lasthopesoftware.bluewater.shared.android.ui.components.boundedValue
+import com.lasthopesoftware.bluewater.shared.android.ui.components.progress
 import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberCalculatedKnobHeight
+import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberScrollTravelDistance
 import com.lasthopesoftware.bluewater.shared.android.ui.components.scrollbar
 import com.lasthopesoftware.bluewater.shared.android.ui.linearInterpolation
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
@@ -144,9 +146,9 @@ fun SearchFilesView(
 	ControlSurface {
 		val isLoading by searchFilesViewModel.isLoading.collectAsState()
 
-		val heightScaler = LocalDensity.current.run {
-			memorableScrollConnectedScaler(max = boxHeight.toPx(), min = topBarHeight.toPx())
-		}
+		val boxHeightPx = LocalDensity.current.run { boxHeight.toPx() }
+		val topBarHeightPx = LocalDensity.current.run { topBarHeight.toPx() }
+		val heightScaler = rememberScrollTravelDistance()
 
 		Box(
 			modifier = Modifier
@@ -192,7 +194,9 @@ fun SearchFilesView(
 								),
 						) {
 							item {
-								Spacer(modifier = Modifier.requiredHeight(boxHeight).fillMaxWidth())
+								Spacer(modifier = Modifier
+									.requiredHeight(boxHeight)
+									.fillMaxWidth())
 							}
 
 							item {
@@ -227,8 +231,8 @@ fun SearchFilesView(
 				}
 			}
 
-			val heightValue by heightScaler.getValueState()
-			val headerCollapsingProgress by heightScaler.getProgressState()
+			val heightValue by remember { heightScaler.totalDistanceTraveled.boundedValue(topBarHeightPx, boxHeightPx) }
+			val headerCollapsingProgress by remember { heightScaler.totalDistanceTraveled.progress(topBarHeightPx, boxHeightPx) }
 			Box(
 				modifier = Modifier
 					.fillMaxWidth()

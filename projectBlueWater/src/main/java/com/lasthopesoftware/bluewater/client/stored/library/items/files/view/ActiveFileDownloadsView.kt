@@ -59,8 +59,10 @@ import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MenuIcon
-import com.lasthopesoftware.bluewater.shared.android.ui.components.memorableScrollConnectedScaler
+import com.lasthopesoftware.bluewater.shared.android.ui.components.boundedValue
+import com.lasthopesoftware.bluewater.shared.android.ui.components.progress
 import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberCalculatedKnobHeight
+import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberScrollTravelDistance
 import com.lasthopesoftware.bluewater.shared.android.ui.components.scrollbar
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
@@ -107,16 +109,17 @@ fun ActiveFileDownloadsView(
 		val boxHeight =
 			(expandedTitleHeight + expandedIconSize + expandedMenuVerticalPadding * 2 + appBarHeight).dp
 
-		val heightScaler = LocalDensity.current.run {
-			memorableScrollConnectedScaler(max = boxHeight.toPx(), min = appBarHeight.dp.toPx())
-		}
+		val boxHeightPx = LocalDensity.current.run { boxHeight.toPx() }
+		val appBarHeightPx = LocalDensity.current.run { appBarHeight.dp.toPx() }
+
+		val heightScaler = rememberScrollTravelDistance()
 
 		Box(
 			modifier = Modifier
 				.fillMaxSize()
 				.nestedScroll(heightScaler)
 		) {
-			val headerCollapsingProgress by heightScaler.getProgressState()
+			val headerCollapsingProgress by remember { heightScaler.totalDistanceTraveled.progress(appBarHeightPx, boxHeightPx) }
 
 			if (isLoading) {
 				Box(modifier = Modifier.fillMaxSize()) {
@@ -144,7 +147,9 @@ fun ActiveFileDownloadsView(
 							),
 					) {
 						item {
-							Spacer(modifier = Modifier.fillMaxWidth().height(boxHeight))
+							Spacer(modifier = Modifier
+								.fillMaxWidth()
+								.height(boxHeight))
 						}
 
 						item {
@@ -175,7 +180,7 @@ fun ActiveFileDownloadsView(
 				}
 			}
 
-			val heightValue by heightScaler.getValueState()
+			val heightValue by remember { heightScaler.totalDistanceTraveled.boundedValue(appBarHeightPx, boxHeightPx) }
 			Box(
 				modifier = Modifier
 					.fillMaxWidth()

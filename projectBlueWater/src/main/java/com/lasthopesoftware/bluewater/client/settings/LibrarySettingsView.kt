@@ -63,7 +63,9 @@ import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.shared.android.ui.components.LabeledSelection
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.StandardTextField
-import com.lasthopesoftware.bluewater.shared.android.ui.components.memorableScrollConnectedScaler
+import com.lasthopesoftware.bluewater.shared.android.ui.components.boundedValue
+import com.lasthopesoftware.bluewater.shared.android.ui.components.progress
+import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberScrollTravelDistance
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.collectAsMutableState
@@ -152,14 +154,14 @@ fun LibrarySettingsView(
 
 		val boxHeightPx = LocalDensity.current.run { boxHeight.toPx() }
 		val collapsedHeightPx = LocalDensity.current.run { appBarHeight.toPx() }
-		val heightScaler = memorableScrollConnectedScaler(boxHeightPx, collapsedHeightPx)
+		val heightScaler = rememberScrollTravelDistance()
 
 		Box(
 			modifier = Modifier
 				.fillMaxSize()
 				.nestedScroll(heightScaler)
 		) {
-			val heightValue by heightScaler.getValueState()
+			val heightValue by remember { heightScaler.totalDistanceTraveled.boundedValue(collapsedHeightPx, boxHeightPx) }
 
 			Column(
 				modifier = Modifier
@@ -167,7 +169,9 @@ fun LibrarySettingsView(
 					.verticalScroll(rememberScrollState()),
 				horizontalAlignment = Alignment.CenterHorizontally,
 			) {
-				Spacer(modifier = Modifier.requiredHeight(boxHeight).fillMaxWidth())
+				Spacer(modifier = Modifier
+					.requiredHeight(boxHeight)
+					.fillMaxWidth())
 
 				librarySettingsViewModel.apply {
 					SpacedOutRow {
@@ -374,7 +378,7 @@ fun LibrarySettingsView(
 					.background(MaterialTheme.colors.surface)
 					.height(LocalDensity.current.run { heightValue.toDp() })
 			) {
-				val headerHidingProgress by heightScaler.getProgressState()
+				val headerHidingProgress by remember { heightScaler.totalDistanceTraveled.progress(collapsedHeightPx, boxHeightPx) }
 				val headerExpandingProgress by remember { derivedStateOf { 1 - headerHidingProgress } }
 				val topPadding by remember { derivedStateOf(structuralEqualityPolicy()) { (appBarHeight - 46.dp * headerHidingProgress) } }
 				BoxWithConstraints(
