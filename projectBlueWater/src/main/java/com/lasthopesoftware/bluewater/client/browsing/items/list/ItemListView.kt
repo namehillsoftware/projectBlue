@@ -244,7 +244,7 @@ fun ItemListView(
 					visibleAlpha = .4f,
 					knobCornerRadius = 1.dp,
 					fixedKnobRatio = knobHeight,
-				)
+				),
 		) {
 			item {
 				Spacer(modifier = Modifier.requiredHeight(headerHeight).fillMaxWidth())
@@ -399,9 +399,9 @@ fun ItemListView(
 					if (isFilesLoading) return@BoxWithConstraints
 
 					val menuWidth by remember { derivedStateOf { linearInterpolation(maxWidth, minimumMenuWidth, acceleratedHeaderHidingProgress) } }
-					val expandedTopRowPadding = expandedTitleHeight + expandedMenuVerticalPadding
-					val collapsedTopRowPadding = 6
-					val topRowPadding by remember { derivedStateOf { linearInterpolation(expandedTopRowPadding.toFloat(), collapsedTopRowPadding.toFloat(), headerCollapseProgress).dp } }
+					val expandedTopRowPadding = expandedTitleHeight.dp + expandedMenuVerticalPadding.dp
+					val collapsedTopRowPadding = 6.dp
+					val topRowPadding by remember { derivedStateOf { linearInterpolation(expandedTopRowPadding, collapsedTopRowPadding, headerCollapseProgress) } }
 					val textModifier = Modifier.alpha(acceleratedToolbarStateProgress)
 
 					Row(

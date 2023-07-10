@@ -73,10 +73,10 @@ import kotlin.math.pow
 
 private val searchFieldPadding = Dimensions.viewPaddingUnit * 4
 private val textFieldHeight = TextFieldDefaults.MinHeight + TextFieldDefaults.FocusedBorderThickness * 2
-private val topBarHeight = textFieldHeight
+private val topBarHeight = textFieldHeight + searchFieldPadding
 private val minimumMenuWidth = (2 * 32).dp
 
-private val expandedMenuVerticalPadding = searchFieldPadding
+private val expandedMenuVerticalPadding = searchFieldPadding * 2
 private val boxHeight = topBarHeight + Dimensions.menuHeight + expandedMenuVerticalPadding
 
 @Composable
@@ -192,13 +192,13 @@ fun SearchFilesView(
 								),
 						) {
 							item {
-								Spacer(modifier = Modifier.fillMaxWidth().height(boxHeight))
+								Spacer(modifier = Modifier.requiredHeight(boxHeight).fillMaxWidth())
 							}
 
 							item {
 								Box(
 									modifier = Modifier
-										.padding(4.dp)
+										.padding(Dimensions.viewPaddingUnit)
 										.height(48.dp)
 								) {
 									ProvideTextStyle(MaterialTheme.typography.h5) {
@@ -206,7 +206,7 @@ fun SearchFilesView(
 											text = stringResource(R.string.file_count_label, files.size),
 											fontWeight = FontWeight.Bold,
 											modifier = Modifier
-												.padding(4.dp)
+												.padding(Dimensions.viewPaddingUnit)
 												.align(Alignment.CenterStart)
 										)
 									}
@@ -233,7 +233,7 @@ fun SearchFilesView(
 				modifier = Modifier
 					.fillMaxWidth()
 					.background(MaterialTheme.colors.surface)
-					.padding(searchFieldPadding)
+					.padding(start = searchFieldPadding, end = searchFieldPadding)
 					.height(LocalDensity.current.run { heightValue.toDp() })
 			) {
 				val acceleratedHeaderCollapsingProgress by remember {
@@ -250,9 +250,7 @@ fun SearchFilesView(
 
 				if (files.any()) {
 					BoxWithConstraints(
-						modifier = Modifier
-							.height(boxHeight)
-							.fillMaxWidth()
+						modifier = Modifier.fillMaxWidth()
 					) {
 						val iconSize = Dimensions.topMenuIconSize
 						val menuWidth by remember { derivedStateOf { linearInterpolation(maxWidth, minimumMenuWidth, acceleratedHeaderCollapsingProgress) } }

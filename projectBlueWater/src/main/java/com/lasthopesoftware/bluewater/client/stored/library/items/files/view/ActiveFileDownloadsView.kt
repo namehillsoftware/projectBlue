@@ -5,11 +5,11 @@ import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -111,7 +111,7 @@ fun ActiveFileDownloadsView(
 			memorableScrollConnectedScaler(max = boxHeight.toPx(), min = appBarHeight.dp.toPx())
 		}
 
-		Column(
+		Box(
 			modifier = Modifier
 				.fillMaxSize()
 				.nestedScroll(heightScaler)
@@ -186,6 +186,7 @@ fun ActiveFileDownloadsView(
 				BoxWithConstraints(
 					modifier = Modifier
 						.height(boxHeight)
+						.background(MaterialTheme.colors.surface)
 						.padding(top = topPadding)
 				) {
 					val minimumMenuWidth = (3 * 32).dp
