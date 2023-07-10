@@ -443,7 +443,7 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 				}
 			}
 
-			val heightValue by remember { heightScaler.totalDistanceTraveled.boundedValue(appBarPx, boxHeightPx) }
+			val heightValue by remember { heightScaler.totalDistanceTraveled.boundedValue(-boxHeightPx, -appBarPx) }
 			Box(
 				modifier = Modifier
 					.fillMaxWidth()
@@ -453,7 +453,7 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 			) {
 				val coverArtTopPadding = viewPadding + appBarHeight
 
-				val headerCollapseProgress by remember { heightScaler.totalDistanceTraveled.progress(appBarPx, boxHeightPx) }
+				val headerCollapseProgress by remember { heightScaler.totalDistanceTraveled.progress(-boxHeightPx, -appBarPx) }
 				val coverArtScrollOffset by remember { derivedStateOf { -coverArtContainerHeight * headerCollapseProgress } }
 				Box(
 					modifier = Modifier

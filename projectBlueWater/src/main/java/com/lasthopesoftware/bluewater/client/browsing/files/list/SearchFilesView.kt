@@ -231,8 +231,8 @@ fun SearchFilesView(
 				}
 			}
 
-			val heightValue by remember { heightScaler.totalDistanceTraveled.boundedValue(topBarHeightPx, boxHeightPx) }
-			val headerCollapsingProgress by remember { heightScaler.totalDistanceTraveled.progress(topBarHeightPx, boxHeightPx) }
+			val heightValue by remember { heightScaler.totalDistanceTraveled.boundedValue(-boxHeightPx, -topBarHeightPx) }
+			val headerCollapsingProgress by remember { heightScaler.totalDistanceTraveled.progress(-boxHeightPx, -topBarHeightPx) }
 			Box(
 				modifier = Modifier
 					.fillMaxWidth()

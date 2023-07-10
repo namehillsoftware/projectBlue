@@ -119,7 +119,7 @@ fun ActiveFileDownloadsView(
 				.fillMaxSize()
 				.nestedScroll(heightScaler)
 		) {
-			val headerCollapsingProgress by remember { heightScaler.totalDistanceTraveled.progress(appBarHeightPx, boxHeightPx) }
+			val headerCollapsingProgress by remember { heightScaler.totalDistanceTraveled.progress(-boxHeightPx, -appBarHeightPx) }
 
 			if (isLoading) {
 				Box(modifier = Modifier.fillMaxSize()) {
@@ -180,7 +180,7 @@ fun ActiveFileDownloadsView(
 				}
 			}
 
-			val heightValue by remember { heightScaler.totalDistanceTraveled.boundedValue(appBarHeightPx, boxHeightPx) }
+			val heightValue by remember { heightScaler.totalDistanceTraveled.boundedValue(-boxHeightPx, -appBarHeightPx) }
 			Box(
 				modifier = Modifier
 					.fillMaxWidth()

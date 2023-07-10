@@ -335,7 +335,7 @@ fun ItemListView(
 				else CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
 			}
 
-			val heightValue by remember { heightScaler.totalDistanceTraveled.boundedValue(collapsedHeightPx, boxHeightPx) }
+			val heightValue by remember { heightScaler.totalDistanceTraveled.boundedValue(-boxHeightPx, -collapsedHeightPx) }
 			Box(
 				modifier = Modifier
 					.fillMaxWidth()
@@ -356,7 +356,7 @@ fun ItemListView(
 						)
 				)
 
-				val headerCollapseProgress by remember { heightScaler.totalDistanceTraveled.progress(collapsedHeightPx, boxHeightPx) }
+				val headerCollapseProgress by remember { heightScaler.totalDistanceTraveled.progress(-boxHeightPx, -collapsedHeightPx) }
 				val topPadding by remember { derivedStateOf { (appBarHeight - 46 * headerCollapseProgress).dp } }
 				BoxWithConstraints(
 					modifier = Modifier.padding(top = topPadding)

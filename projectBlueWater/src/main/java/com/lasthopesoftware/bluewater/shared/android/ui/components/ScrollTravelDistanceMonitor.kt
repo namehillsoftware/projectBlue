@@ -63,9 +63,15 @@ class ScrollTravelDistanceMonitor private constructor(initialDistanceTraveled: F
 	}
 }
 
-fun State<Float>.boundedValue(min: Float, max: Float) = derivedStateOf { value.coerceIn(min, max) }
+fun State<Float>.boundedValue(min: Float, max: Float): State<Float> {
+	check(min < max)
+
+	return derivedStateOf { (min + value).coerceIn(min, max) }
+}
 
 fun State<Float>.progress(min: Float, max: Float): State<Float> {
+	check(min < max)
+
 	val totalDistance = max - min
-	return derivedStateOf { ((max - value).coerceIn(min, max) / totalDistance).coerceIn(0f, 1f) }
+	return derivedStateOf { ((min + value).coerceIn(min, max) / totalDistance).coerceIn(0f, 1f) }
 }
