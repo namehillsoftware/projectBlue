@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,6 +26,14 @@ import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import kotlinx.coroutines.launch
 
 private val bottomAppBarHeight = Dimensions.appBarHeight
+private val iconPaddingDp = Dimensions.viewPaddingUnit * 4
+private val iconPadding = PaddingValues(start = iconPaddingDp, end = iconPaddingDp)
+private val hiddenMenuRowHeight = Dimensions.standardRowHeight
+
+context(BoxScope)
+fun Modifier.iconModifier() = align(Alignment.Center)
+	.padding(iconPadding)
+	.size(Dimensions.topMenuIconSize)
 
 @Composable
 @OptIn(ExperimentalMaterialApi::class)
@@ -122,7 +129,7 @@ fun LibraryMenu(
 						modifier = Modifier
 							.padding(start = 8.dp, end = 8.dp)
 							.align(Alignment.CenterVertically)
-							.size(24.dp),
+							.size(Dimensions.topMenuIconSize),
 					)
 
 					Icon(
@@ -150,91 +157,87 @@ fun LibraryMenu(
 		}
 	}
 
-	val rowHeight = Dimensions.standardRowHeight
 	ProvideTextStyle(value = MaterialTheme.typography.subtitle1) {
-		Row(
-			modifier = Modifier
-				.height(rowHeight)
-				.fillMaxWidth()
-				.clickable {
-					applicationNavigation.viewActiveDownloads(libraryId)
-				},
-			verticalAlignment = Alignment.CenterVertically,
+		CompositionLocalProvider(
+			LocalContentAlpha provides ContentAlpha.medium
 		) {
-			Box(
+			Row(
 				modifier = Modifier
-					.align(Alignment.CenterVertically)
-					.fillMaxHeight()
+					.height(hiddenMenuRowHeight)
+					.fillMaxWidth()
+					.clickable {
+						applicationNavigation.viewActiveDownloads(libraryId)
+					},
+				verticalAlignment = Alignment.CenterVertically,
 			) {
-				Image(
-					painter = painterResource(id = R.drawable.ic_water),
-					contentDescription = stringResource(id = R.string.activeDownloads),
+				Box(
 					modifier = Modifier
-						.align(Alignment.Center)
-						.padding(start = 16.dp, end = 16.dp)
+						.align(Alignment.CenterVertically)
+						.fillMaxHeight()
+				) {
+					Icon(
+						painter = painterResource(id = R.drawable.ic_water),
+						contentDescription = stringResource(id = R.string.activeDownloads),
+						modifier = Modifier.iconModifier()
+					)
+				}
+
+				Text(
+					text = stringResource(R.string.activeDownloads),
 				)
 			}
 
-			Text(
-				text = stringResource(R.string.activeDownloads),
-			)
-		}
-
-		Row(
-			modifier = Modifier
-				.height(rowHeight)
-				.fillMaxWidth()
-				.clickable {
-					applicationNavigation.launchSearch(libraryId)
-				},
-			verticalAlignment = Alignment.CenterVertically,
-		) {
-			Box(
+			Row(
 				modifier = Modifier
-					.align(Alignment.CenterVertically)
-					.fillMaxHeight()
+					.height(hiddenMenuRowHeight)
+					.fillMaxWidth()
+					.clickable {
+						applicationNavigation.launchSearch(libraryId)
+					},
+				verticalAlignment = Alignment.CenterVertically,
 			) {
-				Icon(
-					Icons.Default.Search,
-					contentDescription = stringResource(id = R.string.search),
+				Box(
 					modifier = Modifier
-						.align(Alignment.Center)
-						.padding(start = 16.dp, end = 16.dp)
+						.align(Alignment.CenterVertically)
+						.fillMaxHeight()
+				) {
+					Icon(
+						painter = painterResource(id = R.drawable.search_36dp),
+						contentDescription = stringResource(id = R.string.search),
+						modifier = Modifier.iconModifier()
+					)
+				}
+
+				Text(
+					text = stringResource(R.string.search),
 				)
 			}
 
-			Text(
-				text = stringResource(R.string.search),
-			)
-		}
-
-		Row(
-			modifier = Modifier
-				.height(rowHeight)
-				.fillMaxWidth()
-				.clickable {
-					applicationNavigation.viewServerSettings(libraryId)
-				},
-			verticalAlignment = Alignment.CenterVertically,
-		) {
-			Box(
+			Row(
 				modifier = Modifier
-					.align(Alignment.CenterVertically)
-					.fillMaxHeight()
+					.height(hiddenMenuRowHeight)
+					.fillMaxWidth()
+					.clickable {
+						applicationNavigation.viewServerSettings(libraryId)
+					},
+				verticalAlignment = Alignment.CenterVertically,
 			) {
-				Image(
-					painter = painterResource(id = R.drawable.ic_action_settings),
-					contentDescription = stringResource(id = R.string.settings),
+				Box(
 					modifier = Modifier
-						.align(Alignment.Center)
-						.padding(start = 16.dp, end = 16.dp)
-						.size(Dimensions.topMenuIconSize)
+						.align(Alignment.CenterVertically)
+						.fillMaxHeight()
+				) {
+					Icon(
+						painter = painterResource(id = R.drawable.ic_action_settings),
+						contentDescription = stringResource(id = R.string.settings),
+						modifier = Modifier.iconModifier()
+					)
+				}
+
+				Text(
+					text = stringResource(R.string.settings),
 				)
 			}
-
-			Text(
-				text = stringResource(R.string.settings),
-			)
 		}
 	}
 }

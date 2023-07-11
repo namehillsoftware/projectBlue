@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.list
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -17,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.dimensionResource
@@ -24,6 +26,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
@@ -40,13 +43,12 @@ import com.lasthopesoftware.bluewater.shared.android.ui.components.ColumnMenuIco
 import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.shared.android.ui.components.ListItemIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
+import com.lasthopesoftware.bluewater.shared.android.ui.components.memorableScrollConnectedScaler
 import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberCalculatedKnobHeight
 import com.lasthopesoftware.bluewater.shared.android.ui.components.scrollbar
+import com.lasthopesoftware.bluewater.shared.android.ui.linearInterpolation
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.*
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
-import me.onebone.toolbar.CollapsingToolbarScaffold
-import me.onebone.toolbar.ScrollStrategy
-import me.onebone.toolbar.rememberCollapsingToolbarScaffoldState
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
@@ -227,7 +229,7 @@ fun ItemListView(
 	val lazyListState = rememberLazyListState()
 
 	@Composable
-	fun BoxWithConstraintsScope.LoadedItemListView() {
+	fun BoxWithConstraintsScope.LoadedItemListView(headerHeight: Dp) {
 		val items by itemListViewModel.items.collectAsState()
 
 		val knobHeight by rememberCalculatedKnobHeight(lazyListState, rowHeight)
@@ -242,8 +244,12 @@ fun ItemListView(
 					visibleAlpha = .4f,
 					knobCornerRadius = 1.dp,
 					fixedKnobRatio = knobHeight,
-				)
+				),
 		) {
+			item {
+				Spacer(modifier = Modifier.requiredHeight(headerHeight).fillMaxWidth())
+			}
+
 			if (items.any()) {
 				item {
 					Box(
@@ -303,45 +309,70 @@ fun ItemListView(
 	val isFilesLoading by fileListViewModel.isLoading.collectAsState()
 
 	ControlSurface {
-		// Treat the files not being loaded as isAnyFiles being false to trick the CollapsingToolbarScaffold
-		// into measuring the expanded size correctly.
-		val isAnyFiles by remember { derivedStateOf { isFilesLoading || files.any() } }
-		val expandedIconSize by remember { derivedStateOf { if (isAnyFiles) Dimensions.menuHeight.value else 0f } }
-		val expandedMenuVerticalPadding by remember { derivedStateOf { if (isAnyFiles) 12 else 0 } }
-		val boxHeight by remember {
-			derivedStateOf {
-				expandedTitleHeight + appBarHeight + expandedIconSize + expandedMenuVerticalPadding * 2
-			}
-		}
+		val expandedIconSize = Dimensions.menuHeight.value
+		val expandedMenuVerticalPadding = 12
+		val boxHeight = (expandedTitleHeight + appBarHeight + expandedIconSize + expandedMenuVerticalPadding * 2).dp
 
-		val toolbarState = rememberCollapsingToolbarScaffoldState()
-		val headerHidingProgress by remember { derivedStateOf { 1 - toolbarState.toolbarState.progress } }
-		CollapsingToolbarScaffold(
-			enabled = true,
-			state = toolbarState,
-			scrollStrategy = ScrollStrategy.ExitUntilCollapsed,
-			modifier = Modifier.fillMaxSize(),
-			toolbar = {
-				val topPadding by remember { derivedStateOf { (appBarHeight - 46 * headerHidingProgress).dp } }
-				BoxWithConstraints(
+		val boxHeightPx = LocalDensity.current.run { boxHeight.toPx() }
+		val collapsedHeightPx = LocalDensity.current.run { appBarHeight.dp.toPx() }
+
+		val heightScaler = memorableScrollConnectedScaler(boxHeightPx, collapsedHeightPx)
+
+		Box(
+			modifier = Modifier
+				.fillMaxSize()
+				.nestedScroll(heightScaler)
+		) {
+			BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+				val isItemsLoading by itemListViewModel.isLoading.collectAsState()
+				val isLoaded = !isItemsLoading && !isFilesLoading
+
+				if (isLoaded) LoadedItemListView(boxHeight)
+				else CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+			}
+
+			val heightValue by heightScaler.getValueState()
+			Box(
+				modifier = Modifier
+					.fillMaxWidth()
+					.background(MaterialTheme.colors.surface)
+					.height(LocalDensity.current.run { heightValue.toDp() })
+			) {
+				Icon(
+					Icons.Default.ArrowBack,
+					contentDescription = "",
+					tint = MaterialTheme.colors.onSurface,
 					modifier = Modifier
-						.height(boxHeight.dp)
-						.padding(top = topPadding)
+						.padding(16.dp)
+						.align(Alignment.TopStart)
+						.clickable(
+							interactionSource = remember { MutableInteractionSource() },
+							indication = null,
+							onClick = applicationNavigation::navigateUp
+						)
+				)
+
+				val headerCollapseProgress by heightScaler.getProgressState()
+				val topPadding by remember { derivedStateOf { (appBarHeight - 46 * headerCollapseProgress).dp } }
+				BoxWithConstraints(
+					modifier = Modifier.padding(top = topPadding)
 				) {
 					val acceleratedToolbarStateProgress by remember {
 						derivedStateOf {
-							toolbarState.toolbarState.progress.pow(
+							(1 - headerCollapseProgress).pow(
 								3
 							).coerceIn(0f, 1f)
 						}
 					}
+
 					val acceleratedHeaderHidingProgress by remember {
 						derivedStateOf { 1 - acceleratedToolbarStateProgress }
 					}
+
 					ProvideTextStyle(MaterialTheme.typography.h5) {
-						val startPadding by remember { derivedStateOf { (4 + 48 * headerHidingProgress).dp } }
+						val startPadding by remember { derivedStateOf { (4 + 48 * headerCollapseProgress).dp } }
 						val endPadding by remember { derivedStateOf { Dimensions.viewPaddingUnit + minimumMenuWidth * acceleratedHeaderHidingProgress } }
-						val maxLines by remember { derivedStateOf { (2 - headerHidingProgress).roundToInt() } }
+						val maxLines by remember { derivedStateOf { (2 - headerCollapseProgress).roundToInt() } }
 						if (maxLines > 1) {
 							Text(
 								text = itemValue,
@@ -365,32 +396,33 @@ fun ItemListView(
 						}
 					}
 
-					if (files.any()) {
-						val menuWidth by remember { derivedStateOf { (maxWidth - (maxWidth - minimumMenuWidth) * acceleratedHeaderHidingProgress) } }
-						val expandedTopRowPadding = expandedTitleHeight + expandedMenuVerticalPadding
-						val collapsedTopRowPadding = 6
-						val topRowPadding by remember { derivedStateOf { (expandedTopRowPadding - (expandedTopRowPadding - collapsedTopRowPadding) * headerHidingProgress).dp } }
+					if (isFilesLoading) return@BoxWithConstraints
 
-						Row(
-							modifier = Modifier
-								.padding(
-									top = topRowPadding,
-									bottom = expandedMenuVerticalPadding.dp,
-									start = 8.dp,
-									end = 8.dp
-								)
-								.width(menuWidth)
-								.align(Alignment.TopEnd)
-						) {
-							val textModifier = Modifier.alpha(acceleratedToolbarStateProgress)
+					val menuWidth by remember { derivedStateOf { linearInterpolation(maxWidth, minimumMenuWidth, acceleratedHeaderHidingProgress) } }
+					val expandedTopRowPadding = expandedTitleHeight.dp + expandedMenuVerticalPadding.dp
+					val collapsedTopRowPadding = 6.dp
+					val topRowPadding by remember { derivedStateOf { linearInterpolation(expandedTopRowPadding, collapsedTopRowPadding, headerCollapseProgress) } }
+					val textModifier = Modifier.alpha(acceleratedToolbarStateProgress)
 
+					Row(
+						modifier = Modifier
+							.padding(
+								top = topRowPadding,
+								bottom = expandedMenuVerticalPadding.dp,
+								start = 8.dp,
+								end = 8.dp
+							)
+							.width(menuWidth)
+							.align(Alignment.TopEnd)
+					) {
+						if (files.any()) {
 							val playButtonLabel = stringResource(id = R.string.btn_play)
 							ColumnMenuIcon(
 								onClick = {
 									itemListViewModel.loadedLibraryId?.also {
 										playbackServiceController.startPlaylist(it, files)
 									}
-							  	},
+								},
 								iconPainter = painterResource(id = R.drawable.av_play),
 								contentDescription = playButtonLabel,
 								label = if (acceleratedHeaderHidingProgress < 1) playButtonLabel else null,
@@ -422,40 +454,57 @@ fun ItemListView(
 									itemListViewModel.loadedLibraryId?.also {
 										playbackServiceController.shuffleAndStartPlaylist(it, files)
 									}
-							  	},
+								},
 								iconPainter = painterResource(id = R.drawable.av_shuffle),
 								contentDescription = shuffleButtonLabel,
 								label = if (acceleratedHeaderHidingProgress < 1) shuffleButtonLabel else null,
 								labelModifier = textModifier,
 								labelMaxLines = 1,
 							)
+						} else {
+							ColumnMenuIcon(
+								onClick = {
+									itemListViewModel.loadedLibraryId?.also {
+										applicationNavigation.viewActiveDownloads(it)
+									}
+								},
+								iconPainter = painterResource(id = R.drawable.ic_water),
+								contentDescription = stringResource(id = R.string.activeDownloads),
+								label = if (acceleratedHeaderHidingProgress < 1) stringResource(id = R.string.downloads) else null,
+								labelModifier = textModifier,
+								labelMaxLines = 1,
+							)
+
+							val searchButtonLabel = stringResource(id = R.string.search)
+							ColumnMenuIcon(
+								onClick = {
+									itemListViewModel.loadedLibraryId?.also {
+										applicationNavigation.launchSearch(it)
+									}
+								},
+								iconPainter = painterResource(id = R.drawable.search_36dp),
+								contentDescription = searchButtonLabel,
+								label = if (acceleratedHeaderHidingProgress < 1) searchButtonLabel else null,
+								labelMaxLines = 1,
+								labelModifier = textModifier,
+							)
+
+							val settingsButtonLabel = stringResource(id = R.string.settings)
+							ColumnMenuIcon(
+								onClick = {
+									itemListViewModel.loadedLibraryId?.also {
+										applicationNavigation.viewServerSettings(it)
+									}
+								},
+								iconPainter = painterResource(id = R.drawable.ic_action_settings),
+								contentDescription = settingsButtonLabel,
+								label = if (acceleratedHeaderHidingProgress < 1) settingsButtonLabel else null,
+								labelModifier = textModifier,
+								labelMaxLines = 1,
+							)
 						}
 					}
 				}
-
-				Box(modifier = Modifier.height(appBarHeight.dp)) {
-					Icon(
-						Icons.Default.ArrowBack,
-						contentDescription = "",
-						tint = MaterialTheme.colors.onSurface,
-						modifier = Modifier
-							.padding(16.dp)
-							.align(Alignment.CenterStart)
-							.clickable(
-								interactionSource = remember { MutableInteractionSource() },
-								indication = null,
-								onClick = applicationNavigation::navigateUp
-							)
-					)
-				}
-			},
-		) {
-			BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-				val isItemsLoading by itemListViewModel.isLoading.collectAsState()
-				val isLoaded = !isItemsLoading && !isFilesLoading
-
-				if (isLoaded) LoadedItemListView()
-				else CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
 			}
 		}
 	}
