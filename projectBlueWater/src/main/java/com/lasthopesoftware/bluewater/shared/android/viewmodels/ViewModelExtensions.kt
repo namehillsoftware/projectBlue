@@ -1,54 +1,16 @@
 package com.lasthopesoftware.bluewater.shared.android.viewmodels
 
-import androidx.activity.ComponentActivity
 import androidx.annotation.MainThread
-import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelLazy
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.ViewModelStore
+import androidx.lifecycle.ViewModelStoreOwner
 
 @MainThread
-inline fun <reified V: ViewModel> ComponentActivity.buildViewModelLazily(noinline initializer: () -> V) =
+inline fun <reified V: ViewModel> ViewModelStoreOwner.buildViewModelLazily(noinline initializer: () -> V) =
 	ViewModelLazy(
 		viewModelClass = V::class,
 		storeProducer = { viewModelStore },
-		factoryProducer = PassThroughFactory(initializer)
-	)
-
-@MainThread
-inline fun <reified V: ViewModel> Fragment.buildViewModelLazily(noinline initializer: () -> V) =
-	ViewModelLazy(
-		viewModelClass = V::class,
-		storeProducer = { viewModelStore },
-		factoryProducer = PassThroughFactory(initializer)
-	)
-
-@MainThread
-inline fun <reified V: ViewModel> Fragment.buildActivityViewModelLazily(noinline initializer: () -> V) =
-	ViewModelLazy(
-		viewModelClass = V::class,
-		storeProducer = { requireActivity().viewModelStore },
-		factoryProducer = PassThroughFactory(initializer)
-	)
-
-@MainThread
-inline fun <reified V: ViewModel> Fragment.buildActivityViewModel(noinline initializer: () -> V) =
-	viewModelStore.buildViewModel(initializer)
-
-@MainThread
-inline fun <reified V: ViewModel> ComponentActivity.buildViewModel(noinline initializer: () -> V): V =
-	viewModelStore.buildViewModel(initializer)
-
-@MainThread
-inline fun <reified V: ViewModel> ViewModelStore.buildViewModel(noinline initializer: () -> V): V =
-	ViewModelProvider(this, PassThroughFactory(initializer))[V::class.java]
-
-@MainThread
-inline fun <reified V: ViewModel> ViewModelStore.buildViewModelLazily(noinline initializer: () -> V) =
-	ViewModelLazy(
-		viewModelClass = V::class,
-		storeProducer = { this },
 		factoryProducer = PassThroughFactory(initializer)
 	)
 
