@@ -10,11 +10,11 @@ import com.lasthopesoftware.bluewater.client.playback.file.PlayedFile
 import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.error.ExoPlayerException
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.progress.ExoPlayerFileProgressReader
+import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressedPromise
 import com.namehillsoftware.handoff.promises.Promise
 import org.joda.time.Duration
 import org.joda.time.format.PeriodFormatterBuilder
-import org.slf4j.LoggerFactory
 import java.io.EOFException
 import java.net.ProtocolException
 
@@ -38,7 +38,7 @@ class ExoPlayerPlaybackHandler(private val exoPlayer: PromisingExoPlayer) :
 				.toFormatter()
 		}
 
-		private val logger by lazy { LoggerFactory.getLogger(ExoPlayerPlaybackHandler::class.java) }
+		private val logger by lazyLogger<ExoPlayerPlaybackHandler>()
 	}
 
 	private val lazyFileProgressReader by lazy { ExoPlayerFileProgressReader(exoPlayer) }
@@ -128,12 +128,10 @@ class ExoPlayerPlaybackHandler(private val exoPlayer: PromisingExoPlayer) :
 				}
 			}
 			is ParserException -> {
-				when (cause.message) {
-					"Searched too many bytes." -> {
-						logger.warn("The stream was corrupted, completing playback", error)
-						resolve(this)
-						return
-					}
+				if (cause.message?.startsWith("Searched too many bytes.") == true) {
+					logger.warn("The stream was corrupted, completing playback", error)
+					resolve(this)
+					return
 				}
 			}
 			is HttpDataSource.InvalidResponseCodeException -> {
