@@ -1,9 +1,9 @@
 package com.lasthopesoftware.bluewater.client.playback.caching.GivenAFileLessThan1Megabyte
 
 import android.net.Uri
-import com.google.android.exoplayer2.C
-import com.google.android.exoplayer2.upstream.DataSpec
-import com.google.android.exoplayer2.upstream.HttpDataSource
+import androidx.media3.common.C
+import androidx.media3.datasource.DataSpec
+import androidx.media3.datasource.HttpDataSource
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.repository.CachedFile
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.CacheOutputStream
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.supplier.SupplyCacheStreams

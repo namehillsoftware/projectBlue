@@ -1,9 +1,9 @@
 package com.lasthopesoftware.bluewater.client.playback.file.exoplayer
 
-import com.google.android.exoplayer2.ParserException
-import com.google.android.exoplayer2.PlaybackException
-import com.google.android.exoplayer2.Player
-import com.google.android.exoplayer2.upstream.HttpDataSource
+import androidx.media3.common.ParserException
+import androidx.media3.common.PlaybackException
+import androidx.media3.common.Player
+import androidx.media3.datasource.HttpDataSource
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.PromisingExoPlayer
 import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile
 import com.lasthopesoftware.bluewater.client.playback.file.PlayedFile

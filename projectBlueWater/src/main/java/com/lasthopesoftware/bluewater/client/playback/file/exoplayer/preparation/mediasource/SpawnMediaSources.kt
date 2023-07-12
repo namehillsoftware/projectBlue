@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource
 
 import android.net.Uri
-import com.google.android.exoplayer2.source.MediaSource
+import androidx.media3.exoplayer.source.MediaSource
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.namehillsoftware.handoff.promises.Promise
 
