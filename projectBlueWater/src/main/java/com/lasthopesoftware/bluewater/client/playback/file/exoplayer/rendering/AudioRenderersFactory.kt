@@ -6,7 +6,6 @@ import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.Renderer
 import androidx.media3.exoplayer.RenderersFactory
-import androidx.media3.exoplayer.audio.AudioCapabilities
 import androidx.media3.exoplayer.audio.AudioRendererEventListener
 import androidx.media3.exoplayer.audio.DefaultAudioSink
 import androidx.media3.exoplayer.audio.MediaCodecAudioRenderer
@@ -33,8 +32,6 @@ import com.lasthopesoftware.compilation.DebugFlag
 				false,
 				if (DebugFlag.isDebugCompilation) eventHandler else null,
 				if (DebugFlag.isDebugCompilation) AudioRenderingEventListener() else null,
-				DefaultAudioSink.Builder()
-					.setAudioCapabilities(AudioCapabilities.getCapabilities(context))
-					.build())
+				DefaultAudioSink.Builder(context).build())
 		)
 }
