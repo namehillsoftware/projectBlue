@@ -63,49 +63,6 @@ private fun LazyListScope.settingsList(
 			verticalAlignment = Alignment.CenterVertically,
 		) {
 			ProvideTextStyle(value = MaterialTheme.typography.h6) {
-				Text(text = stringResource(id = R.string.app_sync_settings))
-			}
-		}
-	}
-
-	item {
-		Row(
-			modifier = standardRowModifier.padding(optionsPadding),
-			verticalAlignment = Alignment.CenterVertically,
-		) {
-			val isSyncOnWifiOnly by applicationSettingsViewModel.isSyncOnWifiOnly.collectAsState()
-			LabeledSelection(
-				label = stringResource(id = R.string.app_only_sync_on_wifi),
-				selected = isSyncOnWifiOnly,
-				onSelected = { applicationSettingsViewModel.promiseSyncOnWifiChange(!isSyncOnWifiOnly) }
-			) {
-				Checkbox(checked = isSyncOnWifiOnly, onCheckedChange = null)
-			}
-		}
-	}
-
-	item {
-		Row(
-			modifier = standardRowModifier.padding(optionsPadding),
-			verticalAlignment = Alignment.CenterVertically,
-		) {
-			val isSyncOnPowerOnly by applicationSettingsViewModel.isSyncOnPowerOnly.collectAsState()
-			LabeledSelection(
-				label = stringResource(id = R.string.app_only_sync_ext_power),
-				selected = isSyncOnPowerOnly,
-				onSelected = { applicationSettingsViewModel.promiseSyncOnPowerChange(!isSyncOnPowerOnly) }
-			) {
-				Checkbox(checked = isSyncOnPowerOnly, onCheckedChange = null)
-			}
-		}
-	}
-
-	item {
-		Row(
-			modifier = standardRowModifier,
-			verticalAlignment = Alignment.CenterVertically,
-		) {
-			ProvideTextStyle(value = MaterialTheme.typography.h6) {
 				Text(text = stringResource(id = R.string.app_audio_settings))
 			}
 		}
@@ -205,62 +162,23 @@ private fun LazyListScope.settingsList(
 	}
 
 	item {
-		Button(
+		Box(
 			modifier = Modifier
+				.fillMaxWidth()
 				.padding(top = 48.dp),
-			onClick = {
-				playbackService.kill()
-			}
 		) {
-			Text(
-				text = stringResource(id = R.string.kill_playback),
-				fontSize = rowFontSize,
-			)
-		}
-	}
-}
-
-@Composable
-private fun ApplicationSettingsViewVertical(
-	applicationSettingsViewModel: ApplicationSettingsViewModel,
-	applicationNavigation: NavigateApplication,
-	playbackService: ControlPlaybackService,
-) {
-	val rowHeight = Dimensions.standardRowHeight
-	val rowFontSize = LocalDensity.current.run { dimensionResource(id = R.dimen.row_font_size).toSp() }
-
-	val standardRowModifier = Modifier
-		.fillMaxWidth()
-		.height(rowHeight)
-
-	val libraries by applicationSettingsViewModel.libraries.collectAsState()
-	val selectedLibraryId by applicationSettingsViewModel.chosenLibraryId.collectAsState()
-
-	LazyColumn(
-		modifier = Modifier.fillMaxSize(),
-		horizontalAlignment = Alignment.CenterHorizontally,
-	) {
-		item {
-			Box(
-				modifier = Modifier
-					.fillMaxWidth()
-					.padding(Dimensions.viewPaddingUnit * 8)
+			Button(
+				modifier = Modifier.align(Alignment.Center),
+				onClick = {
+					playbackService.kill()
+				}
 			) {
-				ApplicationLogo(modifier = Modifier
-					.fillMaxWidth(.5f)
-					.align(Alignment.TopCenter))
+				Text(
+					text = stringResource(id = R.string.kill_playback),
+					fontSize = rowFontSize,
+				)
 			}
 		}
-
-		settingsList(
-			standardRowModifier,
-			rowFontSize,
-			applicationSettingsViewModel,
-			applicationNavigation,
-			playbackService,
-			libraries,
-			selectedLibraryId
-		)
 	}
 }
 
@@ -274,9 +192,10 @@ private fun ApplicationSettingsViewHorizontal(
 		modifier = Modifier.fillMaxSize(),
 		horizontalArrangement = Arrangement.SpaceEvenly,
 	) {
-		ApplicationLogo(modifier = Modifier
-			.fillMaxHeight(.75f)
-			.align(Alignment.CenterVertically)
+		ApplicationLogo(
+			modifier = Modifier
+				.fillMaxHeight(.75f)
+				.align(Alignment.CenterVertically)
 		)
 
 		val rowHeight = Dimensions.standardRowHeight
@@ -308,18 +227,18 @@ private fun ApplicationSettingsViewHorizontal(
 }
 
 @Composable
-fun ApplicationSettingsView(
+fun TvApplicationSettingsView(
 	applicationSettingsViewModel: ApplicationSettingsViewModel,
 	applicationNavigation: NavigateApplication,
 	playbackService: ControlPlaybackService,
 ) {
 	ControlSurface {
-		BoxWithConstraints(modifier = Modifier
-			.fillMaxSize()
-			.padding(Dimensions.viewPaddingUnit)
+		BoxWithConstraints(
+			modifier = Modifier
+				.fillMaxSize()
+				.padding(Dimensions.viewPaddingUnit)
 		) {
-			if (maxWidth < maxHeight) ApplicationSettingsViewVertical(applicationSettingsViewModel, applicationNavigation, playbackService)
-			else ApplicationSettingsViewHorizontal(applicationSettingsViewModel, applicationNavigation, playbackService)
+			ApplicationSettingsViewHorizontal(applicationSettingsViewModel, applicationNavigation, playbackService)
 		}
 	}
 }

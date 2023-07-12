@@ -4,31 +4,15 @@ import android.os.Bundle
 import android.os.PersistableBundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
-import androidx.tv.foundation.lazy.list.TvLazyRow
-import androidx.tv.foundation.lazy.list.items
-import androidx.tv.foundation.lazy.list.itemsIndexed
-import androidx.tv.material3.Card
-import androidx.tv.material3.ExperimentalTvMaterial3Api
-import androidx.tv.material3.MaterialTheme
-import androidx.tv.material3.Text
 import com.lasthopesoftware.bluewater.ActivityDependencies
 import com.lasthopesoftware.bluewater.NavigateApplication
-import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelDependencies
-import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
-import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewPlaylistFileItem
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
-import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
+import com.lasthopesoftware.bluewater.client.browsing.items.list.TvItemView
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.navigation.AboutScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ActiveLibraryDownloadsScreen
@@ -46,10 +30,9 @@ import com.lasthopesoftware.bluewater.client.browsing.navigation.SelectedLibrary
 import com.lasthopesoftware.bluewater.client.settings.PermissionsDependencies
 import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermissionsRequirementsProvider
 import com.lasthopesoftware.bluewater.permissions.write.ApplicationWritePermissionsRequirementsProvider
+import com.lasthopesoftware.bluewater.settings.TvApplicationSettingsView
 import com.lasthopesoftware.bluewater.shared.android.permissions.ManagePermissions
-import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
-import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import dev.olshevski.navigation.reimagined.NavController
@@ -121,80 +104,9 @@ private class TvNavigation(
 	}
 }
 
-@OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
-fun TvItemView(
-	itemListViewModel: ItemListViewModel,
-	fileListViewModel: FileListViewModel,
-	navigateApplication: NavigateApplication,
-	trackHeadlineViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
-) {
-	Column {
-		val itemTitle by itemListViewModel.itemValue.collectAsState()
+fun TvSettingsView() {
 
-		Text(
-			text = itemTitle,
-			style = MaterialTheme.typography.headlineMedium,
-		)
-
-		val childItems by itemListViewModel.items.collectAsState()
-		Text(
-			text = stringResource(id = R.string.item_count_label, childItems.size),
-			style = MaterialTheme.typography.headlineSmall,
-		)
-
-		TvLazyRow(
-			horizontalArrangement = Arrangement.spacedBy(Dimensions.viewPaddingUnit * 2)
-		) {
-			items(childItems) { child ->
-				Card(
-					onClick = {
-						itemListViewModel.loadedLibraryId?.also {
-							navigateApplication.viewItem(it, child)
-						}
-					}
-				) {
-					Text(text = child.value ?: "")
-				}
-			}
-		}
-
-		val childFiles by fileListViewModel.files.collectAsState()
-		Text(
-			text = stringResource(id = R.string.file_count_label, childFiles.size),
-			style = MaterialTheme.typography.headlineSmall,
-		)
-
-		TvLazyRow(
-			horizontalArrangement = Arrangement.spacedBy(Dimensions.viewPaddingUnit * 2)
-		) {
-			itemsIndexed(childFiles) { i, serviceFile ->
-				Card(
-					onClick = {
-						itemListViewModel.loadedLibraryId?.also {
-							navigateApplication.viewFileDetails(it, childFiles, i)
-						}
-					}
-				) {
-					val fileItemViewModel = remember(trackHeadlineViewModelProvider::getViewModel)
-
-					DisposableEffect(serviceFile) {
-						itemListViewModel.loadedLibraryId?.also {
-							fileItemViewModel.promiseUpdate(it, serviceFile)
-						}
-
-						onDispose {
-							fileItemViewModel.reset()
-						}
-					}
-
-					val title by fileItemViewModel.title.collectAsState()
-
-					Text(text = title)
-				}
-			}
-		}
-	}
 }
 
 private class TvDependencies(
@@ -218,19 +130,25 @@ fun CatalogBrowser(
 	val tvDependencies = TvDependencies(browserViewDependencies, graphNavigation)
 
 	NavHost(navController) { destination ->
-		when (destination) {
-			AboutScreen -> {}
-			ApplicationSettingsScreen -> {}
-			ActiveLibraryDownloadsScreen -> {}
-			SelectedLibraryReRouter -> {}
-			HiddenSettingsScreen -> {}
-			is DownloadsScreen -> {}
-			is ItemScreen -> {
-				LocalViewModelStoreOwner.current
-					?.let {
-						ScopedViewModelDependencies(tvDependencies, permissionsDependencies, it)
+		LocalViewModelStoreOwner.current
+			?.let {
+				ScopedViewModelDependencies(tvDependencies, permissionsDependencies, it)
+			}
+			?.apply {
+				when (destination) {
+					AboutScreen -> {}
+					ApplicationSettingsScreen -> {
+						TvApplicationSettingsView(
+							applicationSettingsViewModel,
+							applicationNavigation,
+							playbackServiceController,
+						)
 					}
-					?.apply {
+					ActiveLibraryDownloadsScreen -> {}
+					SelectedLibraryReRouter -> {}
+					HiddenSettingsScreen -> {}
+					is DownloadsScreen -> {}
+					is ItemScreen -> {
 						TvItemView(
 							itemListViewModel = itemListViewModel,
 							fileListViewModel = fileListViewModel,
@@ -238,12 +156,13 @@ fun CatalogBrowser(
 							trackHeadlineViewModelProvider = reusablePlaylistFileItemViewModelProvider,
 						)
 					}
+
+					is LibraryScreen -> {}
+					is SearchScreen -> {}
+					is ConnectionSettingsScreen -> {}
+					is NowPlayingScreen -> {}
+					NewConnectionSettingsScreen -> {}
+				}
 			}
-			is LibraryScreen -> {}
-			is SearchScreen -> {}
-			is ConnectionSettingsScreen -> {}
-			is NowPlayingScreen -> {}
-			NewConnectionSettingsScreen -> {}
-		}
 	}
 }
