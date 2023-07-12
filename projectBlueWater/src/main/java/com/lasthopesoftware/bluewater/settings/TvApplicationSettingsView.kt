@@ -1,16 +1,11 @@
-@file:OptIn(ExperimentalFoundationApi::class)
-
 package com.lasthopesoftware.bluewater.settings
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -23,14 +18,12 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.Button
 import androidx.compose.material.Checkbox
-import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.ProvideTextStyle
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
@@ -52,7 +45,6 @@ import com.lasthopesoftware.bluewater.shared.android.ui.components.ApplicationLo
 import com.lasthopesoftware.bluewater.shared.android.ui.components.LabeledSelection
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
-import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 
 private val optionsPadding = PaddingValues(start = 32.dp, end = 32.dp)
 
@@ -65,7 +57,6 @@ private fun LazyListScope.settingsList(
 	playbackService: ControlPlaybackService,
 	libraries: List<Library>,
 	selectedLibraryId: LibraryId,
-	isLoading: Boolean
 ) {
 	stickyHeader {
 		Row(
@@ -75,49 +66,6 @@ private fun LazyListScope.settingsList(
 		) {
 			ProvideTextStyle(MaterialTheme.typography.h5) {
 				Text(text = stringResource(id = R.string.app_name))
-			}
-		}
-	}
-
-	item {
-		Row(
-			modifier = standardRowModifier,
-			verticalAlignment = Alignment.CenterVertically,
-		) {
-			ProvideTextStyle(value = MaterialTheme.typography.h6) {
-				Text(text = stringResource(id = R.string.app_sync_settings))
-			}
-		}
-	}
-
-	item {
-		Row(
-			modifier = standardRowModifier.padding(optionsPadding),
-			verticalAlignment = Alignment.CenterVertically,
-		) {
-			val isSyncOnWifiOnly by applicationSettingsViewModel.isSyncOnWifiOnly.collectAsState()
-			LabeledSelection(
-				label = stringResource(id = R.string.app_only_sync_on_wifi),
-				selected = isSyncOnWifiOnly,
-				onSelected = { applicationSettingsViewModel.promiseSyncOnWifiChange(!isSyncOnWifiOnly) }
-			) {
-				Checkbox(checked = isSyncOnWifiOnly, onCheckedChange = null, enabled = !isLoading)
-			}
-		}
-	}
-
-	item {
-		Row(
-			modifier = standardRowModifier.padding(optionsPadding),
-			verticalAlignment = Alignment.CenterVertically,
-		) {
-			val isSyncOnPowerOnly by applicationSettingsViewModel.isSyncOnPowerOnly.collectAsState()
-			LabeledSelection(
-				label = stringResource(id = R.string.app_only_sync_ext_power),
-				selected = isSyncOnPowerOnly,
-				onSelected = { applicationSettingsViewModel.promiseSyncOnPowerChange(!isSyncOnPowerOnly) }
-			) {
-				Checkbox(checked = isSyncOnPowerOnly, onCheckedChange = null, enabled = !isLoading)
 			}
 		}
 	}
@@ -144,7 +92,7 @@ private fun LazyListScope.settingsList(
 				selected = isVolumeLevelingEnabled,
 				onSelected = { applicationSettingsViewModel.promiseVolumeLevelingEnabledChange(!isVolumeLevelingEnabled) }
 			) {
-				Checkbox(checked = isVolumeLevelingEnabled, onCheckedChange = null, enabled = !isLoading)
+				Checkbox(checked = isVolumeLevelingEnabled, onCheckedChange = null)
 			}
 		}
 	}
@@ -171,8 +119,7 @@ private fun LazyListScope.settingsList(
 
 	items(libraries) { library ->
 		Row(
-			modifier = standardRowModifier
-				.clickable { applicationNavigation.viewServerSettings(library.libraryId) },
+			modifier = standardRowModifier,
 			verticalAlignment = Alignment.CenterVertically,
 		) {
 			Text(
@@ -186,14 +133,28 @@ private fun LazyListScope.settingsList(
 				fontSize = rowFontSize,
 			)
 
+			Image(
+				painter = painterResource(id = R.drawable.ic_action_settings),
+				contentDescription = stringResource(id = R.string.settings),
+				modifier = Modifier
+					.clickable { applicationNavigation.viewServerSettings(library.libraryId) }
+					.padding(Dimensions.viewPaddingUnit),
+			)
+
 			Row(
 				modifier = Modifier
+					.clickable { applicationNavigation.viewLibrary(library.libraryId) }
 					.padding(Dimensions.viewPaddingUnit),
 				verticalAlignment = Alignment.CenterVertically,
 			) {
-				Icon(
-					painter = painterResource(id = R.drawable.ic_action_settings),
-					contentDescription = stringResource(id = R.string.settings)
+				Text(
+					text = stringResource(id = R.string.lbl_connect),
+					fontSize = rowFontSize,
+				)
+
+				Image(
+					painter = painterResource(id = R.drawable.ic_arrow_right),
+					contentDescription = stringResource(id = R.string.lbl_connect)
 				)
 			}
 		}
@@ -214,71 +175,23 @@ private fun LazyListScope.settingsList(
 	}
 
 	item {
-		Button(
+		Box(
 			modifier = Modifier
+				.fillMaxWidth()
 				.padding(top = 48.dp),
-			onClick = {
-				playbackService.kill()
-			}
 		) {
-			Text(
-				text = stringResource(id = R.string.kill_playback),
-				fontSize = rowFontSize,
-			)
-		}
-	}
-}
-
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-private fun ApplicationSettingsViewVertical(
-	applicationSettingsViewModel: ApplicationSettingsViewModel,
-	applicationNavigation: NavigateApplication,
-	playbackService: ControlPlaybackService,
-) {
-	val rowHeight = Dimensions.standardRowHeight
-	val rowFontSize = LocalDensity.current.run { dimensionResource(id = R.dimen.row_font_size).toSp() }
-
-	val standardRowModifier = Modifier
-		.fillMaxWidth()
-		.height(rowHeight)
-
-	val libraries by applicationSettingsViewModel.libraries.collectAsState()
-	val selectedLibraryId by applicationSettingsViewModel.chosenLibraryId.collectAsState()
-	val isLoading by applicationSettingsViewModel.isLoading.subscribeAsState()
-
-	LazyColumn(
-		modifier = Modifier.fillMaxSize(),
-		horizontalAlignment = Alignment.CenterHorizontally,
-	) {
-		item {
-			Box(
-				modifier = Modifier
-					.fillMaxWidth()
-					.padding(Dimensions.viewPaddingUnit * 8)
+			Button(
+				modifier = Modifier.align(Alignment.Center),
+				onClick = {
+					playbackService.kill()
+				}
 			) {
-				ApplicationLogo(modifier = Modifier
-					.fillMaxWidth(.5f)
-					.align(Alignment.TopCenter)
-					.combinedClickable(
-						interactionSource = remember { MutableInteractionSource() },
-						indication = null,
-						onClick = {},
-						onLongClick = { applicationNavigation.viewHiddenSettings() },
-					))
+				Text(
+					text = stringResource(id = R.string.kill_playback),
+					fontSize = rowFontSize,
+				)
 			}
 		}
-
-		settingsList(
-			standardRowModifier,
-			rowFontSize,
-			applicationSettingsViewModel,
-			applicationNavigation,
-			playbackService,
-			libraries,
-			selectedLibraryId,
-			isLoading
-		)
 	}
 }
 
@@ -292,15 +205,10 @@ private fun ApplicationSettingsViewHorizontal(
 		modifier = Modifier.fillMaxSize(),
 		horizontalArrangement = Arrangement.SpaceEvenly,
 	) {
-		ApplicationLogo(modifier = Modifier
-			.fillMaxHeight(.75f)
-			.align(Alignment.CenterVertically)
-			.combinedClickable(
-				interactionSource = remember { MutableInteractionSource() },
-				indication = null,
-				onClick = {},
-				onLongClick = { applicationNavigation.viewHiddenSettings() },
-			)
+		ApplicationLogo(
+			modifier = Modifier
+				.fillMaxHeight(.75f)
+				.align(Alignment.CenterVertically)
 		)
 
 		val rowHeight = Dimensions.standardRowHeight
@@ -312,7 +220,6 @@ private fun ApplicationSettingsViewHorizontal(
 
 		val libraries by applicationSettingsViewModel.libraries.collectAsState()
 		val selectedLibraryId by applicationSettingsViewModel.chosenLibraryId.collectAsState()
-		val isLoading by applicationSettingsViewModel.isLoading.subscribeAsState()
 
 		LazyColumn(
 			modifier = Modifier
@@ -326,26 +233,25 @@ private fun ApplicationSettingsViewHorizontal(
 				applicationNavigation,
 				playbackService,
 				libraries,
-				selectedLibraryId,
-				isLoading
+				selectedLibraryId
 			)
 		}
 	}
 }
 
 @Composable
-fun ApplicationSettingsView(
+fun TvApplicationSettingsView(
 	applicationSettingsViewModel: ApplicationSettingsViewModel,
 	applicationNavigation: NavigateApplication,
 	playbackService: ControlPlaybackService,
 ) {
 	ControlSurface {
-		BoxWithConstraints(modifier = Modifier
-			.fillMaxSize()
-			.padding(Dimensions.viewPaddingUnit)
+		Box(
+			modifier = Modifier
+				.fillMaxSize()
+				.padding(Dimensions.viewPaddingUnit)
 		) {
-			if (maxWidth < maxHeight) ApplicationSettingsViewVertical(applicationSettingsViewModel, applicationNavigation, playbackService)
-			else ApplicationSettingsViewHorizontal(applicationSettingsViewModel, applicationNavigation, playbackService)
+			ApplicationSettingsViewHorizontal(applicationSettingsViewModel, applicationNavigation, playbackService)
 		}
 	}
 }

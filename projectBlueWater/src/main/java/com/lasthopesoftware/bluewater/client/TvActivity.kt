@@ -1,36 +1,23 @@
 package com.lasthopesoftware.bluewater.client
 
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.PersistableBundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.res.stringResource
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.core.app.ActivityCompat
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.media3.common.util.UnstableApi
-import androidx.tv.foundation.lazy.list.TvLazyRow
-import androidx.tv.foundation.lazy.list.items
-import androidx.tv.foundation.lazy.list.itemsIndexed
-import androidx.tv.material3.Card
-import androidx.tv.material3.ExperimentalTvMaterial3Api
-import androidx.tv.material3.MaterialTheme
-import androidx.tv.material3.Text
 import com.lasthopesoftware.bluewater.ActivityDependencies
 import com.lasthopesoftware.bluewater.NavigateApplication
-import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.BrowserViewDependencies
-import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
-import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewPlaylistFileItem
+import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelDependencies
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
-import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
+import com.lasthopesoftware.bluewater.client.browsing.items.list.TvItemView
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ActiveLibraryDownloadsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ApplicationSettingsScreen
@@ -44,11 +31,17 @@ import com.lasthopesoftware.bluewater.client.browsing.navigation.NewConnectionSe
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NowPlayingScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.SearchScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.SelectedLibraryReRouter
-import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
+import com.lasthopesoftware.bluewater.client.settings.PermissionsDependencies
+import com.lasthopesoftware.bluewater.permissions.ApplicationPermissionsRequests
+import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermissionsRequirementsProvider
+import com.lasthopesoftware.bluewater.settings.TvApplicationSettingsView
+import com.lasthopesoftware.bluewater.shared.android.permissions.ManagePermissions
+import com.lasthopesoftware.bluewater.shared.android.permissions.OsPermissionsChecker
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
-import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 import com.lasthopesoftware.promises.extensions.registerResultActivityLauncher
 import com.lasthopesoftware.promises.extensions.toPromise
+import com.namehillsoftware.handoff.Messenger
+import com.namehillsoftware.handoff.promises.Promise
 import dev.olshevski.navigation.reimagined.NavController
 import dev.olshevski.navigation.reimagined.NavHost
 import dev.olshevski.navigation.reimagined.moveToTop
@@ -57,21 +50,65 @@ import dev.olshevski.navigation.reimagined.popUpTo
 import dev.olshevski.navigation.reimagined.rememberNavController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import java.util.concurrent.ConcurrentHashMap
 
 @UnstableApi
-class TvActivity : AppCompatActivity(), ActivitySuppliedDependencies {
+class TvActivity :
+	AppCompatActivity(),
+	PermissionsDependencies,
+	ManagePermissions,
+	ActivitySuppliedDependencies
+{
 	private val dependencies by lazy { ActivityDependencies(this, this) }
 
 	override val registeredActivityResultsLauncher = registerResultActivityLauncher()
+
+	override val applicationPermissions by lazy {
+		val osPermissionChecker = OsPermissionsChecker(applicationContext)
+		ApplicationPermissionsRequests(
+			dependencies.libraryProvider,
+			ApplicationReadPermissionsRequirementsProvider(osPermissionChecker),
+			this,
+			osPermissionChecker
+		)
+	}
+
+	private val permissionsRequests = ConcurrentHashMap<Int, Messenger<Map<String, Boolean>>>()
 
 	override fun onCreate(savedInstanceState: Bundle?, persistentState: PersistableBundle?) {
 		super.onCreate(savedInstanceState, persistentState)
 
 		setContent {
 			ProjectBlueTheme {
-				CatalogBrowser(dependencies)
+				CatalogBrowser(dependencies, this)
 			}
 		}
+	}
+
+	override fun requestPermissions(permissions: List<String>): Promise<Map<String, Boolean>> {
+		return if (permissions.isEmpty()) Promise(emptyMap())
+		else Promise<Map<String, Boolean>> { messenger ->
+			val requestId = messenger.hashCode()
+			permissionsRequests[requestId] = messenger
+
+			ActivityCompat.requestPermissions(
+				this,
+				permissions.toTypedArray(),
+				requestId
+			)
+		}
+	}
+
+	override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
+		super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+
+		permissionsRequests
+			.remove(requestCode)
+			?.sendResolution(
+				grantResults
+					.zip(permissions)
+					.associate { (r, p) -> Pair(p, r == PackageManager.PERMISSION_GRANTED) }
+			)
 	}
 }
 
@@ -107,80 +144,9 @@ private class TvNavigation(
 	}.toPromise()
 }
 
-@OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
-fun TvItemView(
-	itemListViewModel: ItemListViewModel,
-	fileListViewModel: FileListViewModel,
-	navigateApplication: NavigateApplication,
-	trackHeadlineViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
-) {
-	Column {
-		val itemTitle by itemListViewModel.itemValue.collectAsState()
+fun TvSettingsView() {
 
-		Text(
-			text = itemTitle,
-			style = MaterialTheme.typography.headlineMedium,
-		)
-
-		val childItems by itemListViewModel.items.collectAsState()
-		Text(
-			text = stringResource(id = R.string.item_count_label, childItems.size),
-			style = MaterialTheme.typography.headlineSmall,
-		)
-
-		TvLazyRow(
-			horizontalArrangement = Arrangement.spacedBy(Dimensions.viewPaddingUnit * 2)
-		) {
-			items(childItems) { child ->
-				Card(
-					onClick = {
-						itemListViewModel.loadedLibraryId?.also {
-							navigateApplication.viewItem(it, child)
-						}
-					}
-				) {
-					Text(text = child.value ?: "")
-				}
-			}
-		}
-
-		val childFiles by fileListViewModel.files.collectAsState()
-		Text(
-			text = stringResource(id = R.string.file_count_label, childFiles.size),
-			style = MaterialTheme.typography.headlineSmall,
-		)
-
-		TvLazyRow(
-			horizontalArrangement = Arrangement.spacedBy(Dimensions.viewPaddingUnit * 2)
-		) {
-			itemsIndexed(childFiles) { i, serviceFile ->
-				Card(
-					onClick = {
-						itemListViewModel.loadedLibraryId?.also {
-							navigateApplication.viewFileDetails(it, childFiles, i)
-						}
-					}
-				) {
-					val fileItemViewModel = remember(trackHeadlineViewModelProvider::getViewModel)
-
-					DisposableEffect(serviceFile) {
-						itemListViewModel.loadedLibraryId?.also {
-							fileItemViewModel.promiseUpdate(it, serviceFile)
-						}
-
-						onDispose {
-							fileItemViewModel.reset()
-						}
-					}
-
-					val title by fileItemViewModel.title.collectAsState()
-
-					Text(text = title)
-				}
-			}
-		}
-	}
 }
 
 private class TvDependencies(
@@ -190,7 +156,8 @@ private class TvDependencies(
 
 @Composable
 fun CatalogBrowser(
-	browserViewDependencies: BrowserViewDependencies
+	browserViewDependencies: BrowserViewDependencies,
+	permissionsDependencies: PermissionsDependencies
 ) {
 	val navController = rememberNavController(
 		listOf(ApplicationSettingsScreen, SelectedLibraryReRouter)
@@ -205,38 +172,38 @@ fun CatalogBrowser(
 	val tvDependencies = TvDependencies(browserViewDependencies, graphNavigation)
 
 	NavHost(navController) { destination ->
-		when (destination) {
-			ApplicationSettingsScreen -> {}
-			ActiveLibraryDownloadsScreen -> {}
-			SelectedLibraryReRouter -> {}
-			HiddenSettingsScreen -> {}
-			is DownloadsScreen -> {}
-			is ItemScreen -> {
-				with (tvDependencies) {
-					TvItemView(
-						itemListViewModel = viewModel {
-							ItemListViewModel(
-								itemProvider,
-								messageBus,
-								libraryProvider,
-							)
-						},
-						fileListViewModel = viewModel {
-							FileListViewModel(
-								itemFileProvider,
-								storedItemAccess,
-							)
-						},
-						navigateApplication = applicationNavigation,
-						trackHeadlineViewModelProvider = reusablePlaylistFileItemViewModelProvider,
-					)
+		LocalViewModelStoreOwner.current
+			?.let {
+				ScopedViewModelDependencies(tvDependencies, permissionsDependencies, it)
+			}
+			?.apply {
+				when (destination) {
+					ApplicationSettingsScreen -> {
+						TvApplicationSettingsView(
+							applicationSettingsViewModel,
+							applicationNavigation,
+							playbackServiceController,
+						)
+					}
+					ActiveLibraryDownloadsScreen -> {}
+					SelectedLibraryReRouter -> {}
+					HiddenSettingsScreen -> {}
+					is DownloadsScreen -> {}
+					is ItemScreen -> {
+						TvItemView(
+							itemListViewModel = itemListViewModel,
+							fileListViewModel = fileListViewModel,
+							navigateApplication = applicationNavigation,
+							trackHeadlineViewModelProvider = reusablePlaylistFileItemViewModelProvider,
+						)
+					}
+
+					is LibraryScreen -> {}
+					is SearchScreen -> {}
+					is ConnectionSettingsScreen -> {}
+					is NowPlayingScreen -> {}
+					NewConnectionSettingsScreen -> {}
 				}
 			}
-			is LibraryScreen -> {}
-			is SearchScreen -> {}
-			is ConnectionSettingsScreen -> {}
-			is NowPlayingScreen -> {}
-			NewConnectionSettingsScreen -> {}
-		}
 	}
 }
