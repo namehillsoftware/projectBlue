@@ -1,12 +1,13 @@
 package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource
 
 import android.net.Uri
-import com.google.android.exoplayer2.MediaItem
-import com.google.android.exoplayer2.extractor.mp3.Mp3Extractor
-import com.google.android.exoplayer2.source.MediaSource
-import com.google.android.exoplayer2.source.ProgressiveMediaSource
-import com.google.android.exoplayer2.upstream.DefaultLoadErrorHandlingPolicy
-import com.google.android.exoplayer2.upstream.FileDataSource
+import androidx.media3.common.MediaItem
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.datasource.FileDataSource
+import androidx.media3.exoplayer.source.MediaSource
+import androidx.media3.exoplayer.source.ProgressiveMediaSource
+import androidx.media3.exoplayer.upstream.DefaultLoadErrorHandlingPolicy
+import androidx.media3.extractor.mp3.Mp3Extractor
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideGuaranteedLibraryConnections
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
@@ -15,7 +16,7 @@ import com.lasthopesoftware.bluewater.shared.IoCommon
 import com.lasthopesoftware.bluewater.shared.policies.caching.PermanentPromiseFunctionCache
 import com.namehillsoftware.handoff.promises.Promise
 
-class MediaSourceProvider(
+@UnstableApi class MediaSourceProvider(
 	private val diskFileCacheSourceFactory: DiskFileCacheSourceFactory,
 	private val guaranteedLibraryConnections: ProvideGuaranteedLibraryConnections,
 ) : SpawnMediaSources {

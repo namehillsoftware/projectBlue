@@ -2,7 +2,8 @@ package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparatio
 
 import android.content.Context
 import android.os.Handler
-import com.google.android.exoplayer2.DefaultLoadControl
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.exoplayer.DefaultLoadControl
 import com.lasthopesoftware.bluewater.client.browsing.files.uri.BestMatchUriProvider
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlayableFilePreparationSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.ExoPlayerProvider
@@ -10,7 +11,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.rendering.AudioRenderersFactory
 import org.joda.time.Minutes
 
-class ExoPlayerPlayableFilePreparationSourceProvider(
+@UnstableApi class ExoPlayerPlayableFilePreparationSourceProvider(
 	private val context: Context,
 	private val playbackHandler: Handler,
 	private val eventHandler: Handler,

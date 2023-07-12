@@ -16,8 +16,9 @@ import android.os.Process
 import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.LifecycleService
-import com.google.android.exoplayer2.ExoPlaybackException
-import com.google.android.exoplayer2.upstream.HttpDataSource.InvalidResponseCodeException
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.datasource.HttpDataSource
+import androidx.media3.exoplayer.ExoPlaybackException
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFileUriQueryParamsProvider
@@ -142,7 +143,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
-open class PlaybackService :
+@UnstableApi open class PlaybackService :
 	LifecycleService(),
 	OnPlaybackPaused,
 	OnPlaybackInterrupted,
@@ -970,7 +971,7 @@ open class PlaybackService :
 		}
 
 		fun handleIoException(exception: IOException?) {
-			if (exception is InvalidResponseCodeException && exception.responseCode == 416) {
+			if (exception is HttpDataSource.InvalidResponseCodeException && exception.responseCode == 416) {
 				logger.warn("Received an error code of " + exception.responseCode + ", will attempt restarting the player", exception)
 				closeAndRestartPlaylistManager(exception)
 				return
