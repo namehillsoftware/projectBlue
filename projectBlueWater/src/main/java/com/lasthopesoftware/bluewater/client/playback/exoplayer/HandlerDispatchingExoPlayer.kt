@@ -2,10 +2,18 @@ package com.lasthopesoftware.bluewater.client.playback.exoplayer
 
 import android.os.Handler
 import android.os.Looper
-import com.google.android.exoplayer2.*
-import com.google.android.exoplayer2.source.MediaSource
-import com.google.android.exoplayer2.source.ShuffleOrder
-import com.google.android.exoplayer2.trackselection.TrackSelector
+import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackParameters
+import androidx.media3.common.Player
+import androidx.media3.common.Timeline
+import androidx.media3.common.Tracks
+import androidx.media3.exoplayer.ExoPlaybackException
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.PlayerMessage
+import androidx.media3.exoplayer.SeekParameters
+import androidx.media3.exoplayer.source.MediaSource
+import androidx.media3.exoplayer.source.ShuffleOrder
+import androidx.media3.exoplayer.trackselection.TrackSelector
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.MessageWriter
@@ -337,16 +345,19 @@ class HandlerDispatchingExoPlayer(private val innerPlayer: ExoPlayer, private va
 			},
 			handler)
 
+	@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 	override fun getRendererCount(): Promise<Int> =
 		LoopedInPromise(
-			MessageWriter { innerPlayer.rendererCount },
+			MessageWriter<Int> { innerPlayer.rendererCount },
 			handler)
 
+	@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 	override fun getRendererType(index: Int): Promise<Int> =
 		LoopedInPromise(
 			MessageWriter { innerPlayer.getRendererType(index) },
 			handler)
 
+	@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 	override fun getTrackSelector(): Promise<TrackSelector?> =
 		LoopedInPromise(
 			MessageWriter { innerPlayer.trackSelector },
@@ -357,6 +368,7 @@ class HandlerDispatchingExoPlayer(private val innerPlayer: ExoPlayer, private va
 			MessageWriter { innerPlayer.currentTracks },
 			handler)
 
+	@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 	override fun getCurrentManifest(): Promise<Any?> =
 		LoopedInPromise(
 			MessageWriter { innerPlayer.currentManifest },
@@ -477,11 +489,13 @@ class HandlerDispatchingExoPlayer(private val innerPlayer: ExoPlayer, private va
 			MessageWriter { innerPlayer.contentBufferedPosition },
 			handler)
 
+	@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 	override fun getPlaybackLooper(): Promise<Looper> =
 		LoopedInPromise(
 			MessageWriter { innerPlayer.playbackLooper },
 			handler)
 
+	@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 	override fun setMediaSources(mediaSources: MutableList<MediaSource>): Promise<PromisingExoPlayer> =
 		LoopedInPromise(
 			MessageWriter {
@@ -490,6 +504,7 @@ class HandlerDispatchingExoPlayer(private val innerPlayer: ExoPlayer, private va
 			},
 			handler)
 
+	@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 	override fun setMediaSources(mediaSources: MutableList<MediaSource>, resetPosition: Boolean): Promise<PromisingExoPlayer> =
 		LoopedInPromise(
 			MessageWriter {
@@ -498,6 +513,7 @@ class HandlerDispatchingExoPlayer(private val innerPlayer: ExoPlayer, private va
 			},
 			handler)
 
+	@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 	override fun setMediaSources(mediaSources: MutableList<MediaSource>, startWindowIndex: Int, startPositionMs: Long): Promise<PromisingExoPlayer> =
 		LoopedInPromise(
 			MessageWriter {
@@ -506,6 +522,7 @@ class HandlerDispatchingExoPlayer(private val innerPlayer: ExoPlayer, private va
 			},
 			handler)
 
+	@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 	override fun setMediaSource(mediaSource: MediaSource): Promise<PromisingExoPlayer> =
 		LoopedInPromise(
 			MessageWriter {
@@ -514,6 +531,7 @@ class HandlerDispatchingExoPlayer(private val innerPlayer: ExoPlayer, private va
 			},
 			handler)
 
+	@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 	override fun setMediaSource(mediaSource: MediaSource, startPositionMs: Long): Promise<PromisingExoPlayer> =
 		LoopedInPromise(
 			MessageWriter {
@@ -522,6 +540,7 @@ class HandlerDispatchingExoPlayer(private val innerPlayer: ExoPlayer, private va
 			},
 			handler)
 
+	@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 	override fun setMediaSource(mediaSource: MediaSource, resetPosition: Boolean): Promise<PromisingExoPlayer> =
 		LoopedInPromise(
 			MessageWriter {
@@ -530,6 +549,7 @@ class HandlerDispatchingExoPlayer(private val innerPlayer: ExoPlayer, private va
 			},
 			handler)
 
+	@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 	override fun addMediaSource(mediaSource: MediaSource): Promise<PromisingExoPlayer> =
 		LoopedInPromise(
 			MessageWriter {
@@ -538,6 +558,7 @@ class HandlerDispatchingExoPlayer(private val innerPlayer: ExoPlayer, private va
 			},
 			handler)
 
+	@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 	override fun addMediaSource(index: Int, mediaSource: MediaSource): Promise<PromisingExoPlayer> =
 		LoopedInPromise(
 			MessageWriter {
@@ -546,6 +567,7 @@ class HandlerDispatchingExoPlayer(private val innerPlayer: ExoPlayer, private va
 			},
 			handler)
 
+	@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 	override fun addMediaSources(mediaSources: MutableList<MediaSource>): Promise<PromisingExoPlayer> =
 		LoopedInPromise(
 			MessageWriter {
@@ -554,6 +576,7 @@ class HandlerDispatchingExoPlayer(private val innerPlayer: ExoPlayer, private va
 			},
 			handler)
 
+	@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 	override fun addMediaSources(index: Int, mediaSources: MutableList<MediaSource>): Promise<PromisingExoPlayer> =
 		LoopedInPromise(
 			MessageWriter {
@@ -562,6 +585,7 @@ class HandlerDispatchingExoPlayer(private val innerPlayer: ExoPlayer, private va
 			},
 			handler)
 
+	@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 	override fun setShuffleOrder(shuffleOrder: ShuffleOrder): Promise<PromisingExoPlayer> =
 		LoopedInPromise(
 			MessageWriter {
@@ -570,11 +594,13 @@ class HandlerDispatchingExoPlayer(private val innerPlayer: ExoPlayer, private va
 			},
 			handler)
 
+	@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 	override fun createMessage(target: PlayerMessage.Target): Promise<PlayerMessage> =
 		LoopedInPromise(
 			MessageWriter { innerPlayer.createMessage(target) },
 			handler)
 
+	@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 	override fun setSeekParameters(seekParameters: SeekParameters?): Promise<PromisingExoPlayer> =
 		LoopedInPromise(
 			MessageWriter {
@@ -583,11 +609,13 @@ class HandlerDispatchingExoPlayer(private val innerPlayer: ExoPlayer, private va
 			},
 			handler)
 
+	@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 	override fun getSeekParameters(): Promise<SeekParameters> =
 		LoopedInPromise(
 			MessageWriter { innerPlayer.seekParameters },
 			handler)
 
+	@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 	override fun setForegroundMode(foregroundMode: Boolean): Promise<PromisingExoPlayer> =
 		LoopedInPromise(
 			MessageWriter {
@@ -596,6 +624,7 @@ class HandlerDispatchingExoPlayer(private val innerPlayer: ExoPlayer, private va
 			},
 			handler)
 
+	@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 	override fun setPauseAtEndOfMediaItems(pauseAtEndOfMediaItems: Boolean): Promise<PromisingExoPlayer> =
 		LoopedInPromise(
 			MessageWriter {
@@ -604,11 +633,13 @@ class HandlerDispatchingExoPlayer(private val innerPlayer: ExoPlayer, private va
 			},
 			handler)
 
+	@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 	override fun getPauseAtEndOfMediaItems(): Promise<Boolean> =
 		LoopedInPromise(
 			MessageWriter { innerPlayer.pauseAtEndOfMediaItems },
 			handler)
 
+	@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 	override fun experimentalSetOffloadSchedulingEnabled(offloadSchedulingEnabled: Boolean): Promise<PromisingExoPlayer> =
 		LoopedInPromise(
 			MessageWriter {

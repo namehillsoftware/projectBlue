@@ -2,9 +2,9 @@ package com.lasthopesoftware.bluewater.client.playback.exoplayer
 
 import android.content.Context
 import android.os.Handler
-import com.google.android.exoplayer2.ExoPlayer
-import com.google.android.exoplayer2.LoadControl
-import com.google.android.exoplayer2.RenderersFactory
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.LoadControl
+import androidx.media3.exoplayer.RenderersFactory
 
 class ExoPlayerProvider(
 	private val context: Context,
@@ -14,6 +14,7 @@ class ExoPlayerProvider(
 ) :
 	ProvideExoPlayers
 {
+	@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 	override fun getExoPlayer(): PromisingExoPlayer {
 		val exoPlayerBuilder = ExoPlayer.Builder(context, renderersFactory)
 			.setLoadControl(loadControl)

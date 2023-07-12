@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.list
 
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -12,7 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -26,6 +26,7 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.ProvideTextStyle
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
+import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Search
@@ -42,6 +43,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -56,18 +59,25 @@ import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionF
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.shared.android.ui.components.ColumnMenuIcon
+import com.lasthopesoftware.bluewater.shared.android.ui.components.memorableScrollConnectedScaler
 import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberCalculatedKnobHeight
 import com.lasthopesoftware.bluewater.shared.android.ui.components.scrollbar
+import com.lasthopesoftware.bluewater.shared.android.ui.linearInterpolation
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 import com.lasthopesoftware.bluewater.shared.promises.extensions.suspend
 import kotlinx.coroutines.launch
-import me.onebone.toolbar.CollapsingToolbarScaffold
-import me.onebone.toolbar.ScrollStrategy
-import me.onebone.toolbar.rememberCollapsingToolbarScaffoldState
 import java.io.IOException
 import kotlin.math.pow
+
+private val searchFieldPadding = Dimensions.viewPaddingUnit * 4
+private val textFieldHeight = TextFieldDefaults.MinHeight + TextFieldDefaults.FocusedBorderThickness * 2
+private val topBarHeight = textFieldHeight + searchFieldPadding
+private val minimumMenuWidth = (2 * 32).dp
+
+private val expandedMenuVerticalPadding = searchFieldPadding * 2
+private val boxHeight = topBarHeight + Dimensions.menuHeight + expandedMenuVerticalPadding
 
 @Composable
 fun SearchFilesView(
@@ -132,150 +142,17 @@ fun SearchFilesView(
 	}
 
 	ControlSurface {
-		val toolbarState = rememberCollapsingToolbarScaffoldState()
-		val headerHidingProgress by remember { derivedStateOf { 1 - toolbarState.toolbarState.progress } }
 		val isLoading by searchFilesViewModel.isLoading.collectAsState()
 
-		CollapsingToolbarScaffold(
-			enabled = true,
-			state = toolbarState,
-			scrollStrategy = ScrollStrategy.ExitUntilCollapsed,
-			modifier = Modifier.fillMaxSize(),
-			toolbar = {
-				val appBarHeight = Dimensions.appBarHeight
-				val searchFieldPadding = 16.dp
-				val minimumMenuWidth = (2 * 32).dp
+		val heightScaler = LocalDensity.current.run {
+			memorableScrollConnectedScaler(max = boxHeight.toPx(), min = topBarHeight.toPx())
+		}
 
-				val expandedMenuVerticalPadding = 4.dp
-				val boxHeight = appBarHeight + Dimensions.menuHeight + expandedMenuVerticalPadding * 2 + searchFieldPadding * 2
-
-				val acceleratedToolbarStateProgress by remember {
-					derivedStateOf {
-						toolbarState.toolbarState.progress.pow(
-							5
-						).coerceIn(0f, 1f)
-					}
-				}
-				val acceleratedHeaderHidingProgress by remember {
-					derivedStateOf { 1 - acceleratedToolbarStateProgress }
-				}
-
-				BoxWithConstraints(
-					modifier = Modifier
-						.height(boxHeight)
-						.fillMaxWidth()
-				) {
-					if (files.any()) {
-
-						val iconSize = Dimensions.topMenuIconSize
-						val menuWidth by remember { derivedStateOf { (maxWidth - (maxWidth - minimumMenuWidth) * acceleratedHeaderHidingProgress) } }
-						val expandedTopRowPadding = appBarHeight + expandedMenuVerticalPadding + searchFieldPadding * 2
-						val collapsedTopRowPadding = searchFieldPadding + appBarHeight / 2 - iconSize / 2
-						val topRowPadding by remember { derivedStateOf { (expandedTopRowPadding - (expandedTopRowPadding - collapsedTopRowPadding) * headerHidingProgress) } }
-						Row(
-							modifier = Modifier
-								.padding(
-									top = topRowPadding,
-									bottom = expandedMenuVerticalPadding,
-									start = 8.dp,
-									end = 8.dp
-								)
-								.width(menuWidth)
-								.align(Alignment.TopEnd)
-						) {
-							val textModifier = Modifier.alpha(acceleratedToolbarStateProgress)
-
-							val playLabel = stringResource(id = R.string.btn_play)
-							ColumnMenuIcon(
-								onClick = {
-									searchFilesViewModel.libraryId?.also {
-										playbackServiceController.startPlaylist(it, files, 0)
-									}
-							  	},
-								icon = {
-									Image(
-										painter = painterResource(id = R.drawable.av_play),
-										contentDescription = playLabel,
-										modifier = Modifier.size(iconSize)
-									)
-								},
-								label = if (acceleratedHeaderHidingProgress < 1) playLabel else null,
-								labelModifier = textModifier,
-								labelMaxLines = 1,
-							)
-
-							val shuffleLabel = stringResource(id = R.string.btn_shuffle_files)
-							ColumnMenuIcon(
-								onClick = {
-									searchFilesViewModel.libraryId?.also {
-										playbackServiceController.shuffleAndStartPlaylist(it, files)
-									}
-							  	},
-								icon = {
-									Image(
-										painter = painterResource(id = R.drawable.av_shuffle),
-										contentDescription = shuffleLabel,
-										modifier = Modifier.size(iconSize)
-									)
-								},
-								label = if (acceleratedHeaderHidingProgress < 1) shuffleLabel else null,
-								labelModifier = textModifier,
-								labelMaxLines = 1,
-							)
-						}
-					}
-				}
-
-				Row(
-					modifier = Modifier
-						.fillMaxWidth()
-						.padding(searchFieldPadding)
-						.height(appBarHeight),
-					horizontalArrangement = Arrangement.Center,
-				) {
-					Icon(
-						Icons.Default.ArrowBack,
-						contentDescription = "",
-						tint = MaterialTheme.colors.onSurface,
-						modifier = Modifier
-							.padding(end = 16.dp)
-							.align(Alignment.CenterVertically)
-							.clickable(
-								interactionSource = remember { MutableInteractionSource() },
-								indication = null,
-								onClick = applicationNavigation::backOut
-							)
-					)
-
-					val endPadding by remember { derivedStateOf { 4.dp + minimumMenuWidth * acceleratedHeaderHidingProgress } }
-					val query by searchFilesViewModel.query.collectAsState()
-					val isLibraryIdActive by searchFilesViewModel.isLibraryIdActive.collectAsState()
-
-					TextField(
-						value = query,
-						placeholder = { stringResource(id = R.string.lbl_search_hint) },
-						onValueChange = { searchFilesViewModel.query.value = it },
-						singleLine = true,
-						keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-						keyboardActions = KeyboardActions(onSearch = {
-							scope.launch {
-								try {
-									searchFilesViewModel.findFiles().suspend()
-								} catch (e: IOException) {
-									isConnectionLost = ConnectionLostExceptionFilter.isConnectionLostException(e)
-								}
-							}
-						}),
-						trailingIcon = { Icon(Icons.Default.Search, contentDescription = stringResource(id = R.string.search)) },
-						enabled = isLibraryIdActive && !isLoading,
-						modifier = Modifier
-							.padding(end = endPadding)
-							.weight(1f)
-					)
-				}
-			},
+		Box(
+			modifier = Modifier
+				.fillMaxSize()
+				.nestedScroll(heightScaler)
 		) {
-
 			when {
 				isLoading -> {
 					Box(modifier = Modifier.fillMaxSize()) {
@@ -315,9 +192,13 @@ fun SearchFilesView(
 								),
 						) {
 							item {
+								Spacer(modifier = Modifier.requiredHeight(boxHeight).fillMaxWidth())
+							}
+
+							item {
 								Box(
 									modifier = Modifier
-										.padding(4.dp)
+										.padding(Dimensions.viewPaddingUnit)
 										.height(48.dp)
 								) {
 									ProvideTextStyle(MaterialTheme.typography.h5) {
@@ -325,7 +206,7 @@ fun SearchFilesView(
 											text = stringResource(R.string.file_count_label, files.size),
 											fontWeight = FontWeight.Bold,
 											modifier = Modifier
-												.padding(4.dp)
+												.padding(Dimensions.viewPaddingUnit)
 												.align(Alignment.CenterStart)
 										)
 									}
@@ -343,6 +224,126 @@ fun SearchFilesView(
 				}
 				else -> {
 					Spacer(modifier = Modifier.fillMaxSize())
+				}
+			}
+
+			val heightValue by heightScaler.getValueState()
+			val headerCollapsingProgress by heightScaler.getProgressState()
+			Box(
+				modifier = Modifier
+					.fillMaxWidth()
+					.background(MaterialTheme.colors.surface)
+					.padding(start = searchFieldPadding, end = searchFieldPadding)
+					.height(LocalDensity.current.run { heightValue.toDp() })
+			) {
+				val acceleratedHeaderCollapsingProgress by remember {
+					derivedStateOf {
+						headerCollapsingProgress.pow(
+							.2f
+						).coerceIn(0f, 1f)
+					}
+				}
+
+				val acceleratedToolbarExpandingProgress by remember {
+					derivedStateOf { 1 - acceleratedHeaderCollapsingProgress }
+				}
+
+				if (files.any()) {
+					BoxWithConstraints(
+						modifier = Modifier.fillMaxWidth()
+					) {
+						val iconSize = Dimensions.topMenuIconSize
+						val menuWidth by remember { derivedStateOf { linearInterpolation(maxWidth, minimumMenuWidth, acceleratedHeaderCollapsingProgress) } }
+						val expandedTopRowPadding = topBarHeight + expandedMenuVerticalPadding
+						val collapsedTopRowPadding = topBarHeight / 2 - iconSize / 2
+						val topRowPadding by remember { derivedStateOf { linearInterpolation(expandedTopRowPadding, collapsedTopRowPadding, headerCollapsingProgress) } }
+						Row(
+							modifier = Modifier
+								.padding(
+									top = topRowPadding
+								)
+								.width(menuWidth)
+								.align(Alignment.TopEnd)
+						) {
+							val textModifier = Modifier.alpha(acceleratedToolbarExpandingProgress)
+
+							val playLabel = stringResource(id = R.string.btn_play)
+							ColumnMenuIcon(
+								onClick = {
+									searchFilesViewModel.libraryId?.also {
+										playbackServiceController.startPlaylist(it, files, 0)
+									}
+								},
+								iconPainter = painterResource(id = R.drawable.av_play),
+								contentDescription = playLabel,
+								label = if (acceleratedHeaderCollapsingProgress < 1) playLabel else null,
+								labelModifier = textModifier,
+								labelMaxLines = 1,
+							)
+
+							val shuffleLabel = stringResource(id = R.string.btn_shuffle_files)
+							ColumnMenuIcon(
+								onClick = {
+									searchFilesViewModel.libraryId?.also {
+										playbackServiceController.shuffleAndStartPlaylist(it, files)
+									}
+								},
+								iconPainter = painterResource(id = R.drawable.av_shuffle),
+								contentDescription = shuffleLabel,
+								label = if (acceleratedHeaderCollapsingProgress < 1) shuffleLabel else null,
+								labelModifier = textModifier,
+								labelMaxLines = 1,
+							)
+						}
+					}
+				}
+
+				Row(
+					modifier = Modifier
+						.fillMaxWidth()
+						.requiredHeight(topBarHeight)
+						.align(Alignment.TopStart),
+					horizontalArrangement = Arrangement.Center,
+					verticalAlignment = Alignment.CenterVertically,
+				) {
+					Icon(
+						Icons.Default.ArrowBack,
+						contentDescription = "",
+						tint = MaterialTheme.colors.onSurface,
+						modifier = Modifier
+							.padding(end = 16.dp)
+							.clickable(
+								interactionSource = remember { MutableInteractionSource() },
+								indication = null,
+								onClick = applicationNavigation::backOut
+							)
+					)
+
+					val endPadding by remember { derivedStateOf { 4.dp + (minimumMenuWidth + 12.dp) * acceleratedHeaderCollapsingProgress } }
+					val query by searchFilesViewModel.query.collectAsState()
+					val isLibraryIdActive by searchFilesViewModel.isLibraryIdActive.collectAsState()
+
+					TextField(
+						value = query,
+						placeholder = { stringResource(id = R.string.lbl_search_hint) },
+						onValueChange = { searchFilesViewModel.query.value = it },
+						singleLine = true,
+						keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+						keyboardActions = KeyboardActions(onSearch = {
+							scope.launch {
+								try {
+									searchFilesViewModel.findFiles().suspend()
+								} catch (e: IOException) {
+									isConnectionLost = ConnectionLostExceptionFilter.isConnectionLostException(e)
+								}
+							}
+						}),
+						trailingIcon = { Icon(Icons.Default.Search, contentDescription = stringResource(id = R.string.search)) },
+						enabled = isLibraryIdActive && !isLoading,
+						modifier = Modifier
+							.padding(end = endPadding)
+							.weight(1f)
+					)
 				}
 			}
 		}

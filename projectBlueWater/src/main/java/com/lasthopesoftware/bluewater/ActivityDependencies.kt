@@ -9,6 +9,8 @@ import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.Fi
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.ItemStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.LibraryFileStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.image.CachedImageProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusableFileItemViewModelProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusablePlaylistFileItemViewModelProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.RateControlledFilePropertiesProvider
@@ -17,6 +19,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.F
 import com.lasthopesoftware.bluewater.client.browsing.items.access.CachedItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.access.DelegatingItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemPlayback
+import com.lasthopesoftware.bluewater.client.browsing.items.list.ReusableChildItemViewModelProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistsStorage
@@ -33,7 +36,6 @@ import com.lasthopesoftware.bluewater.client.connection.authentication.Connectio
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.polling.LibraryConnectionPoller
 import com.lasthopesoftware.bluewater.client.connection.polling.LibraryConnectionPollingSessions
-import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionWatcherViewModel
 import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettingsLookup
@@ -49,6 +51,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.StateChangeBro
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
 import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
+import com.lasthopesoftware.bluewater.settings.ApplicationSettingsViewModel
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.android.intents.IntentBuilder
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
@@ -111,7 +114,7 @@ class ActivityDependencies(activity: ComponentActivity) : BrowserViewDependencie
 		)
 	}
 
-	override val libraryFilePropertiesProvider by lazy {
+	private val libraryFilePropertiesProvider by lazy {
 		CachedFilePropertiesProvider(
 			libraryConnectionProvider,
 			FilePropertyCache,
@@ -119,11 +122,28 @@ class ActivityDependencies(activity: ComponentActivity) : BrowserViewDependencie
 		)
 	}
 
-	override val selectedLibraryIdProvider by lazy { activity.getCachedSelectedLibraryIdProvider() }
+	private val selectedLibraryIdProvider by lazy { activity.getCachedSelectedLibraryIdProvider() }
 
 	override val messageBus by lazy { ApplicationMessageBus.getApplicationMessageBus().getScopedMessageBus().also(viewModelScope::manage) }
 
-	override val menuMessageBus by activity.buildViewModelLazily { ViewModelMessageBus<ItemListMenuMessage>() }
+	private val menuMessageBus by activity.buildViewModelLazily { ViewModelMessageBus<ItemListMenuMessage>() }
+
+	private val selectedPlaybackEngineTypeAccess by lazy {
+		SelectedPlaybackEngineTypeAccess(
+			applicationSettingsRepository,
+			DefaultPlaybackEngineLookup
+		)
+	}
+
+	private val libraryBrowserSelection by lazy {
+		BrowserLibrarySelection(
+			applicationSettingsRepository,
+			messageBus,
+			libraryProvider,
+		)
+	}
+
+	private val urlKeyProvider by lazy { UrlKeyProvider(libraryConnectionProvider) }
 
 	override val itemListMenuBackPressedHandler by activity.lazyScoped { ItemListMenuBackPressedHandler(menuMessageBus) }
 
@@ -141,15 +161,11 @@ class ActivityDependencies(activity: ComponentActivity) : BrowserViewDependencie
 		)
 	}
 
-	override val urlKeyProvider by lazy { UrlKeyProvider(libraryConnectionProvider) }
-
 	override val libraryConnectionProvider by lazy { activity.buildNewConnectionSessionManager() }
 
 	override val playbackServiceController by lazy { PlaybackServiceController(activity) }
 
 	override val nowPlayingState by lazy { LiveNowPlayingLookup.getInstance() }
-
-	override val selectedConnectionProvider by lazy { SelectedConnectionProvider(activity) }
 
 	override val nowPlayingFilePropertiesViewModel by activity.buildViewModelLazily {
 		NowPlayingFilePropertiesViewModel(
@@ -211,21 +227,6 @@ class ActivityDependencies(activity: ComponentActivity) : BrowserViewDependencie
 
 	override val applicationSettingsRepository by lazy { applicationContext.getApplicationSettingsRepository() }
 
-	override val selectedPlaybackEngineTypeAccess by lazy {
-		SelectedPlaybackEngineTypeAccess(
-			applicationSettingsRepository,
-			DefaultPlaybackEngineLookup
-		)
-	}
-
-	override val libraryBrowserSelection by lazy {
-		BrowserLibrarySelection(
-			applicationSettingsRepository,
-			messageBus,
-			libraryProvider,
-		)
-	}
-
 	override val playbackLibraryItems by lazy {
 		ItemPlayback(
 			itemListProvider,
@@ -248,7 +249,7 @@ class ActivityDependencies(activity: ComponentActivity) : BrowserViewDependencie
 		NowPlayingCoverArtViewModel(
 			messageBus,
 			nowPlayingState,
-			selectedConnectionProvider,
+			libraryConnectionProvider,
 			defaultImageProvider,
 			imageProvider,
 			pollForConnections,
@@ -269,6 +270,42 @@ class ActivityDependencies(activity: ComponentActivity) : BrowserViewDependencie
 			messageBus,
 			libraryConnectionProvider,
 			pollForConnections,
+		)
+	}
+
+	override val reusablePlaylistFileItemViewModelProvider by activity.buildViewModelLazily {
+		ReusablePlaylistFileItemViewModelProvider(
+			libraryFilePropertiesProvider,
+			urlKeyProvider,
+			stringResources,
+			menuMessageBus,
+			messageBus,
+		)
+	}
+
+	override val reusableChildItemViewModelProvider by activity.buildViewModelLazily {
+		ReusableChildItemViewModelProvider(
+			storedItemAccess,
+			menuMessageBus,
+		)
+	}
+
+	override val reusableFileItemViewModelProvider by activity.buildViewModelLazily {
+		ReusableFileItemViewModelProvider(
+			libraryFilePropertiesProvider,
+			urlKeyProvider,
+			stringResources,
+			messageBus,
+		)
+	}
+
+	override val applicationSettingsViewModel by activity.buildViewModelLazily {
+		ApplicationSettingsViewModel(
+			applicationSettingsRepository,
+			selectedPlaybackEngineTypeAccess,
+			libraryProvider,
+			messageBus,
+			syncScheduler,
 		)
 	}
 }

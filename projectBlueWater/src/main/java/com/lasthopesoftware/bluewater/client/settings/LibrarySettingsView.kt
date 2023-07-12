@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.settings
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -9,12 +10,14 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -43,6 +46,8 @@ import androidx.compose.runtime.structuralEqualityPolicy
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -58,15 +63,13 @@ import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.shared.android.ui.components.LabeledSelection
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.StandardTextField
+import com.lasthopesoftware.bluewater.shared.android.ui.components.memorableScrollConnectedScaler
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.collectAsMutableState
 import com.lasthopesoftware.bluewater.shared.promises.extensions.suspend
 import com.lasthopesoftware.resources.strings.GetStringResources
 import kotlinx.coroutines.launch
-import me.onebone.toolbar.CollapsingToolbarScaffold
-import me.onebone.toolbar.ScrollStrategy
-import me.onebone.toolbar.rememberCollapsingToolbarScaffoldState
 import kotlin.math.pow
 
 private val expandedTitleHeight = 84.dp
@@ -147,124 +150,25 @@ fun LibrarySettingsView(
 			)
 		}
 
-		val toolbarState = rememberCollapsingToolbarScaffoldState()
-		val headerHidingProgress by remember { derivedStateOf(structuralEqualityPolicy()) { 1 - toolbarState.toolbarState.progress } }
+		val boxHeightPx = LocalDensity.current.run { boxHeight.toPx() }
+		val collapsedHeightPx = LocalDensity.current.run { appBarHeight.toPx() }
+		val heightScaler = memorableScrollConnectedScaler(boxHeightPx, collapsedHeightPx)
 
-		CollapsingToolbarScaffold(
-			enabled = true,
-			state = toolbarState,
-			scrollStrategy = ScrollStrategy.ExitUntilCollapsed,
-			modifier = Modifier.fillMaxSize(),
-			toolbar = {
-				val topPadding by remember { derivedStateOf(structuralEqualityPolicy()) { (appBarHeight - 46.dp * headerHidingProgress) } }
-				BoxWithConstraints(
-					modifier = Modifier
-						.height(boxHeight)
-						.padding(top = topPadding)
-				) {
-					val iconSize = Dimensions.topMenuIconSize
-					val acceleratedToolbarStateProgress by remember {
-						derivedStateOf {
-							toolbarState.toolbarState.progress.pow(
-								3
-							).coerceIn(0f, 1f)
-						}
-					}
-					val acceleratedHeaderHidingProgress by remember {
-						derivedStateOf { 1 - acceleratedToolbarStateProgress }
-					}
-					ProvideTextStyle(MaterialTheme.typography.h5) {
-						val iconClearance = 48
-						val startPadding by remember {  derivedStateOf(structuralEqualityPolicy()) { (4 + iconClearance * headerHidingProgress).dp } }
-						val endPadding by remember { derivedStateOf(structuralEqualityPolicy()) { 4.dp + iconSize * acceleratedHeaderHidingProgress } }
-						val header = stringResource(id = R.string.settings)
-						MarqueeText(
-							text = header,
-							overflow = TextOverflow.Ellipsis,
-							gradientSides = setOf(GradientSide.End),
-							gradientEdgeColor = MaterialTheme.colors.surface,
-							modifier = Modifier
-								.fillMaxWidth()
-								.padding(start = startPadding, end = endPadding),
-						)
-					}
-
-					val menuWidth by remember { derivedStateOf(structuralEqualityPolicy()) { (maxWidth - (maxWidth - iconSize) * acceleratedHeaderHidingProgress) } }
-					val expandedTopRowPadding = expandedTitleHeight + expandedMenuVerticalPadding
-					val topRowPadding by remember { derivedStateOf(structuralEqualityPolicy()) { (expandedTopRowPadding - (expandedTopRowPadding - collapsedTopRowPadding) * headerHidingProgress) } }
-					Row(
-						modifier = Modifier
-							.padding(
-								top = topRowPadding,
-								bottom = expandedMenuVerticalPadding,
-								start = 8.dp,
-								end = 8.dp
-							)
-							.width(menuWidth)
-							.align(Alignment.TopEnd)
-					) {
-						val textModifier = Modifier.alpha(acceleratedToolbarStateProgress)
-
-						if (menuWidth > iconSize * 2) {
-							ColumnMenuIcon(
-								modifier = Modifier
-									.fillMaxHeight(),
-								onClick = librarySettingsViewModel::requestLibraryRemoval,
-								icon = {
-									Image(
-										painter = painterResource(id = R.drawable.ic_remove_item_36dp),
-										contentDescription = stringResources.removeServer,
-										modifier = Modifier.size(iconSize)
-									)
-								},
-								label = stringResources.removeServer,
-								labelModifier = textModifier,
-							)
-						}
-
-						ColumnMenuIcon(
-							modifier = Modifier
-								.fillMaxHeight(),
-							onClick = {
-								navigateApplication.launchAboutActivity()
-							},
-							icon = {
-								Image(
-									painter = painterResource(id = R.drawable.ic_help),
-									contentDescription = stringResources.aboutTitle,
-									modifier = Modifier.size(iconSize)
-								)
-							},
-							label = if (acceleratedHeaderHidingProgress < 1) stringResources.aboutTitle else null,
-							labelModifier = textModifier,
-						)
-					}
-				}
-
-				// Always draw box to help the collapsing toolbar measure minimum size
-				Box(modifier = Modifier.height(appBarHeight)) {
-					Icon(
-						Icons.Default.ArrowBack,
-						contentDescription = "",
-						tint = MaterialTheme.colors.onSurface,
-						modifier = Modifier
-							.padding(16.dp)
-							.align(Alignment.CenterStart)
-							.clickable(
-								interactionSource = remember { MutableInteractionSource() },
-								indication = null,
-								onClick = navigateApplication::navigateUp
-							)
-					)
-				}
-			},
+		Box(
+			modifier = Modifier
+				.fillMaxSize()
+				.nestedScroll(heightScaler)
 		) {
+			val heightValue by heightScaler.getValueState()
+
 			Column(
 				modifier = Modifier
 					.fillMaxSize()
 					.verticalScroll(rememberScrollState()),
 				horizontalAlignment = Alignment.CenterHorizontally,
 			) {
+				Spacer(modifier = Modifier.requiredHeight(boxHeight).fillMaxWidth())
+
 				librarySettingsViewModel.apply {
 					SpacedOutRow {
 						StandardTextField(
@@ -461,6 +365,117 @@ fun LibrarySettingsView(
 						Text(text = if (isSaved) stringResource(id = R.string.saved) else stringResource(id = R.string.save))
 					}
 				}
+			}
+
+			Box(
+				modifier = Modifier
+					.fillMaxWidth()
+					.align(Alignment.TopStart)
+					.background(MaterialTheme.colors.surface)
+					.height(LocalDensity.current.run { heightValue.toDp() })
+			) {
+				val headerHidingProgress by heightScaler.getProgressState()
+				val headerExpandingProgress by remember { derivedStateOf { 1 - headerHidingProgress } }
+				val topPadding by remember { derivedStateOf(structuralEqualityPolicy()) { (appBarHeight - 46.dp * headerHidingProgress) } }
+				BoxWithConstraints(
+					modifier = Modifier
+						.height(boxHeight)
+						.padding(top = topPadding)
+				) {
+					val iconSize = Dimensions.topMenuIconSize
+					val acceleratedToolbarStateProgress by remember {
+						derivedStateOf {
+							headerExpandingProgress.pow(
+								3
+							).coerceIn(0f, 1f)
+						}
+					}
+
+					val acceleratedHeaderHidingProgress by remember {
+						derivedStateOf { 1 - acceleratedToolbarStateProgress }
+					}
+
+					ProvideTextStyle(MaterialTheme.typography.h5) {
+						val iconClearance = 48
+						val startPadding by remember {  derivedStateOf(structuralEqualityPolicy()) { (4 + iconClearance * headerHidingProgress).dp } }
+						val endPadding by remember { derivedStateOf(structuralEqualityPolicy()) { 4.dp + iconSize * acceleratedHeaderHidingProgress } }
+						val header = stringResource(id = R.string.settings)
+						MarqueeText(
+							text = header,
+							overflow = TextOverflow.Ellipsis,
+							gradientSides = setOf(GradientSide.End),
+							gradientEdgeColor = MaterialTheme.colors.surface,
+							modifier = Modifier
+								.fillMaxWidth()
+								.padding(start = startPadding, end = endPadding),
+						)
+					}
+
+					val menuWidth by remember { derivedStateOf(structuralEqualityPolicy()) { (maxWidth - (maxWidth - iconSize) * acceleratedHeaderHidingProgress) } }
+					val expandedTopRowPadding = expandedTitleHeight + expandedMenuVerticalPadding
+					val topRowPadding by remember { derivedStateOf(structuralEqualityPolicy()) { (expandedTopRowPadding - (expandedTopRowPadding - collapsedTopRowPadding) * headerHidingProgress) } }
+					Row(
+						modifier = Modifier
+							.padding(
+								top = topRowPadding,
+								bottom = expandedMenuVerticalPadding,
+								start = 8.dp,
+								end = 8.dp
+							)
+							.width(menuWidth)
+							.align(Alignment.TopEnd)
+					) {
+						val textModifier = Modifier.alpha(acceleratedToolbarStateProgress)
+
+						if (menuWidth > iconSize * 2) {
+							ColumnMenuIcon(
+								modifier = Modifier
+									.fillMaxHeight(),
+								onClick = librarySettingsViewModel::requestLibraryRemoval,
+								icon = {
+									Image(
+										painter = painterResource(id = R.drawable.ic_remove_item_36dp),
+										contentDescription = stringResources.removeServer,
+										modifier = Modifier.size(iconSize)
+									)
+								},
+								label = stringResources.removeServer,
+								labelModifier = textModifier,
+							)
+						}
+
+						ColumnMenuIcon(
+							modifier = Modifier
+								.fillMaxHeight(),
+							onClick = {
+								navigateApplication.launchAboutActivity()
+							},
+							icon = {
+								Image(
+									painter = painterResource(id = R.drawable.ic_help),
+									contentDescription = stringResources.aboutTitle,
+									modifier = Modifier.size(iconSize)
+								)
+							},
+							label = if (acceleratedHeaderHidingProgress < 1) stringResources.aboutTitle else null,
+							labelModifier = textModifier,
+						)
+					}
+				}
+
+				Icon(
+					Icons.Default.ArrowBack,
+					contentDescription = "",
+					tint = MaterialTheme.colors.onSurface,
+					modifier = Modifier
+						.padding(16.dp)
+						.align(Alignment.TopStart)
+						.clickable(
+							interactionSource = remember { MutableInteractionSource() },
+							indication = null,
+							onClick = navigateApplication::navigateUp
+						)
+				)
 			}
 		}
 	}

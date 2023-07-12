@@ -1,9 +1,9 @@
 package com.lasthopesoftware.bluewater.client.playback.caching.GivenARemoteFileWithUnsetLength
 
 import android.net.Uri
-import com.google.android.exoplayer2.C
-import com.google.android.exoplayer2.upstream.DataSpec
-import com.google.android.exoplayer2.upstream.HttpDataSource
+import androidx.media3.common.C
+import androidx.media3.datasource.DataSpec
+import androidx.media3.datasource.HttpDataSource
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.caching.datasource.EntireFileCachedDataSource
 import io.mockk.every

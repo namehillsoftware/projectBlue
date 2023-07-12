@@ -1,10 +1,11 @@
 package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.rendering
 
-import com.google.android.exoplayer2.audio.AudioRendererEventListener
-import com.google.android.exoplayer2.decoder.DecoderCounters
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.exoplayer.DecoderCounters
+import androidx.media3.exoplayer.audio.AudioRendererEventListener
 import org.slf4j.LoggerFactory
 
-class AudioRenderingEventListener : AudioRendererEventListener {
+@UnstableApi class AudioRenderingEventListener : AudioRendererEventListener {
     override fun onAudioEnabled(counters: DecoderCounters) {
         if (!logger.isDebugEnabled) return
         logger.debug("Audio decoder counters updated")

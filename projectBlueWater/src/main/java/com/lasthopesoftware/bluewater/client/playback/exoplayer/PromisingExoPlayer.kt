@@ -1,10 +1,17 @@
 package com.lasthopesoftware.bluewater.client.playback.exoplayer
 
 import android.os.Looper
-import com.google.android.exoplayer2.*
-import com.google.android.exoplayer2.source.MediaSource
-import com.google.android.exoplayer2.source.ShuffleOrder
-import com.google.android.exoplayer2.trackselection.TrackSelector
+import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackParameters
+import androidx.media3.common.Player
+import androidx.media3.common.Timeline
+import androidx.media3.common.Tracks
+import androidx.media3.exoplayer.ExoPlaybackException
+import androidx.media3.exoplayer.PlayerMessage
+import androidx.media3.exoplayer.SeekParameters
+import androidx.media3.exoplayer.source.MediaSource
+import androidx.media3.exoplayer.source.ShuffleOrder
+import androidx.media3.exoplayer.trackselection.TrackSelector
 import com.namehillsoftware.handoff.promises.Promise
 
 interface PromisingExoPlayer {

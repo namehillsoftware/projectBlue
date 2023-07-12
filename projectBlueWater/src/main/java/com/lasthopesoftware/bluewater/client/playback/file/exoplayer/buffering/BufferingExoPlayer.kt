@@ -1,19 +1,21 @@
 package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.buffering
 
 import android.os.Handler
-import com.google.android.exoplayer2.PlaybackException
-import com.google.android.exoplayer2.Player
-import com.google.android.exoplayer2.source.LoadEventInfo
-import com.google.android.exoplayer2.source.MediaLoadData
-import com.google.android.exoplayer2.source.MediaSource
-import com.google.android.exoplayer2.source.MediaSourceEventListener
+import androidx.media3.common.PlaybackException
+import androidx.media3.common.Player
+import androidx.media3.exoplayer.source.LoadEventInfo
+import androidx.media3.exoplayer.source.MediaLoadData
+import androidx.media3.exoplayer.source.MediaSource
+import androidx.media3.exoplayer.source.MediaSourceEventListener
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.PromisingExoPlayer
 import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackFile
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.namehillsoftware.handoff.promises.Promise
 import java.io.IOException
 
-class BufferingExoPlayer(handler: Handler, private val mediaSource: MediaSource, private val exoPlayer: PromisingExoPlayer) : Promise<IBufferingPlaybackFile>(), IBufferingPlaybackFile, MediaSourceEventListener, Player.Listener {
+@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
+class BufferingExoPlayer(handler: Handler, private val mediaSource: MediaSource, private val exoPlayer: PromisingExoPlayer) : Promise<IBufferingPlaybackFile>(), IBufferingPlaybackFile,
+	MediaSourceEventListener, Player.Listener {
 
 	companion object {
 		private val logger by lazyLogger<BufferingExoPlayer>()

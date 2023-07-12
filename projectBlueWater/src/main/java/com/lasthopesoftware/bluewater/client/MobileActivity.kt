@@ -17,18 +17,18 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.app.ActivityCompat
 import androidx.core.view.WindowCompat
+import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import browsableItemListView
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.lasthopesoftware.bluewater.ActivityDependencies
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.about.AboutView
+import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelDependencies
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.list.*
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
-import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
-import com.lasthopesoftware.bluewater.client.browsing.items.list.ReusableChildItemViewModelProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.browsing.library.access.*
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -40,14 +40,11 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.InMemoryNowPlayingDisplaySettings
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingScreenViewModel
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsView
-import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsViewModel
 import com.lasthopesoftware.bluewater.client.settings.PermissionsDependencies
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.view.ActiveFileDownloadsView
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.view.ActiveFileDownloadsViewModel
 import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermissionsRequirementsProvider
 import com.lasthopesoftware.bluewater.permissions.write.ApplicationWritePermissionsRequirementsProvider
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsView
-import com.lasthopesoftware.bluewater.settings.ApplicationSettingsViewModel
 import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsView
 import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsViewModel
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
@@ -58,6 +55,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.SharedColors
+import com.lasthopesoftware.bluewater.shared.android.viewmodels.ViewModelInitAction
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToaster
 import com.lasthopesoftware.bluewater.shared.lazyLogger
@@ -301,7 +299,7 @@ private val bottomAppBarHeight = Dimensions.appBarHeight
 @Composable
 @OptIn(ExperimentalMaterialApi::class)
 private fun BrowserLibraryDestination.Navigate(
-    browserViewDependencies: BrowserViewDependencies,
+    browserViewDependencies: ScopedBrowserViewDependencies,
     connectionStatusViewModel: ConnectionStatusViewModel,
     scaffoldState: BottomSheetScaffoldState,
 ) {
@@ -346,125 +344,56 @@ private fun BrowserLibraryDestination.Navigate(
 				when (this@Navigate) {
 					is LibraryScreen -> {
 						val view = browsableItemListView(
-							itemListViewModel = viewModel {
-								ItemListViewModel(
-									itemProvider,
-									messageBus,
-									libraryProvider,
-								)
-							},
-							fileListViewModel = viewModel {
-								FileListViewModel(
-									itemFileProvider,
-									storedItemAccess,
-								)
-							},
+							itemListViewModel = itemListViewModel,
+							fileListViewModel = fileListViewModel,
 							nowPlayingViewModel = nowPlayingFilePropertiesViewModel,
 							itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
-							reusablePlaylistFileItemViewModelProvider = viewModel {
-								ReusablePlaylistFileItemViewModelProvider(
-									libraryFilePropertiesProvider,
-									urlKeyProvider,
-									stringResources,
-									menuMessageBus,
-									messageBus,
-								)
-							},
-							childItemViewModelProvider = viewModel {
-								ReusableChildItemViewModelProvider(
-									storedItemAccess,
-									menuMessageBus,
-								)
-							},
+							reusablePlaylistFileItemViewModelProvider = reusablePlaylistFileItemViewModelProvider,
+							childItemViewModelProvider = reusableChildItemViewModelProvider,
 							applicationNavigation = applicationNavigation,
 							playbackLibraryItems = playbackLibraryItems,
 							playbackServiceController = playbackServiceController,
 							connectionStatusViewModel = connectionStatusViewModel,
 						)
 
-						view(libraryId, null)
+						ViewModelInitAction {
+							view(libraryId, null)
+						}
 					}
 					is ItemScreen -> {
 						val view = browsableItemListView(
-							itemListViewModel = viewModel {
-								ItemListViewModel(
-									itemProvider,
-									messageBus,
-									libraryProvider,
-								)
-							},
-							fileListViewModel = viewModel {
-								FileListViewModel(
-									itemFileProvider,
-									storedItemAccess,
-								)
-							},
+							itemListViewModel = itemListViewModel,
+							fileListViewModel = fileListViewModel,
 							nowPlayingViewModel = nowPlayingFilePropertiesViewModel,
 							itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
-							reusablePlaylistFileItemViewModelProvider = viewModel {
-								ReusablePlaylistFileItemViewModelProvider(
-									libraryFilePropertiesProvider,
-									urlKeyProvider,
-									stringResources,
-									menuMessageBus,
-									messageBus,
-								)
-							},
-							childItemViewModelProvider = viewModel {
-								ReusableChildItemViewModelProvider(
-									storedItemAccess,
-									menuMessageBus,
-								)
-							},
+							reusablePlaylistFileItemViewModelProvider = reusablePlaylistFileItemViewModelProvider,
+							childItemViewModelProvider = reusableChildItemViewModelProvider,
 							applicationNavigation = applicationNavigation,
 							playbackLibraryItems = playbackLibraryItems,
 							playbackServiceController = playbackServiceController,
 							connectionStatusViewModel = connectionStatusViewModel,
 						)
 
-						view(libraryId, item)
+						ViewModelInitAction {
+							view(libraryId, item)
+						}
 					}
 					is DownloadsScreen -> {
-						val activeFileDownloadsViewModel = viewModel {
-							ActiveFileDownloadsViewModel(
-								storedFileAccess,
-								messageBus,
-								syncScheduler,
-							)
-						}
-
 						ActiveFileDownloadsView(
 							activeFileDownloadsViewModel = activeFileDownloadsViewModel,
-							trackHeadlineViewModelProvider = viewModel {
-								ReusableFileItemViewModelProvider(
-									libraryFilePropertiesProvider,
-									urlKeyProvider,
-									stringResources,
-									messageBus,
-								)
-							},
+							trackHeadlineViewModelProvider = reusableFileItemViewModelProvider,
 							applicationNavigation,
 						)
 
 						activeFileDownloadsViewModel.loadActiveDownloads(libraryId)
 					}
 					is SearchScreen -> {
-						val searchFilesViewModel = viewModel { SearchFilesViewModel(libraryFilesProvider) }
-
 						searchFilesViewModel.setActiveLibraryId(libraryId)
 
 						SearchFilesView(
 							searchFilesViewModel = searchFilesViewModel,
 							nowPlayingViewModel = nowPlayingFilePropertiesViewModel,
-							trackHeadlineViewModelProvider = viewModel {
-								ReusablePlaylistFileItemViewModelProvider(
-									libraryFilePropertiesProvider,
-									urlKeyProvider,
-									stringResources,
-									menuMessageBus,
-									messageBus,
-								)
-							},
+							trackHeadlineViewModelProvider = reusablePlaylistFileItemViewModelProvider,
 							itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
 							applicationNavigation = applicationNavigation,
 							playbackServiceController = playbackServiceController,
@@ -479,9 +408,8 @@ private fun BrowserLibraryDestination.Navigate(
 @Composable
 @OptIn(ExperimentalMaterialApi::class)
 private fun LibraryDestination.Navigate(
-    browserViewDependencies: BrowserViewDependencies,
-	permissionsDependencies: PermissionsDependencies,
-    connectionStatusViewModel: ConnectionStatusViewModel,
+    browserViewDependencies: ScopedBrowserViewDependencies,
+	connectionStatusViewModel: ConnectionStatusViewModel,
     scaffoldState: BottomSheetScaffoldState,
     coroutineScope: CoroutineScope,
 ) {
@@ -493,18 +421,7 @@ private fun LibraryDestination.Navigate(
 				connectionStatusViewModel = connectionStatusViewModel,
 			)
 			is ConnectionSettingsScreen -> {
-				val viewModel = viewModel {
-					with (permissionsDependencies) {
-						LibrarySettingsViewModel(
-							libraryProvider = libraryProvider,
-							libraryStorage = libraryStorage,
-							libraryRemoval = libraryRemoval,
-							applicationReadPermissionsRequirementsProvider = readPermissionsRequirements,
-							applicationWritePermissionsRequirementsProvider = writePermissionsRequirements,
-							permissionsManager = permissionsManager,
-						)
-					}
-				}
+				val viewModel = librarySettingsViewModel
 
 				val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
 
@@ -552,15 +469,7 @@ private fun LibraryDestination.Navigate(
 					screenOnState = screenViewModel,
 					playbackServiceController = playbackServiceController,
 					playlistViewModel = nowPlayingPlaylistViewModel,
-					childItemViewModelProvider = viewModel {
-						ReusablePlaylistFileItemViewModelProvider(
-							libraryFilePropertiesProvider,
-							urlKeyProvider,
-							stringResources,
-							menuMessageBus,
-							messageBus,
-						)
-					},
+					childItemViewModelProvider = reusablePlaylistFileItemViewModelProvider,
 					applicationNavigation = applicationNavigation,
 					itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
 					connectionWatcherViewModel = connectionWatcherViewModel,
@@ -692,66 +601,47 @@ private fun BrowserView(
 					}
 				}
 				is LibraryDestination -> {
-					destination.Navigate(
-						graphDependencies,
-						permissionsDependencies,
-						connectionStatusViewModel,
+					LocalViewModelStoreOwner.current?.also {
+						destination.Navigate(
+							ScopedViewModelDependencies(graphDependencies, permissionsDependencies, it),
+							connectionStatusViewModel,
 						scaffoldState,
 						coroutineScope,
-					)
+					)}
 				}
 				is ApplicationSettingsScreen -> {
-					val viewModel = viewModel {
-						ApplicationSettingsViewModel(
-							graphDependencies.applicationSettingsRepository,
-							graphDependencies.selectedPlaybackEngineTypeAccess,
-							graphDependencies.libraryProvider,
-							graphDependencies.messageBus,
-							graphDependencies.syncScheduler,
-						)
-					}
-
 					Box(
 						modifier = Modifier
 							.fillMaxSize()
 							.padding(systemBarsPadding)
 					) {
 						ApplicationSettingsView(
-							applicationSettingsViewModel = viewModel,
+							applicationSettingsViewModel = graphDependencies.applicationSettingsViewModel,
 							applicationNavigation = graphDependencies.applicationNavigation,
 							playbackService = graphDependencies.playbackServiceController,
 						)
 					}
 
-					viewModel.loadSettings()
+					graphDependencies.applicationSettingsViewModel.loadSettings()
 				}
 				is NewConnectionSettingsScreen -> {
-					with(graphDependencies) {
-						val viewModel = with (permissionsDependencies) {
-							viewModel {
-								LibrarySettingsViewModel(
-									libraryProvider = libraryProvider,
-									libraryStorage = libraryStorage,
-									libraryRemoval = libraryRemoval,
-									applicationReadPermissionsRequirementsProvider = readPermissionsRequirements,
-									applicationWritePermissionsRequirementsProvider = writePermissionsRequirements,
-									permissionsManager = permissionsManager,
+					LocalViewModelStoreOwner.current
+						?.let {
+							ScopedViewModelDependencies(graphDependencies, permissionsDependencies, it)
+						}
+						?.apply {
+							Box(
+								modifier = Modifier
+									.fillMaxSize()
+									.padding(systemBarsPadding)
+							) {
+								LibrarySettingsView(
+									librarySettingsViewModel = librarySettingsViewModel,
+									navigateApplication = applicationNavigation,
+									stringResources = stringResources
 								)
 							}
 						}
-
-						Box(
-							modifier = Modifier
-								.fillMaxSize()
-								.padding(systemBarsPadding)
-						) {
-							LibrarySettingsView(
-								librarySettingsViewModel = viewModel,
-								navigateApplication = applicationNavigation,
-								stringResources = stringResources
-							)
-						}
-					}
 				}
 				is AboutScreen -> {
 					Box(

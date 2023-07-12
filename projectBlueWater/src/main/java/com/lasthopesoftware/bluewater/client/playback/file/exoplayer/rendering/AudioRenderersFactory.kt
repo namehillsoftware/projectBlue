@@ -2,20 +2,22 @@ package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.rendering
 
 import android.content.Context
 import android.os.Handler
-import com.google.android.exoplayer2.Renderer
-import com.google.android.exoplayer2.RenderersFactory
-import com.google.android.exoplayer2.audio.AudioCapabilities
-import com.google.android.exoplayer2.audio.AudioRendererEventListener
-import com.google.android.exoplayer2.audio.DefaultAudioSink
-import com.google.android.exoplayer2.audio.MediaCodecAudioRenderer
-import com.google.android.exoplayer2.mediacodec.MediaCodecSelector
-import com.google.android.exoplayer2.metadata.MetadataOutput
-import com.google.android.exoplayer2.text.TextOutput
-import com.google.android.exoplayer2.video.VideoRendererEventListener
+import androidx.annotation.OptIn
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.exoplayer.Renderer
+import androidx.media3.exoplayer.RenderersFactory
+import androidx.media3.exoplayer.audio.AudioRendererEventListener
+import androidx.media3.exoplayer.audio.DefaultAudioSink
+import androidx.media3.exoplayer.audio.MediaCodecAudioRenderer
+import androidx.media3.exoplayer.mediacodec.MediaCodecSelector
+import androidx.media3.exoplayer.metadata.MetadataOutput
+import androidx.media3.exoplayer.text.TextOutput
+import androidx.media3.exoplayer.video.VideoRendererEventListener
 import com.lasthopesoftware.compilation.DebugFlag
 
-class AudioRenderersFactory(private val context: Context) : RenderersFactory {
+@UnstableApi class AudioRenderersFactory(private val context: Context) : RenderersFactory {
 
+	@OptIn(UnstableApi::class)
 	override fun createRenderers(
 		eventHandler: Handler,
 		videoRendererEventListener: VideoRendererEventListener,
@@ -30,7 +32,6 @@ class AudioRenderersFactory(private val context: Context) : RenderersFactory {
 				false,
 				if (DebugFlag.isDebugCompilation) eventHandler else null,
 				if (DebugFlag.isDebugCompilation) AudioRenderingEventListener() else null,
-				DefaultAudioSink.Builder()
-					.setAudioCapabilities(AudioCapabilities.getCapabilities(context))
-					.build()))
+				DefaultAudioSink.Builder(context).build())
+		)
 }

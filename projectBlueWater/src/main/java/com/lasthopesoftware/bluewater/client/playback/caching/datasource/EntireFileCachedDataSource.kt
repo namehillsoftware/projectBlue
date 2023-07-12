@@ -1,11 +1,12 @@
 package com.lasthopesoftware.bluewater.client.playback.caching.datasource
 
 import android.net.Uri
-import com.google.android.exoplayer2.C
-import com.google.android.exoplayer2.upstream.DataSource
-import com.google.android.exoplayer2.upstream.DataSpec
-import com.google.android.exoplayer2.upstream.HttpDataSource
-import com.google.android.exoplayer2.upstream.TransferListener
+import androidx.media3.common.C
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.datasource.DataSource
+import androidx.media3.datasource.DataSpec
+import androidx.media3.datasource.HttpDataSource
+import androidx.media3.datasource.TransferListener
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.CacheOutputStream
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.supplier.SupplyCacheStreams
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -20,7 +21,7 @@ import okhttp3.internal.closeQuietly
 import okio.Buffer
 import java.util.concurrent.ConcurrentLinkedQueue
 
-class EntireFileCachedDataSource(
+@UnstableApi class EntireFileCachedDataSource(
 	private val libraryId: LibraryId,
 	private val innerDataSource: HttpDataSource,
 	private val cacheStreamSupplier: SupplyCacheStreams
@@ -177,11 +178,12 @@ class EntireFileCachedDataSource(
 		}
 	}
 
-	class Factory(
+	@UnstableApi class Factory(
 		private val libraryId: LibraryId,
 		private val httpDataSourceFactory: HttpDataSource.Factory,
 		private val cacheStreamSupplier: SupplyCacheStreams
 	) : DataSource.Factory {
+
 		override fun createDataSource(): DataSource = EntireFileCachedDataSource(
 			libraryId,
 			httpDataSourceFactory.createDataSource(),
