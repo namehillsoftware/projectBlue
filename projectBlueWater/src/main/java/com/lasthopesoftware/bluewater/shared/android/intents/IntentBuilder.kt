@@ -3,6 +3,8 @@ package com.lasthopesoftware.bluewater.shared.android.intents
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import androidx.annotation.OptIn
+import androidx.media3.common.util.UnstableApi
 import com.lasthopesoftware.bluewater.client.browsing.BrowserActivity
 import com.lasthopesoftware.bluewater.client.browsing.destinationAction
 import com.lasthopesoftware.bluewater.client.browsing.destinationProperty
@@ -29,6 +31,7 @@ class IntentBuilder(private val context: Context) : BuildIntents {
 		return PendingIntent.getActivity(context, 0, baseIntent, 0.makePendingIntentImmutable())
 	}
 
+	@OptIn(UnstableApi::class)
 	override fun buildFileDetailsIntent(libraryId: LibraryId, playlist: Collection<ServiceFile>, position: Int) = context.getIntent<FileDetailsActivity>().apply {
 		putExtra(FileDetailsActivity.libraryIdKey, libraryId)
 		putExtra(FileDetailsActivity.playlistPosition, position)
@@ -42,7 +45,7 @@ class IntentBuilder(private val context: Context) : BuildIntents {
 		return PendingIntent.getActivity(context, 0, intent, 0.makePendingIntentImmutable())
 	}
 
-	@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
+	@OptIn(androidx.media3.common.util.UnstableApi::class)
 	override fun buildPendingPausePlaybackIntent(): PendingIntent = PlaybackService.pendingPauseIntent(context)
 
 	override fun buildPendingShowDownloadsIntent(): PendingIntent {

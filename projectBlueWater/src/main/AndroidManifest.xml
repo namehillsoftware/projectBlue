@@ -34,7 +34,7 @@
         tools:targetApi="tiramisu"
         android:requestLegacyExternalStorage="true"
         android:enableOnBackInvokedCallback="true"
-        android:banner="TODO">
+        android:banner="@drawable/tv_banner">
 
         <activity
             android:name=".client.browsing.BrowserActivity"

@@ -122,6 +122,28 @@ private class TvNavigation(
 	private val navController: NavController<Destination>,
 	private val coroutineScope: CoroutineScope
 ) : NavigateApplication {
+	override fun viewApplicationSettings(): Promise<Unit> {
+		navController.popUpTo { it is ApplicationSettingsScreen }
+
+		return Unit.toPromise()
+	}
+
+	override fun viewNewServerSettings(): Promise<Unit> {
+		navController.popUpTo { it is ApplicationSettingsScreen }
+
+		navController.navigate(NewConnectionSettingsScreen)
+
+		return Unit.toPromise()
+	}
+
+	override fun viewServerSettings(libraryId: LibraryId): Promise<Unit> {
+		navController.popUpTo { it is ItemScreen }
+
+		navController.navigate(ConnectionSettingsScreen(libraryId))
+
+		return Unit.toPromise()
+	}
+
 	override fun launchSearch(libraryId: LibraryId) = coroutineScope.launch {
 		navController.popUpTo { it is ItemScreen }
 
@@ -185,6 +207,8 @@ fun CatalogBrowser(
 							applicationNavigation,
 							playbackServiceController,
 						)
+
+						applicationSettingsViewModel.loadSettings()
 					}
 					ActiveLibraryDownloadsScreen -> {}
 					SelectedLibraryReRouter -> {
@@ -215,6 +239,8 @@ fun CatalogBrowser(
 							navigateApplication = applicationNavigation,
 							trackHeadlineViewModelProvider = reusablePlaylistFileItemViewModelProvider,
 						)
+
+
 					}
 
 					is LibraryScreen -> {
@@ -227,7 +253,13 @@ fun CatalogBrowser(
 					is SearchScreen -> {}
 					is ConnectionSettingsScreen -> {}
 					is NowPlayingScreen -> {}
-					NewConnectionSettingsScreen -> {}
+					NewConnectionSettingsScreen -> {
+						TvLibrarySettingsView(
+							librarySettingsViewModel = librarySettingsViewModel,
+							navigateApplication = applicationNavigation,
+							stringResources = stringResources,
+						)
+					}
 				}
 			}
 	}
