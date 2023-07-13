@@ -71,14 +71,14 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
 
-private val logger by lazyLogger<MobileActivity>()
-private val magicPropertyBuilder by lazy { MagicPropertyBuilder(cls<MobileActivity>()) }
+private val logger by lazyLogger<HandheldActivity>()
+private val magicPropertyBuilder by lazy { MagicPropertyBuilder(cls<HandheldActivity>()) }
 private val cachedDestinationActions = ConcurrentHashMap<Class<*>, String>()
 
 val destinationProperty by lazy { magicPropertyBuilder.buildProperty("destination") }
 fun destinationAction(destination: Destination): String = cachedDestinationActions.getOrPut(destination.javaClass) { "$destinationProperty/${destination.javaClass.name}" }
 
-class MobileActivity :
+class HandheldActivity :
 	AppCompatActivity(),
 	PermissionsDependencies,
 	ActivityCompat.OnRequestPermissionsResultCallback,

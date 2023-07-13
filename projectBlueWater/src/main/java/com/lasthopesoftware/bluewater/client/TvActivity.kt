@@ -198,8 +198,6 @@ fun CatalogBrowser(
 							navigateApplication = applicationNavigation,
 							trackHeadlineViewModelProvider = reusablePlaylistFileItemViewModelProvider,
 						)
-
-
 					}
 
 					is LibraryScreen -> {
@@ -208,6 +206,8 @@ fun CatalogBrowser(
 							navigateApplication = applicationNavigation,
 							stringResources = stringResources,
 						)
+
+						librarySettingsViewModel.loadLibrary(destination.libraryId)
 					}
 					is SearchScreen -> {}
 					is ConnectionSettingsScreen -> {}
