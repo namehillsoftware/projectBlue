@@ -6,6 +6,7 @@ import android.os.PersistableBundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.core.app.ActivityCompat
@@ -32,13 +33,16 @@ import com.lasthopesoftware.bluewater.client.browsing.navigation.NowPlayingScree
 import com.lasthopesoftware.bluewater.client.browsing.navigation.SearchScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.SelectedLibraryReRouter
 import com.lasthopesoftware.bluewater.client.settings.PermissionsDependencies
+import com.lasthopesoftware.bluewater.client.settings.TvLibrarySettingsView
 import com.lasthopesoftware.bluewater.permissions.ApplicationPermissionsRequests
 import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermissionsRequirementsProvider
 import com.lasthopesoftware.bluewater.settings.TvApplicationSettingsView
 import com.lasthopesoftware.bluewater.shared.android.permissions.ManagePermissions
 import com.lasthopesoftware.bluewater.shared.android.permissions.OsPermissionsChecker
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
+import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.promises.extensions.registerResultActivityLauncher
+import com.lasthopesoftware.promises.extensions.suspend
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.Messenger
 import com.namehillsoftware.handoff.promises.Promise
@@ -51,6 +55,8 @@ import dev.olshevski.navigation.reimagined.rememberNavController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
+
+private val logger by lazyLogger<TvActivity>()
 
 @UnstableApi
 class TvActivity :
@@ -144,11 +150,6 @@ private class TvNavigation(
 	}.toPromise()
 }
 
-@Composable
-fun TvSettingsView() {
-
-}
-
 private class TvDependencies(
 	private val inner: BrowserViewDependencies,
  	override val applicationNavigation: NavigateApplication
@@ -186,7 +187,25 @@ fun CatalogBrowser(
 						)
 					}
 					ActiveLibraryDownloadsScreen -> {}
-					SelectedLibraryReRouter -> {}
+					SelectedLibraryReRouter -> {
+						tvDependencies.apply {
+							LaunchedEffect(key1 = Unit) {
+								try {
+									val settings =
+										applicationSettingsRepository.promiseApplicationSettings().suspend()
+									if (settings.chosenLibraryId > -1) {
+										val libraryId = LibraryId(settings.chosenLibraryId)
+										applicationNavigation.viewLibrary(libraryId).suspend()
+										return@LaunchedEffect
+									}
+								} catch (e: Throwable) {
+									logger.error("An error occurred initializing the library", e)
+								}
+
+								applicationNavigation.backOut().suspend()
+							}
+						}
+					}
 					HiddenSettingsScreen -> {}
 					is DownloadsScreen -> {}
 					is ItemScreen -> {
@@ -198,7 +217,13 @@ fun CatalogBrowser(
 						)
 					}
 
-					is LibraryScreen -> {}
+					is LibraryScreen -> {
+						TvLibrarySettingsView(
+							librarySettingsViewModel = librarySettingsViewModel,
+							navigateApplication = applicationNavigation,
+							stringResources = stringResources,
+						)
+					}
 					is SearchScreen -> {}
 					is ConnectionSettingsScreen -> {}
 					is NowPlayingScreen -> {}
