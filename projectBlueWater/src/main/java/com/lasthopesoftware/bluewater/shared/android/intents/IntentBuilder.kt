@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.shared.android.intents
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import com.lasthopesoftware.bluewater.client.browsing.BrowserActivity
+import com.lasthopesoftware.bluewater.client.MobileActivity
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsActivity
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -48,7 +48,7 @@ class IntentBuilder(private val context: Context) : BuildIntents {
 
 	private fun buildShowDownloadsIntent(): Intent = getBrowserActivityIntent(ActiveLibraryDownloadsScreen)
 
-	private fun getBrowserActivityIntent(destination: Destination) = context.getIntent<BrowserActivity>().apply {
+	private fun getBrowserActivityIntent(destination: Destination) = context.getIntent<MobileActivity>().apply {
 		flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
 
 		// Set action to uniquely identify intents when compared with `filterEquals`, as the extras are not enough.
