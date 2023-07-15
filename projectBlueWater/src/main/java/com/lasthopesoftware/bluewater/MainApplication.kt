@@ -1,12 +1,13 @@
 package com.lasthopesoftware.bluewater
 
-import android.annotation.SuppressLint
 import android.app.Application
 import android.app.NotificationManager
 import android.content.Context
 import android.os.Environment
 import android.os.StrictMode
 import android.os.StrictMode.VmPolicy
+import androidx.work.Configuration
+import androidx.work.WorkManager
 import ch.qos.logback.classic.AsyncAppender
 import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.Logger
@@ -25,7 +26,6 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.playedfile.PlayedFilePlayStatsUpdater
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertyStorage
-import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.request.read.StorageReadPermissionsRequestNotificationBuilder
 import com.lasthopesoftware.bluewater.client.browsing.library.request.read.StorageReadPermissionsRequestedBroadcaster
@@ -62,7 +62,6 @@ open class MainApplication : Application() {
 
 	private val libraryConnections by lazy { ConnectionSessionManager.get(this) }
 	private val libraryRevisionProvider by lazy { LibraryRevisionProvider(libraryConnections) }
-	private val libraryRepository by lazy { LibraryRepository(this) }
 	private val freshLibraryFileProperties by lazy {
 		FilePropertiesProvider(
 			libraryConnections,
@@ -85,7 +84,6 @@ open class MainApplication : Application() {
 	private val applicationSettings by lazy { getApplicationSettingsRepository() }
 	private val syncScheduler by lazy { SyncScheduler(this) }
 
-	@SuppressLint("DefaultLocale")
 	override fun onCreate() {
 		super.onCreate()
 
@@ -96,14 +94,14 @@ open class MainApplication : Application() {
 
 		registerAppBroadcastReceivers()
 
-//		if (!isWorkManagerInitialized) {
-//			WorkManager.initialize(this, Configuration.Builder().build())
-//			isWorkManagerInitialized = true
-//		}
-//
-//		syncScheduler
-//			.promiseIsScheduled()
-//			.then { isScheduled -> if (!isScheduled) syncScheduler.scheduleSync() }
+		if (!isWorkManagerInitialized) {
+			WorkManager.initialize(this, Configuration.Builder().build())
+			isWorkManagerInitialized = true
+		}
+
+		syncScheduler
+			.promiseIsScheduled()
+			.then { isScheduled -> if (!isScheduled) syncScheduler.scheduleSync() }
 
 		LiveNowPlayingLookup.initializeInstance(this)
 	}

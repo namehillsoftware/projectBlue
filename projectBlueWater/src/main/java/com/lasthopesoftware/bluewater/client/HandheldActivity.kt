@@ -4,7 +4,6 @@ import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
-import android.os.PersistableBundle
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
@@ -100,8 +99,8 @@ class HandheldActivity :
 
 	private val permissionsRequests = ConcurrentHashMap<Int, Messenger<Map<String, Boolean>>>()
 
-	override fun onCreate(savedInstanceState: Bundle?, persistentState: PersistableBundle?) {
-		super.onCreate(savedInstanceState, persistentState)
+	override fun onCreate(savedInstanceState: Bundle?) {
+		super.onCreate(savedInstanceState)
 
 		// Ensure that this task is only started when it's the task root. A workaround for an Android bug.
 		// See http://stackoverflow.com/a/7748416

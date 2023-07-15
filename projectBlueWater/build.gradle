@@ -22,8 +22,7 @@ if (!hasAndroidStorePassword()) {
 def isSignedExternally = { hasKeyStorePassword() && hasAndroidStorePassword() }
 
 android {
-	compileSdk 33
-	buildToolsVersion '33.0.0'
+	compileSdk 34
 
     defaultConfig {
         applicationId "com.lasthopesoftware.bluewater"
@@ -124,9 +123,9 @@ tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
 		freeCompilerArgs += [
 			"-opt-in=kotlin.RequiresOptIn",
 			"-Xcontext-receivers",
-			"-Xopt-in=androidx.tv.tvMaterial3.ExperimentalTvMaterial3Api",
-			"-Xopt-in=androidx.tv.material3.ExperimentalTvMaterial3Api",
-			"-Xopt-in=androidx.tv.foundation.ExperimentalTvFoundationApi",
+			"-opt-in=androidx.tv.tvMaterial3.ExperimentalTvMaterial3Api",
+			"-opt-in=androidx.tv.material3.ExperimentalTvMaterial3Api",
+			"-opt-in=androidx.tv.foundation.ExperimentalTvFoundationApi",
 
 		]
 	}

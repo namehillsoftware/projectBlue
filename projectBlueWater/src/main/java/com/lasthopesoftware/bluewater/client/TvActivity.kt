@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client
 
 import android.os.Bundle
-import android.os.PersistableBundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.Composable
@@ -34,6 +33,7 @@ import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermission
 import com.lasthopesoftware.bluewater.permissions.write.ApplicationWritePermissionsRequirementsProvider
 import com.lasthopesoftware.bluewater.settings.TvApplicationSettingsView
 import com.lasthopesoftware.bluewater.shared.android.permissions.ManagePermissions
+import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.promises.extensions.suspend
@@ -43,6 +43,7 @@ import dev.olshevski.navigation.reimagined.NavController
 import dev.olshevski.navigation.reimagined.NavHost
 import dev.olshevski.navigation.reimagined.moveToTop
 import dev.olshevski.navigation.reimagined.navigate
+import dev.olshevski.navigation.reimagined.pop
 import dev.olshevski.navigation.reimagined.popUpTo
 import dev.olshevski.navigation.reimagined.rememberNavController
 
@@ -55,8 +56,8 @@ class TvActivity :
 {
 	private val dependencies by lazy { ActivityDependencies(this) }
 
-	override fun onCreate(savedInstanceState: Bundle?, persistentState: PersistableBundle?) {
-		super.onCreate(savedInstanceState, persistentState)
+	override fun onCreate(savedInstanceState: Bundle?) {
+		super.onCreate(savedInstanceState)
 
 		setContent {
 			ProjectBlueTheme {
@@ -72,8 +73,9 @@ class TvActivity :
 }
 
 private class TvNavigation(
+	private val inner: NavigateApplication,
 	private val navController: NavController<Destination>
-) : NavigateApplication {
+) : NavigateApplication by inner {
 	override fun viewApplicationSettings(): Promise<Unit> {
 		navController.popUpTo { it is ApplicationSettingsScreen }
 
@@ -130,6 +132,13 @@ private class TvNavigation(
 
 		return Unit.toPromise()
 	}
+
+	override fun backOut(): Promise<Boolean> = navigateUp()
+
+	override fun navigateUp(): Promise<Boolean> {
+		return if (navController.pop() && navController.backstack.entries.any()) true.toPromise()
+		else inner.navigateUp()
+	}
 }
 
 private class TvDependencies(
@@ -147,31 +156,32 @@ fun CatalogBrowser(
 	)
 
 	val graphNavigation = remember {
-		TvNavigation(navController)
+		TvNavigation(browserViewDependencies.applicationNavigation, navController)
 	}
 
 	val tvDependencies = TvDependencies(browserViewDependencies, graphNavigation)
 
-	NavHost(navController) { destination ->
-		LocalViewModelStoreOwner.current
-			?.let {
-				ScopedViewModelDependencies(tvDependencies, permissionsDependencies, it)
-			}
-			?.apply {
-				when (destination) {
-					AboutScreen -> {}
-					ApplicationSettingsScreen -> {
-						TvApplicationSettingsView(
-							applicationSettingsViewModel,
-							applicationNavigation,
-							playbackServiceController,
-						)
+	ControlSurface {
+		NavHost(navController) { destination ->
+			LocalViewModelStoreOwner.current
+				?.let {
+					ScopedViewModelDependencies(tvDependencies, permissionsDependencies, it)
+				}
+				?.apply {
+					when (destination) {
+						AboutScreen -> {}
+						ApplicationSettingsScreen -> {
+							TvApplicationSettingsView(
+								applicationSettingsViewModel,
+								applicationNavigation,
+								playbackServiceController,
+							)
 
-						applicationSettingsViewModel.loadSettings()
-					}
-					ActiveLibraryDownloadsScreen -> {}
-					SelectedLibraryReRouter -> {
-						tvDependencies.apply {
+							applicationSettingsViewModel.loadSettings()
+						}
+
+						ActiveLibraryDownloadsScreen -> {}
+						SelectedLibraryReRouter -> {
 							LaunchedEffect(key1 = Unit) {
 								try {
 									val settings =
@@ -188,38 +198,51 @@ fun CatalogBrowser(
 								applicationNavigation.backOut().suspend()
 							}
 						}
-					}
-					HiddenSettingsScreen -> {}
-					is DownloadsScreen -> {}
-					is ItemScreen -> {
-						TvItemView(
-							itemListViewModel = itemListViewModel,
-							fileListViewModel = fileListViewModel,
-							navigateApplication = applicationNavigation,
-							trackHeadlineViewModelProvider = reusablePlaylistFileItemViewModelProvider,
-						)
-					}
 
-					is LibraryScreen -> {
-						TvLibrarySettingsView(
-							librarySettingsViewModel = librarySettingsViewModel,
-							navigateApplication = applicationNavigation,
-							stringResources = stringResources,
-						)
+						HiddenSettingsScreen -> {}
+						is DownloadsScreen -> {}
+						is ItemScreen -> {
+							TvItemView(
+								itemListViewModel = itemListViewModel,
+								fileListViewModel = fileListViewModel,
+								navigateApplication = applicationNavigation,
+								trackHeadlineViewModelProvider = reusablePlaylistFileItemViewModelProvider,
+							)
 
-						librarySettingsViewModel.loadLibrary(destination.libraryId)
-					}
-					is SearchScreen -> {}
-					is ConnectionSettingsScreen -> {}
-					is NowPlayingScreen -> {}
-					NewConnectionSettingsScreen -> {
-						TvLibrarySettingsView(
-							librarySettingsViewModel = librarySettingsViewModel,
-							navigateApplication = applicationNavigation,
-							stringResources = stringResources,
-						)
+							itemListViewModel.loadItem(destination.libraryId, destination.item)
+						}
+
+						is LibraryScreen -> {
+							TvItemView(
+								itemListViewModel = itemListViewModel,
+								fileListViewModel = fileListViewModel,
+								navigateApplication = applicationNavigation,
+								trackHeadlineViewModelProvider = reusablePlaylistFileItemViewModelProvider,
+							)
+
+							itemListViewModel.loadItem(destination.libraryId)
+						}
+
+						is SearchScreen -> {}
+						is ConnectionSettingsScreen -> {
+							TvLibrarySettingsView(
+								librarySettingsViewModel = librarySettingsViewModel,
+								navigateApplication = applicationNavigation,
+								stringResources = stringResources,
+							)
+
+							librarySettingsViewModel.loadLibrary(destination.libraryId)
+						}
+						is NowPlayingScreen -> {}
+						NewConnectionSettingsScreen -> {
+							TvLibrarySettingsView(
+								librarySettingsViewModel = librarySettingsViewModel,
+								navigateApplication = applicationNavigation,
+								stringResources = stringResources,
+							)
+						}
 					}
 				}
-			}
+		}
 	}
 }
