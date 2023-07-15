@@ -57,12 +57,12 @@ android {
 	}
 
 	compileOptions {
-        sourceCompatibility JavaVersion.VERSION_11
-        targetCompatibility JavaVersion.VERSION_11
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
     }
 
 	kotlinOptions {
-		jvmTarget = '11'
+		jvmTarget = '17'
 	}
 
 	buildTypes {
@@ -123,7 +123,11 @@ tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
 	kotlinOptions {
 		freeCompilerArgs += [
 			"-opt-in=kotlin.RequiresOptIn",
-			"-Xcontext-receivers"
+			"-Xcontext-receivers",
+			"-Xopt-in=androidx.tv.tvMaterial3.ExperimentalTvMaterial3Api",
+			"-Xopt-in=androidx.tv.material3.ExperimentalTvMaterial3Api",
+			"-Xopt-in=androidx.tv.foundation.ExperimentalTvFoundationApi",
+
 		]
 	}
 }
@@ -146,7 +150,7 @@ dependencies {
 	def media3_version = '1.1.0'
 	def lifecycle_version = '2.6.1'
 	def junit5_version = '5.9.3'
-	def tv_compose = '1.0.0-alpha06'
+	def tv_compose = '1.0.0-alpha07'
 
 	implementation 'androidx.core:core-ktx:1.10.1'
 	implementation 'androidx.annotation:annotation:1.6.0'

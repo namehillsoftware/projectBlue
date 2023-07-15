@@ -7,8 +7,6 @@ import android.content.Context
 import android.os.Environment
 import android.os.StrictMode
 import android.os.StrictMode.VmPolicy
-import androidx.work.Configuration
-import androidx.work.WorkManager
 import ch.qos.logback.classic.AsyncAppender
 import ch.qos.logback.classic.Level
 import ch.qos.logback.classic.Logger
@@ -98,14 +96,14 @@ open class MainApplication : Application() {
 
 		registerAppBroadcastReceivers()
 
-		if (!isWorkManagerInitialized) {
-			WorkManager.initialize(this, Configuration.Builder().build())
-			isWorkManagerInitialized = true
-		}
-
-		syncScheduler
-			.promiseIsScheduled()
-			.then { isScheduled -> if (!isScheduled) syncScheduler.scheduleSync() }
+//		if (!isWorkManagerInitialized) {
+//			WorkManager.initialize(this, Configuration.Builder().build())
+//			isWorkManagerInitialized = true
+//		}
+//
+//		syncScheduler
+//			.promiseIsScheduled()
+//			.then { isScheduled -> if (!isScheduled) syncScheduler.scheduleSync() }
 
 		LiveNowPlayingLookup.initializeInstance(this)
 	}
@@ -208,7 +206,6 @@ open class MainApplication : Application() {
 					lazy = true
 					isAppend = true
 					context = lc
-					file = File(logDir, "log.log").absolutePath
 
 					rollingPolicy = TimeBasedRollingPolicy<ILoggingEvent>()
 						.also { it.setParent(this) }
