@@ -2,19 +2,19 @@ package com.lasthopesoftware.bluewater.client.browsing.items.list
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material.Card
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.res.stringResource
-import androidx.tv.foundation.lazy.list.TvLazyRow
-import androidx.tv.foundation.lazy.list.items
-import androidx.tv.foundation.lazy.list.itemsIndexed
-import androidx.tv.material3.Card
-import androidx.tv.material3.ExperimentalTvMaterial3Api
-import androidx.tv.material3.MaterialTheme
-import androidx.tv.material3.Text
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
@@ -22,7 +22,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewPlaylistFil
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 
-@OptIn(ExperimentalTvMaterial3Api::class)
+@OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun TvItemView(
     itemListViewModel: ItemListViewModel,
@@ -35,16 +35,16 @@ fun TvItemView(
 
         Text(
             text = itemTitle,
-            style = MaterialTheme.typography.headlineMedium,
+            style = MaterialTheme.typography.h5,
         )
 
         val childItems by itemListViewModel.items.collectAsState()
         Text(
             text = stringResource(id = R.string.item_count_label, childItems.size),
-            style = MaterialTheme.typography.headlineSmall,
+            style = MaterialTheme.typography.h5,
         )
 
-        TvLazyRow(
+        LazyRow(
             horizontalArrangement = Arrangement.spacedBy(Dimensions.viewPaddingUnit * 2)
         ) {
             items(childItems) { child ->
@@ -63,10 +63,10 @@ fun TvItemView(
         val childFiles by fileListViewModel.files.collectAsState()
         Text(
             text = stringResource(id = R.string.file_count_label, childFiles.size),
-            style = MaterialTheme.typography.headlineSmall,
+            style = MaterialTheme.typography.h5,
         )
 
-        TvLazyRow(
+        LazyRow(
             horizontalArrangement = Arrangement.spacedBy(Dimensions.viewPaddingUnit * 2)
         ) {
             itemsIndexed(childFiles) { i, serviceFile ->
