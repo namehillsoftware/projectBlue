@@ -3,14 +3,21 @@ package com.lasthopesoftware.bluewater.client
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.PersistableBundle
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Modifier
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.media3.common.util.UnstableApi
 import com.lasthopesoftware.bluewater.ActivityDependencies
 import com.lasthopesoftware.bluewater.NavigateApplication
@@ -32,6 +39,10 @@ import com.lasthopesoftware.bluewater.client.browsing.navigation.NewConnectionSe
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NowPlayingScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.SearchScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.SelectedLibraryReRouter
+import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionInitializingLibrarySelectionNavigation
+import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionStatusViewModel
+import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionUpdatesView
+import com.lasthopesoftware.bluewater.client.connection.session.initialization.DramaticConnectionInitializationController
 import com.lasthopesoftware.bluewater.client.settings.PermissionsDependencies
 import com.lasthopesoftware.bluewater.client.settings.TvLibrarySettingsView
 import com.lasthopesoftware.bluewater.permissions.ApplicationPermissionsRequests
@@ -174,8 +185,17 @@ private class TvNavigation(
 
 private class TvDependencies(
 	private val inner: BrowserViewDependencies,
- 	override val applicationNavigation: NavigateApplication
-) : BrowserViewDependencies by inner
+ 	private val tvNavigation: TvNavigation,
+	private val connectionStatusViewModel: ConnectionStatusViewModel,
+) : BrowserViewDependencies by inner {
+	override val applicationNavigation by lazy {
+		ConnectionInitializingLibrarySelectionNavigation(
+			tvNavigation,
+			selectedLibraryViewModel,
+			connectionStatusViewModel,
+		)
+	}
+}
 
 @Composable
 fun CatalogBrowser(
@@ -192,7 +212,19 @@ fun CatalogBrowser(
 		TvNavigation(navController, coroutineScope)
 	}
 
-	val tvDependencies = TvDependencies(browserViewDependencies, graphNavigation)
+	val connectionStatusViewModel = viewModel {
+		ConnectionStatusViewModel(
+			browserViewDependencies.stringResources,
+			DramaticConnectionInitializationController(
+				browserViewDependencies.libraryConnectionProvider,
+				graphNavigation,
+			),
+		)
+	}
+
+	val tvDependencies = remember { TvDependencies(browserViewDependencies, graphNavigation, connectionStatusViewModel) }
+
+	BackHandler { tvDependencies.applicationNavigation.backOut() }
 
 	NavHost(navController) { destination ->
 		LocalViewModelStoreOwner.current
@@ -262,5 +294,14 @@ fun CatalogBrowser(
 					}
 				}
 			}
+
+		val isCheckingConnection by connectionStatusViewModel.isGettingConnection.collectAsState()
+		if (isCheckingConnection) {
+			Box(
+				modifier = Modifier.fillMaxSize()
+			) {
+				ConnectionUpdatesView(connectionViewModel = connectionStatusViewModel)
+			}
+		}
 	}
 }
