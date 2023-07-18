@@ -12,8 +12,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
@@ -25,6 +27,7 @@ import com.lasthopesoftware.bluewater.client.browsing.BrowserViewDependencies
 import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelDependencies
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
+import com.lasthopesoftware.bluewater.client.browsing.items.list.ConnectionLostView
 import com.lasthopesoftware.bluewater.client.browsing.items.list.TvItemView
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ActiveLibraryDownloadsScreen
@@ -39,6 +42,7 @@ import com.lasthopesoftware.bluewater.client.browsing.navigation.NewConnectionSe
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NowPlayingScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.SearchScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.SelectedLibraryReRouter
+import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionInitializingLibrarySelectionNavigation
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionStatusViewModel
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionUpdatesView
@@ -65,6 +69,7 @@ import dev.olshevski.navigation.reimagined.popUpTo
 import dev.olshevski.navigation.reimagined.rememberNavController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
 
 private val logger by lazyLogger<TvActivity>()
@@ -74,8 +79,7 @@ class TvActivity :
 	AppCompatActivity(),
 	PermissionsDependencies,
 	ManagePermissions,
-	ActivitySuppliedDependencies
-{
+	ActivitySuppliedDependencies {
 	private val dependencies by lazy { ActivityDependencies(this, this) }
 
 	override val registeredActivityResultsLauncher = registerResultActivityLauncher()
@@ -185,7 +189,7 @@ private class TvNavigation(
 
 private class TvDependencies(
 	private val inner: BrowserViewDependencies,
- 	private val tvNavigation: TvNavigation,
+	private val tvNavigation: TvNavigation,
 	private val connectionStatusViewModel: ConnectionStatusViewModel,
 ) : BrowserViewDependencies by inner {
 	override val applicationNavigation by lazy {
@@ -222,7 +226,8 @@ fun CatalogBrowser(
 		)
 	}
 
-	val tvDependencies = remember { TvDependencies(browserViewDependencies, graphNavigation, connectionStatusViewModel) }
+	val tvDependencies =
+		remember { TvDependencies(browserViewDependencies, graphNavigation, connectionStatusViewModel) }
 
 	BackHandler { tvDependencies.applicationNavigation.backOut() }
 
@@ -242,6 +247,7 @@ fun CatalogBrowser(
 
 						applicationSettingsViewModel.loadSettings()
 					}
+
 					ActiveLibraryDownloadsScreen -> {}
 					SelectedLibraryReRouter -> {
 						tvDependencies.apply {
@@ -262,6 +268,7 @@ fun CatalogBrowser(
 							}
 						}
 					}
+
 					HiddenSettingsScreen -> {}
 					is DownloadsScreen -> {}
 					is ItemScreen -> {
@@ -272,18 +279,112 @@ fun CatalogBrowser(
 							trackHeadlineViewModelProvider = reusablePlaylistFileItemViewModelProvider,
 						)
 
+						val (libraryId, item) = destination
 
+						var isConnectionLost by remember { mutableStateOf(false) }
+						var reinitializeConnection by remember { mutableStateOf(false) }
+
+						if (isConnectionLost) {
+							ConnectionLostView(
+								onCancel = { applicationNavigation.viewApplicationSettings() },
+								onRetry = {
+									reinitializeConnection = true
+								}
+							)
+						} else {
+							TvItemView(
+								itemListViewModel = itemListViewModel,
+								fileListViewModel = fileListViewModel,
+								navigateApplication = applicationNavigation,
+								trackHeadlineViewModelProvider = reusablePlaylistFileItemViewModelProvider,
+							)
+						}
+
+						if (reinitializeConnection) {
+							LaunchedEffect(key1 = Unit) {
+								isConnectionLost = !connectionStatusViewModel.initializeConnection(libraryId).suspend()
+								reinitializeConnection = false
+							}
+						}
+
+						if (!isConnectionLost) {
+							LaunchedEffect(libraryId) {
+								try {
+									Promise.whenAll(
+										itemListViewModel.loadItem(libraryId, item),
+										fileListViewModel.loadItem(libraryId, item),
+									).suspend()
+								} catch (e: IOException) {
+									if (ConnectionLostExceptionFilter.isConnectionLostException(e))
+										isConnectionLost = true
+									else
+										applicationNavigation.backOut().suspend()
+								} catch (e: Exception) {
+									applicationNavigation.backOut().suspend()
+								}
+							}
+						}
 					}
 
 					is LibraryScreen -> {
+						val libraryId = destination.libraryId
+
+						var isConnectionLost by remember { mutableStateOf(false) }
+						var reinitializeConnection by remember { mutableStateOf(false) }
+
+						if (isConnectionLost) {
+							ConnectionLostView(
+								onCancel = { applicationNavigation.viewApplicationSettings() },
+								onRetry = {
+									reinitializeConnection = true
+								}
+							)
+						} else {
+							TvItemView(
+								itemListViewModel = itemListViewModel,
+								fileListViewModel = fileListViewModel,
+								navigateApplication = applicationNavigation,
+								trackHeadlineViewModelProvider = reusablePlaylistFileItemViewModelProvider,
+							)
+						}
+
+						if (reinitializeConnection) {
+							LaunchedEffect(key1 = Unit) {
+								isConnectionLost = !connectionStatusViewModel.initializeConnection(libraryId).suspend()
+								reinitializeConnection = false
+							}
+						}
+
+						if (!isConnectionLost) {
+							LaunchedEffect(libraryId) {
+								try {
+									Promise.whenAll(
+										itemListViewModel.loadItem(libraryId),
+										fileListViewModel.loadItem(libraryId),
+									).suspend()
+								} catch (e: IOException) {
+									if (ConnectionLostExceptionFilter.isConnectionLostException(e))
+										isConnectionLost = true
+									else
+										applicationNavigation.backOut().suspend()
+								} catch (e: Exception) {
+									applicationNavigation.backOut().suspend()
+								}
+							}
+						}
+					}
+
+					is SearchScreen -> {}
+					is ConnectionSettingsScreen -> {
 						TvLibrarySettingsView(
 							librarySettingsViewModel = librarySettingsViewModel,
 							navigateApplication = applicationNavigation,
 							stringResources = stringResources,
 						)
+
+						librarySettingsViewModel.loadLibrary(destination.libraryId)
 					}
-					is SearchScreen -> {}
-					is ConnectionSettingsScreen -> {}
+
 					is NowPlayingScreen -> {}
 					NewConnectionSettingsScreen -> {
 						TvLibrarySettingsView(
@@ -294,14 +395,14 @@ fun CatalogBrowser(
 					}
 				}
 			}
+	}
 
-		val isCheckingConnection by connectionStatusViewModel.isGettingConnection.collectAsState()
-		if (isCheckingConnection) {
-			Box(
-				modifier = Modifier.fillMaxSize()
-			) {
-				ConnectionUpdatesView(connectionViewModel = connectionStatusViewModel)
-			}
+	val isCheckingConnection by connectionStatusViewModel.isGettingConnection.collectAsState()
+	if (isCheckingConnection) {
+		Box(
+			modifier = Modifier.fillMaxSize()
+		) {
+			ConnectionUpdatesView(connectionViewModel = connectionStatusViewModel)
 		}
 	}
 }
