@@ -22,7 +22,8 @@ if (!hasAndroidStorePassword()) {
 def isSignedExternally = { hasKeyStorePassword() && hasAndroidStorePassword() }
 
 android {
-	compileSdk 34
+	compileSdk 33
+	buildToolsVersion '33.0.0'
 
     defaultConfig {
         applicationId "com.lasthopesoftware.bluewater"
