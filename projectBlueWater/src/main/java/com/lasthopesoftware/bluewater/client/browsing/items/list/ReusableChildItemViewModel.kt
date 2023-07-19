@@ -36,7 +36,7 @@ class ReusableChildItemViewModel(
 			item?.run {
 				storedItemAccess
 					.toggleSync(l, itemId)
-					.then { it -> mutableIsSynced.value = l == libraryId && this == item && it }
+					.then { it -> mutableIsSynced.value = it && l == libraryId && this == item }
 			}
 		}
 		.keepPromise(Unit)
@@ -50,7 +50,7 @@ class ReusableChildItemViewModel(
 					storedItemAccess
 						.isItemMarkedForSync(l, itemId)
 						.then { it ->
-							mutableIsSynced.value = l == libraryId && this == item && it
+							mutableIsSynced.value = it && l == libraryId && this == item
 						}
 				}
 			}

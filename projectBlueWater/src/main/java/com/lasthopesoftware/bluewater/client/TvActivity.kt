@@ -25,9 +25,12 @@ import com.lasthopesoftware.bluewater.ActivityDependencies
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.client.browsing.BrowserViewDependencies
 import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelDependencies
+import com.lasthopesoftware.bluewater.client.browsing.TvInterfaceDependencies
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
+import com.lasthopesoftware.bluewater.client.browsing.items.image.LibraryItemImageProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ConnectionLostView
+import com.lasthopesoftware.bluewater.client.browsing.items.list.ReusableTvChildItemViewModelProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.list.TvItemView
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ActiveLibraryDownloadsScreen
@@ -55,6 +58,7 @@ import com.lasthopesoftware.bluewater.settings.TvApplicationSettingsView
 import com.lasthopesoftware.bluewater.shared.android.permissions.ManagePermissions
 import com.lasthopesoftware.bluewater.shared.android.permissions.OsPermissionsChecker
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
+import com.lasthopesoftware.bluewater.shared.images.bytes.RemoteImageAccess
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.promises.extensions.registerResultActivityLauncher
 import com.lasthopesoftware.promises.extensions.suspend
@@ -191,7 +195,14 @@ private class TvDependencies(
 	private val inner: BrowserViewDependencies,
 	private val tvNavigation: TvNavigation,
 	private val connectionStatusViewModel: ConnectionStatusViewModel,
-) : BrowserViewDependencies by inner {
+) : BrowserViewDependencies by inner, TvInterfaceDependencies {
+
+	override val reusableTvChildItemViewModelProvider by lazy {
+		ReusableTvChildItemViewModelProvider(
+			LibraryItemImageProvider(RemoteImageAccess(libraryConnectionProvider))
+		)
+	}
+
 	override val applicationNavigation by lazy {
 		ConnectionInitializingLibrarySelectionNavigation(
 			tvNavigation,
@@ -276,7 +287,7 @@ fun CatalogBrowser(
 							itemListViewModel = itemListViewModel,
 							fileListViewModel = fileListViewModel,
 							navigateApplication = applicationNavigation,
-							trackHeadlineViewModelProvider = reusablePlaylistFileItemViewModelProvider,
+							tvChildItemViewModelProvider = tvDependencies.reusableTvChildItemViewModelProvider,trackHeadlineViewModelProvider = reusablePlaylistFileItemViewModelProvider,
 						)
 
 						val (libraryId, item) = destination
@@ -296,7 +307,7 @@ fun CatalogBrowser(
 								itemListViewModel = itemListViewModel,
 								fileListViewModel = fileListViewModel,
 								navigateApplication = applicationNavigation,
-								trackHeadlineViewModelProvider = reusablePlaylistFileItemViewModelProvider,
+								tvChildItemViewModelProvider = tvDependencies.reusableTvChildItemViewModelProvider,trackHeadlineViewModelProvider = reusablePlaylistFileItemViewModelProvider,
 							)
 						}
 
@@ -344,7 +355,7 @@ fun CatalogBrowser(
 								itemListViewModel = itemListViewModel,
 								fileListViewModel = fileListViewModel,
 								navigateApplication = applicationNavigation,
-								trackHeadlineViewModelProvider = reusablePlaylistFileItemViewModelProvider,
+								tvChildItemViewModelProvider = tvDependencies.reusableTvChildItemViewModelProvider,trackHeadlineViewModelProvider = reusablePlaylistFileItemViewModelProvider,
 							)
 						}
 
