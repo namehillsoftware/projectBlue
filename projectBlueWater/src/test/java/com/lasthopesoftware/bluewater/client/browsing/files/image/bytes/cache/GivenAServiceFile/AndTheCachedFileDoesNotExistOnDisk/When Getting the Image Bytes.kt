@@ -1,8 +1,8 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.image.bytes.cache.GivenAServiceFile.AndTheCachedFileDoesNotExistOnDisk
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.image.bytes.cache.DiskCacheImageAccess
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.shared.images.bytes.cache.DiskCacheImageAccess
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every

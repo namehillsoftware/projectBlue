@@ -10,10 +10,6 @@ import com.lasthopesoftware.bluewater.client.browsing.files.cached.disk.AndroidD
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.persistence.DiskFileAccessTimeUpdater
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.persistence.DiskFileCachePersistence
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.supplier.DiskFileCacheStreamSupplier
-import com.lasthopesoftware.bluewater.client.browsing.files.image.bytes.RemoteImageAccess
-import com.lasthopesoftware.bluewater.client.browsing.files.image.bytes.cache.DiskCacheImageAccess
-import com.lasthopesoftware.bluewater.client.browsing.files.image.bytes.cache.ImageCacheKeyLookup
-import com.lasthopesoftware.bluewater.client.browsing.files.image.bytes.cache.LookupImageCacheKey
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
@@ -21,6 +17,10 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
+import com.lasthopesoftware.bluewater.shared.images.bytes.RemoteImageAccess
+import com.lasthopesoftware.bluewater.shared.images.bytes.cache.DiskCacheImageAccess
+import com.lasthopesoftware.bluewater.shared.images.bytes.cache.ImageCacheKeyLookup
+import com.lasthopesoftware.bluewater.shared.images.bytes.cache.LookupImageCacheKey
 import com.lasthopesoftware.policies.caching.CachePromiseFunctions
 import com.lasthopesoftware.policies.caching.LruPromiseCache
 import com.lasthopesoftware.promises.extensions.keepPromise
