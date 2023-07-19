@@ -5,9 +5,9 @@ import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.image.LibraryImageProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.image.SelectedLibraryImageProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.image.bytes.GetRawImages
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.shared.images.bytes.GetRawImages
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every

@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.browsing.files.image.bytes.cache
+package com.lasthopesoftware.bluewater.shared.images.bytes.cache
 
 import android.content.Context
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
@@ -8,14 +8,14 @@ import com.lasthopesoftware.bluewater.client.browsing.files.cached.disk.AndroidD
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.persistence.DiskFileAccessTimeUpdater
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.persistence.DiskFileCachePersistence
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.supplier.DiskFileCacheStreamSupplier
-import com.lasthopesoftware.bluewater.client.browsing.files.image.bytes.GetRawImages
-import com.lasthopesoftware.bluewater.client.browsing.files.image.bytes.RemoteImageAccess
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
+import com.lasthopesoftware.bluewater.shared.images.bytes.GetRawImages
+import com.lasthopesoftware.bluewater.shared.images.bytes.RemoteImageAccess
 import com.lasthopesoftware.bluewater.shared.policies.caching.CachePromiseFunctions
 import com.lasthopesoftware.bluewater.shared.policies.caching.LruPromiseCache
 import com.namehillsoftware.handoff.Messenger

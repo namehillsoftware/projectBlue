@@ -1,10 +1,10 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.image.cache.GivenAServiceFile
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.image.bytes.GetRawImages
-import com.lasthopesoftware.bluewater.client.browsing.files.image.bytes.cache.LookupImageCacheKey
-import com.lasthopesoftware.bluewater.client.browsing.files.image.bytes.cache.MemoryCachedImageAccess
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.shared.images.bytes.GetRawImages
+import com.lasthopesoftware.bluewater.shared.images.bytes.cache.LookupImageCacheKey
+import com.lasthopesoftware.bluewater.shared.images.bytes.cache.MemoryCachedImageAccess
 import com.lasthopesoftware.bluewater.shared.policies.caching.LruPromiseCache
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise

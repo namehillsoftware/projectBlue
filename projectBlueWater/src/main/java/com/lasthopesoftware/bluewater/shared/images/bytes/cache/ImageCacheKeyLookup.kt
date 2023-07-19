@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.browsing.files.image.bytes.cache
+package com.lasthopesoftware.bluewater.shared.images.bytes.cache
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
@@ -8,7 +8,7 @@ import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
 
 class ImageCacheKeyLookup(private val cachedFilePropertiesProvider: CachedFilePropertiesProvider) :
-    LookupImageCacheKey {
+	LookupImageCacheKey {
 	override fun promiseImageCacheKey(libraryId: LibraryId, serviceFile: ServiceFile): Promise<String> {
 		return object : Promise<String>() {
 			init {

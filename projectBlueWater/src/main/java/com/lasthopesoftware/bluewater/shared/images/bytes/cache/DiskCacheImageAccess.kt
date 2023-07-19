@@ -1,10 +1,10 @@
-package com.lasthopesoftware.bluewater.client.browsing.files.image.bytes.cache
+package com.lasthopesoftware.bluewater.shared.images.bytes.cache
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.CacheFiles
-import com.lasthopesoftware.bluewater.client.browsing.files.image.bytes.GetRawImages
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.shared.cls
+import com.lasthopesoftware.bluewater.shared.images.bytes.GetRawImages
+import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
@@ -15,7 +15,6 @@ import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken
 import org.apache.commons.io.IOUtils
-import org.slf4j.LoggerFactory
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileInputStream
@@ -26,10 +25,10 @@ class DiskCacheImageAccess(
 	private val sourceImages: GetRawImages,
 	private val imageCacheKeys: LookupImageCacheKey,
 	private val fileCache: CacheFiles,
-) : GetRawImages {
+) : GetRawImages by sourceImages {
 
 	companion object {
-		private val logger by lazy { LoggerFactory.getLogger(cls<DiskCacheImageAccess>()) }
+		private val logger by lazyLogger<DiskCacheImageAccess>()
 
 		fun getBytesFromFiles(file: File, cancellationToken: CancellationToken): ByteArray {
 			if (cancellationToken.isCancelled) return ByteArray(0)

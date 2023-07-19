@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.browsing.files.image.bytes.cache
+package com.lasthopesoftware.bluewater.shared.images.bytes.cache
 
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.configuration.IDiskFileCacheConfiguration
 import org.joda.time.Days

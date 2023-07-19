@@ -1,11 +1,11 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.image.GivenAServiceFile.WithoutAnImage
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.image.bytes.RemoteImageAccess
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTuple
 import com.lasthopesoftware.bluewater.client.connection.FakeLibraryConnectionProvider
+import com.lasthopesoftware.bluewater.shared.images.bytes.RemoteImageAccess
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
