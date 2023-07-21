@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.browsing.items.list
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -9,6 +10,11 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -16,17 +22,20 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.tv.foundation.lazy.list.TvLazyRow
-import androidx.tv.foundation.lazy.list.items
-import androidx.tv.foundation.lazy.list.itemsIndexed
 import androidx.tv.material3.Card
 import androidx.tv.material3.ExperimentalTvMaterial3Api
 import androidx.tv.material3.Text
@@ -37,7 +46,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewPlaylistFil
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 
-@OptIn(ExperimentalTvMaterial3Api::class)
+@OptIn(ExperimentalTvMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
 fun TvItemView(
     itemListViewModel: ItemListViewModel,
@@ -60,12 +69,31 @@ fun TvItemView(
             style = androidx.tv.material3.MaterialTheme.typography.headlineSmall,
         )
 
-        TvLazyRow(
-            horizontalArrangement = Arrangement.spacedBy(Dimensions.viewPaddingUnit * 2)
+		val (initialFocus) = remember { FocusRequester.createRefs() }
+		val isFirst = true
+
+		LazyVerticalGrid(
+			columns = GridCells.Adaptive(200.dp),
+            horizontalArrangement = Arrangement.spacedBy(Dimensions.viewPaddingUnit * 2),
+			verticalArrangement = Arrangement.spacedBy(Dimensions.viewPaddingUnit * 2),
         ) {
             items(childItems) { child ->
+				var isFocused by remember { mutableStateOf(false) }
+				var cardModifier = Modifier
+					.width(200.dp)
+					.focusable(enabled = true)
+					.onFocusChanged { state -> isFocused = state.isFocused }
+
+				if (isFirst) {
+					cardModifier = cardModifier.focusRequester(initialFocus)
+				}
+
+				if (isFocused) {
+					cardModifier = cardModifier.border(Dimensions.viewPaddingUnit, MaterialTheme.colors.onSurface)
+				}
+
                 Card(
-					modifier = Modifier.width(300.dp),
+					modifier = cardModifier,
                     onClick = {
                         itemListViewModel.loadedLibraryId?.also {
                             navigateApplication.viewItem(it, child)
@@ -73,10 +101,13 @@ fun TvItemView(
                     }
                 ) {
 					Column(
-						modifier = Modifier.fillMaxWidth()
+						modifier = Modifier.fillMaxWidth(),
+						horizontalAlignment = Alignment.CenterHorizontally,
 					) {
 						Box(
-							modifier = Modifier.height(300.dp).fillMaxWidth()
+							modifier = Modifier
+								.height(200.dp)
+								.fillMaxWidth()
 						) {
 							val childItemViewModel = remember(tvChildItemViewModelProvider::getViewModel)
 
@@ -122,9 +153,7 @@ fun TvItemView(
             style = androidx.tv.material3.MaterialTheme.typography.headlineSmall,
         )
 
-        TvLazyRow(
-            horizontalArrangement = Arrangement.spacedBy(Dimensions.viewPaddingUnit * 2)
-        ) {
+        LazyColumn {
             itemsIndexed(childFiles) { i, serviceFile ->
                 Card(
                     onClick = {
