@@ -16,13 +16,11 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFileUriQueryP
 import com.lasthopesoftware.bluewater.client.browsing.files.access.LibraryFileProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.LibraryFileStringListProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.broadcasts.ScanMediaFileBroadcaster
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.library.access.DelegatingLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.request.read.StorageReadPermissionsRequestedBroadcaster
 import com.lasthopesoftware.bluewater.client.browsing.library.request.write.StorageWritePermissionsRequestedBroadcaster
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
@@ -52,7 +50,6 @@ import com.lasthopesoftware.bluewater.client.stored.sync.notifications.SyncChann
 import com.lasthopesoftware.bluewater.client.stored.sync.receivers.SyncStartedReceiver
 import com.lasthopesoftware.bluewater.client.stored.sync.receivers.file.StoredFileBroadcastReceiver
 import com.lasthopesoftware.bluewater.client.stored.sync.receivers.file.StoredFileDownloadingNotifier
-import com.lasthopesoftware.bluewater.client.stored.sync.receivers.file.StoredFileMediaScannerNotifier
 import com.lasthopesoftware.bluewater.client.stored.sync.receivers.file.StoredFileReadPermissionsReceiver
 import com.lasthopesoftware.bluewater.client.stored.sync.receivers.file.StoredFileWritePermissionsReceiver
 import com.lasthopesoftware.bluewater.shared.android.intents.IntentBuilder
@@ -94,7 +91,6 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 	private val applicationMessageBus by lazy { getApplicationMessageBus().getScopedMessageBus() }
 	private val storedFileAccess by lazy { StoredFileAccess(context) }
 	private val readPermissionArbitratorForOs by lazy { OsPermissionsChecker(context) }
-	private val libraryIdentifierProvider by lazy { context.getCachedSelectedLibraryIdProvider() }
 	private val libraryConnections by lazy { ConnectionSessionManager.get(context) }
 	private val cachingPolicyFactory by lazy { CachingPolicyFactory() }
 
@@ -178,11 +174,7 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 			fileProperties,
 			this,
 			context)
-		val storedFileMediaScannerNotifier =
-			StoredFileMediaScannerNotifier(
-				storedFileAccess,
-				ScanMediaFileBroadcaster(context)
-			)
+
 		val storedFileReadPermissionsReceiver = StoredFileReadPermissionsReceiver(
 			readPermissionArbitratorForOs,
 			StorageReadPermissionsRequestedBroadcaster(applicationMessageBus),
@@ -194,9 +186,9 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 
 		arrayOf(
 			storedFileDownloadingNotifier,
-			storedFileMediaScannerNotifier,
 			storedFileReadPermissionsReceiver,
-			storedFileWritePermissionsReceiver)
+			storedFileWritePermissionsReceiver
+		)
 	}
 
 	private val syncStartedReceiver = lazy { SyncStartedReceiver(this) }
