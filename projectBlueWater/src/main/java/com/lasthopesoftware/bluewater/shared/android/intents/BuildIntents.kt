@@ -21,5 +21,7 @@ interface BuildIntents {
 
 	fun buildPendingNowPlayingIntent(libraryId: LibraryId): PendingIntent
 
+	fun buildPendingKillPlaybackIntent(): PendingIntent
+
 	fun buildPendingShowDownloadsIntent(): PendingIntent
 }
