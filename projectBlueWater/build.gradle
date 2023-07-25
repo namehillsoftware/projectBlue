@@ -145,7 +145,7 @@ dependencies {
     def compose_version = '1.4.3'
 	def media3_version = '1.1.0'
 	def lifecycle_version = '2.6.1'
-	def junit5_version = '5.9.3'
+	def junit5_version = '5.10.0'
 
 	implementation 'androidx.core:core-ktx:1.10.1'
 	implementation 'androidx.annotation:annotation:1.6.0'
@@ -168,7 +168,7 @@ dependencies {
 	implementation 'com.github.danrien:xmlwise:-SNAPSHOT'
 	implementation "androidx.media3:media3-exoplayer:$media3_version"
 	implementation "androidx.media3:media3-datasource-okhttp:$media3_version"
-	implementation 'com.squareup.okio:okio:3.2.0'
+	implementation 'com.squareup.okio:okio:3.4.0'
 	implementation 'com.squareup.okhttp3:okhttp:4.11.0'
 	implementation 'com.github.namehillsoftware:artful:0.3.0'
 	implementation "androidx.compose.ui:ui:$compose_version"
@@ -177,7 +177,7 @@ dependencies {
 	implementation 'com.google.accompanist:accompanist-systemuicontroller:0.27.0'
 	implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.1'
 	implementation 'androidx.activity:activity-compose:1.7.2'
-	implementation 'androidx.compose.compiler:compiler:1.4.8'
+	implementation 'androidx.compose.compiler:compiler:1.5.0'
 	implementation "dev.olshevski.navigation:reimagined:1.4.0"
 	debugImplementation "androidx.compose.ui:ui-tooling:$compose_version"
 	testImplementation 'androidx.test.ext:junit:1.1.5'
