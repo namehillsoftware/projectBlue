@@ -9,13 +9,20 @@ import android.util.SparseBooleanArray
 class NotificationsController(
 	private val service: Service,
 	private val notificationManager: NotificationManager
-) : ControlNotifications {
+) : ControlNotifications, AutoCloseable {
 
 	private val syncObject = Any()
 	private val notificationForegroundStatuses = SparseBooleanArray()
 
+	@Volatile
+	private var isClosed = false
+
 	override fun notifyEither(notification: Notification?, notificationId: Int) {
+		if (isClosed) return
+
 		synchronized(syncObject) {
+			if (isClosed) return
+
 			if (notificationForegroundStatuses.indexOfKey(notificationId) < 0)
 				notificationForegroundStatuses.put(notificationId, false)
 
@@ -24,7 +31,11 @@ class NotificationsController(
 	}
 
 	override fun notifyBackground(notification: Notification?, notificationId: Int) {
+		if (isClosed) return
+
 		synchronized(syncObject) {
+			if (isClosed) return
+
 			if (isOnlyNotificationForeground(notificationId)) stopForeground(false)
 			markNotificationBackground(notificationId)
 			notificationManager.notify(notificationId, notification)
@@ -32,7 +43,11 @@ class NotificationsController(
 	}
 
 	override fun notifyForeground(notification: Notification?, notificationId: Int) {
+		if (isClosed) return
+
 		synchronized(syncObject) {
+			if (isClosed) return
+
 			service.startForeground(notificationId, notification)
 			markNotificationForeground(notificationId)
 		}
@@ -57,6 +72,13 @@ class NotificationsController(
 		synchronized(syncObject) {
 			markNotificationBackground(notificationId)
 			if (isAllNotificationsBackground) stopForeground(false)
+		}
+	}
+
+	override fun close() {
+		synchronized(syncObject) {
+			isClosed = true
+			removeAllNotifications()
 		}
 	}
 

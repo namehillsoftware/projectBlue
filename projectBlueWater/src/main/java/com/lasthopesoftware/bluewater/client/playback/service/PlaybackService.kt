@@ -414,7 +414,7 @@ import java.util.concurrent.TimeoutException
 			NotificationBuilderProducer(this),
 			connectionSessionManager,
 			connectionNotificationsConfiguration,
-			lazyNotificationController.value,
+			notificationController,
 			StringResources(this),
 		)
 	}
@@ -439,7 +439,9 @@ import java.util.concurrent.TimeoutException
 	private val diskFileAccessTimeUpdater by lazy { DiskFileAccessTimeUpdater(this) }
 	private val audioDiskCacheDirectoryProvider by lazy { AndroidDiskCacheDirectoryProvider(this, AudioCacheConfiguration) }
 	private val lazyAudioBecomingNoisyReceiver = lazy { AudioBecomingNoisyReceiver() }
-	private val lazyNotificationController = lazy { NotificationsController(this, notificationManager) }
+	private val notificationController by lazy {
+		playbackEngineCloseables.manage(NotificationsController(this, notificationManager))
+	}
 	private val disconnectionLatch by lazy { TimedCountdownLatch(numberOfDisconnects, disconnectResetDuration) }
 	private val errorLatch by lazy { TimedCountdownLatch(numberOfErrors, errorLatchResetDuration) }
 	private val intentBuilder by lazy { IntentBuilder(this) }
@@ -508,7 +510,7 @@ import java.util.concurrent.TimeoutException
 						nowPlayingRepository,
 						applicationMessageBus,
 						urlKeyProvider,
-						lazyNotificationController.value,
+						notificationController,
 						playbackNotificationsConfiguration,
 						builder,
 						playbackStartingNotificationBuilder,
@@ -650,7 +652,7 @@ import java.util.concurrent.TimeoutException
 	private var isDestroyed = false
 
 	private fun stopNotificationIfNotPlaying() {
-		if (!isMarkedForPlay) lazyNotificationController.value.removeNotification(playingNotificationId)
+		if (!isMarkedForPlay) notificationController.removeNotification(playingNotificationId)
 	}
 
 	private fun registerListeners() {
@@ -1074,8 +1076,6 @@ import java.util.concurrent.TimeoutException
 	override fun onDestroy() {
 		isDestroyed = true
 		isMarkedForPlay = false
-
-		if (lazyNotificationController.isInitialized()) lazyNotificationController.value.removeAllNotifications()
 
 		if (areListenersRegistered) unregisterListeners()
 
