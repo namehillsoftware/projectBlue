@@ -8,10 +8,10 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.IMediaQueryCursorProvider
 import com.lasthopesoftware.bluewater.shared.IoCommon
 import com.lasthopesoftware.bluewater.shared.android.permissions.CheckOsPermissions
+import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
 import com.lasthopesoftware.bluewater.shared.messages.application.SendApplicationMessages
 import com.namehillsoftware.handoff.promises.Promise
-import org.slf4j.LoggerFactory
 import java.io.File
 
 class MediaFileUriProvider(
@@ -68,7 +68,7 @@ class MediaFileUriProvider(
 	) : ApplicationMessage
 
     companion object {
-		private val audioIdKey by lazy { MediaStore.Audio.keyFor("audio_id") }
-        private val logger by lazy { LoggerFactory.getLogger(MediaFileUriProvider::class.java) }
+		private const val audioIdKey = MediaStore.Audio.Media._ID
+        private val logger by lazyLogger<MediaFileUriProvider>()
     }
 }

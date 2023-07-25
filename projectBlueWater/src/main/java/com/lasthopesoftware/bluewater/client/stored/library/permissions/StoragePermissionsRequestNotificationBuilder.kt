@@ -9,9 +9,6 @@ import com.lasthopesoftware.bluewater.shared.android.intents.BuildIntents
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.ChannelConfiguration
 import com.lasthopesoftware.resources.strings.GetStringResources
 
-/**
- * Created by david on 7/10/16.
- */
 class StoragePermissionsRequestNotificationBuilder(
 	private val context: Context,
 	private val stringResources: GetStringResources,
@@ -22,14 +19,14 @@ class StoragePermissionsRequestNotificationBuilder(
 	override fun buildStoragePermissionsRequestNotification(libraryId: Int): Notification {
 		val notificationBuilder = NotificationCompat.Builder(context, channelProperties.channelId)
 
-        notificationBuilder.setSmallIcon(R.drawable.now_playing_status_icon_white)
-        notificationBuilder.setContentTitle(stringResources.permissionsNeeded)
-        notificationBuilder.setContentText(stringResources.permissionsNeededLaunchSettings)
-        notificationBuilder.setContentIntent(
-            intentBuilder.buildLibraryServerSettingsPendingIntent(LibraryId(libraryId))
-        )
-        notificationBuilder.setAutoCancel(true)
-        notificationBuilder.setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-        return notificationBuilder.build()
-    }
+		notificationBuilder.setSmallIcon(R.drawable.now_playing_status_icon_white)
+		notificationBuilder.setContentTitle(stringResources.permissionsNeeded)
+		notificationBuilder.setContentText(stringResources.permissionsNeededLaunchSettings)
+		notificationBuilder.setContentIntent(
+			intentBuilder.buildLibraryServerSettingsPendingIntent(LibraryId(libraryId))
+		)
+		notificationBuilder.setAutoCancel(true)
+		notificationBuilder.setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+		return notificationBuilder.build()
+	}
 }
