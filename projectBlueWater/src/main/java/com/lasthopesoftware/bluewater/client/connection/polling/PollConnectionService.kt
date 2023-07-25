@@ -2,12 +2,12 @@ package com.lasthopesoftware.bluewater.client.connection.polling
 
 import android.app.NotificationManager
 import android.app.PendingIntent
-import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
+import androidx.lifecycle.LifecycleService
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
@@ -24,9 +24,10 @@ import com.lasthopesoftware.bluewater.shared.android.services.GenericBinder
 import com.lasthopesoftware.bluewater.shared.android.services.promiseBoundService
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
+import com.lasthopesoftware.resources.closables.lazyScoped
 import com.namehillsoftware.handoff.promises.Promise
 
-class PollConnectionService : Service() {
+class PollConnectionService : LifecycleService() {
 
 	companion object {
 		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(cls<PollConnectionService>()) }
@@ -60,7 +61,7 @@ class PollConnectionService : Service() {
 		NotificationsConfiguration(channelName, notificationId)
 	}
 
-	private val lazyNotificationController = lazy { NotificationsController(this, notificationManager) }
+	private val notificationController by lazyScoped { NotificationsController(this, notificationManager) }
 
 	private val libraryConnectionProvider by lazy { ConnectionSessionManager.get(this) }
 
@@ -70,9 +71,14 @@ class PollConnectionService : Service() {
 		)
 	}
 
-	override fun onBind(intent: Intent): IBinder = binder
+	override fun onBind(intent: Intent): IBinder {
+		super.onBind(intent)
+		return binder
+	}
 
 	override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+		super.onStartCommand(intent, flags, startId)
+
 		if (intent?.action == stopWaitingForConnectionAction)
 			libraryConnectionPoller.cancelActiveConnections()
 
@@ -105,12 +111,6 @@ class PollConnectionService : Service() {
 			.setSmallIcon(R.drawable.now_playing_status_icon_white)
 			.setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
 
-		lazyNotificationController.value.notifyBackground(builder.build(), notificationsConfiguration.notificationId)
-	}
-
-	override fun onDestroy() {
-		if (lazyNotificationController.isInitialized())
-			lazyNotificationController.value.removeAllNotifications()
-		super.onDestroy()
+		notificationController.notifyBackground(builder.build(), notificationsConfiguration.notificationId)
 	}
 }
