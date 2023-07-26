@@ -1,4 +1,4 @@
-FROM gradle:8.0.2-jdk17
+FROM gradle:8.2.1-jdk17
 
 # Install system dependencies
 RUN apt-get update -qq && apt-get install -qq -y --no-install-recommends \
@@ -22,7 +22,7 @@ ARG SDK_VERSION=commandlinetools-linux-9477386_latest.zip
 
 # Set these to the same versions as in build.gradle to avoid downloading updated tools
 ARG ANDROID_BUILD_VERSION=33
-ARG ANDROID_TOOLS_VERSION=33.0.0
+ARG ANDROID_TOOLS_VERSION=33.0.1
 
 # Full reference at https://dl.google.com/android/repository/repository2-1.xml
 # download and unpack android

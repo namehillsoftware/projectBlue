@@ -1,7 +1,6 @@
-import org.ajoberstar.grgit.Grgit
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 apply plugin: 'com.android.application'
-apply plugin: 'com.cinnober.gradle.semver-git'
 apply plugin: 'kotlin-android'
 apply plugin: 'de.mannodermaus.android-junit5'
 apply plugin: 'org.jetbrains.kotlin.android'
@@ -23,14 +22,13 @@ def isSignedExternally = { hasKeyStorePassword() && hasAndroidStorePassword() }
 
 android {
 	compileSdk 33
-	buildToolsVersion '33.0.0'
 
     defaultConfig {
         applicationId "com.lasthopesoftware.bluewater"
         minSdkVersion 21
         targetSdkVersion 33
-		versionName project.version
-		archivesBaseName = "project-blue-" + project.version
+		versionName gitVersion()
+		archivesBaseName = "project-blue-" + gitVersion()
 	}
 
 	signingConfigs {
@@ -119,25 +117,49 @@ android {
 	namespace 'com.lasthopesoftware.bluewater'
 }
 
-tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
-	kotlinOptions {
-		freeCompilerArgs += [
-			"-opt-in=kotlin.RequiresOptIn",
-			"-Xcontext-receivers"
-		]
+tasks.withType(KotlinCompile).configureEach {
+	compilerOptions {
+		freeCompilerArgs.add("-opt-in=kotlin.RequiresOptIn")
+		freeCompilerArgs.add("-Xcontext-receivers")
+	}
+}
+
+def gitVersion() {
+	try {
+		def gitDescribe = providers.exec {
+			it.ignoreExitValue = true
+			commandLine("git", "describe")
+		}.standardOutput.asText.get().trim()
+
+		def latestTag = providers.exec {
+			it.ignoreExitValue = true
+			commandLine("git", "describe", "--abbrev=0")
+		}.standardOutput.asText.get().trim()
+
+		if (gitDescribe != latestTag) {
+			return latestTag + "-SNAPSHOT"
+		}
+
+		return gitDescribe
+	} catch (ignored) {
+		return "0.0.1"
 	}
 }
 
 def getGeneratedVersionCode() {
-    // current dir is <your proj>/app, so it's likely that all your git repo files are in the dir
-    // above.
-    ext.repo = Grgit.open(project.file('..'))
-
     // should result in the same value as running
     // git rev-list <checked out branch name> | wc -l
     def initialVersionCode = 3761 // the initial version code before tags were used to increment version code
-    def numberOfReleases = ext.repo.tag.list().size()
-    return numberOfReleases + initialVersionCode
+
+	try {
+		def numberOfReleases = providers.exec {
+			it.ignoreExitValue = true
+			commandLine("sh", "-c", "git tag | wc -l")
+		}.standardOutput.asText.get() as Integer
+		return numberOfReleases + initialVersionCode
+	} catch (ignored) {
+		return initialVersionCode
+	}
 }
 
 dependencies {
@@ -159,7 +181,7 @@ dependencies {
 	implementation 'com.google.android.material:material:1.9.0'
 	implementation 'com.google.guava:guava:31.1-android'
 	implementation 'joda-time:joda-time:2.12.5'
-	implementation 'commons-io:commons-io:2.8.0'
+	implementation 'commons-io:commons-io:2.11.0'
 	implementation 'org.slf4j:slf4j-api:2.0.7'
 	implementation 'com.github.tony19:logback-android:3.0.0'
 	implementation 'com.namehillsoftware:handoff:0.19.6'
