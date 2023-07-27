@@ -17,8 +17,12 @@ class ApplicationReadPermissionsRequirementsProvider(
     )
 
 	override fun isReadPermissionsRequiredForLibrary(library: Library): Boolean {
-        return libraryStorageReadPermissionsRequirementsProvider.isReadPermissionsRequiredForLibrary(
-            library
-        ) && !storageReadPermissionArbitratorForOs.isReadPermissionGranted
+        return libraryStorageReadPermissionsRequirementsProvider.isReadPermissionsRequiredForLibrary(library)
+			&& !storageReadPermissionArbitratorForOs.isReadPermissionGranted
     }
+
+	override fun isReadMediaPermissionsRequiredForLibrary(library: Library): Boolean {
+		return libraryStorageReadPermissionsRequirementsProvider.isReadPermissionsRequiredForLibrary(library)
+			&& !storageReadPermissionArbitratorForOs.isReadMediaAudioPermissionGranted
+	}
 }
