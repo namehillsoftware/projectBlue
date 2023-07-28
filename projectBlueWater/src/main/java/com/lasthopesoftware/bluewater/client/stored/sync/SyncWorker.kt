@@ -156,7 +156,7 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 				StoredFileDownloader(ServiceFileUriQueryParamsProvider, libraryConnections),
 				FileReadPossibleArbitrator(),
 				FileWritePossibleArbitrator(),
-				FileStreamWriter()
+				FileStreamWriter(context.contentResolver)
 			)
 		)
 		StoredFileSynchronization(
