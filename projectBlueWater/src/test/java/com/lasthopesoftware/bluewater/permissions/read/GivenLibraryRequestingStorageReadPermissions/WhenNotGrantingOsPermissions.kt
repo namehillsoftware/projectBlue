@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.permissions.read.GivenLibraryRequestingSt
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermissionsRequirementsProvider
+import com.lasthopesoftware.bluewater.shared.android.permissions.CheckOsPermissions
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -10,15 +11,15 @@ import org.junit.jupiter.api.Test
 class WhenNotGrantingOsPermissions {
 	private val isPermissionRequired by lazy {
 		val applicationReadPermissionsRequirementsProvider = ApplicationReadPermissionsRequirementsProvider(
-			mockk {
-				every { isReadPermissionsRequiredForLibrary(any()) } returns true
-			},
-			mockk {
+            mockk<CheckOsPermissions> {
 				every { isReadPermissionGranted } returns false
 			}
 		)
 
-		applicationReadPermissionsRequirementsProvider.isReadPermissionsRequiredForLibrary(Library())
+		applicationReadPermissionsRequirementsProvider
+			.isReadPermissionsRequiredForLibrary(
+				Library().setSyncedFileLocation(Library.SyncedFileLocation.EXTERNAL)
+			)
 	}
 
 	@Test
