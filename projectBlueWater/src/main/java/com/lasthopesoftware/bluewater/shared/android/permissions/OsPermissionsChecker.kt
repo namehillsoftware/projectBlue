@@ -7,13 +7,20 @@ import android.os.Build
 import androidx.core.content.ContextCompat
 
 class OsPermissionsChecker(private val context: Context) : CheckOsPermissions {
+	override val isReadMediaAudioPermissionGranted: Boolean
+		get() = Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU
+			|| isPermissionGranted(Manifest.permission.READ_MEDIA_AUDIO)
+
 	override val isReadPermissionGranted: Boolean
-		get() = isPermissionGranted(Manifest.permission.READ_EXTERNAL_STORAGE)
+		get() = Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU
+			&& isPermissionGranted(Manifest.permission.READ_EXTERNAL_STORAGE)
 
 	override val isWritePermissionGranted: Boolean
-		get() = isPermissionGranted(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+		get() = Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU
+			&& isPermissionGranted(Manifest.permission.WRITE_EXTERNAL_STORAGE)
 	override val isNotificationsPermissionGranted: Boolean
-		get() = Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU || isPermissionGranted(Manifest.permission.POST_NOTIFICATIONS)
+		get() = Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU
+			|| isPermissionGranted(Manifest.permission.POST_NOTIFICATIONS)
 
 	private fun isPermissionGranted(permission: String) =
 		ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED

@@ -37,6 +37,7 @@ class WhenSavingTheLibrarySettings {
             mockk(),
 			mockk {
 				every { isReadPermissionsRequiredForLibrary(any()) } returns false
+				every { isReadMediaPermissionsRequiredForLibrary(any()) } returns false
 			},
 			mockk {
 				every { isWritePermissionsRequiredForLibrary(any()) } returns false

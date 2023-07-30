@@ -588,6 +588,7 @@ import java.util.concurrent.TimeoutException
 						ph,
 						Handler(mainLooper),
 						MediaSourceProvider(
+							this,
 							DiskFileCacheSourceFactory(
 								httpDataSourceFactory,
 								audioCacheStreamSupplier

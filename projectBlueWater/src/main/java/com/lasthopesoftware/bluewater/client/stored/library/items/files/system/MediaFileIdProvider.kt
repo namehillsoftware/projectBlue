@@ -5,9 +5,9 @@ import android.provider.MediaStore
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.android.permissions.CheckOsPermissions
+import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
-import org.slf4j.LoggerFactory
 
 class MediaFileIdProvider(
 	private val mediaQueryCursorProvider: IMediaQueryCursorProvider,
@@ -32,7 +32,7 @@ class MediaFileIdProvider(
 	}
 
 	companion object {
-		private val logger by lazy { LoggerFactory.getLogger(MediaFileIdProvider::class.java) }
-		private val audioIdKey = MediaStore.Audio.keyFor("audio_id")
+		private val logger by lazyLogger<MediaFileIdProvider>()
+		private const val audioIdKey = MediaStore.Audio.Media._ID
 	}
 }

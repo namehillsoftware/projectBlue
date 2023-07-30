@@ -15,6 +15,7 @@ import com.lasthopesoftware.bluewater.client.browsing.navigation.ConnectionSetti
 import com.lasthopesoftware.bluewater.client.browsing.navigation.Destination
 import com.lasthopesoftware.bluewater.client.browsing.navigation.LibraryScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NowPlayingScreen
+import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 
 class IntentBuilder(private val context: Context) : BuildIntents {
 
@@ -40,6 +41,9 @@ class IntentBuilder(private val context: Context) : BuildIntents {
 		val intent = buildNowPlayingIntent(libraryId)
 		return PendingIntent.getActivity(context, 0, intent, 0.makePendingIntentImmutable())
 	}
+
+	@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
+	override fun buildPendingKillPlaybackIntent(): PendingIntent = PlaybackService.pendingKillService(context)
 
 	override fun buildPendingShowDownloadsIntent(): PendingIntent {
 		val baseIntent = buildShowDownloadsIntent()
