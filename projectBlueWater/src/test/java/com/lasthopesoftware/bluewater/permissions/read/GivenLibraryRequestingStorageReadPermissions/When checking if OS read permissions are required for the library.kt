@@ -7,12 +7,9 @@ import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
-class WhenGrantingOsPermissions {
-	private val isPermissionGranted by lazy {
+class `When checking if OS read permissions are required for the library` {
+	private val isPermissionRequired by lazy {
 		val applicationReadPermissionsRequirementsProvider = ApplicationReadPermissionsRequirementsProvider(
-			mockk {
-				every { isReadPermissionsRequiredForLibrary(any()) } returns true
-			},
 			mockk {
 				every { isReadPermissionGranted } returns true
 			}
@@ -23,6 +20,6 @@ class WhenGrantingOsPermissions {
 
 	@Test
 	fun `then permissions are not required`() {
-		assertThat(isPermissionGranted).isFalse
+		assertThat(isPermissionRequired).isFalse
 	}
 }

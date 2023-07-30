@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.browsing.library.request
+package com.lasthopesoftware.bluewater.client.stored.library.permissions
 
 import android.app.Notification
 

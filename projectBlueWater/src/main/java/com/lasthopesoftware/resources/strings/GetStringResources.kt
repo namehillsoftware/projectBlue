@@ -1,7 +1,12 @@
 package com.lasthopesoftware.resources.strings
 
 interface GetStringResources {
-	val loading: String
+	val permissionsNeededLaunchSettings: String
+		get() = ""
+	val permissionsNeeded: String
+		get() = ""
+
+    val loading: String
 		get() = ""
 	val unknownArtist: String
 		get() = ""

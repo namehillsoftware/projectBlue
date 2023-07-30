@@ -87,13 +87,9 @@ class HandheldActivity :
 
 	private val browserViewDependencies by lazy { ActivityDependencies(this) }
 
-	override val readPermissionsRequirements by lazy { ApplicationReadPermissionsRequirementsProvider(applicationContext) }
+	override val readPermissionsRequirements by lazy { ApplicationReadPermissionsRequirementsProvider(osPermissionChecker) }
 
-	override val writePermissionsRequirements by lazy {
-		ApplicationWritePermissionsRequirementsProvider(
-			applicationContext
-		)
-	}
+	override val writePermissionsRequirements by lazy { ApplicationWritePermissionsRequirementsProvider(osPermissionChecker) }
 
 	override val permissionsManager = this
 

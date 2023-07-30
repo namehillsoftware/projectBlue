@@ -77,7 +77,9 @@ class LibrarySettingsViewModel(
 			.setIsWakeOnLanEnabled(isWakeOnLanEnabled.value)
 			.setLibraryName(libraryName.value)
 
-		val permissionsToRequest = ArrayList<String>(2)
+		val permissionsToRequest = ArrayList<String>(3)
+		if (applicationReadPermissionsRequirementsProvider.isReadMediaPermissionsRequiredForLibrary(localLibrary))
+			permissionsToRequest.add(Manifest.permission.READ_MEDIA_AUDIO)
 		if (applicationReadPermissionsRequirementsProvider.isReadPermissionsRequiredForLibrary(localLibrary))
 			permissionsToRequest.add(Manifest.permission.READ_EXTERNAL_STORAGE)
 		if (applicationWritePermissionsRequirementsProvider.isWritePermissionsRequiredForLibrary(localLibrary))

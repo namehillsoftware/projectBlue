@@ -50,6 +50,7 @@ import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermission
 import com.lasthopesoftware.bluewater.permissions.write.ApplicationWritePermissionsRequirementsProvider
 import com.lasthopesoftware.bluewater.settings.TvApplicationSettingsView
 import com.lasthopesoftware.bluewater.shared.android.permissions.ManagePermissions
+import com.lasthopesoftware.bluewater.shared.android.permissions.OsPermissionsChecker
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
 import com.lasthopesoftware.bluewater.shared.images.bytes.RemoteImageAccess
@@ -75,6 +76,11 @@ class TvActivity :
 {
 	private val dependencies by lazy { ActivityDependencies(this) }
 
+	private val osPermissionChecker by lazy { OsPermissionsChecker(applicationContext) }
+	override val readPermissionsRequirements by lazy { ApplicationReadPermissionsRequirementsProvider(osPermissionChecker) }
+	override val writePermissionsRequirements by lazy { ApplicationWritePermissionsRequirementsProvider(osPermissionChecker) }
+	override val permissionsManager = this
+
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
@@ -85,9 +91,6 @@ class TvActivity :
 		}
 	}
 
-	override val readPermissionsRequirements by lazy { ApplicationReadPermissionsRequirementsProvider(this) }
-	override val writePermissionsRequirements by lazy { ApplicationWritePermissionsRequirementsProvider(this) }
-	override val permissionsManager = this
 	override fun requestPermissions(permissions: List<String>): Promise<Map<String, Boolean>> = permissions.associateWith { false }.toPromise()
 }
 

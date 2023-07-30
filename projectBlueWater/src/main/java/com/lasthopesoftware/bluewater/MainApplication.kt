@@ -27,15 +27,12 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertyStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedLibraryIdProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.request.read.StorageReadPermissionsRequestNotificationBuilder
-import com.lasthopesoftware.bluewater.client.browsing.library.request.read.StorageReadPermissionsRequestedBroadcaster
-import com.lasthopesoftware.bluewater.client.browsing.library.request.write.StorageWritePermissionsRequestNotificationBuilder
-import com.lasthopesoftware.bluewater.client.browsing.library.request.write.StorageWritePermissionsRequestedBroadcaster
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionSettingsChangeReceiver
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionSettingsChangeReceiver
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.NotificationsConfiguration
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble.PlaybackFileStartedScrobbleDroidProxy
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble.PlaybackFileStoppedScrobbleDroidProxy
@@ -43,13 +40,21 @@ import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble
 import com.lasthopesoftware.bluewater.client.servers.version.LibraryServerVersionProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
+import com.lasthopesoftware.bluewater.client.stored.library.permissions.StoragePermissionsRequestNotificationBuilder
+import com.lasthopesoftware.bluewater.client.stored.library.permissions.read.StorageReadPermissionsRequestNotificationBuilder
+import com.lasthopesoftware.bluewater.client.stored.library.permissions.read.StorageReadPermissionsRequestedBroadcaster
+import com.lasthopesoftware.bluewater.client.stored.library.permissions.write.StorageWritePermissionsRequestNotificationBuilder
+import com.lasthopesoftware.bluewater.client.stored.library.permissions.write.StorageWritePermissionsRequestedBroadcaster
 import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
+import com.lasthopesoftware.bluewater.client.stored.sync.notifications.SyncChannelProperties
 import com.lasthopesoftware.bluewater.client.stored.sync.receivers.SyncItemStateChangedListener
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
+import com.lasthopesoftware.bluewater.shared.android.intents.IntentBuilder
 import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.compilation.DebugFlag
+import com.lasthopesoftware.resources.strings.StringResources
 import com.namehillsoftware.handoff.promises.Promise
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -61,7 +66,9 @@ open class MainApplication : Application() {
 	}
 
 	private val libraryConnections by lazy { ConnectionSessionManager.get(this) }
+
 	private val libraryRevisionProvider by lazy { LibraryRevisionProvider(libraryConnections) }
+
 	private val freshLibraryFileProperties by lazy {
 		FilePropertiesProvider(
 			libraryConnections,
@@ -69,6 +76,7 @@ open class MainApplication : Application() {
 			FilePropertyCache,
 		)
 	}
+
 	private val cachedLibraryFileProperties by lazy {
 		CachedFilePropertiesProvider(
 			libraryConnections,
@@ -76,12 +84,48 @@ open class MainApplication : Application() {
 			freshLibraryFileProperties,
 		)
 	}
+
 	private val storedFileAccess by lazy { StoredFileAccess(this) }
+
 	private val notificationManager by lazy { getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager }
-	private val storageReadPermissionsRequestNotificationBuilder by lazy { StorageReadPermissionsRequestNotificationBuilder(this) }
-	private val storageWritePermissionsRequestNotificationBuilder by lazy { StorageWritePermissionsRequestNotificationBuilder(this) }
+
+	private val syncChannelProperties by lazy { SyncChannelProperties(this) }
+
+	private val storageReadPermissionsConfiguration by lazy {
+		NotificationsConfiguration(
+			syncChannelProperties.channelId,
+			336
+		)
+	}
+
+	private val storageWritePermissionsConfiguration by lazy {
+		NotificationsConfiguration(
+			syncChannelProperties.channelId,
+			396
+		)
+	}
+
+	private val storagePermissionsRequestNotificationBuilder by lazy {
+		StoragePermissionsRequestNotificationBuilder(
+			this,
+			StringResources(this),
+			IntentBuilder(this),
+			syncChannelProperties
+		)
+	}
+
+	private val storageReadPermissionsRequestNotificationBuilder by lazy {
+		StorageReadPermissionsRequestNotificationBuilder(storagePermissionsRequestNotificationBuilder)
+	}
+
+	private val storageWritePermissionsRequestNotificationBuilder by lazy {
+		StorageWritePermissionsRequestNotificationBuilder(storagePermissionsRequestNotificationBuilder)
+	}
+
 	private val applicationMessageBus by lazy { getApplicationMessageBus() }
+
 	private val applicationSettings by lazy { getApplicationSettingsRepository() }
+
 	private val syncScheduler by lazy { SyncScheduler(this) }
 
 	override fun onCreate() {
@@ -118,14 +162,14 @@ open class MainApplication : Application() {
 
 		applicationMessageBus.registerReceiver { readPermissionsNeeded : StorageReadPermissionsRequestedBroadcaster.ReadPermissionsNeeded ->
 			notificationManager.notify(
-				336,
+				storageReadPermissionsConfiguration.notificationId,
 				storageReadPermissionsRequestNotificationBuilder
 					.buildReadPermissionsRequestNotification(readPermissionsNeeded.libraryId.id))
 		}
 
 		applicationMessageBus.registerReceiver { writePermissionsNeeded : StorageWritePermissionsRequestedBroadcaster.WritePermissionsNeeded ->
 			notificationManager.notify(
-				396,
+				storageWritePermissionsConfiguration.notificationId,
 				storageWritePermissionsRequestNotificationBuilder
 					.buildWritePermissionsRequestNotification(writePermissionsNeeded.libraryId.id)
 			)

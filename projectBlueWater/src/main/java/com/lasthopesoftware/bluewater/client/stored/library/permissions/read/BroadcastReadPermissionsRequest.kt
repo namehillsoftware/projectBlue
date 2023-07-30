@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.browsing.library.request.read
+package com.lasthopesoftware.bluewater.client.stored.library.permissions.read
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 

@@ -6,6 +6,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.download
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileJobException
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileWriteException
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.resources.io.WriteFileStreams
 import com.lasthopesoftware.storage.read.permissions.IFileReadPossibleArbitrator
 import com.lasthopesoftware.storage.write.exceptions.StorageCreatePathException
@@ -61,12 +62,12 @@ class StoredFileJobProcessor(
 				observer::onError)
 		}
 
-		private fun processQueue(): Promise<Void> {
-			if (cancellationProxy.isCancelled) return Promise.empty()
+		private fun processQueue(): Promise<Unit> {
+			if (cancellationProxy.isCancelled) return Unit.toPromise()
 
-			val (libraryId, _, storedFile) = jobsQueue.poll() ?: return Promise.empty()
+			val (libraryId, _, storedFile) = jobsQueue.poll() ?: return Unit.toPromise()
 
-			val file = storedFileFileProvider.getFile(storedFile) ?: return Promise.empty()
+			val file = storedFileFileProvider.getFile(storedFile) ?: return Unit.toPromise()
 			if (file.exists()) {
 				if (!fileReadPossibleArbitrator.isFileReadPossible(file)) {
 					observer.onNext(StoredFileJobStatus(storedFile, StoredFileJobState.Unreadable))
@@ -81,18 +82,18 @@ class StoredFileJobProcessor(
 
 			if (!fileWritePossibleArbitrator.isFileWritePossible(file)) {
 				observer.onError(StoredFileWriteException(file, storedFile))
-				return Promise.empty()
+				return Unit.toPromise()
 			}
 
 			val parent = file.parentFile
 			if (parent != null && !parent.exists() && !parent.mkdirs()) {
 				observer.onError(StorageCreatePathException(parent))
-				return Promise.empty()
+				return Unit.toPromise()
 			}
 
 			if (cancellationProxy.isCancelled) {
 				observer.onNext(getCancelledStoredFileJobResult(storedFile))
-				return Promise.empty()
+				return Unit.toPromise()
 			}
 
 			observer.onNext(StoredFileJobStatus(storedFile, StoredFileJobState.Downloading))

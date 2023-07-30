@@ -6,7 +6,6 @@ import androidx.core.content.ContextCompat
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.NotificationsConfiguration
-import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Companion.pendingKillService
 import com.lasthopesoftware.bluewater.shared.android.intents.BuildIntents
 import com.lasthopesoftware.bluewater.shared.android.notifications.ProduceNotificationBuilders
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
@@ -19,12 +18,10 @@ class PlaybackStartingNotificationBuilder(
 	private val intentBuilder: BuildIntents,
 ) : BuildPlaybackStartingNotification {
 
-	private val lazyPendingKillService = lazy { pendingKillService(context) }
-
 	override fun promisePreparedPlaybackStartingNotification(libraryId: LibraryId): Promise<NotificationCompat.Builder> =
 		produceNotificationBuilders.getNotificationBuilder(configuration.notificationChannel)
-			.setDeleteIntent(lazyPendingKillService.value)
-			.addAction(0, context.getString(R.string.btn_cancel), lazyPendingKillService.value)
+			.setDeleteIntent(intentBuilder.buildPendingKillPlaybackIntent())
+			.addAction(0, context.getString(R.string.btn_cancel), intentBuilder.buildPendingKillPlaybackIntent())
 			.setOngoing(false)
 			.setSound(null)
 			.setPriority(NotificationCompat.PRIORITY_DEFAULT)
