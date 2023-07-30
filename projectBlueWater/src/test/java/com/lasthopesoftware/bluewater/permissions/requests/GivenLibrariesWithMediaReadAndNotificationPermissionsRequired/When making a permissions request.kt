@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.permissions.requests.GivenLibrariesWithAllRequiredPermissions
+package com.lasthopesoftware.bluewater.permissions.requests.GivenLibrariesWithMediaReadAndNotificationPermissionsRequired
 
 import android.Manifest
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
@@ -14,18 +14,20 @@ import org.junit.jupiter.api.Test
 class `When making a permissions request` {
 
 	private val mut by lazy {
+		val mediaRequiredLibrary = Library()
 		ApplicationPermissionsRequests(
 			mockk {
 				every { allLibraries } returns Promise(
-					listOf(Library(), Library())
+					listOf(Library(), mediaRequiredLibrary)
 				)
 			},
 			mockk {
-				every { isReadPermissionsRequiredForLibrary(any()) } returns true
-				every { isReadMediaPermissionsRequiredForLibrary(any()) } returns true
+				every { isReadPermissionsRequiredForLibrary(any()) } returns false
+				every { isReadMediaPermissionsRequiredForLibrary(any()) } returns false
+				every { isReadMediaPermissionsRequiredForLibrary(mediaRequiredLibrary) } returns true
 			},
 			mockk {
-				every { isWritePermissionsRequiredForLibrary(any()) } returns true
+				every { isWritePermissionsRequiredForLibrary(any()) } returns false
 			},
 			mockk {
 				every { requestPermissions(any()) } answers {
@@ -49,10 +51,7 @@ class `When making a permissions request` {
 	@Test
 	fun `then a permissions request is made correctly`() {
 		assertThat(requestedPermissions).containsExactlyInAnyOrder(
-			Manifest.permission.READ_MEDIA_AUDIO,
-			Manifest.permission.READ_EXTERNAL_STORAGE,
-			Manifest.permission.WRITE_EXTERNAL_STORAGE,
-			Manifest.permission.POST_NOTIFICATIONS,
+			Manifest.permission.READ_MEDIA_AUDIO, Manifest.permission.POST_NOTIFICATIONS
 		)
 	}
 }

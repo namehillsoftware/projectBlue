@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.permissions.requests.GivenLibrariesWithAllRequiredPermissions
+package com.lasthopesoftware.bluewater.permissions.requests.GivenALibraryWithReadPermissionsRequired
 
 import android.Manifest
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
@@ -15,17 +15,13 @@ class `When making a permissions request` {
 
 	private val mut by lazy {
 		ApplicationPermissionsRequests(
+			mockk(),
 			mockk {
-				every { allLibraries } returns Promise(
-					listOf(Library(), Library())
-				)
-			},
-			mockk {
-				every { isReadPermissionsRequiredForLibrary(any()) } returns true
+				every { isReadPermissionsRequiredForLibrary(any()) } returns false
 				every { isReadMediaPermissionsRequiredForLibrary(any()) } returns true
 			},
 			mockk {
-				every { isWritePermissionsRequiredForLibrary(any()) } returns true
+				every { isWritePermissionsRequiredForLibrary(any()) } returns false
 			},
 			mockk {
 				every { requestPermissions(any()) } answers {
@@ -40,19 +36,22 @@ class `When making a permissions request` {
 	}
 
 	private val requestedPermissions = ArrayList<String>()
+	private var isPermissionsGranted = false
 
 	@BeforeAll
 	fun act() {
-		mut.promiseApplicationPermissionsRequest().toExpiringFuture().get()
+		isPermissionsGranted = mut.promiseIsLibraryPermissionsGranted(Library()).toExpiringFuture().get() ?: false
 	}
 
 	@Test
 	fun `then a permissions request is made correctly`() {
 		assertThat(requestedPermissions).containsExactlyInAnyOrder(
-			Manifest.permission.READ_MEDIA_AUDIO,
-			Manifest.permission.READ_EXTERNAL_STORAGE,
-			Manifest.permission.WRITE_EXTERNAL_STORAGE,
-			Manifest.permission.POST_NOTIFICATIONS,
+			Manifest.permission.READ_MEDIA_AUDIO
 		)
+	}
+
+	@Test
+	fun `then the permissions are returned as granted`() {
+		assertThat(isPermissionsGranted).isTrue
 	}
 }

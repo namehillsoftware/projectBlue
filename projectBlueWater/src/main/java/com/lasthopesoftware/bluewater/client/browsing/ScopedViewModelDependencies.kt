@@ -42,9 +42,7 @@ class ScopedViewModelDependencies(inner: BrowserViewDependencies, viewModelStore
 			libraryProvider = libraryProvider,
 			libraryStorage = libraryStorage,
 			libraryRemoval = libraryRemoval,
-			applicationReadPermissionsRequirementsProvider = readPermissionsRequirements,
-			applicationWritePermissionsRequirementsProvider = writePermissionsRequirements,
-			permissionsManager = permissionsManager,
+			applicationPermissions = applicationPermissions,
 		)
 	}
 }

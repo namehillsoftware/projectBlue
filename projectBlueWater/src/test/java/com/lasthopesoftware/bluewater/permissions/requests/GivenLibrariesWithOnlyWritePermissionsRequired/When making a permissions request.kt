@@ -34,7 +34,7 @@ class `When making a permissions request` {
 				}
 			},
 			mockk {
-				every { isNotificationsPermissionGranted } returns true
+				every { isNotificationsPermissionNotGranted } returns false
 			}
 		)
 	}
