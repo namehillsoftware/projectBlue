@@ -8,5 +8,7 @@ interface CheckOsPermissions {
 	val isReadMediaAudioPermissionGranted: Boolean
     val isReadPermissionGranted: Boolean
 	val isWritePermissionGranted: Boolean
+
+	@get:ChecksSdkIntAtLeast(api = Build.VERSION_CODES.TIRAMISU)
 	val isNotificationsPermissionGranted: Boolean
 }
