@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.settings
 
+import com.lasthopesoftware.bluewater.permissions.RequestApplicationPermissions
 import com.lasthopesoftware.bluewater.permissions.read.ProvideReadPermissionsRequirements
 import com.lasthopesoftware.bluewater.permissions.write.ProvideWritePermissionsRequirements
 import com.lasthopesoftware.bluewater.shared.android.permissions.ManagePermissions
@@ -8,4 +9,5 @@ interface PermissionsDependencies {
 	val readPermissionsRequirements: ProvideReadPermissionsRequirements
 	val writePermissionsRequirements: ProvideWritePermissionsRequirements
 	val permissionsManager: ManagePermissions
+	val applicationPermissions: RequestApplicationPermissions
 }

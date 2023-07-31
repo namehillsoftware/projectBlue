@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client
 
-import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
@@ -41,6 +40,7 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsView
 import com.lasthopesoftware.bluewater.client.settings.PermissionsDependencies
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.view.ActiveFileDownloadsView
+import com.lasthopesoftware.bluewater.permissions.ApplicationPermissionsRequests
 import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermissionsRequirementsProvider
 import com.lasthopesoftware.bluewater.permissions.write.ApplicationWritePermissionsRequirementsProvider
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsView
@@ -91,6 +91,16 @@ class HandheldActivity :
 
 	override val writePermissionsRequirements by lazy { ApplicationWritePermissionsRequirementsProvider(osPermissionChecker) }
 
+	override val applicationPermissions by lazy {
+		ApplicationPermissionsRequests(
+			browserViewDependencies.libraryProvider,
+			readPermissionsRequirements,
+			writePermissionsRequirements,
+			this,
+			osPermissionChecker
+		)
+	}
+
 	override val permissionsManager = this
 
 	private val permissionsRequests = ConcurrentHashMap<Int, Messenger<Map<String, Boolean>>>()
@@ -110,9 +120,7 @@ class HandheldActivity :
 			}
 		}
 
-		if (!osPermissionChecker.isNotificationsPermissionGranted) {
-			requestPermissions(listOf(Manifest.permission.POST_NOTIFICATIONS))
-		}
+		applicationPermissions.promiseApplicationPermissionsRequest()
 
 		WindowCompat.setDecorFitsSystemWindows(window, false)
 

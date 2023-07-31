@@ -45,9 +45,7 @@ class ScopedViewModelDependencies(inner: BrowserViewDependencies, private val pe
 			libraryProvider = libraryProvider,
 			libraryStorage = libraryStorage,
 			libraryRemoval = libraryRemoval,
-			applicationReadPermissionsRequirementsProvider = permissionsDependencies.readPermissionsRequirements,
-			applicationWritePermissionsRequirementsProvider = permissionsDependencies.writePermissionsRequirements,
-			permissionsManager = permissionsDependencies.permissionsManager,
+			applicationPermissions = permissionsDependencies.applicationPermissions,
 		)
 	}
 }

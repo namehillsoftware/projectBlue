@@ -40,17 +40,7 @@ class WhenRemovingTheLibrary {
 					Unit.toPromise()
 				}
 			},
-			mockk {
-				every { isReadPermissionsRequiredForLibrary(any()) } returns false
-			},
-			mockk {
-				every { isWritePermissionsRequiredForLibrary(any()) } returns false
-			},
-			mockk {
-				every { requestPermissions(any()) } answers {
-					firstArg<List<String>>().associateWith { true }.toPromise()
-				}
-			},
+			mockk()
         )
     }
 

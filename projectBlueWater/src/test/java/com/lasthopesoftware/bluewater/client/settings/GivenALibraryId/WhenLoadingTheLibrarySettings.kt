@@ -33,8 +33,6 @@ class WhenLoadingTheLibrarySettings {
             mockk(),
             mockk(),
 			mockk(),
-			mockk(),
-			mockk(),
         )
     }
 

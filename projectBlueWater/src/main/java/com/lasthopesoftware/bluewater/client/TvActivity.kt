@@ -46,6 +46,7 @@ import com.lasthopesoftware.bluewater.client.connection.session.initialization.C
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.DramaticConnectionInitializationController
 import com.lasthopesoftware.bluewater.client.settings.PermissionsDependencies
 import com.lasthopesoftware.bluewater.client.settings.TvLibrarySettingsView
+import com.lasthopesoftware.bluewater.permissions.ApplicationPermissionsRequests
 import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermissionsRequirementsProvider
 import com.lasthopesoftware.bluewater.permissions.write.ApplicationWritePermissionsRequirementsProvider
 import com.lasthopesoftware.bluewater.settings.TvApplicationSettingsView
@@ -79,6 +80,15 @@ class TvActivity :
 	private val osPermissionChecker by lazy { OsPermissionsChecker(applicationContext) }
 	override val readPermissionsRequirements by lazy { ApplicationReadPermissionsRequirementsProvider(osPermissionChecker) }
 	override val writePermissionsRequirements by lazy { ApplicationWritePermissionsRequirementsProvider(osPermissionChecker) }
+	override val applicationPermissions by lazy {
+		ApplicationPermissionsRequests(
+			dependencies.libraryProvider,
+			readPermissionsRequirements,
+			writePermissionsRequirements,
+			this,
+			osPermissionChecker
+		)
+	}
 	override val permissionsManager = this
 
 	override fun onCreate(savedInstanceState: Bundle?) {
