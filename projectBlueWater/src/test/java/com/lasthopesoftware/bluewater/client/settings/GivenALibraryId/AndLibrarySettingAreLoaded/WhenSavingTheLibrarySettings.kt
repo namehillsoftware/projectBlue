@@ -36,17 +36,8 @@ class WhenSavingTheLibrarySettings {
             libraryRepository,
             mockk(),
 			mockk {
-				every { isReadPermissionsRequiredForLibrary(any()) } returns false
-				every { isReadMediaPermissionsRequiredForLibrary(any()) } returns false
-			},
-			mockk {
-				every { isWritePermissionsRequiredForLibrary(any()) } returns false
-			},
-			mockk {
-				every { requestPermissions(any()) } answers {
-					firstArg<List<String>>().associateWith { true }.toPromise()
-				}
-			},
+				every { promiseIsLibraryPermissionsGranted(any()) } returns true.toPromise()
+			}
         )
     }
 

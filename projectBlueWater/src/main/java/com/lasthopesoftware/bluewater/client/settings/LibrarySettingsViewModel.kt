@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.settings
 
-import android.Manifest
 import android.os.Environment
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.TrackLoadedViewState
@@ -9,9 +8,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibrarySto
 import com.lasthopesoftware.bluewater.client.browsing.library.access.RemoveLibraries
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.permissions.read.ProvideReadPermissionsRequirements
-import com.lasthopesoftware.bluewater.permissions.write.ProvideWritePermissionsRequirements
-import com.lasthopesoftware.bluewater.shared.android.permissions.ManagePermissions
+import com.lasthopesoftware.bluewater.permissions.RequestApplicationPermissions
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
@@ -25,10 +22,8 @@ class LibrarySettingsViewModel(
 	private val libraryProvider: ILibraryProvider,
 	private val libraryStorage: ILibraryStorage,
 	private val libraryRemoval: RemoveLibraries,
-	private val applicationReadPermissionsRequirementsProvider: ProvideReadPermissionsRequirements,
-	private val applicationWritePermissionsRequirementsProvider: ProvideWritePermissionsRequirements,
-	private val permissionsManager: ManagePermissions,
-) : ViewModel(), PromisedResponse<Map<String, Boolean>, Boolean>, ImmediateResponse<Library?, Unit>, TrackLoadedViewState, ImmediateAction
+	private val applicationPermissions: RequestApplicationPermissions,
+) : ViewModel(), PromisedResponse<Boolean, Boolean>, ImmediateResponse<Library?, Unit>, TrackLoadedViewState, ImmediateAction
 {
 	private var library: Library? = null
 
@@ -77,16 +72,8 @@ class LibrarySettingsViewModel(
 			.setIsWakeOnLanEnabled(isWakeOnLanEnabled.value)
 			.setLibraryName(libraryName.value)
 
-		val permissionsToRequest = ArrayList<String>(3)
-		if (applicationReadPermissionsRequirementsProvider.isReadMediaPermissionsRequiredForLibrary(localLibrary))
-			permissionsToRequest.add(Manifest.permission.READ_MEDIA_AUDIO)
-		if (applicationReadPermissionsRequirementsProvider.isReadPermissionsRequiredForLibrary(localLibrary))
-			permissionsToRequest.add(Manifest.permission.READ_EXTERNAL_STORAGE)
-		if (applicationWritePermissionsRequirementsProvider.isWritePermissionsRequiredForLibrary(localLibrary))
-			permissionsToRequest.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
-
-		return permissionsManager
-			.requestPermissions(permissionsToRequest)
+		return applicationPermissions
+			.promiseIsLibraryPermissionsGranted(localLibrary)
 			.eventually(this)
 			.must(this)
 	}
@@ -118,8 +105,8 @@ class LibrarySettingsViewModel(
 		libraryName.value = result?.libraryName ?: ""
 	}
 
-	override fun promiseResponse(resolution: Map<String, Boolean>): Promise<Boolean> {
-		val isPermissionsNeeded = resolution.values.any { !it }
+	override fun promiseResponse(resolution: Boolean): Promise<Boolean> {
+		val isPermissionsNeeded = !resolution
 		mutableIsPermissionsNeeded.value = isPermissionsNeeded
 
 		if (isPermissionsNeeded) return false.toPromise()

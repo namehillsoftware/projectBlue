@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.browsing
 
-import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
@@ -80,6 +79,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAcce
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.view.ActiveFileDownloadsView
 import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
+import com.lasthopesoftware.bluewater.permissions.ApplicationPermissionsRequests
 import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermissionsRequirementsProvider
 import com.lasthopesoftware.bluewater.permissions.write.ApplicationWritePermissionsRequirementsProvider
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsView
@@ -385,6 +385,16 @@ class BrowserActivity :
 		)
 	}
 
+	override val applicationPermissions by lazy {
+		ApplicationPermissionsRequests(
+			libraryProvider,
+			readPermissionsRequirements,
+			writePermissionsRequirements,
+			this,
+			osPermissionChecker
+		)
+	}
+
 	private val permissionsRequests = ConcurrentHashMap<Int, Messenger<Map<String, Boolean>>>()
 
 	public override fun onCreate(savedInstanceState: Bundle?) {
@@ -402,9 +412,7 @@ class BrowserActivity :
 			}
 		}
 
-		if (!osPermissionChecker.isNotificationsPermissionGranted) {
-			requestPermissions(listOf(Manifest.permission.POST_NOTIFICATIONS))
-		}
+		applicationPermissions.promiseApplicationPermissionsRequest()
 
 		WindowCompat.setDecorFitsSystemWindows(window, false)
 
