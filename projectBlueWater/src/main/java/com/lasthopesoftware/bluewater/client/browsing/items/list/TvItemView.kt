@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.browsing.items.list
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
-import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,8 +28,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
@@ -49,57 +46,49 @@ import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseables
 @OptIn(ExperimentalTvMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
 fun TvItemView(
-    itemListViewModel: ItemListViewModel,
-    fileListViewModel: FileListViewModel,
-    navigateApplication: NavigateApplication,
+	itemListViewModel: ItemListViewModel,
+	fileListViewModel: FileListViewModel,
+	navigateApplication: NavigateApplication,
 	tvChildItemViewModelProvider: PooledCloseablesViewModel<ReusableTvChildItemViewModel>,
-    trackHeadlineViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
+	trackHeadlineViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
 ) {
-    Column {
-        val itemTitle by itemListViewModel.itemValue.collectAsState()
+	Column {
+		val itemTitle by itemListViewModel.itemValue.collectAsState()
 
-        Text(
-            text = itemTitle,
-            style = androidx.tv.material3.MaterialTheme.typography.headlineMedium,
-        )
+		Text(
+			text = itemTitle,
+			style = androidx.tv.material3.MaterialTheme.typography.headlineMedium,
+		)
 
-        val childItems by itemListViewModel.items.collectAsState()
-        Text(
-            text = stringResource(id = R.string.item_count_label, childItems.size),
-            style = androidx.tv.material3.MaterialTheme.typography.headlineSmall,
-        )
-
-		val (initialFocus) = remember { FocusRequester.createRefs() }
-		val isFirst = true
+		val childItems by itemListViewModel.items.collectAsState()
+		Text(
+			text = stringResource(id = R.string.item_count_label, childItems.size),
+			style = androidx.tv.material3.MaterialTheme.typography.headlineSmall,
+		)
 
 		LazyVerticalGrid(
 			columns = GridCells.Adaptive(200.dp),
-            horizontalArrangement = Arrangement.spacedBy(Dimensions.viewPaddingUnit * 2),
+			horizontalArrangement = Arrangement.spacedBy(Dimensions.viewPaddingUnit * 2),
 			verticalArrangement = Arrangement.spacedBy(Dimensions.viewPaddingUnit * 2),
-        ) {
-            items(childItems) { child ->
+		) {
+			items(childItems) { child ->
 				var isFocused by remember { mutableStateOf(false) }
 				var cardModifier = Modifier
 					.width(200.dp)
-					.focusable(enabled = true)
 					.onFocusChanged { state -> isFocused = state.isFocused }
-
-				if (isFirst) {
-					cardModifier = cardModifier.focusRequester(initialFocus)
-				}
 
 				if (isFocused) {
 					cardModifier = cardModifier.border(Dimensions.viewPaddingUnit, MaterialTheme.colors.onSurface)
 				}
 
-                Card(
+				Card(
 					modifier = cardModifier,
-                    onClick = {
-                        itemListViewModel.loadedLibraryId?.also {
-                            navigateApplication.viewItem(it, child)
-                        }
-                    }
-                ) {
+					onClick = {
+						itemListViewModel.loadedLibraryId?.also {
+							navigateApplication.viewItem(it, child)
+						}
+					}
+				) {
 					Column(
 						modifier = Modifier.fillMaxWidth(),
 						horizontalAlignment = Alignment.CenterHorizontally,
@@ -143,42 +132,42 @@ fun TvItemView(
 
 						Text(text = child.value ?: "")
 					}
-                }
-            }
-        }
+				}
+			}
+		}
 
-        val childFiles by fileListViewModel.files.collectAsState()
-        Text(
-            text = stringResource(id = R.string.file_count_label, childFiles.size),
-            style = androidx.tv.material3.MaterialTheme.typography.headlineSmall,
-        )
+		val childFiles by fileListViewModel.files.collectAsState()
+		Text(
+			text = stringResource(id = R.string.file_count_label, childFiles.size),
+			style = androidx.tv.material3.MaterialTheme.typography.headlineSmall,
+		)
 
-        LazyColumn {
-            itemsIndexed(childFiles) { i, serviceFile ->
-                Card(
-                    onClick = {
-                        itemListViewModel.loadedLibraryId?.also {
-                            navigateApplication.viewFileDetails(it, childFiles, i)
-                        }
-                    }
-                ) {
-                    val fileItemViewModel = remember(trackHeadlineViewModelProvider::getViewModel)
+		LazyColumn {
+			itemsIndexed(childFiles) { i, serviceFile ->
+				Card(
+					onClick = {
+						itemListViewModel.loadedLibraryId?.also {
+							navigateApplication.viewFileDetails(it, childFiles, i)
+						}
+					}
+				) {
+					val fileItemViewModel = remember(trackHeadlineViewModelProvider::getViewModel)
 
-                    DisposableEffect(serviceFile) {
-                        itemListViewModel.loadedLibraryId?.also {
-                            fileItemViewModel.promiseUpdate(it, serviceFile)
-                        }
+					DisposableEffect(serviceFile) {
+						itemListViewModel.loadedLibraryId?.also {
+							fileItemViewModel.promiseUpdate(it, serviceFile)
+						}
 
-                        onDispose {
-                            fileItemViewModel.reset()
-                        }
-                    }
+						onDispose {
+							fileItemViewModel.reset()
+						}
+					}
 
-                    val title by fileItemViewModel.title.collectAsState()
+					val title by fileItemViewModel.title.collectAsState()
 
-                    Text(text = title)
-                }
-            }
-        }
-    }
+					Text(text = title)
+				}
+			}
+		}
+	}
 }
