@@ -10,7 +10,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.AccessStoredFiles
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.PruneStoredFiles
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileSystemFileProducer
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileUriProducer
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
@@ -80,7 +80,7 @@ class WhenSyncingTheStoredItemsAndAnErrorOccursDownloading {
 			storedFilesPruner,
 			storedFilesUpdater,
 			StoredFileJobProcessor(
-				StoredFileSystemFileProducer(),
+				StoredFileUriProducer(),
 				accessStoredFiles,
 				mockk {
 					every { promiseDownload(any(), any()) } returns Promise(ByteArrayInputStream(ByteArray(0)))

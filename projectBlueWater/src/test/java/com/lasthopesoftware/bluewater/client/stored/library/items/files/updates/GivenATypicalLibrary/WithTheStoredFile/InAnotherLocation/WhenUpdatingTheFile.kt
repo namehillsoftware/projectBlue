@@ -8,7 +8,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFileQuery
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.ProvideMediaFileIds
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.GetStoredFilePaths
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.GetStoredFileUris
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFileUpdater
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
@@ -19,24 +19,32 @@ import org.assertj.core.api.AssertionsForClassTypes.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import java.net.URI
 
 @RunWith(RobolectricTestRunner::class)
 class WhenUpdatingTheFile {
 
 	companion object {
 		private var storedFile = Lazy {
-			val mediaFileUriProvider = mockk<MediaFileUriProvider>()
-			every { mediaFileUriProvider.promiseUri(any(), any()) } returns Promise.empty()
+			val mediaFileUriProvider = mockk<MediaFileUriProvider> {
+				every { promiseUri(any(), any()) } returns Promise.empty()
+			}
 
-			val mediaFileIdProvider = mockk<ProvideMediaFileIds>()
-			every { mediaFileIdProvider.getMediaId(any(), any()) } returns Promise.empty()
+			val mediaFileIdProvider = mockk<ProvideMediaFileIds> {
+				every { getMediaId(any(), any()) } returns Promise.empty()
+			}
 
 			val fakeLibraryRepository = FakeLibraryRepository(
-				Library().setId(14).setSyncedFileLocation(Library.SyncedFileLocation.EXTERNAL)
+				Library()
+					.setId(14)
+					.setSyncedFileLocation(Library.SyncedFileLocation.EXTERNAL)
 			)
 
-			val lookupStoredFilePaths = mockk<GetStoredFilePaths>()
-			every { lookupStoredFilePaths.promiseStoredFilePath(LibraryId(14), ServiceFile(4)) } returns Promise("/my-public-drive-1/14/artist/album/my-filename.mp3")
+			val lookupStoredFilePaths = mockk<GetStoredFileUris> {
+				every { promiseStoredFileUri(LibraryId(14), ServiceFile(4)) } returns Promise(
+					URI("file:///my-public-drive-1/14/artist/album/my-filename.mp3")
+				)
+			}
 
 			StoredFileUpdater(
 				ApplicationProvider.getApplicationContext(),
@@ -44,11 +52,16 @@ class WhenUpdatingTheFile {
 				mediaFileIdProvider,
 				StoredFileQuery(ApplicationProvider.getApplicationContext()),
 				fakeLibraryRepository,
-				lookupStoredFilePaths
+				mockk {
+					every { promiseStoredFileUri(LibraryId(14), ServiceFile(4)) } returns Promise(
+						URI("file:///my-public-drive-1/14/artist/album/my-filename.mp3")
+					)
+				}
 			).promiseStoredFileUpdate(LibraryId(14), ServiceFile(4)).toExpiringFuture().get()
 
-			val lookupOtherStoredFilePaths = mockk<GetStoredFilePaths>()
-			every { lookupStoredFilePaths.promiseStoredFilePath(LibraryId(14), ServiceFile(4)) } returns Promise("/my-public-drive/14/artist/album/my-filename.mp3")
+			every { lookupStoredFilePaths.promiseStoredFileUri(LibraryId(14), ServiceFile(4)) } returns Promise(
+				URI("file:///my-public-drive/14/artist/album/my-filename.mp3")
+			)
 
 			val storedFileUpdater = StoredFileUpdater(
 				ApplicationProvider.getApplicationContext(),
@@ -56,7 +69,7 @@ class WhenUpdatingTheFile {
 				mediaFileIdProvider,
 				StoredFileQuery(ApplicationProvider.getApplicationContext()),
 				fakeLibraryRepository,
-				lookupOtherStoredFilePaths
+				mockk(),
 			)
 			storedFileUpdater
 				.promiseStoredFileUpdate(LibraryId(14), ServiceFile(4))
@@ -73,6 +86,6 @@ class WhenUpdatingTheFile {
     @Test
     fun thenTheFilePathIsCorrect() {
         assertThat(storedFile.`object`?.path)
-            .isEqualTo("/my-public-drive-1/14/artist/album/my-filename.mp3")
+            .isEqualTo("file:///my-public-drive-1/14/artist/album/my-filename.mp3")
     }
 }

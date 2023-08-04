@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.files.system.
 
 import android.content.ContentUris
 import android.net.Uri
-import android.os.Build
 import android.provider.MediaStore
 import androidx.core.database.getLongOrNull
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
@@ -13,6 +12,7 @@ import com.lasthopesoftware.bluewater.shared.android.permissions.CheckOsPermissi
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
 import com.lasthopesoftware.bluewater.shared.messages.application.SendApplicationMessages
+import com.lasthopesoftware.resources.uri.MediaCollections
 import com.namehillsoftware.handoff.promises.Promise
 import java.io.File
 
@@ -33,11 +33,7 @@ class MediaFileUriProvider(
 					val fileId = it.getLongOrNull(it.getColumnIndexOrThrow(audioIdKey)) ?: return@then null
 
 					// The file object will produce a properly escaped file URI, as opposed to what is stored in the DB
-					val collectionUri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-						MediaStore.Audio.Media.getContentUri(MediaStore.VOLUME_EXTERNAL)
-					} else {
-						MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
-					}
+					val collectionUri = MediaCollections.ExternalAudio
 
 //					if (!isSilent) {
 //

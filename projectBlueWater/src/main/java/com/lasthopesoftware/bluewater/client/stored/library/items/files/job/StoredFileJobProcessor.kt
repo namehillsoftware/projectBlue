@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.job
 
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.AccessStoredFiles
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.IStoredFileSystemFileProducer
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.ProduceStoredFileDestinations
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.download.DownloadStoredFiles
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileJobException
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileWriteException
@@ -21,7 +21,7 @@ import java.io.IOException
 import java.util.LinkedList
 
 class StoredFileJobProcessor(
-	private val storedFileFileProvider: IStoredFileSystemFileProducer,
+	private val storedFileFileProvider: ProduceStoredFileDestinations,
 	private val storedFileAccess: AccessStoredFiles,
 	private val storedFiles: DownloadStoredFiles,
 	private val fileReadPossibleArbitrator: IFileReadPossibleArbitrator,
@@ -100,7 +100,7 @@ class StoredFileJobProcessor(
 			return storedFiles.promiseDownload(libraryId, storedFile)
 				.also(cancellationProxy::doCancel)
 				.then(
-				{ inputStream ->
+					{ inputStream ->
 						try {
 							if (cancellationProxy.isCancelled) getCancelledStoredFileJobResult(storedFile)
 							else inputStream.use { s ->

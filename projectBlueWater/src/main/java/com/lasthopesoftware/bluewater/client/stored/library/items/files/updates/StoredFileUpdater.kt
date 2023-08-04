@@ -24,7 +24,7 @@ class StoredFileUpdater(
 	private val mediaFileIdProvider: ProvideMediaFileIds,
 	private val storedFiles: GetStoredFiles,
 	private val libraryProvider: ILibraryProvider,
-	private val lookupStoredFilePaths: GetStoredFilePaths
+	private val lookupStoredFilePaths: GetStoredFileUris
 ) : UpdateStoredFiles {
 
 	companion object {
@@ -78,8 +78,8 @@ class StoredFileUpdater(
 
 	override fun promiseStoredFileUpdate(libraryId: LibraryId, serviceFile: ServiceFile): Promise<StoredFile?> {
 		fun storedFileWithFilePath(storedFile: StoredFile): Promise<StoredFile?> =
-			if (storedFile.path != null) Promise(storedFile)
-			else lookupStoredFilePaths.promiseStoredFilePath(libraryId, serviceFile).then(storedFile::setPath)
+			if (storedFile.path != null) storedFile.toPromise()
+			else lookupStoredFilePaths.promiseStoredFileUri(libraryId, serviceFile).then { uri -> storedFile.setPath(uri.toString()) }
 
 		val promisedLibrary = libraryProvider.promiseLibrary(libraryId)
 		return storedFiles.promiseStoredFile(libraryId, serviceFile)

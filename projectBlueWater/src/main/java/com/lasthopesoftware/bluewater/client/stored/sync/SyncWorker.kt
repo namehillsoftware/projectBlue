@@ -28,7 +28,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.StoredFilesCou
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileSystemFileProducer
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileUriProducer
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFilesChecker
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFilesPruner
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.download.StoredFileDownloader
@@ -38,8 +38,8 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieva
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.MediaFileIdProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.MediaQueryCursorProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFilePathsLookup
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFileUpdater
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFileUrisLookup
 import com.lasthopesoftware.bluewater.client.stored.library.permissions.read.StorageReadPermissionsRequestedBroadcaster
 import com.lasthopesoftware.bluewater.client.stored.library.permissions.write.StorageWritePermissionsRequestedBroadcaster
 import com.lasthopesoftware.bluewater.client.stored.library.sync.LibrarySyncsHandler
@@ -129,20 +129,29 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 			fileProperties
 		)
 
+		val mediaFileUriProvider = MediaFileUriProvider(
+			cursorProvider,
+			readPermissionArbitratorForOs,
+			true,
+			applicationMessageBus
+		)
 		val storedFileUpdater = StoredFileUpdater(
             context,
-            MediaFileUriProvider(
-				cursorProvider,
-				readPermissionArbitratorForOs,
-                true,
-				applicationMessageBus
-			),
+			mediaFileUriProvider,
             MediaFileIdProvider(cursorProvider, readPermissionArbitratorForOs),
             StoredFileQuery(context),
             libraryProvider,
-			StoredFilePathsLookup(
+			StoredFileUrisLookup(
 				fileProperties,
-				SyncDirectoryLookup(libraryProvider, PublicDirectoryLookup(context), PrivateDirectoryLookup(context), FreeSpaceLookup)
+				libraryProvider,
+				SyncDirectoryLookup(
+					libraryProvider,
+					PublicDirectoryLookup(context),
+					PrivateDirectoryLookup(context),
+					FreeSpaceLookup
+				),
+				mediaFileUriProvider,
+				context.contentResolver
 			)
         )
 
@@ -151,7 +160,7 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 			storedFilesPruner,
 			storedFileUpdater,
 			StoredFileJobProcessor(
-				StoredFileSystemFileProducer(),
+				StoredFileUriProducer(),
 				storedFileAccess,
 				StoredFileDownloader(ServiceFileUriQueryParamsProvider, libraryConnections),
 				FileReadPossibleArbitrator(),
@@ -159,6 +168,7 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 				FileStreamWriter(context.contentResolver)
 			)
 		)
+
 		StoredFileSynchronization(
 			libraryProvider,
 			applicationMessageBus,
