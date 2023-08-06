@@ -4,6 +4,8 @@ import android.content.ContentResolver
 import android.content.ContentValues
 import android.provider.MediaStore
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.albumArtistOrArtist
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.baseFileNameAsMp3
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
@@ -36,15 +38,6 @@ class StoredFileUrisLookup(
 
 		private fun String.replaceReservedCharsAndPath(): String =
 			reservedCharactersPattern.matcher(this).replaceAll("_")
-
-		private val Map<String, String>.artist
-			get() = this[KnownFileProperties.AlbumArtist] ?: this[KnownFileProperties.Artist]
-
-		private val Map<String, String>.fileName
-			get() = this[KnownFileProperties.Filename]
-				?.let { f ->
-					FilenameUtils.getBaseName(f) + ".mp3"
-				}
 	}
 
 	override fun promiseStoredFileUri(libraryId: LibraryId, serviceFile: ServiceFile): Promise<URI?> =
@@ -70,7 +63,7 @@ class StoredFileUrisLookup(
 					?.path
 					?.let { fullPath ->
 						fileProperties
-							.artist
+							.albumArtistOrArtist
 							?.let { a ->
 									FilenameUtils.concat(
 										fullPath,
@@ -90,7 +83,7 @@ class StoredFileUrisLookup(
 							?: fullPath
 					}
 					?.let { fullPath ->
-						fileProperties.fileName
+						fileProperties.baseFileNameAsMp3
 							?.let { fileName ->
 								FilenameUtils.concat(fullPath, fileName).trim { it <= ' ' }
 							}
@@ -108,8 +101,8 @@ class StoredFileUrisLookup(
 						if (ct.isCancelled) return@CancellableMessageWriter null
 
 						val newSongDetails = ContentValues().apply {
-							put(MediaStore.Audio.Media.DISPLAY_NAME, fileProperties.fileName)
-							put(MediaStore.Audio.Media.ARTIST, fileProperties.artist)
+							put(MediaStore.Audio.Media.DISPLAY_NAME, fileProperties.baseFileNameAsMp3)
+							put(MediaStore.Audio.Media.ARTIST, fileProperties.albumArtistOrArtist)
 							put(MediaStore.Audio.Media.ALBUM, fileProperties[KnownFileProperties.Album])
 							put(MediaStore.Audio.Media.IS_PENDING, 1)
 						}

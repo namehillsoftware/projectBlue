@@ -14,7 +14,7 @@ class MediaFileIdProvider(
 	private val externalStorageReadPermissionsArbitrator: CheckOsPermissions
 ) : ImmediateResponse<Cursor?, Int>, ProvideMediaFileIds {
 	override fun getMediaId(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Int> =
-		if (!externalStorageReadPermissionsArbitrator.isReadPermissionGranted) Promise(-1)
+		if (externalStorageReadPermissionsArbitrator.run { !isReadPermissionGranted || !isReadMediaAudioPermissionGranted }) Promise(-1)
 		else mediaQueryCursorProvider
 			.getMediaQueryCursor(libraryId, serviceFile)
 			.then(this)
