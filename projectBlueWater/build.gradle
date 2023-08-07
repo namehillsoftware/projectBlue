@@ -200,11 +200,11 @@ dependencies {
 	implementation 'androidx.compose.compiler:compiler:1.5.1'
 	implementation "dev.olshevski.navigation:reimagined:1.4.0"
 	debugImplementation "androidx.compose.ui:ui-tooling:$compose_version"
-	testImplementation 'androidx.test.ext:junit:1.1.5'
+	testImplementation 'androidx.test.ext:junit-ktx:1.1.5'
 	testImplementation 'junit:junit:4.13.2'
 	testImplementation "org.junit.jupiter:junit-jupiter-api:$junit5_version"
 	testImplementation 'org.assertj:assertj-core:3.24.2'
-	testImplementation 'org.robolectric:robolectric:4.9'
+	testImplementation 'org.robolectric:robolectric:4.10.3'
 	testImplementation 'commons-codec:commons-codec:1.15'
 	testImplementation 'androidx.test:core:1.5.0'
 	testImplementation 'io.mockk:mockk:1.13.5'

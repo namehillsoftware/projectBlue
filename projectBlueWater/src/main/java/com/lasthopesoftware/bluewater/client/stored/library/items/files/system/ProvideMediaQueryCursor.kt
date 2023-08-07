@@ -8,6 +8,6 @@ import com.namehillsoftware.handoff.promises.Promise
 /**
  * Created by david on 6/13/16.
  */
-interface IMediaQueryCursorProvider {
+interface ProvideMediaQueryCursor {
 	fun getMediaQueryCursor(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Cursor?>
 }

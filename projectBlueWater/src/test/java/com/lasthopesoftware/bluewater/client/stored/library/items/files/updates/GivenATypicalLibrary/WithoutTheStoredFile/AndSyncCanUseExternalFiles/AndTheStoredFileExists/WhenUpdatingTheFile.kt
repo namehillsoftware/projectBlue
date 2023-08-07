@@ -19,7 +19,6 @@ import io.mockk.mockk
 import org.assertj.core.api.AssertionsForClassTypes.assertThat
 import org.junit.Test
 import java.io.File
-import java.net.URI
 
 class WhenUpdatingTheFile : AndroidContext() {
 
@@ -49,10 +48,11 @@ class WhenUpdatingTheFile : AndroidContext() {
 			StoredFileQuery(ApplicationProvider.getApplicationContext()),
 			fakeLibraryRepository,
 			mockk {
-				every { promiseStoredFileUri(libraryId, ServiceFile(4)) } returns Promise(
-					URI("file:///my-public-drive/busy/sweeten.mp3")
+				every { promiseStoredFilePath(libraryId, ServiceFile(4)) } returns Promise(
+					"/my-public-drive/busy/sweeten.mp3"
 				)
-			}
+			},
+			mockk(),
 		)
 		storedFile =
 			storedFileUpdater.promiseStoredFileUpdate(libraryId, ServiceFile(4)).toExpiringFuture().get()
@@ -61,9 +61,10 @@ class WhenUpdatingTheFile : AndroidContext() {
 	@Test
 	fun thenTheFileIsInsertedIntoTheDatabase() {
 		assertThat(
-				StoredFileQuery(ApplicationProvider.getApplicationContext()).promiseStoredFile(
-					LibraryId(14), ServiceFile(4)
-				).toExpiringFuture().get()
+			StoredFileQuery(ApplicationProvider.getApplicationContext())
+				.promiseStoredFile(LibraryId(14), ServiceFile(4))
+				.toExpiringFuture()
+				.get()
 		).isNotNull
 	}
 

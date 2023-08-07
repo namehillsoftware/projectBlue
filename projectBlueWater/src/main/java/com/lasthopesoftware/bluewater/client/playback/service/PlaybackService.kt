@@ -551,14 +551,15 @@ import java.util.concurrent.TimeoutException
 
 	private val bestMatchUriProvider by lazy {
 		val audioCache = DiskFileCache(this, audioDiskCacheDirectoryProvider, AudioCacheConfiguration, audioCacheStreamSupplier, audioCacheFilesProvider, diskFileAccessTimeUpdater)
+		val storedFileAccess = StoredFileAccess(this)
 		BestMatchUriProvider(
 			libraryRepository,
 			StoredFileUriProvider(
-				StoredFileAccess(this),
+				storedFileAccess,
 				arbitratorForOs),
 			CachedAudioFileUriProvider(remoteFileUriProvider, audioCache),
 			MediaFileUriProvider(
-				MediaQueryCursorProvider(this, cachedFileProperties),
+				MediaQueryCursorProvider(contentResolver, storedFileAccess, cachedFileProperties),
 				arbitratorForOs,
 				false,
 				applicationMessageBus

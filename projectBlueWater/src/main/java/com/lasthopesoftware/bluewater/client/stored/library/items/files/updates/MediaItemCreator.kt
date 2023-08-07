@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.files.updates
 
 import android.content.ContentResolver
 import android.content.ContentValues
+import android.os.Build
 import android.provider.MediaStore
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.albumArtistOrArtist
@@ -18,11 +19,12 @@ import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 
 private const val audioIdKey = MediaStore.Audio.Media._ID
-private val logger by lazyLogger<ExternalMediaItemCreator>()
+private val logger by lazyLogger<MediaItemCreator>()
+private const val mediaIdQuery = MediaStore.Audio.Media._ID + " = ?"
 
-class ExternalMediaItemCreator(
+class MediaItemCreator(
 	private val libraryFileProperties: ProvideLibraryFileProperties,
-	private val contentResolver: ContentResolver
+	private val contentResolver: ContentResolver,
 ) : CreateExternalMediaItem {
 	override fun promiseCreatedItem(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Int?> = CancellableProxyPromise { cp ->
 		libraryFileProperties
@@ -30,8 +32,6 @@ class ExternalMediaItemCreator(
 			.also(cp::doCancel)
 			.eventually { fileProperties ->
 				QueuedPromise(MessageWriter {
-					if (cp.isCancelled) return@MessageWriter null
-
 					contentResolver
 						.takeUnless { cp.isCancelled }
 						?.insert(
@@ -45,8 +45,22 @@ class ExternalMediaItemCreator(
 						)
 						?.takeUnless { cp.isCancelled }
 						?.let { uri ->
-							contentResolver
-								.query(uri, arrayOf(MediaStore.Audio.Media._ID), null, null, null)
+							if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+								contentResolver.refresh(MediaCollections.ExternalAudio, null, null)
+							}
+
+							contentResolver.notifyChange(MediaCollections.ExternalAudio, null)
+
+							val maybeCursor = contentResolver
+								.query(
+									MediaCollections.ExternalAudio,
+									null,
+									null,
+									null,
+									null
+								)
+
+							maybeCursor
 								?.use { cursor ->
 									try {
 										cursor

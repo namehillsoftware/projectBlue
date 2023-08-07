@@ -1,31 +1,25 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.GivenATypicalLibrary.WithTheStoredFile.AndItsInAnExternalLocation
 
-import android.content.Context
-import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import androidx.test.platform.app.InstrumentationRegistry
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FakeFilesPropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
-import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFileUrisLookup
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.MediaItemCreator
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
-import com.namehillsoftware.handoff.promises.Promise
-import io.mockk.every
-import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
-import java.io.File
 
 private const val libraryId = 512
 private const val serviceFileId = 338
 
 @RunWith(AndroidJUnit4::class)
-class WhenGettingTheStoredFilePath {
+class WhenGettingTheMediaFileId {
 	companion object {
-		private val filePath by lazy {
+
+		private val mediaId by lazy {
 			val filePropertiesProvider = FakeFilesPropertiesProvider()
 			filePropertiesProvider.addFilePropertiesToCache(
 				ServiceFile(serviceFileId),
@@ -38,29 +32,22 @@ class WhenGettingTheStoredFilePath {
 				)
 			)
 
-			val storedFilePathsLookup = StoredFileUrisLookup(
+			val mediaItemCreator = MediaItemCreator(
 				filePropertiesProvider,
-				FakeLibraryRepository(
-					Library(_id = libraryId, _syncedFileLocation = Library.SyncedFileLocation.EXTERNAL)
-				),
-				mockk {
-					every { promiseSyncDirectory(LibraryId(libraryId)) } returns Promise(File("/lock"))
-				},
-				mockk {
-					every { promiseUri(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns Promise.empty()
-				},
-				ApplicationProvider.getApplicationContext<Context>().contentResolver,
+				InstrumentationRegistry.getInstrumentation().targetContext.contentResolver,
 			)
 
-			storedFilePathsLookup
-				.promiseStoredFileUri(LibraryId(libraryId), ServiceFile(serviceFileId))
+			mediaItemCreator
+				.promiseCreatedItem(LibraryId(libraryId), ServiceFile(serviceFileId))
 				.toExpiringFuture()
 				.get()
 		}
 	}
 
+//	private val rule by lazy { ProviderTestRule }
+
 	@Test
-	fun thenTheFilepathIsCorrect() {
-		assertThat(filePath.toString()).isEqualTo("content://media/external/audio/media/1")
+	fun `then the media id is correct`() {
+		assertThat(mediaId).isEqualTo(1)
 	}
 }

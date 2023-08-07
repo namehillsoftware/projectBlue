@@ -10,7 +10,7 @@ import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 
 class MediaFileIdProvider(
-	private val mediaQueryCursorProvider: IMediaQueryCursorProvider,
+	private val mediaQueryCursorProvider: ProvideMediaQueryCursor,
 	private val externalStorageReadPermissionsArbitrator: CheckOsPermissions
 ) : ImmediateResponse<Cursor?, Int>, ProvideMediaFileIds {
 	override fun getMediaId(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Int> =

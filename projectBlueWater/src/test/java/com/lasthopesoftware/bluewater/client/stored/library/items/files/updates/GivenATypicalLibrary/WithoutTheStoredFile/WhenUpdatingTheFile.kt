@@ -17,7 +17,6 @@ import org.assertj.core.api.AssertionsForClassTypes.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import java.net.URI
 import java.util.concurrent.TimeUnit
 
 @RunWith(RobolectricTestRunner::class)
@@ -26,7 +25,7 @@ class WhenUpdatingTheFile {
 	companion object {
 		private val storedFile = Lazy {
 			val fakeLibraryRepository = FakeLibraryRepository(
-				Library().setId(14).setSyncedFileLocation(Library.SyncedFileLocation.EXTERNAL)
+				Library().setId(14).setSyncedFileLocation(Library.SyncedFileLocation.INTERNAL)
 			)
 
 			val context = ApplicationProvider.getApplicationContext<Context>()
@@ -41,10 +40,11 @@ class WhenUpdatingTheFile {
 				StoredFileQuery(context),
 				fakeLibraryRepository,
 				mockk {
-					every { promiseStoredFileUri(LibraryId(14), ServiceFile(4)) } returns Promise(
-						URI("file:/my-public-drive/14/artist/album/my-filename.mp3")
+					every { promiseStoredFilePath(LibraryId(14), ServiceFile(4)) } returns Promise(
+						"/my-private-drive/14/artist/album/my-filename.mp3"
 					)
-				}
+				},
+				mockk(),
 			)
 			storedFileUpdater.promiseStoredFileUpdate(LibraryId(14), ServiceFile(4))
 				.toExpiringFuture()
@@ -65,6 +65,6 @@ class WhenUpdatingTheFile {
 	@Test
 	fun thenTheFilePathIsCorrect() {
 		assertThat(storedFile.`object`?.path)
-			.isEqualTo("file:/my-public-drive/14/artist/album/my-filename.mp3")
+			.isEqualTo("/my-private-drive/14/artist/album/my-filename.mp3")
 	}
 }

@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.GivenATypicalLibrary.WithTheStoredFile
 
+import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
@@ -8,58 +9,71 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFileQuery
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFileUpdater
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
+import com.namehillsoftware.lazyj.Lazy
 import io.mockk.every
 import io.mockk.mockk
+import org.assertj.core.api.Assertions.*
 import org.assertj.core.api.AssertionsForClassTypes.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import java.net.URI
+import java.util.concurrent.TimeUnit
 
 @RunWith(RobolectricTestRunner::class)
 class WhenUpdatingTheFile {
 
 	companion object {
-		private val storedFile by lazy {
+		private val storedFile = Lazy {
+			val libraryId = LibraryId(705)
+
 			val fakeLibraryRepository = FakeLibraryRepository(
-				Library().setId(14).setSyncedFileLocation(Library.SyncedFileLocation.EXTERNAL)
+				Library().setId(libraryId.id).setSyncedFileLocation(Library.SyncedFileLocation.EXTERNAL)
 			)
 
+			val serviceFile = ServiceFile(596)
+
+			val context = ApplicationProvider.getApplicationContext<Context>()
 			val storedFileUpdater = StoredFileUpdater(
-				ApplicationProvider.getApplicationContext(),
+				context,
 				mockk {
 					every { promiseUri(any(), any()) } returns Promise.empty()
 				},
-				mockk() {
+				mockk {
 					every { getMediaId(any(), any()) } returns Promise.empty()
 				},
-				StoredFileQuery(ApplicationProvider.getApplicationContext()),
+				StoredFileQuery(context),
 				fakeLibraryRepository,
 				mockk {
-					every { promiseStoredFileUri(LibraryId(14), ServiceFile(4)) } returns Promise(
-						URI("file:///my-public-drive/14/artist/album/my-filename.mp3")
+					every { promiseStoredFilePath(libraryId, serviceFile) } returns Promise(
+						"/my-public-drive/14/artist/album/my-filename.mp3"
 					)
+				},
+				mockk {
+					every { promiseCreatedItem(libraryId, serviceFile) } returns 643.toPromise()
 				},
 			)
 
-			storedFileUpdater.promiseStoredFileUpdate(LibraryId(14), ServiceFile(4)).toExpiringFuture().get()
-
 			storedFileUpdater
-				.promiseStoredFileUpdate(LibraryId(14), ServiceFile(4))
+				.promiseStoredFileUpdate(libraryId, serviceFile)
 				.toExpiringFuture()
-				.get()
+				.get(1, TimeUnit.MINUTES)
 		}
 	}
 
 	@Test
 	fun thenTheFileIsOwnedByTheLibrary() {
-		assertThat(storedFile?.isOwner).isTrue
+		assertThat(storedFile.`object`?.isOwner).isTrue
 	}
 
 	@Test
 	fun thenTheFilePathIsCorrect() {
-		assertThat(storedFile?.path)
-			.isEqualTo("file:///my-public-drive/14/artist/album/my-filename.mp3")
+		assertThat(storedFile.`object`?.path).isEmpty()
+	}
+
+	@Test
+	fun thenTheStoredMediaIdIsCorrect() {
+		assertThat(storedFile.`object`?.storedMediaId).isEqualTo(643)
 	}
 }

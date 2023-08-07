@@ -6,5 +6,5 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.reposito
 import com.namehillsoftware.handoff.promises.Promise
 
 interface UpdateStoredFiles {
-    fun promiseStoredFileUpdate(libraryId: LibraryId, serviceFile: ServiceFile): Promise<StoredFile?>
+    fun promiseStoredFileUpdate(libraryId: LibraryId, serviceFile: ServiceFile): Promise<StoredFile>
 }

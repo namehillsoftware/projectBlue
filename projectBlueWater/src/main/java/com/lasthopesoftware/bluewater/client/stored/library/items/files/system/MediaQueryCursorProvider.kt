@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.system
 
-import android.content.Context
+import android.content.ContentResolver
 import android.database.Cursor
 import android.provider.MediaStore
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
@@ -19,10 +19,10 @@ import java.io.IOException
 
 class MediaQueryCursorProvider
 (
-	private val context: Context,
+	private val contentResolver: ContentResolver,
 	private val storedFileProvider: AccessStoredFiles,
 	private val cachedFilePropertiesProvider: ProvideLibraryFileProperties
-) : IMediaQueryCursorProvider, PromisedResponse<Map<String, String>, Cursor?> {
+) : ProvideMediaQueryCursor, PromisedResponse<Map<String, String>, Cursor?> {
 
 	override fun getMediaQueryCursor(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Cursor?> =
 		storedFileProvider
@@ -33,7 +33,7 @@ class MediaQueryCursorProvider
 					?.let { mediaId ->
 						QueuedPromise(
 							MessageWriter {
-								context.contentResolver.query(
+								contentResolver.query(
 									MediaCollections.ExternalAudio,
 									mediaQueryProjection,
 									mediaIdQuery,
@@ -55,7 +55,7 @@ class MediaQueryCursorProvider
 
 		return QueuedPromise(
 			MessageWriter {
-				context.contentResolver.query(
+				contentResolver.query(
 					MediaCollections.ExternalAudio,
 					mediaQueryProjection,
 					mediaDisplayNameQuery,
