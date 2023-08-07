@@ -71,7 +71,7 @@ class WhenSyncingTheStoredItems {
 				override fun promiseStoredFileUpdate(
 					libraryId: LibraryId,
 					serviceFile: ServiceFile
-				): Promise<StoredFile?> =
+				): Promise<StoredFile> =
 					Promise(StoredFile(libraryId, 1, serviceFile, "fake-file-name", true))
 			},
 			mockk {

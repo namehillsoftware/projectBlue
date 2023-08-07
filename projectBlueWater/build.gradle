@@ -204,7 +204,7 @@ dependencies {
 	testImplementation 'junit:junit:4.13.2'
 	testImplementation "org.junit.jupiter:junit-jupiter-api:$junit5_version"
 	testImplementation 'org.assertj:assertj-core:3.24.2'
-	testImplementation 'org.robolectric:robolectric:4.10.3'
+	testImplementation 'org.robolectric:robolectric:4.9'
 	testImplementation 'commons-codec:commons-codec:1.15'
 	testImplementation 'androidx.test:core:1.5.0'
 	testImplementation 'io.mockk:mockk:1.13.5'

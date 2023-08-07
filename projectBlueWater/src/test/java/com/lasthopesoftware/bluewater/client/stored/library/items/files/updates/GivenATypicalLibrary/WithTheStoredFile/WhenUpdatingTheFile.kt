@@ -63,17 +63,17 @@ class WhenUpdatingTheFile {
 	}
 
 	@Test
-	fun thenTheFileIsOwnedByTheLibrary() {
+	fun `then the file is owned by the library`() {
 		assertThat(storedFile.`object`?.isOwner).isTrue
 	}
 
 	@Test
-	fun thenTheFilePathIsCorrect() {
-		assertThat(storedFile.`object`?.path).isEmpty()
+	fun `then the file path is correct`() {
+		assertThat(storedFile.`object`?.path).isNullOrEmpty()
 	}
 
 	@Test
-	fun thenTheStoredMediaIdIsCorrect() {
+	fun `then the stored media id is correct`() {
 		assertThat(storedFile.`object`?.storedMediaId).isEqualTo(643)
 	}
 }

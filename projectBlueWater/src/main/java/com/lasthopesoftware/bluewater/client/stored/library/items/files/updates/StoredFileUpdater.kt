@@ -103,43 +103,37 @@ class StoredFileUpdater(
 				promisedLibrary
 					.eventually { library ->
 						library
-							?.takeUnless { it.isUsingExistingFiles && storedFile.path == null }
+							?.takeIf { it.isUsingExistingFiles && storedFile.path == null }
 							?.let {
-								storedFile.toPromise()
-							}
-							?: mediaFileUriProvider
-							.promiseUri(libraryId, serviceFile)
-							.eventually { localUri ->
-								localUri
-									?.let { u ->
-										storedFile.setPath(u.path)
-										storedFile.setIsDownloadComplete(true)
-										storedFile.setIsOwner(false)
-										mediaFileIdProvider
-											.getMediaId(libraryId, serviceFile)
-											.then(storedFile::setStoredMediaId)
+								mediaFileUriProvider
+									.promiseUri(libraryId, serviceFile)
+									.eventually { localUri ->
+										localUri
+											?.let { u ->
+												storedFile.setPath(u.path)
+												storedFile.setIsDownloadComplete(true)
+												storedFile.setIsOwner(false)
+												mediaFileIdProvider
+													.getMediaId(libraryId, serviceFile)
+													.then(storedFile::setStoredMediaId)
+											}
+											.keepPromise(storedFile)
 									}
-									.keepPromise(storedFile)
 							}
+							.keepPromise(storedFile)
 							.eventually { storedFile ->
-								storedFile
-									?.let {
-										if (library?.syncedFileLocation == Library.SyncedFileLocation.EXTERNAL) storedFileWithMediaId(it)
-										else storedFileWithFilePath(it)
-									}
-									.keepPromise()
+								if (library?.syncedFileLocation == Library.SyncedFileLocation.EXTERNAL) storedFileWithMediaId(storedFile)
+								else storedFileWithFilePath(storedFile)
 							}
 					}
 			}
-			.eventually {
-				it?.let { sf ->
-					promiseTableMessage<StoredFile, StoredFile> {
-						RepositoryAccessHelper(context).use { repositoryAccessHelper ->
-							repositoryAccessHelper.updateStoredFile(sf)
-							sf
-						}
+			.eventually { sf ->
+				promiseTableMessage<StoredFile, StoredFile> {
+					RepositoryAccessHelper(context).use { repositoryAccessHelper ->
+						repositoryAccessHelper.updateStoredFile(sf)
+						sf
 					}
-				}.keepPromise()
+				}
 			}
 	}
 }
