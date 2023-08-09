@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.GivenAFileThatDoesNotYetExist.WithParentDirectory.ThatCannotBeCreated
+package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.GivenAFileThatDoesNotYetExist.AndTheParentDirectoryCannotBeCreated
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -13,22 +13,18 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.io.ByteArrayInputStream
+import java.io.File
 
 class WhenProcessingTheJob {
     private val storedFile = StoredFile(LibraryId(7), 1, ServiceFile(1), "test-path", true)
     private var storageCreatePathException: StorageCreatePathException? = null
+
     @BeforeAll
     fun before() {
         val storedFileJobProcessor = StoredFileJobProcessor(
 			mockk {
-				every { getFile(any()) } returns mockk {
-					every { exists() } returns false
-					every { parentFile } returns mockk {
-						every { exists() } returns false
-						every { mkdirs() } returns false
-					}
-				}
-            },
+				every { getOutputStream(any()) } throws StorageCreatePathException(File("JN7DGC9O"))
+			},
             mockk(),
 			mockk { every { promiseDownload(any(), any()) } returns Promise(ByteArrayInputStream(ByteArray(0))) },
 			mockk { every { isFileReadPossible(any()) } returns false },

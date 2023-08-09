@@ -4,12 +4,11 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.AccessSt
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.ProduceStoredFileDestinations
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.download.DownloadStoredFiles
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileJobException
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileWriteException
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileReadException
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.resources.io.WriteFileStreams
 import com.lasthopesoftware.storage.read.permissions.IFileReadPossibleArbitrator
-import com.lasthopesoftware.storage.write.exceptions.StorageCreatePathException
 import com.lasthopesoftware.storage.write.permissions.IFileWritePossibleArbitrator
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
@@ -27,8 +26,8 @@ class StoredFileJobProcessor(
 	private val fileReadPossibleArbitrator: IFileReadPossibleArbitrator,
 	private val fileWritePossibleArbitrator: IFileWritePossibleArbitrator,
 	private val fileStreamWriter: WriteFileStreams
-) : ProcessStoredFileJobs
-{
+) : ProcessStoredFileJobs {
+
 	override fun observeStoredFileDownload(jobs: Iterable<StoredFileJob>): Observable<StoredFileJobStatus> =
 		RecursiveQueueProcessor(jobs)
 
@@ -67,28 +66,21 @@ class StoredFileJobProcessor(
 
 			val (libraryId, _, storedFile) = jobsQueue.poll() ?: return Unit.toPromise()
 
-			val file = storedFileFileProvider.getFile(storedFile) ?: return Unit.toPromise()
-			if (file.exists()) {
-				if (!fileReadPossibleArbitrator.isFileReadPossible(file)) {
-					observer.onNext(StoredFileJobStatus(storedFile, StoredFileJobState.Unreadable))
-					return processQueue()
-				}
+			val outputStream = try {
+				storedFileFileProvider.getOutputStream(storedFile)
+			} catch (e: Exception) {
+				observer.onError(e)
+				return Unit.toPromise()
+			}
 
+			if (outputStream == null) {
 				if (storedFile.isDownloadComplete) {
 					observer.onNext(StoredFileJobStatus(storedFile, StoredFileJobState.Downloaded))
 					return processQueue()
 				}
-			}
 
-			if (!fileWritePossibleArbitrator.isFileWritePossible(file)) {
-				observer.onError(StoredFileWriteException(file, storedFile))
-				return Unit.toPromise()
-			}
-
-			val parent = file.parentFile
-			if (parent != null && !parent.exists() && !parent.mkdirs()) {
-				observer.onError(StorageCreatePathException(parent))
-				return Unit.toPromise()
+				observer.onNext(StoredFileJobStatus(storedFile, StoredFileJobState.Unreadable))
+				return processQueue()
 			}
 
 			if (cancellationProxy.isCancelled) {
@@ -103,11 +95,12 @@ class StoredFileJobProcessor(
 					{ inputStream ->
 						try {
 							if (cancellationProxy.isCancelled) getCancelledStoredFileJobResult(storedFile)
-							else inputStream.use { s ->
-								fileStreamWriter.writeStreamToFile(s, file)
-								storedFileAccess.markStoredFileAsDownloaded(storedFile)
-								StoredFileJobStatus(storedFile, StoredFileJobState.Downloaded)
-							}
+							else inputStream.use { s -> s.copyTo(outputStream) }
+
+							storedFileAccess.markStoredFileAsDownloaded(storedFile)
+							StoredFileJobStatus(storedFile, StoredFileJobState.Downloaded)
+						} catch (sfr: StoredFileReadException) {
+							StoredFileJobStatus(storedFile, StoredFileJobState.Unreadable)
 						} catch (ioe: IOException) {
 							logger.error("Error writing file!", ioe)
 							StoredFileJobStatus(storedFile, StoredFileJobState.Queued)
@@ -122,6 +115,7 @@ class StoredFileJobProcessor(
 							else -> throw StoredFileJobException(storedFile, error)
 						}
 					})
+				.must { outputStream.close() }
 				.eventually { status ->
 					observer.onNext(status)
 					processQueue()

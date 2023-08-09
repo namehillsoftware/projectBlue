@@ -18,6 +18,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 
 class WhenProcessingTheQueue {
 	private val storedFileJobs = setOf(
@@ -49,7 +50,7 @@ class WhenProcessingTheQueue {
 		StoredFileJob(
 			LibraryId(1),
 			ServiceFile(114),
-			StoredFile().setServiceId(114).setLibraryId(1).setIsDownloadComplete(true)
+			StoredFile().setServiceId(114).setLibraryId(1).setIsDownloadComplete(false)
 		),
 		StoredFileJob(
 			LibraryId(1),
@@ -73,14 +74,8 @@ class WhenProcessingTheQueue {
 	fun before() {
 		val storedFileJobProcessor = StoredFileJobProcessor(
 			mockk {
-				every { getFile(any()) } answers {
-					val storedFile = firstArg<StoredFile>()
-					mockk {
-						every { parentFile } returns null
-						every { exists() } returns storedFile.isDownloadComplete
-						every { path } returns if (storedFile.serviceId == 114) "unreadable" else ""
-					}
-				}
+				every { getOutputStream(any()) } returns ByteArrayOutputStream()
+				every { getOutputStream(match { arrayOf(114, 92, 5).contains(it.serviceId) }) } returns null
 			},
 			storedFilesAccess,
 			mockk {

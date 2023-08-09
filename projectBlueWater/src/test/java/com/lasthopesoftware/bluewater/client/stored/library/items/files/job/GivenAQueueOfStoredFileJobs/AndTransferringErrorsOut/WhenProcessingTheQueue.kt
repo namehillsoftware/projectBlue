@@ -17,6 +17,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 import java.io.IOException
 
 class WhenProcessingTheQueue {
@@ -75,18 +76,14 @@ class WhenProcessingTheQueue {
 	fun before() {
 		val storedFileJobProcessor = StoredFileJobProcessor(
 			mockk {
-				every { getFile(any()) } answers {
-					val storedFile = firstArg<StoredFile>()
-					mockk {
-						every { parentFile } returns null
-						every { exists() } returns storedFile.isDownloadComplete
-						every { path } returns if (storedFile.serviceId == 2) "write-failure" else ""
-					}
+				every { getOutputStream(any()) } returns ByteArrayOutputStream()
+				every { getOutputStream(match { it.serviceId == 2 }) } returns mockk(relaxUnitFun = true) {
+					every { write(any(), any(), any()) } throws IOException()
 				}
 			},
 			storedFilesAccess,
 			mockk {
-				every { promiseDownload(any(), any()) } returns Promise(ByteArrayInputStream(ByteArray(0)))
+				every { promiseDownload(any(), any()) } answers { Promise(ByteArrayInputStream(byteArrayOf(65, 39))) }
 			},
 			mockk { every { isFileReadPossible(any()) } returns true },
 			mockk { every { isFileWritePossible(any()) } returns true },
@@ -115,8 +112,7 @@ class WhenProcessingTheQueue {
 
 	@Test
 	fun thenTheFilesAreMarkedAsDownloaded() {
-		assertThat(storedFilesAccess.storedFilesMarkedAsDownloaded)
-			.containsExactly(*expectedStoredFiles)
+		assertThat(storedFilesAccess.storedFilesMarkedAsDownloaded).containsExactly(*expectedStoredFiles)
 	}
 
 	@Test

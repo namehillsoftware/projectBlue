@@ -10,7 +10,6 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.AccessStoredFiles
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.PruneStoredFiles
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileUriProducer
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
@@ -23,7 +22,9 @@ import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 import java.io.IOException
+import java.util.concurrent.TimeUnit
 
 class WhenSyncingTheStoredItemsAndAnErrorOccursDownloading {
 	private val storedFileJobResults by lazy {
@@ -80,7 +81,9 @@ class WhenSyncingTheStoredItemsAndAnErrorOccursDownloading {
 			storedFilesPruner,
 			storedFilesUpdater,
 			StoredFileJobProcessor(
-				StoredFileUriProducer(),
+				mockk {
+					every { getOutputStream(any()) } returns ByteArrayOutputStream()
+				},
 				accessStoredFiles,
 				mockk {
 					every { promiseDownload(any(), any()) } returns Promise(ByteArrayInputStream(ByteArray(0)))
@@ -96,6 +99,7 @@ class WhenSyncingTheStoredItemsAndAnErrorOccursDownloading {
 			.filter { j -> j.storedFileJobState == StoredFileJobState.Downloaded }
 			.map { j -> j.storedFile }
 			.toList()
+			.timeout(1, TimeUnit.MINUTES)
 			.blockingGet()
 	}
 

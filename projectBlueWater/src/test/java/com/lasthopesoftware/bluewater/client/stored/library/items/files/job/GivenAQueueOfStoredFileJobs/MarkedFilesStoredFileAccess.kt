@@ -10,13 +10,9 @@ import com.namehillsoftware.handoff.promises.Promise
 class MarkedFilesStoredFileAccess : AccessStoredFiles {
 	val storedFilesMarkedAsDownloaded: MutableList<StoredFile> = ArrayList()
 
-    override fun getStoredFile(storedFileId: Int): Promise<StoredFile?> {
-        return Promise.empty()
-    }
+    override fun getStoredFile(storedFileId: Int): Promise<StoredFile?> = Promise.empty()
 
-    override fun getStoredFile(libraryId: LibraryId, serviceFile: ServiceFile): Promise<StoredFile?> {
-        return Promise.empty()
-    }
+    override fun getStoredFile(libraryId: LibraryId, serviceFile: ServiceFile): Promise<StoredFile?> = Promise.empty()
 
 	override fun promiseDownloadingFiles(): Promise<List<StoredFile>> = Promise(emptyList())
 

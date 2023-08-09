@@ -17,6 +17,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 import java.io.IOException
 
 class WhenProcessingTheQueue {
@@ -74,16 +75,7 @@ class WhenProcessingTheQueue {
 	fun act() {
 		val storedFileJobProcessor = StoredFileJobProcessor(
 			mockk {
-				every { getFile(any()) } answers {
-					val storedFile = firstArg<StoredFile>()
-					mockk {
-						every { parentFile } returns null
-						every { exists() } returns storedFile.isDownloadComplete
-						if (storedFile.serviceId == 2) {
-							every { path } returns "write-failure"
-						}
-					}
-				}
+				every { getOutputStream(any()) } returns ByteArrayOutputStream()
 			},
 			storedFilesAccess,
 			mockk {

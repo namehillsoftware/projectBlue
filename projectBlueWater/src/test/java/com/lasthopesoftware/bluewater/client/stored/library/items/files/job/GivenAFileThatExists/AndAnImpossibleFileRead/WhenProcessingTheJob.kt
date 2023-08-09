@@ -16,10 +16,7 @@ class WhenProcessingTheJob {
 	private val jobStates by lazy {
 		val storedFileJobProcessor = StoredFileJobProcessor(
 			mockk {
-				every { getFile(any()) } returns mockk {
-					every { exists() } returns true
-					every { parentFile } returns null
-				}
+				every { getOutputStream(any()) } returns null
 			},
 			mockk(),
 			mockk { every { promiseDownload(any(), any()) } returns Promise.empty() },

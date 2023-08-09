@@ -3,9 +3,11 @@ package com.lasthopesoftware.storage.write.exceptions
 import java.io.File
 import java.io.IOException
 
-open class StorageWriteFileException @JvmOverloads constructor(
-    val file: File,
+open class StorageWriteFileException(
+    val file: File? = null,
     innerException: Exception? = null
 ) : IOException(
-    "There was an error writing the file $file.", innerException
+	if (file != null) "There was an error writing the file $file."
+	else "There was an error writing the file.",
+	innerException
 )

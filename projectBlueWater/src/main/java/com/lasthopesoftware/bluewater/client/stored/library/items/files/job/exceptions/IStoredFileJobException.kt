@@ -2,9 +2,6 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exc
 
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 
-/**
- * Created by david on 7/17/16.
- */
 interface IStoredFileJobException {
     val storedFile: StoredFile
 }

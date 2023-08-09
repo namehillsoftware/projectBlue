@@ -12,21 +12,15 @@ import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.io.ByteArrayOutputStream
 import java.io.IOException
 
 class WhenProcessingTheJob {
     private val storedFile = StoredFile(LibraryId(4), 1, ServiceFile(1), "test-path", true)
     private val jobStates by lazy {
         val storedFileJobProcessor = StoredFileJobProcessor(
-            mockk {
-				every { getFile(any()) } returns
-					mockk {
-						every { exists() } returns false
-						every { parentFile } returns mockk {
-							every { exists() } returns false
-							every { mkdirs() } returns true
-						}
-					}
+			mockk {
+				every { getOutputStream(any()) } returns ByteArrayOutputStream()
 			},
             mockk(),
             mockk { every { promiseDownload(any(), any()) } returns Promise(IOException()) },

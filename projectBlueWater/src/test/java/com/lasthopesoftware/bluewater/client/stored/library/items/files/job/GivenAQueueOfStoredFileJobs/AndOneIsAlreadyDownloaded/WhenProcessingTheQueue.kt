@@ -17,6 +17,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 
 class WhenProcessingTheQueue {
 	private val storedFileJobs = setOf(
@@ -73,13 +74,8 @@ class WhenProcessingTheQueue {
 	fun before() {
 		val storedFileJobProcessor = StoredFileJobProcessor(
 			mockk {
-				every { getFile(any()) } answers {
-					val storedFile = firstArg<StoredFile>()
-					mockk {
-						every { parentFile } returns null
-						every { exists() } returns storedFile.isDownloadComplete
-					}
-				}
+				every { getOutputStream(match { !it.isDownloadComplete }) } returns ByteArrayOutputStream()
+				every { getOutputStream(match { it.isDownloadComplete }) } returns null
 			},
 			storedFilesAccess,
 			mockk {

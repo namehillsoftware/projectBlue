@@ -18,9 +18,7 @@ class WhenProcessingTheJob {
 		storedFile.setIsDownloadComplete(true)
 		val storedFileJobProcessor = StoredFileJobProcessor(
 			mockk {
-				every { getFile(any()) } returns mockk {
-					every { exists() } returns true
-				}
+				every { getOutputStream(any()) } returns null
 			},
 			mockk(),
 			mockk { every { promiseDownload(any(), any()) } returns Promise.empty() },

@@ -18,6 +18,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 
 class WhenProcessingTheQueue {
 	private val storedFileJobs: Set<StoredFileJob> = HashSet(
@@ -72,17 +73,8 @@ class WhenProcessingTheQueue {
 	fun act() {
 		val storedFileJobProcessor = StoredFileJobProcessor(
 			mockk {
-				every { getFile(any()) } answers {
-					val storedFile = firstArg<StoredFile>()
-
-					mockk {
-						every { parentFile } returns null
-						every { exists() } returns storedFile.isDownloadComplete
-						if (storedFile.serviceId == 4) {
-							every { path } returns "write-failure"
-						}
-					}
-				}
+				every { getOutputStream(match { it.isDownloadComplete }) } returns null
+				every { getOutputStream(match { !it.isDownloadComplete }) } returns ByteArrayOutputStream()
 			},
 			storedFilesAccess,
 			mockk {

@@ -18,6 +18,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 import java.io.InputStream
 
 class WhenProcessingTheJob {
@@ -30,10 +31,7 @@ class WhenProcessingTheJob {
 		val deferredPromise = DeferredPromise<InputStream>(ByteArrayInputStream(ByteArray(0)))
 		val storedFileJobProcessor = StoredFileJobProcessor(
 			mockk {
-				every { getFile(any()) } returns mockk {
-					every { parentFile } returns null
-					every { exists() } returns false
-				}
+				every { getOutputStream(any()) } returns ByteArrayOutputStream()
 			},
 			storedFileAccess,
 			mockk { every { promiseDownload(any(), any()) } returns deferredPromise },

@@ -9,7 +9,7 @@ import java.io.File
 
 class WhenCheckingForPermissions {
 	private val fileWriteIsPossible by lazy {
-		val fileWritePossibleArbitrator = FileWritePossibleArbitrator()
+		val fileWritePossibleArbitrator = FileWritePossibleArbitrator
 		val file = mockk<File> {
 			every { exists() } returns false
 			every { canWrite() } returns false

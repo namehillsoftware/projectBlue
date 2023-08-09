@@ -18,6 +18,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 
 class WhenProcessingTheQueue {
 	private val storedFileJobs: Set<StoredFileJob> = setOf(
@@ -72,17 +73,13 @@ class WhenProcessingTheQueue {
 	fun before() {
 		val storedFileJobProcessor = StoredFileJobProcessor(
 			mockk {
-				every { getFile(any()) } answers {
-					val storedFile = firstArg<StoredFile>()
-					mockk {
-						every { parentFile } returns null
-						every { exists() } returns storedFile.isDownloadComplete
-						every { path } returns if (storedFile.serviceId == 5) "write-failure" else ""
-					}
+				every { getOutputStream(any()) } returns ByteArrayOutputStream()
+				every { getOutputStream(match { it.serviceId == 5 }) } returns mockk(relaxUnitFun = true) {
+					every { write(any(), any(), any()) } throws UnexpectedException()
 				}
 			},
 			storedFilesAccess,
-			mockk { every { promiseDownload(any(), any()) } returns Promise(ByteArrayInputStream(ByteArray(0))) },
+			mockk { every { promiseDownload(any(), any()) } answers { Promise(ByteArrayInputStream(byteArrayOf(5, 10))) } },
 			mockk { every { isFileReadPossible(any()) } returns true },
 			mockk { every { isFileWritePossible(any()) } returns true },
 			mockk(relaxed = true) {
@@ -93,21 +90,19 @@ class WhenProcessingTheQueue {
 				} throws UnexpectedException()
 			})
 
-		storedFileJobProcessor.observeStoredFileDownload(storedFileJobs).blockingSubscribe(
-			storedFileStatuses::add
-		) { e -> if (e is StoredFileJobException) exception = e }
+		storedFileJobProcessor
+			.observeStoredFileDownload(storedFileJobs)
+			.blockingSubscribe(storedFileStatuses::add) { e -> if (e is StoredFileJobException) exception = e }
 	}
 
 	@Test
 	fun `then the error file is correct`() {
-		assertThat(exception!!.storedFile.serviceId).isEqualTo(5)
+		assertThat(exception?.storedFile?.serviceId).isEqualTo(5)
 	}
 
 	@Test
-	fun `then the unexpected esception is correct`() {
-		assertThat(exception!!.cause).isInstanceOf(
-			UnexpectedException::class.java
-		)
+	fun `then the unexpected exception is correct`() {
+		assertThat(exception?.cause).isInstanceOf(UnexpectedException::class.java)
 	}
 
 	@Test

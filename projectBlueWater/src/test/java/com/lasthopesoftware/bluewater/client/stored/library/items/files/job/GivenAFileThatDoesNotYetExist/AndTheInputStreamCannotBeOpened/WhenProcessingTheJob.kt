@@ -12,6 +12,7 @@ import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
+import java.io.ByteArrayOutputStream
 import java.io.IOException
 
 class WhenProcessingTheJob {
@@ -22,13 +23,7 @@ class WhenProcessingTheJob {
 	fun before() {
 		val storedFileJobProcessor = StoredFileJobProcessor(
 			mockk {
-				every { getFile(any()) } returns mockk {
-					every { exists() } returns false
-					every { parentFile } returns mockk {
-						every { exists() } returns false
-						every { mkdirs() } returns true
-					}
-				}
+				every { getOutputStream(any()) } returns ByteArrayOutputStream()
 			},
 			mockk(relaxed = true),
 			mockk { every { promiseDownload(any(), any()) } returns Promise(IOException()) },

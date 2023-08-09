@@ -20,6 +20,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 import java.util.concurrent.TimeUnit
 
 class WhenProcessingTheQueue {
@@ -88,10 +89,7 @@ class WhenProcessingTheQueue {
 		})
 		val storedFileJobProcessor = StoredFileJobProcessor(
 			mockk {
-				every { getFile(any()) } returns mockk {
-					every { exists() } returns false
-					every { parentFile } returns null
-				}
+				every { getOutputStream(any()) } returns ByteArrayOutputStream()
 			},
 			storedFilesAccess,
 			mockk {
