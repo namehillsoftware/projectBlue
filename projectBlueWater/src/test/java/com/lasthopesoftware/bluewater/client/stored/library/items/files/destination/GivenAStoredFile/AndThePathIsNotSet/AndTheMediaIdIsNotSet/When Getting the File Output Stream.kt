@@ -20,7 +20,7 @@ class `When Getting the File Output Stream` {
 
 	@BeforeAll
 	fun act() {
-		val storedFile = StoredFile(LibraryId(1), 0, ServiceFile(1), null, true)
+		val storedFile = StoredFile(LibraryId(1), ServiceFile(1), null, true)
 
 		outputStream = mut.getOutputStream(storedFile)
 	}

@@ -6,11 +6,13 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.reposito
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.GetAllStoredFilesInLibrary
 import com.lasthopesoftware.bluewater.client.stored.library.sync.CollectServiceFilesForSync
 import com.lasthopesoftware.resources.executors.ThreadPools
+import com.lasthopesoftware.resources.uri.IoCommon
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter
 import com.namehillsoftware.handoff.promises.response.PromisedResponse
 import java.io.File
+import java.net.URI
 
 class StoredFilesPruner(
 	private val serviceFilesToSyncCollector: CollectServiceFilesForSync,
@@ -42,16 +44,19 @@ class StoredFilesPruner(
 				for (storedFile in allStoredFiles) {
 					if (ct.isCancelled) break
 
-					val filePath = storedFile.path
+					val uriString = storedFile.uri
 					// It doesn't make sense to create a stored serviceFile without a serviceFile path
-					if (filePath == null) {
+					if (uriString == null) {
 						storedFileAccess.deleteStoredFile(storedFile)
 						continue
 					}
 
+					val uri = URI(uriString)
+					if (uri.scheme != IoCommon.fileUriScheme) continue
+
 					if (ct.isCancelled) break
 
-					val systemFile = File(filePath)
+					val systemFile = File(uri)
 
 					// Remove files that are marked as downloaded but the file doesn't actually exist
 					if (storedFile.isDownloadComplete && !systemFile.exists()) {

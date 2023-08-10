@@ -17,6 +17,7 @@ import org.assertj.core.api.AssertionsForClassTypes.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import java.net.URI
 import java.util.concurrent.TimeUnit
 
 @RunWith(RobolectricTestRunner::class)
@@ -34,17 +35,13 @@ class WhenUpdatingTheFile {
 				mockk {
 					every { promiseUri(any(), any()) } returns Promise.empty()
 				},
-				mockk {
-					every { getMediaId(any(), any()) } returns Promise.empty()
-				},
-				StoredFileQuery(context),
+                StoredFileQuery(context),
 				fakeLibraryRepository,
 				mockk {
-					every { promiseStoredFilePath(LibraryId(14), ServiceFile(4)) } returns Promise(
-						"/my-private-drive/14/artist/album/my-filename.mp3"
+					every { promiseStoredFileUri(LibraryId(14), ServiceFile(4)) } returns Promise(
+						URI("file:/my-private-drive/14/artist/album/my-filename.mp3")
 					)
 				},
-				mockk(),
 			)
 			storedFileUpdater.promiseStoredFileUpdate(LibraryId(14), ServiceFile(4))
 				.toExpiringFuture()
@@ -63,8 +60,8 @@ class WhenUpdatingTheFile {
 	}
 
 	@Test
-	fun thenTheFilePathIsCorrect() {
-		assertThat(storedFile.`object`?.path)
-			.isEqualTo("/my-private-drive/14/artist/album/my-filename.mp3")
+	fun `then the file uri is correct`() {
+		assertThat(storedFile.`object`?.uri)
+			.isEqualTo("file:/my-private-drive/14/artist/album/my-filename.mp3")
 	}
 }

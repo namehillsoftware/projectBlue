@@ -15,6 +15,7 @@ import com.lasthopesoftware.bluewater.repository.fetchFirst
 import com.lasthopesoftware.resources.executors.ThreadPools.promiseTableMessage
 import com.namehillsoftware.handoff.promises.Promise
 import org.slf4j.LoggerFactory
+import java.net.URI
 
 class StoredFileAccess(private val context: Context) : AccessStoredFiles {
 
@@ -85,7 +86,7 @@ class StoredFileAccess(private val context: Context) : AccessStoredFiles {
 			storedFile.setIsDownloadComplete(true)
 		}
 
-	override fun addMediaFile(libraryId: LibraryId, serviceFile: ServiceFile, mediaFileId: Int, filePath: String): Promise<Unit> =
+	override fun addMediaFile(libraryId: LibraryId, serviceFile: ServiceFile, uri: URI): Promise<Unit> =
 		promiseTableMessage<Unit, StoredFile> {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				val storedFile = getStoredFile(libraryId, repositoryAccessHelper, serviceFile) ?: run {
@@ -93,9 +94,8 @@ class StoredFileAccess(private val context: Context) : AccessStoredFiles {
 					getStoredFile(libraryId, repositoryAccessHelper, serviceFile)
 						?.setIsOwner(false)
 						?.setIsDownloadComplete(true)
-						?.setPath(filePath)
+						?.setUri(uri.toString())
 				}
-				storedFile?.setStoredMediaId(mediaFileId)
 				updateStoredFile(repositoryAccessHelper, storedFile)
 			}
 		}
@@ -166,8 +166,7 @@ class StoredFileAccess(private val context: Context) : AccessStoredFiles {
 			UpdateBuilder
 				.fromTable(StoredFileEntityInformation.tableName)
 				.addSetter(StoredFileEntityInformation.serviceIdColumnName)
-				.addSetter(StoredFileEntityInformation.storedMediaIdColumnName)
-				.addSetter(StoredFileEntityInformation.pathColumnName)
+				.addSetter(StoredFileEntityInformation.uriColumnName)
 				.addSetter(StoredFileEntityInformation.isOwnerColumnName)
 				.addSetter(StoredFileEntityInformation.isDownloadCompleteColumnName)
 				.setFilter("WHERE id = @id")
@@ -181,8 +180,7 @@ class StoredFileAccess(private val context: Context) : AccessStoredFiles {
 				repositoryAccessHelper
 					.mapSql(updateSql)
 					.addParameter(StoredFileEntityInformation.serviceIdColumnName, storedFile.serviceId)
-					.addParameter(StoredFileEntityInformation.storedMediaIdColumnName, storedFile.storedMediaId)
-					.addParameter(StoredFileEntityInformation.pathColumnName, storedFile.path)
+					.addParameter(StoredFileEntityInformation.uriColumnName, storedFile.uri)
 					.addParameter(StoredFileEntityInformation.isOwnerColumnName, storedFile.isOwner)
 					.addParameter(
 						StoredFileEntityInformation.isDownloadCompleteColumnName,

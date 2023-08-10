@@ -12,6 +12,7 @@ import org.junit.AfterClass
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import java.net.URI
 
 @RunWith(RobolectricTestRunner::class)
 class WhenAddingTheFile {
@@ -26,8 +27,7 @@ class WhenAddingTheFile {
 				.addMediaFile(
 					libraryId,
 					ServiceFile(3),
-					14,
-					"a-test-path"
+					URI("a-test-path")
 				)
 				.eventually {
 					storedFileAccess.getStoredFile(
@@ -62,12 +62,7 @@ class WhenAddingTheFile {
 	}
 
 	@Test
-	fun thenTheStoredFileHasTheCorrectMediaFileId() {
-		assertThat(storedFile?.`object`?.storedMediaId).isEqualTo(14)
-	}
-
-	@Test
-	fun thenTheStoredFileHasTheCorrectPath() {
-		assertThat(storedFile?.`object`?.path).isEqualTo("a-test-path")
+	fun `then the stored file has the correct uri`() {
+		assertThat(storedFile?.`object`?.uri).isEqualTo("a-test-path")
 	}
 }

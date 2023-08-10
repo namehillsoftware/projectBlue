@@ -20,7 +20,7 @@ class `When Getting the File Output Stream` {
 		val tempFile = File.createTempFile("test-path", "tst")
 		tempFile.deleteOnExit()
 		tempFile.setReadOnly()
-		val storedFile = StoredFile(LibraryId(1), 1, ServiceFile(1), tempFile.path, true)
+		val storedFile = StoredFile(LibraryId(1), ServiceFile(1), tempFile.toURI(), true)
 		storedFile.setIsDownloadComplete(true)
 		val storedFileJobProcessor = StoredFileUriDestinationBuilder(mockk())
 

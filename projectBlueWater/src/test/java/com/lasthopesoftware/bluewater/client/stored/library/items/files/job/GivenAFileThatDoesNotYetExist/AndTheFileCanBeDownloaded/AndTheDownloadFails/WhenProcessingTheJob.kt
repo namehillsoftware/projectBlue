@@ -16,11 +16,12 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.io.ByteArrayInputStream
 import java.io.IOException
+import java.net.URI
 
 class WhenProcessingTheJob {
 
 	private var storedFileWriteException: Throwable? = null
-	private val storedFile = StoredFile(LibraryId(5), 1, ServiceFile(1), "test-path", true)
+	private val storedFile = StoredFile(LibraryId(5), ServiceFile(1), URI("test-path"), true)
 	private val states = ArrayList<StoredFileJobState>()
 
 	@RequiresApi(api = Build.VERSION_CODES.N)

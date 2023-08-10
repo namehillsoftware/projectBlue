@@ -40,7 +40,6 @@ import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble.ScrobbleIntentProvider
 import com.lasthopesoftware.bluewater.client.servers.version.LibraryServerVersionProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
 import com.lasthopesoftware.bluewater.client.stored.library.permissions.StoragePermissionsRequestNotificationBuilder
 import com.lasthopesoftware.bluewater.client.stored.library.permissions.read.StorageReadPermissionsRequestNotificationBuilder
 import com.lasthopesoftware.bluewater.client.stored.library.permissions.read.StorageReadPermissionsRequestedBroadcaster
@@ -153,15 +152,6 @@ open class MainApplication : Application() {
 	}
 
 	private fun registerAppBroadcastReceivers() {
-		applicationMessageBus.registerReceiver { mediaFileFound : MediaFileUriProvider.MediaFileFound ->
-			mediaFileFound.mediaId ?: return@registerReceiver
-			storedFileAccess.addMediaFile(
-				mediaFileFound.libraryId,
-				mediaFileFound.serviceFile,
-				mediaFileFound.mediaId,
-				mediaFileFound.systemFile.path)
-		}
-
 		applicationMessageBus.registerReceiver { readPermissionsNeeded : StorageReadPermissionsRequestedBroadcaster.ReadPermissionsNeeded ->
 			notificationManager.notify(
 				storageReadPermissionsConfiguration.notificationId,

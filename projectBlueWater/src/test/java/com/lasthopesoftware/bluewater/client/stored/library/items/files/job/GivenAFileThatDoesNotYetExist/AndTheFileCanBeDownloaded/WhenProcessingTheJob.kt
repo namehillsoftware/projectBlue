@@ -18,9 +18,10 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
+import java.net.URI
 
 class WhenProcessingTheJob {
-	private val storedFile = StoredFile(LibraryId(5), 1, ServiceFile(1), "test-path", true)
+	private val storedFile = StoredFile(LibraryId(5), ServiceFile(1), URI("test-path"), true)
 	private val storedFileAccess = mockk<AccessStoredFiles> {
 		every { markStoredFileAsDownloaded(any()) } answers { Promise(firstArg<StoredFile>()) }
 	}

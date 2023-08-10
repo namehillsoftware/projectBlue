@@ -19,6 +19,7 @@ import io.mockk.mockk
 import org.assertj.core.api.AssertionsForClassTypes.assertThat
 import org.junit.Test
 import java.io.File
+import java.net.URI
 
 class WhenUpdatingTheFile : AndroidContext() {
 
@@ -44,15 +45,13 @@ class WhenUpdatingTheFile : AndroidContext() {
 		val storedFileUpdater = StoredFileUpdater(
 			ApplicationProvider.getApplicationContext(),
 			mediaFileUriProvider,
-			mediaFileIdProvider,
-			StoredFileQuery(ApplicationProvider.getApplicationContext()),
+            StoredFileQuery(ApplicationProvider.getApplicationContext()),
 			fakeLibraryRepository,
 			mockk {
-				every { promiseStoredFilePath(libraryId, ServiceFile(4)) } returns Promise(
-					"/my-public-drive/busy/sweeten.mp3"
+				every { promiseStoredFileUri(libraryId, ServiceFile(4)) } returns Promise(
+					URI("file:/my-public-drive/busy/sweeten.mp3")
 				)
 			},
-			mockk(),
 		)
 		storedFile =
 			storedFileUpdater.promiseStoredFileUpdate(libraryId, ServiceFile(4)).toExpiringFuture().get()
@@ -74,7 +73,7 @@ class WhenUpdatingTheFile : AndroidContext() {
 	}
 
 	@Test
-	fun thenTheFilePathIsCorrect() {
-		assertThat(storedFile?.path).isEqualTo("/custom-root/a-file.mp3")
+	fun `then the file path is correct`() {
+		assertThat(storedFile?.uri).isEqualTo("file:///custom-root/a-file.mp3")
 	}
 }

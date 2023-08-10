@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileUriDestinationBuilder
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.resources.uri.MediaCollections
+import com.lasthopesoftware.resources.uri.toURI
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -37,7 +38,7 @@ class `When Getting the File Output Stream` {
 		@BeforeClass
 		@JvmStatic
 		fun act() {
-			val storedFile = StoredFile(LibraryId(1), storedMediaId.toInt(), ServiceFile(1), null, true)
+			val storedFile = StoredFile(LibraryId(1), ServiceFile(1), ContentUris.withAppendedId(MediaCollections.ExternalAudio, storedMediaId).toURI(), true)
 
 			outputStream = mut.getOutputStream(storedFile)
 		}

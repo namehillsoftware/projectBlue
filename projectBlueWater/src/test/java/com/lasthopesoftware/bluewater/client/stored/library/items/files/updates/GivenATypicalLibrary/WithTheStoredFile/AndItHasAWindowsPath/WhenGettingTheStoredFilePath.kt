@@ -3,8 +3,10 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.files.updates
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FakeFilesPropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFilePathsLookup
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFileUrisLookup
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
@@ -27,21 +29,26 @@ class WhenGettingTheStoredFilePath {
 			)
 		)
 
-		val storedFilePathsLookup = StoredFilePathsLookup(
+		val storedFilePathsLookup = StoredFileUrisLookup(
 			filePropertiesProvider,
+			FakeLibraryRepository(
+				Library(_id = 550, _syncedFileLocation = Library.SyncedFileLocation.INTERNAL)
+			),
 			mockk {
 				every { promiseSyncDirectory(LibraryId(550)) } returns Promise(File("/lock"))
-			}
+			},
+			mockk(),
+			mockk()
 		)
 
 		storedFilePathsLookup
-			.promiseStoredFilePath(LibraryId(550), ServiceFile(340))
+			.promiseStoredFileUri(LibraryId(550), ServiceFile(340))
 			.toExpiringFuture()
 			.get()
 	}
 
 	@Test
 	fun thenTheFilepathIsCorrect() {
-		assertThat(filePath.toString()).isEqualTo("/lock/tobacco/sign/for_music.mp3")
+		assertThat(filePath.toString()).isEqualTo("file:/lock/tobacco/sign/for_music.mp3")
 	}
 }

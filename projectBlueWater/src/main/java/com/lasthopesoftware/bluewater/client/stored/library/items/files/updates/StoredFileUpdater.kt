@@ -3,12 +3,11 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.files.updates
 import android.content.Context
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFileEntityInformation
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.setURI
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.GetStoredFiles
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.ProvideMediaFileIds
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
 import com.lasthopesoftware.bluewater.repository.InsertBuilder.Companion.fromTable
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
@@ -22,11 +21,9 @@ import com.namehillsoftware.handoff.promises.Promise
 class StoredFileUpdater(
 	private val context: Context,
 	private val mediaFileUriProvider: MediaFileUriProvider,
-	private val mediaFileIdProvider: ProvideMediaFileIds,
 	private val storedFiles: GetStoredFiles,
 	private val libraryProvider: ILibraryProvider,
-	private val lookupStoredFilePaths: GetStoredFilePaths,
-	private val externalMediaItemCreator: CreateExternalMediaItem,
+	private val lookupStoredFilePaths: GetStoredFileUris,
 ) : UpdateStoredFiles {
 
 	companion object {
@@ -44,8 +41,7 @@ class StoredFileUpdater(
 			UpdateBuilder
 				.fromTable(StoredFileEntityInformation.tableName)
 				.addSetter(StoredFileEntityInformation.serviceIdColumnName)
-				.addSetter(StoredFileEntityInformation.storedMediaIdColumnName)
-				.addSetter(StoredFileEntityInformation.pathColumnName)
+				.addSetter(StoredFileEntityInformation.uriColumnName)
 				.addSetter(StoredFileEntityInformation.isOwnerColumnName)
 				.addSetter(StoredFileEntityInformation.isDownloadCompleteColumnName)
 				.setFilter("WHERE id = @id")
@@ -56,8 +52,7 @@ class StoredFileUpdater(
 			beginTransaction().use { closeableTransaction ->
 					mapSql(updateSql)
 						.addParameter(StoredFileEntityInformation.serviceIdColumnName, storedFile.serviceId)
-						.addParameter(StoredFileEntityInformation.storedMediaIdColumnName, storedFile.storedMediaId)
-						.addParameter(StoredFileEntityInformation.pathColumnName, storedFile.path)
+						.addParameter(StoredFileEntityInformation.uriColumnName, storedFile.uri)
 						.addParameter(StoredFileEntityInformation.isOwnerColumnName, storedFile.isOwner)
 						.addParameter(StoredFileEntityInformation.isDownloadCompleteColumnName, storedFile.isDownloadComplete)
 						.addParameter("id", storedFile.id)
@@ -79,13 +74,9 @@ class StoredFileUpdater(
 	}
 
 	override fun promiseStoredFileUpdate(libraryId: LibraryId, serviceFile: ServiceFile): Promise<StoredFile> {
-		fun storedFileWithMediaId(storedFile: StoredFile): Promise<StoredFile> =
-			if (storedFile.storedMediaId > 0) storedFile.toPromise()
-			else externalMediaItemCreator.promiseCreatedItem(libraryId, serviceFile).then { it?.let(storedFile::setStoredMediaId) }
-
-		fun storedFileWithFilePath(storedFile: StoredFile): Promise<StoredFile> =
-			if (storedFile.path != null) storedFile.toPromise()
-			else lookupStoredFilePaths.promiseStoredFilePath(libraryId, serviceFile).then(storedFile::setPath)
+		fun storedFileWithUri(storedFile: StoredFile): Promise<StoredFile> =
+			if (storedFile.uri != null) storedFile.toPromise()
+			else lookupStoredFilePaths.promiseStoredFileUri(libraryId, serviceFile).then(storedFile::setURI)
 
 		val promisedLibrary = libraryProvider.promiseLibrary(libraryId)
 		return storedFiles.promiseStoredFile(libraryId, serviceFile)
@@ -103,30 +94,25 @@ class StoredFileUpdater(
 				promisedLibrary
 					.eventually { library ->
 						library
-							?.takeIf { it.isUsingExistingFiles && storedFile.path == null }
+							?.takeIf { it.isUsingExistingFiles && storedFile.uri == null }
 							?.let {
 								mediaFileUriProvider
 									.promiseUri(libraryId, serviceFile)
-									.eventually { localUri ->
-										localUri
-											?.let { u ->
-												storedFile.setPath(u.path)
-												storedFile.setIsDownloadComplete(true)
-												storedFile.setIsOwner(false)
-												mediaFileIdProvider
-													.getMediaId(libraryId, serviceFile)
-													.then(storedFile::setStoredMediaId)
+									.then { localUri ->
+										storedFile
+											.apply {
+												if (localUri != null) {
+													setUri(localUri.toString())
+													setIsDownloadComplete(true)
+													setIsOwner(false)
+												}
 											}
-											.keepPromise(storedFile)
 									}
 							}
 							.keepPromise(storedFile)
-							.eventually { storedFile ->
-								if (library?.syncedFileLocation == Library.SyncedFileLocation.EXTERNAL) storedFileWithMediaId(storedFile)
-								else storedFileWithFilePath(storedFile)
-							}
 					}
 			}
+			.eventually(::storedFileWithUri)
 			.eventually { sf ->
 				promiseTableMessage<StoredFile, StoredFile> {
 					RepositoryAccessHelper(context).use { repositoryAccessHelper ->

@@ -11,6 +11,7 @@ import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.net.URI
 
 class WhenProcessingTheJob {
 	private val jobStates by lazy {
@@ -30,7 +31,7 @@ class WhenProcessingTheJob {
 					StoredFileJob(
 						LibraryId(12),
 						ServiceFile(1),
-						StoredFile(LibraryId(12), 1, ServiceFile(1), "test-path", true)
+						StoredFile(LibraryId(12), ServiceFile(1), URI("test-path"), true)
 					)
 				)
 			)

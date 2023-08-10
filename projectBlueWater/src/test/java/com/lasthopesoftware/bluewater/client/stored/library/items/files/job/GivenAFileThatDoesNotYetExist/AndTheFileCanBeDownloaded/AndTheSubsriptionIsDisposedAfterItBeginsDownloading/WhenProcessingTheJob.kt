@@ -20,9 +20,10 @@ import org.junit.jupiter.api.Test
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
+import java.net.URI
 
 class WhenProcessingTheJob {
-	private val storedFile = StoredFile(LibraryId(55), 1, ServiceFile(1), "test-path", true)
+	private val storedFile = StoredFile(LibraryId(55), ServiceFile(1), URI("test://test-path"), true)
 	private val storedFileAccess = mockk<AccessStoredFiles>()
 	private val states: MutableList<StoredFileJobState> = ArrayList()
 

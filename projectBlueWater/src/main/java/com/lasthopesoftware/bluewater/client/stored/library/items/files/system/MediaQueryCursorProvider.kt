@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.files.system
 import android.content.ContentResolver
 import android.database.Cursor
 import android.provider.MediaStore
+import androidx.core.net.toUri
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
@@ -29,15 +30,15 @@ class MediaQueryCursorProvider
 			.getStoredFile(libraryId, serviceFile)
 			.eventually { storedFile ->
 				storedFile
-					?.storedMediaId
-					?.let { mediaId ->
+					?.uri
+					?.let { uri ->
 						QueuedPromise(
 							MessageWriter {
 								contentResolver.query(
-									MediaCollections.ExternalAudio,
+									uri.toUri(),
 									mediaQueryProjection,
-									mediaIdQuery,
-									arrayOf(mediaId.toString()),
+									null,
+									null,
 									null
 								)
 							}, ThreadPools.io)

@@ -14,9 +14,10 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.io.ByteArrayInputStream
 import java.io.File
+import java.net.URI
 
 class WhenProcessingTheJob {
-    private val storedFile = StoredFile(LibraryId(7), 1, ServiceFile(1), "test-path", true)
+    private val storedFile = StoredFile(LibraryId(7), ServiceFile(1), URI("test-path"), true)
     private var storageCreatePathException: StorageCreatePathException? = null
 
     @BeforeAll

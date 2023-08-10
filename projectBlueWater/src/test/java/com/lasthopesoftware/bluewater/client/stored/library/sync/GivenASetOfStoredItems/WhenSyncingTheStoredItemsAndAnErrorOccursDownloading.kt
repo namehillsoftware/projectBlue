@@ -24,6 +24,7 @@ import org.junit.jupiter.api.Test
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.IOException
+import java.net.URI
 import java.util.concurrent.TimeUnit
 
 class WhenSyncingTheStoredItemsAndAnErrorOccursDownloading {
@@ -61,9 +62,8 @@ class WhenSyncingTheStoredItemsAndAnErrorOccursDownloading {
 			Promise(
 				StoredFile(
 					firstArg(),
-					1,
-					secondArg(),
-					"fake-file-name",
+                    secondArg(),
+					URI("fake-file-name"),
 					true
 				)
 			)

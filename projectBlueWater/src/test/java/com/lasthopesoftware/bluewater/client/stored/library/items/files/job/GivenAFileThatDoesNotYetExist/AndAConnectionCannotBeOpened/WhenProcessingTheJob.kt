@@ -14,9 +14,10 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.io.ByteArrayOutputStream
 import java.io.IOException
+import java.net.URI
 
 class WhenProcessingTheJob {
-    private val storedFile = StoredFile(LibraryId(4), 1, ServiceFile(1), "test-path", true)
+    private val storedFile = StoredFile(LibraryId(4), ServiceFile(1), URI("test://test-path"), true)
     private val jobStates by lazy {
         val storedFileJobProcessor = StoredFileJobProcessor(
 			mockk {

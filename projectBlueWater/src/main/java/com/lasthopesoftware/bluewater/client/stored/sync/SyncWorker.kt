@@ -35,12 +35,10 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.download
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFileQuery
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFilesCollection
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.MediaFileIdProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.MediaQueryCursorProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.MediaItemCreator
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFilePathsLookup
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFileUpdater
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFileUrisLookup
 import com.lasthopesoftware.bluewater.client.stored.library.permissions.read.StorageReadPermissionsRequestedBroadcaster
 import com.lasthopesoftware.bluewater.client.stored.library.permissions.write.StorageWritePermissionsRequestedBroadcaster
 import com.lasthopesoftware.bluewater.client.stored.library.sync.LibrarySyncsHandler
@@ -138,20 +136,21 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 		val storedFileUpdater = StoredFileUpdater(
             context,
 			mediaFileUriProvider,
-            MediaFileIdProvider(cursorProvider, readPermissionArbitratorForOs),
             StoredFileQuery(context),
             libraryProvider,
-			StoredFilePathsLookup(
+			StoredFileUrisLookup(
 				fileProperties,
+				libraryProvider,
 				SyncDirectoryLookup(
 					libraryProvider,
 					PublicDirectoryLookup(context),
 					PrivateDirectoryLookup(context),
 					FreeSpaceLookup
-				)
-			),
-			MediaItemCreator(fileProperties, contentResolver)
-        )
+				),
+				mediaFileUriProvider,
+				context.contentResolver,
+			)
+		)
 
 		val syncHandler = LibrarySyncsHandler(
 			serviceFilesCollector,

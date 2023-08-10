@@ -14,9 +14,10 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.io.ByteArrayOutputStream
 import java.io.IOException
+import java.net.URI
 
 class WhenProcessingTheJob {
-	private val storedFile = StoredFile(LibraryId(6), 1, ServiceFile(1), "test-path", true)
+	private val storedFile = StoredFile(LibraryId(6), ServiceFile(1), URI("test-path"), true)
 	private var jobStates: List<StoredFileJobState>? = null
 
 	@BeforeAll

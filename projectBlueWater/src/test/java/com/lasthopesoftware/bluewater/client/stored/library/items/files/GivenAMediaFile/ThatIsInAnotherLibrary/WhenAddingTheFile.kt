@@ -9,6 +9,7 @@ import org.assertj.core.api.AssertionsForClassTypes.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import java.net.URI
 
 @RunWith(RobolectricTestRunner::class)
 class WhenAddingTheFile {
@@ -19,8 +20,7 @@ class WhenAddingTheFile {
 				.addMediaFile(
 					LibraryId(13),
 					ServiceFile(3),
-					14,
-					"a-test-path"
+					URI("a-test-path")
 				)
 				.toExpiringFuture()
 				.get()
@@ -30,8 +30,7 @@ class WhenAddingTheFile {
 				.addMediaFile(
 					LibraryId(15),
 					ServiceFile(3),
-					14,
-					"a-test-path"
+					URI("a-test-path")
 				)
 				.toExpiringFuture()
 				.get()
@@ -59,12 +58,7 @@ class WhenAddingTheFile {
     }
 
     @Test
-    fun thenTheStoredFileHasTheCorrectMediaFileId() {
-        assertThat(storedFile.storedMediaId).isEqualTo(14)
-    }
-
-    @Test
-    fun thenTheStoredFileHasTheCorrectPath() {
-        assertThat(storedFile.path).isEqualTo("a-test-path")
+    fun `then the stored file has the correct uri`() {
+        assertThat(storedFile.uri).isEqualTo("a-test-path")
     }
 }
