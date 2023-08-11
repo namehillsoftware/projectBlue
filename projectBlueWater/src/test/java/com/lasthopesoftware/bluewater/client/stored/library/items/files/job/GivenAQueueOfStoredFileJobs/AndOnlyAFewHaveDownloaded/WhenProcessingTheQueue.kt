@@ -98,10 +98,7 @@ class WhenProcessingTheQueue {
 					if (expectedDownloadedStoredFiles.contains(f)) Promise(ByteArrayInputStream(ByteArray(0)))
 					else DeferredPromise(ByteArrayInputStream(ByteArray(0)))
 				}
-			},
-			mockk { every { isFileReadPossible(any()) } returns false },
-			mockk { every { isFileWritePossible(any()) } returns true },
-			mockk(relaxUnitFun = true)
+			}
 		)
 		storedFileStatuses = storedFileJobProcessor
 			.observeStoredFileDownload(storedFileJobs)

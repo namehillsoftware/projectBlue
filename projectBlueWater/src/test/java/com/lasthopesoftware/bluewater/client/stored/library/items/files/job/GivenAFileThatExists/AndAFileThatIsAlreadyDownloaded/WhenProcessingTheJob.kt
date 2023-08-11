@@ -22,10 +22,7 @@ class WhenProcessingTheJob {
 				every { getOutputStream(any()) } returns null
 			},
 			mockk(),
-			mockk { every { promiseDownload(any(), any()) } returns Promise.empty() },
-			mockk { every { isFileReadPossible(any()) } returns true },
-			mockk(),
-			mockk(relaxUnitFun = true)
+			mockk { every { promiseDownload(any(), any()) } returns Promise.empty() }
 		)
 
 		storedFileJobProcessor

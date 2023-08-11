@@ -7,25 +7,23 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exce
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileReadException
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
-import com.lasthopesoftware.resources.io.WriteFileStreams
-import com.lasthopesoftware.storage.read.permissions.IFileReadPossibleArbitrator
-import com.lasthopesoftware.storage.write.permissions.IFileWritePossibleArbitrator
+import com.lasthopesoftware.resources.closables.useEventually
+import com.lasthopesoftware.resources.io.PromisingOutputStreamWrapper
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
+import com.namehillsoftware.handoff.promises.response.PromisedResponse
 import io.reactivex.Observable
 import io.reactivex.Observer
 import io.reactivex.disposables.Disposable
 import org.slf4j.LoggerFactory
 import java.io.IOException
 import java.util.LinkedList
+import java.util.concurrent.CancellationException
 
 class StoredFileJobProcessor(
 	private val storedFileFileProvider: ProduceStoredFileDestinations,
 	private val storedFileAccess: AccessStoredFiles,
-	private val storedFiles: DownloadStoredFiles,
-	private val fileReadPossibleArbitrator: IFileReadPossibleArbitrator,
-	private val fileWritePossibleArbitrator: IFileWritePossibleArbitrator,
-	private val fileStreamWriter: WriteFileStreams
+	private val storedFiles: DownloadStoredFiles
 ) : ProcessStoredFileJobs {
 
 	override fun observeStoredFileDownload(jobs: Iterable<StoredFileJob>): Observable<StoredFileJobStatus> =
@@ -33,6 +31,7 @@ class StoredFileJobProcessor(
 
 	private inner class RecursiveQueueProcessor(private val jobs: Iterable<StoredFileJob>) :
 		Observable<StoredFileJobStatus>(),
+		PromisedResponse<Unit, Unit>,
 		Disposable
 	{
 		private val cancellationProxy = CancellationProxy()
@@ -85,46 +84,49 @@ class StoredFileJobProcessor(
 
 			if (cancellationProxy.isCancelled) {
 				observer.onNext(getCancelledStoredFileJobResult(storedFile))
+				outputStream.close()
 				return Unit.toPromise()
 			}
 
 			observer.onNext(StoredFileJobStatus(storedFile, StoredFileJobState.Downloading))
-			return storedFiles.promiseDownload(libraryId, storedFile)
-				.also(cancellationProxy::doCancel)
-				.then(
-					{ inputStream ->
-						try {
-							if (cancellationProxy.isCancelled) getCancelledStoredFileJobResult(storedFile)
-							else inputStream.use { s -> s.copyTo(outputStream) }
+			return PromisingOutputStreamWrapper(outputStream)
+				.useEventually { outputStreamWrapper ->
+					storedFiles.promiseDownload(libraryId, storedFile)
+						.also(cancellationProxy::doCancel)
+						.eventually { inputStream ->
+							if (cancellationProxy.isCancelled) getCancelledStoredFileJobResult(storedFile).toPromise()
+							else {
 
-							storedFileAccess.markStoredFileAsDownloaded(storedFile)
-							StoredFileJobStatus(storedFile, StoredFileJobState.Downloaded)
-						} catch (sfr: StoredFileReadException) {
-							StoredFileJobStatus(storedFile, StoredFileJobState.Unreadable)
-						} catch (ioe: IOException) {
-							logger.error("Error writing file!", ioe)
-							StoredFileJobStatus(storedFile, StoredFileJobState.Queued)
-						} catch (t: Throwable) {
-							throw StoredFileJobException(storedFile, t)
+								outputStreamWrapper
+									.promiseCopyFrom(inputStream)
+									.also(cancellationProxy::doCancel)
+									.eventually { storedFileAccess.markStoredFileAsDownloaded(storedFile) }
+									.then { StoredFileJobStatus(it, StoredFileJobState.Downloaded) }
+							}
 						}
-					},
-					{ error ->
-						when (error) {
-							is IOException -> StoredFileJobStatus(storedFile, StoredFileJobState.Queued)
-							is StoredFileJobException -> throw error
-							else -> throw StoredFileJobException(storedFile, error)
-						}
-					})
-				.must { outputStream.close() }
-				.eventually { status ->
-					observer.onNext(status)
-					processQueue()
 				}
+				.then(observer::onNext) { error ->
+					val status = when (error) {
+						is CancellationException -> getCancelledStoredFileJobResult(storedFile)
+						is StoredFileReadException -> StoredFileJobStatus(storedFile, StoredFileJobState.Unreadable)
+						is IOException -> {
+							logger.error("Error writing file!", error)
+							StoredFileJobStatus(storedFile, StoredFileJobState.Queued)
+						}
+						is StoredFileJobException -> throw error
+						else -> throw StoredFileJobException(storedFile, error)
+					}
+
+					observer.onNext(status)
+				}
+				.eventually(this)
+
 		}
 
 		override fun dispose() = cancellationProxy.run()
 
 		override fun isDisposed(): Boolean = cancellationProxy.isCancelled
+		override fun promiseResponse(resolution: Unit): Promise<Unit> = processQueue()
 	}
 
 	companion object {

@@ -88,10 +88,7 @@ class WhenSyncingTheStoredItemsAndAnErrorOccursDownloading {
 				mockk {
 					every { promiseDownload(any(), any()) } returns Promise(ByteArrayInputStream(ByteArray(0)))
 					every { promiseDownload(any(), match { it.serviceId == 2 }) } returns Promise(IOException())
-				},
-				mockk { every { isFileReadPossible(any()) } returns true },
-				mockk { every { isFileWritePossible(any()) } returns true },
-				mockk(relaxUnitFun = true)
+				}
 			)
 		)
 

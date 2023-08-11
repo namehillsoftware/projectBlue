@@ -35,10 +35,7 @@ class WhenProcessingTheJob {
 				every { getOutputStream(any()) } returns ByteArrayOutputStream()
 			},
 			storedFileAccess,
-			mockk { every { promiseDownload(any(), any()) } returns deferredPromise },
-			mockk { every { isFileReadPossible(any()) } returns false },
-			mockk { every { isFileWritePossible(any()) } returns true },
-			mockk(relaxUnitFun = true)
+			mockk { every { promiseDownload(any(), any()) } returns deferredPromise }
 		)
 		storedFileJobProcessor.observeStoredFileDownload(
 			setOf(

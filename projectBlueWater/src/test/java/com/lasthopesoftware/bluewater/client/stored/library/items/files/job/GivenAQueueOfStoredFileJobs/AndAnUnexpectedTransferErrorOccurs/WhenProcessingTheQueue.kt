@@ -79,16 +79,8 @@ class WhenProcessingTheQueue {
 				}
 			},
 			storedFilesAccess,
-			mockk { every { promiseDownload(any(), any()) } answers { Promise(ByteArrayInputStream(byteArrayOf(5, 10))) } },
-			mockk { every { isFileReadPossible(any()) } returns true },
-			mockk { every { isFileWritePossible(any()) } returns true },
-			mockk(relaxed = true) {
-				every {
-					writeStreamToFile(
-						any(),
-						match { it.path == "write-failure" })
-				} throws UnexpectedException()
-			})
+			mockk { every { promiseDownload(any(), any()) } answers { Promise(ByteArrayInputStream(byteArrayOf(5, 10))) } }
+		)
 
 		storedFileJobProcessor
 			.observeStoredFileDownload(storedFileJobs)

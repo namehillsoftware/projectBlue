@@ -43,10 +43,8 @@ class WhenProcessingTheJob {
 						)
 					)
 				)
-			},
-			mockk { every { isFileReadPossible(any()) } returns false },
-			mockk { every { isFileWritePossible(any()) } returns true },
-			mockk { every { writeStreamToFile(any(), any()) } throws IOException() })
+			}
+		)
 		storedFileJobProcessor.observeStoredFileDownload(
 			setOf(
 				StoredFileJob(

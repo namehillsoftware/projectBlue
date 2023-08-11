@@ -27,10 +27,7 @@ class WhenProcessingTheJob {
 				every { getOutputStream(any()) } returns ByteArrayOutputStream()
 			},
 			mockk(relaxed = true),
-			mockk { every { promiseDownload(any(), any()) } returns Promise(IOException()) },
-			mockk { every { isFileReadPossible(any()) } returns false },
-			mockk { every { isFileWritePossible(any()) } returns true },
-			mockk(relaxUnitFun = true)
+			mockk { every { promiseDownload(any(), any()) } returns Promise(IOException()) }
 		)
 
 		jobStates = storedFileJobProcessor.observeStoredFileDownload(

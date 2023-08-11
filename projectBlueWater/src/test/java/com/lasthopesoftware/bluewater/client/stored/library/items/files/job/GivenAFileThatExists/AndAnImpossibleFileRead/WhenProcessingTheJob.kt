@@ -20,10 +20,7 @@ class WhenProcessingTheJob {
 				every { getOutputStream(any()) } returns null
 			},
 			mockk(),
-			mockk { every { promiseDownload(any(), any()) } returns Promise.empty() },
-			mockk { every { isFileReadPossible(any()) } returns false },
-			mockk { every { isFileWritePossible(any()) } returns false },
-			mockk(relaxUnitFun = true)
+			mockk { every { promiseDownload(any(), any()) } returns Promise.empty() }
 		)
 		storedFileJobProcessor
 			.observeStoredFileDownload(

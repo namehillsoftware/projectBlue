@@ -82,10 +82,7 @@ class WhenProcessingTheQueue {
 				every { promiseDownload(any(), any()) } answers {
 					Promise(ByteArrayInputStream(ByteArray(0)))
 				}
-			},
-			mockk { every { isFileReadPossible(any()) } returns false },
-			mockk { every { isFileWritePossible(any()) } returns true },
-			mockk(relaxUnitFun = true)
+			}
 		)
 		val observedStatuses =
 			storedFileJobProcessor.observeStoredFileDownload(storedFileJobs).toList()

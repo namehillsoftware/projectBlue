@@ -80,10 +80,7 @@ class WhenProcessingTheQueue {
 			mockk {
 				every { promiseDownload(any(), any()) } returns Promise(ByteArrayInputStream(ByteArray(0)))
 				every { promiseDownload(any(), match { it.serviceId == 4 }) } returns Promise(UnexpectedException())
-			},
-			mockk { every { isFileReadPossible(any()) } returns true },
-			mockk { every { isFileWritePossible(any()) } returns true },
-			mockk(relaxed = true)
+			}
 		)
 
 		storedFileJobProcessor.observeStoredFileDownload(storedFileJobs).blockingSubscribe(
