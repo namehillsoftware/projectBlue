@@ -1,6 +1,6 @@
 package com.lasthopesoftware.storage.write.GivenAFileThatCannotBeWritten.AndANullParentFile
 
-import com.lasthopesoftware.storage.write.permissions.FileWritePossibleArbitrator
+import com.lasthopesoftware.storage.write.permissions.FileWritePossibleTester
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -9,7 +9,7 @@ import java.io.File
 
 class WhenCheckingForPermissions {
 	private val fileWriteIsPossible by lazy {
-		val fileWritePossibleArbitrator = FileWritePossibleArbitrator
+		val fileWritePossibleArbitrator = FileWritePossibleTester
 		val file = mockk<File> {
 			every { exists() } returns false
 			every { canWrite() } returns false

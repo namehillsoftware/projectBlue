@@ -62,9 +62,11 @@ import com.lasthopesoftware.bluewater.shared.policies.caching.CachingPolicyFacto
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.lasthopesoftware.resources.executors.ThreadPools
+import com.lasthopesoftware.resources.io.OsFileSupplier
 import com.lasthopesoftware.storage.FreeSpaceLookup
 import com.lasthopesoftware.storage.directories.PrivateDirectoryLookup
 import com.lasthopesoftware.storage.directories.PublicDirectoryLookup
+import com.lasthopesoftware.storage.write.permissions.FileWritePossibleTester
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
 
@@ -154,7 +156,7 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 			storedFilesPruner,
 			storedFileUpdater,
 			StoredFileJobProcessor(
-				StoredFileUriDestinationBuilder(context.contentResolver),
+				StoredFileUriDestinationBuilder(OsFileSupplier, FileWritePossibleTester, context.contentResolver),
 				storedFileAccess,
 				StoredFileDownloader(ServiceFileUriQueryParamsProvider, libraryConnections)
 			)

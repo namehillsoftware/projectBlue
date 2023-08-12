@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.stored.library.items.files.destination.GivenAStoredFile.AndThePathIsNotSet.AndTheMediaIdIsSet
+package com.lasthopesoftware.bluewater.client.stored.library.items.files.destination.GivenAStoredFile.AndAContentUri
 
 import android.content.ContentUris
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -11,7 +11,7 @@ import com.lasthopesoftware.resources.uri.MediaCollections
 import com.lasthopesoftware.resources.uri.toURI
 import io.mockk.every
 import io.mockk.mockk
-import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions
 import org.junit.BeforeClass
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -25,13 +25,16 @@ class `When Getting the File Output Stream` {
 
 	companion object {
 		private val mut by lazy {
-			StoredFileUriDestinationBuilder(
-				mockk {
-					val expectedContentUri = ContentUris.withAppendedId(MediaCollections.ExternalAudio, storedMediaId)
-					every { openFileDescriptor(expectedContentUri, "r") } returns null
-					every { openOutputStream(expectedContentUri) } returns ByteArrayOutputStream()
-				}
-			)
+            StoredFileUriDestinationBuilder(
+				mockk(),
+                mockk(),
+                mockk {
+                    val expectedContentUri =
+                        ContentUris.withAppendedId(MediaCollections.ExternalAudio, storedMediaId)
+                    every { openFileDescriptor(expectedContentUri, "r") } returns null
+                    every { openOutputStream(expectedContentUri, "wt") } returns ByteArrayOutputStream()
+                }
+            )
 		}
 
 		private var outputStream: OutputStream? = null
@@ -39,7 +42,12 @@ class `When Getting the File Output Stream` {
 		@BeforeClass
 		@JvmStatic
 		fun act() {
-			val storedFile = StoredFile(LibraryId(1), ServiceFile(1), ContentUris.withAppendedId(MediaCollections.ExternalAudio, storedMediaId).toURI(), true)
+			val storedFile = StoredFile(
+                LibraryId(1),
+                ServiceFile(1),
+                ContentUris.withAppendedId(MediaCollections.ExternalAudio, storedMediaId).toURI(),
+                true
+            )
 
 			outputStream = mut.promiseOutputStream(storedFile).toExpiringFuture().get()
 		}
@@ -47,6 +55,6 @@ class `When Getting the File Output Stream` {
 
 	@Test
 	fun `then the output stream is correct`() {
-		assertThat(outputStream).isNotNull
+		Assertions.assertThat(outputStream).isNotNull
 	}
 }
