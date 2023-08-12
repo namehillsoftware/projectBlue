@@ -4,6 +4,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileUriDestinationBuilder
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
@@ -22,7 +23,7 @@ class `When Getting the File Output Stream` {
 	fun act() {
 		val storedFile = StoredFile(LibraryId(1), ServiceFile(1), null, true)
 
-		outputStream = mut.getOutputStream(storedFile)
+		outputStream = mut.promiseOutputStream(storedFile).toExpiringFuture().get()
 	}
 
 	@Test

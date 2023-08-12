@@ -24,7 +24,7 @@ class WhenProcessingTheJob {
     fun before() {
         val storedFileJobProcessor = StoredFileJobProcessor(
 			mockk {
-				every { getOutputStream(any()) } throws StorageCreatePathException(File("JN7DGC9O"))
+				every { promiseOutputStream(any()) } throws StorageCreatePathException(File("JN7DGC9O"))
 			},
             mockk(),
 			mockk { every { promiseDownload(any(), any()) } returns Promise(ByteArrayInputStream(ByteArray(0))) }

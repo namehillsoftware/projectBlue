@@ -11,6 +11,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Stor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileJobException
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -19,6 +20,7 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
+import java.io.OutputStream
 
 class WhenProcessingTheQueue {
 	private val storedFileJobs: Set<StoredFileJob> = setOf(
@@ -73,10 +75,10 @@ class WhenProcessingTheQueue {
 	fun before() {
 		val storedFileJobProcessor = StoredFileJobProcessor(
 			mockk {
-				every { getOutputStream(any()) } returns ByteArrayOutputStream()
-				every { getOutputStream(match { it.serviceId == 5 }) } returns mockk(relaxUnitFun = true) {
+				every { promiseOutputStream(any()) } returns ByteArrayOutputStream().toPromise()
+				every { promiseOutputStream(match { it.serviceId == 5 }) } returns Promise(mockk<OutputStream>(relaxUnitFun = true) {
 					every { write(any(), any(), any()) } throws UnexpectedException()
-				}
+				})
 			},
 			storedFilesAccess,
 			mockk { every { promiseDownload(any(), any()) } answers { Promise(ByteArrayInputStream(byteArrayOf(5, 10))) } }

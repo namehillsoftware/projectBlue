@@ -4,6 +4,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileUriDestinationBuilder
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.storage.write.exceptions.StorageCreatePathException
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.io.File
 import java.nio.file.Files
+import java.util.concurrent.ExecutionException
 
 class `When Getting the File Output Stream` {
 
@@ -28,9 +30,9 @@ class `When Getting the File Output Stream` {
 		val storedFileJobProcessor = StoredFileUriDestinationBuilder(mockk())
 
 		try {
-			storedFileJobProcessor.getOutputStream(storedFile)
-		} catch (e: StorageCreatePathException) {
-			storageCreatePathException = e
+			storedFileJobProcessor.promiseOutputStream(storedFile).toExpiringFuture().get()
+		} catch (e: ExecutionException) {
+			storageCreatePathException = e.cause as? StorageCreatePathException
 		}
 	}
 

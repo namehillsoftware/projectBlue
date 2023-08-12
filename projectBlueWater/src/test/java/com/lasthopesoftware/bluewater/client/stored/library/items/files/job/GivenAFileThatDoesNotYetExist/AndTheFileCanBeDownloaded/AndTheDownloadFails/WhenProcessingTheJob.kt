@@ -16,6 +16,7 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.io.ByteArrayInputStream
 import java.io.IOException
+import java.io.OutputStream
 import java.net.URI
 
 class WhenProcessingTheJob {
@@ -29,9 +30,9 @@ class WhenProcessingTheJob {
 	fun before() {
 		val storedFileJobProcessor = StoredFileJobProcessor(
 			mockk {
-				every { getOutputStream(any()) } returns mockk(relaxUnitFun = true) {
+				every { promiseOutputStream(any()) } returns Promise(mockk<OutputStream>(relaxUnitFun = true) {
 					every { write(any(), any(), any()) } throws IOException()
-				}
+				})
 			},
 			mockk(),
 			mockk {

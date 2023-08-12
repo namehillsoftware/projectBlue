@@ -6,6 +6,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileUriDestinationBuilder
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.resources.uri.MediaCollections
 import com.lasthopesoftware.resources.uri.toURI
 import io.mockk.every
@@ -40,7 +41,7 @@ class `When Getting the File Output Stream` {
 		fun act() {
 			val storedFile = StoredFile(LibraryId(1), ServiceFile(1), ContentUris.withAppendedId(MediaCollections.ExternalAudio, storedMediaId).toURI(), true)
 
-			outputStream = mut.getOutputStream(storedFile)
+			outputStream = mut.promiseOutputStream(storedFile).toExpiringFuture().get()
 		}
 	}
 

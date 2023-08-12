@@ -82,7 +82,7 @@ class WhenSyncingTheStoredItemsAndAnErrorOccursDownloading {
 			storedFilesUpdater,
 			StoredFileJobProcessor(
 				mockk {
-					every { getOutputStream(any()) } returns ByteArrayOutputStream()
+					every { promiseOutputStream(any()) } returns ByteArrayOutputStream().toPromise()
 				},
 				accessStoredFiles,
 				mockk {

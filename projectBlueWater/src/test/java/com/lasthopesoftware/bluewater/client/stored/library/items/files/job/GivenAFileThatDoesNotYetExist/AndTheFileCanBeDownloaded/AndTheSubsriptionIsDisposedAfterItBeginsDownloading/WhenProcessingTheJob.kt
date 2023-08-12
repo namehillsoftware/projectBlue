@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Stor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
@@ -32,7 +33,7 @@ class WhenProcessingTheJob {
 		val deferredPromise = DeferredPromise<InputStream>(ByteArrayInputStream(ByteArray(0)))
 		val storedFileJobProcessor = StoredFileJobProcessor(
 			mockk {
-				every { getOutputStream(any()) } returns ByteArrayOutputStream()
+				every { promiseOutputStream(any()) } returns ByteArrayOutputStream().toPromise()
 			},
 			storedFileAccess,
 			mockk { every { promiseDownload(any(), any()) } returns deferredPromise }

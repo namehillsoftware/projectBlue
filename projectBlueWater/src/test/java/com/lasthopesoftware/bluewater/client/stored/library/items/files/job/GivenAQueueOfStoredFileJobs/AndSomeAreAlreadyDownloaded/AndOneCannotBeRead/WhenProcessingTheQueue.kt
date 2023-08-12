@@ -10,6 +10,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Stor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.storage.read.exceptions.StorageReadFileException
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
@@ -74,8 +75,8 @@ class WhenProcessingTheQueue {
 	fun before() {
 		val storedFileJobProcessor = StoredFileJobProcessor(
 			mockk {
-				every { getOutputStream(any()) } returns ByteArrayOutputStream()
-				every { getOutputStream(match { arrayOf(114, 92, 5).contains(it.serviceId) }) } returns null
+				every { promiseOutputStream(any()) } returns ByteArrayOutputStream().toPromise()
+				every { promiseOutputStream(match { arrayOf(114, 92, 5).contains(it.serviceId) }) } returns Promise.empty()
 			},
 			storedFilesAccess,
 			mockk {
