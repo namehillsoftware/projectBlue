@@ -6,7 +6,6 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibrary
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFileQuery
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.ProvideMediaFileIds
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.GetStoredFileUris
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFileUpdater
@@ -28,10 +27,6 @@ class WhenUpdatingTheFile {
 		private var storedFile = Lazy {
 			val mediaFileUriProvider = mockk<MediaFileUriProvider> {
 				every { promiseUri(any(), any()) } returns Promise.empty()
-			}
-
-			val mediaFileIdProvider = mockk<ProvideMediaFileIds> {
-				every { getMediaId(any(), any()) } returns Promise.empty()
 			}
 
 			val fakeLibraryRepository = FakeLibraryRepository(

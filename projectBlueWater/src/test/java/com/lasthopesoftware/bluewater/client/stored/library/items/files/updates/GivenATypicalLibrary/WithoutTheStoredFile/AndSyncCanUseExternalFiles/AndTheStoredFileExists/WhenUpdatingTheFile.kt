@@ -9,10 +9,10 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFileQuery
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.ProvideMediaFileIds
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFileUpdater
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -29,11 +29,9 @@ class WhenUpdatingTheFile : AndroidContext() {
 	}
 
 	override fun before() {
-		val mediaFileUriProvider = mockk<MediaFileUriProvider>()
-		every { mediaFileUriProvider.promiseUri(libraryId, ServiceFile(4)) } returns Promise(Uri.fromFile(File("/custom-root/a-file.mp3")))
-
-		val mediaFileIdProvider = mockk<ProvideMediaFileIds>()
-		every { mediaFileIdProvider.getMediaId(libraryId, ServiceFile(4)) } returns Promise(12)
+		val mediaFileUriProvider = mockk<MediaFileUriProvider> {
+			every { promiseUri(libraryId, ServiceFile(4)) } returns Uri.fromFile(File("/custom-root/a-file.mp3")).toPromise()
+		}
 
 		val fakeLibraryRepository = FakeLibraryRepository(
 			Library()
