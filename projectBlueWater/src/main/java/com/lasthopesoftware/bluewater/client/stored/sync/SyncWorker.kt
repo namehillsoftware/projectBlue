@@ -34,7 +34,6 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFi
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.download.StoredFileDownloader
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFileQuery
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFilesCollection
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.MediaQueryCursorProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFileUpdater
@@ -78,19 +77,19 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 		private const val notificationId = 23
 	}
 
-	private val syncChecker by lazy {
-		SyncChecker(
-			LibraryRepository(context),
-			serviceFilesCollector,
-			StoredFilesChecker(StoredFilesCounter(StoredFilesCollection(context)))
-		)
-	}
-
 	private val applicationMessageBus by lazy { getApplicationMessageBus().getScopedMessageBus() }
 	private val storedFileAccess by lazy { StoredFileAccess(context) }
 	private val readPermissionArbitratorForOs by lazy { OsPermissionsChecker(context) }
 	private val libraryConnections by lazy { ConnectionSessionManager.get(context) }
 	private val cachingPolicyFactory by lazy { CachingPolicyFactory() }
+
+	private val syncChecker by lazy {
+		SyncChecker(
+			LibraryRepository(context),
+			serviceFilesCollector,
+			StoredFilesChecker(StoredFilesCounter(storedFileAccess))
+		)
+	}
 
 	private val libraryProvider by lazy { DelegatingLibraryProvider(LibraryRepository(context), cachingPolicyFactory) }
 
@@ -118,7 +117,7 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 	}
 
 	private val storedFilesPruner by lazy {
-		StoredFilesPruner(serviceFilesCollector, StoredFilesCollection(context), storedFileAccess)
+		StoredFilesPruner(serviceFilesCollector, storedFileAccess)
 	}
 
 	private val storedFilesSynchronization by lazy {

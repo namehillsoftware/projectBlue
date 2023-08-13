@@ -6,7 +6,6 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.AccessSt
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
-import java.net.URI
 
 class MarkedFilesStoredFileAccess : AccessStoredFiles {
 	val storedFilesMarkedAsDownloaded: MutableList<StoredFile> = ArrayList()
@@ -14,6 +13,7 @@ class MarkedFilesStoredFileAccess : AccessStoredFiles {
     override fun getStoredFile(storedFileId: Int): Promise<StoredFile?> = Promise.empty()
 
     override fun getStoredFile(libraryId: LibraryId, serviceFile: ServiceFile): Promise<StoredFile?> = Promise.empty()
+	override fun promiseAllStoredFiles(libraryId: LibraryId): Promise<Collection<StoredFile>> = Promise(emptyList())
 
 	override fun promiseDownloadingFiles(): Promise<List<StoredFile>> = Promise(emptyList())
 
@@ -22,11 +22,7 @@ class MarkedFilesStoredFileAccess : AccessStoredFiles {
         return Promise(storedFile)
     }
 
-    override fun addMediaFile(libraryId: LibraryId, serviceFile: ServiceFile, uri: URI): Promise<Unit> {
-        return Unit.toPromise()
-    }
-
-	override fun deleteStoredFile(storedFile: StoredFile): Promise<Unit> {
+    override fun deleteStoredFile(storedFile: StoredFile): Promise<Unit> {
 		return Unit.toPromise()
 	}
 

@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.files
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.GetAllStoredFilesInLibrary
 import com.lasthopesoftware.bluewater.client.stored.library.sync.CollectServiceFilesForSync
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.lasthopesoftware.resources.uri.IoCommon
@@ -16,7 +15,6 @@ import java.net.URI
 
 class StoredFilesPruner(
 	private val serviceFilesToSyncCollector: CollectServiceFilesForSync,
-	private val getAllStoredFilesInLibrary: GetAllStoredFilesInLibrary,
 	private val storedFileAccess: AccessStoredFiles
 ) :
 	PruneStoredFiles
@@ -27,7 +25,7 @@ class StoredFilesPruner(
 			.eventually(PruneFilesTask(emptyList()))
 
 	override fun pruneStoredFiles(libraryId: LibraryId): Promise<Unit> {
-		val promisedStoredFiles = getAllStoredFilesInLibrary.promiseAllStoredFiles(libraryId)
+		val promisedStoredFiles = storedFileAccess.promiseAllStoredFiles(libraryId)
 		val promisedServiceFilesToKeep = serviceFilesToSyncCollector.promiseServiceFilesToSync(libraryId)
 		return promisedServiceFilesToKeep
 			.eventually { serviceFilesToKeep ->

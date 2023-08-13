@@ -75,19 +75,20 @@ class StoredFileJobProcessor(
 								getCancelledStoredFileJobResult(storedFile).toPromise()
 							} else {
 								observer.onNext(StoredFileJobStatus(storedFile, StoredFileJobState.Downloading))
+
+								val promisedDownload = storedFiles
+									.promiseDownload(libraryId, storedFile)
+									.also(cancellationProxy::doCancel)
 								PromisingOutputStreamWrapper(it)
 									.useEventually { outputStreamWrapper ->
-										storedFiles.promiseDownload(libraryId, storedFile)
-											.also(cancellationProxy::doCancel)
+										promisedDownload
 											.eventually { inputStream ->
 												if (cancellationProxy.isCancelled) getCancelledStoredFileJobResult(storedFile).toPromise()
-												else {
-													outputStreamWrapper
-														.promiseCopyFrom(inputStream)
-														.also(cancellationProxy::doCancel)
-														.eventually { storedFileAccess.markStoredFileAsDownloaded(storedFile) }
-														.then { sf -> StoredFileJobStatus(sf, StoredFileJobState.Downloaded) }
-												}
+												else outputStreamWrapper
+													.promiseCopyFrom(inputStream)
+													.also(cancellationProxy::doCancel)
+													.eventually { storedFileAccess.markStoredFileAsDownloaded(storedFile) }
+													.then { sf -> StoredFileJobStatus(sf, StoredFileJobState.Downloaded) }
 											}
 									}
 							}
