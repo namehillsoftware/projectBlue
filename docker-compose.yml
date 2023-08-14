@@ -5,6 +5,11 @@ services:
     image: ${TAG_ID:-project_blue_build}
     build:
       context: .
+    volumes:
+      - gradle-cache:/home/gradle/.gradle
     environment:
       - ANDROID_STORE_PASSWORD=${ANDROID_STORE_PASSWORD}
       - ANDROID_KEY_STORE_PASSWORD=${ANDROID_KEY_STORE_PASSWORD}
+
+volumes:
+  gradle-cache:
