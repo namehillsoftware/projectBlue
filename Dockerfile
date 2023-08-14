@@ -18,10 +18,10 @@ ENV ANDROID_SDK_HOME=${ANDROID_HOME}
 ENV PATH ${ANDROID_HOME}/cmdline-tools/cmdline-tools/bin:${ANDROID_HOME}/tools:${ANDROID_HOME}/tools/bin:${ANDROID_HOME}/platform-tools:${PATH}
 
 # set default build arguments
-ARG SDK_VERSION=commandlinetools-linux-9477386_latest.zip
+ARG SDK_VERSION=commandlinetools-linux-10406996_latest.zip
 
 # Set these to the same versions as in build.gradle to avoid downloading updated tools
-ARG ANDROID_BUILD_VERSION=33
+ARG ANDROID_BUILD_VERSION=34
 ARG ANDROID_TOOLS_VERSION=33.0.1
 
 # Full reference at https://dl.google.com/android/repository/repository2-1.xml

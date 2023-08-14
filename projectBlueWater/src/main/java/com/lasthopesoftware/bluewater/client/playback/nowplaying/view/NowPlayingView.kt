@@ -305,7 +305,7 @@ fun NowPlayingView(
 					.collect()
 			}
 
-			val snappingLayout = remember(pagerState) { SnapLayoutInfoProvider(pagerState) { _, _ -> 0f } }
+			val snappingLayout = remember(pagerState) { SnapLayoutInfoProvider(pagerState) { _, _, _ -> 0 } }
 
 			CompositionLocalProvider(
 				LocalOverscrollConfiguration provides null
