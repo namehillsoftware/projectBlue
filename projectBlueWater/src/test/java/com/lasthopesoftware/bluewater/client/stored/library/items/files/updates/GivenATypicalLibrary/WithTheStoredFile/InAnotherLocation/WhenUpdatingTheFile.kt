@@ -1,11 +1,10 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.GivenATypicalLibrary.WithTheStoredFile.InAnotherLocation
 
-import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFileQuery
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.FakeStoredFileAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.GetStoredFileUris
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFileUpdater
@@ -41,11 +40,12 @@ class WhenUpdatingTheFile {
 				)
 			}
 
+			val fakeStoredFileAccess = FakeStoredFileAccess()
+
 			StoredFileUpdater(
-				ApplicationProvider.getApplicationContext(),
+				fakeStoredFileAccess,
 				mediaFileUriProvider,
-                StoredFileQuery(ApplicationProvider.getApplicationContext()),
-				fakeLibraryRepository,
+                fakeLibraryRepository,
 				lookupStoredFilePaths,
 			).promiseStoredFileUpdate(LibraryId(14), ServiceFile(4)).toExpiringFuture().get()
 
@@ -54,12 +54,12 @@ class WhenUpdatingTheFile {
 			)
 
 			val storedFileUpdater = StoredFileUpdater(
-				ApplicationProvider.getApplicationContext(),
+				fakeStoredFileAccess,
 				mediaFileUriProvider,
-                StoredFileQuery(ApplicationProvider.getApplicationContext()),
-				fakeLibraryRepository,
+                fakeLibraryRepository,
 				mockk(),
 			)
+
 			storedFileUpdater
 				.promiseStoredFileUpdate(LibraryId(14), ServiceFile(4))
 				.toExpiringFuture()

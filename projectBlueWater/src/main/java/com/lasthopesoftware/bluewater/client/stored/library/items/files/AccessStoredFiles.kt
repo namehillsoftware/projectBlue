@@ -13,4 +13,6 @@ interface AccessStoredFiles {
 	fun promiseDownloadingFiles(): Promise<List<StoredFile>>
 	fun markStoredFileAsDownloaded(storedFile: StoredFile): Promise<StoredFile>
 	fun deleteStoredFile(storedFile: StoredFile): Promise<Unit>
+	fun promiseNewStoredFile(libraryId: LibraryId, serviceFile: ServiceFile): Promise<StoredFile>
+	fun promiseUpdatedStoredFile(storedFile: StoredFile): Promise<StoredFile>
 }

@@ -33,7 +33,6 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFi
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFilesPruner
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.download.StoredFileDownloader
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFileQuery
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.MediaQueryCursorProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFileUpdater
@@ -132,10 +131,9 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 			applicationMessageBus
 		)
 		val storedFileUpdater = StoredFileUpdater(
-            context,
+            storedFileAccess,
 			mediaFileUriProvider,
-            StoredFileQuery(context),
-            libraryProvider,
+			libraryProvider,
 			StoredFileUrisLookup(
 				fileProperties,
 				libraryProvider,

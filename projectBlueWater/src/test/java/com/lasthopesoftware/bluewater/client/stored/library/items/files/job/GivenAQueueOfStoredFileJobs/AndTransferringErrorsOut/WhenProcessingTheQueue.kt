@@ -4,7 +4,7 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.GivenAQueueOfStoredFileJobs.MarkedFilesStoredFileAccess
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.FakeStoredFileAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState
@@ -70,7 +70,7 @@ class WhenProcessingTheQueue {
 		StoredFile().setServiceId(92).setLibraryId(1)
 	)
 
-	private val storedFilesAccess = MarkedFilesStoredFileAccess()
+	private val storedFilesAccess = FakeStoredFileAccess()
 	private var storedFileStatuses: List<StoredFileJobStatus>? = null
 
 	@RequiresApi(api = Build.VERSION_CODES.N)

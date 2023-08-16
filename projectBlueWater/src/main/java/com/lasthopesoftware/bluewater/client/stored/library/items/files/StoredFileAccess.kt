@@ -57,11 +57,16 @@ class StoredFileAccess(private val context: Context) : AccessStoredFiles {
 			}
 		}
 
-	fun promiseNewStoredFile(libraryId: LibraryId, serviceFile: ServiceFile): Promise<StoredFile> =
+	override fun promiseNewStoredFile(libraryId: LibraryId, serviceFile: ServiceFile): Promise<StoredFile> =
 		promiseTableMessage<StoredFile, StoredFile> {
 			RepositoryAccessHelper(context).use {
 				it.createStoredFile(libraryId, serviceFile)
 			}
+		}
+
+	override fun promiseUpdatedStoredFile(storedFile: StoredFile): Promise<StoredFile> =
+		promiseTableMessage<StoredFile, StoredFile> {
+			RepositoryAccessHelper(context).use { it.update(tableName, storedFile) }
 		}
 
 	private fun getStoredFileTask(libraryId: LibraryId, serviceFile: ServiceFile): Promise<StoredFile?> =
@@ -91,7 +96,7 @@ class StoredFileAccess(private val context: Context) : AccessStoredFiles {
 			storedFile.setIsDownloadComplete(true)
 
 			try {
-				RepositoryAccessHelper(context).update(tableName, storedFile)
+				RepositoryAccessHelper(context).use { it.update(tableName, storedFile) }
 			} catch (e: Throwable) {
 				logger.warn("An error occurred updating the stored file ${storedFile.id}.", e)
 				storedFile.setIsDownloadComplete(false)

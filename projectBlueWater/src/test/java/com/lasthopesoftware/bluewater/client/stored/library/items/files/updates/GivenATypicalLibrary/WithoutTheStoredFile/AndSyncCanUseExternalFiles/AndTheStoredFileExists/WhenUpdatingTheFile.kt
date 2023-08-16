@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.FakeStoredFileAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFileQuery
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
@@ -41,10 +42,9 @@ class WhenUpdatingTheFile : AndroidContext() {
 		)
 
 		val storedFileUpdater = StoredFileUpdater(
-			ApplicationProvider.getApplicationContext(),
+			FakeStoredFileAccess(),
 			mediaFileUriProvider,
-            StoredFileQuery(ApplicationProvider.getApplicationContext()),
-			fakeLibraryRepository,
+            fakeLibraryRepository,
 			mockk {
 				every { promiseStoredFileUri(libraryId, ServiceFile(4)) } returns Promise(
 					URI("file:/my-public-drive/busy/sweeten.mp3")
