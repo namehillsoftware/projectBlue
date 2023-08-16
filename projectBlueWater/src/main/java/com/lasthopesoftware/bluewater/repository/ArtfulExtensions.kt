@@ -1,58 +1,57 @@
 package com.lasthopesoftware.bluewater.repository
 
 import com.namehillsoftware.artful.Artful
-import com.namehillsoftware.handoff.promises.Promise
+import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.reflect.KClass
-import kotlin.reflect.KProperty1
 import kotlin.reflect.full.declaredMemberProperties
 
 inline fun <reified T> Artful.fetchFirst(): T = fetchFirst(T::class.java)
 
 inline fun <reified T> Artful.fetch(): List<T> = fetch(T::class.java)
 
-val propertyCache = ConcurrentHashMap<KClass<*>, Collection<KProperty1<*, *>>>()
-val insertStatementCache = ConcurrentHashMap<String, String>()
-val updateStatementCache = ConcurrentHashMap<String, String>()
+private const val idField = "id"
 
-inline fun <reified T : Entity> RepositoryAccessHelper.insert(value: T): Long {
-	val kClass = T::class
-	val tableName = kClass.simpleName ?: return 0
+private val insertStatementCache = ConcurrentHashMap<String, String>()
+private val updateStatementCache = ConcurrentHashMap<String, String>()
 
-	return insert(tableName, value)
-}
-
-inline fun <reified T : Entity> RepositoryAccessHelper.insert(tableName: String, value: T): Long {
-	val properties = T::class.declaredMemberProperties
+fun <T : Entity> RepositoryAccessHelper.insert(tableName: String, value: T): T {
+	val properties = value::class.declaredMemberProperties
 
 	val insertQuery = insertStatementCache.getOrPut(tableName) {
 		val insertBuilder = InsertBuilder.fromTable(tableName)
 		for (property in properties) {
-			insertBuilder.addColumn(property.name)
+			if (property.name != idField)
+				insertBuilder.addColumn(property.name)
 		}
 
 		insertBuilder.build()
 	}
 
-	beginTransaction().use { transaction ->
+	return beginTransaction().use { transaction ->
 		val artful = mapSql(insertQuery)
 		for (property in properties) {
-			artful.addParameter(property.name, property.get(value))
+			if (property.name != idField)
+				artful.addParameter(property.name, property.getter.call(value))
 		}
 
-		return artful.execute().also {
-			transaction.setTransactionSuccessful()
+		if (artful.execute() == 0L) {
+			throw IOException("Insert into $tableName returned 0 rows.")
 		}
+
+		transaction.setTransactionSuccessful()
+
+		mapSql("SELECT * FROM $tableName WHERE rowId = (SELECT MAX(rowId) FROM $tableName)").fetchFirst(value::class.java)
 	}
 }
 
-inline fun <reified T : Entity> RepositoryAccessHelper.update(tableName: String, value: T): Long {
-	val properties = T::class.declaredMemberProperties
+fun <T : Entity> RepositoryAccessHelper.update(tableName: String, value: T): T {
+	val properties = value::class.declaredMemberProperties
 
 	val updateQuery = updateStatementCache.getOrPut(tableName) {
 		val updateBuilder = UpdateBuilder.fromTable(tableName)
 		for (property in properties) {
-			updateBuilder.addSetter(property.name)
+			if (property.name != "id")
+				updateBuilder.addSetter(property.name)
 		}
 
 		updateBuilder.setFilter("WHERE id = @id")
@@ -62,24 +61,28 @@ inline fun <reified T : Entity> RepositoryAccessHelper.update(tableName: String,
 
 	beginTransaction().use { transaction ->
 		val artful = mapSql(updateQuery)
+
+		var id: Any? = null
 		for (property in properties) {
-			artful.addParameter(property.name, property.getter.call(value))
+			val propertyValue = property.getter.call(value)
+			if (property.name == idField)
+				id = propertyValue
+
+			artful.addParameter(property.name, propertyValue)
 		}
 
-		return artful.execute().also {
-			transaction.setTransactionSuccessful()
+		if (id == null) {
+			throw IllegalArgumentException("Table must have id field.")
 		}
+
+		if (artful.execute() == 0L) {
+			throw IOException("Updating $tableName for id $id returned 0 rows.")
+		}
+
+		transaction.setTransactionSuccessful()
+
+		return mapSql("SELECT * FROM $tableName where id = @id")
+			.addParameter(idField, id)
+			.fetchFirst(value::class.java)
 	}
 }
-
-inline fun <reified T> Promise<Artful>.promiseFirst(): Promise<T> =
-	then { it.fetchFirst(T::class.java) }
-
-inline fun <reified T> Artful.promiseFirst(): Promise<T> =
-	DatabasePromise { fetchFirst(T::class.java) }
-
-fun Promise<Artful>.promiseExecution(): Promise<Long> =
-	then { it.execute() }
-
-fun Artful.promiseExecution(): Promise<Long> =
-	DatabasePromise { execute() }

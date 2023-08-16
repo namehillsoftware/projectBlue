@@ -46,10 +46,10 @@ class CachedFile : Entity, IEntityCreator, IEntityUpdater {
     var fileSize: Long = 0
 
     override fun onCreate(db: SQLiteDatabase) {
-        db.execSQL("CREATE TABLE `CachedFile` (`cacheName` VARCHAR , `createdTime` BIGINT , `fileName` VARCHAR , `fileSize` BIGINT , `id` INTEGER PRIMARY KEY AUTOINCREMENT , `lastAccessedTime` BIGINT , `libraryId` INTEGER , `uniqueKey` VARCHAR ,  UNIQUE (`fileName`), UNIQUE (`cacheName`,`libraryId`,`uniqueKey`) ) ")
-        db.execSQL("CREATE INDEX `CachedFile_lastAccessedTime_idx` ON `CachedFile` ( `lastAccessedTime` )")
-        db.execSQL("CREATE INDEX `CachedFile_cacheName_idx` ON `CachedFile` ( `cacheName` )")
-        db.execSQL("CREATE INDEX `CachedFile_createdTime_idx` ON `CachedFile` ( `createdTime` )")
+        db.execSQL("CREATE TABLE IF NOT EXISTS `CachedFile` (`cacheName` VARCHAR , `createdTime` BIGINT , `fileName` VARCHAR , `fileSize` BIGINT , `id` INTEGER PRIMARY KEY AUTOINCREMENT , `lastAccessedTime` BIGINT , `libraryId` INTEGER , `uniqueKey` VARCHAR ,  UNIQUE (`fileName`), UNIQUE (`cacheName`,`libraryId`,`uniqueKey`) ) ")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `CachedFile_lastAccessedTime_idx` ON `CachedFile` ( `lastAccessedTime` )")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `CachedFile_cacheName_idx` ON `CachedFile` ( `cacheName` )")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `CachedFile_createdTime_idx` ON `CachedFile` ( `createdTime` )")
     }
 
     override fun onUpdate(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {}
