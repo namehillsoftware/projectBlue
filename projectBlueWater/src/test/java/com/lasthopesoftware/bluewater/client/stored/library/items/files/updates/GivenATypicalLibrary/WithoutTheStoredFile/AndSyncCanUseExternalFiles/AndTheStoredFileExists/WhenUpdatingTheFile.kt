@@ -49,6 +49,7 @@ class WhenUpdatingTheFile : AndroidContext() {
 					URI("file:/my-public-drive/busy/sweeten.mp3")
 				)
 			},
+			mockk(),
 		)
 		storedFile =
 			storedFileUpdater.promiseStoredFileUpdate(libraryId, ServiceFile(4)).toExpiringFuture().get()

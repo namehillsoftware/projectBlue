@@ -10,12 +10,13 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFile
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.external.ExternalContentRepository
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFileUrisLookup
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
-import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.File
@@ -50,15 +51,18 @@ class WhenGettingTheStoredFilePath {
                 mockk {
                     every { promiseSyncDirectory(LibraryId(libraryId)) } returns Promise(File("/lock"))
                 },
-                mockk {
-                    every {
-                        promiseUri(
-                            LibraryId(libraryId),
-                            ServiceFile(serviceFileId)
-                        )
-                    } returns Promise(Uri.parse("content://media/external/audio/media/bogus1"))
-                },
-                ApplicationProvider.getApplicationContext<Context>().contentResolver,
+				mockk {
+					every {
+						promiseUri(
+							LibraryId(libraryId),
+							ServiceFile(serviceFileId)
+						)
+					} returns Promise(Uri.parse("content://media/external/audio/media/bogus1"))
+				},
+				ExternalContentRepository(
+					filePropertiesProvider,
+					ApplicationProvider.getApplicationContext<Context>().contentResolver,
+				)
             )
 
 			storedFilePathsLookup
@@ -70,6 +74,6 @@ class WhenGettingTheStoredFilePath {
 
 	@Test
 	fun thenTheFilepathIsCorrect() {
-		Assertions.assertThat(filePath.toString()).isEqualTo("content://media/external/audio/media/bogus1")
+		assertThat(filePath.toString()).isEqualTo("content://media/external/audio/media/bogus1")
 	}
 }

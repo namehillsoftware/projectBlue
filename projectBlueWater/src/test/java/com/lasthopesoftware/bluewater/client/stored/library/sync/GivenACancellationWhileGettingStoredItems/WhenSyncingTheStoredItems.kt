@@ -69,6 +69,8 @@ class WhenSyncingTheStoredItems {
 			),
 			pruneStoredFiles,
 			object : UpdateStoredFiles {
+				override fun markStoredFileAsDownloaded(storedFile: StoredFile): Promise<StoredFile> = storedFile.toPromise()
+
 				override fun promiseStoredFileUpdate(
 					libraryId: LibraryId,
 					serviceFile: ServiceFile

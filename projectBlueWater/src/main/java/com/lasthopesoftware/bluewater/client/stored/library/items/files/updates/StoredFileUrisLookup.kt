@@ -1,8 +1,5 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.updates
 
-import android.content.ContentResolver
-import android.content.ContentValues
-import android.provider.MediaStore
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.albumArtistOrArtist
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.baseFileNameAsMp3
@@ -11,15 +8,12 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLi
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.external.HaveExternalContent
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
 import com.lasthopesoftware.bluewater.client.stored.library.sync.LookupSyncDirectory
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
-import com.lasthopesoftware.resources.executors.ThreadPools
-import com.lasthopesoftware.resources.uri.MediaCollections
 import com.lasthopesoftware.resources.uri.toURI
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.queued.QueuedPromise
-import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter
 import org.apache.commons.io.FilenameUtils
 import java.io.File
 import java.net.URI
@@ -30,7 +24,7 @@ class StoredFileUrisLookup(
 	private val libraryProvider: ILibraryProvider,
 	private val lookupSyncDirectory: LookupSyncDirectory,
 	private val mediaFileUriProvider: MediaFileUriProvider,
-	private val contentResolver: ContentResolver
+	private val externalContent: HaveExternalContent,
 ) : GetStoredFileUris {
 
 	companion object {
@@ -49,7 +43,7 @@ class StoredFileUrisLookup(
 					.eventually { l ->
 						when (l?.syncedFileLocation) {
 							Library.SyncedFileLocation.INTERNAL -> promiseLocalFileUri(libraryId, fileProperties)
-							Library.SyncedFileLocation.EXTERNAL -> promiseContentUri(libraryId, serviceFile, fileProperties)
+							Library.SyncedFileLocation.EXTERNAL -> promiseContentUri(libraryId, serviceFile)
 							else -> Promise.empty()
 						}
 					}
@@ -92,25 +86,11 @@ class StoredFileUrisLookup(
 					?.let { File(it).toURI() }
 			}
 
-	private fun promiseContentUri(libraryId: LibraryId, serviceFile: ServiceFile, fileProperties: Map<String, String>): Promise<URI?> =
+	private fun promiseContentUri(libraryId: LibraryId, serviceFile: ServiceFile): Promise<URI?> =
 		mediaFileUriProvider
 			.promiseUri(libraryId, serviceFile)
 			.eventually { existingUri ->
 				existingUri?.toURI()?.toPromise()
-					?: QueuedPromise(CancellableMessageWriter { ct ->
-						if (ct.isCancelled) return@CancellableMessageWriter null
-
-						val newSongDetails = ContentValues().apply {
-							put(MediaStore.Audio.Media.DISPLAY_NAME, fileProperties.baseFileNameAsMp3)
-							put(MediaStore.Audio.Media.ARTIST, fileProperties.albumArtistOrArtist)
-							put(MediaStore.Audio.Media.ALBUM, fileProperties[KnownFileProperties.Album])
-							put(MediaStore.Audio.Media.IS_PENDING, 1)
-						}
-
-						if (ct.isCancelled) null
-						else contentResolver
-							.insert(MediaCollections.ExternalAudio, newSongDetails)
-							?.toURI()
-					}, ThreadPools.io)
+					?: externalContent.promiseNewContentUri(libraryId, serviceFile)
 			}
 }

@@ -47,6 +47,7 @@ class WhenUpdatingTheFile {
 				mediaFileUriProvider,
                 fakeLibraryRepository,
 				lookupStoredFilePaths,
+				mockk(),
 			).promiseStoredFileUpdate(LibraryId(14), ServiceFile(4)).toExpiringFuture().get()
 
 			every { lookupStoredFilePaths.promiseStoredFileUri(LibraryId(14), ServiceFile(4)) } returns Promise(
@@ -57,6 +58,7 @@ class WhenUpdatingTheFile {
 				fakeStoredFileAccess,
 				mediaFileUriProvider,
                 fakeLibraryRepository,
+				mockk(),
 				mockk(),
 			)
 

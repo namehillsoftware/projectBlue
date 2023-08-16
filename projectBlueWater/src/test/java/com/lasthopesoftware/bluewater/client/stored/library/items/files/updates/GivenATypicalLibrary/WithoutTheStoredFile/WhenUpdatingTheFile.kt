@@ -38,6 +38,7 @@ class WhenUpdatingTheFile {
 					URI("file:/my-private-drive/14/artist/album/my-filename.mp3")
 				)
 			},
+			mockk(),
 		)
 	}
 

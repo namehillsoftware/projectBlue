@@ -43,6 +43,7 @@ class WhenUpdatingTheFile {
 						URI("file:/my-public-drive/14/artist/album/my-filename.mp3")
 					)
 				},
+				mockk(),
 			)
 
 			storedFileUpdater

@@ -38,7 +38,7 @@ class WhenGettingTheStoredFilePath {
 				every { promiseSyncDirectory(LibraryId(550)) } returns Promise(File("/lock"))
 			},
 			mockk(),
-			mockk()
+			mockk(),
 		)
 
 		storedFilePathsLookup
