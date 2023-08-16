@@ -16,7 +16,7 @@ class StoredFileWritePermissionsReceiver(
     private val storedFileAccess: AccessStoredFiles
 ) : ReceiveStoredFileEvent, ImmediateResponse<StoredFile?, Unit> {
 	override fun receive(storedFileId: Int): Promise<Unit> =
-		if (!checkOsPermissions.isWritePermissionGranted) storedFileAccess.getStoredFile(storedFileId).then(this)
+		if (!checkOsPermissions.isWritePermissionGranted) storedFileAccess.promiseStoredFile(storedFileId).then(this)
 		else Promise.empty()
 
 	override fun acceptedEvents(): Collection<Class<out StoredFileMessage>> =

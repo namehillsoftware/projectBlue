@@ -24,8 +24,8 @@ class WhenProcessingTheJob {
 			mockk {
 				every { promiseOutputStream(any()) } returns ByteArrayOutputStream().toPromise()
 			},
-            mockk(),
-            mockk { every { promiseDownload(any(), any()) } returns Promise(IOException()) }
+			mockk { every { promiseDownload(any(), any()) } returns Promise(IOException()) },
+			mockk(),
 		)
         storedFileJobProcessor
 			.observeStoredFileDownload(

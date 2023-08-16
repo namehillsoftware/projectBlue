@@ -4,7 +4,7 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.FakeStoredFileAccess
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.GivenAQueueOfStoredFileJobs.MarkedFilesStoredFilesUpdater
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState
@@ -68,7 +68,7 @@ class WhenProcessingTheQueue {
 		StoredFile().setServiceId(114).setLibraryId(1),
 		StoredFile().setServiceId(92).setLibraryId(1)
 	)
-	private val storedFilesAccess = FakeStoredFileAccess()
+	private val storedFilesUpdater = MarkedFilesStoredFilesUpdater()
 	private lateinit var storedFileStatuses: List<StoredFileJobStatus>
 
 	@RequiresApi(api = Build.VERSION_CODES.N)
@@ -78,11 +78,11 @@ class WhenProcessingTheQueue {
 			mockk {
 				every { promiseOutputStream(any()) } returns ByteArrayOutputStream().toPromise()
 			},
-			storedFilesAccess,
 			mockk {
 				every { promiseDownload(any(), any()) } returns Promise(ByteArrayInputStream(ByteArray(0)))
 				every { promiseDownload(any(), match { it.serviceId == 2 }) } returns Promise(IOException())
-			}
+			},
+			storedFilesUpdater,
 		)
 		storedFileStatuses =
 			storedFileJobProcessor.observeStoredFileDownload(storedFileJobs).toList().blockingGet()
@@ -100,7 +100,7 @@ class WhenProcessingTheQueue {
 
 	@Test
 	fun `then the files are marked as downloaded`() {
-		assertThat(storedFilesAccess.storedFilesMarkedAsDownloaded)
+		assertThat(storedFilesUpdater.storedFilesMarkedAsDownloaded)
 			.containsExactly(*expectedStoredFiles)
 	}
 

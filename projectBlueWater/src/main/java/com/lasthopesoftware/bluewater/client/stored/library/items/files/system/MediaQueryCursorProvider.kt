@@ -27,7 +27,7 @@ class MediaQueryCursorProvider
 
 	override fun getMediaQueryCursor(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Cursor?> =
 		storedFileProvider
-			.getStoredFile(libraryId, serviceFile)
+			.promiseStoredFile(libraryId, serviceFile)
 			.eventually { storedFile ->
 				storedFile
 					?.uri
@@ -67,7 +67,6 @@ class MediaQueryCursorProvider
 	}
 
 	companion object {
-		private const val mediaIdQuery = MediaStore.Audio.Media._ID + " = ?"
 		private const val mediaDisplayNameQuery = MediaStore.Audio.Media.DISPLAY_NAME + " LIKE '%' || ? || '%' "
 		private val mediaQueryProjection = arrayOf(MediaStore.Audio.Media._ID, MediaStore.Audio.Media.DISPLAY_NAME)
 	}

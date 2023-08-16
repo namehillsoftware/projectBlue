@@ -19,7 +19,7 @@ class StoredFileUriProvider(
 ) : ProvideFileUrisForLibrary {
     override fun promiseUri(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Uri?> {
         return storedFileAccess
-			.getStoredFile(libraryId, serviceFile)
+			.promiseStoredFile(libraryId, serviceFile)
             .then { storedFile: StoredFile? ->
 				storedFile
 					?.takeUnless { !it.isDownloadComplete || it.uri.isNullOrEmpty() }

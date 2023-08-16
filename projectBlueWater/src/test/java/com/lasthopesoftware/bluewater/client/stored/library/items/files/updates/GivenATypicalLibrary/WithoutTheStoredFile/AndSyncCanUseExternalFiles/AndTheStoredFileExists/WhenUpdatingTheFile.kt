@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.GivenATypicalLibrary.WithoutTheStoredFile.AndSyncCanUseExternalFiles.AndTheStoredFileExists
 
 import android.net.Uri
-import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
@@ -9,7 +8,6 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.FakeStoredFileAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFileQuery
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFileUpdater
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -17,7 +15,7 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
-import org.assertj.core.api.AssertionsForClassTypes.assertThat
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
 import java.io.File
 import java.net.URI
@@ -27,6 +25,7 @@ class WhenUpdatingTheFile : AndroidContext() {
 	companion object {
 		private var storedFile: StoredFile? = null
 		private val libraryId = LibraryId(14)
+		private val affectedSystems by lazy { FakeStoredFileAccess() }
 	}
 
 	override fun before() {
@@ -42,7 +41,7 @@ class WhenUpdatingTheFile : AndroidContext() {
 		)
 
 		val storedFileUpdater = StoredFileUpdater(
-			FakeStoredFileAccess(),
+			affectedSystems,
 			mediaFileUriProvider,
             fakeLibraryRepository,
 			mockk {
@@ -57,12 +56,7 @@ class WhenUpdatingTheFile : AndroidContext() {
 
 	@Test
 	fun thenTheFileIsInsertedIntoTheDatabase() {
-		assertThat(
-			StoredFileQuery(ApplicationProvider.getApplicationContext())
-				.promiseStoredFile(LibraryId(14), ServiceFile(4))
-				.toExpiringFuture()
-				.get()
-		).isNotNull
+		assertThat(affectedSystems.storedFiles.values).allMatch { sf -> sf.libraryId == 14 && sf.serviceId == 4 }
 	}
 
 	@Test

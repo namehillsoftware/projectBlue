@@ -1,11 +1,11 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.job
 
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.AccessStoredFiles
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.ProduceStoredFileDestinations
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.download.DownloadStoredFiles
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileJobException
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileReadException
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.UpdateStoredFiles
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.resources.closables.useEventually
@@ -22,8 +22,8 @@ import java.util.concurrent.CancellationException
 
 class StoredFileJobProcessor(
 	private val storedFileFileProvider: ProduceStoredFileDestinations,
-	private val storedFileAccess: AccessStoredFiles,
-	private val storedFiles: DownloadStoredFiles
+	private val storedFiles: DownloadStoredFiles,
+	private val updateStoredFiles: UpdateStoredFiles,
 ) : ProcessStoredFileJobs {
 
 	override fun observeStoredFileDownload(jobs: Iterable<StoredFileJob>): Observable<StoredFileJobStatus> =
@@ -87,7 +87,7 @@ class StoredFileJobProcessor(
 												else outputStreamWrapper
 													.promiseCopyFrom(inputStream)
 													.also(cancellationProxy::doCancel)
-													.eventually { storedFileAccess.markStoredFileAsDownloaded(storedFile) }
+													.eventually { updateStoredFiles.markStoredFileAsDownloaded(storedFile) }
 													.then { sf -> StoredFileJobStatus(sf, StoredFileJobState.Downloaded) }
 											}
 									}

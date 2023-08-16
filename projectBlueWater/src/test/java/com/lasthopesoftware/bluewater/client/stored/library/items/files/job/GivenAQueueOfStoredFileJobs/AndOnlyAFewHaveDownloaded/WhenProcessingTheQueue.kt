@@ -6,7 +6,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTuple
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.FakeStoredFileAccess
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.GivenAQueueOfStoredFileJobs.MarkedFilesStoredFilesUpdater
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState
@@ -75,7 +75,7 @@ class WhenProcessingTheQueue {
 		StoredFile().setServiceId(4).setLibraryId(1),
 		StoredFile().setServiceId(5).setLibraryId(1)
 	)
-	private val storedFilesAccess = FakeStoredFileAccess()
+	private val storedFilesUpdater = MarkedFilesStoredFilesUpdater()
 	private var storedFileStatuses: List<StoredFileJobStatus> = ArrayList()
 
 	@RequiresApi(api = Build.VERSION_CODES.N)
@@ -92,14 +92,14 @@ class WhenProcessingTheQueue {
 			mockk {
 				every { promiseOutputStream(any()) } returns ByteArrayOutputStream().toPromise()
 			},
-			storedFilesAccess,
 			mockk {
 				every { promiseDownload(any(), any()) } answers {
 					val f = lastArg<StoredFile>()
 					if (expectedDownloadedStoredFiles.contains(f)) Promise(ByteArrayInputStream(ByteArray(0)))
 					else DeferredPromise(ByteArrayInputStream(ByteArray(0)))
 				}
-			}
+			},
+			storedFilesUpdater,
 		)
 		storedFileStatuses = storedFileJobProcessor
 			.observeStoredFileDownload(storedFileJobs)

@@ -4,7 +4,7 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.FakeStoredFileAccess
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.GivenAQueueOfStoredFileJobs.MarkedFilesStoredFilesUpdater
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState
@@ -65,7 +65,7 @@ class WhenProcessingTheQueue {
 		StoredFile().setServiceId(1).setLibraryId(1),
 		StoredFile().setServiceId(2).setLibraryId(1)
 	)
-	private val storedFilesAccess = FakeStoredFileAccess()
+	private val storedFilesUpdater = MarkedFilesStoredFilesUpdater()
 	private val storedFileStatuses = ArrayList<StoredFileJobStatus>()
 	private var exception: StoredFileJobException? = null
 
@@ -77,11 +77,11 @@ class WhenProcessingTheQueue {
 				every { promiseOutputStream(match { it.isDownloadComplete }) } returns Promise.empty()
 				every { promiseOutputStream(match { !it.isDownloadComplete }) } returns ByteArrayOutputStream().toPromise()
 			},
-			storedFilesAccess,
 			mockk {
 				every { promiseDownload(any(), any()) } returns Promise(ByteArrayInputStream(ByteArray(0)))
 				every { promiseDownload(any(), match { it.serviceId == 4 }) } returns Promise(UnexpectedException())
-			}
+			},
+			storedFilesUpdater,
 		)
 
 		storedFileJobProcessor.observeStoredFileDownload(storedFileJobs).blockingSubscribe(
@@ -103,7 +103,7 @@ class WhenProcessingTheQueue {
 
     @Test
     fun `then the files are marked as downloaded`() {
-        assertThat(storedFilesAccess.storedFilesMarkedAsDownloaded)
+        assertThat(storedFilesUpdater.storedFilesMarkedAsDownloaded)
             .containsExactly(*expectedStoredFiles)
     }
 

@@ -30,7 +30,7 @@ class StoredFile() : Entity {
 	) : this() {
 		this.libraryId = libraryId.id
 		serviceId = serviceFile.key
-		this.uri = uri.toString()
+		this.uri = uri?.toString()
 		this.isOwner = isOwner
 	}
 

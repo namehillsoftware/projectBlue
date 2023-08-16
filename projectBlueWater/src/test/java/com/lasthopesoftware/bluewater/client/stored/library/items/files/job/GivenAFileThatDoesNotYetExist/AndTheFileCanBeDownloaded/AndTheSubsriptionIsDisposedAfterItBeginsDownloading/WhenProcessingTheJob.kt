@@ -2,12 +2,12 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Giv
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.AccessStoredFiles
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.UpdateStoredFiles
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import io.mockk.every
@@ -25,7 +25,7 @@ import java.net.URI
 
 class WhenProcessingTheJob {
 	private val storedFile = StoredFile(LibraryId(55), ServiceFile(1), URI("test://test-path"), true)
-	private val storedFileAccess = mockk<AccessStoredFiles>()
+	private val storedFileUpdater = mockk<UpdateStoredFiles>()
 	private val states: MutableList<StoredFileJobState> = ArrayList()
 
 	@BeforeAll
@@ -35,8 +35,8 @@ class WhenProcessingTheJob {
 			mockk {
 				every { promiseOutputStream(any()) } returns ByteArrayOutputStream().toPromise()
 			},
-			storedFileAccess,
-			mockk { every { promiseDownload(any(), any()) } returns deferredPromise }
+			mockk { every { promiseDownload(any(), any()) } returns deferredPromise },
+			storedFileUpdater,
 		)
 		storedFileJobProcessor.observeStoredFileDownload(
 			setOf(
@@ -68,7 +68,7 @@ class WhenProcessingTheJob {
 
 	@Test
 	fun `then the file is not marked as downloaded`() {
-		verify(exactly = 0) { storedFileAccess.markStoredFileAsDownloaded(storedFile) }
+		verify(exactly = 0) { storedFileUpdater.markStoredFileAsDownloaded(storedFile) }
 	}
 
 	@Test

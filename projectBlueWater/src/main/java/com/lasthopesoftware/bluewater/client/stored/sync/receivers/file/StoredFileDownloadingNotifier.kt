@@ -23,7 +23,7 @@ class StoredFileDownloadingNotifier(
 	private val downloadingStatusLabel by lazy { context.getString(R.string.downloading_status_label) }
 
 	override fun receive(storedFileId: Int): Promise<Unit> {
-		return storedFileAccess.getStoredFile(storedFileId)
+		return storedFileAccess.promiseStoredFile(storedFileId)
 			.eventually { storedFile -> storedFile?.run { notifyOfFileDownload(this) } }
 	}
 

@@ -14,22 +14,17 @@ class FakeStoredFileAccess : AccessStoredFiles {
 
 	val storedFilesMarkedAsDownloaded = storedFiles.values.filter { sf -> sf.isDownloadComplete }
 
-    override fun getStoredFile(storedFileId: Int): Promise<StoredFile?> =
+    override fun promiseStoredFile(storedFileId: Int): Promise<StoredFile?> =
 		storedFiles.values.firstOrNull { sf -> sf.id == storedFileId }.toPromise()
 
-    override fun getStoredFile(libraryId: LibraryId, serviceFile: ServiceFile): Promise<StoredFile?> =
+    override fun promiseStoredFile(libraryId: LibraryId, serviceFile: ServiceFile): Promise<StoredFile?> =
 		storedFiles.values.firstOrNull { sf -> sf.libraryId == libraryId.id && sf.serviceId == serviceFile.key }.toPromise()
 	override fun promiseAllStoredFiles(libraryId: LibraryId): Promise<Collection<StoredFile>> = storedFiles.values.toPromise()
 
 	override fun promiseDownloadingFiles(): Promise<List<StoredFile>> =
 		storedFiles.values.filter { sf -> !sf.isDownloadComplete }.toPromise()
 
-    override fun markStoredFileAsDownloaded(storedFile: StoredFile): Promise<StoredFile> {
-        storedFiles[storedFile.id] = storedFile.setIsDownloadComplete(true)
-        return Promise(storedFile)
-    }
-
-    override fun deleteStoredFile(storedFile: StoredFile): Promise<Unit> {
+	override fun deleteStoredFile(storedFile: StoredFile): Promise<Unit> {
 		storedFiles.remove(storedFile.id)
 		return Unit.toPromise()
 	}

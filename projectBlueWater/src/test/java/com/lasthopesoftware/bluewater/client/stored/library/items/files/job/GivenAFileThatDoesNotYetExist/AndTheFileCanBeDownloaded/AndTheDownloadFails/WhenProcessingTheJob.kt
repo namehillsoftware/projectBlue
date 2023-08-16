@@ -34,7 +34,6 @@ class WhenProcessingTheJob {
 					every { write(any(), any(), any()) } throws IOException()
 				})
 			},
-			mockk(),
 			mockk {
 				every { promiseDownload(any(), any()) } returns Promise(
 					ByteArrayInputStream(
@@ -44,7 +43,8 @@ class WhenProcessingTheJob {
 						)
 					)
 				)
-			}
+			},
+			mockk(),
 		)
 		storedFileJobProcessor.observeStoredFileDownload(
 			setOf(

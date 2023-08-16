@@ -8,7 +8,6 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.AccessStoredFiles
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.PruneStoredFiles
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState
@@ -69,9 +68,6 @@ class WhenSyncingTheStoredItemsAndAnErrorOccursDownloading {
 			)
 		}
 
-		val accessStoredFiles = mockk<AccessStoredFiles>()
-		every { accessStoredFiles.markStoredFileAsDownloaded(any()) } answers { Promise(firstArg<StoredFile>()) }
-
 		val librarySyncHandler = LibrarySyncsHandler(
 			StoredItemServiceFileCollector(
 				storedItemAccessMock,
@@ -84,15 +80,18 @@ class WhenSyncingTheStoredItemsAndAnErrorOccursDownloading {
 				mockk {
 					every { promiseOutputStream(any()) } returns ByteArrayOutputStream().toPromise()
 				},
-				accessStoredFiles,
 				mockk {
 					every { promiseDownload(any(), any()) } returns Promise(ByteArrayInputStream(ByteArray(0)))
 					every { promiseDownload(any(), match { it.serviceId == 2 }) } returns Promise(IOException())
-				}
+				},
+				mockk {
+					every { markStoredFileAsDownloaded(any()) } answers { Promise(firstArg<StoredFile>()) }
+				},
 			)
 		)
 
-		librarySyncHandler.observeLibrarySync(LibraryId(42))
+		librarySyncHandler
+			.observeLibrarySync(LibraryId(42))
 			.filter { j -> j.storedFileJobState == StoredFileJobState.Downloaded }
 			.map { j -> j.storedFile }
 			.toList()

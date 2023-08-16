@@ -26,8 +26,8 @@ class WhenProcessingTheJob {
 			mockk {
 				every { promiseOutputStream(any()) } throws StorageCreatePathException(File("JN7DGC9O"))
 			},
-            mockk(),
-			mockk { every { promiseDownload(any(), any()) } returns Promise(ByteArrayInputStream(ByteArray(0))) }
+			mockk { every { promiseDownload(any(), any()) } returns Promise(ByteArrayInputStream(ByteArray(0))) },
+			mockk(),
 		)
         try {
             storedFileJobProcessor.observeStoredFileDownload(

@@ -13,7 +13,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 
 @RunWith(AndroidContextRunner::class)
-class WhenMarkingAFileAsDownloaded : AndroidContext() {
+class WhenUpdatingAFile : AndroidContext() {
 
 	companion object {
 		private var updatedStoredFile: StoredFile? = null
@@ -27,13 +27,18 @@ class WhenMarkingAFileAsDownloaded : AndroidContext() {
 		val storedFile = services.promiseNewStoredFile(LibraryId(405), ServiceFile(936)).toExpiringFuture().get()!!
 
 		updatedStoredFile = services
-			.markStoredFileAsDownloaded(storedFile)
+			.promiseUpdatedStoredFile(storedFile.setIsDownloadComplete(true).setUri("nXpBx"))
 			.toExpiringFuture()
 			.get()
 	}
 
 	@Test
-	fun `then the change is recorded correctly`() {
+	fun `then isDownloadComplete is recorded correctly`() {
 		assertThat(updatedStoredFile?.isDownloadComplete).isTrue
+	}
+
+	@Test
+	fun `then the URI is recorded correctly`() {
+		assertThat(updatedStoredFile?.uri).isEqualTo("nXpBx")
 	}
 }

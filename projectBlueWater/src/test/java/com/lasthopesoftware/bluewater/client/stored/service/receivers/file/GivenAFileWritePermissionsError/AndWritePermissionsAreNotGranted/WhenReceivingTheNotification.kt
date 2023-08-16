@@ -19,7 +19,7 @@ class WhenReceivingTheNotification {
 	@BeforeAll
 	fun act() {
 		val storedFileAccess = mockk<AccessStoredFiles>().apply {
-			every { getStoredFile(14) } returns Promise(StoredFile().setId(14).setLibraryId(22))
+			every { promiseStoredFile(14) } returns Promise(StoredFile().setId(14).setLibraryId(22))
 		}
 
 		val storedFileWritePermissionsReceiver = StoredFileWritePermissionsReceiver(

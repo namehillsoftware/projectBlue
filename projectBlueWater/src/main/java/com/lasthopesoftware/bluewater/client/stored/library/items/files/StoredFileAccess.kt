@@ -21,14 +21,14 @@ import com.namehillsoftware.handoff.promises.Promise
 
 class StoredFileAccess(private val context: Context) : AccessStoredFiles {
 
-	override fun getStoredFile(storedFileId: Int): Promise<StoredFile?> =
+	override fun promiseStoredFile(storedFileId: Int): Promise<StoredFile?> =
 		promiseTableMessage<StoredFile?, StoredFile> {
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				getStoredFile(repositoryAccessHelper, storedFileId)
 			}
 		}
 
-	override fun getStoredFile(libraryId: LibraryId, serviceFile: ServiceFile): Promise<StoredFile?> =
+	override fun promiseStoredFile(libraryId: LibraryId, serviceFile: ServiceFile): Promise<StoredFile?> =
 		getStoredFileTask(libraryId, serviceFile)
 
 	override fun promiseAllStoredFiles(libraryId: LibraryId): Promise<Collection<StoredFile>> =
@@ -88,19 +88,6 @@ class StoredFileAccess(private val context: Context) : AccessStoredFiles {
 					)
 					.addParameter(isDownloadCompleteColumnName, false)
 					.fetch()
-			}
-		}
-
-	override fun markStoredFileAsDownloaded(storedFile: StoredFile): Promise<StoredFile> =
-		promiseTableMessage<StoredFile, StoredFile> {
-			storedFile.setIsDownloadComplete(true)
-
-			try {
-				RepositoryAccessHelper(context).use { it.update(tableName, storedFile) }
-			} catch (e: Throwable) {
-				logger.warn("An error occurred updating the stored file ${storedFile.id}.", e)
-				storedFile.setIsDownloadComplete(false)
-				storedFile
 			}
 		}
 
