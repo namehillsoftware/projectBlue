@@ -39,7 +39,6 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.u
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFileUpdater
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFileUrisLookup
 import com.lasthopesoftware.bluewater.client.stored.library.permissions.read.StorageReadPermissionsRequestedBroadcaster
-import com.lasthopesoftware.bluewater.client.stored.library.permissions.write.StorageWritePermissionsRequestedBroadcaster
 import com.lasthopesoftware.bluewater.client.stored.library.sync.LibrarySyncsHandler
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncChecker
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncDirectoryLookup
@@ -49,7 +48,6 @@ import com.lasthopesoftware.bluewater.client.stored.sync.receivers.SyncStartedRe
 import com.lasthopesoftware.bluewater.client.stored.sync.receivers.file.StoredFileBroadcastReceiver
 import com.lasthopesoftware.bluewater.client.stored.sync.receivers.file.StoredFileDownloadingNotifier
 import com.lasthopesoftware.bluewater.client.stored.sync.receivers.file.StoredFileReadPermissionsReceiver
-import com.lasthopesoftware.bluewater.client.stored.sync.receivers.file.StoredFileWritePermissionsReceiver
 import com.lasthopesoftware.bluewater.shared.android.intents.IntentBuilder
 import com.lasthopesoftware.bluewater.shared.android.notifications.NoOpChannelActivator
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.NotificationChannelActivator
@@ -185,15 +183,10 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 			readPermissionArbitratorForOs,
 			StorageReadPermissionsRequestedBroadcaster(applicationMessageBus),
 			storedFileAccess)
-		val storedFileWritePermissionsReceiver = StoredFileWritePermissionsReceiver(
-			OsPermissionsChecker(context),
-			StorageWritePermissionsRequestedBroadcaster(applicationMessageBus),
-			storedFileAccess)
 
 		arrayOf(
 			storedFileDownloadingNotifier,
 			storedFileReadPermissionsReceiver,
-			storedFileWritePermissionsReceiver
 		)
 	}
 

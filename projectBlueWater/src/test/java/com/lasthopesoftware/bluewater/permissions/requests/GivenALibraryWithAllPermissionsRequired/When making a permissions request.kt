@@ -21,9 +21,6 @@ class `When making a permissions request` {
 				every { isReadMediaPermissionsRequiredForLibrary(any()) } returns true
 			},
 			mockk {
-				every { isWritePermissionsRequiredForLibrary(any()) } returns true
-			},
-			mockk {
 				every { requestPermissions(any()) } answers {
 					requestedPermissions.addAll(firstArg())
 					Promise(emptyMap())
@@ -48,7 +45,6 @@ class `When making a permissions request` {
 		assertThat(requestedPermissions).containsExactlyInAnyOrder(
 			Manifest.permission.READ_MEDIA_AUDIO,
 			Manifest.permission.READ_EXTERNAL_STORAGE,
-			Manifest.permission.WRITE_EXTERNAL_STORAGE,
 		)
 	}
 
