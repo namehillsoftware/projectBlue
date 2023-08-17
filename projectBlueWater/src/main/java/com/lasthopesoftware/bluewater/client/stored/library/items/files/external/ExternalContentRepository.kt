@@ -58,4 +58,9 @@ class ExternalContentRepository(
 
 		Unit
 	}, ThreadPools.io)
+
+	override fun removeContent(uri: URI): Promise<Boolean> = QueuedPromise(MessageWriter{
+		val deletedRecords = contentResolver.delete(uri.toUri(), null, null)
+		deletedRecords > 0
+	}, ThreadPools.io)
 }

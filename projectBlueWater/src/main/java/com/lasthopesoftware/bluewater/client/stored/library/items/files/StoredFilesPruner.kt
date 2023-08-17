@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.files
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.external.HaveExternalContent
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.client.stored.library.sync.CollectServiceFilesForSync
 import com.lasthopesoftware.resources.executors.ThreadPools
@@ -15,7 +16,8 @@ import java.net.URI
 
 class StoredFilesPruner(
 	private val serviceFilesToSyncCollector: CollectServiceFilesForSync,
-	private val storedFileAccess: AccessStoredFiles
+	private val storedFileAccess: AccessStoredFiles,
+	private val externalContent: HaveExternalContent,
 ) :
 	PruneStoredFiles
 {
@@ -50,6 +52,16 @@ class StoredFilesPruner(
 					}
 
 					val uri = URI(uriString)
+
+					if (uri.scheme == IoCommon.contentUriScheme) {
+						if (ct.isCancelled) break
+						if (serviceIdsToKeep.contains(storedFile.serviceId)) continue
+
+						storedFileAccess.deleteStoredFile(storedFile)
+						externalContent.removeContent(uri)
+						continue
+					}
+
 					if (uri.scheme != IoCommon.fileUriScheme) continue
 
 					if (ct.isCancelled) break

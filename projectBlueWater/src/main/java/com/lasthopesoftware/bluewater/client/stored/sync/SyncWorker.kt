@@ -114,8 +114,15 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 		DelegatingStoredItemServiceFileCollector(serviceFilesCollector, cachingPolicyFactory)
 	}
 
+	private val externalContentRepository by lazy {
+		ExternalContentRepository(
+			fileProperties,
+			context.contentResolver
+		)
+	}
+
 	private val storedFilesPruner by lazy {
-		StoredFilesPruner(serviceFilesCollector, storedFileAccess)
+		StoredFilesPruner(serviceFilesCollector, storedFileAccess, externalContentRepository)
 	}
 
 	private val storedFilesSynchronization by lazy {
@@ -129,10 +136,7 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 			true,
 			applicationMessageBus
 		)
-		val externalContentRepository = ExternalContentRepository(
-			fileProperties,
-			context.contentResolver
-		)
+
 		val storedFileUpdater = StoredFileUpdater(
             storedFileAccess,
 			mediaFileUriProvider,

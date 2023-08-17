@@ -9,4 +9,6 @@ interface HaveExternalContent {
 	fun promiseNewContentUri(libraryId: LibraryId, serviceFile: ServiceFile): Promise<URI?>
 
 	fun markContentAsNotPending(uri: URI): Promise<Unit>
+
+	fun removeContent(uri: URI): Promise<Boolean>
 }
