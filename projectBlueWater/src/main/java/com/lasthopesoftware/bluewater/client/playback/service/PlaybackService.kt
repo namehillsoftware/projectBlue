@@ -559,10 +559,8 @@ import java.util.concurrent.TimeoutException
 				arbitratorForOs),
 			CachedAudioFileUriProvider(remoteFileUriProvider, audioCache),
 			MediaFileUriProvider(
-				MediaQueryCursorProvider(contentResolver, storedFileAccess, cachedFileProperties),
-				arbitratorForOs,
-				false,
-				applicationMessageBus
+				MediaQueryCursorProvider(contentResolver, cachedFileProperties),
+				arbitratorForOs
 			),
 			remoteFileUriProvider
 		)
@@ -1172,6 +1170,4 @@ import java.util.concurrent.TimeoutException
 			val playbackServiceAction by lazy { magicPropertyBuilder.buildProperty("playbackServiceAction") }
 		}
 	}
-
-	private class UninitializedPlaybackEngineException : PlaybackEngineInitializationException("The playback engine did not properly initialize")
 }

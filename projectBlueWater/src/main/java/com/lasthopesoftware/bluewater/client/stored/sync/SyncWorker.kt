@@ -128,13 +128,11 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 	private val storedFilesSynchronization by lazy {
 		val contentResolver = context.contentResolver
 
-		val cursorProvider = MediaQueryCursorProvider(contentResolver, storedFileAccess, fileProperties)
+		val cursorProvider = MediaQueryCursorProvider(contentResolver, fileProperties)
 
 		val mediaFileUriProvider = MediaFileUriProvider(
 			cursorProvider,
-			readPermissionArbitratorForOs,
-			true,
-			applicationMessageBus
+			readPermissionArbitratorForOs
 		)
 
 		val storedFileUpdater = StoredFileUpdater(

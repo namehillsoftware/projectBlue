@@ -40,8 +40,8 @@ class StoredItemServiceFileCollector(
 			val promisedServiceFileLists = promisedStoredItems
 				.eventually { storedItems ->
 					if (cancellationProxy.isCancelled) Promise(CancellationException())
-					else Promise.whenAll(storedItems
-						.map { storedItem -> promiseServiceFiles(libraryId, storedItem, cancellationProxy) })
+					else Promise
+						.whenAll(storedItems.map { storedItem -> promiseServiceFiles(libraryId, storedItem, cancellationProxy) })
 				}
 			cancellationProxy.doCancel(promisedServiceFileLists)
 

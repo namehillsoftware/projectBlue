@@ -10,17 +10,12 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.ProvideMediaQueryCursor
 import com.lasthopesoftware.bluewater.shared.android.permissions.CheckOsPermissions
 import com.lasthopesoftware.bluewater.shared.lazyLogger
-import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
-import com.lasthopesoftware.bluewater.shared.messages.application.SendApplicationMessages
 import com.lasthopesoftware.resources.uri.MediaCollections
 import com.namehillsoftware.handoff.promises.Promise
-import java.io.File
 
 class MediaFileUriProvider(
     private val mediaQueryCursorProvider: ProvideMediaQueryCursor,
-    private val externalStorageReadPermissionsArbitrator: CheckOsPermissions,
-    private val isSilent: Boolean,
-    private val sendApplicationMessages: SendApplicationMessages
+    private val externalStorageReadPermissionsArbitrator: CheckOsPermissions
 ) : ProvideFileUrisForLibrary {
 
     override fun promiseUri(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Uri?> =
@@ -35,39 +30,13 @@ class MediaFileUriProvider(
 					// The file object will produce a properly escaped file URI, as opposed to what is stored in the DB
 					val collectionUri = MediaCollections.ExternalAudio
 
-//					if (!isSilent) {
-//
-//						val mediaId = try {
-//							it.getInt(cursor.getColumnIndexOrThrow(audioIdKey))
-//						} catch (ie: IllegalArgumentException) {
-//							logger.info("Illegal column name.", ie)
-//							null
-//						}
-//
-//						sendApplicationMessages.sendMessage(
-//							MediaFileFound(
-//								libraryId,
-//								mediaId,
-//								serviceFile,
-//								systemFile
-//							)
-//						)
-//					}
-
 					val uri = ContentUris.withAppendedId(collectionUri, fileId)
 					logger.info("Returning media file URI {} from local disk.", uri)
 					uri
 				}
 			}
 
-	class MediaFileFound(
-		val libraryId: LibraryId,
-		val mediaId: Int?,
-		val serviceFile: ServiceFile,
-		val systemFile: File,
-	) : ApplicationMessage
-
-    companion object {
+	companion object {
 		private const val audioIdKey = MediaStore.Audio.Media._ID
         private val logger by lazyLogger<MediaFileUriProvider>()
     }
