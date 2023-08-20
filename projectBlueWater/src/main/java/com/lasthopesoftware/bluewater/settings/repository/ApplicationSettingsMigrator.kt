@@ -11,7 +11,7 @@ import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEnt
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.isVolumeLevelingEnabledColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.playbackEngineTypeNameColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.tableName
-import com.namehillsoftware.artful.Artful
+import com.namehillsoftware.querydroid.SqLiteCommand
 
 class ApplicationSettingsMigrator(private val context: Context) {
 	companion object {
@@ -27,7 +27,7 @@ class ApplicationSettingsMigrator(private val context: Context) {
 	}
 
 	fun migrateSettings(db: SQLiteDatabase) {
-		val artful = Artful(db, checkIfTableExists)
+		val artful = SqLiteCommand(db, checkIfTableExists)
 		val count = artful.execute()
 
 		if (count > 0) return
@@ -49,7 +49,7 @@ class ApplicationSettingsMigrator(private val context: Context) {
 			.build()
 
 		val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
-		val insertArtSql = Artful(db, insertQuery)
+		val insertArtSql = SqLiteCommand(db, insertQuery)
 		insertArtSql
 			.addParameter(isSyncOnWifiOnlyColumn, sharedPreferences.getBoolean(OldConstants.isSyncOnWifiOnlyKey, false))
 			.addParameter(isSyncOnPowerOnlyColumn, sharedPreferences.getBoolean(OldConstants.isSyncOnPowerOnlyKey, false))

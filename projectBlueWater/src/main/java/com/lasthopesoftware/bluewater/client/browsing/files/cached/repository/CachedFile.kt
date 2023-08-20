@@ -8,7 +8,7 @@ import com.lasthopesoftware.bluewater.repository.IEntityUpdater
 
 @Keep
 class CachedFile : Entity, IEntityCreator, IEntityUpdater {
-    var id: Long = 0
+    override var id: Long = 0
 
     /**
      * @return the library

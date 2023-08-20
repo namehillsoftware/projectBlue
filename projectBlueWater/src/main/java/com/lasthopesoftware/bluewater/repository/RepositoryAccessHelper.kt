@@ -13,7 +13,7 @@ import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsCre
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsMigrator
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsUpdater
 import com.lasthopesoftware.bluewater.tutorials.TutorialMigrator
-import com.namehillsoftware.artful.Artful
+import com.namehillsoftware.querydroid.SqLiteCommand
 import java.io.Closeable
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.write
@@ -37,7 +37,7 @@ class RepositoryAccessHelper(private val context: Context) : SQLiteOpenHelper(co
 		writableDatabase
 	}
 
-	fun mapSql(sqlQuery: String): Artful = Artful(sqliteDb.value, sqlQuery)
+	fun mapSql(sqlQuery: String): SqLiteCommand = SqLiteCommand(sqliteDb.value, sqlQuery)
 
 	override fun onCreate(db: SQLiteDatabase) {
 		databaseSynchronization.write {

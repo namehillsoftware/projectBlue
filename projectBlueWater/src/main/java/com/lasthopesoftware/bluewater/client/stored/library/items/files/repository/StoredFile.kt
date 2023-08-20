@@ -9,7 +9,7 @@ import java.util.Objects
 
 @Keep
 class StoredFile() : Entity {
-	var id = 0
+	override var id = 0
 		private set
 	var libraryId = 0
 		private set
@@ -87,8 +87,3 @@ class StoredFile() : Entity {
 			'}'
 	}
 }
-
-fun StoredFile.setURI(uri: URI?) = setUri(uri?.toString())
-
-val StoredFile.URI: URI?
-	get() = uri?.let(::URI)

@@ -20,7 +20,7 @@ import kotlin.random.Random.Default.nextInt
 class WhenAQueueIsCycledThroughManyTimes {
 
 	private val mut by lazy {
-		val numberOfFiles = nextInt(500)
+		val numberOfFiles = nextInt(1, 500)
 		val serviceFiles = generateSequence { ServiceFile(nextInt()) }.take(numberOfFiles).toList()
 		val fileActionMap = serviceFiles.associateWith { MockResolveAction() }
 		val bufferingPlaybackQueuesProvider = CyclicalFileQueueProvider()

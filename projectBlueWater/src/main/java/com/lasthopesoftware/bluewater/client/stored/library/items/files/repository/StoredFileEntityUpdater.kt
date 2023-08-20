@@ -5,10 +5,10 @@ import android.database.SQLException
 import android.database.sqlite.SQLiteDatabase
 import androidx.annotation.Keep
 import com.lasthopesoftware.bluewater.repository.IEntityUpdater
-import com.lasthopesoftware.bluewater.repository.InsertBuilder
 import com.lasthopesoftware.bluewater.repository.fetch
 import com.lasthopesoftware.resources.uri.MediaCollections
-import com.namehillsoftware.artful.Artful
+import com.namehillsoftware.querydroid.SqLiteAssistants
+import com.namehillsoftware.querydroid.SqLiteCommand
 import org.slf4j.LoggerFactory
 import java.io.File
 
@@ -23,7 +23,7 @@ object StoredFileEntityUpdater : IEntityUpdater {
 		"SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='${StoredFileEntityInformation.tableName}'"
 
 	private fun recreateTableSchema(db: SQLiteDatabase) {
-		val artful = Artful(db, checkIfStoredFilesExists)
+		val artful = SqLiteCommand(db, checkIfStoredFilesExists)
 		val storedFileCheckResults = artful.execute()
 		if (storedFileCheckResults == 0L) {
 			db.execSQL(StoredFileEntityInformation.createTableSql)
@@ -43,15 +43,7 @@ object StoredFileEntityUpdater : IEntityUpdater {
 		logger.warn("Creating temp table with SQL: $createTempTableSql")
 		db.execSQL(createTempTableSql)
 		try {
-			val oldStoredFiles = Artful(db, "SELECT * FROM " + StoredFileEntityInformation.tableName).fetch<OldStoredFile>()
-
-			val insertQuery = InsertBuilder.fromTable(storedFilesTempTableName)
-				.addColumn(StoredFileEntityInformation.isDownloadCompleteColumnName)
-				.addColumn(StoredFileEntityInformation.isOwnerColumnName)
-				.addColumn(StoredFileEntityInformation.libraryIdColumnName)
-				.addColumn(StoredFileEntityInformation.uriColumnName)
-				.addColumn(StoredFileEntityInformation.serviceIdColumnName)
-				.build()
+			val oldStoredFiles = SqLiteCommand(db, "SELECT * FROM " + StoredFileEntityInformation.tableName).fetch<Version12StoredFile>()
 
 			for (oldStoredFile in oldStoredFiles) {
 				val newUriString = oldStoredFile
@@ -62,16 +54,16 @@ object StoredFileEntityUpdater : IEntityUpdater {
 
 				if (newUriString.isNullOrEmpty()) continue
 
-				Artful(db, insertQuery)
-					.addParameter(
-						StoredFileEntityInformation.isDownloadCompleteColumnName,
-						oldStoredFile.isDownloadComplete
-					)
-					.addParameter(StoredFileEntityInformation.isOwnerColumnName, oldStoredFile.isOwner)
-					.addParameter(StoredFileEntityInformation.libraryIdColumnName, oldStoredFile.libraryId)
-					.addParameter(StoredFileEntityInformation.uriColumnName, newUriString)
-					.addParameter(StoredFileEntityInformation.serviceIdColumnName, oldStoredFile.serviceId)
-					.execute()
+				SqLiteAssistants.insertValue(
+					db,
+					storedFilesTempTableName,
+					StoredFile()
+						.setServiceId(oldStoredFile.serviceId)
+						.setLibraryId(oldStoredFile.libraryId)
+						.setIsDownloadComplete(oldStoredFile.isDownloadComplete)
+						.setIsOwner(oldStoredFile.isOwner)
+						.setUri(newUriString)
+				)
 			}
 		} catch (sqlException: SQLException) {
 			logger.error("There was an error moving the data!", sqlException)

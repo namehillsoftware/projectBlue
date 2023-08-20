@@ -8,7 +8,7 @@ import com.lasthopesoftware.bluewater.repository.IEntityUpdater
 
 @Keep
 class StoredItem : Entity, IEntityCreator, IEntityUpdater {
-	var id = 0
+	override var id = 0
 	var libraryId = 0
 
 	// unique with library id
