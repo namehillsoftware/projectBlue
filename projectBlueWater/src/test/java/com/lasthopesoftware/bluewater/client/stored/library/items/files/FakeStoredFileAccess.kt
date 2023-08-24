@@ -5,12 +5,18 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
-class FakeStoredFileAccess : AccessStoredFiles {
+class FakeStoredFileAccess(vararg initialStoredFiles: Pair<LibraryId, ServiceFile>) : AccessStoredFiles {
 	private val storedFileCounter = AtomicInteger(0)
 
-	val storedFiles = HashMap<Int, StoredFile>()
+	val storedFiles = ConcurrentHashMap<Int, StoredFile>()
+
+	init {
+	    for ((libraryId, serviceFile) in initialStoredFiles)
+			promiseNewStoredFile(libraryId, serviceFile)
+	}
 
 	val storedFilesMarkedAsDownloaded = storedFiles.values.filter { sf -> sf.isDownloadComplete }
 
@@ -19,7 +25,8 @@ class FakeStoredFileAccess : AccessStoredFiles {
 
     override fun promiseStoredFile(libraryId: LibraryId, serviceFile: ServiceFile): Promise<StoredFile?> =
 		storedFiles.values.firstOrNull { sf -> sf.libraryId == libraryId.id && sf.serviceId == serviceFile.key }.toPromise()
-	override fun promiseAllStoredFiles(libraryId: LibraryId): Promise<Collection<StoredFile>> = storedFiles.values.toPromise()
+	override fun promiseAllStoredFiles(libraryId: LibraryId): Promise<Collection<StoredFile>> =
+		storedFiles.values.filter { it.libraryId == libraryId.id }.toPromise()
 
 	override fun promiseDownloadingFiles(): Promise<List<StoredFile>> =
 		storedFiles.values.filter { sf -> !sf.isDownloadComplete }.toPromise()
