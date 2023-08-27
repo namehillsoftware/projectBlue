@@ -32,7 +32,6 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.view.Act
 import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
 import com.lasthopesoftware.bluewater.permissions.RequestApplicationPermissions
 import com.lasthopesoftware.bluewater.permissions.read.ProvideReadPermissionsRequirements
-import com.lasthopesoftware.bluewater.permissions.write.ProvideWritePermissionsRequirements
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsViewModel
 import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
 import com.lasthopesoftware.bluewater.shared.android.permissions.ManagePermissions
@@ -59,7 +58,6 @@ interface BrowserViewDependencies {
 	val libraryStorage: ILibraryStorage
 	val libraryRemoval: RemoveLibraries
 	val readPermissionsRequirements: ProvideReadPermissionsRequirements
-	val writePermissionsRequirements: ProvideWritePermissionsRequirements
 	val permissionsManager: ManagePermissions
 	val navigationMessages: RegisterForTypedMessages<NavigationMessage>
 	val applicationSettingsRepository: HoldApplicationSettings

@@ -8,9 +8,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.AccessStoredFiles
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.PruneStoredFiles
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileSystemFileProducer
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
@@ -23,7 +21,10 @@ import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 import java.io.IOException
+import java.net.URI
+import java.util.concurrent.TimeUnit
 
 class WhenSyncingTheStoredItemsAndAnErrorOccursDownloading {
 	private val storedFileJobResults by lazy {
@@ -60,16 +61,12 @@ class WhenSyncingTheStoredItemsAndAnErrorOccursDownloading {
 			Promise(
 				StoredFile(
 					firstArg(),
-					1,
-					secondArg(),
-					"fake-file-name",
+                    secondArg(),
+					URI("fake-file-name"),
 					true
 				)
 			)
 		}
-
-		val accessStoredFiles = mockk<AccessStoredFiles>()
-		every { accessStoredFiles.markStoredFileAsDownloaded(any()) } answers { Promise(firstArg<StoredFile>()) }
 
 		val librarySyncHandler = LibrarySyncsHandler(
 			StoredItemServiceFileCollector(
@@ -80,22 +77,25 @@ class WhenSyncingTheStoredItemsAndAnErrorOccursDownloading {
 			storedFilesPruner,
 			storedFilesUpdater,
 			StoredFileJobProcessor(
-				StoredFileSystemFileProducer(),
-				accessStoredFiles,
+				mockk {
+					every { promiseOutputStream(any()) } returns ByteArrayOutputStream().toPromise()
+				},
 				mockk {
 					every { promiseDownload(any(), any()) } returns Promise(ByteArrayInputStream(ByteArray(0)))
 					every { promiseDownload(any(), match { it.serviceId == 2 }) } returns Promise(IOException())
 				},
-				mockk { every { isFileReadPossible(any()) } returns true },
-				mockk { every { isFileWritePossible(any()) } returns true },
-				mockk(relaxUnitFun = true)
+				mockk {
+					every { markStoredFileAsDownloaded(any()) } answers { Promise(firstArg<StoredFile>()) }
+				},
 			)
 		)
 
-		librarySyncHandler.observeLibrarySync(LibraryId(42))
+		librarySyncHandler
+			.observeLibrarySync(LibraryId(42))
 			.filter { j -> j.storedFileJobState == StoredFileJobState.Downloaded }
 			.map { j -> j.storedFile }
 			.toList()
+			.timeout(1, TimeUnit.MINUTES)
 			.blockingGet()
 	}
 

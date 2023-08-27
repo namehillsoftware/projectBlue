@@ -8,59 +8,57 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Stor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
-import com.lasthopesoftware.resources.io.WriteFileStreams
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.BeforeClass
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 import java.io.ByteArrayInputStream
-import java.io.File
 import java.io.IOException
+import java.io.OutputStream
+import java.net.URI
 
 class WhenProcessingTheJob {
 
-	companion object {
-		private var storedFileWriteException: Throwable? = null
-		private val storedFile = StoredFile(LibraryId(5), 1, ServiceFile(1), "test-path", true)
-		private val states: MutableList<StoredFileJobState> = ArrayList()
+	private var storedFileWriteException: Throwable? = null
+	private val storedFile = StoredFile(LibraryId(5), ServiceFile(1), URI("test-path"), true)
+	private val states = ArrayList<StoredFileJobState>()
 
-		@RequiresApi(api = Build.VERSION_CODES.N)
-		@JvmStatic
-		@BeforeClass
-		fun before() {
-			val storedFileJobProcessor = StoredFileJobProcessor(
-				mockk {
-					every { getFile(any()) } answers {
-						val file = mockk<File>(relaxed = true)
-						val parentFile = mockk<File>(relaxed = true).apply {
-							every { exists() } returns false
-							every { mkdirs() } returns true
-						}
-						every { file.parentFile } returns parentFile
-						file
-					}
-				},
-				mockk(),
-				mockk { every { promiseDownload(any(), any()) } returns Promise(ByteArrayInputStream(ByteArray(0))) },
-				mockk { every { isFileReadPossible(any()) } returns false },
-				mockk { every { isFileWritePossible(any()) } returns true },
-				mockk<WriteFileStreams>().apply { every { writeStreamToFile(any(), any()) } throws IOException() })
-			storedFileJobProcessor.observeStoredFileDownload(
-				setOf(
-					StoredFileJob(
-						LibraryId(5),
-						ServiceFile(1),
-						storedFile
+	@RequiresApi(api = Build.VERSION_CODES.N)
+	@BeforeAll
+	fun before() {
+		val storedFileJobProcessor = StoredFileJobProcessor(
+			mockk {
+				every { promiseOutputStream(any()) } returns Promise(mockk<OutputStream>(relaxUnitFun = true) {
+					every { write(any(), any(), any()) } throws IOException()
+				})
+			},
+			mockk {
+				every { promiseDownload(any(), any()) } returns Promise(
+					ByteArrayInputStream(
+						byteArrayOf(
+							(474 % 128).toByte(),
+							(550 % 128).toByte(),
+						)
 					)
 				)
+			},
+			mockk(),
+		)
+		storedFileJobProcessor.observeStoredFileDownload(
+			setOf(
+				StoredFileJob(
+					LibraryId(5),
+					ServiceFile(1),
+					storedFile
+				)
 			)
-				.map { f -> f.storedFileJobState }
-				.blockingSubscribe(
-					{ storedFileJobState -> states.add(storedFileJobState) }
-				) { e -> storedFileWriteException = e }
-		}
+		)
+			.map { f -> f.storedFileJobState }
+			.blockingSubscribe(
+				{ storedFileJobState -> states.add(storedFileJobState) }
+			) { e -> storedFileWriteException = e }
 	}
 
 	@Test

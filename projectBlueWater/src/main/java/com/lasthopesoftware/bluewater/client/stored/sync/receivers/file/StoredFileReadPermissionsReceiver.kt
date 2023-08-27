@@ -16,7 +16,7 @@ class StoredFileReadPermissionsReceiver(
 	private val storedFileAccess: AccessStoredFiles
 ) : ReceiveStoredFileEvent, ImmediateResponse<StoredFile?, Unit> {
 	override fun receive(storedFileId: Int): Promise<Unit> =
-		if (!readPermissionArbitratorForOs.isReadPermissionGranted) storedFileAccess.getStoredFile(storedFileId).then(this)
+		if (!readPermissionArbitratorForOs.isReadPermissionGranted) storedFileAccess.promiseStoredFile(storedFileId).then(this)
 		else Promise.empty()
 
 	override fun acceptedEvents(): Collection<Class<out StoredFileMessage>> =

@@ -4,7 +4,6 @@ import android.Manifest
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.permissions.read.ProvideReadPermissionsRequirements
-import com.lasthopesoftware.bluewater.permissions.write.ProvideWritePermissionsRequirements
 import com.lasthopesoftware.bluewater.shared.android.permissions.CheckOsPermissions
 import com.lasthopesoftware.bluewater.shared.android.permissions.ManagePermissions
 import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
@@ -13,7 +12,6 @@ import com.namehillsoftware.handoff.promises.Promise
 class ApplicationPermissionsRequests(
 	private val libraryProvider: ILibraryProvider,
 	private val applicationReadPermissionsRequirementsProvider: ProvideReadPermissionsRequirements,
-	private val applicationWritePermissionsRequirementsProvider: ProvideWritePermissionsRequirements,
 	private val permissionsManager: ManagePermissions,
 	private val checkOsPermissions: CheckOsPermissions,
 ) : RequestApplicationPermissions {
@@ -27,8 +25,6 @@ class ApplicationPermissionsRequests(
 						permissionsToRequest.add(Manifest.permission.READ_MEDIA_AUDIO)
 					if (!permissionsToRequest.contains(Manifest.permission.READ_EXTERNAL_STORAGE) && applicationReadPermissionsRequirementsProvider.isReadPermissionsRequiredForLibrary(library))
 						permissionsToRequest.add(Manifest.permission.READ_EXTERNAL_STORAGE)
-					if (!permissionsToRequest.contains(Manifest.permission.WRITE_EXTERNAL_STORAGE) && applicationWritePermissionsRequirementsProvider.isWritePermissionsRequiredForLibrary(library))
-						permissionsToRequest.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
 				}
 
 				if (checkOsPermissions.isNotificationsPermissionNotGranted) {
@@ -45,8 +41,6 @@ class ApplicationPermissionsRequests(
 			permissionsToRequest.add(Manifest.permission.READ_MEDIA_AUDIO)
 		if (applicationReadPermissionsRequirementsProvider.isReadPermissionsRequiredForLibrary(library))
 			permissionsToRequest.add(Manifest.permission.READ_EXTERNAL_STORAGE)
-		if (applicationWritePermissionsRequirementsProvider.isWritePermissionsRequiredForLibrary(library))
-			permissionsToRequest.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
 
 		return permissionsManager
 			.requestPermissions(permissionsToRequest.toList())

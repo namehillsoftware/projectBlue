@@ -10,6 +10,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem.ItemType
 import com.lasthopesoftware.bluewater.client.stored.library.sync.CollectServiceFilesForSync
+import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.promises.ForwardedResponse.Companion.forward
 import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
 import com.lasthopesoftware.resources.executors.ThreadPools
@@ -18,17 +19,17 @@ import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
 import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
-import org.slf4j.LoggerFactory
 import java.io.FileNotFoundException
 import java.util.concurrent.CancellationException
 
 class StoredItemServiceFileCollector(
 	private val storedItemAccess: AccessStoredItems,
 	private val fileProvider: ProvideLibraryFiles,
-	private val fileListParameters: IFileListParameterProvider) : CollectServiceFilesForSync {
+	private val fileListParameters: IFileListParameterProvider
+) : CollectServiceFilesForSync {
 
 	companion object {
-		private val logger by lazy { LoggerFactory.getLogger(StoredItemServiceFileCollector::class.java) }
+		private val logger by lazyLogger<StoredItemServiceFileCollector>()
 	}
 
 	override fun promiseServiceFilesToSync(libraryId: LibraryId): Promise<Collection<ServiceFile>> {
@@ -39,8 +40,8 @@ class StoredItemServiceFileCollector(
 			val promisedServiceFileLists = promisedStoredItems
 				.eventually { storedItems ->
 					if (cancellationProxy.isCancelled) Promise(CancellationException())
-					else Promise.whenAll(storedItems
-						.map { storedItem -> promiseServiceFiles(libraryId, storedItem, cancellationProxy) })
+					else Promise
+						.whenAll(storedItems.map { storedItem -> promiseServiceFiles(libraryId, storedItem, cancellationProxy) })
 				}
 			cancellationProxy.doCancel(promisedServiceFileLists)
 
@@ -80,7 +81,7 @@ class StoredItemServiceFileCollector(
 
 		override fun respond(e: Throwable): List<ServiceFile> {
 			if (e is FileNotFoundException) {
-				logger.warn("The item " + item.id + " was not found, disabling sync for item")
+				logger.warn("The item ${item.id} was not found, disabling sync for item")
 				storedItemAccess.toggleSync(libraryId, item, false)
 				return emptyList()
 			}

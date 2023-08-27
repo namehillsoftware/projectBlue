@@ -4,11 +4,12 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTuple
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.AccessStoredFiles
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.UpdateStoredFiles
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -17,10 +18,12 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.net.URI
 
 class WhenProcessingTheJob {
-	private val storedFile = StoredFile(LibraryId(5), 1, ServiceFile(1), "test-path", true)
-	private val storedFileAccess = mockk<AccessStoredFiles> {
+	private val storedFile = StoredFile(LibraryId(5), ServiceFile(1), URI("test-path"), true)
+	private val storedFileAccess = mockk<UpdateStoredFiles> {
 		every { markStoredFileAsDownloaded(any()) } answers { Promise(firstArg<StoredFile>()) }
 	}
 	private var states: List<StoredFileJobState>? = null
@@ -36,16 +39,11 @@ class WhenProcessingTheJob {
 		})
 		val storedFileJobProcessor = StoredFileJobProcessor(
 			mockk {
-				every { getFile(any()) } returns mockk {
-					every { parentFile } returns null
-					every { exists() } returns false
-				}
+				every { promiseOutputStream(any()) } returns ByteArrayOutputStream().toPromise()
 			},
-			storedFileAccess,
 			mockk { every { promiseDownload(any(), any()) } returns Promise(ByteArrayInputStream(ByteArray(0))) },
-			mockk { every { isFileReadPossible(any()) } returns false },
-			mockk { every { isFileWritePossible(any()) } returns true },
-			mockk(relaxUnitFun = true))
+			storedFileAccess,
+		)
 		states = storedFileJobProcessor.observeStoredFileDownload(
 			setOf(
 				StoredFileJob(

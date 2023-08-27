@@ -25,7 +25,7 @@ import java.net.URL
 private const val serviceFileId = 220
 
 @RunWith(AndroidJUnit4::class)
-class WhenAnotherPropertyIsEdited {
+class WhenTheLyricsPropertyIsEdited {
 	companion object {
 		private var persistedValue = ""
 
@@ -63,14 +63,18 @@ class WhenAnotherPropertyIsEdited {
 					}
 				},
 				mockk {
-					every { promiseFileBitmap() } returns BitmapFactory
-						.decodeByteArray(byteArrayOf(3, 4), 0, 2)
-						.toPromise()
+					every { promiseFileBitmap() } answers {
+						BitmapFactory
+							.decodeByteArray(byteArrayOf(3, 4), 0, 2)
+							.toPromise()
+					}
 				},
 				mockk {
-					every { promiseFileBitmap(any()) } returns BitmapFactory
-						.decodeByteArray(byteArrayOf(61, 127), 0, 2)
-						.toPromise()
+					every { promiseFileBitmap(any()) } answers {
+						BitmapFactory
+							.decodeByteArray(byteArrayOf(61, 127), 0, 2)
+							.toPromise()
+					}
 				},
 				mockk(),
 				RecordingApplicationMessageBus(),

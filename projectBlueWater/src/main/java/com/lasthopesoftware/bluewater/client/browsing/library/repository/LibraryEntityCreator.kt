@@ -21,7 +21,7 @@ import com.lasthopesoftware.bluewater.repository.IEntityCreator
 
 object LibraryEntityCreator : IEntityCreator {
 	override fun onCreate(db: SQLiteDatabase) =
-		db.execSQL("""CREATE TABLE `LIBRARIES` (
+		db.execSQL("""CREATE TABLE IF NOT EXISTS `LIBRARIES` (
 			`$accessCodeColumn` VARCHAR(30) ,
 			`$userNameColumn` VARCHAR ,
 			`$passwordColumn` VARCHAR ,

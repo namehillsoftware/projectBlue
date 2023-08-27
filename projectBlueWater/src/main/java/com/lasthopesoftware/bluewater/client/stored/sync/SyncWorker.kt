@@ -28,20 +28,17 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.StoredFilesCou
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemServiceFileCollector
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileSystemFileProducer
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileUriDestinationBuilder
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFilesChecker
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFilesPruner
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.download.StoredFileDownloader
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.external.ExternalContentRepository
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFileQuery
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFilesCollection
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.MediaFileIdProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.MediaQueryCursorProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFilePathsLookup
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFileUpdater
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFileUrisLookup
 import com.lasthopesoftware.bluewater.client.stored.library.permissions.read.StorageReadPermissionsRequestedBroadcaster
-import com.lasthopesoftware.bluewater.client.stored.library.permissions.write.StorageWritePermissionsRequestedBroadcaster
 import com.lasthopesoftware.bluewater.client.stored.library.sync.LibrarySyncsHandler
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncChecker
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncDirectoryLookup
@@ -51,7 +48,6 @@ import com.lasthopesoftware.bluewater.client.stored.sync.receivers.SyncStartedRe
 import com.lasthopesoftware.bluewater.client.stored.sync.receivers.file.StoredFileBroadcastReceiver
 import com.lasthopesoftware.bluewater.client.stored.sync.receivers.file.StoredFileDownloadingNotifier
 import com.lasthopesoftware.bluewater.client.stored.sync.receivers.file.StoredFileReadPermissionsReceiver
-import com.lasthopesoftware.bluewater.client.stored.sync.receivers.file.StoredFileWritePermissionsReceiver
 import com.lasthopesoftware.bluewater.shared.android.intents.IntentBuilder
 import com.lasthopesoftware.bluewater.shared.android.notifications.NoOpChannelActivator
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.NotificationChannelActivator
@@ -63,12 +59,11 @@ import com.lasthopesoftware.bluewater.shared.policies.caching.CachingPolicyFacto
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.lasthopesoftware.resources.executors.ThreadPools
-import com.lasthopesoftware.resources.io.FileStreamWriter
+import com.lasthopesoftware.resources.io.OsFileSupplier
 import com.lasthopesoftware.storage.FreeSpaceLookup
 import com.lasthopesoftware.storage.directories.PrivateDirectoryLookup
 import com.lasthopesoftware.storage.directories.PublicDirectoryLookup
-import com.lasthopesoftware.storage.read.permissions.FileReadPossibleArbitrator
-import com.lasthopesoftware.storage.write.permissions.FileWritePossibleArbitrator
+import com.lasthopesoftware.storage.write.permissions.FileWritePossibleTester
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
 
@@ -80,19 +75,19 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 		private const val notificationId = 23
 	}
 
-	private val syncChecker by lazy {
-		SyncChecker(
-			LibraryRepository(context),
-			serviceFilesCollector,
-			StoredFilesChecker(StoredFilesCounter(StoredFilesCollection(context)))
-		)
-	}
-
 	private val applicationMessageBus by lazy { getApplicationMessageBus().getScopedMessageBus() }
 	private val storedFileAccess by lazy { StoredFileAccess(context) }
 	private val readPermissionArbitratorForOs by lazy { OsPermissionsChecker(context) }
 	private val libraryConnections by lazy { ConnectionSessionManager.get(context) }
 	private val cachingPolicyFactory by lazy { CachingPolicyFactory() }
+
+	private val syncChecker by lazy {
+		SyncChecker(
+			LibraryRepository(context),
+			serviceFilesCollector,
+			StoredFilesChecker(StoredFilesCounter(storedFileAccess))
+		)
+	}
 
 	private val libraryProvider by lazy { DelegatingLibraryProvider(LibraryRepository(context), cachingPolicyFactory) }
 
@@ -119,46 +114,57 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 		DelegatingStoredItemServiceFileCollector(serviceFilesCollector, cachingPolicyFactory)
 	}
 
+	private val externalContentRepository by lazy {
+		ExternalContentRepository(
+			fileProperties,
+			context.contentResolver
+		)
+	}
+
 	private val storedFilesPruner by lazy {
-		StoredFilesPruner(serviceFilesCollector, StoredFilesCollection(context), storedFileAccess)
+		StoredFilesPruner(serviceFilesCollector, storedFileAccess, externalContentRepository)
 	}
 
 	private val storedFilesSynchronization by lazy {
-		val cursorProvider = MediaQueryCursorProvider(
-			context,
-			fileProperties
+		val contentResolver = context.contentResolver
+
+		val cursorProvider = MediaQueryCursorProvider(contentResolver, fileProperties)
+
+		val mediaFileUriProvider = MediaFileUriProvider(
+			cursorProvider,
+			readPermissionArbitratorForOs
 		)
 
 		val storedFileUpdater = StoredFileUpdater(
-            context,
-            MediaFileUriProvider(
-				cursorProvider,
-				readPermissionArbitratorForOs,
-                true,
-				applicationMessageBus
-			),
-            MediaFileIdProvider(cursorProvider, readPermissionArbitratorForOs),
-            StoredFileQuery(context),
-            libraryProvider,
-			StoredFilePathsLookup(
+            storedFileAccess,
+			mediaFileUriProvider,
+			libraryProvider,
+			StoredFileUrisLookup(
 				fileProperties,
-				SyncDirectoryLookup(libraryProvider, PublicDirectoryLookup(context), PrivateDirectoryLookup(context), FreeSpaceLookup)
-			)
-        )
+				libraryProvider,
+				SyncDirectoryLookup(
+					libraryProvider,
+					PublicDirectoryLookup(context),
+					PrivateDirectoryLookup(context),
+					FreeSpaceLookup
+				),
+				mediaFileUriProvider,
+				externalContentRepository
+			),
+			externalContentRepository
+		)
 
 		val syncHandler = LibrarySyncsHandler(
 			serviceFilesCollector,
 			storedFilesPruner,
 			storedFileUpdater,
 			StoredFileJobProcessor(
-				StoredFileSystemFileProducer(),
-				storedFileAccess,
+				StoredFileUriDestinationBuilder(OsFileSupplier, FileWritePossibleTester, context.contentResolver),
 				StoredFileDownloader(ServiceFileUriQueryParamsProvider, libraryConnections),
-				FileReadPossibleArbitrator(),
-				FileWritePossibleArbitrator(),
-				FileStreamWriter()
+				storedFileUpdater,
 			)
 		)
+
 		StoredFileSynchronization(
 			libraryProvider,
 			applicationMessageBus,
@@ -179,15 +185,10 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 			readPermissionArbitratorForOs,
 			StorageReadPermissionsRequestedBroadcaster(applicationMessageBus),
 			storedFileAccess)
-		val storedFileWritePermissionsReceiver = StoredFileWritePermissionsReceiver(
-			OsPermissionsChecker(context),
-			StorageWritePermissionsRequestedBroadcaster(applicationMessageBus),
-			storedFileAccess)
 
 		arrayOf(
 			storedFileDownloadingNotifier,
 			storedFileReadPermissionsReceiver,
-			storedFileWritePermissionsReceiver
 		)
 	}
 

@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Stor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -16,6 +17,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 
 class WhenProcessingTheQueue {
 	private val storedFileJobs = setOf(
@@ -64,7 +66,7 @@ class WhenProcessingTheQueue {
 		StoredFile().setServiceId(114).setLibraryId(1),
 		StoredFile().setServiceId(92).setLibraryId(1)
 	)
-	private val storedFilesAccess = MarkedFilesStoredFileAccess()
+	private val storedFilesUpdater = MarkedFilesStoredFilesUpdater()
 	private lateinit var storedFileStatuses: List<StoredFileJobStatus>
 
 	@RequiresApi(api = Build.VERSION_CODES.N)
@@ -72,18 +74,12 @@ class WhenProcessingTheQueue {
 	fun before() {
 		val storedFileJobProcessor = StoredFileJobProcessor(
 			mockk {
-				every { getFile(any()) } returns mockk {
-					every { parentFile } returns null
-					every { exists() } returns false
-				}
+				every { promiseOutputStream(any()) } returns ByteArrayOutputStream().toPromise()
 			},
-			storedFilesAccess,
 			mockk {
 				every { promiseDownload(any(), any()) } returns Promise(ByteArrayInputStream(ByteArray(0)))
 			},
-			mockk { every { isFileReadPossible(any()) } returns false },
-			mockk { every { isFileWritePossible(any()) } returns true },
-			mockk(relaxUnitFun = true)
+			storedFilesUpdater,
 		)
 		storedFileStatuses =
 			storedFileJobProcessor.observeStoredFileDownload(storedFileJobs).toList().blockingGet()
@@ -91,7 +87,7 @@ class WhenProcessingTheQueue {
 
 	@Test
 	fun `then the files are all marked as downloaded`() {
-		assertThat(storedFilesAccess.storedFilesMarkedAsDownloaded)
+		assertThat(storedFilesUpdater.storedFilesMarkedAsDownloaded)
 			.containsExactly(*expectedStoredFiles)
 	}
 

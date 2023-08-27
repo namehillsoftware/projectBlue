@@ -20,18 +20,19 @@ ENV PATH ${ANDROID_HOME}/cmdline-tools/cmdline-tools/bin:${ANDROID_HOME}/tools:$
 # set default build arguments
 ARG SDK_VERSION=commandlinetools-linux-10406996_latest.zip
 
+RUN curl -sSL https://dl.google.com/android/repository/${SDK_VERSION} -o /tmp/sdk.zip \
+    && mkdir ${ANDROID_HOME} \
+    && unzip -q -d ${ANDROID_HOME}/cmdline-tools /tmp/sdk.zip \
+    && rm /tmp/sdk.zip \
+    && yes | sdkmanager --licenses
+
 # Set these to the same versions as in build.gradle to avoid downloading updated tools
 ARG ANDROID_BUILD_VERSION=34
 ARG ANDROID_TOOLS_VERSION=33.0.1
 
 # Full reference at https://dl.google.com/android/repository/repository2-1.xml
 # download and unpack android
-RUN curl -sSL https://dl.google.com/android/repository/${SDK_VERSION} -o /tmp/sdk.zip \
-    && mkdir ${ANDROID_HOME} \
-    && unzip -q -d ${ANDROID_HOME}/cmdline-tools /tmp/sdk.zip \
-    && rm /tmp/sdk.zip \
-    && yes | sdkmanager --licenses \
-    && yes | sdkmanager "platform-tools" \
+RUN yes | sdkmanager "platform-tools" \
 #        "emulator" \ # keeping just in case it is needed
         "platforms;android-${ANDROID_BUILD_VERSION}" \
         "build-tools;${ANDROID_TOOLS_VERSION}" \

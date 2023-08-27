@@ -66,7 +66,7 @@ class WhenSynchronizing {
 							StoredFileJobStatus(f, StoredFileJobState.Downloading),
 						),
 						Observable.error(
-							StoredFileWriteException(mockk(), f)
+							StoredFileWriteException(f, mockk())
 						)
 					)
 				}, true)

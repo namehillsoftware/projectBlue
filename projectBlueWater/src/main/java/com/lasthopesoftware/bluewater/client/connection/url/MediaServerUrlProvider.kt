@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.connection.url
 
-import com.lasthopesoftware.bluewater.shared.IoCommon
+import com.lasthopesoftware.resources.uri.IoCommon
 import java.io.UnsupportedEncodingException
 import java.net.URL
 import java.net.URLEncoder

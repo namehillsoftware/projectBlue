@@ -81,7 +81,6 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.view.Act
 import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
 import com.lasthopesoftware.bluewater.permissions.ApplicationPermissionsRequests
 import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermissionsRequirementsProvider
-import com.lasthopesoftware.bluewater.permissions.write.ApplicationWritePermissionsRequirementsProvider
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsView
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsViewModel
 import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsView
@@ -295,8 +294,6 @@ class BrowserActivity :
 
 	override val readPermissionsRequirements by lazy { ApplicationReadPermissionsRequirementsProvider(osPermissionChecker) }
 
-	override val writePermissionsRequirements by lazy { ApplicationWritePermissionsRequirementsProvider(osPermissionChecker) }
-
 	override val permissionsManager = this
 
 	override val navigationMessages by buildViewModelLazily { ViewModelMessageBus<NavigationMessage>() }
@@ -389,7 +386,6 @@ class BrowserActivity :
 		ApplicationPermissionsRequests(
 			libraryProvider,
 			readPermissionsRequirements,
-			writePermissionsRequirements,
 			this,
 			osPermissionChecker
 		)

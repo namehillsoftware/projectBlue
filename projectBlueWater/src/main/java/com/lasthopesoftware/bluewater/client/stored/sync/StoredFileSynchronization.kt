@@ -45,21 +45,15 @@ class StoredFileSynchronization(
 			.stream()
 			.flatMap({ library -> syncHandler.observeLibrarySync(library.libraryId) }, true)
 			.flatMapCompletable({ storedFileJobStatus ->
-				when (storedFileJobStatus.storedFileJobState) {
-					StoredFileJobState.Queued -> {
-						applicationMessages.sendMessage(StoredFileMessage.FileQueued(storedFileJobStatus.storedFile.id))
-						Completable.complete()
-					}
-					StoredFileJobState.Downloading -> {
-						applicationMessages.sendMessage(StoredFileMessage.FileDownloading(storedFileJobStatus.storedFile.id))
-						Completable.complete()
-					}
-					StoredFileJobState.Downloaded -> {
-						applicationMessages.sendMessage(StoredFileMessage.FileDownloaded(storedFileJobStatus.storedFile.id))
-						Completable.complete()
-					}
-					else ->	Completable.complete()
+				val message = when (storedFileJobStatus.storedFileJobState) {
+					StoredFileJobState.Queued -> StoredFileMessage.FileQueued(storedFileJobStatus.storedFile.id)
+					StoredFileJobState.Downloading -> StoredFileMessage.FileDownloading(storedFileJobStatus.storedFile.id)
+					StoredFileJobState.Downloaded -> StoredFileMessage.FileDownloaded(storedFileJobStatus.storedFile.id)
+					else ->	null
 				}
+
+				message?.let(applicationMessages::sendMessage)
+				Completable.complete()
 			}, true)
 			.onErrorComplete(::handleError)
 			.doOnComplete(::sendStoppedSync)

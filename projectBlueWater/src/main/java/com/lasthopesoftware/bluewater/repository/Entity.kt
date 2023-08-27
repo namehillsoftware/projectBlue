@@ -1,3 +1,5 @@
 package com.lasthopesoftware.bluewater.repository
 
-interface Entity
+interface Entity {
+	val id: Number
+}
