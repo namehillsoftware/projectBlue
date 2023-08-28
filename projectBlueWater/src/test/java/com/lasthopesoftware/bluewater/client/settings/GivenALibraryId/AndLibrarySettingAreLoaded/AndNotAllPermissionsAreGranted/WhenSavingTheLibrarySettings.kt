@@ -38,8 +38,8 @@ class WhenSavingTheLibrarySettings {
             mockk(),
 			mockk {
 				every { promiseIsLibraryPermissionsGranted(any()) } returns false.toPromise()
-			}
-        )
+			},
+		)
     }
 
 	private var isSaved = false

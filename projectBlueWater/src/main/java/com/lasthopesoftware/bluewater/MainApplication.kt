@@ -39,12 +39,9 @@ import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble.PlaybackFileStoppedScrobbleDroidProxy
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble.ScrobbleIntentProvider
 import com.lasthopesoftware.bluewater.client.servers.version.LibraryServerVersionProvider
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
 import com.lasthopesoftware.bluewater.client.stored.library.permissions.StoragePermissionsRequestNotificationBuilder
 import com.lasthopesoftware.bluewater.client.stored.library.permissions.read.StorageReadPermissionsRequestNotificationBuilder
 import com.lasthopesoftware.bluewater.client.stored.library.permissions.read.StorageReadPermissionsRequestedBroadcaster
-import com.lasthopesoftware.bluewater.client.stored.library.permissions.write.StorageWritePermissionsRequestNotificationBuilder
-import com.lasthopesoftware.bluewater.client.stored.library.permissions.write.StorageWritePermissionsRequestedBroadcaster
 import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
 import com.lasthopesoftware.bluewater.client.stored.sync.notifications.SyncChannelProperties
 import com.lasthopesoftware.bluewater.client.stored.sync.receivers.SyncItemStateChangedListener
@@ -85,8 +82,6 @@ open class MainApplication : Application() {
 		)
 	}
 
-	private val storedFileAccess by lazy { StoredFileAccess(this) }
-
 	private val notificationManager by lazy { getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager }
 
 	private val syncChannelProperties by lazy { SyncChannelProperties(this) }
@@ -95,13 +90,6 @@ open class MainApplication : Application() {
 		NotificationsConfiguration(
 			syncChannelProperties.channelId,
 			336
-		)
-	}
-
-	private val storageWritePermissionsConfiguration by lazy {
-		NotificationsConfiguration(
-			syncChannelProperties.channelId,
-			396
 		)
 	}
 
@@ -116,10 +104,6 @@ open class MainApplication : Application() {
 
 	private val storageReadPermissionsRequestNotificationBuilder by lazy {
 		StorageReadPermissionsRequestNotificationBuilder(storagePermissionsRequestNotificationBuilder)
-	}
-
-	private val storageWritePermissionsRequestNotificationBuilder by lazy {
-		StorageWritePermissionsRequestNotificationBuilder(storagePermissionsRequestNotificationBuilder)
 	}
 
 	private val applicationMessageBus by lazy { getApplicationMessageBus() }
@@ -157,14 +141,6 @@ open class MainApplication : Application() {
 				storageReadPermissionsConfiguration.notificationId,
 				storageReadPermissionsRequestNotificationBuilder
 					.buildReadPermissionsRequestNotification(readPermissionsNeeded.libraryId.id))
-		}
-
-		applicationMessageBus.registerReceiver { writePermissionsNeeded : StorageWritePermissionsRequestedBroadcaster.WritePermissionsNeeded ->
-			notificationManager.notify(
-				storageWritePermissionsConfiguration.notificationId,
-				storageWritePermissionsRequestNotificationBuilder
-					.buildWritePermissionsRequestNotification(writePermissionsNeeded.libraryId.id)
-			)
 		}
 
 		applicationMessageBus.registerReceiver(ConnectionSessionSettingsChangeReceiver(libraryConnections))

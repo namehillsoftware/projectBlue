@@ -29,6 +29,7 @@ import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsViewModel
 import com.lasthopesoftware.bluewater.client.stored.library.items.StateChangeBroadcastingStoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.view.ActiveFileDownloadsViewModel
+import com.lasthopesoftware.bluewater.client.stored.library.permissions.folder.RequestWritableFolders
 import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
 import com.lasthopesoftware.bluewater.permissions.RequestApplicationPermissions
 import com.lasthopesoftware.bluewater.permissions.read.ProvideReadPermissionsRequirements
@@ -72,6 +73,7 @@ interface BrowserViewDependencies {
 	val reusableFileItemViewModelProvider: ReusableFileItemViewModelProvider
 	val applicationSettingsViewModel: ApplicationSettingsViewModel
 	val applicationPermissions: RequestApplicationPermissions
+	val folderPermissions: RequestWritableFolders
 }
 
 /**

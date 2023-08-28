@@ -33,7 +33,7 @@ class WhenLoadingTheLibrarySettings {
             mockk(),
             mockk(),
 			mockk(),
-        )
+		)
     }
 
     @BeforeAll

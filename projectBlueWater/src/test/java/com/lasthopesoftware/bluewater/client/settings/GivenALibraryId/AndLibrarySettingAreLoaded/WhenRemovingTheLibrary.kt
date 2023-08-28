@@ -41,7 +41,7 @@ class WhenRemovingTheLibrary {
 				}
 			},
 			mockk(),
-        )
+		)
     }
 
 	private val removedLibraries = mutableListOf<Library>()

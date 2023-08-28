@@ -40,8 +40,8 @@ class WhenRemovingTheLibrary {
 					Unit.toPromise()
 				}
 			},
-			mockk()
-        )
+			mockk(),
+		)
     }
 
 	private val removedLibraries = mutableListOf<Library>()

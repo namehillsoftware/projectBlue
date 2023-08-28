@@ -9,6 +9,8 @@ import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import io.reactivex.Completable
 import io.reactivex.CompletableObserver
+import io.reactivex.Observable
+import io.reactivex.Observer
 import io.reactivex.disposables.Disposable
 import kotlinx.coroutines.*
 import java.util.concurrent.ExecutionException
@@ -28,6 +30,8 @@ suspend fun <T> Promise<T>.suspend(): T = suspendCancellableCoroutine { d ->
 }
 
 fun Completable.toPromise(): Promise<Unit> = CompletablePromise(this)
+
+fun <T : Any> Observable<T>.promiseFirstResult(): Promise<T> = ObserverPromise(this)
 
 fun <T> ListenableFuture<T>.toPromise(executor: Executor): Promise<T> = PromisedListenableFuture(this, executor)
 
@@ -85,6 +89,35 @@ private class CompletablePromise(completable: Completable) : Promise<Unit>(), Co
 	}
 
 	override fun onComplete() = resolve(Unit)
+
+	override fun onError(e: Throwable) = reject(e)
+}
+
+private class ObserverPromise<T : Any>(observable: Observable<T>) : Promise<T>(), Observer<T>, Runnable {
+	private lateinit var disposable: Disposable
+
+	init {
+		observable.subscribe(this)
+		respondToCancellation(this)
+	}
+
+	override fun onNext(t: T) {
+		resolve(t)
+		disposable.dispose()
+	}
+
+	override fun onComplete() {
+		reject(IllegalStateException("Observable was completed before a result was received."))
+		disposable.dispose()
+	}
+
+	override fun run() {
+		disposable.dispose()
+	}
+
+	override fun onSubscribe(d: Disposable) {
+		disposable = d
+	}
 
 	override fun onError(e: Throwable) = reject(e)
 }
