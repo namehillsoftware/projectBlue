@@ -62,7 +62,6 @@ import com.lasthopesoftware.resources.executors.ThreadPools
 import com.lasthopesoftware.resources.io.OsFileSupplier
 import com.lasthopesoftware.storage.FreeSpaceLookup
 import com.lasthopesoftware.storage.directories.PrivateDirectoryLookup
-import com.lasthopesoftware.storage.directories.PublicDirectoryLookup
 import com.lasthopesoftware.storage.write.permissions.FileWritePossibleTester
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
@@ -144,8 +143,7 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 				libraryProvider,
 				SyncDirectoryLookup(
 					libraryProvider,
-					PublicDirectoryLookup(context),
-					PrivateDirectoryLookup(context),
+                    PrivateDirectoryLookup(context),
 					FreeSpaceLookup
 				),
 				mediaFileUriProvider,

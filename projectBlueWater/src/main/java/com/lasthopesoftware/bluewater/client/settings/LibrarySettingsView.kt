@@ -58,7 +58,6 @@ import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
-import com.lasthopesoftware.bluewater.client.stored.library.permissions.folder.RequestWritableFolders
 import com.lasthopesoftware.bluewater.shared.android.ui.components.ColumnMenuIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.shared.android.ui.components.LabeledSelection
@@ -71,7 +70,6 @@ import com.lasthopesoftware.bluewater.shared.android.viewmodels.collectAsMutable
 import com.lasthopesoftware.bluewater.shared.promises.extensions.suspend
 import com.lasthopesoftware.resources.strings.GetStringResources
 import kotlinx.coroutines.launch
-import java.io.File
 import kotlin.math.pow
 
 private val expandedTitleHeight = 84.dp
@@ -99,7 +97,6 @@ fun LibrarySettingsView(
 	librarySettingsViewModel: LibrarySettingsViewModel,
 	navigateApplication: NavigateApplication,
 	stringResources: GetStringResources,
-	folderPermissions: RequestWritableFolders,
 ) {
 	ControlSurface {
 		var accessCodeState by librarySettingsViewModel.accessCode.collectAsMutableState()
@@ -280,43 +277,6 @@ fun LibrarySettingsView(
 									onClick = null,
 								)
 							}
-						}
-
-						Row(
-							modifier = Modifier.padding(innerGroupPadding)
-						) {
-							LabeledSelection(
-								label = stringResource(id = R.string.rbCustomLocation),
-								selected = syncedFileLocationState == Library.SyncedFileLocation.CUSTOM,
-								onSelected = { syncedFileLocationState = Library.SyncedFileLocation.CUSTOM },
-								role = Role.RadioButton,
-							) {
-								RadioButton(
-									selected = syncedFileLocationState == Library.SyncedFileLocation.CUSTOM,
-									onClick = null,
-								)
-							}
-						}
-
-						Row(
-							modifier = Modifier
-								.fillMaxWidth()
-								.padding(innerGroupPadding),
-						) {
-							var customSyncPathState by customSyncPath.collectAsMutableState()
-							StandardTextField(
-								placeholder = stringResource(id = R.string.lbl_sync_path),
-								value = customSyncPathState,
-								onValueChange = {},
-								enabled = false,
-								modifier = Modifier
-									.clickable(enabled = syncedFileLocationState == Library.SyncedFileLocation.CUSTOM) {
-										scope.launch {
-											val writableFolder = folderPermissions.promiseWritableFolder().suspend()
-											customSyncPathState = writableFolder?.let(::File)?.path ?: ""
-										}
-									}
-							)
 						}
 
 						val isStoragePermissionsNeeded by isStoragePermissionsNeeded.collectAsState()

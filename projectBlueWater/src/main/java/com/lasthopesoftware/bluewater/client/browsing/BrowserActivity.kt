@@ -726,8 +726,7 @@ private fun LibraryDestination.Navigate(
 						librarySettingsViewModel = viewModel,
 						navigateApplication = applicationNavigation,
 						stringResources = stringResources,
-						folderPermissions = folderPermissions,
-					)
+                    )
 				}
 
 				viewModel.loadLibrary(libraryId)
@@ -932,8 +931,7 @@ private fun BrowserView(
 									librarySettingsViewModel = librarySettingsViewModel,
 									navigateApplication = applicationNavigation,
 									stringResources = stringResources,
-									folderPermissions = folderPermissions,
-								)
+                                )
 							}
 						}
 				}

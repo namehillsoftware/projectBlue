@@ -28,14 +28,15 @@ private class ActivityResultObserver(activity: ComponentActivity) : ActivityResu
 	}
 
 	override fun onActivityResult(result: ActivityResult) {
-		publisher.onNext(result)
+		publisher.offer(result)
 	}
 
 	override fun promiseResult(intent: Intent): Promise<ActivityResult> {
-		val promisedResult = publisher.filter { p -> p.data == intent }.toObservable().promiseFirstResult()
+		val promisedResult = publisher.toObservable().promiseFirstResult()
 		launcher.launch(intent)
 		return promisedResult
 	}
+
 	override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
 		if (source == lifecycle && event.targetState == Lifecycle.State.DESTROYED) {
 			launcher.unregister()
