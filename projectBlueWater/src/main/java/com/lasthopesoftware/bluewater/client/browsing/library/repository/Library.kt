@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.library.repository
 
 import androidx.annotation.Keep
-import java.util.Collections
+import com.lasthopesoftware.bluewater.repository.Entity
 
 @Keep
 data class Library(
@@ -17,13 +17,12 @@ data class Library(
 	private var _selectedViewType: ViewType? = null,
 	private var _selectedView: Int = -1,
 	private var _savedTracksString: String? = null,
-	private var _customSyncedFilesPath: String? = null,
 	private var _syncedFileLocation: SyncedFileLocation? = null,
 	private var _isUsingExistingFiles: Boolean = false,
 	private var _isSyncLocalConnectionsOnly: Boolean = false,
-	private var _isWakeOnLanEnabled: Boolean = false) {
+	private var _isWakeOnLanEnabled: Boolean = false) : Entity {
 
-	val id: Int get() = _id
+	override val id: Int get() = _id
 	val libraryName: String? get() = _libraryName
 	val accessCode: String? get() = _accessCode
 	val userName: String? get() = _userName
@@ -35,7 +34,6 @@ data class Library(
 	val selectedViewType: ViewType? get() = _selectedViewType
 	val selectedView: Int get() = _selectedView
 	val savedTracksString: String? get() = _savedTracksString
-	val customSyncedFilesPath: String? get() = _customSyncedFilesPath
 	val syncedFileLocation: SyncedFileLocation? get() = _syncedFileLocation
 	val isUsingExistingFiles: Boolean get() = _isUsingExistingFiles
 	val isSyncLocalConnectionsOnly: Boolean get() = _isSyncLocalConnectionsOnly
@@ -81,11 +79,6 @@ data class Library(
 		return this
 	}
 
-	fun setCustomSyncedFilesPath(customSyncedFilesPath: String?): Library {
-		this._customSyncedFilesPath = customSyncedFilesPath
-		return this
-	}
-
 	fun setSyncedFileLocation(syncedFileLocation: SyncedFileLocation?): Library {
 		_syncedFileLocation = syncedFileLocation
 		return this
@@ -126,15 +119,12 @@ data class Library(
 		return this
 	}
 
-	val libraryId: LibraryId
-		get() = LibraryId(id)
-
 	@Keep
 	enum class SyncedFileLocation {
-		EXTERNAL, INTERNAL, CUSTOM;
+		EXTERNAL, INTERNAL;
 
 		companion object {
-			val ExternalDiskAccessSyncLocations: Set<SyncedFileLocation> = Collections.unmodifiableSet(setOf(EXTERNAL, CUSTOM))
+			val ExternalDiskAccessSyncLocations: Set<SyncedFileLocation> = setOf(EXTERNAL)
 		}
 	}
 
