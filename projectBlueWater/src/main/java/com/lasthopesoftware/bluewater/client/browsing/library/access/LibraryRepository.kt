@@ -4,27 +4,27 @@ import android.content.Context
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityInformation.tableName
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.repository.DatabasePromise
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
 import com.lasthopesoftware.bluewater.repository.fetchFirst
 import com.lasthopesoftware.bluewater.repository.insert
 import com.lasthopesoftware.bluewater.repository.update
 import com.lasthopesoftware.bluewater.shared.lazyLogger
+import com.lasthopesoftware.resources.executors.ThreadPools.promiseTableMessage
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.MessageWriter
 
 class LibraryRepository(private val context: Context) : ILibraryStorage, ILibraryProvider {
 	override fun promiseLibrary(libraryId: LibraryId): Promise<Library?> =
-		DatabasePromise(GetLibraryWriter(context, libraryId))
+		promiseTableMessage<Library?, Library>(GetLibraryWriter(context, libraryId))
 
 	override val allLibraries: Promise<Collection<Library>>
-		get() = DatabasePromise(GetAllLibrariesWriter(context))
+		get() = promiseTableMessage<Collection<Library>, Library>(GetAllLibrariesWriter(context))
 
 	override fun saveLibrary(library: Library): Promise<Library> =
-		DatabasePromise(SaveLibraryWriter(context, library))
+		promiseTableMessage<Library, Library>(SaveLibraryWriter(context, library))
 
 	override fun removeLibrary(library: Library): Promise<Unit> =
-		DatabasePromise(RemoveLibraryWriter(context, library))
+		promiseTableMessage<Unit, Library>(RemoveLibraryWriter(context, library))
 
 	private class GetAllLibrariesWriter constructor(private val context: Context) : MessageWriter<Collection<Library>> {
 		override fun prepareMessage(): Collection<Library> =

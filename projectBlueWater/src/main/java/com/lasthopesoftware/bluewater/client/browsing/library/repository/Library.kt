@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.library.repository
 
 import androidx.annotation.Keep
-import com.lasthopesoftware.bluewater.repository.Entity
+import com.lasthopesoftware.bluewater.IdentifiableEntity
 
 @Keep
 data class Library(
@@ -20,7 +20,7 @@ data class Library(
 	private var _syncedFileLocation: SyncedFileLocation? = null,
 	private var _isUsingExistingFiles: Boolean = false,
 	private var _isSyncLocalConnectionsOnly: Boolean = false,
-	private var _isWakeOnLanEnabled: Boolean = false) : Entity {
+	private var _isWakeOnLanEnabled: Boolean = false) : IdentifiableEntity {
 
 	override val id: Int get() = _id
 	val libraryName: String? get() = _libraryName

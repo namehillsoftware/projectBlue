@@ -1,14 +1,14 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.repository
 
 import androidx.annotation.Keep
+import com.lasthopesoftware.bluewater.IdentifiableEntity
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.repository.Entity
 import java.net.URI
 import java.util.Objects
 
 @Keep
-class StoredFile() : Entity {
+class StoredFile() : IdentifiableEntity {
 	override var id = 0
 		private set
 	var libraryId = 0

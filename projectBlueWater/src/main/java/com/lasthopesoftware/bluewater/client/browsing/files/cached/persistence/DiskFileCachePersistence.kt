@@ -16,7 +16,6 @@ import com.lasthopesoftware.bluewater.client.browsing.files.cached.repository.Ca
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.repository.CachedFile.Companion.UNIQUE_KEY
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.repository.CachedFile.Companion.tableName
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.repository.DatabasePromise
 import com.lasthopesoftware.bluewater.repository.InsertBuilder.Companion.fromTable
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
 import com.lasthopesoftware.resources.executors.ThreadPools.promiseTableMessage
@@ -79,7 +78,7 @@ class DiskFileCachePersistence(
 			}
 	}
 
-	private fun promiseFilePathUpdate(cachedFile: CachedFile): Promise<CachedFile> = DatabasePromise {
+	private fun promiseFilePathUpdate(cachedFile: CachedFile): Promise<CachedFile> = promiseTableMessage<CachedFile, CachedFile> {
 		val cachedFileId = cachedFile.id
 		val cachedFilePath = cachedFile.fileName
 		RepositoryAccessHelper(context).use { repositoryAccessHelper ->
