@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.browsing.library.access
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectBrowserLibrary
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.libraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
 import com.namehillsoftware.handoff.promises.Promise
 

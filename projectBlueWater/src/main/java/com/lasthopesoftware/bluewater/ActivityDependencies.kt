@@ -234,7 +234,7 @@ class ActivityDependencies(activity: ComponentActivity) : BrowserViewDependencie
 		)
 	}
 
-	override val selectedLibraryViewModel by activity.buildViewModelLazily {
+	override val selectedLibraryViewModel: SelectedLibraryViewModel by activity.buildViewModelLazily {
 		SelectedLibraryViewModel(
 			selectedLibraryIdProvider,
 			libraryBrowserSelection,

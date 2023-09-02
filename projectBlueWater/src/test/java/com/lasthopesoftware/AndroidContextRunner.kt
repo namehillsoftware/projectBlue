@@ -1,9 +1,7 @@
 package com.lasthopesoftware
 
-import android.os.Looper
 import org.junit.runners.model.InitializationError
 import org.robolectric.RobolectricTestRunner
-import org.robolectric.Shadows.shadowOf
 import org.robolectric.internal.SandboxTestRunner
 import java.util.*
 
@@ -11,17 +9,14 @@ open class AndroidContextRunner(testClass: Class<*>) : RobolectricTestRunner(tes
 	private val testRunners = HashMap<Class<*>, HelperTestRunner>()
 
 	@Synchronized
-	override fun getHelperTestRunner(bootstrappedTestClass: Class<*>): SandboxTestRunner.HelperTestRunner {
-		return try {
-			if (!testRunners.containsKey(bootstrappedTestClass)) testRunners[bootstrappedTestClass] =
-				HelperTestRunner(bootstrappedTestClass)
-			testRunners[bootstrappedTestClass]!!
+	override fun getHelperTestRunner(bootstrappedTestClass: Class<*>): SandboxTestRunner.HelperTestRunner =
+		try {
+			testRunners.getOrPut(bootstrappedTestClass) { HelperTestRunner(bootstrappedTestClass) }
 		} catch (initializationError: InitializationError) {
 			throw RuntimeException(initializationError)
 		}
-	}
 
-	protected class HelperTestRunner(bootstrappedTestClass: Class<*>?) :
+	protected class HelperTestRunner(bootstrappedTestClass: Class<*>) :
 		RobolectricTestRunner.HelperTestRunner(bootstrappedTestClass) {
 		private var isCheckedForBeforeMethod = false
 		@Throws(Exception::class)
@@ -33,7 +28,7 @@ open class AndroidContextRunner(testClass: Class<*>) : RobolectricTestRunner(tes
 				val beforeMethod = test.javaClass.getMethod("before")
 				beforeMethod.invoke(test)
 				isCheckedForBeforeMethod = true
-				Looper.getMainLooper()?.let { shadowOf(it).idle() }
+//				Looper.getMainLooper()?.let { shadowOf(it).idle() }
 			}
 			return test
 		}

@@ -2,13 +2,13 @@ package com.lasthopesoftware.bluewater.client.browsing.files.cached.repository
 
 import android.database.sqlite.SQLiteDatabase
 import androidx.annotation.Keep
-import com.lasthopesoftware.bluewater.repository.Entity
+import com.lasthopesoftware.bluewater.IdentifiableEntity
 import com.lasthopesoftware.bluewater.repository.IEntityCreator
 import com.lasthopesoftware.bluewater.repository.IEntityUpdater
 
 @Keep
-class CachedFile : Entity, IEntityCreator, IEntityUpdater {
-    var id: Long = 0
+class CachedFile : IdentifiableEntity, IEntityCreator, IEntityUpdater {
+    override var id: Long = 0
 
     /**
      * @return the library
@@ -46,10 +46,10 @@ class CachedFile : Entity, IEntityCreator, IEntityUpdater {
     var fileSize: Long = 0
 
     override fun onCreate(db: SQLiteDatabase) {
-        db.execSQL("CREATE TABLE `CachedFile` (`cacheName` VARCHAR , `createdTime` BIGINT , `fileName` VARCHAR , `fileSize` BIGINT , `id` INTEGER PRIMARY KEY AUTOINCREMENT , `lastAccessedTime` BIGINT , `libraryId` INTEGER , `uniqueKey` VARCHAR ,  UNIQUE (`fileName`), UNIQUE (`cacheName`,`libraryId`,`uniqueKey`) ) ")
-        db.execSQL("CREATE INDEX `CachedFile_lastAccessedTime_idx` ON `CachedFile` ( `lastAccessedTime` )")
-        db.execSQL("CREATE INDEX `CachedFile_cacheName_idx` ON `CachedFile` ( `cacheName` )")
-        db.execSQL("CREATE INDEX `CachedFile_createdTime_idx` ON `CachedFile` ( `createdTime` )")
+        db.execSQL("CREATE TABLE IF NOT EXISTS `CachedFile` (`cacheName` VARCHAR , `createdTime` BIGINT , `fileName` VARCHAR , `fileSize` BIGINT , `id` INTEGER PRIMARY KEY AUTOINCREMENT , `lastAccessedTime` BIGINT , `libraryId` INTEGER , `uniqueKey` VARCHAR ,  UNIQUE (`fileName`), UNIQUE (`cacheName`,`libraryId`,`uniqueKey`) ) ")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `CachedFile_lastAccessedTime_idx` ON `CachedFile` ( `lastAccessedTime` )")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `CachedFile_cacheName_idx` ON `CachedFile` ( `cacheName` )")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `CachedFile_createdTime_idx` ON `CachedFile` ( `createdTime` )")
     }
 
     override fun onUpdate(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {}

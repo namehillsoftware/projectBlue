@@ -32,7 +32,7 @@ class ActiveFileDownloadsViewModel(
 	private val fileQueuedRegistration = applicationMessages.registerReceiver { message: StoredFileMessage.FileQueued ->
 		message.storedFileId
 			.takeUnless(mutableDownloadingFiles.value::containsKey)
-			?.let(storedFileAccess::getStoredFile)
+			?.let(storedFileAccess::promiseStoredFile)
 			?.then { storedFile ->
 				if (storedFile != null && storedFile.libraryId == activeLibraryId?.id) {
 					mutableDownloadingFiles.value += Pair(storedFile.id, storedFile)

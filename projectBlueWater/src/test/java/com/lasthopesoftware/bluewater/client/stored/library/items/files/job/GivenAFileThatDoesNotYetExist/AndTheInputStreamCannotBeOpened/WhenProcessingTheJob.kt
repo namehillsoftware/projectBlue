@@ -6,35 +6,29 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Stor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
+import java.io.ByteArrayOutputStream
 import java.io.IOException
+import java.net.URI
 
 class WhenProcessingTheJob {
-	private val storedFile = StoredFile(LibraryId(6), 1, ServiceFile(1), "test-path", true)
+	private val storedFile = StoredFile(LibraryId(6), ServiceFile(1), URI("test-path"), true)
 	private var jobStates: List<StoredFileJobState>? = null
 
 	@BeforeAll
 	fun before() {
 		val storedFileJobProcessor = StoredFileJobProcessor(
 			mockk {
-				every { getFile(any()) } returns mockk {
-					every { exists() } returns false
-					every { parentFile } returns mockk {
-						every { exists() } returns false
-						every { mkdirs() } returns true
-					}
-				}
+				every { promiseOutputStream(any()) } returns ByteArrayOutputStream().toPromise()
 			},
-			mockk(relaxed = true),
 			mockk { every { promiseDownload(any(), any()) } returns Promise(IOException()) },
-			mockk { every { isFileReadPossible(any()) } returns false },
-			mockk { every { isFileWritePossible(any()) } returns true },
-			mockk(relaxUnitFun = true)
+			mockk(relaxed = true),
 		)
 
 		jobStates = storedFileJobProcessor.observeStoredFileDownload(

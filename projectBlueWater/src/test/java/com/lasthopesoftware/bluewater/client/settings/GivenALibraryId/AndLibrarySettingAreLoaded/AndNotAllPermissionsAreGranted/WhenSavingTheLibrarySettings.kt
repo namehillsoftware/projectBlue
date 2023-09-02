@@ -20,7 +20,6 @@ class WhenSavingTheLibrarySettings {
 			Library(
 				_id = libraryId.id,
 				_accessCode = "b2q",
-				_customSyncedFilesPath = "d6DL91i",
 				_isLocalOnly = false,
 				_isSyncLocalConnectionsOnly = true,
 				_isWakeOnLanEnabled = false,
@@ -38,8 +37,8 @@ class WhenSavingTheLibrarySettings {
             mockk(),
 			mockk {
 				every { promiseIsLibraryPermissionsGranted(any()) } returns false.toPromise()
-			}
-        )
+			},
+		)
     }
 
 	private var isSaved = false
@@ -49,14 +48,13 @@ class WhenSavingTheLibrarySettings {
 		with (services) {
 			loadLibrary(libraryId).toExpiringFuture().get()
 			accessCode.value = "V68Bp9rS"
-			customSyncPath.value = "s39"
 			password.value = "sl0Ha"
 			userName.value = "xw9wy0T"
 			isLocalOnly.value = !isLocalOnly.value
 			isSyncLocalConnectionsOnly.value = !isSyncLocalConnectionsOnly.value
 			isUsingExistingFiles.value = !isUsingExistingFiles.value
 			isWakeOnLanEnabled.value = !isWakeOnLanEnabled.value
-			syncedFileLocation.value = Library.SyncedFileLocation.CUSTOM
+			syncedFileLocation.value = Library.SyncedFileLocation.INTERNAL
 			libraryName.value = "spit"
 			isSaved = saveLibrary().toExpiringFuture().get() == true
 		}
@@ -75,11 +73,6 @@ class WhenSavingTheLibrarySettings {
     @Test
     fun `then the access code is correct`() {
         assertThat(services.accessCode.value).isEqualTo("V68Bp9rS")
-    }
-
-    @Test
-    fun `then the custom synced files path is correct`() {
-        assertThat(services.customSyncPath.value).isEqualTo("s39")
     }
 
     @Test
@@ -110,7 +103,7 @@ class WhenSavingTheLibrarySettings {
     @Test
     fun `then synced file location is correct`() {
         assertThat(services.syncedFileLocation.value)
-            .isEqualTo(Library.SyncedFileLocation.CUSTOM)
+            .isEqualTo(Library.SyncedFileLocation.INTERNAL)
     }
 
     @Test

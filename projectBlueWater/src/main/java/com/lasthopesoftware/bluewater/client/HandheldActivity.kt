@@ -40,9 +40,9 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsView
 import com.lasthopesoftware.bluewater.client.settings.PermissionsDependencies
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.view.ActiveFileDownloadsView
+import com.lasthopesoftware.bluewater.client.stored.library.permissions.folder.WritableFoldersProvider
 import com.lasthopesoftware.bluewater.permissions.ApplicationPermissionsRequests
 import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermissionsRequirementsProvider
-import com.lasthopesoftware.bluewater.permissions.write.ApplicationWritePermissionsRequirementsProvider
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsView
 import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsView
 import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsViewModel
@@ -87,19 +87,20 @@ class HandheldActivity :
 
 	private val browserViewDependencies by lazy { ActivityDependencies(this) }
 
-	override val readPermissionsRequirements by lazy { ApplicationReadPermissionsRequirementsProvider(osPermissionChecker) }
+	private val activityResultsLauncher = registerResultActivityLauncher()
 
-	override val writePermissionsRequirements by lazy { ApplicationWritePermissionsRequirementsProvider(osPermissionChecker) }
+	override val readPermissionsRequirements by lazy { ApplicationReadPermissionsRequirementsProvider(osPermissionChecker) }
 
 	override val applicationPermissions by lazy {
 		ApplicationPermissionsRequests(
 			browserViewDependencies.libraryProvider,
 			readPermissionsRequirements,
-			writePermissionsRequirements,
 			this,
 			osPermissionChecker
 		)
 	}
+
+	override val folderPermissions by lazy { WritableFoldersProvider(activityResultsLauncher, contentResolver) }
 
 	override val permissionsManager = this
 
@@ -436,8 +437,8 @@ private fun LibraryDestination.Navigate(
 					LibrarySettingsView(
 						librarySettingsViewModel = viewModel,
 						navigateApplication = applicationNavigation,
-						stringResources = stringResources
-					)
+						stringResources = stringResources,
+                    )
 				}
 
 				viewModel.loadLibrary(libraryId)
@@ -641,8 +642,8 @@ private fun BrowserView(
 								LibrarySettingsView(
 									librarySettingsViewModel = librarySettingsViewModel,
 									navigateApplication = applicationNavigation,
-									stringResources = stringResources
-								)
+									stringResources = stringResources,
+                                )
 							}
 						}
 				}

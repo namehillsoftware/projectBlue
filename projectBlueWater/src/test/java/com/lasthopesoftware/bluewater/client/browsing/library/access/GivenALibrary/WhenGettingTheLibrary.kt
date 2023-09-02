@@ -4,6 +4,7 @@ import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library.ViewType
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.libraryId
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
@@ -18,7 +19,6 @@ class WhenGettingTheLibrary {
             Library()
                 .setLibraryName("SomeName")
                 .setAccessCode("aCxeS")
-                .setCustomSyncedFilesPath("custom")
                 .setIsSyncLocalConnectionsOnly(true)
                 .setIsUsingExistingFiles(true)
                 .setIsWakeOnLanEnabled(true)
@@ -31,14 +31,17 @@ class WhenGettingTheLibrary {
                 .setSelectedViewType(ViewType.StandardServerView)
                 .setRepeating(true)
                 .setSavedTracksString("This is not even a real track string")
-                .setSyncedFileLocation(Library.SyncedFileLocation.CUSTOM)
+                .setSyncedFileLocation(Library.SyncedFileLocation.EXTERNAL)
         }
 
         private val retrievedLibrary by lazy {
 			val libraryRepository = LibraryRepository(ApplicationProvider.getApplicationContext())
 			libraryRepository
 				.saveLibrary(expectedLibrary)
-				.eventually { l -> libraryRepository.promiseLibrary(l.libraryId) }
+				.eventually { l ->
+					expectedLibrary.setId(l.id)
+					libraryRepository.promiseLibrary(l.libraryId)
+				}
 				.toExpiringFuture()
 				.get()
 		}

@@ -2,9 +2,9 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.files.retriev
 
 import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFileEntityInformation
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFilesCollection
 import com.lasthopesoftware.bluewater.repository.InsertBuilder.Companion.fromTable
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -51,9 +51,7 @@ class WhenCollectingTheStoredFiles {
 				}
 			}.toExpiringFuture().get()
 
-			val storedFilesCollection =
-				StoredFilesCollection(ApplicationProvider.getApplicationContext())
-
+			val storedFilesCollection = StoredFileAccess(ApplicationProvider.getApplicationContext())
 			storedFilesCollection.promiseAllStoredFiles(LibraryId(5)).toExpiringFuture().get()
 		}
 

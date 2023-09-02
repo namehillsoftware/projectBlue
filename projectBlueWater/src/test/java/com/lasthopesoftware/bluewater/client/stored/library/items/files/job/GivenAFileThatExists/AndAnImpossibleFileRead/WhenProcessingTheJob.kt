@@ -11,21 +11,16 @@ import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
+import java.net.URI
 
 class WhenProcessingTheJob {
 	private val jobStates by lazy {
 		val storedFileJobProcessor = StoredFileJobProcessor(
 			mockk {
-				every { getFile(any()) } returns mockk {
-					every { exists() } returns true
-					every { parentFile } returns null
-				}
+				every { promiseOutputStream(any()) } returns Promise.empty()
 			},
-			mockk(),
 			mockk { every { promiseDownload(any(), any()) } returns Promise.empty() },
-			mockk { every { isFileReadPossible(any()) } returns false },
-			mockk { every { isFileWritePossible(any()) } returns false },
-			mockk(relaxUnitFun = true)
+			mockk(),
 		)
 		storedFileJobProcessor
 			.observeStoredFileDownload(
@@ -33,7 +28,7 @@ class WhenProcessingTheJob {
 					StoredFileJob(
 						LibraryId(12),
 						ServiceFile(1),
-						StoredFile(LibraryId(12), 1, ServiceFile(1), "test-path", true)
+						StoredFile(LibraryId(12), ServiceFile(1), URI("test-path"), true)
 					)
 				)
 			)

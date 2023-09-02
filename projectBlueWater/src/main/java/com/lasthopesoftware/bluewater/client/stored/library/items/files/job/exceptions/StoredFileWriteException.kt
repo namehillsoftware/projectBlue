@@ -4,11 +4,8 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.reposito
 import com.lasthopesoftware.storage.write.exceptions.StorageWriteFileException
 import java.io.File
 
-/**
- * Created by david on 7/17/16.
- */
-class StoredFileWriteException @JvmOverloads constructor(
-    file: File,
+class StoredFileWriteException(
     override val storedFile: StoredFile,
+	file: File? = null,
     innerException: Exception? = null
 ) : StorageWriteFileException(file, innerException), IStoredFileJobException

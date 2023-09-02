@@ -26,10 +26,7 @@ class `When making a permissions request` {
 				every { isReadMediaPermissionsRequiredForLibrary(any()) } returns false
 				every { isReadMediaPermissionsRequiredForLibrary(mediaRequiredLibrary) } returns true
 			},
-			mockk {
-				every { isWritePermissionsRequiredForLibrary(any()) } returns false
-			},
-			mockk {
+            mockk {
 				every { requestPermissions(any()) } answers {
 					requestedPermissions.addAll(firstArg())
 					Promise(emptyMap())

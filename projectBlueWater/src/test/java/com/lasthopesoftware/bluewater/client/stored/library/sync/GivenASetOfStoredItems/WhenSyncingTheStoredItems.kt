@@ -23,6 +23,7 @@ import io.reactivex.Observable
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
+import java.net.URI
 
 class WhenSyncingTheStoredItems {
 
@@ -66,11 +67,11 @@ class WhenSyncingTheStoredItems {
 		val storedFilesUpdater = mockk<UpdateStoredFiles>()
 			.apply {
 				every { promiseStoredFileUpdate(any(), any()) } answers {
-					Promise(StoredFile(firstArg(), 1, lastArg(), "fake-file-name", true))
+					Promise(StoredFile(firstArg(), lastArg(), URI("fake-file-name"), true))
 				}
 
 				every { promiseStoredFileUpdate(any(), ServiceFile(19)) } returns Promise(
-					StoredFile(LibraryId(52), 1, ServiceFile(19), "fake", true).setIsDownloadComplete(true)
+					StoredFile(LibraryId(52), ServiceFile(19), URI("fake"), true).setIsDownloadComplete(true)
 				)
 			}
 

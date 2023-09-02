@@ -8,7 +8,7 @@ import com.lasthopesoftware.bluewater.repository.IEntityUpdater
 import com.lasthopesoftware.bluewater.repository.InsertBuilder
 import com.lasthopesoftware.bluewater.tutorials.DisplayedTutorialEntityInformation.tableName
 import com.lasthopesoftware.bluewater.tutorials.DisplayedTutorialEntityInformation.tutorialKeyColumn
-import com.namehillsoftware.artful.Artful
+import com.namehillsoftware.querydroid.SqLiteCommand
 
 class TutorialMigrator(private val context: Context) : IEntityCreator, IEntityUpdater {
 	companion object {
@@ -29,7 +29,7 @@ class TutorialMigrator(private val context: Context) : IEntityCreator, IEntityUp
 	}
 
 	private fun migrateSettings(db: SQLiteDatabase) {
-		val artful = Artful(db, checkIfTableExists)
+		val artful = SqLiteCommand(db, checkIfTableExists)
 		val count = artful.execute()
 
 		if (count > 0) return
@@ -44,7 +44,7 @@ class TutorialMigrator(private val context: Context) : IEntityCreator, IEntityUp
 			.build()
 
 		val sharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
-		val insertArtSql = Artful(db, insertQuery)
+		val insertArtSql = SqLiteCommand(db, insertQuery)
 
 		if (sharedPreferences.getBoolean(OldConstants.isListTutorialShownPreference, false)) {
 			insertArtSql

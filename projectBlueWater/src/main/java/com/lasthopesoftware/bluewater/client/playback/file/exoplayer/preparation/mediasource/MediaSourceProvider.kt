@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource
 
-import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
 import androidx.media3.common.MediaItem
@@ -17,8 +16,8 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideGuaranteedLibraryConnections
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
 import com.lasthopesoftware.bluewater.client.playback.caching.datasource.DiskFileCacheSourceFactory
-import com.lasthopesoftware.bluewater.shared.IoCommon
 import com.lasthopesoftware.bluewater.shared.policies.caching.PermanentPromiseFunctionCache
+import com.lasthopesoftware.resources.uri.IoCommon
 import com.namehillsoftware.handoff.promises.Promise
 
 @UnstableApi class MediaSourceProvider(
@@ -49,8 +48,8 @@ import com.namehillsoftware.handoff.promises.Promise
 
 	private fun getFactory(libraryId: LibraryId, uri: Uri): Promise<MediaSource.Factory> =
 		when {
-			IoCommon.FileUriScheme.equals(uri.scheme, ignoreCase = true) -> promisedFileExtractorFactory
-			ContentResolver.SCHEME_CONTENT.equals(uri.scheme, ignoreCase = true) -> promisedContentExtractorFactory
+			IoCommon.fileUriScheme.equals(uri.scheme, ignoreCase = true) -> promisedFileExtractorFactory
+			IoCommon.contentUriScheme.equals(uri.scheme, ignoreCase = true) -> promisedContentExtractorFactory
 			else ->  guaranteedLibraryConnections
 				.promiseLibraryConnection(libraryId)
 				.eventually { cp ->

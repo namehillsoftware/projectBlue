@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.settings.repository.access
 
 import android.content.Context
-import com.lasthopesoftware.bluewater.repository.DatabasePromise
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
 import com.lasthopesoftware.bluewater.repository.UpdateBuilder
 import com.lasthopesoftware.bluewater.repository.fetchFirst
@@ -12,6 +11,7 @@ import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEnt
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.isVolumeLevelingEnabledColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.playbackEngineTypeNameColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.tableName
+import com.lasthopesoftware.resources.executors.ThreadPools.promiseTableMessage
 import com.namehillsoftware.handoff.promises.Promise
 
 class ApplicationSettingsRepository(private val context: Context): HoldApplicationSettings {
@@ -29,7 +29,7 @@ class ApplicationSettingsRepository(private val context: Context): HoldApplicati
 	}
 
 	override fun promiseApplicationSettings(): Promise<ApplicationSettings> =
-		DatabasePromise {
+		promiseTableMessage<ApplicationSettings, ApplicationSettings> {
 			RepositoryAccessHelper(context).use { helper ->
 				helper.beginNonExclusiveTransaction().use {
 					helper.mapSql("SELECT * FROM $tableName").fetchFirst()
@@ -38,7 +38,7 @@ class ApplicationSettingsRepository(private val context: Context): HoldApplicati
 		}
 
 	override fun promiseUpdatedSettings(applicationSettings: ApplicationSettings): Promise<ApplicationSettings> =
-		DatabasePromise {
+		promiseTableMessage<Unit, ApplicationSettings> {
 			RepositoryAccessHelper(context).use { helper ->
 				helper.beginTransaction().use {
 					helper.mapSql(updateStatement)

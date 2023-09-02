@@ -24,6 +24,7 @@ import io.reactivex.disposables.Disposable
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
+import java.net.URI
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
@@ -68,11 +69,13 @@ class WhenSyncingTheStoredItems {
 			),
 			pruneStoredFiles,
 			object : UpdateStoredFiles {
+				override fun markStoredFileAsDownloaded(storedFile: StoredFile): Promise<StoredFile> = storedFile.toPromise()
+
 				override fun promiseStoredFileUpdate(
 					libraryId: LibraryId,
 					serviceFile: ServiceFile
-				): Promise<StoredFile?> =
-					Promise(StoredFile(libraryId, 1, serviceFile, "fake-file-name", true))
+				): Promise<StoredFile> =
+					Promise(StoredFile(libraryId, serviceFile, URI("fake-file-name"), true))
 			},
 			mockk {
 				every { observeStoredFileDownload(any()) } answers {

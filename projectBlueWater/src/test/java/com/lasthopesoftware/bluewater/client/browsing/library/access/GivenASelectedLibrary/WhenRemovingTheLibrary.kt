@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.Pro
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectBrowserLibrary
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.libraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
 import com.lasthopesoftware.bluewater.client.stored.library.items.FakeStoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem

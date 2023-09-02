@@ -279,36 +279,6 @@ fun LibrarySettingsView(
 							}
 						}
 
-						Row(
-							modifier = Modifier.padding(innerGroupPadding)
-						) {
-							LabeledSelection(
-								label = stringResource(id = R.string.rbCustomLocation),
-								selected = syncedFileLocationState == Library.SyncedFileLocation.CUSTOM,
-								onSelected = { syncedFileLocationState = Library.SyncedFileLocation.CUSTOM },
-								role = Role.RadioButton,
-							) {
-								RadioButton(
-									selected = syncedFileLocationState == Library.SyncedFileLocation.CUSTOM,
-									onClick = null,
-								)
-							}
-						}
-
-						Row(
-							modifier = Modifier
-								.fillMaxWidth()
-								.padding(innerGroupPadding)
-						) {
-							var customSyncPathState by customSyncPath.collectAsMutableState()
-							StandardTextField(
-								placeholder = stringResource(id = R.string.lbl_sync_path),
-								value = customSyncPathState,
-								onValueChange = { customSyncPathState = it },
-								enabled = syncedFileLocationState == Library.SyncedFileLocation.CUSTOM,
-							)
-						}
-
 						val isStoragePermissionsNeeded by isStoragePermissionsNeeded.collectAsState()
 						if (isStoragePermissionsNeeded) {
 							ProvideTextStyle(value = MaterialTheme.typography.caption) {

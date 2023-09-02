@@ -1,66 +1,65 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.GivenATypicalLibrary.WithTheStoredFile
 
-import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.retrieval.StoredFileQuery
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.ProvideMediaFileIds
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.GetStoredFilePaths
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.FakeStoredFileAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFileUpdater
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
+import com.namehillsoftware.lazyj.Lazy
 import io.mockk.every
 import io.mockk.mockk
+import org.assertj.core.api.Assertions.*
 import org.assertj.core.api.AssertionsForClassTypes.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import java.net.URI
+import java.util.concurrent.TimeUnit
 
 @RunWith(RobolectricTestRunner::class)
 class WhenUpdatingTheFile {
 
 	companion object {
-		private val storedFile by lazy {
-			val mediaFileUriProvider = mockk<MediaFileUriProvider>()
-			every { mediaFileUriProvider.promiseUri(any(), any()) } returns Promise.empty()
-
-			val mediaFileIdProvider = mockk<ProvideMediaFileIds>()
-			every { mediaFileIdProvider.getMediaId(any(), any()) } returns Promise.empty()
+		private val storedFile = Lazy {
+			val libraryId = LibraryId(705)
 
 			val fakeLibraryRepository = FakeLibraryRepository(
-				Library().setId(14).setSyncedFileLocation(Library.SyncedFileLocation.EXTERNAL)
+				Library().setId(libraryId.id).setSyncedFileLocation(Library.SyncedFileLocation.EXTERNAL)
 			)
 
-			val lookupStoredFilePaths = mockk<GetStoredFilePaths>()
-			every { lookupStoredFilePaths.promiseStoredFilePath(LibraryId(14), ServiceFile(4)) } returns Promise("/my-public-drive/14/artist/album/my-filename.mp3")
+			val serviceFile = ServiceFile(596)
 
 			val storedFileUpdater = StoredFileUpdater(
-				ApplicationProvider.getApplicationContext(),
-				mediaFileUriProvider,
-				mediaFileIdProvider,
-				StoredFileQuery(ApplicationProvider.getApplicationContext()),
+				FakeStoredFileAccess(),
+				mockk {
+					every { promiseUri(any(), any()) } returns Promise.empty()
+				},
 				fakeLibraryRepository,
-				lookupStoredFilePaths
+				mockk {
+					every { promiseStoredFileUri(libraryId, serviceFile) } returns Promise(
+						URI("file:/my-public-drive/14/artist/album/my-filename.mp3")
+					)
+				},
+				mockk(),
 			)
-			storedFileUpdater.promiseStoredFileUpdate(LibraryId(14), ServiceFile(4)).toExpiringFuture().get()
+
 			storedFileUpdater
-				.promiseStoredFileUpdate(LibraryId(14), ServiceFile(4))
+				.promiseStoredFileUpdate(libraryId, serviceFile)
 				.toExpiringFuture()
-				.get()
+				.get(1, TimeUnit.MINUTES)
 		}
 	}
 
 	@Test
-	fun thenTheFileIsOwnedByTheLibrary() {
-		assertThat(storedFile?.isOwner).isTrue
+	fun `then the file is owned by the library`() {
+		assertThat(storedFile.`object`?.isOwner).isTrue
 	}
 
 	@Test
-	fun thenTheFilePathIsCorrect() {
-		assertThat(storedFile?.path)
-			.isEqualTo("/my-public-drive/14/artist/album/my-filename.mp3")
+	fun `then the file path is correct`() {
+		assertThat(storedFile.`object`?.uri).isEqualTo("file:/my-public-drive/14/artist/album/my-filename.mp3")
 	}
 }

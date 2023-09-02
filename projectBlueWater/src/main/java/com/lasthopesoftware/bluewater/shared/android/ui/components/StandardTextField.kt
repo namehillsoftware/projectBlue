@@ -7,7 +7,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.input.key.Key
@@ -17,12 +16,12 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.VisualTransformation
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun StandardTextField(
 	placeholder: String,
 	value: String,
 	onValueChange: (String) -> Unit,
+	modifier: Modifier = Modifier,
 	enabled: Boolean = true,
 	visualTransformation: VisualTransformation = VisualTransformation.None,
 	keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
@@ -38,7 +37,8 @@ fun StandardTextField(
 				} else {
 					false
 				}
-			},
+			}
+			.then(modifier),
 		value = value,
 		placeholder = { Text(placeholder) },
 		onValueChange = onValueChange,

@@ -4,13 +4,14 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.GivenAQueueOfStoredFileJobs.MarkedFilesStoredFileAccess
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.GivenAQueueOfStoredFileJobs.MarkedFilesStoredFilesUpdater
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exceptions.StoredFileJobException
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -18,6 +19,8 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.io.OutputStream
 
 class WhenProcessingTheQueue {
 	private val storedFileJobs: Set<StoredFileJob> = setOf(
@@ -63,7 +66,7 @@ class WhenProcessingTheQueue {
 		StoredFile().setServiceId(2).setLibraryId(1),
 		StoredFile().setServiceId(4).setLibraryId(1)
 	)
-	private val storedFilesAccess = MarkedFilesStoredFileAccess()
+	private val storedFilesUpdater = MarkedFilesStoredFilesUpdater()
 	private val storedFileStatuses = ArrayList<StoredFileJobStatus>()
 	private var exception: StoredFileJobException? = null
 
@@ -72,47 +75,33 @@ class WhenProcessingTheQueue {
 	fun before() {
 		val storedFileJobProcessor = StoredFileJobProcessor(
 			mockk {
-				every { getFile(any()) } answers {
-					val storedFile = firstArg<StoredFile>()
-					mockk {
-						every { parentFile } returns null
-						every { exists() } returns storedFile.isDownloadComplete
-						every { path } returns if (storedFile.serviceId == 5) "write-failure" else ""
-					}
-				}
+				every { promiseOutputStream(any()) } returns ByteArrayOutputStream().toPromise()
+				every { promiseOutputStream(match { it.serviceId == 5 }) } returns Promise(mockk<OutputStream>(relaxUnitFun = true) {
+					every { write(any(), any(), any()) } throws UnexpectedException()
+				})
 			},
-			storedFilesAccess,
-			mockk { every { promiseDownload(any(), any()) } returns Promise(ByteArrayInputStream(ByteArray(0))) },
-			mockk { every { isFileReadPossible(any()) } returns true },
-			mockk { every { isFileWritePossible(any()) } returns true },
-			mockk(relaxed = true) {
-				every {
-					writeStreamToFile(
-						any(),
-						match { it.path == "write-failure" })
-				} throws UnexpectedException()
-			})
+			mockk { every { promiseDownload(any(), any()) } answers { Promise(ByteArrayInputStream(byteArrayOf(5, 10))) } },
+			storedFilesUpdater,
+		)
 
-		storedFileJobProcessor.observeStoredFileDownload(storedFileJobs).blockingSubscribe(
-			storedFileStatuses::add
-		) { e -> if (e is StoredFileJobException) exception = e }
+		storedFileJobProcessor
+			.observeStoredFileDownload(storedFileJobs)
+			.blockingSubscribe(storedFileStatuses::add) { e -> if (e is StoredFileJobException) exception = e }
 	}
 
 	@Test
 	fun `then the error file is correct`() {
-		assertThat(exception!!.storedFile.serviceId).isEqualTo(5)
+		assertThat(exception?.storedFile?.serviceId).isEqualTo(5)
 	}
 
 	@Test
-	fun `then the unexpected esception is correct`() {
-		assertThat(exception!!.cause).isInstanceOf(
-			UnexpectedException::class.java
-		)
+	fun `then the unexpected exception is correct`() {
+		assertThat(exception?.cause).isInstanceOf(UnexpectedException::class.java)
 	}
 
 	@Test
 	fun `then the files are marked as downloaded`() {
-		assertThat(storedFilesAccess.storedFilesMarkedAsDownloaded)
+		assertThat(storedFilesUpdater.storedFilesMarkedAsDownloaded)
 			.containsExactly(*expectedStoredFiles)
 	}
 

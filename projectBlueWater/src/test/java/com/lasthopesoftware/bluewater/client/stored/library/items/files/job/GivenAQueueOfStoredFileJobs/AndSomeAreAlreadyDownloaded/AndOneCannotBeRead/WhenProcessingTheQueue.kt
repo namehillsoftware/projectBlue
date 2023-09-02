@@ -4,12 +4,13 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.GivenAQueueOfStoredFileJobs.MarkedFilesStoredFileAccess
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.GivenAQueueOfStoredFileJobs.MarkedFilesStoredFilesUpdater
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.storage.read.exceptions.StorageReadFileException
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
@@ -18,6 +19,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
 
 class WhenProcessingTheQueue {
 	private val storedFileJobs = setOf(
@@ -49,7 +51,7 @@ class WhenProcessingTheQueue {
 		StoredFileJob(
 			LibraryId(1),
 			ServiceFile(114),
-			StoredFile().setServiceId(114).setLibraryId(1).setIsDownloadComplete(true)
+			StoredFile().setServiceId(114).setLibraryId(1).setIsDownloadComplete(false)
 		),
 		StoredFileJob(
 			LibraryId(1),
@@ -64,7 +66,7 @@ class WhenProcessingTheQueue {
 		StoredFile().setServiceId(4).setLibraryId(1),
 		StoredFile().setServiceId(7).setLibraryId(1)
 	)
-	private val storedFilesAccess = MarkedFilesStoredFileAccess()
+	private val storedFilesUpdater = MarkedFilesStoredFilesUpdater()
 	private val storedFileStatuses = ArrayList<StoredFileJobStatus>()
 	private var exception: StorageReadFileException? = null
 
@@ -73,25 +75,13 @@ class WhenProcessingTheQueue {
 	fun before() {
 		val storedFileJobProcessor = StoredFileJobProcessor(
 			mockk {
-				every { getFile(any()) } answers {
-					val storedFile = firstArg<StoredFile>()
-					mockk {
-						every { parentFile } returns null
-						every { exists() } returns storedFile.isDownloadComplete
-						every { path } returns if (storedFile.serviceId == 114) "unreadable" else ""
-					}
-				}
+				every { promiseOutputStream(any()) } returns ByteArrayOutputStream().toPromise()
+				every { promiseOutputStream(match { arrayOf(114, 92, 5).contains(it.serviceId) }) } returns Promise.empty()
 			},
-			storedFilesAccess,
 			mockk {
 				every { promiseDownload(any(), any()) } returns Promise(ByteArrayInputStream(ByteArray(0)))
 			},
-			mockk {
-				every { isFileReadPossible(any()) } returns true
-				every { isFileReadPossible(match { it.path == "unreadable" }) } returns false
-		  	},
-			mockk { every { isFileWritePossible(any()) } returns true },
-			mockk(relaxUnitFun = true)
+			storedFilesUpdater,
 		)
 		storedFileJobProcessor
 			.observeStoredFileDownload(storedFileJobs)
@@ -113,7 +103,7 @@ class WhenProcessingTheQueue {
 
 	@Test
 	fun `then the correct files are marked as downloaded`() {
-		assertThat(storedFilesAccess.storedFilesMarkedAsDownloaded)
+		assertThat(storedFilesUpdater.storedFilesMarkedAsDownloaded)
 			.containsExactly(*expectedStoredFiles)
 	}
 

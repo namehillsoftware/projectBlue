@@ -2,13 +2,13 @@ package com.lasthopesoftware.bluewater.client.stored.library.items
 
 import android.database.sqlite.SQLiteDatabase
 import androidx.annotation.Keep
-import com.lasthopesoftware.bluewater.repository.Entity
+import com.lasthopesoftware.bluewater.IdentifiableEntity
 import com.lasthopesoftware.bluewater.repository.IEntityCreator
 import com.lasthopesoftware.bluewater.repository.IEntityUpdater
 
 @Keep
-class StoredItem : Entity, IEntityCreator, IEntityUpdater {
-	var id = 0
+class StoredItem : IdentifiableEntity, IEntityCreator, IEntityUpdater {
+	override var id = 0
 	var libraryId = 0
 
 	// unique with library id
@@ -41,6 +41,6 @@ class StoredItem : Entity, IEntityCreator, IEntityUpdater {
 		const val serviceIdColumnName = "serviceId"
 		const val libraryIdColumnName = "libraryId"
 		const val itemTypeColumnName = "itemType"
-		private const val createTableSql = "CREATE TABLE `StoredItems` (`id` INTEGER PRIMARY KEY AUTOINCREMENT , `itemType` VARCHAR , `libraryId` INTEGER , `serviceId` INTEGER , UNIQUE (`itemType`,`libraryId`,`serviceId`) ) "
+		private const val createTableSql = "CREATE TABLE IF NOT EXISTS `StoredItems` (`id` INTEGER PRIMARY KEY AUTOINCREMENT , `itemType` VARCHAR , `libraryId` INTEGER , `serviceId` INTEGER , UNIQUE (`itemType`,`libraryId`,`serviceId`) ) "
 	}
 }

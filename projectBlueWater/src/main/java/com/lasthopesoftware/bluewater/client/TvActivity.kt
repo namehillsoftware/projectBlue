@@ -46,9 +46,9 @@ import com.lasthopesoftware.bluewater.client.connection.session.initialization.C
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.DramaticConnectionInitializationController
 import com.lasthopesoftware.bluewater.client.settings.PermissionsDependencies
 import com.lasthopesoftware.bluewater.client.settings.TvLibrarySettingsView
+import com.lasthopesoftware.bluewater.client.stored.library.permissions.folder.WritableFoldersProvider
 import com.lasthopesoftware.bluewater.permissions.ApplicationPermissionsRequests
 import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermissionsRequirementsProvider
-import com.lasthopesoftware.bluewater.permissions.write.ApplicationWritePermissionsRequirementsProvider
 import com.lasthopesoftware.bluewater.settings.TvApplicationSettingsView
 import com.lasthopesoftware.bluewater.shared.android.permissions.ManagePermissions
 import com.lasthopesoftware.bluewater.shared.android.permissions.OsPermissionsChecker
@@ -56,6 +56,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
 import com.lasthopesoftware.bluewater.shared.images.bytes.RemoteImageAccess
 import com.lasthopesoftware.bluewater.shared.lazyLogger
+import com.lasthopesoftware.bluewater.shared.promises.extensions.registerResultActivityLauncher
 import com.lasthopesoftware.bluewater.shared.promises.extensions.suspend
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
@@ -76,20 +77,20 @@ class TvActivity :
 	ManagePermissions
 {
 	private val dependencies by lazy { ActivityDependencies(this) }
+	private val activityResultsLauncher = registerResultActivityLauncher()
 
 	private val osPermissionChecker by lazy { OsPermissionsChecker(applicationContext) }
 	override val readPermissionsRequirements by lazy { ApplicationReadPermissionsRequirementsProvider(osPermissionChecker) }
-	override val writePermissionsRequirements by lazy { ApplicationWritePermissionsRequirementsProvider(osPermissionChecker) }
 	override val applicationPermissions by lazy {
 		ApplicationPermissionsRequests(
 			dependencies.libraryProvider,
 			readPermissionsRequirements,
-			writePermissionsRequirements,
 			this,
 			osPermissionChecker
 		)
 	}
 	override val permissionsManager = this
+	override val folderPermissions by lazy { WritableFoldersProvider(activityResultsLauncher, contentResolver) }
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)

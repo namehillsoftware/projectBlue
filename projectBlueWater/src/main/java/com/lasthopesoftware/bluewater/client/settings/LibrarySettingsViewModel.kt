@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.settings
 
-import android.os.Environment
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.TrackLoadedViewState
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
@@ -36,7 +35,6 @@ class LibrarySettingsViewModel(
 	val libraryName = MutableStateFlow("")
 	val userName = MutableStateFlow("")
 	val password = MutableStateFlow("")
-	val customSyncPath = MutableStateFlow(Environment.getExternalStorageDirectory()?.path ?: "")
 	val isLocalOnly = MutableStateFlow(false)
 	val syncedFileLocation = MutableStateFlow(Library.SyncedFileLocation.INTERNAL)
 	val isWakeOnLanEnabled = MutableStateFlow(false)
@@ -65,7 +63,6 @@ class LibrarySettingsViewModel(
 			.setUserName(userName.value)
 			.setPassword(password.value)
 			.setLocalOnly(isLocalOnly.value)
-			.setCustomSyncedFilesPath(customSyncPath.value)
 			.setSyncedFileLocation(syncedFileLocation.value)
 			.setIsUsingExistingFiles(isUsingExistingFiles.value)
 			.setIsSyncLocalConnectionsOnly(isSyncLocalConnectionsOnly.value)
@@ -96,7 +93,6 @@ class LibrarySettingsViewModel(
 		isSyncLocalConnectionsOnly.value = result?.isSyncLocalConnectionsOnly ?: false
 		isWakeOnLanEnabled.value = result?.isWakeOnLanEnabled ?: false
 
-		customSyncPath.value = result?.customSyncedFilesPath?.takeIf { it.isNotEmpty() } ?: Environment.getExternalStorageDirectory()?.path ?: ""
 		syncedFileLocation.value = result?.syncedFileLocation ?: Library.SyncedFileLocation.INTERNAL
 
 		accessCode.value = result?.accessCode ?: ""
