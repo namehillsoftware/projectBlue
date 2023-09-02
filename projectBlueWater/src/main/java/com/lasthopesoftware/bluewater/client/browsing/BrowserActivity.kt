@@ -78,6 +78,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.StateChangeBro
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.view.ActiveFileDownloadsView
+import com.lasthopesoftware.bluewater.client.stored.library.permissions.folder.WritableFoldersProvider
 import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
 import com.lasthopesoftware.bluewater.permissions.ApplicationPermissionsRequests
 import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermissionsRequirementsProvider
@@ -211,6 +212,8 @@ class BrowserActivity :
 			DefaultPlaybackEngineLookup
 		)
 	}
+
+	private val activityResultsLauncher = registerResultActivityLauncher()
 
 	override val messageBus by lazy { getApplicationMessageBus().getScopedMessageBus().also(viewModelScope::manage) }
 
@@ -390,6 +393,8 @@ class BrowserActivity :
 			osPermissionChecker
 		)
 	}
+
+	override val folderPermissions by lazy { WritableFoldersProvider(activityResultsLauncher, contentResolver) }
 
 	private val permissionsRequests = ConcurrentHashMap<Int, Messenger<Map<String, Boolean>>>()
 
@@ -720,8 +725,8 @@ private fun LibraryDestination.Navigate(
 					LibrarySettingsView(
 						librarySettingsViewModel = viewModel,
 						navigateApplication = applicationNavigation,
-						stringResources = stringResources
-					)
+						stringResources = stringResources,
+                    )
 				}
 
 				viewModel.loadLibrary(libraryId)
@@ -925,8 +930,8 @@ private fun BrowserView(
 								LibrarySettingsView(
 									librarySettingsViewModel = librarySettingsViewModel,
 									navigateApplication = applicationNavigation,
-									stringResources = stringResources
-								)
+									stringResources = stringResources,
+                                )
 							}
 						}
 				}

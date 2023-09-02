@@ -2,8 +2,14 @@ package com.lasthopesoftware.bluewater.client.browsing.library.repository
 
 import android.database.sqlite.SQLiteDatabase
 import android.util.Base64
+import androidx.annotation.Keep
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityInformation.createTableSql
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityInformation.isWakeOnLanEnabledColumn
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityInformation.tableName
 import com.lasthopesoftware.bluewater.repository.IEntityUpdater
+import com.lasthopesoftware.bluewater.repository.fetch
+import com.namehillsoftware.querydroid.SqLiteAssistants
+import com.namehillsoftware.querydroid.SqLiteCommand
 
 object LibraryEntityUpdater : IEntityUpdater {
 
@@ -28,7 +34,7 @@ object LibraryEntityUpdater : IEntityUpdater {
 						val userCredentials = decodedAuthKey.split(":").toTypedArray()
 						if (userCredentials.size > 1) {
 							db.execSQL(
-								"UPDATE `" + LibraryEntityInformation.tableName + "` " +
+								"UPDATE `" + tableName + "` " +
 									" SET `" + LibraryEntityInformation.userNameColumn + "` = ?, " +
 									" `" + LibraryEntityInformation.passwordColumn + "` = ? " +
 									" WHERE `id` = ?", arrayOf<Any>(
@@ -40,7 +46,7 @@ object LibraryEntityUpdater : IEntityUpdater {
 						}
 						if (userCredentials.isNotEmpty()) {
 							db.execSQL(
-								"UPDATE `" + LibraryEntityInformation.tableName + "` " +
+								"UPDATE `" + tableName + "` " +
 									" SET `" + LibraryEntityInformation.userNameColumn + "` = ? " +
 									" WHERE `id` = ?", arrayOf<Any>(
 									userCredentials[0],
@@ -54,5 +60,71 @@ object LibraryEntityUpdater : IEntityUpdater {
 		if (oldVersion < 8) {
 			db.execSQL("ALTER TABLE `LIBRARIES` add column `$isWakeOnLanEnabledColumn` SMALLINT;")
 		}
+
+		if (oldVersion < 14) {
+			val tempTableName = tableName + "Temp"
+			db.execSQL("DROP TABLE IF EXISTS `$tempTableName`")
+			val createTempTableSql = createTableSql.replaceFirst("`$tableName`", "`$tempTableName`")
+			db.execSQL(createTempTableSql)
+			val oldLibraries = SqLiteCommand(db, "SELECT * FROM $tableName").fetch<Version13Library>()
+			for (oldLibrary in oldLibraries) {
+				val newLibrary = oldLibrary.toLibrary()
+
+				SqLiteAssistants.insertValue(db, tempTableName, newLibrary)
+			}
+
+			db.execSQL("DROP TABLE `$tableName`")
+			db.execSQL("ALTER TABLE `$tempTableName` RENAME TO `$tableName`")
+		}
+	}
+
+	@Keep
+	class Version13Library {
+		var id: Int = 0
+		var libraryName: String? = null
+		var accessCode: String? = null
+		var userName: String? = null
+		var password: String? = null
+		var isLocalOnly: Boolean = false
+		var isRepeating: Boolean = false
+		var nowPlayingId: Int = 0
+		var nowPlayingProgress: Long = 0L
+		var selectedViewType: Library.ViewType? = null
+		var selectedView: Int = 0
+		var savedTracksString: String? = null
+		var syncedFileLocation: Version13SyncedFileLocation? = null
+		var isUsingExistingFiles: Boolean = false
+		var isSyncLocalConnectionsOnly: Boolean = false
+		var isWakeOnLanEnabled: Boolean = false
+
+		fun toLibrary(): Library {
+			return Library(
+				_id = id,
+				_accessCode = accessCode,
+				_isLocalOnly = isLocalOnly,
+				_isRepeating = isRepeating,
+				_isSyncLocalConnectionsOnly = isSyncLocalConnectionsOnly,
+				_libraryName = libraryName,
+				_isUsingExistingFiles = isUsingExistingFiles,
+				_isWakeOnLanEnabled = isWakeOnLanEnabled,
+				_nowPlayingId = nowPlayingId,
+				_password = password,
+				_nowPlayingProgress = nowPlayingProgress,
+				_savedTracksString = savedTracksString,
+				_selectedView = selectedView,
+				_selectedViewType = selectedViewType,
+				_userName = userName,
+				_syncedFileLocation = when (syncedFileLocation) {
+					Version13SyncedFileLocation.CUSTOM, Version13SyncedFileLocation.EXTERNAL -> Library.SyncedFileLocation.EXTERNAL
+					Version13SyncedFileLocation.INTERNAL -> Library.SyncedFileLocation.INTERNAL
+					null -> null
+				}
+			)
+		}
+	}
+
+	@Keep
+	enum class Version13SyncedFileLocation {
+		EXTERNAL, INTERNAL, CUSTOM;
 	}
 }

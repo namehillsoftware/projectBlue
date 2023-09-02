@@ -5,3 +5,6 @@ val Library.isReadPermissionsRequiredForLibrary: Boolean
 
 val Library.isWritePermissionsRequiredForLibrary: Boolean
 	get() = Library.SyncedFileLocation.ExternalDiskAccessSyncLocations.contains(syncedFileLocation)
+
+val Library.libraryId: LibraryId
+	get() = LibraryId(id)

@@ -20,7 +20,6 @@ class WhenLoadingTheLibrarySettings {
                 Library(
                     _id = libraryId.id,
                     _accessCode = "yKV48o",
-                    _customSyncedFilesPath = "3RrtFh",
                     _isLocalOnly = true,
                     _isSyncLocalConnectionsOnly = true,
                     _isWakeOnLanEnabled = true,
@@ -33,7 +32,7 @@ class WhenLoadingTheLibrarySettings {
             mockk(),
             mockk(),
 			mockk(),
-        )
+		)
     }
 
     @BeforeAll
@@ -47,11 +46,6 @@ class WhenLoadingTheLibrarySettings {
     @Test
     fun `then the access code is correct`() {
         assertThat(services.accessCode.value).isEqualTo("")
-    }
-
-    @Test
-    fun `then the custom synced files path is correct`() {
-        assertThat(services.customSyncPath.value).isEqualTo("")
     }
 
     @Test

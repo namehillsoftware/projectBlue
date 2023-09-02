@@ -20,7 +20,6 @@ class WhenRemovingTheLibrary {
 			Library(
 				_id = libraryId.id,
 				_accessCode = "b2q",
-				_customSyncedFilesPath = "d6DL91i",
 				_isLocalOnly = false,
 				_isSyncLocalConnectionsOnly = true,
 				_isWakeOnLanEnabled = false,
@@ -40,8 +39,8 @@ class WhenRemovingTheLibrary {
 					Unit.toPromise()
 				}
 			},
-			mockk()
-        )
+			mockk(),
+		)
     }
 
 	private val removedLibraries = mutableListOf<Library>()

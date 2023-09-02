@@ -20,7 +20,6 @@ class WhenLoadingTheLibrarySettings {
                 Library(
                     _id = libraryId.id,
                     _accessCode = "r64HLI",
-                    _customSyncedFilesPath = "T5YN",
                     _isLocalOnly = true,
                     _isSyncLocalConnectionsOnly = true,
                     _isWakeOnLanEnabled = true,
@@ -33,7 +32,7 @@ class WhenLoadingTheLibrarySettings {
             mockk(),
             mockk(),
 			mockk(),
-        )
+		)
     }
 
     @BeforeAll
@@ -44,11 +43,6 @@ class WhenLoadingTheLibrarySettings {
     @Test
     fun `then the access code is correct`() {
         assertThat(services.accessCode.value).isEqualTo("r64HLI")
-    }
-
-    @Test
-    fun `then the custom synced files path is correct`() {
-        assertThat(services.customSyncPath.value).isEqualTo("T5YN")
     }
 
     @Test

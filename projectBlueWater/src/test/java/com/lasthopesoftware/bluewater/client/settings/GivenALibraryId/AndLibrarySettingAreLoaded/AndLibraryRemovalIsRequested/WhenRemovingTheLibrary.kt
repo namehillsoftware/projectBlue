@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.settings.GivenALibraryId.AndLibrar
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.libraryId
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsViewModel
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
@@ -20,7 +21,6 @@ class WhenRemovingTheLibrary {
 			Library(
 				_id = libraryId.id,
 				_accessCode = "b2q",
-				_customSyncedFilesPath = "d6DL91i",
 				_isLocalOnly = false,
 				_isSyncLocalConnectionsOnly = true,
 				_isWakeOnLanEnabled = false,
@@ -40,8 +40,8 @@ class WhenRemovingTheLibrary {
 					Unit.toPromise()
 				}
 			},
-			mockk()
-        )
+			mockk(),
+		)
     }
 
 	private val removedLibraries = mutableListOf<Library>()

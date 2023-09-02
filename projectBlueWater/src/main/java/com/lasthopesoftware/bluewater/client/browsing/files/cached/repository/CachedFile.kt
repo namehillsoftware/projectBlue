@@ -2,12 +2,12 @@ package com.lasthopesoftware.bluewater.client.browsing.files.cached.repository
 
 import android.database.sqlite.SQLiteDatabase
 import androidx.annotation.Keep
-import com.lasthopesoftware.bluewater.repository.Entity
+import com.lasthopesoftware.bluewater.IdentifiableEntity
 import com.lasthopesoftware.bluewater.repository.IEntityCreator
 import com.lasthopesoftware.bluewater.repository.IEntityUpdater
 
 @Keep
-class CachedFile : Entity, IEntityCreator, IEntityUpdater {
+class CachedFile : IdentifiableEntity, IEntityCreator, IEntityUpdater {
     override var id: Long = 0
 
     /**

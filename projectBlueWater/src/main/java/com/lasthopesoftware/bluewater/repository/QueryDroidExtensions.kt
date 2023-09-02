@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.repository
 
+import com.lasthopesoftware.bluewater.IdentifiableEntity
 import com.namehillsoftware.querydroid.SqLiteAssistants
 import com.namehillsoftware.querydroid.SqLiteCommand
 import java.io.IOException
@@ -24,7 +25,7 @@ fun <T : Entity> RepositoryAccessHelper.insert(tableName: String, value: T): T {
 	}
 }
 
-fun <T : Entity> RepositoryAccessHelper.update(tableName: String, value: T): T {
+fun <T : IdentifiableEntity> RepositoryAccessHelper.update(tableName: String, value: T): T {
 	beginTransaction().use { transaction ->
 		val result = SqLiteAssistants.updateValue(writableDatabase, tableName, value)
 
