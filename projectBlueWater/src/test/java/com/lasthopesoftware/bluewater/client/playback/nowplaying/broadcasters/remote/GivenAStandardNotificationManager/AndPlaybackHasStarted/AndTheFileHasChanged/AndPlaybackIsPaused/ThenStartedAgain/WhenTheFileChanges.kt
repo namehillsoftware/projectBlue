@@ -41,7 +41,7 @@ class WhenTheFileChanges : AndroidContext() {
 	override fun before() {
 		val messageBus = RecordingApplicationMessageBus()
 		val nowPlaying = singleNowPlaying(LibraryId(libraryId), ServiceFile(serviceFileId))
-		val playbackNotificationBroadcaster = MediaSessionBroadcaster(
+		MediaSessionBroadcaster(
 			FakeNowPlayingRepository(nowPlaying),
             mockk {
 				every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns mapOf(

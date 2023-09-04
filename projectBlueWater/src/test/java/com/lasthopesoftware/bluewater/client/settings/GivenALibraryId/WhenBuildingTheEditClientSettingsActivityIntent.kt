@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ConnectionSettingsScreen
 import com.lasthopesoftware.bluewater.client.destinationProperty
 import com.lasthopesoftware.bluewater.shared.android.intents.IntentBuilder
+import com.lasthopesoftware.bluewater.shared.android.intents.safelyGetParcelableExtra
 import org.assertj.core.api.Assertions.*
 import org.junit.Before
 import org.junit.Test
@@ -29,7 +30,7 @@ class WhenBuildingTheEditClientSettingsActivityIntent {
     @Test
     fun thenTheIdInTheIntentIsSetToTheLibraryId() {
         assertThat(
-            (returnedIntent?.getParcelableExtra(destinationProperty) as? ConnectionSettingsScreen)?.libraryId
+            (returnedIntent?.safelyGetParcelableExtra(destinationProperty) as? ConnectionSettingsScreen)?.libraryId
         ).isEqualTo(LibraryId(13))
     }
 
