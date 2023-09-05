@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test
 class WhenSavingTheLibrarySettings {
 
 	private val libraryId = LibraryId(56)
-    private val services by lazy {
+	private val services by lazy {
 		val libraryRepository = FakeLibraryRepository(
 			Library(
 				id = libraryId.id,
@@ -41,11 +41,15 @@ class WhenSavingTheLibrarySettings {
     }
 
 	private var isSaved = false
+	private var didSettingsChange = false
+	private var didSettingsChangeAfterLoad = false
 
     @BeforeAll
     fun act() {
 		with (services) {
 			loadLibrary(libraryId).toExpiringFuture().get()
+			didSettingsChangeAfterLoad = isSettingsChanged.value
+
 			accessCode.value = "V68Bp9rS"
 			password.value = "sl0Ha"
 			userName.value = "xw9wy0T"
@@ -55,9 +59,21 @@ class WhenSavingTheLibrarySettings {
 			isUsingExistingFiles.value = !isUsingExistingFiles.value
 			isWakeOnLanEnabled.value = !isWakeOnLanEnabled.value
 			syncedFileLocation.value = Library.SyncedFileLocation.EXTERNAL
+
+			didSettingsChange = isSettingsChanged.value
 			isSaved = saveLibrary().toExpiringFuture().get() == true
 		}
     }
+
+	@Test
+	fun `then the settings are not changed after load`() {
+		assertThat(didSettingsChangeAfterLoad).isFalse
+	}
+
+	@Test
+	fun `then the settings changed`() {
+		assertThat(didSettingsChange).isTrue
+	}
 
 	@Test
 	fun `then the library is saved`() {

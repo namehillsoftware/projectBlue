@@ -133,7 +133,7 @@ fun LibrarySettingsView(
 				},
 				title = {
 					Text(
-						text = stringResource(id = R.string.removeServer),
+						text = stringResource(id = R.string.remove_server),
 					)
 				},
 				text = {
@@ -399,8 +399,7 @@ fun LibrarySettingsView(
 
 						if (menuWidth > iconSize * 2) {
 							ColumnMenuIcon(
-								modifier = Modifier
-									.fillMaxHeight(),
+								modifier = Modifier.fillMaxHeight(),
 								onClick = librarySettingsViewModel::requestLibraryRemoval,
 								icon = {
 									Image(
@@ -415,19 +414,18 @@ fun LibrarySettingsView(
 						}
 
 						ColumnMenuIcon(
-							modifier = Modifier
-								.fillMaxHeight(),
+							modifier = Modifier.fillMaxHeight(),
 							onClick = {
-								navigateApplication.launchAboutActivity()
+								librarySettingsViewModel.activeLibraryId?.also(navigateApplication::viewLibrary)
 							},
 							icon = {
 								Image(
-									painter = painterResource(id = R.drawable.ic_help),
-									contentDescription = stringResources.aboutTitle,
+									painter = painterResource(id = R.drawable.ic_arrow_right),
+									contentDescription = stringResources.saveAndConnect,
 									modifier = Modifier.size(iconSize)
 								)
 							},
-							label = if (acceleratedHeaderHidingProgress < 1) stringResources.aboutTitle else null,
+							label = if (acceleratedHeaderHidingProgress < 1) stringResources.saveAndConnect else null,
 							labelModifier = textModifier,
 						)
 					}

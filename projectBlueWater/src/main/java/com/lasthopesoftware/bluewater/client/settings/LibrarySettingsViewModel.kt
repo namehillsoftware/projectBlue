@@ -26,11 +26,13 @@ class LibrarySettingsViewModel(
 ) : ViewModel(), PromisedResponse<Boolean, Boolean>, ImmediateResponse<Library?, Unit>, TrackLoadedViewState, ImmediateAction
 {
 	private var library: Library? = null
+	private var modifiedLibrary: Library? = null
 
 	private val mutableIsLoading = MutableStateFlow(false)
 	private val mutableIsSaving = MutableStateFlow(false)
 	private val mutableIsPermissionsNeeded = MutableStateFlow(false)
 	private val mutableIsRemovalRequested = MutableStateFlow(false)
+	private val mutableIsSettingsChanged = MutableStateFlow(false)
 
 	val accessCode = MutableStateFlow("")
 	val libraryName = MutableStateFlow("")
@@ -41,10 +43,15 @@ class LibrarySettingsViewModel(
 	val isWakeOnLanEnabled = MutableStateFlow(false)
 	val isUsingExistingFiles = MutableStateFlow(false)
 	val isSyncLocalConnectionsOnly = MutableStateFlow(false)
+
 	override val isLoading = mutableIsLoading.asStateFlow()
 	val isSaving = mutableIsSaving.asStateFlow()
 	val isStoragePermissionsNeeded = mutableIsPermissionsNeeded.asStateFlow()
 	val isRemovalRequested = mutableIsRemovalRequested.asStateFlow()
+	val isSettingsChanged = mutableIsSettingsChanged.asStateFlow()
+
+	val activeLibraryId
+		get() = library?.libraryId
 
 	fun loadLibrary(libraryId: LibraryId): Promise<*> {
 		mutableIsLoading.value = true

@@ -95,7 +95,8 @@
     <string name="permissions_needed">Permissions needed</string>
     <string name="permissions_needed_launch_settings">Permissions are needed to read or write from the disk. Please set these permissions from the settings page.</string>
     <string name="title_activity_about">About %1$s</string>
-    <string name="removeServer">Remove Server</string>
+    <string name="remove_server">Remove Server</string>
+    <string name="save_and_connect">Save and Connect</string>
     <string name="confirmServerRemoval">Are you sure want to remove server %1$s? Removing the server will remove all associated synchronized files.</string>
     <string name="aboutAppText">%1$s\n\nVersion: %2$s (%3$s)\n\n\n\nCopyright © %4$s %5$s</string>
     <string name="playbackEngine">Playback Engine</string>
