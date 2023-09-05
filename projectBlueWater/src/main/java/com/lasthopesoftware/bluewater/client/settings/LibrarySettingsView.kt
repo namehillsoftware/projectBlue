@@ -38,7 +38,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -325,18 +324,11 @@ fun LibrarySettingsView(
 					}
 
 					val isSavingState by isSaving.collectAsState()
-					var isSaved by remember { mutableStateOf(false) }
 					Button(
-						onClick = {
-							scope.launch {
-								isSaved = saveLibrary().suspend()
-								if (isSaved)
-									navigateApplication.navigateUp()
-							}
-						},
-						enabled = isSettingsChanged && !isSavingState && !isSaved,
+						onClick = { saveLibrary() },
+						enabled = isSettingsChanged && !isSavingState,
 					) {
-						Text(text = if (isSaved) stringResource(id = R.string.saved) else stringResource(id = R.string.save))
+						Text(text = if (!isSettingsChanged) stringResource(id = R.string.saved) else stringResource(id = R.string.save))
 					}
 				}
 			}

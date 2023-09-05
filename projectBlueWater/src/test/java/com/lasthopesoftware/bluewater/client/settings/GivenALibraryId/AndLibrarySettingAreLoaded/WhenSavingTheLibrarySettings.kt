@@ -40,6 +40,7 @@ class WhenSavingTheLibrarySettings {
 		)
     }
 	private var isSaved = false
+	private var settingsChangedAfterSaving = false
 	private var didSettingsChange = false
 	private var didSettingsChangeAfterLoad = false
 	private var didSettingsChangeAfterAccessCodeChanged = false
@@ -69,6 +70,7 @@ class WhenSavingTheLibrarySettings {
 
 			didSettingsChange = isSettingsChanged.value
 			isSaved = saveLibrary().toExpiringFuture().get() == true
+			settingsChangedAfterSaving = isSettingsChanged.value
 		}
     }
 
@@ -95,6 +97,11 @@ class WhenSavingTheLibrarySettings {
 	@Test
 	fun `then the library is saved`() {
 		assertThat(isSaved).isTrue
+	}
+
+	@Test
+	fun `then the settings are changed after saving`() {
+		assertThat(settingsChangedAfterSaving).isFalse
 	}
 
 	@Test

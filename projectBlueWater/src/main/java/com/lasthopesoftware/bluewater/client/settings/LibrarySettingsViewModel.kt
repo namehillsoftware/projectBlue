@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.libraryId
 import com.lasthopesoftware.bluewater.permissions.RequestApplicationPermissions
+import com.lasthopesoftware.bluewater.shared.NullBox
 import com.lasthopesoftware.bluewater.shared.observables.MutableStateObservable
 import com.lasthopesoftware.bluewater.shared.observables.ReadOnlyStateObservable
 import com.lasthopesoftware.bluewater.shared.observables.SingleStateObservable
@@ -30,8 +31,7 @@ class LibrarySettingsViewModel(
 	private val applicationPermissions: RequestApplicationPermissions,
 ) : ViewModel(), PromisedResponse<Boolean, Boolean>, ImmediateResponse<Library?, Unit>, TrackLoadedViewState, ImmediateAction
 {
-	private var library: Library? = null
-
+	private val libraryState = MutableStateObservable<Library?>(null)
 	private val mutableIsLoading = MutableStateFlow(false)
 	private val mutableIsSaving = MutableStateFlow(false)
 	private val mutableIsPermissionsNeeded = MutableStateFlow(false)
@@ -48,6 +48,23 @@ class LibrarySettingsViewModel(
 	val isUsingExistingFiles = MutableStateObservable(false)
 	val isSyncLocalConnectionsOnly = MutableStateObservable(false)
 
+	private val changeTrackers by lazy {
+		fun <T> observeChanges(observable: Observable<NullBox<T>>, libraryValue: Library.() -> T?) =
+			Observable.combineLatest(libraryState, observable) { l, o -> l.value?.let(libraryValue) != o.value }
+
+		arrayOf(
+			observeChanges(accessCode) { accessCode },
+			observeChanges(libraryName) { libraryName },
+			observeChanges(userName) { userName },
+			observeChanges(password) { password },
+			observeChanges(isLocalOnly) { isLocalOnly },
+			observeChanges(syncedFileLocation) { syncedFileLocation },
+			observeChanges(isWakeOnLanEnabled) { isWakeOnLanEnabled },
+			observeChanges(isUsingExistingFiles) { isUsingExistingFiles },
+			observeChanges(isSyncLocalConnectionsOnly) { isSyncLocalConnectionsOnly }
+		)
+	}
+
 	override val isLoading = mutableIsLoading.asStateFlow()
 	val isSaving = mutableIsSaving.asStateFlow()
 	val isStoragePermissionsNeeded = mutableIsPermissionsNeeded.asStateFlow()
@@ -56,7 +73,7 @@ class LibrarySettingsViewModel(
 		get() = isSettingsChangedObserver as? ReadOnlyStateObservable<Boolean> ?: SingleStateObservable(false)
 
 	val activeLibraryId
-		get() = library?.libraryId
+		get() = libraryState.value?.libraryId
 
 	override fun onCleared() {
 		isSettingsChangedObserver?.close()
@@ -73,9 +90,9 @@ class LibrarySettingsViewModel(
 
 	fun saveLibrary(): Promise<Boolean> {
 		mutableIsSaving.value = true
-		val localLibrary = library ?: Library(nowPlayingId = -1)
+		val localLibrary = libraryState.value ?: Library(nowPlayingId = -1)
 
-		library = localLibrary
+		libraryState.value = localLibrary
 			.copy(
 				accessCode = accessCode.value,
 				userName = userName.value,
@@ -102,10 +119,12 @@ class LibrarySettingsViewModel(
 		mutableIsRemovalRequested.value = false
 	}
 
-	fun removeLibrary(): Promise<*> = library?.takeIf { mutableIsRemovalRequested.value }?.let(libraryRemoval::removeLibrary).keepPromise()
+	fun removeLibrary(): Promise<*> = libraryState.value?.takeIf { mutableIsRemovalRequested.value }?.let(libraryRemoval::removeLibrary).keepPromise()
 
 	override fun respond(result: Library?) {
-		library = result
+		libraryState.value = result
+
+		isSettingsChangedObserver?.close()
 
 		isLocalOnly.value = result?.isLocalOnly ?: false
 		isUsingExistingFiles.value = result?.isUsingExistingFiles ?: false
@@ -119,9 +138,7 @@ class LibrarySettingsViewModel(
 		password.value = result?.password ?: ""
 		libraryName.value = result?.libraryName ?: ""
 
-		isSettingsChangedObserver?.close()
-
-		library = result?.copy(
+		libraryState.value = result?.copy(
 			isLocalOnly = isLocalOnly.value,
 			isUsingExistingFiles = isUsingExistingFiles.value,
 			isSyncLocalConnectionsOnly = isSyncLocalConnectionsOnly.value,
@@ -134,29 +151,7 @@ class LibrarySettingsViewModel(
 		)
 
 		isSettingsChangedObserver = SubscribedStateObservable(
-			Observable.combineLatest(
-				accessCode,
-				libraryName,
-				userName,
-				password,
-				isLocalOnly,
-				syncedFileLocation,
-				isWakeOnLanEnabled,
-				isUsingExistingFiles,
-				isSyncLocalConnectionsOnly
-			) { newAccessCode, newLibraryName, newUserName, newPassword, newIsLocalOnly, newSyncedFileLocation, newWolEnabled, newUseExistingFile, newSyncLocal ->
-				library?.run {
-					accessCode != newAccessCode
-						|| libraryName != newLibraryName
-						|| userName != newUserName
-						|| password != newPassword
-						|| isLocalOnly != newIsLocalOnly
-						|| syncedFileLocation != newSyncedFileLocation
-						|| isWakeOnLanEnabled != newWolEnabled
-						|| isUsingExistingFiles != newUseExistingFile
-						|| isSyncLocalConnectionsOnly != newSyncLocal
-				} ?: false
-			},
+			Observable.combineLatest(changeTrackers) { values -> values.any { it as Boolean } },
 			false
 		)
 	}
@@ -167,7 +162,7 @@ class LibrarySettingsViewModel(
 
 		if (isPermissionsNeeded) return false.toPromise()
 
-		val localLibrary = library ?: return false.toPromise()
+		val localLibrary = libraryState.value ?: return false.toPromise()
 
 		return libraryStorage
 			.saveLibrary(localLibrary)

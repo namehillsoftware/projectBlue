@@ -1,20 +1,21 @@
 package com.lasthopesoftware.bluewater.shared.observables
 
+import com.lasthopesoftware.bluewater.shared.NullBox
 import io.reactivex.Observer
 import io.reactivex.subjects.BehaviorSubject
 
-class MutableStateObservable<T : Any>(private val initialValue: T) : ReadOnlyStateObservable<T>() {
+class MutableStateObservable<T>(private val initialValue: T) : ReadOnlyStateObservable<T>() {
 
-	private val behaviorSubject = BehaviorSubject.createDefault(initialValue)
+	private val behaviorSubject = BehaviorSubject.createDefault(NullBox(initialValue))
 
 	override var value: T
-		get() = behaviorSubject.value ?: initialValue
+		get() = behaviorSubject.value?.value ?: initialValue
 		set(value) {
 			if (behaviorSubject.value != value)
-				behaviorSubject.onNext(value)
+				behaviorSubject.onNext(NullBox(value))
 		}
 
-	override fun subscribeActual(observer: Observer<in T>?) {
+	override fun subscribeActual(observer: Observer<in NullBox<T>>?) {
 		behaviorSubject.safeSubscribe(observer)
 	}
 }

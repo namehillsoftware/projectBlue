@@ -17,7 +17,7 @@ fun <T, S : ReadOnlyStateObservable<T>> S.subscribeAsState(): State<T> {
 	val state = remember { mutableStateOf(value) }
 	DisposableEffect(this) {
 		val disposable = subscribe {
-			state.value = it
+			state.value = it.value
 		}
 		onDispose { disposable.dispose() }
 	}
@@ -30,7 +30,7 @@ fun <T, S : MutableStateObservable<T>> S.subscribeAsMutableState(
 ): MutableState<T> {
 	val state = remember { mutableStateOf(value) }
 	DisposableEffect(key1 = this) {
-		val disposable = subscribe { state.value = it }
+		val disposable = subscribe { state.value = it.value }
 
 		onDispose {
 			disposable.dispose()
