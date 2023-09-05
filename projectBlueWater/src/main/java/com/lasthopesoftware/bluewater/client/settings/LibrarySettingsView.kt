@@ -66,7 +66,8 @@ import com.lasthopesoftware.bluewater.shared.android.ui.components.StandardTextF
 import com.lasthopesoftware.bluewater.shared.android.ui.components.memorableScrollConnectedScaler
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
-import com.lasthopesoftware.bluewater.shared.android.viewmodels.collectAsMutableState
+import com.lasthopesoftware.bluewater.shared.observables.subscribeAsMutableState
+import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 import com.lasthopesoftware.bluewater.shared.promises.extensions.suspend
 import com.lasthopesoftware.resources.strings.GetStringResources
 import kotlinx.coroutines.launch
@@ -99,7 +100,7 @@ fun LibrarySettingsView(
 	stringResources: GetStringResources,
 ) {
 	ControlSurface {
-		var accessCodeState by librarySettingsViewModel.accessCode.collectAsMutableState()
+		var accessCodeState by librarySettingsViewModel.accessCode.subscribeAsMutableState()
 
 		val scope = rememberCoroutineScope()
 		val libraryRemovalRequested by librarySettingsViewModel.isRemovalRequested.collectAsState()
@@ -150,6 +151,7 @@ fun LibrarySettingsView(
 			)
 		}
 
+		val isSettingsChanged by librarySettingsViewModel.isSettingsChanged.subscribeAsState()
 		val boxHeightPx = LocalDensity.current.run { boxHeight.toPx() }
 		val collapsedHeightPx = LocalDensity.current.run { appBarHeight.toPx() }
 		val heightScaler = memorableScrollConnectedScaler(boxHeightPx, collapsedHeightPx)
@@ -167,7 +169,9 @@ fun LibrarySettingsView(
 					.verticalScroll(rememberScrollState()),
 				horizontalAlignment = Alignment.CenterHorizontally,
 			) {
-				Spacer(modifier = Modifier.requiredHeight(boxHeight).fillMaxWidth())
+				Spacer(modifier = Modifier
+					.requiredHeight(boxHeight)
+					.fillMaxWidth())
 
 				librarySettingsViewModel.apply {
 					SpacedOutRow {
@@ -179,7 +183,7 @@ fun LibrarySettingsView(
 					}
 
 					SpacedOutRow {
-						var userNameState by userName.collectAsMutableState()
+						var userNameState by userName.subscribeAsMutableState()
 						StandardTextField(
 							placeholder = stringResource(R.string.lbl_user_name),
 							value = userNameState,
@@ -188,7 +192,7 @@ fun LibrarySettingsView(
 					}
 
 					SpacedOutRow {
-						var passwordState by password.collectAsMutableState()
+						var passwordState by password.subscribeAsMutableState()
 						StandardTextField(
 							placeholder = stringResource(R.string.lbl_password),
 							value = passwordState,
@@ -199,7 +203,7 @@ fun LibrarySettingsView(
 					}
 
 					SpacedOutRow {
-						var libraryNameState by libraryName.collectAsMutableState()
+						var libraryNameState by libraryName.subscribeAsMutableState()
 						StandardTextField(
 							placeholder = stringResource(R.string.lbl_library_name),
 							value = libraryNameState,
@@ -208,7 +212,7 @@ fun LibrarySettingsView(
 					}
 
 					SpacedOutRow {
-						var isLocalOnlyState by isLocalOnly.collectAsMutableState()
+						var isLocalOnlyState by isLocalOnly.subscribeAsMutableState()
 						LabeledSelection(
 							label = stringResource(id = R.string.lbl_local_only),
 							selected = isLocalOnlyState,
@@ -223,7 +227,7 @@ fun LibrarySettingsView(
 					}
 
 					SpacedOutRow {
-						var isWolEnabledState by isWakeOnLanEnabled.collectAsMutableState()
+						var isWolEnabledState by isWakeOnLanEnabled.subscribeAsMutableState()
 						LabeledSelection(
 							label = stringResource(id = R.string.wake_on_lan_setting),
 							selected = isWolEnabledState,
@@ -246,7 +250,7 @@ fun LibrarySettingsView(
 							modifier = Modifier.padding(innerGroupPadding),
 						)
 
-						var syncedFileLocationState by syncedFileLocation.collectAsMutableState()
+						var syncedFileLocationState by syncedFileLocation.subscribeAsMutableState()
 						Row(
 							modifier = Modifier.padding(innerGroupPadding)
 						) {
@@ -291,7 +295,7 @@ fun LibrarySettingsView(
 					}
 
 					SpacedOutRow {
-						var isSyncLocalConnectionsOnlyState by isSyncLocalConnectionsOnly.collectAsMutableState()
+						var isSyncLocalConnectionsOnlyState by isSyncLocalConnectionsOnly.subscribeAsMutableState()
 						LabeledSelection(
 							label = stringResource(id = R.string.lbl_sync_local_connection),
 							selected = isSyncLocalConnectionsOnlyState,
@@ -306,7 +310,7 @@ fun LibrarySettingsView(
 					}
 
 					SpacedOutRow {
-						var isUsingExistingFilesState by isUsingExistingFiles.collectAsMutableState()
+						var isUsingExistingFilesState by isUsingExistingFiles.subscribeAsMutableState()
 						LabeledSelection(
 							label = stringResource(id = R.string.lbl_use_existing_music),
 							selected = isUsingExistingFilesState,
@@ -330,7 +334,7 @@ fun LibrarySettingsView(
 									navigateApplication.navigateUp()
 							}
 						},
-						enabled = !isSavingState && !isSaved,
+						enabled = isSettingsChanged && !isSavingState && !isSaved,
 					) {
 						Text(text = if (isSaved) stringResource(id = R.string.saved) else stringResource(id = R.string.save))
 					}
@@ -413,6 +417,13 @@ fun LibrarySettingsView(
 							)
 						}
 
+						val saveAndConnectText by remember {
+							derivedStateOf {
+								if (isSettingsChanged) stringResources.saveAndConnect
+								else stringResources.connect
+							}
+						}
+
 						ColumnMenuIcon(
 							modifier = Modifier.fillMaxHeight(),
 							onClick = {
@@ -421,11 +432,11 @@ fun LibrarySettingsView(
 							icon = {
 								Image(
 									painter = painterResource(id = R.drawable.ic_arrow_right),
-									contentDescription = stringResources.saveAndConnect,
+									contentDescription = saveAndConnectText,
 									modifier = Modifier.size(iconSize)
 								)
 							},
-							label = if (acceleratedHeaderHidingProgress < 1) stringResources.saveAndConnect else null,
+							label = if (acceleratedHeaderHidingProgress < 1) saveAndConnectText else null,
 							labelModifier = textModifier,
 						)
 					}

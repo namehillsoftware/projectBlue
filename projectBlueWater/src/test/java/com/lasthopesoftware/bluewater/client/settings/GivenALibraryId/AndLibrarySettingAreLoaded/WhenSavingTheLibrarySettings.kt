@@ -39,16 +39,23 @@ class WhenSavingTheLibrarySettings {
 			},
 		)
     }
-
 	private var isSaved = false
 	private var didSettingsChange = false
 	private var didSettingsChangeAfterLoad = false
+	private var didSettingsChangeAfterAccessCodeChanged = false
+	private var didSettingsChangeAfterAccessCodeReverted = false
 
     @BeforeAll
     fun act() {
 		with (services) {
 			loadLibrary(libraryId).toExpiringFuture().get()
 			didSettingsChangeAfterLoad = isSettingsChanged.value
+
+			accessCode.value = "V68Bp9rS"
+			didSettingsChangeAfterAccessCodeChanged = isSettingsChanged.value
+
+			accessCode.value = "b2q"
+			didSettingsChangeAfterAccessCodeReverted = isSettingsChanged.value
 
 			accessCode.value = "V68Bp9rS"
 			password.value = "sl0Ha"
@@ -68,6 +75,16 @@ class WhenSavingTheLibrarySettings {
 	@Test
 	fun `then the settings are not changed after load`() {
 		assertThat(didSettingsChangeAfterLoad).isFalse
+	}
+
+	@Test
+	fun `then the settings changed after the access code changed`() {
+		assertThat(didSettingsChangeAfterAccessCodeChanged).isTrue
+	}
+
+	@Test
+	fun `then the settings did not change after the access code changed`() {
+		assertThat(didSettingsChangeAfterAccessCodeReverted).isFalse
 	}
 
 	@Test
