@@ -99,22 +99,22 @@ object LibraryEntityUpdater : IEntityUpdater {
 
 		fun toLibrary(): Library {
 			return Library(
-				_id = id,
-				_accessCode = accessCode,
-				_isLocalOnly = isLocalOnly,
-				_isRepeating = isRepeating,
-				_isSyncLocalConnectionsOnly = isSyncLocalConnectionsOnly,
-				_libraryName = libraryName,
-				_isUsingExistingFiles = isUsingExistingFiles,
-				_isWakeOnLanEnabled = isWakeOnLanEnabled,
-				_nowPlayingId = nowPlayingId,
-				_password = password,
-				_nowPlayingProgress = nowPlayingProgress,
-				_savedTracksString = savedTracksString,
-				_selectedView = selectedView,
-				_selectedViewType = selectedViewType,
-				_userName = userName,
-				_syncedFileLocation = when (syncedFileLocation) {
+				id = id,
+				accessCode = accessCode,
+				isLocalOnly = isLocalOnly,
+				isRepeating = isRepeating,
+				isSyncLocalConnectionsOnly = isSyncLocalConnectionsOnly,
+				libraryName = libraryName,
+				isUsingExistingFiles = isUsingExistingFiles,
+				isWakeOnLanEnabled = isWakeOnLanEnabled,
+				nowPlayingId = nowPlayingId,
+				password = password,
+				nowPlayingProgress = nowPlayingProgress,
+				savedTracksString = savedTracksString,
+				selectedView = selectedView,
+				selectedViewType = selectedViewType,
+				userName = userName,
+				syncedFileLocation = when (syncedFileLocation) {
 					Version13SyncedFileLocation.CUSTOM, Version13SyncedFileLocation.EXTERNAL -> Library.SyncedFileLocation.EXTERNAL
 					Version13SyncedFileLocation.INTERNAL -> Library.SyncedFileLocation.INTERNAL
 					null -> null

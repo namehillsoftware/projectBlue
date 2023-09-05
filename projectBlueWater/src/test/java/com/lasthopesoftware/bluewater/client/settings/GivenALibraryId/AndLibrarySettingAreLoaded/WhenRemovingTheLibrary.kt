@@ -18,15 +18,15 @@ class WhenRemovingTheLibrary {
     private val services by lazy {
 		val libraryRepository = FakeLibraryRepository(
 			Library(
-				_id = libraryId.id,
-				_accessCode = "b2q",
-				_isLocalOnly = false,
-				_isSyncLocalConnectionsOnly = true,
-				_isWakeOnLanEnabled = false,
-				_userName = "o0PoFzNL",
-				_password = "hmpyA",
-				_syncedFileLocation = Library.SyncedFileLocation.EXTERNAL,
-				_isUsingExistingFiles = true,
+				id = libraryId.id,
+				accessCode = "b2q",
+				isLocalOnly = false,
+				isSyncLocalConnectionsOnly = true,
+				isWakeOnLanEnabled = false,
+				userName = "o0PoFzNL",
+				password = "hmpyA",
+				syncedFileLocation = Library.SyncedFileLocation.EXTERNAL,
+				isUsingExistingFiles = true,
 			)
 		)
 

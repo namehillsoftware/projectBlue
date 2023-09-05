@@ -49,8 +49,8 @@ class `When loading the items twice` {
                 mockk {
                     every { promiseLibrary(LibraryId(libraryId)) } returns Promise(
                         Library(
-                            _id = libraryId,
-                            _accessCode = "Lh33",
+                            id = libraryId,
+                            accessCode = "Lh33",
                         )
                     )
                 },

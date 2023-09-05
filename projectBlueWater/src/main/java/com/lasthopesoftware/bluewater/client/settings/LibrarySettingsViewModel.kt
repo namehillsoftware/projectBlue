@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibrarySto
 import com.lasthopesoftware.bluewater.client.browsing.library.access.RemoveLibraries
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.libraryId
 import com.lasthopesoftware.bluewater.permissions.RequestApplicationPermissions
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
@@ -56,18 +57,20 @@ class LibrarySettingsViewModel(
 
 	fun saveLibrary(): Promise<Boolean> {
 		mutableIsSaving.value = true
-		val localLibrary = library ?: Library(_nowPlayingId = -1)
+		val localLibrary = library ?: Library(nowPlayingId = -1)
 
 		library = localLibrary
-			.setAccessCode(accessCode.value)
-			.setUserName(userName.value)
-			.setPassword(password.value)
-			.setLocalOnly(isLocalOnly.value)
-			.setSyncedFileLocation(syncedFileLocation.value)
-			.setIsUsingExistingFiles(isUsingExistingFiles.value)
-			.setIsSyncLocalConnectionsOnly(isSyncLocalConnectionsOnly.value)
-			.setIsWakeOnLanEnabled(isWakeOnLanEnabled.value)
-			.setLibraryName(libraryName.value)
+			.copy(
+				accessCode = accessCode.value,
+				userName = userName.value,
+				password = password.value,
+				isLocalOnly = isLocalOnly.value,
+				syncedFileLocation = syncedFileLocation.value,
+				isUsingExistingFiles = isUsingExistingFiles.value,
+				isSyncLocalConnectionsOnly = isSyncLocalConnectionsOnly.value,
+				isWakeOnLanEnabled = isWakeOnLanEnabled.value,
+				libraryName = libraryName.value
+			)
 
 		return applicationPermissions
 			.promiseIsLibraryPermissionsGranted(localLibrary)

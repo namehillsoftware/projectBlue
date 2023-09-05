@@ -11,8 +11,7 @@ class WhenCheckingIfStorageWritePermissionsAreRequired {
 
 	@BeforeAll
 	fun act() {
-		val libraryRequiringExistingFiles = Library()
-		libraryRequiringExistingFiles.setSyncedFileLocation(Library.SyncedFileLocation.INTERNAL)
+		val libraryRequiringExistingFiles = Library(syncedFileLocation = Library.SyncedFileLocation.INTERNAL)
 		isWritePermissionsRequired = libraryRequiringExistingFiles.isWritePermissionsRequiredForLibrary
 	}
 

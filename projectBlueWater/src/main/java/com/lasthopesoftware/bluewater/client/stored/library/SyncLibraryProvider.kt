@@ -12,5 +12,5 @@ class SyncLibraryProvider(private val libraryProvider: ILibraryProvider) : ILibr
 	override fun promiseLibrary(libraryId: LibraryId): Promise<Library?> =
 		libraryProvider.promiseLibrary(libraryId).then { it?.transformConnectionSetting() }
 
-	private fun Library.transformConnectionSetting() = setLocalOnly(isSyncLocalConnectionsOnly)
+	private fun Library.transformConnectionSetting() = copy(isLocalOnly = isSyncLocalConnectionsOnly)
 }

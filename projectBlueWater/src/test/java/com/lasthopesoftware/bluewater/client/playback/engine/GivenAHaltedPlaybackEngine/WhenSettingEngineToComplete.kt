@@ -31,10 +31,9 @@ class WhenSettingEngineToComplete {
 
 	private val nowPlaying by lazy {
 		val fakePlaybackPreparerProvider = FakeDeferredPlayableFilePreparationSourceProvider()
-		val library = Library()
-		library.setId(607)
-		library.setSavedTracksString(
-			FileStringListUtilities.promiseSerializedFileStringList(
+		val library = Library(
+			id = 607,
+			savedTracksString = FileStringListUtilities.promiseSerializedFileStringList(
 				listOf(
 					ServiceFile(1),
 					ServiceFile(2),
@@ -42,10 +41,11 @@ class WhenSettingEngineToComplete {
 					ServiceFile(4),
 					ServiceFile(5)
 				)
-			).toExpiringFuture().get()
+			).toExpiringFuture().get(),
+			nowPlayingId = 0,
+			isRepeating = true,
 		)
-		library.setNowPlayingId(0)
-		library.setRepeating(true)
+
 		val libraryProvider = FakeLibraryRepository(library)
 
 		val filePropertiesContainerRepository = mockk<IFilePropertiesContainerRepository>()

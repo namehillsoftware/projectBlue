@@ -24,20 +24,19 @@ import java.util.concurrent.TimeUnit
 class WhenMovingThePlayingTrack {
 
 	private val updatedNowPlaying by lazy {
-		val storedLibrary = Library()
-			.setId(1)
-			.setSavedTracksString(
-				FileStringListUtilities.promiseSerializedFileStringList(
-					listOf(
-						ServiceFile(1),
-						ServiceFile(2),
-						ServiceFile(3),
-						ServiceFile(4),
-						ServiceFile(5)
-					)
-				).toExpiringFuture().get()
-			)
-			.setNowPlayingId(3)
+		val storedLibrary = Library(
+			id = 1,
+			savedTracksString = FileStringListUtilities.promiseSerializedFileStringList(
+				listOf(
+					ServiceFile(1),
+					ServiceFile(2),
+					ServiceFile(3),
+					ServiceFile(4),
+					ServiceFile(5)
+				)
+			).toExpiringFuture().get(),
+			nowPlayingId = 3,
+		)
 
 		val fakePlaybackPreparerProvider = FakeDeferredPlayableFilePreparationSourceProvider()
 		val libraryProvider = FakeLibraryRepository(storedLibrary)

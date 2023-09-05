@@ -28,10 +28,11 @@ private const val libraryId = 858
 class WhenResumingPlayback {
 	private val mut by lazy {
 		val fakePlaybackPreparerProvider = FakeDeferredPlayableFilePreparationSourceProvider()
-		val library = Library()
-		library.setId(libraryId)
-		library.setNowPlayingProgress(543)
-		library.setNowPlayingId(586)
+		val library = Library(
+			id = libraryId,
+			nowPlayingProgress = 543,
+			nowPlayingId = 586,
+		)
 
 		val deferredNowPlaying = DeferredPromise<NowPlaying?>(
 			NowPlaying(

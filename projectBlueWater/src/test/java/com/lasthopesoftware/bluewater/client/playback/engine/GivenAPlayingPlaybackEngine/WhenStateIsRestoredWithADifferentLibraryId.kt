@@ -31,16 +31,15 @@ class WhenStateIsRestoredWithADifferentLibraryId {
 
 	private val mut by lazy {
 		val fakePlaybackPreparerProvider = FakeDeferredPlayableFilePreparationSourceProvider()
-		val library = Library()
-		library.setId(libraryId)
+		val library = Library(id = libraryId)
 
 		val restoringLibrary = Library(
-			_id = restoringLibraryId,
-			_savedTracksString = FileStringListUtilities
+			id = restoringLibraryId,
+			savedTracksString = FileStringListUtilities
 				.promiseSerializedFileStringList(listOf(ServiceFile(467), ServiceFile(144)))
 				.toExpiringFuture()
 				.get(),
-			_nowPlayingId = 1,
+			nowPlayingId = 1,
 		)
 
 		val libraryProvider = FakeLibraryRepository(library, restoringLibrary)

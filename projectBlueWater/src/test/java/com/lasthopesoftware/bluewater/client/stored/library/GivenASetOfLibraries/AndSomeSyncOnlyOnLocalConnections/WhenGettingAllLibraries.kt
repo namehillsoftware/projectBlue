@@ -9,21 +9,21 @@ import org.junit.jupiter.api.Test
 
 class WhenGettingAllLibraries {
 	private val expectedLibraries = listOf(
-		Library().setId(5).setIsSyncLocalConnectionsOnly(true).setLocalOnly(true),
-		Library().setId(4),
-		Library().setId(8),
-		Library().setId(99).setIsSyncLocalConnectionsOnly(true).setLocalOnly(true),
-		Library().setId(13)
+		Library(id = 5, isSyncLocalConnectionsOnly = true, isLocalOnly = true),
+		Library(id = 4),
+		Library(id = 8),
+		Library(id = 99, isSyncLocalConnectionsOnly = true, isLocalOnly = true),
+		Library(id = 13)
 	)
 
 	private val libraries by lazy {
 		val syncLibraryProvider = SyncLibraryProvider(
 			FakeLibraryRepository(
-				Library().setId(5).setIsSyncLocalConnectionsOnly(true),
-				Library().setId(4),
-				Library().setId(8),
-				Library().setId(99).setIsSyncLocalConnectionsOnly(true),
-				Library().setId(13)
+				Library(id = 5, isSyncLocalConnectionsOnly = true),
+				Library(id = 4),
+				Library(id = 8),
+				Library(id = 99, isSyncLocalConnectionsOnly = true),
+				Library(id = 13)
 			)
 		)
 		ExpiringFuturePromise(syncLibraryProvider.allLibraries).get()

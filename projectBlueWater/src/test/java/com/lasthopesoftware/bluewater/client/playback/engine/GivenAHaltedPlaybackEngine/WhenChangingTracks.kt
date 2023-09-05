@@ -30,12 +30,11 @@ private const val libraryId = 311
 class WhenChangingTracks {
 
 	private val mut by lazy {
-		val library = Library()
 
 		val fakePlaybackPreparerProvider = FakeDeferredPlayableFilePreparationSourceProvider()
-		library.setId(libraryId)
-		library.setSavedTracksString(
-			FileStringListUtilities.promiseSerializedFileStringList(
+		val library = Library(
+			id = libraryId,
+			savedTracksString = FileStringListUtilities.promiseSerializedFileStringList(
 				listOf(
 					ServiceFile(1),
 					ServiceFile(2),
@@ -43,9 +42,10 @@ class WhenChangingTracks {
 					ServiceFile(4),
 					ServiceFile(5)
 				)
-			).toExpiringFuture().get()
+			).toExpiringFuture().get(),
+			nowPlayingId = 0,
 		)
-		library.setNowPlayingId(0)
+
 		val libraryProvider = FakeLibraryRepository(library)
 		val playbackEngine = PlaybackEngine(
 			PreparedPlaybackQueueResourceManagement(

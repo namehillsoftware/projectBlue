@@ -32,9 +32,9 @@ class WhenLoadingTheItems {
 			mockk {
 				every { promiseLibrary(LibraryId(libraryId)) } returns Promise(
 					Library(
-						_id = libraryId,
-						_accessCode = "2WF95",
-						_libraryName = "shelter",
+						id = libraryId,
+						accessCode = "2WF95",
+						libraryName = "shelter",
 					)
 				)
 			},

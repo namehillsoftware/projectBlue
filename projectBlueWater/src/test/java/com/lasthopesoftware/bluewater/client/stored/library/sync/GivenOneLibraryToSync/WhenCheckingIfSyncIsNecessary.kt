@@ -33,9 +33,9 @@ class WhenCheckingIfSyncIsNecessary {
 
 		SyncChecker(
 			FakeLibraryRepository(
-				Library().setId(3),
-				Library().setId(11),
-				Library().setId(10)
+				Library(id = 3),
+				Library(id = 11),
+				Library(id = 10)
 			),
 			collector,
 			checkStoredFiles
