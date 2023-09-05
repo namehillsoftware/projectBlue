@@ -105,7 +105,6 @@ import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
-import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRateLimiter
 import com.lasthopesoftware.bluewater.shared.policies.retries.RetryExecutionPolicy
 import com.lasthopesoftware.bluewater.shared.promises.extensions.*
@@ -703,7 +702,6 @@ private fun LibraryDestination.Navigate(
 	browserViewDependencies: ScopedBrowserViewDependencies,
 	connectionStatusViewModel: ConnectionStatusViewModel,
 	scaffoldState: BottomSheetScaffoldState,
-	coroutineScope: CoroutineScope,
 ) {
 	with(browserViewDependencies) {
 		when (this@Navigate) {
@@ -730,18 +728,6 @@ private fun LibraryDestination.Navigate(
 				}
 
 				viewModel.loadLibrary(libraryId)
-
-				DisposableEffect(key1 = Unit) {
-					val registration =
-						messageBus.registerReceiver(coroutineScope) { m: ObservableConnectionSettingsLibraryStorage.ConnectionSettingsUpdated ->
-							if (libraryId == m.libraryId)
-								applicationNavigation.viewLibrary(libraryId)
-						}
-
-					onDispose {
-						registration.close()
-					}
-				}
 			}
 			is NowPlayingScreen -> {
 				val systemUiController = rememberSystemUiController()
@@ -897,7 +883,6 @@ private fun BrowserView(
 							ScopedViewModelDependencies(graphDependencies, it),
 							connectionStatusViewModel,
 							scaffoldState,
-							coroutineScope,
 						)
 					}
 				}
