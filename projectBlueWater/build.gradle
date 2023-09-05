@@ -23,6 +23,8 @@ if (!hasAndroidStorePassword()) {
 
 def isSignedExternally = { hasKeyStorePassword() && hasAndroidStorePassword() }
 
+def compose_compiler_version = '1.5.3'
+
 android {
 	compileSdk 34
 
@@ -113,7 +115,7 @@ android {
     }
 
 	composeOptions {
-		kotlinCompilerExtensionVersion '1.4.7'
+		kotlinCompilerExtensionVersion compose_compiler_version
 	}
 	namespace 'com.lasthopesoftware.bluewater'
 }
@@ -200,7 +202,7 @@ dependencies {
 	implementation 'com.google.accompanist:accompanist-systemuicontroller:0.27.0'
 	implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.1'
 	implementation 'androidx.activity:activity-compose:1.7.2'
-	implementation 'androidx.compose.compiler:compiler:1.5.2'
+	implementation "androidx.compose.compiler:compiler:$compose_compiler_version"
 	implementation 'dev.olshevski.navigation:reimagined:1.5.0'
 	debugImplementation "androidx.compose.ui:ui-tooling:$compose_version"
 	testImplementation 'commons-codec:commons-codec:1.15'
