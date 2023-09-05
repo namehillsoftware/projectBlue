@@ -38,19 +38,9 @@ class LibrarySettingsViewModel(
 	private val mutableIsRemovalRequested = MutableStateFlow(false)
 	private var isSettingsChangedObserver: SubscribedStateObservable<Boolean>? = null
 
-	val accessCode = MutableStateObservable("")
-	val libraryName = MutableStateObservable("")
-	val userName = MutableStateObservable("")
-	val password = MutableStateObservable("")
-	val isLocalOnly = MutableStateObservable(false)
-	val syncedFileLocation = MutableStateObservable(Library.SyncedFileLocation.INTERNAL)
-	val isWakeOnLanEnabled = MutableStateObservable(false)
-	val isUsingExistingFiles = MutableStateObservable(false)
-	val isSyncLocalConnectionsOnly = MutableStateObservable(false)
-
 	private val changeTrackers by lazy {
 		fun <T> observeChanges(observable: Observable<NullBox<T>>, libraryValue: Library.() -> T?) =
-			Observable.combineLatest(libraryState, observable) { l, o -> l.value?.let(libraryValue) != o.value }
+			Observable.combineLatest(libraryState, observable) { l, o -> l.value?.run(libraryValue) != o.value }
 
 		arrayOf(
 			observeChanges(accessCode) { accessCode },
@@ -64,6 +54,16 @@ class LibrarySettingsViewModel(
 			observeChanges(isSyncLocalConnectionsOnly) { isSyncLocalConnectionsOnly }
 		)
 	}
+
+	val accessCode = MutableStateObservable("")
+	val libraryName = MutableStateObservable("")
+	val userName = MutableStateObservable("")
+	val password = MutableStateObservable("")
+	val isLocalOnly = MutableStateObservable(false)
+	val syncedFileLocation = MutableStateObservable(Library.SyncedFileLocation.INTERNAL)
+	val isWakeOnLanEnabled = MutableStateObservable(false)
+	val isUsingExistingFiles = MutableStateObservable(false)
+	val isSyncLocalConnectionsOnly = MutableStateObservable(false)
 
 	override val isLoading = mutableIsLoading.asStateFlow()
 	val isSaving = mutableIsSaving.asStateFlow()

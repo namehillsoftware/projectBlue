@@ -419,7 +419,15 @@ fun LibrarySettingsView(
 						ColumnMenuIcon(
 							modifier = Modifier.fillMaxHeight(),
 							onClick = {
-								librarySettingsViewModel.activeLibraryId?.also(navigateApplication::viewLibrary)
+								if (isSettingsChanged) {
+									scope.launch {
+										val isSaved = librarySettingsViewModel.saveLibrary().suspend()
+										if (isSaved)
+											librarySettingsViewModel.activeLibraryId?.also(navigateApplication::viewLibrary)
+									}
+								} else {
+									librarySettingsViewModel.activeLibraryId?.also(navigateApplication::viewLibrary)
+								}
 							},
 							icon = {
 								Image(
