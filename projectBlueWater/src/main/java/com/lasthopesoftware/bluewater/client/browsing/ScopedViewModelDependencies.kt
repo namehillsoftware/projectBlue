@@ -5,10 +5,11 @@ import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewMod
 import com.lasthopesoftware.bluewater.client.browsing.files.list.SearchFilesViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsViewModel
+import com.lasthopesoftware.bluewater.client.settings.PermissionsDependencies
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.view.ActiveFileDownloadsViewModel
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 
-class ScopedViewModelDependencies(inner: BrowserViewDependencies, viewModelStoreOwner: ViewModelStoreOwner) : ScopedBrowserViewDependencies, BrowserViewDependencies by inner {
+class ScopedViewModelDependencies(inner: BrowserViewDependencies, permissionsDependencies: PermissionsDependencies, viewModelStoreOwner: ViewModelStoreOwner) : ScopedBrowserViewDependencies, BrowserViewDependencies by inner {
 
 	override val itemListViewModel by viewModelStoreOwner.buildViewModelLazily {
         ItemListViewModel(
@@ -42,7 +43,7 @@ class ScopedViewModelDependencies(inner: BrowserViewDependencies, viewModelStore
 			libraryProvider = libraryProvider,
 			libraryStorage = libraryStorage,
 			libraryRemoval = libraryRemoval,
-			applicationPermissions = applicationPermissions,
+			applicationPermissions = permissionsDependencies.applicationPermissions,
 		)
 	}
 }

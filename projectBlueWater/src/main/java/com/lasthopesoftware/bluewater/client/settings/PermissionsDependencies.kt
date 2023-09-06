@@ -1,0 +1,13 @@
+package com.lasthopesoftware.bluewater.client.settings
+
+import com.lasthopesoftware.bluewater.client.stored.library.permissions.folder.RequestWritableFolders
+import com.lasthopesoftware.bluewater.permissions.RequestApplicationPermissions
+import com.lasthopesoftware.bluewater.permissions.read.ProvideReadPermissionsRequirements
+import com.lasthopesoftware.bluewater.shared.android.permissions.ManagePermissions
+
+interface PermissionsDependencies {
+	val readPermissionsRequirements: ProvideReadPermissionsRequirements
+	val permissionsManager: ManagePermissions
+	val applicationPermissions: RequestApplicationPermissions
+	val folderPermissions: RequestWritableFolders
+}
