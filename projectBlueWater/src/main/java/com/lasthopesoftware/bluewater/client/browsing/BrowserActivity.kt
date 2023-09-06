@@ -38,7 +38,6 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsView
 import com.lasthopesoftware.bluewater.client.settings.PermissionsDependencies
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.view.ActiveFileDownloadsView
-import com.lasthopesoftware.bluewater.client.stored.library.permissions.folder.WritableFoldersProvider
 import com.lasthopesoftware.bluewater.permissions.ApplicationPermissionsRequests
 import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermissionsRequirementsProvider
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsView
@@ -82,24 +81,15 @@ class BrowserActivity :
 {
 	private val browserViewDependencies by lazy { ActivityDependencies(this) }
 
-	private val osPermissionChecker by lazy { OsPermissionsChecker(applicationContext) }
-
-	private val activityResultsLauncher = registerResultActivityLauncher()
-
-	override val readPermissionsRequirements by lazy { ApplicationReadPermissionsRequirementsProvider(osPermissionChecker) }
-
-	override val permissionsManager = this
-
 	override val applicationPermissions by lazy {
+		val osPermissionChecker = OsPermissionsChecker(applicationContext)
 		ApplicationPermissionsRequests(
 			browserViewDependencies.libraryProvider,
-			readPermissionsRequirements,
+			ApplicationReadPermissionsRequirementsProvider(osPermissionChecker),
 			this,
 			osPermissionChecker
 		)
 	}
-
-	override val folderPermissions by lazy { WritableFoldersProvider(activityResultsLauncher, contentResolver) }
 
 	private val permissionsRequests = ConcurrentHashMap<Int, Messenger<Map<String, Boolean>>>()
 
