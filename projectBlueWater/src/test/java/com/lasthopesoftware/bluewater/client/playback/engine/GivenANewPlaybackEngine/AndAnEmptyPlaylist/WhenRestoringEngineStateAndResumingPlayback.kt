@@ -25,10 +25,11 @@ private const val libraryId = 55
 class WhenRestoringEngineStateAndResumingPlayback {
 	private val mut by lazy {
 		val fakePlaybackPreparerProvider = FakeDeferredPlayableFilePreparationSourceProvider()
-		val library = Library()
-		library.setId(libraryId)
-		library.setNowPlayingProgress(543)
-		library.setNowPlayingId(586)
+		val library = Library(
+			id = libraryId,
+			nowPlayingId = 586,
+			nowPlayingProgress = 543
+		)
 
 		val libraryProvider = FakeLibraryRepository(library)
 

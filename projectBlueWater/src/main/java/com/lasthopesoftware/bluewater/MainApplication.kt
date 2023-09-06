@@ -27,10 +27,8 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.playedfile.PlayedFilePlayStatsUpdater
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertyStorage
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
-import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionSettingsChangeReceiver
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionSettingsChangeReceiver
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.NotificationsConfiguration
@@ -45,7 +43,6 @@ import com.lasthopesoftware.bluewater.client.stored.library.permissions.read.Sto
 import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
 import com.lasthopesoftware.bluewater.client.stored.sync.notifications.SyncChannelProperties
 import com.lasthopesoftware.bluewater.client.stored.sync.receivers.SyncItemStateChangedListener
-import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.android.intents.IntentBuilder
 import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
@@ -108,8 +105,6 @@ open class MainApplication : Application() {
 
 	private val applicationMessageBus by lazy { getApplicationMessageBus() }
 
-	private val applicationSettings by lazy { getApplicationSettingsRepository() }
-
 	private val syncScheduler by lazy { SyncScheduler(this) }
 
 	@SuppressLint("DefaultLocale")
@@ -144,12 +139,6 @@ open class MainApplication : Application() {
 		}
 
 		applicationMessageBus.registerReceiver(ConnectionSessionSettingsChangeReceiver(libraryConnections))
-		applicationMessageBus.registerReceiver(
-			SelectedConnectionSettingsChangeReceiver(
-				SelectedLibraryIdProvider(applicationSettings),
-				applicationMessageBus
-			)
-		)
 
 		applicationMessageBus.registerReceiver(
 			PlaybackFileStartedScrobbleDroidProxy(

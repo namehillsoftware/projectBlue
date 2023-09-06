@@ -19,8 +19,10 @@ class StringResources(context: Context): GetStringResources {
 	override val connectingToServerLibrary by lazy { context.getString(R.string.lbl_connecting_to_server_library) }
 	override val errorConnectingTryAgain by lazy { context.getString(R.string.lbl_error_connecting_try_again) }
 	override val connected by lazy { context.getString(R.string.lbl_connected) }
-	override val removeServer by lazy { context.getString(R.string.removeServer) }
+	override val removeServer by lazy { context.getString(R.string.remove_server) }
 	override val connectingToServerTitle by lazy { context.getString(R.string.title_svc_connecting_to_server) }
 	override val permissionsNeeded by lazy { context.getString(R.string.permissions_needed) }
 	override val permissionsNeededLaunchSettings by lazy { context.getString(R.string.permissions_needed_launch_settings) }
+	override val saveAndConnect by lazy { context.getString(R.string.save_and_connect) }
+	override val connect by lazy { context.getString(R.string.lbl_connect) }
 }

@@ -35,9 +35,9 @@ class `When Loading the Settings` {
 			mockk {
 				every { allLibraries } returns Promise(
 					listOf(
-						Library(_id = 504),
-						Library(_id = 395),
-						Library(_id = 304),
+						Library(id = 504),
+						Library(id = 395),
+						Library(id = 304),
 					)
 				)
 			},
@@ -80,9 +80,9 @@ class `When Loading the Settings` {
 	fun `then the libraries are correct`() {
 		assertThat(mutt.libraries.value).isEqualTo(
 			listOf(
-				Library(_id = 504),
-				Library(_id = 395),
-				Library(_id = 304),
+				Library(id = 504),
+				Library(id = 395),
+				Library(id = 304),
 			)
 		)
 	}

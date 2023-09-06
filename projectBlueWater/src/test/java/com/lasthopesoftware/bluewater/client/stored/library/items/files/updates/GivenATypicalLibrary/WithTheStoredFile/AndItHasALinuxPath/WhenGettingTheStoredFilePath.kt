@@ -32,7 +32,7 @@ class WhenGettingTheStoredFilePath {
 		val storedFilePathsLookup = StoredFileUrisLookup(
 			filePropertiesProvider,
 			FakeLibraryRepository(
-				Library(_id = 550, _syncedFileLocation = Library.SyncedFileLocation.INTERNAL)
+				Library(id = 550, syncedFileLocation = Library.SyncedFileLocation.INTERNAL)
 			),
 			mockk {
 				every { promiseSyncDirectory(LibraryId(550)) } returns Promise(File("/lock"))

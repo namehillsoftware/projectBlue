@@ -29,9 +29,10 @@ class WhenUpdatingTheFile {
 			}
 
 			val fakeLibraryRepository = FakeLibraryRepository(
-				Library()
-					.setId(14)
-					.setSyncedFileLocation(Library.SyncedFileLocation.INTERNAL)
+				Library(
+					id = 14,
+					syncedFileLocation = Library.SyncedFileLocation.INTERNAL
+				)
 			)
 
 			val lookupStoredFilePaths = mockk<GetStoredFileUris> {

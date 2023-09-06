@@ -18,15 +18,15 @@ class WhenLoadingTheLibrarySettings {
         LibrarySettingsViewModel(
             FakeLibraryRepository(
                 Library(
-                    _id = libraryId.id,
-                    _accessCode = "yKV48o",
-                    _isLocalOnly = true,
-                    _isSyncLocalConnectionsOnly = true,
-                    _isWakeOnLanEnabled = true,
-                    _userName = "6O6Wkha6",
-                    _password = "7t5nHd",
-                    _syncedFileLocation = Library.SyncedFileLocation.EXTERNAL,
-                    _isUsingExistingFiles = true,
+                    id = libraryId.id,
+                    accessCode = "yKV48o",
+                    isLocalOnly = true,
+                    isSyncLocalConnectionsOnly = true,
+                    isWakeOnLanEnabled = true,
+                    userName = "6O6Wkha6",
+                    password = "7t5nHd",
+                    syncedFileLocation = Library.SyncedFileLocation.EXTERNAL,
+                    isUsingExistingFiles = true,
                 )
             ),
             mockk(),

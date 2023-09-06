@@ -56,21 +56,20 @@ class WhenRemovingFilesBeforeTheCurrentlyPlayingFile {
 	}
 
 	private val library by lazy {
-		Library()
-			.setId(libraryId)
-			.setSavedTracksString(
-				FileStringListUtilities.promiseSerializedFileStringList(
-					listOf(
-						ServiceFile(1),
-						ServiceFile(2),
-						ServiceFile(3),
-						ServiceFile(4),
-						ServiceFile(5)
-					)
-				).toExpiringFuture().get()
-			)
-			.setNowPlayingProgress(35)
-			.setNowPlayingId(2)
+		Library(
+			id = libraryId,
+			savedTracksString = FileStringListUtilities.promiseSerializedFileStringList(
+				listOf(
+					ServiceFile(1),
+					ServiceFile(2),
+					ServiceFile(3),
+					ServiceFile(4),
+					ServiceFile(5)
+				)
+			).toExpiringFuture().get(),
+			nowPlayingId = 2,
+			nowPlayingProgress = 35
+		)
 	}
 	private val libraryProvider by lazy { FakeLibraryRepository(library) }
 	private var initialState: PositionedProgressedFile? = null

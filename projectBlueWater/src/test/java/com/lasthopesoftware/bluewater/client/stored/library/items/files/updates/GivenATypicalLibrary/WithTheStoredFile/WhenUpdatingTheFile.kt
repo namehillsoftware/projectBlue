@@ -27,7 +27,7 @@ class WhenUpdatingTheFile {
 			val libraryId = LibraryId(705)
 
 			val fakeLibraryRepository = FakeLibraryRepository(
-				Library().setId(libraryId.id).setSyncedFileLocation(Library.SyncedFileLocation.EXTERNAL)
+				Library(id = libraryId.id, syncedFileLocation = Library.SyncedFileLocation.EXTERNAL)
 			)
 
 			val serviceFile = ServiceFile(596)

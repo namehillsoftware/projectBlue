@@ -16,22 +16,23 @@ class WhenGettingTheLibrary {
 
     companion object {
         private val expectedLibrary by lazy {
-            Library()
-                .setLibraryName("SomeName")
-                .setAccessCode("aCxeS")
-                .setIsSyncLocalConnectionsOnly(true)
-                .setIsUsingExistingFiles(true)
-                .setIsWakeOnLanEnabled(true)
-                .setLocalOnly(true)
-                .setNowPlayingId(14)
-                .setNowPlayingProgress(80000000000000L)
-                .setPassword("somePass")
-                .setUserName("myUser")
-                .setSelectedView(32)
-                .setSelectedViewType(ViewType.StandardServerView)
-                .setRepeating(true)
-                .setSavedTracksString("This is not even a real track string")
-                .setSyncedFileLocation(Library.SyncedFileLocation.EXTERNAL)
+            Library(
+				libraryName = "SomeName",
+				accessCode = "aCxeS",
+				isSyncLocalConnectionsOnly = true,
+				isUsingExistingFiles = true,
+				isWakeOnLanEnabled = true,
+				isLocalOnly = true,
+				nowPlayingId = 14,
+				nowPlayingProgress = 80000000000000L,
+				password = "somePass",
+				userName = "myUser",
+				selectedView = 32,
+				selectedViewType = ViewType.StandardServerView,
+				isRepeating = true,
+				savedTracksString = "This is not even a real track string",
+				syncedFileLocation = Library.SyncedFileLocation.EXTERNAL,
+			)
         }
 
         private val retrievedLibrary by lazy {
@@ -39,7 +40,7 @@ class WhenGettingTheLibrary {
 			libraryRepository
 				.saveLibrary(expectedLibrary)
 				.eventually { l ->
-					expectedLibrary.setId(l.id)
+					expectedLibrary.id = l.id
 					libraryRepository.promiseLibrary(l.libraryId)
 				}
 				.toExpiringFuture()

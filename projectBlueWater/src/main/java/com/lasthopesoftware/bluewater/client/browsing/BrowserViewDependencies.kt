@@ -29,13 +29,9 @@ import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsViewModel
 import com.lasthopesoftware.bluewater.client.stored.library.items.StateChangeBroadcastingStoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.view.ActiveFileDownloadsViewModel
-import com.lasthopesoftware.bluewater.client.stored.library.permissions.folder.RequestWritableFolders
 import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
-import com.lasthopesoftware.bluewater.permissions.RequestApplicationPermissions
-import com.lasthopesoftware.bluewater.permissions.read.ProvideReadPermissionsRequirements
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsViewModel
 import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
-import com.lasthopesoftware.bluewater.shared.android.permissions.ManagePermissions
 import com.lasthopesoftware.bluewater.shared.messages.RegisterForTypedMessages
 import com.lasthopesoftware.bluewater.shared.messages.application.ScopedApplicationMessageBus
 import com.lasthopesoftware.resources.strings.StringResources
@@ -58,8 +54,6 @@ interface BrowserViewDependencies {
 	val libraryProvider: ILibraryProvider
 	val libraryStorage: ILibraryStorage
 	val libraryRemoval: RemoveLibraries
-	val readPermissionsRequirements: ProvideReadPermissionsRequirements
-	val permissionsManager: ManagePermissions
 	val navigationMessages: RegisterForTypedMessages<NavigationMessage>
 	val applicationSettingsRepository: HoldApplicationSettings
 	val playbackLibraryItems: PlaybackLibraryItems
@@ -72,8 +66,6 @@ interface BrowserViewDependencies {
 	val reusableChildItemViewModelProvider: ReusableChildItemViewModelProvider
 	val reusableFileItemViewModelProvider: ReusableFileItemViewModelProvider
 	val applicationSettingsViewModel: ApplicationSettingsViewModel
-	val applicationPermissions: RequestApplicationPermissions
-	val folderPermissions: RequestWritableFolders
 }
 
 /**

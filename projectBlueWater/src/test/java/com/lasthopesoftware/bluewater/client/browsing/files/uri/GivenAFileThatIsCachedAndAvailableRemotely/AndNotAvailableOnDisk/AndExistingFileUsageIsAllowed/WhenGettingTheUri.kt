@@ -39,7 +39,7 @@ class WhenGettingTheUri {
 			every { mockRemoteFileUriProvider.promiseUri(LibraryId(libraryId), ServiceFile(3)) } returns Promise(Uri.parse("http://remote-url/to_a_file.mp3"))
 			val bestMatchUriProvider = BestMatchUriProvider(
 				mockk {
-					every { promiseLibrary(LibraryId(libraryId)) } returns Library().setIsUsingExistingFiles(true).toPromise()
+					every { promiseLibrary(LibraryId(libraryId)) } returns Library(isUsingExistingFiles = true).toPromise()
 				},
 				mockStoredFileUriProvider,
 				cachedAudioFileUriProvider,

@@ -21,11 +21,7 @@ import org.junit.jupiter.api.Test
 
 class WhenRemovingTheLibrary {
 
-	private val library by lazy {
-		val library = Library()
-		library.setId(14)
-		library
-	}
+	private val library = Library(id = 14)
 
 	private val libraryRemoval by lazy {
 		val fakeStoredItemAccess: AccessStoredItems = FakeStoredItemAccess(
@@ -42,8 +38,8 @@ class WhenRemovingTheLibrary {
 
 		val libraryProvider = FakeLibraryRepository(
 			library,
-			Library().setId(4),
-			Library().setId(15)
+			Library(id = 4),
+			Library(id = 15)
 		)
 
 		val selectBrowserLibrary = mockk<SelectBrowserLibrary>()

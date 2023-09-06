@@ -24,7 +24,7 @@ class WhenNotObservingPlayback {
 	private val mut by lazy {
 		val fakePlaybackPreparerProvider = FakeDeferredPlayableFilePreparationSourceProvider()
 
-		val library = Library(_id = 1, _nowPlayingId = 5)
+		val library = Library(id = 1, nowPlayingId = 5)
 
 		val libraryProvider = FakeLibraryRepository(library)
 

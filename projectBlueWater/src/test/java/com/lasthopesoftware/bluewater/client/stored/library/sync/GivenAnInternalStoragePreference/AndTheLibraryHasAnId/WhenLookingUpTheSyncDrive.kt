@@ -17,9 +17,10 @@ class WhenLookingUpTheSyncDrive {
 		fakePrivateDirectoryLookup.addDirectory("", 3)
 		fakePrivateDirectoryLookup.addDirectory("/storage/0/my-private-sd-card", 10)
 		val fakeLibraryRepository = FakeLibraryRepository(
-			Library()
-				.setId(14)
-				.setSyncedFileLocation(Library.SyncedFileLocation.INTERNAL)
+			Library(
+				id = 14,
+				syncedFileLocation = Library.SyncedFileLocation.INTERNAL
+			)
 		)
 		val syncDirectoryLookup = SyncDirectoryLookup(
 			fakeLibraryRepository,

@@ -17,7 +17,7 @@ class `When checking if OS read permissions are required for the library` {
 
 		applicationReadPermissionsRequirementsProvider
 			.isReadPermissionsRequiredForLibrary(
-				Library().setSyncedFileLocation(Library.SyncedFileLocation.EXTERNAL)
+				Library(syncedFileLocation = Library.SyncedFileLocation.EXTERNAL)
 			)
 	}
 

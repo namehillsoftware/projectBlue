@@ -27,11 +27,11 @@ class WhenGettingNowPlayingState {
 			},
 			mockk {
 				every { promiseLibrary(LibraryId(libraryId)) } returns Library(
-					_id = libraryId,
-					_nowPlayingProgress = 435,
-					_nowPlayingId = 2,
-					_savedTracksString = "2;-1;130;32;22;",
-					_isRepeating = false
+					id = libraryId,
+					nowPlayingProgress = 435,
+					nowPlayingId = 2,
+					savedTracksString = "2;-1;130;32;22;",
+					isRepeating = false
 				).toPromise()
 			},
 			mockk(),

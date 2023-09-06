@@ -6,11 +6,9 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 
 @MainThread
-fun <T : AutoCloseable> LifecycleOwner.lazyScoped(factory: () -> T): Lazy<T> = lazy {
-	factory().also { LifecycleAutoCloser(this, it) }
-}
+fun <T : AutoCloseable> LifecycleOwner.lazyScoped(factory: () -> T): Lazy<T> = LifecycleAutoCloser(this, lazy(factory))
 
-private class LifecycleAutoCloser(private val owner: LifecycleOwner, private val closeable: AutoCloseable) : LifecycleEventObserver {
+private class LifecycleAutoCloser<T : AutoCloseable>(private val owner: LifecycleOwner, private val innerLazy: Lazy<T>) : LifecycleEventObserver, Lazy<T> by innerLazy {
 	init {
 		owner.lifecycle.addObserver(this)
 	}
@@ -19,7 +17,8 @@ private class LifecycleAutoCloser(private val owner: LifecycleOwner, private val
 		if (source !== owner || event != Lifecycle.Event.ON_DESTROY) return
 
 		try {
-			closeable.close()
+			if (innerLazy.isInitialized())
+				innerLazy.value.close()
 		} finally {
 			owner.lifecycle.removeObserver(this)
 		}

@@ -15,18 +15,18 @@ import org.junit.jupiter.api.Test
 class WhenSavingTheLibrarySettings {
 
 	private val libraryId = LibraryId(56)
-    private val services by lazy {
+	private val services by lazy {
 		val libraryRepository = FakeLibraryRepository(
 			Library(
-				_id = libraryId.id,
-				_accessCode = "b2q",
-				_isLocalOnly = false,
-				_isSyncLocalConnectionsOnly = true,
-				_isWakeOnLanEnabled = false,
-				_userName = "o0PoFzNL",
-				_password = "hmpyA",
-				_syncedFileLocation = Library.SyncedFileLocation.EXTERNAL,
-				_isUsingExistingFiles = true,
+				id = libraryId.id,
+				accessCode = "b2q",
+				isLocalOnly = false,
+				isSyncLocalConnectionsOnly = true,
+				isWakeOnLanEnabled = false,
+				userName = "o0PoFzNL",
+				password = "hmpyA",
+				syncedFileLocation = Library.SyncedFileLocation.EXTERNAL,
+				isUsingExistingFiles = true,
 			)
 		)
 
@@ -39,13 +39,25 @@ class WhenSavingTheLibrarySettings {
 			},
 		)
     }
-
 	private var isSaved = false
+	private var settingsChangedAfterSaving = false
+	private var didSettingsChange = false
+	private var didSettingsChangeAfterLoad = false
+	private var didSettingsChangeAfterAccessCodeChanged = false
+	private var didSettingsChangeAfterAccessCodeReverted = false
 
     @BeforeAll
     fun act() {
 		with (services) {
 			loadLibrary(libraryId).toExpiringFuture().get()
+			didSettingsChangeAfterLoad = isSettingsChanged.value
+
+			accessCode.value = "V68Bp9rS"
+			didSettingsChangeAfterAccessCodeChanged = isSettingsChanged.value
+
+			accessCode.value = "b2q"
+			didSettingsChangeAfterAccessCodeReverted = isSettingsChanged.value
+
 			accessCode.value = "V68Bp9rS"
 			password.value = "sl0Ha"
 			userName.value = "xw9wy0T"
@@ -55,13 +67,41 @@ class WhenSavingTheLibrarySettings {
 			isUsingExistingFiles.value = !isUsingExistingFiles.value
 			isWakeOnLanEnabled.value = !isWakeOnLanEnabled.value
 			syncedFileLocation.value = Library.SyncedFileLocation.EXTERNAL
+
+			didSettingsChange = isSettingsChanged.value
 			isSaved = saveLibrary().toExpiringFuture().get() == true
+			settingsChangedAfterSaving = isSettingsChanged.value
 		}
     }
 
 	@Test
+	fun `then the settings are not changed after load`() {
+		assertThat(didSettingsChangeAfterLoad).isFalse
+	}
+
+	@Test
+	fun `then the settings changed after the access code changed`() {
+		assertThat(didSettingsChangeAfterAccessCodeChanged).isTrue
+	}
+
+	@Test
+	fun `then the settings did not change after the access code changed`() {
+		assertThat(didSettingsChangeAfterAccessCodeReverted).isFalse
+	}
+
+	@Test
+	fun `then the settings changed`() {
+		assertThat(didSettingsChange).isTrue
+	}
+
+	@Test
 	fun `then the library is saved`() {
 		assertThat(isSaved).isTrue
+	}
+
+	@Test
+	fun `then the settings are changed after saving`() {
+		assertThat(settingsChangedAfterSaving).isFalse
 	}
 
 	@Test

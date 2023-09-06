@@ -25,8 +25,7 @@ private const val libraryId = 411
 class WhenATrackIsSwitchedTwice {
 	private val nextSwitchedFile by lazy {
 		val fakePlaybackPreparerProvider = FakeDeferredPlayableFilePreparationSourceProvider()
-		val library = Library()
-		library.setId(libraryId)
+		val library = Library(id = libraryId)
 		val libraryProvider = FakeLibraryRepository(library)
 		val playbackEngine = PlaybackEngine(
 			PreparedPlaybackQueueResourceManagement(

@@ -41,7 +41,7 @@ class WhenGettingTheUri {
 
 			val bestMatchUriProvider = BestMatchUriProvider(
 				mockk {
-					every { promiseLibrary(LibraryId(libraryId)) } returns Library(_id = 3, _isUsingExistingFiles = true).toPromise()
+					every { promiseLibrary(LibraryId(libraryId)) } returns Library(id = 3, isUsingExistingFiles = true).toPromise()
 				},
 				mockStoredFileUriProvider,
 				cachedAudioFileUriProvider,
