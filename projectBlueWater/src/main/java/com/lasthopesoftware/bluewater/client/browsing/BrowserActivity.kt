@@ -21,7 +21,6 @@ import browsableItemListView
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.lasthopesoftware.bluewater.ActivityDependencies
 import com.lasthopesoftware.bluewater.NavigateApplication
-import com.lasthopesoftware.bluewater.about.AboutView
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.list.*
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
@@ -226,10 +225,6 @@ private class GraphNavigation(
 		if (!navController.moveToTop { it is NowPlayingScreen }) {
 			navController.navigate(NowPlayingScreen(libraryId))
 		}
-	}.toPromise()
-
-	override fun launchAboutActivity() = coroutineScope.launch {
-		navController.navigate(AboutScreen)
 	}.toPromise()
 
 	override fun navigateUp() = coroutineScope.async {
@@ -616,15 +611,6 @@ private fun BrowserView(
                                 )
 							}
 						}
-				}
-				is AboutScreen -> {
-					Box(
-						modifier = Modifier
-							.fillMaxSize()
-							.padding(systemBarsPadding)
-					) {
-						AboutView(graphDependencies.applicationNavigation)
-					}
 				}
 				is HiddenSettingsScreen -> {
 					HiddenSettingsView(viewModel {
