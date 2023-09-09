@@ -35,7 +35,6 @@ import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -102,7 +101,7 @@ fun LibrarySettingsView(
 		var accessCodeState by librarySettingsViewModel.accessCode.subscribeAsMutableState()
 
 		val scope = rememberCoroutineScope()
-		val libraryRemovalRequested by librarySettingsViewModel.isRemovalRequested.collectAsState()
+		val libraryRemovalRequested by librarySettingsViewModel.isRemovalRequested.subscribeAsState()
 		if (libraryRemovalRequested) {
 			AlertDialog(
 				onDismissRequest = librarySettingsViewModel::cancelLibraryRemovalRequest,
@@ -211,6 +210,16 @@ fun LibrarySettingsView(
 					}
 
 					SpacedOutRow {
+						val hasSslCertificate by hasSslCertificate.subscribeAsState()
+
+						Button(
+							onClick = { saveLibrary() },
+						) {
+							Text(text = if (hasSslCertificate) "Change SSL Certificate" else "Set SSL Certificate")
+						}
+					}
+
+					SpacedOutRow {
 						var isLocalOnlyState by isLocalOnly.subscribeAsMutableState()
 						LabeledSelection(
 							label = stringResource(id = R.string.lbl_local_only),
@@ -282,7 +291,7 @@ fun LibrarySettingsView(
 							}
 						}
 
-						val isStoragePermissionsNeeded by isStoragePermissionsNeeded.collectAsState()
+						val isStoragePermissionsNeeded by isStoragePermissionsNeeded.subscribeAsState()
 						if (isStoragePermissionsNeeded) {
 							ProvideTextStyle(value = MaterialTheme.typography.caption) {
 								Text(
@@ -323,7 +332,7 @@ fun LibrarySettingsView(
 						}
 					}
 
-					val isSavingState by isSaving.collectAsState()
+					val isSavingState by isSaving.subscribeAsState()
 					Button(
 						onClick = { saveLibrary() },
 						enabled = isSettingsChanged && !isSavingState,

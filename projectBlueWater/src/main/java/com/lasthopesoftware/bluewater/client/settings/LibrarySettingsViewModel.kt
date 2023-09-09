@@ -22,6 +22,7 @@ import com.namehillsoftware.handoff.promises.response.PromisedResponse
 import io.reactivex.Observable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import java.net.URI
 
 class LibrarySettingsViewModel(
 	private val libraryProvider: ILibraryProvider,
@@ -44,9 +45,10 @@ class LibrarySettingsViewModel(
 
 	private val libraryState = MutableStateObservable(defaultLibrary.copy())
 	private val mutableIsLoading = MutableStateFlow(false)
-	private val mutableIsSaving = MutableStateFlow(false)
-	private val mutableIsPermissionsNeeded = MutableStateFlow(false)
-	private val mutableIsRemovalRequested = MutableStateFlow(false)
+	private val mutableIsSaving = MutableStateObservable(false)
+	private val mutableIsPermissionsNeeded = MutableStateObservable(false)
+	private val mutableIsRemovalRequested = MutableStateObservable(false)
+	private val sslCertificateUri = MutableStateObservable<URI?>(null)
 
 	private val changeTrackers by lazy {
 		fun <T> observeChanges(observable: Observable<NullBox<T>>, libraryValue: Library.() -> T?) =
@@ -81,11 +83,12 @@ class LibrarySettingsViewModel(
 	val isWakeOnLanEnabled = MutableStateObservable(defaultLibrary.isWakeOnLanEnabled)
 	val isUsingExistingFiles = MutableStateObservable(defaultLibrary.isUsingExistingFiles)
 	val isSyncLocalConnectionsOnly = MutableStateObservable(defaultLibrary.isSyncLocalConnectionsOnly)
+	val hasSslCertificate: ReadOnlyStateObservable<Boolean> = SubscribedStateObservable(sslCertificateUri.map { it.value != null }, false)
 
 	override val isLoading = mutableIsLoading.asStateFlow()
-	val isSaving = mutableIsSaving.asStateFlow()
-	val isStoragePermissionsNeeded = mutableIsPermissionsNeeded.asStateFlow()
-	val isRemovalRequested = mutableIsRemovalRequested.asStateFlow()
+	val isSaving = mutableIsSaving as ReadOnlyStateObservable<Boolean>
+	val isStoragePermissionsNeeded = mutableIsPermissionsNeeded as ReadOnlyStateObservable<Boolean>
+	val isRemovalRequested = mutableIsRemovalRequested as ReadOnlyStateObservable<Boolean>
 	val isSettingsChanged: ReadOnlyStateObservable<Boolean>
 		get() = isSettingsChangedObserver.value
 
@@ -151,6 +154,7 @@ class LibrarySettingsViewModel(
 		userName.value = result?.userName ?: ""
 		password.value = result?.password ?: ""
 		libraryName.value = result?.libraryName ?: ""
+		sslCertificateUri.value = result?.sslCertificateUri?.let(::URI)
 
 		libraryState.value = result?.copy(
 			isLocalOnly = isLocalOnly.value,

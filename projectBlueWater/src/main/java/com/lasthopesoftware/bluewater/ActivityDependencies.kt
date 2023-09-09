@@ -62,7 +62,6 @@ import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessa
 import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRateLimiter
 import com.lasthopesoftware.bluewater.shared.policies.retries.RetryExecutionPolicy
 import com.lasthopesoftware.resources.closables.ViewModelCloseableManager
-import com.lasthopesoftware.resources.closables.lazyScoped
 import com.lasthopesoftware.resources.strings.StringResources
 
 class ActivityDependencies(activity: ComponentActivity) : BrowserViewDependencies {
@@ -145,7 +144,7 @@ class ActivityDependencies(activity: ComponentActivity) : BrowserViewDependencie
 
 	private val urlKeyProvider by lazy { UrlKeyProvider(libraryConnectionProvider) }
 
-	override val itemListMenuBackPressedHandler by activity.lazyScoped { ItemListMenuBackPressedHandler(menuMessageBus) }
+	override val itemListMenuBackPressedHandler by lazy { ItemListMenuBackPressedHandler(menuMessageBus).also(viewModelScope::manage) }
 
 	override val itemProvider by lazy {
 		DelegatingItemProvider(
@@ -193,7 +192,7 @@ class ActivityDependencies(activity: ComponentActivity) : BrowserViewDependencie
 		LibraryFileProvider(LibraryFileStringListProvider(libraryConnectionProvider))
 	}
 
-	override val applicationNavigation: NavigateApplication by lazy {
+	override val applicationNavigation by lazy {
 		ActivityApplicationNavigation(
 			activity,
 			IntentBuilder(applicationContext),

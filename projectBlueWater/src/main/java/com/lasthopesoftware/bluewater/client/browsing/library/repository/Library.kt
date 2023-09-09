@@ -10,6 +10,7 @@ data class Library(
 	var accessCode: String? = null,
 	var userName: String? = null,
 	var password: String? = null,
+	var sslCertificateUri: String? = null,
 	var isLocalOnly: Boolean = false,
 	var isRepeating: Boolean = false,
 	var nowPlayingId: Int = -1,
@@ -20,7 +21,8 @@ data class Library(
 	var syncedFileLocation: SyncedFileLocation? = null,
 	var isUsingExistingFiles: Boolean = false,
 	var isSyncLocalConnectionsOnly: Boolean = false,
-	var isWakeOnLanEnabled: Boolean = false) : IdentifiableEntity {
+	var isWakeOnLanEnabled: Boolean = false,
+	var sslCertificate: String? = null) : IdentifiableEntity {
 
 	@Keep
 	enum class SyncedFileLocation {
