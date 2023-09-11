@@ -21,6 +21,7 @@ import browsableItemListView
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.lasthopesoftware.bluewater.ActivityDependencies
 import com.lasthopesoftware.bluewater.NavigateApplication
+import com.lasthopesoftware.bluewater.client.ActivitySuppliedDependencies
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.list.*
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
@@ -76,9 +77,12 @@ class BrowserActivity :
 	AppCompatActivity(),
 	ActivityCompat.OnRequestPermissionsResultCallback,
 	ManagePermissions,
-	PermissionsDependencies
+	PermissionsDependencies,
+	ActivitySuppliedDependencies
 {
-	private val browserViewDependencies by lazy { ActivityDependencies(this) }
+	private val browserViewDependencies by lazy { ActivityDependencies(this, this) }
+
+	override val registeredActivityResultsLauncher = registerResultActivityLauncher()
 
 	override val applicationPermissions by lazy {
 		val osPermissionChecker = OsPermissionsChecker(applicationContext)
@@ -415,6 +419,7 @@ private fun LibraryDestination.Navigate(
 						librarySettingsViewModel = viewModel,
 						navigateApplication = applicationNavigation,
 						stringResources = stringResources,
+						userSslCertificates = userSslCertificateProvider,
                     )
 				}
 
@@ -608,6 +613,7 @@ private fun BrowserView(
 									librarySettingsViewModel = librarySettingsViewModel,
 									navigateApplication = applicationNavigation,
 									stringResources = stringResources,
+									userSslCertificates = userSslCertificateProvider,
                                 )
 							}
 						}

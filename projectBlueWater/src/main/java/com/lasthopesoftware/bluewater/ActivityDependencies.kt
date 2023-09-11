@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater
 
 import androidx.activity.ComponentActivity
+import com.lasthopesoftware.bluewater.client.ActivitySuppliedDependencies
 import com.lasthopesoftware.bluewater.client.browsing.BrowserViewDependencies
 import com.lasthopesoftware.bluewater.client.browsing.files.access.CachedItemFileProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.DelegatingItemFileProvider
@@ -40,6 +41,7 @@ import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessio
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionWatcherViewModel
 import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettingsLookup
 import com.lasthopesoftware.bluewater.client.connection.settings.changes.ObservableConnectionSettingsLibraryStorage
+import com.lasthopesoftware.bluewater.client.connection.trust.UserSslCertificateProvider
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.SelectedPlaybackEngineTypeAccess
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.defaults.DefaultPlaybackEngineLookup
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
@@ -63,8 +65,9 @@ import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRate
 import com.lasthopesoftware.bluewater.shared.policies.retries.RetryExecutionPolicy
 import com.lasthopesoftware.resources.closables.ViewModelCloseableManager
 import com.lasthopesoftware.resources.strings.StringResources
+import com.lasthopesoftware.resources.uri.DocumentUriSelector
 
-class ActivityDependencies(activity: ComponentActivity) : BrowserViewDependencies {
+class ActivityDependencies(activity: ComponentActivity, activitySuppliedDependencies: ActivitySuppliedDependencies) : BrowserViewDependencies {
 	private val applicationContext by lazy { activity.applicationContext }
 
 	private val viewModelScope by activity.buildViewModelLazily { ViewModelCloseableManager() }
@@ -305,6 +308,13 @@ class ActivityDependencies(activity: ComponentActivity) : BrowserViewDependencie
 			libraryProvider,
 			messageBus,
 			syncScheduler,
+		)
+	}
+
+	override val userSslCertificateProvider by lazy {
+		UserSslCertificateProvider(
+			DocumentUriSelector(activitySuppliedDependencies.registeredActivityResultsLauncher),
+			activity.contentResolver
 		)
 	}
 }

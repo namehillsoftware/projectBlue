@@ -22,15 +22,14 @@ import com.namehillsoftware.handoff.promises.response.PromisedResponse
 import io.reactivex.Observable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import java.net.URI
 
 class LibrarySettingsViewModel(
 	private val libraryProvider: ILibraryProvider,
 	private val libraryStorage: ILibraryStorage,
 	private val libraryRemoval: RemoveLibraries,
 	private val applicationPermissions: RequestApplicationPermissions,
-) : ViewModel(), PromisedResponse<Boolean, Boolean>, ImmediateResponse<Library?, Unit>, TrackLoadedViewState, ImmediateAction
-{
+) : ViewModel(), PromisedResponse<Boolean, Boolean>, ImmediateResponse<Library?, Unit>, TrackLoadedViewState, ImmediateAction {
+
 	companion object {
 		private val defaultLibrary = Library(
 			id = -1,
@@ -48,7 +47,6 @@ class LibrarySettingsViewModel(
 	private val mutableIsSaving = MutableStateObservable(false)
 	private val mutableIsPermissionsNeeded = MutableStateObservable(false)
 	private val mutableIsRemovalRequested = MutableStateObservable(false)
-	private val sslCertificateUri = MutableStateObservable<URI?>(null)
 
 	private val changeTrackers by lazy {
 		fun <T> observeChanges(observable: Observable<NullBox<T>>, libraryValue: Library.() -> T?) =
@@ -63,7 +61,8 @@ class LibrarySettingsViewModel(
 			observeChanges(syncedFileLocation) { syncedFileLocation },
 			observeChanges(isWakeOnLanEnabled) { isWakeOnLanEnabled },
 			observeChanges(isUsingExistingFiles) { isUsingExistingFiles },
-			observeChanges(isSyncLocalConnectionsOnly) { isSyncLocalConnectionsOnly }
+			observeChanges(isSyncLocalConnectionsOnly) { isSyncLocalConnectionsOnly },
+			Observable.combineLatest(libraryState, sslCertificateFingerprint) { l, f -> !f.value.contentEquals(l.value.sslCertificateFingerprint) },
 		)
 	}
 
@@ -83,7 +82,8 @@ class LibrarySettingsViewModel(
 	val isWakeOnLanEnabled = MutableStateObservable(defaultLibrary.isWakeOnLanEnabled)
 	val isUsingExistingFiles = MutableStateObservable(defaultLibrary.isUsingExistingFiles)
 	val isSyncLocalConnectionsOnly = MutableStateObservable(defaultLibrary.isSyncLocalConnectionsOnly)
-	val hasSslCertificate: ReadOnlyStateObservable<Boolean> = SubscribedStateObservable(sslCertificateUri.map { it.value != null }, false)
+	val sslCertificateFingerprint = MutableStateObservable(ByteArray(0))
+	val hasSslCertificate: ReadOnlyStateObservable<Boolean> = SubscribedStateObservable(sslCertificateFingerprint.map { it.value.any() }, false)
 
 	override val isLoading = mutableIsLoading.asStateFlow()
 	val isSaving = mutableIsSaving as ReadOnlyStateObservable<Boolean>
@@ -123,7 +123,8 @@ class LibrarySettingsViewModel(
 				isUsingExistingFiles = isUsingExistingFiles.value,
 				isSyncLocalConnectionsOnly = isSyncLocalConnectionsOnly.value,
 				isWakeOnLanEnabled = isWakeOnLanEnabled.value,
-				libraryName = libraryName.value
+				libraryName = libraryName.value,
+				sslCertificateFingerprint = sslCertificateFingerprint.value
 			)
 
 		return applicationPermissions
@@ -154,7 +155,7 @@ class LibrarySettingsViewModel(
 		userName.value = result?.userName ?: ""
 		password.value = result?.password ?: ""
 		libraryName.value = result?.libraryName ?: ""
-		sslCertificateUri.value = result?.sslCertificateUri?.let(::URI)
+		sslCertificateFingerprint.value = result?.sslCertificateFingerprint ?: ByteArray(0)
 
 		libraryState.value = result?.copy(
 			isLocalOnly = isLocalOnly.value,

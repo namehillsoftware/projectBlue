@@ -56,6 +56,7 @@ import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
+import com.lasthopesoftware.bluewater.client.connection.trust.ProvideUserSslCertificates
 import com.lasthopesoftware.bluewater.shared.android.ui.components.ColumnMenuIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.shared.android.ui.components.LabeledSelection
@@ -96,6 +97,7 @@ fun LibrarySettingsView(
 	librarySettingsViewModel: LibrarySettingsViewModel,
 	navigateApplication: NavigateApplication,
 	stringResources: GetStringResources,
+	userSslCertificates: ProvideUserSslCertificates,
 ) {
 	ControlSurface {
 		var accessCodeState by librarySettingsViewModel.accessCode.subscribeAsMutableState()
@@ -213,7 +215,12 @@ fun LibrarySettingsView(
 						val hasSslCertificate by hasSslCertificate.subscribeAsState()
 
 						Button(
-							onClick = { saveLibrary() },
+							onClick = {
+								scope.launch {
+									val fingerprint = userSslCertificates.promiseUserSslCertificateFingerprint().suspend()
+									sslCertificateFingerprint.value = fingerprint
+								}
+							},
 						) {
 							Text(text = if (hasSslCertificate) "Change SSL Certificate" else "Set SSL Certificate")
 						}

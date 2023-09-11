@@ -23,8 +23,7 @@ class WhenLoadingTheLibrarySettings {
                     isLocalOnly = true,
                     isSyncLocalConnectionsOnly = true,
                     isWakeOnLanEnabled = true,
-                    userName = "ZaxM5Iid",
-                    password = "sL33L3Xt",
+					password = "sL33L3Xt",
                     syncedFileLocation = Library.SyncedFileLocation.EXTERNAL,
                     isUsingExistingFiles = true,
                 )

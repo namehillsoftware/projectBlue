@@ -100,12 +100,12 @@ object LibraryEntityUpdater : IEntityUpdater {
 		fun toLibrary(): Library {
 			return Library(
 				id = id,
+				libraryName = libraryName,
 				accessCode = accessCode,
 				isLocalOnly = isLocalOnly,
 				isRepeating = isRepeating,
 				isSyncLocalConnectionsOnly = isSyncLocalConnectionsOnly,
-				libraryName = libraryName,
-				isUsingExistingFiles = isUsingExistingFiles,
+                isUsingExistingFiles = isUsingExistingFiles,
 				isWakeOnLanEnabled = isWakeOnLanEnabled,
 				nowPlayingId = nowPlayingId,
 				password = password,

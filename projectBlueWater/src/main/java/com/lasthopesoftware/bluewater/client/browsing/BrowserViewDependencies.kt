@@ -20,6 +20,7 @@ import com.lasthopesoftware.bluewater.client.browsing.navigation.NavigationMessa
 import com.lasthopesoftware.bluewater.client.connection.polling.PollForLibraryConnections
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionWatcherViewModel
+import com.lasthopesoftware.bluewater.client.connection.trust.ProvideUserSslCertificates
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingCoverArtViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
@@ -66,6 +67,7 @@ interface BrowserViewDependencies {
 	val reusableChildItemViewModelProvider: ReusableChildItemViewModelProvider
 	val reusableFileItemViewModelProvider: ReusableFileItemViewModelProvider
 	val applicationSettingsViewModel: ApplicationSettingsViewModel
+	val userSslCertificateProvider: ProvideUserSslCertificates
 }
 
 /**
