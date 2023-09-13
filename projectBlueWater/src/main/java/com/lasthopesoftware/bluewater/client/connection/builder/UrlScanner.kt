@@ -36,7 +36,8 @@ class UrlScanner(
 			if (settings.isUserCredentialsValid()) base64.encodeString(settings.userName + ":" + settings.password)
 			else null
 
-		val mediaServerUrlProvider = MediaServerUrlProvider(authKey, parseAccessCode(settings.accessCode))
+		val mediaServerUrlProvider = MediaServerUrlProvider(
+			authKey, parseAccessCode(settings.accessCode), settings.sslCertificateFingerprint)
 
 		if (cp.isCancelled) Promise.empty()
 		else connectionTester
@@ -76,7 +77,7 @@ class UrlScanner(
 									MediaServerUrlProvider(
 										authKey,
 										remoteIp,
-										httpPort
+										httpPort,
 									)
 								)
 							}
@@ -86,7 +87,7 @@ class UrlScanner(
 									MediaServerUrlProvider(
 										authKey,
 										ip,
-										httpPort
+										httpPort,
 									)
 								)
 							}

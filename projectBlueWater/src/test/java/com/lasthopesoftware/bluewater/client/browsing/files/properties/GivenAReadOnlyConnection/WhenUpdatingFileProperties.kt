@@ -28,7 +28,7 @@ class WhenUpdatingFileProperties {
 	private val fileStorage by lazy {
 		every { connectionProvider.promiseResponse(*anyVararg()) } returns Promise.empty()
 
-		val urlProvider = MediaServerUrlProvider(null, URL("http://hewo"))
+		val urlProvider = MediaServerUrlProvider(null, URL("http://hewo"), ByteArray(0))
 		every { connectionProvider.urlProvider } returns urlProvider
 
 		val revisionChecker = mockk<CheckScopedRevisions>()
