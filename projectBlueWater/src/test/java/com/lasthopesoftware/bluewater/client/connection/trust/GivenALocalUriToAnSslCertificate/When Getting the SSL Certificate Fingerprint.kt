@@ -47,7 +47,7 @@ class `When Getting the SSL Certificate Fingerprint` {
 					every { promiseSelectedDocumentUri("application/x-x509*") } returns URI("wl2Ta0").toPromise()
 				},
 				mockk {
-					every { openInputStream(Uri.parse("wl2Ta0")) } returns ByteArrayInputStream(certificate.toByteArray())
+					every { openInputStream(Uri.parse("wl2Ta0")) } returns ByteArrayInputStream(certificate.trim().toByteArray(Charsets.UTF_8))
 				}
 			)
 		}

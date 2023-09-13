@@ -19,6 +19,7 @@ class WhenLoadingTheLibrarySettings {
             FakeLibraryRepository(
                 Library(
                     id = libraryId.id,
+					userName = "ZaxM5Iid",
                     accessCode = "r64HLI",
                     isLocalOnly = true,
                     isSyncLocalConnectionsOnly = true,

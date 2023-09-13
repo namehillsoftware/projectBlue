@@ -34,7 +34,8 @@ class UserSslCertificateProvider(
 			?.toUri()
 			?.let { uri ->
 				QueuedPromise(MessageWriter {
-					contentResolver.openInputStream(uri)
+					contentResolver
+						.openInputStream(uri)
 						?.use { stream ->
 							x509CertificateFactory.generateCertificate(stream) as? X509Certificate
 						}
