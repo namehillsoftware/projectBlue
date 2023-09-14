@@ -44,7 +44,12 @@ class `When Getting the SSL Certificate Fingerprint` {
 		private val service by lazy {
 			UserSslCertificateProvider(
 				mockk {
-					every { promiseSelectedDocumentUri("application/x-x509*") } returns URI("wl2Ta0").toPromise()
+					every { promiseSelectedDocumentUri(
+						"application/x-x509-ca-cert",
+						"application/x-x509-user-cert",
+						"application/x-pem-file",
+						)
+					} returns URI("wl2Ta0").toPromise()
 				},
 				mockk {
 					every { openInputStream(Uri.parse("wl2Ta0")) } returns ByteArrayInputStream(certificate.trim().toByteArray(Charsets.UTF_8))

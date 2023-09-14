@@ -26,7 +26,11 @@ class UserSslCertificateProvider(
 
 	override fun promiseUserSslCertificateFingerprint(): Promise<ByteArray> =
 		selectDocumentUris
-			.promiseSelectedDocumentUri("application/x-x509*")
+			.promiseSelectedDocumentUri(
+				"application/x-x509-ca-cert",
+				"application/x-x509-user-cert",
+				"application/x-pem-file",
+			)
 			.eventually(this)
 
 	override fun promiseResponse(documentUri: URI?): Promise<ByteArray> =
