@@ -2,6 +2,8 @@ package com.lasthopesoftware.bluewater.client.settings.GivenANewLibrary.AndSetti
 
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.libraryId
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsViewModel
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
@@ -11,10 +13,18 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
+private val newLibraryId = 918
+
 class WhenSavingTheLibrarySettings {
 
 	private val services by lazy {
-		val libraryRepository = FakeLibraryRepository()
+		val libraryRepository = mockk<FakeLibraryRepository> {
+			every { saveLibrary(match { it.libraryId.id == -1 }) } answers {
+				firstArg<Library>().run {
+					copy(id = newLibraryId)
+				}.toPromise()
+			}
+		}
 
         LibrarySettingsViewModel(
             libraryRepository,
@@ -53,6 +63,11 @@ class WhenSavingTheLibrarySettings {
 			settingsChangedAfterSaving = isSettingsChanged.value
 		}
     }
+
+	@Test
+	fun `then the library id is updated`() {
+		assertThat(services.activeLibraryId).isEqualTo(LibraryId(918))
+	}
 
 	@Test
 	fun `then the settings are not changed after load`() {

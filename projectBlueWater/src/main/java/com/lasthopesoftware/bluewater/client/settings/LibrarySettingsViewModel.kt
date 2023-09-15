@@ -175,7 +175,10 @@ class LibrarySettingsViewModel(
 
 		return libraryStorage
 			.saveLibrary(localLibrary)
-			.then { true }
+			.then {
+				libraryState.value = it
+				true
+			}
 	}
 
 	override fun act() {
