@@ -48,11 +48,11 @@ class LibrarySettingsViewModel(
 	private val mutableIsPermissionsNeeded = MutableStateObservable(false)
 	private val mutableIsRemovalRequested = MutableStateObservable(false)
 
-	private val changeTrackers by lazy {
+	private val isSettingsChangedObserver = lazy {
 		fun <T> observeChanges(observable: Observable<NullBox<T>>, libraryValue: Library.() -> T?) =
 			Observable.combineLatest(libraryState, observable) { l, o -> l.value.run(libraryValue) != o.value }
 
-		arrayOf(
+		val changeTrackers = arrayOf(
 			observeChanges(accessCode) { accessCode },
 			observeChanges(libraryName) { libraryName },
 			observeChanges(userName) { userName },
@@ -64,13 +64,15 @@ class LibrarySettingsViewModel(
 			observeChanges(isSyncLocalConnectionsOnly) { isSyncLocalConnectionsOnly },
 			Observable.combineLatest(libraryState, sslCertificateFingerprint) { l, f -> !f.value.contentEquals(l.value.sslCertificateFingerprint) },
 		)
-	}
 
-	private var isSettingsChangedObserver = lazy {
 		SubscribedStateObservable(
 			Observable.combineLatest(changeTrackers) { values -> values.any { it as Boolean } },
 			false
 		)
+	}
+
+	private val hasSslCertificateObserver = lazy {
+		SubscribedStateObservable(sslCertificateFingerprint.map { it.value.any() }, false)
 	}
 
 	val accessCode = MutableStateObservable(defaultLibrary.accessCode ?: "")
@@ -83,21 +85,25 @@ class LibrarySettingsViewModel(
 	val isUsingExistingFiles = MutableStateObservable(defaultLibrary.isUsingExistingFiles)
 	val isSyncLocalConnectionsOnly = MutableStateObservable(defaultLibrary.isSyncLocalConnectionsOnly)
 	val sslCertificateFingerprint = MutableStateObservable(ByteArray(0))
-	val hasSslCertificate: ReadOnlyStateObservable<Boolean> = SubscribedStateObservable(sslCertificateFingerprint.map { it.value.any() }, false)
+	val hasSslCertificate
+		get() = hasSslCertificateObserver.value as ReadOnlyStateObservable<Boolean>
 
 	override val isLoading = mutableIsLoading.asStateFlow()
 	val isSaving = mutableIsSaving as ReadOnlyStateObservable<Boolean>
 	val isStoragePermissionsNeeded = mutableIsPermissionsNeeded as ReadOnlyStateObservable<Boolean>
 	val isRemovalRequested = mutableIsRemovalRequested as ReadOnlyStateObservable<Boolean>
-	val isSettingsChanged: ReadOnlyStateObservable<Boolean>
-		get() = isSettingsChangedObserver.value
+	val isSettingsChanged
+		get() = isSettingsChangedObserver.value as ReadOnlyStateObservable<Boolean>
 
 	val activeLibraryId
-		get() = libraryState.value.libraryId
+		get() = libraryState.value.libraryId.takeIf { it.id > -1 }
 
 	override fun onCleared() {
 		if (isSettingsChangedObserver.isInitialized())
 			isSettingsChangedObserver.value.close()
+
+		if (hasSslCertificateObserver.isInitialized())
+			hasSslCertificateObserver.value.close()
 	}
 
 	fun loadLibrary(libraryId: LibraryId): Promise<*> {
@@ -157,7 +163,7 @@ class LibrarySettingsViewModel(
 		libraryName.value = result?.libraryName ?: ""
 		sslCertificateFingerprint.value = result?.sslCertificateFingerprint ?: ByteArray(0)
 
-		libraryState.value = result?.copy(
+		libraryState.value = (result ?: defaultLibrary).copy(
 			isLocalOnly = isLocalOnly.value,
 			isUsingExistingFiles = isUsingExistingFiles.value,
 			isSyncLocalConnectionsOnly = isSyncLocalConnectionsOnly.value,
@@ -167,7 +173,7 @@ class LibrarySettingsViewModel(
 			userName = userName.value,
 			password = password.value,
 			libraryName = libraryName.value,
-		) ?: defaultLibrary.copy()
+		)
 	}
 
 	override fun promiseResponse(resolution: Boolean): Promise<Boolean> {

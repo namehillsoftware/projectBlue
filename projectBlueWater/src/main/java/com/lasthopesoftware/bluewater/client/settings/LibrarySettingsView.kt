@@ -81,11 +81,12 @@ private val boxHeight = expandedTitleHeight + expandedIconSize + expandedMenuVer
 private val innerGroupPadding = Dimensions.viewPaddingUnit * 2
 
 @Composable
-private fun SpacedOutRow(content: @Composable (RowScope.() -> Unit)) {
+private fun SpacedOutRow(modifier: Modifier = Modifier, content: @Composable (RowScope.() -> Unit)) {
 	Row(
 		modifier = Modifier
 			.fillMaxWidth(.8f)
-			.height(Dimensions.standardRowHeight),
+			.height(Dimensions.standardRowHeight)
+			.then(modifier),
 		verticalAlignment = Alignment.CenterVertically,
 	) {
 		content()
@@ -212,7 +213,23 @@ fun LibrarySettingsView(
 					}
 
 					SpacedOutRow {
+						Text(text = stringResource(R.string.optional_ssl_certificate))
+					}
+
+					SpacedOutRow {
 						val hasSslCertificate by hasSslCertificate.subscribeAsState()
+
+						Button(
+							onClick = {
+								sslCertificateFingerprint.value = ByteArray(0)
+							},
+							modifier = Modifier
+								.weight(1f)
+								.padding(end = innerGroupPadding),
+							enabled = hasSslCertificate,
+						) {
+							Text(text = stringResources.clear)
+						}
 
 						Button(
 							onClick = {
@@ -221,8 +238,13 @@ fun LibrarySettingsView(
 									sslCertificateFingerprint.value = fingerprint
 								}
 							},
+							modifier = Modifier
+								.weight(1f)
+								.padding(start = innerGroupPadding),
 						) {
-							Text(text = if (hasSslCertificate) "Change SSL Certificate" else "Set SSL Certificate")
+							Text(
+								text = stringResources.run { if (hasSslCertificate) change else set }
+							)
 						}
 					}
 

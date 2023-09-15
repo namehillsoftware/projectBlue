@@ -41,4 +41,13 @@ interface GetStringResources {
 
 	val connect: String
 		get() = ""
+
+	val clear: String
+		get() = ""
+
+	val change: String
+		get() = ""
+
+	val set: String
+		get() = ""
 }
