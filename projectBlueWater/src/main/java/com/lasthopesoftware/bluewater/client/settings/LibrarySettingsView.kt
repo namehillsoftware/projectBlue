@@ -37,6 +37,7 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -79,12 +80,13 @@ private val collapsedTopRowPadding = 6.dp
 private val appBarHeight = Dimensions.appBarHeight
 private val boxHeight = expandedTitleHeight + expandedIconSize + expandedMenuVerticalPadding * 2 + appBarHeight
 private val innerGroupPadding = Dimensions.viewPaddingUnit * 2
+private const val inputRowMaxWidth = .8f
 
 @Composable
 private fun SpacedOutRow(modifier: Modifier = Modifier, content: @Composable (RowScope.() -> Unit)) {
 	Row(
 		modifier = Modifier
-			.fillMaxWidth(.8f)
+			.fillMaxWidth(inputRowMaxWidth)
 			.height(Dimensions.standardRowHeight)
 			.then(modifier),
 		verticalAlignment = Alignment.CenterVertically,
@@ -212,39 +214,55 @@ fun LibrarySettingsView(
 						)
 					}
 
-					SpacedOutRow {
+					Column(modifier = Modifier.fillMaxWidth(inputRowMaxWidth)) {
 						Text(text = stringResource(R.string.optional_ssl_certificate))
-					}
 
-					SpacedOutRow {
-						val hasSslCertificate by hasSslCertificate.subscribeAsState()
+						var hasError by remember { mutableStateOf(false) }
+						Row {
+							val hasSslCertificate by hasSslCertificate.subscribeAsState()
 
-						Button(
-							onClick = {
-								sslCertificateFingerprint.value = ByteArray(0)
-							},
-							modifier = Modifier
-								.weight(1f)
-								.padding(end = innerGroupPadding),
-							enabled = hasSslCertificate,
-						) {
-							Text(text = stringResources.clear)
+							Button(
+								onClick = {
+									sslCertificateFingerprint.value = ByteArray(0)
+								},
+								modifier = Modifier
+									.weight(1f)
+									.padding(end = innerGroupPadding),
+								enabled = hasSslCertificate,
+							) {
+								Text(text = stringResources.clear)
+							}
+
+							Button(
+								onClick = {
+									hasError = false
+									scope.launch {
+										try {
+											val fingerprint =
+												userSslCertificates.promiseUserSslCertificateFingerprint().suspend()
+											sslCertificateFingerprint.value = fingerprint
+										} catch (e: Throwable) {
+											hasError = true
+										}
+									}
+								},
+								modifier = Modifier
+									.weight(1f)
+									.padding(start = innerGroupPadding),
+							) {
+								Text(
+									text = stringResources.run { if (hasSslCertificate) change else set }
+								)
+							}
 						}
 
-						Button(
-							onClick = {
-								scope.launch {
-									val fingerprint = userSslCertificates.promiseUserSslCertificateFingerprint().suspend()
-									sslCertificateFingerprint.value = fingerprint
-								}
-							},
-							modifier = Modifier
-								.weight(1f)
-								.padding(start = innerGroupPadding),
-						) {
-							Text(
-								text = stringResources.run { if (hasSslCertificate) change else set }
-							)
+						if (hasError) {
+							ProvideTextStyle(value = MaterialTheme.typography.caption) {
+								Text(
+									text = stringResource(R.string.invalid_ssl_certificate),
+									color = MaterialTheme.colors.error
+								)
+							}
 						}
 					}
 
@@ -279,7 +297,7 @@ fun LibrarySettingsView(
 					}
 
 					Column(modifier = Modifier
-						.fillMaxWidth(.8f)
+						.fillMaxWidth(inputRowMaxWidth)
 						.selectableGroup()
 					) {
 						Text(
