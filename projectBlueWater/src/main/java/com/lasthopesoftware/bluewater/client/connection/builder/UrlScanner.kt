@@ -31,13 +31,14 @@ class UrlScanner(
 				?: Promise(MissingConnectionSettingsException(libraryId))
 		}
 
+	@OptIn(ExperimentalStdlibApi::class)
 	private fun promiseBuiltUrlProvider(libraryId: LibraryId, settings: ConnectionSettings): Promise<IUrlProvider?> = CancellableProxyPromise { cp ->
 		val authKey =
 			if (settings.isUserCredentialsValid()) base64.encodeString(settings.userName + ":" + settings.password)
 			else null
 
 		val mediaServerUrlProvider = MediaServerUrlProvider(
-			authKey, parseAccessCode(settings.accessCode), settings.sslCertificateFingerprint)
+			authKey, parseAccessCode(settings), settings.sslCertificateFingerprint)
 
 		if (cp.isCancelled) Promise.empty()
 		else connectionTester
@@ -68,7 +69,7 @@ class UrlScanner(
 											authKey,
 											remoteIp,
 											httpsPort,
-											certificateFingerprint?.decodeHex() ?: ByteArray(0)
+											certificateFingerprint?.hexToByteArray() ?: ByteArray(0)
 										)
 									)
 								}
@@ -102,41 +103,22 @@ class UrlScanner(
 		private fun ConnectionSettings.isUserCredentialsValid(): Boolean =
 				!userName.isNullOrEmpty() && !password.isNullOrEmpty()
 
-		private fun parseAccessCode(accessCode: String): URL {
+		private fun parseAccessCode(connectionSettings: ConnectionSettings): URL = with(connectionSettings) {
 			var url = accessCode
 			var scheme = "http"
+			if (sslCertificateFingerprint.any()) scheme += "s"
+
 			if (url.startsWith("http://")) url = url.replaceFirst("http://", "")
 			if (url.startsWith("https://")) {
 				url = url.replaceFirst("https://", "")
 				scheme = "https"
 			}
+
 			val urlParts = url.split(":", limit = 2)
 			val port = if (urlParts.size > 1 && isPositiveInteger(urlParts[1])) urlParts[1].toInt() else 80
-			return URL(scheme, urlParts[0], port, "")
+			URL(scheme, urlParts[0], port, "")
 		}
 
 		private fun isPositiveInteger(string: String): Boolean = string.toCharArray().all(Character::isDigit)
-
-		private fun String.decodeHex(): ByteArray {
-			val data = this.toCharArray()
-			val len = data.size
-			if (len and 0x01 != 0) {
-				return ByteArray(0)
-			}
-			val out = ByteArray(len shr 1)
-
-			// two characters form the hex value.
-			var i = 0
-			var j = 0
-			while (j < len) {
-				var f = Character.digit(data[j], 16) shl 4
-				j++
-				f = f or Character.digit(data[j], 16)
-				j++
-				out[i] = (f and 0xFF).toByte()
-				i++
-			}
-			return out
-		}
 	}
 }
