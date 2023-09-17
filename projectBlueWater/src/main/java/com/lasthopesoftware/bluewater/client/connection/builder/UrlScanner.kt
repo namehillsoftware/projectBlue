@@ -12,6 +12,7 @@ import com.lasthopesoftware.bluewater.client.connection.url.MediaServerUrlProvid
 import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.resources.strings.EncodeToBase64
+import com.lasthopesoftware.resources.uri.IoCommon
 import com.namehillsoftware.handoff.promises.Promise
 import java.net.URL
 import java.util.LinkedList
@@ -105,13 +106,18 @@ class UrlScanner(
 
 		private fun parseAccessCode(connectionSettings: ConnectionSettings): URL = with(connectionSettings) {
 			var url = accessCode
-			var scheme = "http"
-			if (sslCertificateFingerprint.any()) scheme += "s"
 
-			if (url.startsWith("http://")) url = url.replaceFirst("http://", "")
-			if (url.startsWith("https://")) {
-				url = url.replaceFirst("https://", "")
-				scheme = "https"
+			val scheme = when {
+				url.startsWith("http://") -> {
+					url = url.replaceFirst("http://", "")
+					IoCommon.httpUriScheme
+				}
+				url.startsWith("https://") -> {
+					url = url.replaceFirst("https://", "")
+					IoCommon.httpsUriScheme
+				}
+				sslCertificateFingerprint.any() -> IoCommon.httpsUriScheme
+				else -> IoCommon.httpUriScheme
 			}
 
 			val urlParts = url.split(":", limit = 2)
