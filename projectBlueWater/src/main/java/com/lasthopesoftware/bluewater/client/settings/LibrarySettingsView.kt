@@ -215,7 +215,10 @@ fun LibrarySettingsView(
 					}
 
 					Column(modifier = Modifier.fillMaxWidth(inputRowMaxWidth)) {
-						Text(text = stringResource(R.string.optional_ssl_certificate))
+						Text(
+							text = stringResource(R.string.optional_ssl_certificate),
+							modifier = Modifier.padding(top = innerGroupPadding, bottom = innerGroupPadding),
+						)
 
 						var hasError by remember { mutableStateOf(false) }
 						Row {

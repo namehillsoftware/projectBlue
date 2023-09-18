@@ -70,7 +70,10 @@ class UrlScanner(
 											authKey,
 											remoteIp,
 											httpsPort,
-											certificateFingerprint?.hexToByteArray() ?: ByteArray(0)
+											settings
+												.sslCertificateFingerprint.takeIf { f -> f.any() }
+												?: certificateFingerprint?.hexToByteArray()
+												?: ByteArray(0)
 										)
 									)
 								}
@@ -108,11 +111,11 @@ class UrlScanner(
 			var url = accessCode
 
 			val scheme = when {
-				url.startsWith("http://") -> {
+				url.startsWith("http://", ignoreCase = true) -> {
 					url = url.replaceFirst("http://", "")
 					IoCommon.httpUriScheme
 				}
-				url.startsWith("https://") -> {
+				url.startsWith("https://", ignoreCase = true) -> {
 					url = url.replaceFirst("https://", "")
 					IoCommon.httpsUriScheme
 				}
