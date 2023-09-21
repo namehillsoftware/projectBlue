@@ -24,7 +24,6 @@ class WhenRemovingTheLibrary {
 				isLocalOnly = false,
 				isSyncLocalConnectionsOnly = true,
 				isWakeOnLanEnabled = false,
-				userName = "o0PoFzNL",
 				password = "hmpyA",
 				syncedFileLocation = Library.SyncedFileLocation.EXTERNAL,
 				isUsingExistingFiles = true,

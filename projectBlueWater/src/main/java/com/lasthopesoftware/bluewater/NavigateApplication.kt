@@ -15,10 +15,6 @@ interface NavigateApplication {
 
 	fun viewServerSettings(libraryId: LibraryId) = Unit.toPromise()
 
-	fun viewHiddenApplicationSettings() = Unit.toPromise()
-
-	fun launchAboutActivity() = Unit.toPromise()
-
 	fun viewFileDetails(libraryId: LibraryId, playlist: List<ServiceFile>, position: Int) = Unit.toPromise()
 
 	fun launchSearch(libraryId: LibraryId) = Unit.toPromise()

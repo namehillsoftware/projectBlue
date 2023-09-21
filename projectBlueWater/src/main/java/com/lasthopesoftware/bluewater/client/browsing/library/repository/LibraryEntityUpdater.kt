@@ -5,6 +5,7 @@ import android.util.Base64
 import androidx.annotation.Keep
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityInformation.createTableSql
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityInformation.isWakeOnLanEnabledColumn
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityInformation.sslCertificateFingerprintColumn
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityInformation.tableName
 import com.lasthopesoftware.bluewater.repository.IEntityUpdater
 import com.lasthopesoftware.bluewater.repository.fetch
@@ -58,7 +59,7 @@ object LibraryEntityUpdater : IEntityUpdater {
 			}
 		}
 		if (oldVersion < 8) {
-			db.execSQL("ALTER TABLE `LIBRARIES` add column `$isWakeOnLanEnabledColumn` SMALLINT;")
+			db.execSQL("ALTER TABLE `$tableName` add column `$isWakeOnLanEnabledColumn` SMALLINT;")
 		}
 
 		if (oldVersion < 14) {
@@ -75,6 +76,10 @@ object LibraryEntityUpdater : IEntityUpdater {
 
 			db.execSQL("DROP TABLE `$tableName`")
 			db.execSQL("ALTER TABLE `$tempTableName` RENAME TO `$tableName`")
+		}
+
+		if (oldVersion < 15) {
+			db.execSQL("ALTER TABLE `$tableName` ADD COLUMN `$sslCertificateFingerprintColumn` BLOB;")
 		}
 	}
 
@@ -100,12 +105,12 @@ object LibraryEntityUpdater : IEntityUpdater {
 		fun toLibrary(): Library {
 			return Library(
 				id = id,
+				libraryName = libraryName,
 				accessCode = accessCode,
 				isLocalOnly = isLocalOnly,
 				isRepeating = isRepeating,
 				isSyncLocalConnectionsOnly = isSyncLocalConnectionsOnly,
-				libraryName = libraryName,
-				isUsingExistingFiles = isUsingExistingFiles,
+                isUsingExistingFiles = isUsingExistingFiles,
 				isWakeOnLanEnabled = isWakeOnLanEnabled,
 				nowPlayingId = nowPlayingId,
 				password = password,

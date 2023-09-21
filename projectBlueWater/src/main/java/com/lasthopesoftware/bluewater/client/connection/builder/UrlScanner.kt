@@ -12,6 +12,7 @@ import com.lasthopesoftware.bluewater.client.connection.url.MediaServerUrlProvid
 import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.resources.strings.EncodeToBase64
+import com.lasthopesoftware.resources.uri.IoCommon
 import com.namehillsoftware.handoff.promises.Promise
 import java.net.URL
 import java.util.LinkedList
@@ -31,12 +32,14 @@ class UrlScanner(
 				?: Promise(MissingConnectionSettingsException(libraryId))
 		}
 
+	@OptIn(ExperimentalStdlibApi::class)
 	private fun promiseBuiltUrlProvider(libraryId: LibraryId, settings: ConnectionSettings): Promise<IUrlProvider?> = CancellableProxyPromise { cp ->
 		val authKey =
 			if (settings.isUserCredentialsValid()) base64.encodeString(settings.userName + ":" + settings.password)
 			else null
 
-		val mediaServerUrlProvider = MediaServerUrlProvider(authKey, parseAccessCode(settings.accessCode))
+		val mediaServerUrlProvider = MediaServerUrlProvider(
+			authKey, parseAccessCode(settings), settings.sslCertificateFingerprint)
 
 		if (cp.isCancelled) Promise.empty()
 		else connectionTester
@@ -67,7 +70,10 @@ class UrlScanner(
 											authKey,
 											remoteIp,
 											httpsPort,
-											certificateFingerprint?.decodeHex() ?: ByteArray(0)
+											settings
+												.sslCertificateFingerprint.takeIf { f -> f.any() }
+												?: certificateFingerprint?.hexToByteArray()
+												?: ByteArray(0)
 										)
 									)
 								}
@@ -76,7 +82,7 @@ class UrlScanner(
 									MediaServerUrlProvider(
 										authKey,
 										remoteIp,
-										httpPort
+										httpPort,
 									)
 								)
 							}
@@ -86,7 +92,7 @@ class UrlScanner(
 									MediaServerUrlProvider(
 										authKey,
 										ip,
-										httpPort
+										httpPort,
 									)
 								)
 							}
@@ -101,41 +107,27 @@ class UrlScanner(
 		private fun ConnectionSettings.isUserCredentialsValid(): Boolean =
 				!userName.isNullOrEmpty() && !password.isNullOrEmpty()
 
-		private fun parseAccessCode(accessCode: String): URL {
+		private fun parseAccessCode(connectionSettings: ConnectionSettings): URL = with(connectionSettings) {
 			var url = accessCode
-			var scheme = "http"
-			if (url.startsWith("http://")) url = url.replaceFirst("http://", "")
-			if (url.startsWith("https://")) {
-				url = url.replaceFirst("https://", "")
-				scheme = "https"
+
+			val scheme = when {
+				url.startsWith("http://", ignoreCase = true) -> {
+					url = url.replaceFirst("http://", "")
+					IoCommon.httpUriScheme
+				}
+				url.startsWith("https://", ignoreCase = true) -> {
+					url = url.replaceFirst("https://", "")
+					IoCommon.httpsUriScheme
+				}
+				sslCertificateFingerprint.any() -> IoCommon.httpsUriScheme
+				else -> IoCommon.httpUriScheme
 			}
+
 			val urlParts = url.split(":", limit = 2)
 			val port = if (urlParts.size > 1 && isPositiveInteger(urlParts[1])) urlParts[1].toInt() else 80
-			return URL(scheme, urlParts[0], port, "")
+			URL(scheme, urlParts[0], port, "")
 		}
 
 		private fun isPositiveInteger(string: String): Boolean = string.toCharArray().all(Character::isDigit)
-
-		private fun String.decodeHex(): ByteArray {
-			val data = this.toCharArray()
-			val len = data.size
-			if (len and 0x01 != 0) {
-				return ByteArray(0)
-			}
-			val out = ByteArray(len shr 1)
-
-			// two characters form the hex value.
-			var i = 0
-			var j = 0
-			while (j < len) {
-				var f = Character.digit(data[j], 16) shl 4
-				j++
-				f = f or Character.digit(data[j], 16)
-				j++
-				out[i] = (f and 0xFF).toByte()
-				i++
-			}
-			return out
-		}
 	}
 }

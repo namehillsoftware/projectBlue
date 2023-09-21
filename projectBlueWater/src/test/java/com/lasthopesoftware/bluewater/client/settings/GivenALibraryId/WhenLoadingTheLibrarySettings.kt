@@ -19,12 +19,12 @@ class WhenLoadingTheLibrarySettings {
             FakeLibraryRepository(
                 Library(
                     id = libraryId.id,
+					userName = "ZaxM5Iid",
                     accessCode = "r64HLI",
                     isLocalOnly = true,
                     isSyncLocalConnectionsOnly = true,
                     isWakeOnLanEnabled = true,
-                    userName = "ZaxM5Iid",
-                    password = "sL33L3Xt",
+					password = "sL33L3Xt",
                     syncedFileLocation = Library.SyncedFileLocation.EXTERNAL,
                     isUsingExistingFiles = true,
                 )

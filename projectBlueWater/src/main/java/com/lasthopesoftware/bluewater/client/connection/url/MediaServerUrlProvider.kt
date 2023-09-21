@@ -5,21 +5,19 @@ import java.io.UnsupportedEncodingException
 import java.net.URL
 import java.net.URLEncoder
 
-class MediaServerUrlProvider private constructor(
+class MediaServerUrlProvider constructor(
 	override val authCode: String?,
 	baseUrl: URL,
-	override val certificateFingerprint: ByteArray) : IUrlProvider
-{
+	override val certificateFingerprint: ByteArray
+) : IUrlProvider {
 
 	private val baseURL = URL(baseUrl, "/MCWS/v1/")
 
+	constructor(authCode: String?, ipAddress: String?, port: Int)
+		: this(authCode, URL(IoCommon.httpUriScheme, ipAddress, port, ""), ByteArray(0))
+
 	constructor(authCode: String?, ipAddress: String?, port: Int, certificateFingerprint: ByteArray)
 		: this(authCode, URL(IoCommon.httpsUriScheme, ipAddress, port, ""), certificateFingerprint)
-
-	constructor(authCode: String?, ipAddress: String?, port: Int)
-		: this(authCode, URL(IoCommon.httpUriScheme, ipAddress, port, ""))
-
-	constructor(authCode: String?, baseUrl: URL) : this(authCode, baseUrl, ByteArray(0))
 
 	override val baseUrl: URL
 		get() = baseURL

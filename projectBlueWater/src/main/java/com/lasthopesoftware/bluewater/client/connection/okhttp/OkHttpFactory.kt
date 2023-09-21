@@ -25,11 +25,12 @@ object OkHttpFactory : ProvideOkHttpClients {
 	private val buildConnectionTime = Duration.standardSeconds(10)
 
     override fun getOkHttpClient(urlProvider: IUrlProvider): OkHttpClient =
-        commonBuilder
+        commonClient
+			.newBuilder()
             .addNetworkInterceptor { chain ->
                 val requestBuilder = chain.request().newBuilder()
                 val authCode = urlProvider.authCode
-                if (!authCode.isNullOrEmpty()) requestBuilder.addHeader(
+                if (!authCode.isNullOrEmpty()) requestBuilder.header(
                     "Authorization",
                     "basic ${urlProvider.authCode}"
                 )
@@ -40,23 +41,25 @@ object OkHttpFactory : ProvideOkHttpClients {
             .build()
 
 	override fun getJriverCentralClient(): OkHttpClient =
-		commonBuilder
+		commonClient
+			.newBuilder()
 			.connectTimeout(buildConnectionTime.millis, TimeUnit.MILLISECONDS)
 			.build()
 
 	private val dispatcher by lazy { Dispatcher(ThreadPools.io) }
 
-	private val commonBuilder by lazy {
+	private val commonClient by lazy {
 		OkHttpClient.Builder()
 			.addNetworkInterceptor { chain ->
 				val requestBuilder =
-					chain.request().newBuilder().addHeader("Connection", "close")
+					chain.request().newBuilder().header("Connection", "close")
 				chain.proceed(requestBuilder.build())
 			}
 			.cache(null)
 			.readTimeout(1, TimeUnit.MINUTES)
 			.retryOnConnectionFailure(false)
 			.dispatcher(dispatcher)
+			.build()
 	}
 
 	private fun getSslSocketFactory(urlProvider: IUrlProvider): SSLSocketFactory {

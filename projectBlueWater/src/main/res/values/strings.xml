@@ -126,4 +126,9 @@
     <string name="retry">Retry</string>
     <string name="connection_lost_retry_prompt">The connection has been lost! Try again?</string>
     <string name="new_or_existing_playlist_path">New or Existing Playlist Path</string>
+    <string name="clear">Clear</string>
+    <string name="change">Change</string>
+    <string name="set">Set</string>
+    <string name="optional_ssl_certificate">Optional SSL Certificate</string>
+    <string name="invalid_ssl_certificate">An error occurred setting the SSL Certificate, please ensure it is valid and try again</string>
 </resources>

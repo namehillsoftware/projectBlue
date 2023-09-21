@@ -16,9 +16,7 @@
  */
 package com.lasthopesoftware.bluewater.client.connection.trust
 
-import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
-import java.security.cert.CertificateEncodingException
 import java.security.cert.CertificateException
 import java.security.cert.X509Certificate
 import java.util.Arrays
@@ -41,12 +39,7 @@ class SelfSignedTrustManager(
         // They match? All is good. They don't, throw an exception.
         try {
             // Assume self-signed root is okay
-            if (Arrays.equals(
-                    certificateFingerprint, getThumbPrint(
-                        chain[0]
-                    )
-                )
-            ) return
+            if (Arrays.equals(certificateFingerprint, getThumbPrint(chain[0]))) return
         } catch (e: NoSuchAlgorithmException) {
             throw CertificateException(
                 "Unable to check self-signed certificate, unknown algorithm. ",
@@ -62,13 +55,5 @@ class SelfSignedTrustManager(
 
     companion object {
         private val acceptedIssuers = arrayOf<X509Certificate>()
-
-        // Thank you: http://stackoverflow.com/questions/1270703/how-to-retrieve-compute-an-x509-certificates-thumbprint-in-java
-        @Throws(NoSuchAlgorithmException::class, CertificateEncodingException::class)
-        private fun getThumbPrint(cert: X509Certificate): ByteArray {
-            val md = MessageDigest.getInstance("SHA-1")
-            md.update(cert.encoded)
-            return md.digest()
-        }
     }
 }

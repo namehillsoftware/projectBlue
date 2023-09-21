@@ -35,9 +35,9 @@ import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -57,6 +57,7 @@ import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
+import com.lasthopesoftware.bluewater.client.connection.trust.ProvideUserSslCertificates
 import com.lasthopesoftware.bluewater.shared.android.ui.components.ColumnMenuIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.shared.android.ui.components.LabeledSelection
@@ -79,13 +80,15 @@ private val collapsedTopRowPadding = 6.dp
 private val appBarHeight = Dimensions.appBarHeight
 private val boxHeight = expandedTitleHeight + expandedIconSize + expandedMenuVerticalPadding * 2 + appBarHeight
 private val innerGroupPadding = Dimensions.viewPaddingUnit * 2
+private const val inputRowMaxWidth = .8f
 
 @Composable
-private fun SpacedOutRow(content: @Composable (RowScope.() -> Unit)) {
+private fun SpacedOutRow(modifier: Modifier = Modifier, content: @Composable (RowScope.() -> Unit)) {
 	Row(
 		modifier = Modifier
-			.fillMaxWidth(.8f)
-			.height(Dimensions.standardRowHeight),
+			.fillMaxWidth(inputRowMaxWidth)
+			.height(Dimensions.standardRowHeight)
+			.then(modifier),
 		verticalAlignment = Alignment.CenterVertically,
 	) {
 		content()
@@ -97,12 +100,13 @@ fun LibrarySettingsView(
 	librarySettingsViewModel: LibrarySettingsViewModel,
 	navigateApplication: NavigateApplication,
 	stringResources: GetStringResources,
+	userSslCertificates: ProvideUserSslCertificates,
 ) {
 	ControlSurface {
 		var accessCodeState by librarySettingsViewModel.accessCode.subscribeAsMutableState()
 
 		val scope = rememberCoroutineScope()
-		val libraryRemovalRequested by librarySettingsViewModel.isRemovalRequested.collectAsState()
+		val libraryRemovalRequested by librarySettingsViewModel.isRemovalRequested.subscribeAsState()
 		if (libraryRemovalRequested) {
 			AlertDialog(
 				onDismissRequest = librarySettingsViewModel::cancelLibraryRemovalRequest,
@@ -210,6 +214,61 @@ fun LibrarySettingsView(
 						)
 					}
 
+					Column(modifier = Modifier.fillMaxWidth(inputRowMaxWidth)) {
+						Text(
+							text = stringResource(R.string.optional_ssl_certificate),
+							modifier = Modifier.padding(top = innerGroupPadding, bottom = innerGroupPadding),
+						)
+
+						var hasError by remember { mutableStateOf(false) }
+						Row {
+							val hasSslCertificate by hasSslCertificate.subscribeAsState()
+
+							Button(
+								onClick = {
+									sslCertificateFingerprint.value = ByteArray(0)
+								},
+								modifier = Modifier
+									.weight(1f)
+									.padding(end = innerGroupPadding),
+								enabled = hasSslCertificate,
+							) {
+								Text(text = stringResources.clear)
+							}
+
+							Button(
+								onClick = {
+									hasError = false
+									scope.launch {
+										try {
+											val fingerprint =
+												userSslCertificates.promiseUserSslCertificateFingerprint().suspend()
+											sslCertificateFingerprint.value = fingerprint
+										} catch (e: Throwable) {
+											hasError = true
+										}
+									}
+								},
+								modifier = Modifier
+									.weight(1f)
+									.padding(start = innerGroupPadding),
+							) {
+								Text(
+									text = stringResources.run { if (hasSslCertificate) change else set }
+								)
+							}
+						}
+
+						if (hasError) {
+							ProvideTextStyle(value = MaterialTheme.typography.caption) {
+								Text(
+									text = stringResource(R.string.invalid_ssl_certificate),
+									color = MaterialTheme.colors.error
+								)
+							}
+						}
+					}
+
 					SpacedOutRow {
 						var isLocalOnlyState by isLocalOnly.subscribeAsMutableState()
 						LabeledSelection(
@@ -241,7 +300,7 @@ fun LibrarySettingsView(
 					}
 
 					Column(modifier = Modifier
-						.fillMaxWidth(.8f)
+						.fillMaxWidth(inputRowMaxWidth)
 						.selectableGroup()
 					) {
 						Text(
@@ -282,7 +341,7 @@ fun LibrarySettingsView(
 							}
 						}
 
-						val isStoragePermissionsNeeded by isStoragePermissionsNeeded.collectAsState()
+						val isStoragePermissionsNeeded by isStoragePermissionsNeeded.subscribeAsState()
 						if (isStoragePermissionsNeeded) {
 							ProvideTextStyle(value = MaterialTheme.typography.caption) {
 								Text(
@@ -323,7 +382,7 @@ fun LibrarySettingsView(
 						}
 					}
 
-					val isSavingState by isSaving.collectAsState()
+					val isSavingState by isSaving.subscribeAsState()
 					Button(
 						onClick = { saveLibrary() },
 						enabled = isSettingsChanged && !isSavingState,
