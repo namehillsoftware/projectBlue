@@ -29,7 +29,7 @@ object OkHttpFactory : ProvideOkHttpClients {
             .addNetworkInterceptor { chain ->
                 val requestBuilder = chain.request().newBuilder()
                 val authCode = urlProvider.authCode
-                if (!authCode.isNullOrEmpty()) requestBuilder.addHeader(
+                if (!authCode.isNullOrEmpty()) requestBuilder.header(
                     "Authorization",
                     "basic ${urlProvider.authCode}"
                 )
