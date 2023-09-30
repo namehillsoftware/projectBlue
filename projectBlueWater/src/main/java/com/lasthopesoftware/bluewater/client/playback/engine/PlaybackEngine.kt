@@ -27,8 +27,8 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.promiseFirstRes
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.namehillsoftware.handoff.promises.Promise
+import io.reactivex.Observable
 import io.reactivex.disposables.Disposable
-import io.reactivex.observables.ConnectableObservable
 import org.jetbrains.annotations.Contract
 import org.joda.time.Duration
 import kotlin.math.max
@@ -325,16 +325,23 @@ class PlaybackEngine(
 		}
 	}
 
-	override fun clearPlaylist(): Promise<NowPlaying?> = pausePlayback()
-		.eventually {
-			withState {
-				playlist = ArrayList()
-				playlistPosition = 0
-				fileProgress = zeroProgressedFile
-				updatePreparedFileQueueUsingState()
-				saveState()
+	override fun clearPlaylist(): Promise<NowPlaying?> {
+		return activePlayer
+			?.halt()
+			.keepPromise()
+			.eventually {
+				playbackSubscription?.dispose()
+				activePlayer = null
+
+				withState {
+					playlist = ArrayList()
+					playlistPosition = 0
+					fileProgress = zeroProgressedFile
+					updatePreparedFileQueueUsingState()
+					saveState()
+				}
 			}
-		}
+	}
 
 	private fun getActiveNowPlaying() = nowPlayingRepository.promiseNowPlaying(activeLibraryId).keepPromise()
 
@@ -354,10 +361,7 @@ class PlaybackEngine(
 		fileProgress.progress.then { startPlayback(preparedPlaybackQueue, it) }.unitResponse()
 	}
 
-	private fun startPlayback(
-		preparedPlaybackQueue: PreparedPlayableFileQueue,
-		filePosition: Duration
-	): ConnectableObservable<PositionedPlayingFile> {
+	private fun startPlayback(preparedPlaybackQueue: PreparedPlayableFileQueue, filePosition: Duration): Observable<PositionedPlayingFile> {
 		playbackSubscription?.dispose()
 
 		val newPlayer = playbackBootstrapper.startPlayback(preparedPlaybackQueue, filePosition)

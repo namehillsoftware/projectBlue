@@ -97,4 +97,14 @@ class WhenInitializingTheNowPlayingFilePropertiesViewModel {
 	fun `then the title is correct`() {
 		assertThat(nowPlayingViewModel.title.value).isEqualTo("Nada")
 	}
+
+	@Test
+	fun `then the rating is correct`() {
+		assertThat(nowPlayingViewModel.songRating.value).isEqualTo(0f)
+	}
+
+	@Test
+	fun `then the rating is disabled`() {
+		assertThat(nowPlayingViewModel.isSongRatingEnabled.value).isFalse
+	}
 }

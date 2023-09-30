@@ -60,8 +60,10 @@ class WhenClearingThePlaylist {
 			),
 			PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
 		)
+			.setOnPlaybackCompleted { isPlaybackCompletionSignaled = true }
 	}
 
+	private var isPlaybackCompletionSignaled = false
 	private var updatedNowPlaying: NowPlaying? = null
 
 	@BeforeAll
@@ -82,6 +84,11 @@ class WhenClearingThePlaylist {
 			.toExpiringFuture()
 			.get()
 		updatedNowPlaying = mut.clearPlaylist().toExpiringFuture()[1, TimeUnit.SECONDS]
+	}
+
+	@Test
+	fun `then playback completion is signaled`() {
+		assertThat(isPlaybackCompletionSignaled).isTrue
 	}
 
 	@Test

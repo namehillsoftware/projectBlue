@@ -149,6 +149,8 @@ class ExoPlayerPlaybackHandler(private val exoPlayer: PromisingExoPlayer) :
 
 	override fun close() {
 		isPlaying = false
+		resolve(this)
+		lazyFileProgressReader
 		exoPlayer.setPlayWhenReady(false)
 		exoPlayer.stop()
 		removeListener()
