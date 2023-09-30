@@ -60,6 +60,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.SharedColors
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
+import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
@@ -143,7 +144,7 @@ private fun PlaylistControls(
 		horizontalArrangement = Arrangement.SpaceAround,
 		verticalAlignment = Alignment.CenterVertically,
 	) {
-		val isEditingPlaylist by playlistViewModel.isEditingPlaylistState.collectAsState()
+		val isEditingPlaylist by playlistViewModel.isEditingPlaylistState.subscribeAsState()
 		if (isEditingPlaylist) {
 			Image(
 				painter = painterResource(id = R.drawable.ic_remove_item_white_36dp),
@@ -164,7 +165,7 @@ private fun PlaylistControls(
 			)
 		}
 
-		val isRepeating by playlistViewModel.isRepeating.collectAsState()
+		val isRepeating by playlistViewModel.isRepeating.subscribeAsState()
 		if (isRepeating) {
 			Image(
 				painter = painterResource(id = R.drawable.av_repeat_white),
@@ -263,7 +264,7 @@ fun NowPlayingView(
 		val pagerState = rememberLazyListState()
 		val isSettledOnFirstPage by remember { derivedStateOf { pagerState.firstVisibleItemIndex == 0 && pagerState.firstVisibleItemScrollOffset == 0 } }
 		val isNotSettledOnFirstPage by remember { derivedStateOf { !isSettledOnFirstPage } }
-		val isEditingPlaylist by playlistViewModel.isEditingPlaylistState.collectAsState()
+		val isEditingPlaylist by playlistViewModel.isEditingPlaylistState.subscribeAsState()
 
 		val scope = rememberCoroutineScope()
 		BackHandler(isNotSettledOnFirstPage) {
@@ -429,7 +430,7 @@ fun NowPlayingView(
 								NowPlayingProgressIndicator(fileProgress = fileProgress)
 							}
 
-							val nowPlayingFiles by playlistViewModel.nowPlayingList.collectAsState()
+							val nowPlayingFiles by playlistViewModel.nowPlayingList.subscribeAsState()
 							val playlist by remember { derivedStateOf { nowPlayingFiles.map { p -> p.serviceFile } } }
 							val playingFile by nowPlayingFilePropertiesViewModel.nowPlayingFile.collectAsState()
 
@@ -527,12 +528,12 @@ fun NowPlayingView(
 								}
 							}
 
-							val isSavingPlaylistActive by playlistViewModel.isSavingPlaylistActive.collectAsState()
+							val isSavingPlaylistActive by playlistViewModel.isSavingPlaylistActive.subscribeAsState()
 							if (isSavingPlaylistActive) {
 								Dialog(
 									onDismissRequest = { playlistViewModel.disableSavingPlaylist() },
 								) {
-									val selectedPlaylistPath by playlistViewModel.selectedPlaylistPath.collectAsState()
+									val selectedPlaylistPath by playlistViewModel.selectedPlaylistPath.subscribeAsState()
 
 									BackHandler(selectedPlaylistPath.isNotEmpty()) {
 										playlistViewModel.updateSelectedPlaylistPath("")
@@ -576,7 +577,7 @@ fun NowPlayingView(
 												singleLine = true,
 											)
 
-											val filteredPlaylistPaths by playlistViewModel.filteredPlaylistPaths.collectAsState()
+											val filteredPlaylistPaths by playlistViewModel.filteredPlaylistPaths.subscribeAsState()
 
 											Box(
 												modifier = Modifier
@@ -602,7 +603,7 @@ fun NowPlayingView(
 												}
 											}
 
-											val isPlaylistPathValid by playlistViewModel.isPlaylistPathValid.collectAsState()
+											val isPlaylistPathValid by playlistViewModel.isPlaylistPathValid.subscribeAsState()
 
 											if (isPlaylistPathValid) {
 												Row(

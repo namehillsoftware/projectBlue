@@ -18,4 +18,6 @@ class MutableStateObservable<T>(private val initialValue: T) : ReadOnlyStateObse
 	override fun subscribeActual(observer: Observer<in NullBox<T>>?) {
 		behaviorSubject.safeSubscribe(observer)
 	}
+
+	fun asReadOnly(): ReadOnlyStateObservable<T> = this
 }

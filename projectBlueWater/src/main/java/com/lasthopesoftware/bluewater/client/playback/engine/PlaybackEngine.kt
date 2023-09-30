@@ -21,6 +21,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.Pr
 import com.lasthopesoftware.bluewater.client.playback.file.progress.ReadFileProgress
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.MaintainNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
+import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
@@ -29,7 +30,6 @@ import io.reactivex.disposables.Disposable
 import io.reactivex.observables.ConnectableObservable
 import org.jetbrains.annotations.Contract
 import org.joda.time.Duration
-import org.slf4j.LoggerFactory
 import kotlin.math.max
 
 class PlaybackEngine(
@@ -46,7 +46,7 @@ class PlaybackEngine(
 	RegisterPlaybackEngineEvents,
 	AutoCloseable {
 	companion object {
-		private val logger by lazy { LoggerFactory.getLogger(PlaybackEngine::class.java) }
+		private val logger by lazyLogger<PlaybackEngine>()
 
 		@Contract(pure = true)
 		private fun getNextPosition(startingPosition: Int, playlist: Collection<ServiceFile>): Int =
@@ -328,6 +328,13 @@ class PlaybackEngine(
 			updatePreparedFileQueueUsingState()
 			saveState()
 		}
+	}
+
+	override fun clearPlaylist(): Promise<NowPlaying?> = withState {
+		playlist = ArrayList()
+		playlistPosition = 0
+		updatePreparedFileQueueUsingState()
+		saveState()
 	}
 
 	private fun getActiveNowPlaying() = nowPlayingRepository.promiseNowPlaying(activeLibraryId).keepPromise()

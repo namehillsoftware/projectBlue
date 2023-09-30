@@ -289,6 +289,10 @@ import java.util.concurrent.TimeoutException
 			)
 		}
 
+		fun clearPlaylist(context: Context, libraryId: LibraryId) {
+			context.safelyStartService(getNewSelfIntent(context, PlaybackEngineAction.ClearPlaylist(libraryId)))
+		}
+
 		fun killService(context: Context) =
 			context.safelyStartService(getNewSelfIntent(context, PlaybackServiceAction.KillPlaybackService))
 
@@ -757,6 +761,15 @@ import java.util.concurrent.TimeoutException
 						}
 						.unitResponse()
 				}
+				is PlaybackEngineAction.ClearPlaylist -> {
+					val (libraryId) = playbackEngineAction
+					restorePlaybackServices(libraryId)
+						.eventually { it.playlistFiles.clearPlaylist() }
+						.then {
+							applicationMessageBus.sendMessage(LibraryPlaybackMessage.PlaylistChanged(libraryId))
+						}
+						.unitResponse()
+				}
 			}
 		}
 
@@ -1107,10 +1120,10 @@ import java.util.concurrent.TimeoutException
 	private sealed interface PlaybackServiceAction : Parcelable {
 
 		@Parcelize
-		object KillPlaybackService : PlaybackServiceAction
+		data object KillPlaybackService : PlaybackServiceAction
 
 		@Parcelize
-		object Pause : PlaybackServiceAction
+		data object Pause : PlaybackServiceAction
 	}
 
 	private sealed interface PlaybackEngineAction : PlaybackServiceAction {
@@ -1146,6 +1159,9 @@ import java.util.concurrent.TimeoutException
 
 		@Parcelize
 		data class MoveFile(override val libraryId: LibraryId, val from: Int, val to: Int) : PlaybackEngineAction
+
+		@Parcelize
+		data class ClearPlaylist(override val libraryId: LibraryId): PlaybackEngineAction
 	}
 
 	private sealed interface PlaybackStartingAction : PlaybackEngineAction {
