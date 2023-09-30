@@ -23,6 +23,7 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.Maintai
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.promiseFirstResult
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.namehillsoftware.handoff.promises.Promise
@@ -57,13 +58,17 @@ class PlaybackEngine(
 
 		private val markerLibraryId = LibraryId(-1)
 
+		private val zeroProgressedFile by lazy {
+			StaticProgressedFile(Duration.ZERO.toPromise())
+		}
+
 		private val defaultState by lazy {
 			PlayingState(
 				markerLibraryId,
 				mutableListOf(),
 				false,
 				0,
-				StaticProgressedFile(Duration.ZERO.toPromise())
+				zeroProgressedFile
 			)
 		}
 	}
@@ -186,29 +191,19 @@ class PlaybackEngine(
 					val serviceFile = playlist[playlistPosition]
 					Pair(libraryId, PositionedFile(playlistPosition, serviceFile))
 				} else eventually {
-					object : Promise<Pair<LibraryId, PositionedFile>>() {
-						init {
-							val queueProvider = positionedFileQueueProviders.getValue(isRepeating)
-							try {
-								val preparedPlaybackQueue = preparedPlaybackQueueResourceManagement
-									.initializePreparedPlaybackQueue(
-										queueProvider.provideQueue(
-											libraryId,
-											playlist,
-											playlistPosition
-										)
-									)
+					val queueProvider = positionedFileQueueProviders.getValue(isRepeating)
+					val preparedPlaybackQueue = preparedPlaybackQueueResourceManagement
+						.initializePreparedPlaybackQueue(
+							queueProvider.provideQueue(
+								libraryId,
+								playlist,
+								playlistPosition
+							)
+						)
 
-								startPlayback(preparedPlaybackQueue, filePosition)
-									.firstElement()
-									.subscribe(
-										{ resolve(Pair(libraryId, it.asPositionedFile())) },
-										{ reject(it) })
-							} catch (e: Exception) {
-								reject(e)
-							}
-						}
-					}
+					startPlayback(preparedPlaybackQueue, filePosition)
+						.promiseFirstResult()
+						.then { Pair(libraryId, it.asPositionedFile()) }
 				}
 			}
 		}
@@ -330,12 +325,16 @@ class PlaybackEngine(
 		}
 	}
 
-	override fun clearPlaylist(): Promise<NowPlaying?> = withState {
-		playlist = ArrayList()
-		playlistPosition = 0
-		updatePreparedFileQueueUsingState()
-		saveState()
-	}
+	override fun clearPlaylist(): Promise<NowPlaying?> = pausePlayback()
+		.eventually {
+			withState {
+				playlist = ArrayList()
+				playlistPosition = 0
+				fileProgress = zeroProgressedFile
+				updatePreparedFileQueueUsingState()
+				saveState()
+			}
+		}
 
 	private fun getActiveNowPlaying() = nowPlayingRepository.promiseNowPlaying(activeLibraryId).keepPromise()
 
@@ -382,7 +381,7 @@ class PlaybackEngine(
 				if (e is PreparationException) {
 					withState {
 						playlistPosition = e.positionedFile.playlistPosition
-						fileProgress = StaticProgressedFile(Duration.ZERO.toPromise())
+						fileProgress = zeroProgressedFile
 						saveState()
 					}
 				}
