@@ -165,25 +165,38 @@ private fun PlaylistControls(
 			)
 		}
 
-		val isRepeating by playlistViewModel.isRepeating.subscribeAsState()
-		if (isRepeating) {
+		if (isEditingPlaylist) {
 			Image(
-				painter = painterResource(id = R.drawable.av_repeat_white),
-				contentDescription = stringResource(id = R.string.btn_complete_playlist),
+				painter = painterResource(id = R.drawable.clear_all_white_36dp),
+				contentDescription = stringResource(R.string.clear_playlist),
 				modifier = Modifier.clickable {
-					playlistViewModel.toggleRepeating()
+					nowPlayingFilePropertiesViewModel.activeLibraryId.value?.also {
+						playbackServiceController.clearPlaylist(it)
+					}
 				},
 				alpha = playlistControlAlpha,
 			)
 		} else {
-			Image(
-				painter = painterResource(id = R.drawable.av_no_repeat_white),
-				contentDescription = stringResource(id = R.string.btn_repeat_playlist),
-				modifier = Modifier.clickable {
-					playlistViewModel.toggleRepeating()
-				},
-				alpha = playlistControlAlpha,
-			)
+			val isRepeating by playlistViewModel.isRepeating.subscribeAsState()
+			if (isRepeating) {
+				Image(
+					painter = painterResource(id = R.drawable.av_repeat_white),
+					contentDescription = stringResource(id = R.string.btn_complete_playlist),
+					modifier = Modifier.clickable {
+						playlistViewModel.toggleRepeating()
+					},
+					alpha = playlistControlAlpha,
+				)
+			} else {
+				Image(
+					painter = painterResource(id = R.drawable.av_no_repeat_white),
+					contentDescription = stringResource(id = R.string.btn_repeat_playlist),
+					modifier = Modifier.clickable {
+						playlistViewModel.toggleRepeating()
+					},
+					alpha = playlistControlAlpha,
+				)
+			}
 		}
 
 		if (isEditingPlaylist) {
@@ -593,7 +606,11 @@ fun NowPlayingView(
 																modifier = Modifier
 																	.height(Dimensions.standardRowHeight)
 																	.fillMaxWidth()
-																	.clickable { playlistViewModel.updateSelectedPlaylistPath(playlistPath) },
+																	.clickable {
+																		playlistViewModel.updateSelectedPlaylistPath(
+																			playlistPath
+																		)
+																	},
 																verticalAlignment = Alignment.CenterVertically,
 															) {
 																Text(text = playlistPath)

@@ -131,4 +131,5 @@
     <string name="set">Set</string>
     <string name="optional_ssl_certificate">Optional SSL Certificate</string>
     <string name="invalid_ssl_certificate">An error occurred setting the SSL Certificate, please ensure it is valid and try again</string>
+    <string name="clear_playlist">Clear Playlist</string>
 </resources>
