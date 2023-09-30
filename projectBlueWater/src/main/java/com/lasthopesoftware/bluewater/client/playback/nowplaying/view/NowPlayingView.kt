@@ -293,12 +293,12 @@ fun NowPlayingView(
 
 		val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
 
-		val filePosition by nowPlayingFilePropertiesViewModel.filePosition.collectAsState()
-		val fileDuration by nowPlayingFilePropertiesViewModel.fileDuration.collectAsState()
+		val filePosition by nowPlayingFilePropertiesViewModel.filePosition.subscribeAsState()
+		val fileDuration by nowPlayingFilePropertiesViewModel.fileDuration.subscribeAsState()
 		val fileProgress by remember { derivedStateOf { filePosition / fileDuration.toFloat() } }
-		val isScreenControlsVisible by nowPlayingFilePropertiesViewModel.isScreenControlsVisible.collectAsState()
+		val isScreenControlsVisible by nowPlayingFilePropertiesViewModel.isScreenControlsVisible.subscribeAsState()
 
-		val activeLibraryId by nowPlayingFilePropertiesViewModel.activeLibraryId.collectAsState()
+		val activeLibraryId by nowPlayingFilePropertiesViewModel.activeLibraryId.subscribeAsState()
 
 		BoxWithConstraints(
 			modifier = Modifier
@@ -349,7 +349,7 @@ fun NowPlayingView(
 									modifier = Modifier.weight(1f)
 								) {
 									ProvideTextStyle(value = MaterialTheme.typography.h5) {
-										val title by nowPlayingFilePropertiesViewModel.title.collectAsState()
+										val title by nowPlayingFilePropertiesViewModel.title.subscribeAsState()
 
 										MarqueeText(
 											text = title,
@@ -358,7 +358,7 @@ fun NowPlayingView(
 									}
 
 									ProvideTextStyle(value = MaterialTheme.typography.subtitle1) {
-										val artist by nowPlayingFilePropertiesViewModel.artist.collectAsState()
+										val artist by nowPlayingFilePropertiesViewModel.artist.subscribeAsState()
 										MarqueeText(
 											text = artist,
 											gradientEdgeColor = Color.Transparent,
@@ -445,7 +445,7 @@ fun NowPlayingView(
 
 							val nowPlayingFiles by playlistViewModel.nowPlayingList.subscribeAsState()
 							val playlist by remember { derivedStateOf { nowPlayingFiles.map { p -> p.serviceFile } } }
-							val playingFile by nowPlayingFilePropertiesViewModel.nowPlayingFile.collectAsState()
+							val playingFile by nowPlayingFilePropertiesViewModel.nowPlayingFile.subscribeAsState()
 
 							val reorderableState = rememberDragDropListState(
 								onMove = { from, to ->
@@ -659,9 +659,9 @@ fun NowPlayingView(
 							.height(controlRowHeight),
 						verticalArrangement = Arrangement.Center,
 					) {
-						val rating by nowPlayingFilePropertiesViewModel.songRating.collectAsState()
+						val rating by nowPlayingFilePropertiesViewModel.songRating.subscribeAsState()
 						val ratingInt by remember { derivedStateOf { rating.toInt() } }
-						val isRatingEnabled by nowPlayingFilePropertiesViewModel.isSongRatingEnabled.collectAsState()
+						val isRatingEnabled by nowPlayingFilePropertiesViewModel.isSongRatingEnabled.subscribeAsState()
 						RatingBar(
 							rating = ratingInt,
 							color = Color.White,
@@ -678,7 +678,7 @@ fun NowPlayingView(
 							} else null
 						)
 
-						val isReadOnly by nowPlayingFilePropertiesViewModel.isReadOnly.collectAsState()
+						val isReadOnly by nowPlayingFilePropertiesViewModel.isReadOnly.subscribeAsState()
 						if (isReadOnly) {
 							ProvideTextStyle(value = MaterialTheme.typography.caption) {
 								Text(

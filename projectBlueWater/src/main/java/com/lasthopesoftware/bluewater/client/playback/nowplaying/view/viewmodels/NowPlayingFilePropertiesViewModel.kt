@@ -25,6 +25,7 @@ import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.promiseReceivedMessage
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
+import com.lasthopesoftware.bluewater.shared.observables.MutableStateObservable
 import com.lasthopesoftware.bluewater.shared.promises.ForwardedResponse.Companion.forward
 import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay
 import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
@@ -33,8 +34,6 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.lasthopesoftware.resources.strings.GetStringResources
 import com.namehillsoftware.handoff.promises.Promise
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import org.joda.time.Duration
 import kotlin.math.roundToInt
 
@@ -89,31 +88,31 @@ class NowPlayingFilePropertiesViewModel(
 	private val onPropertiesChangedSubscription = applicationMessages.registerReceiver(::handleFilePropertyUpdates)
 
 	private val cachedPromiseSync = Any()
-	private val filePositionState = MutableStateFlow(0)
-	private val fileDurationState = MutableStateFlow(Int.MAX_VALUE) // Use max so that position updates will take effect
-	private val isPlayingState = MutableStateFlow(false)
-	private val isReadOnlyState = MutableStateFlow(false)
-	private val artistState = MutableStateFlow(stringResources.defaultNowPlayingArtist)
-	private val titleState = MutableStateFlow(stringResources.defaultNowPlayingTrackTitle)
-	private val songRatingState = MutableStateFlow(0F)
-	private val isSongRatingEnabledState = MutableStateFlow(false)
-	private val nowPlayingFileState = MutableStateFlow<PositionedFile?>(null)
-	private val isScreenControlsVisibleState = MutableStateFlow(false)
-	private val unexpectedErrorState = MutableStateFlow<Throwable?>(null)
-	private val activeLibraryIdState = MutableStateFlow<LibraryId?>(null)
+	private val filePositionState = MutableStateObservable(0)
+	private val fileDurationState = MutableStateObservable(Int.MAX_VALUE) // Use max so that position updates will take effect
+	private val isPlayingState = MutableStateObservable(false)
+	private val isReadOnlyState = MutableStateObservable(false)
+	private val artistState = MutableStateObservable(stringResources.defaultNowPlayingArtist)
+	private val titleState = MutableStateObservable(stringResources.defaultNowPlayingTrackTitle)
+	private val songRatingState = MutableStateObservable(0F)
+	private val isSongRatingEnabledState = MutableStateObservable(false)
+	private val nowPlayingFileState = MutableStateObservable<PositionedFile?>(null)
+	private val isScreenControlsVisibleState = MutableStateObservable(false)
+	private val unexpectedErrorState = MutableStateObservable<Throwable?>(null)
+	private val activeLibraryIdState = MutableStateObservable<LibraryId?>(null)
 
-	val filePosition = filePositionState.asStateFlow()
-	val fileDuration = fileDurationState.asStateFlow()
-	val isPlaying = isPlayingState.asStateFlow()
-	val isReadOnly = isReadOnlyState.asStateFlow()
-	val artist = artistState.asStateFlow()
-	val title = titleState.asStateFlow()
-	val songRating = songRatingState.asStateFlow()
-	val isSongRatingEnabled = isSongRatingEnabledState.asStateFlow()
-	val nowPlayingFile = nowPlayingFileState.asStateFlow()
-	val isScreenControlsVisible = isScreenControlsVisibleState.asStateFlow()
-	val unexpectedError = unexpectedErrorState.asStateFlow()
-	val activeLibraryId = activeLibraryIdState.asStateFlow()
+	val filePosition = filePositionState.asReadOnly()
+	val fileDuration = fileDurationState.asReadOnly()
+	val isPlaying = isPlayingState.asReadOnly()
+	val isReadOnly = isReadOnlyState.asReadOnly()
+	val artist = artistState.asReadOnly()
+	val title = titleState.asReadOnly()
+	val songRating = songRatingState.asReadOnly()
+	val isSongRatingEnabled = isSongRatingEnabledState.asReadOnly()
+	val nowPlayingFile = nowPlayingFileState.asReadOnly()
+	val isScreenControlsVisible = isScreenControlsVisibleState.asReadOnly()
+	val unexpectedError = unexpectedErrorState.asReadOnly()
+	val activeLibraryId = activeLibraryIdState.asReadOnly()
 
 	override fun onCleared() {
 		cachedPromises?.close()
@@ -191,20 +190,27 @@ class NowPlayingFilePropertiesViewModel(
 		return nowPlayingRepository.promiseNowPlaying(libraryId)
 			.eventually { np ->
 				nowPlayingFileState.value = np?.playingFile
-				np?.playingFile?.let { positionedFile ->
-					provideUrlKey
-						.promiseGuaranteedUrlKey(np.libraryId, positionedFile.serviceFile)
-						.eventually { key ->
-							val filePosition =
-								if (cachedPromises?.key == key) filePositionState.value
-								else np.filePosition
+				np?.run {
+					playingFile?.let { positionedFile ->
+						provideUrlKey
+							.promiseGuaranteedUrlKey(np.libraryId, positionedFile.serviceFile)
+							.eventually { key ->
+								val filePosition =
+									if (cachedPromises?.key == key) filePositionState.value
+									else filePosition
 
-							setView(np.libraryId, positionedFile.serviceFile, filePosition)
-						}
-						.then(forward()) { e ->
-							setTrackProgress(0)
-							handleException(e)
-						}
+								setView(np.libraryId, positionedFile.serviceFile, filePosition)
+							}
+							.then(forward()) { e ->
+								setTrackProgress(0)
+								handleException(e)
+							}
+					} ?: run {
+						artistState.value = ""
+						titleState.value = stringResources.nothingPlaying
+						filePositionState.value = filePosition.toInt()
+						Unit.toPromise()
+					}
 				}.keepPromise(Unit)
 			}
 	}

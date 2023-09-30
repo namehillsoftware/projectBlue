@@ -23,6 +23,7 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.components
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
+import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 import kotlinx.coroutines.launch
 
 private val bottomAppBarHeight = Dimensions.appBarHeight
@@ -44,7 +45,7 @@ fun LibraryMenu(
     bottomSheetState: BottomSheetState,
     libraryId: LibraryId,
 ) {
-	val nowPlayingFile by nowPlayingFilePropertiesViewModel.nowPlayingFile.collectAsState()
+	val nowPlayingFile by nowPlayingFilePropertiesViewModel.nowPlayingFile.subscribeAsState()
 	val isNowPlayingFileSet by remember { derivedStateOf { nowPlayingFile != null } }
 
 	var rowModifier = Modifier
@@ -99,7 +100,7 @@ fun LibraryMenu(
 						.weight(1f)
 						.align(Alignment.CenterVertically),
 				) {
-					val songTitle by nowPlayingFilePropertiesViewModel.title.collectAsState()
+					val songTitle by nowPlayingFilePropertiesViewModel.title.subscribeAsState()
 
 					ProvideTextStyle(MaterialTheme.typography.subtitle1) {
 						Text(
@@ -111,7 +112,7 @@ fun LibraryMenu(
 						)
 					}
 
-					val songArtist by nowPlayingFilePropertiesViewModel.artist.collectAsState()
+					val songArtist by nowPlayingFilePropertiesViewModel.artist.subscribeAsState()
 					ProvideTextStyle(MaterialTheme.typography.body2) {
 						Text(
 							text = songArtist,
@@ -143,8 +144,8 @@ fun LibraryMenu(
 				}
 			}
 
-			val filePosition by nowPlayingFilePropertiesViewModel.filePosition.collectAsState()
-			val fileDuration by nowPlayingFilePropertiesViewModel.fileDuration.collectAsState()
+			val filePosition by nowPlayingFilePropertiesViewModel.filePosition.subscribeAsState()
+			val fileDuration by nowPlayingFilePropertiesViewModel.fileDuration.subscribeAsState()
 			val fileProgress by remember { derivedStateOf { filePosition / fileDuration.toFloat() } }
 			LinearProgressIndicator(
 				progress = fileProgress,

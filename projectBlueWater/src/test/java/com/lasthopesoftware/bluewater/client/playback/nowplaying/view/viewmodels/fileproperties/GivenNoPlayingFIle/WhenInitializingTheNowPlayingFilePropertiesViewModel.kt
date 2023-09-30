@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.fileproperties.GivenAPlayingFile
+package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.fileproperties.GivenNoPlayingFIle
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideFreshLibraryFileProperties
@@ -8,7 +8,6 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.Maintai
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
-import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
@@ -19,12 +18,8 @@ import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.Timeout
-import java.net.URL
-import java.util.concurrent.TimeUnit
 
-private const val libraryId = 718
-private const val serviceFileId = 355
+private const val libraryId = 11
 
 class WhenInitializingTheNowPlayingFilePropertiesViewModel {
 
@@ -32,57 +27,53 @@ class WhenInitializingTheNowPlayingFilePropertiesViewModel {
 
 	private val nowPlayingViewModel by lazy {
 		val nowPlayingRepository = mockk<MaintainNowPlayingState> {
-			every { promiseNowPlaying(LibraryId(libraryId)) } returns Promise(
-				NowPlaying(
-					LibraryId(libraryId),
-					listOf(
-						ServiceFile(815),
-						ServiceFile(449),
-						ServiceFile(592),
-						ServiceFile(serviceFileId),
-						ServiceFile(390),
-					),
-					3,
-					439774,
-					false
-				)
-			)
-		}
+            every { promiseNowPlaying(LibraryId(libraryId)) } returns Promise(
+                NowPlaying(
+                    LibraryId(libraryId),
+                    emptyList(),
+                    0,
+					649,
+                    false
+                )
+            )
+        }
 
 		val filePropertiesProvider = mockk<ProvideFreshLibraryFileProperties> {
-			val delayedPromise by lazy { PromiseDelay.delay<Any>(Duration.standardSeconds(1)) }
-			every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } answers {
-				delayedPromise.then {
-					filePropertiesReturnedTime = System.currentTimeMillis()
-					emptyMap()
-				}
-			}
-		}
+            val delayedPromise by lazy { PromiseDelay.delay<Any>(Duration.standardSeconds(1)) }
+            every {
+                promiseFileProperties(
+                    LibraryId(libraryId),
+                    ServiceFile(149)
+                )
+            } answers {
+                delayedPromise.then {
+                    filePropertiesReturnedTime = System.currentTimeMillis()
+                    emptyMap()
+                }
+            }
+        }
 
 		val checkAuthentication = mockk<CheckIfConnectionIsReadOnly> {
-			every { promiseIsReadOnly(LibraryId(libraryId)) } returns true.toPromise()
-		}
+            every { promiseIsReadOnly(LibraryId(libraryId)) } returns true.toPromise()
+        }
 
 		val playbackService = mockk<ControlPlaybackService> {
-			every { promiseIsMarkedForPlay(LibraryId(libraryId)) } returns true.toPromise()
-		}
+            every { promiseIsMarkedForPlay(LibraryId(libraryId)) } returns true.toPromise()
+        }
 
 		val nowPlayingViewModel = NowPlayingFilePropertiesViewModel(
             mockk(relaxed = true, relaxUnitFun = true),
             nowPlayingRepository,
             filePropertiesProvider,
-            mockk {
-                every { promiseGuaranteedUrlKey(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns UrlKeyHolder(
-					URL("http://plan"),
-					ServiceFile(serviceFileId)
-				).toPromise()
-            },
+            mockk(),
             mockk(),
             checkAuthentication,
             playbackService,
-			mockk(),
-			mockk(relaxed = true),
-		)
+            mockk(),
+            mockk(relaxed = true) {
+		  		every { nothingPlaying } returns "Nada"
+			},
+        )
 
 		nowPlayingViewModel
 	}
@@ -94,13 +85,16 @@ class WhenInitializingTheNowPlayingFilePropertiesViewModel {
 
 	@Test
 	fun `then the file position is correct`() {
-		assertThat(nowPlayingViewModel.filePosition.value).isEqualTo(439774)
+		assertThat(nowPlayingViewModel.filePosition.value).isEqualTo(649)
 	}
 
 	@Test
-	@Timeout(10, unit = TimeUnit.SECONDS)
-	fun `then the controls are shown at least five seconds after the properties load`() {
-		nowPlayingViewModel.isScreenControlsVisible.skipWhile { !it.value }.takeWhile { it.value }.blockingSubscribe()
-		assertThat(System.currentTimeMillis() - filePropertiesReturnedTime).isGreaterThan(5_000)
+	fun `then the artist is correct`() {
+		assertThat(nowPlayingViewModel.artist.value).isEqualTo("")
+	}
+
+	@Test
+	fun `then the title is correct`() {
+		assertThat(nowPlayingViewModel.title.value).isEqualTo("Nada")
 	}
 }
