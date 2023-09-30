@@ -209,6 +209,8 @@ class NowPlayingFilePropertiesViewModel(
 						artistState.value = ""
 						titleState.value = stringResources.nothingPlaying
 						filePositionState.value = filePosition.toInt()
+						songRatingState.value = 0f
+						isSongRatingEnabledState.value = false
 						Unit.toPromise()
 					}
 				}.keepPromise(Unit)
