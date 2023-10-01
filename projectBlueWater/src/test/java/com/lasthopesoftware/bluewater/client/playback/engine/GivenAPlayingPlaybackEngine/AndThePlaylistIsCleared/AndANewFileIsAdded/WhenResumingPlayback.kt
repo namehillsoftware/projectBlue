@@ -59,7 +59,7 @@ class WhenResumingPlayback {
 
 		engine
 			.setOnPlaybackCompleted { isPlaybackCompletionSignaled = true }
-			.setOnPlayingFileChanged { l, f -> playingFiles.add(f?.serviceFile) }
+			.setOnPlayingFileChanged { _, f -> playingFiles.add(f?.serviceFile) }
 
 		Pair(fakePlaybackPreparerProvider, engine)
 	}
