@@ -12,6 +12,8 @@ interface GetStringResources {
 		get() = ""
 	val unknownTrack: String
 		get() = ""
+	val nothingPlaying: String
+		get() = ""
 	val defaultNowPlayingTrackTitle: String
 		get() = ""
 	val defaultNowPlayingArtist: String

@@ -1,15 +1,16 @@
 package com.lasthopesoftware.bluewater.client.playback.engine.preparation
 
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.PositionedFileQueue
+import com.lasthopesoftware.resources.closables.ResettableCloseable
 
 class PreparedPlaybackQueueResourceManagement(
     private val playbackPreparerProvider: IPlayableFilePreparationSourceProvider,
     private val preparedPlaybackQueueConfiguration: IPreparedPlaybackQueueConfiguration
-) : ManagePlaybackQueues {
+) : ManagePlaybackQueues, ResettableCloseable {
     private var preparedPlaybackQueue: PreparedPlayableFileQueue? = null
 
     override fun initializePreparedPlaybackQueue(positionedFileQueue: PositionedFileQueue): PreparedPlayableFileQueue {
-        close()
+        reset()
         return PreparedPlayableFileQueue(
             preparedPlaybackQueueConfiguration,
             playbackPreparerProvider.providePlayableFilePreparationSource(),
@@ -21,7 +22,11 @@ class PreparedPlaybackQueueResourceManagement(
 		return preparedPlaybackQueue?.updateQueue(positionedFileQueue)?.let { true } ?: false
     }
 
-    override fun close() {
-        preparedPlaybackQueue?.close()
+	override fun reset() {
+		preparedPlaybackQueue?.close()
+	}
+
+	override fun close() {
+        reset()
     }
 }

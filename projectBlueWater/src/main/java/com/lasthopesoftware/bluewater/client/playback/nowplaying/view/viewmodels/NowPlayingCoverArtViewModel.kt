@@ -15,7 +15,7 @@ import com.lasthopesoftware.bluewater.shared.images.ProvideDefaultImage
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
-import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.namehillsoftware.handoff.promises.Promise
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -45,7 +45,6 @@ class NowPlayingCoverArtViewModel(
 	private val isNowPlayingImageLoadingState = MutableStateFlow(false)
 	private val defaultImageState = MutableStateFlow<Bitmap?>(null)
 	private val nowPlayingImageState = MutableStateFlow<Bitmap?>(null)
-	private val unexpectedErrorState = MutableStateFlow<Throwable?>(null)
 
 	private var activeLibraryId: LibraryId? = null
 	private var cachedPromises: CachedPromises? = null
@@ -53,7 +52,6 @@ class NowPlayingCoverArtViewModel(
 	val isNowPlayingImageLoading = isNowPlayingImageLoadingState.asStateFlow()
 	val nowPlayingImage = nowPlayingImageState.asStateFlow()
 	val defaultImage = defaultImageState.asStateFlow()
-	val unexpectedError = unexpectedErrorState.asStateFlow()
 
 	override fun onCleared() {
 		cachedPromises?.close()
@@ -78,7 +76,10 @@ class NowPlayingCoverArtViewModel(
 		val promisedSetView = nowPlayingRepository
 			.promiseNowPlaying(libraryId)
 			.eventually { np ->
-				np?.playingFile?.run { setView(np.libraryId, serviceFile) }.keepPromise(Unit)
+				np?.playingFile?.run { setView(np.libraryId, serviceFile) } ?: run {
+					nowPlayingImageState.value = defaultImage.value
+					Unit.toPromise()
+				}
 			}
 
 		promisedSetView.excuse { error -> logger.warn("An error occurred initializing `NowPlayingActivity`", error) }
@@ -92,7 +93,6 @@ class NowPlayingCoverArtViewModel(
 			val isIoException = handleIoException(exception)
 			if (!isIoException) return
 
-			unexpectedErrorState.value = exception
 			pollConnections.pollConnection(libraryId).then {
 				cachedPromises?.close()
 				cachedPromises = null
@@ -138,11 +138,7 @@ class NowPlayingCoverArtViewModel(
 	}
 
 	private fun handleIoException(exception: Throwable) =
-		if (ConnectionLostExceptionFilter.isConnectionLostException(exception)) true
-		else {
-			unexpectedErrorState.value = exception
-			false
-		}
+		ConnectionLostExceptionFilter.isConnectionLostException(exception)
 
 	private class CachedPromises(
 		val urlKeyHolder: UrlKeyHolder<ServiceFile>,

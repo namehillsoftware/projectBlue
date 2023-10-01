@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.playlist.GivenAPlaylist
+package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.playlist.GivenAPlaylist.AndThePlaylistIsInitialized
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -21,23 +21,23 @@ private const val libraryId = 155
 class `When saving the now playing playlist` {
 
 	private val mut by lazy {
-        NowPlayingPlaylistViewModel(
-            RecordingApplicationMessageBus(),
-            FakeNowPlayingRepository(
-                NowPlaying(
-                    LibraryId(libraryId),
-                    listOf(
-                        ServiceFile(312),
-                        ServiceFile(851),
-                        ServiceFile(780),
-                        ServiceFile(650),
-                    ),
-                    0,
-                    0,
-                    false
-                )
-            ),
-            mockk(),
+		NowPlayingPlaylistViewModel(
+			RecordingApplicationMessageBus(),
+			FakeNowPlayingRepository(
+				NowPlaying(
+					LibraryId(libraryId),
+					listOf(
+						ServiceFile(312),
+						ServiceFile(851),
+						ServiceFile(780),
+						ServiceFile(650),
+					),
+					0,
+					0,
+					false
+				)
+			),
+			mockk(),
 			mockk {
 				every { promiseAudioPlaylistPaths(LibraryId(libraryId)) } returns Promise(
 					listOf("country", "hardly", "company\\pretense", "briBery\\new")
@@ -48,7 +48,7 @@ class `When saving the now playing playlist` {
 					Unit.toPromise()
 				}
 			},
-        )
+		)
 	}
 
 	private var savedPlaylistPath: String? = null
@@ -89,10 +89,10 @@ class `When saving the now playing playlist` {
 	@Test
 	fun `then the playlist is correct`() {
 		assertThat(mut.nowPlayingList.value).containsExactly(
-            PositionedFile(0, ServiceFile(312)),
-            PositionedFile(1, ServiceFile(851)),
-            PositionedFile(2, ServiceFile(780)),
-            PositionedFile(3, ServiceFile(650)),
+			PositionedFile(0, ServiceFile(312)),
+			PositionedFile(1, ServiceFile(851)),
+			PositionedFile(2, ServiceFile(780)),
+			PositionedFile(3, ServiceFile(650)),
 		)
 	}
 

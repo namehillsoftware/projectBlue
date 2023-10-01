@@ -10,11 +10,11 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messa
 import com.lasthopesoftware.bluewater.shared.android.ui.components.dragging.move
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
+import com.lasthopesoftware.bluewater.shared.observables.MutableStateObservable
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.namehillsoftware.handoff.promises.Promise
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 
 class NowPlayingPlaylistViewModel(
 	applicationMessages: RegisterForApplicationMessages,
@@ -31,21 +31,21 @@ class NowPlayingPlaylistViewModel(
 	private var loadedPlaylistPaths = emptyList<String>()
 	private val playlistChangedSubscription = applicationMessages.registerReceiver(this)
 
-	private val isRepeatingState = MutableStateFlow(false)
-	private val mutableEditingPlaylistState = MutableStateFlow(false)
-	private val nowPlayingListState = MutableStateFlow(emptyList<PositionedFile>())
-	private val mutableFilteredPlaylistPaths = MutableStateFlow(emptyList<String>())
-	private val mutableIsSavingPlaylistActive = MutableStateFlow(false)
-	private val mutableSelectedPlaylistPath = MutableStateFlow("")
-	private val mutableIsPlaylistPathValid = MutableStateFlow(false)
+	private val isRepeatingState = MutableStateObservable(false)
+	private val mutableEditingPlaylistState = MutableStateObservable(false)
+	private val nowPlayingListState = MutableStateObservable(emptyList<PositionedFile>())
+	private val mutableFilteredPlaylistPaths = MutableStateObservable(emptyList<String>())
+	private val mutableIsSavingPlaylistActive = MutableStateObservable(false)
+	private val mutableSelectedPlaylistPath = MutableStateObservable("")
+	private val mutableIsPlaylistPathValid = MutableStateObservable(false)
 
-	val isRepeating = isRepeatingState.asStateFlow()
-	val isEditingPlaylistState = mutableEditingPlaylistState.asStateFlow()
-	val nowPlayingList = nowPlayingListState.asStateFlow()
-	val filteredPlaylistPaths = mutableFilteredPlaylistPaths.asStateFlow()
-	val isSavingPlaylistActive = mutableIsSavingPlaylistActive.asStateFlow()
-	val selectedPlaylistPath = mutableSelectedPlaylistPath.asStateFlow()
-	val isPlaylistPathValid = mutableIsPlaylistPathValid.asStateFlow()
+	val isRepeating = isRepeatingState.asReadOnly()
+	val isEditingPlaylistState = mutableEditingPlaylistState.asReadOnly()
+	val nowPlayingList = nowPlayingListState.asReadOnly()
+	val filteredPlaylistPaths = mutableFilteredPlaylistPaths.asReadOnly()
+	val isSavingPlaylistActive = mutableIsSavingPlaylistActive.asReadOnly()
+	val selectedPlaylistPath = mutableSelectedPlaylistPath.asReadOnly()
+	val isPlaylistPathValid = mutableIsPlaylistPathValid.asReadOnly()
 
 	fun initializeView(libraryId: LibraryId): Promise<Unit> {
 		activeLibraryId = libraryId
@@ -62,6 +62,15 @@ class NowPlayingPlaylistViewModel(
 	override fun finishPlaylistEdit() {
 		mutableEditingPlaylistState.value = false
 		disableSavingPlaylist()
+	}
+
+	override fun invoke(message: LibraryPlaybackMessage.PlaylistChanged) {
+		if (message.libraryId == activeLibraryId)
+			updateViewFromRepository()
+	}
+
+	override fun onCleared() {
+		playlistChangedSubscription.close()
 	}
 
 	fun disableSavingPlaylist() {
@@ -101,13 +110,9 @@ class NowPlayingPlaylistViewModel(
 		}
 	}
 
-	override fun invoke(message: LibraryPlaybackMessage.PlaylistChanged) {
-		if (message.libraryId == activeLibraryId)
-			updateViewFromRepository()
-	}
-
-	override fun onCleared() {
-		playlistChangedSubscription.close()
+	fun clearPlaylist(): Promise<*> {
+		activeLibraryId?.also(playbackService::clearPlaylist)
+		return Unit.toPromise()
 	}
 
 	private fun updateViewFromRepository() =

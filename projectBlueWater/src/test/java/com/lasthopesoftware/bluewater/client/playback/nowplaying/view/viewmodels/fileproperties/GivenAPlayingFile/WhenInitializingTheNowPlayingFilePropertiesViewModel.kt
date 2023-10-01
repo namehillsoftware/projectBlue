@@ -15,10 +15,6 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.dropWhile
-import kotlinx.coroutines.flow.takeWhile
-import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
 import org.junit.jupiter.api.BeforeAll
@@ -104,9 +100,7 @@ class WhenInitializingTheNowPlayingFilePropertiesViewModel {
 	@Test
 	@Timeout(10, unit = TimeUnit.SECONDS)
 	fun `then the controls are shown at least five seconds after the properties load`() {
-		runBlocking {
-			nowPlayingViewModel.isScreenControlsVisible.dropWhile { !it }.takeWhile { it }.collect()
-		}
+		nowPlayingViewModel.isScreenControlsVisible.skipWhile { !it.value }.takeWhile { it.value }.blockingSubscribe()
 		assertThat(System.currentTimeMillis() - filePropertiesReturnedTime).isGreaterThan(5_000)
 	}
 }

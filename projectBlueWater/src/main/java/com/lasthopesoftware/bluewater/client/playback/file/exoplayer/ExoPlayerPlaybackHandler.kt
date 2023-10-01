@@ -41,7 +41,7 @@ class ExoPlayerPlaybackHandler(private val exoPlayer: PromisingExoPlayer) :
 		private val logger by lazyLogger<ExoPlayerPlaybackHandler>()
 	}
 
-	private val lazyFileProgressReader by lazy { ExoPlayerFileProgressReader(exoPlayer) }
+	private val fileProgressReader by lazy { ExoPlayerFileProgressReader(exoPlayer) }
 
 	private var backingDuration = Duration.ZERO
 
@@ -61,7 +61,7 @@ class ExoPlayerPlaybackHandler(private val exoPlayer: PromisingExoPlayer) :
 	override fun promisePlayedFile(): ProgressedPromise<Duration, PlayedFile> = this
 
 	override val progress: Promise<Duration>
-		get() = lazyFileProgressReader.progress
+		get() = fileProgressReader.progress
 
 	override val duration: Promise<Duration>
 		get() = exoPlayer.getDuration().then { newDuration ->
@@ -149,10 +149,12 @@ class ExoPlayerPlaybackHandler(private val exoPlayer: PromisingExoPlayer) :
 
 	override fun close() {
 		isPlaying = false
+		fileProgressReader.close()
 		exoPlayer.setPlayWhenReady(false)
 		exoPlayer.stop()
 		removeListener()
 		exoPlayer.release()
+		resolve(this)
 	}
 
 	override fun run() {

@@ -10,6 +10,7 @@ class StringResources(private val context: Context): GetStringResources {
 	override val unknownTrack by lazyString(R.string.unknown_track)
 	override val defaultNowPlayingTrackTitle by lazyString(R.string.lbl_song_title)
 	override val defaultNowPlayingArtist by lazyString(R.string.lbl_song_artist)
+	override val nothingPlaying: String by lazyString(R.string.nothing_playing)
 	override val aboutTitle by lazy { context
 		.getString(R.string.title_activity_about)
 		.format(context.getString(R.string.app_name)) }

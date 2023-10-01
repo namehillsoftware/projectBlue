@@ -49,6 +49,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.components.scrollbar
 import com.lasthopesoftware.bluewater.shared.android.ui.linearInterpolation
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.*
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
+import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
@@ -70,7 +71,7 @@ fun ItemListView(
     playbackLibraryItems: PlaybackLibraryItems,
     playbackServiceController: ControlPlaybackService,
 ) {
-	val playingFile by nowPlayingViewModel.nowPlayingFile.collectAsState()
+	val playingFile by nowPlayingViewModel.nowPlayingFile.subscribeAsState()
 	val files by fileListViewModel.files.collectAsState()
 	val rowHeight = Dimensions.standardRowHeight
 	val rowFontSize = LocalDensity.current.run { dimensionResource(id = R.dimen.row_font_size).toSp() }

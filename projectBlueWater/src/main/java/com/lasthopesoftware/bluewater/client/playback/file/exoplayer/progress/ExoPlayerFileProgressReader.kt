@@ -6,7 +6,8 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import org.joda.time.Duration
 
-class ExoPlayerFileProgressReader(private val exoPlayer: PromisingExoPlayer) : ReadFileProgress {
+class ExoPlayerFileProgressReader(private val exoPlayer: PromisingExoPlayer) : ReadFileProgress, AutoCloseable {
+	private var isClosed = false
 	private var currentDurationPromise: Promise<Duration> = Promise.empty()
 	private var fileProgress = Duration.ZERO
 
@@ -17,10 +18,9 @@ class ExoPlayerFileProgressReader(private val exoPlayer: PromisingExoPlayer) : R
 				.eventually({ promiseProgress() }, { promiseProgress() })
 				.also { currentDurationPromise = it }
 
-
 	private fun promiseProgress(): Promise<Duration> =
 		exoPlayer.getPlayWhenReady().eventually { isPlaying ->
-			if (!isPlaying) fileProgress.toPromise()
+			if (isClosed || !isPlaying) fileProgress.toPromise()
 			else {
 				exoPlayer.getCurrentPosition().then { currentPosition ->
 					if (currentPosition != fileProgress.millis)
@@ -29,4 +29,8 @@ class ExoPlayerFileProgressReader(private val exoPlayer: PromisingExoPlayer) : R
 				}
 			}
 		}
+
+	override fun close() {
+		isClosed = true
+	}
 }

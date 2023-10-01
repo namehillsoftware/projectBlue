@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.service
 
 import android.content.Context
+import androidx.media3.common.util.UnstableApi
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.FileStringListUtilities
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -9,7 +10,7 @@ import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 
-class PlaybackServiceController(private val context: Context) : ControlPlaybackService {
+@UnstableApi class PlaybackServiceController(private val context: Context) : ControlPlaybackService {
 	override fun initialize(libraryId: LibraryId) = PlaybackService.initialize(context, libraryId)
 
 	override fun promiseIsMarkedForPlay(libraryId: LibraryId): Promise<Boolean> =
@@ -53,5 +54,8 @@ class PlaybackServiceController(private val context: Context) : ControlPlaybackS
 	override fun setRepeating(libraryId: LibraryId) = PlaybackService.setRepeating(context, libraryId)
 
 	override fun setCompleting(libraryId: LibraryId) = PlaybackService.setCompleting(context, libraryId)
+
+	override fun clearPlaylist(libraryId: LibraryId) = PlaybackService.clearPlaylist(context, libraryId)
+
 	override fun kill() = PlaybackService.killService(context)
 }

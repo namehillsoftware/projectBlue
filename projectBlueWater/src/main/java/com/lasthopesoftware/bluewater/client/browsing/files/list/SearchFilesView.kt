@@ -66,6 +66,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.linearInterpolation
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
+import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 import com.lasthopesoftware.bluewater.shared.promises.extensions.suspend
 import kotlinx.coroutines.launch
 import java.io.IOException
@@ -89,7 +90,7 @@ fun SearchFilesView(
     playbackServiceController: ControlPlaybackService,
 ) {
 	val files by searchFilesViewModel.files.collectAsState()
-	val playingFile by nowPlayingViewModel.nowPlayingFile.collectAsState()
+	val playingFile by nowPlayingViewModel.nowPlayingFile.subscribeAsState()
 	var isConnectionLost by remember { mutableStateOf(false) }
 	val scope = rememberCoroutineScope()
 
