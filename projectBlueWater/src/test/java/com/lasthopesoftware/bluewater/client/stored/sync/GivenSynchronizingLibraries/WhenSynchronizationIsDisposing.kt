@@ -49,8 +49,8 @@ class WhenSynchronizationIsDisposing {
 		val libraryProvider = mockk<ILibraryProvider>()
 		every { libraryProvider.allLibraries } returns Promise(
 			listOf(
-				Library().setId(4),
-				Library().setId(10)
+				Library(id = 4),
+				Library(id = 10)
 			)
 		)
 

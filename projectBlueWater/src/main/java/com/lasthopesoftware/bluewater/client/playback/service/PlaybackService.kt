@@ -45,8 +45,8 @@ import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibr
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionServiceProxy
-import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionSettingsChangeReceiver
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
+import com.lasthopesoftware.bluewater.client.connection.settings.changes.ObservableConnectionSettingsLibraryStorage
 import com.lasthopesoftware.bluewater.client.playback.caching.AudioCacheConfiguration
 import com.lasthopesoftware.bluewater.client.playback.caching.datasource.DiskFileCacheSourceFactory
 import com.lasthopesoftware.bluewater.client.playback.caching.uri.CachedAudioFileUriProvider
@@ -112,12 +112,11 @@ import com.lasthopesoftware.bluewater.shared.android.notifications.notificationc
 import com.lasthopesoftware.bluewater.shared.android.permissions.OsPermissionsChecker
 import com.lasthopesoftware.bluewater.shared.android.services.GenericBinder
 import com.lasthopesoftware.bluewater.shared.android.services.promiseBoundService
-import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToaster
 import com.lasthopesoftware.bluewater.shared.lazyLogger
-import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
+import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.observables.toMaybeObservable
 import com.lasthopesoftware.bluewater.shared.policies.retries.RetryOnRejectionLazyPromise
 import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay.Companion.delay
@@ -126,6 +125,7 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.lasthopesoftware.bluewater.shared.resilience.TimedCountdownLatch
 import com.lasthopesoftware.resources.closables.AutoCloseableManager
+import com.lasthopesoftware.resources.closables.PromisingCloseableManager
 import com.lasthopesoftware.resources.closables.lazyScoped
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.lasthopesoftware.resources.loopers.HandlerThreadCreator
@@ -290,6 +290,10 @@ import java.util.concurrent.TimeoutException
 			)
 		}
 
+		fun clearPlaylist(context: Context, libraryId: LibraryId) {
+			context.safelyStartService(getNewSelfIntent(context, PlaybackEngineAction.ClearPlaylist(libraryId)))
+		}
+
 		fun killService(context: Context) =
 			context.safelyStartService(getNewSelfIntent(context, PlaybackServiceAction.KillPlaybackService))
 
@@ -343,6 +347,7 @@ import java.util.concurrent.TimeoutException
 
 	private val applicationMessageBus by lazyScoped { getApplicationMessageBus().getScopedMessageBus() }
 	private val playbackEngineCloseables = AutoCloseableManager()
+	private val promisingPlaybackEngineCloseables = PromisingCloseableManager()
 	private val lazyObservationScheduler = lazy { ExecutorScheduler(ThreadPools.compute, true) }
 	private val binder by lazy { GenericBinder(this) }
 	private val notificationManager by lazy { getSystemService(NOTIFICATION_SERVICE) as NotificationManager }
@@ -457,13 +462,6 @@ import java.util.concurrent.TimeoutException
 		}
 	}
 
-	private val playbackHaltingEvent = object : (ApplicationMessage) -> Unit {
-		override fun invoke(message: ApplicationMessage) {
-			pausePlayback()
-			stopSelf(startId)
-		}
-	}
-
 	private val nowPlayingRepository by lazy {
 		NowPlayingRepository(
 			getCachedSelectedLibraryIdProvider(),
@@ -569,6 +567,20 @@ import java.util.concurrent.TimeoutException
 	private val playlistPlaybackBootstrapper by lazy { PlaylistPlaybackBootstrapper(playlistVolumeManager).also(playbackEngineCloseables::manage) }
 
 	private val promisedPlaybackServices = RetryOnRejectionLazyPromise {
+		playbackEngineCloseables.manage(applicationMessageBus.registerReceiver { m: ObservableConnectionSettingsLibraryStorage.ConnectionSettingsUpdated ->
+			if (m.libraryId == activeLibraryId)
+				haltService()
+		})
+
+		playbackEngineCloseables.manage(applicationMessageBus.registerReceiver { m: BrowserLibrarySelection.LibraryChosenMessage ->
+			if (m.chosenLibraryId != activeLibraryId)
+				haltService()
+		})
+
+		playbackEngineCloseables.manage(applicationMessageBus.registerReceiver { _: PlaybackEngineTypeChangedBroadcaster.PlaybackEngineTypeChanged ->
+			haltService()
+		})
+
 		// Call the value to initialize the lazy promise
 		val hotPromisedMediaNotificationSetup = promisedMediaNotificationSetup
 
@@ -613,7 +625,7 @@ import java.util.concurrent.TimeoutException
 
 				engine
 					.also {
-						playbackEngineCloseables.manage(engine)
+						promisingPlaybackEngineCloseables.manage(engine)
 					}
 					.setOnPlaybackStarted(this)
 					.setOnPlaybackPaused(this)
@@ -675,18 +687,6 @@ import java.util.concurrent.TimeoutException
 		super.onCreate()
 
 		guardDestroyedService()
-
-		applicationMessageBus.registerForClass(
-			cls<SelectedConnectionSettingsChangeReceiver.SelectedConnectionSettingsUpdated>(),
-			playbackHaltingEvent
-		)
-		applicationMessageBus.registerForClass(
-			cls<BrowserLibrarySelection.LibraryChosenMessage>(),
-			playbackHaltingEvent)
-
-		applicationMessageBus.registerForClass(
-			cls<PlaybackEngineTypeChangedBroadcaster.PlaybackEngineTypeChanged>(),
-			playbackHaltingEvent)
 	}
 
 	override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -763,6 +763,16 @@ import java.util.concurrent.TimeoutException
 						}
 						.unitResponse()
 				}
+				is PlaybackEngineAction.ClearPlaylist -> {
+					val (libraryId) = playbackEngineAction
+					restorePlaybackServices(libraryId)
+						.eventually { it.playlistFiles.clearPlaylist() }
+						.then {
+							logger.debug("Playlist cleared")
+							applicationMessageBus.sendMessage(LibraryPlaybackMessage.PlaylistChanged(libraryId))
+						}
+						.unitResponse()
+				}
 			}
 		}
 
@@ -790,7 +800,7 @@ import java.util.concurrent.TimeoutException
 			logger.debug("processPlaybackServiceAction({})", playbackServiceAction)
 			return when (playbackServiceAction) {
 				null, is PlaybackServiceAction.KillPlaybackService -> {
-					stopSelf(startId)
+					haltService()
 					START_NOT_STICKY
 				}
 
@@ -1057,11 +1067,11 @@ import java.util.concurrent.TimeoutException
 
 		promisedPlayedFile
 			.then {
+				localSubscription?.dispose()
+
 				applicationMessageBus.sendMessage(
 					LibraryPlaybackMessage.TrackCompleted(libraryId, positionedPlayingFile.serviceFile)
 				)
-
-				localSubscription?.dispose()
 			}
 
 		filePositionSubscription = localSubscription
@@ -1071,6 +1081,11 @@ import java.util.concurrent.TimeoutException
 
 	private fun broadcastChangedFile(libraryId: LibraryId, positionedFile: PositionedFile) {
 		applicationMessageBus.sendMessage(LibraryPlaybackMessage.TrackChanged(libraryId, positionedFile))
+	}
+
+	private fun haltService() {
+		pausePlayback()
+		stopSelf(startId)
 	}
 
 	override fun onDestroy() {
@@ -1090,7 +1105,10 @@ import java.util.concurrent.TimeoutException
 				if (playbackThread.isInitializing()) playbackThread.value.then { it.quitSafely() }
 				else Unit.toPromise()
 			}
-			.must { playbackEngineCloseables.close() }
+			.inevitably {
+				playbackEngineCloseables.close()
+				promisingPlaybackEngineCloseables.promiseClose()
+			}
 
 		super.onDestroy()
 	}
@@ -1108,10 +1126,10 @@ import java.util.concurrent.TimeoutException
 	private sealed interface PlaybackServiceAction : Parcelable {
 
 		@Parcelize
-		object KillPlaybackService : PlaybackServiceAction
+		data object KillPlaybackService : PlaybackServiceAction
 
 		@Parcelize
-		object Pause : PlaybackServiceAction
+		data object Pause : PlaybackServiceAction
 	}
 
 	private sealed interface PlaybackEngineAction : PlaybackServiceAction {
@@ -1147,6 +1165,9 @@ import java.util.concurrent.TimeoutException
 
 		@Parcelize
 		data class MoveFile(override val libraryId: LibraryId, val from: Int, val to: Int) : PlaybackEngineAction
+
+		@Parcelize
+		data class ClearPlaylist(override val libraryId: LibraryId): PlaybackEngineAction
 	}
 
 	private sealed interface PlaybackStartingAction : PlaybackEngineAction {

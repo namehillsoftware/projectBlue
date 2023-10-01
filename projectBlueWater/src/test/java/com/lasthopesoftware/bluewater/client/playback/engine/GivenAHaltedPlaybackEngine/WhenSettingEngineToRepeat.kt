@@ -30,10 +30,9 @@ import org.junit.jupiter.api.Test
 class WhenSettingEngineToRepeat {
 	private val nowPlaying by lazy {
 		val fakePlaybackPreparerProvider = FakeDeferredPlayableFilePreparationSourceProvider()
-		val library = Library()
-		library.setId(907)
-		library.setSavedTracksString(
-			FileStringListUtilities.promiseSerializedFileStringList(
+		val library = Library(
+			id = 907,
+			savedTracksString = FileStringListUtilities.promiseSerializedFileStringList(
 				listOf(
 					ServiceFile(1),
 					ServiceFile(2),
@@ -41,9 +40,9 @@ class WhenSettingEngineToRepeat {
 					ServiceFile(4),
 					ServiceFile(5)
 				)
-			).toExpiringFuture().get()
+			).toExpiringFuture().get(),
+			nowPlayingId = 0,
 		)
-		library.setNowPlayingId(0)
 		val libraryProvider = FakeLibraryRepository(library)
 
 		val filePropertiesContainerRepository = mockk<IFilePropertiesContainerRepository>()

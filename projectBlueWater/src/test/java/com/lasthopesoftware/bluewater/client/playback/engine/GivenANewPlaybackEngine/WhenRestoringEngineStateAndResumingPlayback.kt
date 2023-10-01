@@ -32,10 +32,9 @@ class WhenRestoringEngineStateAndResumingPlayback {
 	private var positionedPlayingFile: PositionedPlayingFile? = null
 	private val restoredState by lazy {
 		val fakePlaybackPreparerProvider = FakeDeferredPlayableFilePreparationSourceProvider()
-		val library = Library()
-		library.setId(35)
-		library.setSavedTracksString(
-			FileStringListUtilities.promiseSerializedFileStringList(
+		val library = Library(
+			id = 35,
+			savedTracksString = FileStringListUtilities.promiseSerializedFileStringList(
 				listOf(
 					ServiceFile(32),
 					ServiceFile(329),
@@ -43,10 +42,11 @@ class WhenRestoringEngineStateAndResumingPlayback {
 					ServiceFile(915),
 					ServiceFile(899)
 				)
-			).toExpiringFuture().get()
+			).toExpiringFuture().get(),
+			nowPlayingProgress = 893,
+			nowPlayingId = 3,
 		)
-		library.setNowPlayingProgress(893)
-		library.setNowPlayingId(3)
+
 		val libraryProvider = FakeLibraryRepository(library)
 
 		val filePropertiesContainerRepository = mockk<IFilePropertiesContainerRepository>()

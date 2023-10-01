@@ -5,35 +5,22 @@ import com.lasthopesoftware.bluewater.client.playback.playlist.IPlaylistPlayer
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
 import com.namehillsoftware.handoff.promises.Promise
 import io.reactivex.Observable
-import io.reactivex.disposables.Disposable
-import io.reactivex.observables.ConnectableObservable
 
 class ActivePlayer(
     private val playlistPlayer: IPlaylistPlayer,
     volumeManagement: PlaylistVolumeManager
-) : IActivePlayer, AutoCloseable {
-    private val fileChangedObservableConnection: Disposable
-    private val observableProxy: ConnectableObservable<PositionedPlayingFile>
+) : IActivePlayer {
+	private val observableProxy = Observable.create(playlistPlayer).replay(1).refCount()
 
     init {
         volumeManagement.managePlayer(playlistPlayer)
-        observableProxy = Observable.create(playlistPlayer).replay(1)
-        fileChangedObservableConnection = observableProxy.connect()
     }
 
-    override fun pause(): Promise<*> {
-        return playlistPlayer.pause()
-    }
+    override fun pause(): Promise<*> = playlistPlayer.pause()
 
-    override fun resume(): Promise<PositionedPlayingFile?> {
-        return playlistPlayer.resume()
-    }
+    override fun resume(): Promise<PositionedPlayingFile?> = playlistPlayer.resume()
 
-    override fun observe(): ConnectableObservable<PositionedPlayingFile> {
-        return observableProxy
-    }
+    override fun observe(): Observable<PositionedPlayingFile> = observableProxy
 
-    override fun close() {
-        fileChangedObservableConnection.dispose()
-    }
+	override fun halt(): Promise<*> = playlistPlayer.haltPlayback()
 }

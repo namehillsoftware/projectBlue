@@ -44,8 +44,8 @@ class WhenGettingTheStoredFilePath {
                 filePropertiesProvider,
                 FakeLibraryRepository(
                     Library(
-                        _id = libraryId,
-                        _syncedFileLocation = Library.SyncedFileLocation.EXTERNAL
+                        id = libraryId,
+                        syncedFileLocation = Library.SyncedFileLocation.EXTERNAL
                     )
                 ),
                 mockk {

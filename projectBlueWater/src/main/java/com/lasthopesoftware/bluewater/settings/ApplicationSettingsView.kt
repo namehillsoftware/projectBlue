@@ -150,7 +150,8 @@ private fun LazyListScope.settingsList(
 
 	items(libraries) { library ->
 		Row(
-			modifier = standardRowModifier,
+			modifier = standardRowModifier
+				.clickable { applicationNavigation.viewServerSettings(library.libraryId) },
 			verticalAlignment = Alignment.CenterVertically,
 		) {
 			Text(
@@ -164,28 +165,14 @@ private fun LazyListScope.settingsList(
 				fontSize = rowFontSize,
 			)
 
-			Image(
-				painter = painterResource(id = R.drawable.ic_action_settings),
-				contentDescription = stringResource(id = R.string.settings),
-				modifier = Modifier
-					.clickable { applicationNavigation.viewServerSettings(library.libraryId) }
-					.padding(Dimensions.viewPaddingUnit),
-			)
-
 			Row(
 				modifier = Modifier
-					.clickable { applicationNavigation.viewLibrary(library.libraryId) }
 					.padding(Dimensions.viewPaddingUnit),
 				verticalAlignment = Alignment.CenterVertically,
 			) {
-				Text(
-					text = stringResource(id = R.string.lbl_connect),
-					fontSize = rowFontSize,
-				)
-
-				Image(
-					painter = painterResource(id = R.drawable.ic_arrow_right),
-					contentDescription = stringResource(id = R.string.lbl_connect)
+				Icon(
+					painter = painterResource(id = R.drawable.ic_action_settings),
+					contentDescription = stringResource(id = R.string.settings)
 				)
 			}
 		}

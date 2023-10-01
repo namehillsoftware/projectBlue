@@ -12,6 +12,8 @@ interface GetStringResources {
 		get() = ""
 	val unknownTrack: String
 		get() = ""
+	val nothingPlaying: String
+		get() = ""
 	val defaultNowPlayingTrackTitle: String
 		get() = ""
 	val defaultNowPlayingArtist: String
@@ -35,5 +37,19 @@ interface GetStringResources {
 	val removeServer: String
 		get() = ""
 	val connectingToServerTitle: String
+		get() = ""
+	val saveAndConnect: String
+		get() = ""
+
+	val connect: String
+		get() = ""
+
+	val clear: String
+		get() = ""
+
+	val change: String
+		get() = ""
+
+	val set: String
 		get() = ""
 }

@@ -17,6 +17,7 @@ object LibraryEntityInformation {
 	const val userNameColumn = "userName"
 	const val passwordColumn = "password"
 	const val isWakeOnLanEnabledColumn = "isWakeOnLanEnabled"
+	const val sslCertificateFingerprintColumn = "sslCertificateFingerprint"
 	const val createTableSql = """CREATE TABLE IF NOT EXISTS `LIBRARIES` (
 			`$accessCodeColumn` VARCHAR(30) ,
 			`$userNameColumn` VARCHAR ,
@@ -33,5 +34,6 @@ object LibraryEntityInformation {
 			`$savedTracksStringColumn` VARCHAR ,
 			`$selectedViewColumn` INTEGER DEFAULT -1 NOT NULL ,
 			`$selectedViewTypeColumn` VARCHAR ,
-			`$syncedFileLocationColumn` VARCHAR )"""
+			`$syncedFileLocationColumn` VARCHAR ,
+			`$sslCertificateFingerprintColumn` BLOB )"""
 }

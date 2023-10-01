@@ -25,10 +25,11 @@ class WhenMarkingTheStoredFileAsDownloaded {
 
 	private val sut by lazy {
 		val fakeLibraryRepository = FakeLibraryRepository(
-			Library()
-				.setIsUsingExistingFiles(true)
-				.setId(libraryId)
-				.setSyncedFileLocation(Library.SyncedFileLocation.INTERNAL)
+			Library(
+				isUsingExistingFiles = true,
+				id = libraryId,
+				syncedFileLocation = Library.SyncedFileLocation.INTERNAL
+			)
 		)
 
 		StoredFileUpdater(

@@ -1,8 +1,8 @@
 # project blue
 
-![project blue](./design/project-blue-logo-circular.png)
+## An alternative, open source streaming music client for [JRiver Media Center](http://jriver.com/).
 
-project blue is an alternative, open source streaming music client for [JRiver Media Center](http://jriver.com/).
+![project blue](./design/project-blue-logo-circular.png)
 
 It's features include:
 

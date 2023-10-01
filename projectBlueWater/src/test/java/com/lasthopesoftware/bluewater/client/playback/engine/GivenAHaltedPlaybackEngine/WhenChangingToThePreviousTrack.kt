@@ -33,12 +33,11 @@ private const val libraryId = 224
 class WhenChangingToThePreviousTrack {
 
 	private val mut by lazy {
-		val libraryUnderTest = Library()
 
 		val fakePlaybackPreparerProvider = FakeDeferredPlayableFilePreparationSourceProvider()
-		libraryUnderTest.setId(libraryId)
-		libraryUnderTest.setSavedTracksString(
-			FileStringListUtilities.promiseSerializedFileStringList(
+		val libraryUnderTest = Library(
+			id = libraryId,
+			savedTracksString = FileStringListUtilities.promiseSerializedFileStringList(
 				listOf(
 					ServiceFile(1),
 					ServiceFile(2),
@@ -46,9 +45,9 @@ class WhenChangingToThePreviousTrack {
 					ServiceFile(4),
 					ServiceFile(5)
 				)
-			).toExpiringFuture().get()
+			).toExpiringFuture().get(),
+			nowPlayingId = 4,
 		)
-		libraryUnderTest.setNowPlayingId(4)
 
 		val libraryProvider = FakeLibraryRepository(libraryUnderTest)
 		val filePropertiesContainerRepository = mockk<IFilePropertiesContainerRepository>()

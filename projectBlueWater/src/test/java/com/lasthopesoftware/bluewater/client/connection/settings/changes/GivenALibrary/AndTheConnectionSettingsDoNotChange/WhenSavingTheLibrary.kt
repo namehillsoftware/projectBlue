@@ -33,7 +33,7 @@ class WhenSavingTheLibrary {
 			messageBus
 		)
 
-		connectionSettingsChangeDetectionLibraryStorage.saveLibrary(Library(_id = 13)).toExpiringFuture().get()
+		connectionSettingsChangeDetectionLibraryStorage.saveLibrary(Library(id = 13)).toExpiringFuture().get()
 	}
 
 	@Test

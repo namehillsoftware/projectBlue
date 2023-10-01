@@ -14,7 +14,9 @@ class ConnectionSettingsLookup(private val libraryProvider: ILibraryProvider) : 
 					userName,
 					password,
 					isLocalOnly,
-					isWakeOnLanEnabled)
+					isWakeOnLanEnabled,
+					sslCertificateFingerprint
+				)
 			}
 		}
 }

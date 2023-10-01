@@ -11,5 +11,8 @@ interface IPlaylistPlayer : ObservableOnSubscribe<PositionedPlayingFile> {
 	fun pause(): Promise<*>
 	fun resume(): Promise<PositionedPlayingFile?>
 	fun setVolume(volume: Float): Promise<Unit>
+
+	fun haltPlayback(): Promise<*>
+
 	val isPlaying: Boolean
 }

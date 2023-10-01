@@ -18,7 +18,6 @@ import androidx.compose.material.Button
 import androidx.compose.material.Checkbox
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -37,7 +36,8 @@ import com.lasthopesoftware.bluewater.shared.android.ui.components.LabeledSelect
 import com.lasthopesoftware.bluewater.shared.android.ui.components.StandardTextField
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
-import com.lasthopesoftware.bluewater.shared.android.viewmodels.collectAsMutableState
+import com.lasthopesoftware.bluewater.shared.observables.subscribeAsMutableState
+import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 import com.lasthopesoftware.bluewater.shared.promises.extensions.suspend
 import com.lasthopesoftware.resources.strings.GetStringResources
 import kotlinx.coroutines.launch
@@ -63,10 +63,10 @@ fun TvLibrarySettingsView(
 	stringResources: GetStringResources,
 ) {
 	ControlSurface {
-		var accessCodeState by librarySettingsViewModel.accessCode.collectAsMutableState()
+		var accessCodeState by librarySettingsViewModel.accessCode.subscribeAsMutableState()
 
 		val scope = rememberCoroutineScope()
-		val libraryRemovalRequested by librarySettingsViewModel.isRemovalRequested.collectAsState()
+		val libraryRemovalRequested by librarySettingsViewModel.isRemovalRequested.subscribeAsState()
 		if (libraryRemovalRequested) {
 			AlertDialog(
 				onDismissRequest = librarySettingsViewModel::cancelLibraryRemovalRequest,
@@ -97,7 +97,7 @@ fun TvLibrarySettingsView(
 				},
 				title = {
 					Text(
-						text = stringResource(id = R.string.removeServer),
+						text = stringResource(id = R.string.remove_server),
 					)
 				},
 				text = {
@@ -134,7 +134,7 @@ fun TvLibrarySettingsView(
 					}
 
 					SpacedOutRow {
-						var userNameState by userName.collectAsMutableState()
+						var userNameState by userName.subscribeAsMutableState()
 						StandardTextField(
 							placeholder = stringResource(R.string.lbl_user_name),
 							value = userNameState,
@@ -143,7 +143,7 @@ fun TvLibrarySettingsView(
 					}
 
 					SpacedOutRow {
-						var passwordState by password.collectAsMutableState()
+						var passwordState by password.subscribeAsMutableState()
 						StandardTextField(
 							placeholder = stringResource(R.string.lbl_password),
 							value = passwordState,
@@ -154,7 +154,7 @@ fun TvLibrarySettingsView(
 					}
 
 					SpacedOutRow {
-						var libraryNameState by libraryName.collectAsMutableState()
+						var libraryNameState by libraryName.subscribeAsMutableState()
 						StandardTextField(
 							placeholder = stringResource(R.string.lbl_library_name),
 							value = libraryNameState,
@@ -163,7 +163,7 @@ fun TvLibrarySettingsView(
 					}
 
 					SpacedOutRow {
-						var isLocalOnlyState by isLocalOnly.collectAsMutableState()
+						var isLocalOnlyState by isLocalOnly.subscribeAsMutableState()
 						LabeledSelection(
 							label = stringResource(id = R.string.lbl_local_only),
 							selected = isLocalOnlyState,
@@ -178,7 +178,7 @@ fun TvLibrarySettingsView(
 					}
 
 					SpacedOutRow {
-						var isWolEnabledState by isWakeOnLanEnabled.collectAsMutableState()
+						var isWolEnabledState by isWakeOnLanEnabled.subscribeAsMutableState()
 						LabeledSelection(
 							label = stringResource(id = R.string.wake_on_lan_setting),
 							selected = isWolEnabledState,
@@ -192,7 +192,7 @@ fun TvLibrarySettingsView(
 						}
 					}
 
-					val isSavingState by isSaving.collectAsState()
+					val isSavingState by isSaving.subscribeAsState()
 					var isSaved by remember { mutableStateOf(false) }
 					Button(
 						onClick = {

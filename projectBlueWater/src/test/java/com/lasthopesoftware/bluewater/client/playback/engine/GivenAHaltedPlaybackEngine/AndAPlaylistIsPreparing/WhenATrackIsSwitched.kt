@@ -25,8 +25,7 @@ class WhenATrackIsSwitched {
 
 	private val nextSwitchedFile by lazy {
 		val fakePlaybackPreparerProvider = FakeDeferredPlayableFilePreparationSourceProvider()
-		val library = Library()
-		library.setId(libraryId)
+		val library = Library(id = libraryId)
 
 		val libraryProvider = FakeLibraryRepository(library)
 

@@ -38,10 +38,9 @@ class WhenRemovingTheCurrentlyPlayingFile {
 
 	private val mut by lazy {
 		val fakePlaybackPreparerProvider = FakeDeferredPlayableFilePreparationSourceProvider()
-		val library = Library()
-		library.setId(libraryId)
-		library.setSavedTracksString(
-			FileStringListUtilities.promiseSerializedFileStringList(
+		val library = Library(
+			id = libraryId,
+			savedTracksString = FileStringListUtilities.promiseSerializedFileStringList(
 				listOf(
 					ServiceFile(1),
 					ServiceFile(2),
@@ -51,9 +50,10 @@ class WhenRemovingTheCurrentlyPlayingFile {
 					ServiceFile(13),
 					ServiceFile(27)
 				)
-			).toExpiringFuture().get()
+			).toExpiringFuture().get(),
+			nowPlayingId = 5,
 		)
-		library.setNowPlayingId(5)
+
 		val libraryProvider = FakeLibraryRepository(library)
 		val savedLibrary = object : Promise<Library>() {
 			val libraryStorage = mockk<ILibraryStorage> {

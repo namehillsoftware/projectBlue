@@ -36,7 +36,7 @@ class WhenGettingTheStoredFilePath {
 		val privateStoredFilePaths = StoredFileUrisLookup(
 			filePropertiesProvider,
 			FakeLibraryRepository(
-				Library(_id = 550, _syncedFileLocation = Library.SyncedFileLocation.INTERNAL)
+				Library(id = 550, syncedFileLocation = Library.SyncedFileLocation.INTERNAL)
 			),
 			directoryLookup,
 			mockk(),

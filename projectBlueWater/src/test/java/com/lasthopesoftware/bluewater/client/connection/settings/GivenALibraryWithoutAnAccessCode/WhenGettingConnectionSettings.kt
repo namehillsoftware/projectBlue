@@ -37,7 +37,7 @@ class WhenGettingConnectionSettings {
 	}
 
 	@Test
-	fun thenAMissingAccessCodeExceptionIsThrown() {
+	fun `then a missing access code exception is thrown`() {
 		assertThat(exception).isNotNull
 	}
 }

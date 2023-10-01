@@ -18,7 +18,7 @@ import org.junit.jupiter.api.Test
 
 class WhenRemovingTheLibrary {
 
-	private val libraryToRemove = Library(_id = 14)
+	private val libraryToRemove = Library(id = 14)
 	private val messageBus = RecordingApplicationMessageBus()
 	private val libraryStorage = mockk<ILibraryStorage>()
 

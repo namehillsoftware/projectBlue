@@ -34,10 +34,11 @@ class WhenUpdatingTheFile : AndroidContext() {
 		}
 
 		val fakeLibraryRepository = FakeLibraryRepository(
-			Library()
-				.setIsUsingExistingFiles(true)
-				.setId(14)
-				.setSyncedFileLocation(Library.SyncedFileLocation.EXTERNAL)
+			Library(
+				isUsingExistingFiles = true,
+				id = 14,
+				syncedFileLocation = Library.SyncedFileLocation.EXTERNAL
+			)
 		)
 
 		val storedFileUpdater = StoredFileUpdater(

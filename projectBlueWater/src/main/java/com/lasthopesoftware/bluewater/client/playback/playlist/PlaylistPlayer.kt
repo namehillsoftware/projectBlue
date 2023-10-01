@@ -61,6 +61,27 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 		return positionedPlayableFile?.playableFileVolumeManager?.setVolume(volume)?.unitResponse() ?: Unit.toPromise()
 	}
 
+	override fun haltPlayback(): Promise<*> {
+		fun generateHaltPromise() = positionedPlayableFile?.playableFile?.toPromise()
+				?: positionedPlayingFile?.playingFile?.promisePause()
+				?: Promise.empty()
+
+		return synchronized(stateChangeSync) {
+			lastStateChangePromise
+				.eventually(
+					{ generateHaltPromise() },
+					{ generateHaltPromise() })
+				.then({ p ->
+					p?.close()
+					doCompletion()
+				}, { e ->
+					logger.error("There was an error releasing the media player", e)
+					emitter?.onError(e)
+				})
+				.also { lastStateChangePromise = it }
+		}
+	}
+
 	private fun promisePause(): Promise<PositionedPlayableFile?> {
 		return positionedPlayingFile
 			?.let {
@@ -144,28 +165,6 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 			logger.error("There was an error releasing the media player", e)
 		}
 		setupNextPreparedFile()
-	}
-
-	private fun haltPlayback() {
-		synchronized(stateChangeSync) {
-			lastStateChangePromise = lastStateChangePromise
-				.eventually(
-					{ generateHaltPromise() },
-					{ generateHaltPromise() })
-				.then({ p ->
-					p?.close()
-					doCompletion()
-				}, { e ->
-					logger.error("There was an error releasing the media player", e)
-					emitter?.onError(e)
-				})
-		}
-	}
-
-	private fun generateHaltPromise(): Promise<PlayableFile> {
-		return positionedPlayableFile?.playableFile?.toPromise()
-			?: positionedPlayingFile?.playingFile?.promisePause()
-			?: Promise.empty()
 	}
 
 	private fun handlePlaybackException(exception: Throwable) {

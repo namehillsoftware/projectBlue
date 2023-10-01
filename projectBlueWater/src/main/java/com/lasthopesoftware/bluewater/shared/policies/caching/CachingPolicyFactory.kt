@@ -1,12 +1,13 @@
 package com.lasthopesoftware.bluewater.shared.policies.caching
 
+import com.lasthopesoftware.bluewater.shared.NullBox
 import com.lasthopesoftware.bluewater.shared.policies.ApplyExecutionPolicies
 import com.namehillsoftware.handoff.promises.Promise
 
 class CachingPolicyFactory : ApplyExecutionPolicies {
 	override fun <Input : Any?, Output> applyPolicy(function: (Input) -> Promise<Output>): (Input) -> Promise<Output> {
 		val functionCache = PermanentPromiseFunctionCache<NullBox<Input>, Output>()
-		return { input -> functionCache.getOrAdd(NullBox(input)) { function(it.boxedValue) } }
+		return { input -> functionCache.getOrAdd(NullBox(input)) { function(it.value) } }
 	}
 
 	override fun <In1 : Any?, In2 : Any?, Output> applyPolicy(function: (In1, In2) -> Promise<Output>): (In1, In2) -> Promise<Output> {
@@ -19,5 +20,4 @@ class CachingPolicyFactory : ApplyExecutionPolicies {
 		return { in1, in2, in3 -> functionCache.getOrAdd(Triple(in1, in2, in3)) { (in1, in2, in3) -> function(in1, in2, in3) } }
 	}
 
-	private data class NullBox<T>(val boxedValue: T)
 }

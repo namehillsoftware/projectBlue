@@ -95,7 +95,8 @@
     <string name="permissions_needed">Permissions needed</string>
     <string name="permissions_needed_launch_settings">Permissions are needed to read or write from the disk. Please set these permissions from the settings page.</string>
     <string name="title_activity_about">About %1$s</string>
-    <string name="removeServer">Remove Server</string>
+    <string name="remove_server">Remove Server</string>
+    <string name="save_and_connect">Save and Connect</string>
     <string name="confirmServerRemoval">Are you sure want to remove server %1$s? Removing the server will remove all associated synchronized files.</string>
     <string name="aboutAppText">%1$s\n\nVersion: %2$s (%3$s)\n\n\n\nCopyright © %4$s %5$s</string>
     <string name="playbackEngine">Playback Engine</string>
@@ -125,4 +126,12 @@
     <string name="retry">Retry</string>
     <string name="connection_lost_retry_prompt">The connection has been lost! Try again?</string>
     <string name="new_or_existing_playlist_path">New or Existing Playlist Path</string>
+    <string name="clear">Clear</string>
+    <string name="change">Change</string>
+    <string name="set">Set</string>
+    <string name="optional_ssl_certificate">Optional SSL Certificate</string>
+    <string name="invalid_ssl_certificate">An error occurred setting the SSL Certificate, please ensure it is valid and try again</string>
+    <string name="empty_playlist">Empty Playlist</string>
+    <string name="nothing_playing">Nothing Playing</string>
+    <string name="empty_playlist_confirmation">Are you sure you want to empty the playlist?</string>
 </resources>

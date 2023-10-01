@@ -5,6 +5,7 @@ import android.util.Base64
 import androidx.annotation.Keep
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityInformation.createTableSql
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityInformation.isWakeOnLanEnabledColumn
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityInformation.sslCertificateFingerprintColumn
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityInformation.tableName
 import com.lasthopesoftware.bluewater.repository.IEntityUpdater
 import com.lasthopesoftware.bluewater.repository.fetch
@@ -58,7 +59,7 @@ object LibraryEntityUpdater : IEntityUpdater {
 			}
 		}
 		if (oldVersion < 8) {
-			db.execSQL("ALTER TABLE `LIBRARIES` add column `$isWakeOnLanEnabledColumn` SMALLINT;")
+			db.execSQL("ALTER TABLE `$tableName` add column `$isWakeOnLanEnabledColumn` SMALLINT;")
 		}
 
 		if (oldVersion < 14) {
@@ -75,6 +76,10 @@ object LibraryEntityUpdater : IEntityUpdater {
 
 			db.execSQL("DROP TABLE `$tableName`")
 			db.execSQL("ALTER TABLE `$tempTableName` RENAME TO `$tableName`")
+		}
+
+		if (oldVersion < 15) {
+			db.execSQL("ALTER TABLE `$tableName` ADD COLUMN `$sslCertificateFingerprintColumn` BLOB;")
 		}
 	}
 
@@ -99,22 +104,22 @@ object LibraryEntityUpdater : IEntityUpdater {
 
 		fun toLibrary(): Library {
 			return Library(
-				_id = id,
-				_accessCode = accessCode,
-				_isLocalOnly = isLocalOnly,
-				_isRepeating = isRepeating,
-				_isSyncLocalConnectionsOnly = isSyncLocalConnectionsOnly,
-				_libraryName = libraryName,
-				_isUsingExistingFiles = isUsingExistingFiles,
-				_isWakeOnLanEnabled = isWakeOnLanEnabled,
-				_nowPlayingId = nowPlayingId,
-				_password = password,
-				_nowPlayingProgress = nowPlayingProgress,
-				_savedTracksString = savedTracksString,
-				_selectedView = selectedView,
-				_selectedViewType = selectedViewType,
-				_userName = userName,
-				_syncedFileLocation = when (syncedFileLocation) {
+				id = id,
+				libraryName = libraryName,
+				accessCode = accessCode,
+				isLocalOnly = isLocalOnly,
+				isRepeating = isRepeating,
+				isSyncLocalConnectionsOnly = isSyncLocalConnectionsOnly,
+                isUsingExistingFiles = isUsingExistingFiles,
+				isWakeOnLanEnabled = isWakeOnLanEnabled,
+				nowPlayingId = nowPlayingId,
+				password = password,
+				nowPlayingProgress = nowPlayingProgress,
+				savedTracksString = savedTracksString,
+				selectedView = selectedView,
+				selectedViewType = selectedViewType,
+				userName = userName,
+				syncedFileLocation = when (syncedFileLocation) {
 					Version13SyncedFileLocation.CUSTOM, Version13SyncedFileLocation.EXTERNAL -> Library.SyncedFileLocation.EXTERNAL
 					Version13SyncedFileLocation.INTERNAL -> Library.SyncedFileLocation.INTERNAL
 					null -> null

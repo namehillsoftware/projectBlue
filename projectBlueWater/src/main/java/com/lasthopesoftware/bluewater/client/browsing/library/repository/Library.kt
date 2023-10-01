@@ -5,119 +5,24 @@ import com.lasthopesoftware.bluewater.IdentifiableEntity
 
 @Keep
 data class Library(
-	private var _id: Int = -1,
-	private var _libraryName: String? = null,
-	private var _accessCode: String? = null,
-	private var _userName: String? = null,
-	private var _password: String? = null,
-	private var _isLocalOnly: Boolean = false,
-	private var _isRepeating: Boolean = false,
-	private var _nowPlayingId: Int = -1,
-	private var _nowPlayingProgress: Long = -1,
-	private var _selectedViewType: ViewType? = null,
-	private var _selectedView: Int = -1,
-	private var _savedTracksString: String? = null,
-	private var _syncedFileLocation: SyncedFileLocation? = null,
-	private var _isUsingExistingFiles: Boolean = false,
-	private var _isSyncLocalConnectionsOnly: Boolean = false,
-	private var _isWakeOnLanEnabled: Boolean = false) : IdentifiableEntity {
-
-	override val id: Int get() = _id
-	val libraryName: String? get() = _libraryName
-	val accessCode: String? get() = _accessCode
-	val userName: String? get() = _userName
-	val password: String? get() = _password
-	val isLocalOnly: Boolean get() = _isLocalOnly
-	val isRepeating: Boolean get() = _isRepeating
-	val nowPlayingId: Int get() = _nowPlayingId
-	val nowPlayingProgress: Long get() = _nowPlayingProgress
-	val selectedViewType: ViewType? get() = _selectedViewType
-	val selectedView: Int get() = _selectedView
-	val savedTracksString: String? get() = _savedTracksString
-	val syncedFileLocation: SyncedFileLocation? get() = _syncedFileLocation
-	val isUsingExistingFiles: Boolean get() = _isUsingExistingFiles
-	val isSyncLocalConnectionsOnly: Boolean get() = _isSyncLocalConnectionsOnly
-	val isWakeOnLanEnabled: Boolean get() = _isWakeOnLanEnabled
-
-	fun setNowPlayingId(nowPlayingId: Int): Library {
-		_nowPlayingId = nowPlayingId
-		return this
-	}
-
-	fun setLibraryName(libraryName: String?): Library {
-		_libraryName = libraryName
-		return this
-	}
-
-	fun setAccessCode(accessCode: String?): Library {
-		_accessCode = accessCode
-		return this
-	}
-
-	fun setNowPlayingProgress(nowPlayingProgress: Long): Library {
-		_nowPlayingProgress = nowPlayingProgress
-		return this
-	}
-
-	fun setSavedTracksString(savedTracksString: String?): Library {
-		_savedTracksString = savedTracksString
-		return this
-	}
-
-	fun setLocalOnly(isLocalOnly: Boolean): Library {
-		_isLocalOnly = isLocalOnly
-		return this
-	}
-
-	fun setSelectedView(selectedView: Int): Library {
-		_selectedView = selectedView
-		return this
-	}
-
-	fun setRepeating(isRepeating: Boolean): Library {
-		_isRepeating = isRepeating
-		return this
-	}
-
-	fun setSyncedFileLocation(syncedFileLocation: SyncedFileLocation?): Library {
-		_syncedFileLocation = syncedFileLocation
-		return this
-	}
-
-	fun setIsUsingExistingFiles(isUsingExistingFiles: Boolean): Library {
-		_isUsingExistingFiles = isUsingExistingFiles
-		return this
-	}
-
-	fun setIsSyncLocalConnectionsOnly(isSyncLocalConnections: Boolean): Library {
-		_isSyncLocalConnectionsOnly = isSyncLocalConnections
-		return this
-	}
-
-	fun setIsWakeOnLanEnabled(isWakeOnLanEnabled: Boolean): Library {
-		_isWakeOnLanEnabled = isWakeOnLanEnabled
-		return this
-	}
-
-	fun setSelectedViewType(selectedViewType: ViewType?): Library {
-		_selectedViewType = selectedViewType
-		return this
-	}
-
-	fun setId(id: Int): Library {
-		_id = id
-		return this
-	}
-
-	fun setUserName(userName: String?): Library {
-		_userName = userName
-		return this
-	}
-
-	fun setPassword(password: String?): Library {
-		_password = password
-		return this
-	}
+	override var id: Int = -1,
+	var libraryName: String? = null,
+	var accessCode: String? = null,
+	var userName: String? = null,
+	var password: String? = null,
+	var isLocalOnly: Boolean = false,
+	var isRepeating: Boolean = false,
+	var nowPlayingId: Int = -1,
+	var nowPlayingProgress: Long = -1,
+	var selectedViewType: ViewType? = null,
+	var selectedView: Int = -1,
+	var savedTracksString: String? = null,
+	var syncedFileLocation: SyncedFileLocation? = null,
+	var isUsingExistingFiles: Boolean = false,
+	var isSyncLocalConnectionsOnly: Boolean = false,
+	var isWakeOnLanEnabled: Boolean = false,
+	var sslCertificateFingerprint: ByteArray = ByteArray(0)
+) : IdentifiableEntity {
 
 	@Keep
 	enum class SyncedFileLocation {
@@ -131,5 +36,53 @@ data class Library(
 	@Keep
 	enum class ViewType {
 		StandardServerView, PlaylistView, DownloadView, SearchView
+	}
+
+	override fun equals(other: Any?): Boolean {
+		if (this === other) return true
+		if (javaClass != other?.javaClass) return false
+
+		other as Library
+
+		if (id != other.id) return false
+		if (libraryName != other.libraryName) return false
+		if (accessCode != other.accessCode) return false
+		if (userName != other.userName) return false
+		if (password != other.password) return false
+		if (isLocalOnly != other.isLocalOnly) return false
+		if (isRepeating != other.isRepeating) return false
+		if (nowPlayingId != other.nowPlayingId) return false
+		if (nowPlayingProgress != other.nowPlayingProgress) return false
+		if (selectedViewType != other.selectedViewType) return false
+		if (selectedView != other.selectedView) return false
+		if (savedTracksString != other.savedTracksString) return false
+		if (syncedFileLocation != other.syncedFileLocation) return false
+		if (isUsingExistingFiles != other.isUsingExistingFiles) return false
+		if (isSyncLocalConnectionsOnly != other.isSyncLocalConnectionsOnly) return false
+		if (isWakeOnLanEnabled != other.isWakeOnLanEnabled) return false
+		if (!sslCertificateFingerprint.contentEquals(other.sslCertificateFingerprint)) return false
+
+		return true
+	}
+
+	override fun hashCode(): Int {
+		var result = id
+		result = 31 * result + (libraryName?.hashCode() ?: 0)
+		result = 31 * result + (accessCode?.hashCode() ?: 0)
+		result = 31 * result + (userName?.hashCode() ?: 0)
+		result = 31 * result + (password?.hashCode() ?: 0)
+		result = 31 * result + isLocalOnly.hashCode()
+		result = 31 * result + isRepeating.hashCode()
+		result = 31 * result + nowPlayingId
+		result = 31 * result + nowPlayingProgress.hashCode()
+		result = 31 * result + (selectedViewType?.hashCode() ?: 0)
+		result = 31 * result + selectedView
+		result = 31 * result + (savedTracksString?.hashCode() ?: 0)
+		result = 31 * result + (syncedFileLocation?.hashCode() ?: 0)
+		result = 31 * result + isUsingExistingFiles.hashCode()
+		result = 31 * result + isSyncLocalConnectionsOnly.hashCode()
+		result = 31 * result + isWakeOnLanEnabled.hashCode()
+		result = 31 * result + (sslCertificateFingerprint.contentHashCode())
+		return result
 	}
 }

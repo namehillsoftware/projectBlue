@@ -41,7 +41,7 @@ class WhenSavingTheLibrary {
 
 	@BeforeAll
 	fun act() {
-		updatedLibrary = mut.saveLibrary(Library(_id = 13)).toExpiringFuture().get()
+		updatedLibrary = mut.saveLibrary(Library(id = 13)).toExpiringFuture().get()
 	}
 
 	@Test

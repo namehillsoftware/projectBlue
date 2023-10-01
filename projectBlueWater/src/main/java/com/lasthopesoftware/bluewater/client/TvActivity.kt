@@ -16,6 +16,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.media3.common.util.UnstableApi
 import com.lasthopesoftware.bluewater.ActivityDependencies
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelDependencies
@@ -26,7 +27,6 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.ConnectionLostV
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ReusableTvChildItemViewModelProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.list.TvItemView
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.browsing.navigation.AboutScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ActiveLibraryDownloadsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ApplicationSettingsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ConnectionSettingsScreen
@@ -46,7 +46,6 @@ import com.lasthopesoftware.bluewater.client.connection.session.initialization.C
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.DramaticConnectionInitializationController
 import com.lasthopesoftware.bluewater.client.settings.PermissionsDependencies
 import com.lasthopesoftware.bluewater.client.settings.TvLibrarySettingsView
-import com.lasthopesoftware.bluewater.client.stored.library.permissions.folder.WritableFoldersProvider
 import com.lasthopesoftware.bluewater.permissions.ApplicationPermissionsRequests
 import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermissionsRequirementsProvider
 import com.lasthopesoftware.bluewater.settings.TvApplicationSettingsView
@@ -71,16 +70,17 @@ import java.io.IOException
 
 private val logger by lazyLogger<TvActivity>()
 
-class TvActivity :
+@UnstableApi class TvActivity :
 	AppCompatActivity(),
 	PermissionsDependencies,
-	ManagePermissions
+	ManagePermissions,
+	ActivitySuppliedDependencies
 {
-	private val dependencies by lazy { ActivityDependencies(this) }
-	private val activityResultsLauncher = registerResultActivityLauncher()
-
+	private val dependencies by lazy { ActivityDependencies(this, this) }
 	private val osPermissionChecker by lazy { OsPermissionsChecker(applicationContext) }
-	override val readPermissionsRequirements by lazy { ApplicationReadPermissionsRequirementsProvider(osPermissionChecker) }
+	private val readPermissionsRequirements by lazy { ApplicationReadPermissionsRequirementsProvider(osPermissionChecker) }
+
+	override val registeredActivityResultsLauncher = registerResultActivityLauncher()
 	override val applicationPermissions by lazy {
 		ApplicationPermissionsRequests(
 			dependencies.libraryProvider,
@@ -89,8 +89,6 @@ class TvActivity :
 			osPermissionChecker
 		)
 	}
-	override val permissionsManager = this
-	override val folderPermissions by lazy { WritableFoldersProvider(activityResultsLauncher, contentResolver) }
 
 	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
@@ -230,7 +228,6 @@ fun CatalogBrowser(
 				}
 				?.apply {
 					when (destination) {
-						AboutScreen -> {}
 						ApplicationSettingsScreen -> {
 							TvApplicationSettingsView(
 								applicationSettingsViewModel,

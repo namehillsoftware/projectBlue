@@ -11,7 +11,7 @@ import com.lasthopesoftware.bluewater.client.settings.PermissionsDependencies
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.view.ActiveFileDownloadsViewModel
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 
-class ScopedViewModelDependencies(inner: BrowserViewDependencies, private val permissionsDependencies: PermissionsDependencies, viewModelStoreOwner: ViewModelStoreOwner) : ScopedBrowserViewDependencies, BrowserViewDependencies by inner {
+class ScopedViewModelDependencies(inner: BrowserViewDependencies, permissionsDependencies: PermissionsDependencies, viewModelStoreOwner: ViewModelStoreOwner) : ScopedBrowserViewDependencies, BrowserViewDependencies by inner {
 
 	override val itemListViewModel by viewModelStoreOwner.buildViewModelLazily {
         ItemListViewModel(

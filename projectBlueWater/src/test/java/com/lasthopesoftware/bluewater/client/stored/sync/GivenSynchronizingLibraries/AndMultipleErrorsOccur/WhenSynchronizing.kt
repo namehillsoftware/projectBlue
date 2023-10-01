@@ -46,7 +46,7 @@ class WhenSynchronizing {
 			}
 
 		val libraryProvider = mockk<ILibraryProvider>()
-		every { libraryProvider.allLibraries } returns Promise(listOf(Library().setId(4)))
+		every { libraryProvider.allLibraries } returns Promise(listOf(Library(id = 4)))
 		val librarySyncHandler = mockk<ControlLibrarySyncs>()
 		every { librarySyncHandler.observeLibrarySync(LibraryId(4)) } returns Observable.concatArrayDelayError(
 			Observable

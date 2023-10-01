@@ -44,7 +44,7 @@ class WhenSynchronizing {
 	private val synchronization by lazy {
 		val libraryProvider = mockk<ILibraryProvider>()
 		with(libraryProvider) {
-			every { allLibraries } returns Promise(listOf(Library().setId(4), Library().setId(10)))
+			every { allLibraries } returns Promise(listOf(Library(id = 4), Library(id = 10)))
 		}
 
 		val librarySyncHandler = mockk<ControlLibrarySyncs>()

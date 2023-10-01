@@ -43,7 +43,7 @@ fun StandardTextField(
 		placeholder = { Text(placeholder) },
 		onValueChange = onValueChange,
 		enabled = enabled,
-		maxLines = 1,
+		singleLine = true,
 		visualTransformation = visualTransformation,
 		keyboardOptions = keyboardOptions.copy(imeAction = ImeAction.Next),
 		keyboardActions = KeyboardActions(

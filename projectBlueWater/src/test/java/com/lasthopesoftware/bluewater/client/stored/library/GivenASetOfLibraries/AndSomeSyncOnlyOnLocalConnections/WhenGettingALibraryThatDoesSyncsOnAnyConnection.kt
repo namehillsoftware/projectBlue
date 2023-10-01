@@ -12,11 +12,11 @@ class WhenGettingALibraryThatDoesSyncsOnAnyConnection {
 	private val library by lazy {
 		val syncLibraryProvider = SyncLibraryProvider(
 			FakeLibraryRepository(
-				Library().setId(3),
-				Library().setId(4),
-				Library().setId(8).setIsSyncLocalConnectionsOnly(true),
-				Library().setId(1),
-				Library().setId(13).setIsSyncLocalConnectionsOnly(true)
+				Library(id = 3),
+				Library(id = 4),
+				Library(id = 8, isSyncLocalConnectionsOnly = true),
+				Library(id = 1),
+				Library(id = 13, isSyncLocalConnectionsOnly = true)
 			)
 		)
 		ExpiringFuturePromise(syncLibraryProvider.promiseLibrary(LibraryId(4))).get()

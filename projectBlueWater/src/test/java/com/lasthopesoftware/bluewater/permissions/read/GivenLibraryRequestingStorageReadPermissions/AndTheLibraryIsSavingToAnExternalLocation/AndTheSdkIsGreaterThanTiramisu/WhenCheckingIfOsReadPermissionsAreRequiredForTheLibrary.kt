@@ -23,7 +23,7 @@ class WhenCheckingIfOsReadPermissionsAreRequiredForTheLibrary {
 
 		applicationReadPermissionsRequirementsProvider
 			.isReadPermissionsRequiredForLibrary(
-				Library().setSyncedFileLocation(Library.SyncedFileLocation.EXTERNAL)
+				Library(syncedFileLocation = Library.SyncedFileLocation.EXTERNAL)
 			)
 	}
 

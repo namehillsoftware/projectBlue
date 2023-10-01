@@ -11,9 +11,6 @@ sealed interface Destination : Parcelable
 object ApplicationSettingsScreen : Destination
 
 @Parcelize
-object AboutScreen : Destination
-
-@Parcelize
 object NewConnectionSettingsScreen : Destination
 
 @Parcelize

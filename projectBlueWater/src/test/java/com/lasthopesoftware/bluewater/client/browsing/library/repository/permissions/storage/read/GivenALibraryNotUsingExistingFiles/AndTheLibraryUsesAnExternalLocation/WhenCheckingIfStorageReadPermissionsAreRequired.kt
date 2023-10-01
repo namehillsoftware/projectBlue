@@ -11,9 +11,10 @@ class WhenCheckingIfStorageReadPermissionsAreRequired {
 
 	@BeforeAll
 	fun act() {
-		val libraryRequiringExistingFiles = Library()
-		libraryRequiringExistingFiles.setIsUsingExistingFiles(true)
-		libraryRequiringExistingFiles.setSyncedFileLocation(Library.SyncedFileLocation.EXTERNAL)
+		val libraryRequiringExistingFiles = Library(
+			isUsingExistingFiles = true,
+			syncedFileLocation = Library.SyncedFileLocation.EXTERNAL,
+		)
 		isReadPermissionsRequired = libraryRequiringExistingFiles.isReadPermissionsRequiredForLibrary
 	}
 

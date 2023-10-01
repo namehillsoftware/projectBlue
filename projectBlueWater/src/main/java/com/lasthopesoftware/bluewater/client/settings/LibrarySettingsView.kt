@@ -35,7 +35,6 @@ import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -58,6 +57,7 @@ import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
+import com.lasthopesoftware.bluewater.client.connection.trust.ProvideUserSslCertificates
 import com.lasthopesoftware.bluewater.shared.android.ui.components.ColumnMenuIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.shared.android.ui.components.LabeledSelection
@@ -66,7 +66,8 @@ import com.lasthopesoftware.bluewater.shared.android.ui.components.StandardTextF
 import com.lasthopesoftware.bluewater.shared.android.ui.components.memorableScrollConnectedScaler
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
-import com.lasthopesoftware.bluewater.shared.android.viewmodels.collectAsMutableState
+import com.lasthopesoftware.bluewater.shared.observables.subscribeAsMutableState
+import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 import com.lasthopesoftware.bluewater.shared.promises.extensions.suspend
 import com.lasthopesoftware.resources.strings.GetStringResources
 import kotlinx.coroutines.launch
@@ -79,13 +80,15 @@ private val collapsedTopRowPadding = 6.dp
 private val appBarHeight = Dimensions.appBarHeight
 private val boxHeight = expandedTitleHeight + expandedIconSize + expandedMenuVerticalPadding * 2 + appBarHeight
 private val innerGroupPadding = Dimensions.viewPaddingUnit * 2
+private const val inputRowMaxWidth = .8f
 
 @Composable
-private fun SpacedOutRow(content: @Composable (RowScope.() -> Unit)) {
+private fun SpacedOutRow(modifier: Modifier = Modifier, content: @Composable (RowScope.() -> Unit)) {
 	Row(
 		modifier = Modifier
-			.fillMaxWidth(.8f)
-			.height(Dimensions.standardRowHeight),
+			.fillMaxWidth(inputRowMaxWidth)
+			.height(Dimensions.standardRowHeight)
+			.then(modifier),
 		verticalAlignment = Alignment.CenterVertically,
 	) {
 		content()
@@ -97,12 +100,13 @@ fun LibrarySettingsView(
 	librarySettingsViewModel: LibrarySettingsViewModel,
 	navigateApplication: NavigateApplication,
 	stringResources: GetStringResources,
+	userSslCertificates: ProvideUserSslCertificates,
 ) {
 	ControlSurface {
-		var accessCodeState by librarySettingsViewModel.accessCode.collectAsMutableState()
+		var accessCodeState by librarySettingsViewModel.accessCode.subscribeAsMutableState()
 
 		val scope = rememberCoroutineScope()
-		val libraryRemovalRequested by librarySettingsViewModel.isRemovalRequested.collectAsState()
+		val libraryRemovalRequested by librarySettingsViewModel.isRemovalRequested.subscribeAsState()
 		if (libraryRemovalRequested) {
 			AlertDialog(
 				onDismissRequest = librarySettingsViewModel::cancelLibraryRemovalRequest,
@@ -133,7 +137,7 @@ fun LibrarySettingsView(
 				},
 				title = {
 					Text(
-						text = stringResource(id = R.string.removeServer),
+						text = stringResource(id = R.string.remove_server),
 					)
 				},
 				text = {
@@ -150,6 +154,7 @@ fun LibrarySettingsView(
 			)
 		}
 
+		val isSettingsChanged by librarySettingsViewModel.isSettingsChanged.subscribeAsState()
 		val boxHeightPx = LocalDensity.current.run { boxHeight.toPx() }
 		val collapsedHeightPx = LocalDensity.current.run { appBarHeight.toPx() }
 		val heightScaler = memorableScrollConnectedScaler(boxHeightPx, collapsedHeightPx)
@@ -167,7 +172,9 @@ fun LibrarySettingsView(
 					.verticalScroll(rememberScrollState()),
 				horizontalAlignment = Alignment.CenterHorizontally,
 			) {
-				Spacer(modifier = Modifier.requiredHeight(boxHeight).fillMaxWidth())
+				Spacer(modifier = Modifier
+					.requiredHeight(boxHeight)
+					.fillMaxWidth())
 
 				librarySettingsViewModel.apply {
 					SpacedOutRow {
@@ -179,7 +186,7 @@ fun LibrarySettingsView(
 					}
 
 					SpacedOutRow {
-						var userNameState by userName.collectAsMutableState()
+						var userNameState by userName.subscribeAsMutableState()
 						StandardTextField(
 							placeholder = stringResource(R.string.lbl_user_name),
 							value = userNameState,
@@ -188,7 +195,7 @@ fun LibrarySettingsView(
 					}
 
 					SpacedOutRow {
-						var passwordState by password.collectAsMutableState()
+						var passwordState by password.subscribeAsMutableState()
 						StandardTextField(
 							placeholder = stringResource(R.string.lbl_password),
 							value = passwordState,
@@ -199,7 +206,7 @@ fun LibrarySettingsView(
 					}
 
 					SpacedOutRow {
-						var libraryNameState by libraryName.collectAsMutableState()
+						var libraryNameState by libraryName.subscribeAsMutableState()
 						StandardTextField(
 							placeholder = stringResource(R.string.lbl_library_name),
 							value = libraryNameState,
@@ -207,8 +214,63 @@ fun LibrarySettingsView(
 						)
 					}
 
+					Column(modifier = Modifier.fillMaxWidth(inputRowMaxWidth)) {
+						Text(
+							text = stringResource(R.string.optional_ssl_certificate),
+							modifier = Modifier.padding(top = innerGroupPadding, bottom = innerGroupPadding),
+						)
+
+						var hasError by remember { mutableStateOf(false) }
+						Row {
+							val hasSslCertificate by hasSslCertificate.subscribeAsState()
+
+							Button(
+								onClick = {
+									sslCertificateFingerprint.value = ByteArray(0)
+								},
+								modifier = Modifier
+									.weight(1f)
+									.padding(end = innerGroupPadding),
+								enabled = hasSslCertificate,
+							) {
+								Text(text = stringResources.clear)
+							}
+
+							Button(
+								onClick = {
+									hasError = false
+									scope.launch {
+										try {
+											val fingerprint =
+												userSslCertificates.promiseUserSslCertificateFingerprint().suspend()
+											sslCertificateFingerprint.value = fingerprint
+										} catch (e: Throwable) {
+											hasError = true
+										}
+									}
+								},
+								modifier = Modifier
+									.weight(1f)
+									.padding(start = innerGroupPadding),
+							) {
+								Text(
+									text = stringResources.run { if (hasSslCertificate) change else set }
+								)
+							}
+						}
+
+						if (hasError) {
+							ProvideTextStyle(value = MaterialTheme.typography.caption) {
+								Text(
+									text = stringResource(R.string.invalid_ssl_certificate),
+									color = MaterialTheme.colors.error
+								)
+							}
+						}
+					}
+
 					SpacedOutRow {
-						var isLocalOnlyState by isLocalOnly.collectAsMutableState()
+						var isLocalOnlyState by isLocalOnly.subscribeAsMutableState()
 						LabeledSelection(
 							label = stringResource(id = R.string.lbl_local_only),
 							selected = isLocalOnlyState,
@@ -223,7 +285,7 @@ fun LibrarySettingsView(
 					}
 
 					SpacedOutRow {
-						var isWolEnabledState by isWakeOnLanEnabled.collectAsMutableState()
+						var isWolEnabledState by isWakeOnLanEnabled.subscribeAsMutableState()
 						LabeledSelection(
 							label = stringResource(id = R.string.wake_on_lan_setting),
 							selected = isWolEnabledState,
@@ -238,7 +300,7 @@ fun LibrarySettingsView(
 					}
 
 					Column(modifier = Modifier
-						.fillMaxWidth(.8f)
+						.fillMaxWidth(inputRowMaxWidth)
 						.selectableGroup()
 					) {
 						Text(
@@ -246,7 +308,7 @@ fun LibrarySettingsView(
 							modifier = Modifier.padding(innerGroupPadding),
 						)
 
-						var syncedFileLocationState by syncedFileLocation.collectAsMutableState()
+						var syncedFileLocationState by syncedFileLocation.subscribeAsMutableState()
 						Row(
 							modifier = Modifier.padding(innerGroupPadding)
 						) {
@@ -279,7 +341,7 @@ fun LibrarySettingsView(
 							}
 						}
 
-						val isStoragePermissionsNeeded by isStoragePermissionsNeeded.collectAsState()
+						val isStoragePermissionsNeeded by isStoragePermissionsNeeded.subscribeAsState()
 						if (isStoragePermissionsNeeded) {
 							ProvideTextStyle(value = MaterialTheme.typography.caption) {
 								Text(
@@ -291,7 +353,7 @@ fun LibrarySettingsView(
 					}
 
 					SpacedOutRow {
-						var isSyncLocalConnectionsOnlyState by isSyncLocalConnectionsOnly.collectAsMutableState()
+						var isSyncLocalConnectionsOnlyState by isSyncLocalConnectionsOnly.subscribeAsMutableState()
 						LabeledSelection(
 							label = stringResource(id = R.string.lbl_sync_local_connection),
 							selected = isSyncLocalConnectionsOnlyState,
@@ -306,7 +368,7 @@ fun LibrarySettingsView(
 					}
 
 					SpacedOutRow {
-						var isUsingExistingFilesState by isUsingExistingFiles.collectAsMutableState()
+						var isUsingExistingFilesState by isUsingExistingFiles.subscribeAsMutableState()
 						LabeledSelection(
 							label = stringResource(id = R.string.lbl_use_existing_music),
 							selected = isUsingExistingFilesState,
@@ -320,19 +382,12 @@ fun LibrarySettingsView(
 						}
 					}
 
-					val isSavingState by isSaving.collectAsState()
-					var isSaved by remember { mutableStateOf(false) }
+					val isSavingState by isSaving.subscribeAsState()
 					Button(
-						onClick = {
-							scope.launch {
-								isSaved = saveLibrary().suspend()
-								if (isSaved)
-									navigateApplication.navigateUp()
-							}
-						},
-						enabled = !isSavingState && !isSaved,
+						onClick = { saveLibrary() },
+						enabled = isSettingsChanged && !isSavingState,
 					) {
-						Text(text = if (isSaved) stringResource(id = R.string.saved) else stringResource(id = R.string.save))
+						Text(text = if (!isSettingsChanged) stringResource(id = R.string.saved) else stringResource(id = R.string.save))
 					}
 				}
 			}
@@ -399,8 +454,7 @@ fun LibrarySettingsView(
 
 						if (menuWidth > iconSize * 2) {
 							ColumnMenuIcon(
-								modifier = Modifier
-									.fillMaxHeight(),
+								modifier = Modifier.fillMaxHeight(),
 								onClick = librarySettingsViewModel::requestLibraryRemoval,
 								icon = {
 									Image(
@@ -414,20 +468,34 @@ fun LibrarySettingsView(
 							)
 						}
 
+						val saveAndConnectText by remember {
+							derivedStateOf {
+								if (isSettingsChanged) stringResources.saveAndConnect
+								else stringResources.connect
+							}
+						}
+
 						ColumnMenuIcon(
-							modifier = Modifier
-								.fillMaxHeight(),
+							modifier = Modifier.fillMaxHeight(),
 							onClick = {
-								navigateApplication.launchAboutActivity()
+								if (isSettingsChanged) {
+									scope.launch {
+										val isSaved = librarySettingsViewModel.saveLibrary().suspend()
+										if (isSaved)
+											librarySettingsViewModel.activeLibraryId?.also(navigateApplication::viewLibrary)
+									}
+								} else {
+									librarySettingsViewModel.activeLibraryId?.also(navigateApplication::viewLibrary)
+								}
 							},
 							icon = {
 								Image(
-									painter = painterResource(id = R.drawable.ic_help),
-									contentDescription = stringResources.aboutTitle,
+									painter = painterResource(id = R.drawable.ic_arrow_right),
+									contentDescription = saveAndConnectText,
 									modifier = Modifier.size(iconSize)
 								)
 							},
-							label = if (acceleratedHeaderHidingProgress < 1) stringResources.aboutTitle else null,
+							label = if (acceleratedHeaderHidingProgress < 1) saveAndConnectText else null,
 							labelModifier = textModifier,
 						)
 					}

@@ -36,5 +36,7 @@ interface ControlPlaybackService {
 
 	fun setCompleting(libraryId: LibraryId)
 
+	fun clearPlaylist(libraryId: LibraryId)
+
 	fun kill()
 }

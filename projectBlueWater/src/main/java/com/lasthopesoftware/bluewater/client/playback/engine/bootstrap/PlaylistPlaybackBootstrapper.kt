@@ -10,18 +10,17 @@ import java.io.Closeable
 
 class PlaylistPlaybackBootstrapper(private val volumeManagement: PlaylistVolumeManager) : IStartPlayback, Closeable {
 
-    private var playlistPlayer: PlaylistPlayer? = null
-    private var activePlayer: ActivePlayer? = null
+	private var playlistPlayer: PlaylistPlayer? = null
+	private var activePlayer: ActivePlayer? = null
 
-    override fun startPlayback(preparedPlaybackQueue: PreparedPlayableFileQueue, filePosition: Duration): IActivePlayer {
-        close()
+	override fun startPlayback(preparedPlaybackQueue: PreparedPlayableFileQueue, filePosition: Duration): IActivePlayer {
+		playlistPlayer?.close()
 		val newPlayer = PlaylistPlayer(preparedPlaybackQueue, filePosition)
-        playlistPlayer = newPlayer
-        return ActivePlayer(newPlayer, volumeManagement).also { activePlayer = it }
-    }
+		playlistPlayer = newPlayer
+		return ActivePlayer(newPlayer, volumeManagement).also { activePlayer = it }
+	}
 
-    override fun close() {
-        activePlayer?.close()
-        playlistPlayer?.close()
-    }
+	override fun close() {
+		playlistPlayer?.close()
+	}
 }

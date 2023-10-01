@@ -42,9 +42,9 @@ class `When Changing isVolumeLevelingEnabled` {
 			mockk {
 				every { allLibraries } returns Promise(
 					listOf(
-						Library(_id = 585),
-						Library(_id = 893),
-						Library(_id = 72),
+						Library(id = 585),
+						Library(id = 893),
+						Library(id = 72),
 					)
 				)
 			},
@@ -91,9 +91,9 @@ class `When Changing isVolumeLevelingEnabled` {
 	fun `then the libraries are correct`() {
 		assertThat(mutt.libraries.value).isEqualTo(
 			listOf(
-				Library(_id = 585),
-				Library(_id = 893),
-				Library(_id = 72),
+				Library(id = 585),
+				Library(id = 893),
+				Library(id = 72),
 			)
 		)
 	}
