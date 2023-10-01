@@ -22,6 +22,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messa
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.TrackPositionUpdate
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.cls
+import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.promiseReceivedMessage
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
@@ -37,6 +38,7 @@ import com.namehillsoftware.handoff.promises.Promise
 import org.joda.time.Duration
 import kotlin.math.roundToInt
 
+private val logger by lazyLogger<NowPlayingFilePropertiesViewModel>()
 private val screenControlVisibilityTime by lazy { Duration.standardSeconds(5) }
 
 class NowPlayingFilePropertiesViewModel(
@@ -192,6 +194,8 @@ class NowPlayingFilePropertiesViewModel(
 				nowPlayingFileState.value = np?.playingFile
 				np?.run {
 					playingFile?.let { positionedFile ->
+						logger.debug("File {} is playing.", positionedFile)
+
 						provideUrlKey
 							.promiseGuaranteedUrlKey(np.libraryId, positionedFile.serviceFile)
 							.eventually { key ->
@@ -206,6 +210,7 @@ class NowPlayingFilePropertiesViewModel(
 								handleException(e)
 							}
 					} ?: run {
+						logger.debug("No file is playing")
 						artistState.value = ""
 						titleState.value = stringResources.nothingPlaying
 						filePositionState.value = filePosition.toInt()

@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.engine.GivenAPlayingPlaybackEngine
+package com.lasthopesoftware.bluewater.client.playback.engine.GivenAPlayingPlaybackEngine.AndThePlaylistIsCleared.AndANewFileIsAdded
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.FileStringListUtilities
@@ -16,15 +16,13 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlay
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
-import io.mockk.every
-import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.util.concurrent.TimeUnit
 
-class WhenClearingThePlaylist {
+class WhenResumingPlayback {
 
 	private val mut by lazy {
 		val storedLibrary = Library(
@@ -44,12 +42,10 @@ class WhenClearingThePlaylist {
 		val fakePlaybackPreparerProvider = FakeDeferredPlayableFilePreparationSourceProvider()
 		val libraryProvider = FakeLibraryRepository(storedLibrary)
 
-		PlaybackEngine(
+		val engine = PlaybackEngine(
 			PreparedPlaybackQueueResourceManagement(
 				fakePlaybackPreparerProvider,
-				mockk {
-					every { maxQueueSize } returns 1
-				}
+				fakePlaybackPreparerProvider
 			),
 			listOf(CompletingFileQueueProvider()),
 			NowPlayingRepository(
@@ -60,15 +56,24 @@ class WhenClearingThePlaylist {
 			),
 			PlaylistPlaybackBootstrapper(PlaylistVolumeManager(1.0f))
 		)
-			.setOnPlaybackCompleted { isPlaybackCompletionSignaled = true }
-	}
 
+		engine
+			.setOnPlaybackCompleted { isPlaybackCompletionSignaled = true }
+			.setOnPlayingFileChanged { l, f -> playingFiles.add(f?.serviceFile) }
+
+		Pair(fakePlaybackPreparerProvider, engine)
+	}
+	private val playingFiles = ArrayList<ServiceFile?>()
+
+	private var isPlayingAfterPlaylistCleared = false
+	private var playlistAfterClearing: List<ServiceFile>? = null
 	private var isPlaybackCompletionSignaled = false
-	private var updatedNowPlaying: NowPlaying? = null
+	private var updatedNowPlayingAfterClearing: NowPlaying? = null
 
 	@BeforeAll
 	fun act() {
-		mut
+		val (provider, engine) = mut
+		engine
 			.startPlaylist(
 				LibraryId(1),
 				listOf(
@@ -83,7 +88,13 @@ class WhenClearingThePlaylist {
 			)
 			.toExpiringFuture()
 			.get()
-		updatedNowPlaying = mut.clearPlaylist().toExpiringFuture()[1, TimeUnit.SECONDS]
+		provider.deferredResolution.resolve()
+		updatedNowPlayingAfterClearing = engine.clearPlaylist().toExpiringFuture()[1, TimeUnit.SECONDS]
+		playlistAfterClearing = updatedNowPlayingAfterClearing?.playlist?.toList()
+		isPlayingAfterPlaylistCleared = engine.isPlaying
+		engine.addFile(ServiceFile(701)).toExpiringFuture().get()
+		engine.resume().toExpiringFuture().get()
+		provider.deferredResolution.resolve()
 	}
 
 	@Test
@@ -93,21 +104,31 @@ class WhenClearingThePlaylist {
 
 	@Test
 	fun `then the playlist is updated`() {
-		assertThat(updatedNowPlaying?.playlist).isEmpty()
+		assertThat(playlistAfterClearing).isEmpty()
 	}
 
 	@Test
-	fun `then the playing file is correct`() {
-		assertThat(updatedNowPlaying?.playlistPosition).isEqualTo(0)
+	fun `then the playing file is correct after clearing`() {
+		assertThat(updatedNowPlayingAfterClearing?.playlistPosition).isEqualTo(0)
 	}
 
 	@Test
-	fun `then the file position is correct`() {
-		assertThat(updatedNowPlaying?.filePosition).isEqualTo(0)
+	fun `then the file position is correct after clearing`() {
+		assertThat(updatedNowPlayingAfterClearing?.filePosition).isEqualTo(0)
 	}
 
 	@Test
-	fun `then it is not playing`() {
-		assertThat(mut.isPlaying).isFalse
+	fun `then it is not playing after the playlist is cleared`() {
+		assertThat(isPlayingAfterPlaylistCleared).isFalse
+	}
+
+	@Test
+	fun `then playback is resumed`() {
+		assertThat(mut.second.isPlaying).isTrue
+	}
+
+	@Test
+	fun `then the playing files is correct`() {
+		assertThat(playingFiles).containsExactly(ServiceFile(1), ServiceFile(701))
 	}
 }

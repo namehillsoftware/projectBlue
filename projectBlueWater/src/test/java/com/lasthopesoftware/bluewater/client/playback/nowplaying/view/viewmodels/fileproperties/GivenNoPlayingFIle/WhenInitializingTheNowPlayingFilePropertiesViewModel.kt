@@ -21,38 +21,38 @@ class WhenInitializingTheNowPlayingFilePropertiesViewModel {
 
 	private val nowPlayingViewModel by lazy {
 		val nowPlayingRepository = mockk<MaintainNowPlayingState> {
-            every { promiseNowPlaying(LibraryId(libraryId)) } returns Promise(
-                NowPlaying(
-                    LibraryId(libraryId),
-                    emptyList(),
-                    0,
+			every { promiseNowPlaying(LibraryId(libraryId)) } returns Promise(
+				NowPlaying(
+					LibraryId(libraryId),
+					emptyList(),
+					0,
 					649,
-                    false
-                )
-            )
-        }
+					false
+				)
+			)
+		}
 
 		val checkAuthentication = mockk<CheckIfConnectionIsReadOnly> {
-            every { promiseIsReadOnly(LibraryId(libraryId)) } returns true.toPromise()
-        }
+			every { promiseIsReadOnly(LibraryId(libraryId)) } returns true.toPromise()
+		}
 
 		val playbackService = mockk<ControlPlaybackService> {
-            every { promiseIsMarkedForPlay(LibraryId(libraryId)) } returns true.toPromise()
-        }
+			every { promiseIsMarkedForPlay(LibraryId(libraryId)) } returns true.toPromise()
+		}
 
 		val nowPlayingViewModel = NowPlayingFilePropertiesViewModel(
-            mockk(relaxed = true, relaxUnitFun = true),
-            nowPlayingRepository,
-            mockk(),
-            mockk(),
-            mockk(),
-            checkAuthentication,
-            playbackService,
-            mockk(),
-            mockk(relaxed = true) {
-		  		every { nothingPlaying } returns "Nada"
+			mockk(relaxed = true, relaxUnitFun = true),
+			nowPlayingRepository,
+			mockk(),
+			mockk(),
+			mockk(),
+			checkAuthentication,
+			playbackService,
+			mockk(),
+			mockk(relaxed = true) {
+				every { nothingPlaying } returns "Nada"
 			},
-        )
+		)
 
 		nowPlayingViewModel
 	}

@@ -125,6 +125,7 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.lasthopesoftware.bluewater.shared.resilience.TimedCountdownLatch
 import com.lasthopesoftware.resources.closables.AutoCloseableManager
+import com.lasthopesoftware.resources.closables.PromisingCloseableManager
 import com.lasthopesoftware.resources.closables.lazyScoped
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.lasthopesoftware.resources.loopers.HandlerThreadCreator
@@ -346,6 +347,7 @@ import java.util.concurrent.TimeoutException
 
 	private val applicationMessageBus by lazyScoped { getApplicationMessageBus().getScopedMessageBus() }
 	private val playbackEngineCloseables = AutoCloseableManager()
+	private val promisingPlaybackEngineCloseables = PromisingCloseableManager()
 	private val lazyObservationScheduler = lazy { ExecutorScheduler(ThreadPools.compute, true) }
 	private val binder by lazy { GenericBinder(this) }
 	private val notificationManager by lazy { getSystemService(NOTIFICATION_SERVICE) as NotificationManager }
@@ -623,7 +625,7 @@ import java.util.concurrent.TimeoutException
 
 				engine
 					.also {
-						playbackEngineCloseables.manage(engine)
+						promisingPlaybackEngineCloseables.manage(engine)
 					}
 					.setOnPlaybackStarted(this)
 					.setOnPlaybackPaused(this)
@@ -766,6 +768,7 @@ import java.util.concurrent.TimeoutException
 					restorePlaybackServices(libraryId)
 						.eventually { it.playlistFiles.clearPlaylist() }
 						.then {
+							logger.debug("Playlist cleared")
 							applicationMessageBus.sendMessage(LibraryPlaybackMessage.PlaylistChanged(libraryId))
 						}
 						.unitResponse()
@@ -1102,7 +1105,10 @@ import java.util.concurrent.TimeoutException
 				if (playbackThread.isInitializing()) playbackThread.value.then { it.quitSafely() }
 				else Unit.toPromise()
 			}
-			.must { playbackEngineCloseables.close() }
+			.inevitably {
+				playbackEngineCloseables.close()
+				promisingPlaybackEngineCloseables.promiseClose()
+			}
 
 		super.onDestroy()
 	}

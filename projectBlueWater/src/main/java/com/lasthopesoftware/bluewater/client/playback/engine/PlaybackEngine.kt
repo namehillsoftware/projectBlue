@@ -26,6 +26,7 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.promiseFirstResult
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
+import com.lasthopesoftware.resources.closables.PromisingCloseable
 import com.namehillsoftware.handoff.promises.Promise
 import io.reactivex.Observable
 import io.reactivex.disposables.Disposable
@@ -45,7 +46,7 @@ class PlaybackEngine(
 	ChangePlaybackContinuity,
 	ChangePlaylistFiles,
 	RegisterPlaybackEngineEvents,
-	AutoCloseable {
+	PromisingCloseable {
 	companion object {
 		private val logger by lazyLogger<PlaybackEngine>()
 
@@ -326,6 +327,7 @@ class PlaybackEngine(
 	}
 
 	override fun clearPlaylist(): Promise<NowPlaying?> {
+		preparedPlaybackQueueResourceManagement.reset()
 		return activePlayer
 			?.halt()
 			.keepPromise()
@@ -350,8 +352,7 @@ class PlaybackEngine(
 
 		isPlaying = false
 
-		return promisedPause
-			.eventually { saveState() }
+		return promisedPause.eventually { saveState() }
 	}
 
 	private fun resumePlayback(): Promise<Unit> = withState {
@@ -432,13 +433,19 @@ class PlaybackEngine(
 		else Promise.empty()
 	}
 
-	override fun close() {
-		isPlaying = false
-		onPlaybackStarted = null
-		onPlayingFileChanged = null
-		onPlaylistError = null
-		activePlayer = null
-		playbackSubscription?.dispose()
+	override fun promiseClose(): Promise<Unit> {
+		preparedPlaybackQueueResourceManagement.reset()
+		return activePlayer
+			?.halt()
+			.keepPromise()
+			.then {
+				isPlaying = false
+				onPlaybackStarted = null
+				onPlayingFileChanged = null
+				onPlaylistError = null
+				activePlayer = null
+				playbackSubscription?.dispose()
+			}
 	}
 
 	private fun <T> withState(action: PlayingState.() -> Promise<T>): Promise<T> = synchronized(playingStateSync) {

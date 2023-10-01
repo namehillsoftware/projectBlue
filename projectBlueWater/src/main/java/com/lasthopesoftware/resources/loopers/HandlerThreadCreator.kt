@@ -4,7 +4,6 @@ import android.os.HandlerThread
 import com.namehillsoftware.handoff.promises.Promise
 
 object HandlerThreadCreator {
-	@JvmStatic
 	fun promiseNewHandlerThread(looperThreadName: String?, threadPriority: Int): Promise<HandlerThread> =
 		object: Promise<HandlerThread>() {
 			init {

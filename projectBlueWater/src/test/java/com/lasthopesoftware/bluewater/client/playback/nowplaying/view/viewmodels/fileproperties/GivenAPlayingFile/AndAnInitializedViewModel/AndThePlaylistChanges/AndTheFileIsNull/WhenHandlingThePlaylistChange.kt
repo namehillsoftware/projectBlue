@@ -28,17 +28,17 @@ class WhenHandlingThePlaylistChange {
 
 	private val mut by lazy {
 		val nowPlayingRepository = mockk<MaintainNowPlayingState> {
-            every { promiseNowPlaying(LibraryId(libraryId)) } returns Promise(
-                NowPlaying(
-                    LibraryId(libraryId),
-                    listOf(
+			every { promiseNowPlaying(LibraryId(libraryId)) } returns Promise(
+				NowPlaying(
+					LibraryId(libraryId),
+					listOf(
 						ServiceFile(5)
 					),
-                    0,
-                    649,
-                    false
-                )
-            ) andThen Promise(
+					0,
+					649,
+					false
+				)
+			) andThen Promise(
 				NowPlaying(
 					LibraryId(libraryId),
 					emptyList(),
@@ -47,47 +47,47 @@ class WhenHandlingThePlaylistChange {
 					false
 				)
 			)
-        }
+		}
 
 		val filePropertiesProvider = mockk<ProvideFreshLibraryFileProperties> {
-            every {
-                promiseFileProperties(
-                    LibraryId(libraryId),
-                    ServiceFile(5)
-                )
-            } returns mapOf(
+			every {
+				promiseFileProperties(
+					LibraryId(libraryId),
+					ServiceFile(5)
+				)
+			} returns mapOf(
 				Pair(KnownFileProperties.Artist, "tea"),
 				Pair(KnownFileProperties.Name, "rake"),
 				Pair(KnownFileProperties.Rating, "748"),
 			).toPromise()
-        }
+		}
 
 		val checkAuthentication = mockk<CheckIfConnectionIsReadOnly> {
-            every { promiseIsReadOnly(LibraryId(libraryId)) } returns true.toPromise()
-        }
+			every { promiseIsReadOnly(LibraryId(libraryId)) } returns true.toPromise()
+		}
 
 		val playbackService = mockk<ControlPlaybackService> {
-            every { promiseIsMarkedForPlay(LibraryId(libraryId)) } returns true.toPromise()
-        }
+			every { promiseIsMarkedForPlay(LibraryId(libraryId)) } returns true.toPromise()
+		}
 
 		val recordingApplicationMessageBus = RecordingApplicationMessageBus()
 		val nowPlayingViewModel = NowPlayingFilePropertiesViewModel(
-            recordingApplicationMessageBus,
-            nowPlayingRepository,
-            filePropertiesProvider,
+			recordingApplicationMessageBus,
+			nowPlayingRepository,
+			filePropertiesProvider,
 			mockk {
 				every { promiseGuaranteedUrlKey(LibraryId(libraryId), ServiceFile(5)) } returns Promise(
 					UrlKeyHolder(URL("http://77Q8Tq2h/"), ServiceFile(5))
 				)
 			},
-            mockk(),
-            checkAuthentication,
-            playbackService,
-            mockk(),
-            mockk(relaxed = true) {
-                every { nothingPlaying } returns "Nada"
-            },
-        )
+			mockk(),
+			checkAuthentication,
+			playbackService,
+			mockk(),
+			mockk(relaxed = true) {
+				every { nothingPlaying } returns "Nada"
+			},
+		)
 
 		Pair(recordingApplicationMessageBus, nowPlayingViewModel)
 	}
@@ -116,11 +116,11 @@ class WhenHandlingThePlaylistChange {
 
 	@Test
 	fun `then the rating is correct`() {
-        assertThat(mut.second.songRating.value).isEqualTo(0f)
+		assertThat(mut.second.songRating.value).isEqualTo(0f)
 	}
 
 	@Test
 	fun `then the rating is disabled`() {
-        assertThat(mut.second.isSongRatingEnabled.value).isFalse
+		assertThat(mut.second.isSongRatingEnabled.value).isFalse
 	}
 }
