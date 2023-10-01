@@ -12,6 +12,7 @@ import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApp
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.observables.MutableStateObservable
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.namehillsoftware.handoff.promises.Promise
 
@@ -107,6 +108,11 @@ class NowPlayingPlaylistViewModel(
 				else playbackService.setCompleting(it)
 			}
 		}
+	}
+
+	fun clearPlaylist(): Promise<*> {
+		activeLibraryId?.also(playbackService::clearPlaylist)
+		return Unit.toPromise()
 	}
 
 	private fun updateViewFromRepository() =

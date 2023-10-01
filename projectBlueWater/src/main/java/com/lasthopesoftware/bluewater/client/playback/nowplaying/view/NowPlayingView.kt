@@ -137,7 +137,8 @@ private fun PlaylistControls(
 	nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel,
 	playlistViewModel: NowPlayingPlaylistViewModel,
 	playbackServiceController: ControlPlaybackService,
-	onHide: () -> Unit
+	onHide: () -> Unit,
+	onEmptyPlaylist: () -> Unit,
 ) {
 	Row(
 		modifier = modifier,
@@ -168,12 +169,8 @@ private fun PlaylistControls(
 		if (isEditingPlaylist) {
 			Image(
 				painter = painterResource(id = R.drawable.clear_all_white_36dp),
-				contentDescription = stringResource(R.string.clear_playlist),
-				modifier = Modifier.clickable {
-					nowPlayingFilePropertiesViewModel.activeLibraryId.value?.also {
-						playbackServiceController.clearPlaylist(it)
-					}
-				},
+				contentDescription = stringResource(R.string.empty_playlist),
+				modifier = Modifier.clickable(onClick = onEmptyPlaylist),
 				alpha = playlistControlAlpha,
 			)
 		} else {
@@ -266,6 +263,8 @@ fun NowPlayingView(
 ) {
 	val isScreenOn by screenOnState.isScreenOn.collectAsState()
 	KeepScreenOn(isScreenOn)
+
+	var isEmptyPlaylistRequested by remember { mutableStateOf(false) }
 
 	ControlSurface(
 		color = Color.Transparent,
@@ -435,7 +434,8 @@ fun NowPlayingView(
 												scope.launch {
 													pagerState.animateScrollToItem(0)
 												}
-											}
+											},
+											onEmptyPlaylist = { isEmptyPlaylistRequested = true },
 										)
 									}
 								}
@@ -671,9 +671,7 @@ fun NowPlayingView(
 								.height(Dimensions.menuHeight),
 							onRatingSelected = if (isRatingEnabled) {
 								{
-									nowPlayingFilePropertiesViewModel.updateRating(
-										it.toFloat()
-									)
+									nowPlayingFilePropertiesViewModel.updateRating(it.toFloat())
 								}
 							} else null
 						)
@@ -759,6 +757,46 @@ fun NowPlayingView(
 						},
 					) {
 						Text(text = stringResource(id = R.string.btn_cancel))
+					}
+				}
+			},
+			properties = DialogProperties(
+				dismissOnBackPress = true,
+			)
+		)
+	}
+
+	if (isEmptyPlaylistRequested) {
+		AlertDialog(
+			onDismissRequest = { isEmptyPlaylistRequested = false },
+			title = { Text(text = stringResource(id = R.string.empty_playlist)) },
+			text = {
+				Text(
+					text = stringResource(R.string.empty_playlist_confirmation)
+				)
+			},
+			buttons = {
+				Row(
+					modifier = Modifier
+						.fillMaxWidth()
+						.padding(Dimensions.viewPaddingUnit),
+					horizontalArrangement = Arrangement.SpaceEvenly,
+				) {
+					Button(
+						onClick = {
+							isEmptyPlaylistRequested = false
+						},
+					) {
+						Text(text = stringResource(id = R.string.btn_cancel))
+					}
+
+					Button(
+						onClick = {
+							playlistViewModel.clearPlaylist()
+							isEmptyPlaylistRequested = false
+						},
+					) {
+						Text(text = stringResource(id = R.string.yes))
 					}
 				}
 			},
