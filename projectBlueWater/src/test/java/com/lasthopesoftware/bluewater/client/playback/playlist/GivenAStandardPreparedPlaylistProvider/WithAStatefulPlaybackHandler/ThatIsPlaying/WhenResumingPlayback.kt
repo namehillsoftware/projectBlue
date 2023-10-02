@@ -31,7 +31,7 @@ class WhenResumingPlayback {
 			playbackHandler,
 			NoTransformVolumeManager(),
 			ServiceFile(1)))
-		val preparedPlaybackFileQueue = mockk<SupplyQueuedPreparedFiles>().apply {
+		val preparedPlaybackFileQueue = mockk<SupplyQueuedPreparedFiles> {
 			every { promiseNextPreparedPlaybackFile(Duration.ZERO) } returns positionedPlaybackHandlerContainer
 		}
 		val playlistPlayback = PlaylistPlayer(preparedPlaybackFileQueue, Duration.ZERO)
