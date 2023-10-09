@@ -34,6 +34,7 @@ class `When making a permissions request` {
 			},
 			mockk {
 				every { isNotificationsPermissionNotGranted } returns true
+				every { isForegroundMediaServicePermissionNotGranted } returns true
 			}
 		)
 	}
@@ -48,7 +49,9 @@ class `When making a permissions request` {
 	@Test
 	fun `then a permissions request is made correctly`() {
 		assertThat(requestedPermissions).containsExactlyInAnyOrder(
-			Manifest.permission.READ_MEDIA_AUDIO, Manifest.permission.POST_NOTIFICATIONS
+			Manifest.permission.READ_MEDIA_AUDIO,
+			Manifest.permission.POST_NOTIFICATIONS,
+			Manifest.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK
 		)
 	}
 }

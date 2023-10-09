@@ -19,6 +19,10 @@ class OsPermissionsChecker(private val context: Context) : CheckOsPermissions {
 		get() = Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU
 			|| isPermissionGranted(Manifest.permission.POST_NOTIFICATIONS)
 
+	override val isForegroundMediaServicePermissionNotGranted: Boolean
+		get() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE
+			&& !isPermissionGranted(Manifest.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK)
+
 	private fun isPermissionGranted(permission: String) =
 		ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
 }
