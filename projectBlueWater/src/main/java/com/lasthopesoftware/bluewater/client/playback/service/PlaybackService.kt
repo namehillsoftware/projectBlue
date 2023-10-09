@@ -555,7 +555,8 @@ import java.util.concurrent.TimeoutException
 			libraryRepository,
 			StoredFileUriProvider(
 				storedFileAccess,
-				arbitratorForOs),
+				arbitratorForOs,
+				contentResolver),
 			CachedAudioFileUriProvider(remoteFileUriProvider, audioCache),
 			MediaFileUriProvider(
 				MediaQueryCursorProvider(contentResolver, cachedFileProperties),
