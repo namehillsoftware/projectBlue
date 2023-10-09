@@ -1,6 +1,6 @@
 .idea
 build
-screenshots
+examples
 design
 docker-compose.yml
 Dockerfile
