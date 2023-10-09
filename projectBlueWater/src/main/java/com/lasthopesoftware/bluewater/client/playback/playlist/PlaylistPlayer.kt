@@ -71,10 +71,7 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 				.eventually(
 					{ generateHaltPromise() },
 					{ generateHaltPromise() })
-				.then({ p ->
-					p?.close()
-					doCompletion()
-				}, { e ->
+				.then({ p -> p?.close() }, { e ->
 					logger.error("There was an error releasing the media player", e)
 					emitter?.onError(e)
 				})

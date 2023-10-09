@@ -154,7 +154,6 @@ class ExoPlayerPlaybackHandler(private val exoPlayer: PromisingExoPlayer) :
 		exoPlayer.stop()
 		removeListener()
 		exoPlayer.release()
-		resolve(this)
 	}
 
 	override fun run() {

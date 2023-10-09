@@ -14,6 +14,9 @@ open class FakeBufferingPlaybackHandler : IBufferingPlaybackFile, PlayableFile, 
 	var isPlaying = false
 		private set
 
+	var isClosed = false
+		private set
+
 	protected var backingCurrentPosition = 0
 
 	fun setCurrentPosition(position: Int) {
@@ -25,7 +28,9 @@ open class FakeBufferingPlaybackHandler : IBufferingPlaybackFile, PlayableFile, 
 		return Promise(this)
 	}
 
-	override fun close() {}
+	override fun close() {
+		isClosed = true
+	}
 	override fun promiseBufferedPlaybackFile(): Promise<IBufferingPlaybackFile> {
 		return Promise(this)
 	}

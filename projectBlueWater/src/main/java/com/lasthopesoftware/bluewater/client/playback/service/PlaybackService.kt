@@ -123,6 +123,7 @@ import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay.Companion.del
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
+import com.lasthopesoftware.bluewater.shared.promises.toFuture
 import com.lasthopesoftware.bluewater.shared.resilience.TimedCountdownLatch
 import com.lasthopesoftware.resources.closables.AutoCloseableManager
 import com.lasthopesoftware.resources.closables.PromisingCloseableManager
@@ -1102,13 +1103,15 @@ import java.util.concurrent.TimeoutException
 
 		pausePlayback()
 			.inevitably {
-				if (playbackThread.isInitializing()) playbackThread.value.then { it.quitSafely() }
-				else Unit.toPromise()
-			}
-			.inevitably {
 				playbackEngineCloseables.close()
 				promisingPlaybackEngineCloseables.promiseClose()
 			}
+			.inevitably {
+				if (playbackThread.isInitializing()) playbackThread.value.then { it.quitSafely() }
+				else Unit.toPromise()
+			}
+			.toFuture()
+			.get(30, TimeUnit.SECONDS)
 
 		super.onDestroy()
 	}

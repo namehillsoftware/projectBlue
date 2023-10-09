@@ -14,4 +14,7 @@ interface CheckOsPermissions {
 		get() = !isNotificationsPermissionGranted
 
 	val isNotificationsPermissionGranted: Boolean
+
+	@get:ChecksSdkIntAtLeast(api = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+	val isForegroundMediaServicePermissionNotGranted: Boolean
 }

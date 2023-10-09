@@ -332,6 +332,7 @@ class PlaybackEngine(
 			?.halt()
 			.keepPromise()
 			.eventually {
+				isPlaying = false
 				playbackSubscription?.dispose()
 				activePlayer = null
 
@@ -342,6 +343,10 @@ class PlaybackEngine(
 					updatePreparedFileQueueUsingState()
 					saveState()
 				}
+			}
+			.then {
+				onPlaybackCompleted?.onPlaybackCompleted()
+				it
 			}
 	}
 
