@@ -3,8 +3,8 @@ package com.lasthopesoftware.bluewater.client.playback.service.receivers
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.os.Build
 import android.view.KeyEvent
+import androidx.media3.common.util.UnstableApi
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Companion.next
@@ -12,21 +12,17 @@ import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Co
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Companion.play
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Companion.previous
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Companion.togglePlayPause
-import com.lasthopesoftware.bluewater.shared.cls
+import com.lasthopesoftware.bluewater.shared.android.intents.safelyGetParcelableExtra
 
-class RemoteControlReceiver : BroadcastReceiver() {
+@UnstableApi class RemoteControlReceiver : BroadcastReceiver() {
 	override fun onReceive(context: Context, intent: Intent) {
 		fun getSelectedLibraryIdProvider(): ProvideSelectedLibraryId {
 			return context.getCachedSelectedLibraryIdProvider()
 		}
 
-		val event = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-			intent.getParcelableExtra(Intent.EXTRA_KEY_EVENT, cls<KeyEvent>())
-		} else {
-			@Suppress("DEPRECATION")
-			intent.getParcelableExtra(Intent.EXTRA_KEY_EVENT)
-		}
-		if (event?.action != KeyEvent.ACTION_UP) return
+		val event = intent.safelyGetParcelableExtra<KeyEvent>(Intent.EXTRA_KEY_EVENT)
+
+		if (event?.action != KeyEvent.ACTION_DOWN) return
 
 		when (event.keyCode) {
 			KeyEvent.KEYCODE_MEDIA_PLAY -> {
@@ -42,6 +38,9 @@ class RemoteControlReceiver : BroadcastReceiver() {
 			KeyEvent.KEYCODE_MEDIA_PREVIOUS -> {
 				getSelectedLibraryIdProvider().promiseSelectedLibraryId().then { it?.also { l -> previous(context, l) } }
 			}
+			else -> return
 		}
+
+		if (isOrderedBroadcast) abortBroadcast()
 	}
 }
