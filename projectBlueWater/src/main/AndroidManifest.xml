@@ -59,7 +59,7 @@
         <receiver
             android:name=".client.playback.service.receivers.RemoteControlReceiver"
             android:exported="true">
-            <intent-filter>
+            <intent-filter android:priority="999">
                 <action android:name="android.intent.action.MEDIA_BUTTON" />
             </intent-filter>
         </receiver>
@@ -75,8 +75,13 @@
         <service
             android:name=".client.playback.service.PlaybackService"
             android:enabled="true"
-            android:exported="false"
-            android:foregroundServiceType="mediaPlayback" />
+            android:exported="true"
+            android:foregroundServiceType="mediaPlayback"
+            tools:ignore="ExportedService">
+            <intent-filter>
+                <action android:name=".client.playback.service.PlaybackService.Action.parsePlaybackServiceAction" />
+            </intent-filter>
+        </service>
         <service
             android:name=".client.connection.polling.PollConnectionService"
             android:enabled="true"
