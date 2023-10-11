@@ -170,7 +170,7 @@ import java.util.concurrent.TimeoutException
 		fun initialize(context: Context, libraryId: LibraryId) =
 			context.safelyStartService(getNewSelfIntent(context, PlaybackEngineAction.Initialize(libraryId)))
 
-		fun launchMusicService(context: Context, libraryId: LibraryId, filePos: Int, serializedFileList: String) {
+		fun startPlaylist(context: Context, libraryId: LibraryId, filePos: Int, serializedFileList: String) {
 			context.safelyStartServiceInForeground(
 				getNewSelfIntent(
 					context,
@@ -1083,8 +1083,10 @@ import java.util.concurrent.TimeoutException
 		if (lazyObservationScheduler.isInitialized()) lazyObservationScheduler.value.shutdown()
 
 		pausePlayback()
-			.inevitably {
+			.must {
 				playbackEngineCloseables.close()
+			}
+			.inevitably {
 				promisingPlaybackEngineCloseables.promiseClose()
 			}
 			.inevitably {
