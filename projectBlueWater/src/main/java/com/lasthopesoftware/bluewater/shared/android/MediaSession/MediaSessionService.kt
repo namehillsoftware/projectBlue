@@ -20,8 +20,11 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.InMemor
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.MediaSessionCallbackReceiver
+import com.lasthopesoftware.bluewater.shared.android.intents.IntentBuilder
 import com.lasthopesoftware.bluewater.shared.android.services.GenericBinder
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
+import com.lasthopesoftware.bluewater.shared.promises.toFuture
+import java.util.concurrent.TimeUnit
 
 @UnstableApi class MediaSessionService : Service() {
 	private val binder by lazy { GenericBinder(this) }
@@ -59,13 +62,15 @@ import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMes
 
 	private	val imageProvider by lazy { CachedImageProvider.getInstance(this) }
 
+	private val libraryIdProvider by lazy { getCachedSelectedLibraryIdProvider() }
+
 	private val lazyMediaSession = lazy {
 		val newMediaSession = MediaSessionCompat(this, MediaSessionConstants.mediaSessionTag)
 		val connectionProvider = ConnectionSessionManager.get(this)
 		newMediaSession.setCallback(
 			MediaSessionCallbackReceiver(
 				PlaybackServiceController(this),
-				getCachedSelectedLibraryIdProvider(),
+				libraryIdProvider,
 				ItemStringListProvider(
 					FileListParameters,
 					LibraryFileStringListProvider(connectionProvider)
@@ -84,6 +89,8 @@ import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMes
 		Pair(broadcaster, newMediaSession)
 	}
 
+	private val intentBuilder by lazy { IntentBuilder(this) }
+
 	val mediaSession
 		get() = lazyMediaSession.value.second
 
@@ -96,9 +103,17 @@ import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMes
 	override fun onDestroy() {
 		if (lazyMediaSession.isInitialized()) {
 			val (broadcaster, mediaSession) = lazyMediaSession.value
+
+			val futureLibraryId = libraryIdProvider.promiseSelectedLibraryId().toFuture()
+
 			broadcaster.close()
 			with (mediaSession) {
 				isActive = false
+				futureLibraryId
+					.get(30, TimeUnit.SECONDS)
+					?.also {
+						setSessionActivity(intentBuilder.buildPendingNowPlayingIntent(it))
+					}
 				release()
 			}
 		}

@@ -761,11 +761,6 @@ import java.util.concurrent.TimeoutException
 		fun processPlaybackEngineActionOnDeadline(playbackEngineAction: PlaybackEngineAction) {
 			val promisedTimeout = delay<Any?>(playbackStartTimeout)
 
-			val promisedIntentHandling = handlePlaybackEngineAction(playbackEngineAction)
-				.must {
-					promisedTimeout.cancel()
-				}
-
 			val timeoutResponse =
 				promisedTimeout.then(
 					{ throw TimeoutException("Timed out after $playbackStartTimeout") },
@@ -775,6 +770,12 @@ import java.util.concurrent.TimeoutException
 							throw it
 					}
 				)
+
+			val promisedIntentHandling = handlePlaybackEngineAction(playbackEngineAction)
+				.must {
+					promisedTimeout.cancel()
+				}
+
 			Promise.whenAny(promisedIntentHandling, timeoutResponse).excuse(unhandledRejectionHandler)
 		}
 
