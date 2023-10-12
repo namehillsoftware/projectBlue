@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.n
 import android.content.Context
 import android.graphics.Bitmap
 import androidx.core.app.NotificationCompat
+import androidx.media3.common.util.UnstableApi
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideLibraryImages
@@ -19,7 +20,7 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 
-class NowPlayingNotificationBuilder(
+@UnstableApi class NowPlayingNotificationBuilder(
     private val context: Context,
     private val mediaStyleNotificationSetup: SetupMediaStyleNotifications,
     private val urlKeyProvider: ProvideUrlKey,

@@ -28,7 +28,7 @@ import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 		PlaybackService.moveFile(context, libraryId, dragFrom, dragTo)
 
 	override fun startPlaylist(libraryId: LibraryId, fileStringList: String, position: Int) {
-		PlaybackService.launchMusicService(context, libraryId, position, fileStringList)
+		PlaybackService.startPlaylist(context, libraryId, position, fileStringList)
 	}
 
 	override fun startPlaylist(libraryId: LibraryId, serviceFiles: List<ServiceFile>, position: Int) {

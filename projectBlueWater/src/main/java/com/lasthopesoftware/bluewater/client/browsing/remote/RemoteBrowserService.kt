@@ -29,6 +29,7 @@ import com.lasthopesoftware.bluewater.shared.android.MediaSession.MediaSessionSe
 import com.lasthopesoftware.bluewater.shared.android.services.promiseBoundService
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRateLimiter
+import com.lasthopesoftware.bluewater.shared.policies.retries.RetryOnRejectionLazyPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.resources.PackageValidator
 import kotlin.math.max
@@ -126,7 +127,7 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 		)
 	}
 
-	private val lazyMediaSessionService = lazy { promiseBoundService<MediaSessionService>() }
+	private val lazyMediaSessionService = RetryOnRejectionLazyPromise { promiseBoundService<MediaSessionService>() }
 
 	override fun onCreate() {
 		super.onCreate()
@@ -208,7 +209,7 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 	}
 
 	override fun onDestroy() {
-		if (lazyMediaSessionService.isInitialized()) lazyMediaSessionService.value.then { unbindService(it.serviceConnection) }
+		if (lazyMediaSessionService.isInitializing()) lazyMediaSessionService.value.then { unbindService(it.serviceConnection) }
 		super.onDestroy()
 	}
 }
