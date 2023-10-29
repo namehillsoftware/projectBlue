@@ -4,7 +4,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.CacheFiles
 import com.lasthopesoftware.bluewater.client.browsing.files.image.bytes.GetRawImages
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.shared.cls
+import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
@@ -14,8 +14,6 @@ import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken
-import org.apache.commons.io.IOUtils
-import org.slf4j.LoggerFactory
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileInputStream
@@ -29,15 +27,15 @@ class DiskCacheImageAccess(
 ) : GetRawImages {
 
 	companion object {
-		private val logger by lazy { LoggerFactory.getLogger(cls<DiskCacheImageAccess>()) }
+		private val logger by lazyLogger<DiskCacheImageAccess>()
 
 		fun getBytesFromFiles(file: File, cancellationToken: CancellationToken): ByteArray {
 			if (cancellationToken.isCancelled) return ByteArray(0)
 
 			try {
 				FileInputStream(file).use { fis ->
-					ByteArrayOutputStream().use { buffer ->
-						IOUtils.copy(fis, buffer)
+					ByteArrayOutputStream(fis.available()).use { buffer ->
+						fis.copyTo(buffer)
 						return buffer.toByteArray()
 					}
 				}
@@ -64,7 +62,8 @@ class DiskCacheImageAccess(
 						.also(cancellationProxy::doCancel)
 						.eventually { imageFile ->
 							imageFile
-								?.let { f -> QueuedPromise(ImageDiskCacheWriter(f), ThreadPools.io).also(cancellationProxy::doCancel) }
+								?.takeIf { it.exists() }
+								?.let { f -> QueuedPromise(ImageDiskCacheReader(f), ThreadPools.io).also(cancellationProxy::doCancel) }
 								.keepPromise()
 						}
 						.eventually { bytes ->
@@ -77,7 +76,7 @@ class DiskCacheImageAccess(
 				}
 	}
 
-	private class ImageDiskCacheWriter(private val imageCacheFile: File) : CancellableMessageWriter<ByteArray> {
+	private class ImageDiskCacheReader(private val imageCacheFile: File) : CancellableMessageWriter<ByteArray> {
 		override fun prepareMessage(cancellationToken: CancellationToken): ByteArray = getBytesFromFiles(imageCacheFile, cancellationToken)
 	}
 }
