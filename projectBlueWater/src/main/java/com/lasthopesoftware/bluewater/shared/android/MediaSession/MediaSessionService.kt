@@ -1,9 +1,9 @@
 package com.lasthopesoftware.bluewater.shared.android.MediaSession
 
-import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
 import android.support.v4.media.session.MediaSessionCompat
+import androidx.media3.common.util.UnstableApi
 import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.ItemStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.LibraryFileStringListProvider
@@ -20,11 +20,13 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.InMemor
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.MediaSessionCallbackReceiver
-import com.lasthopesoftware.bluewater.shared.android.intents.makePendingIntentImmutable
+import com.lasthopesoftware.bluewater.shared.android.intents.IntentBuilder
 import com.lasthopesoftware.bluewater.shared.android.services.GenericBinder
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
+import com.lasthopesoftware.bluewater.shared.promises.toFuture
+import java.util.concurrent.TimeUnit
 
-class MediaSessionService : Service() {
+@UnstableApi class MediaSessionService : Service() {
 	private val binder by lazy { GenericBinder(this) }
 
 	private val nowPlayingRepository by lazy {
@@ -60,13 +62,15 @@ class MediaSessionService : Service() {
 
 	private	val imageProvider by lazy { CachedImageProvider.getInstance(this) }
 
+	private val libraryIdProvider by lazy { getCachedSelectedLibraryIdProvider() }
+
 	private val lazyMediaSession = lazy {
 		val newMediaSession = MediaSessionCompat(this, MediaSessionConstants.mediaSessionTag)
 		val connectionProvider = ConnectionSessionManager.get(this)
 		newMediaSession.setCallback(
 			MediaSessionCallbackReceiver(
 				PlaybackServiceController(this),
-				getCachedSelectedLibraryIdProvider(),
+				libraryIdProvider,
 				ItemStringListProvider(
 					FileListParameters,
 					LibraryFileStringListProvider(connectionProvider)
@@ -82,12 +86,10 @@ class MediaSessionService : Service() {
 			ApplicationMessageBus.getApplicationMessageBus()
 		)
 
-		val mediaButtonIntent = Intent(Intent.ACTION_MEDIA_BUTTON)
-
-		val mediaPendingIntent = PendingIntent.getBroadcast(this, 0, mediaButtonIntent, 0.makePendingIntentImmutable())
-		newMediaSession.setMediaButtonReceiver(mediaPendingIntent)
 		Pair(broadcaster, newMediaSession)
 	}
+
+	private val intentBuilder by lazy { IntentBuilder(this) }
 
 	val mediaSession
 		get() = lazyMediaSession.value.second
@@ -101,9 +103,17 @@ class MediaSessionService : Service() {
 	override fun onDestroy() {
 		if (lazyMediaSession.isInitialized()) {
 			val (broadcaster, mediaSession) = lazyMediaSession.value
+
+			val futureLibraryId = libraryIdProvider.promiseSelectedLibraryId().toFuture()
+
 			broadcaster.close()
 			with (mediaSession) {
 				isActive = false
+				futureLibraryId
+					.get(30, TimeUnit.SECONDS)
+					?.also {
+						setSessionActivity(intentBuilder.buildPendingNowPlayingIntent(it))
+					}
 				release()
 			}
 		}

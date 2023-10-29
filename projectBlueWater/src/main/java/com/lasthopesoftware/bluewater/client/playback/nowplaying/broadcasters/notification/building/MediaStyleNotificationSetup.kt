@@ -4,6 +4,7 @@ import android.content.Context
 import android.support.v4.media.session.MediaSessionCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
+import androidx.media3.common.util.UnstableApi
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.NotificationsConfiguration
@@ -11,7 +12,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Co
 import com.lasthopesoftware.bluewater.shared.android.intents.BuildIntents
 import com.lasthopesoftware.bluewater.shared.android.notifications.ProduceNotificationBuilders
 
-class MediaStyleNotificationSetup(
+@UnstableApi class MediaStyleNotificationSetup(
 	private val context: Context,
 	private val produceNotificationBuilders: ProduceNotificationBuilders,
 	private val configuration: NotificationsConfiguration,
