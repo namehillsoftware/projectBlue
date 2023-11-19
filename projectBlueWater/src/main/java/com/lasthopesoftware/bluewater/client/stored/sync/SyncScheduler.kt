@@ -2,7 +2,14 @@ package com.lasthopesoftware.bluewater.client.stored.sync
 
 import android.content.Context
 import android.os.Build
-import androidx.work.*
+import androidx.work.Constraints
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequest
+import androidx.work.Operation
+import androidx.work.PeriodicWorkRequest
+import androidx.work.WorkInfo
+import androidx.work.WorkManager
 import com.lasthopesoftware.bluewater.client.stored.sync.constraints.SyncWorkerConstraints
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
@@ -15,9 +22,11 @@ private const val workName = "StoredFilesSync"
 class SyncScheduler(private val context: Context) : ScheduleSyncs {
 
 	override fun syncImmediately(): Promise<Operation> {
-		val oneTimeWorkRequest = OneTimeWorkRequest.Builder(SyncWorker::class.java)
+		val oneTimeWorkRequest = OneTimeWorkRequest.Builder(SyncWorker::class.java).build()
+
 		return WorkManager.getInstance(context)
-			.enqueueUniqueWork(workName, ExistingWorkPolicy.REPLACE, oneTimeWorkRequest.build())
+			.beginUniqueWork(workName, ExistingWorkPolicy.REPLACE, oneTimeWorkRequest)
+			.enqueue()
 			.result
 			.toPromise(ThreadPools.compute)
 			.eventually(
