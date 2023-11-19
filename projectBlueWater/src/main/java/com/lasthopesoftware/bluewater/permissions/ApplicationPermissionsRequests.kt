@@ -35,6 +35,10 @@ class ApplicationPermissionsRequests(
 					permissionsToRequest.add(Manifest.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK)
 				}
 
+				if (checkOsPermissions.isForegroundDataServicePermissionNotGranted) {
+					permissionsToRequest.add(Manifest.permission.FOREGROUND_SERVICE_DATA_SYNC)
+				}
+
 				permissionsManager.requestPermissions(permissionsToRequest.toList())
 			}
 			.unitResponse()
