@@ -638,13 +638,4 @@ class HandlerDispatchingExoPlayer(private val innerPlayer: ExoPlayer, private va
 		LoopedInPromise(
 			MessageWriter { innerPlayer.pauseAtEndOfMediaItems },
 			handler)
-
-	@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
-	override fun experimentalSetOffloadSchedulingEnabled(offloadSchedulingEnabled: Boolean): Promise<PromisingExoPlayer> =
-		LoopedInPromise(
-			MessageWriter {
-				innerPlayer.experimentalSetOffloadSchedulingEnabled(offloadSchedulingEnabled)
-				this
-			},
-			handler)
 }
