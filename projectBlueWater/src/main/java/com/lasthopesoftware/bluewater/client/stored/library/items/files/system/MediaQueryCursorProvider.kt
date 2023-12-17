@@ -39,14 +39,17 @@ class MediaQueryCursorProvider
 					MediaCollections.ExternalAudio,
 					mediaQueryProjection,
 					mediaCollectionFilter,
-					arrayOf(filename),
+					arrayOf(filename, fileProperties[KnownFileProperties.Album] ?: ""),
 					null
 				)
 			}, ThreadPools.io)
 	}
 
 	companion object {
-		private const val mediaCollectionFilter = "${MediaStore.Audio.Media.IS_PENDING} = 0 AND ${MediaStore.Audio.Media.DISPLAY_NAME} LIKE '%' || ? || '%'"
+		private const val mediaCollectionFilter =
+			"""${MediaStore.Audio.Media.IS_PENDING} = 0
+				| AND ${MediaStore.Audio.Media.DISPLAY_NAME} LIKE '%' || ? || '%'
+				| AND COALESCE(${MediaStore.Audio.AlbumColumns.ALBUM}, "") = ?"""
 		private val mediaQueryProjection = arrayOf(MediaStore.Audio.Media._ID, MediaStore.Audio.Media.DISPLAY_NAME)
 	}
 }
