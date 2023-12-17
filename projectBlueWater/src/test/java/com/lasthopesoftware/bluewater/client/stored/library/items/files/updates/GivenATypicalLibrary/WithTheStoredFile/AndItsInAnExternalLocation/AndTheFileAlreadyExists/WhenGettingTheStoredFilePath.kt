@@ -60,7 +60,6 @@ class WhenGettingTheStoredFilePath {
 					} returns Promise(Uri.parse("content://media/external/audio/media/bogus1"))
 				},
 				ExternalContentRepository(
-					filePropertiesProvider,
 					ApplicationProvider.getApplicationContext<Context>().contentResolver,
 				)
             )
