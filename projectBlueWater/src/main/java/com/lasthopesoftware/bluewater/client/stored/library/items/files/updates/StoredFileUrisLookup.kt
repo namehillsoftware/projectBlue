@@ -8,7 +8,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLi
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.external.ExternalAudioContent
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.external.ExternalMusicContent
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.external.HaveExternalContent
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
 import com.lasthopesoftware.bluewater.client.stored.library.sync.LookupSyncDirectory
@@ -92,7 +92,7 @@ class StoredFileUrisLookup(
 			.promiseUri(libraryId, serviceFile)
 			.eventually { existingUri ->
 				existingUri?.toURI()?.toPromise() ?: externalContent.promiseNewContentUri(
-					ExternalAudioContent(
+					ExternalMusicContent(
 						displayName = fileProperties.baseFileNameAsMp3,
 						artist = fileProperties.albumArtistOrArtist,
 						album = fileProperties[KnownFileProperties.Album],
@@ -107,6 +107,7 @@ class StoredFileUrisLookup(
 									}
 									?: path
 							}
+							?.let { path -> if (!path.endsWith("/")) "$path/" else path }
 					)
 				)
 			}

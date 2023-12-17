@@ -4,7 +4,6 @@ import android.content.ContentResolver
 import android.content.ContentValues
 import android.provider.MediaStore
 import com.lasthopesoftware.resources.executors.ThreadPools
-import com.lasthopesoftware.resources.uri.MediaCollections
 import com.lasthopesoftware.resources.uri.toURI
 import com.lasthopesoftware.resources.uri.toUri
 import com.namehillsoftware.handoff.promises.Promise
@@ -24,7 +23,7 @@ class ExternalContentRepository(
 				?.toContentValues()
 				?.takeUnless { ct.isCancelled }
 				?.let { newContent ->
-					contentResolver.insert(MediaCollections.ExternalAudio, newContent)
+					contentResolver.insert(externalContent.collection, newContent)
 				}
 				?.toURI()
 		}, ThreadPools.io)

@@ -6,7 +6,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFile
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.external.ExternalAudioContent
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.external.ExternalMusicContent
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFileUrisLookup
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
@@ -51,7 +51,7 @@ class WhenGettingTheStoredFilePath {
 			},
 			mockk {
 				every { promiseNewContentUri(any()) } answers {
-					externalAudioContent = firstArg()
+					externalMusicContent = firstArg()
 					expectedUri.toPromise()
 				}
 			},
@@ -60,7 +60,7 @@ class WhenGettingTheStoredFilePath {
 		storedFilePathsLookup
 	}
 
-	private var externalAudioContent: ExternalAudioContent? = null
+	private var externalMusicContent: ExternalMusicContent? = null
 	private var newUri: URI? = null
 
 	@BeforeAll
@@ -73,12 +73,12 @@ class WhenGettingTheStoredFilePath {
 
 	@Test
 	fun `then the external audio content is correct`() {
-		assertThat(externalAudioContent).isEqualTo(
-			ExternalAudioContent(
+		assertThat(externalMusicContent).isEqualTo(
+			ExternalMusicContent(
 				displayName = "in_windows.mp3",
 				artist = "6YYPwSql",
 				album = "baKCea7AEK",
-				relativePath = "6YYPwSql/baKCea7AEK",
+				relativePath = "6YYPwSql/baKCea7AEK/",
 			)
 		)
 	}
