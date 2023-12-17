@@ -17,6 +17,7 @@ import com.lasthopesoftware.resources.uri.toUri
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
+import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter
 import org.apache.commons.io.FilenameUtils
 import java.net.URI
 import java.util.regex.Pattern
@@ -33,20 +34,29 @@ class ExternalContentRepository(
 			reservedCharactersPattern.matcher(this).replaceAll("_")
 	}
 
+	override fun promiseNewContentUri(externalContent: ExternalContent): Promise<URI?> =
+		QueuedPromise(CancellableMessageWriter { ct ->
+			externalContent
+				.takeUnless { ct.isCancelled }
+				?.toContentValues()
+				?.takeUnless { ct.isCancelled }
+				?.let { newContent ->
+					contentResolver.insert(MediaCollections.ExternalAudio, newContent)
+				}
+				?.toURI()
+		}, ThreadPools.io)
+
 	override fun promiseNewContentUri(libraryId: LibraryId, serviceFile: ServiceFile): Promise<URI?> = CancellableProxyPromise { cp ->
 		libraryFileProperties
 			.promiseFileProperties(libraryId, serviceFile)
 			.also(cp::doCancel)
 			.eventually { fileProperties ->
-				QueuedPromise(MessageWriter {
-					if (cp.isCancelled) return@MessageWriter null
-
-					val newSongDetails = ContentValues().apply {
-						put(MediaStore.Audio.Media.DISPLAY_NAME, fileProperties.baseFileNameAsMp3)
-						put(MediaStore.Audio.Media.ARTIST, fileProperties.albumArtistOrArtist)
-						put(MediaStore.Audio.Media.ALBUM, fileProperties[KnownFileProperties.Album])
-
-						val relativePath = fileProperties
+				promiseNewContentUri(
+					ExternalAudioContent(
+						displayName = fileProperties.baseFileNameAsMp3,
+						artist = fileProperties.albumArtistOrArtist,
+						album = fileProperties[KnownFileProperties.Album],
+						relativePath = fileProperties
 							.albumArtistOrArtist?.trim { c -> c <= ' ' }
 							?.replaceReservedCharsAndPath()
 							?.let { path ->
@@ -59,23 +69,8 @@ class ExternalContentRepository(
 									}
 									?: path
 							}
-							?.let { path ->
-								fileProperties.baseFileNameAsMp3
-									?.let { fileName ->
-										FilenameUtils.concat(path, fileName).trim { it <= ' ' }
-									}
-									?: path
-							}
-
-						put(MediaStore.Audio.Media.RELATIVE_PATH, relativePath)
-						put(MediaStore.Audio.Media.IS_PENDING, 1)
-					}
-
-					if (cp.isCancelled) null
-					else contentResolver
-						.insert(MediaCollections.ExternalAudio, newSongDetails)
-						?.toURI()
-				}, ThreadPools.io)
+					)
+				).also(cp::doCancel)
 			}
 	}
 
