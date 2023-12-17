@@ -17,12 +17,22 @@ import com.lasthopesoftware.resources.uri.toUri
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
+import org.apache.commons.io.FilenameUtils
 import java.net.URI
+import java.util.regex.Pattern
 
 class ExternalContentRepository(
 	private val libraryFileProperties: ProvideLibraryFileProperties,
 	private val contentResolver: ContentResolver,
 ) : HaveExternalContent {
+
+	companion object {
+		private val reservedCharactersPattern by lazy { Pattern.compile("[|?*<\":>+\\[\\]'/]") }
+
+		private fun String.replaceReservedCharsAndPath(): String =
+			reservedCharactersPattern.matcher(this).replaceAll("_")
+	}
+
 	override fun promiseNewContentUri(libraryId: LibraryId, serviceFile: ServiceFile): Promise<URI?> = CancellableProxyPromise { cp ->
 		libraryFileProperties
 			.promiseFileProperties(libraryId, serviceFile)
@@ -35,6 +45,29 @@ class ExternalContentRepository(
 						put(MediaStore.Audio.Media.DISPLAY_NAME, fileProperties.baseFileNameAsMp3)
 						put(MediaStore.Audio.Media.ARTIST, fileProperties.albumArtistOrArtist)
 						put(MediaStore.Audio.Media.ALBUM, fileProperties[KnownFileProperties.Album])
+
+						val relativePath = fileProperties
+							.albumArtistOrArtist?.trim { c -> c <= ' ' }
+							?.replaceReservedCharsAndPath()
+							?.let { path ->
+								fileProperties[KnownFileProperties.Album]
+									?.let { album ->
+										FilenameUtils.concat(
+											path,
+											album.trim { it <= ' ' }.replaceReservedCharsAndPath()
+										)
+									}
+									?: path
+							}
+							?.let { path ->
+								fileProperties.baseFileNameAsMp3
+									?.let { fileName ->
+										FilenameUtils.concat(path, fileName).trim { it <= ' ' }
+									}
+									?: path
+							}
+
+						put(MediaStore.Audio.Media.RELATIVE_PATH, relativePath)
 						put(MediaStore.Audio.Media.IS_PENDING, 1)
 					}
 
