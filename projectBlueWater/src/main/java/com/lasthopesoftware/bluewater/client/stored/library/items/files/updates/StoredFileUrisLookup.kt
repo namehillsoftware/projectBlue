@@ -8,6 +8,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLi
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.external.ExternalMusicContent
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.external.HaveExternalContent
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
 import com.lasthopesoftware.bluewater.client.stored.library.sync.LookupSyncDirectory
@@ -43,7 +44,7 @@ class StoredFileUrisLookup(
 					.eventually { l ->
 						when (l?.syncedFileLocation) {
 							Library.SyncedFileLocation.INTERNAL -> promiseLocalFileUri(libraryId, fileProperties)
-							Library.SyncedFileLocation.EXTERNAL -> promiseContentUri(libraryId, serviceFile)
+							Library.SyncedFileLocation.EXTERNAL -> promiseContentUri(libraryId, serviceFile, fileProperties)
 							else -> Promise.empty()
 						}
 					}
@@ -86,11 +87,28 @@ class StoredFileUrisLookup(
 					?.let { File(it).toURI() }
 			}
 
-	private fun promiseContentUri(libraryId: LibraryId, serviceFile: ServiceFile): Promise<URI?> =
+	private fun promiseContentUri(libraryId: LibraryId, serviceFile: ServiceFile, fileProperties: Map<String, String>): Promise<URI?> =
 		mediaFileUriProvider
 			.promiseUri(libraryId, serviceFile)
 			.eventually { existingUri ->
-				existingUri?.toURI()?.toPromise()
-					?: externalContent.promiseNewContentUri(libraryId, serviceFile)
+				existingUri?.toURI()?.toPromise() ?: externalContent.promiseNewContentUri(
+					ExternalMusicContent(
+						displayName = fileProperties.baseFileNameAsMp3,
+						artist = fileProperties.albumArtistOrArtist,
+						album = fileProperties[KnownFileProperties.Album],
+						relativePath = fileProperties
+							.albumArtistOrArtist?.trim { c -> c <= ' ' }?.replaceReservedCharsAndPath()
+							?.let { path ->
+								fileProperties[KnownFileProperties.Album]
+									?.let { album ->
+										FilenameUtils.concat(
+											path, album.trim { it <= ' ' }.replaceReservedCharsAndPath()
+										)
+									}
+									?: path
+							}
+							?.let { path -> if (!path.endsWith("/")) "$path/" else path }
+					)
+				)
 			}
 }
