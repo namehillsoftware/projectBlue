@@ -32,16 +32,18 @@ class ExternalContentRepository(
 
 						val relativePath = newContent.getAsString(MediaStore.Audio.Media.RELATIVE_PATH)
 						val albumDirectory = relativePath?.let { File(root, it).path } ?: root
-						val songPath = File(albumDirectory, newContent.getAsString(MediaStore.Audio.Media.DISPLAY_NAME)).path
-						newContent.put(MediaStore.Audio.Media.DATA, songPath)
+						val songFile = File(albumDirectory, newContent.getAsString(MediaStore.Audio.Media.DISPLAY_NAME))
+						newContent.put(MediaStore.Audio.Media.DATA, songFile.path)
 
 						newContent.remove(MediaStore.Audio.Media.RELATIVE_PATH)
 						newContent.remove(MediaStore.Audio.Media.IS_PENDING)
-					}
 
-					contentResolver.insert(externalContent.collection, newContent)
+						contentResolver.insert(externalContent.collection, newContent)
+						songFile.toURI()
+					} else {
+						contentResolver.insert(externalContent.collection, newContent)?.toURI()
+					}
 				}
-				?.toURI()
 		}, ThreadPools.io)
 
 	override fun markContentAsNotPending(uri: URI): Promise<Unit> = QueuedPromise(MessageWriter{

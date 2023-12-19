@@ -44,7 +44,7 @@ class StoredFileUrisLookup(
 					.eventually { l ->
 						when (l?.syncedFileLocation) {
 							Library.SyncedFileLocation.INTERNAL -> promiseLocalFileUri(libraryId, fileProperties)
-							Library.SyncedFileLocation.EXTERNAL -> promiseContentUri(libraryId, serviceFile, fileProperties)
+							Library.SyncedFileLocation.EXTERNAL -> promiseExternalUri(libraryId, serviceFile, fileProperties)
 							else -> Promise.empty()
 						}
 					}
@@ -87,7 +87,7 @@ class StoredFileUrisLookup(
 					?.let { File(it).toURI() }
 			}
 
-	private fun promiseContentUri(libraryId: LibraryId, serviceFile: ServiceFile, fileProperties: Map<String, String>): Promise<URI?> =
+	private fun promiseExternalUri(libraryId: LibraryId, serviceFile: ServiceFile, fileProperties: Map<String, String>): Promise<URI?> =
 		mediaFileUriProvider
 			.promiseUri(libraryId, serviceFile)
 			.eventually { existingUri ->
