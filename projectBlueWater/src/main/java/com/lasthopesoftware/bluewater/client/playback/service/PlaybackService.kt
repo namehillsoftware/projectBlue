@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.service
 
+import android.annotation.SuppressLint
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
@@ -540,7 +541,8 @@ import java.util.concurrent.TimeoutException
 			CachedAudioFileUriProvider(remoteFileUriProvider, audioCache),
 			MediaFileUriProvider(
 				MediaQueryCursorProvider(contentResolver, cachedFileProperties),
-				arbitratorForOs
+				arbitratorForOs,
+				contentResolver
 			),
 			remoteFileUriProvider
 		)
@@ -649,6 +651,7 @@ import java.util.concurrent.TimeoutException
 		if (!isMarkedForPlay) notificationController.removeNotification(playingNotificationId)
 	}
 
+	@SuppressLint("WakelockTimeout", "Unknown media playback time")
 	private fun registerListeners() {
 		wakeLock = (getSystemService(POWER_SERVICE) as PowerManager).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK or PowerManager.ON_AFTER_RELEASE, javaClass.name)
 		wakeLock?.acquire()
