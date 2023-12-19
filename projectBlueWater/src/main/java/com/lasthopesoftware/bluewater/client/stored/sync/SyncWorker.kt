@@ -115,7 +115,8 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 
 	private val externalContentRepository by lazy {
 		ExternalContentRepository(
-            context.contentResolver
+            context.contentResolver,
+			context,
 		)
 	}
 

@@ -94,8 +94,6 @@ class StoredFileUrisLookup(
 				existingUri?.toURI()?.toPromise() ?: externalContent.promiseNewContentUri(
 					ExternalMusicContent(
 						displayName = fileProperties.baseFileNameAsMp3,
-						artist = fileProperties.albumArtistOrArtist,
-						album = fileProperties[KnownFileProperties.Album],
 						relativePath = fileProperties
 							.albumArtistOrArtist?.trim { c -> c <= ' ' }?.replaceReservedCharsAndPath()
 							?.let { path ->

@@ -4,6 +4,7 @@ import android.content.ContentResolver
 import android.content.ContentValues
 import android.net.Uri
 import android.provider.MediaStore
+import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.AndroidContextRunner
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.external.ExternalContentRepository
@@ -23,6 +24,7 @@ class WhenMarkingItAsNotPending : AndroidContext() {
 	private val sut by lazy {
 		ExternalContentRepository(
 			affectedSystems,
+			ApplicationProvider.getApplicationContext(),
 		)
 	}
 	companion object {
