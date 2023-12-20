@@ -1,8 +1,6 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.GivenATypicalLibrary.WithTheStoredFile.AndItsInAnExternalLocation.AndTheFileAlreadyExists
 
-import android.content.Context
 import android.net.Uri
-import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FakeFilesPropertiesProvider
@@ -10,7 +8,6 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFile
 import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.external.ExternalContentRepository
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFileUrisLookup
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
@@ -59,10 +56,7 @@ class WhenGettingTheStoredFilePath {
 						)
 					} returns Promise(Uri.parse("content://media/external/audio/media/bogus1"))
 				},
-				ExternalContentRepository(
-					ApplicationProvider.getApplicationContext<Context>().contentResolver,
-					ApplicationProvider.getApplicationContext(),
-				)
+				mockk(),
             )
 
 			storedFilePathsLookup

@@ -12,6 +12,7 @@ private const val relativeRoot = "Music"
 data class ExternalMusicContent(
 	val displayName: String? = null,
 	val relativePath: String? = null,
+	val fullPath: String? = null,
 ) : ExternalContent {
 
 	override val collection: Uri
