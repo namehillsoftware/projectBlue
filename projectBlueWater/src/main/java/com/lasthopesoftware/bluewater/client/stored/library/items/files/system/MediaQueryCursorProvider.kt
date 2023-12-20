@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.files.system
 
 import android.content.ContentResolver
 import android.database.Cursor
+import android.os.Build
 import android.provider.MediaStore
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
@@ -33,23 +34,33 @@ class MediaQueryCursorProvider
 
 		val filename = FilenameUtils.getBaseName(originalFilename)
 
+		val selectionArgs = if (Build.VERSION.SDK_INT >= 29) {
+			arrayOf(filename, fileProperties[KnownFileProperties.Album] ?: "")
+		} else {
+			arrayOf(filename)
+		}
+
 		return QueuedPromise(
 			MessageWriter {
 				contentResolver.query(
 					MediaCollections.ExternalAudio,
 					mediaQueryProjection,
 					mediaCollectionFilter,
-					arrayOf(filename, fileProperties[KnownFileProperties.Album] ?: ""),
+					selectionArgs,
 					null
 				)
 			}, ThreadPools.io)
 	}
 
 	companion object {
-		private const val mediaCollectionFilter =
+		private val mediaCollectionFilter = if (Build.VERSION.SDK_INT >= 29) {
 			"""${MediaStore.Audio.Media.IS_PENDING} = 0
 				AND ${MediaStore.Audio.Media.DISPLAY_NAME} LIKE '%' || ? || '%'
 				AND COALESCE(${MediaStore.Audio.AlbumColumns.ALBUM}, "") = ?"""
+		} else {
+			"${MediaStore.Audio.Media.DISPLAY_NAME} LIKE '%' || ? || '%'"
+		}
+
 		private val mediaQueryProjection = arrayOf(MediaStore.Audio.Media._ID, MediaStore.Audio.Media.DISPLAY_NAME)
 	}
 }

@@ -61,6 +61,7 @@ class WhenGettingTheStoredFilePath {
 				},
 				ExternalContentRepository(
 					ApplicationProvider.getApplicationContext<Context>().contentResolver,
+					ApplicationProvider.getApplicationContext(),
 				)
             )
 

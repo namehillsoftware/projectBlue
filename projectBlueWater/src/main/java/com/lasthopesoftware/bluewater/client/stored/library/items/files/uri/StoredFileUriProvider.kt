@@ -9,8 +9,8 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.AccessStoredFiles
 import com.lasthopesoftware.bluewater.shared.android.permissions.CheckOsPermissions
 import com.lasthopesoftware.resources.uri.IoCommon
+import com.lasthopesoftware.resources.uri.resourceExists
 import com.namehillsoftware.handoff.promises.Promise
-import java.io.FileNotFoundException
 
 class StoredFileUriProvider(
 	private val storedFileAccess: AccessStoredFiles,
@@ -39,12 +39,6 @@ class StoredFileUriProvider(
 		val isReadPermissionGranted = (!externalStorageReadPermissionsArbitrator.isReadPermissionGranted
 			|| !externalStorageReadPermissionsArbitrator.isReadMediaAudioPermissionGranted)
 
-		if (!isReadPermissionGranted) return false
-
-		return try {
-			contentResolver.openFileDescriptor(uri, "r")?.use { true } ?: false
-		} catch(e: FileNotFoundException) {
-			false
-		}
+		return isReadPermissionGranted && contentResolver.resourceExists(uri)
 	}
 }

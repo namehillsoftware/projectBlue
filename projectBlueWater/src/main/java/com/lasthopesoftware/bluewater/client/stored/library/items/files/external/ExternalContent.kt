@@ -5,5 +5,6 @@ import android.net.Uri
 
 interface ExternalContent {
 	val collection: Uri
+	val type: String
 	fun toContentValues(): ContentValues
 }

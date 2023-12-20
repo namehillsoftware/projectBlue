@@ -76,8 +76,6 @@ class WhenGettingTheStoredFilePath {
 		assertThat(externalMusicContent).isEqualTo(
 			ExternalMusicContent(
 				displayName = "in_windows.mp3",
-				artist = "6YYPwSql",
-				album = "baKCea7AEK",
 				relativePath = "6YYPwSql/baKCea7AEK/",
 			)
 		)
