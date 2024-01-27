@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.namehillsoftware.handoff.promises.Promise
-import io.reactivex.ObservableEmitter
+import io.reactivex.rxjava3.core.ObservableEmitter
 import org.joda.time.Duration
 import java.io.Closeable
 import java.io.IOException

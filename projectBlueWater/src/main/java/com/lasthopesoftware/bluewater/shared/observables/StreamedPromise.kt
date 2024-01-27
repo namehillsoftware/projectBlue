@@ -1,10 +1,10 @@
 package com.lasthopesoftware.bluewater.shared.observables
 
 import com.namehillsoftware.handoff.promises.Promise
-import io.reactivex.Observable
-import io.reactivex.functions.Function
+import io.reactivex.rxjava3.core.Observable
+import io.reactivex.rxjava3.functions.Function
 
-fun <T, S : Iterable<T>> Promise<S>.stream(): Observable<T> = this.toMaybeObservable().flattenAsObservable(flatten())
+fun <T : Any, S : Iterable<T>> Promise<S>.stream(): Observable<T> = this.toMaybeObservable().flattenAsObservable(flatten())
 
 @Suppress("UNCHECKED_CAST")
 private fun <T : Any> flatten(): Flattener<T> = singleFlattener as Flattener<T>

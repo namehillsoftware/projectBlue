@@ -26,7 +26,7 @@ import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.promiseReceivedMessage
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
-import com.lasthopesoftware.bluewater.shared.observables.MutableStateObservable
+import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
 import com.lasthopesoftware.bluewater.shared.promises.ForwardedResponse.Companion.forward
 import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay
 import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
@@ -90,18 +90,18 @@ class NowPlayingFilePropertiesViewModel(
 	private val onPropertiesChangedSubscription = applicationMessages.registerReceiver(::handleFilePropertyUpdates)
 
 	private val cachedPromiseSync = Any()
-	private val filePositionState = MutableStateObservable(0)
-	private val fileDurationState = MutableStateObservable(Int.MAX_VALUE) // Use max so that position updates will take effect
-	private val isPlayingState = MutableStateObservable(false)
-	private val isReadOnlyState = MutableStateObservable(false)
-	private val artistState = MutableStateObservable(stringResources.defaultNowPlayingArtist)
-	private val titleState = MutableStateObservable(stringResources.defaultNowPlayingTrackTitle)
-	private val songRatingState = MutableStateObservable(0F)
-	private val isSongRatingEnabledState = MutableStateObservable(false)
-	private val nowPlayingFileState = MutableStateObservable<PositionedFile?>(null)
-	private val isScreenControlsVisibleState = MutableStateObservable(false)
-	private val unexpectedErrorState = MutableStateObservable<Throwable?>(null)
-	private val activeLibraryIdState = MutableStateObservable<LibraryId?>(null)
+	private val filePositionState = MutableInteractionState(0)
+	private val fileDurationState = MutableInteractionState(Int.MAX_VALUE) // Use max so that position updates will take effect
+	private val isPlayingState = MutableInteractionState(false)
+	private val isReadOnlyState = MutableInteractionState(false)
+	private val artistState = MutableInteractionState(stringResources.defaultNowPlayingArtist)
+	private val titleState = MutableInteractionState(stringResources.defaultNowPlayingTrackTitle)
+	private val songRatingState = MutableInteractionState(0F)
+	private val isSongRatingEnabledState = MutableInteractionState(false)
+	private val nowPlayingFileState = MutableInteractionState<PositionedFile?>(null)
+	private val isScreenControlsVisibleState = MutableInteractionState(false)
+	private val unexpectedErrorState = MutableInteractionState<Throwable?>(null)
+	private val activeLibraryIdState = MutableInteractionState<LibraryId?>(null)
 
 	val filePosition = filePositionState.asReadOnly()
 	val fileDuration = fileDurationState.asReadOnly()

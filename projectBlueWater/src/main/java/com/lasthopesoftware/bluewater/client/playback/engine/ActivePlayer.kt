@@ -4,7 +4,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile
 import com.lasthopesoftware.bluewater.client.playback.playlist.IPlaylistPlayer
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
 import com.namehillsoftware.handoff.promises.Promise
-import io.reactivex.Observable
+import io.reactivex.rxjava3.core.Observable
 
 class ActivePlayer(
     private val playlistPlayer: IPlaylistPlayer,

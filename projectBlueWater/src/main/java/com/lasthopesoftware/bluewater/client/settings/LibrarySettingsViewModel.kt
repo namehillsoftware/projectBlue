@@ -10,16 +10,16 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.libraryId
 import com.lasthopesoftware.bluewater.permissions.RequestApplicationPermissions
 import com.lasthopesoftware.bluewater.shared.NullBox
-import com.lasthopesoftware.bluewater.shared.observables.MutableStateObservable
-import com.lasthopesoftware.bluewater.shared.observables.ReadOnlyStateObservable
-import com.lasthopesoftware.bluewater.shared.observables.SubscribedStateObservable
+import com.lasthopesoftware.bluewater.shared.observables.InteractionState
+import com.lasthopesoftware.bluewater.shared.observables.LiftedInteractionState
+import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateAction
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import com.namehillsoftware.handoff.promises.response.PromisedResponse
-import io.reactivex.Observable
+import io.reactivex.rxjava3.core.Observable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
@@ -42,11 +42,11 @@ class LibrarySettingsViewModel(
 		)
 	}
 
-	private val libraryState = MutableStateObservable(defaultLibrary.copy())
+	private val libraryState = MutableInteractionState(defaultLibrary.copy())
 	private val mutableIsLoading = MutableStateFlow(false)
-	private val mutableIsSaving = MutableStateObservable(false)
-	private val mutableIsPermissionsNeeded = MutableStateObservable(false)
-	private val mutableIsRemovalRequested = MutableStateObservable(false)
+	private val mutableIsSaving = MutableInteractionState(false)
+	private val mutableIsPermissionsNeeded = MutableInteractionState(false)
+	private val mutableIsRemovalRequested = MutableInteractionState(false)
 
 	private val isSettingsChangedObserver = lazy {
 		fun <T> observeChanges(observable: Observable<NullBox<T>>, libraryValue: Library.() -> T?) =
@@ -65,35 +65,35 @@ class LibrarySettingsViewModel(
 			Observable.combineLatest(libraryState, sslCertificateFingerprint) { l, f -> !f.value.contentEquals(l.value.sslCertificateFingerprint) },
 		)
 
-		SubscribedStateObservable(
-			Observable.combineLatest(changeTrackers) { values -> values.any { it as Boolean } },
+		LiftedInteractionState(
+			Observable.combineLatest(changeTrackers.asIterable()) { values -> values.any { it as Boolean } },
 			false
 		)
 	}
 
 	private val hasSslCertificateObserver = lazy {
-		SubscribedStateObservable(sslCertificateFingerprint.map { it.value.any() }, false)
+		LiftedInteractionState(sslCertificateFingerprint.map { it.value.any() }, false)
 	}
 
-	val accessCode = MutableStateObservable(defaultLibrary.accessCode ?: "")
-	val libraryName = MutableStateObservable(defaultLibrary.libraryName ?: "")
-	val userName = MutableStateObservable(defaultLibrary.userName ?: "")
-	val password = MutableStateObservable(defaultLibrary.password ?: "")
-	val isLocalOnly = MutableStateObservable(defaultLibrary.isLocalOnly)
-	val syncedFileLocation = MutableStateObservable(defaultLibrary.syncedFileLocation ?: Library.SyncedFileLocation.INTERNAL)
-	val isWakeOnLanEnabled = MutableStateObservable(defaultLibrary.isWakeOnLanEnabled)
-	val isUsingExistingFiles = MutableStateObservable(defaultLibrary.isUsingExistingFiles)
-	val isSyncLocalConnectionsOnly = MutableStateObservable(defaultLibrary.isSyncLocalConnectionsOnly)
-	val sslCertificateFingerprint = MutableStateObservable(ByteArray(0))
+	val accessCode = MutableInteractionState(defaultLibrary.accessCode ?: "")
+	val libraryName = MutableInteractionState(defaultLibrary.libraryName ?: "")
+	val userName = MutableInteractionState(defaultLibrary.userName ?: "")
+	val password = MutableInteractionState(defaultLibrary.password ?: "")
+	val isLocalOnly = MutableInteractionState(defaultLibrary.isLocalOnly)
+	val syncedFileLocation = MutableInteractionState(defaultLibrary.syncedFileLocation ?: Library.SyncedFileLocation.INTERNAL)
+	val isWakeOnLanEnabled = MutableInteractionState(defaultLibrary.isWakeOnLanEnabled)
+	val isUsingExistingFiles = MutableInteractionState(defaultLibrary.isUsingExistingFiles)
+	val isSyncLocalConnectionsOnly = MutableInteractionState(defaultLibrary.isSyncLocalConnectionsOnly)
+	val sslCertificateFingerprint = MutableInteractionState(ByteArray(0))
 	val hasSslCertificate
-		get() = hasSslCertificateObserver.value as ReadOnlyStateObservable<Boolean>
+		get() = hasSslCertificateObserver.value as InteractionState<Boolean>
 
 	override val isLoading = mutableIsLoading.asStateFlow()
-	val isSaving = mutableIsSaving as ReadOnlyStateObservable<Boolean>
-	val isStoragePermissionsNeeded = mutableIsPermissionsNeeded as ReadOnlyStateObservable<Boolean>
-	val isRemovalRequested = mutableIsRemovalRequested as ReadOnlyStateObservable<Boolean>
+	val isSaving = mutableIsSaving as InteractionState<Boolean>
+	val isStoragePermissionsNeeded = mutableIsPermissionsNeeded as InteractionState<Boolean>
+	val isRemovalRequested = mutableIsRemovalRequested as InteractionState<Boolean>
 	val isSettingsChanged
-		get() = isSettingsChangedObserver.value as ReadOnlyStateObservable<Boolean>
+		get() = isSettingsChangedObserver.value as InteractionState<Boolean>
 
 	val activeLibraryId
 		get() = libraryState.value.libraryId.takeIf { it.id > -1 }

@@ -13,7 +13,7 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
 
 @Composable
-fun <T, S : ReadOnlyStateObservable<T>> S.subscribeAsState(): State<T> {
+fun <T, S : InteractionState<T>> S.subscribeAsState(): State<T> {
 	val state = remember { mutableStateOf(value) }
 	DisposableEffect(this) {
 		val disposable = subscribe {
@@ -25,7 +25,7 @@ fun <T, S : ReadOnlyStateObservable<T>> S.subscribeAsState(): State<T> {
 }
 
 @Composable
-fun <T, S : MutableStateObservable<T>> S.subscribeAsMutableState(
+fun <T, S : MutableInteractionState<T>> S.subscribeAsMutableState(
 	context: CoroutineContext = EmptyCoroutineContext
 ): MutableState<T> {
 	val state = remember { mutableStateOf(value) }

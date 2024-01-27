@@ -14,8 +14,8 @@ import com.lasthopesoftware.bluewater.shared.observables.stream
 import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
 import com.lasthopesoftware.storage.write.exceptions.StorageCreatePathException
 import com.namehillsoftware.handoff.promises.Promise
-import io.reactivex.Completable
-import io.reactivex.exceptions.CompositeException
+import io.reactivex.rxjava3.core.Completable
+import io.reactivex.rxjava3.exceptions.CompositeException
 import org.slf4j.LoggerFactory
 
 class StoredFileSynchronization(
