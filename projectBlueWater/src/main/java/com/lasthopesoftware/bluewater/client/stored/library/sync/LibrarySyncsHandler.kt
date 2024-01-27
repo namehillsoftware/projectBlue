@@ -10,7 +10,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.
 import com.lasthopesoftware.bluewater.shared.observables.stream
 import com.lasthopesoftware.bluewater.shared.observables.toMaybeObservable
 import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
-import io.reactivex.Observable
+import io.reactivex.rxjava3.core.Observable
 import org.slf4j.LoggerFactory
 
 class LibrarySyncsHandler(

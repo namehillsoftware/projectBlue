@@ -1,9 +1,9 @@
 package com.lasthopesoftware.bluewater.shared.observables
 
 import com.lasthopesoftware.bluewater.shared.NullBox
-import io.reactivex.Observable
-import io.reactivex.Observer
-import io.reactivex.subjects.BehaviorSubject
+import io.reactivex.rxjava3.core.Observable
+import io.reactivex.rxjava3.core.Observer
+import io.reactivex.rxjava3.subjects.BehaviorSubject
 
 class LiftedInteractionState<T: Any>(source: Observable<T>, private val initialValue: T) : InteractionState<T>(), AutoCloseable {
 
@@ -13,7 +13,7 @@ class LiftedInteractionState<T: Any>(source: Observable<T>, private val initialV
 	override val value: T
 		get() = behaviorSubject.value?.value ?: initialValue
 
-	override fun subscribeActual(observer: Observer<in NullBox<T>>?) {
+	override fun subscribeActual(observer: Observer<in NullBox<T>>) {
 		behaviorSubject.safeSubscribe(observer)
 	}
 

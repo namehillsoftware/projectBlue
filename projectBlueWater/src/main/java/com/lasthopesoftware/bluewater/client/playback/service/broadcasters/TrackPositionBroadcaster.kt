@@ -7,7 +7,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedProgressedFile
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.TrackPositionUpdate
 import com.lasthopesoftware.bluewater.shared.messages.application.SendApplicationMessages
-import io.reactivex.functions.Consumer
+import io.reactivex.rxjava3.functions.Consumer
 import org.joda.time.Duration
 
 class TrackPositionBroadcaster(
