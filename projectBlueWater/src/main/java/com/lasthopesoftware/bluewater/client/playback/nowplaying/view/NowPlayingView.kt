@@ -49,7 +49,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -95,9 +94,6 @@ import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.SharedColors
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 
 @Composable
@@ -343,13 +339,16 @@ fun NowPlayingView(
 
 			val filePropertiesHeightPx = LocalDensity.current.run { filePropertiesHeight.toPx() }
 
-			var firstPageShownProgress by remember { mutableStateOf(1f) }
-
-			LaunchedEffect(key1 = pagerState) {
-				snapshotFlow { pagerState.layoutInfo }
-					.map { it.visibleItemsInfo.getVisibleItemInfoFor(0) }
-					.onEach { firstPageShownProgress = it?.run { (filePropertiesHeightPx + offset) / filePropertiesHeightPx }?.coerceIn(0f, 1f) ?: 0f }
-					.collect()
+			val firstPageShownProgress by remember {
+				derivedStateOf {
+					pagerState.layoutInfo.visibleItemsInfo
+						.getVisibleItemInfoFor(0)
+						?.run {
+							(filePropertiesHeightPx + offset) / filePropertiesHeightPx
+						}
+						?.coerceIn(0f, 1f)
+						?: 0f
+				}
 			}
 
 			val snappingLayout = remember(pagerState) { SnapLayoutInfoProvider(pagerState) { _, _, _, _, _ -> 0 } }
