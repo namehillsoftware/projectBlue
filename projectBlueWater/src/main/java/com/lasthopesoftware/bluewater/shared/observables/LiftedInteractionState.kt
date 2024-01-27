@@ -5,7 +5,7 @@ import io.reactivex.Observable
 import io.reactivex.Observer
 import io.reactivex.subjects.BehaviorSubject
 
-class SubscribedStateObservable<T: Any>(source: Observable<T>, private val initialValue: T) : ReadOnlyStateObservable<T>(), AutoCloseable {
+class LiftedInteractionState<T: Any>(source: Observable<T>, private val initialValue: T) : InteractionState<T>(), AutoCloseable {
 
 	private val behaviorSubject = BehaviorSubject.createDefault(NullBox(initialValue))
 	private val subscription = source.distinctUntilChanged().subscribe { behaviorSubject.onNext(NullBox(it)) }

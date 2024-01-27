@@ -4,7 +4,7 @@ import com.lasthopesoftware.bluewater.shared.NullBox
 import io.reactivex.Observer
 import io.reactivex.subjects.BehaviorSubject
 
-class MutableStateObservable<T>(private val initialValue: T) : ReadOnlyStateObservable<T>() {
+class MutableInteractionState<T>(private val initialValue: T) : InteractionState<T>() {
 
 	private val behaviorSubject = BehaviorSubject.createDefault(NullBox(initialValue))
 
@@ -19,5 +19,5 @@ class MutableStateObservable<T>(private val initialValue: T) : ReadOnlyStateObse
 		behaviorSubject.safeSubscribe(observer)
 	}
 
-	fun asReadOnly(): ReadOnlyStateObservable<T> = this
+	fun asReadOnly(): InteractionState<T> = this
 }
