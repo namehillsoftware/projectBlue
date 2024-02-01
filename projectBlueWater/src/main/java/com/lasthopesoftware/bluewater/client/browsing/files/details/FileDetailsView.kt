@@ -36,7 +36,7 @@ import androidx.compose.material.ProvideTextStyle
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
@@ -491,17 +491,17 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 						.fillMaxWidth()
 				) {
 					Icon(
-						Icons.Default.ArrowBack,
+						Icons.AutoMirrored.Filled.ArrowBack,
 						contentDescription = "",
 						tint = coverArtColorState.secondaryTextColor,
 						modifier = Modifier
-							.padding(16.dp)
 							.align(Alignment.CenterStart)
 							.clickable(
 								interactionSource = remember { MutableInteractionSource() },
 								indication = null,
 								onClick = activity::finish
 							)
+							.padding(16.dp)
 					)
 				}
 
