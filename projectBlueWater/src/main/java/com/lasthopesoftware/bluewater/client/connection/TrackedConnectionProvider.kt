@@ -22,5 +22,8 @@ class TrackedConnectionProvider(private val inner: IConnectionProvider) : IConne
 		return innerCall
 	}
 
-	override fun promiseClose() = Promise.whenAll(activeCalls.values).guaranteedUnitResponse()
+	override fun promiseClose(): Promise<Unit> = Promise
+		.whenAll(activeCalls.values)
+		.guaranteedUnitResponse()
+		.must { activeCalls.clear() }
 }

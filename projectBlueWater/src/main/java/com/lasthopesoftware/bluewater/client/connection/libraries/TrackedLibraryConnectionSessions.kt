@@ -14,7 +14,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 class TrackedLibraryConnectionSessions(private val inner: ManageConnectionSessions) : ManageConnectionSessions by inner, PromisingCloseable {
 
-	private val libraryConnections = ConcurrentHashMap<Pair<LibraryId, IConnectionProvider?>, TrackedConnectionProvider>()
+	private val libraryConnections = ConcurrentHashMap<LibraryId, ConcurrentHashMap<IConnectionProvider, TrackedConnectionProvider>>()
 
 	override fun promiseLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?> {
 		return object : ProgressingPromiseProxy<BuildingConnectionStatus, IConnectionProvider?>() {
@@ -24,24 +24,7 @@ class TrackedLibraryConnectionSessions(private val inner: ManageConnectionSessio
 					.also(::proxyUpdates)
 					.also(::proxyRejection)
 					.then { connection ->
-						resolve(
-							connection
-								?.let { cp ->
-									libraryConnections
-										.getOrPut(Pair(libraryId, cp)) {
-											libraryConnections
-												.filter { (pair, _) -> pair.first == libraryId }
-												.forEach { (pair, tracked) ->
-													tracked
-														.promiseClose()
-														.then { libraryConnections.remove(pair) }
-												}
-
-											TrackedConnectionProvider(cp)
-										}
-								}
-								?: connection
-						)
+						resolve(connection?.let { cp -> getTrackedConnection(libraryId, cp) })
 					}
 			}
 		}
@@ -55,20 +38,7 @@ class TrackedLibraryConnectionSessions(private val inner: ManageConnectionSessio
 					.also(::proxyUpdates)
 					.also(::proxyRejection)
 					.then { connection ->
-						resolve(
-							connection
-								?.let { cp ->
-									libraryConnections
-										.getOrPut(Pair(libraryId, cp)) {
-											libraryConnections.keys
-												.filter { (id, _) -> id == libraryId }
-												.forEach(libraryConnections::remove)
-
-											TrackedConnectionProvider(cp)
-										}
-								}
-								?: connection
-						)
+						resolve(connection?.let { cp -> getTrackedConnection(libraryId, cp) })
 					}
 			}
 		}
@@ -76,12 +46,28 @@ class TrackedLibraryConnectionSessions(private val inner: ManageConnectionSessio
 
 	override fun removeConnection(libraryId: LibraryId) {
 		inner.removeConnection(libraryId)
-		libraryConnections.keys
-			.filter { (id, _) -> id == libraryId }
-			.forEach(libraryConnections::remove)
+		libraryConnections.remove(libraryId)
 	}
 
 	override fun promiseClose(): Promise<Unit> = Promise
-		.whenAll(libraryConnections.values.map { it.promiseClose() })
+		.whenAll(libraryConnections.values.flatMap { it.values.map{ cp -> cp.promiseClose() } })
 		.guaranteedUnitResponse()
+		.must { libraryConnections.clear() }
+
+	private fun getTrackedConnection(libraryId: LibraryId, sourceConnection: IConnectionProvider): TrackedConnectionProvider {
+		val existingConnections = libraryConnections.getOrPut(libraryId) { ConcurrentHashMap() }
+		val trackedConnection = existingConnections.getOrPut(sourceConnection) { TrackedConnectionProvider(sourceConnection) }
+
+		if (existingConnections.size == 1) return trackedConnection
+
+		for ((existingConnection, existingTrackedConnection) in existingConnections) {
+			if (existingConnection == sourceConnection && existingTrackedConnection == trackedConnection) continue
+
+			existingTrackedConnection
+				.promiseClose()
+				.must { existingConnections.remove(existingConnection, existingTrackedConnection) }
+		}
+
+		return trackedConnection
+	}
 }
