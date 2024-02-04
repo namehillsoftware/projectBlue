@@ -21,14 +21,8 @@ import ch.qos.logback.core.rolling.TimeBasedRollingPolicy
 import ch.qos.logback.core.util.StatusPrinter
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.UpdatePlayStatsOnPlaybackCompleteReceiver
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.factory.LibraryPlaystatsUpdateSelector
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.fileproperties.FilePropertiesPlayStatsUpdater
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.playedfile.PlayedFilePlayStatsUpdater
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertyStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
-import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionSettingsChangeReceiver
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.NotificationsConfiguration
@@ -36,7 +30,6 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNow
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble.PlaybackFileStartedScrobbleDroidProxy
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble.PlaybackFileStoppedScrobbleDroidProxy
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble.ScrobbleIntentProvider
-import com.lasthopesoftware.bluewater.client.servers.version.LibraryServerVersionProvider
 import com.lasthopesoftware.bluewater.client.stored.library.permissions.StoragePermissionsRequestNotificationBuilder
 import com.lasthopesoftware.bluewater.client.stored.library.permissions.read.StorageReadPermissionsRequestNotificationBuilder
 import com.lasthopesoftware.bluewater.client.stored.library.permissions.read.StorageReadPermissionsRequestedBroadcaster
@@ -150,25 +143,6 @@ open class MainApplication : Application() {
 
 		applicationMessageBus.registerReceiver(
 			PlaybackFileStoppedScrobbleDroidProxy(this, ScrobbleIntentProvider)
-		)
-
-		applicationMessageBus.registerReceiver(
-			UpdatePlayStatsOnPlaybackCompleteReceiver(
-				LibraryPlaystatsUpdateSelector(
-					LibraryServerVersionProvider(libraryConnections),
-					PlayedFilePlayStatsUpdater(libraryConnections),
-					FilePropertiesPlayStatsUpdater(
-						freshLibraryFileProperties,
-						FilePropertyStorage(
-							libraryConnections,
-							ConnectionAuthenticationChecker(libraryConnections),
-							libraryRevisionProvider,
-							FilePropertyCache,
-							applicationMessageBus
-						),
-					),
-				)
-			)
 		)
 
 		applicationMessageBus.registerReceiver(SyncItemStateChangedListener(syncScheduler))

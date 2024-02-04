@@ -33,7 +33,12 @@ import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.suppli
 import com.lasthopesoftware.bluewater.client.browsing.files.image.CachedImageProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.UpdatePlayStatsOnPlaybackCompleteReceiver
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.factory.LibraryPlaystatsUpdateSelector
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.fileproperties.FilePropertiesPlayStatsUpdater
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.playedfile.PlayedFilePlayStatsUpdater
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertyStorage
 import com.lasthopesoftware.bluewater.client.browsing.files.uri.BestMatchUriProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.uri.RemoteFileUriProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
@@ -42,7 +47,9 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.Cac
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibraryConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.libraries.TrackedLibraryConnectionSessions
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionServiceProxy
@@ -92,6 +99,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messa
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.AudioBecomingNoisyReceiver
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
+import com.lasthopesoftware.bluewater.client.servers.version.LibraryServerVersionProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.MediaQueryCursorProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
@@ -395,7 +403,8 @@ import java.util.concurrent.TimeoutException
 		)
 	}
 
-	private val connectionSessionManager by lazy { ConnectionSessionManager.get(this) }
+	private val connectionSessionManager by lazy { promisingPlaybackEngineCloseables.manage(TrackedLibraryConnectionSessions(ConnectionSessionManager.get(this))) }
+
 	private val libraryConnectionProvider by lazy {
 		NotifyingLibraryConnectionProvider(
 			NotificationBuilderProducer(this),
@@ -564,6 +573,27 @@ import java.util.concurrent.TimeoutException
 		playbackEngineCloseables.manage(applicationMessageBus.registerReceiver { _: PlaybackEngineTypeChangedBroadcaster.PlaybackEngineTypeChanged ->
 			haltService()
 		})
+
+		playbackEngineCloseables.manage(
+			applicationMessageBus.registerReceiver(
+				UpdatePlayStatsOnPlaybackCompleteReceiver(
+					LibraryPlaystatsUpdateSelector(
+						LibraryServerVersionProvider(libraryConnectionProvider),
+						PlayedFilePlayStatsUpdater(libraryConnectionProvider),
+						FilePropertiesPlayStatsUpdater(
+							freshLibraryFileProperties,
+							FilePropertyStorage(
+								libraryConnectionProvider,
+								ConnectionAuthenticationChecker(libraryConnectionProvider),
+								revisionProvider,
+								FilePropertyCache,
+								applicationMessageBus
+							),
+						),
+					)
+				)
+			)
+		)
 
 		// Call the value to initialize the lazy promise
 		val hotPromisedMediaNotificationSetup = promisedMediaNotificationSetup
