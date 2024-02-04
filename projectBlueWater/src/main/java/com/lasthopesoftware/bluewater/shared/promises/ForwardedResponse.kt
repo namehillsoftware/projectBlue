@@ -2,9 +2,12 @@ package com.lasthopesoftware.bluewater.shared.promises
 
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
+import com.namehillsoftware.handoff.promises.response.PromisedResponse
 
-class ForwardedResponse<Resolution : Response, Response> private constructor() : ImmediateResponse<Resolution, Response> {
+class ForwardedResponse<Resolution : Response, Response> private constructor() : ImmediateResponse<Resolution, Response>, PromisedResponse<Resolution, Response> {
 	override fun respond(resolution: Resolution): Response = resolution
+
+	override fun promiseResponse(resolution: Resolution): Promise<Response> = Promise(resolution)
 
 	companion object {
 		private val singlePassThrough by lazy { ForwardedResponse<Any, Any>() }
