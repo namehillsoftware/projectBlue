@@ -33,7 +33,12 @@ import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.suppli
 import com.lasthopesoftware.bluewater.client.browsing.files.image.CachedImageProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.UpdatePlayStatsOnPlaybackCompleteReceiver
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.factory.LibraryPlaystatsUpdateSelector
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.fileproperties.FilePropertiesPlayStatsUpdater
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.playedfile.PlayedFilePlayStatsUpdater
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertyStorage
 import com.lasthopesoftware.bluewater.client.browsing.files.uri.BestMatchUriProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.uri.RemoteFileUriProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
@@ -42,7 +47,9 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.Cac
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibraryConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.libraries.TrackedLibraryConnectionSessions
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionServiceProxy
@@ -92,6 +99,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messa
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.PlaybackMessage
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.AudioBecomingNoisyReceiver
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
+import com.lasthopesoftware.bluewater.client.servers.version.LibraryServerVersionProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.MediaQueryCursorProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
@@ -120,6 +128,7 @@ import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessa
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.observables.toMaybeObservable
 import com.lasthopesoftware.bluewater.shared.policies.retries.RetryOnRejectionLazyPromise
+import com.lasthopesoftware.bluewater.shared.promises.ForwardedResponse.Companion.forward
 import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay.Companion.delay
 import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
@@ -329,7 +338,9 @@ import java.util.concurrent.TimeoutException
 
 	private val applicationMessageBus by lazyScoped { getApplicationMessageBus().getScopedMessageBus() }
 	private val playbackEngineCloseables = AutoCloseableManager()
+	private val serviceCloseables by lazyScoped { AutoCloseableManager() }
 	private val promisingPlaybackEngineCloseables = PromisingCloseableManager()
+	private val promisingServiceCloseables = PromisingCloseableManager()
 	private val lazyObservationScheduler = lazy { ExecutorScheduler(ThreadPools.compute, true, true) }
 	private val binder by lazy { GenericBinder(this) }
 	private val notificationManager by lazy { getSystemService(NOTIFICATION_SERVICE) as NotificationManager }
@@ -395,7 +406,8 @@ import java.util.concurrent.TimeoutException
 		)
 	}
 
-	private val connectionSessionManager by lazy { ConnectionSessionManager.get(this) }
+	private val connectionSessionManager by lazy { promisingServiceCloseables.manage(TrackedLibraryConnectionSessions(ConnectionSessionManager.get(this))) }
+
 	private val libraryConnectionProvider by lazy {
 		NotifyingLibraryConnectionProvider(
 			NotificationBuilderProducer(this),
@@ -477,25 +489,27 @@ import java.util.concurrent.TimeoutException
 
 	private	val promisedMediaNotificationSetup by RetryOnRejectionLazyPromise {
 		mediaStyleNotificationSetup.then { mediaStyleNotificationSetup ->
-			NowPlayingNotificationBuilder(
-				this,
-				mediaStyleNotificationSetup,
-				urlKeyProvider,
-				libraryFilePropertiesProvider,
-				imageProvider
+			val notificationBuilder = serviceCloseables.manage(
+					NowPlayingNotificationBuilder(
+					this,
+					mediaStyleNotificationSetup,
+					urlKeyProvider,
+					libraryFilePropertiesProvider,
+					imageProvider
+				)
 			)
-				.also(playbackEngineCloseables::manage)
-				.let { builder ->
-					PlaybackNotificationBroadcaster(
-						nowPlayingRepository,
-						applicationMessageBus,
-						urlKeyProvider,
-						notificationController,
-						playbackNotificationsConfiguration,
-						builder,
-						playbackStartingNotificationBuilder,
-					).also(playbackEngineCloseables::manage)
-				}
+
+			serviceCloseables.manage(
+				PlaybackNotificationBroadcaster(
+					nowPlayingRepository,
+					applicationMessageBus,
+					urlKeyProvider,
+					notificationController,
+					playbackNotificationsConfiguration,
+					notificationBuilder,
+					playbackStartingNotificationBuilder,
+				)
+			)
 		}
 	}
 
@@ -548,23 +562,9 @@ import java.util.concurrent.TimeoutException
 		)
 	}
 
-	private val playlistPlaybackBootstrapper by lazy { PlaylistPlaybackBootstrapper(playlistVolumeManager).also(playbackEngineCloseables::manage) }
+	private val playlistPlaybackBootstrapper by lazy { serviceCloseables.manage(PlaylistPlaybackBootstrapper(playlistVolumeManager)) }
 
 	private val promisedPlaybackServices = RetryOnRejectionLazyPromise {
-		playbackEngineCloseables.manage(applicationMessageBus.registerReceiver { m: ObservableConnectionSettingsLibraryStorage.ConnectionSettingsUpdated ->
-			if (m.libraryId == activeLibraryId)
-				haltService()
-		})
-
-		playbackEngineCloseables.manage(applicationMessageBus.registerReceiver { m: BrowserLibrarySelection.LibraryChosenMessage ->
-			if (m.chosenLibraryId != activeLibraryId)
-				haltService()
-		})
-
-		playbackEngineCloseables.manage(applicationMessageBus.registerReceiver { _: PlaybackEngineTypeChangedBroadcaster.PlaybackEngineTypeChanged ->
-			haltService()
-		})
-
 		// Call the value to initialize the lazy promise
 		val hotPromisedMediaNotificationSetup = promisedMediaNotificationSetup
 
@@ -634,7 +634,14 @@ import java.util.concurrent.TimeoutException
 					}
 			}
 
-		hotPromisedMediaNotificationSetup.eventually { promisedEngine }
+		hotPromisedMediaNotificationSetup
+			.eventually { promisedEngine }
+			.eventually(forward()) { e ->
+				playbackEngineCloseables.close()
+				promisingPlaybackEngineCloseables
+					.promiseClose()
+					.then { throw e }
+			}
 	}
 
 	private val unhandledRejectionHandler = ImmediateResponse<Throwable, Unit>(::uncaughtExceptionHandler)
@@ -672,6 +679,40 @@ import java.util.concurrent.TimeoutException
 		super.onCreate()
 
 		guardDestroyedService()
+
+		// Message bus is service-scoped
+		applicationMessageBus.registerReceiver { m: ObservableConnectionSettingsLibraryStorage.ConnectionSettingsUpdated ->
+			if (m.libraryId == activeLibraryId)
+				haltService()
+		}
+
+		applicationMessageBus.registerReceiver { m: BrowserLibrarySelection.LibraryChosenMessage ->
+			if (m.chosenLibraryId != activeLibraryId)
+				haltService()
+		}
+
+		applicationMessageBus.registerReceiver { _: PlaybackEngineTypeChangedBroadcaster.PlaybackEngineTypeChanged ->
+			haltService()
+		}
+
+		applicationMessageBus.registerReceiver(
+			UpdatePlayStatsOnPlaybackCompleteReceiver(
+				LibraryPlaystatsUpdateSelector(
+					LibraryServerVersionProvider(libraryConnectionProvider),
+					PlayedFilePlayStatsUpdater(libraryConnectionProvider),
+					FilePropertiesPlayStatsUpdater(
+						freshLibraryFileProperties,
+						FilePropertyStorage(
+							libraryConnectionProvider,
+							ConnectionAuthenticationChecker(libraryConnectionProvider),
+							revisionProvider,
+							FilePropertyCache,
+							applicationMessageBus
+						),
+					),
+				)
+			)
+		)
 	}
 
 	override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -1091,7 +1132,10 @@ import java.util.concurrent.TimeoutException
 				playbackEngineCloseables.close()
 			}
 			.inevitably {
-				promisingPlaybackEngineCloseables.promiseClose()
+				Promise.whenAll(
+					promisingPlaybackEngineCloseables.promiseClose(),
+					promisingServiceCloseables.promiseClose()
+				)
 			}
 			.inevitably {
 				if (playbackThread.isInitializing()) playbackThread.value.then { it.quitSafely() }

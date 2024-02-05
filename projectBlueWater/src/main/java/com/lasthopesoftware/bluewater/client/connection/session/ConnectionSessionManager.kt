@@ -34,7 +34,7 @@ class ConnectionSessionManager(
 	private val libraryConnections: ProvideLibraryConnections,
 	private val holdConnections: HoldPromisedConnections,
 	private val sendApplicationMessages: SendApplicationMessages,
-) : ManageConnectionSessions, ProvideLibraryConnections {
+) : ManageConnectionSessions {
 
 	override fun promiseTestedLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?> =
 		holdConnections.setAndGetPromisedConnection(libraryId) { l, promised ->
