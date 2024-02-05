@@ -20,14 +20,15 @@ class NotifyingLibraryConnectionProvider(
 	private val notifications: ControlNotifications,
 	private val stringResources: GetStringResources,
 ) : ProvideLibraryConnections, (BuildingConnectionStatus) -> Unit, ImmediateAction {
-	override fun promiseLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?> = object : ProgressingPromiseProxy<BuildingConnectionStatus, IConnectionProvider?>() {
-		init {
-		    val promisedConnection = inner.promiseLibraryConnection(libraryId)
-			proxy(promisedConnection)
-			promisedConnection.updates(this@NotifyingLibraryConnectionProvider)
-			promisedConnection.must(this@NotifyingLibraryConnectionProvider)
+	override fun promiseLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?> =
+		object : ProgressingPromiseProxy<BuildingConnectionStatus, IConnectionProvider?>() {
+			init {
+				val promisedConnection = inner.promiseLibraryConnection(libraryId)
+				proxy(promisedConnection)
+				promisedConnection.updates(this@NotifyingLibraryConnectionProvider)
+				promisedConnection.must(this@NotifyingLibraryConnectionProvider)
+			}
 		}
-	}
 
 	override fun invoke(status: BuildingConnectionStatus) {
 		val notifyBuilder = notificationBuilders.getNotificationBuilder(notificationsConfiguration.notificationChannel)

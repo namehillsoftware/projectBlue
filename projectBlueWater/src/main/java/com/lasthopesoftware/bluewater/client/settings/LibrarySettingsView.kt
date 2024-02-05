@@ -33,7 +33,7 @@ import androidx.compose.material.ProvideTextStyle
 import androidx.compose.material.RadioButton
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -501,19 +501,19 @@ fun LibrarySettingsView(
 					}
 				}
 
-				Icon(
-					Icons.Default.ArrowBack,
-					contentDescription = "",
-					tint = MaterialTheme.colors.onSurface,
-					modifier = Modifier
+                Icon(
+                    Icons.AutoMirrored.Filled.ArrowBack,
+                    contentDescription = "",
+                    tint = MaterialTheme.colors.onSurface,
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .clickable(
+                            interactionSource = remember { MutableInteractionSource() },
+                            indication = null,
+                            onClick = navigateApplication::navigateUp
+                        )
 						.padding(16.dp)
-						.align(Alignment.TopStart)
-						.clickable(
-							interactionSource = remember { MutableInteractionSource() },
-							indication = null,
-							onClick = navigateApplication::navigateUp
-						)
-				)
+                )
 			}
 		}
 	}

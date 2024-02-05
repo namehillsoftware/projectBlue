@@ -11,7 +11,7 @@ import com.lasthopesoftware.bluewater.client.playback.playlist.PlaylistPlayer
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
-import io.reactivex.Observable
+import io.reactivex.rxjava3.core.Observable
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
 import org.junit.jupiter.api.BeforeAll

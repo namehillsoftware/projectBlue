@@ -33,6 +33,7 @@ class `When making a permissions request` {
 			mockk {
 				every { isNotificationsPermissionNotGranted } returns true
 				every { isForegroundMediaServicePermissionNotGranted } returns false
+				every { isForegroundDataServicePermissionNotGranted } returns true
 			}
 		)
 	}
@@ -50,6 +51,7 @@ class `When making a permissions request` {
 			Manifest.permission.READ_MEDIA_AUDIO,
 			Manifest.permission.READ_EXTERNAL_STORAGE,
 			Manifest.permission.POST_NOTIFICATIONS,
+			Manifest.permission.FOREGROUND_SERVICE_DATA_SYNC
 		)
 	}
 }

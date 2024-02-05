@@ -17,4 +17,7 @@ interface CheckOsPermissions {
 
 	@get:ChecksSdkIntAtLeast(api = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
 	val isForegroundMediaServicePermissionNotGranted: Boolean
+
+	@get:ChecksSdkIntAtLeast(api = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
+	val isForegroundDataServicePermissionNotGranted: Boolean
 }

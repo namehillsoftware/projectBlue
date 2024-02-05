@@ -1,13 +1,13 @@
 package com.lasthopesoftware.bluewater.shared.observables
 
 import com.namehillsoftware.handoff.promises.Promise
-import io.reactivex.Maybe
-import io.reactivex.MaybeObserver
-import io.reactivex.disposables.Disposable
+import io.reactivex.rxjava3.core.Maybe
+import io.reactivex.rxjava3.core.MaybeObserver
+import io.reactivex.rxjava3.disposables.Disposable
 
-fun <T> Promise<T>.toMaybeObservable(): Maybe<T> = MaybeObservePromise(this)
+fun <T : Any> Promise<T>.toMaybeObservable(): Maybe<T> = MaybeObservePromise(this)
 
-private class MaybeObservePromise<T>(private val promise: Promise<T>) :
+private class MaybeObservePromise<T : Any>(private val promise: Promise<T>) :
 	Maybe<T>(),
 	Disposable
 {

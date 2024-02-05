@@ -6,6 +6,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.reposito
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.lasthopesoftware.resources.io.SupplyFiles
 import com.lasthopesoftware.resources.uri.IoCommon
+import com.lasthopesoftware.resources.uri.resourceExists
 import com.lasthopesoftware.resources.uri.toUri
 import com.lasthopesoftware.storage.write.exceptions.StorageCreatePathException
 import com.lasthopesoftware.storage.write.permissions.DecideIfFileWriteIsPossible
@@ -45,16 +46,9 @@ class StoredFileUriDestinationBuilder(
 				IoCommon.contentUriScheme -> {
 					val contentUri = storedFileUri.toUri()
 
-					try {
-						val isDownloaded = try {
-							contentResolver.openFileDescriptor(contentUri, "r")?.use {
-								storedFile.isDownloadComplete
-							} ?: false
-						} catch (_: FileNotFoundException) {
-							// Bizarrely it's good if the file isn't found, because we want to create a new file.
-							false
-						}
+					val isDownloaded = storedFile.isDownloadComplete && contentResolver.resourceExists(contentUri)
 
+					try {
 						if (!isDownloaded) contentResolver.openOutputStream(contentUri, "wt") else null
 					} catch (f: FileNotFoundException) {
 						throw StoredFileWriteException(storedFile, innerException = f)

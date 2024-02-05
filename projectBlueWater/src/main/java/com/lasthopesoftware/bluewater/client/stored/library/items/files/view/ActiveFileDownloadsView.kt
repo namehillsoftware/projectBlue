@@ -29,7 +29,7 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.ProvideTextStyle
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
@@ -279,19 +279,19 @@ fun ActiveFileDownloadsView(
 
 				// Always draw box to help the collapsing toolbar measure minimum size
 				Box(modifier = Modifier.height(appBarHeight.dp)) {
-					Icon(
-						Icons.Default.ArrowBack,
-						contentDescription = "",
-						tint = MaterialTheme.colors.onSurface,
-						modifier = Modifier
+                    Icon(
+                        Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "",
+                        tint = MaterialTheme.colors.onSurface,
+                        modifier = Modifier
+                            .align(Alignment.CenterStart)
+                            .clickable(
+                                interactionSource = remember { MutableInteractionSource() },
+                                indication = null,
+                                onClick = applicationNavigation::backOut
+                            )
 							.padding(16.dp)
-							.align(Alignment.CenterStart)
-							.clickable(
-								interactionSource = remember { MutableInteractionSource() },
-								indication = null,
-								onClick = applicationNavigation::backOut
-							)
-					)
+                    )
 				}
 			}
 		}

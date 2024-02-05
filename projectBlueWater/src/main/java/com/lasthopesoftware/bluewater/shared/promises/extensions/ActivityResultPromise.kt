@@ -9,7 +9,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import com.namehillsoftware.handoff.promises.Promise
-import io.reactivex.processors.PublishProcessor
+import io.reactivex.rxjava3.processors.PublishProcessor
 
 fun ComponentActivity.registerResultActivityLauncher(): LaunchActivitiesForResults = ActivityResultObserver(this)
 

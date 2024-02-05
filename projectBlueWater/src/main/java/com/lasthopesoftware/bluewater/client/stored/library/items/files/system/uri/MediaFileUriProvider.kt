@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri
 
+import android.content.ContentResolver
 import android.content.ContentUris
 import android.net.Uri
 import android.provider.MediaStore
@@ -11,11 +12,13 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.P
 import com.lasthopesoftware.bluewater.shared.android.permissions.CheckOsPermissions
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.resources.uri.MediaCollections
+import com.lasthopesoftware.resources.uri.resourceExists
 import com.namehillsoftware.handoff.promises.Promise
 
 class MediaFileUriProvider(
     private val mediaQueryCursorProvider: ProvideMediaQueryCursor,
-    private val externalStorageReadPermissionsArbitrator: CheckOsPermissions
+    private val externalStorageReadPermissionsArbitrator: CheckOsPermissions,
+	private val contentResolver: ContentResolver,
 ) : ProvideFileUrisForLibrary {
 
     override fun promiseUri(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Uri?> =
@@ -31,8 +34,9 @@ class MediaFileUriProvider(
 					val collectionUri = MediaCollections.ExternalAudio
 
 					val uri = ContentUris.withAppendedId(collectionUri, fileId)
-					logger.info("Returning media file URI {} from local disk.", uri)
-					uri
+					uri.takeIf(contentResolver::resourceExists)?.also {
+						logger.info("Returning media file URI {} from local disk.", uri)
+					}
 				}
 			}
 

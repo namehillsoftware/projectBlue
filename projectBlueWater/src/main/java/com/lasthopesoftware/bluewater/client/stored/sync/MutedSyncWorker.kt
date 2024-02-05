@@ -6,6 +6,7 @@ import androidx.annotation.RequiresApi
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.work.WorkerParameters
+import com.lasthopesoftware.bluewater.shared.android.permissions.OsPermissionsChecker
 
 @RequiresApi(Build.VERSION_CODES.S)
 class MutedSyncWorker(context: Context, workerParams: WorkerParameters) : SyncWorker(context, workerParams) {
@@ -13,9 +14,13 @@ class MutedSyncWorker(context: Context, workerParams: WorkerParameters) : SyncWo
 		private val foregroundStates by lazy { arrayOf(Lifecycle.State.STARTED, Lifecycle.State.RESUMED) }
 	}
 
+	private val permissionsChecker by lazy { OsPermissionsChecker(context) }
+
 	private var isForeground = false
 
 	override fun notify(notificationText: String?) {
+		if (permissionsChecker.isForegroundDataServicePermissionNotGranted) return
+
 		if (isForeground || foregroundStates.contains(ProcessLifecycleOwner.get().lifecycle.currentState)) {
 			isForeground = true
 			super.notify(notificationText)

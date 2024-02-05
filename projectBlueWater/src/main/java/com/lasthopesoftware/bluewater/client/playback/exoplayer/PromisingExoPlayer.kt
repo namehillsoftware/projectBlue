@@ -197,6 +197,4 @@ interface PromisingExoPlayer {
 	fun setPauseAtEndOfMediaItems(pauseAtEndOfMediaItems: Boolean): Promise<PromisingExoPlayer>
 
 	fun getPauseAtEndOfMediaItems(): Promise<Boolean>
-
-	fun experimentalSetOffloadSchedulingEnabled(offloadSchedulingEnabled: Boolean): Promise<PromisingExoPlayer>
 }

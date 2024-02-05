@@ -10,7 +10,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messa
 import com.lasthopesoftware.bluewater.shared.android.ui.components.dragging.move
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
-import com.lasthopesoftware.bluewater.shared.observables.MutableStateObservable
+import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
@@ -31,13 +31,13 @@ class NowPlayingPlaylistViewModel(
 	private var loadedPlaylistPaths = emptyList<String>()
 	private val playlistChangedSubscription = applicationMessages.registerReceiver(this)
 
-	private val isRepeatingState = MutableStateObservable(false)
-	private val mutableEditingPlaylistState = MutableStateObservable(false)
-	private val nowPlayingListState = MutableStateObservable(emptyList<PositionedFile>())
-	private val mutableFilteredPlaylistPaths = MutableStateObservable(emptyList<String>())
-	private val mutableIsSavingPlaylistActive = MutableStateObservable(false)
-	private val mutableSelectedPlaylistPath = MutableStateObservable("")
-	private val mutableIsPlaylistPathValid = MutableStateObservable(false)
+	private val isRepeatingState = MutableInteractionState(false)
+	private val mutableEditingPlaylistState = MutableInteractionState(false)
+	private val nowPlayingListState = MutableInteractionState(emptyList<PositionedFile>())
+	private val mutableFilteredPlaylistPaths = MutableInteractionState(emptyList<String>())
+	private val mutableIsSavingPlaylistActive = MutableInteractionState(false)
+	private val mutableSelectedPlaylistPath = MutableInteractionState("")
+	private val mutableIsPlaylistPathValid = MutableInteractionState(false)
 
 	val isRepeating = isRepeatingState.asReadOnly()
 	val isEditingPlaylistState = mutableEditingPlaylistState.asReadOnly()
