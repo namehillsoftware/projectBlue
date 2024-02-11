@@ -49,7 +49,6 @@ import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryR
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibraryConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.libraries.TrackedLibraryConnectionSessions
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionServiceProxy
@@ -406,7 +405,7 @@ import java.util.concurrent.TimeoutException
 		)
 	}
 
-	private val connectionSessionManager by lazy { promisingServiceCloseables.manage(TrackedLibraryConnectionSessions(ConnectionSessionManager.get(this))) }
+	private val connectionSessionManager by lazy { ConnectionSessionManager.get(this) }
 
 	private val libraryConnectionProvider by lazy {
 		NotifyingLibraryConnectionProvider(
@@ -563,22 +562,24 @@ import java.util.concurrent.TimeoutException
 	}
 
 	private val updatePlayStatsOnPlaybackCompletedReceiver by lazy {
-		UpdatePlayStatsOnPlaybackCompletedReceiver(
-			LibraryPlaystatsUpdateSelector(
-				LibraryServerVersionProvider(libraryConnectionProvider),
-				PlayedFilePlayStatsUpdater(libraryConnectionProvider),
-				FilePropertiesPlayStatsUpdater(
-					freshLibraryFileProperties,
-					FilePropertyStorage(
-						libraryConnectionProvider,
-						ConnectionAuthenticationChecker(libraryConnectionProvider),
-						revisionProvider,
-						FilePropertyCache,
-						applicationMessageBus
+		promisingServiceCloseables.manage(
+			UpdatePlayStatsOnPlaybackCompletedReceiver(
+				LibraryPlaystatsUpdateSelector(
+					LibraryServerVersionProvider(libraryConnectionProvider),
+					PlayedFilePlayStatsUpdater(libraryConnectionProvider),
+					FilePropertiesPlayStatsUpdater(
+						freshLibraryFileProperties,
+						FilePropertyStorage(
+							libraryConnectionProvider,
+							ConnectionAuthenticationChecker(libraryConnectionProvider),
+							revisionProvider,
+							FilePropertyCache,
+							applicationMessageBus
+						),
 					),
 				),
-			),
-			this,
+				this,
+			)
 		)
 	}
 

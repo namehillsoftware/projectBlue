@@ -6,28 +6,45 @@ import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlayingFil
 import com.lasthopesoftware.bluewater.client.playback.file.EmptyPlaybackHandler
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile
 import com.lasthopesoftware.bluewater.shared.lazyLogger
+import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay
+import com.lasthopesoftware.bluewater.shared.promises.PromiseTracker
+import com.lasthopesoftware.resources.closables.PromisingCloseable
+import com.namehillsoftware.handoff.promises.Promise
+import org.joda.time.Duration
 
 private val logger by lazyLogger<UpdatePlayStatsOnPlaybackCompletedReceiver>()
 
 class UpdatePlayStatsOnPlaybackCompletedReceiver(
 	private val libraryPlaystatsUpdateSelector: LibraryPlaystatsUpdateSelector,
 	private val inner: OnPlayingFileChanged
-) : OnPlayingFileChanged by inner {
+) : OnPlayingFileChanged by inner, PromisingCloseable {
+
+	private val promiseTracker = PromiseTracker()
 
 	override fun onPlayingFileChanged(libraryId: LibraryId, positionedPlayingFile: PositionedPlayingFile?) {
+		inner.onPlayingFileChanged(libraryId, positionedPlayingFile)
+
 		val playingFile = positionedPlayingFile?.playingFile ?: return
 
 		if (playingFile is EmptyPlaybackHandler) return
 
-		playingFile.promisePlayedFile().then { pf ->
-			val serviceFile = positionedPlayingFile.serviceFile
-			libraryPlaystatsUpdateSelector
-				.promisePlaystatsUpdate(libraryId, serviceFile)
-				.excuse { e ->
-					logger.error("There was an error updating the playstats for the file with key $serviceFile", e)
-				}
-		}
+		promiseTracker.track(
+			playingFile.promisePlayedFile().eventually {
+				val serviceFile = positionedPlayingFile.serviceFile
+				val promisedUpdate = libraryPlaystatsUpdateSelector.promisePlaystatsUpdate(libraryId, serviceFile)
 
-		inner.onPlayingFileChanged(libraryId, positionedPlayingFile)
+				promisedUpdate
+					.excuse { e ->
+						logger.error("There was an error updating the playstats for the file with key $serviceFile", e)
+					}
+
+				promisedUpdate
+			}
+		)
 	}
+
+	override fun promiseClose(): Promise<Unit> = Promise.whenAny(
+		promiseTracker.promiseClose(),
+		PromiseDelay.delay(Duration.standardSeconds(30))
+	)
 }

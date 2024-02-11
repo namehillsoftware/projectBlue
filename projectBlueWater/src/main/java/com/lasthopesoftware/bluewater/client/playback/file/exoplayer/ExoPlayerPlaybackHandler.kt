@@ -1,8 +1,10 @@
 package com.lasthopesoftware.bluewater.client.playback.file.exoplayer
 
+import androidx.annotation.OptIn
 import androidx.media3.common.ParserException
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.HttpDataSource
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.PromisingExoPlayer
 import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile
@@ -17,6 +19,7 @@ import org.joda.time.Duration
 import org.joda.time.format.PeriodFormatterBuilder
 import java.io.EOFException
 import java.net.ProtocolException
+import kotlin.coroutines.cancellation.CancellationException
 
 class ExoPlayerPlaybackHandler(private val exoPlayer: PromisingExoPlayer) :
 	ProgressedPromise<Duration, PlayedFile>(),
@@ -46,6 +49,7 @@ class ExoPlayerPlaybackHandler(private val exoPlayer: PromisingExoPlayer) :
 	private var backingDuration = Duration.ZERO
 
 	init {
+		respondToCancellation(this)
 		exoPlayer.addListener(this)
 	}
 
@@ -105,7 +109,7 @@ class ExoPlayerPlaybackHandler(private val exoPlayer: PromisingExoPlayer) :
 			}
 	}
 
-	override fun onPlayerError(error: PlaybackException) {
+	@OptIn(UnstableApi::class) override fun onPlayerError(error: PlaybackException) {
 		removeListener()
 		when (val cause = error.cause) {
 			is EOFException -> {
@@ -148,6 +152,7 @@ class ExoPlayerPlaybackHandler(private val exoPlayer: PromisingExoPlayer) :
 	}
 
 	override fun close() {
+		reject(CancellationException("Playback resources closed."))
 		isPlaying = false
 		fileProgressReader.close()
 		exoPlayer.setPlayWhenReady(false)
