@@ -71,7 +71,14 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 				.eventually(
 					{ generateHaltPromise() },
 					{ generateHaltPromise() })
-				.then({ p -> p?.close() }, { e ->
+				.then({ p ->
+					try {
+						p?.close()
+					} catch (e: Throwable) {
+						logger.error("There was an error releasing the media player", e)
+						emitter?.onError(e)
+					}
+				}, { e ->
 					logger.error("There was an error releasing the media player", e)
 					emitter?.onError(e)
 				})
@@ -144,8 +151,7 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 
 					emitter?.onNext(newPositionedPlayingFile)
 
-					newPositionedPlayingFile
-						.playingFile
+					playingFile
 						.promisePlayedFile()
 						.then(
 							{ closeAndStartNextFile(playbackHandler) },

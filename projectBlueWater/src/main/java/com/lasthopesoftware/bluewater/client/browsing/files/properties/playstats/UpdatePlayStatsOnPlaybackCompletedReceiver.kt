@@ -6,11 +6,9 @@ import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlayingFil
 import com.lasthopesoftware.bluewater.client.playback.file.EmptyPlaybackHandler
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile
 import com.lasthopesoftware.bluewater.shared.lazyLogger
-import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay
 import com.lasthopesoftware.bluewater.shared.promises.PromiseTracker
 import com.lasthopesoftware.resources.closables.PromisingCloseable
 import com.namehillsoftware.handoff.promises.Promise
-import org.joda.time.Duration
 
 private val logger by lazyLogger<UpdatePlayStatsOnPlaybackCompletedReceiver>()
 
@@ -43,8 +41,5 @@ class UpdatePlayStatsOnPlaybackCompletedReceiver(
 		)
 	}
 
-	override fun promiseClose(): Promise<Unit> = Promise.whenAny(
-		promiseTracker.promiseClose(),
-		PromiseDelay.delay(Duration.standardSeconds(30))
-	)
+	override fun promiseClose(): Promise<Unit> = promiseTracker.promiseClose()
 }

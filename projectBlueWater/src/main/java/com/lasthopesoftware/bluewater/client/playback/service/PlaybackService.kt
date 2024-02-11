@@ -1096,12 +1096,11 @@ import java.util.concurrent.TimeoutException
 
 		promisedPlayedFile
 			.then {
-				localSubscription.dispose()
-
 				applicationMessageBus.sendMessage(
 					LibraryPlaybackMessage.TrackCompleted(libraryId, positionedPlayingFile.serviceFile)
 				)
 			}
+			.must { localSubscription.dispose() }
 
 		filePositionSubscription = localSubscription
 

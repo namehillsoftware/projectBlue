@@ -18,6 +18,7 @@ import com.namehillsoftware.handoff.promises.Promise
 import org.joda.time.Duration
 import org.joda.time.format.PeriodFormatterBuilder
 import java.io.EOFException
+import java.io.IOException
 import java.net.ProtocolException
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -152,16 +153,17 @@ class ExoPlayerPlaybackHandler(private val exoPlayer: PromisingExoPlayer) :
 	}
 
 	override fun close() {
-		reject(CancellationException("Playback resources closed."))
 		isPlaying = false
 		fileProgressReader.close()
 		exoPlayer.setPlayWhenReady(false)
 		exoPlayer.stop()
 		removeListener()
 		exoPlayer.release()
+		reject(IOException("Playback resources closed before playback could complete."))
 	}
 
 	override fun run() {
+		reject(CancellationException("Cancelling playback."))
 		close()
 	}
 
