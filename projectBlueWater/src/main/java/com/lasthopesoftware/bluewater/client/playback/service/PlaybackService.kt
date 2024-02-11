@@ -124,6 +124,7 @@ import com.lasthopesoftware.bluewater.shared.android.services.promiseBoundServic
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToaster
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
+import com.lasthopesoftware.bluewater.shared.messages.application.GuaranteedDeliveryApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.observables.toMaybeObservable
@@ -336,7 +337,7 @@ import java.util.concurrent.TimeoutException
 
 	/* End streamer intent helpers */
 
-	private val applicationMessageBus by lazyScoped { getApplicationMessageBus().getScopedMessageBus() }
+	private val applicationMessageBus by lazyScoped { GuaranteedDeliveryApplicationMessageBus(getApplicationMessageBus().getScopedMessageBus()) }
 	private val playbackEngineCloseables = AutoCloseableManager()
 	private val serviceCloseables by lazyScoped { AutoCloseableManager() }
 	private val promisingPlaybackEngineCloseables = PromisingCloseableManager()
