@@ -33,7 +33,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.suppli
 import com.lasthopesoftware.bluewater.client.browsing.files.image.CachedImageProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.UpdatePlayStatsOnPlaybackCompleteReceiver
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.UpdatePlayStatsOnPlaybackCompletedReceiver
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.factory.LibraryPlaystatsUpdateSelector
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.fileproperties.FilePropertiesPlayStatsUpdater
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.playedfile.PlayedFilePlayStatsUpdater
@@ -124,7 +124,6 @@ import com.lasthopesoftware.bluewater.shared.android.services.promiseBoundServic
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToaster
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
-import com.lasthopesoftware.bluewater.shared.messages.application.GuaranteedDeliveryApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.observables.toMaybeObservable
@@ -337,7 +336,7 @@ import java.util.concurrent.TimeoutException
 
 	/* End streamer intent helpers */
 
-	private val applicationMessageBus by lazyScoped { GuaranteedDeliveryApplicationMessageBus(getApplicationMessageBus().getScopedMessageBus()) }
+	private val applicationMessageBus by lazyScoped { getApplicationMessageBus().getScopedMessageBus() }
 	private val playbackEngineCloseables = AutoCloseableManager()
 	private val serviceCloseables by lazyScoped { AutoCloseableManager() }
 	private val promisingPlaybackEngineCloseables = PromisingCloseableManager()
@@ -563,6 +562,26 @@ import java.util.concurrent.TimeoutException
 		)
 	}
 
+	private val updatePlayStatsOnPlaybackCompletedReceiver by lazy {
+		UpdatePlayStatsOnPlaybackCompletedReceiver(
+			LibraryPlaystatsUpdateSelector(
+				LibraryServerVersionProvider(libraryConnectionProvider),
+				PlayedFilePlayStatsUpdater(libraryConnectionProvider),
+				FilePropertiesPlayStatsUpdater(
+					freshLibraryFileProperties,
+					FilePropertyStorage(
+						libraryConnectionProvider,
+						ConnectionAuthenticationChecker(libraryConnectionProvider),
+						revisionProvider,
+						FilePropertyCache,
+						applicationMessageBus
+					),
+				),
+			),
+			this,
+		)
+	}
+
 	private val playlistPlaybackBootstrapper by lazy { serviceCloseables.manage(PlaylistPlaybackBootstrapper(playlistVolumeManager)) }
 
 	private val promisedPlaybackServices = RetryOnRejectionLazyPromise {
@@ -615,7 +634,7 @@ import java.util.concurrent.TimeoutException
 					.setOnPlaybackStarted(this)
 					.setOnPlaybackPaused(this)
 					.setOnPlaybackInterrupted(this)
-					.setOnPlayingFileChanged(this)
+					.setOnPlayingFileChanged(updatePlayStatsOnPlaybackCompletedReceiver)
 					.setOnPlaylistError(::uncaughtExceptionHandler)
 					.setOnPlaybackCompleted(this)
 					.setOnPlaylistReset(this)
@@ -695,25 +714,6 @@ import java.util.concurrent.TimeoutException
 		applicationMessageBus.registerReceiver { _: PlaybackEngineTypeChangedBroadcaster.PlaybackEngineTypeChanged ->
 			haltService()
 		}
-
-		applicationMessageBus.registerReceiver(
-			UpdatePlayStatsOnPlaybackCompleteReceiver(
-				LibraryPlaystatsUpdateSelector(
-					LibraryServerVersionProvider(libraryConnectionProvider),
-					PlayedFilePlayStatsUpdater(libraryConnectionProvider),
-					FilePropertiesPlayStatsUpdater(
-						freshLibraryFileProperties,
-						FilePropertyStorage(
-							libraryConnectionProvider,
-							ConnectionAuthenticationChecker(libraryConnectionProvider),
-							revisionProvider,
-							FilePropertyCache,
-							applicationMessageBus
-						),
-					),
-				)
-			)
-		)
 	}
 
 	override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
