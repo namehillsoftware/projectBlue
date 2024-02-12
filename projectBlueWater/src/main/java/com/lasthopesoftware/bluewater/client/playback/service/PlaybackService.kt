@@ -135,6 +135,7 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.lasthopesoftware.bluewater.shared.promises.toFuture
 import com.lasthopesoftware.bluewater.shared.resilience.TimedCountdownLatch
 import com.lasthopesoftware.resources.closables.AutoCloseableManager
+import com.lasthopesoftware.resources.closables.ClosedResourceException
 import com.lasthopesoftware.resources.closables.PromisingCloseableManager
 import com.lasthopesoftware.resources.closables.lazyScoped
 import com.lasthopesoftware.resources.executors.ThreadPools
@@ -1012,6 +1013,8 @@ import java.util.concurrent.TimeoutException
 		}
 
 		fun handleIoException(exception: IOException?) {
+			if (exception is ClosedResourceException) return
+
 			if (exception is HttpDataSource.InvalidResponseCodeException && exception.responseCode == 416) {
 				logger.warn("Received an error code of " + exception.responseCode + ", will attempt restarting the player", exception)
 				closeAndRestartPlaylistManager(exception)
