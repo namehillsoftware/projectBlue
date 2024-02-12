@@ -11,7 +11,6 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFutur
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
-import io.reactivex.rxjava3.core.Observable
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
 import org.junit.jupiter.api.BeforeAll
@@ -33,7 +32,7 @@ class WhenResumingPlayback {
 			every { promiseNextPreparedPlaybackFile(Duration.ZERO) } returns positionedPlaybackHandlerContainer
 		}
 		val playlistPlayback = PlaylistPlayer(preparedPlaybackFileQueue, Duration.ZERO)
-		Observable.create(playlistPlayback).subscribe()
+		playlistPlayback.prepare()
 		playlistPlayback.pause().toExpiringFuture().get()
 		playingFile = playlistPlayback.resume().toExpiringFuture().get()
 	}

@@ -9,7 +9,8 @@ import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.namehillsoftware.handoff.promises.Promise
-import io.reactivex.rxjava3.core.ObservableEmitter
+import io.reactivex.rxjava3.core.Observable
+import io.reactivex.rxjava3.subjects.BehaviorSubject
 import org.joda.time.Duration
 import java.io.Closeable
 import java.io.IOException
@@ -17,8 +18,10 @@ import java.util.concurrent.CancellationException
 
 private val logger by lazyLogger<PlaylistPlayer>()
 
-class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPreparedFiles, private val preparedPosition: Duration) : IPlaylistPlayer, Closeable {
+class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPreparedFiles, private val preparedPosition: Duration) :
+	ManagePlaylistPlayback, Closeable {
 
+	private val behaviorSubject = BehaviorSubject.create<PositionedPlayingFile>()
 	private val stateChangeSync = Any()
 	private var positionedPlayingFile: PositionedPlayingFile? = null
 	private var positionedPlayableFile: PositionedPlayableFile? = null
@@ -30,14 +33,20 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 	private var isStarted = false
 	@Volatile
 	private var isHalted = false
-	private var emitter: ObservableEmitter<PositionedPlayingFile>? = null
 
-	override fun subscribe(e: ObservableEmitter<PositionedPlayingFile>) {
-		emitter = e
+	override fun observe(): Observable<PositionedPlayingFile> = behaviorSubject
+
+	override fun prepare(): ManagePlaylistPlayback {
 		if (!isStarted) {
-			isStarted = true
-			setupNextPreparedFile(preparedPosition)
+			synchronized(stateChangeSync) {
+				if (!isStarted) {
+					isStarted = true
+					setupNextPreparedFile(preparedPosition)
+				}
+			}
 		}
+
+		return this
 	}
 
 	override fun pause(): Promise<PositionedPlayableFile?> {
@@ -81,12 +90,12 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 							p?.close()
 						} catch (e: Throwable) {
 							logger.error("There was an error releasing the media player", e)
-							emitter?.onError(e)
+							behaviorSubject.onError(e)
 						}
 					}
 				}, { e ->
 					logger.error("There was an error releasing the media player", e)
-					emitter?.onError(e)
+					behaviorSubject.onError(e)
 				})
 				.also { lastStateChangePromise = it }
 		}
@@ -155,7 +164,7 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 
 					positionedPlayingFile = newPositionedPlayingFile
 
-					emitter?.onNext(newPositionedPlayingFile)
+					behaviorSubject.onNext(newPositionedPlayingFile)
 
 					playingFile
 						.promisePlayedFile()
@@ -179,7 +188,7 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 	private fun handlePlaybackException(exception: Throwable) {
 		if (isHalted && exception is CancellationException) return
 
-		emitter?.onError(exception)
+		behaviorSubject.onError(exception)
 		haltPlayback()
 	}
 
@@ -189,6 +198,6 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 
 	private fun doCompletion() {
 		positionedPlayingFile = null
-		emitter?.onComplete()
+		behaviorSubject.onComplete()
 	}
 }

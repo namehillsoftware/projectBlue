@@ -10,7 +10,6 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFutur
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import io.mockk.every
 import io.mockk.mockk
-import io.reactivex.rxjava3.core.Observable
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
 import org.junit.jupiter.api.BeforeAll
@@ -39,7 +38,7 @@ class `When Halting Playback` {
 	@BeforeAll
 	fun act() {
 		val playlistPlayback = mut
-		val disposable = Observable.create(playlistPlayback).subscribe(
+		val disposable = playlistPlayback.prepare().observe().subscribe(
 			{},
 			{ e -> exception = e },
 			{ isCompleted = true }

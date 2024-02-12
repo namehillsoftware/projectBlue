@@ -11,7 +11,6 @@ import com.lasthopesoftware.bluewater.client.playback.playlist.PlaylistPlayer
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
-import io.reactivex.rxjava3.core.Observable
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
 import org.junit.jupiter.api.BeforeAll
@@ -45,8 +44,9 @@ class WhenChangingTracks {
 				secondPositionedPlaybackHandlerContainer,
 			)
 		}
-        val subscription = Observable
-			.create(PlaylistPlayer(preparedPlaybackFileQueue, Duration.ZERO))
+        val subscription = PlaylistPlayer(preparedPlaybackFileQueue, Duration.ZERO)
+			.prepare()
+			.observe()
             .subscribe { this.positionedPlayingFile = it }
         playbackHandler.resolve()
 		subscription.dispose()
@@ -54,7 +54,7 @@ class WhenChangingTracks {
 
     @Test
     fun `then the change is observed`() {
-        assertThat(positionedPlayingFile!!.asPositionedFile())
+        assertThat(positionedPlayingFile?.asPositionedFile())
             .isEqualTo(expectedPositionedPlayableFile.asPositionedFile())
     }
 }

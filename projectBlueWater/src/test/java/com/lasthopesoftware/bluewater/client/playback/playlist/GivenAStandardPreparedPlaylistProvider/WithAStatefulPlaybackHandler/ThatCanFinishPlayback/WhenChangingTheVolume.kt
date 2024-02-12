@@ -10,7 +10,6 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFutur
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
-import io.reactivex.rxjava3.core.Observable
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
 import org.junit.jupiter.api.BeforeAll
@@ -44,7 +43,7 @@ class WhenChangingTheVolume {
 		val playlistPlayback = PlaylistPlayer(
 			preparedPlaybackFileQueue,
 			Duration.ZERO)
-		Observable.create(playlistPlayback).subscribe()
+		playlistPlayback.prepare()
 		playlistPlayback.setVolume(0.8f)
 		playbackHandler.resolve()
 	}
