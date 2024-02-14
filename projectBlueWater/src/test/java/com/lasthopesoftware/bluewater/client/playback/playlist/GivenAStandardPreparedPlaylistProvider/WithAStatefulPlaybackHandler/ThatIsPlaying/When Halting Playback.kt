@@ -4,7 +4,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.SupplyQueuedPreparedFiles
 import com.lasthopesoftware.bluewater.client.playback.file.NoTransformVolumeManager
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile
-import com.lasthopesoftware.bluewater.client.playback.file.fakes.FakeBufferingPlaybackHandler
+import com.lasthopesoftware.bluewater.client.playback.file.fakes.ResolvablePlaybackHandler
 import com.lasthopesoftware.bluewater.client.playback.playlist.PlaylistPlayer
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
@@ -19,7 +19,7 @@ import org.junit.jupiter.api.Test
 class `When Halting Playback` {
 
 	private val affectedSystems by lazy {
-		FakeBufferingPlaybackHandler()
+		ResolvablePlaybackHandler()
 	}
 	private val mut by lazy {
 		val preparedPlaybackFileQueue = mockk<SupplyQueuedPreparedFiles> {
@@ -34,13 +34,14 @@ class `When Halting Playback` {
 	}
 
 	private var isCompleted = false
+	private var exception: Throwable? = null
 
 	@BeforeAll
 	fun act() {
 		val playlistPlayback = mut
 		val disposable = Observable.create(playlistPlayback).subscribe(
 			{},
-			{},
+			{ e -> exception = e },
 			{ isCompleted = true }
 		)
 		playlistPlayback.haltPlayback().toExpiringFuture().get()
@@ -55,5 +56,10 @@ class `When Halting Playback` {
 	@Test
 	fun `then the player feed is not completed`() {
 		assertThat(isCompleted).isFalse
+	}
+
+	@Test
+	fun `then the closed resource exception is ignored`() {
+		assertThat(exception).isNull()
 	}
 }

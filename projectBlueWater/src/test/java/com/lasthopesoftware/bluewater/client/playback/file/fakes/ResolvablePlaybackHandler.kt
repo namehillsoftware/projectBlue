@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.playback.file.fakes
 import com.lasthopesoftware.bluewater.client.playback.file.PlayedFile
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressedPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.resources.closables.ClosedResourceException
 import com.namehillsoftware.handoff.Messenger
 import com.namehillsoftware.handoff.promises.MessengerOperator
 import com.namehillsoftware.handoff.promises.Promise
@@ -18,8 +19,14 @@ class ResolvablePlaybackHandler : FakeBufferingPlaybackHandler() {
 
 	override fun promisePlayedFile(): ProgressedPromise<Duration, PlayedFile> = promise
 
+	override fun close() {
+		super.close()
+		resolve?.sendRejection(ClosedResourceException())
+	}
+
 	fun resolve() {
-		resolve?.sendResolution(this)
+		if (!isClosed) resolve?.sendResolution(this)
+		else resolve?.sendRejection(ClosedResourceException())
 		resolve = null
 	}
 }
