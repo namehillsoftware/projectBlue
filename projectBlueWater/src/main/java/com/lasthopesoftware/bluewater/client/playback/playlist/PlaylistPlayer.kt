@@ -99,6 +99,7 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 		pause()
 			.then({ p ->
 				if (!isHalted) {
+					promisedPlayableFile.cancel()
 					isHalted = true
 					try {
 						p?.playableFile?.close()
