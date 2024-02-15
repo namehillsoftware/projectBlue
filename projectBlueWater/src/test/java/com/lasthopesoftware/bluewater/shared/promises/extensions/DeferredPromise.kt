@@ -5,6 +5,8 @@ import com.namehillsoftware.handoff.promises.Promise
 open class DeferredPromise<Resolution> : Promise<Resolution>, Runnable {
     private val resolution: Resolution?
     private val error: Throwable?
+	var isCancelled = false
+		private set
 
     constructor(resolution: Resolution) {
         this.resolution = resolution
@@ -26,6 +28,6 @@ open class DeferredPromise<Resolution> : Promise<Resolution>, Runnable {
     }
 
 	override fun run() {
-
+		isCancelled = true
 	}
 }

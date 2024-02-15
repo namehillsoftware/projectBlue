@@ -32,7 +32,7 @@ class WhenChangingTheVolume {
 			every { promiseNextPreparedPlaybackFile(Duration.ZERO) } returns positionedPlaybackHandlerContainer
 		}
 		val playlistPlayback = PlaylistPlayer(preparedPlaybackFileQueue, Duration.ZERO)
-		playlistPlayback.prepare()
+		playlistPlayback.resume()
 		playlistPlayback.setVolume(0.8f)
 	}
 

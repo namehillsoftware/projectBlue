@@ -2,10 +2,10 @@ package com.lasthopesoftware.bluewater.client.playback.playlist
 
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.SupplyQueuedPreparedFiles
 import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile
-import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile
 import com.lasthopesoftware.bluewater.shared.lazyLogger
+import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.namehillsoftware.handoff.promises.Promise
@@ -23,46 +23,63 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 
 	private val behaviorSubject = BehaviorSubject.create<PositionedPlayingFile>()
 	private val stateChangeSync = Any()
-	private var positionedPlayingFile: PositionedPlayingFile? = null
-	private var positionedPlayableFile: PositionedPlayableFile? = null
-	private var volume = 0f
-
-	private var lastStateChangePromise: Promise<*> = Promise.empty<Any>()
 
 	@Volatile
-	private var isStarted = false
+	private var positionedPlayingFile: Promise<PositionedPlayingFile?>? = null
+
+	@Volatile
+	private var positionedPlayableFile: Promise<PositionedPlayableFile?>? = null
+
+	@Volatile
+	private var volume = 0f
+
+	@Volatile
+	private var promisedPlayableFile: Promise<PositionedPlayableFile> = Promise.empty()
+
 	@Volatile
 	private var isHalted = false
 
 	override fun observe(): Observable<PositionedPlayingFile> = behaviorSubject
 
-	override fun prepare(): ManagePlaylistPlayback {
-		if (!isStarted) {
-			synchronized(stateChangeSync) {
-				if (!isStarted) {
-					isStarted = true
-					setupNextPreparedFile(preparedPosition)
-				}
+	override fun pause(): Promise<PositionedPlayableFile?> = synchronized(stateChangeSync) {
+		positionedPlayingFile
+			?.apply { cancel() }
+			?.eventually { ppf ->
+				ppf
+					?.let { playingFile ->
+						playingFile
+							.playingFile
+							.promisePause()
+							.then { p ->
+								PositionedPlayableFile(p, ppf.playableFileVolumeManager, ppf.asPositionedFile())
+							}
+					}.keepPromise()
 			}
-		}
-
-		return this
+			?.also {
+				positionedPlayableFile = it
+				positionedPlayingFile = null
+			}
+			?: positionedPlayableFile
+			?: Promise.empty()
 	}
 
-	override fun pause(): Promise<PositionedPlayableFile?> {
-		synchronized(stateChangeSync) {
-			return lastStateChangePromise
-				.eventually({ promisePause() }, { promisePause() })
-				.also { lastStateChangePromise = it }
-		}
-	}
-
-	override fun resume(): Promise<PositionedPlayingFile?> {
-		synchronized(stateChangeSync) {
-			return lastStateChangePromise
-				.eventually({ promiseResumption() }, { promiseResumption() })
-				.also { lastStateChangePromise = it }
-		}
+	override fun resume(): Promise<PositionedPlayingFile?> = synchronized(stateChangeSync) {
+		positionedPlayingFile
+			?: (positionedPlayableFile
+				?.eventually {
+					it?.playableFile?.let { playableFile ->
+						playableFile
+							.promisePlayback()
+							.then { p ->
+								PositionedPlayingFile(p, it.playableFileVolumeManager, it.asPositionedFile())
+							}
+					}.keepPromise()
+				}
+				?: continuePreparedFileQueueDrain(preparedPosition))
+				.also {
+					positionedPlayingFile = it
+					positionedPlayableFile = null
+				}
 	}
 
 	override val isPlaying: Boolean
@@ -70,99 +87,75 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 
 	override fun setVolume(volume: Float): Promise<Unit> {
 		this.volume = volume
-		return positionedPlayableFile?.playableFileVolumeManager?.setVolume(volume)?.unitResponse() ?: Unit.toPromise()
-	}
-
-	override fun haltPlayback(): Promise<*> {
-		fun generateHaltPromise() = positionedPlayableFile?.playableFile?.toPromise()
-				?: positionedPlayingFile?.playingFile?.promisePause()
-				?: Promise.empty()
-
-		return synchronized(stateChangeSync) {
-			lastStateChangePromise
-				.eventually(
-					{ generateHaltPromise() },
-					{ generateHaltPromise() })
-				.then({ p ->
-					if (!isHalted) {
-						isHalted = true
-						try {
-							p?.close()
-						} catch (e: Throwable) {
-							logger.error("There was an error releasing the media player", e)
-							behaviorSubject.onError(e)
-						}
-					}
-				}, { e ->
-					logger.error("There was an error releasing the media player", e)
-					behaviorSubject.onError(e)
-				})
-				.also { lastStateChangePromise = it }
-		}
-	}
-
-	private fun promisePause(): Promise<PositionedPlayableFile?> {
-		return positionedPlayingFile
-			?.let {
-				it.playingFile
-					.promisePause()
-					.then { p ->
-						PositionedPlayableFile(p, it.playableFileVolumeManager,	it.asPositionedFile()).apply {
-							positionedPlayableFile = this
-							positionedPlayingFile = null
-						}
-					}
-			}
-			?: positionedPlayableFile.toPromise()
-	}
-
-	private fun promiseResumption(): Promise<PositionedPlayingFile?> {
 		return positionedPlayableFile
-			?.let {
-				it.playableFile
-					.promisePlayback()
-					.then { p ->
-						PositionedPlayingFile(p, it.playableFileVolumeManager, it.asPositionedFile()).apply {
-							positionedPlayingFile = this
-							positionedPlayableFile = null
-						}
-					}
+			?.eventually { it?.playableFileVolumeManager?.setVolume(volume)?.unitResponse() ?: Unit.toPromise() }
+			?: positionedPlayingFile?.eventually {
+				it?.playableFileVolumeManager?.setVolume(volume)?.unitResponse() ?: Unit.toPromise()
 			}
-			?: Promise(IllegalStateException("A file must not be playing in order to resume"))
+			?: Unit.toPromise()
 	}
 
-	private fun setupNextPreparedFile(preparedPosition: Duration = Duration.ZERO) {
-		val preparingPlaybackFile = preparedPlaybackFileProvider
-			.promiseNextPreparedPlaybackFile(preparedPosition)
+	override fun haltPlayback(): Promise<*> = synchronized(stateChangeSync) {
+		pause()
+			.then({ p ->
+				if (!isHalted) {
+					isHalted = true
+					try {
+						p?.playableFile?.close()
+					} catch (e: Throwable) {
+						logger.error("There was an error releasing the media player", e)
+						behaviorSubject.onError(e)
+					}
+				}
+			}, { e ->
+				logger.error("There was an error releasing the media player", e)
+				behaviorSubject.onError(e)
+			})
+	}
 
-		if (preparingPlaybackFile == null) {
-			doCompletion()
-			return
+	private fun continuePreparedFileQueueDrain(preparedPosition: Duration = Duration.ZERO): Promise<PositionedPlayingFile?> =
+		object : Promise<PositionedPlayingFile?>(), Runnable {
+
+			var isCancelled = false
+
+			init {
+				respondToCancellation(this)
+
+				val preparedPlaybackFile = preparedPlaybackFileProvider.promiseNextPreparedPlaybackFile(preparedPosition)
+
+				if (preparedPlaybackFile == null || isCancelled) {
+					doCompletion()
+					resolve(null)
+				} else {
+					promisedPlayableFile = preparedPlaybackFile
+					preparedPlaybackFile.excuse(::handlePlaybackException)
+
+					preparedPlaybackFile.then {
+						if (!isCancelled) startFilePlayback(it).then(::resolve, ::reject)
+						else resolve(null)
+					}
+				}
+			}
+
+			override fun run() {
+				isCancelled = true
+				resolve(null)
+			}
 		}
 
-		preparingPlaybackFile
-			.eventually { positionedPlayableFile -> startFilePlayback(positionedPlayableFile) }
-			.excuse { exception -> handlePlaybackException(exception) }
-	}
-
-	private fun startFilePlayback(positionedPlayableFile: PositionedPlayableFile): Promise<PlayingFile?> {
+	private fun startFilePlayback(positionedPlayableFile: PositionedPlayableFile): Promise<PositionedPlayingFile> {
 		positionedPlayableFile.playableFileVolumeManager.setVolume(volume)
 		val playbackHandler = positionedPlayableFile.playableFile
 
-		synchronized(stateChangeSync) {
-			this.positionedPlayableFile = positionedPlayableFile
-			val promisedPlayback = lastStateChangePromise.eventually(
-				{ playbackHandler.promisePlayback() },
-				{ playbackHandler.promisePlayback() })
-
-			lastStateChangePromise = promisedPlayback
+		return synchronized(stateChangeSync) {
+			playbackHandler
+				.promisePlayback()
 				.then { playingFile ->
 					val newPositionedPlayingFile = PositionedPlayingFile(
 						playingFile,
 						positionedPlayableFile.playableFileVolumeManager,
-						positionedPlayableFile.asPositionedFile())
-
-					positionedPlayingFile = newPositionedPlayingFile
+						positionedPlayableFile.asPositionedFile()
+					)
 
 					behaviorSubject.onNext(newPositionedPlayingFile)
 
@@ -171,8 +164,10 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 						.then(
 							{ closeAndStartNextFile(playbackHandler) },
 							{ handlePlaybackException(it) })
+
+					newPositionedPlayingFile
 				}
-			return promisedPlayback
+				.also { positionedPlayingFile = it }
 		}
 	}
 
@@ -182,7 +177,7 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 		} catch (e: IOException) {
 			logger.error("There was an error releasing the media player", e)
 		}
-		setupNextPreparedFile()
+		continuePreparedFileQueueDrain()
 	}
 
 	private fun handlePlaybackException(exception: Throwable) {

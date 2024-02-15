@@ -61,7 +61,7 @@ class WhenStartingPlayback {
 
 		val futurePositionedPlayingFiles = playlistPlayer.observe().toList().toFuture()
 
-		playlistPlayer.prepare()
+		playlistPlayer.resume()
 
 		positionedPlayingFiles = futurePositionedPlayingFiles.get(30, TimeUnit.SECONDS)
 	}

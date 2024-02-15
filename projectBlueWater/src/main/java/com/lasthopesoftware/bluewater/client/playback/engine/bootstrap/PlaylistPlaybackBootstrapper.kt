@@ -18,7 +18,7 @@ class PlaylistPlaybackBootstrapper(private val volumeManagement: PlaylistVolumeM
 		val newPlayer = PlaylistPlayer(preparedPlaybackQueue, filePosition)
 		volumeManagement.managePlayer(newPlayer)
 		playlistPlayer = newPlayer
-		newPlayer.prepare()
+		newPlayer.resume()
 		return newPlayer
 	}
 

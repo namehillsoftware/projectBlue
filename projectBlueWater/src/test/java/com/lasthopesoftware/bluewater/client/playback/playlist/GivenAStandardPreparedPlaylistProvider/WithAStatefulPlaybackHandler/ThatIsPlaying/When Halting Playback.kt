@@ -38,7 +38,8 @@ class `When Halting Playback` {
 	@BeforeAll
 	fun act() {
 		val playlistPlayback = mut
-		val disposable = playlistPlayback.prepare().observe().subscribe(
+		playlistPlayback.resume()
+		val disposable = playlistPlayback.observe().subscribe(
 			{},
 			{ e -> exception = e },
 			{ isCompleted = true }

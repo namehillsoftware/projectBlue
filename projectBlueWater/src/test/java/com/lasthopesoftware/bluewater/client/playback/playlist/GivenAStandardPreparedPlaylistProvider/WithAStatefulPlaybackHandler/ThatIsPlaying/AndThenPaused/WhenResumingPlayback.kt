@@ -32,7 +32,7 @@ class WhenResumingPlayback {
 			every { promiseNextPreparedPlaybackFile(Duration.ZERO) } returns positionedPlaybackHandlerContainer
 		}
 		val playlistPlayback = PlaylistPlayer(preparedPlaybackFileQueue, Duration.ZERO)
-		playlistPlayback.prepare()
+		playlistPlayback.resume().toExpiringFuture().get()
 		playlistPlayback.pause().toExpiringFuture().get()
 		playingFile = playlistPlayback.resume().toExpiringFuture().get()
 	}

@@ -1,10 +1,9 @@
 package com.lasthopesoftware.bluewater.client.playback.playlist.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatIsPlaying
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.playback.engine.preparation.SupplyQueuedPreparedFiles
 import com.lasthopesoftware.bluewater.client.playback.file.NoTransformVolumeManager
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile
-import com.lasthopesoftware.bluewater.client.playback.file.fakes.FakeBufferingPlaybackHandler
+import com.lasthopesoftware.bluewater.client.playback.file.fakes.ResolvablePlaybackHandler
 import com.lasthopesoftware.bluewater.client.playback.playlist.PlaylistPlayer
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
@@ -16,7 +15,7 @@ import org.junit.jupiter.api.Test
 
 class WhenPausingPlayback {
 
-	private val playbackHandler = FakeBufferingPlaybackHandler()
+	private val playbackHandler = ResolvablePlaybackHandler()
 
 	@BeforeAll
 	fun act() {
@@ -28,10 +27,12 @@ class WhenPausingPlayback {
 				ServiceFile(1)
 			)
 		)
-		val preparedPlaybackFileQueue = mockk<SupplyQueuedPreparedFiles>().apply {
-			every { promiseNextPreparedPlaybackFile(Duration.ZERO) } returns positionedPlaybackHandlerContainer
-		}
-		val playlistPlayback = PlaylistPlayer(preparedPlaybackFileQueue, Duration.ZERO)
+		val playlistPlayback = PlaylistPlayer(
+			mockk {
+				every { promiseNextPreparedPlaybackFile(Duration.ZERO) } returns positionedPlaybackHandlerContainer
+			},
+			Duration.ZERO
+		)
 		playlistPlayback.pause()
 	}
 

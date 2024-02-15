@@ -5,7 +5,6 @@ import com.namehillsoftware.handoff.promises.Promise
 import io.reactivex.rxjava3.core.Observable
 
 interface ManagePlaylistPlayback {
-	fun prepare(): ManagePlaylistPlayback
 	fun pause(): Promise<*>
 	fun resume(): Promise<PositionedPlayingFile?>
 	fun setVolume(volume: Float): Promise<Unit>
