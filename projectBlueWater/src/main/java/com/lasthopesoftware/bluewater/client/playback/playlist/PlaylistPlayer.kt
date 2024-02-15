@@ -117,7 +117,11 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 	private fun playNextFile(preparedPosition: Duration = Duration.ZERO): Promise<PositionedPlayingFile?> =
 		object : Promise<PositionedPlayingFile?>(), Runnable {
 
-			var isCancelled = false
+			private val sync = Any()
+			@Volatile
+			private var isCancelled = false
+			@Volatile
+			private var isStarting = false
 
 			init {
 				respondToCancellation(this)
@@ -129,18 +133,27 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 					resolve(null)
 				} else {
 					promisedPlayableFile = preparedPlaybackFile
-					preparedPlaybackFile.excuse(::handlePlaybackException)
 
-					preparedPlaybackFile.then {
-						if (!isCancelled) startFilePlayback(it).then(::resolve, ::reject)
-						else resolve(null)
-					}
+					preparedPlaybackFile.then(
+						{
+							synchronized(sync) {
+								if (!isCancelled) {
+									isStarting = true
+									startFilePlayback(it).then(::resolve, ::reject)
+								}
+								else resolve(null)
+							}
+						},
+						::handlePlaybackException
+					)
 				}
 			}
 
-			override fun run() {
+			override fun run() = synchronized(sync) {
 				isCancelled = true
-				resolve(null)
+
+				if (!isStarting)
+					resolve(null)
 			}
 		}
 

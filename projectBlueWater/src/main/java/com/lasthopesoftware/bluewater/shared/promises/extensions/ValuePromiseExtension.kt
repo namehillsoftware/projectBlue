@@ -4,7 +4,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.produceState
 import com.google.common.util.concurrent.ListenableFuture
-import com.lasthopesoftware.bluewater.shared.promises.ForwardedResponse.Companion.forward
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import io.reactivex.rxjava3.core.Completable
@@ -58,7 +57,8 @@ private object FalsePromise: Promise<Boolean>(false)
 
 private object UnitPromise : Promise<Unit>(Unit)
 
-fun <T> Promise<T>?.keepPromise(): Promise<T?> = this?.forward() ?: Promise.empty()
+@Suppress("UNCHECKED_CAST")
+fun <T> Promise<T>?.keepPromise(): Promise<T?> = this as? Promise<T?> ?: Promise.empty<T?>()
 
 fun <T> Promise<T>?.keepPromise(default: T): Promise<T> = this ?: default.toPromise()
 
