@@ -75,7 +75,7 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 							}
 					}.keepPromise()
 				}
-				?: continuePreparedFileQueueDrain(preparedPosition))
+				?: playNextFile(preparedPosition))
 				.also {
 					positionedPlayingFile = it
 					positionedPlayableFile = null
@@ -114,7 +114,7 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 			})
 	}
 
-	private fun continuePreparedFileQueueDrain(preparedPosition: Duration = Duration.ZERO): Promise<PositionedPlayingFile?> =
+	private fun playNextFile(preparedPosition: Duration = Duration.ZERO): Promise<PositionedPlayingFile?> =
 		object : Promise<PositionedPlayingFile?>(), Runnable {
 
 			var isCancelled = false
@@ -148,37 +148,34 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 		positionedPlayableFile.playableFileVolumeManager.setVolume(volume)
 		val playbackHandler = positionedPlayableFile.playableFile
 
-		return synchronized(stateChangeSync) {
-			playbackHandler
-				.promisePlayback()
-				.then { playingFile ->
-					val newPositionedPlayingFile = PositionedPlayingFile(
-						playingFile,
-						positionedPlayableFile.playableFileVolumeManager,
-						positionedPlayableFile.asPositionedFile()
-					)
+		return playbackHandler
+			.promisePlayback()
+			.then { playingFile ->
+				val newPositionedPlayingFile = PositionedPlayingFile(
+					playingFile,
+					positionedPlayableFile.playableFileVolumeManager,
+					positionedPlayableFile.asPositionedFile()
+				)
 
-					behaviorSubject.onNext(newPositionedPlayingFile)
+				behaviorSubject.onNext(newPositionedPlayingFile)
 
-					playingFile
-						.promisePlayedFile()
-						.then(
-							{ closeAndStartNextFile(playbackHandler) },
-							{ handlePlaybackException(it) })
+				playingFile
+					.promisePlayedFile()
+					.then(
+						{ closeAndStartNextFile(playbackHandler) },
+						{ handlePlaybackException(it) })
 
-					newPositionedPlayingFile
-				}
-				.also { positionedPlayingFile = it }
-		}
+				newPositionedPlayingFile
+			}
 	}
 
-	private fun closeAndStartNextFile(playbackHandler: PlayableFile) {
+	private fun closeAndStartNextFile(playbackHandler: PlayableFile) = synchronized(stateChangeSync) {
 		try {
 			playbackHandler.close()
 		} catch (e: IOException) {
 			logger.error("There was an error releasing the media player", e)
 		}
-		continuePreparedFileQueueDrain()
+		positionedPlayingFile = playNextFile()
 	}
 
 	private fun handlePlaybackException(exception: Throwable) {
