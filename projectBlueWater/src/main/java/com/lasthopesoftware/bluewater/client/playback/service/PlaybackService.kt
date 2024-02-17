@@ -33,7 +33,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.suppli
 import com.lasthopesoftware.bluewater.client.browsing.files.image.CachedImageProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.UpdatePlayStatsOnPlaybackCompleteReceiver
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.UpdatePlayStatsOnPlaybackCompletedReceiver
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.factory.LibraryPlaystatsUpdateSelector
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.fileproperties.FilePropertiesPlayStatsUpdater
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.playedfile.PlayedFilePlayStatsUpdater
@@ -49,7 +49,6 @@ import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryR
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibraryConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.libraries.TrackedLibraryConnectionSessions
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionServiceProxy
@@ -136,6 +135,7 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
 import com.lasthopesoftware.bluewater.shared.promises.toFuture
 import com.lasthopesoftware.bluewater.shared.resilience.TimedCountdownLatch
 import com.lasthopesoftware.resources.closables.AutoCloseableManager
+import com.lasthopesoftware.resources.closables.ClosedResourceException
 import com.lasthopesoftware.resources.closables.PromisingCloseableManager
 import com.lasthopesoftware.resources.closables.lazyScoped
 import com.lasthopesoftware.resources.executors.ThreadPools
@@ -406,7 +406,7 @@ import java.util.concurrent.TimeoutException
 		)
 	}
 
-	private val connectionSessionManager by lazy { promisingServiceCloseables.manage(TrackedLibraryConnectionSessions(ConnectionSessionManager.get(this))) }
+	private val connectionSessionManager by lazy { ConnectionSessionManager.get(this) }
 
 	private val libraryConnectionProvider by lazy {
 		NotifyingLibraryConnectionProvider(
@@ -562,6 +562,28 @@ import java.util.concurrent.TimeoutException
 		)
 	}
 
+	private val updatePlayStatsOnPlaybackCompletedReceiver by lazy {
+		promisingServiceCloseables.manage(
+			UpdatePlayStatsOnPlaybackCompletedReceiver(
+				LibraryPlaystatsUpdateSelector(
+					LibraryServerVersionProvider(libraryConnectionProvider),
+					PlayedFilePlayStatsUpdater(libraryConnectionProvider),
+					FilePropertiesPlayStatsUpdater(
+						freshLibraryFileProperties,
+						FilePropertyStorage(
+							libraryConnectionProvider,
+							ConnectionAuthenticationChecker(libraryConnectionProvider),
+							revisionProvider,
+							FilePropertyCache,
+							applicationMessageBus
+						),
+					),
+				),
+				this,
+			)
+		)
+	}
+
 	private val playlistPlaybackBootstrapper by lazy { serviceCloseables.manage(PlaylistPlaybackBootstrapper(playlistVolumeManager)) }
 
 	private val promisedPlaybackServices = RetryOnRejectionLazyPromise {
@@ -614,7 +636,7 @@ import java.util.concurrent.TimeoutException
 					.setOnPlaybackStarted(this)
 					.setOnPlaybackPaused(this)
 					.setOnPlaybackInterrupted(this)
-					.setOnPlayingFileChanged(this)
+					.setOnPlayingFileChanged(updatePlayStatsOnPlaybackCompletedReceiver)
 					.setOnPlaylistError(::uncaughtExceptionHandler)
 					.setOnPlaybackCompleted(this)
 					.setOnPlaylistReset(this)
@@ -694,25 +716,6 @@ import java.util.concurrent.TimeoutException
 		applicationMessageBus.registerReceiver { _: PlaybackEngineTypeChangedBroadcaster.PlaybackEngineTypeChanged ->
 			haltService()
 		}
-
-		applicationMessageBus.registerReceiver(
-			UpdatePlayStatsOnPlaybackCompleteReceiver(
-				LibraryPlaystatsUpdateSelector(
-					LibraryServerVersionProvider(libraryConnectionProvider),
-					PlayedFilePlayStatsUpdater(libraryConnectionProvider),
-					FilePropertiesPlayStatsUpdater(
-						freshLibraryFileProperties,
-						FilePropertyStorage(
-							libraryConnectionProvider,
-							ConnectionAuthenticationChecker(libraryConnectionProvider),
-							revisionProvider,
-							FilePropertyCache,
-							applicationMessageBus
-						),
-					),
-				)
-			)
-		)
 	}
 
 	override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -1010,6 +1013,8 @@ import java.util.concurrent.TimeoutException
 		}
 
 		fun handleIoException(exception: IOException?) {
+			if (exception is ClosedResourceException) return
+
 			if (exception is HttpDataSource.InvalidResponseCodeException && exception.responseCode == 416) {
 				logger.warn("Received an error code of " + exception.responseCode + ", will attempt restarting the player", exception)
 				closeAndRestartPlaylistManager(exception)
@@ -1094,12 +1099,11 @@ import java.util.concurrent.TimeoutException
 
 		promisedPlayedFile
 			.then {
-				localSubscription.dispose()
-
 				applicationMessageBus.sendMessage(
 					LibraryPlaybackMessage.TrackCompleted(libraryId, positionedPlayingFile.serviceFile)
 				)
 			}
+			.must { localSubscription.dispose() }
 
 		filePositionSubscription = localSubscription
 

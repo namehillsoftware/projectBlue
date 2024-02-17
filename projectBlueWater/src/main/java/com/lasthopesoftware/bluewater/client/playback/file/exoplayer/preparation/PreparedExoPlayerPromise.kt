@@ -2,9 +2,11 @@ package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparatio
 
 import android.net.Uri
 import android.os.Handler
+import androidx.annotation.OptIn
 import androidx.media3.common.ParserException
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.HttpDataSource
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.PromisingExoPlayer
@@ -124,7 +126,7 @@ internal class PreparedExoPlayerPromise(
 		handleError(error)
 	}
 
-	private fun handleError(error: Throwable) {
+	@OptIn(UnstableApi::class) private fun handleError(error: Throwable) {
 		if (isResolved) return
 
 		isResolved = true

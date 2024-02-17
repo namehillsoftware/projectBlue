@@ -8,6 +8,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
+import com.lasthopesoftware.resources.closables.ClosedResourceException
 import com.namehillsoftware.handoff.promises.Promise
 import io.reactivex.rxjava3.core.ObservableEmitter
 import org.joda.time.Duration
@@ -27,6 +28,8 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 
 	@Volatile
 	private var isStarted = false
+	@Volatile
+	private var isHalted = false
 	private var emitter: ObservableEmitter<PositionedPlayingFile>? = null
 
 	override fun subscribe(e: ObservableEmitter<PositionedPlayingFile>) {
@@ -71,7 +74,17 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 				.eventually(
 					{ generateHaltPromise() },
 					{ generateHaltPromise() })
-				.then({ p -> p?.close() }, { e ->
+				.then({ p ->
+					if (!isHalted) {
+						isHalted = true
+						try {
+							p?.close()
+						} catch (e: Throwable) {
+							logger.error("There was an error releasing the media player", e)
+							emitter?.onError(e)
+						}
+					}
+				}, { e ->
 					logger.error("There was an error releasing the media player", e)
 					emitter?.onError(e)
 				})
@@ -144,8 +157,7 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 
 					emitter?.onNext(newPositionedPlayingFile)
 
-					newPositionedPlayingFile
-						.playingFile
+					playingFile
 						.promisePlayedFile()
 						.then(
 							{ closeAndStartNextFile(playbackHandler) },
@@ -165,6 +177,8 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 	}
 
 	private fun handlePlaybackException(exception: Throwable) {
+		if (isHalted && exception is ClosedResourceException) return
+
 		emitter?.onError(exception)
 		haltPlayback()
 	}
