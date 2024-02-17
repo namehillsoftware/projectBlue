@@ -6,9 +6,26 @@ import android.os.Bundle
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.material.BottomSheetScaffold
+import androidx.compose.material.BottomSheetScaffoldState
+import androidx.compose.material.BottomSheetState
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.rememberBottomSheetScaffoldState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -23,15 +40,33 @@ import com.lasthopesoftware.bluewater.ActivityDependencies
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.client.ActivitySuppliedDependencies
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.list.*
+import com.lasthopesoftware.bluewater.client.browsing.files.list.SearchFilesView
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
-import com.lasthopesoftware.bluewater.client.browsing.library.access.*
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.browsing.navigation.*
+import com.lasthopesoftware.bluewater.client.browsing.navigation.ActiveLibraryDownloadsScreen
+import com.lasthopesoftware.bluewater.client.browsing.navigation.ApplicationSettingsScreen
+import com.lasthopesoftware.bluewater.client.browsing.navigation.BrowserLibraryDestination
+import com.lasthopesoftware.bluewater.client.browsing.navigation.ConnectionSettingsScreen
+import com.lasthopesoftware.bluewater.client.browsing.navigation.Destination
+import com.lasthopesoftware.bluewater.client.browsing.navigation.DestinationApplicationNavigation
+import com.lasthopesoftware.bluewater.client.browsing.navigation.DownloadsScreen
+import com.lasthopesoftware.bluewater.client.browsing.navigation.HiddenSettingsScreen
+import com.lasthopesoftware.bluewater.client.browsing.navigation.ItemScreen
+import com.lasthopesoftware.bluewater.client.browsing.navigation.LibraryDestination
+import com.lasthopesoftware.bluewater.client.browsing.navigation.LibraryMenu
+import com.lasthopesoftware.bluewater.client.browsing.navigation.LibraryScreen
+import com.lasthopesoftware.bluewater.client.browsing.navigation.NavigationMessage
+import com.lasthopesoftware.bluewater.client.browsing.navigation.NewConnectionSettingsScreen
+import com.lasthopesoftware.bluewater.client.browsing.navigation.NowPlayingScreen
+import com.lasthopesoftware.bluewater.client.browsing.navigation.SearchScreen
+import com.lasthopesoftware.bluewater.client.browsing.navigation.SelectedLibraryReRouter
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
-import com.lasthopesoftware.bluewater.client.connection.session.initialization.*
+import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionInitializingLibrarySelectionNavigation
+import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionStatusViewModel
+import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionUpdatesView
+import com.lasthopesoftware.bluewater.client.connection.session.initialization.DramaticConnectionInitializationController
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingView
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.InMemoryNowPlayingDisplaySettings
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingScreenViewModel
@@ -55,11 +90,19 @@ import com.lasthopesoftware.bluewater.shared.android.viewmodels.ViewModelInitAct
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToaster
 import com.lasthopesoftware.bluewater.shared.lazyLogger
-import com.lasthopesoftware.bluewater.shared.promises.extensions.*
+import com.lasthopesoftware.bluewater.shared.promises.extensions.registerResultActivityLauncher
+import com.lasthopesoftware.bluewater.shared.promises.extensions.suspend
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.resources.closables.AutoCloseableManager
 import com.namehillsoftware.handoff.Messenger
 import com.namehillsoftware.handoff.promises.Promise
-import dev.olshevski.navigation.reimagined.*
+import dev.olshevski.navigation.reimagined.NavController
+import dev.olshevski.navigation.reimagined.NavHost
+import dev.olshevski.navigation.reimagined.moveToTop
+import dev.olshevski.navigation.reimagined.navigate
+import dev.olshevski.navigation.reimagined.pop
+import dev.olshevski.navigation.reimagined.popUpTo
+import dev.olshevski.navigation.reimagined.rememberNavController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
@@ -400,7 +443,7 @@ private fun LibraryDestination.Navigate(
 ) {
 	with(browserViewDependencies) {
 		when (this@Navigate) {
-			is BrowserLibraryDestination -> this@Navigate.Navigate(
+			is BrowserLibraryDestination -> Navigate(
 				browserViewDependencies = browserViewDependencies,
 				scaffoldState = scaffoldState,
 				connectionStatusViewModel = connectionStatusViewModel,
