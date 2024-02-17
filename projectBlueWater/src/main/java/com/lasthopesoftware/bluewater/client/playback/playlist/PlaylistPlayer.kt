@@ -114,12 +114,49 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 			})
 	}
 
-	private fun playNextFile(preparedPosition: Duration = Duration.ZERO): Promise<PositionedPlayingFile?> =
-		object : Promise<PositionedPlayingFile?>(), Runnable {
+	private fun playNextFile(preparedPosition: Duration = Duration.ZERO): Promise<PositionedPlayingFile?> {
+		fun closeAndStartNextFile(playbackHandler: PlayableFile) = synchronized(stateChangeSync) {
+			try {
+				playbackHandler.close()
+			} catch (e: IOException) {
+				logger.error("There was an error releasing the media player", e)
+			}
+			positionedPlayingFile = playNextFile()
+		}
+
+		fun startFilePlayback(positionedPlayableFile: PositionedPlayableFile): Promise<PositionedPlayingFile> {
+			positionedPlayableFile.playableFileVolumeManager.setVolume(volume)
+			val playbackHandler = positionedPlayableFile.playableFile
+
+			return playbackHandler
+				.promisePlayback()
+				.then { playingFile ->
+					val newPositionedPlayingFile = PositionedPlayingFile(
+						playingFile,
+						positionedPlayableFile.playableFileVolumeManager,
+						positionedPlayableFile.asPositionedFile()
+					)
+
+					behaviorSubject.onNext(newPositionedPlayingFile)
+
+					playingFile
+						.promisePlayedFile()
+						.then(
+							{ closeAndStartNextFile(playbackHandler) },
+							::handlePlaybackException
+						)
+
+					newPositionedPlayingFile
+				}
+		}
+
+		return object : Promise<PositionedPlayingFile?>(), Runnable {
 
 			private val sync = Any()
+
 			@Volatile
 			private var isCancelled = false
+
 			@Volatile
 			private var isStarting = false
 
@@ -140,8 +177,7 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 								if (!isCancelled) {
 									isStarting = true
 									startFilePlayback(it).then(::resolve, ::reject)
-								}
-								else resolve(null)
+								} else resolve(null)
 							}
 						},
 						::handlePlaybackException
@@ -156,39 +192,6 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 					resolve(null)
 			}
 		}
-
-	private fun startFilePlayback(positionedPlayableFile: PositionedPlayableFile): Promise<PositionedPlayingFile> {
-		positionedPlayableFile.playableFileVolumeManager.setVolume(volume)
-		val playbackHandler = positionedPlayableFile.playableFile
-
-		return playbackHandler
-			.promisePlayback()
-			.then { playingFile ->
-				val newPositionedPlayingFile = PositionedPlayingFile(
-					playingFile,
-					positionedPlayableFile.playableFileVolumeManager,
-					positionedPlayableFile.asPositionedFile()
-				)
-
-				behaviorSubject.onNext(newPositionedPlayingFile)
-
-				playingFile
-					.promisePlayedFile()
-					.then(
-						{ closeAndStartNextFile(playbackHandler) },
-						{ handlePlaybackException(it) })
-
-				newPositionedPlayingFile
-			}
-	}
-
-	private fun closeAndStartNextFile(playbackHandler: PlayableFile) = synchronized(stateChangeSync) {
-		try {
-			playbackHandler.close()
-		} catch (e: IOException) {
-			logger.error("There was an error releasing the media player", e)
-		}
-		positionedPlayingFile = playNextFile()
 	}
 
 	private fun handlePlaybackException(exception: Throwable) {
