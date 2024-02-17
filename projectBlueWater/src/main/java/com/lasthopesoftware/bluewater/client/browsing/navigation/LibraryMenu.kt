@@ -3,11 +3,36 @@ package com.lasthopesoftware.bluewater.client.browsing.navigation
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.material.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredSize
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.material.BottomSheetState
+import androidx.compose.material.BottomSheetValue
+import androidx.compose.material.ContentAlpha
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.Icon
+import androidx.compose.material.LinearProgressIndicator
+import androidx.compose.material.LocalContentAlpha
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.ProvideTextStyle
+import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowForward
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
@@ -66,7 +91,14 @@ fun LibraryMenu(
 			) {
 				val progress by remember {
 					derivedStateOf {
-						if (bottomSheetState.currentValue == BottomSheetValue.Collapsed) 0f else 1f
+						val bottomSheetProgress = bottomSheetState.progress
+						when {
+							bottomSheetState.targetValue == BottomSheetValue.Collapsed && bottomSheetProgress == 1f -> 0f
+							bottomSheetState.isCollapsed -> bottomSheetProgress
+							bottomSheetState.targetValue == BottomSheetValue.Expanded && bottomSheetProgress == 1f -> 1f
+							bottomSheetState.isExpanded -> 1 - bottomSheetProgress
+							else -> 0f
+						}
 					}
 				}
 
@@ -134,7 +166,7 @@ fun LibraryMenu(
 					)
 
 					Icon(
-						Icons.Default.ArrowForward,
+						Icons.AutoMirrored.Filled.ArrowForward,
 						contentDescription = stringResource(id = R.string.title_activity_view_now_playing),
 						tint = MaterialTheme.colors.onSecondary,
 						modifier = Modifier
