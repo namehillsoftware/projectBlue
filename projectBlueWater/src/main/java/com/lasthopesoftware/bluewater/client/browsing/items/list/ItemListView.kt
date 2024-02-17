@@ -377,7 +377,7 @@ fun ItemListView(
 				)
 
 				val headerCollapseProgress by heightScaler.getProgressState()
-				val topPadding by remember { derivedStateOf { (appBarHeight - 46 * headerCollapseProgress).dp } }
+				val topPadding by remember { derivedStateOf { (appBarHeight - 42 * headerCollapseProgress).dp } }
 				BoxWithConstraints(
 					modifier = Modifier.padding(top = topPadding)
 				) {
@@ -424,7 +424,7 @@ fun ItemListView(
 
 					val menuWidth by remember { derivedStateOf { linearInterpolation(maxWidth, minimumMenuWidth, acceleratedHeaderHidingProgress) } }
 					val expandedTopRowPadding = expandedTitleHeight.dp + expandedMenuVerticalPadding.dp
-					val collapsedTopRowPadding = 6.dp
+					val collapsedTopRowPadding = 2.dp
 					val topRowPadding by remember { derivedStateOf { linearInterpolation(expandedTopRowPadding, collapsedTopRowPadding, headerCollapseProgress) } }
 					val textModifier = Modifier.alpha(acceleratedToolbarStateProgress)
 
