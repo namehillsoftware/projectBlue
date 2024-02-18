@@ -126,6 +126,7 @@ import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMes
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.observables.toMaybeObservable
+import com.lasthopesoftware.bluewater.shared.policies.retries.CloseableRetryOnRejectionLazyPromise
 import com.lasthopesoftware.bluewater.shared.policies.retries.RetryOnRejectionLazyPromise
 import com.lasthopesoftware.bluewater.shared.promises.ForwardedResponse.Companion.forward
 import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay.Companion.delay
@@ -293,7 +294,7 @@ import java.util.concurrent.TimeoutException
 			context.promiseBoundService<PlaybackService>()
 				.then { h ->
 					val isPlaying = h.service.run { activeLibraryId == libraryId && isMarkedForPlay }
-					context.unbindService(h.serviceConnection)
+					h.close()
 					isPlaying
 				}
 
@@ -374,9 +375,9 @@ import java.util.concurrent.TimeoutException
 
 	private val arbitratorForOs by lazy { OsPermissionsChecker(this) }
 
-	private val lazyMediaSessionService = RetryOnRejectionLazyPromise { promiseBoundService<MediaSessionService>() }
+	private val lazyMediaSessionService by promisingServiceCloseables.manage(CloseableRetryOnRejectionLazyPromise { promiseBoundService<MediaSessionService>() })
 
-	private val promisedMediaSession by RetryOnRejectionLazyPromise { lazyMediaSessionService.value.then { c -> c.service.mediaSession } }
+	private val promisedMediaSession by RetryOnRejectionLazyPromise { lazyMediaSessionService.then { c -> c.service.mediaSession } }
 
 	private val mediaStyleNotificationSetup by RetryOnRejectionLazyPromise {
 			promisedMediaSession.then { mediaSession ->
@@ -1124,8 +1125,6 @@ import java.util.concurrent.TimeoutException
 		if (areListenersRegistered) unregisterListeners()
 
 		filePositionSubscription?.dispose()
-
-		if (lazyMediaSessionService.isInitializing()) lazyMediaSessionService.value.then { unbindService(it.serviceConnection) }
 
 		if (lazyObservationScheduler.isInitialized()) lazyObservationScheduler.value.shutdown()
 
