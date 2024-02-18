@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater
 
 import androidx.activity.ComponentActivity
+import androidx.media3.common.util.UnstableApi
 import com.lasthopesoftware.bluewater.client.ActivitySuppliedDependencies
 import com.lasthopesoftware.bluewater.client.browsing.BrowserViewDependencies
 import com.lasthopesoftware.bluewater.client.browsing.files.access.CachedItemFileProvider
@@ -67,6 +68,7 @@ import com.lasthopesoftware.resources.closables.ViewModelCloseableManager
 import com.lasthopesoftware.resources.strings.StringResources
 import com.lasthopesoftware.resources.uri.DocumentUriSelector
 
+@UnstableApi
 class ActivityDependencies(activity: ComponentActivity, activitySuppliedDependencies: ActivitySuppliedDependencies) : BrowserViewDependencies {
 	private val applicationContext by lazy { activity.applicationContext }
 

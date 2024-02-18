@@ -1,5 +1,5 @@
 package com.lasthopesoftware.resources.closables
 
-interface ManagePromisingCloseables {
+interface ManagePromisingCloseables : ManageCloseables {
 	fun <T : PromisingCloseable> manage(closeable: T): T
 }
