@@ -1129,22 +1129,26 @@ import java.util.concurrent.TimeoutException
 
 		if (lazyObservationScheduler.isInitialized()) lazyObservationScheduler.value.shutdown()
 
-		pausePlayback()
-			.must {
-				playbackEngineCloseables.close()
-			}
-			.inevitably {
-				Promise.whenAll(
-					promisingPlaybackEngineCloseables.promiseClose(),
-					promisingServiceCloseables.promiseClose()
-				)
-			}
-			.inevitably {
-				if (playbackThread.isInitializing()) playbackThread.value.then { it.quitSafely() }
-				else Unit.toPromise()
-			}
-			.toFuture()
-			.get(30, TimeUnit.SECONDS)
+		try {
+			pausePlayback()
+				.must {
+					playbackEngineCloseables.close()
+				}
+				.inevitably {
+					Promise.whenAll(
+						promisingPlaybackEngineCloseables.promiseClose(),
+						promisingServiceCloseables.promiseClose()
+					)
+				}
+				.inevitably {
+					if (playbackThread.isInitializing()) playbackThread.value.then { it.quitSafely() }
+					else Unit.toPromise()
+				}
+				.toFuture()
+				.get(4, TimeUnit.SECONDS)
+		} catch (e: Throwable) {
+			logger.error("An error occurred closing resources", e)
+		}
 
 		super.onDestroy()
 	}
