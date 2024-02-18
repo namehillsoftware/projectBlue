@@ -3,11 +3,11 @@ package com.lasthopesoftware.bluewater.client.playback.file.fakes
 import com.lasthopesoftware.bluewater.client.playback.file.PlayedFile
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressedPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
-import com.lasthopesoftware.resources.closables.ClosedResourceException
 import com.namehillsoftware.handoff.Messenger
 import com.namehillsoftware.handoff.promises.MessengerOperator
 import com.namehillsoftware.handoff.promises.Promise
 import org.joda.time.Duration
+import kotlin.coroutines.cancellation.CancellationException
 
 class ResolvablePlaybackHandler : FakeBufferingPlaybackHandler() {
 	private val promise: ProgressedPromise<Duration, PlayedFile> = object : ProgressedPromise<Duration, PlayedFile>(MessengerOperator { messenger -> resolve = messenger }) {
@@ -21,12 +21,12 @@ class ResolvablePlaybackHandler : FakeBufferingPlaybackHandler() {
 
 	override fun close() {
 		super.close()
-		resolve?.sendRejection(ClosedResourceException())
+		resolve?.sendRejection(CancellationException())
 	}
 
 	fun resolve() {
 		if (!isClosed) resolve?.sendResolution(this)
-		else resolve?.sendRejection(ClosedResourceException())
+		else resolve?.sendRejection(CancellationException())
 		resolve = null
 	}
 }
