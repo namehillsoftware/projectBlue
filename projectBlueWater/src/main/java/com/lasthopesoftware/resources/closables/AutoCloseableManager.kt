@@ -1,7 +1,7 @@
 package com.lasthopesoftware.resources.closables
 
 import com.lasthopesoftware.bluewater.shared.lazyLogger
-import java.util.concurrent.ConcurrentLinkedDeque
+import java.util.Stack
 
 class AutoCloseableManager : ManageCloseables, AutoCloseable {
 
@@ -9,14 +9,15 @@ class AutoCloseableManager : ManageCloseables, AutoCloseable {
 		private val logger by lazyLogger<AutoCloseableManager>()
 	}
 
-	private val closeables = ConcurrentLinkedDeque<AutoCloseable>()
+	private val lock = Any()
+	private val closeables = Stack<AutoCloseable>()
 
-	override fun <T : AutoCloseable> manage(closeable: T): T {
+	override fun <T : AutoCloseable> manage(closeable: T): T = synchronized(lock) {
 		closeables.push(closeable)
 		return closeable
 	}
 
-	override fun close() {
+	override fun close() = synchronized(lock) {
 		while (closeables.isNotEmpty()) {
 			try {
 				closeables.pop()?.close()

@@ -126,7 +126,6 @@ import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMes
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.observables.toMaybeObservable
-import com.lasthopesoftware.bluewater.shared.policies.retries.CloseableRetryOnRejectionLazyPromise
 import com.lasthopesoftware.bluewater.shared.policies.retries.RetryOnRejectionLazyPromise
 import com.lasthopesoftware.bluewater.shared.promises.ForwardedResponse.Companion.forward
 import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay.Companion.delay
@@ -335,7 +334,6 @@ import java.util.concurrent.TimeoutException
 	/* End streamer intent helpers */
 
 	private val promisingServiceCloseables = PromisingCloseableManager()
-	private val promisingPlaybackEngineCloseables by lazy { promisingServiceCloseables.manage(PromisingCloseableManager()) }
 	private val applicationMessageBus by lazy { promisingServiceCloseables.manage(getApplicationMessageBus().getScopedMessageBus()) }
 	private val lazyObservationScheduler = lazy { ExecutorScheduler(ThreadPools.compute, true, true) }
 	private val binder by lazy { GenericBinder(this) }
@@ -371,27 +369,33 @@ import java.util.concurrent.TimeoutException
 
 	private val arbitratorForOs by lazy { OsPermissionsChecker(this) }
 
-	private val lazyMediaSessionService by promisingServiceCloseables.manage(CloseableRetryOnRejectionLazyPromise { promiseBoundService<MediaSessionService>() })
+	private val lazyMediaSessionService by promisingServiceCloseables.manage(
+		RetryOnRejectionLazyPromise {
+			promiseBoundService<MediaSessionService>().then(promisingServiceCloseables::manage)
+		}
+	)
 
-	private val promisedMediaSession by RetryOnRejectionLazyPromise { lazyMediaSessionService.then { c -> c.service.mediaSession } }
+	private val promisedMediaSession by RetryOnRejectionLazyPromise {
+		lazyMediaSessionService.then { c -> c.service.mediaSession }
+	}
 
 	private val mediaStyleNotificationSetup by RetryOnRejectionLazyPromise {
-			promisedMediaSession.then { mediaSession ->
-				MediaStyleNotificationSetup(
-					this,
-					NotificationBuilderProducer(this),
-					playbackNotificationsConfiguration,
-					mediaSession,
-					intentBuilder,
-				)
-			}
+		promisedMediaSession.then { mediaSession ->
+			MediaStyleNotificationSetup(
+				this,
+				NotificationBuilderProducer(this),
+				playbackNotificationsConfiguration,
+				mediaSession,
+				intentBuilder,
+			)
 		}
+	}
 
-	private val playbackThread = RetryOnRejectionLazyPromise {
+	private val playbackThread = promisingServiceCloseables.manage(RetryOnRejectionLazyPromise {
 		HandlerThreadCreator.promiseNewHandlerThread(
 			"Playback",
 			Process.THREAD_PRIORITY_AUDIO)
-	}
+	})
 
 	private val playbackStartingNotificationBuilder by lazy {
 		PlaybackStartingNotificationBuilder(
@@ -435,7 +439,7 @@ import java.util.concurrent.TimeoutException
 	private val audioDiskCacheDirectoryProvider by lazy { AndroidDiskCacheDirectoryProvider(this, AudioCacheConfiguration) }
 	private val lazyAudioBecomingNoisyReceiver = lazy { AudioBecomingNoisyReceiver() }
 	private val notificationController by lazy {
-		promisingPlaybackEngineCloseables.manage(NotificationsController(this, notificationManager))
+		promisingServiceCloseables.manage(NotificationsController(this, notificationManager))
 	}
 	private val disconnectionLatch by lazy { TimedCountdownLatch(numberOfDisconnects, disconnectResetDuration) }
 	private val errorLatch by lazy { TimedCountdownLatch(numberOfErrors, errorLatchResetDuration) }
@@ -483,7 +487,7 @@ import java.util.concurrent.TimeoutException
 
 	private val urlKeyProvider by lazy { UrlKeyProvider(libraryConnectionProvider) }
 
-	private	val promisedMediaNotificationSetup by RetryOnRejectionLazyPromise {
+	private	val promisedMediaNotificationSetup by promisingServiceCloseables.manage(RetryOnRejectionLazyPromise {
 		mediaStyleNotificationSetup.then { mediaStyleNotificationSetup ->
 			val notificationBuilder = promisingServiceCloseables.manage(
 					NowPlayingNotificationBuilder(
@@ -507,7 +511,7 @@ import java.util.concurrent.TimeoutException
 				)
 			)
 		}
-	}
+	})
 
 	private val trackPositionBroadcaster by lazy {
 		TrackPositionBroadcaster(
@@ -517,10 +521,7 @@ import java.util.concurrent.TimeoutException
 	}
 
 	private val remoteFileUriProvider by lazy {
-		RemoteFileUriProvider(
-			libraryConnectionProvider,
-			ServiceFileUriQueryParamsProvider
-		)
+		RemoteFileUriProvider(libraryConnectionProvider, ServiceFileUriQueryParamsProvider)
 	}
 
 	private val audioCacheFilesProvider by lazy { CachedFilesProvider(this, AudioCacheConfiguration) }
@@ -592,6 +593,8 @@ import java.util.concurrent.TimeoutException
 			OkHttpFactory
 		)
 
+		val promisingPlaybackEngineCloseables = promisingServiceCloseables.createNestedManager()
+
 		val promisedEngine = playbackThread.value
 			.then { h -> Handler(h.looper) }
 			.then { ph ->
@@ -614,8 +617,9 @@ import java.util.concurrent.TimeoutException
 				)
 			}
 			.then { preparationSourceProvider ->
-				PreparedPlaybackQueueResourceManagement(preparationSourceProvider, preparationSourceProvider)
-					.also(promisingPlaybackEngineCloseables::manage)
+				promisingPlaybackEngineCloseables.manage(
+					PreparedPlaybackQueueResourceManagement(preparationSourceProvider, preparationSourceProvider)
+				)
 			}
 			.then { preparedPlaybackQueueResourceManagement ->
 				val engine = PlaybackEngine(
@@ -626,9 +630,6 @@ import java.util.concurrent.TimeoutException
 				)
 
 				engine
-					.also {
-						promisingPlaybackEngineCloseables.manage(engine)
-					}
 					.setOnPlaybackStarted(this)
 					.setOnPlaybackPaused(this)
 					.setOnPlaybackInterrupted(this)
@@ -636,14 +637,17 @@ import java.util.concurrent.TimeoutException
 					.setOnPlaylistError(::uncaughtExceptionHandler)
 					.setOnPlaybackCompleted(this)
 					.setOnPlaylistReset(this)
+					.let(promisingPlaybackEngineCloseables::manage)
 					.let {
 						PlaybackServices(
-							playbackState = AudioManagingPlaybackStateChanger(
-								engine,
-								engine,
-								AudioFocusManagement(audioManager),
-								playlistVolumeManager
-							).also(promisingPlaybackEngineCloseables::manage),
+							playbackState = promisingPlaybackEngineCloseables.manage(
+								AudioManagingPlaybackStateChanger(
+									engine,
+									engine,
+									AudioFocusManagement(audioManager),
+									playlistVolumeManager
+								)
+							),
 							systemPlaybackState = it,
 							playlistFiles = it,
 							playbackContinuity = it,
@@ -1131,7 +1135,7 @@ import java.util.concurrent.TimeoutException
 					else Unit.toPromise()
 				}
 				.toFuture()
-				.get(4, TimeUnit.SECONDS)
+				.get()
 		} catch (e: Throwable) {
 			logger.error("An error occurred closing resources", e)
 		}

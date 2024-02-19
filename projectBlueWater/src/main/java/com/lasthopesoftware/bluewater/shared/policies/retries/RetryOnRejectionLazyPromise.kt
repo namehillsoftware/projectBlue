@@ -8,7 +8,7 @@ import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import com.namehillsoftware.lazyj.AbstractSynchronousLazy
 import java.util.concurrent.atomic.AtomicReference
 
-open class RetryOnRejectionLazyPromise<T>(private val factory: () -> Promise<T>) : Lazy<Promise<T>> {
+open class RetryOnRejectionLazyPromise<T>(private val factory: () -> Promise<T>) : Lazy<Promise<T>>, AutoCloseable {
 	private val resolvedPromiseBox = AtomicReference(RecurseOnRejectionLazyPromise())
 
 	override val value: Promise<T>
@@ -18,6 +18,11 @@ open class RetryOnRejectionLazyPromise<T>(private val factory: () -> Promise<T>)
 
 	override fun isInitialized(): Boolean = resolvedPromiseBox.get().run {
 		isCreated && `object`?.resolvedPromise != null
+	}
+
+	override fun close() {
+		if (isInitializing())
+			value.cancel()
 	}
 
 	private inner class RecurseOnRejectionLazyPromise
@@ -35,9 +40,11 @@ open class RetryOnRejectionLazyPromise<T>(private val factory: () -> Promise<T>)
 }
 
 class CloseableRetryOnRejectionLazyPromise<T : AutoCloseable>(factory: () -> Promise<T>) : RetryOnRejectionLazyPromise<T>(factory), PromisingCloseable, ImmediateResponse<T, Unit> {
-	override fun promiseClose(): Promise<Unit> =
-		if (isInitializing()) value.then(this)
+	override fun promiseClose(): Promise<Unit> {
+		close()
+		return if (isInitializing()) value.then(this)
 		else Unit.toPromise()
+	}
 
 	override fun respond(resolution: T) {
 		resolution.close()

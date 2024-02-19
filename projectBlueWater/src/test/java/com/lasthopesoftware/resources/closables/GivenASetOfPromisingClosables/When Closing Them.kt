@@ -12,18 +12,43 @@ class `When Closing Them` {
 
 	private val closeables = listOf(Closeable(), Closeable(), Closeable())
 
+	private val nestedCloseables = listOf(Closeable(), Closeable())
+
+	private val doublyNestedCloseables = listOf(Closeable(), Closeable())
+
 	private val closedCloseables = mutableListOf<Closeable>()
 
 	@BeforeAll
 	fun act() {
-		for (closeable in closeables) mut.manage(closeable)
+		with (mut) {
+			for (closeable in closeables) manage(closeable)
 
-		mut.promiseClose().toExpiringFuture().get()
+			with (createNestedManager()) {
+				for (closeable in nestedCloseables)
+					manage(closeable)
+
+				with (createNestedManager()) {
+					for (closeable in doublyNestedCloseables)
+						manage(closeable)
+
+					promiseClose().toExpiringFuture().get()
+				}
+			}
+
+			promiseClose().toExpiringFuture().get()
+		}
 	}
 
 	@Test
 	fun `then the closeables are closed in the reverse order they were added`() {
-		assertThat(closedCloseables).containsExactly(*closeables.reversed().toTypedArray())
+		assertThat(closedCloseables).containsExactly(
+			*doublyNestedCloseables.reversed().toTypedArray(),
+			*doublyNestedCloseables.reversed().toTypedArray(),
+			*nestedCloseables.reversed().toTypedArray(),
+			*doublyNestedCloseables.reversed().toTypedArray(),
+			*nestedCloseables.reversed().toTypedArray(),
+			*closeables.reversed().toTypedArray()
+		)
 	}
 
 	inner class Closeable : AutoCloseable {

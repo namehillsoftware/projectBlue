@@ -9,11 +9,18 @@ import android.os.Bundle
 import android.os.IBinder
 import com.lasthopesoftware.bluewater.shared.cls
 import com.namehillsoftware.handoff.promises.Promise
+import kotlin.coroutines.cancellation.CancellationException
 
 inline fun <reified TService : Service> Context.promiseBoundService(extras: Bundle? = null): Promise<ConnectedServiceBinding<TService>> =
-	object : Promise<ConnectedServiceBinding<TService>>(), ServiceConnection {
+	object : Promise<ConnectedServiceBinding<TService>>(), ServiceConnection, Runnable {
 
+		private val lock = Any()
 		private val serviceClass = cls<TService>()
+
+		@Volatile
+		private var isCancelled = false
+		@Volatile
+		private var isBound = false
 
 		init {
 			try {
@@ -27,9 +34,16 @@ inline fun <reified TService : Service> Context.promiseBoundService(extras: Bund
 			}
 		}
 
-		override fun onServiceConnected(name: ComponentName?, service: IBinder) {
+		override fun onServiceConnected(name: ComponentName?, service: IBinder) = synchronized(lock) {
+			if (isCancelled) {
+				unbindService(this)
+				reject(CancellationException("Service Binding cancelled"))
+			}
+
 			val boundService = (service as? GenericBinder<*>)?.service as? TService
 			if (boundService != null) {
+				isBound = true
+
 				resolve(ConnectedServiceBinding(this@promiseBoundService, this, boundService))
 				return
 			}
@@ -46,5 +60,11 @@ inline fun <reified TService : Service> Context.promiseBoundService(extras: Bund
 
 		override fun onNullBinding(name: ComponentName?) {
 			reject(UnexpectedNullBindingException(serviceClass))
+		}
+
+		override fun run() = synchronized(lock) {
+			isCancelled = true
+			if (isBound)
+				unbindService(this)
 		}
 	}
