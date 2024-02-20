@@ -6,8 +6,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
-class `When Closing Them` {
-
+class `When Closing Nested Closables First` {
 	private val mut = PromisingCloseableManager()
 
 	private val closeables = listOf(Closeable(), Closeable(), Closeable())
@@ -31,6 +30,8 @@ class `When Closing Them` {
 					for (closeable in doublyNestedCloseables)
 						manage(closeable)
 				}
+
+				promiseClose().toExpiringFuture().get()
 			}
 
 			promiseClose().toExpiringFuture().get()

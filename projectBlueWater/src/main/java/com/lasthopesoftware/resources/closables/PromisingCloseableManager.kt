@@ -15,21 +15,15 @@ open class PromisingCloseableManager : ManagePromisingCloseables {
 	private val stackSync = Any()
 
 	@Volatile
-	private var head: LinkedNode? = null
+	private var head: HierarchicalLinkedNode? = null
 
 	override fun <T : PromisingCloseable> manage(closeable: T): T {
-		if (closeable === this) {
-			if (BuildConfig.DEBUG)
-				logger.debug("Attempted to manage self! Returning.")
-			return closeable
-		}
-
-		LinkedNode(this, closeable)
+		newNode(closeable)
 		return closeable
 	}
 
 	override fun <T : AutoCloseable> manage(closeable: T): T {
-		manage(AutoCloseableWrapper(closeable))
+		newNode(AutoCloseableWrapper(closeable))
 		return closeable
 	}
 
@@ -51,6 +45,24 @@ open class PromisingCloseableManager : ManagePromisingCloseables {
 				})
 			.keepPromise(Unit)
 
+	protected open fun newNode(closeable: PromisingCloseable): HierarchicalLinkedNode? {
+		if (isSelf(closeable)) {
+			return null
+		}
+
+		return HierarchicalLinkedNode(this, closeable)
+	}
+
+	private fun isSelf(closeable: PromisingCloseable): Boolean {
+		if (closeable === this) {
+			if (BuildConfig.DEBUG)
+				logger.debug("Attempted to manage self! Returning.")
+			return true
+		}
+
+		return false
+	}
+
 	private class AutoCloseableWrapper(private val closeable: AutoCloseable) : PromisingCloseable {
 		override fun promiseClose(): Promise<Unit> {
 			if (BuildConfig.DEBUG)
@@ -61,17 +73,23 @@ open class PromisingCloseableManager : ManagePromisingCloseables {
 		}
 	}
 
-	private class LinkedNode(
+	protected class HierarchicalLinkedNode(
 		private val container: PromisingCloseableManager,
 		private val closeable: PromisingCloseable
 	)
 	{
 		@Volatile
-		var prev: LinkedNode? = null
+		var prev: HierarchicalLinkedNode? = null
 			private set
 		@Volatile
-		var next: LinkedNode? = null
+		var next: HierarchicalLinkedNode? = null
 			private set
+
+		@Volatile
+		var parentNode: HierarchicalLinkedNode? = null
+
+		@Volatile
+		var childNode: HierarchicalLinkedNode? = null
 
 		init {
 			synchronized(container.stackSync) {
@@ -82,6 +100,16 @@ open class PromisingCloseableManager : ManagePromisingCloseables {
 		}
 
 		fun remove(): PromisingCloseable = synchronized(container.stackSync) {
+			childNode?.apply {
+				parentNode = null
+				remove()
+			}
+
+			parentNode?.apply {
+				childNode = null
+				remove()
+			}
+
 			// Take out of the chain
 			prev?.next = next
 			next?.prev = prev
@@ -99,18 +127,14 @@ open class PromisingCloseableManager : ManagePromisingCloseables {
 
 	private class NestedPromisingCloseableManager(private val parent: PromisingCloseableManager) : PromisingCloseableManager() {
 
-		private val node = LinkedNode(parent, this)
-
-		override fun <T : PromisingCloseable> manage(closeable: T): T {
-			parent.manage(closeable)
-			return super.manage(closeable)
-		}
+		override fun newNode(closeable: PromisingCloseable): HierarchicalLinkedNode? =
+			super.newNode(closeable)
+				?.also { childNode ->
+					val parentNode = parent.newNode(closeable)
+					childNode.parentNode = parentNode
+					parentNode?.childNode = childNode
+				}
 
 		override fun createNestedManager(): ManagePromisingCloseables = NestedPromisingCloseableManager(this)
-
-		override fun promiseClose(): Promise<Unit> {
-			node.remove()
-			return super.promiseClose()
-		}
 	}
 }
