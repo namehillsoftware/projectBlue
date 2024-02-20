@@ -10,6 +10,9 @@ import java.util.concurrent.TimeoutException
 
 fun <Resolution> Promise<Resolution>.toFuture(): Future<Resolution?> = FuturePromise(this)
 
+// Get the result in less time than the Application Not Responding error from Android
+fun <Resolution> Future<Resolution>.getSafely(): Resolution? = get(3, TimeUnit.SECONDS)
+
 private class FuturePromise<Resolution>(promise: Promise<Resolution>) : Future<Resolution?> {
 	private val cancellationProxy = CancellationProxy()
 	private val promise: Promise<Unit>

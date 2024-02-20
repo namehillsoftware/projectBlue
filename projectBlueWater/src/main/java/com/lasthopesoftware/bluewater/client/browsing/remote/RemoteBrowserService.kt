@@ -32,9 +32,9 @@ import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRateLimiter
 import com.lasthopesoftware.bluewater.shared.policies.retries.CloseableRetryOnRejectionLazyPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
+import com.lasthopesoftware.bluewater.shared.promises.getSafely
 import com.lasthopesoftware.bluewater.shared.promises.toFuture
 import com.lasthopesoftware.resources.PackageValidator
-import java.util.concurrent.TimeUnit
 import kotlin.math.max
 
 private val logger by lazyLogger<RemoteBrowserService>()
@@ -215,7 +215,7 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 
 	override fun onDestroy() {
 		try {
-			lazyMediaSessionService.promiseClose().toFuture().get(4, TimeUnit.SECONDS)
+			lazyMediaSessionService.promiseClose().toFuture().getSafely()
 		} catch (e: Throwable) {
 			logger.error("There was an error destroying the service", e)
 		}
