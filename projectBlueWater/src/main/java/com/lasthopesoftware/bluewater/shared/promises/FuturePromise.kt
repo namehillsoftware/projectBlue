@@ -2,9 +2,16 @@ package com.lasthopesoftware.bluewater.shared.promises
 
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
-import java.util.concurrent.*
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.ExecutionException
+import java.util.concurrent.Future
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 
 fun <Resolution> Promise<Resolution>.toFuture(): Future<Resolution?> = FuturePromise(this)
+
+// Get the result in less time than the Application Not Responding error from Android
+fun <Resolution> Future<Resolution>.getSafely(): Resolution? = get(3, TimeUnit.SECONDS)
 
 private class FuturePromise<Resolution>(promise: Promise<Resolution>) : Future<Resolution?> {
 	private val cancellationProxy = CancellationProxy()
@@ -50,11 +57,11 @@ private class FuturePromise<Resolution>(promise: Promise<Resolution>) : Future<R
 
 	override fun get(timeout: Long, unit: TimeUnit): Resolution? {
 		if (countDownLatch.await(timeout, unit)) return getResolution()
-		throw TimeoutException()
+		throw TimeoutException("Timed out waiting for promise to resolve")
 	}
 
 	private fun getResolution(): Resolution? {
-		rejection?.also { throw ExecutionException(rejection) }
+		rejection?.also { throw ExecutionException(it) }
 		return resolution
 	}
 }

@@ -28,11 +28,16 @@ import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.MediaSession.MediaSessionService
 import com.lasthopesoftware.bluewater.shared.android.services.promiseBoundService
 import com.lasthopesoftware.bluewater.shared.cls
+import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRateLimiter
-import com.lasthopesoftware.bluewater.shared.policies.retries.RetryOnRejectionLazyPromise
+import com.lasthopesoftware.bluewater.shared.policies.retries.CloseableRetryOnRejectionLazyPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
+import com.lasthopesoftware.bluewater.shared.promises.getSafely
+import com.lasthopesoftware.bluewater.shared.promises.toFuture
 import com.lasthopesoftware.resources.PackageValidator
 import kotlin.math.max
+
+private val logger by lazyLogger<RemoteBrowserService>()
 
 class RemoteBrowserService : MediaBrowserServiceCompat() {
 	companion object {
@@ -127,7 +132,7 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 		)
 	}
 
-	private val lazyMediaSessionService = RetryOnRejectionLazyPromise { promiseBoundService<MediaSessionService>() }
+	private val lazyMediaSessionService = CloseableRetryOnRejectionLazyPromise { promiseBoundService<MediaSessionService>() }
 
 	override fun onCreate() {
 		super.onCreate()
@@ -209,7 +214,11 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 	}
 
 	override fun onDestroy() {
-		if (lazyMediaSessionService.isInitializing()) lazyMediaSessionService.value.then { unbindService(it.serviceConnection) }
+		try {
+			lazyMediaSessionService.promiseClose().toFuture().getSafely()
+		} catch (e: Throwable) {
+			logger.error("There was an error destroying the service", e)
+		}
 		super.onDestroy()
 	}
 }

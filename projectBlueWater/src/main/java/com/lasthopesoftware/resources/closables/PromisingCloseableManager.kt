@@ -1,35 +1,135 @@
 package com.lasthopesoftware.resources.closables
 
+import com.lasthopesoftware.bluewater.BuildConfig
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
-import java.util.concurrent.ConcurrentLinkedQueue
 
-class PromisingCloseableManager : ManagePromisingCloseables, PromisingCloseable {
+open class PromisingCloseableManager : ManagePromisingCloseables {
 
 	companion object {
 		private val logger by lazyLogger<PromisingCloseableManager>()
 	}
 
-	private val closeables = ConcurrentLinkedQueue<PromisingCloseable>()
+	private val closeablesStack = LinkedNodeStack()
+
+	private var nestedContainerStack = LinkedNodeStack()
 
 	override fun <T : PromisingCloseable> manage(closeable: T): T {
-		closeables.offer(closeable)
+		stack(closeable)
 		return closeable
 	}
 
-	override fun promiseClose(): Promise<Unit> {
-		return if (closeables.isEmpty()) Unit.toPromise()
-		else closeables
-			.poll()
+	override fun <T : AutoCloseable> manage(closeable: T): T {
+		stack(AutoCloseableWrapper(closeable))
+		return closeable
+	}
+
+	override fun createNestedManager(): ManagePromisingCloseables = NestedPromisingCloseableManager(this)
+
+	override fun promiseClose(): Promise<Unit> =
+		(nestedContainerStack
+			.pop()
 			?.promiseClose()
-			?.eventually(
-				{ promiseClose() },
-				{ e ->
-					logger.warn("There was an error closing a resource", e)
-					promiseClose()
-				})
+			?: closeablesStack
+				.pop()
+				?.also {
+					if (BuildConfig.DEBUG)
+						logger.debug("Closing {}.", it)
+				}
+				?.promiseClose())
+				?.eventually(
+					{ promiseClose() },
+					{ e ->
+						logger.warn("There was an error closing a resource", e)
+						promiseClose()
+					})
 			.keepPromise(Unit)
+
+	private fun stack(closeable: PromisingCloseable) {
+		if (!isSelf(closeable))
+			closeablesStack.push(closeable)
+	}
+
+	private fun isSelf(closeable: PromisingCloseable): Boolean {
+		if (closeable === this) {
+			if (BuildConfig.DEBUG)
+				logger.debug("Attempted to manage self! Returning.")
+			return true
+		}
+
+		return false
+	}
+
+	private class AutoCloseableWrapper(private val closeable: AutoCloseable) : PromisingCloseable {
+		override fun promiseClose(): Promise<Unit> {
+			if (BuildConfig.DEBUG)
+				logger.debug("Closing {}.", closeable)
+
+			closeable.close()
+			return Unit.toPromise()
+		}
+	}
+
+	private class LinkedNodeStack {
+
+		private val stackSync = Any()
+
+		@Volatile
+		var head: LinkedNode? = null
+			private set
+
+		fun push(closeable: PromisingCloseable): LinkedNode = LinkedNode(this, closeable)
+
+		fun pop(): PromisingCloseable? = head?.remove()
+
+		class LinkedNode(
+			private val container: LinkedNodeStack,
+			private val closeable: PromisingCloseable
+		)
+		{
+			@Volatile
+			var prev: LinkedNode? = null
+				private set
+			@Volatile
+			var next: LinkedNode? = null
+				private set
+
+			init {
+				synchronized(container.stackSync) {
+					next = container.head
+					container.head?.prev = this
+					container.head = this
+				}
+			}
+
+			fun remove(): PromisingCloseable = synchronized(container.stackSync) {
+				// Take out of the chain
+				prev?.next = next
+				next?.prev = prev
+
+				if (container.head === this)
+					container.head = next
+
+				// Break the links
+				next = null
+				prev = null
+
+				return closeable
+			}
+		}
+	}
+
+	private class NestedPromisingCloseableManager(parent: PromisingCloseableManager) : PromisingCloseableManager() {
+
+		private val node = parent.nestedContainerStack.push(this)
+
+		override fun createNestedManager(): ManagePromisingCloseables = NestedPromisingCloseableManager(this)
+
+		override fun promiseClose(): Promise<Unit> {
+			node.remove()
+			return super.promiseClose()
+		}
 	}
 }

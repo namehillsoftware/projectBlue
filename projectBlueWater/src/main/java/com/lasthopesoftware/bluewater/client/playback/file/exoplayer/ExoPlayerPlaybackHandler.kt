@@ -14,7 +14,6 @@ import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.error.ExoPl
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.progress.ExoPlayerFileProgressReader
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressedPromise
-import com.lasthopesoftware.resources.closables.ClosedResourceException
 import com.namehillsoftware.handoff.promises.Promise
 import org.joda.time.Duration
 import org.joda.time.format.PeriodFormatterBuilder
@@ -159,11 +158,10 @@ class ExoPlayerPlaybackHandler(private val exoPlayer: PromisingExoPlayer) :
 		exoPlayer.stop()
 		removeListener()
 		exoPlayer.release()
-		reject(ClosedResourceException("Playback resources closed before playback could complete."))
+		reject(CancellationException("Playback resources closed before playback could complete."))
 	}
 
 	override fun run() {
-		reject(CancellationException("Cancelling playback."))
 		close()
 	}
 
