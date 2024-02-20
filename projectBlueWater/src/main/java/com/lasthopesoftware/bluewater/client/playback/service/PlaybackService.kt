@@ -392,10 +392,13 @@ import java.util.concurrent.TimeoutException
 		}
 	}
 
-	private val playbackThread = promisingServiceCloseables.manage(RetryOnRejectionLazyPromise {
-		HandlerThreadCreator.promiseNewHandlerThread(
-			"Playback",
-			Process.THREAD_PRIORITY_AUDIO)
+	private val playbackThread by promisingServiceCloseables.manage(RetryOnRejectionLazyPromise {
+		HandlerThreadCreator
+			.promiseNewHandlerThread(
+				"Playback",
+				Process.THREAD_PRIORITY_AUDIO
+			)
+			.then(promisingServiceCloseables::manage)
 	})
 
 	private val playbackStartingNotificationBuilder by lazy {
@@ -596,7 +599,7 @@ import java.util.concurrent.TimeoutException
 
 		val promisingPlaybackEngineCloseables = promisingServiceCloseables.createNestedManager()
 
-		val promisedEngine = playbackThread.value
+		val promisedEngine = playbackThread
 			.then { h -> Handler(h.looper) }
 			.then { ph ->
 				MaxFileVolumePreparationProvider(
@@ -1131,10 +1134,6 @@ import java.util.concurrent.TimeoutException
 		try {
 			pausePlayback()
 				.inevitably { promisingServiceCloseables.promiseClose() }
-				.inevitably {
-					if (playbackThread.isInitializing()) playbackThread.value.then { it.quitSafely() }
-					else Unit.toPromise()
-				}
 				.toFuture()
 				.getSafely()
 		} catch (e: Throwable) {
