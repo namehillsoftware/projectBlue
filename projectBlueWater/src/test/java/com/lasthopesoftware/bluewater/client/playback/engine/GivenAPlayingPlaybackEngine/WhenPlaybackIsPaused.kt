@@ -77,7 +77,7 @@ class WhenPlaybackIsPaused {
 
 	@Test
 	fun `then the player is not playing`() {
-		assertThat(resolvablePlaybackHandler!!.isPlaying).isFalse
+		assertThat(resolvablePlaybackHandler?.isPlaying).isFalse
 	}
 
 	@Test

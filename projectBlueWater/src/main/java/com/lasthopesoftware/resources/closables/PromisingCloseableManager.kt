@@ -77,40 +77,35 @@ open class PromisingCloseableManager : ManagePromisingCloseables {
 		private val stackSync = Any()
 
 		@Volatile
-		var head: LinkedNode? = null
-			private set
+		private var head: LinkedNode? = null
 
-		fun push(closeable: PromisingCloseable): LinkedNode = LinkedNode(this, closeable)
+		fun push(closeable: PromisingCloseable): LinkedNode = LinkedNode(closeable)
 
 		fun pop(): PromisingCloseable? = head?.remove()
 
-		class LinkedNode(
-			private val container: LinkedNodeStack,
-			private val closeable: PromisingCloseable
-		)
-		{
+		inner class LinkedNode(private val closeable: PromisingCloseable) {
+
 			@Volatile
-			var prev: LinkedNode? = null
-				private set
+			private var prev: LinkedNode? = null
+
 			@Volatile
-			var next: LinkedNode? = null
-				private set
+			private var next: LinkedNode? = null
 
 			init {
-				synchronized(container.stackSync) {
-					next = container.head
-					container.head?.prev = this
-					container.head = this
+				synchronized(stackSync) {
+					next = head
+					head?.prev = this
+					head = this
 				}
 			}
 
-			fun remove(): PromisingCloseable = synchronized(container.stackSync) {
+			fun remove(): PromisingCloseable = synchronized(stackSync) {
 				// Take out of the chain
 				prev?.next = next
 				next?.prev = prev
 
-				if (container.head === this)
-					container.head = next
+				if (head === this)
+					head = next
 
 				// Break the links
 				next = null

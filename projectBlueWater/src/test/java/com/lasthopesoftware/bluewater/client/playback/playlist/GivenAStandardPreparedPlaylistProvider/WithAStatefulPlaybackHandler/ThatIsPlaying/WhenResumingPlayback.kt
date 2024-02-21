@@ -11,18 +11,16 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFutur
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
-import io.reactivex.rxjava3.core.Observable
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
-import java.util.concurrent.ExecutionException
 
 class WhenResumingPlayback {
 
+	private var originalPlayingFile: PositionedPlayingFile? = null
 	private val playbackHandler = FakeBufferingPlaybackHandler()
-	private var illegalStateException: IllegalStateException? = null
-	private var playingFile: PositionedPlayingFile? = null
+	private var resumedPlayingFile: PositionedPlayingFile? = null
 
 	@BeforeAll
 	fun act() {
@@ -35,18 +33,12 @@ class WhenResumingPlayback {
 			every { promiseNextPreparedPlaybackFile(Duration.ZERO) } returns positionedPlaybackHandlerContainer
 		}
 		val playlistPlayback = PlaylistPlayer(preparedPlaybackFileQueue, Duration.ZERO)
-		Observable.create(playlistPlayback).subscribe()
-		playlistPlayback.resume().toExpiringFuture().get()
-
-		try {
-			playingFile = playlistPlayback.resume().toExpiringFuture().get()
-		} catch (e: ExecutionException) {
-			illegalStateException = e.cause as? IllegalStateException
-		}
+		originalPlayingFile = playlistPlayback.resume().toExpiringFuture().get()
+		resumedPlayingFile = playlistPlayback.resume().toExpiringFuture().get()
 	}
 
 	@Test
-	fun `then an illegal state exception is thrown as it is illegal to resume many times`() {
-		assertThat(illegalStateException).isNotNull
+	fun `then the resumed playing file is the same as the original playing file`() {
+		assertThat(resumedPlayingFile).isSameAs(originalPlayingFile)
 	}
 }
