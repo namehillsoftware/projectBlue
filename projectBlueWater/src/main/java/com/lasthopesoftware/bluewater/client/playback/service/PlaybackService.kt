@@ -883,7 +883,12 @@ import java.util.concurrent.TimeoutException
 	override fun onPlaybackCompleted() {
 		applicationMessageBus.sendMessage(PlaybackMessage.PlaybackStopped)
 		isMarkedForPlay = false
-		stopSelf(startId)
+
+		// Closing these resources before calling `stopSelf` let's us avoid application resources shutting down (such
+		// as network connections) before we are ready for them to close.
+		promisingServiceCloseables
+			.promiseClose()
+			.must { stopSelf(startId) }
 	}
 
 	override fun onPlaybackStarted() {
