@@ -8,11 +8,17 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressedPromi
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
+import okhttp3.internal.toImmutableList
 import org.joda.time.Duration
 
 open class FakeBufferingPlaybackHandler : IBufferingPlaybackFile, PlayableFile, PlayingFile, PlayedFile {
-	var isPlaying = false
-		private set
+	private val playingStates = mutableListOf(false)
+
+	val recordedPlayingStates
+		get() = playingStates.toImmutableList()
+
+	val isPlaying
+		get() = playingStates.last()
 
 	var isClosed = false
 		private set
@@ -24,13 +30,14 @@ open class FakeBufferingPlaybackHandler : IBufferingPlaybackFile, PlayableFile, 
 	}
 
 	override fun promisePlayback(): Promise<PlayingFile> {
-		isPlaying = true
+		playingStates.add(true)
 		return Promise(this)
 	}
 
 	override fun close() {
 		isClosed = true
 	}
+
 	override fun promiseBufferedPlaybackFile(): Promise<IBufferingPlaybackFile> {
 		return Promise(this)
 	}
@@ -39,7 +46,7 @@ open class FakeBufferingPlaybackHandler : IBufferingPlaybackFile, PlayableFile, 
 		get() = Duration.millis(backingCurrentPosition.toLong()).toPromise()
 
 	override fun promisePause(): Promise<PlayableFile> {
-		isPlaying = false
+		playingStates.add(false)
 		return Promise(this)
 	}
 

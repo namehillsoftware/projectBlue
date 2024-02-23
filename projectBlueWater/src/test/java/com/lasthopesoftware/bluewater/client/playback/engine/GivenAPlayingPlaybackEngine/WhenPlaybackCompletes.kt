@@ -50,13 +50,19 @@ class WhenPlaybackCompletes {
 
 	private var nowPlaying: NowPlaying? = null
 	private var observedPlayingFile: PositionedPlayingFile? = null
+	private var lastCompletedPlayedFile: PositionedFile? = null
 	private var resetPositionedFile: PositionedFile? = null
 
 	@BeforeAll
 	fun act() {
 		val (fakePlaybackPreparerProvider, nowPlayingRepository, playbackEngine) = mut
 		playbackEngine
-			.setOnPlayingFileChanged { _, f -> observedPlayingFile = f }
+			.setOnPlayingFileChanged { _, f ->
+				observedPlayingFile = f
+				f?.playingFile?.promisePlayedFile()?.then { pf ->
+					lastCompletedPlayedFile = observedPlayingFile?.asPositionedFile()
+				}
+			}
 			.setOnPlaylistReset { _, f -> resetPositionedFile = f }
 			.startPlaylist(
 				LibraryId(libraryId),
@@ -90,6 +96,11 @@ class WhenPlaybackCompletes {
 	fun `then the observed file position is correct`() {
 		assertThat(observedPlayingFile!!.asPositionedFile())
 			.isEqualTo(PositionedFile(4, ServiceFile(5)))
+	}
+
+	@Test
+	fun `then the completed played file is correct`() {
+		assertThat(lastCompletedPlayedFile!!).isEqualTo(PositionedFile(4, ServiceFile(5)))
 	}
 
 	@Test

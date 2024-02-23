@@ -14,7 +14,6 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
-import io.reactivex.rxjava3.core.Observable
 import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
 import org.junit.jupiter.api.BeforeAll
@@ -58,15 +57,17 @@ class WhenStartingPlayback {
 			)
 		}
 
-		positionedPlayingFiles =
-			Observable.create(PlaylistPlayer(preparedPlaybackFileQueue, Duration.ZERO))
-				.toList()
-				.timeout(30, TimeUnit.SECONDS)
-				.blockingGet()
+		val playlistPlayer = PlaylistPlayer(preparedPlaybackFileQueue, Duration.ZERO)
+
+		val futurePositionedPlayingFiles = playlistPlayer.observe().toList().toFuture()
+
+		playlistPlayer.resume()
+
+		positionedPlayingFiles = futurePositionedPlayingFiles.get(30, TimeUnit.SECONDS)
 	}
 
 	@Test
 	fun `then the playback count is correct`() {
-		assertThat(positionedPlayingFiles!!.size).isEqualTo(5)
+		assertThat(positionedPlayingFiles?.size).isEqualTo(5)
 	}
 }

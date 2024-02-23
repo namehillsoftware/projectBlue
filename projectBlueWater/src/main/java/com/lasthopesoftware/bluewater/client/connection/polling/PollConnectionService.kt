@@ -40,7 +40,7 @@ class PollConnectionService : LifecycleService() {
 					s.service
 						.promiseTestedLibrary(libraryId)
 						.also(cp::doCancel)
-						.must { context.unbindService(s.serviceConnection) }
+						.must { s.close() }
 				}
 		}
 	}

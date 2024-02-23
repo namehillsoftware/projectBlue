@@ -1,13 +1,13 @@
 package com.lasthopesoftware.bluewater.client.playback.volume
 
-import com.lasthopesoftware.bluewater.client.playback.playlist.IPlaylistPlayer
+import com.lasthopesoftware.bluewater.client.playback.playlist.ManagePlaylistPlayback
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 
 class PlaylistVolumeManager(private var volume: Float) : IVolumeManagement {
-	private var playlistPlayer: IPlaylistPlayer? = null
+	private var playlistPlayer: ManagePlaylistPlayback? = null
 
-	fun managePlayer(playlistPlayer: IPlaylistPlayer?) {
+	fun managePlayer(playlistPlayer: ManagePlaylistPlayback?) {
 		this.playlistPlayer = playlistPlayer
 		playlistPlayer?.setVolume(volume)
 	}

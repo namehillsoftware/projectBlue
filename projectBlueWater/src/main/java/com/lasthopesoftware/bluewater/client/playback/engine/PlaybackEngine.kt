@@ -21,6 +21,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.Pr
 import com.lasthopesoftware.bluewater.client.playback.file.progress.ReadFileProgress
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.MaintainNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
+import com.lasthopesoftware.bluewater.client.playback.playlist.ManagePlaylistPlayback
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.promiseFirstResult
@@ -88,7 +89,7 @@ class PlaybackEngine(
 	private var promisedPlayingState = Promise(defaultState)
 
 	private var playbackSubscription: Disposable? = null
-	private var activePlayer: IActivePlayer? = null
+	private var activePlayer: ManagePlaylistPlayback? = null
 	private var onPlayingFileChanged: OnPlayingFileChanged? = null
 	private var onPlaylistError: OnPlaylistError? = null
 	private var onPlaybackStarted: OnPlaybackStarted? = null
@@ -329,7 +330,7 @@ class PlaybackEngine(
 	override fun clearPlaylist(): Promise<NowPlaying?> {
 		preparedPlaybackQueueResourceManagement.reset()
 		return activePlayer
-			?.halt()
+			?.haltPlayback()
 			.keepPromise()
 			.eventually {
 				isPlaying = false
@@ -441,7 +442,7 @@ class PlaybackEngine(
 	override fun promiseClose(): Promise<Unit> {
 		preparedPlaybackQueueResourceManagement.reset()
 		return activePlayer
-			?.halt()
+			?.haltPlayback()
 			.keepPromise()
 			.then {
 				isPlaying = false
