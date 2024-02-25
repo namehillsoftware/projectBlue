@@ -67,10 +67,14 @@ class DiskCacheImageAccess(
 								.keepPromise()
 						}
 						.eventually { bytes ->
-							bytes?.toPromise() ?: sourceImages.promiseImageBytes(libraryId, serviceFile)
+							bytes?.toPromise() ?: sourceImages
+								.promiseImageBytes(libraryId, serviceFile)
 								.also { p ->
 									cancellationProxy.doCancel(p)
-									p.then { fileCache.put(libraryId, uniqueKey, it) }.excuse { ioe -> logger.error("Error writing cached file!", ioe) }
+									p.then {
+										if (it.isNotEmpty())
+											fileCache.put(libraryId, uniqueKey, it).excuse { ioe -> logger.error("Error writing cached file!", ioe) }
+									}
 								}
 						}
 				}

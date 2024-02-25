@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.browsing.files.image.bytes.cache.GivenAServiceFile.AndTheCachedFileDoesNotExistOnDisk
+package com.lasthopesoftware.bluewater.client.browsing.files.image.bytes.cache.GivenAServiceFile.AndTheCachedFileDoesNotExistOnDisk.AndTheSourceImageIsEmpty
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.image.bytes.cache.DiskCacheImageAccess
@@ -12,16 +12,14 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.io.File
 
-private const val libraryId = 292
-private const val serviceFileId = 113
-
 class `When Getting the Image Bytes` {
 
-	private val expectedBytes = byteArrayOf(
-		(892 % 128).toByte(),
-		(283 % 128).toByte(),
-		(492 % 128).toByte(),
-	)
+	companion object {
+		private const val libraryId = 754
+		private const val serviceFileId = 818
+	}
+
+	private val expectedBytes = byteArrayOf()
 
 	private val mut by lazy {
 		DiskCacheImageAccess(
@@ -55,7 +53,7 @@ class `When Getting the Image Bytes` {
 	}
 
 	@Test
-	fun `then the stored bytes are correct`() {
-		assertThat(storedBytes).isEqualTo(expectedBytes)
+	fun `then there are no stored bytes because no data was returned from the server`() {
+		assertThat(storedBytes).isNull()
 	}
 }
