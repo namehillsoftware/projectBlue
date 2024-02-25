@@ -28,25 +28,6 @@ class DiskCacheImageAccess(
 
 	companion object {
 		private val logger by lazyLogger<DiskCacheImageAccess>()
-
-		fun getBytesFromFiles(file: File, cancellationToken: CancellationToken): ByteArray {
-			if (cancellationToken.isCancelled) return ByteArray(0)
-
-			try {
-				FileInputStream(file).use { fis ->
-					ByteArrayOutputStream(fis.available()).use { buffer ->
-						fis.copyTo(buffer)
-						return buffer.toByteArray()
-					}
-				}
-			} catch (e: FileNotFoundException) {
-				logger.error("Could not find cached file.", e)
-				return ByteArray(0)
-			} catch (e: IOException) {
-				logger.error("Error reading cached file.", e)
-				return ByteArray(0)
-			}
-		}
 	}
 
 	override fun promiseImageBytes(libraryId: LibraryId, serviceFile: ServiceFile): Promise<ByteArray> =
@@ -62,25 +43,46 @@ class DiskCacheImageAccess(
 						.also(cancellationProxy::doCancel)
 						.eventually { imageFile ->
 							imageFile
-								?.takeIf { it.exists() }
 								?.let { f -> QueuedPromise(ImageDiskCacheReader(f), ThreadPools.io).also(cancellationProxy::doCancel) }
 								.keepPromise()
 						}
 						.eventually { bytes ->
-							bytes?.toPromise() ?: sourceImages
+							bytes
+								?.takeIf { it.isNotEmpty() }
+								?.toPromise()
+								?: sourceImages
 								.promiseImageBytes(libraryId, serviceFile)
 								.also { p ->
 									cancellationProxy.doCancel(p)
 									p.then {
 										if (it.isNotEmpty())
-											fileCache.put(libraryId, uniqueKey, it).excuse { ioe -> logger.error("Error writing cached file!", ioe) }
+											fileCache
+												.put(libraryId, uniqueKey, it)
+												.excuse { ioe -> logger.error("Error writing cached file!", ioe) }
 									}
 								}
 						}
 				}
 	}
 
-	private class ImageDiskCacheReader(private val imageCacheFile: File) : CancellableMessageWriter<ByteArray> {
-		override fun prepareMessage(cancellationToken: CancellationToken): ByteArray = getBytesFromFiles(imageCacheFile, cancellationToken)
+	private class ImageDiskCacheReader(private val imageCacheFile: File) : CancellableMessageWriter<ByteArray?> {
+		override fun prepareMessage(cancellationToken: CancellationToken): ByteArray? {
+			if (cancellationToken.isCancelled) return null
+
+			try {
+				FileInputStream(imageCacheFile).use { fis ->
+					ByteArrayOutputStream(fis.available()).use { buffer ->
+						fis.copyTo(buffer)
+						return buffer.toByteArray()
+					}
+				}
+			} catch (e: FileNotFoundException) {
+				logger.error("Could not find cached file.", e)
+				return null
+			} catch (e: IOException) {
+				logger.error("Error reading cached file.", e)
+				return null
+			}
+		}
 	}
 }
