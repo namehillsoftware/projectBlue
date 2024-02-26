@@ -6,6 +6,7 @@ import com.lasthopesoftware.bluewater.repository.UpdateBuilder
 import com.lasthopesoftware.bluewater.repository.fetchFirst
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.chosenLibraryIdColumn
+import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.isLoggingToFile
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.isSyncOnPowerOnlyColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.isSyncOnWifiOnlyColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.isVolumeLevelingEnabledColumn
@@ -22,6 +23,7 @@ class ApplicationSettingsRepository(private val context: Context): HoldApplicati
 				.addSetter(isSyncOnWifiOnlyColumn)
 				.addSetter(isSyncOnPowerOnlyColumn)
 				.addSetter(isVolumeLevelingEnabledColumn)
+				.addSetter(isLoggingToFile)
 				.addSetter(playbackEngineTypeNameColumn)
 				.addSetter(chosenLibraryIdColumn)
 				.buildQuery()
@@ -45,6 +47,7 @@ class ApplicationSettingsRepository(private val context: Context): HoldApplicati
 						.addParameter(isSyncOnWifiOnlyColumn, applicationSettings.isSyncOnWifiOnly)
 						.addParameter(isSyncOnPowerOnlyColumn, applicationSettings.isSyncOnPowerOnly)
 						.addParameter(isVolumeLevelingEnabledColumn, applicationSettings.isVolumeLevelingEnabled)
+						.addParameter(isLoggingToFile, applicationSettings.isLoggingToFile)
 						.addParameter(playbackEngineTypeNameColumn, applicationSettings.playbackEngineTypeName)
 						.addParameter(chosenLibraryIdColumn, applicationSettings.chosenLibraryId)
 						.execute()

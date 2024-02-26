@@ -11,6 +11,8 @@ interface NavigateApplication {
 
 	fun viewApplicationSettings() = Unit.toPromise()
 
+	fun viewHiddenSettings() = Unit.toPromise()
+
 	fun viewNewServerSettings() = Unit.toPromise()
 
 	fun viewServerSettings(libraryId: LibraryId) = Unit.toPromise()

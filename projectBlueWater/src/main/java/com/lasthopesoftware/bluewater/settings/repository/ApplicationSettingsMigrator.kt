@@ -6,6 +6,7 @@ import androidx.preference.PreferenceManager
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.PlaybackEngineType
 import com.lasthopesoftware.bluewater.repository.InsertBuilder
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.chosenLibraryIdColumn
+import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.isLoggingToFile
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.isSyncOnPowerOnlyColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.isSyncOnWifiOnlyColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.isVolumeLevelingEnabledColumn
@@ -37,6 +38,7 @@ class ApplicationSettingsMigrator(private val context: Context) {
 			`$isSyncOnWifiOnlyColumn` SMALLINT ,
 			`$isSyncOnPowerOnlyColumn` SMALLINT ,
 			`$isVolumeLevelingEnabledColumn` SMALLINT ,
+			`$isLoggingToFile` SMALLINT DEFAULT 0 NOT NULL,
 			`$playbackEngineTypeNameColumn` VARCHAR ,
 			`$chosenLibraryIdColumn` INTEGER DEFAULT -1 NOT NULL )""")
 
