@@ -34,6 +34,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.media3.common.util.UnstableApi
 import browsableItemListView
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import com.lasthopesoftware.bluewater.ActivityDependencies
@@ -77,7 +78,6 @@ import com.lasthopesoftware.bluewater.permissions.ApplicationPermissionsRequests
 import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermissionsRequirementsProvider
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsView
 import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsView
-import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsViewModel
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.intents.safelyGetParcelableExtra
 import com.lasthopesoftware.bluewater.shared.android.permissions.ManagePermissions
@@ -116,7 +116,7 @@ private val cachedDestinationActions = ConcurrentHashMap<Class<*>, String>()
 val destinationProperty by lazy { magicPropertyBuilder.buildProperty("destination") }
 fun destinationAction(destination: Destination): String = cachedDestinationActions.getOrPut(destination.javaClass) { "$destinationProperty/${destination.javaClass.name}" }
 
-class BrowserActivity :
+@UnstableApi class BrowserActivity :
 	AppCompatActivity(),
 	ActivityCompat.OnRequestPermissionsResultCallback,
 	ManagePermissions,
@@ -222,6 +222,10 @@ private class GraphNavigation(
 
 	override fun viewApplicationSettings() = coroutineScope.launch {
 		navController.popUpTo { it is ApplicationSettingsScreen }
+	}.toPromise()
+
+	override fun viewHiddenSettings(): Promise<Unit> = coroutineScope.launch {
+		navController.navigate(HiddenSettingsScreen)
 	}.toPromise()
 
 	override fun viewNewServerSettings() = coroutineScope.launch {
@@ -662,9 +666,9 @@ private fun BrowserView(
 						}
 				}
 				is HiddenSettingsScreen -> {
-					HiddenSettingsView(viewModel {
-						HiddenSettingsViewModel(graphDependencies.applicationSettingsRepository)
-					})
+					HiddenSettingsView(graphDependencies.hiddenSettingsViewModel)
+
+					graphDependencies.hiddenSettingsViewModel.loadApplicationSettings()
 				}
 			}
 		}

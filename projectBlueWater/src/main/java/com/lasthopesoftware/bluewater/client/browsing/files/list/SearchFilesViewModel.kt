@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideLibrar
 import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.SearchFileParameterProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.namehillsoftware.handoff.promises.Promise
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,11 +20,11 @@ class SearchFilesViewModel(
 	var libraryId: LibraryId? = null
 		private set
 
-	private val mutableIsLoading = MutableStateFlow(false)
+	private val mutableIsLoading = MutableInteractionState(false)
 	private val mutableFiles = MutableStateFlow(emptyList<ServiceFile>())
 	private val mutableIsLibraryIdActive = MutableStateFlow(false)
 
-	override val isLoading = mutableIsLoading.asStateFlow()
+	override val isLoading = mutableIsLoading.asInteractionState()
 	val isLibraryIdActive = mutableIsLibraryIdActive.asStateFlow()
 	val files = mutableFiles.asStateFlow()
 	val query = MutableStateFlow("")

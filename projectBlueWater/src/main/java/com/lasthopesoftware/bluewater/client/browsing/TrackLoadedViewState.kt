@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing
 
-import kotlinx.coroutines.flow.StateFlow
+import com.lasthopesoftware.bluewater.shared.observables.InteractionState
 
 interface TrackLoadedViewState {
-	val isLoading: StateFlow<Boolean>
+	val isLoading: InteractionState<Boolean>
 }

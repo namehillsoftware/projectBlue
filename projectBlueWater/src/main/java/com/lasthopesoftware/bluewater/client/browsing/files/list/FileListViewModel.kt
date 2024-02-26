@@ -10,6 +10,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
+import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
 import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.namehillsoftware.handoff.promises.Promise
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,7 +21,7 @@ class FileListViewModel(
 	private val storedItemAccess: AccessStoredItems,
 ) : ViewModel(), TrackLoadedViewState {
 
-	private val mutableIsLoading = MutableStateFlow(true)
+	private val mutableIsLoading = MutableInteractionState(true)
 	private val mutableFiles = MutableStateFlow(emptyList<ServiceFile>())
 	private val mutableItemValue = MutableStateFlow("")
 	private val mutableIsSynced = MutableStateFlow(false)
@@ -28,7 +29,7 @@ class FileListViewModel(
 	private var loadedItem: IItem? = null
 	private var loadedLibraryId: LibraryId? = null
 
-	override val isLoading = mutableIsLoading.asStateFlow()
+	override val isLoading = mutableIsLoading.asInteractionState()
 	val files = mutableFiles.asStateFlow()
 	val itemValue = mutableItemValue.asStateFlow()
 	val isSynced = mutableIsSynced.asStateFlow()

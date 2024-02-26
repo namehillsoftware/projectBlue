@@ -20,8 +20,6 @@ import com.namehillsoftware.handoff.promises.response.ImmediateAction
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import com.namehillsoftware.handoff.promises.response.PromisedResponse
 import io.reactivex.rxjava3.core.Observable
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 
 class LibrarySettingsViewModel(
 	private val libraryProvider: ILibraryProvider,
@@ -43,7 +41,7 @@ class LibrarySettingsViewModel(
 	}
 
 	private val libraryState = MutableInteractionState(defaultLibrary.copy())
-	private val mutableIsLoading = MutableStateFlow(false)
+	private val mutableIsLoading = MutableInteractionState(false)
 	private val mutableIsSaving = MutableInteractionState(false)
 	private val mutableIsPermissionsNeeded = MutableInteractionState(false)
 	private val mutableIsRemovalRequested = MutableInteractionState(false)
@@ -88,7 +86,7 @@ class LibrarySettingsViewModel(
 	val hasSslCertificate
 		get() = hasSslCertificateObserver.value as InteractionState<Boolean>
 
-	override val isLoading = mutableIsLoading.asStateFlow()
+	override val isLoading = mutableIsLoading.asInteractionState()
 	val isSaving = mutableIsSaving as InteractionState<Boolean>
 	val isStoragePermissionsNeeded = mutableIsPermissionsNeeded as InteractionState<Boolean>
 	val isRemovalRequested = mutableIsRemovalRequested as InteractionState<Boolean>

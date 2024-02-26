@@ -39,13 +39,13 @@ class NowPlayingPlaylistViewModel(
 	private val mutableSelectedPlaylistPath = MutableInteractionState("")
 	private val mutableIsPlaylistPathValid = MutableInteractionState(false)
 
-	val isRepeating = isRepeatingState.asReadOnly()
-	val isEditingPlaylistState = mutableEditingPlaylistState.asReadOnly()
-	val nowPlayingList = nowPlayingListState.asReadOnly()
-	val filteredPlaylistPaths = mutableFilteredPlaylistPaths.asReadOnly()
-	val isSavingPlaylistActive = mutableIsSavingPlaylistActive.asReadOnly()
-	val selectedPlaylistPath = mutableSelectedPlaylistPath.asReadOnly()
-	val isPlaylistPathValid = mutableIsPlaylistPathValid.asReadOnly()
+	val isRepeating = isRepeatingState.asInteractionState()
+	val isEditingPlaylistState = mutableEditingPlaylistState.asInteractionState()
+	val nowPlayingList = nowPlayingListState.asInteractionState()
+	val filteredPlaylistPaths = mutableFilteredPlaylistPaths.asInteractionState()
+	val isSavingPlaylistActive = mutableIsSavingPlaylistActive.asInteractionState()
+	val selectedPlaylistPath = mutableSelectedPlaylistPath.asInteractionState()
+	val isPlaylistPathValid = mutableIsPlaylistPathValid.asInteractionState()
 
 	fun initializeView(libraryId: LibraryId): Promise<Unit> {
 		activeLibraryId = libraryId

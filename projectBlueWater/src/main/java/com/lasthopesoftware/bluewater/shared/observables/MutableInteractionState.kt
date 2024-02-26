@@ -19,5 +19,5 @@ class MutableInteractionState<T>(private val initialValue: T) : InteractionState
 		behaviorSubject.safeSubscribe(observer)
 	}
 
-	fun asReadOnly(): InteractionState<T> = this
+	fun asInteractionState(): InteractionState<T> = this
 }

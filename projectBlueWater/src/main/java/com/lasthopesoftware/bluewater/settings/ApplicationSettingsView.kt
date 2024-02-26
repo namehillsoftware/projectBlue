@@ -1,17 +1,36 @@
+@file:OptIn(ExperimentalFoundationApi::class)
+
 package com.lasthopesoftware.bluewater.settings
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.*
+import androidx.compose.material.Button
+import androidx.compose.material.Checkbox
+import androidx.compose.material.Icon
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.ProvideTextStyle
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
@@ -33,6 +52,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.components.ApplicationLo
 import com.lasthopesoftware.bluewater.shared.android.ui.components.LabeledSelection
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
+import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 
 private val optionsPadding = PaddingValues(start = 32.dp, end = 32.dp)
 
@@ -45,6 +65,7 @@ private fun LazyListScope.settingsList(
 	playbackService: ControlPlaybackService,
 	libraries: List<Library>,
 	selectedLibraryId: LibraryId,
+	isLoading: Boolean
 ) {
 	stickyHeader {
 		Row(
@@ -80,7 +101,7 @@ private fun LazyListScope.settingsList(
 				selected = isSyncOnWifiOnly,
 				onSelected = { applicationSettingsViewModel.promiseSyncOnWifiChange(!isSyncOnWifiOnly) }
 			) {
-				Checkbox(checked = isSyncOnWifiOnly, onCheckedChange = null)
+				Checkbox(checked = isSyncOnWifiOnly, onCheckedChange = null, enabled = !isLoading)
 			}
 		}
 	}
@@ -96,7 +117,7 @@ private fun LazyListScope.settingsList(
 				selected = isSyncOnPowerOnly,
 				onSelected = { applicationSettingsViewModel.promiseSyncOnPowerChange(!isSyncOnPowerOnly) }
 			) {
-				Checkbox(checked = isSyncOnPowerOnly, onCheckedChange = null)
+				Checkbox(checked = isSyncOnPowerOnly, onCheckedChange = null, enabled = !isLoading)
 			}
 		}
 	}
@@ -123,7 +144,7 @@ private fun LazyListScope.settingsList(
 				selected = isVolumeLevelingEnabled,
 				onSelected = { applicationSettingsViewModel.promiseVolumeLevelingEnabledChange(!isVolumeLevelingEnabled) }
 			) {
-				Checkbox(checked = isVolumeLevelingEnabled, onCheckedChange = null)
+				Checkbox(checked = isVolumeLevelingEnabled, onCheckedChange = null, enabled = !isLoading)
 			}
 		}
 	}
@@ -208,6 +229,7 @@ private fun LazyListScope.settingsList(
 	}
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun ApplicationSettingsViewVertical(
 	applicationSettingsViewModel: ApplicationSettingsViewModel,
@@ -223,6 +245,7 @@ private fun ApplicationSettingsViewVertical(
 
 	val libraries by applicationSettingsViewModel.libraries.collectAsState()
 	val selectedLibraryId by applicationSettingsViewModel.chosenLibraryId.collectAsState()
+	val isLoading by applicationSettingsViewModel.isLoading.subscribeAsState()
 
 	LazyColumn(
 		modifier = Modifier.fillMaxSize(),
@@ -236,7 +259,13 @@ private fun ApplicationSettingsViewVertical(
 			) {
 				ApplicationLogo(modifier = Modifier
 					.fillMaxWidth(.5f)
-					.align(Alignment.TopCenter))
+					.align(Alignment.TopCenter)
+					.combinedClickable(
+						interactionSource = remember { MutableInteractionSource() },
+						indication = null,
+						onClick = {},
+						onLongClick = { applicationNavigation.viewHiddenSettings() },
+					))
 			}
 		}
 
@@ -247,7 +276,8 @@ private fun ApplicationSettingsViewVertical(
 			applicationNavigation,
 			playbackService,
 			libraries,
-			selectedLibraryId
+			selectedLibraryId,
+			isLoading
 		)
 	}
 }
@@ -265,6 +295,12 @@ fun ApplicationSettingsViewHorizontal(
 		ApplicationLogo(modifier = Modifier
 			.fillMaxHeight(.75f)
 			.align(Alignment.CenterVertically)
+			.combinedClickable(
+				interactionSource = remember { MutableInteractionSource() },
+				indication = null,
+				onClick = {},
+				onLongClick = { applicationNavigation.viewHiddenSettings() },
+			)
 		)
 
 		val rowHeight = Dimensions.standardRowHeight
@@ -276,6 +312,7 @@ fun ApplicationSettingsViewHorizontal(
 
 		val libraries by applicationSettingsViewModel.libraries.collectAsState()
 		val selectedLibraryId by applicationSettingsViewModel.chosenLibraryId.collectAsState()
+		val isLoading by applicationSettingsViewModel.isLoading.subscribeAsState()
 
 		LazyColumn(
 			modifier = Modifier
@@ -289,7 +326,8 @@ fun ApplicationSettingsViewHorizontal(
 				applicationNavigation,
 				playbackService,
 				libraries,
-				selectedLibraryId
+				selectedLibraryId,
+				isLoading
 			)
 		}
 	}

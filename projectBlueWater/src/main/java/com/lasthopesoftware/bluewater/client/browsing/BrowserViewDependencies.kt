@@ -32,6 +32,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFi
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.view.ActiveFileDownloadsViewModel
 import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsViewModel
+import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsViewModel
 import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
 import com.lasthopesoftware.bluewater.shared.messages.RegisterForTypedMessages
 import com.lasthopesoftware.bluewater.shared.messages.application.ScopedApplicationMessageBus
@@ -67,6 +68,7 @@ interface BrowserViewDependencies {
 	val reusableChildItemViewModelProvider: ReusableChildItemViewModelProvider
 	val reusableFileItemViewModelProvider: ReusableFileItemViewModelProvider
 	val applicationSettingsViewModel: ApplicationSettingsViewModel
+	val hiddenSettingsViewModel: HiddenSettingsViewModel
 	val userSslCertificateProvider: ProvideUserSslCertificates
 }
 

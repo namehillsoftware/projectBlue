@@ -134,4 +134,5 @@
     <string name="empty_playlist">Empty Playlist</string>
     <string name="nothing_playing">Nothing Playing</string>
     <string name="empty_playlist_confirmation">Are you sure you want to empty the playlist?</string>
+    <string name="log_to_file">Log to File</string>
 </resources>

@@ -55,6 +55,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAcce
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
 import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsViewModel
+import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsViewModel
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.android.intents.IntentBuilder
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
@@ -311,6 +312,10 @@ class ActivityDependencies(activity: ComponentActivity, activitySuppliedDependen
 			messageBus,
 			syncScheduler,
 		)
+	}
+
+	override val hiddenSettingsViewModel by activity.buildViewModelLazily {
+		HiddenSettingsViewModel(applicationSettingsRepository)
 	}
 
 	override val userSslCertificateProvider by lazy {
