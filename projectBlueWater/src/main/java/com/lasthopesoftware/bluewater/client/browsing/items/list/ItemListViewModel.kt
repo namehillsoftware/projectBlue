@@ -10,6 +10,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryPro
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
+import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,7 +26,7 @@ class ItemListViewModel(
 		mutableIsLoading.value = event != ActivityLaunching.HALTED // Only show the item list view again when launching error'ed for some reason
 	}
 	private val mutableItems = MutableStateFlow(emptyList<IItem>())
-	private val mutableIsLoading = MutableStateFlow(true)
+	private val mutableIsLoading = MutableInteractionState(true)
 	private val mutableItemValue = MutableStateFlow("")
 
 	var loadedItem: IItem? = null
@@ -33,7 +34,7 @@ class ItemListViewModel(
 
 	val itemValue = mutableItemValue.asStateFlow()
 	val items = mutableItems.asStateFlow()
-	override val isLoading = mutableIsLoading.asStateFlow()
+	override val isLoading = mutableIsLoading.asInteractionState()
 
 	override fun onCleared() {
 		activityLaunchingReceiver.close()

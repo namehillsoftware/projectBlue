@@ -65,6 +65,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.components.scrollbar
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
+import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 import kotlin.math.pow
 
 private const val expandedTitleHeight = 84
@@ -102,7 +103,7 @@ fun ActiveFileDownloadsView(
 	}
 
 	ControlSurface {
-		val isLoading by activeFileDownloadsViewModel.isLoading.collectAsState()
+		val isLoading by activeFileDownloadsViewModel.isLoading.subscribeAsState()
 
 		val boxHeight =
 			(expandedTitleHeight + expandedIconSize + expandedMenuVerticalPadding * 2 + appBarHeight).dp

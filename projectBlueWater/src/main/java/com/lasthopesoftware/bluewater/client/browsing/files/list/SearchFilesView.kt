@@ -143,7 +143,7 @@ fun SearchFilesView(
 	}
 
 	ControlSurface {
-		val isLoading by searchFilesViewModel.isLoading.collectAsState()
+		val isLoading by searchFilesViewModel.isLoading.subscribeAsState()
 
 		val heightScaler = LocalDensity.current.run {
 			memorableScrollConnectedScaler(max = boxHeight.toPx(), min = topBarHeight.toPx())
@@ -193,7 +193,9 @@ fun SearchFilesView(
 								),
 						) {
 							item {
-								Spacer(modifier = Modifier.requiredHeight(boxHeight).fillMaxWidth())
+								Spacer(modifier = Modifier
+									.requiredHeight(boxHeight)
+									.fillMaxWidth())
 							}
 
 							item {
@@ -307,16 +309,16 @@ fun SearchFilesView(
 					horizontalArrangement = Arrangement.Center,
 					verticalAlignment = Alignment.CenterVertically,
 				) {
-                    Icon(
+					Icon(
                         Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "",
                         tint = MaterialTheme.colors.onSurface,
                         modifier = Modifier
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null,
-                                onClick = applicationNavigation::backOut
-                            )
+							.clickable(
+								interactionSource = remember { MutableInteractionSource() },
+								indication = null,
+								onClick = applicationNavigation::backOut
+							)
 							.padding(end = 16.dp)
                     )
 

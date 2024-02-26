@@ -330,7 +330,7 @@ fun ItemListView(
 		}
 	}
 
-	val isFilesLoading by fileListViewModel.isLoading.collectAsState()
+	val isFilesLoading by fileListViewModel.isLoading.subscribeAsState()
 
 	ControlSurface {
 		val expandedIconSize = Dimensions.menuHeight.value
@@ -348,7 +348,7 @@ fun ItemListView(
 				.nestedScroll(heightScaler)
 		) {
 			BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-				val isItemsLoading by itemListViewModel.isLoading.collectAsState()
+				val isItemsLoading by itemListViewModel.isLoading.subscribeAsState()
 				val isLoaded = !isItemsLoading && !isFilesLoading
 
 				if (isLoaded) LoadedItemListView(boxHeight)

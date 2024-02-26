@@ -10,6 +10,7 @@ import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileMessage
 import com.lasthopesoftware.bluewater.client.stored.sync.SyncStateMessage
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
+import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
 import com.namehillsoftware.handoff.promises.Promise
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -19,7 +20,7 @@ class ActiveFileDownloadsViewModel(
 	applicationMessages: RegisterForApplicationMessages,
 	private val scheduler: ScheduleSyncs,
 ) : ViewModel(), TrackLoadedViewState {
-	private val mutableIsLoading = MutableStateFlow(false)
+	private val mutableIsLoading = MutableInteractionState(false)
 
 	private val mutableIsSyncing = MutableStateFlow(false)
 	private val mutableIsSyncStateChangeEnabled = MutableStateFlow(false)
@@ -59,7 +60,7 @@ class ActiveFileDownloadsViewModel(
 	val isSyncStateChangeEnabled = mutableIsSyncStateChangeEnabled.asStateFlow()
 	val downloadingFiles = mutableDownloadingFiles.asStateFlow()
 	val downloadingFileId = mutableDownloadingFileId.asStateFlow()
-	override val isLoading = mutableIsLoading.asStateFlow()
+	override val isLoading = mutableIsLoading.asInteractionState()
 
 	init {
 	    scheduler
