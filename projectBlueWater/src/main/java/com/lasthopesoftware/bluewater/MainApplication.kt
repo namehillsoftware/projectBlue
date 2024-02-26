@@ -36,8 +36,12 @@ import com.lasthopesoftware.bluewater.client.stored.library.permissions.read.Sto
 import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
 import com.lasthopesoftware.bluewater.client.stored.sync.notifications.SyncChannelProperties
 import com.lasthopesoftware.bluewater.client.stored.sync.receivers.SyncItemStateChangedListener
+import com.lasthopesoftware.bluewater.settings.ApplicationSettingsUpdated
+import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
+import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.shared.android.intents.IntentBuilder
 import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler
+import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.compilation.DebugFlag
@@ -49,6 +53,7 @@ import java.io.File
 open class MainApplication : Application() {
 
 	companion object {
+		private val logger by lazyLogger<MainApplication>()
 		private var isWorkManagerInitialized = false
 	}
 
@@ -100,6 +105,11 @@ open class MainApplication : Application() {
 
 	private val syncScheduler by lazy { SyncScheduler(this) }
 
+	private val applicationSettings by lazy { getApplicationSettingsRepository() }
+
+	@Volatile
+	private var isLoggingToFile = true
+
 	@SuppressLint("DefaultLocale")
 	override fun onCreate() {
 		super.onCreate()
@@ -108,6 +118,10 @@ open class MainApplication : Application() {
 
 		Thread.setDefaultUncaughtExceptionHandler(LoggerUncaughtExceptionHandler)
 		Promise.Rejections.setUnhandledRejectionsReceiver(LoggerUncaughtExceptionHandler)
+
+		applicationSettings
+			.promiseApplicationSettings()
+			.then(::reinitializeLoggingIfNecessary)
 
 		registerAppBroadcastReceivers()
 
@@ -146,6 +160,21 @@ open class MainApplication : Application() {
 		)
 
 		applicationMessageBus.registerReceiver(SyncItemStateChangedListener(syncScheduler))
+
+		applicationMessageBus.registerReceiver { _: ApplicationSettingsUpdated ->
+			applicationSettings
+				.promiseApplicationSettings()
+				.then(::reinitializeLoggingIfNecessary)
+		}
+	}
+
+	private fun reinitializeLoggingIfNecessary(applicationSettings: ApplicationSettings) {
+		if (applicationSettings.isLoggingToFile != isLoggingToFile) {
+			isLoggingToFile = applicationSettings.isLoggingToFile
+			initializeLogging()
+
+			logger.info("File logging {}.", if (isLoggingToFile) "enabled" else "disabled")
+		}
 	}
 
 	private fun initializeLogging() {
@@ -167,7 +196,7 @@ open class MainApplication : Application() {
 		val rootLogger = LoggerFactory.getLogger(org.slf4j.Logger.ROOT_LOGGER_NAME) as Logger
 		rootLogger.level = Level.WARN
 		rootLogger.addAppender(logcatAppender)
-		if (Environment.MEDIA_MOUNTED == Environment.getExternalStorageState() && getExternalFilesDir(null) != null) {
+		if (isLoggingToFile && Environment.MEDIA_MOUNTED == Environment.getExternalStorageState() && getExternalFilesDir(null) != null) {
 			val asyncAppender = AsyncAppender()
 			asyncAppender.context = lc
 			asyncAppender.name = "ASYNC"
@@ -211,22 +240,23 @@ open class MainApplication : Application() {
 			StatusPrinter.print(lc)
 		}
 
-		val logger = LoggerFactory.getLogger(javaClass)
-		logger.info("Uncaught exceptions logging to custom uncaught exception handler.")
-
-		if (!DebugFlag.isDebugCompilation) return
-
-		rootLogger.level = Level.DEBUG
-		logger.info("DEBUG_MODE active")
-		StrictMode.setThreadPolicy(StrictMode.ThreadPolicy.Builder()
-			.detectDiskReads()
-			.detectDiskWrites()
-			.detectNetwork() // or .detectAll() for all detectable problems
-			.penaltyLog()
-			.build())
-		StrictMode.setVmPolicy(VmPolicy.Builder()
-			.detectLeakedSqlLiteObjects()
-			.penaltyLog()
-			.build())
+		if (DebugFlag.isDebugCompilation) {
+			rootLogger.level = Level.DEBUG
+			logger.info("DEBUG_MODE active")
+			StrictMode.setThreadPolicy(
+				StrictMode.ThreadPolicy.Builder()
+					.detectDiskReads()
+					.detectDiskWrites()
+					.detectNetwork() // or .detectAll() for all detectable problems
+					.penaltyLog()
+					.build()
+			)
+			StrictMode.setVmPolicy(
+				VmPolicy.Builder()
+					.detectLeakedSqlLiteObjects()
+					.penaltyLog()
+					.build()
+			)
+		}
 	}
 }

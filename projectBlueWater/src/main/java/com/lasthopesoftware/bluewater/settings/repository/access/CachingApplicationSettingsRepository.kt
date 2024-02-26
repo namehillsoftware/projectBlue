@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.settings.repository.access
 
 import android.content.Context
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
+import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
 import com.namehillsoftware.handoff.promises.Promise
 
 class CachingApplicationSettingsRepository
@@ -12,7 +13,10 @@ class CachingApplicationSettingsRepository
 
 	companion object {
 		fun Context.getApplicationSettingsRepository(): CachingApplicationSettingsRepository =
-			CachingApplicationSettingsRepository(ApplicationSettingsRepository(this), PromisedApplicationSettingsCache)
+			CachingApplicationSettingsRepository(
+				ApplicationSettingsRepository(this, ApplicationMessageBus.getApplicationMessageBus()),
+				PromisedApplicationSettingsCache
+			)
 	}
 
 	override fun promiseApplicationSettings(): Promise<ApplicationSettings> =

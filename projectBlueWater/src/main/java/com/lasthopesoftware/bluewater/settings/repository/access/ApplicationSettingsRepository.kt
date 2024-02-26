@@ -2,8 +2,8 @@ package com.lasthopesoftware.bluewater.settings.repository.access
 
 import android.content.Context
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
-import com.lasthopesoftware.bluewater.repository.UpdateBuilder
 import com.lasthopesoftware.bluewater.repository.fetchFirst
+import com.lasthopesoftware.bluewater.settings.ApplicationSettingsUpdated
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.chosenLibraryIdColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.isLoggingToFile
@@ -12,14 +12,16 @@ import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEnt
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.isVolumeLevelingEnabledColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.playbackEngineTypeNameColumn
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettingsEntityInformation.tableName
+import com.lasthopesoftware.bluewater.shared.messages.application.SendApplicationMessages
 import com.lasthopesoftware.resources.executors.ThreadPools.promiseTableMessage
 import com.namehillsoftware.handoff.promises.Promise
+import com.namehillsoftware.querydroid.SqLiteAssistants
 
-class ApplicationSettingsRepository(private val context: Context): HoldApplicationSettings {
+class ApplicationSettingsRepository(private val context: Context, private val messages: SendApplicationMessages): HoldApplicationSettings {
 
 	companion object {
 		private val updateStatement by lazy {
-			UpdateBuilder.fromTable(tableName)
+			SqLiteAssistants.UpdateBuilder.fromTable(tableName)
 				.addSetter(isSyncOnWifiOnlyColumn)
 				.addSetter(isSyncOnPowerOnlyColumn)
 				.addSetter(isVolumeLevelingEnabledColumn)
@@ -54,5 +56,8 @@ class ApplicationSettingsRepository(private val context: Context): HoldApplicati
 					it.setTransactionSuccessful()
 				}
 			}
-		}.eventually { promiseApplicationSettings() }
+		}.eventually {
+			messages.sendMessage(ApplicationSettingsUpdated)
+			promiseApplicationSettings()
+		}
 }

@@ -9,13 +9,15 @@ private const val UnhandledCancellationException = "A CancellationException was 
 
 object LoggerUncaughtExceptionHandler : Thread.UncaughtExceptionHandler, UnhandledRejectionsReceiver {
 
-	private val logger by lazy { LoggerFactory.getLogger(LoggerUncaughtExceptionHandler::class.java) }
+	private val logger by lazy {
+		LoggerFactory.getLogger(javaClass).apply {
+			info("Uncaught exceptions logging to custom uncaught exception handler.")
+		}
+	}
 
 	override fun uncaughtException(thread: Thread, ex: Throwable) {
 		if (ex is CancellationException) {
-			if (logger.isDebugEnabled) {
-				logger.debug(UnhandledCancellationException, ex)
-			}
+			logger.debug(UnhandledCancellationException, ex)
 			return
 		}
 
@@ -24,9 +26,7 @@ object LoggerUncaughtExceptionHandler : Thread.UncaughtExceptionHandler, Unhandl
 
 	override fun newUnhandledRejection(rejection: Throwable) {
 		if (rejection is CancellationException) {
-			if (logger.isDebugEnabled) {
-				logger.debug(UnhandledCancellationException, rejection)
-			}
+			logger.debug(UnhandledCancellationException, rejection)
 			return
 		}
 
