@@ -921,7 +921,7 @@ import java.util.concurrent.TimeoutException
 				playbackState.value.eventually {
 					it.playbackState.startPlaylist(
 						libraryId,
-						playlist.toMutableList(),
+						playlist.toList(),
 						playlistPosition,
 						Duration.ZERO
 					)
@@ -1117,7 +1117,8 @@ import java.util.concurrent.TimeoutException
 
 	private fun haltService() {
 		pausePlayback()
-		stopSelf(startId)
+			.inevitably { promisingServiceCloseables.promiseClose() }
+			.must { stopSelf(startId) }
 	}
 
 	override fun onDestroy() {
