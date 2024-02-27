@@ -43,9 +43,6 @@ class IntentBuilder(private val context: Context) : BuildIntents {
 	}
 
 	@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
-	override fun buildPendingKillPlaybackIntent(): PendingIntent = PlaybackService.pendingKillService(context)
-
-	@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 	override fun buildPendingPausePlaybackIntent(): PendingIntent = PlaybackService.pendingPauseIntent(context)
 
 	override fun buildPendingShowDownloadsIntent(): PendingIntent {

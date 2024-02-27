@@ -285,9 +285,6 @@ import java.util.concurrent.TimeoutException
 		fun killService(context: Context) =
 			context.safelyStartService(getNewSelfIntent(context, PlaybackServiceAction.KillPlaybackService))
 
-		fun pendingKillService(context: Context): PendingIntent =
-			getPendingIntent(context, PlaybackServiceAction.KillPlaybackService)
-
 		fun promiseIsMarkedForPlay(context: Context, libraryId: LibraryId): Promise<Boolean> =
 			context.promiseBoundService<PlaybackService>()
 				.then { h ->
