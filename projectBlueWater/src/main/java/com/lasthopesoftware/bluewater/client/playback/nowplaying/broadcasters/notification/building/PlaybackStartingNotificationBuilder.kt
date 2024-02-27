@@ -20,8 +20,8 @@ class PlaybackStartingNotificationBuilder(
 
 	override fun promisePreparedPlaybackStartingNotification(libraryId: LibraryId): Promise<NotificationCompat.Builder> =
 		produceNotificationBuilders.getNotificationBuilder(configuration.notificationChannel)
-			.setDeleteIntent(intentBuilder.buildPendingKillPlaybackIntent())
-			.addAction(0, context.getString(R.string.btn_cancel), intentBuilder.buildPendingKillPlaybackIntent())
+			.setDeleteIntent(intentBuilder.buildPendingPausePlaybackIntent())
+			.addAction(0, context.getString(R.string.btn_cancel), intentBuilder.buildPendingPausePlaybackIntent())
 			.setOngoing(false)
 			.setSound(null)
 			.setPriority(NotificationCompat.PRIORITY_DEFAULT)

@@ -23,5 +23,7 @@ interface BuildIntents {
 
 	fun buildPendingKillPlaybackIntent(): PendingIntent
 
+	fun buildPendingPausePlaybackIntent(): PendingIntent
+
 	fun buildPendingShowDownloadsIntent(): PendingIntent
 }
