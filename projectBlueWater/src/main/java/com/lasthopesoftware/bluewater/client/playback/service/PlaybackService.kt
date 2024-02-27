@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.playback.service
 import android.annotation.SuppressLint
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
@@ -16,7 +17,6 @@ import android.os.PowerManager.WakeLock
 import android.os.Process
 import android.widget.Toast
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.LifecycleService
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.HttpDataSource
 import androidx.media3.exoplayer.ExoPlaybackException
@@ -153,7 +153,7 @@ import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
 @UnstableApi open class PlaybackService :
-	LifecycleService(),
+	Service(),
 	OnPlaybackPaused,
 	OnPlaybackInterrupted,
 	OnPlaybackStarted,
@@ -901,10 +901,7 @@ import java.util.concurrent.TimeoutException
 		changePositionedPlaybackFile(libraryId, positionedPlayingFile)
 	}
 
-	override fun onBind(intent: Intent): IBinder? {
-		super.onBind(intent)
-		return binder
-	}
+	override fun onBind(intent: Intent): IBinder? = binder
 
 	private fun guardDestroyedService() {
 		if (isDestroyed)
