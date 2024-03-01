@@ -59,6 +59,7 @@ class MediaSessionBroadcaster(
 
 	override fun close() {
 		trackPositionUpdatesSubscription.close()
+		clearClientBitmap()
 		super.close()
 	}
 
@@ -94,7 +95,6 @@ class MediaSessionBroadcaster(
 			playbackSpeed
 		)
 		mediaSession.setPlaybackState(builder.build())
-		clearClientBitmap()
 	}
 
 	override fun notifyInterrupted() {
