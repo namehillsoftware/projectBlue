@@ -50,13 +50,13 @@ class WhenTheFileChanges : AndroidContext() {
 			},
 			mediaSessionCompat,
 			messageBus,
-		)
-
-		with (messageBus) {
-			sendMessage(PlaybackMessage.PlaybackStarted)
-			sendMessage(LibraryPlaybackMessage.TrackChanged(LibraryId(libraryId), nowPlaying.playingFile!!))
-			sendMessage(PlaybackMessage.PlaybackStopped)
-			sendMessage(LibraryPlaybackMessage.TrackChanged(LibraryId(libraryId), nowPlaying.playingFile!!))
+		).use {
+			with(messageBus) {
+				sendMessage(PlaybackMessage.PlaybackStarted)
+				sendMessage(LibraryPlaybackMessage.TrackChanged(LibraryId(libraryId), nowPlaying.playingFile!!))
+				sendMessage(PlaybackMessage.PlaybackStopped)
+				sendMessage(LibraryPlaybackMessage.TrackChanged(LibraryId(libraryId), nowPlaying.playingFile!!))
+			}
 		}
 	}
 

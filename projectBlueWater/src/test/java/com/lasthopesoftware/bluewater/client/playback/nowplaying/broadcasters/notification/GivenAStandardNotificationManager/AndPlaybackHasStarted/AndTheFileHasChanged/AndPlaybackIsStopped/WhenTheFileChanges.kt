@@ -91,11 +91,11 @@ class WhenTheFileChanges : AndroidContext() {
 
 	@Test
 	fun `then the service does not continue in the background`() {
-		verify { service.stopForeground(Service.STOP_FOREGROUND_REMOVE) }
+		verify { service.stopForeground(Service.STOP_FOREGROUND_DETACH) }
 	}
 
 	@Test
-	fun `then the notification is not set to the second notification`() {
-		verify(exactly = 0) { notificationManager.notify(43, secondNotification) }
+	fun `then the notification is set to the second notification`() {
+		verify { notificationManager.notify(43, secondNotification) }
 	}
 }

@@ -87,12 +87,14 @@ class PlaybackNotificationBroadcaster(
 		}
 
 		nowPlayingNotificationContentBuilder
-			.promiseNowPlayingNotification(libraryId, currentServiceFile, false.also { isPlaying = false })
+			.promiseNowPlayingNotification(libraryId, currentServiceFile, false)
 			.then {
 				it?.apply {
 					notificationsController.notifyBackground(build(), notificationId)
 				}
 			}
+
+		isPlaying = false
 	}
 
 	override fun notifyInterrupted() {
@@ -104,21 +106,17 @@ class PlaybackNotificationBroadcaster(
 		}
 
 		nowPlayingNotificationContentBuilder
-			.promiseNowPlayingNotification(libraryId, currentServiceFile, false.also { isPlaying = it })
+			.promiseNowPlayingNotification(libraryId, currentServiceFile, false)
 			.then {
 				it?.apply {
 					notificationsController.notifyForeground(build(), notificationId)
 				}
 			}
+
+		isPlaying = false
 	}
 
-	override fun notifyStopped() {
-		synchronized(notificationSync) {
-			isPlaying = false
-			isNotificationStarted = false
-			notificationsController.removeNotification(notificationId)
-		}
-	}
+	override fun notifyStopped() = notifyPaused()
 
 	override fun notifyPlayingFileUpdated() {
 		nowPlayingState.promiseActiveNowPlaying().then { np ->
