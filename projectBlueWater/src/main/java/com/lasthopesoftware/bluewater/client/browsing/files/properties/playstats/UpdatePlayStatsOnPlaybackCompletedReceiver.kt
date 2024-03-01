@@ -41,5 +41,7 @@ class UpdatePlayStatsOnPlaybackCompletedReceiver(
 		)
 	}
 
-	override fun promiseClose(): Promise<Unit> = promiseTracker.promiseClose()
+	override fun promiseClose(): Promise<Unit> = promiseUpdatesFinish()
+
+	fun promiseUpdatesFinish(): Promise<Unit> = promiseTracker.promiseAllConcluded()
 }

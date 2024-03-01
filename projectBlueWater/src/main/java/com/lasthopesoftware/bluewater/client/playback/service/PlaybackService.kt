@@ -560,7 +560,7 @@ import java.util.concurrent.TimeoutException
 		)
 	}
 
-	private val updatePlayStatsOnPlaybackCompletedReceiver by lazy {
+	private val updatePlayStatsOnPlaybackCompletedReceiver = lazy {
 		promisingServiceCloseables.manage(
 			UpdatePlayStatsOnPlaybackCompletedReceiver(
 				LibraryPlaystatsUpdateSelector(
@@ -634,7 +634,7 @@ import java.util.concurrent.TimeoutException
 					.setOnPlaybackStarted(this)
 					.setOnPlaybackPaused(this)
 					.setOnPlaybackInterrupted(this)
-					.setOnPlayingFileChanged(updatePlayStatsOnPlaybackCompletedReceiver)
+					.setOnPlayingFileChanged(updatePlayStatsOnPlaybackCompletedReceiver.value)
 					.setOnPlaylistError(::uncaughtExceptionHandler)
 					.setOnPlaybackCompleted(this)
 					.setOnPlaylistReset(this)
@@ -878,14 +878,22 @@ import java.util.concurrent.TimeoutException
 	}
 
 	override fun onPlaybackCompleted() {
-		applicationMessageBus.sendMessage(PlaybackMessage.PlaybackStopped)
 		isMarkedForPlay = false
 
-		// Closing these resources before calling `stopSelf` let's us avoid application resources shutting down (such
-		// as network connections) before we are ready for them to close.
-		promisingServiceCloseables
-			.promiseClose()
-			.must { stopSelf(startId) }
+		if (!updatePlayStatsOnPlaybackCompletedReceiver.isInitialized()) {
+			applicationMessageBus.sendMessage(PlaybackMessage.PlaybackStopped)
+			stopSelf(startId)
+			return
+		}
+
+		// Wait for any playback updates to finish before sending out the playback stopped message.
+		updatePlayStatsOnPlaybackCompletedReceiver
+			.value
+			.promiseUpdatesFinish()
+			.must {
+				applicationMessageBus.sendMessage(PlaybackMessage.PlaybackStopped)
+				stopSelf(startId)
+			}
 	}
 
 	override fun onPlaybackStarted() {
@@ -1115,11 +1123,7 @@ import java.util.concurrent.TimeoutException
 		applicationMessageBus.sendMessage(LibraryPlaybackMessage.TrackChanged(libraryId, positionedFile))
 	}
 
-	private fun haltService() {
-		pausePlayback()
-			.inevitably { promisingServiceCloseables.promiseClose() }
-			.must { stopSelf(startId) }
-	}
+	private fun haltService() = stopSelf()
 
 	override fun onDestroy() {
 		isDestroyed = true
