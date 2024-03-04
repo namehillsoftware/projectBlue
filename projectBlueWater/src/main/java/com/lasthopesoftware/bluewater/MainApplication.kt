@@ -46,6 +46,7 @@ import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMes
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.compilation.DebugFlag
 import com.lasthopesoftware.resources.strings.StringResources
+import com.namehillsoftware.handoff.errors.StackTraceFiltering
 import com.namehillsoftware.handoff.promises.Promise
 import org.slf4j.LoggerFactory
 import java.io.File
@@ -113,6 +114,8 @@ open class MainApplication : Application() {
 	@SuppressLint("DefaultLocale")
 	override fun onCreate() {
 		super.onCreate()
+
+		StackTraceFiltering.toggleStackTraceFiltering(!DebugFlag.isDebugCompilation)
 
 		initializeLogging()
 
