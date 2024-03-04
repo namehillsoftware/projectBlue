@@ -13,7 +13,7 @@ class ImageCacheKeyLookup(private val cachedFilePropertiesProvider: CachedFilePr
 		return object : Promise<String>() {
 			init {
 				val cancellationProxy = CancellationProxy()
-				respondToCancellation(cancellationProxy)
+				awaitCancellation(cancellationProxy)
 
 				val promisedFileProperties = cachedFilePropertiesProvider.promiseFileProperties(libraryId, serviceFile)
 				cancellationProxy.doCancel(promisedFileProperties)
@@ -30,7 +30,7 @@ class ImageCacheKeyLookup(private val cachedFilePropertiesProvider: CachedFilePr
 
 						resolve("$artist:$albumOrTrackName")
 					}
-					.excuse { reject(it) }
+					.excuse(::reject)
 			}
 		}
 	}

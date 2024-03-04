@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.connection.libraries
 
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
-import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
+import com.lasthopesoftware.promises.extensions.keepPromise
 import com.namehillsoftware.handoff.promises.Promise
 
 class SelectedLibraryUrlKeyProvider(

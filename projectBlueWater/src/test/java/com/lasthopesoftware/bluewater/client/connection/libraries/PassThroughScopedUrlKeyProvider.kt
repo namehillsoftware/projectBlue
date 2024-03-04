@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.connection.libraries
 
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import java.net.URL
 

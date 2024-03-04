@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.connection.libraries
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
-import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
+import com.lasthopesoftware.promises.extensions.CancellableProxyPromise
 import com.namehillsoftware.handoff.promises.Promise
 
 class GuaranteedLibraryConnectionProvider(
@@ -12,7 +12,7 @@ class GuaranteedLibraryConnectionProvider(
 		libraryConnectionProvider
 			.promiseLibraryConnection(libraryId)
 			.also(cp::doCancel)
-			.then {
+			.then { it ->
 				it ?: throw ConnectionUnavailableException(libraryId)
 			}
 	}

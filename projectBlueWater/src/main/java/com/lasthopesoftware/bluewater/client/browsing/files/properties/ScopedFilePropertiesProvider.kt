@@ -4,8 +4,8 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.IFilePropertiesContainerRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.CheckScopedRevisions
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
-import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.promises.extensions.CancellableProxyPromise
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 
 private val promisedEmptyProperties by lazy { emptyMap<String, String>().toPromise() }

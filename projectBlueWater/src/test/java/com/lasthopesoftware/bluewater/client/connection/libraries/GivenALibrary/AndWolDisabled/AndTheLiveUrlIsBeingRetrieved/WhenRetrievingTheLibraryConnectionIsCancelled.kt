@@ -12,7 +12,7 @@ import com.lasthopesoftware.bluewater.client.connection.settings.ValidateConnect
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.promises.extensions.toPromise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -29,7 +29,7 @@ class WhenRetrievingTheLibraryConnectionIsCancelled {
 		)
 	)
 	private val deferredLiveUrlProvider = object : DeferredPromise<IUrlProvider?>(urlProvider) {
-		override fun run() {
+		override fun cancellationRequested() {
 			isLiveUrlProviderCancelled = true
 			resolve(null)
 		}

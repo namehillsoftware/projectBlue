@@ -5,7 +5,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.repositor
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.CheckRevisions
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
-import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
+import com.lasthopesoftware.promises.extensions.CancellableProxyPromise
 import com.namehillsoftware.handoff.promises.Promise
 
 class FilePropertiesProvider(

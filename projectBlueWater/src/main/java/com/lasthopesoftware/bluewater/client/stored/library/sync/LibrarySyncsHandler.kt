@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Stor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.UpdateStoredFiles
 import com.lasthopesoftware.bluewater.shared.observables.stream
 import com.lasthopesoftware.bluewater.shared.observables.toMaybeObservable
-import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
+import com.lasthopesoftware.promises.extensions.CancellableProxyPromise
 import io.reactivex.rxjava3.core.Observable
 import org.slf4j.LoggerFactory
 
@@ -36,7 +36,7 @@ class LibrarySyncsHandler(
 				.eventually { allServiceFilesToSync ->
 					val serviceFilesSet = allServiceFilesToSync as? Set<ServiceFile> ?: allServiceFilesToSync.toSet()
 					pruneFilesTasks.excuse { e -> logger.warn("There was an error pruning the files", e) }
-					pruneFilesTasks.then { serviceFilesSet }
+					pruneFilesTasks.then { _ -> serviceFilesSet }
 				}
 		}
 		.stream()

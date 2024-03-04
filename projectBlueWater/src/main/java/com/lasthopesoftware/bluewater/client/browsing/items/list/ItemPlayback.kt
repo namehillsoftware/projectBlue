@@ -14,10 +14,10 @@ class ItemPlayback(
 	override fun playItem(libraryId: LibraryId, itemId: ItemId): Promise<Unit> =
 		itemStringListProvider
 			.promiseFileStringList(libraryId, itemId, FileListParameters.Options.None)
-			.then { controlPlaybackService.startPlaylist(libraryId, it) }
+			.then { it -> controlPlaybackService.startPlaylist(libraryId, it) }
 
 	override fun playItemShuffled(libraryId: LibraryId, itemId: ItemId): Promise<Unit> =
 		itemStringListProvider
 			.promiseFileStringList(libraryId, itemId, FileListParameters.Options.Shuffled)
-			.then { controlPlaybackService.startPlaylist(libraryId, it) }
+			.then { it -> controlPlaybackService.startPlaylist(libraryId, it) }
 }

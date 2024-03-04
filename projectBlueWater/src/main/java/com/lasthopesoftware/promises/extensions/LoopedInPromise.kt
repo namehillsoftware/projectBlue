@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.shared.promises.extensions
+package com.lasthopesoftware.promises.extensions
 
 import android.content.Context
 import android.os.Handler
@@ -20,16 +20,32 @@ open class LoopedInPromise<Result> : Promise<Result> {
 		: this(task, Handler(context.mainLooper))
 
 	constructor(task: MessageWriter<Result>, handler: Handler)
-		: super(Executors.LoopedInResponse<Result>(PreparedMessengerOperator<Result>(task), handler))
+		: super(
+		Executors.LoopedInResponse<Result>(
+			PreparedMessengerOperator<Result>(task),
+			handler
+		)
+    )
 
 	constructor(task: MessageWriter<Result>, context: Context, delay: Duration)
 		: this(task, Handler(context.mainLooper), delay)
 
 	constructor(task: MessageWriter<Result>, handler: Handler, delay: Duration)
-		: super(Executors.DelayedLoopedInPromise<Result>(PreparedMessengerOperator<Result>(task), handler, delay))
+		: super(
+		Executors.DelayedLoopedInPromise<Result>(
+			PreparedMessengerOperator<Result>(task),
+			handler,
+			delay
+		)
+    )
 
 	constructor(task: CancellableMessageWriter<Result>, handler: Handler)
-		: super(Executors.LoopedInResponse<Result>(CancellablePreparedMessengerOperator<Result>(task), handler))
+		: super(
+		Executors.LoopedInResponse<Result>(
+			CancellablePreparedMessengerOperator<Result>(task),
+			handler
+		)
+    )
 
 	constructor(task: MessengerOperator<Result>, handler: Handler)
 		: super(Executors.LoopedInResponse<Result>(task, handler))

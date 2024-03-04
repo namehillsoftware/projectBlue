@@ -8,7 +8,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.I
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import com.lasthopesoftware.resources.RecordingTypedMessageBus
 import com.lasthopesoftware.resources.strings.GetStringResources

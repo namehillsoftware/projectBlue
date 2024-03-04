@@ -5,7 +5,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredIt
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemsChecker
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ExpiringFuturePromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.promises.extensions.toPromise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat

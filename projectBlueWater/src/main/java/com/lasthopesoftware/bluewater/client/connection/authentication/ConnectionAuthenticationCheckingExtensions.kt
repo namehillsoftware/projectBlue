@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.connection.authentication
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.shared.StandardResponse
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 
 private val nullConnectionProviderPromise by lazy { false.toPromise() }

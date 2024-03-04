@@ -90,9 +90,9 @@ import com.lasthopesoftware.bluewater.shared.android.viewmodels.ViewModelInitAct
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToaster
 import com.lasthopesoftware.bluewater.shared.lazyLogger
-import com.lasthopesoftware.bluewater.shared.promises.extensions.registerResultActivityLauncher
-import com.lasthopesoftware.bluewater.shared.promises.extensions.suspend
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.promises.extensions.registerResultActivityLauncher
+import com.lasthopesoftware.promises.extensions.suspend
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.closables.AutoCloseableManager
 import com.namehillsoftware.handoff.Messenger
 import com.namehillsoftware.handoff.promises.Promise

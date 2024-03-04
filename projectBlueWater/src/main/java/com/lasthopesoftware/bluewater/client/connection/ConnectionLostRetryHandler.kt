@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.connection
 
 import com.lasthopesoftware.bluewater.shared.policies.retries.RecursivePromiseRetryHandler
 import com.lasthopesoftware.bluewater.shared.policies.retries.RetryPromises
-import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay
+import com.lasthopesoftware.promises.PromiseDelay
 import com.namehillsoftware.handoff.promises.Promise
 import org.joda.time.Duration
 

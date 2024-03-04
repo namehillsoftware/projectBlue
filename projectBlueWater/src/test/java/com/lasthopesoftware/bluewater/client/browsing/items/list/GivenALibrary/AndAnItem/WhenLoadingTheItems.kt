@@ -6,7 +6,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import io.mockk.every
 import io.mockk.mockk

@@ -3,8 +3,8 @@ package com.lasthopesoftware.bluewater.client.browsing.files.image
 import android.graphics.Bitmap
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
-import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
+import com.lasthopesoftware.promises.extensions.CancellableProxyPromise
+import com.lasthopesoftware.promises.extensions.keepPromise
 import com.namehillsoftware.handoff.promises.Promise
 
 class SelectedLibraryImageProvider(private val selectedLibraryId: ProvideSelectedLibraryId, private val provideLibraryImages: ProvideLibraryImages) : ProvideScopedImages {

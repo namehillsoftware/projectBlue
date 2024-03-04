@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.shared.promises
+package com.lasthopesoftware.promises
 
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
@@ -38,7 +38,7 @@ private class FuturePromise<Resolution>(promise: Promise<Resolution>) : Future<R
 
 	override fun cancel(mayInterruptIfRunning: Boolean): Boolean {
 		if (isCompleted) return false
-		cancellationProxy.run()
+		cancellationProxy.cancellationRequested()
 		return true
 	}
 

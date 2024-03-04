@@ -11,7 +11,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.reposito
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFileUpdater
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk

@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.connection.builder.lookup
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
+import com.lasthopesoftware.promises.extensions.CancellableProxyPromise
 import com.namehillsoftware.handoff.promises.Promise
 
 class ServerLookup(private val serverInfoXmlRequest: RequestServerInfoXml) : LookupServers {

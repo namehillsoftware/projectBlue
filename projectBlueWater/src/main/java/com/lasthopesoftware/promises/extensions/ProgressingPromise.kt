@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.shared.promises.extensions
+package com.lasthopesoftware.promises.extensions
 
 import com.namehillsoftware.handoff.promises.MessengerOperator
 import com.namehillsoftware.handoff.promises.Promise
@@ -32,7 +32,7 @@ open class ProgressingPromise<Progress, Resolution> : ProgressedPromise<Progress
 		if (isResolved.get()) return
 
 		updateListeners[action] = Unit
-		must {
+		must { _ ->
 			isResolved.set(true)
 			updateListeners.remove(action)
 		}

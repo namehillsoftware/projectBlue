@@ -127,14 +127,14 @@ import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessa
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.observables.toMaybeObservable
 import com.lasthopesoftware.bluewater.shared.policies.retries.RetryOnRejectionLazyPromise
-import com.lasthopesoftware.bluewater.shared.promises.ForwardedResponse.Companion.forward
-import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay.Companion.delay
-import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
-import com.lasthopesoftware.bluewater.shared.promises.getSafely
-import com.lasthopesoftware.bluewater.shared.promises.toFuture
 import com.lasthopesoftware.bluewater.shared.resilience.TimedCountdownLatch
+import com.lasthopesoftware.promises.ForwardedResponse.Companion.forward
+import com.lasthopesoftware.promises.PromiseDelay.Companion.delay
+import com.lasthopesoftware.promises.extensions.LoopedInPromise
+import com.lasthopesoftware.promises.extensions.toPromise
+import com.lasthopesoftware.promises.extensions.unitResponse
+import com.lasthopesoftware.promises.getSafely
+import com.lasthopesoftware.promises.toFuture
 import com.lasthopesoftware.resources.closables.PromisingCloseableManager
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.lasthopesoftware.resources.loopers.HandlerThreadCreator
@@ -662,7 +662,7 @@ import java.util.concurrent.TimeoutException
 			.eventually(forward()) { e ->
 				promisingPlaybackEngineCloseables
 					.promiseClose()
-					.then { throw e }
+					.then { _ -> throw e }
 			}
 	}
 
@@ -767,7 +767,7 @@ import java.util.concurrent.TimeoutException
 					val (libraryId, serviceFile) = playbackEngineAction
 					restorePlaybackServices(libraryId)
 						.eventually { it.playlistFiles.addFile(serviceFile) }
-						.then { applicationMessageBus.sendMessage(LibraryPlaybackMessage.PlaylistChanged(libraryId)) }
+						.then { _ -> applicationMessageBus.sendMessage(LibraryPlaybackMessage.PlaylistChanged(libraryId)) }
 						.eventually(LoopedInPromise.response({
 							Toast.makeText(this, getText(R.string.lbl_song_added_to_now_playing), Toast.LENGTH_SHORT).show()
 						}, this))
@@ -777,7 +777,7 @@ import java.util.concurrent.TimeoutException
 
 					restorePlaybackServices(libraryId)
 						.eventually { it.playlistFiles.removeFileAtPosition(filePosition) }
-						.then {
+						.then { _ ->
 							applicationMessageBus.sendMessage(LibraryPlaybackMessage.PlaylistChanged(libraryId))
 						}
 						.unitResponse()
@@ -787,7 +787,7 @@ import java.util.concurrent.TimeoutException
 
 					restorePlaybackServices(libraryId)
 						.eventually { it.playlistFiles.moveFile(filePosition, newPosition) }
-						.then {
+						.then { _ ->
 							applicationMessageBus.sendMessage(LibraryPlaybackMessage.PlaylistChanged(libraryId))
 						}
 						.unitResponse()
@@ -796,7 +796,7 @@ import java.util.concurrent.TimeoutException
 					val (libraryId) = playbackEngineAction
 					restorePlaybackServices(libraryId)
 						.eventually { it.playlistFiles.clearPlaylist() }
-						.then {
+						.then { _ ->
 							logger.debug("Playlist cleared")
 							applicationMessageBus.sendMessage(LibraryPlaybackMessage.PlaylistChanged(libraryId))
 						}
@@ -811,7 +811,7 @@ import java.util.concurrent.TimeoutException
 			val timeoutResponse =
 				promisedTimeout.then(
 					{ throw TimeoutException("Timed out after $playbackStartTimeout") },
-					{
+					{ it ->
 						// avoid logging cancellation exceptions
 						if (it !is CancellationException)
 							throw it
@@ -819,9 +819,7 @@ import java.util.concurrent.TimeoutException
 				)
 
 			val promisedIntentHandling = handlePlaybackEngineAction(playbackEngineAction)
-				.must {
-					promisedTimeout.cancel()
-				}
+				.must { _ -> promisedTimeout.cancel() }
 
 			Promise.whenAny(promisedIntentHandling, timeoutResponse).excuse(unhandledRejectionHandler)
 		}
@@ -890,7 +888,7 @@ import java.util.concurrent.TimeoutException
 		updatePlayStatsOnPlaybackCompletedReceiver
 			.value
 			.promiseUpdatesFinish()
-			.must {
+			.must { _ ->
 				applicationMessageBus.sendMessage(PlaybackMessage.PlaybackStopped)
 				stopSelf(startId)
 			}
@@ -935,7 +933,7 @@ import java.util.concurrent.TimeoutException
 					)
 				}
 			}
-			.then {
+			.then { _ ->
 				startActivity(intentBuilder.buildNowPlayingIntent(libraryId))
 				applicationMessageBus.sendMessage(LibraryPlaybackMessage.PlaylistChanged(libraryId))
 			}
@@ -1107,12 +1105,12 @@ import java.util.concurrent.TimeoutException
 		}
 
 		promisedPlayedFile
-			.then {
+			.then { _ ->
 				applicationMessageBus.sendMessage(
 					LibraryPlaybackMessage.TrackCompleted(libraryId, positionedPlayingFile.serviceFile)
 				)
 			}
-			.must { localSubscription.dispose() }
+			.must { _ -> localSubscription.dispose() }
 
 		filePositionSubscription = localSubscription
 

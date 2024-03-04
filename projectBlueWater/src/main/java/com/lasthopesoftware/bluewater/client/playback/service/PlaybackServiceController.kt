@@ -34,7 +34,7 @@ import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 	override fun startPlaylist(libraryId: LibraryId, serviceFiles: List<ServiceFile>, position: Int) {
 		FileStringListUtilities
 			.promiseSerializedFileStringList(serviceFiles)
-			.then { startPlaylist(libraryId, it, position) }
+			.then { it -> startPlaylist(libraryId, it, position) }
 	}
 
 	override fun shuffleAndStartPlaylist(libraryId: LibraryId, serviceFiles: List<ServiceFile>) {

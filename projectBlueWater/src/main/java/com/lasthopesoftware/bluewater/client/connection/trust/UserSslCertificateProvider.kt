@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.connection.trust
 
 import android.content.ContentResolver
-import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
+import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.lasthopesoftware.resources.uri.SelectDocumentUris
 import com.lasthopesoftware.resources.uri.toUri

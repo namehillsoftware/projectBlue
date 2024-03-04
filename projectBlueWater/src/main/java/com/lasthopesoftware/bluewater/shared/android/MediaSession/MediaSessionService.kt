@@ -23,7 +23,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.receivers.MediaSes
 import com.lasthopesoftware.bluewater.shared.android.intents.IntentBuilder
 import com.lasthopesoftware.bluewater.shared.android.services.GenericBinder
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
-import com.lasthopesoftware.bluewater.shared.promises.toFuture
+import com.lasthopesoftware.promises.toFuture
 import java.util.concurrent.TimeUnit
 
 @UnstableApi class MediaSessionService : Service() {

@@ -11,7 +11,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
 import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
-import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
+import com.lasthopesoftware.promises.extensions.keepPromise
 import com.namehillsoftware.handoff.promises.Promise
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -55,10 +55,10 @@ class FileListViewModel(
 			.keepPromise()
 
 		return Promise.whenAll(promisedFilesUpdate, promisedSyncUpdate)
-			.then {
+			.then { _ ->
 				loadedItem = item
 			}
-			.must {
+			.must { _ ->
 				mutableIsLoading.value = false
 			}
 	}
@@ -69,7 +69,7 @@ class FileListViewModel(
 				val isSynced = !mutableIsSynced.value
 				storedItemAccess
 					.toggleSync(libraryId, key, isSynced)
-					.then { mutableIsSynced.value = isSynced }
+					.then { _ -> mutableIsSynced.value = isSynced }
 			}
 		}
 		.keepPromise(Unit)

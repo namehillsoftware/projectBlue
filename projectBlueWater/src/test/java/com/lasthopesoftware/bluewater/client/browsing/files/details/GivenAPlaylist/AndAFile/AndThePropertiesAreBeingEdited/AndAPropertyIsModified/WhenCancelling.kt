@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.libraries.PassThroughScopedUrlKeyProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every

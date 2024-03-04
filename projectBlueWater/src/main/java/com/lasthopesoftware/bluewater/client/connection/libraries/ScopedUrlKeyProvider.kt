@@ -2,8 +2,8 @@ package com.lasthopesoftware.bluewater.client.connection.libraries
 
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
-import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.promises.extensions.keepPromise
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 
 class ScopedUrlKeyProvider(private val connectionProvider: IConnectionProvider) : ProvideScopedUrlKey {

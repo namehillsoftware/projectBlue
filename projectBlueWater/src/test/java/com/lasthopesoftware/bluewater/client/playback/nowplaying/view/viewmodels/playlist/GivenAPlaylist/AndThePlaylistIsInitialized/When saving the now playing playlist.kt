@@ -7,7 +7,7 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.FakeNowPlayingR
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.playlist.NowPlayingPlaylistViewModel
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every

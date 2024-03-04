@@ -6,7 +6,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.permissions.read.ProvideReadPermissionsRequirements
 import com.lasthopesoftware.bluewater.shared.android.permissions.CheckOsPermissions
 import com.lasthopesoftware.bluewater.shared.android.permissions.ManagePermissions
-import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
+import com.lasthopesoftware.promises.extensions.unitResponse
 import com.namehillsoftware.handoff.promises.Promise
 
 class ApplicationPermissionsRequests(

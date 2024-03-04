@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.shared.promises.extensions
+package com.lasthopesoftware.promises.extensions
 
 import com.namehillsoftware.handoff.promises.MessengerOperator
 import com.namehillsoftware.handoff.promises.Promise

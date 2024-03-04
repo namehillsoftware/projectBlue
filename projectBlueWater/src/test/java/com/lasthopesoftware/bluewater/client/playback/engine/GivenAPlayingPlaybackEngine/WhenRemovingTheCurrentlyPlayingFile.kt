@@ -58,7 +58,7 @@ class WhenRemovingTheCurrentlyPlayingFile {
 		val savedLibrary = object : Promise<Library>() {
 			val libraryStorage = mockk<ILibraryStorage> {
 				every { saveLibrary(any()) } answers {
-					libraryProvider.saveLibrary(firstArg()).then {
+					libraryProvider.saveLibrary(firstArg()).then { it ->
 						if (it.savedTracksString != library.savedTracksString)
 							resolve(it)
 						it

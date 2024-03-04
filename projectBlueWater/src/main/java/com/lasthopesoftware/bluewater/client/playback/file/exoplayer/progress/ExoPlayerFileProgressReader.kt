@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.progress
 
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.PromisingExoPlayer
 import com.lasthopesoftware.bluewater.client.playback.file.progress.ReadFileProgress
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import org.joda.time.Duration
 

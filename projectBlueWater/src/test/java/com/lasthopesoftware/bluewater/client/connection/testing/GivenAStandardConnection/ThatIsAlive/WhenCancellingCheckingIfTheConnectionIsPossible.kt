@@ -35,7 +35,7 @@ class WhenCancellingCheckingIfTheConnectionIsPossible {
 			.message("Hewwo")
 			.body(RealResponseBody(null, bufferedResponse.size, bufferedResponse))
 			.build()) {
-			override fun run() {
+			override fun cancellationRequested() {
 				reject(CancellationException("Cancelled!"))
 			}
 		}

@@ -23,7 +23,7 @@ import com.lasthopesoftware.bluewater.shared.android.notifications.notificationc
 import com.lasthopesoftware.bluewater.shared.android.services.GenericBinder
 import com.lasthopesoftware.bluewater.shared.android.services.promiseBoundService
 import com.lasthopesoftware.bluewater.shared.cls
-import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
+import com.lasthopesoftware.promises.extensions.CancellableProxyPromise
 import com.lasthopesoftware.resources.closables.lazyScoped
 import com.namehillsoftware.handoff.promises.Promise
 
@@ -40,7 +40,7 @@ class PollConnectionService : LifecycleService() {
 					s.service
 						.promiseTestedLibrary(libraryId)
 						.also(cp::doCancel)
-						.must { s.close() }
+						.must { _ -> s.close() }
 				}
 		}
 	}

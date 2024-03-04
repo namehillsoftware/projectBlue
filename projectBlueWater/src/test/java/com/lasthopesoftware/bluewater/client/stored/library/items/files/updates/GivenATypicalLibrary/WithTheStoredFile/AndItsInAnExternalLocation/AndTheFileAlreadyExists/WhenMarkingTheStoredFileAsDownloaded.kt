@@ -8,7 +8,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.FakeStor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFileUpdater
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.uri.IoCommon
 import io.mockk.every
 import io.mockk.mockk

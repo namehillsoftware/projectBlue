@@ -10,8 +10,8 @@ import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibrary
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.messages.application.SendApplicationMessages
-import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.promises.extensions.keepPromise
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 
 private val logger by lazyLogger<FilePropertyStorage>()

@@ -13,7 +13,8 @@ import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.error.ExoPlayerException
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.progress.ExoPlayerFileProgressReader
 import com.lasthopesoftware.bluewater.shared.lazyLogger
-import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressedPromise
+import com.lasthopesoftware.promises.extensions.ProgressedPromise
+import com.namehillsoftware.handoff.cancellation.CancellationResponse
 import com.namehillsoftware.handoff.promises.Promise
 import org.joda.time.Duration
 import org.joda.time.format.PeriodFormatterBuilder
@@ -27,7 +28,7 @@ class ExoPlayerPlaybackHandler(private val exoPlayer: PromisingExoPlayer) :
 	PlayingFile,
 	PlayedFile,
 	Player.Listener,
-	Runnable
+	CancellationResponse
 {
 
 	companion object {
@@ -49,7 +50,7 @@ class ExoPlayerPlaybackHandler(private val exoPlayer: PromisingExoPlayer) :
 	private var backingDuration = Duration.ZERO
 
 	init {
-		respondToCancellation(this)
+		awaitCancellation(this)
 		exoPlayer.addListener(this)
 	}
 
@@ -60,7 +61,7 @@ class ExoPlayerPlaybackHandler(private val exoPlayer: PromisingExoPlayer) :
 
 	private var isPlaying = false
 
-	override fun promisePause(): Promise<PlayableFile> = pause().then { this }
+	override fun promisePause(): Promise<PlayableFile> = pause().then { _ ->  this }
 
 	override fun promisePlayedFile(): ProgressedPromise<Duration, PlayedFile> = this
 
@@ -75,7 +76,7 @@ class ExoPlayerPlaybackHandler(private val exoPlayer: PromisingExoPlayer) :
 
 	override fun promisePlayback(): Promise<PlayingFile> {
 		isPlaying = true
-		return exoPlayer.setPlayWhenReady(true).then { this }
+		return exoPlayer.setPlayWhenReady(true).then { _ -> this }
 	}
 
 	override fun onPlaybackStateChanged(playbackState: Int) {
@@ -161,7 +162,7 @@ class ExoPlayerPlaybackHandler(private val exoPlayer: PromisingExoPlayer) :
 		reject(CancellationException("Playback resources closed before playback could complete."))
 	}
 
-	override fun run() {
+	override fun cancellationRequested() {
 		close()
 	}
 

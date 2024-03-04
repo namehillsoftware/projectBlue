@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.volume
 
 import com.lasthopesoftware.bluewater.client.playback.file.volume.ManagePlayableFileVolume
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 
 class PassthroughVolumeManager : ManagePlayableFileVolume {

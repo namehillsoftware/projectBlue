@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.shared.promises.extensions
+package com.lasthopesoftware.promises.extensions
 
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
@@ -23,7 +23,7 @@ open class ProgressingPromiseProxy<Progress, Resolution> protected constructor()
 	}
 
 	init {
-		respondToCancellation(cancellationProxy)
+		awaitCancellation(cancellationProxy)
 	}
 
 	protected fun proxy(source: ProgressingPromise<Progress, Resolution>) {

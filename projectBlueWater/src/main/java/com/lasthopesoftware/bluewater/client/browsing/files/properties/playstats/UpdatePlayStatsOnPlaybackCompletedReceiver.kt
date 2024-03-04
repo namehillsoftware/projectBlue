@@ -6,7 +6,7 @@ import com.lasthopesoftware.bluewater.client.playback.engine.events.OnPlayingFil
 import com.lasthopesoftware.bluewater.client.playback.file.EmptyPlaybackHandler
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile
 import com.lasthopesoftware.bluewater.shared.lazyLogger
-import com.lasthopesoftware.bluewater.shared.promises.PromiseTracker
+import com.lasthopesoftware.promises.PromiseTracker
 import com.lasthopesoftware.resources.closables.PromisingCloseable
 import com.namehillsoftware.handoff.promises.Promise
 

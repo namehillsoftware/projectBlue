@@ -29,7 +29,7 @@ class HttpDataSourceFactoryProvider(
 	override fun promiseHttpDataSourceFactory(libraryId: LibraryId): Promise<HttpDataSource.Factory> =
 		connectionProvider
 			.promiseLibraryConnection(libraryId)
-			.then {
+			.then { it ->
 				OkHttpDataSource.Factory(
 					okHttpClients.getOkHttpClient(it.urlProvider)
 						.newBuilder()

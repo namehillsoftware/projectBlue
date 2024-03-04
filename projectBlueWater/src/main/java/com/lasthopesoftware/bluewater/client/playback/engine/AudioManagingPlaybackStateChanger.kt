@@ -8,8 +8,8 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.volume.IVolumeManagement
 import com.lasthopesoftware.bluewater.shared.android.audiofocus.ControlAudioFocus
-import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay.Companion.delay
-import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
+import com.lasthopesoftware.promises.PromiseDelay.Companion.delay
+import com.lasthopesoftware.promises.extensions.unitResponse
 import com.namehillsoftware.handoff.promises.Promise
 import org.joda.time.Duration
 import java.util.concurrent.TimeoutException
@@ -106,7 +106,7 @@ class AudioManagingPlaybackStateChanger(
 		val promisedAudioFocus = audioFocus.promiseAudioFocus(lazyAudioRequest.value)
 		return Promise.whenAny(
 			promisedAudioFocus,
-			delay<Any?>(Duration.standardSeconds(10)).then {
+			delay<Any?>(Duration.standardSeconds(10)).then { _ ->
 				promisedAudioFocus.cancel()
 				throw TimeoutException("Unable to gain audio focus in 10s")
 			})
@@ -115,7 +115,7 @@ class AudioManagingPlaybackStateChanger(
 	private fun abandonAudioFocus() =
 		synchronized(audioFocusSync) {
 			audioFocusPromise.cancel()
-			audioFocusPromise.then {
+			audioFocusPromise.then { it ->
 				it?.also(audioFocus::abandonAudioFocus)
 			}
 		}

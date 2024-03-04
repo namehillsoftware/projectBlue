@@ -64,9 +64,9 @@ class ApplicationSettingsViewModel(
 
 		val promisedEngineTypeUpdate = selectedPlaybackEngineTypeAccess
 			.promiseSelectedPlaybackEngineType()
-			.then { playbackEngineType.value = it }
+			.then { it -> playbackEngineType.value = it }
 
-		val promisedLibrariesUpdate = libraryProvider.allLibraries.then { mutableLibraries.value = it.toList() }
+		val promisedLibrariesUpdate = libraryProvider.allLibraries.then { it -> mutableLibraries.value = it.toList() }
 
 		return Promise
 			.whenAll(promisedSimpleValuesUpdate, promisedEngineTypeUpdate, promisedLibrariesUpdate)

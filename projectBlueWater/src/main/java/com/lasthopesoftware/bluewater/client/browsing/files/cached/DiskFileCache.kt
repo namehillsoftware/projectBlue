@@ -12,12 +12,13 @@ import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.suppli
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
 import com.lasthopesoftware.bluewater.shared.lazyLogger
-import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
+import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.lasthopesoftware.resources.executors.ThreadPools.promiseTableMessage
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
+import com.namehillsoftware.handoff.promises.response.ImmediateAction
 import java.io.File
 import java.io.IOException
 
@@ -65,7 +66,7 @@ class DiskFileCache(private val context: Context, private val diskCacheDirectory
 					else -> Promise.empty()
 				}
 			})
-			.must { cachedFileOutputStream.close() }
+			.must(ImmediateAction{ cachedFileOutputStream.close() })
 	}
 
 	override fun promiseCachedFile(libraryId: LibraryId, uniqueKey: String): Promise<File?> {

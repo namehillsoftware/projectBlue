@@ -19,7 +19,7 @@ class WhenCancellingWhileGettingServerInfo {
 	private val mut by lazy {
 		val serverInfoXml = mockk<RequestServerInfoXml>()
 		every { serverInfoXml.promiseServerInfoXml(any()) } returns Promise { m ->
-			m.cancellationRequested {
+			m.promisedCancellation().must { _ ->
 				m.sendRejection(IOException("This was no good"))
 			}
 		}

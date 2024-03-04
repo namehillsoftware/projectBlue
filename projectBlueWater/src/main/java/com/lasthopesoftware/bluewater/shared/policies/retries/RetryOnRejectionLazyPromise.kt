@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.shared.policies.retries
 
-import com.lasthopesoftware.bluewater.shared.promises.ResolvedPromiseBox
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.promises.ResolvedPromiseBox
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.closables.PromisingCloseable
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse

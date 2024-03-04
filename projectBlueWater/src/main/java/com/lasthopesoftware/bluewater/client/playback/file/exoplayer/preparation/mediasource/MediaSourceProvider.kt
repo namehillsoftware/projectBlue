@@ -44,7 +44,7 @@ import com.namehillsoftware.handoff.promises.Promise
 	private val remoteExtractorCustomCacheFactories = PermanentPromiseFunctionCache<IUrlProvider, MediaSource.Factory>()
 
 	override fun promiseNewMediaSource(libraryId: LibraryId, uri: Uri): Promise<MediaSource> =
-		getFactory(libraryId, uri).then { it.createMediaSource(MediaItem.Builder().setUri(uri).build()) }
+		getFactory(libraryId, uri).then { it -> it.createMediaSource(MediaItem.Builder().setUri(uri).build()) }
 
 	private fun getFactory(libraryId: LibraryId, uri: Uri): Promise<MediaSource.Factory> =
 		when {

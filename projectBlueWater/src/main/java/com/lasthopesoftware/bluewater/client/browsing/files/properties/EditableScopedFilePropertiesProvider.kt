@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.properties
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
+import com.lasthopesoftware.promises.extensions.CancellableProxyPromise
 import com.namehillsoftware.handoff.promises.Promise
 
 private fun buildProperties(rawProperties: Map<String, String>): Sequence<FileProperty> = sequence {

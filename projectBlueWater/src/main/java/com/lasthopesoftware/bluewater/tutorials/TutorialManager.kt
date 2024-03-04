@@ -4,9 +4,9 @@ import android.content.Context
 import com.lasthopesoftware.bluewater.repository.InsertBuilder
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
 import com.lasthopesoftware.bluewater.repository.fetchFirst
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
 import com.lasthopesoftware.bluewater.tutorials.DisplayedTutorialEntityInformation.tableName
 import com.lasthopesoftware.bluewater.tutorials.DisplayedTutorialEntityInformation.tutorialKeyColumn
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.executors.ThreadPools.promiseTableMessage
 import com.namehillsoftware.handoff.promises.Promise
 
@@ -44,7 +44,7 @@ class TutorialManager(private val context: Context, private val tutorialCache: C
 						it.setTransactionSuccessful()
 					}
 				}
-			}.then {
+			}.then { _ ->
 				tutorialCache[tutorialKey] = true
 			}
 		}

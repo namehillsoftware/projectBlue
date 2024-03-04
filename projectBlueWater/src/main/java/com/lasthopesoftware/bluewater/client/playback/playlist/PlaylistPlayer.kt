@@ -5,9 +5,10 @@ import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile
 import com.lasthopesoftware.bluewater.shared.lazyLogger
-import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
+import com.lasthopesoftware.promises.extensions.keepPromise
+import com.lasthopesoftware.promises.extensions.toPromise
+import com.lasthopesoftware.promises.extensions.unitResponse
+import com.namehillsoftware.handoff.cancellation.CancellationResponse
 import com.namehillsoftware.handoff.promises.Promise
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.subjects.BehaviorSubject
@@ -150,7 +151,7 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 				}
 		}
 
-		return object : Promise<PositionedPlayingFile?>(), Runnable {
+		return object : Promise<PositionedPlayingFile?>(), CancellationResponse {
 
 			private val sync = Any()
 
@@ -161,7 +162,7 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 			private var isStarting = false
 
 			init {
-				respondToCancellation(this)
+				awaitCancellation(this)
 
 				val preparedPlaybackFile = preparedPlaybackFileProvider.promiseNextPreparedPlaybackFile(preparedPosition)
 
@@ -185,7 +186,7 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 				}
 			}
 
-			override fun run() = synchronized(sync) {
+			override fun cancellationRequested() = synchronized(sync) {
 				isCancelled = true
 
 				if (!isStarting)

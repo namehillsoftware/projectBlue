@@ -5,7 +5,7 @@ import androidx.activity.ComponentActivity
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.android.intents.BuildIntents
-import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise
+import com.lasthopesoftware.promises.extensions.LoopedInPromise
 import com.namehillsoftware.handoff.promises.queued.MessageWriter
 
 class ActivityApplicationNavigation(

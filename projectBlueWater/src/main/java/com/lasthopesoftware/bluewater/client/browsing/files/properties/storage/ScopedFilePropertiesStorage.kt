@@ -8,7 +8,7 @@ import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfSc
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.messages.application.SendApplicationMessages
-import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
+import com.lasthopesoftware.promises.extensions.unitResponse
 import com.namehillsoftware.handoff.promises.Promise
 
 private val logger by lazyLogger<ScopedFilePropertiesStorage>()

@@ -12,7 +12,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.external
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.external.HaveExternalContent
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
 import com.lasthopesoftware.bluewater.client.stored.library.sync.LookupSyncDirectory
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.uri.toURI
 import com.namehillsoftware.handoff.promises.Promise
 import org.apache.commons.io.FilenameUtils

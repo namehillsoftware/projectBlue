@@ -20,7 +20,7 @@ class StoredItemAccess(private val context: Context) : AccessStoredItems {
 		isItemMarkedForSync(libraryId, itemId)
 			.eventually { isSynced ->
 				val newState = !isSynced
-				toggleSync(libraryId, itemId, newState).then { newState }
+				toggleSync(libraryId, itemId, newState).then {  _ -> newState }
 			}
 
 	override fun toggleSync(libraryId: LibraryId, item: IItem, enable: Boolean): Promise<Unit> {

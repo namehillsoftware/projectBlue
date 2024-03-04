@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.stored.library.sync
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.libraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.CheckForAnyStoredFiles
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 
 class SyncChecker(

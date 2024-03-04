@@ -22,9 +22,9 @@ import com.lasthopesoftware.bluewater.client.connection.waking.ServerAlarm
 import com.lasthopesoftware.bluewater.client.connection.waking.ServerWakeSignal
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.SendApplicationMessages
-import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromiseProxy
-import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
+import com.lasthopesoftware.promises.extensions.ProgressingPromise
+import com.lasthopesoftware.promises.extensions.ProgressingPromiseProxy
+import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.resources.network.ActiveNetworkFinder
 import com.lasthopesoftware.resources.strings.Base64Encoder
 import com.namehillsoftware.handoff.promises.Promise
@@ -75,7 +75,7 @@ class ConnectionSessionManager(
 							proxyUpdates(it)
 							proxySuccess(it)
 						}
-						?.excuse { proxy(promiseUpdatedLibraryConnection(promised, l)) }
+						?.excuse { _ -> proxy(promiseUpdatedLibraryConnection(promised, l)) }
 						?: proxy(promiseUpdatedLibraryConnection(promised, l))
 				}
 			}

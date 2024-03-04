@@ -7,7 +7,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.exce
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.UpdateStoredFiles
 import com.lasthopesoftware.bluewater.shared.lazyLogger
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.closables.useEventually
 import com.lasthopesoftware.resources.io.PromisingOutputStreamWrapper
 import com.namehillsoftware.handoff.promises.Promise
@@ -127,7 +127,7 @@ class StoredFileJobProcessor(
 
 		override fun promiseResponse(resolution: Unit): Promise<Unit> = processQueue()
 
-		override fun dispose() = cancellationProxy.run()
+		override fun dispose() = cancellationProxy.cancellationRequested()
 
 		override fun isDisposed(): Boolean = cancellationProxy.isCancelled
 	}

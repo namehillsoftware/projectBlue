@@ -17,11 +17,12 @@ object ConnectionTester : TestConnections {
 	private class ConnectionPossiblePromise(connectionProvider: IConnectionProvider) : Promise<Boolean>() {
 		init {
 			val cancellationProxy = CancellationProxy()
-			respondToCancellation(cancellationProxy)
+			awaitCancellation(cancellationProxy)
 
 			connectionProvider.promiseResponse("Alive")
 				.also(cancellationProxy::doCancel)
-				.then({ resolve(!cancellationProxy.isCancelled && testResponse(it)) }, { resolve(false) })
+				.then({ it, cp -> resolve(!cp.isCancelled && testResponse(it)) }, { _, _ -> resolve(false) })
+				.also(cancellationProxy::doCancel)
 		}
 	}
 

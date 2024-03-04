@@ -5,12 +5,12 @@ import android.graphics.BitmapFactory
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.image.bytes.GetRawImages
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
+import com.lasthopesoftware.promises.extensions.CancellableProxyPromise
 import com.lasthopesoftware.resources.executors.ThreadPools
+import com.namehillsoftware.handoff.cancellation.CancellationSignal
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter
-import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken
 import java.util.concurrent.CancellationException
 
 class LibraryImageProvider(private val rawImages: GetRawImages) : ProvideLibraryImages {
@@ -22,7 +22,7 @@ class LibraryImageProvider(private val rawImages: GetRawImages) : ProvideLibrary
 	}
 
 	private class BitmapWriter(private val imageBytes: ByteArray) : CancellableMessageWriter<Bitmap?> {
-		override fun prepareMessage(cancellationToken: CancellationToken): Bitmap? =
+		override fun prepareMessage(cancellationToken: CancellationSignal): Bitmap? =
 			when {
 				cancellationToken.isCancelled -> throw CancellationException("Cancelled while decoding image")
 				imageBytes.isNotEmpty() -> BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)

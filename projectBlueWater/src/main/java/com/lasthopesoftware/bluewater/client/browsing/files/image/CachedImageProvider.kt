@@ -22,7 +22,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryR
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.shared.policies.caching.CachePromiseFunctions
 import com.lasthopesoftware.bluewater.shared.policies.caching.LruPromiseCache
-import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
+import com.lasthopesoftware.promises.extensions.keepPromise
 import com.namehillsoftware.handoff.promises.Promise
 
 class CachedImageProvider(

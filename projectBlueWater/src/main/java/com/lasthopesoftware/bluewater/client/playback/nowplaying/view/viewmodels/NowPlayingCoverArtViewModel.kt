@@ -15,8 +15,8 @@ import com.lasthopesoftware.bluewater.shared.images.ProvideDefaultImage
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
+import com.lasthopesoftware.promises.extensions.toPromise
+import com.lasthopesoftware.promises.extensions.unitResponse
 import com.namehillsoftware.handoff.promises.Promise
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -63,7 +63,7 @@ class NowPlayingCoverArtViewModel(
 		activeLibraryId = libraryId
 		return Promise.whenAll(
 			setView(libraryId),
-			promisedDefaultImage.then { defaultImageState.value = it }
+			promisedDefaultImage.then { it -> defaultImageState.value = it }
 		).unitResponse()
 	}
 
@@ -93,7 +93,7 @@ class NowPlayingCoverArtViewModel(
 			val isIoException = handleIoException(exception)
 			if (!isIoException) return
 
-			pollConnections.pollConnection(libraryId).then {
+			pollConnections.pollConnection(libraryId).then { _ ->
 				cachedPromises?.close()
 				cachedPromises = null
 				activeLibraryId?.apply(::setView)

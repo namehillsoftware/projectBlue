@@ -6,7 +6,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLi
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.settings.volumeleveling.IVolumeLevelSettings
 import com.lasthopesoftware.bluewater.shared.lazyLogger
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import kotlin.math.pow
 

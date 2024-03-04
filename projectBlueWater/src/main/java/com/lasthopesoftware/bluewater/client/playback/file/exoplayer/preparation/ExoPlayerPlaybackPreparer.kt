@@ -8,7 +8,7 @@ import com.lasthopesoftware.bluewater.client.playback.exoplayer.ProvideExoPlayer
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.SpawnMediaSources
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile
-import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
+import com.lasthopesoftware.promises.extensions.keepPromise
 import com.namehillsoftware.handoff.promises.Promise
 import org.joda.time.Duration
 

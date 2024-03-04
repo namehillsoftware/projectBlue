@@ -77,8 +77,8 @@ class WhenPlaybackIsPausedAndPositionIsChangedAndRestarted {
 			playbackEngine
 				.skipToNext()
 				.eventually { playbackEngine.skipToNext() }
-				.then { playbackEngine.resume() }
-				.then { fakePlaybackPreparerProvider.deferredResolution.resolve() }
+				.then { _ -> playbackEngine.resume() }
+				.then { _ -> fakePlaybackPreparerProvider.deferredResolution.resolve() }
 				.eventually { nowPlayingRepository.promiseNowPlaying(LibraryId(libraryId)) }
 				.toExpiringFuture()
 				.get()

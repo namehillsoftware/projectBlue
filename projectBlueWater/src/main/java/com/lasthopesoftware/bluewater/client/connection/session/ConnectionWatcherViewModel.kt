@@ -8,7 +8,7 @@ import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibrary
 import com.lasthopesoftware.bluewater.client.connection.polling.PollForLibraryConnections
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
-import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
+import com.lasthopesoftware.promises.extensions.CancellableProxyPromise
 import com.namehillsoftware.handoff.promises.Promise
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -58,7 +58,7 @@ class ConnectionWatcherViewModel(
 			pollLibraryConnections
 				.pollConnection(libraryId)
 				.also(cp::doCancel)
-				.must {
+				.must { _ ->
 					if (libraryId == watchedLibraryId)
 						mutableIsCheckingConnection.value = false
 				}

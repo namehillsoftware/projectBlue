@@ -4,7 +4,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
 import com.lasthopesoftware.bluewater.shared.StandardResponse
-import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
+import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.MessageWriter
@@ -46,8 +46,8 @@ class PlaylistsStorage(private val libraryConnections: ProvideLibraryConnections
 			.eventually { connectionProvider ->
 				connectionProvider?.run {
 					promiseResponse("Playlists/Add", "Type=Playlist", "Path=$playlistPath", "CreateMode=Overwrite")
-						.then { it?.use { r -> r.body?.byteStream()?.use(StandardResponse::fromInputStream) } }
-						.then { it?.items?.get("PlaylistID") }
+						.then { it -> it?.use { r -> r.body?.byteStream()?.use(StandardResponse::fromInputStream) } }
+						.then { it -> it?.items?.get("PlaylistID") }
 						.eventually {
 							it?.let { playlistId ->
 								QueuedPromise(MessageWriter{ playlist.map { sf -> sf.key }.joinToString(",") }, ThreadPools.compute)

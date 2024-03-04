@@ -7,7 +7,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.I
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
 import com.lasthopesoftware.bluewater.shared.messages.SendTypedMessages
-import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
+import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.resources.closables.ResettableCloseable
 import com.namehillsoftware.handoff.promises.Promise
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -36,7 +36,7 @@ class ReusableChildItemViewModel(
 			item?.run {
 				storedItemAccess
 					.toggleSync(l, itemId)
-					.then { mutableIsSynced.value = l == libraryId && this == item && it }
+					.then { it -> mutableIsSynced.value = l == libraryId && this == item && it }
 			}
 		}
 		.keepPromise(Unit)
@@ -49,7 +49,7 @@ class ReusableChildItemViewModel(
 				item?.run {
 					storedItemAccess
 						.isItemMarkedForSync(l, itemId)
-						.then {
+						.then { it ->
 							mutableIsSynced.value = l == libraryId && this == item && it
 						}
 				}

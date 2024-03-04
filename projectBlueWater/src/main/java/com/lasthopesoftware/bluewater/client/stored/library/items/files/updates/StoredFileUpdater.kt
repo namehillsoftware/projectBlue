@@ -8,8 +8,8 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.external
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.setURI
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
-import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.promises.extensions.keepPromise
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.uri.IoCommon
 import com.namehillsoftware.handoff.promises.Promise
 import java.net.URI
@@ -30,7 +30,7 @@ class StoredFileUpdater(
 					sf.uri
 						?.let(::URI)
 						?.takeIf { it.scheme == IoCommon.contentUriScheme }
-						?.let { externalContent.markContentAsNotPending(it).then { sf } }
+						?.let { externalContent.markContentAsNotPending(it).then {  _ -> sf } }
 						.keepPromise(sf)
 				},
 				{

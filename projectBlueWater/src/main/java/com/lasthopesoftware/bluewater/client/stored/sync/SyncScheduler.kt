@@ -12,7 +12,7 @@ import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import com.lasthopesoftware.bluewater.client.stored.sync.constraints.SyncWorkerConstraints
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.promises.Promise
 import java.util.concurrent.TimeUnit

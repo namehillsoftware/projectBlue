@@ -8,7 +8,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.Fi
 import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.SearchFileParameterProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
-import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
+import com.lasthopesoftware.promises.extensions.keepPromise
 import com.namehillsoftware.handoff.promises.Promise
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -44,6 +44,6 @@ class SearchFilesViewModel(
 					.then { f -> mutableFiles.value = f }
 			}
 			.keepPromise(Unit)
-			.must { mutableIsLoading.value = false }
+			.must { _ -> mutableIsLoading.value = false }
 	}
 }

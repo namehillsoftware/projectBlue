@@ -6,7 +6,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.cached.CacheFiles
 import com.lasthopesoftware.bluewater.client.browsing.files.uri.ProvideFileUrisForLibrary
 import com.lasthopesoftware.bluewater.client.browsing.files.uri.RemoteFileUriProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
+import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.resources.uri.PathAndQuery.pathAndQuery
 import com.namehillsoftware.handoff.promises.Promise
 

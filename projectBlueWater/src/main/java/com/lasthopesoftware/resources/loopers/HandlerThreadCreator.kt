@@ -1,13 +1,14 @@
 package com.lasthopesoftware.resources.loopers
 
+import com.namehillsoftware.handoff.cancellation.CancellationResponse
 import com.namehillsoftware.handoff.promises.Promise
 import java.lang.Thread.UncaughtExceptionHandler
 
 object HandlerThreadCreator {
 	fun promiseNewHandlerThread(looperThreadName: String?, threadPriority: Int): Promise<CloseableHandlerThread> =
-		object: Promise<CloseableHandlerThread>(), Runnable {
+		object: Promise<CloseableHandlerThread>() {
 
-			private val thread = object : CloseableHandlerThread(looperThreadName, threadPriority) {
+			private val thread = object : CloseableHandlerThread(looperThreadName, threadPriority), CancellationResponse {
 				override fun onLooperPrepared() {
 					try {
 						resolve(this)
@@ -15,10 +16,16 @@ object HandlerThreadCreator {
 						reject(t)
 					}
 				}
+
+				override fun cancellationRequested() {
+					if (state == State.NEW) {
+						interrupt()
+					}
+				}
 			}
 
 			init {
-				respondToCancellation(this)
+				awaitCancellation(thread)
 
 				with(thread) {
 					val currentUncaughtExceptionHandler = uncaughtExceptionHandler
@@ -30,12 +37,6 @@ object HandlerThreadCreator {
 						currentUncaughtExceptionHandler?.uncaughtException(t, e)
 					}
 					start()
-				}
-			}
-
-			override fun run() {
-				if (thread.state == Thread.State.NEW) {
-					thread.interrupt()
 				}
 			}
 		}

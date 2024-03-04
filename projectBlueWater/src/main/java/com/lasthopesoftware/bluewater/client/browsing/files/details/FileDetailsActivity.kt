@@ -43,7 +43,7 @@ import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLa
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
-import com.lasthopesoftware.bluewater.shared.promises.extensions.suspend
+import com.lasthopesoftware.promises.extensions.suspend
 import com.lasthopesoftware.resources.strings.StringResources
 import java.io.IOException
 

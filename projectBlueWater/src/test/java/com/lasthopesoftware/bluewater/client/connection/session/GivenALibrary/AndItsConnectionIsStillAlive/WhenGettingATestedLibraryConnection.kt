@@ -11,7 +11,7 @@ import com.lasthopesoftware.bluewater.client.connection.session.PromisedConnecti
 import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredProgressingPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import io.mockk.every
 import io.mockk.mockk

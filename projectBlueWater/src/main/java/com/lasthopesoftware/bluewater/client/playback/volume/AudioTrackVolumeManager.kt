@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.playback.volume
 
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.PromisingExoPlayer
 import com.lasthopesoftware.bluewater.client.playback.file.volume.ManagePlayableFileVolume
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 
 class AudioTrackVolumeManager(private val exoPlayer: PromisingExoPlayer) : IVolumeManagement, ManagePlayableFileVolume {
@@ -12,7 +12,7 @@ class AudioTrackVolumeManager(private val exoPlayer: PromisingExoPlayer) : IVolu
 	override fun setVolume(volume: Float): Promise<Float> {
 		backingVolume = exoPlayer
 			.setVolume(volume)
-			.then { volume }
+			.then { _ -> volume }
 
 		return backingVolume
 	}

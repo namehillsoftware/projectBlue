@@ -4,7 +4,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
-import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise
+import com.lasthopesoftware.promises.extensions.ProgressingPromise
 import com.namehillsoftware.handoff.promises.Promise
 
 interface ManageConnectionSessions : ProvideLibraryConnections {

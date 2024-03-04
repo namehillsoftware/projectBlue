@@ -1,9 +1,9 @@
 package com.lasthopesoftware.bluewater.client.connection.waking
 
 import com.lasthopesoftware.bluewater.client.connection.SendPackets
-import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay.Companion.delay
-import com.lasthopesoftware.bluewater.shared.promises.PromisePolicies
-import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
+import com.lasthopesoftware.promises.PromiseDelay.Companion.delay
+import com.lasthopesoftware.promises.PromisePolicies
+import com.lasthopesoftware.promises.extensions.CancellableProxyPromise
 import com.namehillsoftware.handoff.promises.Promise
 import org.joda.time.Duration
 

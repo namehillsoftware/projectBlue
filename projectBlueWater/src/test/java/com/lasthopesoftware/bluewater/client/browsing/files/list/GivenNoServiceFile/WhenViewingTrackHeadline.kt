@@ -5,7 +5,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusableFileVie
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusablePlaylistFileViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import com.lasthopesoftware.resources.RecordingTypedMessageBus
 import com.lasthopesoftware.resources.strings.GetStringResources

@@ -8,7 +8,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.NotificationsConfiguration
 import com.lasthopesoftware.bluewater.shared.android.intents.BuildIntents
 import com.lasthopesoftware.bluewater.shared.android.notifications.ProduceNotificationBuilders
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 
 class PlaybackStartingNotificationBuilder(

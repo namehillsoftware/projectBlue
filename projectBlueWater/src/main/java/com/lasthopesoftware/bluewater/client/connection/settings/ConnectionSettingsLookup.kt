@@ -6,7 +6,7 @@ import com.namehillsoftware.handoff.promises.Promise
 
 class ConnectionSettingsLookup(private val libraryProvider: ILibraryProvider) : LookupConnectionSettings {
 	override fun lookupConnectionSettings(libraryId: LibraryId): Promise<ConnectionSettings?> =
-		libraryProvider.promiseLibrary(libraryId).then {
+		libraryProvider.promiseLibrary(libraryId).then { it ->
 			it?.run {
 				val accessCode = accessCode ?: throw MissingAccessCodeException(libraryId)
 				ConnectionSettings(

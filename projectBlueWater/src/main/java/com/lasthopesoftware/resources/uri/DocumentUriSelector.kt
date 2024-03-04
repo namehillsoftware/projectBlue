@@ -2,7 +2,7 @@ package com.lasthopesoftware.resources.uri
 
 import android.content.Intent
 import android.provider.DocumentsContract
-import com.lasthopesoftware.bluewater.shared.promises.extensions.LaunchActivitiesForResults
+import com.lasthopesoftware.promises.extensions.LaunchActivitiesForResults
 import com.namehillsoftware.handoff.promises.Promise
 import java.net.URI
 

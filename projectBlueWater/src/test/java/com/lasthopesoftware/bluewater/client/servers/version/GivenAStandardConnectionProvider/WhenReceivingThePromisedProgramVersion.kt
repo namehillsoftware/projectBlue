@@ -5,8 +5,8 @@ import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTuple
 import com.lasthopesoftware.bluewater.client.servers.version.LibraryServerVersionProvider
 import com.lasthopesoftware.bluewater.client.servers.version.SemanticVersion
-import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.promises.extensions.ProgressingPromise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat

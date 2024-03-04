@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.shared.policies.ratelimiting
 
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.PromiseProxy
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse

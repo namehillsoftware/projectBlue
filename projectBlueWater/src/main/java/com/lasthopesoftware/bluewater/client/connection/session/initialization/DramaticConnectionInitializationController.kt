@@ -6,10 +6,10 @@ import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ManageConnectionSessions
 import com.lasthopesoftware.bluewater.shared.lazyLogger
-import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay
-import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromiseProxy
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.promises.PromiseDelay
+import com.lasthopesoftware.promises.extensions.ProgressingPromise
+import com.lasthopesoftware.promises.extensions.ProgressingPromiseProxy
+import com.lasthopesoftware.promises.extensions.toPromise
 import org.joda.time.Duration
 
 private val dramaticPause by lazy { Duration.standardSeconds(2).plus(Duration.millis(500)) }
@@ -52,14 +52,14 @@ class DramaticConnectionInitializationController(
 								applicationNavigation
 									.viewApplicationSettings()
 									.also(::doCancel)
-									.then({ null }, { null })
+									.then({ _ -> null }, { null })
 							} else {
 								c.toPromise()
 							}
 						},
 						{  e ->
 							logger.error("An error occurred getting the connection for library ID ${libraryId.id}.", e)
-							applicationNavigation.viewApplicationSettings().then({ null }, { null })
+							applicationNavigation.viewApplicationSettings().then({ _ -> null }, { null })
 						}
 					)
 					.then(::resolve, ::reject)

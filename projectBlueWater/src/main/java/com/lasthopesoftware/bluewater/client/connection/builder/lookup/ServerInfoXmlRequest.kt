@@ -4,8 +4,8 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryPro
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.HttpPromisedResponse
 import com.lasthopesoftware.bluewater.client.connection.okhttp.ProvideOkHttpClients
-import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
+import com.lasthopesoftware.promises.extensions.CancellableProxyPromise
+import com.lasthopesoftware.promises.extensions.keepPromise
 import com.namehillsoftware.handoff.promises.Promise
 import okhttp3.Request
 import xmlwise.XmlElement

@@ -13,8 +13,8 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.shared.drainQueue
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRateLimiter
-import com.lasthopesoftware.bluewater.shared.promises.ForwardedResponse.Companion.forward
-import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
+import com.lasthopesoftware.promises.ForwardedResponse.Companion.forward
+import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.resources.uri.PathAndQuery.pathAndQuery
 import com.namehillsoftware.handoff.promises.Promise
 import okhttp3.internal.closeQuietly
@@ -136,7 +136,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 					?.takeUnless { it.exhausted() }
 					?.let(outputStream::promiseTransfer)
 					?.apply {
-						excuse {
+						excuse { it ->
 							isFaulted = true
 							logger.warn("An error occurred copying the buffer, closing the output stream", it)
 							clear()
@@ -162,13 +162,13 @@ import java.util.concurrent.ConcurrentLinkedQueue
 						processQueue()
 					}
 					.eventually { it?.flush().keepPromise() }
-					.eventually { os -> os?.commitToCache()?.must { os.close() }?.then { os }.keepPromise() }
+					.eventually { os -> os?.commitToCache()?.must { _ -> os.close() }?.then { _ -> os }.keepPromise() }
 			}
 		}
 
 		fun clear() {
 			synchronized(activePromiseSync) {
-				activePromise.must {
+				activePromise.must { _ ->
 					promisedOutputStream.then {	os ->
 						os?.closeQuietly()
 						buffersToTransfer.drainQueue().forEach { it.clear() }

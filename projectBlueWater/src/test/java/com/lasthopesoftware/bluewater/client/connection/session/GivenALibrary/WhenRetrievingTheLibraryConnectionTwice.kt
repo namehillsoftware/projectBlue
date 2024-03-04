@@ -16,7 +16,7 @@ import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
 import com.lasthopesoftware.bluewater.client.connection.waking.NoopServerAlarm
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import io.mockk.every
 import io.mockk.mockk
@@ -75,7 +75,7 @@ class WhenRetrievingTheLibraryConnectionTwice {
 			connectionSessionManager
 				.promiseLibraryConnection(LibraryId(libraryId))
 				.apply {
-					progress.then { if (it != null) statuses.add(it) }
+					progress.then { it -> if (it != null) statuses.add(it) }
 					updates(statuses::add)
 				}
 				.toExpiringFuture()
@@ -88,7 +88,7 @@ class WhenRetrievingTheLibraryConnectionTwice {
 			connectionSessionManager
 				.promiseLibraryConnection(LibraryId(libraryId))
 				.apply {
-					progress.then { if (it != null) statuses.add(it) }
+					progress.then { it -> if (it != null) statuses.add(it) }
 					updates(statuses::add)
 				}
 				.toExpiringFuture()

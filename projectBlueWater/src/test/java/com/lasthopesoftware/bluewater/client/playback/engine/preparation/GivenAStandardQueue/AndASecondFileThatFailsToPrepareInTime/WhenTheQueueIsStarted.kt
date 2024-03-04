@@ -31,7 +31,7 @@ class WhenTheQueueIsStarted {
 			every { promisePreparedPlaybackFile(LibraryId(libraryId), ServiceFile(1), Duration.ZERO) } returnsMany(
 				listOf(
 					Promise { messenger: Messenger<PreparedPlayableFile?> ->
-						messenger.cancellationRequested {
+						messenger.promisedCancellation().must { _ ->
 							firstPromiseCancelled = true
 						}
 					},

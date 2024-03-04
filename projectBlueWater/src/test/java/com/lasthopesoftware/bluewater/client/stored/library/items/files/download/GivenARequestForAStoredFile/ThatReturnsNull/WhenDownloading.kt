@@ -7,8 +7,8 @@ import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibrary
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.download.StoredFileDownloader
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ExpiringFuturePromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.promises.extensions.ProgressingPromise
+import com.lasthopesoftware.promises.extensions.toPromise
 import io.mockk.every
 import io.mockk.mockk
 import okhttp3.Protocol

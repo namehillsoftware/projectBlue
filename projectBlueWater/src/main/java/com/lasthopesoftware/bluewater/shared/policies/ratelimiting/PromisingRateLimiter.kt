@@ -1,7 +1,7 @@
 
 package com.lasthopesoftware.bluewater.shared.policies.ratelimiting
 
-import com.lasthopesoftware.bluewater.shared.promises.NoopResponse.Companion.ignore
+import com.lasthopesoftware.promises.NoopResponse.Companion.ignore
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.PromiseProxy
 import com.namehillsoftware.handoff.promises.response.ImmediateAction

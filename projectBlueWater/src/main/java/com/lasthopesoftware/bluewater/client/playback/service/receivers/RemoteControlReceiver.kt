@@ -22,7 +22,7 @@ private val logger by lazyLogger<RemoteControlReceiver>()
 		fun withSelectedLibraryId(action: (LibraryId) -> Unit) =
 			context.getCachedSelectedLibraryIdProvider()
 				.promiseSelectedLibraryId()
-				.then { it?.also(action) }
+				.then { it -> it?.also(action) }
 
 		logger.debug("Received intent: {}.", intent)
 

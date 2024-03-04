@@ -4,16 +4,20 @@ import android.os.Handler
 import android.widget.TextView
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.*
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.RateControlledFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.SelectedLibraryFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRateLimiter
-import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay.Companion.delay
-import com.lasthopesoftware.bluewater.shared.promises.extensions.LoopedInPromise.Companion.response
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.promises.PromiseDelay.Companion.delay
+import com.lasthopesoftware.promises.extensions.LoopedInPromise.Companion.response
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
@@ -22,7 +26,7 @@ import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import org.joda.time.Duration
 import java.io.IOException
 import java.net.SocketException
-import java.util.*
+import java.util.Locale
 import java.util.concurrent.CancellationException
 import javax.net.ssl.SSLProtocolException
 
@@ -88,7 +92,7 @@ class FileNameTextViewSetter(private val fileTextView: TextView, private val art
 		private val cancellationProxy = CancellationProxy()
 
 		init {
-			respondToCancellation(cancellationProxy)
+			awaitCancellation(cancellationProxy)
 		}
 
 		fun beginUpdate() {
@@ -114,10 +118,10 @@ class FileNameTextViewSetter(private val fileTextView: TextView, private val art
 
 			val delayPromise = delay<Unit>(timeoutDuration)
 			whenAny(promisedViewSetting, delayPromise)
-				.must {
+				.must { _ ->
 
 					// First, cancel everything to ensure the losing task doesn't continue running
-					cancellationProxy.run()
+					cancellationProxy.cancellationRequested()
 
 					// Finally, always resolve the parent promise
 					resolve(Unit)

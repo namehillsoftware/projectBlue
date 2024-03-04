@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.shared.promises
+package com.lasthopesoftware.promises
 
 import com.namehillsoftware.handoff.Messenger
 import com.namehillsoftware.handoff.promises.MessengerOperator
@@ -6,7 +6,9 @@ import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.PromiseProxy
 import com.namehillsoftware.handoff.promises.response.ImmediateAction
 
-fun <C : AutoCloseable, T> C.promiseUse(block: (C) -> Promise<T>): Promise<T> = Promise(ClosingMessenger(this, block))
+fun <C : AutoCloseable, T> C.promiseUse(block: (C) -> Promise<T>): Promise<T> = Promise(
+    ClosingMessenger(this, block)
+)
 
 private class ClosingMessenger<C : AutoCloseable, T>(private val closeable: C, private val block: (C) -> Promise<T>): MessengerOperator<T>, ImmediateAction {
 

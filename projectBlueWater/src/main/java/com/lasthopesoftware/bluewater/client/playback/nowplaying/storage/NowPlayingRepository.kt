@@ -7,8 +7,8 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryPro
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.promises.extensions.keepPromise
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 
 class NowPlayingRepository(
