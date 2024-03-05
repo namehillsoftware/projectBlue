@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.stored.library.sync.GivenASetOfStoredItems
+package com.lasthopesoftware.bluewater.client.stored.library.sync.GivenASetOfStoredItems.AndAnErrorOccursPruning
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
@@ -11,7 +11,6 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Stor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.client.stored.library.sync.LibrarySyncsHandler
-import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -22,8 +21,6 @@ import org.junit.jupiter.api.Test
 import java.net.URI
 
 class WhenSyncingTheStoredItems {
-
-	private lateinit var storedFileJobResults: MutableList<StoredFile>
 
 	private val librarySyncsHandler by lazy {
 		val fileListParameters = FileListParameters
@@ -55,7 +52,7 @@ class WhenSyncingTheStoredItems {
 				fileListParameters
 			),
 			mockk {
-				every { pruneStoredFiles(any()) } returns Unit.toPromise()
+				every { pruneStoredFiles(any()) } returns Promise(Exception("oh no!"))
 			},
 			mockk {
 				every { promiseStoredFileUpdate(any(), any()) } answers {
@@ -72,11 +69,11 @@ class WhenSyncingTheStoredItems {
 					Observable.fromIterable(jobs).flatMap { (_, _, storedFile) ->
 						Observable.just(
 							StoredFileJobStatus(
-                                storedFile,
+								storedFile,
 								StoredFileJobState.Downloading
 							),
 							StoredFileJobStatus(
-                                storedFile,
+								storedFile,
 								StoredFileJobState.Downloaded
 							)
 						)
@@ -86,19 +83,30 @@ class WhenSyncingTheStoredItems {
 		)
 	}
 
+	private var storedFileJobResults = emptyList<StoredFile>()
+
+	private var exception: Throwable? = null
+
 	@BeforeAll
 	fun act() {
-		storedFileJobResults = librarySyncsHandler.observeLibrarySync(LibraryId(52))
-			.filter { j -> j.storedFileJobState == StoredFileJobState.Downloaded }
-			.map { j -> j.storedFile }
-			.toList()
-			.blockingGet()
+		try {
+			storedFileJobResults = librarySyncsHandler.observeLibrarySync(LibraryId(52))
+				.filter { j -> j.storedFileJobState == StoredFileJobState.Downloaded }
+				.map { j -> j.storedFile }
+				.toList()
+				.blockingGet()
+		} catch (e: RuntimeException) {
+			exception = e.cause
+		}
 	}
 
 	@Test
-	fun `then the files in the stored items are synced`() {
-		assertThat(
-			storedFileJobResults.map { obj -> obj.serviceId })
-			.containsExactly(1, 2, 4, 10)
+	fun `then the files in the stored items are not synced`() {
+		assertThat(storedFileJobResults).isEmpty()
+	}
+
+	@Test
+	fun `then the error propagates`() {
+		assertThat(exception?.message).isEqualTo("oh no!")
 	}
 }
