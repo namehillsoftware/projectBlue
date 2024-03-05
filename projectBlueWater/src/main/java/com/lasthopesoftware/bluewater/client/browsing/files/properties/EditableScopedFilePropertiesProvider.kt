@@ -1,8 +1,8 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.properties
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.promises.extensions.CancellableProxyPromise
 import com.namehillsoftware.handoff.promises.Promise
+import com.namehillsoftware.handoff.promises.propagation.ProxyPromise
 
 private fun buildProperties(rawProperties: Map<String, String>): Sequence<FileProperty> = sequence {
 	val returnedProperties = HashSet<String>()
@@ -29,7 +29,7 @@ class EditableScopedFilePropertiesProvider(private val inner:  ProvideScopedFile
 	: ProvideEditableScopedFileProperties {
 
 	override fun promiseFileProperties(serviceFile: ServiceFile): Promise<Sequence<FileProperty>> =
-		CancellableProxyPromise { cp ->
+		ProxyPromise { cp ->
 			inner
 				.promiseFileProperties(serviceFile)
 				.apply(cp::doCancel)

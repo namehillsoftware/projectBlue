@@ -11,9 +11,9 @@ import com.lasthopesoftware.bluewater.client.stored.library.sync.CheckForSync
 import com.lasthopesoftware.bluewater.client.stored.library.sync.ControlLibrarySyncs
 import com.lasthopesoftware.bluewater.shared.messages.application.SendApplicationMessages
 import com.lasthopesoftware.bluewater.shared.observables.stream
-import com.lasthopesoftware.promises.extensions.CancellableProxyPromise
 import com.lasthopesoftware.storage.write.exceptions.StorageCreatePathException
 import com.namehillsoftware.handoff.promises.Promise
+import com.namehillsoftware.handoff.promises.propagation.ProxyPromise
 import io.reactivex.rxjava3.core.Completable
 import io.reactivex.rxjava3.exceptions.CompositeException
 import org.slf4j.LoggerFactory
@@ -33,7 +33,7 @@ class StoredFileSynchronization(
 	override fun streamFileSynchronization(): Completable {
 		logger.info("Starting sync.")
 		applicationMessages.sendMessage(SyncStateMessage.SyncStarted)
-		return CancellableProxyPromise { cp ->
+		return ProxyPromise { cp ->
 				pruneStoredFiles
 					.pruneDanglingFiles()
 					.also(cp::doCancel)

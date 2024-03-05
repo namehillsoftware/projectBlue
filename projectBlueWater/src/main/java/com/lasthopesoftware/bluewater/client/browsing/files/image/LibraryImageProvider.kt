@@ -5,16 +5,16 @@ import android.graphics.BitmapFactory
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.image.bytes.GetRawImages
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.promises.extensions.CancellableProxyPromise
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.cancellation.CancellationSignal
 import com.namehillsoftware.handoff.promises.Promise
+import com.namehillsoftware.handoff.promises.propagation.ProxyPromise
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter
 import java.util.concurrent.CancellationException
 
 class LibraryImageProvider(private val rawImages: GetRawImages) : ProvideLibraryImages {
-	override fun promiseFileBitmap(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Bitmap?> = CancellableProxyPromise { cp ->
+	override fun promiseFileBitmap(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Bitmap?> = ProxyPromise { cp ->
 		rawImages
 			.promiseImageBytes(libraryId, serviceFile)
 			.also(cp::doCancel)

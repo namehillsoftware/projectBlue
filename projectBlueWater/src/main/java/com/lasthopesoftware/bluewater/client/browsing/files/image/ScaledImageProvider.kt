@@ -4,10 +4,10 @@ import android.content.Context
 import android.graphics.Bitmap
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.promises.extensions.CancellableProxyPromise
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.promises.Promise
+import com.namehillsoftware.handoff.promises.propagation.ProxyPromise
 import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import kotlin.coroutines.cancellation.CancellationException
@@ -22,7 +22,7 @@ class ScaledImageProvider(private val inner: ProvideLibraryImages, private val c
 	}
 
 	override fun promiseFileBitmap(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Bitmap?> =
-		CancellableProxyPromise { cp ->
+		ProxyPromise { cp ->
 			inner.promiseFileBitmap(libraryId, serviceFile)
 				.also(cp::doCancel)
 				.eventually { image ->

@@ -23,9 +23,9 @@ import com.lasthopesoftware.bluewater.shared.android.notifications.notificationc
 import com.lasthopesoftware.bluewater.shared.android.services.GenericBinder
 import com.lasthopesoftware.bluewater.shared.android.services.promiseBoundService
 import com.lasthopesoftware.bluewater.shared.cls
-import com.lasthopesoftware.promises.extensions.CancellableProxyPromise
 import com.lasthopesoftware.resources.closables.lazyScoped
 import com.namehillsoftware.handoff.promises.Promise
+import com.namehillsoftware.handoff.promises.propagation.ProxyPromise
 
 class PollConnectionService : LifecycleService() {
 
@@ -33,7 +33,7 @@ class PollConnectionService : LifecycleService() {
 		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(cls<PollConnectionService>()) }
 
 		private val stopWaitingForConnectionAction by lazy { magicPropertyBuilder.buildProperty("stopWaitingForConnection") }
-		fun pollSessionConnection(context: Context, libraryId: LibraryId): Promise<IConnectionProvider> = CancellableProxyPromise { cp ->
+		fun pollSessionConnection(context: Context, libraryId: LibraryId): Promise<IConnectionProvider> = ProxyPromise { cp ->
 			context.promiseBoundService<PollConnectionService>()
 				.also(cp::doCancel)
 				.eventually {  s ->

@@ -44,7 +44,7 @@ class WhenResumingPlayback {
 
 		val audioFocus = object : ControlAudioFocus {
 			override fun promiseAudioFocus(audioFocusRequest: AudioFocusRequestCompat): Promise<AudioFocusRequestCompat> =
-				Promise { it.promisedCancellation().must { _ -> isCancelled = true } }
+				Promise { it.awaitCancellation { isCancelled = true } }
 
 			override fun abandonAudioFocus(audioFocusRequest: AudioFocusRequestCompat) {}
 		}

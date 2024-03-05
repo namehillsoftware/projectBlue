@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.shared.policies.ratelimiting
 
 import com.lasthopesoftware.promises.NoopResponse.Companion.ignore
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.propagation.PromiseProxy
+import com.namehillsoftware.handoff.promises.propagation.ProxyPromise
 import com.namehillsoftware.handoff.promises.response.ImmediateAction
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.atomic.AtomicInteger
@@ -15,11 +15,12 @@ class PromisingRateLimiter<T>(private val rate: Int): RateLimitPromises<T>, Imme
 	private val queuedPromises = ConcurrentLinkedQueue<() -> Promise<T>>()
 
 	override fun limit(factory: () -> Promise<T>): Promise<T> =
-		Promise<T> { m ->
-			val promiseProxy = PromiseProxy(m)
-			// Use resolve/rejection handler over `must` so that errors don't propagate as unhandled
-			queuedPromises.offer { factory().also(promiseProxy::proxy) }
-			doNext()
+		object : ProxyPromise<T>() {
+			init {
+				// Use resolve/rejection handler over `must` so that errors don't propagate as unhandled
+				queuedPromises.offer { factory().also(::proxy) }
+				doNext()
+			}
 		}
 
 	private fun doNext() {

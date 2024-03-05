@@ -28,14 +28,14 @@ class WhenCancellingDuringLookup {
 				"http://1.2.3.4:143/MCWS/v1/" == a.urlProvider.baseUrl.toString()
 			})
 		} returns Promise { m ->
-			m.promisedCancellation().must { _ ->
+			m.awaitCancellation {
 				m.sendRejection(CancellationException("I'm not supposed to be cancelled"))
 			}
 		}
 
 		val serverLookup = mockk<LookupServers>()
 		every { serverLookup.promiseServerInformation(LibraryId(55)) } returns Promise { m ->
-			m.promisedCancellation().must { _ ->
+			m.awaitCancellation {
 				m.sendRejection(CancellationException("Yup I'm cancelled"))
 			}
 		}

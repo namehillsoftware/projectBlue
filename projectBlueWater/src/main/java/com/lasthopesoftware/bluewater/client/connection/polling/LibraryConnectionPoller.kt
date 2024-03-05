@@ -16,9 +16,9 @@ class LibraryConnectionPoller(
 	override fun pollConnection(libraryId: LibraryId): Promise<IConnectionProvider> {
 		return Promise<IConnectionProvider> {
 			val cancellationProxy = CancellationProxy()
-			it.promisedCancellation().must(cancellationProxy)
+			it.awaitCancellation(cancellationProxy)
 			pollLibraryConnection(libraryId, it, cancellationProxy, 1000L)
-		}
+		};
 	}
 
 	private fun pollLibraryConnection(libraryId: LibraryId, messenger: Messenger<IConnectionProvider>, cancellationProxy: CancellationProxy, connectionTime: Long) {

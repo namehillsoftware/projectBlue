@@ -23,7 +23,9 @@ class WhenCancellingTheUrlScan {
 	private val cancellationException by lazy {
 		val connectionTester = mockk<TestConnections>()
 		every { connectionTester.promiseIsConnectionPossible(match { a -> a.urlProvider.baseUrl.toString() == "http://gooPc:80/MCWS/v1/" }) } returns Promise { m ->
-			m.promisedCancellation().must { _ -> m.sendRejection(CancellationException("Bye now!")) }
+			m.awaitCancellation {
+				m.sendRejection(CancellationException("Bye now!"))
+			}
 		}
 
 		val connectionSettingsLookup = mockk<LookupConnectionSettings>()

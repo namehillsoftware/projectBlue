@@ -33,7 +33,7 @@ class WhenCancellingTheUrlScan {
 				).contains(a.urlProvider.baseUrl.toString())
 			})
 		} returns Promise { m ->
-			m.promisedCancellation().must { _ ->
+			m.awaitCancellation {
 				m.sendRejection(CancellationException("Maybe later!"))
 			}
 		}

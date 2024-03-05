@@ -48,7 +48,7 @@ class WhenCancellingWakingALibraryServer {
 
 			every { promiseWakeSignal(any(), 4, Duration.standardSeconds(60)) } answers {
 				Promise { m ->
-					m.promisedCancellation().must { _ ->
+					m.awaitCancellation {
 						cancelledPokes.add(firstArg())
 						m.sendResolution(Unit)
 					}

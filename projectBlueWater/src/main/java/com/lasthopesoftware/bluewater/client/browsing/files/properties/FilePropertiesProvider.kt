@@ -5,8 +5,8 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.repositor
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.CheckRevisions
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
-import com.lasthopesoftware.promises.extensions.CancellableProxyPromise
 import com.namehillsoftware.handoff.promises.Promise
+import com.namehillsoftware.handoff.promises.propagation.ProxyPromise
 
 class FilePropertiesProvider(
 	private val libraryConnections: ProvideLibraryConnections,
@@ -19,7 +19,7 @@ class FilePropertiesProvider(
 	}
 
 	override fun promiseFileProperties(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Map<String, String>> =
-		CancellableProxyPromise { cp ->
+		ProxyPromise { cp ->
 			libraryConnections
 				.promiseLibraryConnection(libraryId)
 				.also(cp::doCancel).eventually { connectionProvider ->

@@ -12,10 +12,10 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItem.Ite
 import com.lasthopesoftware.bluewater.client.stored.library.sync.CollectServiceFilesForSync
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.promises.ForwardedResponse.Companion.forward
-import com.lasthopesoftware.promises.extensions.CancellableProxyPromise
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
+import com.namehillsoftware.handoff.promises.propagation.ProxyPromise
 import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
@@ -33,7 +33,7 @@ class StoredItemServiceFileCollector(
 	}
 
 	override fun promiseServiceFilesToSync(libraryId: LibraryId): Promise<Collection<ServiceFile>> {
-		return CancellableProxyPromise { cancellationProxy ->
+		return ProxyPromise { cancellationProxy ->
 			val promisedStoredItems = storedItemAccess.promiseStoredItems(libraryId)
 			cancellationProxy.doCancel(promisedStoredItems)
 

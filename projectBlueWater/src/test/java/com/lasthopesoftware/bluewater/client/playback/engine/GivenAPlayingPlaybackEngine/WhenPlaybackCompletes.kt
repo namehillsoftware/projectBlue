@@ -59,7 +59,7 @@ class WhenPlaybackCompletes {
 		playbackEngine
 			.setOnPlayingFileChanged { _, f ->
 				observedPlayingFile = f
-				f?.playingFile?.promisePlayedFile()?.then { pf ->
+				f?.playingFile?.promisePlayedFile()?.then { _ ->
 					lastCompletedPlayedFile = observedPlayingFile?.asPositionedFile()
 				}
 			}

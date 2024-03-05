@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.shared.policies.ratelimiting
 
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.propagation.PromiseProxy
+import com.namehillsoftware.handoff.promises.propagation.ProxyPromise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.Executor
@@ -17,12 +17,16 @@ class RateLimiter<T>(private val executor: Executor, rate: Int): RateLimitPromis
 	private val semaphoreReleasingRejectionHandler = ImmediateResponse<Throwable, Unit> { semaphore.release() }
 
 	override fun limit(factory: () -> Promise<T>): Promise<T> =
-		Promise<T> { m ->
-			val promiseProxy = PromiseProxy(m)
-			// Use resolve/rejection handler over `must` so that errors don't propagate as unhandled
-			queuedPromises.offer { factory().also(promiseProxy::proxy).then(semaphoreReleasingResolveHandler, semaphoreReleasingRejectionHandler) }
+		object : ProxyPromise<T>() {
+			init {
+				// Use resolve/rejection handler over `must` so that errors don't propagate as unhandled
+				queuedPromises.offer {
+					factory().also(::proxy)
+						.then(semaphoreReleasingResolveHandler, semaphoreReleasingRejectionHandler)
+				}
 
-			if (queueProcessorReference.compareAndSet(null, this)) executor.execute(this)
+				if (queueProcessorReference.compareAndSet(null, this@RateLimiter)) executor.execute(this@RateLimiter)
+			}
 		}
 
 	override fun run() {
