@@ -1,16 +1,21 @@
 package com.lasthopesoftware.bluewater.shared.android.ui.components
 
-import androidx.compose.animation.core.*
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.basicMarquee
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.LocalTextStyle
 import androidx.compose.material.Text
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.Placeable
 import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
@@ -22,10 +27,10 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.delay
 
-// Source: https://stackoverflow.com/a/68980032
+// Originally sourced from https://stackoverflow.com/a/68980032, modified to use the built-in marquee modifier
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun MarqueeText(
 	text: String,
@@ -52,7 +57,7 @@ fun MarqueeText(
 		Text(
 			text,
 			textAlign = textAlign,
-			modifier = localModifier,
+			modifier = if (isMarqueeEnabled) localModifier.basicMarquee(delayMillis = 3_000) else localModifier,
 			color = color,
 			fontSize = fontSize,
 			fontStyle = fontStyle,
@@ -69,79 +74,15 @@ fun MarqueeText(
 		)
 	}
 
-	var offset by remember { mutableStateOf(0) }
-	var textLayoutInfoState by remember { mutableStateOf<TextLayoutInfo?>(null) }
-	if (isMarqueeEnabled) {
-		LaunchedEffect(textLayoutInfoState) {
-			val textLayoutInfo = textLayoutInfoState?.takeUnless {
-				it.containerWidth == 0 || it.textWidth <= it.containerWidth
-			}
-
-			if (textLayoutInfo == null) {
-				offset = 0
-				return@LaunchedEffect
-			}
-
-			val duration = 7500 * textLayoutInfo.textWidth / textLayoutInfo.containerWidth
-			val delay = 1000L
-
-			do {
-				val animation = TargetBasedAnimation(
-					animationSpec = repeatable(
-						iterations = 2,
-						animation = tween(
-							durationMillis = duration,
-							delayMillis = 1000,
-							easing = LinearEasing,
-						),
-						repeatMode = RepeatMode.Restart
-					),
-					typeConverter = Int.VectorConverter,
-					initialValue = 0,
-					targetValue = -textLayoutInfo.textWidth
-				)
-				val startTime = withFrameNanos { it }
-				do {
-					val playTime = withFrameNanos { it } - startTime
-					offset = (animation.getValueFromNanos(playTime))
-				} while (!animation.isFinishedFromNanos(playTime))
-				delay(delay)
-			} while (true)
-		}
-	} else {
-		offset = 0
-	}
-
 	SubcomposeLayout(
 		modifier = modifier.clipToBounds()
 	) { constraints ->
-		val infiniteWidthConstraints = constraints.copy(maxWidth = Int.MAX_VALUE)
-		var mainText = subcompose(MarqueeLayers.MainText) {
-			createText(textModifier)
-		}.first().measure(infiniteWidthConstraints)
+		val mainText = subcompose(MarqueeLayers.MainText) {
+			createText(textModifier.fillMaxWidth())
+		}.first().measure(constraints)
 
-		var gradient: Placeable? = null
-
-		var secondPlaceableWithOffset: Pair<Placeable, Int>? = null
-		if (mainText.width <= constraints.maxWidth) {
-			mainText = subcompose(MarqueeLayers.SecondaryText) {
-				createText(textModifier.fillMaxWidth())
-			}.first().measure(constraints)
-			textLayoutInfoState = null
-		} else {
-			val spacing = constraints.maxWidth * 2 / 3
-			textLayoutInfoState = TextLayoutInfo(
-				textWidth = mainText.width + spacing,
-				containerWidth = constraints.maxWidth
-			)
-			val secondTextOffset = mainText.width + offset + spacing
-			val secondTextSpace = constraints.maxWidth - secondTextOffset
-			if (secondTextSpace > 0) {
-				secondPlaceableWithOffset = subcompose(MarqueeLayers.SecondaryText) {
-					createText(textModifier)
-				}.first().measure(infiniteWidthConstraints) to secondTextOffset
-			}
-			gradient = subcompose(MarqueeLayers.EdgesGradient) {
+		val gradient = if (mainText.width > constraints.maxWidth) {
+			subcompose(MarqueeLayers.EdgesGradient) {
 				Row {
 					val transparent = gradientEdgeColor.copy(alpha = 0f)
 
@@ -154,16 +95,13 @@ fun MarqueeText(
 						GradientEdge(transparent, gradientEdgeColor)
 				}
 			}.first().measure(constraints.copy(maxHeight = mainText.height))
-		}
+		} else null
 
 		layout(
 			width = constraints.maxWidth,
 			height = mainText.height
 		) {
-			mainText.place(offset, 0)
-			secondPlaceableWithOffset?.let {
-				it.first.place(it.second, 0)
-			}
+			mainText.place(0, 0)
 			gradient?.place(0, 0)
 		}
 	}
@@ -186,5 +124,4 @@ private fun GradientEdge(
 }
 
 enum class GradientSide { Start, End }
-private enum class MarqueeLayers { MainText, SecondaryText, EdgesGradient }
-private data class TextLayoutInfo(val textWidth: Int, val containerWidth: Int)
+private enum class MarqueeLayers { MainText, EdgesGradient }
