@@ -10,7 +10,7 @@ import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectio
 import com.lasthopesoftware.bluewater.client.connection.settings.ValidateConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
 import com.lasthopesoftware.bluewater.client.connection.waking.WakeLibraryServer
-import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise
+import com.lasthopesoftware.promises.extensions.ProgressingPromise
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
 
@@ -27,7 +27,7 @@ class LibraryConnectionProvider(
 			private val cancellationProxy = CancellationProxy()
 
 			init {
-				respondToCancellation(cancellationProxy)
+				awaitCancellation(cancellationProxy)
 				fulfillPromise()
 			}
 
@@ -50,7 +50,7 @@ class LibraryConnectionProvider(
 						reject(it)
 						empty()
 					})
-					.then({
+					.then({ it ->
 						if (it != null) {
 							reportProgress(BuildingConnectionStatus.BuildingConnectionComplete)
 							resolve(ConnectionProvider(it, okHttpFactory))

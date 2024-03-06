@@ -14,8 +14,8 @@ import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicat
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageRegistrations
 import com.lasthopesoftware.bluewater.shared.messages.application.HaveApplicationMessageRegistrations
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
-import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
 import com.lasthopesoftware.bluewater.shared.updateIfDifferent
+import com.lasthopesoftware.promises.extensions.keepPromise
 import com.namehillsoftware.handoff.promises.Promise
 import java.util.concurrent.atomic.AtomicReference
 
@@ -60,7 +60,7 @@ class LiveNowPlayingLookup private constructor(
 	private var trackedPosition: Long? = null
 
 	init {
-		selectedLibraryIdentifierProvider.promiseSelectedLibraryId().then { it?.also(::updateInner) }
+		selectedLibraryIdentifierProvider.promiseSelectedLibraryId().then { it -> it?.also(::updateInner) }
 
 		registrations.registerReceiver { message: BrowserLibrarySelection.LibraryChosenMessage -> updateInner(message.chosenLibraryId) }
 		registrations.registerReceiver { message: TrackPositionUpdate -> trackedPosition = message.filePosition.millis }

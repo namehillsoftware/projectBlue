@@ -7,7 +7,7 @@ import com.lasthopesoftware.bluewater.client.playback.engine.ChangePlaybackState
 import com.lasthopesoftware.bluewater.client.playback.engine.ChangePlaybackStateForSystem
 import com.lasthopesoftware.bluewater.shared.android.audiofocus.ControlAudioFocus
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk

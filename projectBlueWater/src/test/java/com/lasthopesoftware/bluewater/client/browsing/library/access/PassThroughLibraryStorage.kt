@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.library.access
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 
 open class PassThroughLibraryStorage : ILibraryStorage {

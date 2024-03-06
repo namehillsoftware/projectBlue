@@ -31,9 +31,9 @@ import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRateLimiter
 import com.lasthopesoftware.bluewater.shared.policies.retries.CloseableRetryOnRejectionLazyPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
-import com.lasthopesoftware.bluewater.shared.promises.getSafely
-import com.lasthopesoftware.bluewater.shared.promises.toFuture
+import com.lasthopesoftware.promises.extensions.keepPromise
+import com.lasthopesoftware.promises.getSafely
+import com.lasthopesoftware.promises.toFuture
 import com.lasthopesoftware.resources.PackageValidator
 import kotlin.math.max
 
@@ -171,7 +171,7 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 		if (parentId == recentRoot) {
 			nowPlayingMediaItemLookup
 				.promiseNowPlayingItem().keepPromise()
-				.then { it?.let { mutableListOf(it) }.apply(result::sendResult) }
+				.then { it -> it?.let { mutableListOf(it) }.apply(result::sendResult) }
 				.excuse { e -> result.sendError(Bundle().apply { putString(error, e.message) }) }
 			return
 		}

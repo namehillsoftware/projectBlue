@@ -2,13 +2,12 @@ package com.lasthopesoftware.bluewater.client.connection.waking
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.LookupServers
-import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
+import com.lasthopesoftware.promises.extensions.unitResponse
 import com.namehillsoftware.handoff.promises.Promise
 
 class ServerAlarm(private val serverLookup: LookupServers, private val server: PokeServer, private val alarmConfiguration: AlarmConfiguration) : WakeLibraryServer {
 	override fun awakeLibraryServer(libraryId: LibraryId): Promise<Unit> =
-		CancellableProxyPromise { cp ->
+		Promise.Proxy { cp ->
 			serverLookup.promiseServerInformation(libraryId)
 				.also(cp::doCancel)
 				.eventually { serverInfo ->

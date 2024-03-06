@@ -88,7 +88,7 @@ class PlaybackNotificationBroadcaster(
 
 		nowPlayingNotificationContentBuilder
 			.promiseNowPlayingNotification(libraryId, currentServiceFile, false)
-			.then {
+			.then { it ->
 				it?.apply {
 					notificationsController.notifyBackground(build(), notificationId)
 				}
@@ -107,7 +107,7 @@ class PlaybackNotificationBroadcaster(
 
 		nowPlayingNotificationContentBuilder
 			.promiseNowPlayingNotification(libraryId, currentServiceFile, false)
-			.then {
+			.then { it ->
 				it?.apply {
 					notificationsController.notifyForeground(build(), notificationId)
 				}
@@ -152,7 +152,7 @@ class PlaybackNotificationBroadcaster(
 
 							nowPlayingNotificationContentBuilder
 								.promiseNowPlayingNotification(libraryId, serviceFile, isPlaying)
-								.then {
+								.then { it ->
 									it?.apply {
 										synchronized(notificationSync) {
 											if (isValidForNotification())

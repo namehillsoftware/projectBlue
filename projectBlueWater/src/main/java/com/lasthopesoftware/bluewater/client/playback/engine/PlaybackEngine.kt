@@ -23,10 +23,10 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.Maintai
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlaying
 import com.lasthopesoftware.bluewater.client.playback.playlist.ManagePlaylistPlayback
 import com.lasthopesoftware.bluewater.shared.lazyLogger
-import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.promiseFirstResult
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
+import com.lasthopesoftware.promises.extensions.keepPromise
+import com.lasthopesoftware.promises.extensions.promiseFirstResult
+import com.lasthopesoftware.promises.extensions.toPromise
+import com.lasthopesoftware.promises.extensions.unitResponse
 import com.lasthopesoftware.resources.closables.PromisingCloseable
 import com.namehillsoftware.handoff.promises.Promise
 import io.reactivex.rxjava3.core.Observable
@@ -189,7 +189,7 @@ class PlaybackEngine(
 			fileProgress = StaticProgressedFile(filePosition.toPromise())
 
 			with(saveState()) {
-				if (!isPlaying) then {
+				if (!isPlaying) then { _ ->
 					val serviceFile = playlist[playlistPosition]
 					Pair(libraryId, PositionedFile(playlistPosition, serviceFile))
 				} else eventually {
@@ -205,7 +205,7 @@ class PlaybackEngine(
 
 					startPlayback(preparedPlaybackQueue, filePosition)
 						.promiseFirstResult()
-						.then { Pair(libraryId, it.asPositionedFile()) }
+						.then { playingFile -> Pair(libraryId, playingFile.asPositionedFile()) }
 				}
 			}
 		}
@@ -232,15 +232,15 @@ class PlaybackEngine(
 				onPlaybackStarted?.onPlaybackStarted()
 			}
 			?.resume()
-			?.then { onPlayingFileChanged?.onPlayingFileChanged(activeLibraryId, it) }
+			?.then { it -> onPlayingFileChanged?.onPlayingFileChanged(activeLibraryId, it) }
 			?: resumePlayback()
 	}
 
 	override fun pause(): Promise<Unit> =
-		pausePlayback().then { onPlaybackPaused?.onPlaybackPaused() }
+		pausePlayback().then { _ -> onPlaybackPaused?.onPlaybackPaused() }
 
 	override fun interrupt(): Promise<Unit> =
-		pausePlayback().then { onPlaybackInterrupted?.onPlaybackInterrupted() }
+		pausePlayback().then { _ -> onPlaybackInterrupted?.onPlaybackInterrupted() }
 
 	override fun setOnPlayingFileChanged(onPlayingFileChanged: OnPlayingFileChanged?): PlaybackEngine {
 		this.onPlayingFileChanged = onPlayingFileChanged
@@ -345,7 +345,7 @@ class PlaybackEngine(
 					saveState()
 				}
 			}
-			.then {
+			.then { it ->
 				onPlaybackCompleted?.onPlaybackCompleted()
 				it
 			}
@@ -365,7 +365,7 @@ class PlaybackEngine(
 		val positionedFileQueueProvider = positionedFileQueueProviders.getValue(isRepeating)
 		val fileQueue = positionedFileQueueProvider.provideQueue(libraryId, playlist, playlistPosition)
 		val preparedPlaybackQueue = preparedPlaybackQueueResourceManagement.initializePreparedPlaybackQueue(fileQueue)
-		fileProgress.progress.then { startPlayback(preparedPlaybackQueue, it) }.unitResponse()
+		fileProgress.progress.then { it -> startPlayback(preparedPlaybackQueue, it) }.unitResponse()
 	}
 
 	private fun startPlayback(preparedPlaybackQueue: PreparedPlayableFileQueue, filePosition: Duration): Observable<PositionedPlayingFile> {
@@ -444,7 +444,7 @@ class PlaybackEngine(
 		return activePlayer
 			?.haltPlayback()
 			.keepPromise()
-			.then {
+			.then { _ ->
 				isPlaying = false
 				onPlaybackStarted = null
 				onPlayingFileChanged = null
@@ -494,6 +494,6 @@ class PlaybackEngine(
 	private class ProgressingFile(val positionedPlayingFile: PositionedPlayingFile) : ReadFileProgress {
 
 		override val progress: Promise<Duration>
-			get() = positionedPlayingFile.playingFile.promisePlayedFile().progress.then { it ?: Duration.ZERO }
+			get() = positionedPlayingFile.playingFile.promisePlayedFile().progress.then { it -> it ?: Duration.ZERO }
 	}
 }

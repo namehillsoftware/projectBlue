@@ -74,7 +74,7 @@ class MediaSessionCallbackReceiver(
 	}
 
 	private fun withSelectedLibraryId(action: (LibraryId) -> Unit) =
-		selectedLibraryId.promiseSelectedLibraryId().then {
+		selectedLibraryId.promiseSelectedLibraryId().then { it ->
 			it?.also(action)
 		}
 }

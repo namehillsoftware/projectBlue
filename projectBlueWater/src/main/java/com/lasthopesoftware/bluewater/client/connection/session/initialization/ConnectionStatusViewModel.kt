@@ -3,8 +3,7 @@ package com.lasthopesoftware.bluewater.client.connection.session.initialization
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
-import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.strings.GetStringResources
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateAction
@@ -35,7 +34,7 @@ class ConnectionStatusViewModel(
 		mutableTestedLibraryId.value = null
 		mutableConnectionStatus.value = stringResources.connecting
 
-		val promiseIsConnected = CancellableProxyPromise { cp ->
+		val promiseIsConnected = Promise.Proxy { cp ->
 			val promisedConnection = connectionInitializationController.promiseActiveLibraryConnection(libraryId)
 			promisedConnection.progress.then { p ->
 				if (p != null) invoke(p)
@@ -44,7 +43,7 @@ class ConnectionStatusViewModel(
 			promisedConnection.must(this)
 			promisedConnection
 				.also(cp::doCancel)
-				.then {
+				.then { it ->
 					val isConnected = it != null
 					if (isConnected) mutableTestedLibraryId.value = libraryId
 					mutableConnectionStatus.value = if (isConnected) stringResources.connected else stringResources.gettingLibraryFailed

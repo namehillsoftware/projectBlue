@@ -9,9 +9,9 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlay
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
-import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.promises.PromiseDelay
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -52,7 +52,7 @@ class WhenInitializingTheNowPlayingFilePropertiesViewModel {
 		val filePropertiesProvider = mockk<ProvideFreshLibraryFileProperties> {
 			val delayedPromise by lazy { PromiseDelay.delay<Any>(Duration.standardSeconds(1)) }
 			every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } answers {
-				delayedPromise.then {
+				delayedPromise.then { _ ->
 					filePropertiesReturnedTime = System.currentTimeMillis()
 					emptyMap()
 				}

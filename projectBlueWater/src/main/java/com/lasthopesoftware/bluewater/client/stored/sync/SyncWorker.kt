@@ -56,8 +56,8 @@ import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMes
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.policies.caching.CachingPolicyFactory
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
+import com.lasthopesoftware.promises.extensions.toPromise
+import com.lasthopesoftware.promises.extensions.unitResponse
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.lasthopesoftware.resources.io.OsFileSupplier
 import com.lasthopesoftware.storage.FreeSpaceLookup
@@ -227,7 +227,7 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 		return futureResult
 	}
 
-	final override fun onStopped() = cancellationProxy.run()
+	final override fun onStopped() = cancellationProxy.cancellationRequested()
 
 	private fun doWork(): Promise<Unit> {
 		if (cancellationProxy.isCancelled) return Unit.toPromise()
@@ -252,12 +252,12 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 				.toPromise()
 				.also(cancellationProxy::doCancel)
 				.inevitably {
-					cancellationProxy.run() // Cancel any on-going processes
+					cancellationProxy.cancellationRequested() // Cancel any on-going processes
 					synchronized(notificationSync) {
 						activePromisedNotification
 					}
 				}
-				.must {
+				.must { _ ->
 					applicationMessageBus.close()
 				}
 		}

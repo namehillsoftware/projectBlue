@@ -1,8 +1,8 @@
 package com.lasthopesoftware.bluewater.client.playback.file.fakes
 
 import com.lasthopesoftware.bluewater.client.playback.file.PlayedFile
-import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressedPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.promises.extensions.ProgressedPromise
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.Messenger
 import com.namehillsoftware.handoff.promises.MessengerOperator
 import com.namehillsoftware.handoff.promises.Promise

@@ -1,8 +1,8 @@
 package com.lasthopesoftware.bluewater.settings.repository.access
 
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
-import com.lasthopesoftware.bluewater.shared.promises.ResolvedPromiseBox
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.promises.ResolvedPromiseBox
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 
 object PromisedApplicationSettingsCache : CachePromisedApplicationSettings {

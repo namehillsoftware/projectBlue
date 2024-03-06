@@ -1,8 +1,9 @@
 package com.lasthopesoftware.bluewater.shared.promises.extensions
 
+import com.namehillsoftware.handoff.cancellation.CancellationResponse
 import com.namehillsoftware.handoff.promises.Promise
 
-open class DeferredPromise<Resolution> : Promise<Resolution>, Runnable {
+open class DeferredPromise<Resolution> : Promise<Resolution>, CancellationResponse {
     private val resolution: Resolution?
     private val error: Throwable?
 	var isCancelled = false
@@ -19,7 +20,7 @@ open class DeferredPromise<Resolution> : Promise<Resolution>, Runnable {
     }
 
 	init {
-	    respondToCancellation(this)
+	    awaitCancellation(this)
 	}
 
     fun resolve() {
@@ -27,7 +28,7 @@ open class DeferredPromise<Resolution> : Promise<Resolution>, Runnable {
 		else reject(error)
     }
 
-	override fun run() {
+	override fun cancellationRequested() {
 		isCancelled = true
 	}
 }

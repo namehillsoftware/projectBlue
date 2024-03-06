@@ -65,7 +65,7 @@ class ActiveFileDownloadsViewModel(
 	init {
 	    scheduler
 			.promiseIsSyncing()
-			.then {
+			.then { it ->
 				mutableIsSyncing.value = it
 				mutableIsSyncStateChangeEnabled.value = true
 			}
@@ -89,7 +89,7 @@ class ActiveFileDownloadsViewModel(
 						.filter { sf -> sf.libraryId == libraryId.id }
 						.associateBy { sf -> sf.id }
 			}
-			.must { mutableIsLoading.value = false }
+			.must {  _ -> mutableIsLoading.value = false }
 	}
 
 	fun toggleSync() {
@@ -102,7 +102,7 @@ class ActiveFileDownloadsViewModel(
 				if (isSyncRunning) scheduler.cancelSync()
 				else scheduler.syncImmediately()
 			}
-			.must {
+			.must { _ ->
 				mutableIsSyncStateChangeEnabled.value = true
 			}
 	}

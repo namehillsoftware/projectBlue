@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.shared.messages
 import android.os.Handler
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
+import com.namehillsoftware.handoff.cancellation.CancellationResponse
 import com.namehillsoftware.handoff.promises.Promise
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -33,11 +34,11 @@ inline fun <S : TypedMessage, reified M : S> RegisterForTypedMessages<S>.registe
 inline fun <reified M : ApplicationMessage> RegisterForApplicationMessages.promiseReceivedMessage(crossinline predicate: (M) -> Boolean = { true }) =
 	promiseReceivedMessage<ApplicationMessage, M>(predicate)
 
-inline fun <S : TypedMessage, reified M : S> RegisterForTypedMessages<S>.promiseReceivedMessage(crossinline predicate: (M) -> Boolean = { true }): Promise<M> = object : Promise<M>(), (M) -> Unit, Runnable {
+inline fun <S : TypedMessage, reified M : S> RegisterForTypedMessages<S>.promiseReceivedMessage(crossinline predicate: (M) -> Boolean = { true }): Promise<M> = object : Promise<M>(), (M) -> Unit, CancellationResponse {
 	private val closeable = registerReceiver(this)
 
 	init {
-		respondToCancellation(this)
+		awaitCancellation(this)
 	}
 
 	override fun invoke(p1: M) {
@@ -47,7 +48,7 @@ inline fun <S : TypedMessage, reified M : S> RegisterForTypedMessages<S>.promise
 		}
 	}
 
-	override fun run() {
+	override fun cancellationRequested() {
 		closeable.close()
 		reject(CancellationException("No longer waiting for message of type ${M::class.java.name}"))
 	}

@@ -26,7 +26,7 @@ class WhenRetrievingTheLibraryConnectionIsCancelled {
 		DeferredPromise<ConnectionSettings?>(ConnectionSettings(accessCode = "aB5nf", isWakeOnLanEnabled = true))
 
 	private val deferredLibraryWake = object : DeferredPromise<Unit>(Unit) {
-		override fun run() {
+		override fun cancellationRequested() {
 			isLibraryServerWakeCancelled = true
 		}
 	}

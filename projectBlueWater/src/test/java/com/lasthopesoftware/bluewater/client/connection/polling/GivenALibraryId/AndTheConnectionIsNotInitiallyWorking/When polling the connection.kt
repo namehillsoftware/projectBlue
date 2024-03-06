@@ -5,8 +5,8 @@ import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.polling.LibraryConnectionPoller
-import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.promises.extensions.ProgressingPromise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -24,7 +24,7 @@ class `When polling the connection` {
             mockk {
                 val nullIterations = log2(8.0).toInt()
                 val connectionResponses = MutableList(nullIterations) {
-                    ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>(java.lang.Exception("whoops"))
+                    ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>(Exception("whoops"))
                 }
                 connectionResponses.add(ProgressingPromise(FakeConnectionProvider()))
                 every { promiseTestedLibraryConnection(LibraryId(libraryId)) } returnsMany connectionResponses

@@ -19,7 +19,7 @@ class SelectedLibraryViewModel(
 	fun loadSelectedLibraryId(): Promise<LibraryId?> =
 		selectedLibraryIdProvider
 			.promiseSelectedLibraryId()
-			.then {
+			.then { it ->
 				mutableSelectedLibraryId.value = it
 				it
 			}
@@ -27,7 +27,7 @@ class SelectedLibraryViewModel(
 	fun selectLibrary(libraryId: LibraryId): Promise<LibraryId> =
 		libraryBrowserSelection
 			.selectBrowserLibrary(libraryId)
-			.then {
+			.then { it ->
 				mutableSelectedLibraryId.value = it.libraryId
 				it.libraryId
 			}

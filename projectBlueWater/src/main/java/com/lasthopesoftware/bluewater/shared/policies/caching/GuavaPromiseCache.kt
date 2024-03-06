@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.shared.policies.caching
 
 import com.google.common.cache.Cache
-import com.lasthopesoftware.bluewater.shared.promises.ResolvedPromiseBox
+import com.lasthopesoftware.promises.ResolvedPromiseBox
 import com.namehillsoftware.handoff.promises.Promise
 
 open class GuavaPromiseCache<Input : Any, Output>(

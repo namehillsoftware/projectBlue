@@ -75,7 +75,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.components.RatingBar
 import com.lasthopesoftware.bluewater.shared.android.ui.components.memorableScrollConnectedScaler
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
-import com.lasthopesoftware.bluewater.shared.promises.extensions.suspend
+import com.lasthopesoftware.promises.extensions.suspend
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlin.math.pow

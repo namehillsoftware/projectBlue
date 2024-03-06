@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.client.connection.session.PromisedConnecti
 import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredProgressingPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import io.mockk.every
 import io.mockk.mockk
@@ -51,7 +51,7 @@ class WhenGettingATestedLibraryConnection {
 			mut
 				.promiseLibraryConnection(libraryId)
 				.apply {
-					progress.then { if (it != null) statuses.add(it) }
+					progress.then { it -> if (it != null) statuses.add(it) }
 					updates(statuses::add)
 				}
 				.toExpiringFuture()
@@ -70,7 +70,7 @@ class WhenGettingATestedLibraryConnection {
 			mut
 				.promiseTestedLibraryConnection(libraryId)
 				.apply {
-					progress.then { if (it != null) statuses.add(it) }
+					progress.then { it -> if (it != null) statuses.add(it) }
 					updates(statuses::add)
 				}
 				.toExpiringFuture()

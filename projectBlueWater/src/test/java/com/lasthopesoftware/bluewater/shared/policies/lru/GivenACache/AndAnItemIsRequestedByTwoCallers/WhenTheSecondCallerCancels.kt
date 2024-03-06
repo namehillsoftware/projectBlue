@@ -13,14 +13,14 @@ class WhenTheSecondCallerCancels {
 	private val mut by lazy {
 		val cache = LruPromiseCache<String, Any>(2)
 		val deferredPromise = object : DeferredPromise<Any>(cachedItem) {
-			override fun run() {
+			override fun cancellationRequested() {
 				resolve("cancelled")
 			}
 		}
 		cache.getOrAdd("first-key") { deferredPromise }
 		val secondCachedPromise = cache.getOrAdd("first-key") {
 			object : DeferredPromise<Any>(Any()) {
-				override fun run() {
+				override fun cancellationRequested() {
 					resolve("cancelled-2")
 				}
 			}

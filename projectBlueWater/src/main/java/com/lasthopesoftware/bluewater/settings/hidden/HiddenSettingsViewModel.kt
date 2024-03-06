@@ -21,10 +21,10 @@ class HiddenSettingsViewModel(private val applicationSettingsRepository: HoldApp
 		mutableIsLoading.value = true
 		return applicationSettingsRepository
 			.promiseApplicationSettings()
-			.then {
+			.then { it ->
 				mutableIsLoggingToFile.value = it.isLoggingToFile
 			}
-			.must {
+			.must { _ ->
 				mutableIsLoading.value = false
 			}
 	}
@@ -42,7 +42,7 @@ class HiddenSettingsViewModel(private val applicationSettingsRepository: HoldApp
 				settings.isLoggingToFile = isLoggingToFile.value
 				applicationSettingsRepository.promiseUpdatedSettings(settings)
 			}
-			.must {
+			.must { _ ->
 				mutableIsLoading.value = false
 			}
 	}

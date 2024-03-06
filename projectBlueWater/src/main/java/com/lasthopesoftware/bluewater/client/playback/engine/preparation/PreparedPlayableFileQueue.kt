@@ -132,7 +132,7 @@ class PreparedPlayableFileQueue(
 		playableFile
 			.bufferingPlaybackFile
 			.promiseBufferedPlaybackFile()
-			.then { beginQueueingPreparingPlayers() }
+			.then { _ -> beginQueueingPreparingPlayers() }
 		return PositionedPlayableFile(
 			playableFile.playbackHandler,
 			playableFile.playableFileVolumeManager,

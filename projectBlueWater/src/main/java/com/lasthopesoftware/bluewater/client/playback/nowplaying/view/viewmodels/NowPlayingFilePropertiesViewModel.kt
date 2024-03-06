@@ -27,12 +27,11 @@ import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApp
 import com.lasthopesoftware.bluewater.shared.messages.promiseReceivedMessage
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
-import com.lasthopesoftware.bluewater.shared.promises.ForwardedResponse.Companion.forward
-import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay
-import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
+import com.lasthopesoftware.promises.ForwardedResponse.Companion.forward
+import com.lasthopesoftware.promises.PromiseDelay
+import com.lasthopesoftware.promises.extensions.keepPromise
+import com.lasthopesoftware.promises.extensions.toPromise
+import com.lasthopesoftware.promises.extensions.unitResponse
 import com.lasthopesoftware.resources.strings.GetStringResources
 import com.namehillsoftware.handoff.promises.Promise
 import org.joda.time.Duration
@@ -162,7 +161,7 @@ class NowPlayingFilePropertiesViewModel(
 				KnownFileProperties.Rating,
 				rating.roundToInt().toString(),
 				false)
-			.must { activeSongRatingUpdates = activeSongRatingUpdates.dec().coerceAtLeast(0) }
+			.must { _ -> activeSongRatingUpdates = activeSongRatingUpdates.dec().coerceAtLeast(0) }
 			.excuse(::handleIoException)
 	}
 
@@ -171,12 +170,12 @@ class NowPlayingFilePropertiesViewModel(
 		controlsShownPromise.cancel()
 
 		isScreenControlsVisibleState.value = true
-		controlsShownPromise = CancellableProxyPromise { cp ->
+		controlsShownPromise = Promise.Proxy { cp ->
 			PromiseDelay
 				.delay<Any?>(screenControlVisibilityTime)
 				.also(cp::doCancel)
 				.then(
-					{
+					{ _ ->
 						if (!cp.isCancelled)
 							isScreenControlsVisibleState.value = false
 					},
@@ -248,11 +247,11 @@ class NowPlayingFilePropertiesViewModel(
 		pollConnections
 			.pollConnection(libraryId)
 			.then(
-				{
+				{ _ ->
 					updateViewFromRepository(libraryId)
 				},
 				{
-					promisedConnectionChanged = CancellableProxyPromise { cp ->
+					promisedConnectionChanged = Promise.Proxy { cp ->
 						applicationMessages
 							.promiseReceivedMessage<LibraryConnectionChangedMessage> { m -> m.libraryId == libraryId }
 							.also(cp::doCancel)
@@ -299,7 +298,7 @@ class NowPlayingFilePropertiesViewModel(
 							}
 						}
 					}
-					.then { showNowPlayingControls() }
+					.then { _ -> showNowPlayingControls() }
 			}
 	}
 

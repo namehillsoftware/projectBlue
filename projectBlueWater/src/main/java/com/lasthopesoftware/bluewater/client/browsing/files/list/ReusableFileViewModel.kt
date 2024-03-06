@@ -10,8 +10,8 @@ import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
-import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.promises.PromiseDelay
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.lasthopesoftware.resources.strings.GetStringResources
 import com.namehillsoftware.handoff.promises.Promise
@@ -23,7 +23,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import org.joda.time.Duration
 import java.io.IOException
 import java.net.SocketException
-import java.util.*
+import java.util.Locale
 import java.util.concurrent.CancellationException
 import javax.net.ssl.SSLProtocolException
 
@@ -106,7 +106,7 @@ class ReusableFileViewModel(
 		private val cancellationProxy = CancellationProxy()
 
 		init {
-			respondToCancellation(cancellationProxy)
+			awaitCancellation(cancellationProxy)
 
 			beginUpdate()
 		}
@@ -119,17 +119,17 @@ class ReusableFileViewModel(
 			val filePropertiesPromise = filePropertiesProvider.promiseFileProperties(libraryId, serviceFile)
 			val promisedUrlKey = urlKeyProvider
 				.promiseUrlKey(libraryId, serviceFile)
-				.then { activeUrlKey = it }
+				.then { it -> activeUrlKey = it }
 			cancellationProxy.doCancel(filePropertiesPromise)
 
 			val promisedViewSetting = filePropertiesPromise.then(this)
 
 			val delayPromise = PromiseDelay.delay<Collection<Unit>>(timeoutDuration)
 			whenAny(whenAll(promisedViewSetting, promisedUrlKey), delayPromise)
-				.must {
+				.must { _ ->
 
 					// First, cancel everything to ensure the losing task doesn't continue running
-					cancellationProxy.run()
+					cancellationProxy.cancellationRequested()
 
 					// Finally, always resolve the parent promise
 					resolve(Unit)

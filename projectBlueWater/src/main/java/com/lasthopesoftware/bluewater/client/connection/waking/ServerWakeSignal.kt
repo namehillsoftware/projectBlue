@@ -1,9 +1,8 @@
 package com.lasthopesoftware.bluewater.client.connection.waking
 
 import com.lasthopesoftware.bluewater.client.connection.SendPackets
-import com.lasthopesoftware.bluewater.shared.promises.PromiseDelay.Companion.delay
-import com.lasthopesoftware.bluewater.shared.promises.PromisePolicies
-import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
+import com.lasthopesoftware.promises.PromiseDelay.Companion.delay
+import com.lasthopesoftware.promises.PromisePolicies
 import com.namehillsoftware.handoff.promises.Promise
 import org.joda.time.Duration
 
@@ -20,7 +19,7 @@ class ServerWakeSignal(private val packetSender: SendPackets) : PokeServer {
 		}
 
 		return PromisePolicies.repeat({
-			CancellableProxyPromise { cp ->
+			Promise.Proxy { cp ->
 				packetSender.promiseSentPackets(machineAddress.host, wakePort, bytes)
 					.also(cp::doCancel)
 					.eventually { delay<Unit>(durationBetween) }

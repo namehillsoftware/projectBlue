@@ -11,9 +11,9 @@ import com.lasthopesoftware.bluewater.shared.android.ui.components.dragging.move
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
-import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.unitResponse
+import com.lasthopesoftware.promises.extensions.keepPromise
+import com.lasthopesoftware.promises.extensions.toPromise
+import com.lasthopesoftware.promises.extensions.unitResponse
 import com.namehillsoftware.handoff.promises.Promise
 
 class NowPlayingPlaylistViewModel(
@@ -91,9 +91,7 @@ class NowPlayingPlaylistViewModel(
 
 	fun savePlaylist(): Promise<*> = activeLibraryId?.let { libraryId ->
 		playlistStorage.promiseStoredPlaylist(libraryId, selectedPlaylistPath.value, nowPlayingList.value.map { it.serviceFile })
-	}.keepPromise().must {
-		mutableIsSavingPlaylistActive.value = false
-	}
+	}.keepPromise().must { _ -> mutableIsSavingPlaylistActive.value = false }
 
 	fun swapFiles(from: Int, to: Int) {
 		nowPlayingListState.value = nowPlayingListState.value.toMutableList().move(from, to)

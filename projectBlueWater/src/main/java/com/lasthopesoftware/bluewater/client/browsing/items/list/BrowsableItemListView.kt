@@ -20,7 +20,7 @@ import com.lasthopesoftware.bluewater.client.connection.session.initialization.C
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
-import com.lasthopesoftware.bluewater.shared.promises.extensions.suspend
+import com.lasthopesoftware.promises.extensions.suspend
 import com.namehillsoftware.handoff.promises.Promise
 import java.io.IOException
 

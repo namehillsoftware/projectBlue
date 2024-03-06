@@ -26,7 +26,7 @@ class WhenExecutingOneAtATime {
 		val rateLimiter = PromisingRateLimiter<Any>(1)
 
 		fun enqueuePromise(promise: Promise<Any>) =
-			rateLimiter.limit { promise.also(activePromises::add).must { activePromises.remove(promise) } }
+			rateLimiter.limit { promise.also(activePromises::add).must { _ -> activePromises.remove(promise) } }
 
 		enqueuePromise(firstPromise)
 		enqueuePromise(secondPromise)

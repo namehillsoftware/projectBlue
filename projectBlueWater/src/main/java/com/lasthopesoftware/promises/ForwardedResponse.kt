@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.shared.promises
+package com.lasthopesoftware.promises
 
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse

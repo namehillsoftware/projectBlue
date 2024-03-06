@@ -15,7 +15,7 @@ import com.namehillsoftware.handoff.promises.response.PromisedResponse
 import okhttp3.Response
 import xmlwise.Xmlwise
 import java.io.IOException
-import java.util.*
+import java.util.Locale
 
 internal class FilePropertiesPromise(
 	private val connectionProvider: IConnectionProvider,
@@ -42,7 +42,7 @@ internal class FilePropertiesPromise(
 
 		if (fileProperties != null) resolve(fileProperties)
 		else {
-			respondToCancellation(cancellationProxy)
+			awaitCancellation(cancellationProxy)
 			val filePropertiesResponse = connectionProvider.promiseResponse("File/GetInfo", "File=" + serviceFile.key)
 			val promisedProperties = filePropertiesResponse.eventually(this)
 

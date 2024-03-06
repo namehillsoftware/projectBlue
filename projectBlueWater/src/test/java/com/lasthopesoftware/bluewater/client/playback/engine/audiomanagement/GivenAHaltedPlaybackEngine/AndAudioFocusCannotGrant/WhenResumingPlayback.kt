@@ -7,7 +7,7 @@ import com.lasthopesoftware.bluewater.client.playback.engine.AudioManagingPlayba
 import com.lasthopesoftware.bluewater.client.playback.engine.ChangePlaybackState
 import com.lasthopesoftware.bluewater.shared.android.audiofocus.ControlAudioFocus
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -44,7 +44,7 @@ class WhenResumingPlayback {
 
 		val audioFocus = object : ControlAudioFocus {
 			override fun promiseAudioFocus(audioFocusRequest: AudioFocusRequestCompat): Promise<AudioFocusRequestCompat> =
-				Promise { it.cancellationRequested { isCancelled = true } }
+				Promise { it.awaitCancellation { isCancelled = true } }
 
 			override fun abandonAudioFocus(audioFocusRequest: AudioFocusRequestCompat) {}
 		}

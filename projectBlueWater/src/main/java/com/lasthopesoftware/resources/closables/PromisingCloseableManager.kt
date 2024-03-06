@@ -2,8 +2,8 @@ package com.lasthopesoftware.resources.closables
 
 import com.lasthopesoftware.bluewater.BuildConfig
 import com.lasthopesoftware.bluewater.shared.lazyLogger
-import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.promises.extensions.keepPromise
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 
 open class PromisingCloseableManager : ManagePromisingCloseables {

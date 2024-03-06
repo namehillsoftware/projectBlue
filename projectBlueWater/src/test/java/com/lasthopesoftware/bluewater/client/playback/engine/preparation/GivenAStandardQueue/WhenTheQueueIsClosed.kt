@@ -20,7 +20,7 @@ class WhenTheQueueIsClosed {
 	private val queue by lazy {
 		val bufferingPlaybackQueuesProvider = CompletingFileQueueProvider()
 		val cancelRecordingPromise = Promise { messenger: Messenger<PreparedPlayableFile?> ->
-			messenger.cancellationRequested {
+			messenger.awaitCancellation {
 				isCancelled = true
 			}
 		}

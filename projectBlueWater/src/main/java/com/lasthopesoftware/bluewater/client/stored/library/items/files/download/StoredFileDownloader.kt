@@ -5,8 +5,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
-import com.lasthopesoftware.bluewater.shared.promises.extensions.CancellableProxyPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
+import com.lasthopesoftware.promises.extensions.keepPromise
 import com.namehillsoftware.handoff.promises.Promise
 import okhttp3.ResponseBody
 import java.io.ByteArrayInputStream
@@ -14,7 +13,7 @@ import java.io.InputStream
 
 class StoredFileDownloader(private val serviceFileUriQueryParamsProvider: IServiceFileUriQueryParamsProvider, private val libraryConnections: ProvideLibraryConnections) : DownloadStoredFiles {
 	override fun promiseDownload(libraryId: LibraryId, storedFile: StoredFile): Promise<InputStream> =
-		CancellableProxyPromise { cp ->
+		Promise.Proxy { cp ->
 			libraryConnections
 				.promiseLibraryConnection(libraryId)
 				.eventually { c ->

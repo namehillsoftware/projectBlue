@@ -11,7 +11,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -60,10 +60,10 @@ class ItemListViewModel(
 			}
 
 		return Promise.whenAll(promisedItemUpdate, promisedLibraryUpdate)
-			.then {
+			.then { _ ->
 				loadedItem = item
 			}
-			.must {
+			.must { _ ->
 				mutableIsLoading.value = false
 			}
 	}

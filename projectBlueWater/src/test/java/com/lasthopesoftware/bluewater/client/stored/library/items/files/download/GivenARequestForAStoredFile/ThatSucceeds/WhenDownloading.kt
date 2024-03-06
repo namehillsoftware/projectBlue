@@ -8,14 +8,14 @@ import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibrary
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.download.StoredFileDownloader
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ExpiringFuturePromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise
+import com.lasthopesoftware.promises.extensions.ProgressingPromise
 import io.mockk.every
 import io.mockk.mockk
 import org.apache.commons.io.IOUtils
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.io.ByteArrayOutputStream
-import java.util.*
+import java.util.Random
 
 class WhenDownloading {
 	private val responseBytes by lazy {

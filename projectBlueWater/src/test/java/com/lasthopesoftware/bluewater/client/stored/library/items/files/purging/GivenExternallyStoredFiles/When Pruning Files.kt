@@ -7,7 +7,7 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.FakeStor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFilesPruner
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.setURI
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.uri.MediaCollections
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every

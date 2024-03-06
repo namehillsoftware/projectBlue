@@ -17,7 +17,7 @@ class ExpiringFuturePromise<Resolution>(promise: Promise<Resolution>) : Future<R
 
 	override fun cancel(mayInterruptIfRunning: Boolean): Boolean {
 		if (isCompleted) return false
-		cancellationProxy.run()
+		cancellationProxy.cancellationRequested()
 		return true
 	}
 
@@ -32,7 +32,7 @@ class ExpiringFuturePromise<Resolution>(promise: Promise<Resolution>) : Future<R
 	@Throws(InterruptedException::class, ExecutionException::class, TimeoutException::class)
 	override fun get(): Resolution? {
 		val countDownLatch = CountDownLatch(1)
-		promise.then { countDownLatch.countDown() }
+		promise.then { _ -> countDownLatch.countDown() }
 		if (countDownLatch.await(defaultCancellationDuration.millis, TimeUnit.MILLISECONDS)) return getResolution()
 		throw TimeoutException()
 	}
@@ -40,7 +40,7 @@ class ExpiringFuturePromise<Resolution>(promise: Promise<Resolution>) : Future<R
 	@Throws(InterruptedException::class, ExecutionException::class, TimeoutException::class)
 	override fun get(timeout: Long, unit: TimeUnit): Resolution? {
 		val countDownLatch = CountDownLatch(1)
-		promise.then {	countDownLatch.countDown() }
+		promise.then { _ -> countDownLatch.countDown() }
 		if (countDownLatch.await(timeout, unit)) return getResolution()
 		throw TimeoutException()
 	}

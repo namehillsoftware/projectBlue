@@ -1,10 +1,12 @@
 package com.lasthopesoftware.bluewater.shared.promises.extensions
 
+import com.lasthopesoftware.promises.extensions.ProgressingPromise
+import com.namehillsoftware.handoff.cancellation.CancellationResponse
 import kotlin.coroutines.cancellation.CancellationException
 
-class DeferredProgressingPromise<Progress, Resolution> : ProgressingPromise<Progress, Resolution>(), Runnable {
+class DeferredProgressingPromise<Progress, Resolution> : ProgressingPromise<Progress, Resolution>(), CancellationResponse {
 	init {
-		respondToCancellation(this)
+		awaitCancellation(this)
 	}
 
 	fun sendProgressUpdate(progress: Progress) {
@@ -23,7 +25,7 @@ class DeferredProgressingPromise<Progress, Resolution> : ProgressingPromise<Prog
 		reject(rejection)
 	}
 
-	override fun run() {
+	override fun cancellationRequested() {
 		reject(CancellationException())
 	}
 }

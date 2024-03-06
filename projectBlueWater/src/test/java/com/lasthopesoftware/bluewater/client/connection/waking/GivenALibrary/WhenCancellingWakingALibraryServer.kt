@@ -8,7 +8,7 @@ import com.lasthopesoftware.bluewater.client.connection.waking.MachineAddress
 import com.lasthopesoftware.bluewater.client.connection.waking.PokeServer
 import com.lasthopesoftware.bluewater.client.connection.waking.ServerAlarm
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -48,7 +48,7 @@ class WhenCancellingWakingALibraryServer {
 
 			every { promiseWakeSignal(any(), 4, Duration.standardSeconds(60)) } answers {
 				Promise { m ->
-					m.cancellationRequested {
+					m.awaitCancellation {
 						cancelledPokes.add(firstArg())
 						m.sendResolution(Unit)
 					}

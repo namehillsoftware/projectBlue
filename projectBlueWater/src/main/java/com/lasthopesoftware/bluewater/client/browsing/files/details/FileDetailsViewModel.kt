@@ -19,8 +19,10 @@ import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.images.ProvideDefaultImage
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
-import com.lasthopesoftware.bluewater.shared.promises.extensions.keepPromise
+import com.lasthopesoftware.promises.extensions.keepPromise
+import com.lasthopesoftware.promises.extensions.unitResponse
 import com.namehillsoftware.handoff.promises.Promise
+import com.namehillsoftware.handoff.promises.response.ImmediateAction
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
@@ -68,9 +70,9 @@ class FileDetailsViewModel(
 	private val mutableIsLoading = MutableStateFlow(false)
 	private val mutableCoverArt = MutableStateFlow<Bitmap?>(null)
 	private val promisedSetDefaultCoverArt = defaultImageProvider.promiseFileBitmap()
-		.then {
-			mutableCoverArt.value = it
-			it
+		.then { art ->
+			mutableCoverArt.value = art
+			art
 		}
 	private val mutableRating = MutableStateFlow(0)
 	private val mutableHighlightedProperty = MutableStateFlow<FilePropertyViewModel?>(null)
@@ -97,12 +99,12 @@ class FileDetailsViewModel(
 
 		mutableIsLoading.value = true
 		val isReadOnlyPromise = connectionPermissions.promiseIsReadOnly()
-			.then { isConnectionReadOnly = it }
+			.then { r -> isConnectionReadOnly = r }
 
 		val filePropertiesSetPromise = loadFileProperties(serviceFile)
 
 		val urlKeyPromise = scopedUrlKeyProvider.promiseUrlKey(serviceFile)
-			.then { associatedUrlKey = it }
+			.then { u -> associatedUrlKey = u }
 
 		val bitmapSetPromise = promisedSetDefaultCoverArt // Ensure default cover art is first set before apply cover art from file properties
 			.eventually { default ->
@@ -113,7 +115,8 @@ class FileDetailsViewModel(
 
 		return Promise
 			.whenAll(filePropertiesSetPromise, bitmapSetPromise, urlKeyPromise, isReadOnlyPromise)
-			.then { mutableIsLoading.value = false }
+			.must(ImmediateAction{ mutableIsLoading.value = false })
+			.unitResponse()
 	}
 
 	fun addToNowPlaying() {
@@ -186,7 +189,7 @@ class FileDetailsViewModel(
 				?.let { serviceFile ->
 					updateFileProperties
 						.promiseFileUpdate(serviceFile, property, newValue, false)
-						.then { mutableCommittedValue.value = newValue }
+						.then { _ -> mutableCommittedValue.value = newValue }
 				}
 				.keepPromise(Unit)
 				.must(::cancel)

@@ -22,7 +22,7 @@ class LibraryConnectionPollingSessions(
 				}
 			}
 			.let {
-				it.value.apply { must { connectionPollerLookup.remove(libraryId, it) } }
+				it.value.apply { must { _ -> connectionPollerLookup.remove(libraryId, it) } }
 			}
 
 	fun cancelActiveConnections() {

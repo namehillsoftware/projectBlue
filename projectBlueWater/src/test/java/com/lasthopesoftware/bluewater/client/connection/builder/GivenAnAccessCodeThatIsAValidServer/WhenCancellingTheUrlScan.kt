@@ -8,7 +8,7 @@ import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSetti
 import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -23,7 +23,7 @@ class WhenCancellingTheUrlScan {
 	private val cancellationException by lazy {
 		val connectionTester = mockk<TestConnections>()
 		every { connectionTester.promiseIsConnectionPossible(match { a -> a.urlProvider.baseUrl.toString() == "http://gooPc:80/MCWS/v1/" }) } returns Promise { m ->
-			m.cancellationRequested {
+			m.awaitCancellation {
 				m.sendRejection(CancellationException("Bye now!"))
 			}
 		}

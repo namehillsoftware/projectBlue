@@ -8,7 +8,7 @@ import com.lasthopesoftware.bluewater.client.connection.waking.MachineAddress
 import com.lasthopesoftware.bluewater.client.connection.waking.PokeServer
 import com.lasthopesoftware.bluewater.client.connection.waking.ServerAlarm
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -25,7 +25,7 @@ class WhenCancellingWhileGettingServerInfo {
 	private val mut by lazy {
 		val lookupServers = mockk<LookupServers>().apply {
 			every { promiseServerInformation(any()) } returns Promise<ServerInfo?> { m ->
-				m.cancellationRequested {
+				m.awaitCancellation {
 					m.sendRejection(CancellationException("CANCELLED!"))
 				}
 			}

@@ -9,7 +9,7 @@ import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSetti
 import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.testing.TestConnections
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -28,14 +28,14 @@ class WhenCancellingDuringLookup {
 				"http://1.2.3.4:143/MCWS/v1/" == a.urlProvider.baseUrl.toString()
 			})
 		} returns Promise { m ->
-			m.cancellationRequested {
+			m.awaitCancellation {
 				m.sendRejection(CancellationException("I'm not supposed to be cancelled"))
 			}
 		}
 
 		val serverLookup = mockk<LookupServers>()
 		every { serverLookup.promiseServerInformation(LibraryId(55)) } returns Promise { m ->
-			m.cancellationRequested {
+			m.awaitCancellation {
 				m.sendRejection(CancellationException("Yup I'm cancelled"))
 			}
 		}

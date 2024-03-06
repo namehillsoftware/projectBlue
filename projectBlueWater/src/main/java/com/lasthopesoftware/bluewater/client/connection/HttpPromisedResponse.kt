@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.connection
 
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.compilation.DebugFlag
+import com.namehillsoftware.handoff.cancellation.CancellationResponse
 import com.namehillsoftware.handoff.promises.Promise
 import okhttp3.Call
 import okhttp3.Callback
@@ -10,10 +11,10 @@ import java.io.IOException
 
 private val logger by lazyLogger<HttpPromisedResponse>()
 
-class HttpPromisedResponse(private val call: Call) : Promise<Response>(), Callback, Runnable {
+class HttpPromisedResponse(private val call: Call) : Promise<Response>(), Callback, CancellationResponse {
 
 	init {
-		respondToCancellation(this)
+		awaitCancellation(this)
 		call.enqueue(this)
 	}
 
@@ -29,5 +30,5 @@ class HttpPromisedResponse(private val call: Call) : Promise<Response>(), Callba
 		}
 	}
 
-	override fun run() = call.cancel()
+	override fun cancellationRequested() = call.cancel()
 }

@@ -26,7 +26,7 @@ class WhenExecutingThreeAtATime {
 		val rateLimiter = PromisingRateLimiter<Any>(3)
 
 		fun enqueuePromise(promise: Promise<Any>) =
-			rateLimiter.limit { promise.also(activePromises::add).must { activePromises.remove(promise) } }
+			rateLimiter.limit { promise.also(activePromises::add).must { _ -> activePromises.remove(promise) } }
 
 		val futureFirstResult = enqueuePromise(firstPromise).toExpiringFuture()
 		enqueuePromise(secondPromise)

@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.shared.android.audiofocus
 import android.media.AudioManager
 import androidx.media.AudioFocusRequestCompat
 import androidx.media.AudioManagerCompat
+import com.namehillsoftware.handoff.cancellation.CancellationResponse
 import com.namehillsoftware.handoff.promises.Promise
 
 class AudioFocusManagement(private val audioManager: AudioManager) : ControlAudioFocus {
@@ -13,14 +14,14 @@ class AudioFocusManagement(private val audioManager: AudioManager) : ControlAudi
 		AudioManagerCompat.abandonAudioFocusRequest(audioManager, audioFocusRequest)
 	}
 
-	private class AudioFocusPromise(audioFocusRequest: AudioFocusRequestCompat, private val audioManager: AudioManager) : Promise<AudioFocusRequestCompat>(), AudioManager.OnAudioFocusChangeListener, Runnable {
+	private class AudioFocusPromise(audioFocusRequest: AudioFocusRequestCompat, private val audioManager: AudioManager) : Promise<AudioFocusRequestCompat>(), AudioManager.OnAudioFocusChangeListener, CancellationResponse {
 		private val innerAudioFocusChangeListener = audioFocusRequest.onAudioFocusChangeListener
 		private val delegatingAudioFocusRequest = AudioFocusRequestCompat.Builder(audioFocusRequest)
 			.setOnAudioFocusChangeListener(this)
 			.build()
 
 		init {
-			respondToCancellation(this)
+			awaitCancellation(this)
 			try {
 				when (AudioManagerCompat.requestAudioFocus(audioManager, delegatingAudioFocusRequest)) {
 					AudioManager.AUDIOFOCUS_REQUEST_GRANTED -> resolve(delegatingAudioFocusRequest)
@@ -40,7 +41,7 @@ class AudioFocusManagement(private val audioManager: AudioManager) : ControlAudi
 			innerAudioFocusChangeListener.onAudioFocusChange(focusChange)
 		}
 
-		override fun run() {
+		override fun cancellationRequested() {
 			AudioManagerCompat.abandonAudioFocusRequest(audioManager, delegatingAudioFocusRequest)
 			resolve(delegatingAudioFocusRequest)
 		}

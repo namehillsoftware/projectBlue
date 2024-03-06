@@ -19,8 +19,9 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedP
 import com.lasthopesoftware.bluewater.client.playback.volume.AudioTrackVolumeManager
 import com.lasthopesoftware.bluewater.client.playback.volume.PassthroughVolumeManager
 import com.lasthopesoftware.bluewater.shared.lazyLogger
+import com.namehillsoftware.handoff.cancellation.CancellationResponse
+import com.namehillsoftware.handoff.cancellation.CancellationToken
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.queued.cancellation.CancellationToken
 import org.joda.time.Duration
 import java.net.ProtocolException
 import java.util.concurrent.CancellationException
@@ -35,7 +36,7 @@ internal class PreparedExoPlayerPromise(
 ) :
 	Promise<PreparedPlayableFile>(),
 	Player.Listener,
-	Runnable {
+	CancellationResponse {
 
 	companion object {
 		private val logger by lazyLogger<PreparedExoPlayerPromise>()
@@ -56,7 +57,7 @@ internal class PreparedExoPlayerPromise(
 	}
 
 	private fun initialize() {
-		respondToCancellation(this)
+		awaitCancellation(this)
 
 		if (cancellationToken.isCancelled) return
 
@@ -99,8 +100,8 @@ internal class PreparedExoPlayerPromise(
 			.excuse(::handleError)
 	}
 
-	override fun run() {
-		cancellationToken.run()
+	override fun cancellationRequested() {
+		cancellationToken.cancellationRequested()
 		exoPlayer?.release()
 		reject(CancellationException())
 	}

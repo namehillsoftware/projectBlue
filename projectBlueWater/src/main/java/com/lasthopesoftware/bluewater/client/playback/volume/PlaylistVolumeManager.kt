@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.volume
 
 import com.lasthopesoftware.bluewater.client.playback.playlist.ManagePlaylistPlayback
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 
 class PlaylistVolumeManager(private var volume: Float) : IVolumeManagement {
@@ -15,6 +15,6 @@ class PlaylistVolumeManager(private var volume: Float) : IVolumeManagement {
 	override fun setVolume(volume: Float): Promise<Float> {
 		this.volume = volume
 
-		return playlistPlayer?.setVolume(this.volume)?.then { this.volume } ?: this.volume.toPromise()
+		return playlistPlayer?.setVolume(this.volume)?.then { _ -> this.volume } ?: this.volume.toPromise()
 	}
 }

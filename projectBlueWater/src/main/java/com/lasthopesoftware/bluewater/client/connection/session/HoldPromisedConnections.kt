@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.connection.session
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
-import com.lasthopesoftware.bluewater.shared.promises.extensions.ProgressingPromise
+import com.lasthopesoftware.promises.extensions.ProgressingPromise
 import com.namehillsoftware.handoff.promises.Promise
 
 interface HoldPromisedConnections {

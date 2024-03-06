@@ -14,7 +14,7 @@ import com.lasthopesoftware.bluewater.client.stored.sync.StoredFileSynchronizati
 import com.lasthopesoftware.bluewater.client.stored.sync.SyncStateMessage
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every

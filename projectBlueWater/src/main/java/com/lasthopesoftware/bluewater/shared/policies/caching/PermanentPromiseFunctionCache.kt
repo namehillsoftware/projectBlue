@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.shared.policies.caching
 
-import com.lasthopesoftware.bluewater.shared.promises.ResolvedPromiseBox
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toPromise
+import com.lasthopesoftware.promises.ResolvedPromiseBox
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import java.util.concurrent.ConcurrentHashMap
 

@@ -68,7 +68,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsMutableState
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
-import com.lasthopesoftware.bluewater.shared.promises.extensions.suspend
+import com.lasthopesoftware.promises.extensions.suspend
 import com.lasthopesoftware.resources.strings.GetStringResources
 import kotlinx.coroutines.launch
 import kotlin.math.pow

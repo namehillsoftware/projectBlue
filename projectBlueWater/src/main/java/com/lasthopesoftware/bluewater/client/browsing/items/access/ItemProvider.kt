@@ -20,5 +20,5 @@ class ItemProvider(private val connectionProvider: ProvideGuaranteedLibraryConne
 							?: promiseResponse(browseLibraryParameter, "Version=2", "ErrorOnMissing=1")
 					}
 			}
-			.then { it.body?.use { body -> body.byteStream().use(ItemResponse::getItems) } ?: emptyList() }
+			.then { it -> it.body?.use { body -> body.byteStream().use(ItemResponse::getItems) } ?: emptyList() }
 }

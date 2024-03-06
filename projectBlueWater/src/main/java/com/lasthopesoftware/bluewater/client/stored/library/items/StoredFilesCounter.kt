@@ -7,5 +7,5 @@ import com.namehillsoftware.handoff.promises.Promise
 
 class StoredFilesCounter(private val storedFiles: AccessStoredFiles) : CountStoredFiles {
 	override fun promiseStoredFilesCount(libraryId: LibraryId): Promise<Long> =
-		storedFiles.promiseAllStoredFiles(libraryId).then { it.size.toLong() }
+		storedFiles.promiseAllStoredFiles(libraryId).then { it -> it.size.toLong() }
 }

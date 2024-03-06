@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.shared.promises.extensions
+package com.lasthopesoftware.promises.extensions
 
 import android.content.Intent
 import androidx.activity.ComponentActivity
@@ -17,7 +17,8 @@ interface LaunchActivitiesForResults {
 	fun promiseResult(intent: Intent): Promise<ActivityResult>
 }
 
-private class ActivityResultObserver(activity: ComponentActivity) : ActivityResultCallback<ActivityResult>, LaunchActivitiesForResults, LifecycleEventObserver {
+private class ActivityResultObserver(activity: ComponentActivity) : ActivityResultCallback<ActivityResult>,
+	LaunchActivitiesForResults, LifecycleEventObserver {
 
 	private val lifecycle = activity.lifecycle
 	private val launcher = activity.registerForActivityResult(ActivityResultContracts.StartActivityForResult(), this)

@@ -1,9 +1,10 @@
-package com.lasthopesoftware.bluewater.shared.promises.extensions
+package com.lasthopesoftware.promises.extensions
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.produceState
 import com.google.common.util.concurrent.ListenableFuture
+import com.namehillsoftware.handoff.cancellation.CancellationResponse
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import io.reactivex.rxjava3.core.Completable
@@ -64,7 +65,10 @@ fun <T> Promise<T>?.keepPromise(default: T): Promise<T> = this ?: default.toProm
 
 fun <T> Promise<T>.unitResponse(): Promise<Unit> = this.then(UnitResponse.respond())
 
-fun <T> Promise<T>.guaranteedUnitResponse(): Promise<Unit> = this.then(UnitResponse.respond(), UnitResponse.respond())
+fun <T> Promise<T>.guaranteedUnitResponse(): Promise<Unit> = this.then(
+	UnitResponse.respond(),
+	UnitResponse.respond()
+)
 
 private class UnitResponse<Resolution> private constructor() : ImmediateResponse<Resolution, Unit> {
 	override fun respond(resolution: Resolution) = Unit
@@ -77,15 +81,15 @@ private class UnitResponse<Resolution> private constructor() : ImmediateResponse
 	}
 }
 
-private class CompletablePromise(completable: Completable) : Promise<Unit>(), CompletableObserver, Runnable {
+private class CompletablePromise(completable: Completable) : Promise<Unit>(), CompletableObserver, CancellationResponse {
 	private lateinit var disposable: Disposable
 
 	init {
 		completable.subscribe(this)
-		respondToCancellation(this)
+		awaitCancellation(this)
 	}
 
-	override fun run() {
+	override fun cancellationRequested() {
 		disposable.dispose()
 	}
 
@@ -98,12 +102,12 @@ private class CompletablePromise(completable: Completable) : Promise<Unit>(), Co
 	override fun onError(e: Throwable) = reject(e)
 }
 
-private class ObserverPromise<T : Any>(observable: Observable<T>) : Promise<T>(), Observer<T>, Runnable {
+private class ObserverPromise<T : Any>(observable: Observable<T>) : Promise<T>(), Observer<T>, CancellationResponse {
 	private lateinit var disposable: Disposable
 
 	init {
 		observable.subscribe(this)
-		respondToCancellation(this)
+		awaitCancellation(this)
 	}
 
 	override fun onNext(t: T) {
@@ -116,7 +120,7 @@ private class ObserverPromise<T : Any>(observable: Observable<T>) : Promise<T>()
 		disposable.dispose()
 	}
 
-	override fun run() {
+	override fun cancellationRequested() {
 		disposable.dispose()
 	}
 
@@ -127,29 +131,35 @@ private class ObserverPromise<T : Any>(observable: Observable<T>) : Promise<T>()
 	override fun onError(e: Throwable) = reject(e)
 }
 
-private class PromisedListenableFuture<Resolution>(listenableFuture: ListenableFuture<Resolution>, executor: Executor) :
-	Promise<Resolution>() {
+private class PromisedListenableFuture<Resolution>(private val listenableFuture: ListenableFuture<Resolution>, executor: Executor) :
+	Promise<Resolution>(), CancellationResponse, Runnable {
 	init {
-		respondToCancellation { listenableFuture.cancel(false) }
-		listenableFuture.addListener({
-			try {
-				resolve(listenableFuture.get())
-			} catch (e: ExecutionException) {
-				reject(e.cause ?: e)
-			} catch (t: Throwable) {
-				reject(t)
-			}
-		}, executor)
-	}
-}
-
-private class PromiseJob(private val job: Job) : Promise<Unit>(), Runnable, CompletionHandler {
-	init {
-		job.invokeOnCompletion(this)
-		respondToCancellation(this)
+		awaitCancellation(this)
+		listenableFuture.addListener(this, executor)
 	}
 
 	override fun run() {
+		try {
+			resolve(listenableFuture.get())
+		} catch (e: ExecutionException) {
+			reject(e.cause ?: e)
+		} catch (t: Throwable) {
+			reject(t)
+		}
+	}
+
+	override fun cancellationRequested() {
+		listenableFuture.cancel(false)
+	}
+}
+
+private class PromiseJob(private val job: Job) : Promise<Unit>(), CancellationResponse, CompletionHandler {
+	init {
+		job.invokeOnCompletion(this)
+		awaitCancellation(this)
+	}
+
+	override fun cancellationRequested() {
 		job.cancel()
 	}
 
@@ -160,13 +170,13 @@ private class PromiseJob(private val job: Job) : Promise<Unit>(), Runnable, Comp
 }
 
 @ExperimentalCoroutinesApi
-private class PromiseDeferred<T>(private val deferred: Deferred<T>) : Promise<T>(), Runnable, CompletionHandler {
+private class PromiseDeferred<T>(private val deferred: Deferred<T>) : Promise<T>(), CancellationResponse, CompletionHandler {
 	init {
 		deferred.invokeOnCompletion(this)
-		respondToCancellation(this)
+		awaitCancellation(this)
 	}
 
-	override fun run() {
+	override fun cancellationRequested() {
 		deferred.cancel()
 	}
 

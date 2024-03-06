@@ -11,7 +11,7 @@ class WhenCancelling {
 	private val cachedPromise by lazy {
 		val cache = LruPromiseCache<String, Any>(2)
 		val deferredPromise = object : DeferredPromise<Any>(Any()) {
-			override fun run() {
+			override fun cancellationRequested() {
 				resolve("cancelled")
 			}
 		}
