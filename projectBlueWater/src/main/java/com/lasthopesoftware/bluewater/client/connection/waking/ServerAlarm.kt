@@ -4,11 +4,10 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.LookupServers
 import com.lasthopesoftware.promises.extensions.unitResponse
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.propagation.ProxyPromise
 
 class ServerAlarm(private val serverLookup: LookupServers, private val server: PokeServer, private val alarmConfiguration: AlarmConfiguration) : WakeLibraryServer {
 	override fun awakeLibraryServer(libraryId: LibraryId): Promise<Unit> =
-		ProxyPromise { cp ->
+		Promise.Proxy { cp ->
 			serverLookup.promiseServerInformation(libraryId)
 				.also(cp::doCancel)
 				.eventually { serverInfo ->

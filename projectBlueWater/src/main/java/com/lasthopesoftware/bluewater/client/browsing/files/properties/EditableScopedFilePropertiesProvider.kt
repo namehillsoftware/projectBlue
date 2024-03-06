@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.browsing.files.properties
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.propagation.ProxyPromise
 
 private fun buildProperties(rawProperties: Map<String, String>): Sequence<FileProperty> = sequence {
 	val returnedProperties = HashSet<String>()
@@ -12,7 +11,7 @@ private fun buildProperties(rawProperties: Map<String, String>): Sequence<FilePr
 			yield(FileProperty(name, value))
 	}
 
-	for (editable in EditableFilePropertyDefinition.values()) {
+	for (editable in EditableFilePropertyDefinition.entries) {
 		val name = editable.propertyName
 		if (!returnedProperties.add(name)) continue
 
@@ -29,7 +28,7 @@ class EditableScopedFilePropertiesProvider(private val inner:  ProvideScopedFile
 	: ProvideEditableScopedFileProperties {
 
 	override fun promiseFileProperties(serviceFile: ServiceFile): Promise<Sequence<FileProperty>> =
-		ProxyPromise { cp ->
+		Promise.Proxy { cp ->
 			inner
 				.promiseFileProperties(serviceFile)
 				.apply(cp::doCancel)

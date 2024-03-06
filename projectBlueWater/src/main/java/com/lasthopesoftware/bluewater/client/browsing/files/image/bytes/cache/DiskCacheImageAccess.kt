@@ -12,7 +12,6 @@ import com.namehillsoftware.handoff.cancellation.CancellationSignal
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
 import com.namehillsoftware.handoff.promises.propagation.ProvideProxyablePromise
-import com.namehillsoftware.handoff.promises.propagation.ProxyPromise
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter
 import java.io.ByteArrayOutputStream
@@ -32,7 +31,7 @@ class DiskCacheImageAccess(
 	}
 
 	override fun promiseImageBytes(libraryId: LibraryId, serviceFile: ServiceFile): Promise<ByteArray> =
-		ProxyPromise(ImageOperator(libraryId, serviceFile))
+		Promise.Proxy(ImageOperator(libraryId, serviceFile))
 
 	inner class ImageOperator internal constructor(private val libraryId: LibraryId, private val serviceFile: ServiceFile) : ProvideProxyablePromise<ByteArray> {
 		override fun provide(cancellationProxy: CancellationProxy): Promise<ByteArray> =

@@ -13,7 +13,6 @@ import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.resources.strings.EncodeToBase64
 import com.lasthopesoftware.resources.uri.IoCommon
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.propagation.ProxyPromise
 import java.net.URL
 import java.util.LinkedList
 
@@ -33,7 +32,7 @@ class UrlScanner(
 		}
 
 	@OptIn(ExperimentalStdlibApi::class)
-	private fun promiseBuiltUrlProvider(libraryId: LibraryId, settings: ConnectionSettings): Promise<IUrlProvider?> = ProxyPromise { cp ->
+	private fun promiseBuiltUrlProvider(libraryId: LibraryId, settings: ConnectionSettings): Promise<IUrlProvider?> = Promise.Proxy { cp ->
 		val authKey =
 			if (settings.isUserCredentialsValid()) base64.encodeString(settings.userName + ":" + settings.password)
 			else null

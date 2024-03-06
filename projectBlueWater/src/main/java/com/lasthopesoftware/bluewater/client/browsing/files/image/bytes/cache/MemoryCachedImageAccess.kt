@@ -19,7 +19,6 @@ import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessio
 import com.lasthopesoftware.bluewater.shared.policies.caching.CachePromiseFunctions
 import com.lasthopesoftware.bluewater.shared.policies.caching.LruPromiseCache
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.propagation.ProxyPromise
 
 class MemoryCachedImageAccess
 (
@@ -81,7 +80,7 @@ class MemoryCachedImageAccess
 	override fun promiseImageBytes(libraryId: LibraryId, serviceFile: ServiceFile): Promise<ByteArray> =
 		PromisedImage(libraryId, serviceFile)
 
-	inner class PromisedImage internal constructor(private val libraryId: LibraryId, private val serviceFile: ServiceFile) : ProxyPromise<ByteArray>() {
+	inner class PromisedImage internal constructor(private val libraryId: LibraryId, private val serviceFile: ServiceFile) : Promise.Proxy<ByteArray>() {
 
 		init {
 			val promisedCacheKey = imageCacheKeys.promiseImageCacheKey(libraryId, serviceFile)

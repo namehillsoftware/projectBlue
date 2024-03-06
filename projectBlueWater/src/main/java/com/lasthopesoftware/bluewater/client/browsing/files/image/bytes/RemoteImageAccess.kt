@@ -5,7 +5,6 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
 import com.lasthopesoftware.bluewater.shared.cls
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.propagation.ProxyPromise
 import org.slf4j.LoggerFactory
 import java.io.FileNotFoundException
 import java.io.IOException
@@ -22,7 +21,7 @@ class RemoteImageAccess(private val connectionProvider: ProvideLibraryConnection
 
 	override fun promiseImageBytes(libraryId: LibraryId, serviceFile: ServiceFile): Promise<ByteArray> {
 		val fileKey = serviceFile.key
-		return ProxyPromise { cp ->
+		return Promise.Proxy { cp ->
 			connectionProvider.promiseLibraryConnection(libraryId)
 				.eventually { c ->
 					c?.promiseResponse(

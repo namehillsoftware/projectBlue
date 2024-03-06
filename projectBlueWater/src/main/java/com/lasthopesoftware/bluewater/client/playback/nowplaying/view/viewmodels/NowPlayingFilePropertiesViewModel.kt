@@ -34,7 +34,6 @@ import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.promises.extensions.unitResponse
 import com.lasthopesoftware.resources.strings.GetStringResources
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.propagation.ProxyPromise
 import org.joda.time.Duration
 import kotlin.math.roundToInt
 
@@ -171,7 +170,7 @@ class NowPlayingFilePropertiesViewModel(
 		controlsShownPromise.cancel()
 
 		isScreenControlsVisibleState.value = true
-		controlsShownPromise = ProxyPromise { cp ->
+		controlsShownPromise = Promise.Proxy { cp ->
 			PromiseDelay
 				.delay<Any?>(screenControlVisibilityTime)
 				.also(cp::doCancel)
@@ -252,7 +251,7 @@ class NowPlayingFilePropertiesViewModel(
 					updateViewFromRepository(libraryId)
 				},
 				{
-					promisedConnectionChanged = ProxyPromise { cp ->
+					promisedConnectionChanged = Promise.Proxy { cp ->
 						applicationMessages
 							.promiseReceivedMessage<LibraryConnectionChangedMessage> { m -> m.libraryId == libraryId }
 							.also(cp::doCancel)

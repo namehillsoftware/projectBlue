@@ -8,13 +8,12 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.cancellation.CancellationSignal
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.propagation.ProxyPromise
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter
 import java.util.concurrent.CancellationException
 
 class LibraryImageProvider(private val rawImages: GetRawImages) : ProvideLibraryImages {
-	override fun promiseFileBitmap(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Bitmap?> = ProxyPromise { cp ->
+	override fun promiseFileBitmap(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Bitmap?> = Promise.Proxy { cp ->
 		rawImages
 			.promiseImageBytes(libraryId, serviceFile)
 			.also(cp::doCancel)

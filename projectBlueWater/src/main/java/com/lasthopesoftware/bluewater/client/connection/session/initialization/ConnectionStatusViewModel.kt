@@ -6,7 +6,6 @@ import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.strings.GetStringResources
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.propagation.ProxyPromise
 import com.namehillsoftware.handoff.promises.response.ImmediateAction
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -35,7 +34,7 @@ class ConnectionStatusViewModel(
 		mutableTestedLibraryId.value = null
 		mutableConnectionStatus.value = stringResources.connecting
 
-		val promiseIsConnected = ProxyPromise { cp ->
+		val promiseIsConnected = Promise.Proxy { cp ->
 			val promisedConnection = connectionInitializationController.promiseActiveLibraryConnection(libraryId)
 			promisedConnection.progress.then { p ->
 				if (p != null) invoke(p)

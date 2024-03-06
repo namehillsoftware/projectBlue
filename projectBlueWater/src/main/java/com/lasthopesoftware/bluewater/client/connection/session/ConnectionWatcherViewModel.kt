@@ -9,7 +9,6 @@ import com.lasthopesoftware.bluewater.client.connection.polling.PollForLibraryCo
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.propagation.ProxyPromise
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
@@ -54,7 +53,7 @@ class ConnectionWatcherViewModel(
 		if (libraryId != watchedLibraryId) return
 
 		mutableIsCheckingConnection.value = true
-		promisedConnection = ProxyPromise { cp ->
+		promisedConnection = Promise.Proxy { cp ->
 			pollLibraryConnections
 				.pollConnection(libraryId)
 				.also(cp::doCancel)

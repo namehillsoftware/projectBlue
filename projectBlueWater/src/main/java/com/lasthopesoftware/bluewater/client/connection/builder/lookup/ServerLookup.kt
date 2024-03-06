@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.client.connection.builder.lookup
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.propagation.ProxyPromise
 
 class ServerLookup(private val serverInfoXmlRequest: RequestServerInfoXml) : LookupServers {
 
@@ -19,7 +18,7 @@ class ServerLookup(private val serverInfoXmlRequest: RequestServerInfoXml) : Loo
 		private const val macAddressElement = "macaddresslist"
 	}
 
-	override fun promiseServerInformation(libraryId: LibraryId): Promise<ServerInfo?> = ProxyPromise { cp ->
+	override fun promiseServerInformation(libraryId: LibraryId): Promise<ServerInfo?> = Promise.Proxy { cp ->
 		serverInfoXmlRequest.promiseServerInfoXml(libraryId)
 			.also(cp::doCancel)
 			.then { xml ->
