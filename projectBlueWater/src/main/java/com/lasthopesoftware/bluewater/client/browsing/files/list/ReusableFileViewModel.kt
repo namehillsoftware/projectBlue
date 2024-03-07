@@ -117,17 +117,14 @@ class ReusableFileViewModel(
 			if (isNotCurrentServiceFile || isUpdateCancelled) return resolve(Unit)
 
 			val filePropertiesPromise = filePropertiesProvider.promiseFileProperties(libraryId, serviceFile)
-			val promisedUrlKey = urlKeyProvider
-				.promiseUrlKey(libraryId, serviceFile)
-				.then { it -> activeUrlKey = it }
-			cancellationProxy.doCancel(filePropertiesPromise)
+
+			val promisedUrlKey = urlKeyProvider.promiseUrlKey(libraryId, serviceFile)
 
 			val promisedViewSetting = filePropertiesPromise.then(this)
 
 			val delayPromise = PromiseDelay.delay<Collection<Unit>>(timeoutDuration)
-			whenAny(whenAll(promisedViewSetting, promisedUrlKey), delayPromise)
+			whenAny(whenAll(promisedViewSetting, promisedUrlKey.then { it -> activeUrlKey = it }), delayPromise)
 				.must { _ ->
-
 					// First, cancel everything to ensure the losing task doesn't continue running
 					cancellationProxy.cancellationRequested()
 
@@ -140,6 +137,8 @@ class ReusableFileViewModel(
 						.execute { handleError(e) }
 				}
 
+			cancellationProxy.doCancel(promisedUrlKey)
+			cancellationProxy.doCancel(filePropertiesPromise)
 			cancellationProxy.doCancel(delayPromise)
 		}
 

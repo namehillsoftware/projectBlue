@@ -114,7 +114,7 @@ open class MainApplication : Application() {
 	override fun onCreate() {
 		super.onCreate()
 
-		Promise.Rejections.toggleStackTraceFiltering(!DebugFlag.isDebugCompilation)
+		Promise.Rejections.toggleStackTraceFiltering(true)
 
 		initializeLogging()
 
