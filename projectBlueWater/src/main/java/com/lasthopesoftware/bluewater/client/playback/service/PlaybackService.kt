@@ -876,21 +876,7 @@ import java.util.concurrent.TimeoutException
 
 	override fun onPlaybackCompleted() {
 		isMarkedForPlay = false
-
-		if (!updatePlayStatsOnPlaybackCompletedReceiver.isInitialized()) {
-			applicationMessageBus.sendMessage(PlaybackMessage.PlaybackStopped)
-			stopSelf(startId)
-			return
-		}
-
-		// Wait for any playback updates to finish before sending out the playback stopped message.
-		updatePlayStatsOnPlaybackCompletedReceiver
-			.value
-			.promiseUpdatesFinish()
-			.must { _ ->
-				applicationMessageBus.sendMessage(PlaybackMessage.PlaybackStopped)
-				stopSelf(startId)
-			}
+		applicationMessageBus.sendMessage(PlaybackMessage.PlaybackStopped)
 	}
 
 	override fun onPlaybackStarted() {
