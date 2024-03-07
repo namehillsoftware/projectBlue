@@ -26,6 +26,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFileUriQueryP
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.FileStringListUtilities
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.DiskFileCache
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.access.CachedFilesProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.cached.configuration.AudioCacheConfiguration
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.disk.AndroidDiskCacheDirectoryProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.persistence.DiskFileAccessTimeUpdater
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.persistence.DiskFileCachePersistence
@@ -54,7 +55,6 @@ import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionServiceProxy
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.settings.changes.ObservableConnectionSettingsLibraryStorage
-import com.lasthopesoftware.bluewater.client.playback.caching.AudioCacheConfiguration
 import com.lasthopesoftware.bluewater.client.playback.caching.datasource.DiskFileCacheSourceFactory
 import com.lasthopesoftware.bluewater.client.playback.caching.uri.CachedAudioFileUriProvider
 import com.lasthopesoftware.bluewater.client.playback.engine.AudioManagingPlaybackStateChanger
@@ -532,7 +532,6 @@ import java.util.concurrent.TimeoutException
 			audioDiskCacheDirectoryProvider,
 			DiskFileCachePersistence(
 				this,
-				audioDiskCacheDirectoryProvider,
 				AudioCacheConfiguration,
 				audioCacheFilesProvider,
 				diskFileAccessTimeUpdater

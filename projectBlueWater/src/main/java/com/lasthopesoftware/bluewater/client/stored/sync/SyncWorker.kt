@@ -10,7 +10,6 @@ import androidx.work.ListenableWorker
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.google.common.util.concurrent.ListenableFuture
-import com.google.common.util.concurrent.SettableFuture
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFileUriQueryParamsProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.LibraryFileProvider
@@ -56,6 +55,7 @@ import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMes
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.policies.caching.CachingPolicyFactory
+import com.lasthopesoftware.promises.extensions.toListenableFuture
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.promises.extensions.unitResponse
 import com.lasthopesoftware.resources.executors.ThreadPools
@@ -219,13 +219,8 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 	@Volatile
 	private var activePromisedNotification = Unit.toPromise()
 
-	final override fun startWork(): ListenableFuture<Result> {
-		val futureResult = SettableFuture.create<Result>()
-
-		doWork().then({ futureResult.set(Result.success()) }, futureResult::setException)
-
-		return futureResult
-	}
+	final override fun startWork(): ListenableFuture<Result> =
+		doWork().then { _ -> Result.success() }.toListenableFuture()
 
 	final override fun onStopped() = cancellationProxy.cancellationRequested()
 

@@ -4,6 +4,7 @@ import android.content.Context
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.DiskFileCache
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.access.CachedFilesProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.cached.configuration.ImageCacheConfiguration
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.disk.AndroidDiskCacheDirectoryProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.persistence.DiskFileAccessTimeUpdater
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.persistence.DiskFileCachePersistence
@@ -60,7 +61,6 @@ class MemoryCachedImageAccess
 							diskCacheDirectoryProvider,
 							DiskFileCachePersistence(
 								context,
-								diskCacheDirectoryProvider,
 								imageCacheConfiguration,
 								cachedFilesProvider,
 								diskFileAccessTimeUpdater

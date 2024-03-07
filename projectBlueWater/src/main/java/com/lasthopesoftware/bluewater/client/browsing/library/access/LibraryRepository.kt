@@ -10,8 +10,10 @@ import com.lasthopesoftware.bluewater.repository.insert
 import com.lasthopesoftware.bluewater.repository.update
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.resources.executors.ThreadPools.promiseTableMessage
+import com.namehillsoftware.handoff.cancellation.CancellationSignal
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.queued.MessageWriter
+import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter
+import kotlin.coroutines.cancellation.CancellationException
 
 class LibraryRepository(private val context: Context) : ILibraryStorage, ILibraryProvider {
 	override fun promiseLibrary(libraryId: LibraryId): Promise<Library?> =
@@ -26,22 +28,25 @@ class LibraryRepository(private val context: Context) : ILibraryStorage, ILibrar
 	override fun removeLibrary(library: Library): Promise<Unit> =
 		promiseTableMessage<Unit, Library>(RemoveLibraryWriter(context, library))
 
-	private class GetAllLibrariesWriter constructor(private val context: Context) : MessageWriter<Collection<Library>> {
-		override fun prepareMessage(): Collection<Library> =
-			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
+	private class GetAllLibrariesWriter(private val context: Context) : CancellableMessageWriter<Collection<Library>> {
+		override fun prepareMessage(cancellationSignal: CancellationSignal): Collection<Library> {
+			if (cancellationSignal.isCancelled) throw CancellationException("Cancelled while getting libraries")
+			return RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				repositoryAccessHelper.beginNonExclusiveTransaction().use {
 					repositoryAccessHelper
 						.mapSql("SELECT * FROM $tableName")
 						.fetch(Library::class.java)
 				}
 			}
+		}
 	}
 
-	private class GetLibraryWriter constructor(private val context: Context, private val libraryId: LibraryId) : MessageWriter<Library?> {
+	private class GetLibraryWriter(private val context: Context, private val libraryId: LibraryId) : CancellableMessageWriter<Library?> {
 
-		override fun prepareMessage(): Library? {
+		override fun prepareMessage(cancellationSignal: CancellationSignal): Library? {
 			val libraryInt = libraryId.id
 			if (libraryInt < 0) return null
+			if (cancellationSignal.isCancelled) throw CancellationException("Cancelled while getting library")
 			return RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				repositoryAccessHelper.beginNonExclusiveTransaction().use {
 					repositoryAccessHelper
@@ -53,15 +58,17 @@ class LibraryRepository(private val context: Context) : ILibraryStorage, ILibrar
 		}
 	}
 
-	private class SaveLibraryWriter constructor(private val context: Context, private val library: Library) : MessageWriter<Library> {
+	private class SaveLibraryWriter(private val context: Context, private val library: Library) : CancellableMessageWriter<Library> {
 
 		companion object {
 			private val logger by lazyLogger<SaveLibraryWriter>()
 
 		}
 
-		override fun prepareMessage(): Library =
-			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
+		override fun prepareMessage(cancellationSignal: CancellationSignal): Library {
+			if (cancellationSignal.isCancelled) throw CancellationException("Cancelled while saving library")
+
+			return RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				repositoryAccessHelper.beginTransaction().use { closeableTransaction ->
 					val isLibraryExists = library.id > -1
 
@@ -73,13 +80,14 @@ class LibraryRepository(private val context: Context) : ILibraryStorage, ILibrar
 					returnLibrary
 				}
 			}
+		}
 	}
 
-	private class RemoveLibraryWriter constructor(private val context: Context, private val library: Library) : MessageWriter<Unit> {
+	private class RemoveLibraryWriter(private val context: Context, private val library: Library) : CancellableMessageWriter<Unit> {
 
-		override fun prepareMessage() {
+		override fun prepareMessage(cancellationSignal: CancellationSignal) {
 			val libraryInt = library.id
-			if (libraryInt < 0) return
+			if (libraryInt < 0 || cancellationSignal.isCancelled) return
 			RepositoryAccessHelper(context).use { repositoryAccessHelper ->
 				repositoryAccessHelper.beginTransaction().use {
 					repositoryAccessHelper

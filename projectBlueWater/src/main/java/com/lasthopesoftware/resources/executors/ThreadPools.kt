@@ -3,8 +3,8 @@ package com.lasthopesoftware.resources.executors
 import com.google.common.util.concurrent.MoreExecutors
 import com.lasthopesoftware.bluewater.repository.Entity
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
+import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter
 import java.util.concurrent.Executor
 import java.util.concurrent.ForkJoinPool
 
@@ -37,6 +37,6 @@ object ThreadPools {
 		databaseThreadCache.getOrPut(cls) { MoreExecutors.newSequentialExecutor(io) }
 	}
 
-	inline fun <T, reified Table : Entity> promiseTableMessage(messageWriter: MessageWriter<T>): Promise<T> =
+	inline fun <T, reified Table : Entity> promiseTableMessage(messageWriter: CancellableMessageWriter<T>): Promise<T> =
 		QueuedPromise(messageWriter, databaseTableExecutor(Table::class.java))
 }
