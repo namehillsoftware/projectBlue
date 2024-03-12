@@ -17,11 +17,6 @@ class RemoteFileUriProvider(
     override fun promiseUri(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Uri?> {
         logger.debug("Returning URL from server.")
 
-        /* Playback:
-		 * 0: Downloading (not real-time playback);
-		 * 1: Real-time playback with update of playback statistics, Scrobbling, etc.;
-		 * 2: Real-time playback, no playback statistics handling (default: )
-		 */
         return libraryConnections
 			.promiseLibraryConnection(libraryId)
 			.then { c -> c?.urlProvider?.getUrl(*serviceFileUriQueryParamsProvider.getServiceFileUriQueryParams(serviceFile))?.let(Uri::parse) }

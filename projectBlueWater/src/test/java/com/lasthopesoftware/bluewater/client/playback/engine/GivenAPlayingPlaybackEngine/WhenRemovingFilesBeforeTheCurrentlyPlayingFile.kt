@@ -81,11 +81,19 @@ class WhenRemovingFilesBeforeTheCurrentlyPlayingFile {
 		val (fakePlaybackPreparerProvider, repository, playbackEngine) = mut
 
 		initialState = playbackEngine.restoreFromSavedState(LibraryId(libraryId)).toExpiringFuture().get()?.second
-		playbackEngine.resume().toExpiringFuture()[1, TimeUnit.SECONDS]
+		playbackEngine
+			.resume()
+			.toExpiringFuture()
+			.also { future ->
+				val resolvablePlaybackHandler =	fakePlaybackPreparerProvider.deferredResolution.resolve()
 
-		val resolvablePlaybackHandler =	fakePlaybackPreparerProvider.deferredResolution.resolve()
-		playbackEngine.removeFileAtPosition(0).toExpiringFuture()[1, TimeUnit.SECONDS]
-		resolvablePlaybackHandler.setCurrentPosition(92)
+				future.get()
+
+				playbackEngine.removeFileAtPosition(0).toExpiringFuture()[1, TimeUnit.SECONDS]
+
+				resolvablePlaybackHandler.setCurrentPosition(92)
+			}
+
 		playbackEngine.pause().toExpiringFuture().get()
 
 		nowPlaying = repository.promiseNowPlaying(LibraryId(libraryId)).toExpiringFuture().get()

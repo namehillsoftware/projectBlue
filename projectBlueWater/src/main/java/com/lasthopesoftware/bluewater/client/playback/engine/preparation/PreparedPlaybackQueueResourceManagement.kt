@@ -19,7 +19,7 @@ class PreparedPlaybackQueueResourceManagement(
     }
 
     override fun tryUpdateQueue(positionedFileQueue: PositionedFileQueue): Boolean {
-		return preparedPlaybackQueue?.updateQueue(positionedFileQueue)?.let { true } ?: false
+		return preparedPlaybackQueue?.updateQueue(positionedFileQueue) != null
     }
 
 	override fun reset() {

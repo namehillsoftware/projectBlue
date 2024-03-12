@@ -35,7 +35,7 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 	private var volume = 0f
 
 	@Volatile
-	private var promisedPlayableFile: Promise<PositionedPlayableFile> = Promise.empty()
+	private var promisedPlayableFile: Promise<PositionedPlayableFile?> = Promise.empty()
 
 	@Volatile
 	private var isHalted = false
@@ -107,11 +107,18 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 					} catch (e: Throwable) {
 						logger.error("There was an error releasing the media player", e)
 						behaviorSubject.onError(e)
+						throw e
 					}
 				}
 			}, { e ->
+				if (!isHalted) {
+					promisedPlayableFile.cancel()
+					isHalted = true
+				}
+
 				logger.error("There was an error releasing the media player", e)
 				behaviorSubject.onError(e)
+				throw e
 			})
 	}
 
@@ -170,19 +177,20 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 					doCompletion()
 					resolve(null)
 				} else {
-					promisedPlayableFile = preparedPlaybackFile
+					promisedPlayableFile = preparedPlaybackFile.keepPromise()
 
-					preparedPlaybackFile.then(
-						{
+					preparedPlaybackFile
+						.then({ pf ->
 							synchronized(sync) {
 								if (!isCancelled) {
 									isStarting = true
-									startFilePlayback(it).then(::resolve, ::reject)
+									startFilePlayback(pf).then(::resolve, ::reject)
 								} else resolve(null)
 							}
-						},
-						::handlePlaybackException
-					)
+						}, { e ->
+							handlePlaybackException(e)
+							reject(e)
+						})
 				}
 			}
 
