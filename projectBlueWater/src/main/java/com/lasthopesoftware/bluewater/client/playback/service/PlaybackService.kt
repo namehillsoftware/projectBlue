@@ -447,7 +447,7 @@ import java.util.concurrent.TimeoutException
 	private val intentBuilder by lazy { IntentBuilder(this) }
 
 	private val pollConnectionServiceProxy by lazy { PollConnectionServiceProxy(this) }
-	private val connectionRegainedListener by lazy { ImmediateResponse<IConnectionProvider, Unit> { closeAndRestartPlaylistManager() } }
+	private val connectionRegainedListener by lazy { ImmediateResponse<IConnectionProvider, Unit> { resetPlaylistManager() } }
 
 	private val onPollingCancelledListener by lazy { ImmediateResponse<Throwable?, Unit> { e ->
 			if (e is CancellationException) {
@@ -1009,11 +1009,11 @@ import java.util.concurrent.TimeoutException
 			when (val cause = exception.cause) {
 				is IllegalStateException -> {
 					logger.error("The ExoPlayer player ended up in an illegal state, closing and restarting the player", cause)
-					closeAndRestartPlaylistManager(exception)
+					resetPlaylistManager(exception)
 				}
 				is NoSuchElementException -> {
 					logger.error("The ExoPlayer player was unable to deque data, closing and restarting the player", cause)
-					closeAndRestartPlaylistManager(exception)
+					resetPlaylistManager(exception)
 				}
 				null -> stopSelf(startId)
 				else -> uncaughtExceptionHandler(exception.cause)
@@ -1023,7 +1023,7 @@ import java.util.concurrent.TimeoutException
 		fun handleIoException(exception: IOException?) {
 			if (exception is HttpDataSource.InvalidResponseCodeException && exception.responseCode == 416) {
 				logger.warn("Received an error code of " + exception.responseCode + ", will attempt restarting the player", exception)
-				closeAndRestartPlaylistManager(exception)
+				resetPlaylistManager(exception)
 				return
 			}
 
@@ -1036,7 +1036,7 @@ import java.util.concurrent.TimeoutException
 				is ExoPlaybackException -> handleExoPlaybackException(cause)
 				is IllegalStateException -> {
 					logger.error("The player ended up in an illegal state - closing and restarting the player", exception)
-					closeAndRestartPlaylistManager(exception)
+					resetPlaylistManager(exception)
 				}
 				is IOException -> handleIoException(cause)
 				null -> logger.error("An unexpected playback exception occurred", exception)
@@ -1046,7 +1046,7 @@ import java.util.concurrent.TimeoutException
 
 		fun handleTimeoutException(exception: TimeoutException) {
 			logger.warn("A timeout occurred during playback, will attempt restarting the player", exception)
-			closeAndRestartPlaylistManager(exception)
+			resetPlaylistManager(exception)
 		}
 
 		when (exception) {
@@ -1066,7 +1066,7 @@ import java.util.concurrent.TimeoutException
 		}
 	}
 
-	private fun closeAndRestartPlaylistManager(error: Throwable) {
+	private fun resetPlaylistManager(error: Throwable) {
 		if (errorLatch.trigger()) {
 			logger.error("$numberOfErrors occurred within $errorLatchResetDuration, stopping the playback service. Last error: ${error.message}", error)
 			UnexpectedExceptionToaster.announce(this, error)
@@ -1074,15 +1074,15 @@ import java.util.concurrent.TimeoutException
 			return
 		}
 
-		closeAndRestartPlaylistManager()
+		resetPlaylistManager()
 	}
 
-	private fun closeAndRestartPlaylistManager() {
+	private fun resetPlaylistManager() {
 		val libraryId = activeLibraryId ?: return
 		promisedPlaybackServices
 			.value
 			.eventually { engine -> engine.systemPlaybackState.interrupt() }
-			.eventually { if (isMarkedForPlay) resumePlayback(libraryId).unitResponse() else Unit.toPromise() }
+			.eventually { if (isMarkedForPlay) resumePlayback(libraryId) else Unit.toPromise() }
 			.excuse(unhandledRejectionHandler)
 	}
 

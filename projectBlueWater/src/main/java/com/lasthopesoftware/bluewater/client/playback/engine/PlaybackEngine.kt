@@ -17,6 +17,7 @@ import com.lasthopesoftware.bluewater.client.playback.engine.preparation.Prepare
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedProgressedFile
+import com.lasthopesoftware.bluewater.client.playback.file.error.PlaybackException
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.queues.ProvidePositionedFileQueue
 import com.lasthopesoftware.bluewater.client.playback.file.progress.ReadFileProgress
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.MaintainNowPlayingState
@@ -28,6 +29,7 @@ import com.lasthopesoftware.promises.extensions.promiseFirstResult
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.promises.extensions.unitResponse
 import com.lasthopesoftware.resources.closables.PromisingCloseable
+import com.namehillsoftware.handoff.errors.RejectionDropper
 import com.namehillsoftware.handoff.promises.Promise
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.disposables.Disposable
@@ -160,7 +162,7 @@ class PlaybackEngine(
 				playlistPosition,
 				StaticProgressedFile(filePosition.toPromise())
 			)
-		}.eventually { saveState() }.eventually { resumePlayback() }
+		}.eventually { saveState() }.eventually { resumePlayback() }.unitResponse()
 	}
 
 	override fun skipToNext(): Promise<Pair<LibraryId, PositionedFile>> = withState {
@@ -389,13 +391,24 @@ class PlaybackEngine(
 				}
 			},
 			{ e ->
-				if (e is PreparationException) {
-					withState {
-						playlistPosition = e.positionedFile.playlistPosition
-						fileProgress = zeroProgressedFile
+				when (e) {
+					is PreparationException -> {
+						withState {
+							playlistPosition = e.positionedFile.playlistPosition
+							fileProgress = zeroProgressedFile
+							saveState()
+						}
+					}
+
+					is PlaybackException -> {
 						saveState()
 					}
 				}
+
+				activePlayer?.haltPlayback()?.excuse(RejectionDropper.Instance.get())
+				isPlaying = false
+				activePlayer = null
+
 				onPlaylistError?.onError(e)
 			},
 			{

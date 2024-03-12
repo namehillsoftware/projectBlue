@@ -22,7 +22,7 @@ class WhenAudioFocusIsLost {
 	private var isAbandoned = false
 
 	private val mut by lazy {
-		val playbackStateForSystem = mockk<ChangePlaybackStateForSystem>().apply {
+		val playbackStateForSystem = mockk<ChangePlaybackStateForSystem> {
 				every { pause() } answers {
 					isPaused = true
 					Unit.toPromise()
@@ -34,7 +34,7 @@ class WhenAudioFocusIsLost {
 				}
 			}
 
-		val innerPlaybackState = mockk<ChangePlaybackState>().apply {
+		val innerPlaybackState = mockk<ChangePlaybackState> {
 			every { resume() } answers {
 				isPaused = false
 				Unit.toPromise()
