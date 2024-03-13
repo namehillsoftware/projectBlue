@@ -2,11 +2,11 @@ package com.lasthopesoftware.bluewater.client.browsing.files.cached.disk
 
 import android.content.Context
 import android.os.Environment
-import com.lasthopesoftware.bluewater.client.browsing.files.cached.configuration.IDiskFileCacheConfiguration
+import com.lasthopesoftware.bluewater.client.browsing.files.cached.configuration.DiskFileCacheConfiguration
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import java.io.File
 
-class AndroidDiskCacheDirectoryProvider(private val context: Context, private val diskFileCacheConfiguration: IDiskFileCacheConfiguration) : IDiskCacheDirectoryProvider {
+class AndroidDiskCacheDirectoryProvider(private val context: Context, private val diskFileCacheConfiguration: DiskFileCacheConfiguration) : ProvideDiskCacheDirectory {
 	override fun getLibraryDiskCacheDirectory(libraryId: LibraryId): File? {
 		val cacheDir = File(
 			getDiskCacheDir(context, diskFileCacheConfiguration.cacheName),

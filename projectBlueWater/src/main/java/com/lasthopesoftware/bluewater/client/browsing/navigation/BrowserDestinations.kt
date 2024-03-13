@@ -8,21 +8,21 @@ import kotlinx.parcelize.Parcelize
 sealed interface Destination : Parcelable
 
 @Parcelize
-object ApplicationSettingsScreen : Destination
+data object ApplicationSettingsScreen : Destination
 
 @Parcelize
-object NewConnectionSettingsScreen : Destination
+data object NewConnectionSettingsScreen : Destination
 
 @Parcelize
-object HiddenSettingsScreen : Destination
+data object HiddenSettingsScreen : Destination
 
 sealed interface ConnectingDestination : Destination
 
 @Parcelize
-object ActiveLibraryDownloadsScreen : ConnectingDestination
+data object ActiveLibraryDownloadsScreen : ConnectingDestination
 
 @Parcelize
-object SelectedLibraryReRouter : ConnectingDestination
+data object SelectedLibraryReRouter : ConnectingDestination
 
 sealed interface LibraryDestination : Destination {
 	val libraryId: LibraryId

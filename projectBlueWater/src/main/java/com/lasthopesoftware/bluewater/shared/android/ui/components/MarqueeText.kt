@@ -57,7 +57,7 @@ fun MarqueeText(
 		Text(
 			text,
 			textAlign = textAlign,
-			modifier = if (isMarqueeEnabled) localModifier.basicMarquee(delayMillis = 3_000) else localModifier,
+			modifier = if (isMarqueeEnabled) localModifier.basicMarquee() else localModifier,
 			color = color,
 			fontSize = fontSize,
 			fontStyle = fontStyle,
@@ -87,7 +87,7 @@ fun MarqueeText(
 					val transparent = gradientEdgeColor.copy(alpha = 0f)
 
 					if (gradientSides.contains(GradientSide.Start))
-						GradientEdge(gradientEdgeColor, Color.Transparent)
+						GradientEdge(gradientEdgeColor, transparent)
 
 					Spacer(Modifier.weight(1f))
 

@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.produceState
 import com.google.common.util.concurrent.ListenableFuture
+import com.google.common.util.concurrent.SettableFuture
 import com.namehillsoftware.handoff.cancellation.CancellationResponse
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
@@ -39,6 +40,10 @@ fun Completable.toPromise(): Promise<Unit> = CompletablePromise(this)
 fun <T : Any> Observable<T>.promiseFirstResult(): Promise<T> = ObserverPromise(this)
 
 fun <T> ListenableFuture<T>.toPromise(executor: Executor): Promise<T> = PromisedListenableFuture(this, executor)
+
+fun <T> Promise<T>.toListenableFuture(): ListenableFuture<T> = SettableFuture.create<T>().apply {
+	then(::set, ::setException)
+}
 
 fun Job.toPromise(): Promise<Unit> = PromiseJob(this)
 

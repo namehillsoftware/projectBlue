@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.browsing.files.cached.access
 import android.content.Context
 import android.database.SQLException
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.DiskFileCache
-import com.lasthopesoftware.bluewater.client.browsing.files.cached.configuration.IDiskFileCacheConfiguration
+import com.lasthopesoftware.bluewater.client.browsing.files.cached.configuration.DiskFileCacheConfiguration
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.repository.CachedFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory
 
 class CachedFilesProvider(
     private val context: Context,
-    private val diskFileCacheConfiguration: IDiskFileCacheConfiguration
+    private val diskFileCacheConfiguration: DiskFileCacheConfiguration
 ) : ICachedFilesProvider {
 
 	companion object {
