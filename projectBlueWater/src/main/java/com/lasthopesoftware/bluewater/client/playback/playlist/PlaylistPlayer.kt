@@ -35,7 +35,7 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 	private var volume = 0f
 
 	@Volatile
-	private var promisedPlayableFile: Promise<PositionedPlayableFile?> = Promise.empty()
+	private var promisedPreparedPlayableFile: Promise<PositionedPlayableFile>? = null
 
 	@Volatile
 	private var isHalted = false
@@ -74,7 +74,7 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 							.then { p ->
 								PositionedPlayingFile(p, it.playableFileVolumeManager, it.asPositionedFile())
 							}
-					}.keepPromise()
+					} ?: playNextFile()
 				}
 				?: playNextFile(preparedPosition))
 				.also {
@@ -100,7 +100,7 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 		pause()
 			.then({ p ->
 				if (!isHalted) {
-					promisedPlayableFile.cancel()
+					promisedPreparedPlayableFile?.cancel()
 					isHalted = true
 					try {
 						p?.playableFile?.close()
@@ -112,7 +112,7 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 				}
 			}, { e ->
 				if (!isHalted) {
-					promisedPlayableFile.cancel()
+					promisedPreparedPlayableFile?.cancel()
 					isHalted = true
 				}
 
@@ -171,19 +171,20 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 			init {
 				awaitCancellation(this)
 
-				val preparedPlaybackFile = preparedPlaybackFileProvider.promiseNextPreparedPlaybackFile(preparedPosition)
+				val preparedPlaybackFile = promisedPreparedPlayableFile ?: preparedPlaybackFileProvider.promiseNextPreparedPlaybackFile(preparedPosition)
 
 				if (preparedPlaybackFile == null || isCancelled) {
 					doCompletion()
 					resolve(null)
 				} else {
-					promisedPlayableFile = preparedPlaybackFile.keepPromise()
+					promisedPreparedPlayableFile = preparedPlaybackFile
 
 					preparedPlaybackFile
 						.then({ pf ->
 							synchronized(sync) {
 								if (!isCancelled) {
 									isStarting = true
+									promisedPreparedPlayableFile = null
 									startFilePlayback(pf).then(::resolve, ::reject)
 								} else resolve(null)
 							}

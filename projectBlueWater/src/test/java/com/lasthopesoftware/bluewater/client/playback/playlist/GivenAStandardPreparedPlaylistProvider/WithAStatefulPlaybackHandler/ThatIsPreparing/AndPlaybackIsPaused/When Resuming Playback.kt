@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.playlist.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatIsPreparing
+package com.lasthopesoftware.bluewater.client.playback.playlist.GivenAStandardPreparedPlaylistProvider.WithAStatefulPlaybackHandler.ThatIsPreparing.AndPlaybackIsPaused
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.SupplyQueuedPreparedFiles
@@ -15,7 +15,7 @@ import org.joda.time.Duration
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
-class `When Pausing Playback` {
+class `When Resuming Playback` {
 
 	private val playbackHandler = ResolvablePlaybackHandler()
 	private val preparingPlaybackHandler = DeferredPromise(
@@ -30,17 +30,19 @@ class `When Pausing Playback` {
 	@BeforeAll
 	fun act() {
 		val preparedPlaybackFileQueue = mockk<SupplyQueuedPreparedFiles> {
-			every { promiseNextPreparedPlaybackFile(Duration.ZERO) } returns preparingPlaybackHandler
+			every { promiseNextPreparedPlaybackFile(Duration.ZERO) } returns preparingPlaybackHandler andThen null
 		}
 		val playlistPlayback = PlaylistPlayer(preparedPlaybackFileQueue, Duration.ZERO)
-		playlistPlayback.resume()
-		val futurePause = playlistPlayback.pause()
+		val futureResume = playlistPlayback.resume().toExpiringFuture()
+		val futurePause = playlistPlayback.pause().toExpiringFuture()
 		preparingPlaybackHandler.resolve()
-		futurePause.toExpiringFuture().get()
+		futureResume.get()
+		futurePause.get()
+		playlistPlayback.resume().toExpiringFuture().get()
 	}
 
 	@Test
-	fun `then playback is never started`() {
-		assertThat(playbackHandler.recordedPlayingStates).containsOnly(false)
+	fun `then playback is only paused and resumed once because it is paused during initial preparation`() {
+		assertThat(playbackHandler.recordedPlayingStates).containsExactly(false, true)
 	}
 }
