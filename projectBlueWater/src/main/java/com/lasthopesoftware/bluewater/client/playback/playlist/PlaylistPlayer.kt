@@ -6,7 +6,6 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFil
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.promises.extensions.keepPromise
-import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.promises.extensions.unitResponse
 import com.namehillsoftware.handoff.cancellation.CancellationResponse
 import com.namehillsoftware.handoff.promises.Promise
@@ -89,18 +88,16 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 	override fun setVolume(volume: Float): Promise<Unit> {
 		this.volume = volume
 		return positionedPlayableFile
-			?.eventually { it?.playableFileVolumeManager?.setVolume(volume)?.unitResponse() ?: Unit.toPromise() }
+			?.eventually { it?.playableFileVolumeManager?.setVolume(volume)?.unitResponse().keepPromise(Unit) }
 			?: positionedPlayingFile?.eventually {
-				it?.playableFileVolumeManager?.setVolume(volume)?.unitResponse() ?: Unit.toPromise()
-			}
-			?: Unit.toPromise()
+				it?.playableFileVolumeManager?.setVolume(volume)?.unitResponse().keepPromise(Unit)
+			}.keepPromise(Unit)
 	}
 
 	override fun haltPlayback(): Promise<*> = synchronized(stateChangeSync) {
 		pause()
 			.then({ p ->
 				if (!isHalted) {
-					promisedPreparedPlayableFile?.cancel()
 					isHalted = true
 					try {
 						p?.playableFile?.close()
@@ -111,10 +108,7 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 					}
 				}
 			}, { e ->
-				if (!isHalted) {
-					promisedPreparedPlayableFile?.cancel()
-					isHalted = true
-				}
+				isHalted = true
 
 				logger.error("There was an error releasing the media player", e)
 				behaviorSubject.onError(e)
@@ -172,13 +166,12 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 				awaitCancellation(this)
 
 				val preparedPlaybackFile = promisedPreparedPlayableFile ?: preparedPlaybackFileProvider.promiseNextPreparedPlaybackFile(preparedPosition)
+				promisedPreparedPlayableFile = preparedPlaybackFile
 
 				if (preparedPlaybackFile == null || isCancelled) {
 					doCompletion()
 					resolve(null)
 				} else {
-					promisedPreparedPlayableFile = preparedPlaybackFile
-
 					preparedPlaybackFile
 						.then({ pf ->
 							synchronized(sync) {

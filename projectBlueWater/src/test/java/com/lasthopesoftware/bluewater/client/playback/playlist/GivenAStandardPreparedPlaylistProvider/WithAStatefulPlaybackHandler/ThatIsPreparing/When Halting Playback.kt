@@ -40,8 +40,8 @@ class `When Halting Playback` {
 	}
 
 	@Test
-	fun `then file preparation is cancelled`() {
-		assertThat(preparingPlaybackHandler.isCancelled).isTrue()
+	fun `then file preparation is NOT cancelled as the provider should handle cancellation when closed`() {
+		assertThat(preparingPlaybackHandler.isCancelled).isFalse()
 	}
 
 	@Test
