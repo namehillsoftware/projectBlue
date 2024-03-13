@@ -160,6 +160,6 @@ class MediaSessionBroadcaster(
 					mediaSession.setMetadata(metadataBuilder.build().also { mediaMetadata = it })
 				}
 			}
-			.excuse { e -> logger.warn("There was an error updating the media session for `${serviceFile.key}`", e) }
+			.excuse { e -> logger.warn("There was an error updating the media session for `$serviceFile`", e) }
 	}
 }

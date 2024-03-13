@@ -8,9 +8,7 @@ import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideGuaranteedLibraryConnections
 import com.lasthopesoftware.bluewater.client.connection.okhttp.ProvideOkHttpClients
-import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.promises.Promise
-import okhttp3.Dispatcher
 import java.util.concurrent.TimeUnit
 
 class HttpDataSourceFactoryProvider(
@@ -18,12 +16,6 @@ class HttpDataSourceFactoryProvider(
 	private val connectionProvider: ProvideGuaranteedLibraryConnections,
 	private val okHttpClients: ProvideOkHttpClients
 ) : ProvideHttpDataSourceFactory {
-
-	companion object {
-		private val constrainedDispatcher by lazy {
-			Dispatcher(ThreadPools.io).apply { maxRequests = 2 }
-		}
-	}
 
 	@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 	override fun promiseHttpDataSourceFactory(libraryId: LibraryId): Promise<HttpDataSource.Factory> =
@@ -35,7 +27,6 @@ class HttpDataSourceFactoryProvider(
 						.newBuilder()
 						.readTimeout(45, TimeUnit.SECONDS)
 						.retryOnConnectionFailure(false)
-						.dispatcher(constrainedDispatcher)
 						.build())
 					.setUserAgent(Util.getUserAgent(context, context.getString(R.string.app_name)))
 			}

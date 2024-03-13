@@ -876,10 +876,10 @@ import java.util.concurrent.TimeoutException
 
 	override fun onPlaybackCompleted() {
 		isMarkedForPlay = false
+		applicationMessageBus.sendMessage(PlaybackMessage.PlaybackStopped)
 
 		if (!updatePlayStatsOnPlaybackCompletedReceiver.isInitialized()) {
-			applicationMessageBus.sendMessage(PlaybackMessage.PlaybackStopped)
-			stopSelf(startId)
+			if (areListenersRegistered) unregisterListeners()
 			return
 		}
 
@@ -888,8 +888,7 @@ import java.util.concurrent.TimeoutException
 			.value
 			.promiseUpdatesFinish()
 			.must { _ ->
-				applicationMessageBus.sendMessage(PlaybackMessage.PlaybackStopped)
-				stopSelf(startId)
+				if (areListenersRegistered) unregisterListeners()
 			}
 	}
 
