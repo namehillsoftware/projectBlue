@@ -7,9 +7,12 @@ import com.namehillsoftware.handoff.promises.Promise
 import org.joda.time.Duration
 
 object ConnectionLostRetryHandler : RetryPromises {
+
+	private val initialTimeToWait = Duration.standardSeconds(5)
+
 	override fun <T> retryOnException(promiseFactory: (Throwable?) -> Promise<T>): Promise<T> {
 		var attempts = 0
-		var timeToWait = Duration.standardSeconds(5)
+		var timeToWait = initialTimeToWait
 		return RecursivePromiseRetryHandler.retryOnException { error ->
 			attempts++
 
@@ -18,7 +21,12 @@ object ConnectionLostRetryHandler : RetryPromises {
 				attempts <= 3 && ConnectionLostExceptionFilter.isConnectionLostException(error) -> {
 					val originalTimeToWait = timeToWait
 					timeToWait = timeToWait.multipliedBy(2)
-					PromiseDelay.delay<Any?>(originalTimeToWait).eventually { promiseFactory(error) }
+					Promise.Proxy { cp ->
+						PromiseDelay
+							.delay<Any?>(originalTimeToWait)
+							.also(cp::doCancel)
+							.eventually { promiseFactory(error) }
+					}
 				}
 				else -> Promise(error)
 			}
