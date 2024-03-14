@@ -11,8 +11,8 @@ import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.Li
 import com.lasthopesoftware.bluewater.client.browsing.files.image.CachedImageProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.image.SelectedLibraryImageProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.DelegatingFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.RateControlledFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.SelectedLibraryFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
@@ -29,8 +29,8 @@ import com.lasthopesoftware.bluewater.shared.android.MediaSession.MediaSessionSe
 import com.lasthopesoftware.bluewater.shared.android.services.promiseBoundService
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.lazyLogger
-import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRateLimiter
 import com.lasthopesoftware.bluewater.shared.policies.retries.CloseableRetryOnRejectionLazyPromise
+import com.lasthopesoftware.bluewater.shared.policies.retries.RateLimitingExecutionPolicy
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.getSafely
 import com.lasthopesoftware.promises.toFuture
@@ -52,7 +52,6 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 		const val itemFileMediaIdPrefix = "it"
 		private const val playlistFileMediaIdPrefix = "pl"
 		const val mediaIdDelimiter = ':'
-		private val rateLimiter by lazy { PromisingRateLimiter<Map<String, String>>(max(Runtime.getRuntime().availableProcessors() - 1, 1)) }
 
 		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(cls<RemoteBrowserService>()) }
 
@@ -76,6 +75,8 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 
 	private val selectedLibraryIdProvider by lazy { getCachedSelectedLibraryIdProvider() }
 
+	private val rateLimitingPolicy by lazy { RateLimitingExecutionPolicy(max(Runtime.getRuntime().availableProcessors() - 1, 1)) }
+
 	private val filePropertiesProvider by lazy {
 		val libraryConnectionProvider = buildNewConnectionSessionManager()
 		SelectedLibraryFilePropertiesProvider(
@@ -83,13 +84,13 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 			CachedFilePropertiesProvider(
 				libraryConnectionProvider,
 				FilePropertyCache,
-				RateControlledFilePropertiesProvider(
+				DelegatingFilePropertiesProvider(
 					FilePropertiesProvider(
 						libraryConnectionProvider,
 						LibraryRevisionProvider(libraryConnectionProvider),
 						FilePropertyCache,
 					),
-					rateLimiter,
+					rateLimitingPolicy,
 				)
 			),
 		)

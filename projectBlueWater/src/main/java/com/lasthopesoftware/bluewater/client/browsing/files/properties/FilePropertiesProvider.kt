@@ -21,7 +21,8 @@ class FilePropertiesProvider(
 		Promise.Proxy { cp ->
 			libraryConnections
 				.promiseLibraryConnection(libraryId)
-				.also(cp::doCancel).eventually { connectionProvider ->
+				.also(cp::doCancel)
+				.eventually { connectionProvider ->
 					if (cp.isCancelled) promisedEmptyProperties
 					else connectionProvider
 						?.let {

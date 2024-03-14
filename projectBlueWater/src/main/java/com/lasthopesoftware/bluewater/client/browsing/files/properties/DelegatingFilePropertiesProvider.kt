@@ -2,10 +2,13 @@ package com.lasthopesoftware.bluewater.client.browsing.files.properties
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.RateLimitPromises
+import com.lasthopesoftware.bluewater.shared.policies.ApplyExecutionPolicies
 import com.namehillsoftware.handoff.promises.Promise
 
-class RateControlledFilePropertiesProvider(private val inner: ProvideFreshLibraryFileProperties, private val rateLimiter: RateLimitPromises<Map<String, String>>): ProvideFreshLibraryFileProperties {
+class DelegatingFilePropertiesProvider(private val inner: ProvideFreshLibraryFileProperties, private val policy: ApplyExecutionPolicies) : ProvideFreshLibraryFileProperties {
+
+	private val filePropertiesFunction by lazy { policy.applyPolicy(inner::promiseFileProperties) }
+
 	override fun promiseFileProperties(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Map<String, String>> =
-		rateLimiter.limit { inner.promiseFileProperties(libraryId, serviceFile) }
+		filePropertiesFunction(libraryId, serviceFile)
 }

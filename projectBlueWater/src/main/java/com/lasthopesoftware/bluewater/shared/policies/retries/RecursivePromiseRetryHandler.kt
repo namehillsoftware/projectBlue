@@ -11,6 +11,9 @@ object RecursivePromiseRetryHandler : RetryPromises {
 					it.toPromise()
 				},
 				{ e ->
-					promiseFactory(e)
+					Promise.Proxy {
+						if (it.isCancelled) Promise(e)
+						else promiseFactory(e)
+					}
 				})
 }
