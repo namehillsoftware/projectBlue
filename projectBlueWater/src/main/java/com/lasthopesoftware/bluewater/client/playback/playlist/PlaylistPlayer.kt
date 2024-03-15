@@ -5,6 +5,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile
 import com.lasthopesoftware.bluewater.shared.lazyLogger
+import com.lasthopesoftware.promises.ForwardedResponse.Companion.forward
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.unitResponse
 import com.namehillsoftware.handoff.cancellation.CancellationResponse
@@ -34,9 +35,6 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 	private var volume = 0f
 
 	@Volatile
-	private var promisedPreparedPlayableFile: Promise<PositionedPlayableFile>? = null
-
-	@Volatile
 	private var isHalted = false
 
 	override fun observe(): Observable<PositionedPlayingFile> = behaviorSubject
@@ -53,7 +51,8 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 							.then { p ->
 								PositionedPlayableFile(p, ppf.playableFileVolumeManager, ppf.asPositionedFile())
 							}
-					}.keepPromise()
+					}
+					?: positionedPlayableFile.keepPromise()
 			}
 			?.also {
 				positionedPlayableFile = it
@@ -73,12 +72,11 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 							.then { p ->
 								PositionedPlayingFile(p, it.playableFileVolumeManager, it.asPositionedFile())
 							}
-					} ?: playNextFile()
+					}.keepPromise()
 				}
 				?: playNextFile(preparedPosition))
 				.also {
 					positionedPlayingFile = it
-					positionedPlayableFile = null
 				}
 	}
 
@@ -165,10 +163,10 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 			init {
 				awaitCancellation(this)
 
-				val preparedPlaybackFile = promisedPreparedPlayableFile ?: preparedPlaybackFileProvider.promiseNextPreparedPlaybackFile(preparedPosition)
-				promisedPreparedPlayableFile = preparedPlaybackFile
+				val preparedPlaybackFile = preparedPlaybackFileProvider.promiseNextPreparedPlaybackFile(preparedPosition)
+				positionedPlayableFile = preparedPlaybackFile?.forward()
 
-				if (preparedPlaybackFile == null || isCancelled) {
+				if (preparedPlaybackFile == null) {
 					doCompletion()
 					resolve(null)
 				} else {
@@ -177,7 +175,6 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 							synchronized(sync) {
 								if (!isCancelled) {
 									isStarting = true
-									promisedPreparedPlayableFile = null
 									startFilePlayback(pf).then(::resolve, ::reject)
 								} else resolve(null)
 							}

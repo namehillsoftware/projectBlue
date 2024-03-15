@@ -168,10 +168,7 @@ class ReusableFileViewModel(
 				}
 			}
 
-			logger.error(
-				"An error occurred getting the file properties for the file with ID " + serviceFile.key,
-				e
-			)
+			logger.error("An error occurred getting the file properties for the file with ID " + serviceFile.key, e)
 		}
 
 		private val isNotCurrentServiceFile: Boolean

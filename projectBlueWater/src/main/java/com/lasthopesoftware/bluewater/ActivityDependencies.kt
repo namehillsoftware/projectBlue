@@ -14,8 +14,8 @@ import com.lasthopesoftware.bluewater.client.browsing.files.image.CachedImagePro
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusableFileItemViewModelProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusablePlaylistFileItemViewModelProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.DelegatingFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.RateControlledFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertyStorage
 import com.lasthopesoftware.bluewater.client.browsing.items.access.CachedItemProvider
@@ -63,7 +63,7 @@ import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLa
 import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
-import com.lasthopesoftware.bluewater.shared.policies.ratelimiting.PromisingRateLimiter
+import com.lasthopesoftware.bluewater.shared.policies.retries.RateLimitingExecutionPolicy
 import com.lasthopesoftware.bluewater.shared.policies.retries.RetryExecutionPolicy
 import com.lasthopesoftware.resources.closables.ViewModelCloseableManager
 import com.lasthopesoftware.resources.strings.StringResources
@@ -94,13 +94,10 @@ class ActivityDependencies(activity: ComponentActivity, activitySuppliedDependen
 	private val itemListProvider by lazy {
 		ItemStringListProvider(
 			FileListParameters,
-			libraryFileStringListProvider
-		)
+			libraryFileStringListProvider)
 	}
 
-	private val connectionLostRetryPolicy by lazy {
-		RetryExecutionPolicy(ConnectionLostRetryHandler)
-	}
+	private val connectionLostRetryPolicy by lazy { RetryExecutionPolicy(ConnectionLostRetryHandler) }
 
 	private val libraryRepository by lazy { LibraryRepository(applicationContext) }
 
@@ -108,14 +105,19 @@ class ActivityDependencies(activity: ComponentActivity, activitySuppliedDependen
 
 	private val imageProvider by lazy { CachedImageProvider.getInstance(applicationContext) }
 
-	private val freshLibraryFileProperties by lazy {
-		RateControlledFilePropertiesProvider(
-			FilePropertiesProvider(
-				libraryConnectionProvider,
-				revisionProvider,
-				FilePropertyCache,
+	private val singleRatePolicy by lazy { RateLimitingExecutionPolicy(1) }
+
+	private val freshRateLimitedLibraryFileProperties by lazy {
+		DelegatingFilePropertiesProvider(
+			DelegatingFilePropertiesProvider(
+				FilePropertiesProvider(
+					libraryConnectionProvider,
+					revisionProvider,
+					FilePropertyCache,
+				),
+				connectionLostRetryPolicy,
 			),
-			PromisingRateLimiter(1),
+			singleRatePolicy,
 		)
 	}
 
@@ -123,13 +125,11 @@ class ActivityDependencies(activity: ComponentActivity, activitySuppliedDependen
 		CachedFilePropertiesProvider(
 			libraryConnectionProvider,
 			FilePropertyCache,
-			freshLibraryFileProperties,
+			freshRateLimitedLibraryFileProperties,
 		)
 	}
 
 	private val selectedLibraryIdProvider by lazy { activity.getCachedSelectedLibraryIdProvider() }
-
-	override val messageBus by lazy { ApplicationMessageBus.getApplicationMessageBus().getScopedMessageBus().also(viewModelScope::manage) }
 
 	private val menuMessageBus by activity.buildViewModelLazily { ViewModelMessageBus<ItemListMenuMessage>() }
 
@@ -149,6 +149,8 @@ class ActivityDependencies(activity: ComponentActivity, activitySuppliedDependen
 	}
 
 	private val urlKeyProvider by lazy { UrlKeyProvider(libraryConnectionProvider) }
+
+	override val messageBus by lazy { ApplicationMessageBus.getApplicationMessageBus().getScopedMessageBus().also(viewModelScope::manage) }
 
 	override val itemListMenuBackPressedHandler by lazy { ItemListMenuBackPressedHandler(menuMessageBus).also(viewModelScope::manage) }
 
@@ -176,7 +178,7 @@ class ActivityDependencies(activity: ComponentActivity, activitySuppliedDependen
 		NowPlayingFilePropertiesViewModel(
 			messageBus,
 			nowPlayingState,
-			freshLibraryFileProperties,
+			freshRateLimitedLibraryFileProperties,
 			UrlKeyProvider(libraryConnectionProvider),
 			filePropertiesStorage,
 			connectionAuthenticationChecker,
@@ -232,12 +234,7 @@ class ActivityDependencies(activity: ComponentActivity, activitySuppliedDependen
 
 	override val applicationSettingsRepository by lazy { applicationContext.getApplicationSettingsRepository() }
 
-	override val playbackLibraryItems by lazy {
-		ItemPlayback(
-			itemListProvider,
-			playbackServiceController
-		)
-	}
+	override val playbackLibraryItems by lazy { ItemPlayback(itemListProvider, playbackServiceController) }
 
 	override val selectedLibraryViewModel: SelectedLibraryViewModel by activity.buildViewModelLazily {
 		SelectedLibraryViewModel(

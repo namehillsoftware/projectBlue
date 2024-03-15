@@ -1,5 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing
 
+import androidx.annotation.OptIn
+import androidx.media3.common.util.UnstableApi
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.client.browsing.files.access.LibraryFileProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideItemFiles
@@ -38,7 +40,7 @@ import com.lasthopesoftware.bluewater.shared.messages.RegisterForTypedMessages
 import com.lasthopesoftware.bluewater.shared.messages.application.ScopedApplicationMessageBus
 import com.lasthopesoftware.resources.strings.StringResources
 
-interface BrowserViewDependencies {
+@OptIn(UnstableApi::class) interface BrowserViewDependencies {
 	val selectedLibraryViewModel: SelectedLibraryViewModel
 	val nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel
 	val itemProvider: ProvideItems
