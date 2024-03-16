@@ -6,7 +6,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.playedfile.PlayedFilePlayStatsUpdater
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.servers.version.ProvideLibraryServerVersion
-import com.lasthopesoftware.bluewater.shared.policies.caching.PermanentPromiseFunctionCache
+import com.lasthopesoftware.policies.caching.PermanentPromiseFunctionCache
 import com.namehillsoftware.handoff.promises.Promise
 
 class LibraryPlaystatsUpdateSelector(

@@ -63,8 +63,8 @@ import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLa
 import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
-import com.lasthopesoftware.bluewater.shared.policies.retries.RateLimitingExecutionPolicy
-import com.lasthopesoftware.bluewater.shared.policies.retries.RetryExecutionPolicy
+import com.lasthopesoftware.policies.retries.RateLimitingExecutionPolicy
+import com.lasthopesoftware.policies.retries.RetryExecutionPolicy
 import com.lasthopesoftware.resources.closables.ViewModelCloseableManager
 import com.lasthopesoftware.resources.strings.StringResources
 import com.lasthopesoftware.resources.uri.DocumentUriSelector

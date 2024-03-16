@@ -5,9 +5,9 @@ import com.lasthopesoftware.bluewater.client.browsing.files.image.bytes.GetRawIm
 import com.lasthopesoftware.bluewater.client.browsing.files.image.bytes.cache.LookupImageCacheKey
 import com.lasthopesoftware.bluewater.client.browsing.files.image.bytes.cache.MemoryCachedImageAccess
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.shared.policies.caching.LruPromiseCache
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.policies.caching.LruPromiseCache
 import com.lasthopesoftware.promises.extensions.toPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk

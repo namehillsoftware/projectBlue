@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.shared.policies.retries
+package com.lasthopesoftware.policies.retries
 
 import com.lasthopesoftware.promises.ResolvedPromiseBox
 import com.lasthopesoftware.promises.extensions.toPromise

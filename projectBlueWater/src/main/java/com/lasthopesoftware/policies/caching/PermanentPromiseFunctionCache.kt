@@ -1,11 +1,12 @@
-package com.lasthopesoftware.bluewater.shared.policies.caching
+package com.lasthopesoftware.policies.caching
 
 import com.lasthopesoftware.promises.ResolvedPromiseBox
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import java.util.concurrent.ConcurrentHashMap
 
-class PermanentPromiseFunctionCache<Input : Any, Output> : CachePromiseFunctions<Input, Output> {
+class PermanentPromiseFunctionCache<Input : Any, Output> :
+	CachePromiseFunctions<Input, Output> {
 	private val cachedSyncs = ConcurrentHashMap<Input, Any>()
 	private val cachedPromises = ConcurrentHashMap<Input, ResolvedPromiseBox<Output, Promise<Output>>>()
 

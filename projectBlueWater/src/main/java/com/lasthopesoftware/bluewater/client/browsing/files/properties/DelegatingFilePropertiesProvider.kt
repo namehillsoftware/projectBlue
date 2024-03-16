@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.browsing.files.properties
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.shared.policies.ApplyExecutionPolicies
+import com.lasthopesoftware.policies.ApplyExecutionPolicies
 import com.namehillsoftware.handoff.promises.Promise
 
 class DelegatingFilePropertiesProvider(private val inner: ProvideFreshLibraryFileProperties, private val policy: ApplyExecutionPolicies) : ProvideFreshLibraryFileProperties {

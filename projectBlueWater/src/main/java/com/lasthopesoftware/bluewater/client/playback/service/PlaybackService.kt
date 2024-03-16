@@ -126,8 +126,8 @@ import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMes
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.observables.toMaybeObservable
-import com.lasthopesoftware.bluewater.shared.policies.retries.RetryOnRejectionLazyPromise
 import com.lasthopesoftware.bluewater.shared.resilience.TimedCountdownLatch
+import com.lasthopesoftware.policies.retries.RetryOnRejectionLazyPromise
 import com.lasthopesoftware.promises.ForwardedResponse.Companion.forward
 import com.lasthopesoftware.promises.PromiseDelay.Companion.delay
 import com.lasthopesoftware.promises.extensions.LoopedInPromise
@@ -488,7 +488,8 @@ import java.util.concurrent.TimeoutException
 
 	private val urlKeyProvider by lazy { UrlKeyProvider(libraryConnectionProvider) }
 
-	private	val promisedMediaNotificationSetup by promisingServiceCloseables.manage(RetryOnRejectionLazyPromise {
+	private	val promisedMediaNotificationSetup by promisingServiceCloseables.manage(
+        RetryOnRejectionLazyPromise {
 		mediaStyleNotificationSetup.then { mediaStyleNotificationSetup ->
 			val notificationBuilder = promisingServiceCloseables.manage(
 					NowPlayingNotificationBuilder(
