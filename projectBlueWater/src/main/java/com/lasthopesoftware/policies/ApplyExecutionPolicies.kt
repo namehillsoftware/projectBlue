@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.shared.policies
+package com.lasthopesoftware.policies
 
 import com.namehillsoftware.handoff.promises.Promise
 

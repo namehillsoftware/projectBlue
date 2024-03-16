@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.shared.policies.lru.GivenACache.AndAddingAnItemErrors
 
-import com.lasthopesoftware.bluewater.shared.policies.caching.LruPromiseCache
+import com.lasthopesoftware.policies.caching.LruPromiseCache
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
 import org.assertj.core.api.Assertions.assertThat

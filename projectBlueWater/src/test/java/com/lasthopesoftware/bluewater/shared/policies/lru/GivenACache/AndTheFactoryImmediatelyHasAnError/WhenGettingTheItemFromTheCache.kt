@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.shared.policies.lru.GivenACache.AndTheFactoryImmediatelyHasAnError
 
-import com.lasthopesoftware.bluewater.shared.policies.caching.LruPromiseCache
+import com.lasthopesoftware.policies.caching.LruPromiseCache
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test

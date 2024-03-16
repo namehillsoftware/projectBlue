@@ -8,8 +8,8 @@ import com.lasthopesoftware.bluewater.client.browsing.library.revisions.CheckRev
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
-import com.lasthopesoftware.bluewater.shared.policies.caching.CachePromiseFunctions
-import com.lasthopesoftware.bluewater.shared.policies.caching.LruPromiseCache
+import com.lasthopesoftware.policies.caching.CachePromiseFunctions
+import com.lasthopesoftware.policies.caching.LruPromiseCache
 import com.namehillsoftware.handoff.promises.Promise
 
 class CachedItemProvider(

@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.shared.policies.ratelimiting
+package com.lasthopesoftware.policies.ratelimiting
 
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise

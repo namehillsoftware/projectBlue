@@ -1,9 +1,10 @@
-package com.lasthopesoftware.bluewater.shared.policies.retries
+package com.lasthopesoftware.policies.retries
 
-import com.lasthopesoftware.bluewater.shared.policies.ApplyExecutionPolicies
+import com.lasthopesoftware.policies.ApplyExecutionPolicies
 import com.namehillsoftware.handoff.promises.Promise
 
-class RetryExecutionPolicy(private val retryPromises: RetryPromises) : ApplyExecutionPolicies {
+class RetryExecutionPolicy(private val retryPromises: RetryPromises) :
+	ApplyExecutionPolicies {
 	override fun <Input : Any?, Output> applyPolicy(function: (Input) -> Promise<Output>): (Input) -> Promise<Output> = { in1 ->
 		retryPromises.retryOnException { function(in1) }
 	}

@@ -16,7 +16,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideGuaranteedLibraryConnections
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
 import com.lasthopesoftware.bluewater.client.playback.caching.datasource.DiskFileCacheSourceFactory
-import com.lasthopesoftware.bluewater.shared.policies.caching.PermanentPromiseFunctionCache
+import com.lasthopesoftware.policies.caching.PermanentPromiseFunctionCache
 import com.lasthopesoftware.resources.uri.IoCommon
 import com.namehillsoftware.handoff.promises.Promise
 

@@ -54,7 +54,7 @@ import com.lasthopesoftware.bluewater.shared.android.permissions.OsPermissionsCh
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
-import com.lasthopesoftware.bluewater.shared.policies.caching.CachingPolicyFactory
+import com.lasthopesoftware.policies.caching.CachingPolicyFactory
 import com.lasthopesoftware.promises.extensions.toListenableFuture
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.promises.extensions.unitResponse

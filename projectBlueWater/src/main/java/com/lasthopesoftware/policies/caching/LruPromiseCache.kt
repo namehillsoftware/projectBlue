@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.shared.policies.caching
+package com.lasthopesoftware.policies.caching
 
 import com.google.common.cache.CacheBuilder
 
