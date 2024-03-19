@@ -12,7 +12,7 @@ object ConnectionLostExceptionFilter {
 	fun isConnectionLostException(error: Throwable?): Boolean =
 		error is IOException && isConnectionLostException(error)
 
-	private fun isConnectionLostException(ioException: IOException): Boolean {
+	fun isConnectionLostException(ioException: IOException): Boolean {
 		return (ioException is SocketTimeoutException
 			|| ioException is SocketException
 			|| ioException is EOFException

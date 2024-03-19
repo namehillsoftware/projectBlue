@@ -22,12 +22,11 @@ object RecursivePromiseRetryHandler : RetryPromises {
 			.also(::doCancel)
 			.eventually(promisedForward(), this)
 
-		override fun promiseResponse(rejection: Throwable): Promise<T> {
-			return if (error === rejection || isCancelled) Promise(rejection)
+		override fun promiseResponse(rejection: Throwable): Promise<T> =
+			if (error === rejection || isCancelled) Promise(rejection)
 			else {
 				error = rejection
 				next()
 			}
-		}
 	}
 }

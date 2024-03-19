@@ -5,6 +5,8 @@ import com.lasthopesoftware.policies.retries.RetryPromises
 import com.lasthopesoftware.promises.PromiseDelay
 import com.namehillsoftware.handoff.promises.Promise
 import org.joda.time.Duration
+import java.io.IOException
+import java.util.Locale
 
 object ConnectionLostRetryHandler : RetryPromises {
 
@@ -18,11 +20,12 @@ object ConnectionLostRetryHandler : RetryPromises {
 
 			when {
 				attempts == 1 -> promiseFactory(error)
-				attempts <= 3 && ConnectionLostExceptionFilter.isConnectionLostException(error) -> {
+				attempts <= 3 && isErrorRetryable(error) -> {
 					val originalTimeToWait = timeToWait
 					timeToWait = timeToWait.multipliedBy(2)
 					Promise.Proxy { cp ->
-						PromiseDelay
+						if (cp.isCancelled) Promise(error)
+						else PromiseDelay
 							.delay<Any?>(originalTimeToWait)
 							.also(cp::doCancel)
 							.eventually { promiseFactory(error) }
@@ -32,4 +35,10 @@ object ConnectionLostRetryHandler : RetryPromises {
 			}
 		}
 	}
+
+	private fun isErrorRetryable(error: Throwable?): Boolean =
+		error is IOException && (
+			ConnectionLostExceptionFilter.isConnectionLostException(error) ||
+				error.message?.lowercase(Locale.getDefault())?.contains("canceled") == true
+			)
 }
