@@ -8,14 +8,13 @@ import com.lasthopesoftware.promises.extensions.ProgressedPromise
 import com.lasthopesoftware.promises.extensions.ProgressingPromise
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
-import okhttp3.internal.toImmutableList
 import org.joda.time.Duration
 
 open class FakeBufferingPlaybackHandler : IBufferingPlaybackFile, PlayableFile, PlayingFile, PlayedFile {
 	private val playingStates = mutableListOf(false)
 
 	val recordedPlayingStates
-		get() = playingStates.toImmutableList()
+		get() = playingStates.toList()
 
 	val isPlaying
 		get() = playingStates.last()
