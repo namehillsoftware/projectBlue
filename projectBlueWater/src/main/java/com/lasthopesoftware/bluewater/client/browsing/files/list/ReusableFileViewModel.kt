@@ -12,6 +12,7 @@ import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApp
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.promises.PromiseDelay
 import com.lasthopesoftware.promises.extensions.toPromise
+import com.lasthopesoftware.promises.extensions.unitResponse
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.lasthopesoftware.resources.strings.GetStringResources
 import com.namehillsoftware.handoff.promises.Promise
@@ -122,8 +123,8 @@ class ReusableFileViewModel(
 
 			val promisedViewSetting = filePropertiesPromise.then(this)
 
-			val delayPromise = PromiseDelay.delay<Collection<Unit>>(timeoutDuration)
-			whenAny(whenAll(promisedViewSetting, promisedUrlKey.then { it -> activeUrlKey = it }), delayPromise)
+			val delayPromise = PromiseDelay.delay<Unit>(timeoutDuration)
+			whenAny(whenAll(promisedViewSetting, promisedUrlKey.then { it -> activeUrlKey = it }).unitResponse(), delayPromise, cancellationProxy.unitResponse())
 				.must { _ ->
 					// First, cancel everything to ensure the losing task doesn't continue running
 					cancellationProxy.cancellationRequested()
