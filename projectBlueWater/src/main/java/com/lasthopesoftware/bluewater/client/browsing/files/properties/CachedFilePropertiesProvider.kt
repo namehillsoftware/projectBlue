@@ -14,8 +14,8 @@ class CachedFilePropertiesProvider(private val libraryConnections: ProvideLibrar
 			.eventually { connectionProvider ->
 				connectionProvider?.urlProvider?.baseUrl
 					?.let { url -> UrlKeyHolder(url, serviceFile) }
-					?.let { urlKeyHolder -> filePropertiesContainerRepository.getFilePropertiesContainer(urlKeyHolder) }
-					?.let { filePropertiesContainer -> filePropertiesContainer.properties.toPromise() }
+					?.let(filePropertiesContainerRepository::getFilePropertiesContainer)
+					?.takeIf { it.properties.isNotEmpty() }?.properties?.toPromise()
 					?: filePropertiesProvider.promiseFileProperties(libraryId, serviceFile)
 			}
 	}
