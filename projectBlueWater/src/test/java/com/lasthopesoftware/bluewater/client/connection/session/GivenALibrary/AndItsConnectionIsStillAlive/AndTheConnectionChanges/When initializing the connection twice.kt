@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.connection.session.GivenALibrary.A
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.DramaticConnectionInitializationController
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredProgressingPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -22,7 +22,7 @@ class `When initializing the connection twice` {
 
 	private val mut by lazy {
 		val deferredProgressingPromise =
-            DeferredProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>()
+            DeferredProgressingPromise<BuildingConnectionStatus, ProvideConnections?>()
 
 		Pair(
 			deferredProgressingPromise,
@@ -40,8 +40,8 @@ class `When initializing the connection twice` {
 	}
 
 	private val recordedUpdates = mutableListOf<BuildingConnectionStatus>()
-	private var firstConnection: IConnectionProvider? = null
-	private var secondConnection: IConnectionProvider? = null
+	private var firstConnection: ProvideConnections? = null
+	private var secondConnection: ProvideConnections? = null
 
 	@BeforeAll
 	fun act() {

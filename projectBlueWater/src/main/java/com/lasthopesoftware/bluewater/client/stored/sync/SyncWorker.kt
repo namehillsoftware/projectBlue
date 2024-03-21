@@ -21,6 +21,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.repositor
 import com.lasthopesoftware.bluewater.client.browsing.library.access.DelegatingLibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
+import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.stored.library.items.DelegatingStoredItemServiceFileCollector
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredFilesCounter
@@ -97,7 +98,7 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 			libraryConnections,
 			filePropertyCache,
 			FilePropertiesProvider(
-				libraryConnections,
+				GuaranteedLibraryConnectionProvider(libraryConnections),
 				LibraryRevisionProvider(libraryConnections),
 				filePropertyCache
 			)

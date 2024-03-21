@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.connection.session.GivenALibrary.A
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.FakeLibraryConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionLostNotification
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionWatcherViewModel
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
@@ -18,7 +18,7 @@ private const val libraryId = 215
 
 class `When watching the connection` {
 	private val mut by lazy {
-		val deferredConnectionProvider = DeferredPromise(FakeConnectionProvider() as IConnectionProvider)
+		val deferredConnectionProvider = DeferredPromise(FakeConnectionProvider() as ProvideConnections)
 
 		val messageBus = RecordingApplicationMessageBus()
 

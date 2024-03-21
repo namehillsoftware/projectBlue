@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.files.downloa
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFileUriQueryParamsProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.download.StoredFileDownloader
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
@@ -29,7 +29,7 @@ class WhenDownloading {
 			.code(202)
 			.message("Not Found")
 			.body("".toResponseBody())
-		val fakeConnectionProvider = mockk<IConnectionProvider> {
+		val fakeConnectionProvider = mockk<ProvideConnections> {
 			every { promiseResponse(*anyVararg()) } returns responseBuilder.build().toPromise()
 		}
 

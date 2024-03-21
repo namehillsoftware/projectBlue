@@ -11,10 +11,11 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTuple
 import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfConnectionIsReadOnly
+import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.ProgressingPromise
 import com.lasthopesoftware.promises.extensions.toPromise
-import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import io.mockk.every
 import io.mockk.mockk
@@ -64,8 +65,11 @@ class WhenStoringTheUpdatedPlayStats {
 		every { checkConnection.promiseIsReadOnly(LibraryId(libraryId)) } returns false.toPromise()
 		val filePropertiesContainer = FakeFilePropertiesContainerRepository()
 		val revisionProvider = LibraryRevisionProvider(libraryConnectionProvider)
-		val filePropertiesProvider =
-			FilePropertiesProvider(libraryConnectionProvider, revisionProvider, filePropertiesContainer)
+		val filePropertiesProvider = FilePropertiesProvider(
+			GuaranteedLibraryConnectionProvider(libraryConnectionProvider),
+			revisionProvider,
+			filePropertiesContainer
+		)
 		Pair(
 			FilePropertiesPlayStatsUpdater(
 				filePropertiesProvider,

@@ -20,6 +20,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.access.CachedItemPro
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
+import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.InMemoryNowPlayingState
@@ -86,7 +87,7 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 				FilePropertyCache,
 				DelegatingFilePropertiesProvider(
 					FilePropertiesProvider(
-						libraryConnectionProvider,
+						GuaranteedLibraryConnectionProvider(libraryConnectionProvider),
 						LibraryRevisionProvider(libraryConnectionProvider),
 						FilePropertyCache,
 					),

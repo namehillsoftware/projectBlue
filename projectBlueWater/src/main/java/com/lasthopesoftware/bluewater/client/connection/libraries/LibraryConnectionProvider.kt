@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.connection.libraries
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
 import com.lasthopesoftware.bluewater.client.connection.builder.live.ProvideLiveUrl
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
@@ -22,8 +22,8 @@ class LibraryConnectionProvider(
 	private val okHttpFactory: OkHttpFactory
 ) : ProvideLibraryConnections {
 
-	override fun promiseLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?> =
-		object : ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>() {
+	override fun promiseLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, ProvideConnections?> =
+		object : ProgressingPromise<BuildingConnectionStatus, ProvideConnections?>() {
 			private val cancellationProxy = CancellationProxy()
 
 			init {

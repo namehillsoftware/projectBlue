@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.connection.libraries.GivenALibrary.AndAConnectionIsNotAvailable
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
 import com.lasthopesoftware.bluewater.client.connection.libraries.ConnectionUnavailableException
 import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibraryConnectionProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -20,7 +20,7 @@ class `When getting a guaranteed connection` {
 	private val mut by lazy {
 		GuaranteedLibraryConnectionProvider(
 			mockk {
-				every { promiseLibraryConnection(LibraryId(libraryId)) } returns ProgressingPromise(null as IConnectionProvider?)
+				every { promiseLibraryConnection(LibraryId(libraryId)) } returns ProgressingPromise(null as ProvideConnections?)
 			}
 		)
 	}

@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.FakeLibraryConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibraryConnectionProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -21,7 +22,7 @@ class WhenGettingFileProperties {
         val fakeLibraryConnectionProvider =
             FakeLibraryConnectionProvider(mapOf(Pair(LibraryId(14), fakeFileConnectionProvider)))
         val filePropertiesProvider = FilePropertiesProvider(
-            fakeLibraryConnectionProvider,
+			GuaranteedLibraryConnectionProvider(fakeLibraryConnectionProvider),
             LibraryRevisionProvider(fakeLibraryConnectionProvider),
             mockk(relaxed = true)
         )

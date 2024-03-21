@@ -1,12 +1,12 @@
 package com.lasthopesoftware.bluewater.client.connection
 
+import com.lasthopesoftware.exceptions.isOkHttpCanceled
 import com.lasthopesoftware.policies.retries.RecursivePromiseRetryHandler
 import com.lasthopesoftware.policies.retries.RetryPromises
 import com.lasthopesoftware.promises.PromiseDelay
 import com.namehillsoftware.handoff.promises.Promise
 import org.joda.time.Duration
 import java.io.IOException
-import java.util.Locale
 
 object ConnectionLostRetryHandler : RetryPromises {
 
@@ -38,7 +38,5 @@ object ConnectionLostRetryHandler : RetryPromises {
 
 	private fun isErrorRetryable(error: Throwable?): Boolean =
 		error is IOException && (
-			ConnectionLostExceptionFilter.isConnectionLostException(error) ||
-				error.message?.lowercase(Locale.getDefault())?.contains("canceled") == true
-			)
+			ConnectionLostExceptionFilter.isConnectionLostException(error) || error.isOkHttpCanceled())
 }

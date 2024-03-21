@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.browsing.library.access
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTuple
 
-class FakeRevisionConnectionProvider : FakeConnectionProvider() {
+open class FakeRevisionConnectionProvider : FakeConnectionProvider() {
     private var syncRevision = 0
 
 	fun setSyncRevision(syncRevision: Int) {

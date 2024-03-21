@@ -23,6 +23,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFil
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
+import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionSettingsChangeReceiver
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.NotificationsConfiguration
@@ -63,7 +64,7 @@ open class MainApplication : Application() {
 
 	private val freshLibraryFileProperties by lazy {
 		FilePropertiesProvider(
-			libraryConnections,
+			GuaranteedLibraryConnectionProvider(libraryConnections),
 			libraryRevisionProvider,
 			FilePropertyCache,
 		)

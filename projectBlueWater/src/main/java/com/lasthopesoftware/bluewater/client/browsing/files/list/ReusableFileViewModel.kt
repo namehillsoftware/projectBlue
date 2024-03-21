@@ -10,6 +10,7 @@ import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
+import com.lasthopesoftware.exceptions.isOkHttpCanceled
 import com.lasthopesoftware.promises.PromiseDelay
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.promises.extensions.unitResponse
@@ -164,8 +165,7 @@ class ReusableFileViewModel(
 					if (message != null && message.lowercase(Locale.getDefault()).contains("ssl handshake aborted")) return
 				}
 				is IOException -> {
-					val message = e.message
-					if (message != null && message.lowercase(Locale.getDefault()).contains("canceled")) return
+					if (e.isOkHttpCanceled()) return
 				}
 			}
 

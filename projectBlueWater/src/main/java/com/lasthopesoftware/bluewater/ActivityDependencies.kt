@@ -35,6 +35,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryR
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NavigationMessage
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostRetryHandler
 import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
+import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.polling.LibraryConnectionPoller
 import com.lasthopesoftware.bluewater.client.connection.polling.LibraryConnectionPollingSessions
@@ -111,7 +112,7 @@ class ActivityDependencies(activity: ComponentActivity, activitySuppliedDependen
 		DelegatingFilePropertiesProvider(
 			DelegatingFilePropertiesProvider(
 				FilePropertiesProvider(
-					libraryConnectionProvider,
+					GuaranteedLibraryConnectionProvider(libraryConnectionProvider),
 					revisionProvider,
 					FilePropertyCache,
 				),

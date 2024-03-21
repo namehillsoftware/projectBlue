@@ -9,7 +9,8 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.repositor
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.IFilePropertiesContainerRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.CheckRevisions
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
+import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
 import com.lasthopesoftware.bluewater.client.playback.file.volume.MaxFileVolumeProvider
 import com.lasthopesoftware.bluewater.settings.volumeleveling.IVolumeLevelSettings
@@ -29,7 +30,7 @@ class WhenGettingTheMaxVolume {
 
 	private val returnedVolume by lazy {
 		val connectionProvider = mockk<ProvideLibraryConnections> {
-			every { promiseLibraryConnection(LibraryId(libraryId)) } returns ProgressingPromise(mockk<IConnectionProvider> {
+			every { promiseLibraryConnection(LibraryId(libraryId)) } returns ProgressingPromise(mockk<ProvideConnections> {
 				every { urlProvider } returns mockk {
 					every { baseUrl } returns EmptyUrl.url
 				}
@@ -44,7 +45,11 @@ class WhenGettingTheMaxVolume {
 		val scopedRevisionProvider = mockk<CheckRevisions>()
 		every { scopedRevisionProvider.promiseRevision(LibraryId(libraryId)) } returns 1.toPromise()
 
-		val sessionFilePropertiesProvider = FilePropertiesProvider(connectionProvider, scopedRevisionProvider, repository)
+		val sessionFilePropertiesProvider = FilePropertiesProvider(
+			GuaranteedLibraryConnectionProvider(connectionProvider),
+			scopedRevisionProvider,
+			repository
+		)
 		val cachedSessionFilePropertiesProvider = CachedFilePropertiesProvider(
 			connectionProvider,
 			repository,

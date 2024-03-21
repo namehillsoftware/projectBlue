@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.connection.selected.GivenASelected
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionReservation
 import com.lasthopesoftware.bluewater.client.connection.session.ManageConnectionSessions
@@ -20,11 +20,11 @@ import org.junit.jupiter.api.Test
 class WhenRetrievingTheSelectedConnection {
 
 	private val applicationMessageBus = RecordingApplicationMessageBus()
-	private var connectionProvider: IConnectionProvider? = null
+	private var connectionProvider: ProvideConnections? = null
 
 	@BeforeAll
 	fun act() {
-		val deferredConnectionProvider = DeferredProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>()
+		val deferredConnectionProvider = DeferredProgressingPromise<BuildingConnectionStatus, ProvideConnections?>()
 		val libraryConnections = mockk<ManageConnectionSessions>()
 		every { libraryConnections.promiseLibraryConnection(LibraryId(2)) } returns deferredConnectionProvider
 

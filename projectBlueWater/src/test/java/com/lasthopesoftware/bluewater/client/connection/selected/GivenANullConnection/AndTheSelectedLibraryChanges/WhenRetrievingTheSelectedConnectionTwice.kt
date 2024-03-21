@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.connection.selected.GivenANullConn
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.ConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnection
 import com.lasthopesoftware.bluewater.client.connection.selected.SelectedConnectionReservation
@@ -20,12 +20,12 @@ import org.junit.jupiter.api.Test
 class WhenRetrievingTheSelectedConnectionTwice {
 
 	private val firstUrlProvider = mockk<IUrlProvider>()
-	private var connectionProvider: IConnectionProvider? = null
+	private var connectionProvider: ProvideConnections? = null
 
 	@BeforeAll
 	fun act() {
 		val libraryConnections = mockk<ManageConnectionSessions>()
-		every { libraryConnections.promiseLibraryConnection(any()) } returns ProgressingPromise(null as IConnectionProvider?)
+		every { libraryConnections.promiseLibraryConnection(any()) } returns ProgressingPromise(null as ProvideConnections?)
 		every { libraryConnections.promiseLibraryConnection(LibraryId(2)) } returns ProgressingPromise(
 			ConnectionProvider(
 				firstUrlProvider, OkHttpFactory

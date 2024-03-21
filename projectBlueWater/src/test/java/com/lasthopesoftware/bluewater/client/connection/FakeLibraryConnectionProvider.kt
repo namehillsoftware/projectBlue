@@ -4,9 +4,9 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
 import com.lasthopesoftware.promises.extensions.ProgressingPromise
 
-class FakeLibraryConnectionProvider(private val connectionProviderMap: Map<LibraryId, IConnectionProvider>) :
+class FakeLibraryConnectionProvider(private val connectionProviderMap: Map<LibraryId, ProvideConnections>) :
     ProvideLibraryConnections {
-    override fun promiseLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?> {
+    override fun promiseLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, ProvideConnections?> {
         return ProgressingPromise(
             connectionProviderMap[libraryId]
         )

@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.connection.session.initialization
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
 import com.lasthopesoftware.bluewater.client.connection.session.ManageConnectionSessions
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.promises.PromiseDelay
@@ -25,8 +25,8 @@ class DramaticConnectionInitializationController(
 ) : ControlConnectionInitialization {
 
 	@Synchronized
-	override fun promiseActiveLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?> =
-		object : ProgressingPromiseProxy<BuildingConnectionStatus, IConnectionProvider?>() {
+	override fun promiseActiveLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, ProvideConnections?> =
+		object : ProgressingPromiseProxy<BuildingConnectionStatus, ProvideConnections?>() {
 			init {
 				manageConnectionSessions
 					.promiseIsConnectionActive(libraryId)
