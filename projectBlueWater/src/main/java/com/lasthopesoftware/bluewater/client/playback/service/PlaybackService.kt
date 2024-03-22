@@ -47,7 +47,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.session.Bro
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
 import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
@@ -423,7 +423,7 @@ import java.util.concurrent.TimeoutException
 
 	private val fileProperties by lazy {
 		FilePropertiesProvider(
-			libraryConnectionProvider,
+			guaranteedLibraryConnectionProvider,
 			LibraryRevisionProvider(libraryConnectionProvider),
 			FilePropertyCache
         )
@@ -447,7 +447,7 @@ import java.util.concurrent.TimeoutException
 	private val intentBuilder by lazy { IntentBuilder(this) }
 
 	private val pollConnectionServiceProxy by lazy { PollConnectionServiceProxy(this) }
-	private val connectionRegainedListener by lazy { ImmediateResponse<IConnectionProvider, Unit> { resetPlaylistManager() } }
+	private val connectionRegainedListener by lazy { ImmediateResponse<ProvideConnections, Unit> { resetPlaylistManager() } }
 
 	private val onPollingCancelledListener by lazy { ImmediateResponse<Throwable?, Unit> { e ->
 			if (e is CancellationException) {
@@ -470,7 +470,7 @@ import java.util.concurrent.TimeoutException
 
 	private val freshLibraryFileProperties by lazy {
 		FilePropertiesProvider(
-			libraryConnectionProvider,
+			guaranteedLibraryConnectionProvider,
 			revisionProvider,
 			FilePropertyCache,
 		)

@@ -16,7 +16,6 @@ object ThreadPools {
 		}
 	}
 
-	// Maximum number to ensure no blocking
 	val io by lazy {
 		ForkJoinPool(Runtime.getRuntime().availableProcessors(), namedThreadPoolFactory("io"), null, true)
 	}

@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.connection.session.GivenALibrary.A
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.DramaticConnectionInitializationController
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredProgressingPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -18,7 +18,7 @@ private const val libraryId = 388
 class `when initializing its connection` {
 	private val mut by lazy {
 		val deferredProgressingPromise =
-			DeferredProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>()
+			DeferredProgressingPromise<BuildingConnectionStatus, ProvideConnections?>()
 
 		Pair(
 			deferredProgressingPromise,
@@ -42,7 +42,7 @@ class `when initializing its connection` {
 
 	private var isConnectionRemoved = false
 	private val recordedUpdates = mutableListOf<BuildingConnectionStatus>()
-	private var initializedConnection: IConnectionProvider? = null
+	private var initializedConnection: ProvideConnections? = null
 	private var isSettingsLaunched = false
 
 	@BeforeAll

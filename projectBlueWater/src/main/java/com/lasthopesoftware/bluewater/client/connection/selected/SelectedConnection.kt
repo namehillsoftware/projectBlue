@@ -4,7 +4,7 @@ import android.content.Context
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.ManageConnectionSessions
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
@@ -20,7 +20,7 @@ class SelectedConnection(
 	private val libraryConnections: ManageConnectionSessions
 ) {
 
-	fun promiseTestedSessionConnection(): Promise<IConnectionProvider?> =
+	fun promiseTestedSessionConnection(): Promise<ProvideConnections?> =
 		selectedLibraryIdentifierProvider.promiseSelectedLibraryId().eventually { selectedLibraryId ->
 			selectedLibraryId
 				?.let {
@@ -37,7 +37,7 @@ class SelectedConnection(
 				.keepPromise()
 		}
 
-	fun promiseSessionConnection(): Promise<IConnectionProvider?> =
+	fun promiseSessionConnection(): Promise<ProvideConnections?> =
 		selectedLibraryIdentifierProvider.promiseSelectedLibraryId().eventually { selectedLibraryId ->
 			selectedLibraryId
 				?.let {

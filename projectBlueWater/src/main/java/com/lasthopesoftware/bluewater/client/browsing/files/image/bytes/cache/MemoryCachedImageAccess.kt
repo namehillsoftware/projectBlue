@@ -16,6 +16,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePrope
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
+import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.policies.caching.CachePromiseFunctions
 import com.lasthopesoftware.policies.caching.LruPromiseCache
@@ -40,9 +41,10 @@ class MemoryCachedImageAccess
 				libraryConnectionProvider,
 				filePropertiesCache,
 				FilePropertiesProvider(
-					libraryConnectionProvider,
+					GuaranteedLibraryConnectionProvider(libraryConnectionProvider),
 					LibraryRevisionProvider(libraryConnectionProvider),
-					filePropertiesCache)))
+					filePropertiesCache)
+				))
 
 			val imageCacheConfiguration = ImageCacheConfiguration
 			val cachedFilesProvider = CachedFilesProvider(context, imageCacheConfiguration)

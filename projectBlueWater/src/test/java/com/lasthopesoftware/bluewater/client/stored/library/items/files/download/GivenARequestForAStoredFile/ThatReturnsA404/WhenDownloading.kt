@@ -4,7 +4,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFileUriQueryP
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.FakeLibraryConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.download.StoredFileDownloader
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.shared.promises.extensions.ExpiringFuturePromise
@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test
 class WhenDownloading {
 	private val inputStream by lazy {
 		val fakeConnectionProvider =
-			FakeLibraryConnectionProvider(object : HashMap<LibraryId, IConnectionProvider>() {
+			FakeLibraryConnectionProvider(object : HashMap<LibraryId, ProvideConnections>() {
 				init {
 					put(LibraryId(2), FakeConnectionProvider())
 				}

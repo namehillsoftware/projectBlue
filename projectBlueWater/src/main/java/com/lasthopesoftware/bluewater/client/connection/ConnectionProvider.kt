@@ -8,7 +8,7 @@ import okhttp3.Request
 import okhttp3.Response
 import java.net.URL
 
-class ConnectionProvider(override val urlProvider: IUrlProvider, private val okHttpClients: ProvideOkHttpClients) : IConnectionProvider {
+class ConnectionProvider(override val urlProvider: IUrlProvider, private val okHttpClients: ProvideOkHttpClients) : ProvideConnections {
 	private val lazyOkHttpClient by lazy { okHttpClients.getOkHttpClient(urlProvider) }
 
 	override fun promiseResponse(vararg params: String): Promise<Response> =

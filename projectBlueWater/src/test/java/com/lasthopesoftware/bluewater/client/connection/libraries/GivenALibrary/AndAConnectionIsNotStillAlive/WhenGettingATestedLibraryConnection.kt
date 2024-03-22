@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.connection.libraries.GivenALibrary
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.PromisedConnectionsRepository
@@ -19,8 +19,8 @@ import org.junit.jupiter.api.Test
 
 class WhenGettingATestedLibraryConnection {
 
-	private val firstDeferredConnectionProvider = DeferredProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>()
-	private val secondDeferredConnectionProvider = DeferredProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>()
+	private val firstDeferredConnectionProvider = DeferredProgressingPromise<BuildingConnectionStatus, ProvideConnections?>()
+	private val secondDeferredConnectionProvider = DeferredProgressingPromise<BuildingConnectionStatus, ProvideConnections?>()
 
 	private val mut by lazy {
 		val testConnections = mockk<TestConnections>()
@@ -40,9 +40,9 @@ class WhenGettingATestedLibraryConnection {
 	}
 
 	private val statuses = ArrayList<BuildingConnectionStatus>()
-	private val expectedConnectionProvider = mockk<IConnectionProvider>()
-	private var connectionProvider: IConnectionProvider? = null
-	private var secondConnectionProvider: IConnectionProvider? = null
+	private val expectedConnectionProvider = mockk<ProvideConnections>()
+	private var connectionProvider: ProvideConnections? = null
+	private var secondConnectionProvider: ProvideConnections? = null
 
 	@BeforeAll
 	fun act() {

@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.connection.testing
 
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
 import com.lasthopesoftware.bluewater.shared.StandardResponse
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
@@ -11,10 +11,10 @@ import java.io.IOException
 object ConnectionTester : TestConnections {
 	private val logger = LoggerFactory.getLogger(ConnectionTester::class.java)
 
-	override fun promiseIsConnectionPossible(connectionProvider: IConnectionProvider): Promise<Boolean> =
+	override fun promiseIsConnectionPossible(connectionProvider: ProvideConnections): Promise<Boolean> =
 		ConnectionPossiblePromise(connectionProvider)
 
-	private class ConnectionPossiblePromise(connectionProvider: IConnectionProvider) : Promise<Boolean>() {
+	private class ConnectionPossiblePromise(connectionProvider: ProvideConnections) : Promise<Boolean>() {
 		init {
 			val cancellationProxy = CancellationProxy()
 			awaitCancellation(cancellationProxy)
@@ -27,7 +27,7 @@ object ConnectionTester : TestConnections {
 	}
 
 	private fun testResponse(response: Response): Boolean {
-		response.body?.use { body ->
+		response.body.use { body ->
 			try {
 				return body.byteStream().use(StandardResponse::fromInputStream)?.isStatus ?: false
 			} catch (e: IOException) {

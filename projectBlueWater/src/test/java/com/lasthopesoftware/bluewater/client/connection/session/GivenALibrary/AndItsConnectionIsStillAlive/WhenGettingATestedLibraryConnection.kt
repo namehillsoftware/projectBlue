@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.connection.session.GivenALibrary.A
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.LibraryConnectionChangedMessage
@@ -29,9 +29,9 @@ class WhenGettingATestedLibraryConnection {
 		every { connectionsTester.promiseIsConnectionPossible(any()) } returns true.toPromise()
 
 		val firstDeferredConnectionProvider =
-			DeferredProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>()
+			DeferredProgressingPromise<BuildingConnectionStatus, ProvideConnections?>()
 		val secondDeferredConnectionProvider =
-			DeferredProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>()
+			DeferredProgressingPromise<BuildingConnectionStatus, ProvideConnections?>()
 
 		val libraryConnectionProvider = mockk<ProvideLibraryConnections>()
 		every {
@@ -50,8 +50,8 @@ class WhenGettingATestedLibraryConnection {
 
 	private val recordingApplicationMessageBus = RecordingApplicationMessageBus()
 	private val statuses: MutableList<BuildingConnectionStatus> = ArrayList()
-	private var connectionProvider: IConnectionProvider? = null
-	private var secondConnectionProvider: IConnectionProvider? = null
+	private var connectionProvider: ProvideConnections? = null
+	private var secondConnectionProvider: ProvideConnections? = null
 
 	@BeforeAll
 	fun act() {

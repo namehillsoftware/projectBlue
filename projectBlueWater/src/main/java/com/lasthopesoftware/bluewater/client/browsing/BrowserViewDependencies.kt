@@ -20,8 +20,8 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.RemoveLibra
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedLibraryViewModel
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NavigationMessage
 import com.lasthopesoftware.bluewater.client.connection.polling.PollForLibraryConnections
-import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionWatcherViewModel
+import com.lasthopesoftware.bluewater.client.connection.session.ManageConnectionSessions
 import com.lasthopesoftware.bluewater.client.connection.trust.ProvideUserSslCertificates
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingCoverArtViewModel
@@ -52,7 +52,7 @@ import com.lasthopesoftware.resources.strings.StringResources
 	val stringResources: StringResources
 	val libraryFilesProvider: LibraryFileProvider
 	val applicationNavigation: NavigateApplication
-	val libraryConnectionProvider: ConnectionSessionManager
+	val libraryConnectionProvider: ManageConnectionSessions
 	val storedFileAccess: StoredFileAccess
 	val syncScheduler: SyncScheduler
 	val libraryProvider: ILibraryProvider

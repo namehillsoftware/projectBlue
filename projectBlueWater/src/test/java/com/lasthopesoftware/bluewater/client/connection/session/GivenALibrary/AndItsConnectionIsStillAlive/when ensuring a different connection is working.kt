@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.connection.session.GivenALibrary.A
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionStatusViewModel
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredProgressingPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -21,7 +21,7 @@ private const val libraryId = 220
 class `when ensuring a different connection is working` {
 	private val mut by lazy {
 		val deferredProgressingPromise =
-			DeferredProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>()
+			DeferredProgressingPromise<BuildingConnectionStatus, ProvideConnections?>()
 
 		Pair(
 			deferredProgressingPromise,

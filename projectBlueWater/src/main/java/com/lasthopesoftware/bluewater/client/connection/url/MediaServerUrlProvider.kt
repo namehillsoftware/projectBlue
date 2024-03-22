@@ -5,13 +5,11 @@ import java.io.UnsupportedEncodingException
 import java.net.URL
 import java.net.URLEncoder
 
-class MediaServerUrlProvider constructor(
+class MediaServerUrlProvider(
 	override val authCode: String?,
 	baseUrl: URL,
 	override val certificateFingerprint: ByteArray
 ) : IUrlProvider {
-
-	private val baseURL = URL(baseUrl, "/MCWS/v1/")
 
 	constructor(authCode: String?, ipAddress: String?, port: Int)
 		: this(authCode, URL(IoCommon.httpUriScheme, ipAddress, port, ""), ByteArray(0))
@@ -19,11 +17,10 @@ class MediaServerUrlProvider constructor(
 	constructor(authCode: String?, ipAddress: String?, port: Int, certificateFingerprint: ByteArray)
 		: this(authCode, URL(IoCommon.httpsUriScheme, ipAddress, port, ""), certificateFingerprint)
 
-	override val baseUrl: URL
-		get() = baseURL
+	override val baseUrl = URL(baseUrl, "/MCWS/v1/")
 
 	override fun getUrl(vararg params: String): String { // Add base url
-		val urlString = baseURL.toString()
+		val urlString = baseUrl.toString()
 		if (params.isEmpty()) return urlString
 
 		val urlBuilder = StringBuilder(urlString)
@@ -56,7 +53,7 @@ class MediaServerUrlProvider constructor(
 
 		if (authCode != other.authCode) return false
 		if (!certificateFingerprint.contentEquals(other.certificateFingerprint)) return false
-		if (baseURL != other.baseURL) return false
+		if (baseUrl != other.baseUrl) return false
 
 		return true
 	}
@@ -64,7 +61,7 @@ class MediaServerUrlProvider constructor(
 	override fun hashCode(): Int {
 		var result = authCode?.hashCode() ?: 0
 		result = 31 * result + certificateFingerprint.contentHashCode()
-		result = 31 * result + baseURL.hashCode()
+		result = 31 * result + baseUrl.hashCode()
 		return result
 	}
 

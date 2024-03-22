@@ -11,7 +11,7 @@ import okhttp3.internal.http.RealResponseBody
 import okio.Buffer
 import java.io.IOException
 
-open class FakeConnectionProvider : IConnectionProvider {
+open class FakeConnectionProvider : ProvideConnections {
 	private val requests = ArrayList<Array<out String>>()
 
 	private val mappedResponses = HashMap<Set<String>, (Array<out String>) -> FakeConnectionResponseTuple>()
@@ -78,7 +78,7 @@ open class FakeConnectionProvider : IConnectionProvider {
 
 	private fun getResponse(vararg params: String): Response {
 		val builder = Request.Builder()
-		builder.url(urlProvider.getUrl(*params)!!)
+		builder.url(urlProvider.getUrl(*params))
 		val buffer = Buffer()
 		val responseBuilder = Response.Builder()
 		responseBuilder

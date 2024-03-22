@@ -2,11 +2,11 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.files.downloa
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFileUriQueryParamsProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.download.StoredFileDownloader
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
-import com.lasthopesoftware.bluewater.shared.promises.extensions.ExpiringFuturePromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.ProgressingPromise
 import com.lasthopesoftware.promises.extensions.toPromise
 import io.mockk.every
@@ -14,6 +14,7 @@ import io.mockk.mockk
 import okhttp3.Protocol
 import okhttp3.Request
 import okhttp3.Response
+import okhttp3.ResponseBody.Companion.toResponseBody
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 
@@ -27,21 +28,17 @@ class WhenDownloading {
 			.protocol(Protocol.HTTP_1_1)
 			.code(202)
 			.message("Not Found")
-			.body(null)
-		val fakeConnectionProvider = mockk<IConnectionProvider>()
-		every { fakeConnectionProvider.promiseResponse(*anyVararg()) } returns responseBuilder.build().toPromise()
+			.body("".toResponseBody())
+		val fakeConnectionProvider = mockk<ProvideConnections> {
+			every { promiseResponse(*anyVararg()) } returns responseBuilder.build().toPromise()
+		}
 
-		val libraryConnections = mockk<ProvideLibraryConnections>()
-		every { libraryConnections.promiseLibraryConnection(LibraryId(4)) } returns ProgressingPromise(fakeConnectionProvider)
+		val libraryConnections = mockk<ProvideLibraryConnections> {
+			every { promiseLibraryConnection(LibraryId(4)) } returns ProgressingPromise(fakeConnectionProvider)
+		}
 
-		val downloader =
-			StoredFileDownloader(ServiceFileUriQueryParamsProvider, libraryConnections)
-		ExpiringFuturePromise(
-			downloader.promiseDownload(
-				LibraryId(4),
-				StoredFile().setServiceId(4)
-			)
-		).get()
+		val downloader = StoredFileDownloader(ServiceFileUriQueryParamsProvider, libraryConnections)
+		downloader.promiseDownload(LibraryId(4), StoredFile().setServiceId(4)).toExpiringFuture().get()
 	}
 
 	@Test

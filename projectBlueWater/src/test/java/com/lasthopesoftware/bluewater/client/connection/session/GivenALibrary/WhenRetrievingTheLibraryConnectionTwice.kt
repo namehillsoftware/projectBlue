@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.connection.session.GivenALibrary
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
 import com.lasthopesoftware.bluewater.client.connection.builder.live.ProvideLiveUrl
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
@@ -64,8 +64,8 @@ class WhenRetrievingTheLibraryConnectionTwice {
 
 	private val recordingApplicationMessageBus = RecordingApplicationMessageBus()
 	private val statuses: MutableList<BuildingConnectionStatus> = ArrayList()
-	private var connectionProvider: IConnectionProvider? = null
-	private var secondConnectionProvider: IConnectionProvider? = null
+	private var connectionProvider: ProvideConnections? = null
+	private var secondConnectionProvider: ProvideConnections? = null
 
 	@BeforeAll
 	fun before() {

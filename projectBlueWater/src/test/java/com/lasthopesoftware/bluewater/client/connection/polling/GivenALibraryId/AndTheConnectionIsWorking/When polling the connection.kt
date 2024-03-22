@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.connection.polling.GivenALibraryId
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
 import com.lasthopesoftware.bluewater.client.connection.polling.LibraryConnectionPoller
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.ProgressingPromise
@@ -24,7 +24,7 @@ class `When polling the connection` {
 		)
 	}
 
-	private var connectionProvider: IConnectionProvider? = null
+	private var connectionProvider: ProvideConnections? = null
 
 	@BeforeAll
 	fun act() {

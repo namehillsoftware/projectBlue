@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.connection.session.GivenALibrary.AndItsConnectionIsStillAlive.AndTheConnectionIsRemoved
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.PromisedConnectionsRepository
@@ -26,7 +26,7 @@ class WhenGettingTheUpdatedConnection {
 		every { connectionsTester.promiseIsConnectionPossible(any()) } returns true.toPromise()
 
 		val libraryConnectionProvider = mockk<ProvideLibraryConnections>()
-		every { libraryConnectionProvider.promiseLibraryConnection(libraryId) } answers { ProgressingPromise(mockk<IConnectionProvider>()) }
+		every { libraryConnectionProvider.promiseLibraryConnection(libraryId) } answers { ProgressingPromise(mockk<ProvideConnections>()) }
 
 		val connectionSessionManager = ConnectionSessionManager(
 			connectionsTester,
@@ -39,8 +39,8 @@ class WhenGettingTheUpdatedConnection {
 	}
 
 	private var isActive: Boolean? = null
-	private var originalConnection: IConnectionProvider? = null
-	private var newConnection: IConnectionProvider? = null
+	private var originalConnection: ProvideConnections? = null
+	private var newConnection: ProvideConnections? = null
 
 	@BeforeAll
 	fun act() {

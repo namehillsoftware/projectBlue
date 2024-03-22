@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.connection.polling
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
 import com.lasthopesoftware.bluewater.client.connection.session.ManageConnectionSessions
 import com.lasthopesoftware.promises.PromiseDelay
 import com.namehillsoftware.handoff.Messenger
@@ -13,15 +13,15 @@ import java.util.concurrent.CancellationException
 class LibraryConnectionPoller(
 	private val connectionSessions: ManageConnectionSessions
 ) : PollForLibraryConnections {
-	override fun pollConnection(libraryId: LibraryId): Promise<IConnectionProvider> {
-		return Promise<IConnectionProvider> {
+	override fun pollConnection(libraryId: LibraryId): Promise<ProvideConnections> {
+		return Promise<ProvideConnections> {
 			val cancellationProxy = CancellationProxy()
 			it.awaitCancellation(cancellationProxy)
 			pollLibraryConnection(libraryId, it, cancellationProxy, 1000L)
-		};
+		}
 	}
 
-	private fun pollLibraryConnection(libraryId: LibraryId, messenger: Messenger<IConnectionProvider>, cancellationProxy: CancellationProxy, connectionTime: Long) {
+	private fun pollLibraryConnection(libraryId: LibraryId, messenger: Messenger<ProvideConnections>, cancellationProxy: CancellationProxy, connectionTime: Long) {
 		if (cancellationProxy.isCancelled) {
 			messenger.sendRejection(newCancellationException())
 			return

@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.connection.testing.GivenAStandardConnection.ThatIsAlive
 
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
 import com.lasthopesoftware.bluewater.client.connection.testing.ConnectionTester
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -39,7 +39,7 @@ class WhenCancellingCheckingIfTheConnectionIsPossible {
 				reject(CancellationException("Cancelled!"))
 			}
 		}
-		val connectionProvider = mockk<IConnectionProvider>()
+		val connectionProvider = mockk<ProvideConnections>()
 		every { connectionProvider.promiseResponse("Alive") } returns deferredResponse
 
 		val promisedTest = ConnectionTester.promiseIsConnectionPossible(connectionProvider)

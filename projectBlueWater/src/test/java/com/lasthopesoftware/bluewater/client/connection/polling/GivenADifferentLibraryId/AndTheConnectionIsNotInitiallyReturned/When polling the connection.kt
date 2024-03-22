@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.connection.polling.GivenADifferent
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
 import com.lasthopesoftware.bluewater.client.connection.polling.LibraryConnectionPoller
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.ProgressingPromise
@@ -23,14 +23,14 @@ class `When polling the connection` {
         LibraryConnectionPoller(
             mockk {
 				val nullIterations = log2(32.0).toInt()
-				val connectionResponses = MutableList(nullIterations) { ProgressingPromise<BuildingConnectionStatus, IConnectionProvider?>(null as IConnectionProvider?) }
+				val connectionResponses = MutableList(nullIterations) { ProgressingPromise<BuildingConnectionStatus, ProvideConnections?>(null as ProvideConnections?) }
 				connectionResponses.add(ProgressingPromise(FakeConnectionProvider()))
                 every { promiseTestedLibraryConnection(LibraryId(libraryId)) } returnsMany connectionResponses
             }
         )
 	}
 
-	private var connectionProvider: IConnectionProvider? = null
+	private var connectionProvider: ProvideConnections? = null
 
 	@BeforeAll
 	fun act() {

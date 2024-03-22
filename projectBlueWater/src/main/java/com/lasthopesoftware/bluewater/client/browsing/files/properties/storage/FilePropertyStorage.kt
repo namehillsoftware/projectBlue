@@ -4,7 +4,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.IFilePropertiesContainerRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.CheckRevisions
-import com.lasthopesoftware.bluewater.client.connection.IConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
 import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfConnectionIsReadOnly
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
@@ -37,7 +37,7 @@ class FilePropertyStorage(
 				else Unit.toPromise()
 			}
 
-	private fun IConnectionProvider.promiseFileUpdate(libraryId: LibraryId, serviceFile: ServiceFile, property: String, value: String, isFormatted: Boolean): Promise<Unit> {
+	private fun ProvideConnections.promiseFileUpdate(libraryId: LibraryId, serviceFile: ServiceFile, property: String, value: String, isFormatted: Boolean): Promise<Unit> {
 		val promisedUpdate = promiseResponse("File/SetInfo", "File=${serviceFile.key}", "Field=$property", "Value=$value", "formatted=" + if (isFormatted) "1" else "0")
 			.then { response ->
 				if (logger.isInfoEnabled) {
@@ -47,22 +47,20 @@ class FilePropertyStorage(
 				}
 			}
 
-		urlProvider.baseUrl?.also { baseUrl ->
-			checkRevisions.promiseRevision(libraryId)
-				.then { revision ->
-					val urlKeyHolder = UrlKeyHolder(baseUrl, serviceFile)
-					filePropertiesContainerRepository.getFilePropertiesContainer(urlKeyHolder)
-						?.takeIf { it.revision == revision }
-						?.updateProperty(property, value)
-					sendApplicationMessages.sendMessage(FilePropertiesUpdatedMessage(urlKeyHolder))
-				}
-				.excuse { e ->
-					logger.warn(
-						"${serviceFile.key}'s property cache item $property was not updated with the new value of $value",
-						e
-					)
-				}
-		}
+		checkRevisions.promiseRevision(libraryId)
+			.then { revision ->
+				val urlKeyHolder = UrlKeyHolder(urlProvider.baseUrl, serviceFile)
+				filePropertiesContainerRepository.getFilePropertiesContainer(urlKeyHolder)
+					?.takeIf { it.revision == revision }
+					?.updateProperty(property, value)
+				sendApplicationMessages.sendMessage(FilePropertiesUpdatedMessage(urlKeyHolder))
+			}
+			.excuse { e ->
+				logger.warn(
+					"${serviceFile.key}'s property cache item $property was not updated with the new value of $value",
+					e
+				)
+			}
 
 		return promisedUpdate
 	}

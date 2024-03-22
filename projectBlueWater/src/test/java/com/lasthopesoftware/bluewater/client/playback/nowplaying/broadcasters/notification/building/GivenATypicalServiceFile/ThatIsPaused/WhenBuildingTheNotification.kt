@@ -15,9 +15,10 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeRevisio
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.FakeLibraryConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building.NowPlayingNotificationBuilder
-import com.lasthopesoftware.bluewater.shared.promises.extensions.ExpiringFuturePromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -67,7 +68,7 @@ class WhenBuildingTheNotification : AndroidContext() {
 				libraryConnectionProvider,
 				containerRepository,
 				FilePropertiesProvider(
-					libraryConnectionProvider,
+					GuaranteedLibraryConnectionProvider(libraryConnectionProvider),
 					FakeRevisionProvider(1),
 					containerRepository
 				)
@@ -76,8 +77,7 @@ class WhenBuildingTheNotification : AndroidContext() {
 				every { promiseFileBitmap(libraryId, any()) } returns Promise(expectedBitmap)
 			}
 		)
-		builder =
-			ExpiringFuturePromise(npBuilder.promiseNowPlayingNotification(libraryId, ServiceFile(3), false)).get()
+		builder = npBuilder.promiseNowPlayingNotification(libraryId, ServiceFile(3), false).toExpiringFuture().get()
 	}
 
 	@Test

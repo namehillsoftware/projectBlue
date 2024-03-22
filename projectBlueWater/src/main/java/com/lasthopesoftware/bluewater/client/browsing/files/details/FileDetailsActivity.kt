@@ -10,6 +10,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.media3.common.util.UnstableApi
 import com.lasthopesoftware.bluewater.ActivityApplicationNavigation
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.image.CachedImageProvider
@@ -27,6 +28,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryR
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
 import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.authentication.SelectedLibraryConnectionAuthenticationChecker
+import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.SelectedLibraryUrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
@@ -47,7 +49,7 @@ import com.lasthopesoftware.promises.extensions.suspend
 import com.lasthopesoftware.resources.strings.StringResources
 import java.io.IOException
 
-class FileDetailsActivity : ComponentActivity() {
+@UnstableApi class FileDetailsActivity : ComponentActivity() {
 
 	companion object {
 
@@ -80,7 +82,7 @@ class FileDetailsActivity : ComponentActivity() {
 			SelectedLibraryFilePropertiesProvider(
 				selectedLibraryIdProvider,
 				FilePropertiesProvider(
-					libraryConnections,
+					GuaranteedLibraryConnectionProvider(libraryConnections),
 					libraryRevisionProvider,
 					FilePropertyCache,
 				),

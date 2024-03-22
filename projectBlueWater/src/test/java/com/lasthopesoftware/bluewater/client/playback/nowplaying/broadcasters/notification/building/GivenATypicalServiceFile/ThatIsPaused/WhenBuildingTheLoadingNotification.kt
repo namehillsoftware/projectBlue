@@ -14,6 +14,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeRevisio
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.FakeLibraryConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.building.NowPlayingNotificationBuilder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -62,7 +63,7 @@ class WhenBuildingTheLoadingNotification : AndroidContext() {
 			},
 			UrlKeyProvider(fakeLibraryConnectionProvider),
             FilePropertiesProvider(
-				fakeLibraryConnectionProvider,
+				GuaranteedLibraryConnectionProvider(fakeLibraryConnectionProvider),
 				FakeRevisionProvider(1),
 				containerRepository,
 			),
