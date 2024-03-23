@@ -38,6 +38,7 @@ class NowPlayingPlaylistViewModel(
 	private val mutableIsSavingPlaylistActive = MutableInteractionState(false)
 	private val mutableSelectedPlaylistPath = MutableInteractionState("")
 	private val mutableIsPlaylistPathValid = MutableInteractionState(false)
+	private val mutableIsAutoScrolling = MutableInteractionState(false)
 
 	val isRepeating = isRepeatingState.asInteractionState()
 	val isEditingPlaylistState = mutableEditingPlaylistState.asInteractionState()
@@ -46,6 +47,7 @@ class NowPlayingPlaylistViewModel(
 	val isSavingPlaylistActive = mutableIsSavingPlaylistActive.asInteractionState()
 	val selectedPlaylistPath = mutableSelectedPlaylistPath.asInteractionState()
 	val isPlaylistPathValid = mutableIsPlaylistPathValid.asInteractionState()
+	val isAutoScrolling = mutableIsAutoScrolling.asInteractionState()
 
 	fun initializeView(libraryId: LibraryId): Promise<Unit> {
 		activeLibraryId = libraryId
@@ -54,6 +56,14 @@ class NowPlayingPlaylistViewModel(
 
 	override val isEditingPlaylist: Boolean
 		get() = isEditingPlaylistState.value
+
+	fun autoScroll() {
+		mutableIsAutoScrolling.value = true
+	}
+
+	fun manualScroll() {
+		mutableIsAutoScrolling.value = false
+	}
 
 	override fun editPlaylist() {
 		mutableEditingPlaylistState.value = true
