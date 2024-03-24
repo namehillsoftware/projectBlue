@@ -47,15 +47,12 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.rotate
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
@@ -202,7 +199,6 @@ private fun PlaylistControls(
 	nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel,
 	playlistViewModel: NowPlayingPlaylistViewModel,
 	playbackServiceController: ControlPlaybackService,
-	onEmptyPlaylist: () -> Unit,
 	onHide: (() -> Unit)? = null,
 ) {
 	Row(
@@ -235,7 +231,7 @@ private fun PlaylistControls(
 			Image(
 				painter = painterResource(id = R.drawable.clear_all_white_36dp),
 				contentDescription = stringResource(R.string.empty_playlist),
-				modifier = Modifier.clickable(onClick = onEmptyPlaylist),
+				modifier = Modifier.clickable(onClick = playlistViewModel::requestPlaylistClearingPermission),
 				alpha = playlistControlAlpha,
 			)
 		} else {
@@ -528,8 +524,7 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 	playlistViewModel: NowPlayingPlaylistViewModel,
 	childItemViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
 	applicationNavigation: NavigateApplication,
-	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
-	onEmptyPlaylist: () -> Unit
+	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler
 ) {
 	val pagerState = rememberLazyListState()
 	val isSettledOnFirstPage by remember { derivedStateOf { pagerState.firstVisibleItemIndex == 0 && pagerState.firstVisibleItemScrollOffset == 0 } }
@@ -663,8 +658,7 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 										scope.launch {
 											pagerState.animateScrollToItem(0)
 										}
-									},
-									onEmptyPlaylist = onEmptyPlaylist,
+									}
 								)
 							}
 						}
@@ -718,7 +712,6 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 	childItemViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
 	applicationNavigation: NavigateApplication,
 	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
-	onEmptyPlaylist: () -> Unit
 ) {
 	val isEditingPlaylist by playlistViewModel.isEditingPlaylistState.subscribeAsState()
 	BackHandler(itemListMenuBackPressedHandler.hideAllMenus() || isEditingPlaylist) {
@@ -792,7 +785,6 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 				nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
 				playlistViewModel = playlistViewModel,
 				playbackServiceController = playbackServiceController,
-				onEmptyPlaylist = onEmptyPlaylist,
 			)
 
 			NowPlayingPlaylist(
@@ -822,8 +814,6 @@ fun NowPlayingView(
 ) {
 	val isScreenOn by screenOnState.isScreenOn.collectAsState()
 	KeepScreenOn(isScreenOn)
-
-	var isEmptyPlaylistRequested by remember { mutableStateOf(false) }
 
 	ControlSurface(
 		color = Color.Transparent,
@@ -863,7 +853,7 @@ fun NowPlayingView(
 						childItemViewModelProvider = childItemViewModelProvider,
 						applicationNavigation = applicationNavigation,
 						itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
-					) { isEmptyPlaylistRequested = true }
+					)
 				} else {
 					NowPlayingWideView(
 						nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
@@ -873,7 +863,7 @@ fun NowPlayingView(
 						childItemViewModelProvider = childItemViewModelProvider,
 						applicationNavigation = applicationNavigation,
 						itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
-					) { isEmptyPlaylistRequested = true }
+					)
 				}
 			}
 		}
@@ -1017,9 +1007,10 @@ fun NowPlayingView(
 		)
 	}
 
+	val isEmptyPlaylistRequested by playlistViewModel.isClearingPlaylistRequested.subscribeAsState()
 	if (isEmptyPlaylistRequested) {
 		AlertDialog(
-			onDismissRequest = { isEmptyPlaylistRequested = false },
+			onDismissRequest = { playlistViewModel.clearPlaylistIfGranted() },
 			title = { Text(text = stringResource(id = R.string.empty_playlist)) },
 			text = {
 				Text(
@@ -1035,7 +1026,7 @@ fun NowPlayingView(
 				) {
 					Button(
 						onClick = {
-							isEmptyPlaylistRequested = false
+							playlistViewModel.clearPlaylistIfGranted()
 						},
 					) {
 						Text(text = stringResource(id = R.string.btn_cancel))
@@ -1043,8 +1034,8 @@ fun NowPlayingView(
 
 					Button(
 						onClick = {
-							playlistViewModel.clearPlaylist()
-							isEmptyPlaylistRequested = false
+							playlistViewModel.grantPlaylistClearing()
+							playlistViewModel.clearPlaylistIfGranted()
 						},
 					) {
 						Text(text = stringResource(id = R.string.yes))
