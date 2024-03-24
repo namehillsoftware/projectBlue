@@ -68,6 +68,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.Velocity
+import androidx.compose.ui.unit.coerceAtMost
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -436,7 +437,9 @@ fun NowPlayingPlaylist(
 	if (isAutoScrollEnabled) {
 		LaunchedEffect(key1 = playingFile) {
 			playingFile?.apply {
-				dragDropListState.lazyListState.scrollToItem(playlistPosition)
+				val listState = dragDropListState.lazyListState
+				if (!listState.isScrollInProgress)
+					listState.scrollToItem(playlistPosition)
 			}
 		}
 	}
@@ -724,7 +727,7 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 		Box(
 			modifier = Modifier
 				.fillMaxHeight()
-				.width(this@NowPlayingWideView.screenWidth - this@NowPlayingWideView.screenHeight)
+				.weight(1f, fill = true)
 				.clickable(
 					interactionSource = remember { MutableInteractionSource() },
 					indication = null,
@@ -771,10 +774,11 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 			)
 		}
 
+		val screenWidth = this@NowPlayingWideView.screenWidth
 		Column(
 			modifier = Modifier
 				.fillMaxHeight()
-				.fillMaxWidth()
+				.width(this@NowPlayingWideView.screenHeight.coerceAtMost(screenWidth / 2))
 				.background(SharedColors.overlayDark),
 			horizontalAlignment = Alignment.CenterHorizontally,
 		) {
@@ -786,6 +790,12 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 				playlistViewModel = playlistViewModel,
 				playbackServiceController = playbackServiceController,
 			)
+
+			DisposableEffect(key1 = Unit) {
+				playlistViewModel.autoScroll()
+
+				onDispose { playlistViewModel.manualScroll() }
+			}
 
 			NowPlayingPlaylist(
 				childItemViewModelProvider,
@@ -844,7 +854,7 @@ fun NowPlayingView(
 			}
 
 			with (screenScope) {
-				if (screenWidth < screenHeight / 2) {
+				if (screenWidth < screenHeight) {
 					NowPlayingNarrowView(
 						nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
 						screenOnState = screenOnState,
