@@ -4,7 +4,7 @@ import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.saveable.SaverScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.geometry.Offset
@@ -29,19 +29,19 @@ class ScrollConnectedScaler private constructor(private val max: Float, private 
 
 	private val fullDistance = max - min
 
-	private val totalDistanceTraveled = mutableStateOf(initialDistanceTraveled)
+	private val totalDistanceTraveled = mutableFloatStateOf(initialDistanceTraveled)
 
-	private val valueState = derivedStateOf { (max + totalDistanceTraveled.value).coerceIn(min, max) }
+	private val valueState = derivedStateOf { (max + totalDistanceTraveled.floatValue).coerceIn(min, max) }
 
 	private val progress = derivedStateOf { calculateProgress(valueState.value) }
 
 	override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
 		// try to consume before LazyColumn to collapse toolbar if needed, hence pre-scroll
 		val delta = available.y
-		totalDistanceTraveled.value += delta
+		totalDistanceTraveled.floatValue += delta
 
 		if (DebugFlag.isDebugCompilation) {
-			Log.d(logTag, "totalDistanceTraveled: ${totalDistanceTraveled.value}")
+			Log.d(logTag, "totalDistanceTraveled: ${totalDistanceTraveled.floatValue}")
 			Log.d(logTag, "valueState.value: ${valueState.value}")
 		}
 
@@ -49,10 +49,10 @@ class ScrollConnectedScaler private constructor(private val max: Float, private 
 	}
 
 	override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
-		totalDistanceTraveled.value -= available.y
+		totalDistanceTraveled.floatValue -= available.y
 
 		if (DebugFlag.isDebugCompilation) {
-			Log.d(logTag, "totalDistanceTraveled: ${totalDistanceTraveled.value}")
+			Log.d(logTag, "totalDistanceTraveled: ${totalDistanceTraveled.floatValue}")
 			Log.d(logTag, "consumed: ${consumed.y}")
 			Log.d(logTag, "available: ${available.y}")
 		}
@@ -65,20 +65,20 @@ class ScrollConnectedScaler private constructor(private val max: Float, private 
 	fun getValueState(): State<Float> = valueState
 
 	fun goToMax() {
-		totalDistanceTraveled.value = 0f
+		totalDistanceTraveled.floatValue = 0f
 	}
 
 	fun goToMin() {
-		totalDistanceTraveled.value = -fullDistance
+		totalDistanceTraveled.floatValue = -fullDistance
 	}
 
-	private fun calculateProgress(value: Float) = (max - value) / fullDistance
+	private fun calculateProgress(value: Float) = if (fullDistance == 0f) 1f else (max - value) / fullDistance
 
 	object Saver : androidx.compose.runtime.saveable.Saver<ScrollConnectedScaler, Triple<Float, Float, Float>> {
 		override fun restore(value: Triple<Float, Float, Float>): ScrollConnectedScaler =
 			ScrollConnectedScaler(value.first, value.second, value.third)
 
 		override fun SaverScope.save(value: ScrollConnectedScaler): Triple<Float, Float, Float> =
-			Triple(value.max, value.min, value.totalDistanceTraveled.value)
+			Triple(value.max, value.min, value.totalDistanceTraveled.floatValue)
 	}
 }
