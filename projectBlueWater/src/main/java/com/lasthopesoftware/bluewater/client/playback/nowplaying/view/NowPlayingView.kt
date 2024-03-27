@@ -12,6 +12,7 @@ import androidx.compose.foundation.gestures.AnchoredDraggableState
 import androidx.compose.foundation.gestures.DraggableAnchors
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.anchoredDraggable
+import androidx.compose.foundation.gestures.animateTo
 import androidx.compose.foundation.gestures.snapping.SnapLayoutInfoProvider
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -21,6 +22,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.BoxWithConstraintsScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
@@ -205,7 +207,7 @@ private fun PlaylistControls(
 	nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel,
 	playlistViewModel: NowPlayingPlaylistViewModel,
 	playbackServiceController: ControlPlaybackService,
-	onHide: (() -> Unit)? = null,
+	hideButton: (@Composable RowScope.() -> Unit)? = null,
 ) {
 	Row(
 		modifier = modifier,
@@ -280,18 +282,8 @@ private fun PlaylistControls(
 			)
 		}
 
-		if (onHide != null) {
-			Image(
-				painter = painterResource(R.drawable.chevron_up_white_36dp),
-				alpha = playlistControlAlpha,
-				contentDescription = stringResource(R.string.btn_hide_files),
-				modifier = Modifier
-					.clickable(onClick = {
-						playlistViewModel.finishPlaylistEdit()
-						onHide()
-					})
-					.rotate(180f),
-			)
+		if (hideButton != null) {
+			hideButton()
 		}
 	}
 }
@@ -662,10 +654,20 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 									nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
 									playlistViewModel = playlistViewModel,
 									playbackServiceController = playbackServiceController,
-									onHide = {
-										scope.launch {
-											pagerState.animateScrollToItem(0)
-										}
+									hideButton = {
+										Image(
+											painter = painterResource(R.drawable.chevron_up_white_36dp),
+											alpha = playlistControlAlpha,
+											contentDescription = stringResource(R.string.btn_hide_files),
+											modifier = Modifier
+												.clickable(onClick = {
+													playlistViewModel.finishPlaylistEdit()
+													scope.launch {
+														pagerState.animateScrollToItem(0)
+													}
+												})
+												.rotate(180f),
+										)
 									}
 								)
 							}
@@ -711,7 +713,7 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 	}
 }
 
-enum class DragValue { Start, Center, End }
+enum class PlaylistDragValue { Collapsed, Expanded }
 
 @ExperimentalFoundationApi
 @Composable
@@ -729,14 +731,14 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 		if (isEditingPlaylist) playlistViewModel.finishPlaylistEdit()
 	}
 
-	val playlistWidth = screenHeight.coerceAtMost(screenWidth / 2)
 	val draggableState = with (LocalDensity.current) {
 		remember {
+			val playlistWidth = screenHeight.coerceAtMost(screenWidth / 2)
 			AnchoredDraggableState(
-				initialValue = DragValue.End,
+				initialValue = PlaylistDragValue.Expanded,
 				anchors = DraggableAnchors {
-					DragValue.Start at 0f
-					DragValue.End at playlistWidth.toPx()
+					PlaylistDragValue.Collapsed at 0f
+					PlaylistDragValue.Expanded at playlistWidth.toPx()
 				},
 				positionalThreshold = { d -> d * .5f },
 				velocityThreshold = { 100.dp.toPx() },
@@ -802,10 +804,15 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 		Column(
 			modifier = Modifier
 				.fillMaxHeight()
-				.width(LocalDensity.current.run { draggableState.requireOffset().toDp() })
+				.width(LocalDensity.current.run {
+					draggableState
+						.requireOffset()
+						.toDp()
+				})
 				.background(SharedColors.overlayDark),
 			horizontalAlignment = Alignment.CenterHorizontally,
 		) {
+			val scope = rememberCoroutineScope()
 			PlaylistControls(
 				modifier = Modifier
 					.fillMaxWidth()
@@ -813,12 +820,27 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 				nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
 				playlistViewModel = playlistViewModel,
 				playbackServiceController = playbackServiceController,
+				hideButton = {
+					Image(
+						painter = painterResource(R.drawable.chevron_up_white_36dp),
+						alpha = playlistControlAlpha,
+						contentDescription = stringResource(R.string.btn_hide_files),
+						modifier = Modifier
+							.clickable(onClick = {
+								playlistViewModel.finishPlaylistEdit()
+								scope.launch {
+									draggableState.animateTo(PlaylistDragValue.Collapsed)
+								}
+							})
+							.rotate(90f),
+					)
+				}
 			)
 
-			DisposableEffect(key1 = Unit) {
+			if (draggableState.currentValue == PlaylistDragValue.Collapsed) {
 				playlistViewModel.autoScroll()
-
-				onDispose { playlistViewModel.manualScroll() }
+			} else {
+				playlistViewModel.manualScroll()
 			}
 
 			NowPlayingPlaylist(
