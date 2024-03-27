@@ -6,7 +6,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
 
 class DragDropItemScope(private val inner: LazyItemScope, private val key: Any, private val state: DragDropListState) : LazyItemScope by inner {
-	fun Modifier.detectDrag() =
+	fun Modifier.detectDrag() = then(
 		pointerInput(Unit) {
 			detectDragGestures(
 				onDragStart = {
@@ -21,4 +21,5 @@ class DragDropItemScope(private val inner: LazyItemScope, private val key: Any, 
 				onDragCancel = { state.onDragInterrupted() }
 			)
 		}
+	)
 }

@@ -1,12 +1,17 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.LocalOverscrollConfiguration
 import androidx.compose.foundation.OverscrollConfiguration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.AnchoredDraggableState
+import androidx.compose.foundation.gestures.DraggableAnchors
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.anchoredDraggable
 import androidx.compose.foundation.gestures.snapping.SnapLayoutInfoProvider
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -706,6 +711,9 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 	}
 }
 
+enum class DragValue { Start, Center, End }
+
+@ExperimentalFoundationApi
 @Composable
 private fun ScreenDimensionsScope.NowPlayingWideView(
 	nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel,
@@ -721,6 +729,22 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 		if (isEditingPlaylist) playlistViewModel.finishPlaylistEdit()
 	}
 
+	val playlistWidth = screenHeight.coerceAtMost(screenWidth / 2)
+	val draggableState = with (LocalDensity.current) {
+		remember {
+			AnchoredDraggableState(
+				initialValue = DragValue.Start,
+				anchors = DraggableAnchors {
+					DragValue.Start at 0f
+					DragValue.End at playlistWidth.toPx()
+				},
+				positionalThreshold = { d -> d * .5f },
+				velocityThreshold = { 100.dp.toPx() },
+				animationSpec = tween()
+			)
+		}
+	}
+
 	Row(
 		modifier = Modifier.fillMaxSize(),
 	) {
@@ -728,6 +752,7 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 			modifier = Modifier
 				.fillMaxHeight()
 				.weight(1f, fill = true)
+				.anchoredDraggable(draggableState, Orientation.Horizontal, reverseDirection = true)
 				.clickable(
 					interactionSource = remember { MutableInteractionSource() },
 					indication = null,
@@ -774,11 +799,10 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 			)
 		}
 
-		val screenWidth = this@NowPlayingWideView.screenWidth
 		Column(
 			modifier = Modifier
 				.fillMaxHeight()
-				.width(this@NowPlayingWideView.screenHeight.coerceAtMost(screenWidth / 2))
+				.width(LocalDensity.current.run { draggableState.requireOffset().toDp() })
 				.background(SharedColors.overlayDark),
 			horizontalAlignment = Alignment.CenterHorizontally,
 		) {
@@ -810,6 +834,7 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 	}
 }
 
+@ExperimentalFoundationApi
 @Composable
 fun NowPlayingView(
 	nowPlayingCoverArtViewModel: NowPlayingCoverArtViewModel,

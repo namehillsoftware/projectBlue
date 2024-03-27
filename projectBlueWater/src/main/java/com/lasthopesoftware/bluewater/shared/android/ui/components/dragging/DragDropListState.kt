@@ -10,6 +10,8 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -29,7 +31,9 @@ fun rememberDragDropListState(
 	onDragEnd: ((Int, Int) -> Unit)? = null
 ): DragDropListState {
 	val scope = rememberCoroutineScope()
-	return remember(lazyListState) { DragDropListState(lazyListState = lazyListState, scope, onMove = onMove, onDragEnd) }
+	return remember(lazyListState) {
+		DragDropListState(lazyListState = lazyListState, scope, onMove = onMove, onDragEnd)
+	}
 }
 
 class DragDropListState(
@@ -45,11 +49,11 @@ class DragDropListState(
 	private var scrollToNextIndexJob: Job? = null
 	private var overscrollJob: Job? = null
 
-	private var draggedDistance by mutableStateOf(0f)
+	private var draggedDistance by mutableFloatStateOf(0f)
 
 	// used to obtain initial offsets on drag start
 	private var initiallyDraggedElementIndex: Int? = null
-	private var initiallyDraggedElementOffset by mutableStateOf(0)
+	private var initiallyDraggedElementOffset by mutableIntStateOf(0)
 
 	var currentIndexOfDraggedItem by mutableStateOf<Int?>(null)
 		private set
