@@ -733,7 +733,7 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 	val draggableState = with (LocalDensity.current) {
 		remember {
 			AnchoredDraggableState(
-				initialValue = DragValue.Start,
+				initialValue = DragValue.End,
 				anchors = DraggableAnchors {
 					DragValue.Start at 0f
 					DragValue.End at playlistWidth.toPx()
