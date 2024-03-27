@@ -1,12 +1,18 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.LocalOverscrollConfiguration
 import androidx.compose.foundation.OverscrollConfiguration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.AnchoredDraggableState
+import androidx.compose.foundation.gestures.DraggableAnchors
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.anchoredDraggable
+import androidx.compose.foundation.gestures.animateTo
 import androidx.compose.foundation.gestures.snapping.SnapLayoutInfoProvider
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -16,6 +22,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.BoxWithConstraintsScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
@@ -23,6 +30,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
@@ -200,7 +208,7 @@ private fun PlaylistControls(
 	nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel,
 	playlistViewModel: NowPlayingPlaylistViewModel,
 	playbackServiceController: ControlPlaybackService,
-	onHide: (() -> Unit)? = null,
+	hideButton: (@Composable RowScope.() -> Unit)? = null,
 ) {
 	Row(
 		modifier = modifier,
@@ -275,18 +283,8 @@ private fun PlaylistControls(
 			)
 		}
 
-		if (onHide != null) {
-			Image(
-				painter = painterResource(R.drawable.chevron_up_white_36dp),
-				alpha = playlistControlAlpha,
-				contentDescription = stringResource(R.string.btn_hide_files),
-				modifier = Modifier
-					.clickable(onClick = {
-						playlistViewModel.finishPlaylistEdit()
-						onHide()
-					})
-					.rotate(180f),
-			)
+		if (hideButton != null) {
+			hideButton()
 		}
 	}
 }
@@ -657,10 +655,20 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 									nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
 									playlistViewModel = playlistViewModel,
 									playbackServiceController = playbackServiceController,
-									onHide = {
-										scope.launch {
-											pagerState.animateScrollToItem(0)
-										}
+									hideButton = {
+										Image(
+											painter = painterResource(R.drawable.chevron_up_white_36dp),
+											alpha = playlistControlAlpha,
+											contentDescription = stringResource(R.string.btn_hide_files),
+											modifier = Modifier
+												.clickable(onClick = {
+													playlistViewModel.finishPlaylistEdit()
+													scope.launch {
+														pagerState.animateScrollToItem(0)
+													}
+												})
+												.rotate(180f),
+										)
 									}
 								)
 							}
@@ -706,6 +714,9 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 	}
 }
 
+enum class PlaylistDragValue { Collapsed, Expanded }
+
+@ExperimentalFoundationApi
 @Composable
 private fun ScreenDimensionsScope.NowPlayingWideView(
 	nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel,
@@ -721,13 +732,33 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 		if (isEditingPlaylist) playlistViewModel.finishPlaylistEdit()
 	}
 
-	Row(
-		modifier = Modifier.fillMaxSize(),
+	val playlistWidth = screenHeight.coerceAtMost(screenWidth / 2)
+	val draggableState = with (LocalDensity.current) {
+		remember {
+			AnchoredDraggableState(
+				initialValue = PlaylistDragValue.Expanded,
+				anchors = DraggableAnchors {
+					PlaylistDragValue.Collapsed at 0f
+					PlaylistDragValue.Expanded at playlistWidth.toPx()
+				},
+				positionalThreshold = { d -> d * .5f },
+				velocityThreshold = { 100.dp.toPx() },
+				animationSpec = tween()
+			)
+		}
+	}
+
+	val nowPlayingPaneWidth = this@NowPlayingWideView.screenWidth - LocalDensity.current.run { draggableState.requireOffset().toDp() }
+
+	Box(
+		modifier = Modifier
+			.fillMaxSize()
+			.anchoredDraggable(draggableState, Orientation.Horizontal, reverseDirection = true),
 	) {
 		Box(
 			modifier = Modifier
 				.fillMaxHeight()
-				.weight(1f, fill = true)
+				.width(nowPlayingPaneWidth)
 				.clickable(
 					interactionSource = remember { MutableInteractionSource() },
 					indication = null,
@@ -774,14 +805,15 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 			)
 		}
 
-		val screenWidth = this@NowPlayingWideView.screenWidth
 		Column(
 			modifier = Modifier
 				.fillMaxHeight()
-				.width(this@NowPlayingWideView.screenHeight.coerceAtMost(screenWidth / 2))
+				.width(playlistWidth)
+				.offset(x = nowPlayingPaneWidth)
 				.background(SharedColors.overlayDark),
 			horizontalAlignment = Alignment.CenterHorizontally,
 		) {
+			val scope = rememberCoroutineScope()
 			PlaylistControls(
 				modifier = Modifier
 					.fillMaxWidth()
@@ -789,12 +821,27 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 				nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
 				playlistViewModel = playlistViewModel,
 				playbackServiceController = playbackServiceController,
+				hideButton = {
+					Image(
+						painter = painterResource(R.drawable.chevron_up_white_36dp),
+						alpha = playlistControlAlpha,
+						contentDescription = stringResource(R.string.btn_hide_files),
+						modifier = Modifier
+							.clickable(onClick = {
+								playlistViewModel.finishPlaylistEdit()
+								scope.launch {
+									draggableState.animateTo(PlaylistDragValue.Collapsed)
+								}
+							})
+							.rotate(90f),
+					)
+				}
 			)
 
-			DisposableEffect(key1 = Unit) {
+			if (draggableState.currentValue == PlaylistDragValue.Collapsed) {
 				playlistViewModel.autoScroll()
-
-				onDispose { playlistViewModel.manualScroll() }
+			} else {
+				playlistViewModel.manualScroll()
 			}
 
 			NowPlayingPlaylist(
@@ -810,6 +857,7 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 	}
 }
 
+@ExperimentalFoundationApi
 @Composable
 fun NowPlayingView(
 	nowPlayingCoverArtViewModel: NowPlayingCoverArtViewModel,
