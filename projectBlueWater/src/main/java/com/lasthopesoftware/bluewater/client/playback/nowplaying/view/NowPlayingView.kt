@@ -13,6 +13,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.BoxWithConstraintsScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -24,6 +25,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -45,10 +47,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -65,7 +65,10 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.Velocity
+import androidx.compose.ui.unit.coerceAtMost
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -95,6 +98,12 @@ import com.lasthopesoftware.bluewater.shared.android.ui.theme.SharedColors
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 import kotlinx.coroutines.launch
+
+private val controlRowHeight = 72.dp
+private const val playlistControlAlpha = .8f
+
+private class ScreenDimensionsScope(val screenHeight: Dp, val screenWidth: Dp, innerBoxScope: BoxWithConstraintsScope)
+	: BoxWithConstraintsScope by innerBoxScope
 
 @Composable
 private fun NowPlayingCoverArtView(
@@ -150,16 +159,40 @@ private fun KeepScreenOn(keepScreenOn: Boolean) {
 }
 
 @Composable
-private fun NowPlayingProgressIndicator(fileProgress: Float) {
+private fun NowPlayingProgressIndicator(nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel, modifier: Modifier = Modifier) {
+	val filePosition by nowPlayingFilePropertiesViewModel.filePosition.subscribeAsState()
+	val fileDuration by nowPlayingFilePropertiesViewModel.fileDuration.subscribeAsState()
+	val fileProgress by remember { derivedStateOf { filePosition / fileDuration.toFloat() } }
+
 	LinearProgressIndicator(
 		progress = fileProgress,
 		color = Color.White,
 		backgroundColor = Color.White.copy(alpha = .2f),
-		modifier = Modifier.fillMaxWidth()
+		modifier = modifier
 	)
 }
 
-private const val playlistControlAlpha = .8f
+@Composable
+private fun NowPlayingHeadline(modifier: Modifier = Modifier, nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel) {
+	Column(modifier = modifier) {
+		ProvideTextStyle(value = MaterialTheme.typography.h5) {
+			val title by nowPlayingFilePropertiesViewModel.title.subscribeAsState()
+
+			MarqueeText(
+				text = title,
+				gradientEdgeColor = Color.Transparent,
+			)
+		}
+
+		ProvideTextStyle(value = MaterialTheme.typography.subtitle1) {
+			val artist by nowPlayingFilePropertiesViewModel.artist.subscribeAsState()
+			MarqueeText(
+				text = artist,
+				gradientEdgeColor = Color.Transparent,
+			)
+		}
+	}
+}
 
 @Composable
 private fun PlaylistControls(
@@ -167,8 +200,7 @@ private fun PlaylistControls(
 	nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel,
 	playlistViewModel: NowPlayingPlaylistViewModel,
 	playbackServiceController: ControlPlaybackService,
-	onHide: () -> Unit,
-	onEmptyPlaylist: () -> Unit,
+	onHide: (() -> Unit)? = null,
 ) {
 	Row(
 		modifier = modifier,
@@ -200,7 +232,7 @@ private fun PlaylistControls(
 			Image(
 				painter = painterResource(id = R.drawable.clear_all_white_36dp),
 				contentDescription = stringResource(R.string.empty_playlist),
-				modifier = Modifier.clickable(onClick = onEmptyPlaylist),
+				modifier = Modifier.clickable(onClick = playlistViewModel::requestPlaylistClearingPermission),
 				alpha = playlistControlAlpha,
 			)
 		} else {
@@ -243,17 +275,19 @@ private fun PlaylistControls(
 			)
 		}
 
-		Image(
-			painter = painterResource(R.drawable.chevron_up_white_36dp),
-			alpha = playlistControlAlpha,
-			contentDescription = stringResource(R.string.btn_hide_files),
-			modifier = Modifier
-				.clickable(onClick = {
-					playlistViewModel.finishPlaylistEdit()
-					onHide()
-				})
-				.rotate(180f),
-		)
+		if (onHide != null) {
+			Image(
+				painter = painterResource(R.drawable.chevron_up_white_36dp),
+				alpha = playlistControlAlpha,
+				contentDescription = stringResource(R.string.btn_hide_files),
+				modifier = Modifier
+					.clickable(onClick = {
+						playlistViewModel.finishPlaylistEdit()
+						onHide()
+					})
+					.rotate(180f),
+			)
+		}
 	}
 }
 
@@ -273,13 +307,510 @@ private object ConsumeAllVerticalFlingScrollConnection : NestedScrollConnection 
 	override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity = available.copy(x = 0f)
 }
 
-private val controlRowHeight = 72.dp
+@Composable
+private fun NowPlayingRating(nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel) {
+	Column(
+		modifier = Modifier
+			.fillMaxWidth()
+			.height(controlRowHeight),
+		verticalArrangement = Arrangement.Center,
+	) {
+		val rating by nowPlayingFilePropertiesViewModel.songRating.subscribeAsState()
+		val ratingInt by remember { derivedStateOf { rating.toInt() } }
+		val isRatingEnabled by nowPlayingFilePropertiesViewModel.isSongRatingEnabled.subscribeAsState()
+		RatingBar(
+			rating = ratingInt,
+			color = Color.White,
+			backgroundColor = Color.White.copy(alpha = .1f),
+			modifier = Modifier
+				.fillMaxWidth()
+				.height(Dimensions.menuHeight),
+			onRatingSelected = if (isRatingEnabled) {
+				{
+					nowPlayingFilePropertiesViewModel.updateRating(it.toFloat())
+				}
+			} else null
+		)
+
+		val isReadOnly by nowPlayingFilePropertiesViewModel.isReadOnly.subscribeAsState()
+		if (isReadOnly) {
+			ProvideTextStyle(value = MaterialTheme.typography.caption) {
+				Text(
+					text = stringResource(id = R.string.readOnlyConnection)
+				)
+			}
+		}
+	}
+}
+
+@Composable
+private fun NowPlayingPlaybackControls(
+	nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel,
+	playbackServiceController: ControlPlaybackService,
+	modifier: Modifier = Modifier,
+) {
+	Row(
+		modifier = modifier.height(controlRowHeight),
+		verticalAlignment = Alignment.CenterVertically,
+	) {
+		val activeLibraryId by nowPlayingFilePropertiesViewModel.activeLibraryId.subscribeAsState()
+		Image(
+			painter = painterResource(id = R.drawable.av_previous_white),
+			contentDescription = stringResource(id = R.string.btn_previous),
+			modifier = Modifier
+				.weight(1f)
+				.clickable(
+					interactionSource = remember { MutableInteractionSource() },
+					indication = null
+				) {
+					activeLibraryId?.also(playbackServiceController::previous)
+				},
+		)
+
+		PlayPauseButton(
+			nowPlayingFilePropertiesViewModel,
+			playbackServiceController,
+			modifier = Modifier.weight(1f),
+		)
+
+		Image(
+			painter = painterResource(id = R.drawable.av_next_white),
+			contentDescription = stringResource(id = R.string.btn_next),
+			modifier = Modifier
+				.weight(1f)
+				.clickable(
+					interactionSource = remember { MutableInteractionSource() },
+					indication = null
+				) {
+					activeLibraryId?.also(playbackServiceController::next)
+				}
+		)
+	}
+}
+
+@Composable
+fun NowPlayingControls(
+	nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel,
+	playbackServiceController: ControlPlaybackService,
+	modifier: Modifier = Modifier,
+) {
+	Column(modifier = modifier) {
+		NowPlayingRating(nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel)
+
+		Spacer(modifier = Modifier.height(ProgressIndicatorDefaults.StrokeWidth))
+
+		NowPlayingPlaybackControls(
+			nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
+			playbackServiceController = playbackServiceController,
+		)
+	}
+}
+
+@Composable
+fun NowPlayingPlaylist(
+	childItemViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
+	nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel,
+	applicationNavigation: NavigateApplication,
+	playbackServiceController: ControlPlaybackService,
+	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
+	playlistViewModel: NowPlayingPlaylistViewModel,
+	modifier: Modifier = Modifier,
+) {
+	val nowPlayingFiles by playlistViewModel.nowPlayingList.subscribeAsState()
+	val playlist by remember { derivedStateOf { nowPlayingFiles.map { p -> p.serviceFile } } }
+	val activeLibraryId by nowPlayingFilePropertiesViewModel.activeLibraryId.subscribeAsState()
+
+	val dragDropListState = rememberDragDropListState(
+		onMove = { from, to ->
+			playlistViewModel.swapFiles(from, to)
+		},
+		onDragEnd = { from, to ->
+			activeLibraryId?.also {
+				playbackServiceController.moveFile(it, from, to)
+			}
+		}
+	)
+
+	val playingFile by nowPlayingFilePropertiesViewModel.nowPlayingFile.subscribeAsState()
+
+	val isAutoScrollEnabled by playlistViewModel.isAutoScrolling.subscribeAsState()
+	if (isAutoScrollEnabled) {
+		LaunchedEffect(key1 = playingFile) {
+			playingFile?.apply {
+				val listState = dragDropListState.lazyListState
+				if (!listState.isScrollInProgress)
+					listState.scrollToItem(playlistPosition)
+			}
+		}
+	}
+
+	@Composable
+	fun DragDropItemScope.NowPlayingFileView(positionedFile: PositionedFile) {
+		val fileItemViewModel = remember(childItemViewModelProvider::getViewModel)
+
+		DisposableEffect(activeLibraryId, positionedFile) {
+			activeLibraryId?.also {
+				fileItemViewModel.promiseUpdate(it, positionedFile.serviceFile)
+			}
+
+			onDispose {
+				fileItemViewModel.reset()
+			}
+		}
+
+		val isMenuShown by fileItemViewModel.isMenuShown.collectAsState()
+		val fileName by fileItemViewModel.title.collectAsState()
+		val artist by fileItemViewModel.artist.collectAsState()
+		val isPlaying by remember { derivedStateOf { playingFile == positionedFile } }
+
+		val viewFilesClickHandler = {
+			activeLibraryId?.also {
+				applicationNavigation.viewFileDetails(
+					it,
+					playlist,
+					positionedFile.playlistPosition
+				)
+			}
+			Unit
+		}
+
+		val isEditingPlaylist by playlistViewModel.isEditingPlaylistState.subscribeAsState()
+		NowPlayingItemView(
+			itemName = fileName,
+			artist = artist,
+			isActive = isPlaying,
+			isEditingPlaylist = isEditingPlaylist,
+			isHiddenMenuShown = isMenuShown,
+			onItemClick = viewFilesClickHandler,
+			dragDropListState = dragDropListState,
+			onHiddenMenuClick = {
+				if (!isEditingPlaylist) {
+					itemListMenuBackPressedHandler.hideAllMenus()
+					fileItemViewModel.showMenu()
+				}
+			},
+			onRemoveFromNowPlayingClick = {
+				activeLibraryId?.also {
+					playbackServiceController
+						.removeFromPlaylistAtPosition(it, positionedFile.playlistPosition)
+				}
+			},
+			onViewFilesClick = viewFilesClickHandler,
+			onPlayClick = {
+				fileItemViewModel.hideMenu()
+				activeLibraryId?.also {
+					playbackServiceController.seekTo(it, positionedFile.playlistPosition)
+				}
+			}
+		)
+	}
+
+	DragDropLazyColumn(
+		dragDropListState = dragDropListState,
+		modifier = modifier,
+	) {
+		dragDropItems(items = nowPlayingFiles, keyFactory = { _, f -> f }) { _, f ->
+			NowPlayingFileView(positionedFile = f)
+		}
+	}
+}
 
 private val collapsedControlsHeight = ProgressIndicatorDefaults.StrokeWidth + Dimensions.appBarHeight
 private val expandedControlsHeight = controlRowHeight + collapsedControlsHeight
 
 @Composable
 @OptIn(ExperimentalFoundationApi::class)
+fun BoxWithConstraintsScope.NowPlayingNarrowView(
+	nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel,
+	screenOnState: NowPlayingScreenViewModel,
+	playbackServiceController: ControlPlaybackService,
+	playlistViewModel: NowPlayingPlaylistViewModel,
+	childItemViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
+	applicationNavigation: NavigateApplication,
+	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler
+) {
+	val pagerState = rememberLazyListState()
+	val isSettledOnFirstPage by remember { derivedStateOf { pagerState.firstVisibleItemIndex == 0 && pagerState.firstVisibleItemScrollOffset == 0 } }
+	val isNotSettledOnFirstPage by remember { derivedStateOf { !isSettledOnFirstPage } }
+	val isEditingPlaylist by playlistViewModel.isEditingPlaylistState.subscribeAsState()
+
+	val scope = rememberCoroutineScope()
+	BackHandler(isNotSettledOnFirstPage) {
+		when {
+			itemListMenuBackPressedHandler.hideAllMenus() -> {}
+			isEditingPlaylist -> playlistViewModel.finishPlaylistEdit()
+			isNotSettledOnFirstPage -> {
+				playlistViewModel.finishPlaylistEdit()
+				scope.launch { pagerState.animateScrollToItem(0) }
+			}
+		}
+	}
+
+	val isScreenControlsVisible by nowPlayingFilePropertiesViewModel.isScreenControlsVisible.subscribeAsState()
+
+	val filePropertiesHeight = maxHeight - expandedControlsHeight
+
+	val filePropertiesHeightPx = LocalDensity.current.run { filePropertiesHeight.toPx() }
+
+	val firstPageShownProgress by remember {
+		derivedStateOf {
+			pagerState.layoutInfo.visibleItemsInfo
+				.getVisibleItemInfoFor(0)
+				?.run {
+					(filePropertiesHeightPx + offset) / filePropertiesHeightPx
+				}
+				?.coerceIn(0f, 1f)
+				?: 0f
+		}
+	}
+
+	val snappingLayout = remember(pagerState) { SnapLayoutInfoProvider(pagerState) { _, _, _, _, _ -> 0 } }
+
+	CompositionLocalProvider(
+		LocalOverscrollConfiguration provides null
+	) {
+		LazyColumn(
+			flingBehavior = rememberSnapFlingBehavior(snappingLayout),
+			state = pagerState,
+			userScrollEnabled = !isEditingPlaylist,
+		) {
+			item {
+				Box(
+					modifier = Modifier
+						.height(filePropertiesHeight)
+						.nestedScroll(ConsumeAllVerticalFlingScrollConnection)
+						.clickable(
+							interactionSource = remember { MutableInteractionSource() },
+							indication = null,
+							onClick = { nowPlayingFilePropertiesViewModel.showNowPlayingControls() }
+						),
+				) {
+					Row(
+						modifier = Modifier.fillMaxWidth(),
+						horizontalArrangement = Arrangement.SpaceBetween,
+						verticalAlignment = Alignment.CenterVertically
+					) {
+						NowPlayingHeadline(modifier = Modifier.weight(1f), nowPlayingFilePropertiesViewModel)
+
+						if (isScreenControlsVisible) {
+							Row(modifier = Modifier.wrapContentWidth()) {
+								val isScreenOnEnabled by screenOnState.isScreenOnEnabled.collectAsState()
+								Image(
+									painter = painterResource(if (isScreenOnEnabled) R.drawable.ic_screen_on_white_36dp else R.drawable.ic_screen_off_white_36dp),
+									alpha = .8f,
+									contentDescription = stringResource(if (isScreenOnEnabled) R.string.screen_is_on else R.string.screen_is_off),
+									modifier = Modifier
+										.padding(Dimensions.viewPaddingUnit)
+										.clickable(onClick = screenOnState::toggleScreenOn),
+								)
+
+								Image(
+									painter = painterResource(R.drawable.chevron_up_white_36dp),
+									alpha = .8f,
+									contentDescription = stringResource(R.string.btn_view_files),
+									modifier = Modifier
+										.padding(Dimensions.viewPaddingUnit)
+										.clickable(onClick = {
+											scope.launch {
+												pagerState.animateScrollToItem(1)
+											}
+										}),
+								)
+							}
+						}
+					}
+				}
+			}
+
+			item {
+				Column(
+					modifier = Modifier
+						.nestedScroll(ConsumeAllVerticalFlingScrollConnection)
+						.fillMaxSize()
+						.height(maxHeight),
+				) {
+					val controlsHeight by remember {
+						derivedStateOf {
+							linearInterpolation(
+								initial = collapsedControlsHeight,
+								final = expandedControlsHeight,
+								firstPageShownProgress
+							)
+						}
+					}
+
+					Column(
+						modifier = Modifier
+							.fillMaxWidth()
+							.height(controlsHeight),
+						horizontalAlignment = Alignment.CenterHorizontally,
+					) {
+						Box(
+							modifier = Modifier.height(Dimensions.appBarHeight),
+							contentAlignment = Alignment.Center,
+						) {
+							if (isNotSettledOnFirstPage) {
+								PlaylistControls(
+									modifier = Modifier
+										.alpha(1 - firstPageShownProgress)
+										.fillMaxWidth(),
+									nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
+									playlistViewModel = playlistViewModel,
+									playbackServiceController = playbackServiceController,
+									onHide = {
+										scope.launch {
+											pagerState.animateScrollToItem(0)
+										}
+									}
+								)
+							}
+						}
+
+						NowPlayingProgressIndicator(nowPlayingFilePropertiesViewModel, modifier = Modifier.fillMaxWidth())
+					}
+
+					if (isSettledOnFirstPage) {
+						playlistViewModel.autoScroll()
+					} else {
+						playlistViewModel.manualScroll()
+					}
+
+					CompositionLocalProvider(
+						LocalOverscrollConfiguration provides OverscrollConfiguration()
+					) {
+						NowPlayingPlaylist(
+							childItemViewModelProvider,
+							nowPlayingFilePropertiesViewModel,
+							applicationNavigation,
+							playbackServiceController,
+							itemListMenuBackPressedHandler,
+							playlistViewModel,
+							modifier = Modifier
+								.background(SharedColors.overlayDark)
+								.fillMaxHeight()
+						)
+					}
+				}
+			}
+		}
+	}
+
+	if (isSettledOnFirstPage && isScreenControlsVisible) {
+		NowPlayingControls(
+			modifier = Modifier
+				.align(Alignment.BottomCenter)
+				.fillMaxWidth(),
+			nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
+			playbackServiceController = playbackServiceController,
+		)
+	}
+}
+
+@Composable
+private fun ScreenDimensionsScope.NowPlayingWideView(
+	nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel,
+	playbackServiceController: ControlPlaybackService,
+	screenOnState: NowPlayingScreenViewModel,
+	playlistViewModel: NowPlayingPlaylistViewModel,
+	childItemViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
+	applicationNavigation: NavigateApplication,
+	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
+) {
+	val isEditingPlaylist by playlistViewModel.isEditingPlaylistState.subscribeAsState()
+	BackHandler(itemListMenuBackPressedHandler.hideAllMenus() || isEditingPlaylist) {
+		if (isEditingPlaylist) playlistViewModel.finishPlaylistEdit()
+	}
+
+	Row(
+		modifier = Modifier.fillMaxSize(),
+	) {
+		Box(
+			modifier = Modifier
+				.fillMaxHeight()
+				.weight(1f, fill = true)
+				.clickable(
+					interactionSource = remember { MutableInteractionSource() },
+					indication = null,
+					onClick = { nowPlayingFilePropertiesViewModel.showNowPlayingControls() }
+				)
+		) {
+			val isScreenControlsVisible by nowPlayingFilePropertiesViewModel.isScreenControlsVisible.subscribeAsState()
+			Row(
+				modifier = Modifier.fillMaxWidth(),
+				horizontalArrangement = Arrangement.SpaceBetween,
+				verticalAlignment = Alignment.CenterVertically
+			) {
+				NowPlayingHeadline(modifier = Modifier.weight(1f), nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel)
+
+				if (isScreenControlsVisible) {
+					val isScreenOnEnabled by screenOnState.isScreenOnEnabled.collectAsState()
+					Image(
+						painter = painterResource(if (isScreenOnEnabled) R.drawable.ic_screen_on_white_36dp else R.drawable.ic_screen_off_white_36dp),
+						alpha = .8f,
+						contentDescription = stringResource(if (isScreenOnEnabled) R.string.screen_is_on else R.string.screen_is_off),
+						modifier = Modifier
+							.padding(Dimensions.viewPaddingUnit)
+							.clickable(onClick = screenOnState::toggleScreenOn),
+					)
+				}
+			}
+
+			if (isScreenControlsVisible) {
+				NowPlayingControls(
+					modifier = Modifier
+						.align(Alignment.BottomCenter)
+						.fillMaxWidth(),
+					nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
+					playbackServiceController = playbackServiceController,
+				)
+			}
+
+			NowPlayingProgressIndicator(
+				nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
+				modifier = Modifier
+					.fillMaxWidth()
+					.align(Alignment.BottomCenter)
+					.padding(bottom = controlRowHeight)
+			)
+		}
+
+		val screenWidth = this@NowPlayingWideView.screenWidth
+		Column(
+			modifier = Modifier
+				.fillMaxHeight()
+				.width(this@NowPlayingWideView.screenHeight.coerceAtMost(screenWidth / 2))
+				.background(SharedColors.overlayDark),
+			horizontalAlignment = Alignment.CenterHorizontally,
+		) {
+			PlaylistControls(
+				modifier = Modifier
+					.fillMaxWidth()
+					.height(Dimensions.appBarHeight),
+				nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
+				playlistViewModel = playlistViewModel,
+				playbackServiceController = playbackServiceController,
+			)
+
+			DisposableEffect(key1 = Unit) {
+				playlistViewModel.autoScroll()
+
+				onDispose { playlistViewModel.manualScroll() }
+			}
+
+			NowPlayingPlaylist(
+				childItemViewModelProvider,
+				nowPlayingFilePropertiesViewModel,
+				applicationNavigation,
+				playbackServiceController,
+				itemListMenuBackPressedHandler,
+				playlistViewModel,
+				modifier = Modifier.fillMaxHeight()
+			)
+		}
+	}
+}
+
+@Composable
 fun NowPlayingView(
 	nowPlayingCoverArtViewModel: NowPlayingCoverArtViewModel,
 	nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel,
@@ -294,8 +825,6 @@ fun NowPlayingView(
 	val isScreenOn by screenOnState.isScreenOn.collectAsState()
 	KeepScreenOn(isScreenOn)
 
-	var isEmptyPlaylistRequested by remember { mutableStateOf(false) }
-
 	ControlSurface(
 		color = Color.Transparent,
 		contentColor = Color.White,
@@ -303,461 +832,150 @@ fun NowPlayingView(
 	) {
 		NowPlayingCoverArtView(nowPlayingCoverArtViewModel = nowPlayingCoverArtViewModel)
 
-		val pagerState = rememberLazyListState()
-		val isSettledOnFirstPage by remember { derivedStateOf { pagerState.firstVisibleItemIndex == 0 && pagerState.firstVisibleItemScrollOffset == 0 } }
-		val isNotSettledOnFirstPage by remember { derivedStateOf { !isSettledOnFirstPage } }
-		val isEditingPlaylist by playlistViewModel.isEditingPlaylistState.subscribeAsState()
-
-		val scope = rememberCoroutineScope()
-		BackHandler(isNotSettledOnFirstPage) {
-			when {
-				itemListMenuBackPressedHandler.hideAllMenus() -> {}
-				isEditingPlaylist -> playlistViewModel.finishPlaylistEdit()
-				isNotSettledOnFirstPage -> {
-					playlistViewModel.finishPlaylistEdit()
-					scope.launch { pagerState.animateScrollToItem(0) }
-				}
-			}
-		}
-
 		val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
 
-		val filePosition by nowPlayingFilePropertiesViewModel.filePosition.subscribeAsState()
-		val fileDuration by nowPlayingFilePropertiesViewModel.fileDuration.subscribeAsState()
-		val fileProgress by remember { derivedStateOf { filePosition / fileDuration.toFloat() } }
-		val isScreenControlsVisible by nowPlayingFilePropertiesViewModel.isScreenControlsVisible.subscribeAsState()
-
-		val activeLibraryId by nowPlayingFilePropertiesViewModel.activeLibraryId.subscribeAsState()
-
+		// Nest boxes to get proper size constraints
 		BoxWithConstraints(
 			modifier = Modifier
 				.fillMaxSize()
 				.background(SharedColors.overlayDark)
 				.padding(systemBarsPadding),
 		) {
-			val filePropertiesHeight = maxHeight - expandedControlsHeight
-
-			val filePropertiesHeightPx = LocalDensity.current.run { filePropertiesHeight.toPx() }
-
-			val firstPageShownProgress by remember {
+			val screenScope by remember {
 				derivedStateOf {
-					pagerState.layoutInfo.visibleItemsInfo
-						.getVisibleItemInfoFor(0)
-						?.run {
-							(filePropertiesHeightPx + offset) / filePropertiesHeightPx
-						}
-						?.coerceIn(0f, 1f)
-						?: 0f
-				}
-			}
-
-			val snappingLayout = remember(pagerState) { SnapLayoutInfoProvider(pagerState) { _, _, _, _, _ -> 0 } }
-
-			CompositionLocalProvider(
-				LocalOverscrollConfiguration provides null
-			) {
-				LazyColumn(
-					flingBehavior = rememberSnapFlingBehavior(snappingLayout),
-					state = pagerState,
-					userScrollEnabled = !isEditingPlaylist,
-				) {
-					item {
-						Box(
-							modifier = Modifier
-								.height(filePropertiesHeight)
-								.nestedScroll(ConsumeAllVerticalFlingScrollConnection)
-								.clickable(
-									interactionSource = remember { MutableInteractionSource() },
-									indication = null,
-									onClick = { nowPlayingFilePropertiesViewModel.showNowPlayingControls() }
-								),
-						) {
-							Row(
-								modifier = Modifier.fillMaxWidth(),
-								horizontalArrangement = Arrangement.SpaceBetween,
-								verticalAlignment = Alignment.CenterVertically
-							) {
-								Column(
-									modifier = Modifier.weight(1f)
-								) {
-									ProvideTextStyle(value = MaterialTheme.typography.h5) {
-										val title by nowPlayingFilePropertiesViewModel.title.subscribeAsState()
-
-										MarqueeText(
-											text = title,
-											gradientEdgeColor = Color.Transparent,
-										)
-									}
-
-									ProvideTextStyle(value = MaterialTheme.typography.subtitle1) {
-										val artist by nowPlayingFilePropertiesViewModel.artist.subscribeAsState()
-										MarqueeText(
-											text = artist,
-											gradientEdgeColor = Color.Transparent,
-										)
-									}
-								}
-
-								if (isScreenControlsVisible) {
-									Row(modifier = Modifier.wrapContentWidth()) {
-										val isScreenOnEnabled by screenOnState.isScreenOnEnabled.collectAsState()
-										Image(
-											painter = painterResource(if (isScreenOnEnabled) R.drawable.ic_screen_on_white_36dp else R.drawable.ic_screen_off_white_36dp),
-											alpha = .8f,
-											contentDescription = stringResource(if (isScreenOnEnabled) R.string.screen_is_on else R.string.screen_is_off),
-											modifier = Modifier
-												.padding(Dimensions.viewPaddingUnit)
-												.clickable(onClick = screenOnState::toggleScreenOn),
-										)
-
-										Image(
-											painter = painterResource(R.drawable.chevron_up_white_36dp),
-											alpha = .8f,
-											contentDescription = stringResource(R.string.btn_view_files),
-											modifier = Modifier
-												.padding(Dimensions.viewPaddingUnit)
-												.clickable(onClick = {
-													scope.launch {
-														pagerState.animateScrollToItem(1)
-													}
-												}),
-										)
-									}
-								}
-							}
-						}
-					}
-
-					item {
-						Column(
-							modifier = Modifier
-								.nestedScroll(ConsumeAllVerticalFlingScrollConnection)
-								.fillMaxSize()
-								.height(maxHeight),
-						) {
-							val controlsHeight by remember {
-								derivedStateOf {
-									linearInterpolation(
-										initial = collapsedControlsHeight,
-										final = expandedControlsHeight,
-										firstPageShownProgress
-									)
-								}
-							}
-
-							Column(
-								modifier = Modifier
-									.fillMaxWidth()
-									.height(controlsHeight),
-								horizontalAlignment = Alignment.CenterHorizontally,
-							) {
-								Box(
-									modifier = Modifier.height(Dimensions.appBarHeight),
-									contentAlignment = Alignment.Center,
-								) {
-									 if (isNotSettledOnFirstPage) {
-										PlaylistControls(
-											modifier = Modifier
-												.alpha(1 - firstPageShownProgress)
-												.fillMaxWidth(),
-											nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
-											playlistViewModel = playlistViewModel,
-											playbackServiceController = playbackServiceController,
-											onHide = {
-												scope.launch {
-													pagerState.animateScrollToItem(0)
-												}
-											},
-											onEmptyPlaylist = { isEmptyPlaylistRequested = true },
-										)
-									}
-								}
-
-								NowPlayingProgressIndicator(fileProgress = fileProgress)
-							}
-
-							val nowPlayingFiles by playlistViewModel.nowPlayingList.subscribeAsState()
-							val playlist by remember { derivedStateOf { nowPlayingFiles.map { p -> p.serviceFile } } }
-							val playingFile by nowPlayingFilePropertiesViewModel.nowPlayingFile.subscribeAsState()
-
-							val reorderableState = rememberDragDropListState(
-								onMove = { from, to ->
-									playlistViewModel.swapFiles(from, to)
-								},
-								onDragEnd = { from, to ->
-									activeLibraryId?.also {
-										playbackServiceController.moveFile(it, from, to)
-									}
-								}
-							)
-
-							@Composable
-							fun DragDropItemScope.NowPlayingFileView(positionedFile: PositionedFile) {
-								val fileItemViewModel = remember(childItemViewModelProvider::getViewModel)
-
-								DisposableEffect(activeLibraryId, positionedFile) {
-									activeLibraryId?.also {
-										fileItemViewModel.promiseUpdate(it, positionedFile.serviceFile)
-									}
-
-									onDispose {
-										fileItemViewModel.reset()
-									}
-								}
-
-								val isMenuShown by fileItemViewModel.isMenuShown.collectAsState()
-								val fileName by fileItemViewModel.title.collectAsState()
-								val artist by fileItemViewModel.artist.collectAsState()
-								val isPlaying by remember { derivedStateOf { playingFile == positionedFile } }
-
-								val viewFilesClickHandler = {
-									activeLibraryId?.also {
-										applicationNavigation.viewFileDetails(
-											it,
-											playlist,
-											positionedFile.playlistPosition
-										)
-									}
-									Unit
-								}
-
-								NowPlayingItemView(
-									itemName = fileName,
-									artist = artist,
-									isActive = isPlaying,
-									isEditingPlaylist = isEditingPlaylist,
-									isHiddenMenuShown = isMenuShown,
-									onItemClick = viewFilesClickHandler,
-									dragDropListState = reorderableState,
-									onHiddenMenuClick = {
-										if (!isEditingPlaylist) {
-											itemListMenuBackPressedHandler.hideAllMenus()
-											fileItemViewModel.showMenu()
-										}
-									},
-									onRemoveFromNowPlayingClick = {
-										activeLibraryId?.also {
-											playbackServiceController
-												.removeFromPlaylistAtPosition(it, positionedFile.playlistPosition)
-										}
-									},
-									onViewFilesClick = viewFilesClickHandler,
-									onPlayClick = {
-										fileItemViewModel.hideMenu()
-										activeLibraryId?.also {
-											playbackServiceController.seekTo(it, positionedFile.playlistPosition)
-										}
-									}
-								)
-							}
-
-							if (isSettledOnFirstPage) {
-								LaunchedEffect(key1 = playingFile) {
-									playingFile?.apply {
-										reorderableState.lazyListState.scrollToItem(playlistPosition)
-									}
-								}
-							}
-
-							CompositionLocalProvider(
-								LocalOverscrollConfiguration provides OverscrollConfiguration()
-							) {
-								DragDropLazyColumn(
-									dragDropListState = reorderableState,
-									modifier = Modifier
-										.background(SharedColors.overlayDark)
-										.fillMaxHeight(),
-								) {
-									dragDropItems(items = nowPlayingFiles, keyFactory = { _, f -> f }) { _, f ->
-										NowPlayingFileView(positionedFile = f)
-									}
-								}
-							}
-
-							val isSavingPlaylistActive by playlistViewModel.isSavingPlaylistActive.subscribeAsState()
-							if (isSavingPlaylistActive) {
-								Dialog(
-									onDismissRequest = { playlistViewModel.disableSavingPlaylist() },
-								) {
-									val selectedPlaylistPath by playlistViewModel.selectedPlaylistPath.subscribeAsState()
-
-									BackHandler(selectedPlaylistPath.isNotEmpty()) {
-										playlistViewModel.updateSelectedPlaylistPath("")
-									}
-
-									ControlSurface {
-										Column(
-											modifier = Modifier
-												.padding(Dimensions.viewPaddingUnit * 2)
-												.fillMaxWidth()
-												.fillMaxHeight(.8f),
-										) {
-											Row(
-												modifier = Modifier
-													.fillMaxWidth()
-													.padding(bottom = Dimensions.viewPaddingUnit * 4)
-											) {
-												ProvideTextStyle(MaterialTheme.typography.h5) {
-													Text(
-														text = stringResource(id = R.string.save_playlist),
-														modifier = Modifier
-															.weight(1f)
-															.align(Alignment.CenterVertically),
-													)
-												}
-
-												Icon(
-													painter = painterResource(id = R.drawable.ic_remove_item_white_36dp),
-													contentDescription = stringResource(id = R.string.btn_cancel),
-													modifier = Modifier
-														.clickable { playlistViewModel.disableSavingPlaylist() }
-														.align(Alignment.CenterVertically),
-												)
-											}
-
-											TextField(
-												value = selectedPlaylistPath,
-												onValueChange = playlistViewModel::updateSelectedPlaylistPath,
-												modifier = Modifier.fillMaxWidth(),
-												placeholder = { Text(stringResource(R.string.new_or_existing_playlist_path)) },
-												singleLine = true,
-											)
-
-											val filteredPlaylistPaths by playlistViewModel.filteredPlaylistPaths.subscribeAsState()
-
-											Box(
-												modifier = Modifier
-													.fillMaxWidth()
-													.weight(1f)
-											) {
-												ProvideTextStyle(value = MaterialTheme.typography.h6.copy(fontWeight = FontWeight.Normal)) {
-													LazyColumn(
-														modifier = Modifier.fillMaxWidth()
-													) {
-														items(filteredPlaylistPaths) { playlistPath ->
-															Row(
-																modifier = Modifier
-																	.height(Dimensions.standardRowHeight)
-																	.fillMaxWidth()
-																	.clickable {
-																		playlistViewModel.updateSelectedPlaylistPath(
-																			playlistPath
-																		)
-																	},
-																verticalAlignment = Alignment.CenterVertically,
-															) {
-																Text(text = playlistPath)
-															}
-														}
-													}
-												}
-											}
-
-											val isPlaylistPathValid by playlistViewModel.isPlaylistPathValid.subscribeAsState()
-
-											if (isPlaylistPathValid) {
-												Row(
-													modifier = Modifier
-														.fillMaxWidth()
-														.padding(Dimensions.viewPaddingUnit)
-												) {
-													Icon(
-														painter = painterResource(id = R.drawable.ic_save_white_36dp),
-														contentDescription = stringResource(id = R.string.save),
-														modifier = Modifier
-															.fillMaxWidth()
-															.weight(1f)
-															.clickable { playlistViewModel.savePlaylist() }
-															.align(Alignment.CenterVertically),
-													)
-												}
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-
-			if (isSettledOnFirstPage && isScreenControlsVisible) {
-				Column(modifier = Modifier
-					.align(Alignment.BottomCenter)
-					.fillMaxWidth()
-				) {
-					Column(
-						modifier = Modifier
-							.fillMaxWidth()
-							.height(controlRowHeight),
-						verticalArrangement = Arrangement.Center,
-					) {
-						val rating by nowPlayingFilePropertiesViewModel.songRating.subscribeAsState()
-						val ratingInt by remember { derivedStateOf { rating.toInt() } }
-						val isRatingEnabled by nowPlayingFilePropertiesViewModel.isSongRatingEnabled.subscribeAsState()
-						RatingBar(
-							rating = ratingInt,
-							color = Color.White,
-							backgroundColor = Color.White.copy(alpha = .1f),
-							modifier = Modifier
-								.fillMaxWidth()
-								.height(Dimensions.menuHeight),
-							onRatingSelected = if (isRatingEnabled) {
-								{
-									nowPlayingFilePropertiesViewModel.updateRating(it.toFloat())
-								}
-							} else null
+					with (this@BoxWithConstraints) {
+						ScreenDimensionsScope(
+							maxHeight + systemBarsPadding.calculateTopPadding() + systemBarsPadding.calculateBottomPadding(),
+							maxWidth  + systemBarsPadding.calculateLeftPadding(LayoutDirection.Ltr) + systemBarsPadding.calculateRightPadding(LayoutDirection.Ltr),
+							this
 						)
-
-						val isReadOnly by nowPlayingFilePropertiesViewModel.isReadOnly.subscribeAsState()
-						if (isReadOnly) {
-							ProvideTextStyle(value = MaterialTheme.typography.caption) {
-								Text(
-									text = stringResource(id = R.string.readOnlyConnection)
-								)
-							}
-						}
 					}
+				}
+			}
 
-					Spacer(modifier = Modifier.height(ProgressIndicatorDefaults.StrokeWidth))
+			with (screenScope) {
+				if (screenWidth < screenHeight) {
+					NowPlayingNarrowView(
+						nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
+						screenOnState = screenOnState,
+						playbackServiceController = playbackServiceController,
+						playlistViewModel = playlistViewModel,
+						childItemViewModelProvider = childItemViewModelProvider,
+						applicationNavigation = applicationNavigation,
+						itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
+					)
+				} else {
+					NowPlayingWideView(
+						nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
+						screenOnState = screenOnState,
+						playbackServiceController = playbackServiceController,
+						playlistViewModel = playlistViewModel,
+						childItemViewModelProvider = childItemViewModelProvider,
+						applicationNavigation = applicationNavigation,
+						itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
+					)
+				}
+			}
+		}
+	}
 
+	val isSavingPlaylistActive by playlistViewModel.isSavingPlaylistActive.subscribeAsState()
+	if (isSavingPlaylistActive) {
+		Dialog(
+			onDismissRequest = { playlistViewModel.disableSavingPlaylist() },
+		) {
+			val selectedPlaylistPath by playlistViewModel.selectedPlaylistPath.subscribeAsState()
+
+			BackHandler(selectedPlaylistPath.isNotEmpty()) {
+				playlistViewModel.updateSelectedPlaylistPath("")
+			}
+
+			ControlSurface {
+				Column(
+					modifier = Modifier
+						.padding(Dimensions.viewPaddingUnit * 2)
+						.fillMaxWidth()
+						.fillMaxHeight(.8f),
+				) {
 					Row(
 						modifier = Modifier
 							.fillMaxWidth()
-							.height(controlRowHeight),
-						verticalAlignment = Alignment.CenterVertically,
+							.padding(bottom = Dimensions.viewPaddingUnit * 4)
 					) {
-						Image(
-							painter = painterResource(id = R.drawable.av_previous_white),
-							contentDescription = stringResource(id = R.string.btn_previous),
-							modifier = Modifier
-								.weight(1f)
-								.clickable(
-									interactionSource = remember { MutableInteractionSource() },
-									indication = null
-								) {
-									activeLibraryId?.also(playbackServiceController::previous)
-								},
-						)
+						ProvideTextStyle(MaterialTheme.typography.h5) {
+							Text(
+								text = stringResource(id = R.string.save_playlist),
+								modifier = Modifier
+									.weight(1f)
+									.align(Alignment.CenterVertically),
+							)
+						}
 
-						PlayPauseButton(
-							nowPlayingFilePropertiesViewModel,
-							playbackServiceController,
-							modifier = Modifier.weight(1f),
-						)
-
-						Image(
-							painter = painterResource(id = R.drawable.av_next_white),
-							contentDescription = stringResource(id = R.string.btn_next),
+						Icon(
+							painter = painterResource(id = R.drawable.ic_remove_item_white_36dp),
+							contentDescription = stringResource(id = R.string.btn_cancel),
 							modifier = Modifier
-								.weight(1f)
-								.clickable(
-									interactionSource = remember { MutableInteractionSource() },
-									indication = null
-								) {
-									activeLibraryId?.also(playbackServiceController::next)
+								.clickable { playlistViewModel.disableSavingPlaylist() }
+								.align(Alignment.CenterVertically),
+						)
+					}
+
+					TextField(
+						value = selectedPlaylistPath,
+						onValueChange = playlistViewModel::updateSelectedPlaylistPath,
+						modifier = Modifier.fillMaxWidth(),
+						placeholder = { Text(stringResource(R.string.new_or_existing_playlist_path)) },
+						singleLine = true,
+					)
+
+					val filteredPlaylistPaths by playlistViewModel.filteredPlaylistPaths.subscribeAsState()
+
+					Box(
+						modifier = Modifier
+							.fillMaxWidth()
+							.weight(1f)
+					) {
+						ProvideTextStyle(value = MaterialTheme.typography.h6.copy(fontWeight = FontWeight.Normal)) {
+							LazyColumn(
+								modifier = Modifier.fillMaxWidth()
+							) {
+								items(filteredPlaylistPaths) { playlistPath ->
+									Row(
+										modifier = Modifier
+											.height(Dimensions.standardRowHeight)
+											.fillMaxWidth()
+											.clickable {
+												playlistViewModel.updateSelectedPlaylistPath(
+													playlistPath
+												)
+											},
+										verticalAlignment = Alignment.CenterVertically,
+									) {
+										Text(text = playlistPath)
+									}
 								}
-						)
+							}
+						}
+					}
+
+					val isPlaylistPathValid by playlistViewModel.isPlaylistPathValid.subscribeAsState()
+
+					if (isPlaylistPathValid) {
+						Row(
+							modifier = Modifier
+								.fillMaxWidth()
+								.padding(Dimensions.viewPaddingUnit)
+						) {
+							Icon(
+								painter = painterResource(id = R.drawable.ic_save_white_36dp),
+								contentDescription = stringResource(id = R.string.save),
+								modifier = Modifier
+									.fillMaxWidth()
+									.weight(1f)
+									.clickable { playlistViewModel.savePlaylist() }
+									.align(Alignment.CenterVertically),
+							)
+						}
 					}
 				}
 			}
@@ -799,9 +1017,10 @@ fun NowPlayingView(
 		)
 	}
 
+	val isEmptyPlaylistRequested by playlistViewModel.isClearingPlaylistRequested.subscribeAsState()
 	if (isEmptyPlaylistRequested) {
 		AlertDialog(
-			onDismissRequest = { isEmptyPlaylistRequested = false },
+			onDismissRequest = { playlistViewModel.clearPlaylistIfGranted() },
 			title = { Text(text = stringResource(id = R.string.empty_playlist)) },
 			text = {
 				Text(
@@ -817,7 +1036,7 @@ fun NowPlayingView(
 				) {
 					Button(
 						onClick = {
-							isEmptyPlaylistRequested = false
+							playlistViewModel.clearPlaylistIfGranted()
 						},
 					) {
 						Text(text = stringResource(id = R.string.btn_cancel))
@@ -825,8 +1044,8 @@ fun NowPlayingView(
 
 					Button(
 						onClick = {
-							playlistViewModel.clearPlaylist()
-							isEmptyPlaylistRequested = false
+							playlistViewModel.grantPlaylistClearing()
+							playlistViewModel.clearPlaylistIfGranted()
 						},
 					) {
 						Text(text = stringResource(id = R.string.yes))

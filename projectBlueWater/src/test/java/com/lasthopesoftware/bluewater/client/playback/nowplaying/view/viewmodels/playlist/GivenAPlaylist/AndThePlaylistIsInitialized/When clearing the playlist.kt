@@ -50,11 +50,11 @@ class `When clearing the playlist` {
 	@BeforeAll
 	fun act() {
 		mut.initializeView(LibraryId(libraryId)).toExpiringFuture().get()
-		mut.clearPlaylist().toExpiringFuture().get()
+		mut.clearPlaylistIfGranted().toExpiringFuture().get()
 	}
 
 	@Test
-	fun `then the playlist is cleared for the correct library`() {
-		assertThat(clearedPlaylistLibraryId).isEqualTo(LibraryId(libraryId))
+	fun `then the playlist is not cleared`() {
+		assertThat(clearedPlaylistLibraryId).isNull()
 	}
 }

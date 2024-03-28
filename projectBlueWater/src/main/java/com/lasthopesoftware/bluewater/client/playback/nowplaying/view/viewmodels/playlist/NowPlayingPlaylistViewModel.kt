@@ -38,6 +38,9 @@ class NowPlayingPlaylistViewModel(
 	private val mutableIsSavingPlaylistActive = MutableInteractionState(false)
 	private val mutableSelectedPlaylistPath = MutableInteractionState("")
 	private val mutableIsPlaylistPathValid = MutableInteractionState(false)
+	private val mutableIsAutoScrolling = MutableInteractionState(false)
+	private val mutableIsClearingPlaylistRequested = MutableInteractionState(false)
+	private val mutableIsClearingPlaylistRequestGranted = MutableInteractionState(false)
 
 	val isRepeating = isRepeatingState.asInteractionState()
 	val isEditingPlaylistState = mutableEditingPlaylistState.asInteractionState()
@@ -46,14 +49,25 @@ class NowPlayingPlaylistViewModel(
 	val isSavingPlaylistActive = mutableIsSavingPlaylistActive.asInteractionState()
 	val selectedPlaylistPath = mutableSelectedPlaylistPath.asInteractionState()
 	val isPlaylistPathValid = mutableIsPlaylistPathValid.asInteractionState()
+	val isAutoScrolling = mutableIsAutoScrolling.asInteractionState()
+	override val isClearingPlaylistRequested = mutableIsClearingPlaylistRequested.asInteractionState()
+	override val isClearingPlaylistRequestGranted = mutableIsClearingPlaylistRequestGranted.asInteractionState()
+
+	override val isEditingPlaylist: Boolean
+		get() = isEditingPlaylistState.value
 
 	fun initializeView(libraryId: LibraryId): Promise<Unit> {
 		activeLibraryId = libraryId
 		return updateViewFromRepository().unitResponse()
 	}
 
-	override val isEditingPlaylist: Boolean
-		get() = isEditingPlaylistState.value
+	fun autoScroll() {
+		mutableIsAutoScrolling.value = true
+	}
+
+	fun manualScroll() {
+		mutableIsAutoScrolling.value = false
+	}
 
 	override fun editPlaylist() {
 		mutableEditingPlaylistState.value = true
@@ -108,8 +122,20 @@ class NowPlayingPlaylistViewModel(
 		}
 	}
 
-	fun clearPlaylist(): Promise<*> {
-		activeLibraryId?.also(playbackService::clearPlaylist)
+	override fun requestPlaylistClearingPermission() {
+		mutableIsClearingPlaylistRequested.value = true
+	}
+
+	override fun grantPlaylistClearing() {
+		mutableIsClearingPlaylistRequestGranted.value = isClearingPlaylistRequested.value
+	}
+
+	override fun clearPlaylistIfGranted(): Promise<*> {
+		if (isClearingPlaylistRequestGranted.value)
+			activeLibraryId?.also(playbackService::clearPlaylist)
+
+		mutableIsClearingPlaylistRequested.value = false
+		mutableIsClearingPlaylistRequestGranted.value = false
 		return Unit.toPromise()
 	}
 
