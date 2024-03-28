@@ -751,13 +751,14 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 	val nowPlayingPaneWidth = this@NowPlayingWideView.screenWidth - LocalDensity.current.run { draggableState.requireOffset().toDp() }
 
 	Box(
-		modifier = Modifier.fillMaxSize(),
+		modifier = Modifier
+			.fillMaxSize()
+			.anchoredDraggable(draggableState, Orientation.Horizontal, reverseDirection = true),
 	) {
 		Box(
 			modifier = Modifier
 				.fillMaxHeight()
 				.width(nowPlayingPaneWidth)
-				.anchoredDraggable(draggableState, Orientation.Horizontal, reverseDirection = true)
 				.clickable(
 					interactionSource = remember { MutableInteractionSource() },
 					indication = null,
