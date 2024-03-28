@@ -30,6 +30,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
@@ -731,9 +732,9 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 		if (isEditingPlaylist) playlistViewModel.finishPlaylistEdit()
 	}
 
+	val playlistWidth = screenHeight.coerceAtMost(screenWidth / 2)
 	val draggableState = with (LocalDensity.current) {
 		remember {
-			val playlistWidth = screenHeight.coerceAtMost(screenWidth / 2)
 			AnchoredDraggableState(
 				initialValue = PlaylistDragValue.Expanded,
 				anchors = DraggableAnchors {
@@ -747,13 +748,15 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 		}
 	}
 
-	Row(
+	val nowPlayingPaneWidth = this@NowPlayingWideView.screenWidth - LocalDensity.current.run { draggableState.requireOffset().toDp() }
+
+	Box(
 		modifier = Modifier.fillMaxSize(),
 	) {
 		Box(
 			modifier = Modifier
 				.fillMaxHeight()
-				.weight(1f, fill = true)
+				.width(nowPlayingPaneWidth)
 				.anchoredDraggable(draggableState, Orientation.Horizontal, reverseDirection = true)
 				.clickable(
 					interactionSource = remember { MutableInteractionSource() },
@@ -804,11 +807,8 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 		Column(
 			modifier = Modifier
 				.fillMaxHeight()
-				.width(LocalDensity.current.run {
-					draggableState
-						.requireOffset()
-						.toDp()
-				})
+				.width(playlistWidth)
+				.offset(x = nowPlayingPaneWidth)
 				.background(SharedColors.overlayDark),
 			horizontalAlignment = Alignment.CenterHorizontally,
 		) {
