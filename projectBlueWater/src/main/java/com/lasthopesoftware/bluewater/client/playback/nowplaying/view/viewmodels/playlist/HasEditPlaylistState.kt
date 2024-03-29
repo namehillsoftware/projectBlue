@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodel
 import com.lasthopesoftware.bluewater.shared.observables.InteractionState
 
 interface HasEditPlaylistState {
-	val isEditingPlaylist : Boolean
+	val isEditingPlaylist: InteractionState<Boolean>
 	val isClearingPlaylistRequested: InteractionState<Boolean>
 	val isClearingPlaylistRequestGranted: InteractionState<Boolean>
 }

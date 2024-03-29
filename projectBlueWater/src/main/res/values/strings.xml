@@ -135,4 +135,6 @@
     <string name="nothing_playing">Nothing Playing</string>
     <string name="empty_playlist_confirmation">Are you sure you want to empty the playlist?</string>
     <string name="log_to_file">Log to File</string>
+    <string name="scroll_to_now_playing_item">Scroll to Now Playing Item</string>
+    <string name="auto_scroll_to_now_playing_item">Auto Scroll to Now Playing Item</string>
 </resources>

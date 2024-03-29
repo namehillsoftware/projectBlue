@@ -497,6 +497,7 @@ private fun LibraryDestination.Navigate(
 					applicationNavigation = applicationNavigation,
 					itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
 					connectionWatcherViewModel = connectionWatcherViewModel,
+					viewModelMessageBus = nowPlayingViewModelMessageBus
 				)
 
 				val context = LocalContext.current
