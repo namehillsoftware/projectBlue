@@ -10,11 +10,13 @@ import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messa
 import com.lasthopesoftware.bluewater.shared.android.ui.components.dragging.move
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
+import com.lasthopesoftware.bluewater.shared.observables.LiftedInteractionState
 import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.promises.extensions.unitResponse
 import com.namehillsoftware.handoff.promises.Promise
+import io.reactivex.rxjava3.core.Observable
 
 class NowPlayingPlaylistViewModel(
 	applicationMessages: RegisterForApplicationMessages,
@@ -31,6 +33,7 @@ class NowPlayingPlaylistViewModel(
 	private var loadedPlaylistPaths = emptyList<String>()
 	private val playlistChangedSubscription = applicationMessages.registerReceiver(this)
 
+	private val autoScrollChangeableLatch = MutableInteractionState(true)
 	private val isRepeatingState = MutableInteractionState(false)
 	private val mutableEditingPlaylistState = MutableInteractionState(false)
 	private val nowPlayingListState = MutableInteractionState(emptyList<PositionedFile>())
@@ -38,43 +41,60 @@ class NowPlayingPlaylistViewModel(
 	private val mutableIsSavingPlaylistActive = MutableInteractionState(false)
 	private val mutableSelectedPlaylistPath = MutableInteractionState("")
 	private val mutableIsPlaylistPathValid = MutableInteractionState(false)
-	private val mutableIsAutoScrolling = MutableInteractionState(false)
+	private val mutableIsSystemAutoScrolling = MutableInteractionState(false)
+	private val mutableIsUserAutoScrolling = MutableInteractionState(false)
 	private val mutableIsClearingPlaylistRequested = MutableInteractionState(false)
 	private val mutableIsClearingPlaylistRequestGranted = MutableInteractionState(false)
 
 	val isRepeating = isRepeatingState.asInteractionState()
-	val isEditingPlaylistState = mutableEditingPlaylistState.asInteractionState()
 	val nowPlayingList = nowPlayingListState.asInteractionState()
 	val filteredPlaylistPaths = mutableFilteredPlaylistPaths.asInteractionState()
 	val isSavingPlaylistActive = mutableIsSavingPlaylistActive.asInteractionState()
 	val selectedPlaylistPath = mutableSelectedPlaylistPath.asInteractionState()
 	val isPlaylistPathValid = mutableIsPlaylistPathValid.asInteractionState()
-	val isAutoScrolling = mutableIsAutoScrolling.asInteractionState()
+	val isUserAutoScrolling = mutableIsUserAutoScrolling.asInteractionState()
+	val isAutoScrolling = LiftedInteractionState(
+		Observable
+			.combineLatest(
+				mutableIsSystemAutoScrolling,
+				mutableIsUserAutoScrolling,
+				autoScrollChangeableLatch
+			) { system, user, latch -> latch.value && (system.value || user.value) },
+		false
+	)
+	override val isEditingPlaylist = mutableEditingPlaylistState.asInteractionState()
 	override val isClearingPlaylistRequested = mutableIsClearingPlaylistRequested.asInteractionState()
 	override val isClearingPlaylistRequestGranted = mutableIsClearingPlaylistRequestGranted.asInteractionState()
-
-	override val isEditingPlaylist: Boolean
-		get() = isEditingPlaylistState.value
 
 	fun initializeView(libraryId: LibraryId): Promise<Unit> {
 		activeLibraryId = libraryId
 		return updateViewFromRepository().unitResponse()
 	}
 
-	fun autoScroll() {
-		mutableIsAutoScrolling.value = true
+	fun enableUserAutoScrolling() {
+		mutableIsUserAutoScrolling.value = true
 	}
 
-	fun manualScroll() {
-		mutableIsAutoScrolling.value = false
+	fun disableUserAutoScrolling() {
+		mutableIsUserAutoScrolling.value = false
+	}
+
+	fun enableSystemAutoScrolling() {
+		mutableIsSystemAutoScrolling.value = true
+	}
+
+	fun disableSystemAutoScrolling() {
+		mutableIsSystemAutoScrolling.value = false
 	}
 
 	override fun editPlaylist() {
 		mutableEditingPlaylistState.value = true
+		autoScrollChangeableLatch.value = false
 	}
 
 	override fun finishPlaylistEdit() {
 		mutableEditingPlaylistState.value = false
+		autoScrollChangeableLatch.value = true
 		disableSavingPlaylist()
 	}
 

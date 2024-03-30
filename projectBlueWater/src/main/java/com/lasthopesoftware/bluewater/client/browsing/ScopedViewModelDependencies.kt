@@ -4,9 +4,11 @@ import androidx.lifecycle.ViewModelStoreOwner
 import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.list.SearchFilesViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingMessage
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsViewModel
 import com.lasthopesoftware.bluewater.client.settings.PermissionsDependencies
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.view.ActiveFileDownloadsViewModel
+import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 
 class ScopedViewModelDependencies(inner: BrowserViewDependencies, permissionsDependencies: PermissionsDependencies, viewModelStoreOwner: ViewModelStoreOwner) : ScopedBrowserViewDependencies, BrowserViewDependencies by inner {
@@ -45,5 +47,9 @@ class ScopedViewModelDependencies(inner: BrowserViewDependencies, permissionsDep
 			libraryRemoval = libraryRemoval,
 			applicationPermissions = permissionsDependencies.applicationPermissions,
 		)
+	}
+
+	override val nowPlayingViewModelMessageBus by viewModelStoreOwner.buildViewModelLazily {
+		ViewModelMessageBus<NowPlayingMessage>()
 	}
 }
