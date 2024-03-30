@@ -5,7 +5,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material.Icon
 import androidx.compose.material.LocalContentColor
 import androidx.compose.material.Text
@@ -119,14 +118,14 @@ fun MenuIcon(
 ) {
 	Column(
 		horizontalAlignment = Alignment.CenterHorizontally,
-		modifier = modifier
+		modifier = Modifier
 			.clickable(
 				interactionSource = interactionSource,
 				indication = rememberRipple(),
 				onClick = onClick,
 				enabled = enabled,
 			)
-			.wrapContentWidth(),
+			.then(modifier)
 	) {
 		icon()
 

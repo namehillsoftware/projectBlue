@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -85,10 +86,10 @@ import kotlin.math.roundToInt
 private const val expandedTitleHeight = 84
 private val appBarHeight = Dimensions.appBarHeight.value
 private val iconSize = Dimensions.topMenuIconSize
-private val minimumMenuWidth = iconSize * 3
+private val minimumMenuWidth = (iconSize + Dimensions.viewPaddingUnit * 2) * 3
 
 private val expandedIconSize = Dimensions.menuHeight.value
-private val expandedMenuVerticalPadding = 12
+private const val expandedMenuVerticalPadding = 12
 private val boxHeight = (expandedTitleHeight + appBarHeight + expandedIconSize + expandedMenuVerticalPadding * 2).dp
 
 @Composable
@@ -437,7 +438,7 @@ fun ItemListView(
 					maxLines = 1,
 					fontWeight = FontWeight.Normal,
 					modifier = Modifier
-						.padding(12.dp)
+						.padding(Dimensions.viewPaddingUnit * 3)
 						.align(Alignment.CenterStart),
 				)
 			}
@@ -746,7 +747,8 @@ fun ItemListView(
 											end = Dimensions.viewPaddingUnit * 2
 										)
 										.width(menuWidth)
-										.align(Alignment.TopEnd)
+										.align(Alignment.TopEnd),
+									horizontalArrangement = Arrangement.SpaceEvenly,
 								) {
 									if (files.any()) {
 										LabelledPlayButton(
