@@ -40,7 +40,7 @@ class MediaStylePaletteProvider(private val context: Context) {
 	private val mBlackWhiteFilter: Palette.Filter =
 		Palette.Filter { _, hsl -> isNotWhiteOrBlack(hsl) }
 
-	fun promisePalette(drawable: Drawable): Promise<MediaStylePalette> =
+	private fun promisePalette(drawable: Drawable): Promise<MediaStylePalette> =
 		QueuedPromise(MessageWriter { getMediaPalette(drawable) }, ThreadPools.compute)
 
 	fun promisePalette(bitmap: Bitmap): Promise<MediaStylePalette> {
@@ -52,15 +52,15 @@ class MediaStylePaletteProvider(private val context: Context) {
 	 * Processes a drawable and calculates the appropriate colors that should
 	 * be used.
 	 */
-	private fun getMediaPalette(drawable: Drawable): MediaStylePalette? {
+	private fun getMediaPalette(drawable: Drawable): MediaStylePalette {
 		// We're transforming the builder, let's make sure all baked in RemoteViews are
 		// rebuilt!
 		var width = drawable.intrinsicWidth
 		var height = drawable.intrinsicHeight
 		val area = width * height
-		if (area <= RESIZE_BITMAP_AREA) return null
+		val maxBitmapArea = RESIZE_BITMAP_AREA.coerceAtMost(area)
 
-		val factor = sqrt((RESIZE_BITMAP_AREA.toFloat() / area).toDouble())
+		val factor = sqrt(maxBitmapArea.toDouble() / area)
 		width = (factor * width).toInt()
 		height = (factor * height).toInt()
 		val bitmap: Bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
@@ -73,8 +73,8 @@ class MediaStylePaletteProvider(private val context: Context) {
 		val paletteBuilder = Palette.from(bitmap)
 			.setRegion(0, bitmap.height / 2, bitmap.width, bitmap.height)
 			.clearFilters() // we want all colors, red / white / black ones too!
-			.resizeBitmapArea(RESIZE_BITMAP_AREA)
-		val backgroundColor = findBackgroundColorAndFilter(drawable)
+			.resizeBitmapArea(maxBitmapArea)
+		val backgroundColor = findBackgroundColorAndFilter(drawable, maxBitmapArea)
 		// we want most of the full region again, slightly shifted to the right
 //		val textColorStartWidthFraction = 0.4f
 //		paletteBuilder.setRegion(
@@ -94,11 +94,11 @@ class MediaStylePaletteProvider(private val context: Context) {
 
 		paletteBuilder.addFilter(mBlackWhiteFilter)
 		val palette = paletteBuilder.generate()
-		val foregroundColor = selectForegroundColor(backgroundColor.rgb, palette)
+		val foregroundColor = selectForegroundColor(backgroundColor.rgb, palette, maxBitmapArea)
 		return finalizeColors(backgroundColor.rgb, foregroundColor)
 	}
 
-	private fun selectForegroundColor(backgroundColor: Int, palette: Palette): Int {
+	private fun selectForegroundColor(backgroundColor: Int, palette: Palette, maxBitmapArea: Int): Int {
 		return if (isColorLight(backgroundColor)) {
 			selectForegroundColorForSwatches(
 				palette.darkVibrantSwatch,
@@ -106,7 +106,8 @@ class MediaStylePaletteProvider(private val context: Context) {
 				palette.darkMutedSwatch,
 				palette.mutedSwatch,
 				palette.dominantSwatch,
-				Color.BLACK
+				Color.BLACK,
+				maxBitmapArea
 			)
 		} else {
 			selectForegroundColorForSwatches(
@@ -115,7 +116,8 @@ class MediaStylePaletteProvider(private val context: Context) {
 				palette.lightMutedSwatch,
 				palette.mutedSwatch,
 				palette.dominantSwatch,
-				Color.WHITE
+				Color.WHITE,
+				maxBitmapArea
 			)
 		}
 	}
@@ -126,10 +128,11 @@ class MediaStylePaletteProvider(private val context: Context) {
 		moreMutedSwatch: Palette.Swatch?,
 		mutedSwatch: Palette.Swatch?,
 		dominantSwatch: Palette.Swatch?,
-		fallbackColor: Int
+		fallbackColor: Int,
+		maxBitmapArea: Int,
 	): Int {
 		val coloredCandidate =
-			selectVibrantCandidate(moreVibrant, vibrant) ?: selectMutedCandidate(mutedSwatch, moreMutedSwatch)
+			selectVibrantCandidate(moreVibrant, vibrant, maxBitmapArea) ?: selectMutedCandidate(mutedSwatch, moreMutedSwatch, maxBitmapArea)
 
 		return if (coloredCandidate != null) {
 			if (dominantSwatch === coloredCandidate || dominantSwatch == null) {
@@ -142,16 +145,16 @@ class MediaStylePaletteProvider(private val context: Context) {
 			} else {
 				coloredCandidate.rgb
 			}
-		} else if (dominantSwatch?.hasEnoughPopulation() == true) {
+		} else if (dominantSwatch?.hasEnoughPopulation(maxBitmapArea) == true) {
 			dominantSwatch.rgb
 		} else {
 			fallbackColor
 		}
 	}
 
-	private fun selectMutedCandidate(first: Palette.Swatch?, second: Palette.Swatch?): Palette.Swatch? {
-		val firstValid = first?.hasEnoughPopulation() ?: return second
-		val secondValid = second?.hasEnoughPopulation() ?: return first
+	private fun selectMutedCandidate(first: Palette.Swatch?, second: Palette.Swatch?, maxBitmapArea: Int): Palette.Swatch? {
+		val firstValid = first?.hasEnoughPopulation(maxBitmapArea) ?: return second
+		val secondValid = second?.hasEnoughPopulation(maxBitmapArea) ?: return first
 		return when {
 			firstValid && secondValid -> {
 				val firstSaturation = first.hsl[1]
@@ -169,9 +172,9 @@ class MediaStylePaletteProvider(private val context: Context) {
 		}
 	}
 
-	private fun selectVibrantCandidate(first: Palette.Swatch?, second: Palette.Swatch?): Palette.Swatch? {
-		val firstValid = first?.hasEnoughPopulation() ?: return second
-		val secondValid = second?.hasEnoughPopulation() ?: return first
+	private fun selectVibrantCandidate(first: Palette.Swatch?, second: Palette.Swatch?, maxBitmapArea: Int): Palette.Swatch? {
+		val firstValid = first?.hasEnoughPopulation(maxBitmapArea) ?: return second
+		val secondValid = second?.hasEnoughPopulation(maxBitmapArea) ?: return first
 		return when {
 			firstValid && secondValid -> {
 				val firstPopulation = first.population
@@ -188,15 +191,15 @@ class MediaStylePaletteProvider(private val context: Context) {
 		}
 	}
 
-	private fun Palette.Swatch.hasEnoughPopulation(): Boolean =
+	private fun Palette.Swatch.hasEnoughPopulation(maxBitmapArea: Int): Boolean =
 		// We want a fraction that is at least 1% of the image
-		population / RESIZE_BITMAP_AREA > MINIMUM_IMAGE_FRACTION
+		population / maxBitmapArea > MINIMUM_IMAGE_FRACTION
 
-	private fun findBackgroundColorAndFilter(drawable: Drawable): RgbAndHsl {
+	private fun findBackgroundColorAndFilter(drawable: Drawable, maxBitmapArea: Int): RgbAndHsl {
 		var width: Int = drawable.intrinsicWidth
 		var height: Int = drawable.intrinsicHeight
 		val area = width * height
-		val factor = sqrt(RESIZE_BITMAP_AREA / area.toDouble())
+		val factor = sqrt(maxBitmapArea / area.toDouble())
 		width = (factor * width).toInt()
 		height = (factor * height).toInt()
 
