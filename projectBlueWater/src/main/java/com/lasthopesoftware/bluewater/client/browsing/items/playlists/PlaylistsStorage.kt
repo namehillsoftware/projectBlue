@@ -20,8 +20,8 @@ class PlaylistsStorage(private val libraryConnections: ProvideLibraryConnections
 					?.promiseResponse("Playlists/List", "IncludeMediaTypes=1")
 					?.then { response ->
 						response.body
-							?.use { body -> Xmlwise.createXml(body.string()) }
-							?.let { xml ->
+							.use { body -> Xmlwise.createXml(body.string()) }
+							.let { xml ->
 								xml
 									.get("Item")
 									.mapNotNull { itemXml ->
@@ -35,7 +35,6 @@ class PlaylistsStorage(private val libraryConnections: ProvideLibraryConnections
 											?.value
 									}
 							}
-							?: emptyList()
 					}
 					.keepPromise(emptyList())
 			}
@@ -46,7 +45,7 @@ class PlaylistsStorage(private val libraryConnections: ProvideLibraryConnections
 			.eventually { connectionProvider ->
 				connectionProvider?.run {
 					promiseResponse("Playlists/Add", "Type=Playlist", "Path=$playlistPath", "CreateMode=Overwrite")
-						.then { it -> it?.use { r -> r.body?.byteStream()?.use(StandardResponse::fromInputStream) } }
+						.then { it -> it?.use { r -> r.body.byteStream().use(StandardResponse::fromInputStream) } }
 						.then { it -> it?.items?.get("PlaylistID") }
 						.eventually {
 							it?.let { playlistId ->
