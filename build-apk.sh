@@ -6,6 +6,7 @@ docker compose build && docker compose run --rm -v "$(pwd)":/src -w /src -u "$(i
   :projectBlueWater:testReleaseUnitTest \
   :projectBlueWater:assembleRelease \
   :projectBlueWater:assembleDebug
+
 EXIT_CODE=${PIPESTATUS[0]}
 
 cp -r projectBlueWater/build _artifacts

@@ -1,4 +1,4 @@
-FROM gradle:8.5.0-jdk17
+FROM gradle:8.7.0-jdk17
 
 # Install system dependencies
 RUN apt-get update -qq && apt-get install -qq -y --no-install-recommends \
@@ -18,7 +18,7 @@ ENV ANDROID_SDK_HOME=${ANDROID_HOME}
 ENV PATH ${ANDROID_HOME}/cmdline-tools/cmdline-tools/bin:${ANDROID_HOME}/tools:${ANDROID_HOME}/tools/bin:${ANDROID_HOME}/platform-tools:${PATH}
 
 # set default build arguments
-ARG SDK_VERSION=commandlinetools-linux-10406996_latest.zip
+ARG SDK_VERSION=commandlinetools-linux-11076708_latest.zip
 
 # Full reference at https://dl.google.com/android/repository/repository2-1.xml
 # Download and unpack android SDKs

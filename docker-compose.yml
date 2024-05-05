@@ -6,10 +6,10 @@ services:
     build:
       context: .
     volumes:
-      - gradle-cache:/home/gradle/.gradle
+      - gradle-home:/home/gradle
     environment:
       - ANDROID_STORE_PASSWORD=${ANDROID_STORE_PASSWORD}
       - ANDROID_KEY_STORE_PASSWORD=${ANDROID_KEY_STORE_PASSWORD}
 
 volumes:
-  gradle-cache:
+  gradle-home:
