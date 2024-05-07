@@ -937,7 +937,7 @@ fun NowPlayingView(
 			}
 
 			with (screenScope) {
-				if (screenWidth < screenHeight) {
+				if (screenWidth < Dimensions.twoColumnThreshold) {
 					NowPlayingNarrowView(
 						nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
 						screenOnState = screenOnState,

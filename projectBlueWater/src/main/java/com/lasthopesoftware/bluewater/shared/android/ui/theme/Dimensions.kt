@@ -12,4 +12,8 @@ object Dimensions {
 	val listItemMenuIconSize = 36.dp
 	val menuHeight = 48.dp
 	val viewPaddingUnit = 4.dp
+	val mediumWindowWidth = 600.dp
+	val twoColumnThreshold = mediumWindowWidth
+	val expandedWindowWidth = 840.dp
+	val threeColumnThreshold = expandedWindowWidth
 }

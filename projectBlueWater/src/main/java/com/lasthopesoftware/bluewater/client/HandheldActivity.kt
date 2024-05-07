@@ -10,8 +10,11 @@ import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
@@ -333,6 +336,70 @@ private class GraphDependencies(
 }
 
 private val bottomAppBarHeight = Dimensions.appBarHeight
+private val bottomSheetElevation = 16.dp
+
+@Composable
+fun LoadingBrowserView(viewModelDependencies: ScopedBrowserViewDependencies, connectionStatusViewModel: ConnectionStatusViewModel, libraryId: LibraryId, item: Item?) {
+	with (viewModelDependencies) {
+		val view = browsableItemListView(
+			itemListViewModel = itemListViewModel,
+			fileListViewModel = fileListViewModel,
+			nowPlayingViewModel = nowPlayingFilePropertiesViewModel,
+			itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
+			reusablePlaylistFileItemViewModelProvider = reusablePlaylistFileItemViewModelProvider,
+			childItemViewModelProvider = reusableChildItemViewModelProvider,
+			applicationNavigation = applicationNavigation,
+			playbackLibraryItems = playbackLibraryItems,
+			playbackServiceController = playbackServiceController,
+			connectionStatusViewModel = connectionStatusViewModel,
+		)
+
+		ViewModelInitAction {
+			view(libraryId, item)
+		}
+	}
+}
+
+@Composable
+fun BrowserLibraryDestination.Navigate(
+	browserViewDependencies: ScopedBrowserViewDependencies,
+	connectionStatusViewModel: ConnectionStatusViewModel,
+) {
+	with(browserViewDependencies) {
+		when (this@Navigate) {
+			is LibraryScreen -> {
+				LoadingBrowserView(browserViewDependencies, connectionStatusViewModel, libraryId, null)
+			}
+
+			is ItemScreen -> {
+				LoadingBrowserView(browserViewDependencies, connectionStatusViewModel, libraryId, item)
+			}
+
+			is DownloadsScreen -> {
+				ActiveFileDownloadsView(
+					activeFileDownloadsViewModel = activeFileDownloadsViewModel,
+					trackHeadlineViewModelProvider = reusableFileItemViewModelProvider,
+					applicationNavigation,
+				)
+
+				activeFileDownloadsViewModel.loadActiveDownloads(libraryId)
+			}
+
+			is SearchScreen -> {
+				searchFilesViewModel.setActiveLibraryId(libraryId)
+
+				SearchFilesView(
+					searchFilesViewModel = searchFilesViewModel,
+					nowPlayingViewModel = nowPlayingFilePropertiesViewModel,
+					trackHeadlineViewModelProvider = reusablePlaylistFileItemViewModelProvider,
+					itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
+					applicationNavigation = applicationNavigation,
+					playbackServiceController = playbackServiceController,
+				)
+			}
+		}
+	}
+}
 
 @Composable
 @OptIn(ExperimentalMaterialApi::class)
@@ -346,14 +413,13 @@ private fun BrowserLibraryDestination.Navigate(
 		val isSelectedLibrary by remember { derivedStateOf { selectedLibraryId == libraryId } }
 
 		val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
-
 		BottomSheetScaffold(
 			modifier = Modifier
 				.fillMaxSize()
 				.padding(systemBarsPadding),
 			scaffoldState = scaffoldState,
 			sheetPeekHeight = if (isSelectedLibrary) bottomAppBarHeight else 0.dp,
-			sheetElevation = 16.dp,
+			sheetElevation = bottomSheetElevation,
 			sheetContent = {
 				if (isSelectedLibrary) {
 					LibraryMenu(
@@ -378,147 +444,183 @@ private fun BrowserLibraryDestination.Navigate(
 				}
 			}
 		) { paddingValues ->
-			Box(modifier = Modifier.padding(paddingValues)) {
-				when (this@Navigate) {
-					is LibraryScreen -> {
-						val view = browsableItemListView(
-							itemListViewModel = itemListViewModel,
-							fileListViewModel = fileListViewModel,
-							nowPlayingViewModel = nowPlayingFilePropertiesViewModel,
-							itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
-							reusablePlaylistFileItemViewModelProvider = reusablePlaylistFileItemViewModelProvider,
-							childItemViewModelProvider = reusableChildItemViewModelProvider,
-							applicationNavigation = applicationNavigation,
-							playbackLibraryItems = playbackLibraryItems,
-							playbackServiceController = playbackServiceController,
-							connectionStatusViewModel = connectionStatusViewModel,
-						)
-
-						ViewModelInitAction {
-							view(libraryId, null)
-						}
-					}
-					is ItemScreen -> {
-						val view = browsableItemListView(
-							itemListViewModel = itemListViewModel,
-							fileListViewModel = fileListViewModel,
-							nowPlayingViewModel = nowPlayingFilePropertiesViewModel,
-							itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
-							reusablePlaylistFileItemViewModelProvider = reusablePlaylistFileItemViewModelProvider,
-							childItemViewModelProvider = reusableChildItemViewModelProvider,
-							applicationNavigation = applicationNavigation,
-							playbackLibraryItems = playbackLibraryItems,
-							playbackServiceController = playbackServiceController,
-							connectionStatusViewModel = connectionStatusViewModel,
-						)
-
-						ViewModelInitAction {
-							view(libraryId, item)
-						}
-					}
-					is DownloadsScreen -> {
-						ActiveFileDownloadsView(
-							activeFileDownloadsViewModel = activeFileDownloadsViewModel,
-							trackHeadlineViewModelProvider = reusableFileItemViewModelProvider,
-							applicationNavigation,
-						)
-
-						activeFileDownloadsViewModel.loadActiveDownloads(libraryId)
-					}
-					is SearchScreen -> {
-						searchFilesViewModel.setActiveLibraryId(libraryId)
-
-						SearchFilesView(
-							searchFilesViewModel = searchFilesViewModel,
-							nowPlayingViewModel = nowPlayingFilePropertiesViewModel,
-							trackHeadlineViewModelProvider = reusablePlaylistFileItemViewModelProvider,
-							itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
-							applicationNavigation = applicationNavigation,
-							playbackServiceController = playbackServiceController,
-						)
-					}
-				}
-			}
+			Box(modifier = Modifier.padding(paddingValues)) { Navigate(browserViewDependencies, connectionStatusViewModel) }
 		}
 	}
 }
 
 @Composable
-@OptIn(ExperimentalMaterialApi::class)
-private fun LibraryDestination.Navigate(
+@OptIn(ExperimentalMaterialApi::class, ExperimentalFoundationApi::class)
+fun LibraryDestination.Navigate(
 	browserViewDependencies: ScopedBrowserViewDependencies,
 	connectionStatusViewModel: ConnectionStatusViewModel,
 	scaffoldState: BottomSheetScaffoldState,
 ) {
 	with(browserViewDependencies) {
-		when (this@Navigate) {
-			is BrowserLibraryDestination -> Navigate(
-				browserViewDependencies = browserViewDependencies,
-				scaffoldState = scaffoldState,
-				connectionStatusViewModel = connectionStatusViewModel,
-			)
-			is ConnectionSettingsScreen -> {
-				val viewModel = librarySettingsViewModel
-
-				val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
-
-				Box(
-					modifier = Modifier
-						.fillMaxSize()
-						.padding(systemBarsPadding)
-				) {
-					LibrarySettingsView(
-						librarySettingsViewModel = viewModel,
-						navigateApplication = applicationNavigation,
-						stringResources = stringResources,
-						userSslCertificates = userSslCertificateProvider,
-                    )
-				}
-
-				viewModel.loadLibrary(libraryId)
-			}
-			is NowPlayingScreen -> {
-				val systemUiController = rememberSystemUiController()
-				systemUiController.setSystemBarsColor(SharedColors.overlayDark)
-
-				val screenViewModel = viewModel {
-					NowPlayingScreenViewModel(
-						messageBus,
-						InMemoryNowPlayingDisplaySettings,
-						playbackServiceController,
-					)
-				}
-
-				NowPlayingView(
-					nowPlayingCoverArtViewModel = nowPlayingCoverArtViewModel,
-					nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
-					screenOnState = screenViewModel,
-					playbackServiceController = playbackServiceController,
-					playlistViewModel = nowPlayingPlaylistViewModel,
-					childItemViewModelProvider = reusablePlaylistFileItemViewModelProvider,
-					applicationNavigation = applicationNavigation,
-					itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
-					connectionWatcherViewModel = connectionWatcherViewModel,
-					viewModelMessageBus = nowPlayingViewModelMessageBus
-				)
-
-				val context = LocalContext.current
-				LaunchedEffect(key1 = libraryId) {
-					try {
-						connectionWatcherViewModel.watchLibraryConnection(libraryId)
-
-						Promise.whenAll(
-							screenViewModel.initializeViewModel(libraryId),
-							nowPlayingFilePropertiesViewModel.initializeViewModel(libraryId),
-							nowPlayingCoverArtViewModel.initializeViewModel(libraryId),
-							nowPlayingPlaylistViewModel.initializeView(libraryId),
-						).suspend()
-					} catch (e: Throwable) {
-						if (ConnectionLostExceptionFilter.isConnectionLostException(e))
-							pollForConnections.pollConnection(libraryId)
-						else
-							UnexpectedExceptionToaster.announce(context, e)
+		BoxWithConstraints(
+			modifier = Modifier.fillMaxSize(),
+		) {
+			if (maxWidth < Dimensions.threeColumnThreshold) {
+				when (this@Navigate) {
+					is BrowserLibraryDestination -> {
+						Navigate(
+							browserViewDependencies = browserViewDependencies,
+							scaffoldState = scaffoldState,
+							connectionStatusViewModel = connectionStatusViewModel,
+						)
 					}
+
+					is ConnectionSettingsScreen -> {
+						val viewModel = librarySettingsViewModel
+
+						val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
+
+						Box(
+							modifier = Modifier
+								.fillMaxSize()
+								.padding(systemBarsPadding)
+						) {
+							LibrarySettingsView(
+								librarySettingsViewModel = viewModel,
+								navigateApplication = applicationNavigation,
+								stringResources = stringResources,
+								userSslCertificates = userSslCertificateProvider,
+							)
+						}
+
+						viewModel.loadLibrary(libraryId)
+					}
+
+					is NowPlayingScreen -> {
+						val systemUiController = rememberSystemUiController()
+						systemUiController.setSystemBarsColor(SharedColors.overlayDark)
+
+						val screenViewModel = viewModel {
+							NowPlayingScreenViewModel(
+								messageBus,
+								InMemoryNowPlayingDisplaySettings,
+								playbackServiceController,
+							)
+						}
+
+						NowPlayingView(
+							nowPlayingCoverArtViewModel = nowPlayingCoverArtViewModel,
+							nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
+							screenOnState = screenViewModel,
+							playbackServiceController = playbackServiceController,
+							playlistViewModel = nowPlayingPlaylistViewModel,
+							childItemViewModelProvider = reusablePlaylistFileItemViewModelProvider,
+							applicationNavigation = applicationNavigation,
+							itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
+							connectionWatcherViewModel = connectionWatcherViewModel,
+							viewModelMessageBus = nowPlayingViewModelMessageBus
+						)
+
+						val context = LocalContext.current
+						LaunchedEffect(key1 = libraryId) {
+							try {
+								connectionWatcherViewModel.watchLibraryConnection(libraryId)
+
+								Promise.whenAll(
+									screenViewModel.initializeViewModel(libraryId),
+									nowPlayingFilePropertiesViewModel.initializeViewModel(libraryId),
+									nowPlayingCoverArtViewModel.initializeViewModel(libraryId),
+									nowPlayingPlaylistViewModel.initializeView(libraryId),
+								).suspend()
+							} catch (e: Throwable) {
+								if (ConnectionLostExceptionFilter.isConnectionLostException(e))
+									pollForConnections.pollConnection(libraryId)
+								else
+									UnexpectedExceptionToaster.announce(context, e)
+							}
+						}
+					}
+				}
+			} else {
+				when (this@Navigate) {
+					is BrowserLibraryDestination -> {
+						Row(modifier = Modifier.fillMaxSize()) {
+							Box(
+								modifier = Modifier
+									.weight(1f)
+									.fillMaxHeight()
+							) {
+								Navigate(
+									browserViewDependencies = browserViewDependencies,
+									connectionStatusViewModel = connectionStatusViewModel
+								)
+							}
+
+							Box(
+								modifier = Modifier
+									.weight(2f)
+									.fillMaxHeight()
+							) {
+								val screenViewModel = viewModel {
+									NowPlayingScreenViewModel(
+										messageBus,
+										InMemoryNowPlayingDisplaySettings,
+										playbackServiceController,
+									)
+								}
+
+								NowPlayingView(
+									nowPlayingCoverArtViewModel = nowPlayingCoverArtViewModel,
+									nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
+									screenOnState = screenViewModel,
+									playbackServiceController = playbackServiceController,
+									playlistViewModel = nowPlayingPlaylistViewModel,
+									childItemViewModelProvider = reusablePlaylistFileItemViewModelProvider,
+									applicationNavigation = applicationNavigation,
+									itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
+									connectionWatcherViewModel = connectionWatcherViewModel,
+									viewModelMessageBus = nowPlayingViewModelMessageBus
+								)
+
+								val context = LocalContext.current
+								LaunchedEffect(key1 = libraryId) {
+									try {
+										connectionWatcherViewModel.watchLibraryConnection(libraryId)
+
+										Promise.whenAll(
+											screenViewModel.initializeViewModel(libraryId),
+											nowPlayingFilePropertiesViewModel.initializeViewModel(libraryId),
+											nowPlayingCoverArtViewModel.initializeViewModel(libraryId),
+											nowPlayingPlaylistViewModel.initializeView(libraryId),
+										).suspend()
+									} catch (e: Throwable) {
+										if (ConnectionLostExceptionFilter.isConnectionLostException(e))
+											pollForConnections.pollConnection(libraryId)
+										else
+											UnexpectedExceptionToaster.announce(context, e)
+									}
+								}
+							}
+						}
+					}
+
+					is ConnectionSettingsScreen -> {
+						val viewModel = librarySettingsViewModel
+
+						val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
+
+						Box(
+							modifier = Modifier
+								.fillMaxSize()
+								.padding(systemBarsPadding)
+						) {
+							LibrarySettingsView(
+								librarySettingsViewModel = viewModel,
+								navigateApplication = applicationNavigation,
+								stringResources = stringResources,
+								userSslCertificates = userSslCertificateProvider,
+							)
+						}
+
+						viewModel.loadLibrary(libraryId)
+					}
+
+					is NowPlayingScreen -> {}
 				}
 			}
 		}
