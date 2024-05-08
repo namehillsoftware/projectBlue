@@ -108,7 +108,7 @@ object OkHttpFactory : ProvideOkHttpClients {
 		return urlProvider.certificateFingerprint
 			?.takeIf { it.isNotEmpty() }
 			?.let {
-				urlProvider.baseUrl?.host?.let { host ->
+				urlProvider.baseUrl.host?.let { host ->
 					AdditionalHostnameVerifier(host, defaultHostnameVerifier)
 				}
 			}

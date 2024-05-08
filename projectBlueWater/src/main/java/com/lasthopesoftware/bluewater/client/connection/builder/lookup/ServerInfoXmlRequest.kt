@@ -20,7 +20,7 @@ class ServerInfoXmlRequest(private val libraryProvider: ILibraryProvider, privat
 						.build()
 				}
 				?.let { request -> HttpPromisedResponse(clientFactory.getJriverCentralClient().newCall(request)).also(cp::doCancel) }
-				?.then { r -> r.body?.use { b -> Xmlwise.createXml(b.string()) } }
+				?.then { r -> r.body.use { b -> Xmlwise.createXml(b.string()) } }
 				.keepPromise()
 		}
 	}

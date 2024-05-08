@@ -37,7 +37,7 @@ class RemoteImageAccess(private val connectionProvider: ProvideLibraryConnection
 					{ response ->
 						if (cp.isCancelled) throw CancellationException("Cancelled while retrieving image")
 						else when (response?.code) {
-							200 -> response.body?.use { it.bytes() } ?: emptyByteArray
+							200 -> response.body.use { it.bytes() }
 							else -> emptyByteArray
 						}
 					},
