@@ -194,7 +194,7 @@ private class TvNavigation(
 private class TvDependencies(
 	private val inner: BrowserViewDependencies,
 	private val tvNavigation: TvNavigation,
-	private val connectionStatusViewModel: ConnectionStatusViewModel,
+	override val connectionStatusViewModel: ConnectionStatusViewModel,
 ) : BrowserViewDependencies by inner, TvInterfaceDependencies {
 
 	override val reusableTvChildItemViewModelProvider by lazy {

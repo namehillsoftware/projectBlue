@@ -23,6 +23,7 @@ import com.lasthopesoftware.bluewater.client.browsing.navigation.NavigationMessa
 import com.lasthopesoftware.bluewater.client.connection.polling.PollForLibraryConnections
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionWatcherViewModel
 import com.lasthopesoftware.bluewater.client.connection.session.ManageConnectionSessions
+import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionStatusViewModel
 import com.lasthopesoftware.bluewater.client.connection.trust.ProvideUserSslCertificates
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingMessage
@@ -76,6 +77,7 @@ import com.lasthopesoftware.resources.strings.StringResources
 	val applicationSettingsViewModel: ApplicationSettingsViewModel
 	val hiddenSettingsViewModel: HiddenSettingsViewModel
 	val userSslCertificateProvider: ProvideUserSslCertificates
+	val connectionStatusViewModel: ConnectionStatusViewModel
 }
 
 interface TvInterfaceDependencies : BrowserViewDependencies {

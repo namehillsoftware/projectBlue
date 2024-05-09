@@ -211,11 +211,10 @@ fun destinationAction(destination: Destination): String = cachedDestinationActio
 		intent?.safelyGetParcelableExtra<Destination>(destinationProperty)
 }
 
-@OptIn(ExperimentalMaterialApi::class, ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class)
 private class GraphNavigation(
 	private val inner: NavigateApplication,
 	private val navController: NavController<Destination>,
-	private val bottomSheetState: BottomSheetState,
 	private val coroutineScope: CoroutineScope,
 	private val itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler
 ) : NavigateApplication by inner {
@@ -224,8 +223,6 @@ private class GraphNavigation(
 		navController.popUpTo { it is ItemScreen }
 
 		navController.navigate(SearchScreen(libraryId))
-
-		hideBottomSheet()
 	}.toPromise()
 
 	override fun viewApplicationSettings() = coroutineScope.launch {
@@ -246,55 +243,105 @@ private class GraphNavigation(
 		navController.popUpTo { it is ItemScreen }
 
 		navController.navigate(ConnectionSettingsScreen(libraryId))
-
-		hideBottomSheet()
 	}.toPromise()
 
 	override fun viewActiveDownloads(libraryId: LibraryId) = coroutineScope.launch {
 		navController.popUpTo { it is ItemScreen }
 
 		navController.navigate(DownloadsScreen(libraryId))
-
-		hideBottomSheet()
 	}.toPromise()
 
 	override fun viewLibrary(libraryId: LibraryId) = coroutineScope.launch {
 		navController.popUpTo { it is ApplicationSettingsScreen }
 
 		navController.navigate(LibraryScreen(libraryId))
-
-		hideBottomSheet()
 	}.toPromise()
 
 	override fun viewItem(libraryId: LibraryId, item: IItem) = coroutineScope.launch {
 		if (item is Item)
 			navController.navigate(ItemScreen(libraryId, item))
-
-		hideBottomSheet()
 	}.toPromise()
 
 	override fun viewFileDetails(libraryId: LibraryId, playlist: List<ServiceFile>, position: Int): Promise<Unit> {
-		hideBottomSheet()
 		return inner.viewFileDetails(libraryId, playlist, position)
 	}
 
 	override fun viewNowPlaying(libraryId: LibraryId) = coroutineScope.launch {
-		hideBottomSheet()
-
 		if (!navController.moveToTop { it is NowPlayingScreen }) {
 			navController.navigate(NowPlayingScreen(libraryId))
 		}
 	}.toPromise()
 
 	override fun navigateUp() = coroutineScope.async {
-		hideBottomSheet()
-
 		(navController.pop() && navController.backstack.entries.any()) || inner.navigateUp().suspend()
 	}.toPromise()
 
 	override fun backOut() = coroutineScope.async {
-		(itemListMenuBackPressedHandler.hideAllMenus() or hideBottomSheet()) || navigateUp().suspend()
+		itemListMenuBackPressedHandler.hideAllMenus() || navigateUp().suspend()
 	}.toPromise()
+}
+
+@OptIn(ExperimentalMaterialApi::class)
+private class BottomSheetHidingNavigation(
+	private val inner: NavigateApplication,
+	private val bottomSheetState: BottomSheetState,
+	private val coroutineScope: CoroutineScope,
+	private val itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler
+) : NavigateApplication by inner {
+
+	override fun launchSearch(libraryId: LibraryId): Promise<Unit> {
+		hideBottomSheet()
+
+		return inner.launchSearch(libraryId)
+	}
+
+	override fun viewServerSettings(libraryId: LibraryId): Promise<Unit> {
+		hideBottomSheet()
+
+		return inner.viewServerSettings(libraryId)
+	}
+
+	override fun viewActiveDownloads(libraryId: LibraryId): Promise<Unit> {
+		hideBottomSheet()
+
+		return inner.viewActiveDownloads(libraryId)
+	}
+
+	override fun viewLibrary(libraryId: LibraryId): Promise<Unit> {
+		hideBottomSheet()
+
+		return inner.viewLibrary(libraryId)
+	}
+
+	override fun viewItem(libraryId: LibraryId, item: IItem): Promise<Unit> {
+		hideBottomSheet()
+
+		return inner.viewItem(libraryId, item)
+	}
+
+	override fun viewFileDetails(libraryId: LibraryId, playlist: List<ServiceFile>, position: Int): Promise<Unit> {
+		hideBottomSheet()
+		return inner.viewFileDetails(libraryId, playlist, position)
+	}
+
+	override fun viewNowPlaying(libraryId: LibraryId): Promise<Unit> {
+		hideBottomSheet()
+
+		return inner.viewNowPlaying(libraryId)
+	}
+
+	override fun navigateUp(): Promise<Boolean> {
+		hideBottomSheet()
+
+		return inner.navigateUp()
+	}
+
+	override fun backOut(): Promise<Boolean> {
+		val isHidden = itemListMenuBackPressedHandler.hideAllMenus() or hideBottomSheet()
+
+		return if (isHidden) true.toPromise()
+		else inner.backOut()
+	}
 
 	private fun hideBottomSheet(): Boolean {
 		if (!bottomSheetState.isCollapsed) {
@@ -308,8 +355,8 @@ private class GraphNavigation(
 
 private class GraphDependencies(
 	inner: BrowserViewDependencies,
-	graphNavigation: GraphNavigation,
-	connectionStatusViewModel: ConnectionStatusViewModel,
+	graphNavigation: NavigateApplication,
+	override val connectionStatusViewModel: ConnectionStatusViewModel,
 	navController: NavController<Destination>,
 	initialDestination: Destination?
 ) : BrowserViewDependencies by inner, AutoCloseable {
@@ -339,7 +386,7 @@ private val bottomAppBarHeight = Dimensions.appBarHeight
 private val bottomSheetElevation = 16.dp
 
 @Composable
-fun LoadingBrowserView(viewModelDependencies: ScopedBrowserViewDependencies, connectionStatusViewModel: ConnectionStatusViewModel, libraryId: LibraryId, item: Item?) {
+fun InitializedBrowserView(viewModelDependencies: ScopedBrowserViewDependencies, libraryId: LibraryId, item: Item?) {
 	with (viewModelDependencies) {
 		val view = browsableItemListView(
 			itemListViewModel = itemListViewModel,
@@ -361,18 +408,15 @@ fun LoadingBrowserView(viewModelDependencies: ScopedBrowserViewDependencies, con
 }
 
 @Composable
-fun BrowserLibraryDestination.Navigate(
-	browserViewDependencies: ScopedBrowserViewDependencies,
-	connectionStatusViewModel: ConnectionStatusViewModel,
-) {
+fun BrowserLibraryDestination.Navigate(browserViewDependencies: ScopedBrowserViewDependencies) {
 	with(browserViewDependencies) {
 		when (this@Navigate) {
 			is LibraryScreen -> {
-				LoadingBrowserView(browserViewDependencies, connectionStatusViewModel, libraryId, null)
+				InitializedBrowserView(browserViewDependencies, libraryId, null)
 			}
 
 			is ItemScreen -> {
-				LoadingBrowserView(browserViewDependencies, connectionStatusViewModel, libraryId, item)
+				InitializedBrowserView(browserViewDependencies, libraryId, item)
 			}
 
 			is DownloadsScreen -> {
@@ -405,7 +449,6 @@ fun BrowserLibraryDestination.Navigate(
 @OptIn(ExperimentalMaterialApi::class)
 private fun BrowserLibraryDestination.Navigate(
 	browserViewDependencies: ScopedBrowserViewDependencies,
-	connectionStatusViewModel: ConnectionStatusViewModel,
 	scaffoldState: BottomSheetScaffoldState,
 ) {
 	with(browserViewDependencies) {
@@ -444,7 +487,7 @@ private fun BrowserLibraryDestination.Navigate(
 				}
 			}
 		) { paddingValues ->
-			Box(modifier = Modifier.padding(paddingValues)) { Navigate(browserViewDependencies, connectionStatusViewModel) }
+			Box(modifier = Modifier.padding(paddingValues)) { Navigate(browserViewDependencies) }
 		}
 	}
 }
@@ -453,7 +496,7 @@ private fun BrowserLibraryDestination.Navigate(
 @OptIn(ExperimentalMaterialApi::class, ExperimentalFoundationApi::class)
 fun LibraryDestination.Navigate(
 	browserViewDependencies: ScopedBrowserViewDependencies,
-	connectionStatusViewModel: ConnectionStatusViewModel,
+
 	scaffoldState: BottomSheetScaffoldState,
 ) {
 	with(browserViewDependencies) {
@@ -466,7 +509,6 @@ fun LibraryDestination.Navigate(
 						Navigate(
 							browserViewDependencies = browserViewDependencies,
 							scaffoldState = scaffoldState,
-							connectionStatusViewModel = connectionStatusViewModel,
 						)
 					}
 
@@ -545,10 +587,7 @@ fun LibraryDestination.Navigate(
 									.weight(1f)
 									.fillMaxHeight()
 							) {
-								Navigate(
-									browserViewDependencies = browserViewDependencies,
-									connectionStatusViewModel = connectionStatusViewModel
-								)
+								Navigate(browserViewDependencies)
 							}
 
 							Box(
@@ -645,9 +684,13 @@ private fun BrowserView(
 
 	val bottomSheetState = scaffoldState.bottomSheetState
 	val graphNavigation = remember {
-		GraphNavigation(
-			browserViewDependencies.applicationNavigation,
-			navController,
+		BottomSheetHidingNavigation(
+			GraphNavigation(
+				browserViewDependencies.applicationNavigation,
+				navController,
+				coroutineScope,
+				browserViewDependencies.itemListMenuBackPressedHandler
+			),
 			bottomSheetState,
 			coroutineScope,
 			browserViewDependencies.itemListMenuBackPressedHandler
@@ -733,7 +776,6 @@ private fun BrowserView(
 					LocalViewModelStoreOwner.current?.also {
 						destination.Navigate(
 							ScopedViewModelDependencies(graphDependencies, permissionsDependencies, it),
-							connectionStatusViewModel,
 							scaffoldState,
 						)
 					}

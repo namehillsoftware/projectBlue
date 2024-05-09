@@ -41,6 +41,8 @@ import com.lasthopesoftware.bluewater.client.connection.polling.LibraryConnectio
 import com.lasthopesoftware.bluewater.client.connection.polling.LibraryConnectionPollingSessions
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionWatcherViewModel
+import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionStatusViewModel
+import com.lasthopesoftware.bluewater.client.connection.session.initialization.DramaticConnectionInitializationController
 import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettingsLookup
 import com.lasthopesoftware.bluewater.client.connection.settings.changes.ObservableConnectionSettingsLibraryStorage
 import com.lasthopesoftware.bluewater.client.connection.trust.UserSslCertificateProvider
@@ -320,6 +322,15 @@ class ActivityDependencies(activity: ComponentActivity, activitySuppliedDependen
 		UserSslCertificateProvider(
 			DocumentUriSelector(activitySuppliedDependencies.registeredActivityResultsLauncher),
 			activity.contentResolver
+		)
+	}
+	override val connectionStatusViewModel by activity.buildViewModelLazily {
+		ConnectionStatusViewModel(
+			stringResources,
+			DramaticConnectionInitializationController(
+				libraryConnectionProvider,
+				applicationNavigation,
+			),
 		)
 	}
 }
