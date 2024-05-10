@@ -10,9 +10,9 @@ class MutableInteractionState<T>(private val initialValue: T) : InteractionState
 
 	override var value: T
 		get() = behaviorSubject.value?.value ?: initialValue
-		set(value) {
-			if (behaviorSubject.value != value)
-				behaviorSubject.onNext(NullBox(value))
+		set(newValue) {
+			if (value != newValue)
+				behaviorSubject.onNext(NullBox(newValue))
 		}
 
 	override fun subscribeActual(observer: Observer<in NullBox<T>>) {

@@ -12,6 +12,7 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.LibraryPlaybackMessage
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
+import com.lasthopesoftware.bluewater.shared.observables.toCloseable
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
@@ -124,6 +125,8 @@ class WhenHandlingTheFileChange {
 		Pair(messageBus, nowPlayingViewModel)
 	}
 
+	private val nowPlayingStates = mutableListOf<Boolean>()
+
 	@BeforeAll
 	fun act() {
 		val (messageBus, vm) = mut
@@ -135,14 +138,21 @@ class WhenHandlingTheFileChange {
 		)
 
 		try {
-			// Add another initialize to catch edge cases where this would happen and cancel the connection changed promise
-			// (but not reset the promise).
-			vm.initializeViewModel(LibraryId(libraryId)).toExpiringFuture().get()
+			vm.isPlaying.subscribe { nowPlayingStates.add(it.value) }.toCloseable().use {
+				// Add another initialize to catch edge cases where this would happen and cancel the connection changed promise
+				// (but not reset the promise).
+				vm.initializeViewModel(LibraryId(libraryId)).toExpiringFuture().get()
+			}
 		} catch(e: Throwable) {
 			// ignored
 		}
 
 		messageBus.sendMessage(LibraryConnectionChangedMessage(LibraryId(libraryId)))
+	}
+
+	@Test
+	fun `then the is playing state isn't disrupted`() {
+		assertThat(nowPlayingStates).containsExactly(true)
 	}
 
 	@Test
