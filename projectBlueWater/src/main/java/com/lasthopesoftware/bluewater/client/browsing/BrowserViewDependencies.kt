@@ -29,6 +29,7 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowP
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingMessage
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingCoverArtViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingScreenViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.playlist.NowPlayingPlaylistViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsViewModel
@@ -70,6 +71,7 @@ import com.lasthopesoftware.resources.strings.StringResources
 	val pollForConnections: PollForLibraryConnections
 	val nowPlayingCoverArtViewModel: NowPlayingCoverArtViewModel
 	val nowPlayingPlaylistViewModel: NowPlayingPlaylistViewModel
+	val nowPlayingScreenViewModel: NowPlayingScreenViewModel
 	val connectionWatcherViewModel: ConnectionWatcherViewModel
 	val reusablePlaylistFileItemViewModelProvider: ReusablePlaylistFileItemViewModelProvider
 	val reusableChildItemViewModelProvider: ReusableChildItemViewModelProvider

@@ -49,8 +49,10 @@ import com.lasthopesoftware.bluewater.client.connection.trust.UserSslCertificate
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.SelectedPlaybackEngineTypeAccess
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.defaults.DefaultPlaybackEngineLookup
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.InMemoryNowPlayingDisplaySettings
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingCoverArtViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingScreenViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.playlist.NowPlayingPlaylistViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.client.stored.library.items.StateChangeBroadcastingStoredItemAccess
@@ -267,6 +269,14 @@ class ActivityDependencies(activity: ComponentActivity, activitySuppliedDependen
 			nowPlayingState,
 			playbackServiceController,
 			PlaylistsStorage(libraryConnectionProvider),
+		)
+	}
+
+	override val nowPlayingScreenViewModel by activity.buildViewModelLazily {
+		NowPlayingScreenViewModel(
+			messageBus,
+			InMemoryNowPlayingDisplaySettings,
+			playbackServiceController,
 		)
 	}
 
