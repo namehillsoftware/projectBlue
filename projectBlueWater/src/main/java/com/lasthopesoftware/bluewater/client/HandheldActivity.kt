@@ -211,6 +211,10 @@ fun destinationAction(destination: Destination): String = cachedDestinationActio
 		intent?.safelyGetParcelableExtra<Destination>(destinationProperty)
 }
 
+private class SkipNowPlayingNavigation(private val inner: NavigateApplication): NavigateApplication by inner {
+	override fun viewNowPlaying(libraryId: LibraryId): Promise<Unit> = Unit.toPromise()
+}
+
 @OptIn(ExperimentalCoroutinesApi::class)
 private class GraphNavigation(
 	private val inner: NavigateApplication,
@@ -673,11 +677,13 @@ private fun UnifiedClientView(
 	val coroutineScope = rememberCoroutineScope()
 
 	val graphNavigation = remember {
-		GraphNavigation(
-			browserViewDependencies.applicationNavigation,
-			navController,
-			coroutineScope,
-			browserViewDependencies.itemListMenuBackPressedHandler
+		SkipNowPlayingNavigation(
+			GraphNavigation(
+				browserViewDependencies.applicationNavigation,
+				navController,
+				coroutineScope,
+				browserViewDependencies.itemListMenuBackPressedHandler
+			)
 		)
 	}
 
