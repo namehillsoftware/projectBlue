@@ -132,8 +132,6 @@ class NowPlayingFilePropertiesViewModel(
 	fun initializeViewModel(libraryId: LibraryId): Promise<Unit> {
 		activeLibraryIdState.value = libraryId
 
-		togglePlaying(false)
-
 		val promisedViewUpdate = updateViewFromRepository(libraryId)
 
 		val promisedTogglePlayingUpdate = playbackService.promiseIsMarkedForPlay(libraryId).then(::togglePlaying)
