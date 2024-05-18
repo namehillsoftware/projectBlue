@@ -98,6 +98,14 @@ class NowPlayingPlaylistViewModel(
 		disableSavingPlaylist()
 	}
 
+	fun lockOutAutoScroll() {
+		autoScrollChangeableLatch.value = true
+	}
+
+	fun releaseAutoScroll() {
+		autoScrollChangeableLatch.value = true
+	}
+
 	override fun invoke(message: LibraryPlaybackMessage.PlaylistChanged) {
 		if (message.libraryId == activeLibraryId)
 			updateViewFromRepository()

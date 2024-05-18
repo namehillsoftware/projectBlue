@@ -2,6 +2,8 @@ package com.lasthopesoftware.bluewater.client.playback.nowplaying.view
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.focusGroup
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
@@ -71,6 +73,7 @@ private fun LibraryDestination.Navigate(browserViewDependencies: ScopedBrowserVi
 						modifier = Modifier
 							.weight(1f)
 							.fillMaxHeight()
+							.focusGroup()
 					) {
 						NavigateToLibraryDestination(browserViewDependencies)
 					}
@@ -79,6 +82,8 @@ private fun LibraryDestination.Navigate(browserViewDependencies: ScopedBrowserVi
 						modifier = Modifier
 							.weight(2f)
 							.fillMaxHeight()
+							.focusGroup()
+							.focusable(true)
 					) {
 						NowPlayingView(
 							nowPlayingCoverArtViewModel = nowPlayingCoverArtViewModel,

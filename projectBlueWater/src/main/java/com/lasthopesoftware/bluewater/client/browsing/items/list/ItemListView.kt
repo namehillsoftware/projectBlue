@@ -3,7 +3,9 @@ package com.lasthopesoftware.bluewater.client.browsing.items.list
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.focusGroup
+import androidx.compose.foundation.focusable
+import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -40,7 +42,9 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
@@ -76,12 +80,18 @@ import com.lasthopesoftware.bluewater.shared.android.ui.components.memorableScro
 import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberCalculatedKnobHeight
 import com.lasthopesoftware.bluewater.shared.android.ui.components.scrollbar
 import com.lasthopesoftware.bluewater.shared.android.ui.linearInterpolation
+import com.lasthopesoftware.bluewater.shared.android.ui.navigable
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
+import kotlinx.coroutines.launch
 import kotlin.math.pow
 import kotlin.math.roundToInt
+
+private enum class ContentType {
+	Header, Spacer, Item, File
+}
 
 private const val expandedTitleHeight = 84
 private val appBarHeight = Dimensions.appBarHeight.value
@@ -373,7 +383,7 @@ private fun BoxScope.CollapsedItemListMenu(
 	}
 }
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
 @Composable
 fun ItemListView(
     itemListViewModel: ItemListViewModel,
@@ -394,7 +404,7 @@ fun ItemListView(
 	val itemValue by itemListViewModel.itemValue.collectAsState()
 
 	@Composable
-	fun ChildItem(item: IItem) {
+	fun ChildItem(item: IItem, onNavigatedTo: () -> Unit) {
 		val childItemViewModel = remember(childItemViewModelProvider::getViewModel)
 
 		DisposableEffect(key1 = item) {
@@ -411,7 +421,7 @@ fun ItemListView(
 
 		if (!isMenuShown) {
 			Box(modifier = Modifier
-				.combinedClickable(
+				.navigable(
 					interactionSource = remember { MutableInteractionSource() },
 					indication = null,
 					onLongClick = {
@@ -426,7 +436,8 @@ fun ItemListView(
 						itemListViewModel.loadedLibraryId?.also {
 							applicationNavigation.viewItem(it, item)
 						}
-					}
+					},
+					onNavigatedTo = onNavigatedTo,
 				)
 				.height(rowHeight)
 				.fillMaxSize()
@@ -543,6 +554,7 @@ fun ItemListView(
 	}
 
 	val lazyListState = rememberLazyListState()
+	val scope = rememberCoroutineScope()
 
 	@Composable
 	fun BoxWithConstraintsScope.LoadedItemListView(headerHeight: Dp) {
@@ -552,6 +564,7 @@ fun ItemListView(
 		LazyColumn(
 			state = lazyListState,
 			modifier = Modifier
+				.focusGroup()
 				.scrollbar(
 					lazyListState,
 					horizontal = false,
@@ -562,14 +575,15 @@ fun ItemListView(
 					fixedKnobRatio = knobHeight,
 				),
 		) {
-			item {
+			item(contentType = ContentType.Spacer) {
 				Spacer(modifier = Modifier
 					.requiredHeight(headerHeight)
-					.fillMaxWidth())
+					.fillMaxWidth()
+					.focusable(false))
 			}
 
 			if (items.any()) {
-				item {
+				item(contentType = ContentType.Header) {
 					Box(
 						modifier = Modifier
 							.padding(Dimensions.viewPaddingUnit)
@@ -587,8 +601,28 @@ fun ItemListView(
 					}
 				}
 
-				itemsIndexed(items, { _, i -> i.key }) { i, f ->
-					ChildItem(f)
+				val itemHeaderCount = 2
+
+				itemsIndexed(items, { _, i -> i.key }, { _, _ -> ContentType.Item }) { i, f ->
+					ChildItem(f) {
+						if (lazyListState.canScrollForward) {
+							val lastVisibleItem = lazyListState.layoutInfo.visibleItemsInfo.lastOrNull()
+							if (lastVisibleItem != null && lastVisibleItem.index == i + itemHeaderCount) {
+								scope.launch {
+									lazyListState.scrollBy(lastVisibleItem.size * 2f)
+								}
+							}
+						}
+
+						if (lazyListState.canScrollBackward) {
+							val firstVisibleItem = lazyListState.layoutInfo.visibleItemsInfo.firstOrNull()
+							if (firstVisibleItem != null && firstVisibleItem.index == i - itemHeaderCount) {
+								scope.launch {
+									lazyListState.scrollBy(firstVisibleItem.size * -2f)
+								}
+							}
+						}
+					}
 
 					if (i < items.lastIndex)
 						Divider()
@@ -597,7 +631,7 @@ fun ItemListView(
 
 			if (!files.any()) return@LazyColumn
 
-			item {
+			item(contentType = ContentType.Header) {
 				Box(
 					modifier = Modifier
 						.padding(Dimensions.viewPaddingUnit)
@@ -615,7 +649,7 @@ fun ItemListView(
 				}
 			}
 
-			itemsIndexed(files) { i, f ->
+			itemsIndexed(files, contentType = { _, _ -> ContentType.File }) { i, f ->
 				RenderTrackHeaderItem(i, f)
 
 				if (i < files.lastIndex)
@@ -666,9 +700,9 @@ fun ItemListView(
 							modifier = Modifier
 								.align(Alignment.TopStart)
 								.clickable(
-									interactionSource = remember { MutableInteractionSource() },
+									onClick = applicationNavigation::navigateUp,
 									indication = null,
-									onClick = applicationNavigation::navigateUp
+									interactionSource = remember { MutableInteractionSource() }
 								)
 								.padding(Dimensions.viewPaddingUnit * 4)
 						)
@@ -837,7 +871,10 @@ fun ItemListView(
 									gradientEdgeColor = MaterialTheme.colors.surface,
 									modifier = Modifier
 										.fillMaxWidth()
-										.padding(start = Dimensions.viewPaddingUnit * 13, end = Dimensions.viewPaddingUnit + minimumMenuWidth),
+										.padding(
+											start = Dimensions.viewPaddingUnit * 13,
+											end = Dimensions.viewPaddingUnit + minimumMenuWidth
+										),
 									isMarqueeEnabled = !lazyListState.isScrollInProgress
 								)
 							}

@@ -63,6 +63,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
@@ -118,9 +119,7 @@ private class ScreenDimensionsScope(val screenHeight: Dp, val screenWidth: Dp, i
 	: BoxWithConstraintsScope by innerBoxScope
 
 @Composable
-private fun NowPlayingCoverArtView(
-	nowPlayingCoverArtViewModel: NowPlayingCoverArtViewModel,
-) {
+private fun NowPlayingCoverArtView(nowPlayingCoverArtViewModel: NowPlayingCoverArtViewModel) {
 	Box(
 		modifier = Modifier.fillMaxSize()
 	) {
@@ -885,7 +884,12 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 				itemListMenuBackPressedHandler,
 				playlistViewModel,
 				viewModelMessageBus = viewModelMessageBus,
-				modifier = Modifier.fillMaxHeight()
+				modifier = Modifier
+					.fillMaxHeight()
+					.onFocusChanged { f ->
+						if (f.hasFocus) playlistViewModel.lockOutAutoScroll()
+						else playlistViewModel.releaseAutoScroll()
+					},
 			)
 		}
 	}
