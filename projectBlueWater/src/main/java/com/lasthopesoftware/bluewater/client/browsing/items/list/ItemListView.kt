@@ -91,14 +91,14 @@ private enum class ContentType {
 	Header, Spacer, Item, File
 }
 
-private const val expandedTitleHeight = 84
-private val appBarHeight = Dimensions.appBarHeight.value
+private val expandedTitleHeight = 84.dp
+private val appBarHeight = Dimensions.appBarHeight
 private val iconSize = Dimensions.topMenuIconSize
 private val minimumMenuWidth = (iconSize + Dimensions.viewPaddingUnit * 2) * 3
 
-private val expandedIconSize = Dimensions.menuHeight.value
-private const val expandedMenuVerticalPadding = 12
-private val boxHeight = (expandedTitleHeight + appBarHeight + expandedIconSize + expandedMenuVerticalPadding * 2).dp
+private val expandedIconSize = Dimensions.menuHeight
+private val expandedMenuVerticalPadding = Dimensions.viewPaddingUnit * 3
+private val boxHeight = expandedTitleHeight + appBarHeight + expandedIconSize + expandedMenuVerticalPadding * 2
 
 @Composable
 private fun RowScope.LabelledPlayButton(
@@ -665,7 +665,7 @@ fun TvItemListView(
 			Box(
 				modifier = Modifier
 					.fillMaxWidth()
-					.height(Dimensions.appBarHeight),
+					.height(appBarHeight),
 				contentAlignment = Alignment.CenterStart,
 			) {
 				Icon(
@@ -683,7 +683,7 @@ fun TvItemListView(
 				)
 			}
 
-			Box(modifier = Modifier.height(expandedTitleHeight.dp)) {
+			Box(modifier = Modifier.height(expandedTitleHeight)) {
 				ProvideTextStyle(MaterialTheme.typography.h5) {
 					val startPadding = Dimensions.viewPaddingUnit
 					val endPadding = Dimensions.viewPaddingUnit
@@ -703,8 +703,8 @@ fun TvItemListView(
 				Row(
 					modifier = Modifier
 						.padding(
-							top = expandedMenuVerticalPadding.dp,
-							bottom = expandedMenuVerticalPadding.dp,
+							top = expandedMenuVerticalPadding,
+							bottom = expandedMenuVerticalPadding,
 							start = Dimensions.viewPaddingUnit * 2,
 							end = Dimensions.viewPaddingUnit * 2
 						)
@@ -852,7 +852,7 @@ fun ItemListView(
 	BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
 		ControlSurface {
 
-			val collapsedHeight = appBarHeight.dp
+			val collapsedHeight = appBarHeight
 
 			val expandedHeightPx = LocalDensity.current.run { boxHeight.toPx() }
 			val collapsedHeightPx = LocalDensity.current.run { collapsedHeight.toPx() }
@@ -897,7 +897,7 @@ fun ItemListView(
 						)
 
 						val headerCollapseProgress by heightScaler.getProgressState()
-						val topPadding by remember { derivedStateOf { (appBarHeight - 42 * headerCollapseProgress).dp } }
+						val topPadding by remember { derivedStateOf { linearInterpolation(appBarHeight, 14.dp, headerCollapseProgress) } }
 						BoxWithConstraints(modifier = Modifier.padding(top = topPadding)) nestedBoxScope@{
 							val acceleratedToolbarStateProgress by remember {
 								derivedStateOf {
@@ -910,8 +910,25 @@ fun ItemListView(
 							}
 
 							ProvideTextStyle(MaterialTheme.typography.h5) {
-								val startPadding by remember { derivedStateOf { (4 + 48 * headerCollapseProgress).dp } }
-								val endPadding by remember { derivedStateOf { Dimensions.viewPaddingUnit + minimumMenuWidth * acceleratedHeaderHidingProgress } }
+								val startPadding by remember {
+									derivedStateOf {
+										linearInterpolation(
+											Dimensions.viewPaddingUnit,
+											Dimensions.viewPaddingUnit + 48.dp,
+											headerCollapseProgress
+										)
+									}
+								}
+
+								val endPadding by remember {
+									derivedStateOf {
+										linearInterpolation(
+											Dimensions.viewPaddingUnit,
+											Dimensions.viewPaddingUnit + minimumMenuWidth,
+											acceleratedHeaderHidingProgress
+										)
+									}
+								}
 								val maxLines by remember { derivedStateOf { (2 - headerCollapseProgress).roundToInt() } }
 								if (maxLines > 1) {
 									Text(
@@ -948,7 +965,7 @@ fun ItemListView(
 								}
 							}
 
-							val expandedTopRowPadding = expandedTitleHeight.dp + expandedMenuVerticalPadding.dp
+							val expandedTopRowPadding = expandedTitleHeight + expandedMenuVerticalPadding
 							val topRowPadding by remember {
 								derivedStateOf {
 									linearInterpolation(
@@ -965,7 +982,7 @@ fun ItemListView(
 									modifier = Modifier
 										.padding(
 											top = topRowPadding,
-											bottom = expandedMenuVerticalPadding.dp,
+											bottom = expandedMenuVerticalPadding,
 											start = Dimensions.viewPaddingUnit * 2,
 											end = Dimensions.viewPaddingUnit * 2
 										)
@@ -1020,7 +1037,7 @@ fun ItemListView(
 									playbackServiceController = playbackServiceController,
 									menuPaddingValues = PaddingValues(
 										top = topRowPadding,
-										bottom = expandedMenuVerticalPadding.dp,
+										bottom = expandedMenuVerticalPadding,
 										start = Dimensions.viewPaddingUnit * 2,
 										end = Dimensions.viewPaddingUnit * 2
 									),
@@ -1050,7 +1067,7 @@ fun ItemListView(
 								.padding(Dimensions.viewPaddingUnit * 4)
 						)
 
-						val topPadding = (appBarHeight - 42).dp
+						val topPadding = appBarHeight - 42.dp
 						BoxWithConstraints(modifier = Modifier.padding(top = topPadding)) nestedBoxScope@{
 							ProvideTextStyle(MaterialTheme.typography.h5) {
 								MarqueeText(
@@ -1079,7 +1096,7 @@ fun ItemListView(
 								playbackServiceController = playbackServiceController,
 								menuPaddingValues = PaddingValues(
 									top = collapsedTopRowPadding,
-									bottom = expandedMenuVerticalPadding.dp,
+									bottom = expandedMenuVerticalPadding,
 									start = Dimensions.viewPaddingUnit * 2,
 									end = Dimensions.viewPaddingUnit * 2
 								),
