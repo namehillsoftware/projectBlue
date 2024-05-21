@@ -30,7 +30,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun TrackHeaderItemView(
+fun TrackTitleItemView(
 	itemName: String,
 	isActive: Boolean = false,
 	isHiddenMenuShown: Boolean = false,

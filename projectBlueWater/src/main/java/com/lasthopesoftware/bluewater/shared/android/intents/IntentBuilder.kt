@@ -5,7 +5,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
-import com.lasthopesoftware.bluewater.client.HandheldActivity
+import android.net.Uri
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsActivity
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -15,17 +15,16 @@ import com.lasthopesoftware.bluewater.client.browsing.navigation.ConnectionSetti
 import com.lasthopesoftware.bluewater.client.browsing.navigation.Destination
 import com.lasthopesoftware.bluewater.client.browsing.navigation.LibraryScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NowPlayingScreen
-import com.lasthopesoftware.bluewater.client.destinationAction
 import com.lasthopesoftware.bluewater.client.destinationProperty
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 
 class IntentBuilder(private val context: Context) : BuildIntents {
 
-	override fun buildViewLibraryIntent(libraryId: LibraryId) = getBrowserActivityIntent(LibraryScreen(libraryId))
+	override fun buildViewLibraryIntent(libraryId: LibraryId): Intent = getBrowserActivityIntent(LibraryScreen(libraryId))
 
-	override fun buildApplicationSettingsIntent() = getBrowserActivityIntent(ApplicationSettingsScreen)
+	override fun buildApplicationSettingsIntent(): Intent = getBrowserActivityIntent(ApplicationSettingsScreen)
 
-	override fun buildLibrarySettingsIntent(libraryId: LibraryId) = getBrowserActivityIntent(ConnectionSettingsScreen(libraryId))
+	override fun buildLibrarySettingsIntent(libraryId: LibraryId): Intent = getBrowserActivityIntent(ConnectionSettingsScreen(libraryId))
 	override fun buildLibraryServerSettingsPendingIntent(libraryId: LibraryId): PendingIntent {
 		val baseIntent = buildLibrarySettingsIntent(libraryId)
 		return PendingIntent.getActivity(context, 0, baseIntent, 0.makePendingIntentImmutable())
@@ -38,14 +37,14 @@ class IntentBuilder(private val context: Context) : BuildIntents {
 		putExtra(FileDetailsActivity.playlist, playlist.map { it.key }.toIntArray())
 	}
 
-	override fun buildNowPlayingIntent(libraryId: LibraryId) = getBrowserActivityIntent(NowPlayingScreen(libraryId))
+	override fun buildNowPlayingIntent(libraryId: LibraryId): Intent = getBrowserActivityIntent(NowPlayingScreen(libraryId))
 
 	override fun buildPendingNowPlayingIntent(libraryId: LibraryId): PendingIntent {
 		val intent = buildNowPlayingIntent(libraryId)
 		return PendingIntent.getActivity(context, 0, intent, 0.makePendingIntentImmutable())
 	}
 
-	@OptIn(androidx.media3.common.util.UnstableApi::class)
+	@OptIn(UnstableApi::class)
 	override fun buildPendingPausePlaybackIntent(): PendingIntent = PlaybackService.pendingPauseIntent(context)
 
 	override fun buildPendingShowDownloadsIntent(): PendingIntent {
@@ -55,11 +54,13 @@ class IntentBuilder(private val context: Context) : BuildIntents {
 
 	private fun buildShowDownloadsIntent(): Intent = getBrowserActivityIntent(ActiveLibraryDownloadsScreen)
 
-	private fun getBrowserActivityIntent(destination: Destination) = context.getIntent<HandheldActivity>().apply {
-		flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
-
+	private fun getBrowserActivityIntent(destination: Destination): Intent {
 		// Set action to uniquely identify intents when compared with `filterEquals`, as the extras are not enough.
-		action = destinationAction(destination)
-		putExtra(destinationProperty, destination)
+		val uri = Uri.parse("destination://${destination.javaClass.name}")
+		return Intent(Intent.ACTION_MAIN, uri).apply {
+			flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
+
+			putExtra(destinationProperty, destination)
+		}
 	}
 }

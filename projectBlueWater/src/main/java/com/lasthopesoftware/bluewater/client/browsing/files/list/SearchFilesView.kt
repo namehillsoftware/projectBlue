@@ -118,7 +118,7 @@ fun SearchFilesView(
 			Unit
 		}
 
-		TrackHeaderItemView(
+		TrackTitleItemView(
 			itemName = fileName,
 			isActive = playingFile?.serviceFile == serviceFile,
 			isHiddenMenuShown = isMenuShown,

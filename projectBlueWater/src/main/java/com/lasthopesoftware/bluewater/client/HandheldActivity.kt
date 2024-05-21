@@ -5,18 +5,14 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.core.app.ActivityCompat
 import androidx.core.view.WindowCompat
 import androidx.media3.common.util.UnstableApi
 import com.lasthopesoftware.bluewater.ActivityDependencies
-import com.lasthopesoftware.bluewater.client.browsing.BrowserViewDependencies
 import com.lasthopesoftware.bluewater.client.browsing.navigation.Destination
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NavigationMessage
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.ThreeColumnApplication
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingTvApplication
 import com.lasthopesoftware.bluewater.client.settings.PermissionsDependencies
 import com.lasthopesoftware.bluewater.permissions.ApplicationPermissionsRequests
 import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermissionsRequirementsProvider
@@ -24,7 +20,6 @@ import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.intents.safelyGetParcelableExtra
 import com.lasthopesoftware.bluewater.shared.android.permissions.ManagePermissions
 import com.lasthopesoftware.bluewater.shared.android.permissions.OsPermissionsChecker
-import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.lazyLogger
@@ -35,10 +30,8 @@ import java.util.concurrent.ConcurrentHashMap
 
 private val logger by lazyLogger<HandheldActivity>()
 private val magicPropertyBuilder by lazy { MagicPropertyBuilder(cls<HandheldActivity>()) }
-private val cachedDestinationActions = ConcurrentHashMap<Class<*>, String>()
 
 val destinationProperty by lazy { magicPropertyBuilder.buildProperty("destination") }
-fun destinationAction(destination: Destination): String = cachedDestinationActions.getOrPut(destination.javaClass) { "$destinationProperty/${destination.javaClass.name}" }
 
 @UnstableApi class HandheldActivity :
 	AppCompatActivity(),
@@ -47,6 +40,8 @@ fun destinationAction(destination: Destination): String = cachedDestinationActio
 	PermissionsDependencies,
 	ActivitySuppliedDependencies
 {
+	private var isInLeanbackMode = false
+
 	private val browserViewDependencies by lazy { ActivityDependencies(this, this) }
 
 	override val registeredActivityResultsLauncher = registerResultActivityLauncher()
@@ -69,13 +64,15 @@ fun destinationAction(destination: Destination): String = cachedDestinationActio
 		// Ensure that this task is only started when it's the task root. A workaround for an Android bug.
 		// See http://stackoverflow.com/a/7748416
 		val intent = intent
-		if (Intent.ACTION_MAIN == intent.action && intent.hasCategory(Intent.CATEGORY_LAUNCHER)) {
-			if (!isTaskRoot) {
+		if (Intent.ACTION_MAIN == intent.action) {
+			if (intent.hasCategory(Intent.CATEGORY_LAUNCHER) && !isTaskRoot) {
 				val className = javaClass.name
 				logger.info("$className is not the root.  Finishing $className instead of launching.")
 				finish()
 				return
 			}
+
+			isInLeanbackMode = intent.hasCategory(Intent.CATEGORY_LEANBACK_LAUNCHER)
 		}
 
 		applicationPermissions.promiseApplicationPermissionsRequest()
@@ -84,7 +81,19 @@ fun destinationAction(destination: Destination): String = cachedDestinationActio
 
 		setContent {
 			ProjectBlueTheme {
-				BrowserView(browserViewDependencies, this, getDestination(intent))
+				if (!isInLeanbackMode) {
+					NarrowScreenApplication(
+						browserViewDependencies = browserViewDependencies,
+						permissionsDependencies = this,
+						initialDestination = getDestination(intent),
+					)
+				} else {
+					NowPlayingTvApplication(
+						browserViewDependencies = browserViewDependencies,
+						permissionsDependencies = this,
+						initialDestination = getDestination(intent),
+					)
+				}
 			}
 		}
 	}
@@ -123,31 +132,6 @@ fun destinationAction(destination: Destination): String = cachedDestinationActio
 			)
 	}
 
-	private fun getDestination(intent: Intent?) =
+	private fun getDestination(intent: Intent?): Destination? =
 		intent?.safelyGetParcelableExtra<Destination>(destinationProperty)
-}
-
-@Composable
-private fun BrowserView(
-	browserViewDependencies: BrowserViewDependencies,
-	permissionsDependencies: PermissionsDependencies,
-	initialDestination: Destination? = null
-) {
-	BoxWithConstraints(
-		modifier = Modifier.fillMaxSize()
-	) {
-		if (maxWidth > Dimensions.threeColumnThreshold) {
-			ThreeColumnApplication(
-				browserViewDependencies = browserViewDependencies,
-				permissionsDependencies = permissionsDependencies,
-				initialDestination = initialDestination,
-			)
-		} else {
-			NarrowScreenApplication(
-				browserViewDependencies = browserViewDependencies,
-				permissionsDependencies = permissionsDependencies,
-				initialDestination = initialDestination,
-			)
-		}
-	}
 }

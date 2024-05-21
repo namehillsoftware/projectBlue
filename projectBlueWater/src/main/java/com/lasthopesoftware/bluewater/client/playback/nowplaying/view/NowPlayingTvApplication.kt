@@ -38,7 +38,7 @@ import com.lasthopesoftware.bluewater.client.browsing.navigation.Destination
 import com.lasthopesoftware.bluewater.client.browsing.navigation.DestinationRoutingNavigation
 import com.lasthopesoftware.bluewater.client.browsing.navigation.HiddenSettingsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.LibraryDestination
-import com.lasthopesoftware.bluewater.client.browsing.navigation.NavigateToLibraryDestination
+import com.lasthopesoftware.bluewater.client.browsing.navigation.NavigateToTvLibraryDestination
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NewConnectionSettingsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NowPlayingScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.RoutedNavigationDependencies
@@ -75,12 +75,12 @@ private fun LibraryDestination.Navigate(browserViewDependencies: ScopedBrowserVi
 							.fillMaxHeight()
 							.focusGroup()
 					) {
-						NavigateToLibraryDestination(browserViewDependencies)
+						NavigateToTvLibraryDestination(browserViewDependencies)
 					}
 
 					Box(
 						modifier = Modifier
-							.weight(2f)
+							.weight(1f)
 							.fillMaxHeight()
 							.focusGroup()
 							.focusable(true)
@@ -147,7 +147,7 @@ private fun LibraryDestination.Navigate(browserViewDependencies: ScopedBrowserVi
 }
 
 @Composable
-fun ThreeColumnApplication(
+fun NowPlayingTvApplication(
 	browserViewDependencies: BrowserViewDependencies,
 	permissionsDependencies: PermissionsDependencies,
 	initialDestination: Destination?

@@ -24,6 +24,12 @@ import java.util.concurrent.Executor
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
+infix fun <Resolution, Response> Promise<Resolution>.then(response: ImmediateResponse<Resolution, Response>): Promise<Response> =
+	this.then(response)
+
+infix fun <Resolution, Response> Promise<Resolution>.excuse(response: ImmediateResponse<Throwable, Response>): Promise<Response> =
+	this.excuse(response)
+
 @Composable
 fun <T> Promise<T>.toState(initialValue: T): State<T> = produceState(initialValue) {
 	value = suspend()

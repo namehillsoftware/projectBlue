@@ -22,6 +22,18 @@ fun List<LazyListItemInfo>.getVisibleItemInfoFor(absoluteIndex: Int): LazyListIt
 val LazyListItemInfo.offsetEnd: Int
 	get() = this.offset + this.size
 
+val LazyListState.firstVisibleItem: LazyListItemInfo?
+	get() = layoutInfo.visibleItemsInfo.firstOrNull()
+
+val LazyListState.lastVisibleItem: LazyListItemInfo?
+	get() = layoutInfo.visibleItemsInfo.lastOrNull()
+
+/*
+	Returns true if the
+ */
+val LazyListState.isAtLocalEnd: Boolean
+	get() = lastVisibleItem?.run { layoutInfo.viewportEndOffset - offsetEnd } == 0
+
 /*
    Moving element in the list
 */
