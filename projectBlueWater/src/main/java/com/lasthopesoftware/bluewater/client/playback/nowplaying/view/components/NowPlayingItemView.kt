@@ -27,12 +27,106 @@ import androidx.compose.ui.text.style.TextOverflow
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.shared.android.ui.components.ListItemIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.components.dragging.DragDropItemScope
-import com.lasthopesoftware.bluewater.shared.android.ui.components.dragging.DragDropListState
 import com.lasthopesoftware.bluewater.shared.android.ui.navigable
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 
 private val itemPadding = Dimensions.viewPaddingUnit * 2
 private val rowHeight = Dimensions.twoLineRowHeight
+
+@OptIn(ExperimentalComposeUiApi::class)
+@Composable
+fun NowPlayingItemView(
+	itemName: String,
+	artist: String,
+	isActive: Boolean = false,
+	isHiddenMenuShown: Boolean = false,
+	onItemClick: () -> Unit = {},
+	onHiddenMenuClick: () -> Unit = {},
+	onRemoveFromNowPlayingClick: () -> Unit = {},
+	onViewFilesClick: () -> Unit = {},
+	onPlayClick: () -> Unit = {},
+) {
+
+	val hapticFeedback = LocalHapticFeedback.current
+
+	if (!isHiddenMenuShown) {
+		Row(
+			modifier = Modifier
+				.navigable(
+					interactionSource = remember { MutableInteractionSource() },
+					indication = null,
+					onLongClick = {
+						hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+
+						onHiddenMenuClick()
+					},
+					onClickLabel = stringResource(id = R.string.btn_view_song_details),
+					onClick = onItemClick,
+					focusedBorderColor = Color.White,
+					unfocusedBorderColor = Color.Transparent,
+				)
+				.height(rowHeight)
+				.fillMaxSize()
+				.padding(itemPadding),
+			verticalAlignment = Alignment.CenterVertically,
+		) {
+			Column(
+				modifier = Modifier.weight(1f),
+			) {
+				ProvideTextStyle(value = MaterialTheme.typography.h6) {
+					Text(
+						text = itemName,
+						overflow = TextOverflow.Ellipsis,
+						maxLines = 1,
+						fontWeight = if (isActive) FontWeight.Bold else FontWeight.Normal,
+					)
+				}
+
+				ProvideTextStyle(value = MaterialTheme.typography.subtitle1) {
+					Text(
+						text = artist,
+						overflow = TextOverflow.Ellipsis,
+						maxLines = 1,
+					)
+				}
+			}
+		}
+	} else {
+		Row(
+			modifier = Modifier
+				.height(rowHeight)
+				.padding(itemPadding),
+			verticalAlignment = Alignment.CenterVertically,
+		) {
+			ListItemIcon(
+				painter = painterResource(id = R.drawable.ic_remove_item_white_36dp),
+				contentDescription = stringResource(id = R.string.btn_remove_file),
+				modifier = Modifier
+					.fillMaxWidth()
+					.weight(1f)
+					.clickable { onRemoveFromNowPlayingClick() },
+			)
+
+			ListItemIcon(
+				painter = painterResource(id = R.drawable.ic_menu_36dp),
+				contentDescription = stringResource(id = R.string.btn_view_files),
+				modifier = Modifier
+					.fillMaxWidth()
+					.weight(1f)
+					.clickable { onViewFilesClick() },
+			)
+
+			ListItemIcon(
+				painter = painterResource(id = R.drawable.av_play_white),
+				contentDescription = stringResource(id = R.string.btn_play),
+				modifier = Modifier
+					.fillMaxWidth()
+					.weight(1f)
+					.clickable { onPlayClick() },
+			)
+		}
+	}
+}
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -42,7 +136,6 @@ fun DragDropItemScope.NowPlayingItemView(
 	isActive: Boolean = false,
 	isEditingPlaylist: Boolean = false,
 	isHiddenMenuShown: Boolean = false,
-	dragDropListState: DragDropListState? = null,
 	onItemClick: () -> Unit = {},
 	onHiddenMenuClick: () -> Unit = {},
 	onRemoveFromNowPlayingClick: () -> Unit = {},
@@ -94,7 +187,7 @@ fun DragDropItemScope.NowPlayingItemView(
 				}
 			}
 
-			if (isEditingPlaylist && dragDropListState != null) {
+			if (isEditingPlaylist) {
 				Image(
 					painter = painterResource(id = R.drawable.drag),
 					contentDescription = stringResource(id = R.string.drag_item),

@@ -83,6 +83,9 @@ import androidx.compose.ui.unit.coerceAtMost
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.tv.foundation.lazy.list.TvLazyColumn
+import androidx.tv.foundation.lazy.list.items
+import androidx.tv.foundation.lazy.list.rememberTvLazyListState
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewPlaylistFileItem
@@ -424,6 +427,117 @@ fun NowPlayingControls(
 }
 
 @Composable
+fun NowPlayingTvPlaylist(
+	childItemViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
+	nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel,
+	applicationNavigation: NavigateApplication,
+	playbackServiceController: ControlPlaybackService,
+	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
+	playlistViewModel: NowPlayingPlaylistViewModel,
+	viewModelMessageBus: ViewModelMessageBus<NowPlayingMessage>,
+	modifier: Modifier = Modifier,
+) {
+	val nowPlayingFiles by playlistViewModel.nowPlayingList.subscribeAsState()
+	val playlist by remember { derivedStateOf { nowPlayingFiles.map { p -> p.serviceFile } } }
+	val activeLibraryId by nowPlayingFilePropertiesViewModel.activeLibraryId.subscribeAsState()
+
+	val lazyListState = rememberTvLazyListState()
+
+	val playingFile by nowPlayingFilePropertiesViewModel.nowPlayingFile.subscribeAsState()
+
+	val isAutoScrollEnabled by playlistViewModel.isAutoScrolling.subscribeAsState()
+	if (isAutoScrollEnabled) {
+		LaunchedEffect(key1 = playingFile) {
+			playingFile?.apply {
+				val listState = lazyListState
+				if (!listState.isScrollInProgress)
+					listState.scrollToItem(playlistPosition)
+			}
+		}
+	}
+
+	val scope = rememberCoroutineScope()
+	DisposableEffect(key1 = Unit) {
+		val registration = viewModelMessageBus.registerReceiver { _: NowPlayingMessage.ScrollToNowPlaying ->
+			scope.launch {
+				playingFile?.apply {
+					lazyListState.scrollToItem(playlistPosition)
+				}
+			}
+		}
+
+		onDispose {
+			registration.close()
+		}
+	}
+
+	@Composable
+	fun NowPlayingFileView(positionedFile: PositionedFile) {
+		val fileItemViewModel = remember(childItemViewModelProvider::getViewModel)
+
+		DisposableEffect(activeLibraryId, positionedFile) {
+			activeLibraryId?.also {
+				fileItemViewModel.promiseUpdate(it, positionedFile.serviceFile)
+			}
+
+			onDispose {
+				fileItemViewModel.reset()
+			}
+		}
+
+		val isMenuShown by fileItemViewModel.isMenuShown.collectAsState()
+		val fileName by fileItemViewModel.title.collectAsState()
+		val artist by fileItemViewModel.artist.collectAsState()
+		val isPlaying by remember { derivedStateOf { playingFile == positionedFile } }
+
+		val viewFilesClickHandler = {
+			activeLibraryId?.also {
+				applicationNavigation.viewFileDetails(
+					it,
+					playlist,
+					positionedFile.playlistPosition
+				)
+			}
+			Unit
+		}
+
+		NowPlayingItemView(
+			itemName = fileName,
+			artist = artist,
+			isActive = isPlaying,
+			isHiddenMenuShown = isMenuShown,
+			onItemClick = viewFilesClickHandler,
+			onHiddenMenuClick = {
+				itemListMenuBackPressedHandler.hideAllMenus()
+				fileItemViewModel.showMenu()
+			},
+			onRemoveFromNowPlayingClick = {
+				activeLibraryId?.also {
+					playbackServiceController
+						.removeFromPlaylistAtPosition(it, positionedFile.playlistPosition)
+				}
+			},
+			onViewFilesClick = viewFilesClickHandler,
+			onPlayClick = {
+				fileItemViewModel.hideMenu()
+				activeLibraryId?.also {
+					playbackServiceController.seekTo(it, positionedFile.playlistPosition)
+				}
+			}
+		)
+	}
+
+	TvLazyColumn(
+		state = lazyListState,
+		modifier = modifier,
+	) {
+		items(items = nowPlayingFiles, key = { f -> f }) { f ->
+			NowPlayingFileView(positionedFile = f)
+		}
+	}
+}
+
+@Composable
 fun NowPlayingPlaylist(
 	childItemViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
 	nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel,
@@ -515,7 +629,6 @@ fun NowPlayingPlaylist(
 			isEditingPlaylist = isEditingPlaylist,
 			isHiddenMenuShown = isMenuShown,
 			onItemClick = viewFilesClickHandler,
-			dragDropListState = dragDropListState,
 			onHiddenMenuClick = {
 				if (!isEditingPlaylist) {
 					itemListMenuBackPressedHandler.hideAllMenus()

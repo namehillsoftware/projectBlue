@@ -122,6 +122,7 @@ private fun ScreenDimensionsScope.NowPlayingTvOverlay(
 
 	var isPlaylistShown by remember { mutableStateOf(false) }
 	var currentPlaylistOffsetPx by remember { mutableFloatStateOf(0f) }
+	val playlistExpansionProgress by remember { derivedStateOf { currentPlaylistOffsetPx / playlistWidthPx } }
 	val nowPlayingPaneWidth = screenWidth - LocalDensity.current.run { currentPlaylistOffsetPx.toDp() }
 
 	Box(
@@ -140,6 +141,7 @@ private fun ScreenDimensionsScope.NowPlayingTvOverlay(
 				NowPlayingHeadline(modifier = Modifier.weight(1f), nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel)
 
 				val scope = rememberCoroutineScope()
+				val chevronRotation by remember { derivedStateOf { -90 + (180 * playlistExpansionProgress) } }
 				Image(
 					painter = painterResource(R.drawable.chevron_up_white_36dp),
 					alpha = playlistControlAlpha,
@@ -156,7 +158,7 @@ private fun ScreenDimensionsScope.NowPlayingTvOverlay(
 								}
 							}
 						})
-						.rotate(90f),
+						.rotate(chevronRotation),
 				)
 			}
 
@@ -199,7 +201,7 @@ private fun ScreenDimensionsScope.NowPlayingTvOverlay(
 				viewModelMessageBus = viewModelMessageBus,
 			)
 
-			NowPlayingPlaylist(
+			NowPlayingTvPlaylist(
 				childItemViewModelProvider,
 				nowPlayingFilePropertiesViewModel,
 				applicationNavigation,
