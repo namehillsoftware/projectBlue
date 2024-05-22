@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
+import com.lasthopesoftware.bluewater.client.HandheldActivity
 import android.net.Uri
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsActivity
@@ -54,13 +55,10 @@ class IntentBuilder(private val context: Context) : BuildIntents {
 
 	private fun buildShowDownloadsIntent(): Intent = getBrowserActivityIntent(ActiveLibraryDownloadsScreen)
 
-	private fun getBrowserActivityIntent(destination: Destination): Intent {
+	private fun getBrowserActivityIntent(destination: Destination): Intent = context.getIntent<HandheldActivity>().apply {
+		flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
 		// Set action to uniquely identify intents when compared with `filterEquals`, as the extras are not enough.
-		val uri = Uri.parse("destination://${destination.javaClass.name}")
-		return Intent(Intent.ACTION_MAIN, uri).apply {
-			flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
-
-			putExtra(destinationProperty, destination)
-		}
+		data = Uri.parse("destination://${destination.javaClass.name}")
+		putExtra(destinationProperty, destination)
 	}
 }
