@@ -112,14 +112,14 @@ import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 import kotlinx.coroutines.launch
 
-private val controlRowHeight = 72.dp
-private const val playlistControlAlpha = .8f
+val controlRowHeight = 72.dp
+const val playlistControlAlpha = .8f
 
-private class ScreenDimensionsScope(val screenHeight: Dp, val screenWidth: Dp, innerBoxScope: BoxWithConstraintsScope)
+class ScreenDimensionsScope(val screenHeight: Dp, val screenWidth: Dp, innerBoxScope: BoxWithConstraintsScope)
 	: BoxWithConstraintsScope by innerBoxScope
 
 @Composable
-private fun NowPlayingCoverArtView(nowPlayingCoverArtViewModel: NowPlayingCoverArtViewModel) {
+fun NowPlayingCoverArtView(nowPlayingCoverArtViewModel: NowPlayingCoverArtViewModel) {
 	Box(
 		modifier = Modifier.fillMaxSize()
 	) {
@@ -170,7 +170,7 @@ private fun KeepScreenOn(keepScreenOn: Boolean) {
 }
 
 @Composable
-private fun NowPlayingProgressIndicator(nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel, modifier: Modifier = Modifier) {
+fun NowPlayingProgressIndicator(nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel, modifier: Modifier = Modifier) {
 	val filePosition by nowPlayingFilePropertiesViewModel.filePosition.subscribeAsState()
 	val fileDuration by nowPlayingFilePropertiesViewModel.fileDuration.subscribeAsState()
 	val fileProgress by remember { derivedStateOf { filePosition / fileDuration.toFloat() } }
@@ -184,7 +184,7 @@ private fun NowPlayingProgressIndicator(nowPlayingFilePropertiesViewModel: NowPl
 }
 
 @Composable
-private fun NowPlayingHeadline(modifier: Modifier = Modifier, nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel) {
+fun NowPlayingHeadline(modifier: Modifier = Modifier, nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel) {
 	Column(modifier = modifier) {
 		ProvideTextStyle(value = MaterialTheme.typography.h5) {
 			val title by nowPlayingFilePropertiesViewModel.title.subscribeAsState()
@@ -207,7 +207,7 @@ private fun NowPlayingHeadline(modifier: Modifier = Modifier, nowPlayingFileProp
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun PlaylistControls(
+fun PlaylistControls(
 	modifier: Modifier = Modifier,
 	playlistViewModel: NowPlayingPlaylistViewModel,
 	viewModelMessageBus: ViewModelMessageBus<NowPlayingMessage>,
