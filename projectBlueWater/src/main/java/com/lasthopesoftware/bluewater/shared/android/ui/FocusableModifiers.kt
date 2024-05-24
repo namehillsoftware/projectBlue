@@ -12,7 +12,6 @@ import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
-import androidx.compose.material.LocalContentColor
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -116,7 +115,7 @@ fun Modifier.navigable(
 		val animatedBorderColor by animateColorAsState(
 			targetValue =
 				if (isItemFocused) focusedBorderColor ?: LocalControlColor.current
-				else unfocusedBorderColor ?: LocalContentColor.current, label = ""
+				else unfocusedBorderColor ?: Color.Transparent, label = ""
 		)
 
 		this

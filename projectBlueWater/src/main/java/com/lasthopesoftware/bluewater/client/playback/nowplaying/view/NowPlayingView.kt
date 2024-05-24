@@ -9,6 +9,7 @@ import androidx.compose.foundation.OverscrollConfiguration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.gestures.AnchoredDraggableState
 import androidx.compose.foundation.gestures.DraggableAnchors
 import androidx.compose.foundation.gestures.Orientation
@@ -60,6 +61,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.rotate
@@ -107,6 +109,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.components.dragging.Drag
 import com.lasthopesoftware.bluewater.shared.android.ui.components.dragging.getVisibleItemInfoFor
 import com.lasthopesoftware.bluewater.shared.android.ui.components.dragging.rememberDragDropListState
 import com.lasthopesoftware.bluewater.shared.android.ui.linearInterpolation
+import com.lasthopesoftware.bluewater.shared.android.ui.navigable
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.SharedColors
@@ -328,11 +331,12 @@ private object ConsumeAllVerticalFlingScrollConnection : NestedScrollConnection 
 }
 
 @Composable
-private fun NowPlayingRating(nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel) {
+fun NowPlayingRating(nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel, modifier: Modifier = Modifier) {
 	Column(
 		modifier = Modifier
 			.fillMaxWidth()
-			.height(controlRowHeight),
+			.height(controlRowHeight)
+			.then(modifier),
 		verticalArrangement = Arrangement.Center,
 	) {
 		val rating by nowPlayingFilePropertiesViewModel.songRating.subscribeAsState()
@@ -363,8 +367,9 @@ private fun NowPlayingRating(nowPlayingFilePropertiesViewModel: NowPlayingFilePr
 	}
 }
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
-private fun NowPlayingPlaybackControls(
+fun NowPlayingPlaybackControls(
 	nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel,
 	playbackServiceController: ControlPlaybackService,
 	modifier: Modifier = Modifier,
@@ -379,12 +384,13 @@ private fun NowPlayingPlaybackControls(
 			contentDescription = stringResource(id = R.string.btn_previous),
 			modifier = Modifier
 				.weight(1f)
-				.clickable(
+				.navigable(
 					interactionSource = remember { MutableInteractionSource() },
-					indication = null
-				) {
-					activeLibraryId?.also(playbackServiceController::previous)
-				},
+					indication = null,
+					onClick = {
+						activeLibraryId?.also(playbackServiceController::previous)
+					}
+				),
 		)
 
 		PlayPauseButton(
@@ -398,12 +404,13 @@ private fun NowPlayingPlaybackControls(
 			contentDescription = stringResource(id = R.string.btn_next),
 			modifier = Modifier
 				.weight(1f)
-				.clickable(
+				.navigable(
 					interactionSource = remember { MutableInteractionSource() },
-					indication = null
-				) {
-					activeLibraryId?.also(playbackServiceController::next)
-				}
+					indication = null,
+					onClick = {
+						activeLibraryId?.also(playbackServiceController::next)
+					}
+				)
 		)
 	}
 }
@@ -449,9 +456,8 @@ fun NowPlayingTvPlaylist(
 	if (isAutoScrollEnabled) {
 		LaunchedEffect(key1 = playingFile) {
 			playingFile?.apply {
-				val listState = lazyListState
-				if (!listState.isScrollInProgress)
-					listState.scrollToItem(playlistPosition)
+				if (!lazyListState.isScrollInProgress)
+					lazyListState.scrollToItem(playlistPosition)
 			}
 		}
 	}
@@ -529,7 +535,10 @@ fun NowPlayingTvPlaylist(
 
 	TvLazyColumn(
 		state = lazyListState,
-		modifier = modifier,
+		modifier = Modifier.focusGroup().onFocusChanged { f ->
+			if (f.hasFocus) playlistViewModel.lockOutAutoScroll()
+			else playlistViewModel.releaseAutoScroll()
+		}.then(modifier),
 	) {
 		items(items = nowPlayingFiles, key = { f -> f }) { f ->
 			NowPlayingFileView(positionedFile = f)

@@ -591,6 +591,7 @@ fun ChildItem(
 	}
 }
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun TvItemListView(
 	itemListViewModel: ItemListViewModel,
@@ -674,7 +675,7 @@ fun TvItemListView(
 					tint = MaterialTheme.colors.onSurface,
 					modifier = Modifier
 						.align(Alignment.TopStart)
-						.clickable(
+						.navigable(
 							onClick = applicationNavigation::navigateUp,
 							indication = null,
 							interactionSource = remember { MutableInteractionSource() }
