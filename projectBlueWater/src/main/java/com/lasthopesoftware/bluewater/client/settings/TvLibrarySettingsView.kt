@@ -39,7 +39,6 @@ import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsMutableState
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 import com.lasthopesoftware.promises.extensions.suspend
-import com.lasthopesoftware.resources.strings.GetStringResources
 import kotlinx.coroutines.launch
 
 @Composable
@@ -58,7 +57,6 @@ private fun SpacedOutRow(content: @Composable (RowScope.() -> Unit)) {
 fun TvLibrarySettingsView(
 	librarySettingsViewModel: LibrarySettingsViewModel,
 	navigateApplication: NavigateApplication,
-	stringResources: GetStringResources,
 ) {
 	ControlSurface {
 		var accessCodeState by librarySettingsViewModel.accessCode.subscribeAsMutableState()

@@ -73,9 +73,9 @@ import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionF
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionStatusViewModel
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionUpdatesView
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.DramaticConnectionInitializationController
-import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsView
 import com.lasthopesoftware.bluewater.client.settings.PermissionsDependencies
-import com.lasthopesoftware.bluewater.settings.ApplicationSettingsView
+import com.lasthopesoftware.bluewater.client.settings.TvLibrarySettingsView
+import com.lasthopesoftware.bluewater.settings.TvApplicationSettingsView
 import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsView
 import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberSystemUiController
 import com.lasthopesoftware.bluewater.shared.android.ui.navigable
@@ -353,11 +353,9 @@ private fun LibraryDestination.Navigate(browserViewDependencies: ScopedBrowserVi
 							.fillMaxSize()
 							.padding(systemBarsPadding)
 					) {
-						LibrarySettingsView(
+						TvLibrarySettingsView(
 							librarySettingsViewModel = viewModel,
-							navigateApplication = applicationNavigation,
-							stringResources = stringResources,
-							userSslCertificates = userSslCertificateProvider,
+							navigateApplication = applicationNavigation
 						)
 					}
 
@@ -483,7 +481,7 @@ fun NowPlayingTvApplication(
 							.fillMaxSize()
 							.padding(systemBarsPadding)
 					) {
-						ApplicationSettingsView(
+						TvApplicationSettingsView(
 							applicationSettingsViewModel = routedNavigationDependencies.applicationSettingsViewModel,
 							applicationNavigation = routedNavigationDependencies.applicationNavigation,
 							playbackService = routedNavigationDependencies.playbackServiceController,
@@ -503,11 +501,9 @@ fun NowPlayingTvApplication(
 									.fillMaxSize()
 									.padding(systemBarsPadding)
 							) {
-								LibrarySettingsView(
+								TvLibrarySettingsView(
 									librarySettingsViewModel = librarySettingsViewModel,
-									navigateApplication = applicationNavigation,
-									stringResources = stringResources,
-									userSslCertificates = userSslCertificateProvider,
+									navigateApplication = applicationNavigation
 								)
 							}
 						}

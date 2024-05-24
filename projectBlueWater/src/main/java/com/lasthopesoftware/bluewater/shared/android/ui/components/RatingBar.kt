@@ -75,9 +75,7 @@ fun RatingBar(
 						)
 				}
 
-				Box(
-					modifier = starModifier,
-				) {
+				Box(modifier = starModifier) {
 					Image(
 						painter = painterResource(id = R.drawable.ic_star_36),
 						colorFilter = ColorFilter.tint(backgroundColor),
