@@ -13,7 +13,6 @@ import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.list.PlaybackLibraryItems
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ReusableChildItemViewModelProvider
-import com.lasthopesoftware.bluewater.client.browsing.items.list.ReusableTvChildItemViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryStorage
@@ -41,7 +40,6 @@ import com.lasthopesoftware.bluewater.settings.ApplicationSettingsViewModel
 import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsViewModel
 import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
-import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 import com.lasthopesoftware.bluewater.shared.messages.RegisterForTypedMessages
 import com.lasthopesoftware.bluewater.shared.messages.application.ScopedApplicationMessageBus
 import com.lasthopesoftware.resources.strings.StringResources
@@ -80,10 +78,6 @@ import com.lasthopesoftware.resources.strings.StringResources
 	val hiddenSettingsViewModel: HiddenSettingsViewModel
 	val userSslCertificateProvider: ProvideUserSslCertificates
 	val connectionStatusViewModel: ConnectionStatusViewModel
-}
-
-interface TvInterfaceDependencies : BrowserViewDependencies {
-	val reusableTvChildItemViewModelProvider: PooledCloseablesViewModel<ReusableTvChildItemViewModel>
 }
 
 /**

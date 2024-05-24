@@ -5,7 +5,6 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.core.app.ActivityCompat
 import androidx.core.view.WindowCompat
 import androidx.media3.common.util.UnstableApi
@@ -28,20 +27,18 @@ import com.namehillsoftware.handoff.Messenger
 import com.namehillsoftware.handoff.promises.Promise
 import java.util.concurrent.ConcurrentHashMap
 
-private val logger by lazyLogger<HandheldActivity>()
-private val magicPropertyBuilder by lazy { MagicPropertyBuilder(cls<HandheldActivity>()) }
+private val logger by lazyLogger<EntryActivity>()
+private val magicPropertyBuilder by lazy { MagicPropertyBuilder(cls<EntryActivity>()) }
 
 val destinationProperty by lazy { magicPropertyBuilder.buildProperty("destination") }
 
-@UnstableApi class HandheldActivity :
+@UnstableApi class EntryActivity :
 	AppCompatActivity(),
 	ActivityCompat.OnRequestPermissionsResultCallback,
 	ManagePermissions,
 	PermissionsDependencies,
 	ActivitySuppliedDependencies
 {
-	private var isInLeanbackMode = false
-
 	private val browserViewDependencies by lazy { ActivityDependencies(this, this) }
 
 	override val registeredActivityResultsLauncher = registerResultActivityLauncher()
@@ -58,7 +55,9 @@ val destinationProperty by lazy { magicPropertyBuilder.buildProperty("destinatio
 
 	private val permissionsRequests = ConcurrentHashMap<Int, Messenger<Map<String, Boolean>>>()
 
-	public override fun onCreate(savedInstanceState: Bundle?) {
+	private var isInLeanbackMode = false
+
+	override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
 		// Ensure that this task is only started when it's the task root. A workaround for an Android bug.

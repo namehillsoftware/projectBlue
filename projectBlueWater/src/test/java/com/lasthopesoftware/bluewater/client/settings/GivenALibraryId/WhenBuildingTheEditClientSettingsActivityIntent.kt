@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.settings.GivenALibraryId
 
 import android.content.Intent
 import androidx.test.core.app.ApplicationProvider
-import com.lasthopesoftware.bluewater.client.HandheldActivity
+import com.lasthopesoftware.bluewater.client.EntryActivity
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ConnectionSettingsScreen
 import com.lasthopesoftware.bluewater.client.destinationProperty
@@ -37,6 +37,6 @@ class WhenBuildingTheEditClientSettingsActivityIntent {
     @Test
     fun thenTheReturnedIntentActivityIsCorrect() {
         assertThat(returnedIntent!!.component!!.className)
-            .isEqualTo(HandheldActivity::class.java.name)
+            .isEqualTo(EntryActivity::class.java.name)
     }
 }

@@ -37,7 +37,7 @@
         android:banner="@drawable/tv_banner">
 
         <activity
-            android:name=".client.HandheldActivity"
+            android:name=".client.EntryActivity"
             android:launchMode="singleTask"
             android:exported="true">
             <intent-filter>
@@ -52,23 +52,12 @@
         </activity>
 
         <activity
-            android:name=".client.TvActivity"
-            android:exported="true">
-
-<!--            <intent-filter>-->
-<!--                <action android:name="android.intent.action.MAIN" />-->
-<!--                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />-->
-<!--            </intent-filter>-->
-
-        </activity>
-
-        <activity
             android:name="com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsActivity"
             android:label="@string/title_activity_file_view"
-            android:parentActivityName=".client.HandheldActivity">
+            android:parentActivityName=".client.EntryActivity">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value=".client.HandheldActivity" />
+                android:value=".client.EntryActivity" />
         </activity>
 
         <receiver
