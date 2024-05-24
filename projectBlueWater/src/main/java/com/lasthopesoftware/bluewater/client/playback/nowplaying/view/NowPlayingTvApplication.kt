@@ -129,14 +129,16 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedBr
 		val isBrowserShown by remember { derivedStateOf { nowPlayingOffsetPx != 0f } }
 		val browserExpansionProgress by remember { derivedStateOf { nowPlayingOffsetPx / halfWidthPx } }
 
-		Box(
-			modifier = Modifier
-				.offset(x = browserOffset)
-				.width(halfWidth)
-				.fillMaxHeight()
-				.focusGroup()
-		) {
-			NavigateToTvLibraryDestination(browserViewDependencies)
+		if (isBrowserShown) {
+			Box(
+				modifier = Modifier
+					.offset(x = browserOffset)
+					.width(halfWidth)
+					.fillMaxHeight()
+					.focusGroup()
+			) {
+				NavigateToTvLibraryDestination(browserViewDependencies)
+			}
 		}
 
 		Box(
@@ -170,6 +172,7 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedBr
 							modifier = Modifier
 								.fillMaxHeight()
 								.width(nowPlayingPaneWidth)
+								.focusGroup()
 						) {
 							NowPlayingHeadline(modifier = Modifier.fillMaxWidth(), nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel)
 
@@ -257,39 +260,45 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedBr
 							)
 						}
 
-						Column(
-							modifier = Modifier
-								.fillMaxHeight()
-								.width(halfWidth)
-								.offset(x = nowPlayingPaneWidth)
-								.background(SharedColors.overlayDark),
-							horizontalAlignment = Alignment.CenterHorizontally,
-						) {
+						DisposableEffect(key1 = isPlaylistShown) {
 							if (!isPlaylistShown) {
 								nowPlayingPlaylistViewModel.enableSystemAutoScrolling()
 							} else {
 								nowPlayingPlaylistViewModel.disableSystemAutoScrolling()
 							}
 
-							PlaylistControls(
-								modifier = Modifier
-									.fillMaxWidth()
-									.height(Dimensions.appBarHeight),
-								playlistViewModel = nowPlayingPlaylistViewModel,
-								viewModelMessageBus = nowPlayingViewModelMessageBus,
-							)
+							onDispose {  }
+						}
 
-							NowPlayingTvPlaylist(
-								reusablePlaylistFileItemViewModelProvider,
-								nowPlayingFilePropertiesViewModel,
-								applicationNavigation,
-								playbackServiceController,
-								itemListMenuBackPressedHandler,
-								nowPlayingPlaylistViewModel,
-								viewModelMessageBus = nowPlayingViewModelMessageBus,
+						if (isPlaylistShown) {
+							Column(
 								modifier = Modifier
-									.fillMaxHeight(),
-							)
+									.fillMaxHeight()
+									.width(halfWidth)
+									.offset(x = nowPlayingPaneWidth)
+									.background(SharedColors.overlayDark),
+								horizontalAlignment = Alignment.CenterHorizontally,
+							) {
+								PlaylistControls(
+									modifier = Modifier
+										.fillMaxWidth()
+										.height(Dimensions.appBarHeight),
+									playlistViewModel = nowPlayingPlaylistViewModel,
+									viewModelMessageBus = nowPlayingViewModelMessageBus,
+								)
+
+								NowPlayingTvPlaylist(
+									reusablePlaylistFileItemViewModelProvider,
+									nowPlayingFilePropertiesViewModel,
+									applicationNavigation,
+									playbackServiceController,
+									itemListMenuBackPressedHandler,
+									nowPlayingPlaylistViewModel,
+									viewModelMessageBus = nowPlayingViewModelMessageBus,
+									modifier = Modifier
+										.fillMaxHeight(),
+								)
+							}
 						}
 					}
 				}
