@@ -28,12 +28,9 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Divider
-import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.ProvideTextStyle
 import androidx.compose.material.Text
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
@@ -71,6 +68,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.h
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncIcon
+import com.lasthopesoftware.bluewater.shared.android.ui.components.BackButton
 import com.lasthopesoftware.bluewater.shared.android.ui.components.ColumnMenuIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.shared.android.ui.components.ListItemIcon
@@ -669,19 +667,7 @@ fun TvItemListView(
 					.height(appBarHeight),
 				contentAlignment = Alignment.CenterStart,
 			) {
-				Icon(
-					Icons.AutoMirrored.Filled.ArrowBack,
-					contentDescription = "",
-					tint = MaterialTheme.colors.onSurface,
-					modifier = Modifier
-						.align(Alignment.TopStart)
-						.navigable(
-							onClick = applicationNavigation::navigateUp,
-							indication = null,
-							interactionSource = remember { MutableInteractionSource() }
-						)
-						.padding(Dimensions.viewPaddingUnit * 4)
-				)
+				BackButton(applicationNavigation::navigateUp, modifier = Modifier.align(Alignment.TopStart))
 			}
 
 			Box(modifier = Modifier.height(expandedTitleHeight)) {
@@ -883,19 +869,7 @@ fun ItemListView(
 							.background(MaterialTheme.colors.surface)
 							.height(LocalDensity.current.run { heightValue.toDp() })
 					) {
-						Icon(
-							Icons.AutoMirrored.Filled.ArrowBack,
-							contentDescription = "",
-							tint = MaterialTheme.colors.onSurface,
-							modifier = Modifier
-								.align(Alignment.TopStart)
-								.clickable(
-									onClick = applicationNavigation::navigateUp,
-									indication = null,
-									interactionSource = remember { MutableInteractionSource() }
-								)
-								.padding(Dimensions.viewPaddingUnit * 4)
-						)
+						BackButton(applicationNavigation::navigateUp, modifier = Modifier.align(Alignment.TopStart))
 
 						val headerCollapseProgress by heightScaler.getProgressState()
 						val topPadding by remember { derivedStateOf { linearInterpolation(appBarHeight, 14.dp, headerCollapseProgress) } }
@@ -1054,19 +1028,7 @@ fun ItemListView(
 							.background(MaterialTheme.colors.surface)
 							.height(collapsedHeight)
 					) {
-						Icon(
-							Icons.AutoMirrored.Filled.ArrowBack,
-							contentDescription = "",
-							tint = MaterialTheme.colors.onSurface,
-							modifier = Modifier
-								.align(Alignment.TopStart)
-								.clickable(
-									interactionSource = remember { MutableInteractionSource() },
-									indication = null,
-									onClick = applicationNavigation::navigateUp
-								)
-								.padding(Dimensions.viewPaddingUnit * 4)
-						)
+						BackButton(applicationNavigation::navigateUp, modifier = Modifier.align(Alignment.TopStart))
 
 						val topPadding = appBarHeight - 42.dp
 						BoxWithConstraints(modifier = Modifier.padding(top = topPadding)) nestedBoxScope@{

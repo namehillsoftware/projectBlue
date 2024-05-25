@@ -378,7 +378,9 @@ private fun LibraryDestination.Navigate(browserViewDependencies: ScopedBrowserVi
 					) {
 						TvLibrarySettingsView(
 							librarySettingsViewModel = viewModel,
-							navigateApplication = applicationNavigation
+							navigateApplication = applicationNavigation,
+							stringResources = stringResources,
+							userSslCertificates = userSslCertificateProvider,
 						)
 					}
 
@@ -526,7 +528,9 @@ fun NowPlayingTvApplication(
 							) {
 								TvLibrarySettingsView(
 									librarySettingsViewModel = librarySettingsViewModel,
-									navigateApplication = applicationNavigation
+									navigateApplication = applicationNavigation,
+									stringResources = stringResources,
+									userSslCertificates = userSslCertificateProvider,
 								)
 							}
 						}
