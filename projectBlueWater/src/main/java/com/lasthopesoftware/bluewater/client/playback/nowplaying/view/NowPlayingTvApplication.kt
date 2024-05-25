@@ -129,6 +129,10 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedBr
 		val isBrowserShown by remember { derivedStateOf { nowPlayingOffsetPx != 0f } }
 		val browserExpansionProgress by remember { derivedStateOf { nowPlayingOffsetPx / halfWidthPx } }
 
+		var currentPlaylistOffsetPx by remember { mutableFloatStateOf(0f) }
+
+		val scope = rememberCoroutineScope()
+
 		if (isBrowserShown) {
 			Box(
 				modifier = Modifier
@@ -138,6 +142,16 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedBr
 					.focusGroup()
 			) {
 				NavigateToTvLibraryDestination(browserViewDependencies)
+			}
+		} else {
+			BackHandler {
+				scope.launch {
+					animate(0f, halfWidthPx, 0f, tween()) { value, _ ->
+						currentPlaylistOffsetPx =
+							(currentPlaylistOffsetPx - value - nowPlayingOffsetPx).coerceAtLeast(0f)
+						nowPlayingOffsetPx = value
+					}
+				}
 			}
 		}
 
@@ -163,7 +177,6 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedBr
 					with (browserViewDependencies) {
 						BackHandler(itemListMenuBackPressedHandler.hideAllMenus()) {}
 
-						var currentPlaylistOffsetPx by remember { mutableFloatStateOf(0f) }
 						val playlistExpansionProgress by remember { derivedStateOf { currentPlaylistOffsetPx / halfWidthPx } }
 						val isPlaylistShown by remember { derivedStateOf { currentPlaylistOffsetPx != 0f } }
 						val nowPlayingPaneWidth = this@BoxWithConstraints.maxWidth - LocalDensity.current.run { currentPlaylistOffsetPx.toDp() }
@@ -189,8 +202,9 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedBr
 									.align(Alignment.BottomCenter)
 									.fillMaxWidth()
 							) {
-								Row {
-									val scope = rememberCoroutineScope()
+								Row(
+									verticalAlignment = Alignment.CenterVertically
+								) {
 									val browserChevronRotation by remember { derivedStateOf { 90 - (180 * browserExpansionProgress) } }
 									Image(
 										painter = painterResource(R.drawable.chevron_up_white_36dp),
