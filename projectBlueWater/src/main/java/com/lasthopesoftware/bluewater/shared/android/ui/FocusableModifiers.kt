@@ -32,15 +32,50 @@ import androidx.compose.ui.input.InputMode
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onKeyEvent
+import androidx.compose.ui.input.key.onInterceptKeyBeforeSoftKeyboard
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalInputModeManager
+import androidx.compose.ui.platform.LocalViewConfiguration
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.LocalControlColor
+import com.lasthopesoftware.promises.PromiseDelay
+import com.lasthopesoftware.promises.extensions.suspend
+import com.lasthopesoftware.promises.extensions.toPromise
+import com.namehillsoftware.handoff.promises.Promise
 import kotlinx.coroutines.launch
+import org.joda.time.Duration
+
+private class TimeoutLatch(private val timeout: Duration) {
+
+	private val sync = Any()
+
+	@Volatile
+	private var promisedTimeout = false.toPromise()
+
+	@Volatile
+	private var isTimedOutState = false
+
+	val isActivated
+		get() = isTimedOutState
+
+	fun wait(): Promise<Boolean> = synchronized(sync) {
+		promisedTimeout.cancel()
+		promisedTimeout = Promise.Proxy {
+			PromiseDelay
+				.delay<Any?>(timeout)
+				.also(it::doCancel)
+				.then { _, cp -> isTimedOutState = !cp.isCancelled; !cp.isCancelled }
+		}
+		return promisedTimeout
+	}
+
+	fun cancel() = synchronized(sync) {
+		promisedTimeout.cancel()
+	}
+}
 
 // Courtesy of https://github.com/thesauri/dpad-compose/blob/main/app/src/main/java/dev/berggren/DpadFocusable.kt
 @OptIn(ExperimentalFoundationApi::class)
@@ -57,6 +92,7 @@ fun Modifier.navigable(
 	isDefault: Boolean = false,
 	enabled: Boolean = true,
 	onLongClick: (() -> Unit)? = null,
+	onLongClickLabel: String? = null,
 	onNavigatedTo: (() -> Unit)? = null
 ) = composed {
 	val focusRequester = remember { FocusRequester() }
@@ -80,11 +116,17 @@ fun Modifier.navigable(
 			interactionSource = boxInteractionSource,
 			indication = indication,
 			onLongClick = onLongClick,
+			onLongClickLabel = onLongClickLabel,
 			onClickLabel = onClickLabel,
 			onClick = onClick,
 			enabled = enabled,
 		)
 	} else {
+		val viewConfiguration = LocalViewConfiguration.current
+		val longPressState = remember {
+			TimeoutLatch(Duration.millis(viewConfiguration.longPressTimeoutMillis))
+		}
+
 		val isItemFocused by boxInteractionSource.collectIsFocusedAsState()
 		var previousFocus: FocusInteraction.Focus? by remember {
 			mutableStateOf(null)
@@ -152,12 +194,16 @@ fun Modifier.navigable(
 					}
 				}
 			}
-			.onKeyEvent {
+			.onInterceptKeyBeforeSoftKeyboard {
 				if (!listOf(Key.DirectionCenter, Key.Enter).contains(it.key)) {
-					return@onKeyEvent false
+					return@onInterceptKeyBeforeSoftKeyboard false
 				}
+
+				longPressState.cancel()
+
 				when (it.type) {
 					KeyEventType.KeyDown -> {
+
 						val press =
 							PressInteraction.Press(
 								pressPosition = Offset(
@@ -168,13 +214,22 @@ fun Modifier.navigable(
 						scope.launch {
 							boxInteractionSource.emit(press)
 						}
+
+						if (onLongClick != null) {
+							scope.launch {
+								val isTimedOut = longPressState.wait().suspend()
+
+								if (isTimedOut)
+									onLongClick()
+							}
+						}
 						previousPress = press
 						true
 					}
 
 					KeyEventType.KeyUp -> {
 						previousPress?.let { previousPress ->
-							if (enabled)
+							if (enabled && !longPressState.isActivated)
 								onClick()
 
 							scope.launch {
