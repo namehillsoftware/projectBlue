@@ -24,31 +24,17 @@ fun PlayPauseButton(
     alpha: Float = 1f
 ) {
 	val isPlaying by nowPlayingFilePropertiesViewModel.isPlaying.subscribeAsState()
-	if (isPlaying) {
-		Image(
-			painter = painterResource(id = R.drawable.av_pause_white),
-			contentDescription = stringResource(id = R.string.btn_pause),
-			modifier = modifier.navigable(
-				interactionSource = remember { MutableInteractionSource() },
-				indication = null,
-				onClick = {
-					playbackServiceController.pause()
-					nowPlayingFilePropertiesViewModel.togglePlaying(false)
-				}),
-			alpha = alpha,
-		)
-	} else {
-		Image(
-			painter = painterResource(id = R.drawable.av_play_white),
-			contentDescription = stringResource(id = R.string.btn_play),
-			modifier = modifier.navigable(
-				interactionSource = remember { MutableInteractionSource() },
-				indication = null,
-				onClick = {
-					nowPlayingFilePropertiesViewModel.activeLibraryId.value?.also(playbackServiceController::play)
-					nowPlayingFilePropertiesViewModel.togglePlaying(true)
-				}),
-			alpha = alpha,
-		)
-	}
+	Image(
+		painter = painterResource(id = if (isPlaying) R.drawable.av_pause_white else R.drawable.av_play_white),
+		contentDescription = stringResource(id = if (isPlaying) R.string.btn_pause else R.string.btn_play),
+		modifier = modifier.navigable(
+			interactionSource = remember { MutableInteractionSource() },
+			indication = null,
+			onClick = {
+				if (isPlaying) playbackServiceController.pause()
+				else nowPlayingFilePropertiesViewModel.activeLibraryId.value?.also(playbackServiceController::play)
+				nowPlayingFilePropertiesViewModel.togglePlaying(!isPlaying)
+			}),
+		alpha = alpha,
+	)
 }

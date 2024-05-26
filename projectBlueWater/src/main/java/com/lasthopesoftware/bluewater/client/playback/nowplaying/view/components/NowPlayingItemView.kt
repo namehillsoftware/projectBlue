@@ -104,7 +104,7 @@ fun NowPlayingItemView(
 				modifier = Modifier
 					.fillMaxWidth()
 					.weight(1f)
-					.clickable { onRemoveFromNowPlayingClick() },
+					.navigable(onClick = onRemoveFromNowPlayingClick, isDefault = true),
 			)
 
 			ListItemIcon(
@@ -113,7 +113,7 @@ fun NowPlayingItemView(
 				modifier = Modifier
 					.fillMaxWidth()
 					.weight(1f)
-					.clickable { onViewFilesClick() },
+					.navigable(onClick = onViewFilesClick),
 			)
 
 			ListItemIcon(
@@ -122,7 +122,7 @@ fun NowPlayingItemView(
 				modifier = Modifier
 					.fillMaxWidth()
 					.weight(1f)
-					.clickable { onPlayClick() },
+					.navigable(onClick = onPlayClick),
 			)
 		}
 	}

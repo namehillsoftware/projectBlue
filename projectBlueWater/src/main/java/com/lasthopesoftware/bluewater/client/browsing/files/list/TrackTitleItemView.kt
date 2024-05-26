@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.list
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -83,7 +82,7 @@ fun TrackTitleItemView(
 				modifier = Modifier
 					.fillMaxWidth()
 					.weight(1f)
-					.clickable { onAddToNowPlayingClick() }
+					.navigable(onClick = onAddToNowPlayingClick, isDefault = true)
 					.align(Alignment.CenterVertically),
 			)
 
@@ -92,7 +91,7 @@ fun TrackTitleItemView(
 				contentDescription = stringResource(id = R.string.btn_view_files),
 				modifier = Modifier
 					.fillMaxWidth()
-					.clickable { onViewFilesClick() }
+					.navigable(onClick = onViewFilesClick)
 					.weight(1f)
 					.align(Alignment.CenterVertically),
 			)
@@ -103,7 +102,7 @@ fun TrackTitleItemView(
 				modifier = Modifier
 					.fillMaxWidth()
 					.weight(1f)
-					.clickable { onPlayClick() }
+					.navigable(onClick = onPlayClick)
 					.align(Alignment.CenterVertically),
 			)
 		}
