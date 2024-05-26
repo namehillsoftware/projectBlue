@@ -2,7 +2,6 @@ package com.lasthopesoftware.bluewater.settings
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -22,6 +21,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.dimensionResource
@@ -44,13 +44,14 @@ import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackSer
 import com.lasthopesoftware.bluewater.shared.android.ui.components.ApplicationInfoText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.ApplicationLogo
 import com.lasthopesoftware.bluewater.shared.android.ui.components.LabeledSelection
+import com.lasthopesoftware.bluewater.shared.android.ui.navigable
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 
 private val optionsPadding = PaddingValues(start = 32.dp, end = 32.dp)
 
-@OptIn(ExperimentalTvFoundationApi::class)
+@OptIn(ExperimentalTvFoundationApi::class, ExperimentalComposeUiApi::class)
 private fun TvLazyListScope.settingsList(
 	standardRowModifier: Modifier,
 	rowFontSize: TextUnit,
@@ -146,9 +147,9 @@ private fun TvLazyListScope.settingsList(
 	item {
 		Row(
 			modifier = standardRowModifier
-				.clickable {
+				.navigable(onClick = {
 					applicationNavigation.viewNewServerSettings()
-				},
+				}),
 			verticalAlignment = Alignment.CenterVertically,
 			horizontalArrangement = Arrangement.SpaceBetween,
 		) {
@@ -166,7 +167,7 @@ private fun TvLazyListScope.settingsList(
 	items(libraries) { library ->
 		Row(
 			modifier = standardRowModifier
-				.clickable { applicationNavigation.viewServerSettings(library.libraryId) },
+				.navigable(onClick =  { applicationNavigation.viewServerSettings(library.libraryId) }),
 			verticalAlignment = Alignment.CenterVertically,
 		) {
 			Text(
