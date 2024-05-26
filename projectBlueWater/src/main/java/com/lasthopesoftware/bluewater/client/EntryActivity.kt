@@ -79,14 +79,16 @@ val destinationProperty by lazy { magicPropertyBuilder.buildProperty("destinatio
 		WindowCompat.setDecorFitsSystemWindows(window, false)
 
 		setContent {
-			ProjectBlueTheme {
-				if (!isInLeanbackMode) {
+			if (!isInLeanbackMode) {
+				ProjectBlueTheme {
 					NarrowScreenApplication(
 						browserViewDependencies = browserViewDependencies,
 						permissionsDependencies = this,
 						initialDestination = getDestination(intent),
 					)
-				} else {
+				}
+			} else {
+				ProjectBlueTheme(darkTheme = true) {
 					NowPlayingTvApplication(
 						browserViewDependencies = browserViewDependencies,
 						permissionsDependencies = this,
