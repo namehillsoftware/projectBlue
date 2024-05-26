@@ -8,7 +8,6 @@ import androidx.compose.foundation.LocalOverscrollConfiguration
 import androidx.compose.foundation.OverscrollConfiguration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.gestures.AnchoredDraggableState
 import androidx.compose.foundation.gestures.DraggableAnchors
@@ -211,7 +210,7 @@ fun NowPlayingHeadline(modifier: Modifier = Modifier, nowPlayingFilePropertiesVi
 	}
 }
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
 @Composable
 fun PlaylistControls(
 	modifier: Modifier = Modifier,
@@ -229,18 +228,14 @@ fun PlaylistControls(
 			Image(
 				painter = painterResource(id = R.drawable.ic_remove_item_white_36dp),
 				contentDescription = stringResource(id = R.string.finish_edit_now_playing_list),
-				modifier = Modifier.clickable {
-					playlistViewModel.finishPlaylistEdit()
-				},
+				modifier = Modifier.navigable(onClick = playlistViewModel::finishPlaylistEdit),
 				alpha = playlistControlAlpha,
 			)
 		} else {
 			Image(
 				painter = painterResource(id = R.drawable.pencil),
 				contentDescription = stringResource(id = R.string.edit_now_playing_list),
-				modifier = Modifier.clickable {
-					playlistViewModel.editPlaylist()
-				},
+				modifier = Modifier.navigable(playlistViewModel::editPlaylist),
 				alpha = playlistControlAlpha,
 			)
 		}
@@ -249,7 +244,7 @@ fun PlaylistControls(
 			Image(
 				painter = painterResource(id = R.drawable.clear_all_white_36dp),
 				contentDescription = stringResource(R.string.empty_playlist),
-				modifier = Modifier.clickable(onClick = playlistViewModel::requestPlaylistClearingPermission),
+				modifier = Modifier.navigable(onClick = playlistViewModel::requestPlaylistClearingPermission),
 				alpha = playlistControlAlpha,
 			)
 		} else {
@@ -258,18 +253,14 @@ fun PlaylistControls(
 				Image(
 					painter = painterResource(id = R.drawable.av_repeat_white),
 					contentDescription = stringResource(id = R.string.btn_complete_playlist),
-					modifier = Modifier.clickable {
-						playlistViewModel.toggleRepeating()
-					},
+					modifier = Modifier.navigable(onClick = playlistViewModel::toggleRepeating),
 					alpha = playlistControlAlpha,
 				)
 			} else {
 				Image(
 					painter = painterResource(id = R.drawable.av_no_repeat_white),
 					contentDescription = stringResource(id = R.string.btn_repeat_playlist),
-					modifier = Modifier.clickable {
-						playlistViewModel.toggleRepeating()
-					},
+					modifier = Modifier.navigable(onClick = playlistViewModel::toggleRepeating),
 					alpha = playlistControlAlpha,
 				)
 			}
@@ -279,9 +270,7 @@ fun PlaylistControls(
 			Image(
 				painter = painterResource(id = R.drawable.upload_36dp),
 				contentDescription = stringResource(id = R.string.save_playlist),
-				modifier = Modifier.clickable {
-					playlistViewModel.enableSavingPlaylist()
-				},
+				modifier = Modifier.navigable(onClick = playlistViewModel::enableSavingPlaylist),
 				alpha = playlistControlAlpha,
 			)
 		} else {
@@ -289,7 +278,7 @@ fun PlaylistControls(
 			Image(
 				painter = painterResource(id = R.drawable.scroll_to_item_36),
 				contentDescription = stringResource(R.string.scroll_to_now_playing_item),
-				modifier = Modifier.combinedClickable(
+				modifier = Modifier.navigable(
 					interactionSource = remember { MutableInteractionSource() },
 					indication = rememberRipple(),
 					onClick = {
