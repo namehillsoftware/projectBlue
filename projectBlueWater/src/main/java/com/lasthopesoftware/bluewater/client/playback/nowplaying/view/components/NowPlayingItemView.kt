@@ -30,7 +30,6 @@ import com.lasthopesoftware.bluewater.shared.android.ui.components.dragging.Drag
 import com.lasthopesoftware.bluewater.shared.android.ui.navigable
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 
-private val itemPadding = Dimensions.viewPaddingUnit * 2
 private val rowHeight = Dimensions.twoLineRowHeight
 
 @OptIn(ExperimentalComposeUiApi::class)
@@ -67,7 +66,7 @@ fun NowPlayingItemView(
 				)
 				.height(rowHeight)
 				.fillMaxSize()
-				.padding(itemPadding),
+				.padding(Dimensions.rowPaddingValues),
 			verticalAlignment = Alignment.CenterVertically,
 		) {
 			Column(
@@ -95,7 +94,7 @@ fun NowPlayingItemView(
 		Row(
 			modifier = Modifier
 				.height(rowHeight)
-				.padding(itemPadding),
+				.padding(Dimensions.rowPaddingValues),
 			verticalAlignment = Alignment.CenterVertically,
 		) {
 			ListItemIcon(
@@ -104,7 +103,7 @@ fun NowPlayingItemView(
 				modifier = Modifier
 					.fillMaxWidth()
 					.weight(1f)
-					.navigable(onClick = onRemoveFromNowPlayingClick, isDefault = true),
+					.navigable(onClick = onRemoveFromNowPlayingClick),
 			)
 
 			ListItemIcon(
@@ -113,7 +112,7 @@ fun NowPlayingItemView(
 				modifier = Modifier
 					.fillMaxWidth()
 					.weight(1f)
-					.navigable(onClick = onViewFilesClick),
+					.navigable(onClick = onViewFilesClick, isDefault = true),
 			)
 
 			ListItemIcon(
@@ -163,7 +162,7 @@ fun DragDropItemScope.NowPlayingItemView(
 				)
 				.height(rowHeight)
 				.fillMaxSize()
-				.padding(itemPadding),
+				.padding(Dimensions.rowPaddingValues),
 			verticalAlignment = Alignment.CenterVertically,
 		) {
 			Column(
@@ -201,7 +200,7 @@ fun DragDropItemScope.NowPlayingItemView(
 		Row(
 			modifier = Modifier
 				.height(rowHeight)
-				.padding(itemPadding),
+				.padding(Dimensions.rowPaddingValues),
 			verticalAlignment = Alignment.CenterVertically,
 		) {
 			ListItemIcon(

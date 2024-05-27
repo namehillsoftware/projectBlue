@@ -309,8 +309,7 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedBr
 									itemListMenuBackPressedHandler,
 									nowPlayingPlaylistViewModel,
 									viewModelMessageBus = nowPlayingViewModelMessageBus,
-									modifier = Modifier
-										.fillMaxHeight(),
+									modifier = Modifier.fillMaxHeight(),
 								)
 							}
 						}
@@ -360,36 +359,36 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedBr
 @Composable
 @OptIn(ExperimentalFoundationApi::class)
 private fun LibraryDestination.Navigate(browserViewDependencies: ScopedBrowserViewDependencies) {
-		when (this) {
-			is BrowserLibraryDestination -> {
-				NowPlayingTvView(browserViewDependencies = browserViewDependencies)
-			}
-
-			is ConnectionSettingsScreen -> {
-				with(browserViewDependencies) {
-					val viewModel = librarySettingsViewModel
-
-					val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
-
-					Box(
-						modifier = Modifier
-							.fillMaxSize()
-							.padding(systemBarsPadding)
-					) {
-						TvLibrarySettingsView(
-							librarySettingsViewModel = viewModel,
-							navigateApplication = applicationNavigation,
-							stringResources = stringResources,
-							userSslCertificates = userSslCertificateProvider,
-						)
-					}
-
-					viewModel.loadLibrary(libraryId)
-				}
-			}
-
-			is NowPlayingScreen -> {}
+	when (this) {
+		is BrowserLibraryDestination -> {
+			NowPlayingTvView(browserViewDependencies = browserViewDependencies)
 		}
+
+		is ConnectionSettingsScreen -> {
+			with(browserViewDependencies) {
+				val viewModel = librarySettingsViewModel
+
+				val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
+
+				Box(
+					modifier = Modifier
+						.fillMaxSize()
+						.padding(systemBarsPadding)
+				) {
+					TvLibrarySettingsView(
+						librarySettingsViewModel = viewModel,
+						navigateApplication = applicationNavigation,
+						stringResources = stringResources,
+						userSslCertificates = userSslCertificateProvider,
+					)
+				}
+
+				viewModel.loadLibrary(libraryId)
+			}
+		}
+
+		is NowPlayingScreen -> {}
+	}
 }
 
 @Composable
@@ -445,8 +444,6 @@ fun NowPlayingTvApplication(
 	}
 
 	BackHandler { routedNavigationDependencies.applicationNavigation.backOut() }
-
-	val systemBarsPadding = WindowInsets.systemBars.asPaddingValues()
 
 	ControlSurface {
 		NavHost(navController) { destination ->
@@ -504,7 +501,6 @@ fun NowPlayingTvApplication(
 					Box(
 						modifier = Modifier
 							.fillMaxSize()
-							.padding(systemBarsPadding)
 					) {
 						TvApplicationSettingsView(
 							applicationSettingsViewModel = routedNavigationDependencies.applicationSettingsViewModel,
@@ -522,9 +518,7 @@ fun NowPlayingTvApplication(
 						}
 						?.apply {
 							Box(
-								modifier = Modifier
-									.fillMaxSize()
-									.padding(systemBarsPadding)
+								modifier = Modifier.fillMaxSize()
 							) {
 								TvLibrarySettingsView(
 									librarySettingsViewModel = librarySettingsViewModel,
@@ -546,9 +540,7 @@ fun NowPlayingTvApplication(
 		val isCheckingConnection by connectionStatusViewModel.isGettingConnection.collectAsState()
 		if (isCheckingConnection) {
 			Box(
-				modifier = Modifier
-					.fillMaxSize()
-					.padding(systemBarsPadding)
+				modifier = Modifier.fillMaxSize()
 			) {
 				ConnectionUpdatesView(connectionViewModel = connectionStatusViewModel)
 			}

@@ -21,7 +21,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.shared.android.ui.components.ListItemIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.navigable
@@ -57,6 +56,7 @@ fun TrackTitleItemView(
 				onClickLabel = stringResource(id = R.string.btn_view_song_details),
 				onClick = onItemClick
 			)
+			.padding(Dimensions.rowPaddingValues)
 			.height(rowHeight)
 			.fillMaxSize(),
 		) {
@@ -67,14 +67,13 @@ fun TrackTitleItemView(
 				maxLines = 1,
 				fontWeight = if (isActive) FontWeight.Bold else FontWeight.Normal,
 				modifier = Modifier
-					.padding(12.dp)
 					.align(Alignment.CenterStart),
 			)
 		}
 	} else {
 		Row(modifier = Modifier
 			.height(rowHeight)
-			.padding(8.dp)
+			.padding(Dimensions.rowPaddingValues)
 		) {
 			ListItemIcon(
 				painter = painterResource(id = R.drawable.ic_add_item_36dp),

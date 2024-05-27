@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.list
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -528,6 +527,7 @@ fun ChildItem(
 			)
 			.height(rowHeight)
 			.fillMaxSize()
+			.padding(Dimensions.rowPaddingValues)
 		) {
 			Text(
 				text = item.value ?: "",
@@ -536,60 +536,59 @@ fun ChildItem(
 				maxLines = 1,
 				fontWeight = FontWeight.Normal,
 				modifier = Modifier
-					.padding(Dimensions.viewPaddingUnit * 3)
 					.align(Alignment.CenterStart),
 			)
 		}
-
-		return
-	}
-
-	Row(
-		modifier = Modifier
-			.height(rowHeight)
-			.padding(8.dp)
-	) {
-		ListItemIcon(
-			painter = painterResource(id = R.drawable.av_play),
-			contentDescription = stringResource(id = R.string.btn_play),
+	} else {
+		Row(
 			modifier = Modifier
-				.fillMaxWidth()
-				.weight(1f)
-				.clickable {
-					itemListViewModel.loadedLibraryId?.also {
-						playbackLibraryItems.playItem(it, ItemId(item.key))
-					}
-				}
-				.align(Alignment.CenterVertically),
-		)
+				.height(rowHeight)
+				.padding(Dimensions.rowPaddingValues)
+		) {
+			ListItemIcon(
+				painter = painterResource(id = R.drawable.av_play),
+				contentDescription = stringResource(id = R.string.btn_play),
+				modifier = Modifier
+					.fillMaxWidth()
+					.weight(1f)
+					.navigable(
+						onClick = {
+							itemListViewModel.loadedLibraryId?.also {
+								playbackLibraryItems.playItem(it, ItemId(item.key))
+							}
+						},
+						isDefault = true,
+					)
+					.align(Alignment.CenterVertically),
+			)
 
-		val isChildItemSynced by childItemViewModel.isSynced.collectAsState()
-		SyncIcon(
-			isActive = isChildItemSynced,
-			modifier = Modifier
-				.fillMaxWidth()
-				.clickable { childItemViewModel.toggleSync() }
-				.weight(1f)
-				.align(Alignment.CenterVertically),
-		)
+			val isChildItemSynced by childItemViewModel.isSynced.collectAsState()
+			SyncIcon(
+				isActive = isChildItemSynced,
+				modifier = Modifier
+					.fillMaxWidth()
+					.navigable(onClick = childItemViewModel::toggleSync)
+					.weight(1f)
+					.align(Alignment.CenterVertically),
+			)
 
-		ListItemIcon(
-			painter = painterResource(id = R.drawable.av_shuffle),
-			contentDescription = stringResource(id = R.string.btn_shuffle_files),
-			modifier = Modifier
-				.fillMaxWidth()
-				.weight(1f)
-				.clickable {
-					itemListViewModel.loadedLibraryId?.also {
-						playbackLibraryItems.playItemShuffled(it, ItemId(item.key))
-					}
-				}
-				.align(Alignment.CenterVertically),
-		)
+			ListItemIcon(
+				painter = painterResource(id = R.drawable.av_shuffle),
+				contentDescription = stringResource(id = R.string.btn_shuffle_files),
+				modifier = Modifier
+					.fillMaxWidth()
+					.weight(1f)
+					.navigable(onClick = {
+						itemListViewModel.loadedLibraryId?.also {
+							playbackLibraryItems.playItemShuffled(it, ItemId(item.key))
+						}
+					})
+					.align(Alignment.CenterVertically),
+			)
+		}
 	}
 }
 
-@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun TvItemListView(
 	itemListViewModel: ItemListViewModel,
@@ -611,6 +610,7 @@ fun TvItemListView(
 
 		TvLazyColumn(
 			modifier = Modifier.focusGroup(),
+			contentPadding = PaddingValues(Dimensions.viewPaddingUnit),
 		) {
 			if (items.any()) {
 				item(contentType = ContentType.Header) {
