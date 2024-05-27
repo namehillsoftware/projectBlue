@@ -80,49 +80,6 @@ private fun TvLazyListScope.settingsList(
 			verticalAlignment = Alignment.CenterVertically,
 		) {
 			ProvideTextStyle(value = MaterialTheme.typography.h6) {
-				Text(text = stringResource(id = R.string.app_sync_settings))
-			}
-		}
-	}
-
-	item {
-		Row(
-			modifier = standardRowModifier.padding(optionsPadding),
-			verticalAlignment = Alignment.CenterVertically,
-		) {
-			val isSyncOnWifiOnly by applicationSettingsViewModel.isSyncOnWifiOnly.collectAsState()
-			LabeledSelection(
-				label = stringResource(id = R.string.app_only_sync_on_wifi),
-				selected = isSyncOnWifiOnly,
-				onSelected = { applicationSettingsViewModel.promiseSyncOnWifiChange(!isSyncOnWifiOnly) }
-			) {
-				Checkbox(checked = isSyncOnWifiOnly, onCheckedChange = null, enabled = !isLoading)
-			}
-		}
-	}
-
-	item {
-		Row(
-			modifier = standardRowModifier.padding(optionsPadding),
-			verticalAlignment = Alignment.CenterVertically,
-		) {
-			val isSyncOnPowerOnly by applicationSettingsViewModel.isSyncOnPowerOnly.collectAsState()
-			LabeledSelection(
-				label = stringResource(id = R.string.app_only_sync_ext_power),
-				selected = isSyncOnPowerOnly,
-				onSelected = { applicationSettingsViewModel.promiseSyncOnPowerChange(!isSyncOnPowerOnly) }
-			) {
-				Checkbox(checked = isSyncOnPowerOnly, onCheckedChange = null, enabled = !isLoading)
-			}
-		}
-	}
-
-	item {
-		Row(
-			modifier = standardRowModifier,
-			verticalAlignment = Alignment.CenterVertically,
-		) {
-			ProvideTextStyle(value = MaterialTheme.typography.h6) {
 				Text(text = stringResource(id = R.string.app_audio_settings))
 			}
 		}
