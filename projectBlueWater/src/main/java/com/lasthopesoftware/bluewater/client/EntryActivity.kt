@@ -19,7 +19,7 @@ import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.intents.safelyGetParcelableExtra
 import com.lasthopesoftware.bluewater.shared.android.permissions.ManagePermissions
 import com.lasthopesoftware.bluewater.shared.android.permissions.OsPermissionsChecker
-import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
+import com.lasthopesoftware.bluewater.shared.android.ui.ProjectBlueComposableApplication
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.promises.extensions.registerResultActivityLauncher
@@ -80,7 +80,7 @@ val destinationProperty by lazy { magicPropertyBuilder.buildProperty("destinatio
 
 		setContent {
 			if (!isInLeanbackMode) {
-				ProjectBlueTheme {
+				ProjectBlueComposableApplication {
 					NarrowScreenApplication(
 						browserViewDependencies = browserViewDependencies,
 						permissionsDependencies = this,
@@ -88,7 +88,7 @@ val destinationProperty by lazy { magicPropertyBuilder.buildProperty("destinatio
 					)
 				}
 			} else {
-				ProjectBlueTheme(darkTheme = true) {
+				ProjectBlueComposableApplication(darkTheme = true) {
 					NowPlayingTvApplication(
 						browserViewDependencies = browserViewDependencies,
 						permissionsDependencies = this,

@@ -40,7 +40,7 @@ import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.intents.IntentBuilder
 import com.lasthopesoftware.bluewater.shared.android.intents.getIntent
 import com.lasthopesoftware.bluewater.shared.android.intents.safelyGetParcelableExtra
-import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
+import com.lasthopesoftware.bluewater.shared.android.ui.ProjectBlueComposableApplication
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider
@@ -148,7 +148,7 @@ import java.io.IOException
 		selectedLibraryIdProvider.selectLibraryId(libraryId)
 
 		setContent {
-			ProjectBlueTheme {
+			ProjectBlueComposableApplication {
 				val isGettingConnection by connectionStatusViewModel.isGettingConnection.collectAsState()
 				var isConnectionLost by remember { mutableStateOf(false) }
 
