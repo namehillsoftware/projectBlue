@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.client.browsing.files.list
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -56,9 +55,9 @@ fun TrackTitleItemView(
 				onClickLabel = stringResource(id = R.string.btn_view_song_details),
 				onClick = onItemClick
 			)
-			.padding(Dimensions.rowPaddingValues)
 			.height(rowHeight)
-			.fillMaxSize(),
+			.fillMaxWidth()
+			.padding(Dimensions.rowPaddingValues)
 		) {
 			Text(
 				text = itemName,
@@ -73,6 +72,7 @@ fun TrackTitleItemView(
 	} else {
 		Row(modifier = Modifier
 			.height(rowHeight)
+			.fillMaxWidth()
 			.padding(Dimensions.rowPaddingValues)
 		) {
 			ListItemIcon(
