@@ -58,6 +58,10 @@ import androidx.tv.foundation.lazy.list.itemsIndexed
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.li.LabelledPlayButton
+import com.lasthopesoftware.bluewater.client.browsing.files.li.LabelledShuffleButton
+import com.lasthopesoftware.bluewater.client.browsing.files.li.UnlabelledPlayButton
+import com.lasthopesoftware.bluewater.client.browsing.files.li.UnlabelledShuffleButton
 import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.list.TrackTitleItemView
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewPlaylistFileItem
@@ -98,47 +102,6 @@ private val expandedMenuVerticalPadding = Dimensions.viewPaddingUnit * 3
 private val boxHeight = expandedTitleHeight + appBarHeight + expandedIconSize + expandedMenuVerticalPadding * 2
 
 @Composable
-private fun RowScope.LabelledPlayButton(
-	itemListViewModel: ItemListViewModel,
-	playbackServiceController: ControlPlaybackService,
-	fileListViewModel: FileListViewModel,
-	modifier: Modifier = Modifier,
-) {
-	val playButtonLabel = stringResource(id = R.string.btn_play)
-	ColumnMenuIcon(
-		onClick = {
-			itemListViewModel.loadedLibraryId?.also {
-				playbackServiceController.startPlaylist(it, fileListViewModel.files.value)
-			}
-		},
-		iconPainter = painterResource(id = R.drawable.av_play),
-		contentDescription = playButtonLabel,
-		label = playButtonLabel,
-		labelModifier = modifier,
-		labelMaxLines = 1,
-	)
-}
-
-@Composable
-private fun RowScope.UnlabelledPlayButton(
-	itemListViewModel: ItemListViewModel,
-	playbackServiceController: ControlPlaybackService,
-	fileListViewModel: FileListViewModel,
-) {
-	val playButtonLabel = stringResource(id = R.string.btn_play)
-	ColumnMenuIcon(
-		onClick = {
-			itemListViewModel.loadedLibraryId?.also {
-				playbackServiceController.startPlaylist(it, fileListViewModel.files.value)
-			}
-		},
-		iconPainter = painterResource(id = R.drawable.av_play),
-		contentDescription = playButtonLabel,
-		label = null,
-	)
-}
-
-@Composable
 private fun RowScope.LabelledSyncButton(
 	fileListViewModel: FileListViewModel,
 	modifier: Modifier = Modifier,
@@ -177,46 +140,6 @@ private fun RowScope.UnlabelledSyncButton(fileListViewModel: FileListViewModel) 
 				contentDescription = syncButtonLabel,
 			)
 		},
-	)
-}
-
-@Composable
-private fun RowScope.LabelledShuffleButton(
-	itemListViewModel: ItemListViewModel,
-	playbackServiceController: ControlPlaybackService,
-	fileListViewModel: FileListViewModel,
-	modifier: Modifier = Modifier,
-) {
-	val shuffleButtonLabel = stringResource(R.string.btn_shuffle_files)
-	ColumnMenuIcon(
-		onClick = {
-			itemListViewModel.loadedLibraryId?.also {
-				playbackServiceController.shuffleAndStartPlaylist(it, fileListViewModel.files.value)
-			}
-		},
-		iconPainter = painterResource(id = R.drawable.av_shuffle),
-		contentDescription = shuffleButtonLabel,
-		label = shuffleButtonLabel,
-		labelModifier = modifier,
-		labelMaxLines = 1,
-	)
-}
-
-@Composable
-private fun RowScope.UnlabelledShuffleButton(
-	itemListViewModel: ItemListViewModel,
-	playbackServiceController: ControlPlaybackService,
-	fileListViewModel: FileListViewModel,
-) {
-	val shuffleButtonLabel = stringResource(R.string.btn_shuffle_files)
-	ColumnMenuIcon(
-		onClick = {
-			itemListViewModel.loadedLibraryId?.also {
-				playbackServiceController.shuffleAndStartPlaylist(it, fileListViewModel.files.value)
-			}
-		},
-		iconPainter = painterResource(id = R.drawable.av_shuffle),
-		contentDescription = shuffleButtonLabel,
 	)
 }
 
@@ -382,20 +305,20 @@ private fun BoxScope.CollapsedItemListMenu(
 			.width(menuWidth)
 			.align(Alignment.TopEnd)
 	) {
-		val files by fileListViewModel.files.collectAsState()
+		val files by fileListViewModel.files.subscribeAsState()
 		if (files.any()) {
 			UnlabelledPlayButton(
-				itemListViewModel = itemListViewModel,
+				libraryState = itemListViewModel,
 				playbackServiceController = playbackServiceController,
-				fileListViewModel = fileListViewModel
+				serviceFilesListState = fileListViewModel
 			)
 
 			UnlabelledSyncButton(fileListViewModel)
 
 			UnlabelledShuffleButton(
-				itemListViewModel = itemListViewModel,
+				libraryState = itemListViewModel,
 				playbackServiceController = playbackServiceController,
-				fileListViewModel = fileListViewModel
+				serviceFilesListState = fileListViewModel
 			)
 		} else {
 			UnlabelledActiveDownloadsButton(
@@ -601,7 +524,7 @@ fun TvItemListView(
 	playbackLibraryItems: PlaybackLibraryItems,
 	playbackServiceController: ControlPlaybackService,
 ) {
-	val files by fileListViewModel.files.collectAsState()
+	val files by fileListViewModel.files.subscribeAsState()
 	val itemValue by itemListViewModel.itemValue.collectAsState()
 
 	@Composable
@@ -700,9 +623,9 @@ fun TvItemListView(
 				) {
 					if (files.any()) {
 						LabelledPlayButton(
-							itemListViewModel = itemListViewModel,
+							libraryState = itemListViewModel,
 							playbackServiceController = playbackServiceController,
-							fileListViewModel = fileListViewModel,
+							serviceFilesListState = fileListViewModel,
 						)
 
 						LabelledSyncButton(
@@ -710,9 +633,9 @@ fun TvItemListView(
 						)
 
 						LabelledShuffleButton(
-							itemListViewModel = itemListViewModel,
+							libraryState = itemListViewModel,
 							playbackServiceController = playbackServiceController,
-							fileListViewModel = fileListViewModel,
+							serviceFilesListState = fileListViewModel,
 						)
 					} else {
 						LabelledActiveDownloadsButton(
@@ -756,7 +679,7 @@ fun ItemListView(
     playbackLibraryItems: PlaybackLibraryItems,
     playbackServiceController: ControlPlaybackService,
 ) {
-	val files by fileListViewModel.files.collectAsState()
+	val files by fileListViewModel.files.subscribeAsState()
 	val rowHeight = Dimensions.standardRowHeight
 	val itemValue by itemListViewModel.itemValue.collectAsState()
 
@@ -967,9 +890,9 @@ fun ItemListView(
 								) {
 									if (files.any()) {
 										LabelledPlayButton(
-											itemListViewModel = itemListViewModel,
+											libraryState = itemListViewModel,
 											playbackServiceController = playbackServiceController,
-											fileListViewModel = fileListViewModel,
+											serviceFilesListState = fileListViewModel,
 											modifier = textModifier,
 										)
 
@@ -979,9 +902,9 @@ fun ItemListView(
 										)
 
 										LabelledShuffleButton(
-											itemListViewModel = itemListViewModel,
+											libraryState = itemListViewModel,
 											playbackServiceController = playbackServiceController,
-											fileListViewModel = fileListViewModel,
+											serviceFilesListState = fileListViewModel,
 											modifier = textModifier
 										)
 									} else {

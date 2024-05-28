@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.browsing.items.list
 
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.TrackLoadedViewState
+import com.lasthopesoftware.bluewater.client.browsing.files.list.LoadedLibraryState
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
@@ -20,7 +21,7 @@ class ItemListViewModel(
 	private val itemProvider: ProvideItems,
 	messageBus: RegisterForApplicationMessages,
 	private val libraryProvider: ILibraryProvider
-) : ViewModel(), TrackLoadedViewState {
+) : ViewModel(), TrackLoadedViewState, LoadedLibraryState {
 
 	private val activityLaunchingReceiver = messageBus.registerReceiver { event : ActivityLaunching ->
 		mutableIsLoading.value = event != ActivityLaunching.HALTED // Only show the item list view again when launching error'ed for some reason
@@ -29,8 +30,9 @@ class ItemListViewModel(
 	private val mutableIsLoading = MutableInteractionState(true)
 	private val mutableItemValue = MutableStateFlow("")
 
-	var loadedItem: IItem? = null
-	var loadedLibraryId: LibraryId? = null
+	private var loadedItem: IItem? = null
+	override var loadedLibraryId: LibraryId? = null
+		private set
 
 	val itemValue = mutableItemValue.asStateFlow()
 	val items = mutableItems.asStateFlow()

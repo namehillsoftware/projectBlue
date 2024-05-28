@@ -1,11 +1,10 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.list
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,7 +27,6 @@ import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -42,23 +40,30 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import androidx.tv.foundation.lazy.list.TvLazyColumn
+import androidx.tv.foundation.lazy.list.itemsIndexed
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.li.LabelledPlayButton
+import com.lasthopesoftware.bluewater.client.browsing.files.li.LabelledShuffleButton
+import com.lasthopesoftware.bluewater.client.browsing.files.li.UnlabelledPlayButton
+import com.lasthopesoftware.bluewater.client.browsing.files.li.UnlabelledShuffleButton
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ConnectionLostView
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
-import com.lasthopesoftware.bluewater.shared.android.ui.components.ColumnMenuIcon
+import com.lasthopesoftware.bluewater.shared.android.ui.components.BackButton
 import com.lasthopesoftware.bluewater.shared.android.ui.components.memorableScrollConnectedScaler
 import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberCalculatedKnobHeight
 import com.lasthopesoftware.bluewater.shared.android.ui.components.scrollbar
@@ -81,6 +86,64 @@ private val expandedMenuVerticalPadding = searchFieldPadding * 2
 private val boxHeight = topBarHeight + Dimensions.menuHeight + expandedMenuVerticalPadding
 
 @Composable
+fun RenderTrackTitleItem(
+	position: Int,
+	serviceFile: ServiceFile,
+	trackHeadlineViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
+	searchFilesViewModel: SearchFilesViewModel,
+	applicationNavigation: NavigateApplication,
+	nowPlayingViewModel: NowPlayingFilePropertiesViewModel,
+	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
+	playbackServiceController: ControlPlaybackService,
+) {
+	val fileItemViewModel = remember(trackHeadlineViewModelProvider::getViewModel)
+
+	DisposableEffect(serviceFile) {
+		searchFilesViewModel.loadedLibraryId?.also {
+			fileItemViewModel.promiseUpdate(it, serviceFile)
+		}
+
+		onDispose {
+			fileItemViewModel.reset()
+		}
+	}
+
+	val isMenuShown by fileItemViewModel.isMenuShown.collectAsState()
+	val fileName by fileItemViewModel.title.collectAsState()
+
+	val viewFilesClickHandler = {
+		searchFilesViewModel.loadedLibraryId?.also {
+			applicationNavigation.viewFileDetails(it, searchFilesViewModel.files.value, position)
+		}
+		Unit
+	}
+
+	val playingFile by nowPlayingViewModel.nowPlayingFile.subscribeAsState()
+	TrackTitleItemView(
+		itemName = fileName,
+		isActive = playingFile?.serviceFile == serviceFile,
+		isHiddenMenuShown = isMenuShown,
+		onItemClick = viewFilesClickHandler,
+		onHiddenMenuClick = {
+			itemListMenuBackPressedHandler.hideAllMenus()
+			fileItemViewModel.showMenu()
+		},
+		onAddToNowPlayingClick = {
+			searchFilesViewModel.loadedLibraryId?.also {
+				playbackServiceController.addToPlaylist(it, serviceFile)
+			}
+		},
+		onViewFilesClick = viewFilesClickHandler,
+		onPlayClick = {
+			fileItemViewModel.hideMenu()
+			searchFilesViewModel.loadedLibraryId?.also {
+				playbackServiceController.startPlaylist(it, searchFilesViewModel.files.value, position)
+			}
+		}
+	)
+}
+
+@Composable
 fun SearchFilesView(
     searchFilesViewModel: SearchFilesViewModel,
     nowPlayingViewModel: NowPlayingFilePropertiesViewModel,
@@ -89,58 +152,9 @@ fun SearchFilesView(
     applicationNavigation: NavigateApplication,
     playbackServiceController: ControlPlaybackService,
 ) {
-	val files by searchFilesViewModel.files.collectAsState()
-	val playingFile by nowPlayingViewModel.nowPlayingFile.subscribeAsState()
+	val files by searchFilesViewModel.files.subscribeAsState()
 	var isConnectionLost by remember { mutableStateOf(false) }
 	val scope = rememberCoroutineScope()
-
-	@Composable
-	fun RenderTrackHeaderItem(position: Int, serviceFile: ServiceFile) {
-		val fileItemViewModel = remember(trackHeadlineViewModelProvider::getViewModel)
-
-		DisposableEffect(serviceFile) {
-			searchFilesViewModel.libraryId?.also {
-				fileItemViewModel.promiseUpdate(it, serviceFile)
-			}
-
-			onDispose {
-				fileItemViewModel.reset()
-			}
-		}
-
-		val isMenuShown by fileItemViewModel.isMenuShown.collectAsState()
-		val fileName by fileItemViewModel.title.collectAsState()
-
-		val viewFilesClickHandler = {
-			searchFilesViewModel.libraryId?.also {
-				applicationNavigation.viewFileDetails(it, files, position)
-			}
-			Unit
-		}
-
-		TrackTitleItemView(
-			itemName = fileName,
-			isActive = playingFile?.serviceFile == serviceFile,
-			isHiddenMenuShown = isMenuShown,
-			onItemClick = viewFilesClickHandler,
-			onHiddenMenuClick = {
-				itemListMenuBackPressedHandler.hideAllMenus()
-				fileItemViewModel.showMenu()
-			},
-			onAddToNowPlayingClick = {
-				searchFilesViewModel.libraryId?.also {
-					playbackServiceController.addToPlaylist(it, serviceFile)
-				}
-			},
-			onViewFilesClick = viewFilesClickHandler,
-			onPlayClick = {
-				fileItemViewModel.hideMenu()
-				searchFilesViewModel.libraryId?.also {
-					playbackServiceController.startPlaylist(it, files, position)
-				}
-			}
-		)
-	}
 
 	ControlSurface {
 		val isLoading by searchFilesViewModel.isLoading.subscribeAsState()
@@ -217,7 +231,16 @@ fun SearchFilesView(
 							}
 
 							itemsIndexed(files) { i, f ->
-								RenderTrackHeaderItem(i, f)
+								RenderTrackTitleItem(
+									position = i,
+									serviceFile = f,
+									trackHeadlineViewModelProvider = trackHeadlineViewModelProvider,
+									searchFilesViewModel = searchFilesViewModel,
+									applicationNavigation = applicationNavigation,
+									nowPlayingViewModel = nowPlayingViewModel,
+									itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
+									playbackServiceController = playbackServiceController,
+								)
 
 								if (i < files.lastIndex)
 									Divider()
@@ -270,33 +293,33 @@ fun SearchFilesView(
 						) {
 							val textModifier = Modifier.alpha(acceleratedToolbarExpandingProgress)
 
-							val playLabel = stringResource(id = R.string.btn_play)
-							ColumnMenuIcon(
-								onClick = {
-									searchFilesViewModel.libraryId?.also {
-										playbackServiceController.startPlaylist(it, files, 0)
-									}
-								},
-								iconPainter = painterResource(id = R.drawable.av_play),
-								contentDescription = playLabel,
-								label = if (acceleratedHeaderCollapsingProgress < 1) playLabel else null,
-								labelModifier = textModifier,
-								labelMaxLines = 1,
-							)
+							if (acceleratedHeaderCollapsingProgress < 1) {
+								LabelledPlayButton(
+									libraryState = searchFilesViewModel,
+									playbackServiceController = playbackServiceController,
+									serviceFilesListState = searchFilesViewModel,
+									modifier = textModifier
+								)
 
-							val shuffleLabel = stringResource(id = R.string.btn_shuffle_files)
-							ColumnMenuIcon(
-								onClick = {
-									searchFilesViewModel.libraryId?.also {
-										playbackServiceController.shuffleAndStartPlaylist(it, files)
-									}
-								},
-								iconPainter = painterResource(id = R.drawable.av_shuffle),
-								contentDescription = shuffleLabel,
-								label = if (acceleratedHeaderCollapsingProgress < 1) shuffleLabel else null,
-								labelModifier = textModifier,
-								labelMaxLines = 1,
-							)
+								LabelledShuffleButton(
+									libraryState = searchFilesViewModel,
+									playbackServiceController = playbackServiceController,
+									serviceFilesListState = searchFilesViewModel,
+									modifier = textModifier,
+								)
+							} else {
+								UnlabelledPlayButton(
+									libraryState = searchFilesViewModel,
+									playbackServiceController = playbackServiceController,
+									serviceFilesListState = searchFilesViewModel
+								)
+
+								UnlabelledShuffleButton(
+									libraryState = searchFilesViewModel,
+									playbackServiceController = playbackServiceController,
+									serviceFilesListState = searchFilesViewModel,
+								)
+							}
 						}
 					}
 				}
@@ -309,18 +332,7 @@ fun SearchFilesView(
 					horizontalArrangement = Arrangement.Center,
 					verticalAlignment = Alignment.CenterVertically,
 				) {
-					Icon(
-                        Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "",
-                        tint = MaterialTheme.colors.onSurface,
-                        modifier = Modifier
-							.clickable(
-								interactionSource = remember { MutableInteractionSource() },
-								indication = null,
-								onClick = applicationNavigation::backOut
-							)
-							.padding(end = 16.dp)
-                    )
+					BackButton(onBack = applicationNavigation::backOut)
 
 					val endPadding by remember { derivedStateOf { 4.dp + (minimumMenuWidth + 12.dp) * acceleratedHeaderCollapsingProgress } }
 					val query by searchFilesViewModel.query.collectAsState()
@@ -347,6 +359,149 @@ fun SearchFilesView(
 							.padding(end = endPadding)
 							.weight(1f)
 					)
+				}
+			}
+		}
+	}
+}
+
+@Composable
+fun TvSearchFilesView(
+	searchFilesViewModel: SearchFilesViewModel,
+	nowPlayingViewModel: NowPlayingFilePropertiesViewModel,
+	trackHeadlineViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
+	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
+	applicationNavigation: NavigateApplication,
+	playbackServiceController: ControlPlaybackService,
+) {
+	val files by searchFilesViewModel.files.subscribeAsState()
+	var isConnectionLost by remember { mutableStateOf(false) }
+	val scope = rememberCoroutineScope()
+
+	ControlSurface {
+		val isLoading by searchFilesViewModel.isLoading.subscribeAsState()
+
+		Column(
+			modifier = Modifier.fillMaxSize()
+		) {
+			Row(
+				modifier = Modifier
+					.fillMaxWidth()
+					.requiredHeight(topBarHeight),
+				horizontalArrangement = Arrangement.Center,
+				verticalAlignment = Alignment.CenterVertically,
+			) {
+				BackButton(onBack = applicationNavigation::backOut)
+
+				val endPadding = Dimensions.viewPaddingUnit * 4 + minimumMenuWidth
+				val query by searchFilesViewModel.query.collectAsState()
+				val isLibraryIdActive by searchFilesViewModel.isLibraryIdActive.collectAsState()
+
+				val focusRequester = remember { FocusRequester() }
+				DisposableEffect(key1 = Unit) {
+					focusRequester.requestFocus()
+
+					onDispose { focusRequester.freeFocus() }
+				}
+				TextField(
+					value = query,
+					placeholder = { stringResource(id = R.string.lbl_search_hint) },
+					onValueChange = { searchFilesViewModel.query.value = it },
+					singleLine = true,
+					keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+					keyboardActions = KeyboardActions(onSearch = {
+						scope.launch {
+							try {
+								searchFilesViewModel.findFiles().suspend()
+							} catch (e: IOException) {
+								isConnectionLost = ConnectionLostExceptionFilter.isConnectionLostException(e)
+							}
+						}
+					}),
+					trailingIcon = { Icon(Icons.Default.Search, contentDescription = stringResource(id = R.string.search)) },
+					enabled = isLibraryIdActive && !isLoading,
+					modifier = Modifier
+						.padding(end = endPadding)
+						.weight(1f)
+						.focusRequester(focusRequester)
+				)
+			}
+
+			when {
+				isLoading -> {
+					Box(modifier = Modifier.fillMaxSize()) {
+						CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+					}
+				}
+				isConnectionLost -> {
+					ConnectionLostView(
+						onCancel = { isConnectionLost = false },
+						onRetry = {
+							scope.launch {
+								try {
+									searchFilesViewModel.findFiles().suspend()
+								} catch (e: IOException) {
+									isConnectionLost = ConnectionLostExceptionFilter.isConnectionLostException(e)
+								}
+							}
+						}
+					)
+				}
+				files.any() -> {
+					Row(
+						modifier = Modifier
+							.padding(
+								top = expandedMenuVerticalPadding
+							)
+					) {
+						LabelledPlayButton(
+							libraryState = searchFilesViewModel,
+							playbackServiceController = playbackServiceController,
+							serviceFilesListState = searchFilesViewModel
+						)
+
+						LabelledShuffleButton(
+							libraryState = searchFilesViewModel,
+							playbackServiceController = playbackServiceController,
+							serviceFilesListState = searchFilesViewModel
+						)
+					}
+
+					TvLazyColumn {
+						item {
+							Box(
+								modifier = Modifier
+									.padding(Dimensions.viewPaddingUnit)
+									.height(Dimensions.menuHeight)
+							) {
+								ProvideTextStyle(MaterialTheme.typography.h5) {
+									Text(
+										text = stringResource(R.string.file_count_label, files.size),
+										fontWeight = FontWeight.Bold,
+										modifier = Modifier
+											.padding(Dimensions.viewPaddingUnit)
+											.align(Alignment.CenterStart)
+									)
+								}
+							}
+						}
+
+						itemsIndexed(files) { i, f ->
+							RenderTrackTitleItem(
+								position = i,
+								serviceFile = f,
+								trackHeadlineViewModelProvider = trackHeadlineViewModelProvider,
+								searchFilesViewModel = searchFilesViewModel,
+								applicationNavigation = applicationNavigation,
+								nowPlayingViewModel = nowPlayingViewModel,
+								itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
+								playbackServiceController = playbackServiceController,
+							)
+
+							if (i < files.lastIndex)
+								Divider()
+						}
+					}
 				}
 			}
 		}

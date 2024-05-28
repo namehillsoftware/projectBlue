@@ -139,8 +139,7 @@ private fun TvLazyListScope.settingsList(
 			)
 
 			Row(
-				modifier = Modifier
-					.padding(Dimensions.viewPaddingUnit),
+				modifier = Modifier.padding(Dimensions.viewPaddingUnit),
 				verticalAlignment = Alignment.CenterVertically,
 			) {
 				Icon(

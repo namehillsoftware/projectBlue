@@ -5,6 +5,7 @@ import LoadedTvItemListView
 import androidx.compose.runtime.Composable
 import com.lasthopesoftware.bluewater.client.browsing.ScopedBrowserViewDependencies
 import com.lasthopesoftware.bluewater.client.browsing.files.list.SearchFilesView
+import com.lasthopesoftware.bluewater.client.browsing.files.list.TvSearchFilesView
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.view.ActiveFileDownloadsView
 
 @Composable
@@ -34,7 +35,7 @@ fun BrowserLibraryDestination.NavigateToTvLibraryDestination(browserViewDependen
 			with(browserViewDependencies) {
 				searchFilesViewModel.setActiveLibraryId(libraryId)
 
-				SearchFilesView(
+				TvSearchFilesView(
 					searchFilesViewModel = searchFilesViewModel,
 					nowPlayingViewModel = nowPlayingFilePropertiesViewModel,
 					trackHeadlineViewModelProvider = reusablePlaylistFileItemViewModelProvider,
