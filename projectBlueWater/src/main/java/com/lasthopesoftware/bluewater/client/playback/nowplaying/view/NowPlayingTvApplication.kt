@@ -1,18 +1,19 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
+import androidx.compose.foundation.gestures.AnchoredDraggableState
+import androidx.compose.foundation.gestures.DraggableAnchors
+import androidx.compose.foundation.gestures.animateTo
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -26,7 +27,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
-import androidx.compose.material.ProgressIndicatorDefaults
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -34,7 +34,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -47,6 +47,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.coerceAtMost
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -77,6 +79,7 @@ import com.lasthopesoftware.bluewater.client.settings.PermissionsDependencies
 import com.lasthopesoftware.bluewater.client.settings.TvLibrarySettingsView
 import com.lasthopesoftware.bluewater.settings.TvApplicationSettingsView
 import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsView
+import com.lasthopesoftware.bluewater.shared.android.ui.absoluteProgressState
 import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberSystemUiController
 import com.lasthopesoftware.bluewater.shared.android.ui.navigable
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
@@ -89,8 +92,11 @@ import com.namehillsoftware.handoff.promises.Promise
 import dev.olshevski.navigation.reimagined.NavHost
 import dev.olshevski.navigation.reimagined.rememberNavController
 import kotlinx.coroutines.launch
+import kotlin.math.abs
 
 private val logger by lazyLogger<MainApplication>()
+
+enum class NowPlayingDragValue { Browser, NowPlaying, NowPlayingList }
 
 @OptIn(ExperimentalComposeUiApi::class)
 @ExperimentalFoundationApi
@@ -118,21 +124,54 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedBr
 	}
 
 	BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-		val halfWidth = maxWidth / 2
-		val halfWidthPx = LocalDensity.current.run { halfWidth.toPx() }
+		val halfWidth by remember { derivedStateOf { maxWidth / 2 } }
+		val halfWidthPx by LocalDensity.current.run { remember { derivedStateOf { halfWidth.toPx() } } }
 
-		var nowPlayingOffsetPx by remember { mutableFloatStateOf(halfWidthPx) }
-		val nowPlayingOffset = LocalDensity.current.run { nowPlayingOffsetPx.toDp() }
-		val nowPlayingWidth = maxWidth - nowPlayingOffset
-		val browserOffset = nowPlayingOffset - halfWidth
+		val maxWidthPx by LocalDensity.current.run { remember { derivedStateOf { maxWidth.toPx() } } }
 
-		val isBrowserShown by remember { derivedStateOf { nowPlayingOffsetPx != 0f } }
-		val browserExpansionProgress by remember { derivedStateOf { nowPlayingOffsetPx / halfWidthPx } }
+		val draggableState = with (LocalDensity.current) {
+			remember {
+				AnchoredDraggableState(
+					initialValue = NowPlayingDragValue.Browser,
+					anchors = DraggableAnchors {
+						NowPlayingDragValue.Browser at 0f
+						NowPlayingDragValue.NowPlaying at halfWidthPx
+						NowPlayingDragValue.NowPlayingList at maxWidthPx
+					},
+					positionalThreshold = { d -> d * .5f },
+					velocityThreshold = { 100.dp.toPx() },
+					animationSpec = tween()
+				)
+			}
+		}
 
-		var currentPlaylistOffsetPx by remember { mutableFloatStateOf(0f) }
+		val dragProgress by draggableState.absoluteProgressState
+		val dragOffset by LocalDensity.current.run {
+			remember {
+				derivedStateOf {
+					draggableState.requireOffset().toDp()
+				}
+			}
+		}
+		val browserOffset by LocalDensity.current.run {
+			remember {
+				derivedStateOf {
+					-dragOffset
+				}
+			}
+		}
+		val nowPlayingWidth by remember { derivedStateOf { (halfWidth + dragOffset).coerceAtMost(maxWidth) } }
+		val nowPlayingOffset by remember { derivedStateOf { maxWidth - nowPlayingWidth } }
+		val playlistOffset by remember { derivedStateOf { maxWidth + halfWidth - dragOffset } }
 
 		val scope = rememberCoroutineScope()
 
+		val isBrowserShown by remember {
+			derivedStateOf {
+				draggableState.targetValue == NowPlayingDragValue.Browser
+					|| draggableState.currentValue == NowPlayingDragValue.Browser
+			}
+		}
 		if (isBrowserShown) {
 			Box(
 				modifier = Modifier
@@ -146,11 +185,15 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedBr
 		} else {
 			BackHandler {
 				scope.launch {
-					animate(0f, halfWidthPx, 0f, tween()) { value, _ ->
-						currentPlaylistOffsetPx =
-							(currentPlaylistOffsetPx - value - nowPlayingOffsetPx).coerceAtLeast(0f)
-						nowPlayingOffsetPx = value
-					}
+					draggableState.animateTo(
+						when (draggableState.currentValue) {
+							NowPlayingDragValue.NowPlayingList -> {
+								browserViewDependencies.nowPlayingPlaylistViewModel.finishPlaylistEdit()
+								NowPlayingDragValue.NowPlaying
+							}
+							else -> NowPlayingDragValue.Browser
+						}
+					)
 				}
 			}
 		}
@@ -177,17 +220,58 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedBr
 					with (browserViewDependencies) {
 						BackHandler(itemListMenuBackPressedHandler.hideAllMenus()) {}
 
-						val playlistExpansionProgress by remember { derivedStateOf { currentPlaylistOffsetPx / halfWidthPx } }
-						val isPlaylistShown by remember { derivedStateOf { currentPlaylistOffsetPx != 0f } }
-						val nowPlayingPaneWidth = this@BoxWithConstraints.maxWidth - LocalDensity.current.run { currentPlaylistOffsetPx.toDp() }
+						val isPlaylistShown by remember { derivedStateOf { playlistOffset < this@BoxWithConstraints.maxWidth } }
+						val nowPlayingOverlayWidth by with (this@BoxWithConstraints) {
+							remember {
+								derivedStateOf {
+									maxWidth - abs(playlistOffset.value - maxWidth.value).dp.coerceAtMost(maxWidth)
+								}
+							}
+						}
 
 						Box(
 							modifier = Modifier
 								.fillMaxHeight()
-								.width(nowPlayingPaneWidth)
+								.width(nowPlayingOverlayWidth)
 								.focusGroup()
 						) {
-							NowPlayingHeadline(modifier = Modifier.fillMaxWidth(), nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel)
+							NowPlayingHeadline(
+								modifier = Modifier.fillMaxWidth(),
+								nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel)
+
+							var isMovingRight by remember { mutableStateOf(true) }
+							val browserChevronRotation by remember { derivedStateOf { 90 - (180 * dragProgress) } }
+							Image(
+								painter = painterResource(R.drawable.chevron_up_white_36dp),
+								alpha = playlistControlAlpha,
+								contentDescription = stringResource(R.string.btn_hide_files),
+								modifier = Modifier
+									.navigable(onClick = {
+										scope.launch {
+											draggableState.animateTo(
+												when (draggableState.currentValue) {
+													NowPlayingDragValue.Browser -> {
+														isMovingRight = true
+														NowPlayingDragValue.NowPlaying
+													}
+
+													NowPlayingDragValue.NowPlaying -> {
+														if (isMovingRight) NowPlayingDragValue.NowPlayingList
+														else NowPlayingDragValue.Browser
+													}
+
+													NowPlayingDragValue.NowPlayingList -> {
+														isMovingRight = false
+														nowPlayingPlaylistViewModel.finishPlaylistEdit()
+														NowPlayingDragValue.NowPlaying
+													}
+												}
+											)
+										}
+									})
+									.rotate(browserChevronRotation)
+									.align(Alignment.Center),
+							)
 
 							NowPlayingControls(
 								modifier = Modifier
@@ -196,74 +280,6 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedBr
 								nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
 								playbackServiceController = playbackServiceController,
 							)
-
-							Column(
-								modifier = Modifier
-									.align(Alignment.BottomCenter)
-									.fillMaxWidth()
-							) {
-								Row(
-									verticalAlignment = Alignment.CenterVertically
-								) {
-									val browserChevronRotation by remember { derivedStateOf { 90 - (180 * browserExpansionProgress) } }
-									Image(
-										painter = painterResource(R.drawable.chevron_up_white_36dp),
-										alpha = playlistControlAlpha,
-										contentDescription = stringResource(R.string.btn_hide_files),
-										modifier = Modifier
-											.navigable(onClick = {
-												nowPlayingPlaylistViewModel.finishPlaylistEdit()
-												scope.launch {
-													val targetOffset = if (isBrowserShown) 0f else halfWidthPx
-													val initialOffset = if (isBrowserShown) halfWidthPx else 0f
-													animate(initialOffset, targetOffset, 0f, tween()) { value, _ ->
-														currentPlaylistOffsetPx =
-															(currentPlaylistOffsetPx - value - nowPlayingOffsetPx).coerceAtLeast(
-																0f
-															)
-														nowPlayingOffsetPx = value
-													}
-												}
-											})
-											.rotate(browserChevronRotation),
-									)
-
-									NowPlayingRating(
-										nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
-										modifier = Modifier.weight(1f))
-
-									val playlistChevronRotation by remember { derivedStateOf { -90 + (180 * playlistExpansionProgress) } }
-									Image(
-										painter = painterResource(R.drawable.chevron_up_white_36dp),
-										alpha = playlistControlAlpha,
-										contentDescription = stringResource(R.string.btn_hide_files),
-										modifier = Modifier
-											.navigable(
-												onClick = {
-													nowPlayingPlaylistViewModel.finishPlaylistEdit()
-													scope.launch {
-														val targetOffset = if (isPlaylistShown) 0f else halfWidthPx
-														val initialOffset = if (isPlaylistShown) halfWidthPx else 0f
-														animate(initialOffset, targetOffset, 0f, tween()) { value, _ ->
-															nowPlayingOffsetPx =
-																(nowPlayingOffsetPx - value - currentPlaylistOffsetPx).coerceAtLeast(
-																	0f
-																)
-															currentPlaylistOffsetPx = value
-														}
-													}
-												})
-											.rotate(playlistChevronRotation),
-									)
-								}
-
-								Spacer(modifier = Modifier.height(ProgressIndicatorDefaults.StrokeWidth))
-
-								NowPlayingPlaybackControls(
-									nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
-									playbackServiceController = playbackServiceController,
-								)
-							}
 
 							NowPlayingProgressIndicator(
 								nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
@@ -289,7 +305,7 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedBr
 								modifier = Modifier
 									.fillMaxHeight()
 									.width(halfWidth)
-									.offset(x = nowPlayingPaneWidth)
+									.offset(x = playlistOffset)
 									.background(SharedColors.overlayDark),
 								horizontalAlignment = Alignment.CenterHorizontally,
 							) {

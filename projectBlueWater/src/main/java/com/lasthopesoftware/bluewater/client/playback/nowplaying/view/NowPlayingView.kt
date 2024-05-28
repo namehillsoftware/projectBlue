@@ -210,7 +210,7 @@ fun NowPlayingHeadline(modifier: Modifier = Modifier, nowPlayingFilePropertiesVi
 	}
 }
 
-@OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun PlaylistControls(
 	modifier: Modifier = Modifier,
@@ -235,7 +235,7 @@ fun PlaylistControls(
 			Image(
 				painter = painterResource(id = R.drawable.pencil),
 				contentDescription = stringResource(id = R.string.edit_now_playing_list),
-				modifier = Modifier.navigable(onClick = playlistViewModel::editPlaylist, isDefault = true),
+				modifier = Modifier.navigable(onClick = playlistViewModel::editPlaylist),
 				alpha = playlistControlAlpha,
 			)
 		}
