@@ -62,7 +62,6 @@ import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsViewModel
 import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsViewModel
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
-import com.lasthopesoftware.bluewater.shared.android.intents.IntentBuilder
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider
@@ -75,8 +74,11 @@ import com.lasthopesoftware.resources.strings.StringResources
 import com.lasthopesoftware.resources.uri.DocumentUriSelector
 
 @UnstableApi
-class ActivityDependencies(activity: ComponentActivity, activitySuppliedDependencies: ActivitySuppliedDependencies) :
-	BrowserViewDependencies {
+class ActivityDependencies(
+	activity: ComponentActivity,
+	activitySuppliedDependencies: ActivitySuppliedDependencies,
+	applicationDependencies: ApplicationDependencies
+) : BrowserViewDependencies {
 	private val applicationContext by lazy { activity.applicationContext }
 
 	private val viewModelScope by activity.buildViewModelLazily { ViewModelCloseableManager() }
@@ -209,7 +211,7 @@ class ActivityDependencies(activity: ComponentActivity, activitySuppliedDependen
 	override val applicationNavigation by lazy {
 		ActivityApplicationNavigation(
 			activity,
-			IntentBuilder(applicationContext),
+			applicationDependencies.intentBuilder,
 		)
 	}
 

@@ -10,6 +10,7 @@ import androidx.work.ListenableWorker
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.google.common.util.concurrent.ListenableFuture
+import com.lasthopesoftware.bluewater.MainApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFileUriQueryParamsProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.LibraryFileProvider
@@ -48,7 +49,6 @@ import com.lasthopesoftware.bluewater.client.stored.sync.receivers.SyncStartedRe
 import com.lasthopesoftware.bluewater.client.stored.sync.receivers.file.StoredFileBroadcastReceiver
 import com.lasthopesoftware.bluewater.client.stored.sync.receivers.file.StoredFileDownloadingNotifier
 import com.lasthopesoftware.bluewater.client.stored.sync.receivers.file.StoredFileReadPermissionsReceiver
-import com.lasthopesoftware.bluewater.shared.android.intents.IntentBuilder
 import com.lasthopesoftware.bluewater.shared.android.notifications.NoOpChannelActivator
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.NotificationChannelActivator
 import com.lasthopesoftware.bluewater.shared.android.permissions.OsPermissionsChecker
@@ -205,7 +205,8 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 		notificationChannelActivator.activateChannel(channelConfiguration)
 	}
 
-	private val intentBuilder by lazy { IntentBuilder(context) }
+	private val intentBuilder
+		get() =  MainApplication.dependencies.intentBuilder
 
 	private val showDownloadsIntent by lazy {
 		intentBuilder.buildPendingShowDownloadsIntent()

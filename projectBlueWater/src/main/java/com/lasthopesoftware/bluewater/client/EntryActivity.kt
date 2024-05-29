@@ -9,6 +9,8 @@ import androidx.core.app.ActivityCompat
 import androidx.core.view.WindowCompat
 import androidx.media3.common.util.UnstableApi
 import com.lasthopesoftware.bluewater.ActivityDependencies
+import com.lasthopesoftware.bluewater.ApplicationDependencies
+import com.lasthopesoftware.bluewater.MainApplication
 import com.lasthopesoftware.bluewater.client.browsing.navigation.Destination
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NavigationMessage
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingTvApplication
@@ -39,7 +41,7 @@ val destinationProperty by lazy { magicPropertyBuilder.buildProperty("destinatio
 	PermissionsDependencies,
 	ActivitySuppliedDependencies
 {
-	private val browserViewDependencies by lazy { ActivityDependencies(this, this) }
+	private val browserViewDependencies by lazy { ActivityDependencies(this, this, MainApplication.dependencies) }
 
 	override val registeredActivityResultsLauncher = registerResultActivityLauncher()
 
