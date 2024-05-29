@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.browsing
 
 import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
+import com.lasthopesoftware.bluewater.ApplicationDependencies
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.client.browsing.files.access.LibraryFileProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideItemFiles
@@ -35,7 +36,6 @@ import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsViewModel
 import com.lasthopesoftware.bluewater.client.stored.library.items.StateChangeBroadcastingStoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.view.ActiveFileDownloadsViewModel
-import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsViewModel
 import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsViewModel
 import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
@@ -44,7 +44,7 @@ import com.lasthopesoftware.bluewater.shared.messages.RegisterForTypedMessages
 import com.lasthopesoftware.bluewater.shared.messages.application.ScopedApplicationMessageBus
 import com.lasthopesoftware.resources.strings.StringResources
 
-@OptIn(UnstableApi::class) interface BrowserViewDependencies {
+@OptIn(UnstableApi::class) interface BrowserViewDependencies : ApplicationDependencies {
 	val selectedLibraryViewModel: SelectedLibraryViewModel
 	val nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel
 	val itemProvider: ProvideItems
@@ -58,7 +58,6 @@ import com.lasthopesoftware.resources.strings.StringResources
 	val applicationNavigation: NavigateApplication
 	val libraryConnectionProvider: ManageConnectionSessions
 	val storedFileAccess: StoredFileAccess
-	val syncScheduler: SyncScheduler
 	val libraryProvider: ILibraryProvider
 	val libraryStorage: ILibraryStorage
 	val libraryRemoval: RemoveLibraries

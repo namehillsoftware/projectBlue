@@ -105,14 +105,16 @@ open class MainApplication : Application(), ApplicationDependencies {
 
 	private val applicationMessageBus by lazy { getApplicationMessageBus() }
 
-	private val syncScheduler by lazy { SyncScheduler(this) }
-
 	private val applicationSettings by lazy { getApplicationSettingsRepository() }
 
 	@Volatile
 	private var isLoggingToFile = true
 
-	override val intentBuilder by lazy { IntentBuilder(this) }
+	override val intentBuilder
+		get() = IntentBuilder(this)
+
+	override val syncScheduler
+		get() = SyncScheduler(this)
 
 	@SuppressLint("DefaultLocale")
 	override fun onCreate() {

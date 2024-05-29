@@ -58,7 +58,6 @@ import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceCon
 import com.lasthopesoftware.bluewater.client.stored.library.items.StateChangeBroadcastingStoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
-import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsViewModel
 import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsViewModel
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
@@ -78,7 +77,7 @@ class ActivityDependencies(
 	activity: ComponentActivity,
 	activitySuppliedDependencies: ActivitySuppliedDependencies,
 	applicationDependencies: ApplicationDependencies
-) : BrowserViewDependencies {
+) : BrowserViewDependencies, ApplicationDependencies by applicationDependencies {
 	private val applicationContext by lazy { activity.applicationContext }
 
 	private val viewModelScope by activity.buildViewModelLazily { ViewModelCloseableManager() }
@@ -211,11 +210,9 @@ class ActivityDependencies(
 	override val applicationNavigation by lazy {
 		ActivityApplicationNavigation(
 			activity,
-			applicationDependencies.intentBuilder,
+			intentBuilder,
 		)
 	}
-
-	override val syncScheduler by lazy { SyncScheduler(applicationContext) }
 
 	override val libraryProvider: ILibraryProvider
 		get() = libraryRepository
