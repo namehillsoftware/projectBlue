@@ -56,7 +56,9 @@ open class MainApplication : Application(), ApplicationDependencies {
 	companion object {
 		private val logger by lazyLogger<MainApplication>()
 		private var isWorkManagerInitialized = false
-		lateinit var dependencies: ApplicationDependencies
+
+		val Context.applicationDependencies: ApplicationDependencies
+			get() = applicationContext as ApplicationDependencies
 	}
 
 	private val libraryConnections by lazy { ConnectionSessionManager.get(this) }
@@ -119,8 +121,6 @@ open class MainApplication : Application(), ApplicationDependencies {
 	@SuppressLint("DefaultLocale")
 	override fun onCreate() {
 		super.onCreate()
-
-		dependencies = this
 
 		Promise.Rejections.toggleStackTraceFiltering(true)
 

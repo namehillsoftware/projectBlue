@@ -4,7 +4,7 @@ import android.app.Service
 import android.content.Intent
 import android.support.v4.media.session.MediaSessionCompat
 import androidx.media3.common.util.UnstableApi
-import com.lasthopesoftware.bluewater.MainApplication
+import com.lasthopesoftware.bluewater.MainApplication.Companion.applicationDependencies
 import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.ItemStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.LibraryFileStringListProvider
@@ -91,7 +91,7 @@ import java.util.concurrent.TimeUnit
 	}
 
 	private val intentBuilder
-		get() =  MainApplication.dependencies.intentBuilder
+		get() =  applicationDependencies.intentBuilder
 
 	val mediaSession
 		get() = lazyMediaSession.value.second

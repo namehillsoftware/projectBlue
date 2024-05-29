@@ -20,7 +20,7 @@ import androidx.core.content.ContextCompat
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.HttpDataSource
 import androidx.media3.exoplayer.ExoPlaybackException
-import com.lasthopesoftware.bluewater.MainApplication
+import com.lasthopesoftware.bluewater.MainApplication.Companion.applicationDependencies
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFileUriQueryParamsProvider
@@ -445,7 +445,7 @@ import java.util.concurrent.TimeoutException
 	private val disconnectionLatch by lazy { TimedCountdownLatch(numberOfDisconnects, disconnectResetDuration) }
 	private val errorLatch by lazy { TimedCountdownLatch(numberOfErrors, errorLatchResetDuration) }
 	private val intentBuilder
-		get() =  MainApplication.dependencies.intentBuilder
+		get() =  applicationDependencies.intentBuilder
 
 	private val pollConnectionServiceProxy by lazy { PollConnectionServiceProxy(this) }
 	private val connectionRegainedListener by lazy { ImmediateResponse<ProvideConnections, Unit> { resetPlaylistManager() } }
