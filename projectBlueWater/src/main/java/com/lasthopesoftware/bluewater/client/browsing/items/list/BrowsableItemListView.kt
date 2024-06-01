@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.lasthopesoftware.bluewater.NavigateApplication
+import com.lasthopesoftware.bluewater.client.browsing.ScopedBrowserViewDependencies
 import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusablePlaylistFileItemViewModelProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
@@ -20,12 +21,35 @@ import com.lasthopesoftware.bluewater.client.connection.session.initialization.C
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
+import com.lasthopesoftware.bluewater.shared.android.viewmodels.ViewModelInitAction
 import com.lasthopesoftware.promises.extensions.suspend
 import com.namehillsoftware.handoff.promises.Promise
 import java.io.IOException
 
 @Composable
-fun browsableItemListView(
+fun LoadedItemListView(viewModelDependencies: ScopedBrowserViewDependencies, libraryId: LibraryId, item: Item?) {
+	with (viewModelDependencies) {
+		LoadedItemListView(
+			libraryId,
+			item,
+			itemListViewModel = itemListViewModel,
+			fileListViewModel = fileListViewModel,
+			nowPlayingViewModel = nowPlayingFilePropertiesViewModel,
+			itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
+			reusablePlaylistFileItemViewModelProvider = reusablePlaylistFileItemViewModelProvider,
+			childItemViewModelProvider = reusableChildItemViewModelProvider,
+			applicationNavigation = applicationNavigation,
+			playbackLibraryItems = playbackLibraryItems,
+			playbackServiceController = playbackServiceController,
+			connectionStatusViewModel = connectionStatusViewModel,
+		)
+	}
+}
+
+@Composable
+private fun LoadedItemListView(
+	libraryId: LibraryId,
+	item: Item?,
     itemListViewModel: ItemListViewModel,
     fileListViewModel: FileListViewModel,
     nowPlayingViewModel: NowPlayingFilePropertiesViewModel,
@@ -36,7 +60,7 @@ fun browsableItemListView(
     playbackLibraryItems: PlaybackLibraryItems,
     playbackServiceController: ControlPlaybackService,
 	connectionStatusViewModel: ConnectionStatusViewModel,
-): @Composable (LibraryId, Item?) -> Unit {
+) {
 	var isConnectionLost by remember { mutableStateOf(false) }
 	var reinitializeConnection by remember { mutableStateOf(false) }
 
@@ -61,7 +85,7 @@ fun browsableItemListView(
 		)
 	}
 
-	return { libraryId: LibraryId, item: Item? ->
+	ViewModelInitAction {
 		if (reinitializeConnection) {
 			LaunchedEffect(key1 = Unit) {
 				isConnectionLost = !connectionStatusViewModel.initializeConnection(libraryId).suspend()
