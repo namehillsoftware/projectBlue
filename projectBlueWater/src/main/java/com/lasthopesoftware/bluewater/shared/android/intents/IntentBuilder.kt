@@ -5,9 +5,7 @@ import android.content.Context
 import android.content.Intent
 import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
-import com.lasthopesoftware.bluewater.client.browsing.BrowserActivity
-import com.lasthopesoftware.bluewater.client.browsing.destinationAction
-import com.lasthopesoftware.bluewater.client.browsing.destinationProperty
+import com.lasthopesoftware.bluewater.client.HandheldActivity
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsActivity
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -17,6 +15,8 @@ import com.lasthopesoftware.bluewater.client.browsing.navigation.ConnectionSetti
 import com.lasthopesoftware.bluewater.client.browsing.navigation.Destination
 import com.lasthopesoftware.bluewater.client.browsing.navigation.LibraryScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NowPlayingScreen
+import com.lasthopesoftware.bluewater.client.destinationAction
+import com.lasthopesoftware.bluewater.client.destinationProperty
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 
 class IntentBuilder(private val context: Context) : BuildIntents {
@@ -55,7 +55,7 @@ class IntentBuilder(private val context: Context) : BuildIntents {
 
 	private fun buildShowDownloadsIntent(): Intent = getBrowserActivityIntent(ActiveLibraryDownloadsScreen)
 
-	private fun getBrowserActivityIntent(destination: Destination) = context.getIntent<BrowserActivity>().apply {
+	private fun getBrowserActivityIntent(destination: Destination) = context.getIntent<HandheldActivity>().apply {
 		flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
 
 		// Set action to uniquely identify intents when compared with `filterEquals`, as the extras are not enough.

@@ -1,6 +1,6 @@
 @file:OptIn(ExperimentalFoundationApi::class)
 
-package com.lasthopesoftware.bluewater.client.browsing
+package com.lasthopesoftware.bluewater.client
 
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -41,7 +41,9 @@ import androidx.media3.common.util.UnstableApi
 import browsableItemListView
 import com.lasthopesoftware.bluewater.ActivityDependencies
 import com.lasthopesoftware.bluewater.NavigateApplication
-import com.lasthopesoftware.bluewater.client.ActivitySuppliedDependencies
+import com.lasthopesoftware.bluewater.client.browsing.BrowserViewDependencies
+import com.lasthopesoftware.bluewater.client.browsing.ScopedBrowserViewDependencies
+import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelDependencies
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.list.SearchFilesView
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
@@ -112,14 +114,14 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
 
-private val logger by lazyLogger<BrowserActivity>()
-private val magicPropertyBuilder by lazy { MagicPropertyBuilder(cls<BrowserActivity>()) }
+private val logger by lazyLogger<HandheldActivity>()
+private val magicPropertyBuilder by lazy { MagicPropertyBuilder(cls<HandheldActivity>()) }
 private val cachedDestinationActions = ConcurrentHashMap<Class<*>, String>()
 
 val destinationProperty by lazy { magicPropertyBuilder.buildProperty("destination") }
 fun destinationAction(destination: Destination): String = cachedDestinationActions.getOrPut(destination.javaClass) { "$destinationProperty/${destination.javaClass.name}" }
 
-@UnstableApi class BrowserActivity :
+@UnstableApi class HandheldActivity :
 	AppCompatActivity(),
 	ActivityCompat.OnRequestPermissionsResultCallback,
 	ManagePermissions,
