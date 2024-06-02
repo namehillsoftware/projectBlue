@@ -41,24 +41,26 @@ import com.lasthopesoftware.bluewater.client.connection.polling.LibraryConnectio
 import com.lasthopesoftware.bluewater.client.connection.polling.LibraryConnectionPollingSessions
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionWatcherViewModel
+import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionStatusViewModel
+import com.lasthopesoftware.bluewater.client.connection.session.initialization.DramaticConnectionInitializationController
 import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettingsLookup
 import com.lasthopesoftware.bluewater.client.connection.settings.changes.ObservableConnectionSettingsLibraryStorage
 import com.lasthopesoftware.bluewater.client.connection.trust.UserSslCertificateProvider
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.SelectedPlaybackEngineTypeAccess
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.defaults.DefaultPlaybackEngineLookup
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.InMemoryNowPlayingDisplaySettings
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingCoverArtViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingScreenViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.playlist.NowPlayingPlaylistViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.client.stored.library.items.StateChangeBroadcastingStoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
-import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsViewModel
 import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsViewModel
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
-import com.lasthopesoftware.bluewater.shared.android.intents.IntentBuilder
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider
@@ -71,7 +73,11 @@ import com.lasthopesoftware.resources.strings.StringResources
 import com.lasthopesoftware.resources.uri.DocumentUriSelector
 
 @UnstableApi
-class ActivityDependencies(activity: ComponentActivity, activitySuppliedDependencies: ActivitySuppliedDependencies) : BrowserViewDependencies {
+class ActivityDependencies(
+	activity: ComponentActivity,
+	activitySuppliedDependencies: ActivitySuppliedDependencies,
+	applicationDependencies: ApplicationDependencies
+) : BrowserViewDependencies, ApplicationDependencies by applicationDependencies {
 	private val applicationContext by lazy { activity.applicationContext }
 
 	private val viewModelScope by activity.buildViewModelLazily { ViewModelCloseableManager() }
@@ -204,11 +210,9 @@ class ActivityDependencies(activity: ComponentActivity, activitySuppliedDependen
 	override val applicationNavigation by lazy {
 		ActivityApplicationNavigation(
 			activity,
-			IntentBuilder(applicationContext),
+			intentBuilder,
 		)
 	}
-
-	override val syncScheduler by lazy { SyncScheduler(applicationContext) }
 
 	override val libraryProvider: ILibraryProvider
 		get() = libraryRepository
@@ -268,6 +272,14 @@ class ActivityDependencies(activity: ComponentActivity, activitySuppliedDependen
 		)
 	}
 
+	override val nowPlayingScreenViewModel by activity.buildViewModelLazily {
+		NowPlayingScreenViewModel(
+			messageBus,
+			InMemoryNowPlayingDisplaySettings,
+			playbackServiceController,
+		)
+	}
+
 	override val connectionWatcherViewModel by activity.buildViewModelLazily {
 		ConnectionWatcherViewModel(
 			messageBus,
@@ -320,6 +332,15 @@ class ActivityDependencies(activity: ComponentActivity, activitySuppliedDependen
 		UserSslCertificateProvider(
 			DocumentUriSelector(activitySuppliedDependencies.registeredActivityResultsLauncher),
 			activity.contentResolver
+		)
+	}
+	override val connectionStatusViewModel by activity.buildViewModelLazily {
+		ConnectionStatusViewModel(
+			stringResources,
+			DramaticConnectionInitializationController(
+				libraryConnectionProvider,
+				applicationNavigation,
+			),
 		)
 	}
 }

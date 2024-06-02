@@ -51,11 +51,14 @@ import com.namehillsoftware.handoff.promises.Promise
 import org.slf4j.LoggerFactory
 import java.io.File
 
-open class MainApplication : Application() {
+open class MainApplication : Application(), ApplicationDependencies {
 
 	companion object {
 		private val logger by lazyLogger<MainApplication>()
 		private var isWorkManagerInitialized = false
+
+		val Context.applicationDependencies: ApplicationDependencies
+			get() = applicationContext as ApplicationDependencies
 	}
 
 	private val libraryConnections by lazy { ConnectionSessionManager.get(this) }
@@ -93,7 +96,7 @@ open class MainApplication : Application() {
 		StoragePermissionsRequestNotificationBuilder(
 			this,
 			StringResources(this),
-			IntentBuilder(this),
+			intentBuilder,
 			syncChannelProperties
 		)
 	}
@@ -104,12 +107,16 @@ open class MainApplication : Application() {
 
 	private val applicationMessageBus by lazy { getApplicationMessageBus() }
 
-	private val syncScheduler by lazy { SyncScheduler(this) }
-
 	private val applicationSettings by lazy { getApplicationSettingsRepository() }
 
 	@Volatile
 	private var isLoggingToFile = true
+
+	override val intentBuilder
+		get() = IntentBuilder(this)
+
+	override val syncScheduler
+		get() = SyncScheduler(this)
 
 	@SuppressLint("DefaultLocale")
 	override fun onCreate() {

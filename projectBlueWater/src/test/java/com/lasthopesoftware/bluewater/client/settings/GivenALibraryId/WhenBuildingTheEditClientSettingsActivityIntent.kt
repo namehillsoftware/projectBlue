@@ -2,12 +2,13 @@ package com.lasthopesoftware.bluewater.client.settings.GivenALibraryId
 
 import android.content.Intent
 import androidx.test.core.app.ApplicationProvider
-import com.lasthopesoftware.bluewater.client.browsing.BrowserActivity
-import com.lasthopesoftware.bluewater.client.browsing.destinationProperty
+import com.lasthopesoftware.bluewater.client.EntryActivity
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ConnectionSettingsScreen
+import com.lasthopesoftware.bluewater.client.destinationProperty
 import com.lasthopesoftware.bluewater.shared.android.intents.IntentBuilder
-import org.assertj.core.api.Assertions.*
+import com.lasthopesoftware.bluewater.shared.cls
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -29,13 +30,13 @@ class WhenBuildingTheEditClientSettingsActivityIntent {
     @Test
     fun thenTheIdInTheIntentIsSetToTheLibraryId() {
         assertThat(
-            (returnedIntent?.getParcelableExtra(destinationProperty) as? ConnectionSettingsScreen)?.libraryId
+            returnedIntent?.getParcelableExtra(destinationProperty, cls<ConnectionSettingsScreen>())?.libraryId
         ).isEqualTo(LibraryId(13))
     }
 
     @Test
     fun thenTheReturnedIntentActivityIsCorrect() {
         assertThat(returnedIntent!!.component!!.className)
-            .isEqualTo(BrowserActivity::class.java.name)
+            .isEqualTo(EntryActivity::class.java.name)
     }
 }

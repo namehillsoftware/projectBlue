@@ -1,24 +1,20 @@
 package com.lasthopesoftware.bluewater.client.settings
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeight
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectableGroup
@@ -27,13 +23,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.Button
 import androidx.compose.material.Checkbox
-import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.ProvideTextStyle
 import androidx.compose.material.RadioButton
 import androidx.compose.material.Text
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -58,6 +51,7 @@ import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.trust.ProvideUserSslCertificates
+import com.lasthopesoftware.bluewater.shared.android.ui.components.BackButton
 import com.lasthopesoftware.bluewater.shared.android.ui.components.ColumnMenuIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.shared.android.ui.components.LabeledSelection
@@ -96,6 +90,385 @@ private fun SpacedOutRow(modifier: Modifier = Modifier, content: @Composable (Ro
 }
 
 @Composable
+private fun RowScope.LabelledRemoveServerButton(
+	librarySettingsViewModel: LibrarySettingsViewModel,
+	stringResources: GetStringResources,
+	modifier: Modifier = Modifier,
+) {
+	ColumnMenuIcon(
+		onClick = librarySettingsViewModel::requestLibraryRemoval,
+		iconPainter = painterResource(id = R.drawable.ic_remove_item_36dp),
+		contentDescription = stringResources.removeServer,
+		label = stringResources.removeServer,
+		labelModifier = modifier,
+	)
+}
+
+@Composable
+private fun RowScope.UnlabelledRemoveServerButton(
+	librarySettingsViewModel: LibrarySettingsViewModel,
+	stringResources: GetStringResources,
+) {
+	ColumnMenuIcon(
+		onClick = librarySettingsViewModel::requestLibraryRemoval,
+		iconPainter = painterResource(id = R.drawable.ic_remove_item_36dp),
+		contentDescription = stringResources.removeServer,
+		label = null,
+	)
+}
+
+@Composable
+private fun RowScope.LabelledSaveAndConnectButton(
+	librarySettingsViewModel: LibrarySettingsViewModel,
+	navigateApplication: NavigateApplication,
+	stringResources: GetStringResources,
+	modifier: Modifier = Modifier,
+) {
+	val isSettingsChanged by librarySettingsViewModel.isSettingsChanged.subscribeAsState()
+	val saveAndConnectText by remember {
+		derivedStateOf {
+			if (isSettingsChanged) stringResources.saveAndConnect
+			else stringResources.connect
+		}
+	}
+
+	val scope = rememberCoroutineScope()
+	ColumnMenuIcon(
+		onClick = {
+			if (isSettingsChanged) {
+				scope.launch {
+					val isSaved = librarySettingsViewModel.saveLibrary().suspend()
+					if (isSaved)
+						librarySettingsViewModel.activeLibraryId?.also(navigateApplication::viewLibrary)
+				}
+			} else {
+				librarySettingsViewModel.activeLibraryId?.also(navigateApplication::viewLibrary)
+			}
+		},
+		iconPainter = painterResource(id = R.drawable.ic_arrow_right),
+		contentDescription = saveAndConnectText,
+		label = saveAndConnectText,
+		labelModifier = modifier,
+	)
+}
+
+@Composable
+private fun RowScope.UnlabelledSaveAndConnectButton(
+	librarySettingsViewModel: LibrarySettingsViewModel,
+	navigateApplication: NavigateApplication,
+	stringResources: GetStringResources,
+) {
+	val isSettingsChanged by librarySettingsViewModel.isSettingsChanged.subscribeAsState()
+	val saveAndConnectText by remember {
+		derivedStateOf {
+			if (isSettingsChanged) stringResources.saveAndConnect
+			else stringResources.connect
+		}
+	}
+
+	val scope = rememberCoroutineScope()
+	ColumnMenuIcon(
+		onClick = {
+			if (isSettingsChanged) {
+				scope.launch {
+					val isSaved = librarySettingsViewModel.saveLibrary().suspend()
+					if (isSaved)
+						librarySettingsViewModel.activeLibraryId?.also(navigateApplication::viewLibrary)
+				}
+			} else {
+				librarySettingsViewModel.activeLibraryId?.also(navigateApplication::viewLibrary)
+			}
+		},
+		iconPainter = painterResource(id = R.drawable.ic_arrow_right),
+		contentDescription = saveAndConnectText,
+		label = null,
+	)
+}
+
+@Composable
+private fun RemoveServerConfirmationDialog(
+	librarySettingsViewModel: LibrarySettingsViewModel,
+	navigateApplication: NavigateApplication
+) {
+	val scope = rememberCoroutineScope()
+	val libraryRemovalRequested by librarySettingsViewModel.isRemovalRequested.subscribeAsState()
+	val accessCodeState by librarySettingsViewModel.accessCode.subscribeAsMutableState()
+	if (libraryRemovalRequested) {
+		AlertDialog(
+			onDismissRequest = librarySettingsViewModel::cancelLibraryRemovalRequest,
+			buttons = {
+				Row(
+					modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(Dimensions.viewPaddingUnit),
+					horizontalArrangement = Arrangement.SpaceEvenly,
+				) {
+					Button(
+						onClick = librarySettingsViewModel::cancelLibraryRemovalRequest,
+					) {
+						Text(text = stringResource(id = R.string.no))
+					}
+
+					Button(
+						onClick = {
+							scope.launch {
+								librarySettingsViewModel.removeLibrary().suspend()
+								navigateApplication.navigateUp()
+							}
+						},
+					) {
+						Text(text = stringResource(id = R.string.yes))
+					}
+				}
+			},
+			title = {
+				Text(
+					text = stringResource(id = R.string.remove_server),
+				)
+			},
+			text = {
+				Box(
+					modifier = Modifier
+                        .padding(Dimensions.viewPaddingUnit)
+                        .fillMaxWidth()
+                        .heightIn(100.dp, 300.dp),
+					contentAlignment = Alignment.Center
+				) {
+					Text(stringResource(id = R.string.confirmServerRemoval, accessCodeState))
+				}
+			}
+		)
+	}
+}
+
+@Composable
+private fun ColumnScope.LibrarySettingsList(
+	librarySettingsViewModel: LibrarySettingsViewModel,
+	stringResources: GetStringResources,
+	userSslCertificates: ProvideUserSslCertificates,
+) {
+	val isSettingsChanged by librarySettingsViewModel.isSettingsChanged.subscribeAsState()
+
+		librarySettingsViewModel.apply {
+			var accessCodeState by librarySettingsViewModel.accessCode.subscribeAsMutableState()
+			SpacedOutRow {
+				StandardTextField(
+					placeholder = stringResource(R.string.lbl_access_code),
+					value = accessCodeState,
+					onValueChange = { accessCodeState = it }
+				)
+			}
+
+			SpacedOutRow {
+				var userNameState by userName.subscribeAsMutableState()
+				StandardTextField(
+					placeholder = stringResource(R.string.lbl_user_name),
+					value = userNameState,
+					onValueChange = { userNameState = it }
+				)
+			}
+
+			SpacedOutRow {
+				var passwordState by password.subscribeAsMutableState()
+				StandardTextField(
+					placeholder = stringResource(R.string.lbl_password),
+					value = passwordState,
+					onValueChange = { passwordState = it },
+					visualTransformation = PasswordVisualTransformation(),
+					keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+				)
+			}
+
+			SpacedOutRow {
+				var libraryNameState by libraryName.subscribeAsMutableState()
+				StandardTextField(
+					placeholder = stringResource(R.string.lbl_library_name),
+					value = libraryNameState,
+					onValueChange = { libraryNameState = it },
+				)
+			}
+
+			Column(modifier = Modifier.fillMaxWidth(inputRowMaxWidth)) {
+				Text(
+					text = stringResource(R.string.optional_ssl_certificate),
+					modifier = Modifier.padding(top = innerGroupPadding, bottom = innerGroupPadding),
+				)
+
+				var hasError by remember { mutableStateOf(false) }
+				Row {
+					val hasSslCertificate by hasSslCertificate.subscribeAsState()
+
+					Button(
+						onClick = {
+							sslCertificateFingerprint.value = ByteArray(0)
+						},
+						modifier = Modifier
+							.weight(1f)
+							.padding(end = innerGroupPadding),
+						enabled = hasSslCertificate,
+					) {
+						Text(text = stringResources.clear)
+					}
+
+					val scope = rememberCoroutineScope()
+					Button(
+						onClick = {
+							hasError = false
+							scope.launch {
+								try {
+									val fingerprint =
+										userSslCertificates.promiseUserSslCertificateFingerprint().suspend()
+									sslCertificateFingerprint.value = fingerprint
+								} catch (e: Throwable) {
+									hasError = true
+								}
+							}
+						},
+						modifier = Modifier
+							.weight(1f)
+							.padding(start = innerGroupPadding),
+					) {
+						Text(
+							text = stringResources.run { if (hasSslCertificate) change else set }
+						)
+					}
+				}
+
+				if (hasError) {
+					ProvideTextStyle(value = MaterialTheme.typography.caption) {
+						Text(
+							text = stringResource(R.string.invalid_ssl_certificate),
+							color = MaterialTheme.colors.error
+						)
+					}
+				}
+			}
+
+			SpacedOutRow {
+				var isLocalOnlyState by isLocalOnly.subscribeAsMutableState()
+				LabeledSelection(
+					label = stringResource(id = R.string.lbl_local_only),
+					selected = isLocalOnlyState,
+					onSelected = { isLocalOnlyState = !isLocalOnlyState },
+					role = Role.Checkbox,
+				) {
+					Checkbox(
+						checked = isLocalOnlyState,
+						onCheckedChange = null,
+					)
+				}
+			}
+
+			SpacedOutRow {
+				var isWolEnabledState by isWakeOnLanEnabled.subscribeAsMutableState()
+				LabeledSelection(
+					label = stringResource(id = R.string.wake_on_lan_setting),
+					selected = isWolEnabledState,
+					onSelected = { isWolEnabledState = !isWolEnabledState },
+					role = Role.Checkbox,
+				) {
+					Checkbox(
+						checked = isWolEnabledState,
+						onCheckedChange = null,
+					)
+				}
+			}
+
+			Column(
+				modifier = Modifier
+					.fillMaxWidth(inputRowMaxWidth)
+					.selectableGroup()
+			) {
+				Text(
+					text = stringResource(id = R.string.lblSyncMusicLocation),
+					modifier = Modifier.padding(innerGroupPadding),
+				)
+
+				var syncedFileLocationState by syncedFileLocation.subscribeAsMutableState()
+				Row(
+					modifier = Modifier.padding(innerGroupPadding)
+				) {
+					LabeledSelection(
+						label = stringResource(id = R.string.rbPrivateToApp),
+						selected = syncedFileLocationState == Library.SyncedFileLocation.INTERNAL,
+						onSelected = { syncedFileLocationState = Library.SyncedFileLocation.INTERNAL },
+						role = Role.RadioButton,
+					) {
+						RadioButton(
+							selected = syncedFileLocationState == Library.SyncedFileLocation.INTERNAL,
+							onClick = null,
+						)
+					}
+				}
+
+				Row(
+					modifier = Modifier.padding(innerGroupPadding)
+				) {
+					LabeledSelection(
+						label = stringResource(id = R.string.rbPublicLocation),
+						selected = syncedFileLocationState == Library.SyncedFileLocation.EXTERNAL,
+						onSelected = { syncedFileLocationState = Library.SyncedFileLocation.EXTERNAL },
+						role = Role.RadioButton,
+					) {
+						RadioButton(
+							selected = syncedFileLocationState == Library.SyncedFileLocation.EXTERNAL,
+							onClick = null,
+						)
+					}
+				}
+
+				val isStoragePermissionsNeeded by isStoragePermissionsNeeded.subscribeAsState()
+				if (isStoragePermissionsNeeded) {
+					ProvideTextStyle(value = MaterialTheme.typography.caption) {
+						Text(
+							text = stringResource(R.string.permissions_must_be_granted_for_settings),
+							color = MaterialTheme.colors.error
+						)
+					}
+				}
+			}
+
+			SpacedOutRow {
+				var isSyncLocalConnectionsOnlyState by isSyncLocalConnectionsOnly.subscribeAsMutableState()
+				LabeledSelection(
+					label = stringResource(id = R.string.lbl_sync_local_connection),
+					selected = isSyncLocalConnectionsOnlyState,
+					onSelected = { isSyncLocalConnectionsOnlyState = !isSyncLocalConnectionsOnlyState },
+					role = Role.Checkbox,
+				) {
+					Checkbox(
+						checked = isSyncLocalConnectionsOnlyState,
+						null,
+					)
+				}
+			}
+
+			SpacedOutRow {
+				var isUsingExistingFilesState by isUsingExistingFiles.subscribeAsMutableState()
+				LabeledSelection(
+					label = stringResource(id = R.string.lbl_use_existing_music),
+					selected = isUsingExistingFilesState,
+					onSelected = { isUsingExistingFilesState = !isUsingExistingFilesState },
+					role = Role.Checkbox,
+				) {
+					Checkbox(
+						checked = isUsingExistingFilesState,
+						null,
+					)
+				}
+			}
+
+			val isSavingState by isSaving.subscribeAsState()
+			Button(
+				onClick = { saveLibrary() },
+				enabled = isSettingsChanged && !isSavingState,
+			) {
+				Text(text = if (!isSettingsChanged) stringResource(id = R.string.saved) else stringResource(id = R.string.save))
+			}
+		}
+}
+
+@Composable
 fun LibrarySettingsView(
 	librarySettingsViewModel: LibrarySettingsViewModel,
 	navigateApplication: NavigateApplication,
@@ -103,68 +476,22 @@ fun LibrarySettingsView(
 	userSslCertificates: ProvideUserSslCertificates,
 ) {
 	ControlSurface {
-		var accessCodeState by librarySettingsViewModel.accessCode.subscribeAsMutableState()
+		RemoveServerConfirmationDialog(
+			librarySettingsViewModel = librarySettingsViewModel,
+			navigateApplication = navigateApplication
+		)
 
-		val scope = rememberCoroutineScope()
-		val libraryRemovalRequested by librarySettingsViewModel.isRemovalRequested.subscribeAsState()
-		if (libraryRemovalRequested) {
-			AlertDialog(
-				onDismissRequest = librarySettingsViewModel::cancelLibraryRemovalRequest,
-				buttons = {
-					Row(
-						modifier = Modifier
-							.fillMaxWidth()
-							.padding(Dimensions.viewPaddingUnit),
-						horizontalArrangement = Arrangement.SpaceEvenly,
-					) {
-						Button(
-							onClick = librarySettingsViewModel::cancelLibraryRemovalRequest,
-						) {
-							Text(text = stringResource(id = R.string.no))
-						}
-
-						Button(
-							onClick = {
-								scope.launch {
-									librarySettingsViewModel.removeLibrary().suspend()
-									navigateApplication.navigateUp()
-								}
-							},
-						) {
-							Text(text = stringResource(id = R.string.yes))
-						}
-					}
-				},
-				title = {
-					Text(
-						text = stringResource(id = R.string.remove_server),
-					)
-				},
-				text = {
-					Box(
-						modifier = Modifier
-							.padding(Dimensions.viewPaddingUnit)
-							.fillMaxWidth()
-							.heightIn(100.dp, 300.dp),
-						contentAlignment = Alignment.Center
-					) {
-						Text(stringResource(id = R.string.confirmServerRemoval, accessCodeState))
-					}
-				}
-			)
-		}
-
-		val isSettingsChanged by librarySettingsViewModel.isSettingsChanged.subscribeAsState()
 		val boxHeightPx = LocalDensity.current.run { boxHeight.toPx() }
 		val collapsedHeightPx = LocalDensity.current.run { appBarHeight.toPx() }
 		val heightScaler = memorableScrollConnectedScaler(boxHeightPx, collapsedHeightPx)
 
 		Box(
 			modifier = Modifier
-				.fillMaxSize()
-				.nestedScroll(heightScaler)
+                .fillMaxSize()
+                .nestedScroll(heightScaler)
 		) {
 			val heightValue by heightScaler.getValueState()
+
 
 			Column(
 				modifier = Modifier
@@ -172,240 +499,33 @@ fun LibrarySettingsView(
 					.verticalScroll(rememberScrollState()),
 				horizontalAlignment = Alignment.CenterHorizontally,
 			) {
-				Spacer(modifier = Modifier
-					.requiredHeight(boxHeight)
-					.fillMaxWidth())
+				Spacer(
+					modifier = Modifier
+						.requiredHeight(boxHeight)
+						.fillMaxWidth()
+				)
 
-				librarySettingsViewModel.apply {
-					SpacedOutRow {
-						StandardTextField(
-							placeholder = stringResource(R.string.lbl_access_code),
-							value = accessCodeState,
-							onValueChange = { accessCodeState = it }
-						)
-					}
-
-					SpacedOutRow {
-						var userNameState by userName.subscribeAsMutableState()
-						StandardTextField(
-							placeholder = stringResource(R.string.lbl_user_name),
-							value = userNameState,
-							onValueChange = { userNameState = it }
-						)
-					}
-
-					SpacedOutRow {
-						var passwordState by password.subscribeAsMutableState()
-						StandardTextField(
-							placeholder = stringResource(R.string.lbl_password),
-							value = passwordState,
-							onValueChange = { passwordState = it },
-							visualTransformation = PasswordVisualTransformation(),
-							keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-						)
-					}
-
-					SpacedOutRow {
-						var libraryNameState by libraryName.subscribeAsMutableState()
-						StandardTextField(
-							placeholder = stringResource(R.string.lbl_library_name),
-							value = libraryNameState,
-							onValueChange = { libraryNameState = it },
-						)
-					}
-
-					Column(modifier = Modifier.fillMaxWidth(inputRowMaxWidth)) {
-						Text(
-							text = stringResource(R.string.optional_ssl_certificate),
-							modifier = Modifier.padding(top = innerGroupPadding, bottom = innerGroupPadding),
-						)
-
-						var hasError by remember { mutableStateOf(false) }
-						Row {
-							val hasSslCertificate by hasSslCertificate.subscribeAsState()
-
-							Button(
-								onClick = {
-									sslCertificateFingerprint.value = ByteArray(0)
-								},
-								modifier = Modifier
-									.weight(1f)
-									.padding(end = innerGroupPadding),
-								enabled = hasSslCertificate,
-							) {
-								Text(text = stringResources.clear)
-							}
-
-							Button(
-								onClick = {
-									hasError = false
-									scope.launch {
-										try {
-											val fingerprint =
-												userSslCertificates.promiseUserSslCertificateFingerprint().suspend()
-											sslCertificateFingerprint.value = fingerprint
-										} catch (e: Throwable) {
-											hasError = true
-										}
-									}
-								},
-								modifier = Modifier
-									.weight(1f)
-									.padding(start = innerGroupPadding),
-							) {
-								Text(
-									text = stringResources.run { if (hasSslCertificate) change else set }
-								)
-							}
-						}
-
-						if (hasError) {
-							ProvideTextStyle(value = MaterialTheme.typography.caption) {
-								Text(
-									text = stringResource(R.string.invalid_ssl_certificate),
-									color = MaterialTheme.colors.error
-								)
-							}
-						}
-					}
-
-					SpacedOutRow {
-						var isLocalOnlyState by isLocalOnly.subscribeAsMutableState()
-						LabeledSelection(
-							label = stringResource(id = R.string.lbl_local_only),
-							selected = isLocalOnlyState,
-							onSelected = { isLocalOnlyState = !isLocalOnlyState },
-							role = Role.Checkbox,
-						) {
-							Checkbox(
-								checked = isLocalOnlyState,
-								onCheckedChange = null,
-							)
-						}
-					}
-
-					SpacedOutRow {
-						var isWolEnabledState by isWakeOnLanEnabled.subscribeAsMutableState()
-						LabeledSelection(
-							label = stringResource(id = R.string.wake_on_lan_setting),
-							selected = isWolEnabledState,
-							onSelected = { isWolEnabledState = !isWolEnabledState },
-							role = Role.Checkbox,
-						) {
-							Checkbox(
-								checked = isWolEnabledState,
-								onCheckedChange = null,
-							)
-						}
-					}
-
-					Column(modifier = Modifier
-						.fillMaxWidth(inputRowMaxWidth)
-						.selectableGroup()
-					) {
-						Text(
-							text = stringResource(id = R.string.lblSyncMusicLocation),
-							modifier = Modifier.padding(innerGroupPadding),
-						)
-
-						var syncedFileLocationState by syncedFileLocation.subscribeAsMutableState()
-						Row(
-							modifier = Modifier.padding(innerGroupPadding)
-						) {
-							LabeledSelection(
-								label = stringResource(id = R.string.rbPrivateToApp),
-								selected = syncedFileLocationState == Library.SyncedFileLocation.INTERNAL,
-								onSelected = { syncedFileLocationState = Library.SyncedFileLocation.INTERNAL },
-								role = Role.RadioButton,
-							) {
-								RadioButton(
-									selected = syncedFileLocationState == Library.SyncedFileLocation.INTERNAL,
-									onClick = null,
-								)
-							}
-						}
-
-						Row(
-							modifier = Modifier.padding(innerGroupPadding)
-						) {
-							LabeledSelection(
-								label = stringResource(id = R.string.rbPublicLocation),
-								selected = syncedFileLocationState == Library.SyncedFileLocation.EXTERNAL,
-								onSelected = { syncedFileLocationState = Library.SyncedFileLocation.EXTERNAL },
-								role = Role.RadioButton,
-							) {
-								RadioButton(
-									selected = syncedFileLocationState == Library.SyncedFileLocation.EXTERNAL,
-									onClick = null,
-								)
-							}
-						}
-
-						val isStoragePermissionsNeeded by isStoragePermissionsNeeded.subscribeAsState()
-						if (isStoragePermissionsNeeded) {
-							ProvideTextStyle(value = MaterialTheme.typography.caption) {
-								Text(
-									text = stringResource(R.string.permissions_must_be_granted_for_settings),
-									color = MaterialTheme.colors.error
-								)
-							}
-						}
-					}
-
-					SpacedOutRow {
-						var isSyncLocalConnectionsOnlyState by isSyncLocalConnectionsOnly.subscribeAsMutableState()
-						LabeledSelection(
-							label = stringResource(id = R.string.lbl_sync_local_connection),
-							selected = isSyncLocalConnectionsOnlyState,
-							onSelected = { isSyncLocalConnectionsOnlyState = !isSyncLocalConnectionsOnlyState },
-							role = Role.Checkbox,
-						) {
-							Checkbox(
-								checked = isSyncLocalConnectionsOnlyState,
-								null,
-							)
-						}
-					}
-
-					SpacedOutRow {
-						var isUsingExistingFilesState by isUsingExistingFiles.subscribeAsMutableState()
-						LabeledSelection(
-							label = stringResource(id = R.string.lbl_use_existing_music),
-							selected = isUsingExistingFilesState,
-							onSelected = { isUsingExistingFilesState = !isUsingExistingFilesState },
-							role = Role.Checkbox,
-						) {
-							Checkbox(
-								checked = isUsingExistingFilesState,
-								null,
-							)
-						}
-					}
-
-					val isSavingState by isSaving.subscribeAsState()
-					Button(
-						onClick = { saveLibrary() },
-						enabled = isSettingsChanged && !isSavingState,
-					) {
-						Text(text = if (!isSettingsChanged) stringResource(id = R.string.saved) else stringResource(id = R.string.save))
-					}
-				}
+				LibrarySettingsList(
+					librarySettingsViewModel = librarySettingsViewModel,
+					stringResources = stringResources,
+					userSslCertificates = userSslCertificates,
+				)
 			}
 
 			Box(
 				modifier = Modifier
-					.fillMaxWidth()
-					.align(Alignment.TopStart)
-					.background(MaterialTheme.colors.surface)
-					.height(LocalDensity.current.run { heightValue.toDp() })
+                    .fillMaxWidth()
+                    .align(Alignment.TopStart)
+                    .background(MaterialTheme.colors.surface)
+                    .height(LocalDensity.current.run { heightValue.toDp() })
 			) {
 				val headerHidingProgress by heightScaler.getProgressState()
 				val headerExpandingProgress by remember { derivedStateOf { 1 - headerHidingProgress } }
 				val topPadding by remember { derivedStateOf(structuralEqualityPolicy()) { (appBarHeight - 46.dp * headerHidingProgress) } }
 				BoxWithConstraints(
 					modifier = Modifier
-						.height(boxHeight)
-						.padding(top = topPadding)
+                        .height(boxHeight)
+                        .padding(top = topPadding)
 				) {
 					val iconSize = Dimensions.topMenuIconSize
 					val acceleratedToolbarStateProgress by remember {
@@ -422,7 +542,7 @@ fun LibrarySettingsView(
 
 					ProvideTextStyle(MaterialTheme.typography.h5) {
 						val iconClearance = 48
-						val startPadding by remember {  derivedStateOf(structuralEqualityPolicy()) { (4 + iconClearance * headerHidingProgress).dp } }
+						val startPadding by remember { derivedStateOf(structuralEqualityPolicy()) { (4 + iconClearance * headerHidingProgress).dp } }
 						val endPadding by remember { derivedStateOf(structuralEqualityPolicy()) { 4.dp + iconSize * acceleratedHeaderHidingProgress } }
 						val header = stringResource(id = R.string.settings)
 						MarqueeText(
@@ -431,8 +551,8 @@ fun LibrarySettingsView(
 							gradientSides = setOf(GradientSide.End),
 							gradientEdgeColor = MaterialTheme.colors.surface,
 							modifier = Modifier
-								.fillMaxWidth()
-								.padding(start = startPadding, end = endPadding),
+                                .fillMaxWidth()
+                                .padding(start = startPadding, end = endPadding),
 						)
 					}
 
@@ -441,79 +561,130 @@ fun LibrarySettingsView(
 					val topRowPadding by remember { derivedStateOf(structuralEqualityPolicy()) { (expandedTopRowPadding - (expandedTopRowPadding - collapsedTopRowPadding) * headerHidingProgress) } }
 					Row(
 						modifier = Modifier
-							.padding(
-								top = topRowPadding,
-								bottom = expandedMenuVerticalPadding,
-								start = 8.dp,
-								end = 8.dp
-							)
-							.width(menuWidth)
-							.align(Alignment.TopEnd)
+                            .padding(
+                                top = topRowPadding,
+                                bottom = expandedMenuVerticalPadding,
+                                start = Dimensions.viewPaddingUnit * 2,
+                                end = Dimensions.viewPaddingUnit * 2
+                            )
+                            .width(menuWidth)
+                            .align(Alignment.TopEnd)
 					) {
 						val textModifier = Modifier.alpha(acceleratedToolbarStateProgress)
 
 						if (menuWidth > iconSize * 2) {
-							ColumnMenuIcon(
-								modifier = Modifier.fillMaxHeight(),
-								onClick = librarySettingsViewModel::requestLibraryRemoval,
-								icon = {
-									Image(
-										painter = painterResource(id = R.drawable.ic_remove_item_36dp),
-										contentDescription = stringResources.removeServer,
-										modifier = Modifier.size(iconSize)
-									)
-								},
-								label = stringResources.removeServer,
-								labelModifier = textModifier,
-							)
-						}
-
-						val saveAndConnectText by remember {
-							derivedStateOf {
-								if (isSettingsChanged) stringResources.saveAndConnect
-								else stringResources.connect
+							if (acceleratedHeaderHidingProgress < 1) {
+								LabelledRemoveServerButton(
+									librarySettingsViewModel = librarySettingsViewModel,
+									stringResources = stringResources,
+									modifier = textModifier
+								)
+							} else {
+								UnlabelledRemoveServerButton(
+									librarySettingsViewModel = librarySettingsViewModel,
+									stringResources = stringResources
+								)
 							}
 						}
 
-						ColumnMenuIcon(
-							modifier = Modifier.fillMaxHeight(),
-							onClick = {
-								if (isSettingsChanged) {
-									scope.launch {
-										val isSaved = librarySettingsViewModel.saveLibrary().suspend()
-										if (isSaved)
-											librarySettingsViewModel.activeLibraryId?.also(navigateApplication::viewLibrary)
-									}
-								} else {
-									librarySettingsViewModel.activeLibraryId?.also(navigateApplication::viewLibrary)
-								}
-							},
-							icon = {
-								Image(
-									painter = painterResource(id = R.drawable.ic_arrow_right),
-									contentDescription = saveAndConnectText,
-									modifier = Modifier.size(iconSize)
-								)
-							},
-							label = if (acceleratedHeaderHidingProgress < 1) saveAndConnectText else null,
-							labelModifier = textModifier,
+						if (acceleratedHeaderHidingProgress < 1) {
+							LabelledSaveAndConnectButton(
+								librarySettingsViewModel = librarySettingsViewModel,
+								navigateApplication = navigateApplication,
+								stringResources = stringResources,
+								modifier = textModifier
+							)
+						} else {
+							UnlabelledSaveAndConnectButton(
+								librarySettingsViewModel = librarySettingsViewModel,
+								navigateApplication = navigateApplication,
+								stringResources = stringResources,
+							)
+						}
+					}
+				}
+
+				BackButton(navigateApplication::navigateUp, modifier = Modifier.align(Alignment.TopStart))
+			}
+		}
+	}
+}
+
+@Composable
+fun TvLibrarySettingsView(
+	librarySettingsViewModel: LibrarySettingsViewModel,
+	navigateApplication: NavigateApplication,
+	stringResources: GetStringResources,
+	userSslCertificates: ProvideUserSslCertificates,
+) {
+	ControlSurface {
+		RemoveServerConfirmationDialog(
+			librarySettingsViewModel = librarySettingsViewModel,
+			navigateApplication = navigateApplication
+		)
+
+		Column(modifier = Modifier.fillMaxSize()) {
+			Column {
+				Box(
+					modifier = Modifier
+						.fillMaxWidth()
+						.height(Dimensions.appBarHeight),
+					contentAlignment = Alignment.CenterStart,
+				) {
+					BackButton(navigateApplication::navigateUp, modifier = Modifier.align(Alignment.TopStart))
+				}
+
+				Box(modifier = Modifier.height(expandedTitleHeight)) {
+					ProvideTextStyle(MaterialTheme.typography.h5) {
+						val startPadding = Dimensions.viewPaddingUnit
+						val endPadding = Dimensions.viewPaddingUnit
+						val maxLines = 2
+						Text(
+							text = stringResource(id = R.string.settings),
+							maxLines = maxLines,
+							overflow = TextOverflow.Ellipsis,
+							modifier = Modifier
+								.fillMaxWidth()
+								.padding(start = startPadding, end = endPadding),
 						)
 					}
 				}
 
-                Icon(
-                    Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "",
-                    tint = MaterialTheme.colors.onSurface,
-                    modifier = Modifier
-                        .align(Alignment.TopStart)
-                        .clickable(
-                            interactionSource = remember { MutableInteractionSource() },
-                            indication = null,
-                            onClick = navigateApplication::navigateUp
-                        )
-						.padding(16.dp)
-                )
+				Row(
+					modifier = Modifier
+						.padding(
+							top = expandedMenuVerticalPadding,
+							bottom = expandedMenuVerticalPadding,
+							start = Dimensions.viewPaddingUnit * 2,
+							end = Dimensions.viewPaddingUnit * 2
+						)
+						.fillMaxWidth(),
+					horizontalArrangement = Arrangement.SpaceEvenly,
+				) {
+					LabelledRemoveServerButton(
+						librarySettingsViewModel = librarySettingsViewModel,
+						stringResources = stringResources,
+					)
+
+					LabelledSaveAndConnectButton(
+						librarySettingsViewModel = librarySettingsViewModel,
+						navigateApplication = navigateApplication,
+						stringResources = stringResources,
+					)
+				}
+			}
+
+			Column(
+				modifier = Modifier
+					.fillMaxSize()
+					.verticalScroll(rememberScrollState()),
+				horizontalAlignment = Alignment.CenterHorizontally,
+			) {
+				LibrarySettingsList(
+					librarySettingsViewModel = librarySettingsViewModel,
+					stringResources = stringResources,
+					userSslCertificates = userSslCertificates,
+				)
 			}
 		}
 	}

@@ -19,10 +19,10 @@ import kotlinx.coroutines.flow.asStateFlow
 class FileListViewModel(
 	private val itemFileProvider: ProvideItemFiles,
 	private val storedItemAccess: AccessStoredItems,
-) : ViewModel(), TrackLoadedViewState {
+) : ViewModel(), TrackLoadedViewState, ServiceFilesListState {
 
 	private val mutableIsLoading = MutableInteractionState(true)
-	private val mutableFiles = MutableStateFlow(emptyList<ServiceFile>())
+	private val mutableFiles = MutableInteractionState(emptyList<ServiceFile>())
 	private val mutableItemValue = MutableStateFlow("")
 	private val mutableIsSynced = MutableStateFlow(false)
 
@@ -30,7 +30,7 @@ class FileListViewModel(
 	private var loadedLibraryId: LibraryId? = null
 
 	override val isLoading = mutableIsLoading.asInteractionState()
-	val files = mutableFiles.asStateFlow()
+	override val files = mutableFiles.asInteractionState()
 	val itemValue = mutableItemValue.asStateFlow()
 	val isSynced = mutableIsSynced.asStateFlow()
 

@@ -4,6 +4,7 @@ import android.app.Service
 import android.content.Intent
 import android.support.v4.media.session.MediaSessionCompat
 import androidx.media3.common.util.UnstableApi
+import com.lasthopesoftware.bluewater.MainApplication.Companion.applicationDependencies
 import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.ItemStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.LibraryFileStringListProvider
@@ -21,7 +22,6 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.InMemor
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.client.playback.service.receivers.MediaSessionCallbackReceiver
-import com.lasthopesoftware.bluewater.shared.android.intents.IntentBuilder
 import com.lasthopesoftware.bluewater.shared.android.services.GenericBinder
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
 import com.lasthopesoftware.promises.toFuture
@@ -90,7 +90,8 @@ import java.util.concurrent.TimeUnit
 		Pair(broadcaster, newMediaSession)
 	}
 
-	private val intentBuilder by lazy { IntentBuilder(this) }
+	private val intentBuilder
+		get() =  applicationDependencies.intentBuilder
 
 	val mediaSession
 		get() = lazyMediaSession.value.second

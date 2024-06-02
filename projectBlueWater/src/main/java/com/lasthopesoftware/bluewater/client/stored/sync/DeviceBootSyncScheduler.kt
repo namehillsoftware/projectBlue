@@ -8,6 +8,7 @@ class DeviceBootSyncScheduler : BroadcastReceiver() {
 	override fun onReceive(context: Context, intent: Intent) {
 		if (Intent.ACTION_BOOT_COMPLETED != intent.action) return
 
+		// Does not use the application dependencies because this is received separately from the application
 		val syncScheduler = SyncScheduler(context)
 		syncScheduler.promiseIsScheduled()
 			.then { isScheduled ->

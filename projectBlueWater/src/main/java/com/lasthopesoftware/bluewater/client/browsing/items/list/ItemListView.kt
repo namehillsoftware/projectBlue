@@ -1,15 +1,14 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.list
 
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.BoxWithConstraintsScope
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -28,12 +27,9 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Divider
-import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.ProvideTextStyle
 import androidx.compose.material.Text
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
@@ -41,6 +37,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
@@ -56,11 +53,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.tv.foundation.lazy.list.TvLazyColumn
+import androidx.tv.foundation.lazy.list.itemsIndexed
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.li.LabelledPlayButton
+import com.lasthopesoftware.bluewater.client.browsing.files.li.LabelledShuffleButton
+import com.lasthopesoftware.bluewater.client.browsing.files.li.UnlabelledPlayButton
+import com.lasthopesoftware.bluewater.client.browsing.files.li.UnlabelledShuffleButton
 import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
-import com.lasthopesoftware.bluewater.client.browsing.files.list.TrackHeaderItemView
+import com.lasthopesoftware.bluewater.client.browsing.files.list.TrackTitleItemView
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewPlaylistFileItem
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
@@ -68,6 +71,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.h
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncIcon
+import com.lasthopesoftware.bluewater.shared.android.ui.components.BackButton
 import com.lasthopesoftware.bluewater.shared.android.ui.components.ColumnMenuIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.shared.android.ui.components.ListItemIcon
@@ -76,6 +80,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.components.memorableScro
 import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberCalculatedKnobHeight
 import com.lasthopesoftware.bluewater.shared.android.ui.components.scrollbar
 import com.lasthopesoftware.bluewater.shared.android.ui.linearInterpolation
+import com.lasthopesoftware.bluewater.shared.android.ui.navigable
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
@@ -83,60 +88,23 @@ import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
-private const val expandedTitleHeight = 84
-private val appBarHeight = Dimensions.appBarHeight.value
+private enum class ContentType {
+	Header, Spacer, Item, File
+}
+
+private val expandedTitleHeight = 84.dp
+private val appBarHeight = Dimensions.appBarHeight
 private val iconSize = Dimensions.topMenuIconSize
 private val minimumMenuWidth = (iconSize + Dimensions.viewPaddingUnit * 2) * 3
 
-private val expandedIconSize = Dimensions.menuHeight.value
-private const val expandedMenuVerticalPadding = 12
-private val boxHeight = (expandedTitleHeight + appBarHeight + expandedIconSize + expandedMenuVerticalPadding * 2).dp
-
-@Composable
-private fun RowScope.LabelledPlayButton(
-	itemListViewModel: ItemListViewModel,
-	playbackServiceController: ControlPlaybackService,
-	fileListViewModel: FileListViewModel,
-	modifier: Modifier,
-) {
-	val playButtonLabel = stringResource(id = R.string.btn_play)
-	ColumnMenuIcon(
-		onClick = {
-			itemListViewModel.loadedLibraryId?.also {
-				playbackServiceController.startPlaylist(it, fileListViewModel.files.value)
-			}
-		},
-		iconPainter = painterResource(id = R.drawable.av_play),
-		contentDescription = playButtonLabel,
-		label = playButtonLabel,
-		labelModifier = modifier,
-		labelMaxLines = 1,
-	)
-}
-
-@Composable
-private fun RowScope.UnlabelledPlayButton(
-	itemListViewModel: ItemListViewModel,
-	playbackServiceController: ControlPlaybackService,
-	fileListViewModel: FileListViewModel,
-) {
-	val playButtonLabel = stringResource(id = R.string.btn_play)
-	ColumnMenuIcon(
-		onClick = {
-			itemListViewModel.loadedLibraryId?.also {
-				playbackServiceController.startPlaylist(it, fileListViewModel.files.value)
-			}
-		},
-		iconPainter = painterResource(id = R.drawable.av_play),
-		contentDescription = playButtonLabel,
-		label = null,
-	)
-}
+private val expandedIconSize = Dimensions.menuHeight
+private val expandedMenuVerticalPadding = Dimensions.viewPaddingUnit * 3
+private val boxHeight = expandedTitleHeight + appBarHeight + expandedIconSize + expandedMenuVerticalPadding * 2
 
 @Composable
 private fun RowScope.LabelledSyncButton(
 	fileListViewModel: FileListViewModel,
-	modifier: Modifier,
+	modifier: Modifier = Modifier,
 ) {
 	val isSynced by fileListViewModel.isSynced.collectAsState()
 	val syncButtonLabel =
@@ -176,50 +144,10 @@ private fun RowScope.UnlabelledSyncButton(fileListViewModel: FileListViewModel) 
 }
 
 @Composable
-private fun RowScope.LabelledShuffleButton(
-	itemListViewModel: ItemListViewModel,
-	playbackServiceController: ControlPlaybackService,
-	fileListViewModel: FileListViewModel,
-	modifier: Modifier,
-) {
-	val shuffleButtonLabel = stringResource(R.string.btn_shuffle_files)
-	ColumnMenuIcon(
-		onClick = {
-			itemListViewModel.loadedLibraryId?.also {
-				playbackServiceController.shuffleAndStartPlaylist(it, fileListViewModel.files.value)
-			}
-		},
-		iconPainter = painterResource(id = R.drawable.av_shuffle),
-		contentDescription = shuffleButtonLabel,
-		label = shuffleButtonLabel,
-		labelModifier = modifier,
-		labelMaxLines = 1,
-	)
-}
-
-@Composable
-private fun RowScope.UnlabelledShuffleButton(
-	itemListViewModel: ItemListViewModel,
-	playbackServiceController: ControlPlaybackService,
-	fileListViewModel: FileListViewModel,
-) {
-	val shuffleButtonLabel = stringResource(R.string.btn_shuffle_files)
-	ColumnMenuIcon(
-		onClick = {
-			itemListViewModel.loadedLibraryId?.also {
-				playbackServiceController.shuffleAndStartPlaylist(it, fileListViewModel.files.value)
-			}
-		},
-		iconPainter = painterResource(id = R.drawable.av_shuffle),
-		contentDescription = shuffleButtonLabel,
-	)
-}
-
-@Composable
 fun RowScope.LabelledActiveDownloadsButton(
 	itemListViewModel: ItemListViewModel,
 	applicationNavigation: NavigateApplication,
-	modifier: Modifier,
+	modifier: Modifier = Modifier,
 ) {
 	ColumnMenuIcon(
 		onClick = {
@@ -255,7 +183,7 @@ fun RowScope.UnlabelledActiveDownloadsButton(
 fun RowScope.LabelledSearchButton(
 	itemListViewModel: ItemListViewModel,
 	applicationNavigation: NavigateApplication,
-	modifier: Modifier,
+	modifier: Modifier = Modifier,
 ) {
 	val searchButtonLabel = stringResource(id = R.string.search)
 	ColumnMenuIcon(
@@ -289,7 +217,7 @@ fun RowScope.UnlabelledSearchButton(
 fun RowScope.LabelledSettingsButton(
 	itemListViewModel: ItemListViewModel,
 	applicationNavigation: NavigateApplication,
-	modifier: Modifier,
+	modifier: Modifier = Modifier,
 ) {
 	val settingsButtonLabel = stringResource(id = R.string.settings)
 	ColumnMenuIcon(
@@ -320,6 +248,44 @@ fun RowScope.UnlabelledSettingsButton(
 }
 
 @Composable
+fun ItemsCountHeader(itemsCount: Int) {
+	Box(
+		modifier = Modifier
+			.padding(Dimensions.viewPaddingUnit)
+			.height(Dimensions.menuHeight)
+	) {
+		ProvideTextStyle(MaterialTheme.typography.h5) {
+			Text(
+				text = stringResource(R.string.item_count_label, itemsCount),
+				fontWeight = FontWeight.Bold,
+				modifier = Modifier
+					.padding(Dimensions.viewPaddingUnit)
+					.align(Alignment.CenterStart)
+			)
+		}
+	}
+}
+
+@Composable
+fun FilesCountHeader(filesCount: Int) {
+	Box(
+		modifier = Modifier
+			.padding(Dimensions.viewPaddingUnit)
+			.height(Dimensions.menuHeight)
+	) {
+		ProvideTextStyle(MaterialTheme.typography.h5) {
+			Text(
+				text = stringResource(R.string.file_count_label, filesCount),
+				fontWeight = FontWeight.Bold,
+				modifier = Modifier
+					.padding(Dimensions.viewPaddingUnit)
+					.align(Alignment.CenterStart)
+			)
+		}
+	}
+}
+
+@Composable
 private fun BoxScope.CollapsedItemListMenu(
 	itemListViewModel: ItemListViewModel,
 	fileListViewModel: FileListViewModel,
@@ -339,20 +305,20 @@ private fun BoxScope.CollapsedItemListMenu(
 			.width(menuWidth)
 			.align(Alignment.TopEnd)
 	) {
-		val files by fileListViewModel.files.collectAsState()
+		val files by fileListViewModel.files.subscribeAsState()
 		if (files.any()) {
 			UnlabelledPlayButton(
-				itemListViewModel = itemListViewModel,
+				libraryState = itemListViewModel,
 				playbackServiceController = playbackServiceController,
-				fileListViewModel = fileListViewModel
+				serviceFilesListState = fileListViewModel
 			)
 
 			UnlabelledSyncButton(fileListViewModel)
 
 			UnlabelledShuffleButton(
-				itemListViewModel = itemListViewModel,
+				libraryState = itemListViewModel,
 				playbackServiceController = playbackServiceController,
-				fileListViewModel = fileListViewModel
+				serviceFilesListState = fileListViewModel
 			)
 		} else {
 			UnlabelledActiveDownloadsButton(
@@ -373,7 +339,334 @@ private fun BoxScope.CollapsedItemListMenu(
 	}
 }
 
-@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun RenderTrackTitleItem(
+	position: Int,
+	serviceFile: ServiceFile,
+	trackHeadlineViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
+	itemListViewModel: ItemListViewModel,
+	nowPlayingViewModel: NowPlayingFilePropertiesViewModel,
+	applicationNavigation: NavigateApplication,
+	fileListViewModel: FileListViewModel,
+	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
+	playbackServiceController: ControlPlaybackService,
+) {
+	val fileItemViewModel = remember(trackHeadlineViewModelProvider::getViewModel)
+
+	DisposableEffect(serviceFile) {
+		itemListViewModel.loadedLibraryId?.also {
+			fileItemViewModel.promiseUpdate(it, serviceFile)
+		}
+
+		onDispose {
+			fileItemViewModel.reset()
+		}
+	}
+
+	val isMenuShown by fileItemViewModel.isMenuShown.collectAsState()
+	val fileName by fileItemViewModel.title.collectAsState()
+	val playingFile by nowPlayingViewModel.nowPlayingFile.subscribeAsState()
+	val isPlaying by remember(serviceFile) { derivedStateOf { playingFile?.serviceFile == serviceFile } }
+
+	val viewFileDetailsClickHandler = remember(position) {
+		{
+			itemListViewModel.loadedLibraryId?.also {
+				applicationNavigation.viewFileDetails(it, fileListViewModel.files.value, position)
+			}
+			Unit
+		}
+	}
+
+	TrackTitleItemView(
+		itemName = fileName,
+		isActive = isPlaying,
+		isHiddenMenuShown = isMenuShown,
+		onItemClick = viewFileDetailsClickHandler,
+		onHiddenMenuClick = {
+			itemListMenuBackPressedHandler.hideAllMenus()
+			fileItemViewModel.showMenu()
+		},
+		onAddToNowPlayingClick = {
+			itemListViewModel.loadedLibraryId?.also {
+				playbackServiceController.addToPlaylist(it, serviceFile)
+			}
+		},
+		onViewFilesClick = viewFileDetailsClickHandler,
+		onPlayClick = {
+			fileItemViewModel.hideMenu()
+			itemListViewModel.loadedLibraryId?.also {
+				playbackServiceController.startPlaylist(it, fileListViewModel.files.value, position)
+			}
+		}
+	)
+}
+
+@OptIn(ExperimentalComposeUiApi::class)
+@Composable
+fun ChildItem(
+	item: IItem,
+	itemListViewModel: ItemListViewModel,
+	applicationNavigation: NavigateApplication,
+	childItemViewModelProvider: PooledCloseablesViewModel<ReusableChildItemViewModel>,
+	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
+	playbackLibraryItems: PlaybackLibraryItems,
+) {
+	val rowHeight = Dimensions.standardRowHeight
+	val rowFontSize = LocalDensity.current.run { dimensionResource(id = R.dimen.row_font_size).toSp() }
+
+	val childItemViewModel = remember(childItemViewModelProvider::getViewModel)
+
+	DisposableEffect(key1 = item) {
+		itemListViewModel.loadedLibraryId?.also {
+			childItemViewModel.update(it, item)
+		}
+
+		onDispose {
+			childItemViewModel.reset()
+		}
+	}
+
+	val isMenuShown by childItemViewModel.isMenuShown.collectAsState()
+	val hapticFeedback = LocalHapticFeedback.current
+
+	if (!isMenuShown) {
+		Box(modifier = Modifier
+			.navigable(
+				interactionSource = remember { MutableInteractionSource() },
+				indication = null,
+				onLongClick = {
+					hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+
+					itemListMenuBackPressedHandler.hideAllMenus()
+
+					childItemViewModel.showMenu()
+				},
+				onClickLabel = stringResource(id = R.string.btn_view_song_details),
+				onClick = {
+					itemListViewModel.loadedLibraryId?.also {
+						applicationNavigation.viewItem(it, item)
+					}
+				},
+			)
+			.height(rowHeight)
+			.fillMaxSize()
+			.padding(Dimensions.rowPaddingValues)
+		) {
+			Text(
+				text = item.value ?: "",
+				fontSize = rowFontSize,
+				overflow = TextOverflow.Ellipsis,
+				maxLines = 1,
+				fontWeight = FontWeight.Normal,
+				modifier = Modifier
+					.align(Alignment.CenterStart),
+			)
+		}
+	} else {
+		Row(
+			modifier = Modifier
+				.height(rowHeight)
+				.padding(Dimensions.rowPaddingValues)
+		) {
+			ListItemIcon(
+				painter = painterResource(id = R.drawable.av_play),
+				contentDescription = stringResource(id = R.string.btn_play),
+				modifier = Modifier
+					.fillMaxWidth()
+					.weight(1f)
+					.navigable(
+						onClick = {
+							itemListViewModel.loadedLibraryId?.also {
+								playbackLibraryItems.playItem(it, ItemId(item.key))
+							}
+						},
+						isDefault = true,
+					)
+					.align(Alignment.CenterVertically),
+			)
+
+			val isChildItemSynced by childItemViewModel.isSynced.collectAsState()
+			SyncIcon(
+				isActive = isChildItemSynced,
+				modifier = Modifier
+					.fillMaxWidth()
+					.navigable(onClick = childItemViewModel::toggleSync)
+					.weight(1f)
+					.align(Alignment.CenterVertically),
+			)
+
+			ListItemIcon(
+				painter = painterResource(id = R.drawable.av_shuffle),
+				contentDescription = stringResource(id = R.string.btn_shuffle_files),
+				modifier = Modifier
+					.fillMaxWidth()
+					.weight(1f)
+					.navigable(onClick = {
+						itemListViewModel.loadedLibraryId?.also {
+							playbackLibraryItems.playItemShuffled(it, ItemId(item.key))
+						}
+					})
+					.align(Alignment.CenterVertically),
+			)
+		}
+	}
+}
+
+@Composable
+fun TvItemListView(
+	itemListViewModel: ItemListViewModel,
+	fileListViewModel: FileListViewModel,
+	nowPlayingViewModel: NowPlayingFilePropertiesViewModel,
+	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
+	trackHeadlineViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
+	childItemViewModelProvider: PooledCloseablesViewModel<ReusableChildItemViewModel>,
+	applicationNavigation: NavigateApplication,
+	playbackLibraryItems: PlaybackLibraryItems,
+	playbackServiceController: ControlPlaybackService,
+) {
+	val files by fileListViewModel.files.subscribeAsState()
+	val itemValue by itemListViewModel.itemValue.collectAsState()
+
+	@Composable
+	fun LoadedItemListView() {
+		val items by itemListViewModel.items.collectAsState()
+
+		TvLazyColumn(
+			modifier = Modifier.focusGroup(),
+			contentPadding = PaddingValues(Dimensions.viewPaddingUnit),
+		) {
+			if (items.any()) {
+				item(contentType = ContentType.Header) {
+					ItemsCountHeader(items.size)
+				}
+
+				itemsIndexed(items, { _, i -> i.key }, { _, _ -> ContentType.Item }) { i, f ->
+					ChildItem(
+						f,
+						itemListViewModel,
+						applicationNavigation,
+						childItemViewModelProvider,
+						itemListMenuBackPressedHandler,
+						playbackLibraryItems
+					)
+
+					if (i < items.lastIndex)
+						Divider()
+				}
+			}
+
+			if (!files.any()) return@TvLazyColumn
+
+			item(contentType = ContentType.Header) {
+				FilesCountHeader(files.size)
+			}
+
+			itemsIndexed(files, contentType = { _, _ -> ContentType.File }) { i, f ->
+				RenderTrackTitleItem(
+					i,
+					f,
+					trackHeadlineViewModelProvider,
+					itemListViewModel,
+					nowPlayingViewModel,
+					applicationNavigation,
+					fileListViewModel,
+					itemListMenuBackPressedHandler,
+					playbackServiceController
+				)
+
+				if (i < files.lastIndex)
+					Divider()
+			}
+		}
+	}
+
+	val isFilesLoading by fileListViewModel.isLoading.subscribeAsState()
+
+	ControlSurface {
+		Column(modifier = Modifier.fillMaxSize()) {
+			Box(
+				modifier = Modifier
+					.fillMaxWidth()
+					.height(appBarHeight),
+				contentAlignment = Alignment.CenterStart,
+			) {
+				BackButton(applicationNavigation::navigateUp, modifier = Modifier.align(Alignment.TopStart))
+			}
+
+			Box(modifier = Modifier.height(expandedTitleHeight)) {
+				ProvideTextStyle(MaterialTheme.typography.h5) {
+					val startPadding = Dimensions.viewPaddingUnit
+					val endPadding = Dimensions.viewPaddingUnit
+					val maxLines = 2
+					Text(
+						text = itemValue,
+						maxLines = maxLines,
+						overflow = TextOverflow.Ellipsis,
+						modifier = Modifier
+							.fillMaxWidth()
+							.padding(start = startPadding, end = endPadding),
+					)
+				}
+			}
+
+			if (!isFilesLoading) {
+				Row(
+					modifier = Modifier
+						.padding(
+							top = expandedMenuVerticalPadding,
+							bottom = expandedMenuVerticalPadding,
+							start = Dimensions.viewPaddingUnit * 2,
+							end = Dimensions.viewPaddingUnit * 2
+						)
+						.fillMaxWidth(),
+					horizontalArrangement = Arrangement.SpaceEvenly,
+				) {
+					if (files.any()) {
+						LabelledPlayButton(
+							libraryState = itemListViewModel,
+							playbackServiceController = playbackServiceController,
+							serviceFilesListState = fileListViewModel,
+						)
+
+						LabelledSyncButton(
+							fileListViewModel = fileListViewModel,
+						)
+
+						LabelledShuffleButton(
+							libraryState = itemListViewModel,
+							playbackServiceController = playbackServiceController,
+							serviceFilesListState = fileListViewModel,
+						)
+					} else {
+						LabelledActiveDownloadsButton(
+							itemListViewModel = itemListViewModel,
+							applicationNavigation = applicationNavigation,
+						)
+
+						LabelledSearchButton(
+							itemListViewModel = itemListViewModel,
+							applicationNavigation = applicationNavigation,
+						)
+
+						LabelledSettingsButton(
+							itemListViewModel = itemListViewModel,
+							applicationNavigation = applicationNavigation,
+						)
+					}
+				}
+			}
+
+			Box(modifier = Modifier.fillMaxSize()) {
+				val isItemsLoading by itemListViewModel.isLoading.subscribeAsState()
+				val isLoaded = !isItemsLoading && !isFilesLoading
+
+				if (isLoaded) LoadedItemListView()
+				else CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+			}
+		}
+	}
+}
+
 @Composable
 fun ItemListView(
     itemListViewModel: ItemListViewModel,
@@ -386,161 +679,9 @@ fun ItemListView(
     playbackLibraryItems: PlaybackLibraryItems,
     playbackServiceController: ControlPlaybackService,
 ) {
-	val playingFile by nowPlayingViewModel.nowPlayingFile.subscribeAsState()
-	val files by fileListViewModel.files.collectAsState()
+	val files by fileListViewModel.files.subscribeAsState()
 	val rowHeight = Dimensions.standardRowHeight
-	val rowFontSize = LocalDensity.current.run { dimensionResource(id = R.dimen.row_font_size).toSp() }
-	val hapticFeedback = LocalHapticFeedback.current
 	val itemValue by itemListViewModel.itemValue.collectAsState()
-
-	@Composable
-	fun ChildItem(item: IItem) {
-		val childItemViewModel = remember(childItemViewModelProvider::getViewModel)
-
-		DisposableEffect(key1 = item) {
-			itemListViewModel.loadedLibraryId?.also {
-				childItemViewModel.update(it, item)
-			}
-
-			onDispose {
-				childItemViewModel.reset()
-			}
-		}
-
-		val isMenuShown by childItemViewModel.isMenuShown.collectAsState()
-
-		if (!isMenuShown) {
-			Box(modifier = Modifier
-				.combinedClickable(
-					interactionSource = remember { MutableInteractionSource() },
-					indication = null,
-					onLongClick = {
-						hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-
-						itemListMenuBackPressedHandler.hideAllMenus()
-
-						childItemViewModel.showMenu()
-					},
-					onClickLabel = stringResource(id = R.string.btn_view_song_details),
-					onClick = {
-						itemListViewModel.loadedLibraryId?.also {
-							applicationNavigation.viewItem(it, item)
-						}
-					}
-				)
-				.height(rowHeight)
-				.fillMaxSize()
-			) {
-				Text(
-					text = item.value ?: "",
-					fontSize = rowFontSize,
-					overflow = TextOverflow.Ellipsis,
-					maxLines = 1,
-					fontWeight = FontWeight.Normal,
-					modifier = Modifier
-						.padding(Dimensions.viewPaddingUnit * 3)
-						.align(Alignment.CenterStart),
-				)
-			}
-
-			return
-		}
-
-		Row(
-			modifier = Modifier
-				.height(rowHeight)
-				.padding(8.dp)
-		) {
-			ListItemIcon(
-				painter = painterResource(id = R.drawable.av_play),
-				contentDescription = stringResource(id = R.string.btn_play),
-				modifier = Modifier
-					.fillMaxWidth()
-					.weight(1f)
-					.clickable {
-						itemListViewModel.loadedLibraryId?.also {
-							playbackLibraryItems.playItem(it, ItemId(item.key))
-						}
-					}
-					.align(Alignment.CenterVertically),
-			)
-
-			val isChildItemSynced by childItemViewModel.isSynced.collectAsState()
-			SyncIcon(
-				isActive = isChildItemSynced,
-				modifier = Modifier
-					.fillMaxWidth()
-					.clickable { childItemViewModel.toggleSync() }
-					.weight(1f)
-					.align(Alignment.CenterVertically),
-			)
-
-			ListItemIcon(
-				painter = painterResource(id = R.drawable.av_shuffle),
-				contentDescription = stringResource(id = R.string.btn_shuffle_files),
-				modifier = Modifier
-					.fillMaxWidth()
-					.weight(1f)
-					.clickable {
-						itemListViewModel.loadedLibraryId?.also {
-							playbackLibraryItems.playItemShuffled(it, ItemId(item.key))
-						}
-					}
-					.align(Alignment.CenterVertically),
-			)
-		}
-	}
-
-	@Composable
-	fun RenderTrackHeaderItem(position: Int, serviceFile: ServiceFile) {
-		val fileItemViewModel = remember(trackHeadlineViewModelProvider::getViewModel)
-
-		DisposableEffect(serviceFile) {
-			itemListViewModel.loadedLibraryId?.also {
-				fileItemViewModel.promiseUpdate(it, serviceFile)
-			}
-
-			onDispose {
-				fileItemViewModel.reset()
-			}
-		}
-
-		val isMenuShown by fileItemViewModel.isMenuShown.collectAsState()
-		val fileName by fileItemViewModel.title.collectAsState()
-		val isPlaying by remember(serviceFile) { derivedStateOf { playingFile?.serviceFile == serviceFile } }
-
-		val viewFileDetailsClickHandler = remember(position) {
-			{
-				itemListViewModel.loadedLibraryId?.also {
-					applicationNavigation.viewFileDetails(it, files, position)
-				}
-				Unit
-			}
-		}
-
-		TrackHeaderItemView(
-			itemName = fileName,
-			isActive = isPlaying,
-			isHiddenMenuShown = isMenuShown,
-			onItemClick = viewFileDetailsClickHandler,
-			onHiddenMenuClick = {
-				itemListMenuBackPressedHandler.hideAllMenus()
-				fileItemViewModel.showMenu()
-			},
-			onAddToNowPlayingClick = {
-				itemListViewModel.loadedLibraryId?.also {
-					playbackServiceController.addToPlaylist(it, serviceFile)
-				}
-			},
-			onViewFilesClick = viewFileDetailsClickHandler,
-			onPlayClick = {
-				fileItemViewModel.hideMenu()
-				itemListViewModel.loadedLibraryId?.also {
-					playbackServiceController.startPlaylist(it, files, position)
-				}
-			}
-		)
-	}
 
 	val lazyListState = rememberLazyListState()
 
@@ -552,6 +693,7 @@ fun ItemListView(
 		LazyColumn(
 			state = lazyListState,
 			modifier = Modifier
+				.focusGroup()
 				.scrollbar(
 					lazyListState,
 					horizontal = false,
@@ -562,33 +704,28 @@ fun ItemListView(
 					fixedKnobRatio = knobHeight,
 				),
 		) {
-			item {
-				Spacer(modifier = Modifier
-					.requiredHeight(headerHeight)
-					.fillMaxWidth())
+			item(contentType = ContentType.Spacer) {
+				Spacer(
+					modifier = Modifier
+						.requiredHeight(headerHeight)
+						.fillMaxWidth()
+				)
 			}
 
 			if (items.any()) {
-				item {
-					Box(
-						modifier = Modifier
-							.padding(Dimensions.viewPaddingUnit)
-							.height(Dimensions.menuHeight)
-					) {
-						ProvideTextStyle(MaterialTheme.typography.h5) {
-							Text(
-								text = stringResource(R.string.item_count_label, items.size),
-								fontWeight = FontWeight.Bold,
-								modifier = Modifier
-									.padding(Dimensions.viewPaddingUnit)
-									.align(Alignment.CenterStart)
-							)
-						}
-					}
+				item(contentType = ContentType.Header) {
+					ItemsCountHeader(items.size)
 				}
 
-				itemsIndexed(items, { _, i -> i.key }) { i, f ->
-					ChildItem(f)
+				itemsIndexed(items, { _, i -> i.key }, { _, _ -> ContentType.Item }) { i, f ->
+					ChildItem(
+						f,
+						itemListViewModel,
+						applicationNavigation,
+						childItemViewModelProvider,
+						itemListMenuBackPressedHandler,
+						playbackLibraryItems
+					)
 
 					if (i < items.lastIndex)
 						Divider()
@@ -597,26 +734,22 @@ fun ItemListView(
 
 			if (!files.any()) return@LazyColumn
 
-			item {
-				Box(
-					modifier = Modifier
-						.padding(Dimensions.viewPaddingUnit)
-						.height(Dimensions.menuHeight)
-				) {
-					ProvideTextStyle(MaterialTheme.typography.h5) {
-						Text(
-							text = stringResource(R.string.file_count_label, files.size),
-							fontWeight = FontWeight.Bold,
-							modifier = Modifier
-								.padding(Dimensions.viewPaddingUnit)
-								.align(Alignment.CenterStart)
-						)
-					}
-				}
+			item(contentType = ContentType.Header) {
+				FilesCountHeader(files.size)
 			}
 
-			itemsIndexed(files) { i, f ->
-				RenderTrackHeaderItem(i, f)
+			itemsIndexed(files, contentType = { _, _ -> ContentType.File }) { i, f ->
+				RenderTrackTitleItem(
+					i,
+					f,
+					trackHeadlineViewModelProvider,
+					itemListViewModel,
+					nowPlayingViewModel,
+					applicationNavigation,
+					fileListViewModel,
+					itemListMenuBackPressedHandler,
+					playbackServiceController
+				)
 
 				if (i < files.lastIndex)
 					Divider()
@@ -629,7 +762,7 @@ fun ItemListView(
 	BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
 		ControlSurface {
 
-			val collapsedHeight = appBarHeight.dp
+			val collapsedHeight = appBarHeight
 
 			val expandedHeightPx = LocalDensity.current.run { boxHeight.toPx() }
 			val collapsedHeightPx = LocalDensity.current.run { collapsedHeight.toPx() }
@@ -659,22 +792,10 @@ fun ItemListView(
 							.background(MaterialTheme.colors.surface)
 							.height(LocalDensity.current.run { heightValue.toDp() })
 					) {
-						Icon(
-							Icons.AutoMirrored.Filled.ArrowBack,
-							contentDescription = "",
-							tint = MaterialTheme.colors.onSurface,
-							modifier = Modifier
-								.align(Alignment.TopStart)
-								.clickable(
-									interactionSource = remember { MutableInteractionSource() },
-									indication = null,
-									onClick = applicationNavigation::navigateUp
-								)
-								.padding(Dimensions.viewPaddingUnit * 4)
-						)
+						BackButton(applicationNavigation::navigateUp, modifier = Modifier.align(Alignment.TopStart))
 
 						val headerCollapseProgress by heightScaler.getProgressState()
-						val topPadding by remember { derivedStateOf { (appBarHeight - 42 * headerCollapseProgress).dp } }
+						val topPadding by remember { derivedStateOf { linearInterpolation(appBarHeight, 14.dp, headerCollapseProgress) } }
 						BoxWithConstraints(modifier = Modifier.padding(top = topPadding)) nestedBoxScope@{
 							val acceleratedToolbarStateProgress by remember {
 								derivedStateOf {
@@ -687,8 +808,25 @@ fun ItemListView(
 							}
 
 							ProvideTextStyle(MaterialTheme.typography.h5) {
-								val startPadding by remember { derivedStateOf { (4 + 48 * headerCollapseProgress).dp } }
-								val endPadding by remember { derivedStateOf { Dimensions.viewPaddingUnit + minimumMenuWidth * acceleratedHeaderHidingProgress } }
+								val startPadding by remember {
+									derivedStateOf {
+										linearInterpolation(
+											Dimensions.viewPaddingUnit,
+											Dimensions.viewPaddingUnit + 48.dp,
+											headerCollapseProgress
+										)
+									}
+								}
+
+								val endPadding by remember {
+									derivedStateOf {
+										linearInterpolation(
+											Dimensions.viewPaddingUnit,
+											Dimensions.viewPaddingUnit + minimumMenuWidth,
+											acceleratedHeaderHidingProgress
+										)
+									}
+								}
 								val maxLines by remember { derivedStateOf { (2 - headerCollapseProgress).roundToInt() } }
 								if (maxLines > 1) {
 									Text(
@@ -725,7 +863,7 @@ fun ItemListView(
 								}
 							}
 
-							val expandedTopRowPadding = expandedTitleHeight.dp + expandedMenuVerticalPadding.dp
+							val expandedTopRowPadding = expandedTitleHeight + expandedMenuVerticalPadding
 							val topRowPadding by remember {
 								derivedStateOf {
 									linearInterpolation(
@@ -742,7 +880,7 @@ fun ItemListView(
 									modifier = Modifier
 										.padding(
 											top = topRowPadding,
-											bottom = expandedMenuVerticalPadding.dp,
+											bottom = expandedMenuVerticalPadding,
 											start = Dimensions.viewPaddingUnit * 2,
 											end = Dimensions.viewPaddingUnit * 2
 										)
@@ -752,9 +890,9 @@ fun ItemListView(
 								) {
 									if (files.any()) {
 										LabelledPlayButton(
-											itemListViewModel = itemListViewModel,
+											libraryState = itemListViewModel,
 											playbackServiceController = playbackServiceController,
-											fileListViewModel = fileListViewModel,
+											serviceFilesListState = fileListViewModel,
 											modifier = textModifier,
 										)
 
@@ -764,9 +902,9 @@ fun ItemListView(
 										)
 
 										LabelledShuffleButton(
-											itemListViewModel = itemListViewModel,
+											libraryState = itemListViewModel,
 											playbackServiceController = playbackServiceController,
-											fileListViewModel = fileListViewModel,
+											serviceFilesListState = fileListViewModel,
 											modifier = textModifier
 										)
 									} else {
@@ -797,7 +935,7 @@ fun ItemListView(
 									playbackServiceController = playbackServiceController,
 									menuPaddingValues = PaddingValues(
 										top = topRowPadding,
-										bottom = expandedMenuVerticalPadding.dp,
+										bottom = expandedMenuVerticalPadding,
 										start = Dimensions.viewPaddingUnit * 2,
 										end = Dimensions.viewPaddingUnit * 2
 									),
@@ -813,21 +951,9 @@ fun ItemListView(
 							.background(MaterialTheme.colors.surface)
 							.height(collapsedHeight)
 					) {
-						Icon(
-							Icons.AutoMirrored.Filled.ArrowBack,
-							contentDescription = "",
-							tint = MaterialTheme.colors.onSurface,
-							modifier = Modifier
-								.align(Alignment.TopStart)
-								.clickable(
-									interactionSource = remember { MutableInteractionSource() },
-									indication = null,
-									onClick = applicationNavigation::navigateUp
-								)
-								.padding(Dimensions.viewPaddingUnit * 4)
-						)
+						BackButton(applicationNavigation::navigateUp, modifier = Modifier.align(Alignment.TopStart))
 
-						val topPadding = (appBarHeight - 42).dp
+						val topPadding = appBarHeight - 42.dp
 						BoxWithConstraints(modifier = Modifier.padding(top = topPadding)) nestedBoxScope@{
 							ProvideTextStyle(MaterialTheme.typography.h5) {
 								MarqueeText(
@@ -837,7 +963,10 @@ fun ItemListView(
 									gradientEdgeColor = MaterialTheme.colors.surface,
 									modifier = Modifier
 										.fillMaxWidth()
-										.padding(start = Dimensions.viewPaddingUnit * 13, end = Dimensions.viewPaddingUnit + minimumMenuWidth),
+										.padding(
+											start = Dimensions.viewPaddingUnit * 13,
+											end = Dimensions.viewPaddingUnit + minimumMenuWidth
+										),
 									isMarqueeEnabled = !lazyListState.isScrollInProgress
 								)
 							}
@@ -853,7 +982,7 @@ fun ItemListView(
 								playbackServiceController = playbackServiceController,
 								menuPaddingValues = PaddingValues(
 									top = collapsedTopRowPadding,
-									bottom = expandedMenuVerticalPadding.dp,
+									bottom = expandedMenuVerticalPadding,
 									start = Dimensions.viewPaddingUnit * 2,
 									end = Dimensions.viewPaddingUnit * 2
 								),

@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.browsing.files.image.bytes.cache
+package com.lasthopesoftware.bluewater.shared.images.bytes.cache
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId

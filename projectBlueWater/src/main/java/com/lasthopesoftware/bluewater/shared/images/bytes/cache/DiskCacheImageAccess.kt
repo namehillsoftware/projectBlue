@@ -1,9 +1,9 @@
-package com.lasthopesoftware.bluewater.client.browsing.files.image.bytes.cache
+package com.lasthopesoftware.bluewater.shared.images.bytes.cache
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.CacheFiles
-import com.lasthopesoftware.bluewater.client.browsing.files.image.bytes.GetRawImages
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.shared.images.bytes.GetRawImages
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.toPromise
@@ -24,7 +24,7 @@ class DiskCacheImageAccess(
 	private val sourceImages: GetRawImages,
 	private val imageCacheKeys: LookupImageCacheKey,
 	private val fileCache: CacheFiles,
-) : GetRawImages {
+) : GetRawImages by sourceImages {
 
 	companion object {
 		private val logger by lazyLogger<DiskCacheImageAccess>()

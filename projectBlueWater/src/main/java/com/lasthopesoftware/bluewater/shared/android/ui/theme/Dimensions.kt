@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.shared.android.ui.theme
 
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.unit.dp
 
@@ -12,4 +13,7 @@ object Dimensions {
 	val listItemMenuIconSize = 36.dp
 	val menuHeight = 48.dp
 	val viewPaddingUnit = 4.dp
+	val rowPaddingValues = PaddingValues(viewPaddingUnit * 2)
+	val mediumWindowWidth = 600.dp
+	val twoColumnThreshold = mediumWindowWidth
 }

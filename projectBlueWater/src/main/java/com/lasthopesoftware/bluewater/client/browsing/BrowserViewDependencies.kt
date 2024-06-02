@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.browsing
 
 import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
+import com.lasthopesoftware.bluewater.ApplicationDependencies
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.client.browsing.files.access.LibraryFileProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideItemFiles
@@ -22,18 +23,19 @@ import com.lasthopesoftware.bluewater.client.browsing.navigation.NavigationMessa
 import com.lasthopesoftware.bluewater.client.connection.polling.PollForLibraryConnections
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionWatcherViewModel
 import com.lasthopesoftware.bluewater.client.connection.session.ManageConnectionSessions
+import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionStatusViewModel
 import com.lasthopesoftware.bluewater.client.connection.trust.ProvideUserSslCertificates
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingMessage
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingCoverArtViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingScreenViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.playlist.NowPlayingPlaylistViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsViewModel
 import com.lasthopesoftware.bluewater.client.stored.library.items.StateChangeBroadcastingStoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.view.ActiveFileDownloadsViewModel
-import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsViewModel
 import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsViewModel
 import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
@@ -42,7 +44,7 @@ import com.lasthopesoftware.bluewater.shared.messages.RegisterForTypedMessages
 import com.lasthopesoftware.bluewater.shared.messages.application.ScopedApplicationMessageBus
 import com.lasthopesoftware.resources.strings.StringResources
 
-@OptIn(UnstableApi::class) interface BrowserViewDependencies {
+@OptIn(UnstableApi::class) interface BrowserViewDependencies : ApplicationDependencies {
 	val selectedLibraryViewModel: SelectedLibraryViewModel
 	val nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel
 	val itemProvider: ProvideItems
@@ -56,7 +58,6 @@ import com.lasthopesoftware.resources.strings.StringResources
 	val applicationNavigation: NavigateApplication
 	val libraryConnectionProvider: ManageConnectionSessions
 	val storedFileAccess: StoredFileAccess
-	val syncScheduler: SyncScheduler
 	val libraryProvider: ILibraryProvider
 	val libraryStorage: ILibraryStorage
 	val libraryRemoval: RemoveLibraries
@@ -67,6 +68,7 @@ import com.lasthopesoftware.resources.strings.StringResources
 	val pollForConnections: PollForLibraryConnections
 	val nowPlayingCoverArtViewModel: NowPlayingCoverArtViewModel
 	val nowPlayingPlaylistViewModel: NowPlayingPlaylistViewModel
+	val nowPlayingScreenViewModel: NowPlayingScreenViewModel
 	val connectionWatcherViewModel: ConnectionWatcherViewModel
 	val reusablePlaylistFileItemViewModelProvider: ReusablePlaylistFileItemViewModelProvider
 	val reusableChildItemViewModelProvider: ReusableChildItemViewModelProvider
@@ -74,6 +76,7 @@ import com.lasthopesoftware.resources.strings.StringResources
 	val applicationSettingsViewModel: ApplicationSettingsViewModel
 	val hiddenSettingsViewModel: HiddenSettingsViewModel
 	val userSslCertificateProvider: ProvideUserSslCertificates
+	val connectionStatusViewModel: ConnectionStatusViewModel
 }
 
 /**

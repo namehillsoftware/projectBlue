@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.shared.android.ui.components
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.RowScope
@@ -12,9 +11,11 @@ import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
+import com.lasthopesoftware.bluewater.shared.android.ui.navigable
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.LocalControlColor
 
@@ -107,6 +108,7 @@ fun MenuIcon(
 	}
 }
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun MenuIcon(
 	onClick: () -> Unit,
@@ -119,7 +121,7 @@ fun MenuIcon(
 	Column(
 		horizontalAlignment = Alignment.CenterHorizontally,
 		modifier = Modifier
-			.clickable(
+			.navigable(
 				interactionSource = interactionSource,
 				indication = rememberRipple(),
 				onClick = onClick,

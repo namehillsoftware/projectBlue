@@ -8,7 +8,7 @@ import androidx.compose.foundation.LocalOverscrollConfiguration
 import androidx.compose.foundation.OverscrollConfiguration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.gestures.AnchoredDraggableState
 import androidx.compose.foundation.gestures.DraggableAnchors
 import androidx.compose.foundation.gestures.Orientation
@@ -60,9 +60,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
@@ -82,6 +84,9 @@ import androidx.compose.ui.unit.coerceAtMost
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.tv.foundation.lazy.list.TvLazyColumn
+import androidx.tv.foundation.lazy.list.items
+import androidx.tv.foundation.lazy.list.rememberTvLazyListState
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewPlaylistFileItem
@@ -103,6 +108,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.components.dragging.Drag
 import com.lasthopesoftware.bluewater.shared.android.ui.components.dragging.getVisibleItemInfoFor
 import com.lasthopesoftware.bluewater.shared.android.ui.components.dragging.rememberDragDropListState
 import com.lasthopesoftware.bluewater.shared.android.ui.linearInterpolation
+import com.lasthopesoftware.bluewater.shared.android.ui.navigable
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.SharedColors
@@ -111,16 +117,14 @@ import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 import kotlinx.coroutines.launch
 
-private val controlRowHeight = 72.dp
-private const val playlistControlAlpha = .8f
+val controlRowHeight = 72.dp
+const val playlistControlAlpha = .8f
 
-private class ScreenDimensionsScope(val screenHeight: Dp, val screenWidth: Dp, innerBoxScope: BoxWithConstraintsScope)
+class ScreenDimensionsScope(val screenHeight: Dp, val screenWidth: Dp, innerBoxScope: BoxWithConstraintsScope)
 	: BoxWithConstraintsScope by innerBoxScope
 
 @Composable
-private fun NowPlayingCoverArtView(
-	nowPlayingCoverArtViewModel: NowPlayingCoverArtViewModel,
-) {
+fun NowPlayingCoverArtView(nowPlayingCoverArtViewModel: NowPlayingCoverArtViewModel) {
 	Box(
 		modifier = Modifier.fillMaxSize()
 	) {
@@ -171,7 +175,7 @@ private fun KeepScreenOn(keepScreenOn: Boolean) {
 }
 
 @Composable
-private fun NowPlayingProgressIndicator(nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel, modifier: Modifier = Modifier) {
+fun NowPlayingProgressIndicator(nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel, modifier: Modifier = Modifier) {
 	val filePosition by nowPlayingFilePropertiesViewModel.filePosition.subscribeAsState()
 	val fileDuration by nowPlayingFilePropertiesViewModel.fileDuration.subscribeAsState()
 	val fileProgress by remember { derivedStateOf { filePosition / fileDuration.toFloat() } }
@@ -185,7 +189,7 @@ private fun NowPlayingProgressIndicator(nowPlayingFilePropertiesViewModel: NowPl
 }
 
 @Composable
-private fun NowPlayingHeadline(modifier: Modifier = Modifier, nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel) {
+fun NowPlayingHeadline(modifier: Modifier = Modifier, nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel) {
 	Column(modifier = modifier) {
 		ProvideTextStyle(value = MaterialTheme.typography.h5) {
 			val title by nowPlayingFilePropertiesViewModel.title.subscribeAsState()
@@ -206,9 +210,9 @@ private fun NowPlayingHeadline(modifier: Modifier = Modifier, nowPlayingFileProp
 	}
 }
 
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
-private fun PlaylistControls(
+fun PlaylistControls(
 	modifier: Modifier = Modifier,
 	playlistViewModel: NowPlayingPlaylistViewModel,
 	viewModelMessageBus: ViewModelMessageBus<NowPlayingMessage>,
@@ -224,18 +228,14 @@ private fun PlaylistControls(
 			Image(
 				painter = painterResource(id = R.drawable.ic_remove_item_white_36dp),
 				contentDescription = stringResource(id = R.string.finish_edit_now_playing_list),
-				modifier = Modifier.clickable {
-					playlistViewModel.finishPlaylistEdit()
-				},
+				modifier = Modifier.navigable(onClick = playlistViewModel::finishPlaylistEdit),
 				alpha = playlistControlAlpha,
 			)
 		} else {
 			Image(
 				painter = painterResource(id = R.drawable.pencil),
 				contentDescription = stringResource(id = R.string.edit_now_playing_list),
-				modifier = Modifier.clickable {
-					playlistViewModel.editPlaylist()
-				},
+				modifier = Modifier.navigable(onClick = playlistViewModel::editPlaylist),
 				alpha = playlistControlAlpha,
 			)
 		}
@@ -244,7 +244,7 @@ private fun PlaylistControls(
 			Image(
 				painter = painterResource(id = R.drawable.clear_all_white_36dp),
 				contentDescription = stringResource(R.string.empty_playlist),
-				modifier = Modifier.clickable(onClick = playlistViewModel::requestPlaylistClearingPermission),
+				modifier = Modifier.navigable(onClick = playlistViewModel::requestPlaylistClearingPermission),
 				alpha = playlistControlAlpha,
 			)
 		} else {
@@ -253,18 +253,14 @@ private fun PlaylistControls(
 				Image(
 					painter = painterResource(id = R.drawable.av_repeat_white),
 					contentDescription = stringResource(id = R.string.btn_complete_playlist),
-					modifier = Modifier.clickable {
-						playlistViewModel.toggleRepeating()
-					},
+					modifier = Modifier.navigable(onClick = playlistViewModel::toggleRepeating),
 					alpha = playlistControlAlpha,
 				)
 			} else {
 				Image(
 					painter = painterResource(id = R.drawable.av_no_repeat_white),
 					contentDescription = stringResource(id = R.string.btn_repeat_playlist),
-					modifier = Modifier.clickable {
-						playlistViewModel.toggleRepeating()
-					},
+					modifier = Modifier.navigable(onClick = playlistViewModel::toggleRepeating),
 					alpha = playlistControlAlpha,
 				)
 			}
@@ -274,9 +270,7 @@ private fun PlaylistControls(
 			Image(
 				painter = painterResource(id = R.drawable.upload_36dp),
 				contentDescription = stringResource(id = R.string.save_playlist),
-				modifier = Modifier.clickable {
-					playlistViewModel.enableSavingPlaylist()
-				},
+				modifier = Modifier.navigable(onClick = playlistViewModel::enableSavingPlaylist),
 				alpha = playlistControlAlpha,
 			)
 		} else {
@@ -284,7 +278,7 @@ private fun PlaylistControls(
 			Image(
 				painter = painterResource(id = R.drawable.scroll_to_item_36),
 				contentDescription = stringResource(R.string.scroll_to_now_playing_item),
-				modifier = Modifier.combinedClickable(
+				modifier = Modifier.navigable(
 					interactionSource = remember { MutableInteractionSource() },
 					indication = rememberRipple(),
 					onClick = {
@@ -326,11 +320,12 @@ private object ConsumeAllVerticalFlingScrollConnection : NestedScrollConnection 
 }
 
 @Composable
-private fun NowPlayingRating(nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel) {
+fun NowPlayingRating(nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel, modifier: Modifier = Modifier) {
 	Column(
 		modifier = Modifier
 			.fillMaxWidth()
-			.height(controlRowHeight),
+			.height(controlRowHeight)
+			.then(modifier),
 		verticalArrangement = Arrangement.Center,
 	) {
 		val rating by nowPlayingFilePropertiesViewModel.songRating.subscribeAsState()
@@ -361,8 +356,9 @@ private fun NowPlayingRating(nowPlayingFilePropertiesViewModel: NowPlayingFilePr
 	}
 }
 
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
-private fun NowPlayingPlaybackControls(
+fun NowPlayingPlaybackControls(
 	nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel,
 	playbackServiceController: ControlPlaybackService,
 	modifier: Modifier = Modifier,
@@ -377,12 +373,13 @@ private fun NowPlayingPlaybackControls(
 			contentDescription = stringResource(id = R.string.btn_previous),
 			modifier = Modifier
 				.weight(1f)
-				.clickable(
+				.navigable(
 					interactionSource = remember { MutableInteractionSource() },
-					indication = null
-				) {
-					activeLibraryId?.also(playbackServiceController::previous)
-				},
+					indication = null,
+					onClick = {
+						activeLibraryId?.also(playbackServiceController::previous)
+					}
+				),
 		)
 
 		PlayPauseButton(
@@ -396,12 +393,13 @@ private fun NowPlayingPlaybackControls(
 			contentDescription = stringResource(id = R.string.btn_next),
 			modifier = Modifier
 				.weight(1f)
-				.clickable(
+				.navigable(
 					interactionSource = remember { MutableInteractionSource() },
-					indication = null
-				) {
-					activeLibraryId?.also(playbackServiceController::next)
-				}
+					indication = null,
+					onClick = {
+						activeLibraryId?.also(playbackServiceController::next)
+					}
+				)
 		)
 	}
 }
@@ -421,6 +419,119 @@ fun NowPlayingControls(
 			nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
 			playbackServiceController = playbackServiceController,
 		)
+	}
+}
+
+@Composable
+fun NowPlayingTvPlaylist(
+	childItemViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
+	nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel,
+	applicationNavigation: NavigateApplication,
+	playbackServiceController: ControlPlaybackService,
+	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
+	playlistViewModel: NowPlayingPlaylistViewModel,
+	viewModelMessageBus: ViewModelMessageBus<NowPlayingMessage>,
+	modifier: Modifier = Modifier,
+) {
+	val nowPlayingFiles by playlistViewModel.nowPlayingList.subscribeAsState()
+	val playlist by remember { derivedStateOf { nowPlayingFiles.map { p -> p.serviceFile } } }
+	val activeLibraryId by nowPlayingFilePropertiesViewModel.activeLibraryId.subscribeAsState()
+
+	val lazyListState = rememberTvLazyListState()
+
+	val playingFile by nowPlayingFilePropertiesViewModel.nowPlayingFile.subscribeAsState()
+
+	val isAutoScrollEnabled by playlistViewModel.isAutoScrolling.subscribeAsState()
+	if (isAutoScrollEnabled) {
+		LaunchedEffect(key1 = playingFile) {
+			playingFile?.apply {
+				if (!lazyListState.isScrollInProgress)
+					lazyListState.scrollToItem(playlistPosition)
+			}
+		}
+	}
+
+	val scope = rememberCoroutineScope()
+	DisposableEffect(key1 = Unit) {
+		val registration = viewModelMessageBus.registerReceiver { _: NowPlayingMessage.ScrollToNowPlaying ->
+			scope.launch {
+				playingFile?.apply {
+					lazyListState.scrollToItem(playlistPosition)
+				}
+			}
+		}
+
+		onDispose {
+			registration.close()
+		}
+	}
+
+	@Composable
+	fun NowPlayingFileView(positionedFile: PositionedFile) {
+		val fileItemViewModel = remember(childItemViewModelProvider::getViewModel)
+
+		DisposableEffect(activeLibraryId, positionedFile) {
+			activeLibraryId?.also {
+				fileItemViewModel.promiseUpdate(it, positionedFile.serviceFile)
+			}
+
+			onDispose {
+				fileItemViewModel.reset()
+			}
+		}
+
+		val isMenuShown by fileItemViewModel.isMenuShown.collectAsState()
+		val fileName by fileItemViewModel.title.collectAsState()
+		val artist by fileItemViewModel.artist.collectAsState()
+		val isPlaying by remember { derivedStateOf { playingFile == positionedFile } }
+
+		val viewFilesClickHandler = {
+			activeLibraryId?.also {
+				applicationNavigation.viewFileDetails(
+					it,
+					playlist,
+					positionedFile.playlistPosition
+				)
+			}
+			Unit
+		}
+
+		NowPlayingItemView(
+			itemName = fileName,
+			artist = artist,
+			isActive = isPlaying,
+			isHiddenMenuShown = isMenuShown,
+			onItemClick = viewFilesClickHandler,
+			onHiddenMenuClick = {
+				itemListMenuBackPressedHandler.hideAllMenus()
+				fileItemViewModel.showMenu()
+			},
+			onRemoveFromNowPlayingClick = {
+				activeLibraryId?.also {
+					playbackServiceController
+						.removeFromPlaylistAtPosition(it, positionedFile.playlistPosition)
+				}
+			},
+			onViewFilesClick = viewFilesClickHandler,
+			onPlayClick = {
+				fileItemViewModel.hideMenu()
+				activeLibraryId?.also {
+					playbackServiceController.seekTo(it, positionedFile.playlistPosition)
+				}
+			}
+		)
+	}
+
+	TvLazyColumn(
+		state = lazyListState,
+		modifier = Modifier.focusGroup().onFocusChanged { f ->
+			if (f.hasFocus) playlistViewModel.lockOutAutoScroll()
+			else playlistViewModel.releaseAutoScroll()
+		}.then(modifier),
+	) {
+		items(items = nowPlayingFiles, key = { f -> f }) { f ->
+			NowPlayingFileView(positionedFile = f)
+		}
 	}
 }
 
@@ -516,7 +627,6 @@ fun NowPlayingPlaylist(
 			isEditingPlaylist = isEditingPlaylist,
 			isHiddenMenuShown = isMenuShown,
 			onItemClick = viewFilesClickHandler,
-			dragDropListState = dragDropListState,
 			onHiddenMenuClick = {
 				if (!isEditingPlaylist) {
 					itemListMenuBackPressedHandler.hideAllMenus()
@@ -885,7 +995,12 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 				itemListMenuBackPressedHandler,
 				playlistViewModel,
 				viewModelMessageBus = viewModelMessageBus,
-				modifier = Modifier.fillMaxHeight()
+				modifier = Modifier
+					.fillMaxHeight()
+					.onFocusChanged { f ->
+						if (f.hasFocus) playlistViewModel.lockOutAutoScroll()
+						else playlistViewModel.releaseAutoScroll()
+					},
 			)
 		}
 	}
@@ -937,7 +1052,7 @@ fun NowPlayingView(
 			}
 
 			with (screenScope) {
-				if (screenWidth < screenHeight) {
+				if (screenWidth < Dimensions.twoColumnThreshold) {
 					NowPlayingNarrowView(
 						nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
 						screenOnState = screenOnState,

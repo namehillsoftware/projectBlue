@@ -15,28 +15,28 @@ import kotlinx.coroutines.flow.asStateFlow
 
 class SearchFilesViewModel(
 	private val libraryFiles: ProvideLibraryFiles,
-) : ViewModel(), TrackLoadedViewState {
+) : ViewModel(), TrackLoadedViewState, ServiceFilesListState, LoadedLibraryState {
 
-	var libraryId: LibraryId? = null
+	override var loadedLibraryId: LibraryId? = null
 		private set
 
 	private val mutableIsLoading = MutableInteractionState(false)
-	private val mutableFiles = MutableStateFlow(emptyList<ServiceFile>())
+	private val mutableFiles = MutableInteractionState(emptyList<ServiceFile>())
 	private val mutableIsLibraryIdActive = MutableStateFlow(false)
 
 	override val isLoading = mutableIsLoading.asInteractionState()
 	val isLibraryIdActive = mutableIsLibraryIdActive.asStateFlow()
-	val files = mutableFiles.asStateFlow()
+	override val files = mutableFiles.asInteractionState()
 	val query = MutableStateFlow("")
 
 	fun setActiveLibraryId(libraryId: LibraryId) {
-		this.libraryId = libraryId
+		this.loadedLibraryId = libraryId
 		mutableIsLibraryIdActive.value = true
 	}
 
 	fun findFiles(): Promise<Unit> {
 		mutableIsLoading.value = true
-		return libraryId
+		return loadedLibraryId
 			?.let { l ->
 				val parameters = SearchFileParameterProvider.getFileListParameters(query.value)
 				libraryFiles

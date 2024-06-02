@@ -40,7 +40,7 @@ sealed interface BrowserLibraryDestination : LibraryDestination
 class LibraryScreen(override val libraryId: LibraryId) : BrowserLibraryDestination
 
 @Parcelize
-class ItemScreen(override val libraryId: LibraryId, val item: Item) : BrowserLibraryDestination
+data class ItemScreen(override val libraryId: LibraryId, val item: Item) : BrowserLibraryDestination
 
 @Parcelize
 class DownloadsScreen(override val libraryId: LibraryId) : BrowserLibraryDestination

@@ -12,6 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.media3.common.util.UnstableApi
 import com.lasthopesoftware.bluewater.ActivityApplicationNavigation
+import com.lasthopesoftware.bluewater.MainApplication.Companion.applicationDependencies
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.image.CachedImageProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.image.SelectedLibraryImageProvider
@@ -37,10 +38,9 @@ import com.lasthopesoftware.bluewater.client.connection.session.initialization.C
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.DramaticConnectionInitializationController
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
-import com.lasthopesoftware.bluewater.shared.android.intents.IntentBuilder
 import com.lasthopesoftware.bluewater.shared.android.intents.getIntent
 import com.lasthopesoftware.bluewater.shared.android.intents.safelyGetParcelableExtra
-import com.lasthopesoftware.bluewater.shared.android.ui.theme.ProjectBlueTheme
+import com.lasthopesoftware.bluewater.shared.android.ui.ProjectBlueComposableApplication
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider
@@ -124,7 +124,7 @@ import java.io.IOException
 	}
 
 	private val connectionStatusViewModel by lazy {
-		val applicationNavigation = ActivityApplicationNavigation(this, IntentBuilder(this))
+		val applicationNavigation = ActivityApplicationNavigation(this, applicationDependencies.intentBuilder)
 
 		ConnectionStatusViewModel(
 			StringResources(this),
@@ -148,7 +148,7 @@ import java.io.IOException
 		selectedLibraryIdProvider.selectLibraryId(libraryId)
 
 		setContent {
-			ProjectBlueTheme {
+			ProjectBlueComposableApplication {
 				val isGettingConnection by connectionStatusViewModel.isGettingConnection.collectAsState()
 				var isConnectionLost by remember { mutableStateOf(false) }
 

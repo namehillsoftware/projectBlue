@@ -52,7 +52,7 @@ import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.list.TrackHeaderItemView
+import com.lasthopesoftware.bluewater.client.browsing.files.list.TrackTitleItemView
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewFileItem
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncIcon
@@ -96,7 +96,7 @@ fun ActiveFileDownloadsView(
 
 		val fileName by fileItemViewModel.title.collectAsState()
 
-		TrackHeaderItemView(
+		TrackTitleItemView(
 			itemName = fileName,
 			isActive = downloadingFileId == storedFile.id,
 		)

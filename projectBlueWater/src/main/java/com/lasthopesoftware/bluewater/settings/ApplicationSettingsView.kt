@@ -283,7 +283,7 @@ private fun ApplicationSettingsViewVertical(
 }
 
 @Composable
-fun ApplicationSettingsViewHorizontal(
+private fun ApplicationSettingsViewHorizontal(
 	applicationSettingsViewModel: ApplicationSettingsViewModel,
 	applicationNavigation: NavigateApplication,
 	playbackService: ControlPlaybackService,
