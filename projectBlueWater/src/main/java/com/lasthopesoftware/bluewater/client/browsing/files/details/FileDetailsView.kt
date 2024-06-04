@@ -38,16 +38,20 @@ import androidx.compose.material.TextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -73,6 +77,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.RatingBar
 import com.lasthopesoftware.bluewater.shared.android.ui.components.memorableScrollConnectedScaler
 import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberSystemUiController
+import com.lasthopesoftware.bluewater.shared.android.ui.navigable
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.promises.extensions.suspend
@@ -88,10 +93,10 @@ private fun StaticFileMenu(viewModel: FileDetailsViewModel, coverArtColorState: 
 
 	Row(
 		modifier = Modifier
-			.height(Dimensions.menuHeight)
 			.padding(
 				top = padding,
 			)
+			.height(Dimensions.menuHeight)
 	) {
 		val iconColor = coverArtColorState.secondaryTextColor
 		ProvideTextStyle(value = TextStyle(color = iconColor)) {
@@ -134,7 +139,7 @@ private fun StaticFileMenu(viewModel: FileDetailsViewModel, coverArtColorState: 
 }
 
 @Composable
-@OptIn(ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
 internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 	val activity = LocalContext.current as? Activity ?: return
 
@@ -173,8 +178,7 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 				contentColor = coverArtColorState.primaryTextColor,
 			) {
 				Column(
-					modifier = Modifier
-						.padding(8.dp),
+					modifier = Modifier.padding(Dimensions.viewPaddingUnit * 2),
 				) {
 					Row(
 						modifier = Modifier
@@ -195,11 +199,12 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 							colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
 							contentDescription = stringResource(id = R.string.btn_cancel),
 							modifier = Modifier
-								.clickable { fileProperty.cancel() }
+								.navigable(onClick = fileProperty::cancel)
 								.align(Alignment.CenterVertically),
 						)
 					}
 
+					val fieldFocusRequester = remember { FocusRequester() }
 					val propertyValueFlow = fileProperty.uncommittedValue
 					val propertyValue by propertyValueFlow.collectAsState()
 					val isEditing by fileProperty.isEditing.collectAsState()
@@ -219,7 +224,8 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 									backgroundColor = coverArtColorState.primaryTextColor.copy(.1f),
 									modifier = Modifier
 										.height(36.dp)
-										.align(Alignment.Center),
+										.align(Alignment.Center)
+										.focusRequester(fieldFocusRequester),
 									onRatingSelected = if (isEditing) {
 										{ fileProperty.updateValue(it.toString()) }
 									} else null
@@ -231,7 +237,9 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 									enabled = isEditing,
 									singleLine = false,
 									onValueChange = fileProperty::updateValue,
-									modifier = Modifier.verticalScroll(rememberScrollState())
+									modifier = Modifier
+										.verticalScroll(rememberScrollState())
+										.focusRequester(fieldFocusRequester)
 								)
 							}
 							else -> {
@@ -240,7 +248,16 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 									enabled = isEditing,
 									singleLine = true,
 									onValueChange = fileProperty::updateValue,
+									modifier = Modifier.focusRequester(fieldFocusRequester),
 								)
+							}
+						}
+
+						if (isEditing) {
+							DisposableEffect(key1 = Unit) {
+								fieldFocusRequester.requestFocus()
+
+								onDispose {  }
 							}
 						}
 					}
@@ -259,7 +276,7 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 									modifier = Modifier
 										.fillMaxWidth()
 										.weight(1f)
-										.clickable { fileProperty.commitChanges() }
+										.navigable(onClick = fileProperty::commitChanges)
 										.align(Alignment.CenterVertically),
 								)
 							}
@@ -271,7 +288,9 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 									modifier = Modifier
 										.fillMaxWidth()
 										.weight(1f)
-										.clickable { fileProperty.edit() }
+										.navigable(onClick = {
+											fileProperty.edit()
+										})
 										.align(Alignment.CenterVertically),
 								)
 							}
@@ -331,7 +350,10 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 		val itemPadding = 2.dp
 
 		Row(
-			modifier = Modifier.clickable { property.highlight() }
+			modifier = Modifier.navigable(
+				onClick = { property.highlight() },
+				focusedBorderColor = coverArtColorState.primaryTextColor
+			)
 		) {
 			Text(
 				text = property.property,
@@ -673,7 +695,7 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 								start = viewPadding,
 								top = viewPadding,
 								bottom = viewPadding,
-								end = 40.dp + viewPadding
+								end = Dimensions.viewPaddingUnit * 10 + viewPadding
 							)
 							.fillMaxWidth(),
 						isMarqueeEnabled = !lazyListState.isScrollInProgress
