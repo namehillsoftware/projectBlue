@@ -12,7 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.media3.common.util.UnstableApi
 import com.lasthopesoftware.bluewater.ActivityApplicationNavigation
-import com.lasthopesoftware.bluewater.MainApplication.Companion.applicationDependencies
+import com.lasthopesoftware.bluewater.ApplicationContextAttachedApplicationDependencies.applicationDependencies
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.image.CachedImageProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.image.SelectedLibraryImageProvider
