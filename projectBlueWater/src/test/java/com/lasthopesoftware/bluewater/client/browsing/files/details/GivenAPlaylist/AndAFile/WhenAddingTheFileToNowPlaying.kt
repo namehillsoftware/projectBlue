@@ -5,9 +5,9 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
@@ -32,10 +32,10 @@ class WhenAddingTheFileToNowPlaying {
 		private var viewModel: Lazy<FileDetailsViewModel>? = lazy {
 			FileDetailsViewModel(
 				mockk {
-					every { promiseIsReadOnly() } returns false.toPromise()
+					every { promiseIsReadOnly(LibraryId(libraryId)) } returns false.toPromise()
 				},
 				mockk {
-					every { promiseFileProperties(ServiceFile(serviceFileId)) } returns Promise(emptySequence())
+					every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns Promise(emptySequence())
 				},
 				mockk(),
 				mockk {
@@ -44,7 +44,7 @@ class WhenAddingTheFileToNowPlaying {
 						.toPromise()
 				},
 				mockk {
-					every { promiseFileBitmap(any()) } returns BitmapFactory
+					every { promiseFileBitmap(LibraryId(libraryId), any()) } returns BitmapFactory
 						.decodeByteArray(byteArrayOf(61, 127), 0, 2)
 						.toPromise()
 				},
@@ -56,7 +56,7 @@ class WhenAddingTheFileToNowPlaying {
 				},
 				RecordingApplicationMessageBus(),
 				mockk {
-					every { promiseUrlKey(ServiceFile(serviceFileId)) } returns UrlKeyHolder(URL("http://bow"), ServiceFile(serviceFileId)).toPromise()
+					every { promiseUrlKey(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns UrlKeyHolder(URL("http://bow"), ServiceFile(serviceFileId)).toPromise()
 				},
 			)
 		}

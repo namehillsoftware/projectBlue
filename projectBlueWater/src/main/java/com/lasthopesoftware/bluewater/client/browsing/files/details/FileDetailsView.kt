@@ -6,7 +6,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.BoxWithConstraintsScope
@@ -30,20 +30,19 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.CircularProgressIndicator
-import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.ProvideTextStyle
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rxjava3.subscribeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
@@ -65,11 +64,18 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.tv.foundation.ExperimentalTvFoundationApi
+import androidx.tv.foundation.lazy.list.TvLazyColumn
+import androidx.tv.foundation.lazy.list.items
+import androidx.tv.foundation.lazy.list.rememberTvLazyListState
+import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyType
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.shared.NullBox
 import com.lasthopesoftware.bluewater.shared.android.colors.MediaStylePalette
 import com.lasthopesoftware.bluewater.shared.android.colors.MediaStylePaletteProvider
+import com.lasthopesoftware.bluewater.shared.android.ui.components.BackButton
 import com.lasthopesoftware.bluewater.shared.android.ui.components.ColumnMenuIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
@@ -79,15 +85,17 @@ import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberSyste
 import com.lasthopesoftware.bluewater.shared.android.ui.navigable
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
-import com.lasthopesoftware.promises.extensions.suspend
-import kotlinx.coroutines.flow.map
+import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
+import com.lasthopesoftware.bluewater.shared.observables.toMaybeObservable
+import io.reactivex.rxjava3.core.Observable
+import io.reactivex.rxjava3.core.Single
 import kotlinx.coroutines.launch
 import kotlin.math.pow
 
 private val viewPadding = Dimensions.viewPaddingUnit
 
 @Composable
-private fun StaticFileMenu(viewModel: FileDetailsViewModel, coverArtColorState: MediaStylePalette) {
+private fun StaticFileMenu(viewModel: FileDetailsViewModel, mediaStylePalette: MediaStylePalette) {
 	val padding = viewPadding * 3
 
 	Row(
@@ -97,7 +105,7 @@ private fun StaticFileMenu(viewModel: FileDetailsViewModel, coverArtColorState: 
 			)
 			.height(Dimensions.menuHeight)
 	) {
-		val iconColor = coverArtColorState.secondaryTextColor
+		val iconColor = mediaStylePalette.secondaryTextColor
 		val iconSize = Dimensions.topMenuIconSize
 
 		val addFileToPlaybackLabel = stringResource(id = R.string.btn_add_file_to_playback)
@@ -138,10 +146,74 @@ private fun StaticFileMenu(viewModel: FileDetailsViewModel, coverArtColorState: 
 }
 
 @Composable
-@OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
-internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
-	val activity = LocalContext.current as? Activity ?: return
+private fun CoverArtColumn(viewModel: FileDetailsViewModel, mediaStylePalette: MediaStylePalette) {
+	Column(
+		modifier = Modifier
+			.fillMaxHeight()
+			.width(250.dp)
+			.padding(
+				start = viewPadding,
+				end = viewPadding * 2,
+				bottom = viewPadding,
+				top = viewPadding,
+			)
+	) {
+		Box(
+			modifier = Modifier
+				.fillMaxWidth()
+				.weight(1.0f)
+				.align(Alignment.CenterHorizontally)
+		) {
+			val coverArtBitmaps by viewModel.coverArt.subscribeAsState()
+			val coverArtState by remember { derivedStateOf { coverArtBitmaps?.asImageBitmap() } }
 
+			coverArtState
+				?.let {
+					val artist by viewModel.artist.subscribeAsState()
+					val album by viewModel.album.subscribeAsState()
+
+					Image(
+						bitmap = it,
+						contentDescription = stringResource(
+							id = R.string.lbl_cover_art,
+							album,
+							artist
+						),
+						contentScale = ContentScale.FillWidth,
+						modifier = Modifier
+							.fillMaxWidth()
+							.clip(RoundedCornerShape(5.dp))
+							.align(Alignment.Center)
+							.border(
+								1.dp,
+								shape = RoundedCornerShape(5.dp),
+								color = mediaStylePalette.secondaryTextColor
+							),
+					)
+				}
+		}
+
+		StaticFileMenu(viewModel, mediaStylePalette)
+	}
+}
+
+@Composable
+fun FileRating(viewModel: FileDetailsViewModel, mediaStylePalette: MediaStylePalette, modifier: Modifier) {
+	val rating by viewModel.rating.subscribeAsState()
+
+	RatingBar(
+		rating = rating,
+		color = mediaStylePalette.primaryTextColor,
+		backgroundColor = mediaStylePalette.primaryTextColor.copy(.1f),
+		modifier = modifier
+	)
+}
+
+@Composable
+fun rememberComputedColorPalette(
+	paletteProvider: MediaStylePaletteProvider,
+	viewModel: FileDetailsViewModel
+): State<MediaStylePalette> {
 	val defaultMediaStylePalette = MediaStylePalette(
 		MaterialTheme.colors.onPrimary,
 		MaterialTheme.colors.secondary,
@@ -149,32 +221,136 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 		MaterialTheme.colors.secondary
 	)
 
-	val paletteProvider = MediaStylePaletteProvider(activity)
 	val coverArtColors = remember {
 		viewModel.coverArt
-			.map { a ->
-				a
+			.flatMap { maybeArt ->
+				maybeArt
+					.value
 					?.takeIf { it.width > 0 && it.height > 0 }
 					?.let(paletteProvider::promisePalette)
-					?.suspend()
-					?: defaultMediaStylePalette
+					?.toMaybeObservable()
+					?.switchIfEmpty(Single.just(defaultMediaStylePalette))
+					?.toObservable()
+					?: Observable.just(defaultMediaStylePalette)
 			}
 	}
-	val coverArtColorState by coverArtColors.collectAsState(defaultMediaStylePalette)
-	val systemUiController = rememberSystemUiController()
-	systemUiController.setStatusBarColor(coverArtColorState.actionBarColor)
+	return coverArtColors.subscribeAsState(defaultMediaStylePalette)
+}
 
-	val artist by viewModel.artist.collectAsState()
-	val album by viewModel.album.collectAsState()
+@Composable
+fun FilePropertyHeader(viewModel: FileDetailsViewModel, palette: MediaStylePalette, isMarqueeEnabled: Boolean, titleFontSize: TextUnit = 24.sp, modifier: Modifier = Modifier) {
+	val fileName by viewModel.fileName.subscribeAsState(NullBox(stringResource(id = R.string.lbl_loading)))
 
-	val maybeHighlightedFileProperty by viewModel.highlightedProperty.collectAsState()
+	Column(modifier = modifier) {
+		val gradientSides = setOf(GradientSide.End)
+
+		Row {
+			MarqueeText(
+				text = fileName.value,
+				color = palette.primaryTextColor,
+				gradientEdgeColor = palette.backgroundColor,
+				fontSize = titleFontSize,
+				overflow = TextOverflow.Ellipsis,
+				gradientSides = gradientSides,
+				isMarqueeEnabled = isMarqueeEnabled,
+			)
+		}
+
+		Row {
+			val artist by viewModel.artist.subscribeAsState()
+			MarqueeText(
+				text = artist,
+				color = palette.primaryTextColor,
+				gradientEdgeColor = palette.backgroundColor,
+				fontSize = 16.sp,
+				overflow = TextOverflow.Ellipsis,
+				gradientSides = gradientSides,
+			)
+		}
+	}
+}
+
+@Composable
+@OptIn(ExperimentalComposeUiApi::class)
+fun FilePropertyRow(viewModel: FileDetailsViewModel, property: FileDetailsViewModel.FilePropertyViewModel, palette: MediaStylePalette) {
+	val itemPadding = 2.dp
+
+	Row(
+		modifier = Modifier.navigable(
+			onClick = property::highlight,
+			focusedBorderColor = palette.primaryTextColor
+		)
+	) {
+		Text(
+			text = property.property,
+			color = palette.primaryTextColor,
+			modifier = Modifier
+				.weight(1f)
+				.padding(
+					start = viewPadding,
+					top = itemPadding,
+					end = itemPadding,
+					bottom = itemPadding
+				),
+		)
+
+		val propertyValue by property.committedValue.collectAsState()
+
+		when (property.property) {
+			KnownFileProperties.Rating -> {
+				Box(
+					modifier = Modifier
+						.weight(2f)
+						.align(Alignment.CenterVertically)
+				) {
+					val height = with(LocalDensity.current) {
+						MaterialTheme.typography.h6.fontSize.toDp()
+					}
+
+					FileRating(
+						viewModel,
+						palette,
+						modifier = Modifier
+							.height(height)
+							.align(Alignment.CenterStart)
+							.padding(
+								start = itemPadding,
+								top = itemPadding,
+								end = viewPadding,
+								bottom = itemPadding,
+							),
+					)
+				}
+			}
+			else -> {
+				Text(
+					text = propertyValue,
+					color = palette.primaryTextColor,
+					modifier = Modifier
+						.weight(2f)
+						.padding(
+							start = itemPadding,
+							top = itemPadding,
+							end = viewPadding,
+							bottom = itemPadding
+						),
+				)
+			}
+		}
+	}
+}
+
+@OptIn(ExperimentalComposeUiApi::class)
+@Composable
+private fun FileDetailsEditor(viewModel: FileDetailsViewModel, palette: MediaStylePalette) {
+	val maybeHighlightedFileProperty by viewModel.highlightedProperty.subscribeAsState()
 	maybeHighlightedFileProperty?.let { fileProperty ->
 		val property = fileProperty.property
 
 		Dialog(onDismissRequest = fileProperty::cancel) {
 			ControlSurface(
-				color = coverArtColorState.backgroundColor,
-				contentColor = coverArtColorState.primaryTextColor,
+				color = palette.backgroundColor,
+				contentColor = palette.primaryTextColor,
 			) {
 				Column(
 					modifier = Modifier.padding(Dimensions.viewPaddingUnit * 2),
@@ -195,7 +371,7 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 
 						Image(
 							painter = painterResource(id = R.drawable.ic_remove_item_white_36dp),
-							colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
+							colorFilter = ColorFilter.tint(palette.secondaryTextColor),
 							contentDescription = stringResource(id = R.string.btn_cancel),
 							modifier = Modifier
 								.navigable(onClick = fileProperty::cancel)
@@ -219,8 +395,8 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 								val ratingValue by remember { derivedStateOf { propertyValue.toInt() } }
 								RatingBar(
 									rating = ratingValue,
-									color = coverArtColorState.primaryTextColor,
-									backgroundColor = coverArtColorState.primaryTextColor.copy(.1f),
+									color = palette.primaryTextColor,
+									backgroundColor = palette.primaryTextColor.copy(.1f),
 									modifier = Modifier
 										.height(36.dp)
 										.align(Alignment.Center)
@@ -270,7 +446,7 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 							isEditing -> {
 								Image(
 									painter = painterResource(id = R.drawable.ic_save_white_36dp),
-									colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
+									colorFilter = ColorFilter.tint(palette.secondaryTextColor),
 									contentDescription = stringResource(id = R.string.save),
 									modifier = Modifier
 										.fillMaxWidth()
@@ -282,7 +458,7 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 							fileProperty.isEditable -> {
 								Image(
 									painter = painterResource(id = R.drawable.pencil),
-									colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
+									colorFilter = ColorFilter.tint(palette.secondaryTextColor),
 									contentDescription = stringResource(id = R.string.edit),
 									modifier = Modifier
 										.fillMaxWidth()
@@ -299,121 +475,26 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 			}
 		}
 	}
+}
 
-	@Composable
-	fun filePropertyHeader(modifier: Modifier, isMarqueeEnabled: Boolean, titleFontSize: TextUnit = 24.sp) {
-		val fileName by viewModel.fileName.collectAsState(stringResource(id = R.string.lbl_loading))
+@Composable
+@OptIn(ExperimentalFoundationApi::class)
+internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
+	val activity = LocalContext.current as? Activity ?: return
 
-		Column(modifier = modifier) {
-			val gradientSides = setOf(GradientSide.End)
+	val paletteProvider = MediaStylePaletteProvider(activity)
+	val coverArtColorState by rememberComputedColorPalette(paletteProvider = paletteProvider, viewModel = viewModel)
+	val systemUiController = rememberSystemUiController()
+	systemUiController.setStatusBarColor(coverArtColorState.actionBarColor)
 
-			Row {
-				MarqueeText(
-					text = fileName,
-					color = coverArtColorState.primaryTextColor,
-					gradientEdgeColor = coverArtColorState.backgroundColor,
-					fontSize = titleFontSize,
-					overflow = TextOverflow.Ellipsis,
-					gradientSides = gradientSides,
-					isMarqueeEnabled = isMarqueeEnabled,
-				)
-			}
+	val artist by viewModel.artist.subscribeAsState()
+	val album by viewModel.album.subscribeAsState()
 
-			Row {
-				MarqueeText(
-					text = artist,
-					color = coverArtColorState.primaryTextColor,
-					gradientEdgeColor = coverArtColorState.backgroundColor,
-					fontSize = 16.sp,
-					overflow = TextOverflow.Ellipsis,
-					gradientSides = gradientSides,
-				)
-			}
-		}
-	}
-
-	@Composable
-	fun fileRating(modifier: Modifier) {
-		val rating by viewModel.rating.collectAsState()
-
-		RatingBar(
-			rating = rating,
-			color = coverArtColorState.primaryTextColor,
-			backgroundColor = coverArtColorState.primaryTextColor.copy(.1f),
-			modifier = modifier
-		)
-	}
-
-	@Composable
-	fun filePropertyRow(property: FileDetailsViewModel.FilePropertyViewModel) {
-		val itemPadding = 2.dp
-
-		Row(
-			modifier = Modifier.navigable(
-				onClick = { property.highlight() },
-				focusedBorderColor = coverArtColorState.primaryTextColor
-			)
-		) {
-			Text(
-				text = property.property,
-				color = coverArtColorState.primaryTextColor,
-				modifier = Modifier
-					.weight(1f)
-					.padding(
-						start = viewPadding,
-						top = itemPadding,
-						end = itemPadding,
-						bottom = itemPadding
-					),
-			)
-
-			val propertyValue by property.committedValue.collectAsState()
-
-			when (property.property) {
-				KnownFileProperties.Rating -> {
-					Box(
-						modifier = Modifier
-							.weight(2f)
-							.align(Alignment.CenterVertically)
-					) {
-						val height = with(LocalDensity.current) {
-							MaterialTheme.typography.h6.fontSize.toDp()
-						}
-
-						fileRating(
-							modifier = Modifier
-								.height(height)
-								.align(Alignment.CenterStart)
-								.padding(
-									start = itemPadding,
-									top = itemPadding,
-									end = viewPadding,
-									bottom = itemPadding,
-								),
-						)
-					}
-				}
-				else -> {
-					Text(
-						text = propertyValue,
-						color = coverArtColorState.primaryTextColor,
-						modifier = Modifier
-							.weight(2f)
-							.padding(
-								start = itemPadding,
-								top = itemPadding,
-								end = viewPadding,
-								bottom = itemPadding
-							),
-					)
-				}
-			}
-		}
-	}
+	FileDetailsEditor(viewModel = viewModel, palette = coverArtColorState)
 
 	@Composable
 	fun fileDetailsSingleColumn() {
-		val fileProperties by viewModel.fileProperties.collectAsState()
+		val fileProperties by viewModel.fileProperties.subscribeAsState()
 
 		val coverArtContainerHeight = 300.dp
 		val appBarHeight = Dimensions.appBarHeight
@@ -453,7 +534,7 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 				}
 
 				items(fileProperties) {
-					filePropertyRow(it)
+					FilePropertyRow(viewModel, it, coverArtColorState)
 				}
 			}
 
@@ -480,7 +561,7 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 						.offset(y = coverArtScrollOffset)
 						.fillMaxWidth()
 				) {
-					val coverArtBitmaps by viewModel.coverArt.collectAsState()
+					val coverArtBitmaps by viewModel.coverArt.subscribeAsState()
 					val coverArtState by remember { derivedStateOf { coverArtBitmaps?.asImageBitmap() } }
 					coverArtState
 						?.let {
@@ -505,26 +586,7 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 						}
 				}
 
-				Box(
-					modifier = Modifier
-						.height(appBarHeight)
-						.background(coverArtColorState.backgroundColor)
-						.fillMaxWidth()
-				) {
-					Icon(
-						Icons.AutoMirrored.Filled.ArrowBack,
-						contentDescription = "",
-						tint = coverArtColorState.secondaryTextColor,
-						modifier = Modifier
-							.align(Alignment.CenterStart)
-							.clickable(
-								interactionSource = remember { MutableInteractionSource() },
-								indication = null,
-								onClick = activity::finish
-							)
-							.padding(16.dp)
-					)
-				}
+				BackButton(onBack = activity::finish)
 
 				val headerExpandProgress by remember { derivedStateOf { 1 - headerCollapseProgress } }
 				val topTitlePadding by remember { derivedStateOf { expandedTitlePadding * headerExpandProgress } }
@@ -546,7 +608,9 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 
 					val startPadding by remember { derivedStateOf { viewPadding + 48.dp * headerCollapseProgress } }
 					val endPadding by remember { derivedStateOf { viewPadding + minimumMenuWidth * acceleratedHeaderHidingProgress } }
-					filePropertyHeader(
+					FilePropertyHeader(
+						viewModel,
+						coverArtColorState,
 						modifier = Modifier.padding(start = startPadding, end = endPadding),
 						titleFontSize = titleFontSize,
 						isMarqueeEnabled = !lazyListState.isScrollInProgress
@@ -637,57 +701,15 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 	@Composable
 	fun BoxWithConstraintsScope.fileDetailsTwoColumn() {
 		Row(modifier = Modifier.fillMaxSize()) {
-			Column(
-				modifier = Modifier
-					.fillMaxHeight()
-					.width(250.dp)
-					.padding(
-						start = viewPadding,
-						end = viewPadding * 2,
-						bottom = viewPadding,
-						top = viewPadding,
-					)
-			) {
-				Box(
-					modifier = Modifier
-						.fillMaxWidth()
-						.weight(1.0f)
-						.align(Alignment.CenterHorizontally)
-				) {
-					val coverArtBitmaps by viewModel.coverArt.collectAsState()
-					val coverArtState by remember { derivedStateOf { coverArtBitmaps?.asImageBitmap() } }
+			CoverArtColumn(viewModel, coverArtColorState)
 
-					coverArtState
-						?.let {
-							Image(
-								bitmap = it,
-								contentDescription = stringResource(
-									id = R.string.lbl_cover_art,
-									album,
-									artist
-								),
-								contentScale = ContentScale.FillWidth,
-								modifier = Modifier
-									.fillMaxWidth()
-									.clip(RoundedCornerShape(5.dp))
-									.align(Alignment.Center)
-									.border(
-										1.dp,
-										shape = RoundedCornerShape(5.dp),
-										color = coverArtColorState.secondaryTextColor
-									),
-							)
-						}
-				}
-
-				StaticFileMenu(viewModel, coverArtColorState)
-			}
-
-			val fileProperties by viewModel.fileProperties.collectAsState()
+			val fileProperties by viewModel.fileProperties.subscribeAsState()
 			val lazyListState = rememberLazyListState()
 			LazyColumn(modifier = Modifier.fillMaxWidth(), state = lazyListState) {
 				stickyHeader {
-					filePropertyHeader(
+					FilePropertyHeader(
+						viewModel,
+						coverArtColorState,
 						modifier = Modifier
 							.background(coverArtColorState.backgroundColor)
 							.padding(
@@ -702,7 +724,7 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 				}
 
 				items(fileProperties) {
-					filePropertyRow(property = it)
+					FilePropertyRow(viewModel, it, coverArtColorState)
 				}
 			}
 		}
@@ -720,7 +742,7 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 		)
 	}
 
-	val isLoading by viewModel.isLoading.collectAsState()
+	val isLoading by viewModel.isLoading.subscribeAsState()
 
 	BoxWithConstraints(
 		modifier = Modifier
@@ -734,6 +756,76 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 			)
 			maxWidth >= 450.dp -> fileDetailsTwoColumn()
 			else -> fileDetailsSingleColumn()
+		}
+	}
+}
+
+@Composable
+@OptIn(ExperimentalTvFoundationApi::class, ExperimentalComposeUiApi::class)
+fun FileDetailsTvView(viewModel: FileDetailsViewModel, navigateApplication: NavigateApplication) {
+	val activity = LocalContext.current as? Activity ?: return
+
+	val isLoading by viewModel.isLoading.subscribeAsState()
+
+	val paletteProvider = MediaStylePaletteProvider(activity)
+	val coverArtColorState by rememberComputedColorPalette(paletteProvider = paletteProvider, viewModel = viewModel)
+
+	FileDetailsEditor(viewModel = viewModel, palette = coverArtColorState)
+
+	Box(
+		modifier = Modifier
+			.fillMaxSize()
+			.background(coverArtColorState.backgroundColor)
+	) {
+		if (isLoading) {
+			CircularProgressIndicator(
+				color = coverArtColorState.primaryTextColor,
+				modifier = Modifier.align(Alignment.Center)
+			)
+		} else {
+			Row(modifier = Modifier.fillMaxSize()) {
+				CoverArtColumn(viewModel, coverArtColorState)
+
+				val lazyListState = rememberTvLazyListState()
+				val fileProperties by viewModel.fileProperties.subscribeAsState()
+				TvLazyColumn(
+					modifier = Modifier
+						.fillMaxWidth()
+						.focusGroup(),
+					state = lazyListState
+				) {
+					stickyHeader {
+						FilePropertyHeader(
+							viewModel,
+							coverArtColorState,
+							modifier = Modifier
+								.background(coverArtColorState.backgroundColor)
+								.padding(
+									start = viewPadding,
+									top = viewPadding,
+									bottom = viewPadding,
+									end = Dimensions.viewPaddingUnit * 10 + viewPadding
+								)
+								.fillMaxWidth(),
+							isMarqueeEnabled = !lazyListState.isScrollInProgress
+						)
+					}
+
+					items(fileProperties) {
+						FilePropertyRow(viewModel, it, coverArtColorState)
+					}
+				}
+			}
+
+			Image(
+				painter = painterResource(id = R.drawable.ic_remove_item_white_36dp),
+				contentDescription = "Close",
+				colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
+				modifier = Modifier
+					.align(Alignment.TopEnd)
+					.padding(top = 12.dp, start = 8.dp, end = 8.dp, bottom = 8.dp)
+					.navigable(onClick = navigateApplication::backOut),
+			)
 		}
 	}
 }

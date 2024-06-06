@@ -7,9 +7,9 @@ import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsV
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
@@ -36,10 +36,10 @@ class WhenPlayingFromFileDetails {
 		private var mut: Lazy<FileDetailsViewModel>? = lazy {
 			FileDetailsViewModel(
 				mockk {
-					every { promiseIsReadOnly() } returns false.toPromise()
+					every { promiseIsReadOnly(LibraryId(libraryId)) } returns false.toPromise()
 				},
 				mockk {
-					every { promiseFileProperties(ServiceFile(serviceFileId)) } returns Promise(
+					every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns Promise(
 						sequenceOf(
 							FileProperty(KnownFileProperties.Name, "toward"),
 							FileProperty(KnownFileProperties.Artist, "load"),
@@ -58,7 +58,7 @@ class WhenPlayingFromFileDetails {
 						.toPromise()
 				},
 				mockk {
-					every { promiseFileBitmap(any()) } returns BitmapFactory
+					every { promiseFileBitmap(LibraryId(libraryId), any()) } returns BitmapFactory
 						.decodeByteArray(byteArrayOf(322.toByte(), 480.toByte()), 0, 2)
 						.toPromise()
 				},
@@ -71,7 +71,7 @@ class WhenPlayingFromFileDetails {
 				},
 				RecordingApplicationMessageBus(),
 				mockk {
-					every { promiseUrlKey(ServiceFile(serviceFileId)) } returns UrlKeyHolder(URL("http://bow"), ServiceFile(serviceFileId)).toPromise()
+					every { promiseUrlKey(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns UrlKeyHolder(URL("http://bow"), ServiceFile(serviceFileId)).toPromise()
 				},
 			)
 		}

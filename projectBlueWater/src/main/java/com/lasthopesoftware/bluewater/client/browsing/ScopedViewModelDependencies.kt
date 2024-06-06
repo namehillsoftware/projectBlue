@@ -1,9 +1,15 @@
 package com.lasthopesoftware.bluewater.client.browsing
 
 import androidx.lifecycle.ViewModelStoreOwner
+import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.list.SearchFilesViewModel
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableLibraryFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
+import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
+import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingMessage
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsViewModel
 import com.lasthopesoftware.bluewater.client.settings.PermissionsDependencies
@@ -51,5 +57,24 @@ class ScopedViewModelDependencies(inner: BrowserViewDependencies, permissionsDep
 
 	override val nowPlayingViewModelMessageBus by viewModelStoreOwner.buildViewModelLazily {
 		ViewModelMessageBus<NowPlayingMessage>()
+	}
+
+	override val fileDetailsViewModel by viewModelStoreOwner.buildViewModelLazily {
+		FileDetailsViewModel(
+			connectionPermissions = ConnectionAuthenticationChecker(libraryConnectionProvider),
+			filePropertiesProvider = EditableLibraryFilePropertiesProvider(
+				FilePropertiesProvider(
+					GuaranteedLibraryConnectionProvider(libraryConnectionProvider),
+					revisionProvider,
+					FilePropertyCache,
+				)
+			),
+			updateFileProperties = filePropertiesStorage,
+			defaultImageProvider = defaultImageProvider,
+			imageProvider = imageProvider,
+			controlPlayback = playbackServiceController,
+			registerForApplicationMessages = messageBus,
+			urlKeyProvider = urlKeyProvider,
+		)
 	}
 }

@@ -15,22 +15,17 @@ import com.lasthopesoftware.bluewater.ActivityApplicationNavigation
 import com.lasthopesoftware.bluewater.ApplicationContextAttachedApplicationDependencies.applicationDependencies
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.image.CachedImageProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.image.SelectedLibraryImageProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableScopedFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableLibraryFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.SelectedLibraryFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertyStorage
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.SelectedLibraryFilePropertyStorage
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ConnectionLostView
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.LibraryIdProviderViewModel
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
 import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
-import com.lasthopesoftware.bluewater.client.connection.authentication.SelectedLibraryConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibraryConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.libraries.SelectedLibraryUrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionStatusViewModel
@@ -78,48 +73,37 @@ import java.io.IOException
 	private val libraryRevisionProvider by lazy { LibraryRevisionProvider(libraryConnections) }
 
 	private val filePropertiesProvider by lazy {
-		EditableScopedFilePropertiesProvider(
-			SelectedLibraryFilePropertiesProvider(
-				selectedLibraryIdProvider,
-				FilePropertiesProvider(
-					GuaranteedLibraryConnectionProvider(libraryConnections),
-					libraryRevisionProvider,
-					FilePropertyCache,
-				),
-			)
-		)
-	}
-
-	private val scopedFilePropertyUpdates by lazy {
-		SelectedLibraryFilePropertyStorage(
-			selectedLibraryIdProvider,
-			FilePropertyStorage(
-				libraryConnections,
-				ConnectionAuthenticationChecker(libraryConnections),
+		EditableLibraryFilePropertiesProvider(
+			FilePropertiesProvider(
+				GuaranteedLibraryConnectionProvider(libraryConnections),
 				libraryRevisionProvider,
-				FilePropertyCache,
-				ApplicationMessageBus.getApplicationMessageBus(),
+				FilePropertyCache
 			)
 		)
 	}
 
-	private val connectionPermissions by lazy {
-		SelectedLibraryConnectionAuthenticationChecker(
-			selectedLibraryIdProvider,
-			ConnectionAuthenticationChecker(libraryConnections)
+	private val filePropertyUpdates by lazy {
+		FilePropertyStorage(
+			libraryConnections,
+			ConnectionAuthenticationChecker(libraryConnections),
+			libraryRevisionProvider,
+			FilePropertyCache,
+			ApplicationMessageBus.getApplicationMessageBus(),
 		)
 	}
+
+	private val connectionPermissions by lazy { ConnectionAuthenticationChecker(libraryConnections) }
 
 	private val vm by buildViewModelLazily {
 		FileDetailsViewModel(
 			connectionPermissions,
 			filePropertiesProvider,
-			scopedFilePropertyUpdates,
+			filePropertyUpdates,
 			defaultImageProvider,
-			SelectedLibraryImageProvider(selectedLibraryIdProvider, imageProvider),
+			imageProvider,
 			PlaybackServiceController(this),
 			ApplicationMessageBus.getApplicationMessageBus(),
-			SelectedLibraryUrlKeyProvider(selectedLibraryIdProvider, UrlKeyProvider(libraryConnections)),
+			UrlKeyProvider(libraryConnections),
 		)
 	}
 

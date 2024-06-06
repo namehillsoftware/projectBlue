@@ -8,9 +8,9 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePrope
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
@@ -36,10 +36,10 @@ class WhenTheFilePropertiesChange {
 				recordingApplicationMessageBus,
 				FileDetailsViewModel(
 					mockk {
-						every { promiseIsReadOnly() } returns false.toPromise()
+						every { promiseIsReadOnly(LibraryId(libraryId)) } returns false.toPromise()
 					},
 					mockk {
-						every { promiseFileProperties(ServiceFile(serviceFileId)) } returns Promise(
+						every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns Promise(
 							sequenceOf(
 								FileProperty(KnownFileProperties.Rating, "815"),
 								FileProperty("little", "more"),
@@ -68,14 +68,14 @@ class WhenTheFilePropertiesChange {
 							.toPromise()
 					},
 					mockk {
-						every { promiseFileBitmap(any()) } returns BitmapFactory
+						every { promiseFileBitmap(LibraryId(libraryId), any()) } returns BitmapFactory
 							.decodeByteArray(byteArrayOf(61, 127), 0, 2)
 							.toPromise()
 					},
 					mockk(),
 					recordingApplicationMessageBus,
 					mockk {
-						every { promiseUrlKey(ServiceFile(serviceFileId)) } returns UrlKeyHolder(URL("http://bow"), ServiceFile(serviceFileId)).toPromise()
+						every { promiseUrlKey(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns UrlKeyHolder(URL("http://bow"), ServiceFile(serviceFileId)).toPromise()
 					}
 				)
 			)

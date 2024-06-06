@@ -1,7 +1,12 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableFileProperties.GivenFileProperties.AndSomeEditableOnesAreNotPresent
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.*
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableFilePropertyDefinition
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableLibraryFilePropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyType
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
@@ -10,13 +15,14 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
+private const val libraryId = 554
 private const val serviceFileId = 907
 
 class WhenGettingTheFileProperties {
 	private val editableFilePropertyProvider by lazy {
-		EditableScopedFilePropertiesProvider(
+		EditableLibraryFilePropertiesProvider(
 			mockk {
-				every { promiseFileProperties(ServiceFile(serviceFileId)) } returns Promise(
+				every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns Promise(
 					mapOf(
 						Pair(KnownFileProperties.DateFirstRated, "Nr13052"),
 						Pair(KnownFileProperties.AlbumArtist, "MB4Q"),
@@ -31,7 +37,7 @@ class WhenGettingTheFileProperties {
 
 	@BeforeAll
 	fun act() {
-		fileProperties = editableFilePropertyProvider.promiseFileProperties(ServiceFile(serviceFileId)).toExpiringFuture().get() ?: emptySequence()
+		fileProperties = editableFilePropertyProvider.promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)).toExpiringFuture().get() ?: emptySequence()
 	}
 
 	@Test

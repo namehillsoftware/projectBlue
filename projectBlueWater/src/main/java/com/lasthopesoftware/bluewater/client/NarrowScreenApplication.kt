@@ -43,6 +43,7 @@ import com.lasthopesoftware.bluewater.client.browsing.navigation.BrowserLibraryD
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ConnectionSettingsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.Destination
 import com.lasthopesoftware.bluewater.client.browsing.navigation.DestinationRoutingNavigation
+import com.lasthopesoftware.bluewater.client.browsing.navigation.FileDetailsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.HiddenSettingsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.LibraryDestination
 import com.lasthopesoftware.bluewater.client.browsing.navigation.LibraryMenu
@@ -214,6 +215,8 @@ fun LibraryDestination.Navigate(
 					scaffoldState = scaffoldState,
 				)
 			}
+
+			is FileDetailsScreen -> {}
 
 			is ConnectionSettingsScreen -> {
 				val viewModel = librarySettingsViewModel

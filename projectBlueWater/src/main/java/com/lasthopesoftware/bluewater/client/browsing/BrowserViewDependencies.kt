@@ -6,10 +6,13 @@ import com.lasthopesoftware.bluewater.ApplicationDependencies
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.client.browsing.files.access.LibraryFileProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideItemFiles
+import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
+import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideLibraryImages
 import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusableFileItemViewModelProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusablePlaylistFileItemViewModelProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.list.SearchFilesViewModel
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.UpdateFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.items.access.ProvideItems
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.list.PlaybackLibraryItems
@@ -19,7 +22,9 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryPro
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.access.RemoveLibraries
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedLibraryViewModel
+import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NavigationMessage
+import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideUrlKey
 import com.lasthopesoftware.bluewater.client.connection.polling.PollForLibraryConnections
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionWatcherViewModel
 import com.lasthopesoftware.bluewater.client.connection.session.ManageConnectionSessions
@@ -40,6 +45,7 @@ import com.lasthopesoftware.bluewater.settings.ApplicationSettingsViewModel
 import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsViewModel
 import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
+import com.lasthopesoftware.bluewater.shared.images.ProvideDefaultImage
 import com.lasthopesoftware.bluewater.shared.messages.RegisterForTypedMessages
 import com.lasthopesoftware.bluewater.shared.messages.application.ScopedApplicationMessageBus
 import com.lasthopesoftware.resources.strings.StringResources
@@ -77,6 +83,11 @@ import com.lasthopesoftware.resources.strings.StringResources
 	val hiddenSettingsViewModel: HiddenSettingsViewModel
 	val userSslCertificateProvider: ProvideUserSslCertificates
 	val connectionStatusViewModel: ConnectionStatusViewModel
+	val revisionProvider: LibraryRevisionProvider
+	val filePropertiesStorage: UpdateFileProperties
+	val defaultImageProvider: ProvideDefaultImage
+	val imageProvider: ProvideLibraryImages
+	val urlKeyProvider: ProvideUrlKey
 }
 
 /**
@@ -89,4 +100,5 @@ interface ScopedBrowserViewDependencies : BrowserViewDependencies {
 	val searchFilesViewModel: SearchFilesViewModel
 	val librarySettingsViewModel: LibrarySettingsViewModel
 	val nowPlayingViewModelMessageBus: ViewModelMessageBus<NowPlayingMessage>
+	val fileDetailsViewModel: FileDetailsViewModel
 }
