@@ -238,7 +238,7 @@ fun rememberComputedColorPalette(
 }
 
 @Composable
-fun FilePropertyHeader(viewModel: FileDetailsViewModel, palette: MediaStylePalette, isMarqueeEnabled: Boolean, titleFontSize: TextUnit = 24.sp, modifier: Modifier = Modifier) {
+fun FilePropertyHeader(viewModel: FileDetailsViewModel, palette: MediaStylePalette, modifier: Modifier = Modifier, isMarqueeEnabled: Boolean, titleFontSize: TextUnit = 24.sp) {
 	val fileName by viewModel.fileName.subscribeAsState(NullBox(stringResource(id = R.string.lbl_loading)))
 
 	Column(modifier = modifier) {
@@ -744,18 +744,21 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 
 	val isLoading by viewModel.isLoading.subscribeAsState()
 
-	BoxWithConstraints(
-		modifier = Modifier
-			.fillMaxSize()
-			.background(coverArtColorState.backgroundColor)
+
+	ControlSurface(
+		color = coverArtColorState.backgroundColor,
+		contentColor = coverArtColorState.primaryTextColor,
+		controlColor = coverArtColorState.secondaryTextColor
 	) {
-		when {
-			isLoading -> CircularProgressIndicator(
-				color = coverArtColorState.primaryTextColor,
-				modifier = Modifier.align(Alignment.Center)
-			)
-			maxWidth >= 450.dp -> fileDetailsTwoColumn()
-			else -> fileDetailsSingleColumn()
+		BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+			when {
+				isLoading -> CircularProgressIndicator(
+					color = coverArtColorState.primaryTextColor,
+					modifier = Modifier.align(Alignment.Center)
+				)
+				maxWidth >= 450.dp -> fileDetailsTwoColumn()
+				else -> fileDetailsSingleColumn()
+			}
 		}
 	}
 }
@@ -772,60 +775,64 @@ fun FileDetailsTvView(viewModel: FileDetailsViewModel, navigateApplication: Navi
 
 	FileDetailsEditor(viewModel = viewModel, palette = coverArtColorState)
 
-	Box(
-		modifier = Modifier
-			.fillMaxSize()
-			.background(coverArtColorState.backgroundColor)
+	ControlSurface(
+		color = coverArtColorState.backgroundColor,
+		contentColor = coverArtColorState.primaryTextColor,
+		controlColor = coverArtColorState.secondaryTextColor
 	) {
-		if (isLoading) {
-			CircularProgressIndicator(
-				color = coverArtColorState.primaryTextColor,
-				modifier = Modifier.align(Alignment.Center)
-			)
-		} else {
-			Row(modifier = Modifier.fillMaxSize()) {
-				CoverArtColumn(viewModel, coverArtColorState)
+		Box(
+			modifier = Modifier.fillMaxSize()
+		) {
+			if (isLoading) {
+				CircularProgressIndicator(
+					color = coverArtColorState.primaryTextColor,
+					modifier = Modifier.align(Alignment.Center)
+				)
+			} else {
+				Row(modifier = Modifier.fillMaxSize()) {
+					CoverArtColumn(viewModel, coverArtColorState)
 
-				val lazyListState = rememberTvLazyListState()
-				val fileProperties by viewModel.fileProperties.subscribeAsState()
-				TvLazyColumn(
-					modifier = Modifier
-						.fillMaxWidth()
-						.focusGroup(),
-					state = lazyListState
-				) {
-					stickyHeader {
-						FilePropertyHeader(
-							viewModel,
-							coverArtColorState,
-							modifier = Modifier
-								.background(coverArtColorState.backgroundColor)
-								.padding(
-									start = viewPadding,
-									top = viewPadding,
-									bottom = viewPadding,
-									end = Dimensions.viewPaddingUnit * 10 + viewPadding
-								)
-								.fillMaxWidth(),
-							isMarqueeEnabled = !lazyListState.isScrollInProgress
-						)
-					}
+					val lazyListState = rememberTvLazyListState()
+					val fileProperties by viewModel.fileProperties.subscribeAsState()
+					TvLazyColumn(
+						modifier = Modifier
+							.fillMaxWidth()
+							.focusGroup(),
+						state = lazyListState
+					) {
+						stickyHeader {
+							FilePropertyHeader(
+								viewModel,
+								coverArtColorState,
+								modifier = Modifier
+									.background(coverArtColorState.backgroundColor)
+									.padding(
+										start = viewPadding,
+										top = viewPadding,
+										bottom = viewPadding,
+										end = Dimensions.viewPaddingUnit * 10 + viewPadding
+									)
+									.fillMaxWidth(),
+								isMarqueeEnabled = !lazyListState.isScrollInProgress
+							)
+						}
 
-					items(fileProperties) {
-						FilePropertyRow(viewModel, it, coverArtColorState)
+						items(fileProperties) {
+							FilePropertyRow(viewModel, it, coverArtColorState)
+						}
 					}
 				}
-			}
 
-			Image(
-				painter = painterResource(id = R.drawable.ic_remove_item_white_36dp),
-				contentDescription = "Close",
-				colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
-				modifier = Modifier
-					.align(Alignment.TopEnd)
-					.padding(top = 12.dp, start = 8.dp, end = 8.dp, bottom = 8.dp)
-					.navigable(onClick = navigateApplication::backOut),
-			)
+				Image(
+					painter = painterResource(id = R.drawable.ic_remove_item_white_36dp),
+					contentDescription = "Close",
+					colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
+					modifier = Modifier
+						.align(Alignment.TopEnd)
+						.padding(top = 12.dp, start = 8.dp, end = 8.dp, bottom = 8.dp)
+						.navigable(onClick = navigateApplication::backOut),
+				)
+			}
 		}
 	}
 }
