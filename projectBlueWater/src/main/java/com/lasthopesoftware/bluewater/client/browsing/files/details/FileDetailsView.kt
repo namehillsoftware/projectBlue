@@ -216,7 +216,7 @@ fun rememberComputedColorPalette(
 ): State<MediaStylePalette> {
 	val defaultMediaStylePalette = MediaStylePalette(
 		MaterialTheme.colors.onPrimary,
-		MaterialTheme.colors.secondary,
+		MaterialTheme.colors.onSecondary,
 		MaterialTheme.colors.primary,
 		MaterialTheme.colors.secondary
 	)
@@ -224,8 +224,7 @@ fun rememberComputedColorPalette(
 	val coverArtColors = remember {
 		viewModel.coverArt
 			.flatMap { maybeArt ->
-				maybeArt
-					.value
+				maybeArt.value
 					?.takeIf { it.width > 0 && it.height > 0 }
 					?.let(paletteProvider::promisePalette)
 					?.toMaybeObservable()
@@ -271,15 +270,11 @@ fun FilePropertyHeader(viewModel: FileDetailsViewModel, palette: MediaStylePalet
 }
 
 @Composable
-@OptIn(ExperimentalComposeUiApi::class)
 fun FilePropertyRow(viewModel: FileDetailsViewModel, property: FileDetailsViewModel.FilePropertyViewModel, palette: MediaStylePalette) {
 	val itemPadding = 2.dp
 
 	Row(
-		modifier = Modifier.navigable(
-			onClick = property::highlight,
-			focusedBorderColor = palette.primaryTextColor
-		)
+		modifier = Modifier.clickable(onClick = property::highlight)
 	) {
 		Text(
 			text = property.property,
