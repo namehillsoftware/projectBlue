@@ -7,6 +7,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusGroup
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.BoxWithConstraintsScope
@@ -82,6 +83,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.RatingBar
 import com.lasthopesoftware.bluewater.shared.android.ui.components.memorableScrollConnectedScaler
 import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberSystemUiController
+import com.lasthopesoftware.bluewater.shared.android.ui.indicateFocus
 import com.lasthopesoftware.bluewater.shared.android.ui.navigable
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
@@ -273,8 +275,15 @@ fun FilePropertyHeader(viewModel: FileDetailsViewModel, palette: MediaStylePalet
 fun FilePropertyRow(viewModel: FileDetailsViewModel, property: FileDetailsViewModel.FilePropertyViewModel, palette: MediaStylePalette) {
 	val itemPadding = 2.dp
 
+	val interactionSource = remember { MutableInteractionSource() }
 	Row(
-		modifier = Modifier.clickable(onClick = property::highlight)
+		modifier = Modifier
+			.clickable(
+				onClick = property::highlight,
+				interactionSource = interactionSource,
+				indication = null,
+			)
+			.indicateFocus(interactionSource),
 	) {
 		Text(
 			text = property.property,
