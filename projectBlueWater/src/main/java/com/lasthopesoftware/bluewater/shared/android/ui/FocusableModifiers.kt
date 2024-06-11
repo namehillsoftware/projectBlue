@@ -149,12 +149,11 @@ fun Modifier.navigable(
 		val longPressState = LocalLongPressLatch.current
 
 		val isItemFocused by boxInteractionSource.collectIsFocusedAsState()
-		var previousFocus: FocusInteraction.Focus? by remember {
-			mutableStateOf(null)
-		}
+
 		var previousPress: PressInteraction.Press? by remember {
 			mutableStateOf(null)
 		}
+
 		val scope = rememberCoroutineScope()
 
 		LaunchedEffect(isItemFocused) {
@@ -173,25 +172,11 @@ fun Modifier.navigable(
 
 		var boxSize by remember { mutableStateOf(IntSize(0, 0)) }
 
-		val animatedBorderColor by animateColorAsState(
-			targetValue =
-				if (isItemFocused) focusedBorderColor ?: LocalControlColor.current
-				else unfocusedBorderColor ?: Color.Transparent, label = ""
-		)
-
 		this
 			.bringIntoViewRequester(bringIntoViewRequester)
 			.onSizeChanged { boxSize = it }
-			.indication(
-				interactionSource = boxInteractionSource,
-				indication = indication,
-			)
 			.onFocusChanged { focusState ->
 				if (focusState.isFocused) {
-					val newFocusInteraction = FocusInteraction.Focus()
-					scope.launch {
-						boxInteractionSource.emit(newFocusInteraction)
-					}
 					scope.launch {
 						val visibilityBounds = Rect(
 							left = -1f * scrollPadding.left,
@@ -201,16 +186,10 @@ fun Modifier.navigable(
 						)
 						bringIntoViewRequester.bringIntoView(visibilityBounds)
 					}
-					previousFocus = newFocusInteraction
 					onNavigatedTo?.invoke()
-				} else {
-					previousFocus?.let {
-						scope.launch {
-							boxInteractionSource.emit(FocusInteraction.Unfocus(it))
-						}
-					}
 				}
 			}
+			.indicateFocus(boxInteractionSource, indication, borderWidth, unfocusedBorderColor, focusedBorderColor)
 			.onKeyEvent {
 				if (!selectionKeys.contains(it.key)) {
 					return@onKeyEvent false
@@ -231,9 +210,7 @@ fun Modifier.navigable(
 
 						if (enabled && onLongClick != null) {
 							scope.launch {
-								val isTimedOut = longPressState
-									.wait()
-									.suspend()
+								val isTimedOut = longPressState.wait().suspend()
 
 								if (isTimedOut)
 									onLongClick()
@@ -271,9 +248,50 @@ fun Modifier.navigable(
 			}
 			.focusRequester(focusRequester)
 			.focusTarget()
-			.border(
-				width = borderWidth,
-				color = animatedBorderColor
-			)
 	}
+}
+
+fun Modifier.indicateFocus(
+	interactionSource: MutableInteractionSource,
+	indication: Indication? = null,
+	borderWidth: Dp = 1.dp,
+	unfocusedBorderColor: Color? = null,
+	focusedBorderColor: Color? = null,
+) = composed {
+	var previousFocus by remember { mutableStateOf<FocusInteraction.Focus?>(null) }
+	val scope = rememberCoroutineScope()
+
+	val isItemFocused by interactionSource.collectIsFocusedAsState()
+
+	val animatedBorderColor by animateColorAsState(
+		targetValue =
+			if (isItemFocused) focusedBorderColor ?: LocalControlColor.current
+			else unfocusedBorderColor ?: Color.Transparent,
+		label = ""
+	)
+
+	this
+		.indication(
+			interactionSource = interactionSource,
+			indication = indication,
+		)
+		.onFocusChanged { focusState ->
+			if (focusState.isFocused) {
+				val newFocusInteraction = FocusInteraction.Focus()
+				scope.launch {
+					interactionSource.emit(newFocusInteraction)
+				}
+				previousFocus = newFocusInteraction
+			} else {
+				previousFocus?.let {
+					scope.launch {
+						interactionSource.emit(FocusInteraction.Unfocus(it))
+					}
+				}
+			}
+		}
+		.border(
+			width = borderWidth,
+			color = animatedBorderColor
+		)
 }

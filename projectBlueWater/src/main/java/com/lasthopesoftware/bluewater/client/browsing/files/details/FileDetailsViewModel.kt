@@ -3,22 +3,23 @@ package com.lasthopesoftware.bluewater.client.browsing.files.details
 import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideScopedImages
+import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideLibraryImages
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideEditableScopedFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideEditableLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.getFormattedValue
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.UpdateScopedFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.UpdateFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfScopedConnectionIsReadOnly
-import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideScopedUrlKey
+import com.lasthopesoftware.bluewater.client.connection.authentication.CheckIfConnectionIsReadOnly
+import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideUrlKey
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.images.ProvideDefaultImage
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
+import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.unitResponse
 import com.namehillsoftware.handoff.promises.Promise
@@ -28,14 +29,14 @@ import kotlinx.coroutines.flow.asStateFlow
 
 
 class FileDetailsViewModel(
-	private val connectionPermissions: CheckIfScopedConnectionIsReadOnly,
-	private val scopedFilePropertiesProvider: ProvideEditableScopedFileProperties,
-	private val updateFileProperties: UpdateScopedFileProperties,
+	private val connectionPermissions: CheckIfConnectionIsReadOnly,
+	private val filePropertiesProvider: ProvideEditableLibraryFileProperties,
+	private val updateFileProperties: UpdateFileProperties,
 	defaultImageProvider: ProvideDefaultImage,
-	private val imageProvider: ProvideScopedImages,
+	private val imageProvider: ProvideLibraryImages,
 	private val controlPlayback: ControlPlaybackService,
 	registerForApplicationMessages: RegisterForApplicationMessages,
-	private val scopedUrlKeyProvider: ProvideScopedUrlKey,
+	private val urlKeyProvider: ProvideUrlKey,
 ) : ViewModel() {
 
 	companion object {
@@ -60,31 +61,35 @@ class FileDetailsViewModel(
 	private var activeLibraryId: LibraryId? = null
 	private val propertyUpdateRegistrations = registerForApplicationMessages.registerReceiver { message: FilePropertiesUpdatedMessage ->
 		if (message.urlServiceKey == associatedUrlKey)
-			activePositionedFile?.serviceFile?.apply(::loadFileProperties)
+			activeLibraryId?.also { l ->
+				activePositionedFile?.serviceFile?.also {  sf ->
+					loadFileProperties(l, sf)
+				}
+			}
 	}
 
-	private val mutableFileName = MutableStateFlow("")
-	private val mutableAlbum = MutableStateFlow("")
-	private val mutableArtist = MutableStateFlow("")
-	private val mutableFileProperties = MutableStateFlow(emptyList<FilePropertyViewModel>())
-	private val mutableIsLoading = MutableStateFlow(false)
-	private val mutableCoverArt = MutableStateFlow<Bitmap?>(null)
+	private val mutableFileName = MutableInteractionState("")
+	private val mutableAlbum = MutableInteractionState("")
+	private val mutableArtist = MutableInteractionState("")
+	private val mutableFileProperties = MutableInteractionState(emptyList<FilePropertyViewModel>())
+	private val mutableIsLoading = MutableInteractionState(false)
+	private val mutableCoverArt = MutableInteractionState<Bitmap?>(null)
 	private val promisedSetDefaultCoverArt = defaultImageProvider.promiseFileBitmap()
 		.then { art ->
 			mutableCoverArt.value = art
 			art
 		}
-	private val mutableRating = MutableStateFlow(0)
-	private val mutableHighlightedProperty = MutableStateFlow<FilePropertyViewModel?>(null)
+	private val mutableRating = MutableInteractionState(0)
+	private val mutableHighlightedProperty = MutableInteractionState<FilePropertyViewModel?>(null)
 
-	val fileName = mutableFileName.asStateFlow()
-	val artist = mutableArtist.asStateFlow()
-	val album = mutableAlbum.asStateFlow()
-	val fileProperties = mutableFileProperties.asStateFlow()
-	val isLoading = mutableIsLoading.asStateFlow()
-	val coverArt = mutableCoverArt.asStateFlow()
-	val rating = mutableRating.asStateFlow()
-	val highlightedProperty = mutableHighlightedProperty.asStateFlow()
+	val fileName = mutableFileName.asInteractionState()
+	val artist = mutableArtist.asInteractionState()
+	val album = mutableAlbum.asInteractionState()
+	val fileProperties = mutableFileProperties.asInteractionState()
+	val isLoading = mutableIsLoading.asInteractionState()
+	val coverArt = mutableCoverArt.asInteractionState()
+	val rating = mutableRating.asInteractionState()
+	val highlightedProperty = mutableHighlightedProperty.asInteractionState()
 
 	override fun onCleared() {
 		propertyUpdateRegistrations.close()
@@ -98,18 +103,20 @@ class FileDetailsViewModel(
 		associatedPlaylist = playlist
 
 		mutableIsLoading.value = true
-		val isReadOnlyPromise = connectionPermissions.promiseIsReadOnly()
+		val isReadOnlyPromise = connectionPermissions
+			.promiseIsReadOnly(libraryId)
 			.then { r -> isConnectionReadOnly = r }
 
-		val filePropertiesSetPromise = loadFileProperties(serviceFile)
+		val filePropertiesSetPromise = loadFileProperties(libraryId, serviceFile)
 
-		val urlKeyPromise = scopedUrlKeyProvider.promiseUrlKey(serviceFile)
+		val urlKeyPromise = urlKeyProvider
+			.promiseUrlKey(libraryId, serviceFile)
 			.then { u -> associatedUrlKey = u }
 
 		val bitmapSetPromise = promisedSetDefaultCoverArt // Ensure default cover art is first set before apply cover art from file properties
 			.eventually { default ->
 				imageProvider
-					.promiseFileBitmap(serviceFile)
+					.promiseFileBitmap(libraryId, serviceFile)
 					.then { bitmap -> mutableCoverArt.value = bitmap ?: default }
 			}
 
@@ -131,9 +138,9 @@ class FileDetailsViewModel(
 		controlPlayback.startPlaylist(libraryId, associatedPlaylist, positionedFile.playlistPosition)
 	}
 
-	private fun loadFileProperties(serviceFile: ServiceFile): Promise<Unit> =
-		scopedFilePropertiesProvider
-			.promiseFileProperties(serviceFile)
+	private fun loadFileProperties(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Unit> =
+		filePropertiesProvider
+			.promiseFileProperties(libraryId, serviceFile)
 			.then { fileProperties ->
 				val filePropertiesList = fileProperties.toList()
 				val filePropertiesMap = filePropertiesList.associateBy { it.name }
@@ -184,12 +191,14 @@ class FileDetailsViewModel(
 			mutableIsEditing.value = false
 			val newValue = uncommittedValue.value
 
-			return activePositionedFile
-				?.serviceFile
-				?.let { serviceFile ->
-					updateFileProperties
-						.promiseFileUpdate(serviceFile, property, newValue, false)
-						.then { _ -> mutableCommittedValue.value = newValue }
+			return activeLibraryId?.let { l ->
+					activePositionedFile
+						?.serviceFile
+						?.let { serviceFile ->
+							updateFileProperties
+								.promiseFileUpdate(l, serviceFile, property, newValue, false)
+								.then { _ -> mutableCommittedValue.value = newValue }
+						}
 				}
 				.keepPromise(Unit)
 				.must(::cancel)
@@ -198,7 +207,10 @@ class FileDetailsViewModel(
 		fun cancel() {
 			mutableUncommittedValue.value = mutableCommittedValue.value
 			mutableIsEditing.value = false
-			mutableHighlightedProperty.compareAndSet(this, null)
+
+			while (mutableHighlightedProperty.value == this) {
+				mutableHighlightedProperty.value = null
+			}
 		}
 	}
 }

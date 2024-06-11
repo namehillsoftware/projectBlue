@@ -4,7 +4,6 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionResponseTuple
 import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
-import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.ProgressingPromise
 import io.mockk.every
@@ -29,11 +28,9 @@ class WhenCheckingAuthentication {
 			)
 		}, "Authenticate")
 
-		val libraryConnectionProvider = mockk<ProvideLibraryConnections> {
+		val authenticationChecker = ConnectionAuthenticationChecker(mockk {
 			every { promiseLibraryConnection(LibraryId(libraryId)) } returns ProgressingPromise(fakeConnectionProvider)
-		}
-
-		val authenticationChecker = ConnectionAuthenticationChecker(libraryConnectionProvider)
+		})
 		authenticationChecker.promiseIsReadOnly(LibraryId(libraryId)).toExpiringFuture().get()
 	}
 

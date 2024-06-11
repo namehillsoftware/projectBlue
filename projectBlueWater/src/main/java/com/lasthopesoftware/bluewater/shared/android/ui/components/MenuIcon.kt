@@ -82,7 +82,6 @@ fun MenuIcon(
 	labelColor: Color = LocalContentColor.current,
 	labelModifier: Modifier = Modifier,
 	labelMaxLines: Int = Int.MAX_VALUE,
-
 ) {
 	if (label != null) {
 		MenuIcon(

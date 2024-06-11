@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.properties
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.namehillsoftware.handoff.promises.Promise
 
 private fun buildProperties(rawProperties: Map<String, String>): Sequence<FileProperty> = sequence {
@@ -24,13 +25,11 @@ private fun buildProperties(rawProperties: Map<String, String>): Sequence<FilePr
 	}
 }
 
-class EditableScopedFilePropertiesProvider(private val inner:  ProvideScopedFileProperties)
-	: ProvideEditableScopedFileProperties {
-
-	override fun promiseFileProperties(serviceFile: ServiceFile): Promise<Sequence<FileProperty>> =
+class EditableLibraryFilePropertiesProvider(private val inner: ProvideLibraryFileProperties): ProvideEditableLibraryFileProperties {
+	override fun promiseFileProperties(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Sequence<FileProperty>> =
 		Promise.Proxy { cp ->
 			inner
-				.promiseFileProperties(serviceFile)
+				.promiseFileProperties(libraryId, serviceFile)
 				.apply(cp::doCancel)
 				.then(::buildProperties)
 		}

@@ -10,7 +10,7 @@ import androidx.work.ListenableWorker
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.google.common.util.concurrent.ListenableFuture
-import com.lasthopesoftware.bluewater.MainApplication.Companion.applicationDependencies
+import com.lasthopesoftware.bluewater.ApplicationContextAttachedApplicationDependencies.applicationDependencies
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFileUriQueryParamsProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.LibraryFileProvider
@@ -208,9 +208,7 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 	private val intentBuilder
 		get() =  context.applicationDependencies.intentBuilder
 
-	private val showDownloadsIntent by lazy {
-		intentBuilder.buildPendingShowDownloadsIntent()
-	}
+	private val showDownloadsIntent by lazy { intentBuilder.buildPendingShowDownloadsIntent() }
 
 	private val cancelIntent by lazy { WorkManager.getInstance(context).createCancelPendingIntent(id) }
 

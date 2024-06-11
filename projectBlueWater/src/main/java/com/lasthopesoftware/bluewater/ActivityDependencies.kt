@@ -86,31 +86,13 @@ class ActivityDependencies(
 
 	private val connectionAuthenticationChecker by lazy { ConnectionAuthenticationChecker(libraryConnectionProvider) }
 
-	private val revisionProvider by lazy { LibraryRevisionProvider(libraryConnectionProvider) }
-
-	private val filePropertiesStorage by lazy {
-		FilePropertyStorage(
-			libraryConnectionProvider,
-			connectionAuthenticationChecker,
-			revisionProvider,
-			FilePropertyCache,
-			messageBus
-		)
-	}
-
 	private val itemListProvider by lazy {
-		ItemStringListProvider(
-			FileListParameters,
-			libraryFileStringListProvider)
+		ItemStringListProvider(FileListParameters, libraryFileStringListProvider)
 	}
 
 	private val connectionLostRetryPolicy by lazy { RetryExecutionPolicy(ConnectionLostRetryHandler) }
 
 	private val libraryRepository by lazy { LibraryRepository(applicationContext) }
-
-	private val defaultImageProvider by lazy { DefaultImageProvider(applicationContext) }
-
-	private val imageProvider by lazy { CachedImageProvider.getInstance(applicationContext) }
 
 	private val singleRatePolicy by lazy { RateLimitingExecutionPolicy(1) }
 
@@ -155,7 +137,23 @@ class ActivityDependencies(
 		)
 	}
 
-	private val urlKeyProvider by lazy { UrlKeyProvider(libraryConnectionProvider) }
+	override val urlKeyProvider by lazy { UrlKeyProvider(libraryConnectionProvider) }
+
+	override val defaultImageProvider by lazy { DefaultImageProvider(applicationContext) }
+
+	override val imageProvider by lazy { CachedImageProvider.getInstance(applicationContext) }
+
+	override val revisionProvider by lazy { LibraryRevisionProvider(libraryConnectionProvider) }
+
+	override val filePropertiesStorage by lazy {
+		FilePropertyStorage(
+			libraryConnectionProvider,
+			connectionAuthenticationChecker,
+			revisionProvider,
+			FilePropertyCache,
+			messageBus
+		)
+	}
 
 	override val messageBus by lazy { ApplicationMessageBus.getApplicationMessageBus().getScopedMessageBus().also(viewModelScope::manage) }
 

@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.navigation
 
 import com.lasthopesoftware.bluewater.NavigateApplication
-import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
@@ -69,10 +68,6 @@ class DestinationRoutingNavigation(
 		if (item is Item)
 			navController.navigate(ItemScreen(libraryId, item))
 	}.toPromise()
-
-	override fun viewFileDetails(libraryId: LibraryId, playlist: List<ServiceFile>, position: Int): Promise<Unit> {
-		return inner.viewFileDetails(libraryId, playlist, position)
-	}
 
 	override fun viewNowPlaying(libraryId: LibraryId) = coroutineScope.launch {
 		if (!navController.moveToTop { it is NowPlayingScreen }) {

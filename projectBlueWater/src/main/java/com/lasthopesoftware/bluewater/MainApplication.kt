@@ -19,6 +19,7 @@ import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.rolling.RollingFileAppender
 import ch.qos.logback.core.rolling.TimeBasedRollingPolicy
 import ch.qos.logback.core.util.StatusPrinter
+import com.lasthopesoftware.bluewater.ApplicationContextAttachedApplicationDependencies.applicationDependencies
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
@@ -34,13 +35,11 @@ import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble
 import com.lasthopesoftware.bluewater.client.stored.library.permissions.StoragePermissionsRequestNotificationBuilder
 import com.lasthopesoftware.bluewater.client.stored.library.permissions.read.StorageReadPermissionsRequestNotificationBuilder
 import com.lasthopesoftware.bluewater.client.stored.library.permissions.read.StorageReadPermissionsRequestedBroadcaster
-import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
 import com.lasthopesoftware.bluewater.client.stored.sync.notifications.SyncChannelProperties
 import com.lasthopesoftware.bluewater.client.stored.sync.receivers.SyncItemStateChangedListener
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsUpdated
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
-import com.lasthopesoftware.bluewater.shared.android.intents.IntentBuilder
 import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
@@ -51,14 +50,11 @@ import com.namehillsoftware.handoff.promises.Promise
 import org.slf4j.LoggerFactory
 import java.io.File
 
-open class MainApplication : Application(), ApplicationDependencies {
+open class MainApplication : Application() {
 
 	companion object {
 		private val logger by lazyLogger<MainApplication>()
 		private var isWorkManagerInitialized = false
-
-		val Context.applicationDependencies: ApplicationDependencies
-			get() = applicationContext as ApplicationDependencies
 	}
 
 	private val libraryConnections by lazy { ConnectionSessionManager.get(this) }
@@ -96,7 +92,7 @@ open class MainApplication : Application(), ApplicationDependencies {
 		StoragePermissionsRequestNotificationBuilder(
 			this,
 			StringResources(this),
-			intentBuilder,
+			applicationDependencies.intentBuilder,
 			syncChannelProperties
 		)
 	}
@@ -109,14 +105,10 @@ open class MainApplication : Application(), ApplicationDependencies {
 
 	private val applicationSettings by lazy { getApplicationSettingsRepository() }
 
+	private val syncScheduler by lazy { applicationDependencies.syncScheduler }
+
 	@Volatile
 	private var isLoggingToFile = true
-
-	override val intentBuilder
-		get() = IntentBuilder(this)
-
-	override val syncScheduler
-		get() = SyncScheduler(this)
 
 	@SuppressLint("DefaultLocale")
 	override fun onCreate() {

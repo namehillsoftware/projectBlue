@@ -33,7 +33,6 @@ import com.lasthopesoftware.bluewater.shared.android.notifications.ProduceNotifi
 			.setPriority(NotificationCompat.PRIORITY_DEFAULT)
 			.setColor(ContextCompat.getColor(context, R.color.project_blue_dark))
 			.setContentIntent(intent)
-			.setDeleteIntent(pauseIntent)
 			.setShowWhen(false)
 			.setSmallIcon(R.drawable.now_playing_status_icon_white)
 			.setVisibility(NotificationCompat.VISIBILITY_PUBLIC)

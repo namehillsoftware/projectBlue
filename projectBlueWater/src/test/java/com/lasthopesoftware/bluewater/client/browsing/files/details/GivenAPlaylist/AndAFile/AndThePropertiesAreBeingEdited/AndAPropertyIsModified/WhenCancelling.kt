@@ -7,9 +7,9 @@ import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsV
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.libraries.PassThroughScopedUrlKeyProvider
-import com.lasthopesoftware.promises.extensions.toPromise
+import com.lasthopesoftware.bluewater.client.connection.libraries.PassThroughUrlKeyProvider
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
@@ -21,6 +21,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import java.net.URL
 
+private const val libraryId = 918
 private const val serviceFileId = 79
 
 @RunWith(AndroidJUnit4::class)
@@ -32,10 +33,10 @@ class WhenCancelling {
 		private var viewModel: Lazy<FileDetailsViewModel>? = lazy {
 			FileDetailsViewModel(
 				mockk {
-					every { promiseIsReadOnly() } returns false.toPromise()
+					every { promiseIsReadOnly(LibraryId(libraryId)) } returns false.toPromise()
 				},
 				mockk {
-					every { promiseFileProperties(ServiceFile(serviceFileId)) } returns Promise(
+					every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns Promise(
 						sequenceOf(
 							FileProperty(KnownFileProperties.Rating, "2"),
 							FileProperty("awkward", "prevent"),
@@ -57,7 +58,7 @@ class WhenCancelling {
 					)
 				},
 				mockk {
-					every { promiseFileUpdate(ServiceFile(serviceFileId), KnownFileProperties.Track, any(), false) } answers {
+					every { promiseFileUpdate(LibraryId(libraryId), ServiceFile(serviceFileId), KnownFileProperties.Track, any(), false) } answers {
 						persistedTrackNumber = arg(2)
 						Unit.toPromise()
 					}
@@ -68,13 +69,13 @@ class WhenCancelling {
 						.toPromise()
 				},
 				mockk {
-					every { promiseFileBitmap(any()) } returns BitmapFactory
+					every { promiseFileBitmap(LibraryId(libraryId), any()) } returns BitmapFactory
 						.decodeByteArray(byteArrayOf(61, 127), 0, 2)
 						.toPromise()
 				},
 				mockk(),
 				RecordingApplicationMessageBus(),
-				PassThroughScopedUrlKeyProvider(URL("http://damage")),
+				PassThroughUrlKeyProvider(URL("http://damage")),
 			)
 		}
 
@@ -82,7 +83,7 @@ class WhenCancelling {
 		@BeforeClass
 		fun act() {
 			viewModel?.value?.apply {
-				loadFromList(LibraryId(287), listOf(ServiceFile(serviceFileId)), 0).toExpiringFuture().get()
+				loadFromList(LibraryId(libraryId), listOf(ServiceFile(serviceFileId)), 0).toExpiringFuture().get()
 				fileProperties.value.first { it.property == KnownFileProperties.Track }.apply {
 					updateValue("141")
 					cancel()
