@@ -6,7 +6,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -65,10 +64,6 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import androidx.tv.foundation.ExperimentalTvFoundationApi
-import androidx.tv.foundation.lazy.list.TvLazyColumn
-import androidx.tv.foundation.lazy.list.items
-import androidx.tv.foundation.lazy.list.rememberTvLazyListState
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyType
@@ -482,8 +477,8 @@ private fun FileDetailsEditor(viewModel: FileDetailsViewModel, palette: MediaSty
 }
 
 @Composable
-@OptIn(ExperimentalFoundationApi::class)
-internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
+@OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
+internal fun FileDetailsView(viewModel: FileDetailsViewModel, navigateApplication: NavigateApplication) {
 	val activity = LocalContext.current as? Activity ?: return
 
 	val paletteProvider = MediaStylePaletteProvider(activity)
@@ -590,7 +585,7 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 						}
 				}
 
-				BackButton(onBack = activity::finish)
+				BackButton(onBack = navigateApplication::backOut)
 
 				val headerExpandProgress by remember { derivedStateOf { 1 - headerCollapseProgress } }
 				val topTitlePadding by remember { derivedStateOf { expandedTitlePadding * headerExpandProgress } }
@@ -740,9 +735,7 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 			modifier = Modifier
 				.align(Alignment.TopEnd)
 				.padding(top = 12.dp, start = 8.dp, end = 8.dp, bottom = 8.dp)
-				.clickable {
-					activity.finish()
-				},
+				.navigable(onClick = navigateApplication::backOut),
 		)
 	}
 
@@ -762,80 +755,6 @@ internal fun FileDetailsView(viewModel: FileDetailsViewModel) {
 				)
 				maxWidth >= 450.dp -> fileDetailsTwoColumn()
 				else -> fileDetailsSingleColumn()
-			}
-		}
-	}
-}
-
-@Composable
-@OptIn(ExperimentalTvFoundationApi::class, ExperimentalComposeUiApi::class)
-fun FileDetailsTvView(viewModel: FileDetailsViewModel, navigateApplication: NavigateApplication) {
-	val activity = LocalContext.current as? Activity ?: return
-
-	val isLoading by viewModel.isLoading.subscribeAsState()
-
-	val paletteProvider = MediaStylePaletteProvider(activity)
-	val coverArtColorState by rememberComputedColorPalette(paletteProvider = paletteProvider, viewModel = viewModel)
-
-	FileDetailsEditor(viewModel = viewModel, palette = coverArtColorState)
-
-	ControlSurface(
-		color = coverArtColorState.backgroundColor,
-		contentColor = coverArtColorState.primaryTextColor,
-		controlColor = coverArtColorState.secondaryTextColor
-	) {
-		Box(
-			modifier = Modifier.fillMaxSize()
-		) {
-			if (isLoading) {
-				CircularProgressIndicator(
-					color = coverArtColorState.primaryTextColor,
-					modifier = Modifier.align(Alignment.Center)
-				)
-			} else {
-				Row(modifier = Modifier.fillMaxSize()) {
-					CoverArtColumn(viewModel, coverArtColorState)
-
-					val lazyListState = rememberTvLazyListState()
-					val fileProperties by viewModel.fileProperties.subscribeAsState()
-					TvLazyColumn(
-						modifier = Modifier
-							.fillMaxWidth()
-							.focusGroup(),
-						state = lazyListState
-					) {
-						stickyHeader {
-							FilePropertyHeader(
-								viewModel,
-								coverArtColorState,
-								modifier = Modifier
-									.background(coverArtColorState.backgroundColor)
-									.padding(
-										start = viewPadding,
-										top = viewPadding,
-										bottom = viewPadding,
-										end = Dimensions.viewPaddingUnit * 10 + viewPadding
-									)
-									.fillMaxWidth(),
-								isMarqueeEnabled = !lazyListState.isScrollInProgress
-							)
-						}
-
-						items(fileProperties) {
-							FilePropertyRow(viewModel, it, coverArtColorState)
-						}
-					}
-				}
-
-				Image(
-					painter = painterResource(id = R.drawable.ic_remove_item_white_36dp),
-					contentDescription = "Close",
-					colorFilter = ColorFilter.tint(coverArtColorState.secondaryTextColor),
-					modifier = Modifier
-						.align(Alignment.TopEnd)
-						.padding(top = 12.dp, start = 8.dp, end = 8.dp, bottom = 8.dp)
-						.navigable(onClick = navigateApplication::backOut),
-				)
 			}
 		}
 	}

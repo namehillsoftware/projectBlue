@@ -119,6 +119,10 @@ import java.io.IOException
 		)
 	}
 
+	private val activityApplicationNavigation by lazy {
+		ActivityApplicationNavigation(this, applicationDependencies.intentBuilder)
+	}
+
 	public override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
@@ -144,7 +148,7 @@ import java.io.IOException
 						ConnectionLostView(onCancel = { finish() }, onRetry = { isConnectionLost = false })
 					}
 					else -> {
-						FileDetailsView(vm)
+						FileDetailsView(vm, activityApplicationNavigation)
 					}
 				}
 

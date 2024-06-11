@@ -59,7 +59,7 @@ import com.lasthopesoftware.bluewater.client.browsing.BrowserViewDependencies
 import com.lasthopesoftware.bluewater.client.browsing.ScopedBrowserViewDependencies
 import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelDependencies
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsTvView
+import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsView
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ActiveLibraryDownloadsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ApplicationSettingsScreen
@@ -389,7 +389,7 @@ private fun LibraryDestination.Navigate(browserViewDependencies: ScopedBrowserVi
 
 		is FileDetailsScreen -> {
 			val fileDetailsViewModel = browserViewDependencies.fileDetailsViewModel
-			FileDetailsTvView(fileDetailsViewModel, browserViewDependencies.applicationNavigation)
+			FileDetailsView(fileDetailsViewModel, browserViewDependencies.applicationNavigation)
 
 			fileDetailsViewModel.loadFromList(libraryId, playlist, position)
 		}
