@@ -478,7 +478,7 @@ private fun FileDetailsEditor(viewModel: FileDetailsViewModel, palette: MediaSty
 
 @Composable
 @OptIn(ExperimentalFoundationApi::class, ExperimentalComposeUiApi::class)
-internal fun FileDetailsView(viewModel: FileDetailsViewModel, navigateApplication: NavigateApplication) {
+fun FileDetailsView(viewModel: FileDetailsViewModel, navigateApplication: NavigateApplication) {
 	val activity = LocalContext.current as? Activity ?: return
 
 	val paletteProvider = MediaStylePaletteProvider(activity)

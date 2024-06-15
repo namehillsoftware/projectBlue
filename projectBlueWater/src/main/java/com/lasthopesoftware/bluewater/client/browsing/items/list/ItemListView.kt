@@ -8,10 +8,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.BoxWithConstraintsScope
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
@@ -20,7 +18,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeight
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -53,8 +50,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.tv.foundation.lazy.list.TvLazyColumn
-import androidx.tv.foundation.lazy.list.itemsIndexed
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
@@ -67,12 +62,19 @@ import com.lasthopesoftware.bluewater.client.browsing.files.list.TrackTitleItemV
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewPlaylistFileItem
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledActiveDownloadsButton
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledSearchButton
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledSettingsButton
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledSyncButton
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.UnlabelledActiveDownloadsButton
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.UnlabelledSearchButton
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.UnlabelledSettingsButton
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.UnlabelledSyncButton
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.components.BackButton
-import com.lasthopesoftware.bluewater.shared.android.ui.components.ColumnMenuIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.shared.android.ui.components.ListItemIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
@@ -83,169 +85,19 @@ import com.lasthopesoftware.bluewater.shared.android.ui.linearInterpolation
 import com.lasthopesoftware.bluewater.shared.android.ui.navigable
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
+import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.expandedMenuVerticalPadding
+import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.expandedTitleHeight
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 import kotlin.math.pow
 import kotlin.math.roundToInt
 
-private enum class ContentType {
-	Header, Spacer, Item, File
-}
-
-private val expandedTitleHeight = 84.dp
 private val appBarHeight = Dimensions.appBarHeight
 private val iconSize = Dimensions.topMenuIconSize
 private val minimumMenuWidth = (iconSize + Dimensions.viewPaddingUnit * 2) * 3
 
 private val expandedIconSize = Dimensions.menuHeight
-private val expandedMenuVerticalPadding = Dimensions.viewPaddingUnit * 3
 private val boxHeight = expandedTitleHeight + appBarHeight + expandedIconSize + expandedMenuVerticalPadding * 2
-
-@Composable
-private fun RowScope.LabelledSyncButton(
-	fileListViewModel: FileListViewModel,
-	modifier: Modifier = Modifier,
-) {
-	val isSynced by fileListViewModel.isSynced.collectAsState()
-	val syncButtonLabel =
-		if (!isSynced) stringResource(id = R.string.btn_sync_item)
-		else stringResource(id = R.string.files_synced)
-	ColumnMenuIcon(
-		onClick = { fileListViewModel.toggleSync() },
-		icon = {
-			SyncIcon(
-				isActive = isSynced,
-				modifier = Modifier.size(iconSize),
-				contentDescription = syncButtonLabel,
-			)
-		},
-		label = syncButtonLabel,
-		labelMaxLines = 1,
-		labelModifier = modifier,
-	)
-}
-
-@Composable
-private fun RowScope.UnlabelledSyncButton(fileListViewModel: FileListViewModel) {
-	val isSynced by fileListViewModel.isSynced.collectAsState()
-	val syncButtonLabel =
-		if (!isSynced) stringResource(id = R.string.btn_sync_item)
-		else stringResource(id = R.string.files_synced)
-	ColumnMenuIcon(
-		onClick = { fileListViewModel.toggleSync() },
-		icon = {
-			SyncIcon(
-				isActive = isSynced,
-				modifier = Modifier.size(iconSize),
-				contentDescription = syncButtonLabel,
-			)
-		},
-	)
-}
-
-@Composable
-fun RowScope.LabelledActiveDownloadsButton(
-	itemListViewModel: ItemListViewModel,
-	applicationNavigation: NavigateApplication,
-	modifier: Modifier = Modifier,
-) {
-	ColumnMenuIcon(
-		onClick = {
-			itemListViewModel.loadedLibraryId?.also {
-				applicationNavigation.viewActiveDownloads(it)
-			}
-		},
-		iconPainter = painterResource(id = R.drawable.ic_water),
-		contentDescription = stringResource(id = R.string.activeDownloads),
-		label = stringResource(id = R.string.downloads), // Use shortened version for button size
-		labelModifier = modifier,
-		labelMaxLines = 1,
-	)
-}
-
-@Composable
-fun RowScope.UnlabelledActiveDownloadsButton(
-	itemListViewModel: ItemListViewModel,
-	applicationNavigation: NavigateApplication,
-) {
-	ColumnMenuIcon(
-		onClick = {
-			itemListViewModel.loadedLibraryId?.also {
-				applicationNavigation.viewActiveDownloads(it)
-			}
-		},
-		iconPainter = painterResource(id = R.drawable.ic_water),
-		contentDescription = stringResource(id = R.string.activeDownloads),
-	)
-}
-
-@Composable
-fun RowScope.LabelledSearchButton(
-	itemListViewModel: ItemListViewModel,
-	applicationNavigation: NavigateApplication,
-	modifier: Modifier = Modifier,
-) {
-	val searchButtonLabel = stringResource(id = R.string.search)
-	ColumnMenuIcon(
-		onClick = {
-			itemListViewModel.loadedLibraryId?.also(applicationNavigation::launchSearch)
-		},
-		iconPainter = painterResource(id = R.drawable.search_36dp),
-		contentDescription = searchButtonLabel,
-		label = searchButtonLabel,
-		labelMaxLines = 1,
-		labelModifier = modifier,
-	)
-}
-
-@Composable
-fun RowScope.UnlabelledSearchButton(
-	itemListViewModel: ItemListViewModel,
-	applicationNavigation: NavigateApplication,
-) {
-	val searchButtonLabel = stringResource(id = R.string.search)
-	ColumnMenuIcon(
-		onClick = {
-			itemListViewModel.loadedLibraryId?.also(applicationNavigation::launchSearch)
-		},
-		iconPainter = painterResource(id = R.drawable.search_36dp),
-		contentDescription = searchButtonLabel,
-	)
-}
-
-@Composable
-fun RowScope.LabelledSettingsButton(
-	itemListViewModel: ItemListViewModel,
-	applicationNavigation: NavigateApplication,
-	modifier: Modifier = Modifier,
-) {
-	val settingsButtonLabel = stringResource(id = R.string.settings)
-	ColumnMenuIcon(
-		onClick = {
-			itemListViewModel.loadedLibraryId?.also(applicationNavigation::viewServerSettings)
-		},
-		iconPainter = painterResource(id = R.drawable.ic_action_settings),
-		contentDescription = settingsButtonLabel,
-		label = settingsButtonLabel,
-		labelModifier = modifier,
-		labelMaxLines = 1,
-	)
-}
-
-@Composable
-fun RowScope.UnlabelledSettingsButton(
-	itemListViewModel: ItemListViewModel,
-	applicationNavigation: NavigateApplication,
-) {
-	val settingsButtonLabel = stringResource(id = R.string.settings)
-	ColumnMenuIcon(
-		onClick = {
-			itemListViewModel.loadedLibraryId?.also(applicationNavigation::viewServerSettings)
-		},
-		iconPainter = painterResource(id = R.drawable.ic_action_settings),
-		contentDescription = settingsButtonLabel,
-	)
-}
 
 @Composable
 fun ItemsCountHeader(itemsCount: Int) {
@@ -513,161 +365,6 @@ fun ChildItem(
 }
 
 @Composable
-fun TvItemListView(
-	itemListViewModel: ItemListViewModel,
-	fileListViewModel: FileListViewModel,
-	nowPlayingViewModel: NowPlayingFilePropertiesViewModel,
-	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
-	trackHeadlineViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
-	childItemViewModelProvider: PooledCloseablesViewModel<ReusableChildItemViewModel>,
-	applicationNavigation: NavigateApplication,
-	playbackLibraryItems: PlaybackLibraryItems,
-	playbackServiceController: ControlPlaybackService,
-) {
-	val files by fileListViewModel.files.subscribeAsState()
-	val itemValue by itemListViewModel.itemValue.collectAsState()
-
-	@Composable
-	fun LoadedItemListView() {
-		val items by itemListViewModel.items.collectAsState()
-
-		TvLazyColumn(
-			modifier = Modifier.focusGroup(),
-			contentPadding = PaddingValues(Dimensions.viewPaddingUnit),
-		) {
-			if (items.any()) {
-				item(contentType = ContentType.Header) {
-					ItemsCountHeader(items.size)
-				}
-
-				itemsIndexed(items, { _, i -> i.key }, { _, _ -> ContentType.Item }) { i, f ->
-					ChildItem(
-						f,
-						itemListViewModel,
-						applicationNavigation,
-						childItemViewModelProvider,
-						itemListMenuBackPressedHandler,
-						playbackLibraryItems
-					)
-
-					if (i < items.lastIndex)
-						Divider()
-				}
-			}
-
-			if (!files.any()) return@TvLazyColumn
-
-			item(contentType = ContentType.Header) {
-				FilesCountHeader(files.size)
-			}
-
-			itemsIndexed(files, contentType = { _, _ -> ContentType.File }) { i, f ->
-				RenderTrackTitleItem(
-					i,
-					f,
-					trackHeadlineViewModelProvider,
-					itemListViewModel,
-					nowPlayingViewModel,
-					applicationNavigation,
-					fileListViewModel,
-					itemListMenuBackPressedHandler,
-					playbackServiceController
-				)
-
-				if (i < files.lastIndex)
-					Divider()
-			}
-		}
-	}
-
-	val isFilesLoading by fileListViewModel.isLoading.subscribeAsState()
-
-	ControlSurface {
-		Column(modifier = Modifier.fillMaxSize()) {
-			Box(
-				modifier = Modifier
-					.fillMaxWidth()
-					.height(appBarHeight),
-				contentAlignment = Alignment.CenterStart,
-			) {
-				BackButton(applicationNavigation::navigateUp, modifier = Modifier.align(Alignment.TopStart))
-			}
-
-			Box(modifier = Modifier.height(expandedTitleHeight)) {
-				ProvideTextStyle(MaterialTheme.typography.h5) {
-					val startPadding = Dimensions.viewPaddingUnit
-					val endPadding = Dimensions.viewPaddingUnit
-					val maxLines = 2
-					Text(
-						text = itemValue,
-						maxLines = maxLines,
-						overflow = TextOverflow.Ellipsis,
-						modifier = Modifier
-							.fillMaxWidth()
-							.padding(start = startPadding, end = endPadding),
-					)
-				}
-			}
-
-			if (!isFilesLoading) {
-				Row(
-					modifier = Modifier
-						.padding(
-							top = expandedMenuVerticalPadding,
-							bottom = expandedMenuVerticalPadding,
-							start = Dimensions.viewPaddingUnit * 2,
-							end = Dimensions.viewPaddingUnit * 2
-						)
-						.fillMaxWidth(),
-					horizontalArrangement = Arrangement.SpaceEvenly,
-				) {
-					if (files.any()) {
-						LabelledPlayButton(
-							libraryState = itemListViewModel,
-							playbackServiceController = playbackServiceController,
-							serviceFilesListState = fileListViewModel,
-						)
-
-						LabelledSyncButton(
-							fileListViewModel = fileListViewModel,
-						)
-
-						LabelledShuffleButton(
-							libraryState = itemListViewModel,
-							playbackServiceController = playbackServiceController,
-							serviceFilesListState = fileListViewModel,
-						)
-					} else {
-						LabelledActiveDownloadsButton(
-							itemListViewModel = itemListViewModel,
-							applicationNavigation = applicationNavigation,
-						)
-
-						LabelledSearchButton(
-							itemListViewModel = itemListViewModel,
-							applicationNavigation = applicationNavigation,
-						)
-
-						LabelledSettingsButton(
-							itemListViewModel = itemListViewModel,
-							applicationNavigation = applicationNavigation,
-						)
-					}
-				}
-			}
-
-			Box(modifier = Modifier.fillMaxSize()) {
-				val isItemsLoading by itemListViewModel.isLoading.subscribeAsState()
-				val isLoaded = !isItemsLoading && !isFilesLoading
-
-				if (isLoaded) LoadedItemListView()
-				else CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-			}
-		}
-	}
-}
-
-@Composable
 fun ItemListView(
     itemListViewModel: ItemListViewModel,
     fileListViewModel: FileListViewModel,
@@ -704,7 +401,7 @@ fun ItemListView(
 					fixedKnobRatio = knobHeight,
 				),
 		) {
-			item(contentType = ContentType.Spacer) {
+			item(contentType = ItemListContentType.Spacer) {
 				Spacer(
 					modifier = Modifier
 						.requiredHeight(headerHeight)
@@ -713,11 +410,11 @@ fun ItemListView(
 			}
 
 			if (items.any()) {
-				item(contentType = ContentType.Header) {
+				item(contentType = ItemListContentType.Header) {
 					ItemsCountHeader(items.size)
 				}
 
-				itemsIndexed(items, { _, i -> i.key }, { _, _ -> ContentType.Item }) { i, f ->
+				itemsIndexed(items, { _, i -> i.key }, { _, _ -> ItemListContentType.Item }) { i, f ->
 					ChildItem(
 						f,
 						itemListViewModel,
@@ -734,11 +431,11 @@ fun ItemListView(
 
 			if (!files.any()) return@LazyColumn
 
-			item(contentType = ContentType.Header) {
+			item(contentType = ItemListContentType.Header) {
 				FilesCountHeader(files.size)
 			}
 
-			itemsIndexed(files, contentType = { _, _ -> ContentType.File }) { i, f ->
+			itemsIndexed(files, contentType = { _, _ -> ItemListContentType.File }) { i, f ->
 				RenderTrackTitleItem(
 					i,
 					f,

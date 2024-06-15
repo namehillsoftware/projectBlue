@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.playback.nowplaying.view
+package com.namehillsoftware.projectblue.tv.client.playback.nowplaying.view
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.tween
@@ -42,6 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -52,6 +53,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.tv.foundation.lazy.list.TvLazyColumn
+import androidx.tv.foundation.lazy.list.items
+import androidx.tv.foundation.lazy.list.rememberTvLazyListState
 import com.lasthopesoftware.bluewater.MainApplication
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
@@ -60,6 +64,8 @@ import com.lasthopesoftware.bluewater.client.browsing.ScopedBrowserViewDependenc
 import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelDependencies
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsView
+import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewPlaylistFileItem
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ActiveLibraryDownloadsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ApplicationSettingsScreen
@@ -70,7 +76,6 @@ import com.lasthopesoftware.bluewater.client.browsing.navigation.DestinationRout
 import com.lasthopesoftware.bluewater.client.browsing.navigation.FileDetailsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.HiddenSettingsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.LibraryDestination
-import com.lasthopesoftware.bluewater.client.browsing.navigation.NavigateToTvLibraryDestination
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NewConnectionSettingsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NowPlayingScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.RoutedNavigationDependencies
@@ -79,21 +84,38 @@ import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionF
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionStatusViewModel
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionUpdatesView
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.DramaticConnectionInitializationController
+import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingControls
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingCoverArtView
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingHeadline
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingMessage
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingProgressIndicator
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.PlaylistControls
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.components.NowPlayingItemView
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.controlRowHeight
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.playlistControlAlpha
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.playlist.NowPlayingPlaylistViewModel
+import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.client.settings.PermissionsDependencies
 import com.lasthopesoftware.bluewater.client.settings.TvLibrarySettingsView
-import com.lasthopesoftware.bluewater.settings.TvApplicationSettingsView
 import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsView
+import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
 import com.lasthopesoftware.bluewater.shared.android.ui.absoluteProgressState
 import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberSystemUiController
 import com.lasthopesoftware.bluewater.shared.android.ui.navigable
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.SharedColors
+import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 import com.lasthopesoftware.bluewater.shared.exceptions.UnexpectedExceptionToaster
 import com.lasthopesoftware.bluewater.shared.lazyLogger
+import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
+import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 import com.lasthopesoftware.promises.extensions.suspend
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
+import com.namehillsoftware.projectblue.tv.settings.TvApplicationSettingsView
 import dev.olshevski.navigation.reimagined.NavController
 import dev.olshevski.navigation.reimagined.NavHost
 import dev.olshevski.navigation.reimagined.navigate
@@ -437,6 +459,120 @@ private class NowPlayingDependencies<T>(inner: T, navController: NavController<D
 {
 	override val applicationNavigation by lazy {
 		NowPlayingNavigation(inner.applicationNavigation, navController)
+	}
+}
+
+
+@Composable
+fun NowPlayingTvPlaylist(
+	childItemViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
+	nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel,
+	applicationNavigation: NavigateApplication,
+	playbackServiceController: ControlPlaybackService,
+	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
+	playlistViewModel: NowPlayingPlaylistViewModel,
+	viewModelMessageBus: ViewModelMessageBus<NowPlayingMessage>,
+	modifier: Modifier = Modifier,
+) {
+	val nowPlayingFiles by playlistViewModel.nowPlayingList.subscribeAsState()
+	val playlist by remember { derivedStateOf { nowPlayingFiles.map { p -> p.serviceFile } } }
+	val activeLibraryId by nowPlayingFilePropertiesViewModel.activeLibraryId.subscribeAsState()
+
+	val lazyListState = rememberTvLazyListState()
+
+	val playingFile by nowPlayingFilePropertiesViewModel.nowPlayingFile.subscribeAsState()
+
+	val isAutoScrollEnabled by playlistViewModel.isAutoScrolling.subscribeAsState()
+	if (isAutoScrollEnabled) {
+		LaunchedEffect(key1 = playingFile) {
+			playingFile?.apply {
+				if (!lazyListState.isScrollInProgress)
+					lazyListState.scrollToItem(playlistPosition)
+			}
+		}
+	}
+
+	val scope = rememberCoroutineScope()
+	DisposableEffect(key1 = Unit) {
+		val registration = viewModelMessageBus.registerReceiver { _: NowPlayingMessage.ScrollToNowPlaying ->
+			scope.launch {
+				playingFile?.apply {
+					lazyListState.scrollToItem(playlistPosition)
+				}
+			}
+		}
+
+		onDispose {
+			registration.close()
+		}
+	}
+
+	@Composable
+	fun NowPlayingFileView(positionedFile: PositionedFile) {
+		val fileItemViewModel = remember(childItemViewModelProvider::getViewModel)
+
+		DisposableEffect(activeLibraryId, positionedFile) {
+			activeLibraryId?.also {
+				fileItemViewModel.promiseUpdate(it, positionedFile.serviceFile)
+			}
+
+			onDispose {
+				fileItemViewModel.reset()
+			}
+		}
+
+		val isMenuShown by fileItemViewModel.isMenuShown.collectAsState()
+		val fileName by fileItemViewModel.title.collectAsState()
+		val artist by fileItemViewModel.artist.collectAsState()
+		val isPlaying by remember { derivedStateOf { playingFile == positionedFile } }
+
+		val viewFilesClickHandler = {
+			activeLibraryId?.also {
+				applicationNavigation.viewFileDetails(
+					it,
+					playlist,
+					positionedFile.playlistPosition
+				)
+			}
+			Unit
+		}
+
+		NowPlayingItemView(
+			itemName = fileName,
+			artist = artist,
+			isActive = isPlaying,
+			isHiddenMenuShown = isMenuShown,
+			onItemClick = viewFilesClickHandler,
+			onHiddenMenuClick = {
+				itemListMenuBackPressedHandler.hideAllMenus()
+				fileItemViewModel.showMenu()
+			},
+			onRemoveFromNowPlayingClick = {
+				activeLibraryId?.also {
+					playbackServiceController
+						.removeFromPlaylistAtPosition(it, positionedFile.playlistPosition)
+				}
+			},
+			onViewFilesClick = viewFilesClickHandler,
+			onPlayClick = {
+				fileItemViewModel.hideMenu()
+				activeLibraryId?.also {
+					playbackServiceController.seekTo(it, positionedFile.playlistPosition)
+				}
+			}
+		)
+	}
+
+	TvLazyColumn(
+		state = lazyListState,
+		modifier = Modifier.focusGroup().onFocusChanged { f ->
+			if (f.hasFocus) playlistViewModel.lockOutAutoScroll()
+			else playlistViewModel.releaseAutoScroll()
+		}.then(modifier),
+	) {
+		items(items = nowPlayingFiles, key = { f -> f }) { f ->
+			NowPlayingFileView(positionedFile = f)
+		}
 	}
 }
 

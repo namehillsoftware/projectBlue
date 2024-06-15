@@ -32,7 +32,8 @@
         tools:ignore="GoogleAppIndexingWarning"
         tools:targetApi="tiramisu"
         android:requestLegacyExternalStorage="true"
-        android:enableOnBackInvokedCallback="true">
+        android:enableOnBackInvokedCallback="true"
+        android:banner="@drawable/tv_banner">
 
         <activity
             android:name=".client.EntryActivity"
@@ -45,34 +46,26 @@
                 <category android:name="android.intent.category.LAUNCHER" />
                 <category android:name="android.intent.category.APP_MUSIC" />
                 <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
         </activity>
 
-        <activity
-            android:name="com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsActivity"
-            android:label="@string/title_activity_file_view"
-            android:parentActivityName=".client.EntryActivity">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value=".client.EntryActivity" />
-        </activity>
-
         <receiver
-            android:name=".client.playback.service.receivers.AudioBecomingNoisyReceiver"
+            android:name="com.lasthopesoftware.bluewater.client.playback.service.receivers.AudioBecomingNoisyReceiver"
             android:exported="true">
             <intent-filter android:priority="1000">
                 <action android:name="android.media.AUDIO_BECOMING_NOISY" />
             </intent-filter>
         </receiver>
         <receiver
-            android:name=".client.playback.service.receivers.RemoteControlReceiver"
+            android:name="com.lasthopesoftware.bluewater.client.playback.service.receivers.RemoteControlReceiver"
             android:exported="true">
             <intent-filter android:priority="999">
                 <action android:name="android.intent.action.MEDIA_BUTTON" />
             </intent-filter>
         </receiver>
         <receiver
-            android:name=".client.stored.sync.DeviceBootSyncScheduler"
+            android:name="com.lasthopesoftware.bluewater.client.stored.sync.DeviceBootSyncScheduler"
             android:enabled="true"
             android:exported="true">
             <intent-filter>
@@ -81,25 +74,25 @@
         </receiver>
 
         <service
-            android:name=".client.playback.service.PlaybackService"
+            android:name="com.lasthopesoftware.bluewater.client.playback.service.PlaybackService"
             android:enabled="true"
             android:exported="true"
             android:foregroundServiceType="mediaPlayback"
             tools:ignore="ExportedService">
             <intent-filter>
-                <action android:name=".client.playback.service.PlaybackService.Action.parsePlaybackServiceAction" />
+                <action android:name="com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Action.parsePlaybackServiceAction" />
             </intent-filter>
         </service>
         <service
-            android:name=".client.connection.polling.PollConnectionService"
+            android:name="com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionService"
             android:enabled="true"
             android:exported="false" />
         <service
-            android:name=".shared.android.MediaSession.MediaSessionService"
+            android:name="com.lasthopesoftware.bluewater.shared.android.MediaSession.MediaSessionService"
             android:enabled="true"
             android:exported="false" />
         <service
-            android:name=".client.browsing.remote.RemoteBrowserService"
+            android:name="com.lasthopesoftware.bluewater.client.browsing.remote.RemoteBrowserService"
             android:enabled="true"
             android:exported="true"
             tools:ignore="ExportedService">

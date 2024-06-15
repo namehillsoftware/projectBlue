@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.settings
+package com.namehillsoftware.projectblue.tv.settings
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -41,6 +41,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.libraryId
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
+import com.lasthopesoftware.bluewater.settings.ApplicationSettingsViewModel
 import com.lasthopesoftware.bluewater.shared.android.ui.components.ApplicationInfoText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.ApplicationLogo
 import com.lasthopesoftware.bluewater.shared.android.ui.components.LabeledSelection

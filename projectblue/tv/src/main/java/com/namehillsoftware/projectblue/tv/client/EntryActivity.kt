@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client
+package com.namehillsoftware.projectblue.tv.client
 
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -9,7 +9,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.view.WindowCompat
 import androidx.media3.common.util.UnstableApi
 import com.lasthopesoftware.bluewater.ActivityDependencies
-import com.lasthopesoftware.bluewater.ApplicationContextAttachedApplicationDependencies.applicationDependencies
+import com.lasthopesoftware.bluewater.client.ActivitySuppliedDependencies
 import com.lasthopesoftware.bluewater.client.browsing.navigation.Destination
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NavigationMessage
 import com.lasthopesoftware.bluewater.client.settings.PermissionsDependencies
@@ -25,6 +25,8 @@ import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.promises.extensions.registerResultActivityLauncher
 import com.namehillsoftware.handoff.Messenger
 import com.namehillsoftware.handoff.promises.Promise
+import com.namehillsoftware.projectblue.tv.ApplicationContextAttachedApplicationDependencies.applicationDependencies
+import com.namehillsoftware.projectblue.tv.client.playback.nowplaying.view.NowPlayingTvApplication
 import java.util.concurrent.ConcurrentHashMap
 
 private val logger by lazyLogger<EntryActivity>()
@@ -75,8 +77,8 @@ val destinationProperty by lazy { magicPropertyBuilder.buildProperty("destinatio
 		WindowCompat.setDecorFitsSystemWindows(window, false)
 
 		setContent {
-			ProjectBlueComposableApplication {
-				NarrowScreenApplication(
+			ProjectBlueComposableApplication(darkTheme = true) {
+				NowPlayingTvApplication(
 					browserViewDependencies = browserViewDependencies,
 					permissionsDependencies = this,
 					initialDestination = getDestination(intent),

@@ -1,3 +1,5 @@
+package com.namehillsoftware.projectblue.tv.client.browsing.items.list
+
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -10,7 +12,6 @@ import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewMod
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusablePlaylistFileItemViewModelProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ConnectionLostView
-import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListView
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.list.PlaybackLibraryItems
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ReusableChildItemViewModel
@@ -27,38 +28,38 @@ import com.namehillsoftware.handoff.promises.Promise
 import java.io.IOException
 
 @Composable
-fun LoadedItemListView(viewModelDependencies: ScopedBrowserViewDependencies, libraryId: LibraryId, item: Item?) {
+fun LoadedTvItemListView(viewModelDependencies: ScopedBrowserViewDependencies, libraryId: LibraryId, item: Item?) {
 	with (viewModelDependencies) {
-		LoadedItemListView(
-			libraryId,
-			item,
-			itemListViewModel = itemListViewModel,
-			fileListViewModel = fileListViewModel,
-			nowPlayingViewModel = nowPlayingFilePropertiesViewModel,
-			itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
-			reusablePlaylistFileItemViewModelProvider = reusablePlaylistFileItemViewModelProvider,
-			childItemViewModelProvider = reusableChildItemViewModelProvider,
-			applicationNavigation = applicationNavigation,
-			playbackLibraryItems = playbackLibraryItems,
-			playbackServiceController = playbackServiceController,
-			connectionStatusViewModel = connectionStatusViewModel,
-		)
+        LoadedTvItemListView(
+            libraryId,
+            item,
+            itemListViewModel = itemListViewModel,
+            fileListViewModel = fileListViewModel,
+            nowPlayingViewModel = nowPlayingFilePropertiesViewModel,
+            itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
+            reusablePlaylistFileItemViewModelProvider = reusablePlaylistFileItemViewModelProvider,
+            childItemViewModelProvider = reusableChildItemViewModelProvider,
+            applicationNavigation = applicationNavigation,
+            playbackLibraryItems = playbackLibraryItems,
+            playbackServiceController = playbackServiceController,
+            connectionStatusViewModel = connectionStatusViewModel,
+        )
 	}
 }
 
 @Composable
-private fun LoadedItemListView(
+private fun LoadedTvItemListView(
 	libraryId: LibraryId,
 	item: Item?,
-    itemListViewModel: ItemListViewModel,
-    fileListViewModel: FileListViewModel,
-    nowPlayingViewModel: NowPlayingFilePropertiesViewModel,
-    itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
-    reusablePlaylistFileItemViewModelProvider: ReusablePlaylistFileItemViewModelProvider,
-    childItemViewModelProvider: PooledCloseablesViewModel<ReusableChildItemViewModel>,
-    applicationNavigation: NavigateApplication,
-    playbackLibraryItems: PlaybackLibraryItems,
-    playbackServiceController: ControlPlaybackService,
+	itemListViewModel: ItemListViewModel,
+	fileListViewModel: FileListViewModel,
+	nowPlayingViewModel: NowPlayingFilePropertiesViewModel,
+	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
+	reusablePlaylistFileItemViewModelProvider: ReusablePlaylistFileItemViewModelProvider,
+	childItemViewModelProvider: PooledCloseablesViewModel<ReusableChildItemViewModel>,
+	applicationNavigation: NavigateApplication,
+	playbackLibraryItems: PlaybackLibraryItems,
+	playbackServiceController: ControlPlaybackService,
 	connectionStatusViewModel: ConnectionStatusViewModel,
 ) {
 	var isConnectionLost by remember { mutableStateOf(false) }
@@ -72,7 +73,7 @@ private fun LoadedItemListView(
 			}
 		)
 	} else {
-		ItemListView(
+		TvItemListView(
 			itemListViewModel,
 			fileListViewModel,
 			nowPlayingViewModel,
