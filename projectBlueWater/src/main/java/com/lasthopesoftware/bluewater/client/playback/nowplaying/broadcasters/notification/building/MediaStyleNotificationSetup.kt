@@ -6,17 +6,17 @@ import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import androidx.media3.common.util.UnstableApi
 import com.lasthopesoftware.bluewater.R
+import com.lasthopesoftware.bluewater.android.intents.BuildIntents
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.NotificationsConfiguration
-import com.lasthopesoftware.bluewater.shared.android.intents.BuildIntents
 import com.lasthopesoftware.bluewater.shared.android.notifications.ProduceNotificationBuilders
 
 @UnstableApi class MediaStyleNotificationSetup(
-	private val context: Context,
-	private val produceNotificationBuilders: ProduceNotificationBuilders,
-	private val configuration: NotificationsConfiguration,
-	private val mediaSessionCompat: MediaSessionCompat,
-	private val intentBuilder: BuildIntents,
+    private val context: Context,
+    private val produceNotificationBuilders: ProduceNotificationBuilders,
+    private val configuration: NotificationsConfiguration,
+    private val mediaSessionCompat: MediaSessionCompat,
+    private val intentBuilder: BuildIntents,
 ) : SetupMediaStyleNotifications {
 	override fun getMediaStyleNotification(libraryId: LibraryId): NotificationCompat.Builder {
 		val builder = produceNotificationBuilders.getNotificationBuilder(configuration.notificationChannel)

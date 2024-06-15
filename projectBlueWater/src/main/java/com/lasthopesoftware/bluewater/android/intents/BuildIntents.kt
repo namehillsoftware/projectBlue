@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.shared.android.intents
+package com.lasthopesoftware.bluewater.android.intents
 
 import android.app.PendingIntent
 import android.content.Intent

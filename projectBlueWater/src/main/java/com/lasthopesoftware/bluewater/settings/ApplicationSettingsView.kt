@@ -206,6 +206,8 @@ private fun LazyListScope.settingsList(
 				.padding(top = 48.dp)
 		) {
 			ApplicationInfoText(
+//				versionName = BuildConfig.VERSION_NAME,
+//				versionCode = BuildConfig.VERSION_CODE,
 				modifier = Modifier
 					.fillMaxWidth()
 					.align(Alignment.Center)

@@ -49,6 +49,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.navigable
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
+import com.namehillsoftware.projectblue.tv.BuildConfig
 
 private val optionsPadding = PaddingValues(start = 32.dp, end = 32.dp)
 
@@ -158,6 +159,8 @@ private fun TvLazyListScope.settingsList(
 				.padding(top = 48.dp)
 		) {
 			ApplicationInfoText(
+				versionName = BuildConfig.VERSION_NAME,
+				versionCode = BuildConfig.VERSION_CODE,
 				modifier = Modifier
 					.fillMaxWidth()
 					.align(Alignment.Center)

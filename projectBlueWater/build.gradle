@@ -4,7 +4,7 @@ plugins {
 	id "de.mannodermaus.android-junit5" version "1.9.3.0"
 }
 
-apply plugin: 'com.android.application'
+apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 apply plugin: 'org.jetbrains.kotlin.android'
 apply plugin: 'kotlin-parcelize'
@@ -29,7 +29,6 @@ android {
 	compileSdk 34
 
 	defaultConfig {
-        applicationId "com.lasthopesoftware.bluewater"
         minSdkVersion 21
         targetSdkVersion 34
 		versionName gitVersion()
@@ -57,7 +56,7 @@ android {
 
 	buildFeatures {
 		compose = true
-		buildConfig true
+		buildConfig = true
 	}
 
 	compileOptions {
@@ -76,7 +75,6 @@ android {
 		}
         release {
             minifyEnabled true
-            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
 			signingConfig (isSignedExternally() ? signingConfigs.release : signingConfig)
         }

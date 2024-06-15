@@ -4,16 +4,16 @@ import android.app.Notification
 import android.content.Context
 import androidx.core.app.NotificationCompat
 import com.lasthopesoftware.bluewater.R
+import com.lasthopesoftware.bluewater.android.intents.BuildIntents
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.shared.android.intents.BuildIntents
 import com.lasthopesoftware.bluewater.shared.android.notifications.notificationchannel.ChannelConfiguration
 import com.lasthopesoftware.resources.strings.GetStringResources
 
 class StoragePermissionsRequestNotificationBuilder(
-	private val context: Context,
-	private val stringResources: GetStringResources,
-	private val intentBuilder: BuildIntents,
-	private val channelProperties: ChannelConfiguration,
+    private val context: Context,
+    private val stringResources: GetStringResources,
+    private val intentBuilder: BuildIntents,
+    private val channelProperties: ChannelConfiguration,
 ) : IStoragePermissionsRequestNotificationBuilder {
 
 	override fun buildStoragePermissionsRequestNotification(libraryId: Int): Notification {

@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.view.KeyEvent
 import androidx.media3.common.util.UnstableApi
+import com.lasthopesoftware.bluewater.android.intents.safelyGetParcelableExtra
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Companion.next
@@ -12,7 +13,6 @@ import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Co
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Companion.play
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Companion.previous
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Companion.togglePlayPause
-import com.lasthopesoftware.bluewater.shared.android.intents.safelyGetParcelableExtra
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 
 private val logger by lazyLogger<RemoteControlReceiver>()

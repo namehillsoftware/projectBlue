@@ -19,7 +19,9 @@ import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.rolling.RollingFileAppender
 import ch.qos.logback.core.rolling.TimeBasedRollingPolicy
 import ch.qos.logback.core.util.StatusPrinter
-import com.lasthopesoftware.bluewater.ApplicationContextAttachedApplicationDependencies.applicationDependencies
+import com.lasthopesoftware.bluewater.AttachedApplicationDependencies
+import com.lasthopesoftware.bluewater.AttachedApplicationDependencies.applicationDependencies
+import com.lasthopesoftware.bluewater.android.intents.newIntentBuilder
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
@@ -47,6 +49,7 @@ import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.compilation.DebugFlag
 import com.lasthopesoftware.resources.strings.StringResources
 import com.namehillsoftware.handoff.promises.Promise
+import com.namehillsoftware.projectblue.tv.client.TvEntryActivity
 import org.slf4j.LoggerFactory
 import java.io.File
 
@@ -113,6 +116,8 @@ open class MainApplication : Application() {
 	@SuppressLint("DefaultLocale")
 	override fun onCreate() {
 		super.onCreate()
+
+		AttachedApplicationDependencies.attach(this, newIntentBuilder<TvEntryActivity>())
 
 		Promise.Rejections.toggleStackTraceFiltering(true)
 

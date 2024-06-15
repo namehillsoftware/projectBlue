@@ -1,0 +1,203 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
+plugins {
+	id 'com.android.application'
+	id 'org.jetbrains.kotlin.android'
+	id "de.mannodermaus.android-junit5" version "1.9.3.0"
+}
+
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply plugin: 'org.jetbrains.kotlin.android'
+apply plugin: 'kotlin-parcelize'
+
+def androidKeyStorePassword = hasProperty('androidKeyStorePassword') ? androidKeyStorePassword : null
+def hasKeyStorePassword = { androidKeyStorePassword != null && !androidKeyStorePassword.isEmpty() }
+if (!hasKeyStorePassword()) {
+	androidKeyStorePassword = System.getenv('ANDROID_KEY_STORE_PASSWORD')
+}
+
+def androidStorePassword = hasProperty('androidStorePassword') ? androidStorePassword : ""
+def hasAndroidStorePassword = { androidStorePassword != null && !androidStorePassword.isEmpty() }
+if (!hasAndroidStorePassword()) {
+	androidStorePassword = System.getenv('ANDROID_STORE_PASSWORD')
+}
+
+def isSignedExternally = { hasKeyStorePassword() && hasAndroidStorePassword() }
+
+def compose_compiler_version = '1.5.14'
+
+android {
+	namespace 'com.namehillsoftware.projectblue.handheld'
+	compileSdk 34
+
+	defaultConfig {
+//		applicationId "com.namehillsoftware.projectblue.handheld"
+		applicationId "com.lasthopesoftware.bluewater"
+		minSdk 21
+		targetSdk 34
+		versionName gitVersion()
+		archivesBaseName = "project-blue-" + gitVersion()
+	}
+
+	buildFeatures {
+		compose = true
+		buildConfig = true
+	}
+
+	signingConfigs {
+		debug {
+			// You need to specify either an absolute path or include the
+			// keystore file in the same directory as the build.gradle file.
+			storeFile file("androidstore")
+			storePassword androidStorePassword
+			keyAlias "store"
+			keyPassword androidKeyStorePassword
+		}
+		release {
+			// You need to specify either an absolute path or include the
+			// keystore file in the same directory as the build.gradle file.
+			storeFile file("androidstore")
+			storePassword androidStorePassword
+			keyAlias "store"
+			keyPassword androidKeyStorePassword
+		}
+	}
+
+	compileOptions {
+		sourceCompatibility JavaVersion.VERSION_11
+		targetCompatibility JavaVersion.VERSION_11
+	}
+
+	kotlinOptions {
+		jvmTarget = '11'
+	}
+
+	buildTypes {
+		debug {
+			minifyEnabled false
+			signingConfig = (isSignedExternally() ? signingConfigs.debug : signingConfig)
+		}
+		release {
+			minifyEnabled true
+			shrinkResources true
+			proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+			signingConfig = (isSignedExternally() ? signingConfigs.release : signingConfig)
+		}
+	}
+
+	packagingOptions {
+		resources {
+			excludes += ['META-INF/LICENSE.txt', 'META-INF/NOTICE.txt', 'META-INF/INDEX.LIST']
+			resources {
+				excludes += '/META-INF/{AL2.0,LGPL2.1}'
+			}
+		}
+	}
+
+	defaultConfig {
+
+		versionCode getGeneratedVersionCode()
+		testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+		vectorDrawables {
+			useSupportLibrary true
+		}
+	}
+
+	lint {
+		abortOnError false
+	}
+
+	composeOptions {
+		kotlinCompilerExtensionVersion compose_compiler_version
+	}
+}
+
+tasks.withType(KotlinCompile).configureEach {
+	compilerOptions {
+		freeCompilerArgs.add("-opt-in=kotlin.RequiresOptIn")
+		freeCompilerArgs.add("-Xcontext-receivers")
+	}
+}
+
+def gitVersion() {
+	try {
+		def gitDescribe = providers.exec {
+			it.ignoreExitValue = true
+			commandLine("git", "describe")
+		}.standardOutput.asText.get().trim()
+
+		def latestTag = providers.exec {
+			it.ignoreExitValue = true
+			commandLine("git", "describe", "--abbrev=0")
+		}.standardOutput.asText.get().trim()
+
+		if (gitDescribe != latestTag) {
+			return latestTag + "-SNAPSHOT"
+		}
+
+		return gitDescribe
+	} catch (ignored) {
+		return "0.0.1"
+	}
+}
+
+def getGeneratedVersionCode() {
+	// should result in the same value as running
+	// git rev-list <checked out branch name> | wc -l
+	def initialVersionCode = 3761 // the initial version code before tags were used to increment version code
+
+	try {
+		def numberOfReleases = providers.exec {
+			it.ignoreExitValue = true
+			commandLine("sh", "-c", "git tag | wc -l")
+		}.standardOutput.asText.get() as Integer
+		return numberOfReleases + initialVersionCode
+	} catch (ignored) {
+		return initialVersionCode
+	}
+}
+
+dependencies {
+
+	implementation 'androidx.test:runner:1.5.2'
+	def compose_version = '1.6.8'
+	def media3_version = '1.3.1'
+	def lifecycle_version = '2.8.2'
+
+	implementation 'androidx.core:core-ktx:1.13.1'
+	implementation 'androidx.annotation:annotation:1.8.0'
+	implementation 'androidx.work:work-runtime:2.9.0'
+	implementation 'androidx.media:media:1.7.0'
+	implementation 'androidx.palette:palette-ktx:1.0.0'
+	implementation 'androidx.preference:preference-ktx:1.2.1'
+	implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:$lifecycle_version"
+	implementation "androidx.lifecycle:lifecycle-process:$lifecycle_version"
+	implementation "androidx.lifecycle:lifecycle-service:$lifecycle_version"
+	implementation "androidx.lifecycle:lifecycle-runtime-ktx:$lifecycle_version"
+	implementation 'com.google.android.material:material:1.12.0'
+	implementation 'com.google.guava:guava:33.2.1-android'
+	implementation 'joda-time:joda-time:2.12.7'
+	implementation 'commons-io:commons-io:2.16.1'
+	implementation 'org.slf4j:slf4j-api:2.0.13'
+	implementation 'com.github.tony19:logback-android:3.0.0'
+	implementation 'com.namehillsoftware:handoff:0.28.0'
+	implementation 'io.reactivex.rxjava3:rxjava:3.1.8'
+	implementation 'com.namehillsoftware:lazy-j:0.11.0'
+	implementation 'com.github.danrien:xmlwise:-SNAPSHOT'
+	implementation "androidx.media3:media3-exoplayer:$media3_version"
+	implementation "androidx.media3:media3-datasource-okhttp:$media3_version"
+	implementation 'com.squareup.okio:okio:3.9.0'
+	implementation 'com.squareup.okhttp3:okhttp:5.0.0-alpha.14'
+	implementation 'com.namehillsoftware:querydroid:0.5.0'
+	implementation "androidx.compose.ui:ui:$compose_version"
+	implementation "androidx.compose.material:material:$compose_version"
+	implementation "androidx.compose.ui:ui-tooling:$compose_version"
+	implementation "androidx.compose.runtime:runtime-rxjava3:$compose_version"
+	implementation 'androidx.activity:activity-compose:1.9.0'
+	implementation "androidx.compose.compiler:compiler:$compose_compiler_version"
+	implementation 'dev.olshevski.navigation:reimagined:1.5.0'
+	implementation project(":projectBlueWater")
+	debugImplementation "androidx.compose.ui:ui-tooling:$compose_version"
+	debugImplementation "androidx.compose.ui:ui-test-manifest:$compose_version"
+}

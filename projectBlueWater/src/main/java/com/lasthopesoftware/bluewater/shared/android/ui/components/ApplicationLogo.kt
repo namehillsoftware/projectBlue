@@ -13,7 +13,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.lasthopesoftware.bluewater.BuildConfig
 import com.lasthopesoftware.bluewater.R
 
 @Composable
@@ -32,13 +31,13 @@ fun ApplicationLogo(modifier: Modifier = Modifier) {
 
 @Composable
 @Preview
-fun ApplicationInfoText(modifier: Modifier = Modifier) {
+fun ApplicationInfoText(versionName: String = "4.0.0", versionCode: Int = 3500, modifier: Modifier = Modifier) {
 	Text(
 		stringResource(
 			R.string.aboutAppText,
 			stringResource(R.string.app_name),
-			BuildConfig.VERSION_NAME,
-			BuildConfig.VERSION_CODE,
+			versionName,
+			versionCode,
 			stringResource(R.string.company_name),
 			stringResource(R.string.copyright_year)
 		),
