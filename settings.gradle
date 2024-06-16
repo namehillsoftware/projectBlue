@@ -1,3 +1,2 @@
 include ':projectBlueWater'
-include ':projectblue:tv'
-include ':projectblue:handheld'
+
