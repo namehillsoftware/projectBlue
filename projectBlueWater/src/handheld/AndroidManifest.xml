@@ -6,7 +6,7 @@
         android:required="false" />
 
     <application
-        android:name=".handheld.MainApplication">
+        android:name=".handheld.HandheldApplication">
 
         <activity
             android:name=".handheld.client.HandheldEntryActivity"

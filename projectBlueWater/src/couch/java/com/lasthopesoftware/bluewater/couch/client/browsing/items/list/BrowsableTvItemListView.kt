@@ -15,6 +15,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.ConnectionLostV
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.list.PlaybackLibraryItems
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ReusableChildItemViewModel
+import com.lasthopesoftware.bluewater.couch.client.browsing.items.list.TvItemListView
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter

@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.handheld
+package com.lasthopesoftware.bluewater
 
 import android.annotation.SuppressLint
 import android.app.Application
@@ -19,8 +19,6 @@ import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.rolling.RollingFileAppender
 import ch.qos.logback.core.rolling.TimeBasedRollingPolicy
 import ch.qos.logback.core.util.StatusPrinter
-import com.lasthopesoftware.bluewater.AttachedApplicationDependencies
-import com.lasthopesoftware.bluewater.android.intents.newIntentBuilder
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
@@ -36,6 +34,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble
 import com.lasthopesoftware.bluewater.client.stored.library.permissions.StoragePermissionsRequestNotificationBuilder
 import com.lasthopesoftware.bluewater.client.stored.library.permissions.read.StorageReadPermissionsRequestNotificationBuilder
 import com.lasthopesoftware.bluewater.client.stored.library.permissions.read.StorageReadPermissionsRequestedBroadcaster
+import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
 import com.lasthopesoftware.bluewater.client.stored.sync.notifications.SyncChannelProperties
 import com.lasthopesoftware.bluewater.client.stored.sync.receivers.SyncItemStateChangedListener
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsUpdated
@@ -48,14 +47,13 @@ import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.compilation.DebugFlag
 import com.lasthopesoftware.resources.strings.StringResources
 import com.namehillsoftware.handoff.promises.Promise
-import com.lasthopesoftware.bluewater.handheld.client.HandheldEntryActivity
 import org.slf4j.LoggerFactory
 import java.io.File
 
-open class MainApplication : Application() {
+abstract class ProjectBlueApplication : Application(), ApplicationDependencies {
 
 	companion object {
-		private val logger by lazyLogger<MainApplication>()
+		private val logger by lazyLogger<ProjectBlueApplication>()
 		private var isWorkManagerInitialized = false
 	}
 
@@ -94,7 +92,7 @@ open class MainApplication : Application() {
 		StoragePermissionsRequestNotificationBuilder(
 			this,
 			StringResources(this),
-			AttachedApplicationDependencies.applicationDependencies.intentBuilder,
+			intentBuilder,
 			syncChannelProperties
 		)
 	}
@@ -107,7 +105,7 @@ open class MainApplication : Application() {
 
 	private val applicationSettings by lazy { getApplicationSettingsRepository() }
 
-	private val syncScheduler by lazy { AttachedApplicationDependencies.applicationDependencies.syncScheduler }
+	override val syncScheduler by lazy { SyncScheduler(this) }
 
 	@Volatile
 	private var isLoggingToFile = true
@@ -116,7 +114,7 @@ open class MainApplication : Application() {
 	override fun onCreate() {
 		super.onCreate()
 
-		AttachedApplicationDependencies.attach(this, newIntentBuilder<HandheldEntryActivity>())
+		ApplicationDependenciesContainer.attach(this)
 
 		Promise.Rejections.toggleStackTraceFiltering(true)
 

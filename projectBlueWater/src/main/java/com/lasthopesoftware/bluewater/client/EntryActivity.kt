@@ -9,7 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.core.app.ActivityCompat
 import androidx.core.view.WindowCompat
 import com.lasthopesoftware.bluewater.ActivityDependencies
-import com.lasthopesoftware.bluewater.AttachedApplicationDependencies.applicationDependencies
+import com.lasthopesoftware.bluewater.ApplicationDependenciesContainer.applicationDependencies
 import com.lasthopesoftware.bluewater.android.intents.safelyGetParcelableExtra
 import com.lasthopesoftware.bluewater.client.browsing.BrowserViewDependencies
 import com.lasthopesoftware.bluewater.client.browsing.navigation.Destination

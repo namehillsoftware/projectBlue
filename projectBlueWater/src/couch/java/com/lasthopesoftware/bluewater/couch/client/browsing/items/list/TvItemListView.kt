@@ -1,4 +1,4 @@
-package com.namehillsoftware.projectblue.tv.client.browsing.items.list
+package com.lasthopesoftware.bluewater.couch.client.browsing.items.list
 
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
