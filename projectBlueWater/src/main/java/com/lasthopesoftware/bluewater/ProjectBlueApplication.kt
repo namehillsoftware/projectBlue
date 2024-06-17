@@ -19,7 +19,6 @@ import ch.qos.logback.classic.spi.ILoggingEvent
 import ch.qos.logback.core.rolling.RollingFileAppender
 import ch.qos.logback.core.rolling.TimeBasedRollingPolicy
 import ch.qos.logback.core.util.StatusPrinter
-import com.lasthopesoftware.bluewater.ApplicationContextAttachedApplicationDependencies.applicationDependencies
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
@@ -35,6 +34,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble
 import com.lasthopesoftware.bluewater.client.stored.library.permissions.StoragePermissionsRequestNotificationBuilder
 import com.lasthopesoftware.bluewater.client.stored.library.permissions.read.StorageReadPermissionsRequestNotificationBuilder
 import com.lasthopesoftware.bluewater.client.stored.library.permissions.read.StorageReadPermissionsRequestedBroadcaster
+import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
 import com.lasthopesoftware.bluewater.client.stored.sync.notifications.SyncChannelProperties
 import com.lasthopesoftware.bluewater.client.stored.sync.receivers.SyncItemStateChangedListener
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsUpdated
@@ -50,10 +50,10 @@ import com.namehillsoftware.handoff.promises.Promise
 import org.slf4j.LoggerFactory
 import java.io.File
 
-open class MainApplication : Application() {
+abstract class ProjectBlueApplication : Application(), ApplicationDependencies {
 
 	companion object {
-		private val logger by lazyLogger<MainApplication>()
+		private val logger by lazyLogger<ProjectBlueApplication>()
 		private var isWorkManagerInitialized = false
 	}
 
@@ -92,7 +92,7 @@ open class MainApplication : Application() {
 		StoragePermissionsRequestNotificationBuilder(
 			this,
 			StringResources(this),
-			applicationDependencies.intentBuilder,
+			intentBuilder,
 			syncChannelProperties
 		)
 	}
@@ -105,7 +105,7 @@ open class MainApplication : Application() {
 
 	private val applicationSettings by lazy { getApplicationSettingsRepository() }
 
-	private val syncScheduler by lazy { applicationDependencies.syncScheduler }
+	override val syncScheduler by lazy { SyncScheduler(this) }
 
 	@Volatile
 	private var isLoggingToFile = true
@@ -113,6 +113,8 @@ open class MainApplication : Application() {
 	@SuppressLint("DefaultLocale")
 	override fun onCreate() {
 		super.onCreate()
+
+		ApplicationDependenciesContainer.attach(this)
 
 		Promise.Rejections.toggleStackTraceFiltering(true)
 

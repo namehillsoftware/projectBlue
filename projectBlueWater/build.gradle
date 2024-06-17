@@ -29,7 +29,6 @@ android {
 	compileSdk 34
 
 	defaultConfig {
-        applicationId "com.lasthopesoftware.bluewater"
         minSdkVersion 21
         targetSdkVersion 34
 		versionName gitVersion()
@@ -57,7 +56,7 @@ android {
 
 	buildFeatures {
 		compose = true
-		buildConfig true
+		buildConfig = true
 	}
 
 	compileOptions {
@@ -119,6 +118,13 @@ android {
 		kotlinCompilerExtensionVersion compose_compiler_version
 	}
 	namespace 'com.lasthopesoftware.bluewater'
+
+	flavorDimensions = ["form"]
+	// Flavor-specific dependencies
+	productFlavors {
+		handheld {}
+		couch {}
+	}
 }
 
 tasks.withType(KotlinCompile).configureEach {
@@ -168,11 +174,10 @@ def getGeneratedVersionCode() {
 
 dependencies {
 	implementation 'androidx.test:runner:1.5.2'
-	def compose_version = '1.6.7'
+	def compose_version = '1.6.8'
 	def media3_version = '1.3.1'
-	def lifecycle_version = '2.8.1'
+	def lifecycle_version = '2.8.2'
 	def junit5_version = '5.10.2'
-	def tv_compose = '1.0.0-alpha10'
 
 	implementation 'androidx.core:core-ktx:1.13.1'
 	implementation 'androidx.annotation:annotation:1.8.0'
@@ -206,8 +211,6 @@ dependencies {
 	implementation 'androidx.activity:activity-compose:1.9.0'
 	implementation "androidx.compose.compiler:compiler:$compose_compiler_version"
 	implementation 'dev.olshevski.navigation:reimagined:1.5.0'
-	implementation 'androidx.tv:tv-foundation:1.0.0-alpha10'
-	implementation "androidx.tv:tv-material:1.0.0-beta01"
 	debugImplementation "androidx.compose.ui:ui-tooling:$compose_version"
 	debugImplementation "androidx.compose.ui:ui-test-manifest:$compose_version"
 	testImplementation 'commons-codec:commons-codec:1.17.0'
@@ -223,4 +226,7 @@ dependencies {
 	testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:$junit5_version"
 	testRuntimeOnly "org.junit.vintage:junit-vintage-engine:$junit5_version"
 	androidTestImplementation "androidx.compose.ui:ui-test-junit4:$compose_version"
+
+	couchImplementation 'androidx.tv:tv-foundation:1.0.0-alpha10'
+	couchImplementation "androidx.tv:tv-material:1.0.0-beta01"
 }

@@ -12,7 +12,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.media3.common.util.UnstableApi
 import com.lasthopesoftware.bluewater.ActivityApplicationNavigation
-import com.lasthopesoftware.bluewater.ApplicationContextAttachedApplicationDependencies.applicationDependencies
+import com.lasthopesoftware.bluewater.ApplicationDependenciesContainer.applicationDependencies
+import com.lasthopesoftware.bluewater.android.intents.getIntent
+import com.lasthopesoftware.bluewater.android.intents.safelyGetParcelableExtra
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.image.CachedImageProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableLibraryFilePropertiesProvider
@@ -33,8 +35,6 @@ import com.lasthopesoftware.bluewater.client.connection.session.initialization.C
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.DramaticConnectionInitializationController
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackServiceController
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
-import com.lasthopesoftware.bluewater.shared.android.intents.getIntent
-import com.lasthopesoftware.bluewater.shared.android.intents.safelyGetParcelableExtra
 import com.lasthopesoftware.bluewater.shared.android.ui.ProjectBlueComposableApplication
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 import com.lasthopesoftware.bluewater.shared.cls

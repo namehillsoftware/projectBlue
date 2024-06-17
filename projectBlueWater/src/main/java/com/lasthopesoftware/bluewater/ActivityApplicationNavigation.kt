@@ -2,15 +2,15 @@ package com.lasthopesoftware.bluewater
 
 import android.os.Handler
 import androidx.activity.ComponentActivity
+import com.lasthopesoftware.bluewater.android.intents.BuildIntents
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.shared.android.intents.BuildIntents
 import com.lasthopesoftware.promises.extensions.LoopedInPromise
 import com.namehillsoftware.handoff.promises.queued.MessageWriter
 
 class ActivityApplicationNavigation(
-	private val componentActivity: ComponentActivity,
-	private val intentBuilder: BuildIntents,
+    private val componentActivity: ComponentActivity,
+    private val intentBuilder: BuildIntents,
 ) : NavigateApplication {
 
 	private val handler by lazy { Handler(componentActivity.mainLooper) }

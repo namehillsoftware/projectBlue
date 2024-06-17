@@ -14,7 +14,6 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListView
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.list.PlaybackLibraryItems
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ReusableChildItemViewModel
-import com.lasthopesoftware.bluewater.client.browsing.items.list.TvItemListView
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
@@ -74,93 +73,6 @@ private fun LoadedItemListView(
 		)
 	} else {
 		ItemListView(
-			itemListViewModel,
-			fileListViewModel,
-			nowPlayingViewModel,
-			itemListMenuBackPressedHandler,
-			reusablePlaylistFileItemViewModelProvider,
-			childItemViewModelProvider,
-			applicationNavigation,
-			playbackLibraryItems,
-			playbackServiceController,
-		)
-	}
-
-	ViewModelInitAction {
-		if (reinitializeConnection) {
-			LaunchedEffect(key1 = Unit) {
-				isConnectionLost = !connectionStatusViewModel.initializeConnection(libraryId).suspend()
-				reinitializeConnection = false
-			}
-		}
-
-		if (!isConnectionLost) {
-			LaunchedEffect(item) {
-				try {
-					Promise.whenAll(
-						itemListViewModel.loadItem(libraryId, item),
-						fileListViewModel.loadItem(libraryId, item),
-					).suspend()
-				} catch (e: IOException) {
-					if (ConnectionLostExceptionFilter.isConnectionLostException(e))
-						isConnectionLost = true
-					else
-						applicationNavigation.backOut().suspend()
-				} catch (e: Exception) {
-					applicationNavigation.backOut().suspend()
-				}
-			}
-		}
-	}
-}
-
-@Composable
-fun LoadedTvItemListView(viewModelDependencies: ScopedBrowserViewDependencies, libraryId: LibraryId, item: Item?) {
-	with (viewModelDependencies) {
-		LoadedTvItemListView(
-			libraryId,
-			item,
-			itemListViewModel = itemListViewModel,
-			fileListViewModel = fileListViewModel,
-			nowPlayingViewModel = nowPlayingFilePropertiesViewModel,
-			itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
-			reusablePlaylistFileItemViewModelProvider = reusablePlaylistFileItemViewModelProvider,
-			childItemViewModelProvider = reusableChildItemViewModelProvider,
-			applicationNavigation = applicationNavigation,
-			playbackLibraryItems = playbackLibraryItems,
-			playbackServiceController = playbackServiceController,
-			connectionStatusViewModel = connectionStatusViewModel,
-		)
-	}
-}
-
-@Composable
-private fun LoadedTvItemListView(
-	libraryId: LibraryId,
-	item: Item?,
-	itemListViewModel: ItemListViewModel,
-	fileListViewModel: FileListViewModel,
-	nowPlayingViewModel: NowPlayingFilePropertiesViewModel,
-	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
-	reusablePlaylistFileItemViewModelProvider: ReusablePlaylistFileItemViewModelProvider,
-	childItemViewModelProvider: PooledCloseablesViewModel<ReusableChildItemViewModel>,
-	applicationNavigation: NavigateApplication,
-	playbackLibraryItems: PlaybackLibraryItems,
-	playbackServiceController: ControlPlaybackService,
-	connectionStatusViewModel: ConnectionStatusViewModel,
-) {
-	var isConnectionLost by remember { mutableStateOf(false) }
-	var reinitializeConnection by remember { mutableStateOf(false) }
-
-	if (isConnectionLost) {
-		ConnectionLostView(
-			onCancel = { applicationNavigation.viewApplicationSettings() },
-			onRetry = {
-				reinitializeConnection = true
-			}
-		)
-	} else {
-		TvItemListView(
 			itemListViewModel,
 			fileListViewModel,
 			nowPlayingViewModel,

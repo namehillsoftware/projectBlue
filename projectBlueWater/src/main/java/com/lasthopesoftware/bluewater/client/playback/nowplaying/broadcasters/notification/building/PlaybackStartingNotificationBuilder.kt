@@ -4,18 +4,18 @@ import android.content.Context
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import com.lasthopesoftware.bluewater.R
+import com.lasthopesoftware.bluewater.android.intents.BuildIntents
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.NotificationsConfiguration
-import com.lasthopesoftware.bluewater.shared.android.intents.BuildIntents
 import com.lasthopesoftware.bluewater.shared.android.notifications.ProduceNotificationBuilders
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 
 class PlaybackStartingNotificationBuilder(
-	private val context: Context,
-	private val produceNotificationBuilders: ProduceNotificationBuilders,
-	private val configuration: NotificationsConfiguration,
-	private val intentBuilder: BuildIntents,
+    private val context: Context,
+    private val produceNotificationBuilders: ProduceNotificationBuilders,
+    private val configuration: NotificationsConfiguration,
+    private val intentBuilder: BuildIntents,
 ) : BuildPlaybackStartingNotification {
 
 	override fun promisePreparedPlaybackStartingNotification(libraryId: LibraryId): Promise<NotificationCompat.Builder> =
