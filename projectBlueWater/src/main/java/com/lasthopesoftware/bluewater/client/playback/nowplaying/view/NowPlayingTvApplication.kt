@@ -1,4 +1,4 @@
-package com.namehillsoftware.projectblue.tv.client.playback.nowplaying.view
+package com.lasthopesoftware.bluewater.client.playback.nowplaying.view
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.tween
@@ -57,8 +57,8 @@ import androidx.tv.foundation.lazy.list.TvLazyColumn
 import androidx.tv.foundation.lazy.list.items
 import androidx.tv.foundation.lazy.list.rememberTvLazyListState
 import com.lasthopesoftware.bluewater.NavigateApplication
+import com.lasthopesoftware.bluewater.ProjectBlueApplication
 import com.lasthopesoftware.bluewater.R
-import com.lasthopesoftware.bluewater.couch.TvApplication
 import com.lasthopesoftware.bluewater.client.browsing.BrowserViewDependencies
 import com.lasthopesoftware.bluewater.client.browsing.ScopedBrowserViewDependencies
 import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelDependencies
@@ -85,20 +85,13 @@ import com.lasthopesoftware.bluewater.client.connection.session.initialization.C
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionUpdatesView
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.DramaticConnectionInitializationController
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingControls
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingCoverArtView
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingHeadline
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingMessage
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingProgressIndicator
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.PlaylistControls
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.components.NowPlayingItemView
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.controlRowHeight
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.playlistControlAlpha
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.playlist.NowPlayingPlaylistViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.client.settings.PermissionsDependencies
 import com.lasthopesoftware.bluewater.client.settings.TvLibrarySettingsView
+import com.lasthopesoftware.bluewater.settings.TvApplicationSettingsView
 import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsView
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
 import com.lasthopesoftware.bluewater.shared.android.ui.absoluteProgressState
@@ -115,7 +108,6 @@ import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 import com.lasthopesoftware.promises.extensions.suspend
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.projectblue.tv.settings.TvApplicationSettingsView
 import dev.olshevski.navigation.reimagined.NavController
 import dev.olshevski.navigation.reimagined.NavHost
 import dev.olshevski.navigation.reimagined.navigate
@@ -123,7 +115,7 @@ import dev.olshevski.navigation.reimagined.rememberNavController
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 
-private val logger by lazyLogger<TvApplication>()
+private val logger by lazyLogger<ProjectBlueApplication>()
 
 enum class NowPlayingDragValue { Browser, NowPlaying, NowPlayingList }
 

@@ -117,14 +117,8 @@ android {
 	composeOptions {
 		kotlinCompilerExtensionVersion compose_compiler_version
 	}
-	namespace 'com.lasthopesoftware.bluewater'
 
-	flavorDimensions = ["form"]
-	// Flavor-specific dependencies
-	productFlavors {
-		handheld {}
-		couch {}
-	}
+	namespace 'com.lasthopesoftware.bluewater'
 }
 
 tasks.withType(KotlinCompile).configureEach {
@@ -211,6 +205,8 @@ dependencies {
 	implementation 'androidx.activity:activity-compose:1.9.0'
 	implementation "androidx.compose.compiler:compiler:$compose_compiler_version"
 	implementation 'dev.olshevski.navigation:reimagined:1.5.0'
+	implementation 'androidx.tv:tv-foundation:1.0.0-alpha10'
+	implementation "androidx.tv:tv-material:1.0.0-beta01"
 	debugImplementation "androidx.compose.ui:ui-tooling:$compose_version"
 	debugImplementation "androidx.compose.ui:ui-test-manifest:$compose_version"
 	testImplementation 'commons-codec:commons-codec:1.17.0'
@@ -226,7 +222,4 @@ dependencies {
 	testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:$junit5_version"
 	testRuntimeOnly "org.junit.vintage:junit-vintage-engine:$junit5_version"
 	androidTestImplementation "androidx.compose.ui:ui-test-junit4:$compose_version"
-
-	couchImplementation 'androidx.tv:tv-foundation:1.0.0-alpha10'
-	couchImplementation "androidx.tv:tv-material:1.0.0-beta01"
 }

@@ -206,7 +206,7 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 	}
 
 	private val intentBuilder
-		get() =  applicationDependencies.intentBuilder
+		get() =  context.applicationDependencies.intentBuilder
 
 	private val showDownloadsIntent by lazy { intentBuilder.buildPendingShowDownloadsIntent() }
 

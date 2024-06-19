@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.couch.client.browsing.items.list
+package com.lasthopesoftware.bluewater.client.browsing.items.list
 
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
@@ -28,14 +28,6 @@ import com.lasthopesoftware.bluewater.client.browsing.files.li.LabelledPlayButto
 import com.lasthopesoftware.bluewater.client.browsing.files.li.LabelledShuffleButton
 import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewPlaylistFileItem
-import com.lasthopesoftware.bluewater.client.browsing.items.list.ChildItem
-import com.lasthopesoftware.bluewater.client.browsing.items.list.FilesCountHeader
-import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListContentType
-import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
-import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemsCountHeader
-import com.lasthopesoftware.bluewater.client.browsing.items.list.PlaybackLibraryItems
-import com.lasthopesoftware.bluewater.client.browsing.items.list.RenderTrackTitleItem
-import com.lasthopesoftware.bluewater.client.browsing.items.list.ReusableChildItemViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledActiveDownloadsButton
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledSearchButton
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledSettingsButton

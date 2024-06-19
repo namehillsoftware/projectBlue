@@ -1,4 +1,4 @@
-package com.namehillsoftware.projectblue.tv.client.browsing.items.list
+package com.lasthopesoftware.bluewater.client.browsing.items.list
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -46,7 +46,6 @@ import com.lasthopesoftware.bluewater.client.browsing.files.li.LabelledShuffleBu
 import com.lasthopesoftware.bluewater.client.browsing.files.list.RenderTrackTitleItem
 import com.lasthopesoftware.bluewater.client.browsing.files.list.SearchFilesViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewPlaylistFileItem
-import com.lasthopesoftware.bluewater.client.browsing.items.list.ConnectionLostView
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel

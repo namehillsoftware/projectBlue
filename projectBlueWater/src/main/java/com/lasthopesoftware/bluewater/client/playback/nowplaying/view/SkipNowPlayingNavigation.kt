@@ -1,4 +1,4 @@
-package com.namehillsoftware.projectblue.tv.client.playback.nowplaying.view
+package com.lasthopesoftware.bluewater.client.playback.nowplaying.view
 
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId

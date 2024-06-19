@@ -1,4 +1,4 @@
-package com.namehillsoftware.projectblue.tv.client.browsing.items.list
+package com.lasthopesoftware.bluewater.client.browsing.items.list
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -11,11 +11,6 @@ import com.lasthopesoftware.bluewater.client.browsing.ScopedBrowserViewDependenc
 import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusablePlaylistFileItemViewModelProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
-import com.lasthopesoftware.bluewater.client.browsing.items.list.ConnectionLostView
-import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
-import com.lasthopesoftware.bluewater.client.browsing.items.list.PlaybackLibraryItems
-import com.lasthopesoftware.bluewater.client.browsing.items.list.ReusableChildItemViewModel
-import com.lasthopesoftware.bluewater.couch.client.browsing.items.list.TvItemListView
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
