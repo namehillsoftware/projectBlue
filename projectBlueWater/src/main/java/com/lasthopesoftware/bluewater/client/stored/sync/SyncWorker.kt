@@ -205,10 +205,7 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 		notificationChannelActivator.activateChannel(channelConfiguration)
 	}
 
-	private val intentBuilder
-		get() =  context.applicationDependencies.intentBuilder
-
-	private val showDownloadsIntent by lazy { intentBuilder.buildPendingShowDownloadsIntent() }
+	private val showDownloadsIntent by lazy { context.applicationDependencies.intentBuilder.buildPendingShowDownloadsIntent() }
 
 	private val cancelIntent by lazy { WorkManager.getInstance(context).createCancelPendingIntent(id) }
 
