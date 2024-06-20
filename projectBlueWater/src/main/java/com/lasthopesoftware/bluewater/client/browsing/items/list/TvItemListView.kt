@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Divider
 import androidx.compose.material.MaterialTheme
@@ -21,8 +23,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.tv.foundation.lazy.list.TvLazyColumn
-import androidx.tv.foundation.lazy.list.itemsIndexed
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.client.browsing.files.li.LabelledPlayButton
 import com.lasthopesoftware.bluewater.client.browsing.files.li.LabelledShuffleButton
@@ -63,7 +63,7 @@ fun TvItemListView(
 	fun LoadedItemListView() {
 		val items by itemListViewModel.items.collectAsState()
 
-		TvLazyColumn(
+		LazyColumn(
 			modifier = Modifier.focusGroup(),
 			contentPadding = PaddingValues(Dimensions.viewPaddingUnit),
 		) {
@@ -87,27 +87,27 @@ fun TvItemListView(
 				}
 			}
 
-			if (!files.any()) return@TvLazyColumn
+			if (files.any()) {
+				item(contentType = ItemListContentType.Header) {
+					FilesCountHeader(files.size)
+				}
 
-			item(contentType = ItemListContentType.Header) {
-				FilesCountHeader(files.size)
-			}
+				itemsIndexed(files, contentType = { _, _ -> ItemListContentType.File }) { i, f ->
+					RenderTrackTitleItem(
+						i,
+						f,
+						trackHeadlineViewModelProvider,
+						itemListViewModel,
+						nowPlayingViewModel,
+						applicationNavigation,
+						fileListViewModel,
+						itemListMenuBackPressedHandler,
+						playbackServiceController
+					)
 
-			itemsIndexed(files, contentType = { _, _ -> ItemListContentType.File }) { i, f ->
-				RenderTrackTitleItem(
-					i,
-					f,
-					trackHeadlineViewModelProvider,
-					itemListViewModel,
-					nowPlayingViewModel,
-					applicationNavigation,
-					fileListViewModel,
-					itemListMenuBackPressedHandler,
-					playbackServiceController
-				)
-
-				if (i < files.lastIndex)
-					Divider()
+					if (i < files.lastIndex)
+						Divider()
+				}
 			}
 		}
 	}
@@ -118,8 +118,8 @@ fun TvItemListView(
 		Column(modifier = Modifier.fillMaxSize()) {
 			Box(
 				modifier = Modifier
-                    .fillMaxWidth()
-                    .height(appBarHeight),
+					.fillMaxWidth()
+					.height(appBarHeight),
 				contentAlignment = Alignment.CenterStart,
 			) {
 				BackButton(
@@ -138,8 +138,8 @@ fun TvItemListView(
 						maxLines = maxLines,
 						overflow = TextOverflow.Ellipsis,
 						modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(start = startPadding, end = endPadding),
+							.fillMaxWidth()
+							.padding(start = startPadding, end = endPadding),
 					)
 				}
 			}
@@ -147,13 +147,13 @@ fun TvItemListView(
 			if (!isFilesLoading) {
 				Row(
 					modifier = Modifier
-                        .padding(
-                            top = expandedMenuVerticalPadding,
-                            bottom = expandedMenuVerticalPadding,
-                            start = Dimensions.viewPaddingUnit * 2,
-                            end = Dimensions.viewPaddingUnit * 2
-                        )
-                        .fillMaxWidth(),
+						.padding(
+							top = expandedMenuVerticalPadding,
+							bottom = expandedMenuVerticalPadding,
+							start = Dimensions.viewPaddingUnit * 2,
+							end = Dimensions.viewPaddingUnit * 2
+						)
+						.fillMaxWidth(),
 					horizontalArrangement = Arrangement.SpaceEvenly,
 				) {
 					if (files.any()) {

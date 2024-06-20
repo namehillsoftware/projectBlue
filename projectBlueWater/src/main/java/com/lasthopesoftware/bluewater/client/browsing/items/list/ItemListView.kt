@@ -87,6 +87,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.expandedMenuVerticalPadding
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.expandedTitleHeight
+import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.rowScrollPadding
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 import kotlin.math.pow
@@ -299,6 +300,7 @@ fun ChildItem(
 						applicationNavigation.viewItem(it, item)
 					}
 				},
+				scrollPadding = rowHeight.rowScrollPadding
 			)
 			.height(rowHeight)
 			.fillMaxSize()

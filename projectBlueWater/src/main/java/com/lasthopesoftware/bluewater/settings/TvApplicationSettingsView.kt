@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.settings
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -11,6 +12,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.Button
 import androidx.compose.material.Checkbox
 import androidx.compose.material.Icon
@@ -31,10 +35,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
-import androidx.tv.foundation.ExperimentalTvFoundationApi
-import androidx.tv.foundation.lazy.list.TvLazyColumn
-import androidx.tv.foundation.lazy.list.TvLazyListScope
-import androidx.tv.foundation.lazy.list.items
+import com.lasthopesoftware.bluewater.BuildConfig
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
@@ -51,8 +52,8 @@ import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 
 private val optionsPadding = PaddingValues(start = 32.dp, end = 32.dp)
 
-@OptIn(ExperimentalTvFoundationApi::class, ExperimentalComposeUiApi::class)
-private fun TvLazyListScope.settingsList(
+@OptIn(ExperimentalComposeUiApi::class, ExperimentalFoundationApi::class)
+private fun LazyListScope.settingsList(
 	standardRowModifier: Modifier,
 	rowFontSize: TextUnit,
 	applicationSettingsViewModel: ApplicationSettingsViewModel,
@@ -104,9 +105,9 @@ private fun TvLazyListScope.settingsList(
 	item {
 		Row(
 			modifier = standardRowModifier
-				.navigable(onClick = {
-					applicationNavigation.viewNewServerSettings()
-				}),
+				.navigable(
+					onClick = { applicationNavigation.viewNewServerSettings() },
+				),
 			verticalAlignment = Alignment.CenterVertically,
 			horizontalArrangement = Arrangement.SpaceBetween,
 		) {
@@ -157,8 +158,8 @@ private fun TvLazyListScope.settingsList(
 				.padding(top = 48.dp)
 		) {
 			ApplicationInfoText(
-//				versionName = BuildConfig.VERSION_NAME,
-//				versionCode = BuildConfig.VERSION_CODE,
+				versionName = BuildConfig.VERSION_NAME,
+				versionCode = BuildConfig.VERSION_CODE,
 				modifier = Modifier
 					.fillMaxWidth()
 					.align(Alignment.Center)
@@ -168,8 +169,7 @@ private fun TvLazyListScope.settingsList(
 
 	item {
 		Button(
-			modifier = Modifier
-				.padding(top = 48.dp),
+			modifier = Modifier.padding(top = 48.dp),
 			onClick = {
 				playbackService.kill()
 			}
@@ -209,7 +209,7 @@ private fun ApplicationSettingsViewHorizontal(
 		val selectedLibraryId by applicationSettingsViewModel.chosenLibraryId.collectAsState()
 		val isLoading by applicationSettingsViewModel.isLoading.subscribeAsState()
 
-		TvLazyColumn(
+		LazyColumn(
 			modifier = Modifier
 				.fillMaxHeight()
 				.padding(start = Dimensions.viewPaddingUnit * 2)

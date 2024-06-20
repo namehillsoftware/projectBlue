@@ -205,8 +205,6 @@ dependencies {
 	implementation 'androidx.activity:activity-compose:1.9.0'
 	implementation "androidx.compose.compiler:compiler:$compose_compiler_version"
 	implementation 'dev.olshevski.navigation:reimagined:1.5.0'
-	implementation 'androidx.tv:tv-foundation:1.0.0-alpha10'
-	implementation "androidx.tv:tv-material:1.0.0-beta01"
 	debugImplementation "androidx.compose.ui:ui-tooling:$compose_version"
 	debugImplementation "androidx.compose.ui:ui-test-manifest:$compose_version"
 	testImplementation 'commons-codec:commons-codec:1.17.0'

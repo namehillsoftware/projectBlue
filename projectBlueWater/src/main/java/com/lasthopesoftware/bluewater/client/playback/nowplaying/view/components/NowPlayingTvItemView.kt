@@ -16,7 +16,6 @@ import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -26,6 +25,7 @@ import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.shared.android.ui.components.ListItemIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.navigable
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
+import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.rowScrollPadding
 
 private val rowHeight = Dimensions.twoLineRowHeight
 
@@ -54,12 +54,7 @@ fun NowPlayingTvItemView(
 				},
 				focusedBorderColor = Color.White,
 				unfocusedBorderColor = Color.Transparent,
-				scrollPadding = Rect(
-					left = 0f,
-					right = 0f,
-					top = rowHeight.value / 2,
-					bottom = rowHeight.value / 2
-				)
+				scrollPadding = rowHeight.rowScrollPadding,
 			)
 			.height(rowHeight)
 			.fillMaxSize()
