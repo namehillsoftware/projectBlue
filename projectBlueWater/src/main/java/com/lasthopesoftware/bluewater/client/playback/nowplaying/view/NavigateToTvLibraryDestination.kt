@@ -1,15 +1,15 @@
-package com.namehillsoftware.projectblue.tv.client.playback.nowplaying.view
+package com.lasthopesoftware.bluewater.client.playback.nowplaying.view
 
 import androidx.compose.runtime.Composable
 import com.lasthopesoftware.bluewater.client.browsing.ScopedBrowserViewDependencies
+import com.lasthopesoftware.bluewater.client.browsing.items.list.LoadedTvItemListView
+import com.lasthopesoftware.bluewater.client.browsing.items.list.TvSearchFilesView
 import com.lasthopesoftware.bluewater.client.browsing.navigation.BrowserLibraryDestination
 import com.lasthopesoftware.bluewater.client.browsing.navigation.DownloadsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ItemScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.LibraryScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.SearchScreen
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.view.ActiveFileDownloadsView
-import com.namehillsoftware.projectblue.tv.client.browsing.items.list.LoadedTvItemListView
-import com.namehillsoftware.projectblue.tv.client.browsing.items.list.TvSearchFilesView
 
 @Composable
 fun BrowserLibraryDestination.NavigateToTvLibraryDestination(browserViewDependencies: ScopedBrowserViewDependencies) {

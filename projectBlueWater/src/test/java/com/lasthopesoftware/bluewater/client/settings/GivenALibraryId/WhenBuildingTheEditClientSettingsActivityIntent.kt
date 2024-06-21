@@ -1,16 +1,12 @@
 package com.lasthopesoftware.bluewater.client.settings.GivenALibraryId
 
 import android.content.Intent
-import androidx.compose.runtime.Composable
 import androidx.test.core.app.ApplicationProvider
 import com.lasthopesoftware.bluewater.android.intents.IntentBuilder
 import com.lasthopesoftware.bluewater.client.EntryActivity
-import com.lasthopesoftware.bluewater.client.browsing.BrowserViewDependencies
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ConnectionSettingsScreen
-import com.lasthopesoftware.bluewater.client.browsing.navigation.Destination
 import com.lasthopesoftware.bluewater.client.destinationProperty
-import com.lasthopesoftware.bluewater.client.settings.PermissionsDependencies
 import com.lasthopesoftware.bluewater.shared.cls
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Before
@@ -27,7 +23,7 @@ class WhenBuildingTheEditClientSettingsActivityIntent {
 
     @Before
     fun before() {
-        val editClientSettingsActivityIntentBuilder = IntentBuilder(ApplicationProvider.getApplicationContext(), cls<FakeActivity>())
+        val editClientSettingsActivityIntentBuilder = IntentBuilder(ApplicationProvider.getApplicationContext())
         returnedIntent = editClientSettingsActivityIntentBuilder.buildLibrarySettingsIntent(LibraryId(13))
     }
 
@@ -41,15 +37,6 @@ class WhenBuildingTheEditClientSettingsActivityIntent {
     @Test
     fun thenTheReturnedIntentActivityIsCorrect() {
         assertThat(returnedIntent!!.component!!.className)
-            .isEqualTo(FakeActivity::class.java.name)
+            .isEqualTo(EntryActivity::class.java.name)
     }
-
-	private class FakeActivity : EntryActivity() {
-		@Composable
-		override fun application(
-			browserViewDependencies: BrowserViewDependencies,
-			permissionsDependencies: PermissionsDependencies,
-			initialDestination: Destination?
-		) {}
-	}
 }

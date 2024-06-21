@@ -117,9 +117,10 @@ fun Modifier.navigable(
 	enabled: Boolean = true,
 	onLongClick: (() -> Unit)? = null,
 	onLongClickLabel: String? = null,
-	onNavigatedTo: (() -> Unit)? = null
+	onNavigatedTo: (() -> Unit)? = null,
+	focusRequester: FocusRequester? = null,
 ) = composed {
-	val focusRequester = remember { FocusRequester() }
+	val localFocusRequester = focusRequester ?: remember { FocusRequester() }
 	val boxInteractionSource = interactionSource ?: remember { MutableInteractionSource() }
 
 	val inputMode = LocalInputModeManager.current
@@ -128,7 +129,7 @@ fun Modifier.navigable(
 		when (inputMode.inputMode) {
 			InputMode.Keyboard -> {
 				if (isDefault) {
-					focusRequester.requestFocus()
+					localFocusRequester.requestFocus()
 				}
 			}
 			InputMode.Touch -> {}
@@ -246,7 +247,7 @@ fun Modifier.navigable(
 					}
 				}
 			}
-			.focusRequester(focusRequester)
+			.focusRequester(localFocusRequester)
 			.focusTarget()
 	}
 }

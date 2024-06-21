@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.handheld.client
+package com.lasthopesoftware.bluewater.client
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
@@ -29,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.lasthopesoftware.bluewater.NavigateApplication
+import com.lasthopesoftware.bluewater.ProjectBlueApplication
 import com.lasthopesoftware.bluewater.client.browsing.BrowserViewDependencies
 import com.lasthopesoftware.bluewater.client.browsing.ScopedBrowserViewDependencies
 import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelDependencies
@@ -60,8 +61,7 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingScreenViewModel
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsView
 import com.lasthopesoftware.bluewater.client.settings.PermissionsDependencies
-import com.lasthopesoftware.bluewater.handheld.HandheldApplication
-import com.lasthopesoftware.bluewater.handheld.settings.ApplicationSettingsView
+import com.lasthopesoftware.bluewater.settings.ApplicationSettingsView
 import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsView
 import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberSystemUiController
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
@@ -77,7 +77,7 @@ import dev.olshevski.navigation.reimagined.rememberNavController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-private val logger by lazyLogger<HandheldApplication>()
+private val logger by lazyLogger<ProjectBlueApplication>()
 
 @OptIn(ExperimentalMaterialApi::class)
 private class BottomSheetHidingNavigation(

@@ -1,4 +1,4 @@
-package com.namehillsoftware.projectblue.tv.client.browsing.items.list
+package com.lasthopesoftware.bluewater.client.browsing.items.list
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeight
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.CircularProgressIndicator
@@ -37,8 +39,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
-import androidx.tv.foundation.lazy.list.TvLazyColumn
-import androidx.tv.foundation.lazy.list.itemsIndexed
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.li.LabelledPlayButton
@@ -46,7 +46,6 @@ import com.lasthopesoftware.bluewater.client.browsing.files.li.LabelledShuffleBu
 import com.lasthopesoftware.bluewater.client.browsing.files.list.RenderTrackTitleItem
 import com.lasthopesoftware.bluewater.client.browsing.files.list.SearchFilesViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewPlaylistFileItem
-import com.lasthopesoftware.bluewater.client.browsing.items.list.ConnectionLostView
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
@@ -177,7 +176,7 @@ fun TvSearchFilesView(
 						)
 					}
 
-					TvLazyColumn {
+					LazyColumn {
 						item {
 							Box(
 								modifier = Modifier

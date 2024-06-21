@@ -24,6 +24,7 @@ import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.shared.android.ui.components.ListItemIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.navigable
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
+import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.rowScrollPadding
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -53,7 +54,8 @@ fun TrackTitleItemView(
 					onHiddenMenuClick()
 				},
 				onClickLabel = stringResource(id = R.string.btn_view_song_details),
-				onClick = onItemClick
+				onClick = onItemClick,
+				scrollPadding = rowHeight.rowScrollPadding
 			)
 			.height(rowHeight)
 			.fillMaxWidth()
