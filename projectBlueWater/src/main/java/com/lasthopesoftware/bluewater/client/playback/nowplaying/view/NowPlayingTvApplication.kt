@@ -40,6 +40,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -149,10 +150,14 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedBr
 
 		val maxWidthPx by LocalDensity.current.run { remember { derivedStateOf { maxWidth.toPx() } } }
 
+		var dragValue by rememberSaveable {
+			mutableStateOf(NowPlayingDragValue.Browser)
+		}
+
 		val draggableState = with (LocalDensity.current) {
 			remember {
 				AnchoredDraggableState(
-					initialValue = NowPlayingDragValue.Browser,
+					initialValue = dragValue,
 					anchors = DraggableAnchors {
 						NowPlayingDragValue.Browser at 0f
 						NowPlayingDragValue.NowPlaying at halfWidthPx
@@ -160,7 +165,11 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedBr
 					},
 					positionalThreshold = { d -> d * .5f },
 					velocityThreshold = { 100.dp.toPx() },
-					animationSpec = tween()
+					animationSpec = tween(),
+					confirmValueChange = { newValue ->
+						dragValue = newValue
+						true
+					}
 				)
 			}
 		}
@@ -496,6 +505,12 @@ fun NowPlayingTvPlaylist(
 		}
 	}
 
+	val isEditing by playlistViewModel.isEditingPlaylist.subscribeAsState()
+	BackHandler(enabled = isEditing) {
+		if (isEditing)
+			playlistViewModel.finishPlaylistEdit()
+	}
+
 	@Composable
 	fun NowPlayingFileView(positionedFile: PositionedFile) {
 		val fileItemViewModel = remember(childItemViewModelProvider::getViewModel)
@@ -514,7 +529,6 @@ fun NowPlayingTvPlaylist(
 		val artist by fileItemViewModel.artist.collectAsState()
 		val isPlaying by remember { derivedStateOf { playingFile == positionedFile } }
 
-		val isEditing by playlistViewModel.isEditingPlaylist.subscribeAsState()
 		NowPlayingTvItemView(
 			itemName = fileName,
 			artist = artist,
