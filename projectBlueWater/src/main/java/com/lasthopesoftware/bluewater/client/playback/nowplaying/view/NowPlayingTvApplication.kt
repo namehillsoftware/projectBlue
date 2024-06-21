@@ -496,6 +496,12 @@ fun NowPlayingTvPlaylist(
 		}
 	}
 
+	val isEditing by playlistViewModel.isEditingPlaylist.subscribeAsState()
+	BackHandler(enabled = isEditing) {
+		if (isEditing)
+			playlistViewModel.finishPlaylistEdit()
+	}
+
 	@Composable
 	fun NowPlayingFileView(positionedFile: PositionedFile) {
 		val fileItemViewModel = remember(childItemViewModelProvider::getViewModel)
@@ -514,7 +520,6 @@ fun NowPlayingTvPlaylist(
 		val artist by fileItemViewModel.artist.collectAsState()
 		val isPlaying by remember { derivedStateOf { playingFile == positionedFile } }
 
-		val isEditing by playlistViewModel.isEditingPlaylist.subscribeAsState()
 		NowPlayingTvItemView(
 			itemName = fileName,
 			artist = artist,
