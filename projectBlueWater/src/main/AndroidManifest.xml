@@ -34,12 +34,28 @@
         tools:targetApi="tiramisu"
         android:requestLegacyExternalStorage="true"
         android:enableOnBackInvokedCallback="true"
-        android:banner="@drawable/tv_banner">
+        android:banner="@drawable/tv_banner"
+        android:hardwareAccelerated="true">
 
         <activity
-            android:name=".client.EntryActivity"
+            android:name=".client.HandheldEntryActivity"
             android:launchMode="singleTask"
             android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <action android:name="android.intent.action.MUSIC_PLAYER" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+                <category android:name="android.intent.category.APP_MUSIC" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".client.TvEntryActivity"
+            android:launchMode="singleTask"
+            android:exported="true"
+            android:theme="@style/AppThemeNight">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <action android:name="android.intent.action.MUSIC_PLAYER" />
