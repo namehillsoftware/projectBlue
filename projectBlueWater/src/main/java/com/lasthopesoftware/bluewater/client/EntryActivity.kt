@@ -5,23 +5,23 @@ import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.app.AppCompatDelegate
+import androidx.compose.runtime.Composable
 import androidx.core.app.ActivityCompat
 import androidx.core.view.WindowCompat
 import androidx.media3.common.util.UnstableApi
 import com.lasthopesoftware.bluewater.ActivityDependencies
+import com.lasthopesoftware.bluewater.ApplicationDependenciesContainer
 import com.lasthopesoftware.bluewater.ApplicationDependenciesContainer.applicationDependencies
 import com.lasthopesoftware.bluewater.android.intents.safelyGetParcelableExtra
+import com.lasthopesoftware.bluewater.client.browsing.BrowserViewDependencies
 import com.lasthopesoftware.bluewater.client.browsing.navigation.Destination
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NavigationMessage
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingTvApplication
 import com.lasthopesoftware.bluewater.client.settings.PermissionsDependencies
 import com.lasthopesoftware.bluewater.permissions.ApplicationPermissionsRequests
 import com.lasthopesoftware.bluewater.permissions.read.ApplicationReadPermissionsRequirementsProvider
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.permissions.ManagePermissions
 import com.lasthopesoftware.bluewater.shared.android.permissions.OsPermissionsChecker
-import com.lasthopesoftware.bluewater.shared.android.ui.ProjectBlueComposableApplication
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.promises.extensions.registerResultActivityLauncher
@@ -34,18 +34,23 @@ private val magicPropertyBuilder by lazy { MagicPropertyBuilder(cls<EntryActivit
 
 val destinationProperty by lazy { magicPropertyBuilder.buildProperty("destination") }
 
-@UnstableApi class EntryActivity :
+@UnstableApi
+abstract class EntryActivity :
 	AppCompatActivity(),
 	ActivityCompat.OnRequestPermissionsResultCallback,
 	ManagePermissions,
 	PermissionsDependencies,
 	ActivitySuppliedDependencies
 {
-	private val browserViewDependencies by lazy { ActivityDependencies(this, this, applicationDependencies) }
+	private val browserViewDependencies by lazy {
+		ApplicationDependenciesContainer.refresh()
 
-	override val registeredActivityResultsLauncher = registerResultActivityLauncher()
+		ActivityDependencies(this, this, applicationDependencies)
+	}
 
-	override val applicationPermissions by lazy {
+	final override val registeredActivityResultsLauncher = registerResultActivityLauncher()
+
+	final override val applicationPermissions by lazy {
 		val osPermissionChecker = OsPermissionsChecker(applicationContext)
 		ApplicationPermissionsRequests(
 			browserViewDependencies.libraryProvider,
@@ -57,9 +62,7 @@ val destinationProperty by lazy { magicPropertyBuilder.buildProperty("destinatio
 
 	private val permissionsRequests = ConcurrentHashMap<Int, Messenger<Map<String, Boolean>>>()
 
-	private var isInLeanbackMode = false
-
-	override fun onCreate(savedInstanceState: Bundle?) {
+	final override fun onCreate(savedInstanceState: Bundle?) {
 		super.onCreate(savedInstanceState)
 
 		// Ensure that this task is only started when it's the task root. A workaround for an Android bug.
@@ -67,13 +70,14 @@ val destinationProperty by lazy { magicPropertyBuilder.buildProperty("destinatio
 		val intent = intent
 		if (Intent.ACTION_MAIN == intent.action) {
 			if (intent.hasCategory(Intent.CATEGORY_LAUNCHER) && !isTaskRoot) {
-				val className = javaClass.name
-				logger.info("$className is not the root.  Finishing $className instead of launching.")
+				if (logger.isInfoEnabled) {
+					val className = javaClass.name
+					logger.info("$className is not the root.  Finishing $className instead of launching.")
+				}
+
 				finish()
 				return
 			}
-
-			isInLeanbackMode = intent.hasCategory(Intent.CATEGORY_LEANBACK_LAUNCHER)
 		}
 
 		applicationPermissions.promiseApplicationPermissionsRequest()
@@ -81,28 +85,15 @@ val destinationProperty by lazy { magicPropertyBuilder.buildProperty("destinatio
 		WindowCompat.setDecorFitsSystemWindows(window, false)
 
 		setContent {
-			if (!isInLeanbackMode) {
-				ProjectBlueComposableApplication {
-					HandheldApplication(
-						browserViewDependencies = browserViewDependencies,
-						permissionsDependencies = this,
-						initialDestination = getDestination(intent),
-					)
-				}
-			} else {
-				AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
-				ProjectBlueComposableApplication(darkTheme = true) {
-					NowPlayingTvApplication(
-						browserViewDependencies = browserViewDependencies,
-						permissionsDependencies = this,
-						initialDestination = getDestination(intent),
-					)
-				}
-			}
+			Application(
+				browserViewDependencies = browserViewDependencies,
+				permissionsDependencies = this,
+				initialDestination = getDestination(intent),
+			)
 		}
 	}
 
-	override fun onNewIntent(intent: Intent) {
+	final override fun onNewIntent(intent: Intent) {
 		super.onNewIntent(intent)
 
 		this.intent = intent
@@ -110,7 +101,7 @@ val destinationProperty by lazy { magicPropertyBuilder.buildProperty("destinatio
 		getDestination(intent)?.also { browserViewDependencies.navigationMessages.sendMessage(NavigationMessage(it)) }
 	}
 
-	override fun requestPermissions(permissions: List<String>): Promise<Map<String, Boolean>> {
+	final override fun requestPermissions(permissions: List<String>): Promise<Map<String, Boolean>> {
 		return if (permissions.isEmpty()) Promise(emptyMap())
 		else Promise<Map<String, Boolean>> { messenger ->
 			val requestId = messenger.hashCode()
@@ -124,7 +115,7 @@ val destinationProperty by lazy { magicPropertyBuilder.buildProperty("destinatio
 		}
 	}
 
-	override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
+	final override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
 		super.onRequestPermissionsResult(requestCode, permissions, grantResults)
 
 		permissionsRequests
@@ -135,6 +126,9 @@ val destinationProperty by lazy { magicPropertyBuilder.buildProperty("destinatio
 					.associate { (r, p) -> Pair(p, r == PackageManager.PERMISSION_GRANTED) }
 			)
 	}
+
+	@Composable
+	abstract fun Application(browserViewDependencies: BrowserViewDependencies, permissionsDependencies: PermissionsDependencies, initialDestination: Destination?)
 
 	private fun getDestination(intent: Intent?): Destination? =
 		intent?.safelyGetParcelableExtra<Destination>(destinationProperty)

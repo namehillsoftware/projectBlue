@@ -15,4 +15,19 @@
         <item name="android:textColor">?attr/colorOnSurface</item>
         <item name="android:windowContentOverlay">@null</item>
     </style>
+
+    <style name="AppThemeNight" parent="Theme.MaterialComponents.DayNight.NoActionBar">
+        <!-- Main theme colors -->
+        <!--   your app branding color for the app bar -->
+        <item name="colorPrimary">@color/project_blue_primary_night</item>
+        <!--   darker variant for the status bar and contextual app bars -->
+        <item name="colorPrimaryDark">@color/project_blue_dark_night</item>
+        <!--   theme UI controls like checkboxes and text fields -->
+        <item name="colorAccent">@color/project_blue_primary_night</item>
+        <item name="colorSecondary">@color/project_blue_dark_night</item>
+        <item name="colorOnSecondary">@android:color/white</item>
+        <item name="colorOnSurfaceVariant">?attr/colorOnSurface</item>
+        <item name="android:textColor">?attr/colorOnSurface</item>
+        <item name="android:windowContentOverlay">@null</item>
+    </style>
 </resources>
