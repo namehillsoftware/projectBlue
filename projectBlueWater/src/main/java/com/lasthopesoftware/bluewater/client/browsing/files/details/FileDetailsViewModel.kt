@@ -196,7 +196,7 @@ class FileDetailsViewModel(
 						?.serviceFile
 						?.let { serviceFile ->
 							updateFileProperties
-								.promiseFileUpdate(l, serviceFile, property, newValue, false)
+								.promiseFileUpdate(l, serviceFile, property, newValue, true)
 								.then { _ -> mutableCommittedValue.value = newValue }
 						}
 				}

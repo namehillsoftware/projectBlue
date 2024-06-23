@@ -53,6 +53,7 @@ private val dateTimeProperties by lazy {
 		KnownFileProperties.DateModified,
 		KnownFileProperties.DateTagged,
 		KnownFileProperties.DateFirstRated,
+		KnownFileProperties.DateLastRated,
 		KnownFileProperties.DateLastOpened
 	)
 }

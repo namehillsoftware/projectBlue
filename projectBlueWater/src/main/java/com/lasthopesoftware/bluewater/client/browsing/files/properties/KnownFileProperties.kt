@@ -29,6 +29,7 @@ object KnownFileProperties {
 	const val DateModified = "Date Modified"
 	const val DateTagged = "Date Tagged"
 	const val DateFirstRated = "Date First Rated"
+	const val DateLastRated = "Date Last Rated"
 	const val DateLastOpened = "Date Last Opened"
 	const val FileSize = "File Size"
 	const val Date = "Date"

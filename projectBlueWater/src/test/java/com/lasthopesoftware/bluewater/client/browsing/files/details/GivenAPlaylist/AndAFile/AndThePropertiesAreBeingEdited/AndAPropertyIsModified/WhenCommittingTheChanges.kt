@@ -58,7 +58,7 @@ class WhenCommittingTheChanges {
 					)
 				},
 				mockk {
-					every { promiseFileUpdate(LibraryId(libraryId), ServiceFile(serviceFileId), KnownFileProperties.Track, any(), false) } answers {
+					every { promiseFileUpdate(LibraryId(libraryId), ServiceFile(serviceFileId), KnownFileProperties.Track, any(), true) } answers {
 						persistedValue = arg(3)
 						Unit.toPromise()
 					}
