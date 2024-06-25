@@ -6,8 +6,4 @@
     <color name="project_blue_dark">#667DB9</color>
     <color name="now_playing_list_color">#4F000000</color>
 
-    <color name="project_blue_primary_night">#303F9F</color>
-    <color name="project_blue_light_night">#666AD1</color>
-    <color name="project_blue_dark_night">#001970</color>
-
 </resources>

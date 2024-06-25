@@ -1,8 +1,7 @@
 package com.lasthopesoftware.bluewater
 
 import android.content.Context
-import com.lasthopesoftware.bluewater.android.intents.BuildIntents
-import com.lasthopesoftware.bluewater.client.ActivitySuppliedDependencies
+import com.lasthopesoftware.bluewater.android.intents.IntentBuilder
 import com.lasthopesoftware.bluewater.client.stored.sync.SyncScheduler
 
 object ApplicationDependenciesContainer {
@@ -15,27 +14,20 @@ object ApplicationDependenciesContainer {
 	val Context.applicationDependencies: ApplicationDependencies
 		// Double-checked initialization
 		get() = attachedDependencies
-			?.takeIf { it.applicationContext == applicationContext }
+			?.takeIf { it.context == applicationContext }
 			?: synchronized(sync) {
 				attachedDependencies
-					?.takeIf { it.applicationContext == applicationContext }
+					?.takeIf { it.context == applicationContext }
 					?: run {
-						val newDependencies = AttachedDependencies(applicationContext, this)
+						val newDependencies = AttachedDependencies(applicationContext)
 						attachedDependencies = newDependencies
 						newDependencies
 					}
 			}
 
-	fun refresh() = synchronized(sync) {
-		attachedDependencies = null
-	}
+	private class AttachedDependencies(val context: Context) : ApplicationDependencies {
+		override val intentBuilder by lazy { IntentBuilder(context) }
 
-	private class AttachedDependencies(val applicationContext: Context, private val callingContext: Context) : ApplicationDependencies {
-		override val intentBuilder: BuildIntents by lazy {
-			if (callingContext is ActivitySuppliedDependencies) callingContext.intentBuilder
-			else throw UnsupportedOperationException("$callingContext could not supply an intentBuilder")
-		}
-
-		override val syncScheduler by lazy { SyncScheduler(applicationContext) }
+		override val syncScheduler by lazy { SyncScheduler(context) }
 	}
 }
