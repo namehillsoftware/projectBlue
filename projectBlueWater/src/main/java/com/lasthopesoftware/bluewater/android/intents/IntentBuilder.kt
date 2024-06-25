@@ -19,7 +19,7 @@ import com.lasthopesoftware.bluewater.client.browsing.navigation.NowPlayingScree
 import com.lasthopesoftware.bluewater.client.destinationProperty
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 
-class IntentBuilder<DestinationRoutingActivity : EntryActivity>(private val context: Context, private val destinationRoutingActivityClass: Class<DestinationRoutingActivity>) : BuildIntents {
+class IntentBuilder(private val context: Context) : BuildIntents {
 
 	override fun buildViewLibraryIntent(libraryId: LibraryId): Intent = getBrowserActivityIntent(LibraryScreen(libraryId))
 
@@ -55,7 +55,7 @@ class IntentBuilder<DestinationRoutingActivity : EntryActivity>(private val cont
 
 	private fun buildShowDownloadsIntent(): Intent = getBrowserActivityIntent(ActiveLibraryDownloadsScreen)
 
-	private fun getBrowserActivityIntent(destination: Destination): Intent = Intent(context, destinationRoutingActivityClass).apply {
+	private fun getBrowserActivityIntent(destination: Destination): Intent = context.getIntent<EntryActivity>().apply {
 		flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
 		// Set action to uniquely identify intents when compared with `filterEquals`, as the extras are not enough.
 		data = Uri.parse("destination://${destination.javaClass.name}")
