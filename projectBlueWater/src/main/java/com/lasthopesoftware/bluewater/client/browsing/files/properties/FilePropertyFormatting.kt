@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.properties
 
+import org.apache.commons.text.StringEscapeUtils
 import org.joda.time.DateTime
 import org.joda.time.Duration
 import org.joda.time.format.DateTimeFormatterBuilder
@@ -82,6 +83,6 @@ fun FileProperty.getFormattedValue(): String {
 		KnownFileProperties.Duration -> {
 			Duration.standardSeconds(value.toDouble().toLong()).toPeriod().toString(minutesAndSecondsFormatter)
 		}
-		else -> value
+		else -> StringEscapeUtils.unescapeHtml4(value)
 	}
 }
