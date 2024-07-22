@@ -36,6 +36,7 @@ import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.AlertDialog
@@ -418,6 +419,11 @@ fun NowPlayingControls(
 	}
 }
 
+suspend fun LazyListState.scrollToFileIfNotScrolling(file: PositionedFile) {
+	if (!isScrollInProgress)
+		scrollToItem(file.playlistPosition)
+}
+
 @Composable
 fun NowPlayingPlaylist(
 	childItemViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
@@ -446,13 +452,17 @@ fun NowPlayingPlaylist(
 
 	val playingFile by nowPlayingFilePropertiesViewModel.nowPlayingFile.subscribeAsState()
 
+	LaunchedEffect(key1 = Unit) {
+		playingFile?.also {
+			dragDropListState.lazyListState.scrollToFileIfNotScrolling(it)
+		}
+	}
+
 	val isAutoScrollEnabled by playlistViewModel.isAutoScrolling.subscribeAsState()
 	if (isAutoScrollEnabled) {
 		LaunchedEffect(key1 = playingFile) {
-			playingFile?.apply {
-				val listState = dragDropListState.lazyListState
-				if (!listState.isScrollInProgress)
-					listState.scrollToItem(playlistPosition)
+			playingFile?.also {
+				dragDropListState.lazyListState.scrollToFileIfNotScrolling(it)
 			}
 		}
 	}
@@ -841,10 +851,16 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 				.background(SharedColors.overlayDark),
 			horizontalAlignment = Alignment.CenterHorizontally,
 		) {
-			if (draggableState.currentValue == PlaylistDragValue.Collapsed) {
-				playlistViewModel.enableSystemAutoScrolling()
-			} else {
-				playlistViewModel.disableSystemAutoScrolling()
+			DisposableEffect(key1 = draggableState.currentValue) {
+				if (draggableState.currentValue == PlaylistDragValue.Collapsed) {
+					playlistViewModel.enableSystemAutoScrolling()
+				} else {
+					playlistViewModel.disableSystemAutoScrolling()
+				}
+
+				onDispose {
+					playlistViewModel.disableSystemAutoScrolling()
+				}
 			}
 
 			val scope = rememberCoroutineScope()
