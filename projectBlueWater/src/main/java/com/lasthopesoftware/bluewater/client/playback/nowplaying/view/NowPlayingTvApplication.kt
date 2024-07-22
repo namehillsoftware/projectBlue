@@ -319,12 +319,9 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedBr
 							)
 						}
 
-						DisposableEffect(key1 = isPlaylistShown) {
-							if (!isPlaylistShown) {
+						DisposableEffect(key1 = Unit) {
+							if (!isPlaylistShown)
 								nowPlayingPlaylistViewModel.enableSystemAutoScrolling()
-							} else {
-								nowPlayingPlaylistViewModel.disableSystemAutoScrolling()
-							}
 
 							onDispose {  }
 						}
@@ -335,7 +332,14 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedBr
 									.fillMaxHeight()
 									.width(halfWidth)
 									.offset(x = playlistOffset)
-									.background(SharedColors.overlayDark),
+									.background(SharedColors.overlayDark)
+									.onFocusChanged { state ->
+										if (state.hasFocus)
+											nowPlayingPlaylistViewModel.disableSystemAutoScrolling()
+										else
+											nowPlayingPlaylistViewModel.enableSystemAutoScrolling()
+									}
+									.focusGroup(),
 								horizontalAlignment = Alignment.CenterHorizontally,
 							) {
 								PlaylistControls(

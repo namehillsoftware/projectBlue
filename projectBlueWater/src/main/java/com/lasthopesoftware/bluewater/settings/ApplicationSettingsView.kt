@@ -204,7 +204,7 @@ private fun LazyListScope.settingsList(
 		Box(
 			modifier = Modifier
 				.fillMaxWidth()
-				.padding(top = 48.dp)
+				.padding(top = Dimensions.menuHeight)
 		) {
 			ApplicationInfoText(
 				versionName = BuildConfig.VERSION_NAME,
@@ -219,7 +219,7 @@ private fun LazyListScope.settingsList(
 	item {
 		Button(
 			modifier = Modifier
-				.padding(top = 48.dp),
+				.padding(top = Dimensions.menuHeight),
 			onClick = {
 				playbackService.kill()
 			}
