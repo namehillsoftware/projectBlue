@@ -1,10 +1,12 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.properties
 
-import org.apache.commons.text.StringEscapeUtils
 import org.joda.time.DateTime
 import org.joda.time.Duration
 import org.joda.time.format.DateTimeFormatterBuilder
 import org.joda.time.format.PeriodFormatterBuilder
+import org.jsoup.Jsoup
+import org.jsoup.safety.Cleaner
+import org.jsoup.safety.Safelist
 import kotlin.math.ceil
 
 private val yearFormatter by lazy { DateTimeFormatterBuilder().appendYear(4, 4).toFormatter() }
@@ -59,6 +61,10 @@ private val dateTimeProperties by lazy {
 	)
 }
 
+private val cleaner by lazy {
+	Cleaner(Safelist.none())
+}
+
 fun FileProperty.getFormattedValue(): String {
 	if (value.isEmpty()) return ""
 
@@ -83,6 +89,17 @@ fun FileProperty.getFormattedValue(): String {
 		KnownFileProperties.Duration -> {
 			Duration.standardSeconds(value.toDouble().toLong()).toPeriod().toString(minutesAndSecondsFormatter)
 		}
-		else -> StringEscapeUtils.unescapeHtml4(value)
+		else -> {
+			val cleanestDocument = cleaner.clean(Jsoup.parse(Jsoup.parse(value).wholeText()))
+
+			val documentText = StringBuilder()
+			for (node in cleanestDocument.body().textNodes()) {
+				val text = node.wholeText
+				if (text.isNotBlank())
+					documentText.append(text)
+			}
+
+			documentText.toString()
+		}
 	}
 }
