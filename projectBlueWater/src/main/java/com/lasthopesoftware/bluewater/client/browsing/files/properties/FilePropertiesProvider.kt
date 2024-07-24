@@ -17,7 +17,7 @@ import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import com.namehillsoftware.handoff.promises.response.PromisedResponse
 import okhttp3.Response
-import xmlwise.Xmlwise
+import org.jsoup.Jsoup
 import java.io.IOException
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -106,10 +106,14 @@ class FilePropertiesProvider(
 
 			resolve(
 				response.body
-					.use { body -> Xmlwise.createXml(body.string()) }
+					.use { body -> body.byteStream().use { Jsoup.parse(it, null, "") } }
 					.let { xml ->
-						val parent = xml[0]
-						parent.associateTo(HashMap()) { el -> Pair(el.getAttribute("Name"), el.value) }
+						xml
+							.getElementsByTag("item")
+							.firstOrNull()
+							?.children()
+							?.associateTo(HashMap()) { el ->Pair(el.attr("Name"), el.wholeOwnText()) }
+							?: emptyMap()
 					}
 					.also { properties ->
 						filePropertiesContainerProvider.putFilePropertiesContainer(

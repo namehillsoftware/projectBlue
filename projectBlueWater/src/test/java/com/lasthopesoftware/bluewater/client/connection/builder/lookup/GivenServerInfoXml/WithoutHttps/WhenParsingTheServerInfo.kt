@@ -8,15 +8,16 @@ import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
+import org.jsoup.Jsoup
+import org.jsoup.parser.Parser
 import org.junit.jupiter.api.Test
-import xmlwise.Xmlwise
 
 class WhenParsingTheServerInfo {
 
 	private val serverInfo by lazy {
 		val serverInfoXml = mockk<RequestServerInfoXml>()
 		every { serverInfoXml.promiseServerInfoXml(any()) } returns Promise(
-			Xmlwise.createXml(
+			Jsoup.parse(
 				"""<?xml version="1.0" encoding="UTF-8"?>
 <Response Status="OK">
 <keyid>gooPc</keyid>
@@ -26,7 +27,9 @@ class WhenParsingTheServerInfo {
 <macaddresslist>
 5c-f3-70-8b-db-e9,b4-2e-99-31-f7-eb
 </macaddresslist>
-</Response>"""
+</Response>""",
+				"",
+				Parser.xmlParser()
 			)
 		)
 		val serverLookup = ServerLookup(serverInfoXml)

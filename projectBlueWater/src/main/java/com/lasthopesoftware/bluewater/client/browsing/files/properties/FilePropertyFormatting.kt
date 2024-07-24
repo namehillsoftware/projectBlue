@@ -5,6 +5,7 @@ import org.joda.time.Duration
 import org.joda.time.format.DateTimeFormatterBuilder
 import org.joda.time.format.PeriodFormatterBuilder
 import org.jsoup.Jsoup
+import org.jsoup.internal.StringUtil
 import org.jsoup.safety.Cleaner
 import org.jsoup.safety.Safelist
 import kotlin.math.ceil
@@ -92,14 +93,18 @@ fun FileProperty.getFormattedValue(): String {
 		else -> {
 			val cleanestDocument = cleaner.clean(Jsoup.parse(Jsoup.parse(value).wholeText()))
 
-			val documentText = StringBuilder()
-			for (node in cleanestDocument.body().textNodes()) {
-				val text = node.wholeText
-				if (text.isNotBlank())
-					documentText.append(text)
-			}
+			val documentText = StringUtil.borrowBuilder()
+			try {
+				for (node in cleanestDocument.body().textNodes()) {
+					val text = node.wholeText
+					if (text.isNotBlank())
+						documentText.append(text)
+				}
 
-			documentText.toString()
+				documentText.toString()
+			} finally {
+				StringUtil.releaseBuilder(documentText)
+			}
 		}
 	}
 }
