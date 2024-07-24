@@ -88,7 +88,7 @@ With nowhere to fall into the arms of someone who
 There's nothing to save and I know
 You live till you die
 
-[Post-Chorus: Mark Lanegan &amp; Josh Homme]
+[Post-Chorus: Mark Lanegan & Josh Homme]
 Live 'til you die
 I know
 Live 'til you die
@@ -110,7 +110,7 @@ With nowhere to fall into the arms of someone who
 There's nothing to save and I know
 You live till you die
 
-[Post-Chorus: Mark Lanegan &amp; Josh Homme]
+[Post-Chorus: Mark Lanegan & Josh Homme]
 Live 'til you die
 I know
 Live 'til you die

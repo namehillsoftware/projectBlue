@@ -10,8 +10,8 @@ class ServerLookup(private val serverInfoXmlRequest: RequestServerInfoXml) : Loo
 		private const val ipElement = "ip"
 		private const val localIpListElement = "localiplist"
 		private const val portElement = "port"
-		private const val httpsPortElement = "https_port"
-		private const val certificateFingerprintElement = "certificate_fingerprint"
+		private const val httpsPortElementTag = "https_port"
+		private const val certificateFingerprintElementTag = "certificate_fingerprint"
 		private const val statusAttribute = "Status"
 		private const val errorStatusValue = "Error"
 		private const val msgElement = "msg"
@@ -24,32 +24,36 @@ class ServerLookup(private val serverInfoXmlRequest: RequestServerInfoXml) : Loo
 			.then { xml ->
 				if (xml == null || cp.isCancelled) return@then null
 
-				if (xml.containsAttribute(statusAttribute) && errorStatusValue == xml.getAttribute(statusAttribute)) {
-					if (xml.contains(msgElement)) throw ServerDiscoveryException(
+				val response = xml.firstElementChild() ?: return@then null
+				if (response.hasAttr(statusAttribute) && errorStatusValue == response.attr(statusAttribute)) {
+					val element = response.getElementsByTag(msgElement).firstOrNull()
+					if (element != null) throw ServerDiscoveryException(
 						libraryId,
-						xml.getUnique(msgElement).value
+						element.text()
 					)
 					throw ServerDiscoveryException(libraryId)
 				}
 
-				val remoteIp = xml.getUnique(ipElement)
-				val localIps = xml.getUnique(localIpListElement)
-				val portXml = xml.getUnique(portElement)
-				val macAddresses = xml.getUnique(macAddressElement)
+				val remoteIp = response.getElementsByTag(ipElement).single()
+				val localIps = response.getElementsByTag(localIpListElement).single()
+				val portXml = response.getElementsByTag(portElement).single()
+				val macAddresses = response.getElementsByTag(macAddressElement).single()
 
 				var serverInfo = ServerInfo(
-					remoteIp = remoteIp.value,
-					localIps = listOf(*localIps.value.split(",").toTypedArray()),
-					httpPort = portXml.value.toInt(),
-					macAddresses = listOf(*macAddresses.value.trim().split(",").toTypedArray())
+					remoteIp = remoteIp.wholeOwnText(),
+					localIps = listOf(*localIps.wholeOwnText().split(",").toTypedArray()),
+					httpPort = portXml.wholeOwnText().toInt(),
+					macAddresses = listOf(*macAddresses.wholeOwnText().trim().split(",").toTypedArray())
 				)
 
-				if (xml.contains(httpsPortElement))
-					serverInfo = serverInfo.copy(httpsPort = xml.getUnique(httpsPortElement).value.toInt())
+				val httpsPortElement = response.getElementsByTag(httpsPortElementTag).firstOrNull()
+				if (httpsPortElement != null)
+					serverInfo = serverInfo.copy(httpsPort = httpsPortElement.wholeOwnText().toInt())
 
-				if (xml.contains(certificateFingerprintElement))
+				val certificateFingerprintElement = response.getElementsByTag(certificateFingerprintElementTag).firstOrNull()
+				if (certificateFingerprintElement != null)
 					serverInfo =
-						serverInfo.copy(certificateFingerprint = xml.getUnique(certificateFingerprintElement).value)
+						serverInfo.copy(certificateFingerprint = certificateFingerprintElement.wholeOwnText())
 
 				serverInfo
 			}

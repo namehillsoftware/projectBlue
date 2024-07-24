@@ -7,11 +7,12 @@ import com.lasthopesoftware.bluewater.client.connection.okhttp.ProvideOkHttpClie
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.namehillsoftware.handoff.promises.Promise
 import okhttp3.Request
-import xmlwise.XmlElement
-import xmlwise.Xmlwise
+import org.jsoup.Jsoup
+import org.jsoup.nodes.Document
+import org.jsoup.parser.Parser
 
 class ServerInfoXmlRequest(private val libraryProvider: ILibraryProvider, private val clientFactory: ProvideOkHttpClients) : RequestServerInfoXml {
-	override fun promiseServerInfoXml(libraryId: LibraryId): Promise<XmlElement?> = Promise.Proxy { cp ->
+	override fun promiseServerInfoXml(libraryId: LibraryId): Promise<Document?> = Promise.Proxy { cp ->
 		libraryProvider.promiseLibrary(libraryId).eventually { library ->
 			library
 				?.run {
@@ -20,7 +21,7 @@ class ServerInfoXmlRequest(private val libraryProvider: ILibraryProvider, privat
 						.build()
 				}
 				?.let { request -> HttpPromisedResponse(clientFactory.getJriverCentralClient().newCall(request)).also(cp::doCancel) }
-				?.then { r -> r.body.use { b -> Xmlwise.createXml(b.string()) } }
+				?.then { r -> r.body.use { b -> b.byteStream().use { Jsoup.parse(it, null, "", Parser.xmlParser()) } } }
 				.keepPromise()
 		}
 	}

@@ -9,7 +9,8 @@ import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
-import xmlwise.Xmlwise
+import org.jsoup.Jsoup
+import org.jsoup.parser.Parser
 
 class PlaylistsStorage(private val libraryConnections: ProvideLibraryConnections) : StorePlaylists {
 	override fun promiseAudioPlaylistPaths(libraryId: LibraryId): Promise<List<String>> =
@@ -20,19 +21,19 @@ class PlaylistsStorage(private val libraryConnections: ProvideLibraryConnections
 					?.promiseResponse("Playlists/List", "IncludeMediaTypes=1")
 					?.then { response ->
 						response.body
-							.use { body -> Xmlwise.createXml(body.string()) }
+							.use { body -> body.byteStream().use { Jsoup.parse(it, null, "", Parser.xmlParser()) } }
 							.let { xml ->
 								xml
-									.get("Item")
+									.getElementsByTag("Item")
 									.mapNotNull { itemXml ->
 										itemXml
 											.takeIf {
-												it.get("Field")
-													.any { el -> el.getAttribute("Name") == "MediaTypes" && el.value == "Audio" }
+												it.getElementsByTag("Field")
+													.any { el -> el.attr("Name") == "MediaTypes" && el.ownText() == "Audio" }
 											}
-											?.get("Field")
-											?.firstOrNull { el -> el.getAttribute("Name") == "Path" }
-											?.value
+											?.getElementsByTag("Field")
+											?.firstOrNull { el -> el.attr("Name") == "Path" }
+											?.ownText()
 									}
 							}
 					}
