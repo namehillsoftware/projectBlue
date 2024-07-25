@@ -140,12 +140,12 @@ fun RenderTrackTitleItem(
 
 @Composable
 fun SearchFilesView(
-    searchFilesViewModel: SearchFilesViewModel,
-    nowPlayingViewModel: NowPlayingFilePropertiesViewModel,
-    trackHeadlineViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
-    itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
-    applicationNavigation: NavigateApplication,
-    playbackServiceController: ControlPlaybackService,
+	searchFilesViewModel: SearchFilesViewModel,
+	nowPlayingViewModel: NowPlayingFilePropertiesViewModel,
+	trackHeadlineViewModelProvider: PooledCloseablesViewModel<ViewPlaylistFileItem>,
+	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
+	applicationNavigation: NavigateApplication,
+	playbackServiceController: ControlPlaybackService,
 ) {
 	val files by searchFilesViewModel.files.subscribeAsState()
 	var isConnectionLost by remember { mutableStateOf(false) }
@@ -330,8 +330,8 @@ fun SearchFilesView(
 					BackButton(onBack = applicationNavigation::backOut)
 
 					val endPadding by remember { derivedStateOf { 4.dp + (minimumMenuWidth + 12.dp) * acceleratedHeaderCollapsingProgress } }
-					val query by searchFilesViewModel.query.collectAsState()
-					val isLibraryIdActive by searchFilesViewModel.isLibraryIdActive.collectAsState()
+					val query by searchFilesViewModel.query.subscribeAsState()
+					val isLibraryIdActive by searchFilesViewModel.isLibraryIdActive.subscribeAsState()
 
 					TextField(
 						value = query,

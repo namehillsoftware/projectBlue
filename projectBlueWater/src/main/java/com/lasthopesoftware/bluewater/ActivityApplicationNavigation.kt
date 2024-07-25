@@ -4,8 +4,10 @@ import android.os.Handler
 import androidx.activity.ComponentActivity
 import com.lasthopesoftware.bluewater.android.intents.BuildIntents
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.promises.extensions.LoopedInPromise
+import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.MessageWriter
 
 class ActivityApplicationNavigation(
@@ -17,6 +19,10 @@ class ActivityApplicationNavigation(
 
 	override fun viewLibrary(libraryId: LibraryId) = loopInOperation {
 		componentActivity.startActivity(intentBuilder.buildViewLibraryIntent(libraryId))
+	}
+
+	override fun search(libraryId: LibraryId, filePropertyFilter: FileProperty): Promise<Unit> = loopInOperation {
+		componentActivity.startActivity(intentBuilder.buildLibrarySearchIntent(libraryId, filePropertyFilter))
 	}
 
 	override fun viewApplicationSettings() = loopInOperation {

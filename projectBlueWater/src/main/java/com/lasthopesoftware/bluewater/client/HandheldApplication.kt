@@ -34,6 +34,7 @@ import com.lasthopesoftware.bluewater.client.browsing.BrowserViewDependencies
 import com.lasthopesoftware.bluewater.client.browsing.ScopedBrowserViewDependencies
 import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelDependencies
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -91,6 +92,12 @@ private class BottomSheetHidingNavigation(
 		hideBottomSheet()
 
 		return inner.launchSearch(libraryId)
+	}
+
+	override fun search(libraryId: LibraryId, filePropertyFilter: FileProperty): Promise<Unit> {
+		hideBottomSheet()
+
+		return inner.search(libraryId, filePropertyFilter)
 	}
 
 	override fun viewServerSettings(libraryId: LibraryId): Promise<Unit> {

@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.navigation
 
 import com.lasthopesoftware.bluewater.NavigateApplication
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
@@ -30,6 +31,12 @@ class DestinationRoutingNavigation(
 		navController.popUpTo { it is ItemScreen }
 
 		navController.navigate(SearchScreen(libraryId))
+	}.toPromise()
+
+	override fun search(libraryId: LibraryId, filePropertyFilter: FileProperty): Promise<Unit> = coroutineScope.launch {
+		navController.popUpTo { it is ItemScreen }
+
+		navController.navigate(SearchScreen(libraryId, filePropertyFilter))
 	}.toPromise()
 
 	override fun viewApplicationSettings() = coroutineScope.launch {

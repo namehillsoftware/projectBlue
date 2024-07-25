@@ -66,6 +66,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyType
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.shared.NullBox
@@ -341,7 +342,11 @@ fun FilePropertyRow(viewModel: FileDetailsViewModel, property: FileDetailsViewMo
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-private fun FileDetailsEditor(viewModel: FileDetailsViewModel, palette: MediaStylePalette) {
+private fun FileDetailsEditor(
+	viewModel: FileDetailsViewModel,
+	navigateApplication: NavigateApplication,
+	palette: MediaStylePalette
+) {
 	val maybeHighlightedFileProperty by viewModel.highlightedProperty.subscribeAsState()
 	maybeHighlightedFileProperty?.let { fileProperty ->
 		val property = fileProperty.property
@@ -441,6 +446,24 @@ private fun FileDetailsEditor(viewModel: FileDetailsViewModel, palette: MediaSty
 							.fillMaxWidth()
 							.padding(viewPadding)
 					) {
+						Image(
+							painter = painterResource(id = R.drawable.search_36dp),
+							colorFilter = ColorFilter.tint(palette.secondaryTextColor),
+							contentDescription = stringResource(id = R.string.search),
+							modifier = Modifier
+								.fillMaxWidth()
+								.weight(1f)
+								.navigable(
+									onClick = {
+										viewModel.activeLibraryId?.also {
+											navigateApplication.search(it, FileProperty(property, propertyValue))
+										}
+									},
+									enabled = !isEditing
+								)
+								.align(Alignment.CenterVertically),
+						)
+
 						when {
 							isEditing -> {
 								Image(
@@ -489,7 +512,7 @@ fun FileDetailsView(viewModel: FileDetailsViewModel, navigateApplication: Naviga
 	val artist by viewModel.artist.subscribeAsState()
 	val album by viewModel.album.subscribeAsState()
 
-	FileDetailsEditor(viewModel = viewModel, palette = coverArtColorState)
+	FileDetailsEditor(viewModel = viewModel, navigateApplication = navigateApplication, palette = coverArtColorState)
 
 	@Composable
 	fun fileDetailsSingleColumn() {

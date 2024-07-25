@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.list
+package com.lasthopesoftware.bluewater.client.browsing.files.list
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -25,7 +25,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,9 +42,7 @@ import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.li.LabelledPlayButton
 import com.lasthopesoftware.bluewater.client.browsing.files.li.LabelledShuffleButton
-import com.lasthopesoftware.bluewater.client.browsing.files.list.RenderTrackTitleItem
-import com.lasthopesoftware.bluewater.client.browsing.files.list.SearchFilesViewModel
-import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewPlaylistFileItem
+import com.lasthopesoftware.bluewater.client.browsing.items.list.ConnectionLostView
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
@@ -94,8 +91,8 @@ fun TvSearchFilesView(
 				BackButton(onBack = applicationNavigation::backOut)
 
 				val endPadding = Dimensions.viewPaddingUnit * 4 + minimumMenuWidth
-				val query by searchFilesViewModel.query.collectAsState()
-				val isLibraryIdActive by searchFilesViewModel.isLibraryIdActive.collectAsState()
+				val query by searchFilesViewModel.query.subscribeAsState()
+				val isLibraryIdActive by searchFilesViewModel.isLibraryIdActive.subscribeAsState()
 
 				val focusRequester = remember { FocusRequester() }
 				DisposableEffect(key1 = Unit) {

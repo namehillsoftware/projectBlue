@@ -21,7 +21,7 @@ enum class EditableFilePropertyDefinition(val propertyName: String, val type: Fi
 	override fun toString() = propertyName
 
 	companion object {
-		private val propertyLookup by lazy { values().associateBy { fp -> fp.propertyName } }
+		private val propertyLookup by lazy { entries.associateBy { fp -> fp.propertyName } }
 
 		fun fromName(name: String) = propertyLookup[name]
 	}

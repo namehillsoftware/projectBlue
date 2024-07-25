@@ -1,5 +1,10 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.properties
 
-data class FileProperty(val name: String, val value: String) {
-	val editableFilePropertyDefinition by lazy { EditableFilePropertyDefinition.fromName(name) }
-}
+import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
+
+@Parcelize
+data class FileProperty(val name: String, val value: String) : Parcelable
+
+val FileProperty.editableFilePropertyDefinition: EditableFilePropertyDefinition?
+	get() = EditableFilePropertyDefinition.fromName(name)

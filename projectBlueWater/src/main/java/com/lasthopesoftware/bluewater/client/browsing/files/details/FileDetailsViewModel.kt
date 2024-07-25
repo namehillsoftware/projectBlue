@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideLibrary
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideEditableLibraryFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.editableFilePropertyDefinition
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.getFormattedValue
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.UpdateFileProperties
@@ -58,7 +59,6 @@ class FileDetailsViewModel(
 	private var associatedUrlKey: UrlKeyHolder<ServiceFile>? = null
 	private var associatedPlaylist = emptyList<ServiceFile>()
 	private var activePositionedFile: PositionedFile? = null
-	private var activeLibraryId: LibraryId? = null
 	private val propertyUpdateRegistrations = registerForApplicationMessages.registerReceiver { message: FilePropertiesUpdatedMessage ->
 		if (message.urlServiceKey == associatedUrlKey)
 			activeLibraryId?.also { l ->
@@ -90,6 +90,8 @@ class FileDetailsViewModel(
 	val coverArt = mutableCoverArt.asInteractionState()
 	val rating = mutableRating.asInteractionState()
 	val highlightedProperty = mutableHighlightedProperty.asInteractionState()
+	var activeLibraryId: LibraryId? = null
+		private set
 
 	override fun onCleared() {
 		propertyUpdateRegistrations.close()
