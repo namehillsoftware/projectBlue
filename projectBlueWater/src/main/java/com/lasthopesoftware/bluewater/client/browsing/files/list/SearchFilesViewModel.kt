@@ -6,12 +6,11 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideLibraryFiles
 import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.SearchFileParameterProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.namehillsoftware.handoff.promises.Promise
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 
 class SearchFilesViewModel(
 	private val libraryFiles: ProvideLibraryFiles,
@@ -22,12 +21,16 @@ class SearchFilesViewModel(
 
 	private val mutableIsLoading = MutableInteractionState(false)
 	private val mutableFiles = MutableInteractionState(emptyList<ServiceFile>())
-	private val mutableIsLibraryIdActive = MutableStateFlow(false)
+	private val mutableIsLibraryIdActive = MutableInteractionState(false)
 
 	override val isLoading = mutableIsLoading.asInteractionState()
-	val isLibraryIdActive = mutableIsLibraryIdActive.asStateFlow()
+	val isLibraryIdActive = mutableIsLibraryIdActive.asInteractionState()
 	override val files = mutableFiles.asInteractionState()
-	val query = MutableStateFlow("")
+	val query = MutableInteractionState("")
+
+	fun prependFilter(filePropertyFilter: FileProperty) {
+		query.value = "[${filePropertyFilter.name}]=${filePropertyFilter.value} ${query.value}"
+	}
 
 	fun setActiveLibraryId(libraryId: LibraryId) {
 		this.loadedLibraryId = libraryId
