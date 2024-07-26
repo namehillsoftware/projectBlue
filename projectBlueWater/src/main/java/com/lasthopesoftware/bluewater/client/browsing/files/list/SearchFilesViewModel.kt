@@ -49,4 +49,9 @@ class SearchFilesViewModel(
 			.keepPromise(Unit)
 			.must { _ -> mutableIsLoading.value = false }
 	}
+
+	fun clearResults() {
+		query.value = ""
+		mutableFiles.value = emptyList()
+	}
 }

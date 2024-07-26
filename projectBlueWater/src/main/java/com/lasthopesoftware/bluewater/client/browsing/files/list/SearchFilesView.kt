@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.list
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -66,6 +67,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.linearInterpolation
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
+import com.lasthopesoftware.bluewater.shared.observables.subscribeAsMutableState
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 import com.lasthopesoftware.promises.extensions.suspend
 import kotlinx.coroutines.launch
@@ -330,13 +332,17 @@ fun SearchFilesView(
 					BackButton(onBack = applicationNavigation::backOut)
 
 					val endPadding by remember { derivedStateOf { 4.dp + (minimumMenuWidth + 12.dp) * acceleratedHeaderCollapsingProgress } }
-					val query by searchFilesViewModel.query.subscribeAsState()
+					var query by searchFilesViewModel.query.subscribeAsMutableState()
 					val isLibraryIdActive by searchFilesViewModel.isLibraryIdActive.subscribeAsState()
+
+					BackHandler(enabled = query != "") {
+						searchFilesViewModel.clearResults()
+					}
 
 					TextField(
 						value = query,
 						placeholder = { stringResource(id = R.string.lbl_search_hint) },
-						onValueChange = { searchFilesViewModel.query.value = it },
+						onValueChange = { query = it },
 						singleLine = true,
 						keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
 						keyboardActions = KeyboardActions(onSearch = {
