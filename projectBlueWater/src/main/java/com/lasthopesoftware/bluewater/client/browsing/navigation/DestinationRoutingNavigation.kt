@@ -28,13 +28,13 @@ class DestinationRoutingNavigation(
 ) : NavigateApplication by inner {
 
 	override fun launchSearch(libraryId: LibraryId) = coroutineScope.launch {
-		navController.popUpTo { it is ItemScreen }
+		popUpToBrowserScreen()
 
 		navController.navigate(SearchScreen(libraryId))
 	}.toPromise()
 
 	override fun search(libraryId: LibraryId, filePropertyFilter: FileProperty): Promise<Unit> = coroutineScope.launch {
-		navController.popUpTo { it is ItemScreen }
+		popUpToBrowserScreen()
 
 		navController.navigate(SearchScreen(libraryId, filePropertyFilter))
 	}.toPromise()
@@ -54,13 +54,13 @@ class DestinationRoutingNavigation(
 	}.toPromise()
 
 	override fun viewServerSettings(libraryId: LibraryId) = coroutineScope.launch {
-		navController.popUpTo { it is ItemScreen }
+		popUpToBrowserScreen()
 
 		navController.navigate(ConnectionSettingsScreen(libraryId))
 	}.toPromise()
 
 	override fun viewActiveDownloads(libraryId: LibraryId) = coroutineScope.launch {
-		navController.popUpTo { it is ItemScreen }
+		popUpToBrowserScreen()
 
 		navController.navigate(DownloadsScreen(libraryId))
 	}.toPromise()
@@ -89,4 +89,8 @@ class DestinationRoutingNavigation(
 	override fun backOut() = coroutineScope.async {
 		itemListMenuBackPressedHandler.hideAllMenus() || navigateUp().suspend()
 	}.toPromise()
+
+	private fun popUpToBrowserScreen() {
+		navController.popUpTo { it is ItemScreen || it is LibraryScreen }
+	}
 }
