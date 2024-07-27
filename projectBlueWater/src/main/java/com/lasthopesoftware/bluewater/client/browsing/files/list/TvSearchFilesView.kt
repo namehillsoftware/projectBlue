@@ -99,11 +99,7 @@ fun TvSearchFilesView(
 				val isLibraryIdActive by searchFilesViewModel.isLibraryIdActive.subscribeAsState()
 
 				val focusRequester = remember { FocusRequester() }
-				DisposableEffect(key1 = Unit) {
-					focusRequester.requestFocus()
 
-					onDispose { focusRequester.freeFocus() }
-				}
 				TextField(
 					value = query,
 					placeholder = { stringResource(id = R.string.lbl_search_hint) },
@@ -130,8 +126,13 @@ fun TvSearchFilesView(
 					modifier = Modifier
 						.padding(end = endPadding)
 						.weight(1f)
-						.focusRequester(focusRequester)
+						.focusRequester(focusRequester),
 				)
+
+				LaunchedEffect(Unit) {
+					delay(300)
+					focusRequester.requestFocus()
+				}
 			}
 
 			when {
