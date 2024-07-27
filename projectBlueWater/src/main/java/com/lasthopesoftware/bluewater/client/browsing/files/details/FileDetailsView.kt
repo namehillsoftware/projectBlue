@@ -608,7 +608,10 @@ fun FileDetailsView(viewModel: FileDetailsViewModel, navigateApplication: Naviga
 						}
 				}
 
-				BackButton(onBack = navigateApplication::backOut)
+				BackButton(
+					onBack = navigateApplication::backOut,
+					modifier = Modifier.padding(Dimensions.topRowOuterPadding)
+				)
 
 				val headerExpandProgress by remember { derivedStateOf { 1 - headerCollapseProgress } }
 				val topTitlePadding by remember { derivedStateOf { expandedTitlePadding * headerExpandProgress } }

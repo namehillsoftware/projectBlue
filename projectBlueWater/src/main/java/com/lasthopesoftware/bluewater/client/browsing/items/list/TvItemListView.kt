@@ -124,7 +124,9 @@ fun TvItemListView(
 			) {
 				BackButton(
 					applicationNavigation::navigateUp,
-					modifier = Modifier.align(Alignment.TopStart)
+					modifier = Modifier
+						.align(Alignment.TopStart)
+						.padding(Dimensions.topRowOuterPadding)
 				)
 			}
 

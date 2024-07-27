@@ -24,7 +24,7 @@ import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -54,6 +54,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.expande
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 import com.lasthopesoftware.promises.extensions.suspend
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.IOException
 
@@ -88,9 +89,12 @@ fun TvSearchFilesView(
 				horizontalArrangement = Arrangement.Center,
 				verticalAlignment = Alignment.CenterVertically,
 			) {
-				BackButton(onBack = applicationNavigation::backOut)
+				BackButton(
+					onBack = applicationNavigation::backOut,
+					modifier = Modifier.padding(Dimensions.topRowOuterPadding)
+				)
 
-				val endPadding = Dimensions.viewPaddingUnit * 4 + minimumMenuWidth
+				val endPadding = Dimensions.topRowOuterPadding + minimumMenuWidth
 				val query by searchFilesViewModel.query.subscribeAsState()
 				val isLibraryIdActive by searchFilesViewModel.isLibraryIdActive.subscribeAsState()
 

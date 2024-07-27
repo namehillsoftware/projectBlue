@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
@@ -242,7 +241,7 @@ private fun RemoveServerConfirmationDialog(
 }
 
 @Composable
-private fun ColumnScope.LibrarySettingsList(
+private fun LibrarySettingsList(
 	librarySettingsViewModel: LibrarySettingsViewModel,
 	stringResources: GetStringResources,
 	userSslCertificates: ProvideUserSslCertificates,
@@ -604,7 +603,12 @@ fun LibrarySettingsView(
 					}
 				}
 
-				BackButton(navigateApplication::navigateUp, modifier = Modifier.align(Alignment.TopStart))
+				BackButton(
+					navigateApplication::navigateUp,
+					modifier = Modifier
+						.align(Alignment.TopStart)
+						.padding(Dimensions.topRowOuterPadding)
+				)
 			}
 		}
 	}
@@ -628,7 +632,8 @@ fun TvLibrarySettingsView(
 				Box(
 					modifier = Modifier
 						.fillMaxWidth()
-						.height(Dimensions.appBarHeight),
+						.height(Dimensions.appBarHeight)
+						.padding(Dimensions.viewPaddingUnit * 4),
 					contentAlignment = Alignment.CenterStart,
 				) {
 					BackButton(navigateApplication::navigateUp, modifier = Modifier.align(Alignment.TopStart))

@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.browsing.files.list
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -74,7 +75,7 @@ import kotlinx.coroutines.launch
 import java.io.IOException
 import kotlin.math.pow
 
-private val searchFieldPadding = Dimensions.viewPaddingUnit * 4
+private val searchFieldPadding = Dimensions.topRowOuterPadding
 private val textFieldHeight = TextFieldDefaults.MinHeight + TextFieldDefaults.FocusedBorderThickness * 2
 private val topBarHeight = textFieldHeight + searchFieldPadding
 private val minimumMenuWidth = (2 * 32).dp
@@ -326,19 +327,22 @@ fun SearchFilesView(
 						.fillMaxWidth()
 						.requiredHeight(topBarHeight)
 						.align(Alignment.TopStart),
-					horizontalArrangement = Arrangement.Center,
+					horizontalArrangement = Arrangement.Start,
 					verticalAlignment = Alignment.CenterVertically,
 				) {
-					BackButton(onBack = applicationNavigation::backOut)
+					BackButton(
+						onBack = applicationNavigation::backOut,
+						modifier = Modifier.padding(end = Dimensions.topRowOuterPadding)
+					)
 
-					val endPadding by remember { derivedStateOf { 4.dp + (minimumMenuWidth + 12.dp) * acceleratedHeaderCollapsingProgress } }
+					val endPadding by remember { derivedStateOf { Dimensions.viewPaddingUnit * 4 + (minimumMenuWidth + 12.dp) * acceleratedHeaderCollapsingProgress } }
+
 					var query by searchFilesViewModel.query.subscribeAsMutableState()
-					val isLibraryIdActive by searchFilesViewModel.isLibraryIdActive.subscribeAsState()
-
-					BackHandler(enabled = query != "") {
+					BackHandler(enabled = query.isNotEmpty()) {
 						searchFilesViewModel.clearResults()
 					}
 
+					val isLibraryIdActive by searchFilesViewModel.isLibraryIdActive.subscribeAsState()
 					TextField(
 						value = query,
 						placeholder = { stringResource(id = R.string.lbl_search_hint) },
@@ -354,11 +358,25 @@ fun SearchFilesView(
 								}
 							}
 						}),
-						trailingIcon = { Icon(Icons.Default.Search, contentDescription = stringResource(id = R.string.search)) },
+						trailingIcon = {
+							Icon(
+								Icons.Default.Search,
+								contentDescription = stringResource(id = R.string.search),
+								modifier = Modifier.clickable {
+									scope.launch {
+										try {
+											searchFilesViewModel.findFiles().suspend()
+										} catch (e: IOException) {
+											isConnectionLost = ConnectionLostExceptionFilter.isConnectionLostException(e)
+										}
+									}
+								}
+							)
+					  	},
 						enabled = isLibraryIdActive && !isLoading,
 						modifier = Modifier
 							.padding(end = endPadding)
-							.weight(1f)
+							.weight(1f, fill = true)
 					)
 				}
 			}
