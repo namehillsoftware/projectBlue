@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.browsing.items.list
+package com.lasthopesoftware.bluewater.client.browsing.files.list
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -24,8 +24,7 @@ import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -43,9 +42,7 @@ import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.li.LabelledPlayButton
 import com.lasthopesoftware.bluewater.client.browsing.files.li.LabelledShuffleButton
-import com.lasthopesoftware.bluewater.client.browsing.files.list.RenderTrackTitleItem
-import com.lasthopesoftware.bluewater.client.browsing.files.list.SearchFilesViewModel
-import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewPlaylistFileItem
+import com.lasthopesoftware.bluewater.client.browsing.items.list.ConnectionLostView
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
@@ -57,6 +54,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.expande
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 import com.lasthopesoftware.promises.extensions.suspend
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.IOException
 
@@ -91,18 +89,17 @@ fun TvSearchFilesView(
 				horizontalArrangement = Arrangement.Center,
 				verticalAlignment = Alignment.CenterVertically,
 			) {
-				BackButton(onBack = applicationNavigation::backOut)
+				BackButton(
+					onBack = applicationNavigation::backOut,
+					modifier = Modifier.padding(Dimensions.topRowOuterPadding)
+				)
 
-				val endPadding = Dimensions.viewPaddingUnit * 4 + minimumMenuWidth
-				val query by searchFilesViewModel.query.collectAsState()
-				val isLibraryIdActive by searchFilesViewModel.isLibraryIdActive.collectAsState()
+				val endPadding = Dimensions.topRowOuterPadding + minimumMenuWidth
+				val query by searchFilesViewModel.query.subscribeAsState()
+				val isLibraryIdActive by searchFilesViewModel.isLibraryIdActive.subscribeAsState()
 
 				val focusRequester = remember { FocusRequester() }
-				DisposableEffect(key1 = Unit) {
-					focusRequester.requestFocus()
 
-					onDispose { focusRequester.freeFocus() }
-				}
 				TextField(
 					value = query,
 					placeholder = { stringResource(id = R.string.lbl_search_hint) },
@@ -129,8 +126,13 @@ fun TvSearchFilesView(
 					modifier = Modifier
 						.padding(end = endPadding)
 						.weight(1f)
-						.focusRequester(focusRequester)
+						.focusRequester(focusRequester),
 				)
+
+				LaunchedEffect(Unit) {
+					delay(300)
+					focusRequester.requestFocus()
+				}
 			}
 
 			when {

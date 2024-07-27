@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.promises.extensions.toPromise
@@ -20,6 +21,8 @@ interface NavigateApplication {
 	fun viewFileDetails(libraryId: LibraryId, playlist: List<ServiceFile>, position: Int) = Unit.toPromise()
 
 	fun launchSearch(libraryId: LibraryId) = Unit.toPromise()
+
+	fun search(libraryId: LibraryId, filePropertyFilter: FileProperty) = Unit.toPromise()
 
 	fun viewItem(libraryId: LibraryId, item: IItem) = Unit.toPromise()
 

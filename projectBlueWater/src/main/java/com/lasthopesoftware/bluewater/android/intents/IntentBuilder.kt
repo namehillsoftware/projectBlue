@@ -9,6 +9,7 @@ import androidx.media3.common.util.UnstableApi
 import com.lasthopesoftware.bluewater.client.EntryActivity
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsActivity
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ActiveLibraryDownloadsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ApplicationSettingsScreen
@@ -16,12 +17,15 @@ import com.lasthopesoftware.bluewater.client.browsing.navigation.ConnectionSetti
 import com.lasthopesoftware.bluewater.client.browsing.navigation.Destination
 import com.lasthopesoftware.bluewater.client.browsing.navigation.LibraryScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NowPlayingScreen
+import com.lasthopesoftware.bluewater.client.browsing.navigation.SearchScreen
 import com.lasthopesoftware.bluewater.client.destinationProperty
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService
 
 class IntentBuilder(private val context: Context) : BuildIntents {
 
 	override fun buildViewLibraryIntent(libraryId: LibraryId): Intent = getBrowserActivityIntent(LibraryScreen(libraryId))
+
+	override fun buildLibrarySearchIntent(libraryId: LibraryId, filePropertyFilter: FileProperty): Intent = getBrowserActivityIntent(SearchScreen(libraryId, filePropertyFilter))
 
 	override fun buildApplicationSettingsIntent(): Intent = getBrowserActivityIntent(ApplicationSettingsScreen)
 

@@ -491,7 +491,12 @@ fun ItemListView(
 							.background(MaterialTheme.colors.surface)
 							.height(LocalDensity.current.run { heightValue.toDp() })
 					) {
-						BackButton(applicationNavigation::navigateUp, modifier = Modifier.align(Alignment.TopStart))
+						BackButton(
+							applicationNavigation::navigateUp,
+							modifier = Modifier
+								.align(Alignment.TopStart)
+								.padding(Dimensions.topRowOuterPadding)
+						)
 
 						val headerCollapseProgress by heightScaler.getProgressState()
 						val topPadding by remember { derivedStateOf { linearInterpolation(appBarHeight, 14.dp, headerCollapseProgress) } }

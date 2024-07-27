@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.navigation
 
 import com.lasthopesoftware.bluewater.NavigateApplication
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
@@ -27,9 +28,15 @@ class DestinationRoutingNavigation(
 ) : NavigateApplication by inner {
 
 	override fun launchSearch(libraryId: LibraryId) = coroutineScope.launch {
-		navController.popUpTo { it is ItemScreen }
+		popUpToBrowserScreen()
 
 		navController.navigate(SearchScreen(libraryId))
+	}.toPromise()
+
+	override fun search(libraryId: LibraryId, filePropertyFilter: FileProperty): Promise<Unit> = coroutineScope.launch {
+		popUpToBrowserScreen()
+
+		navController.navigate(SearchScreen(libraryId, filePropertyFilter))
 	}.toPromise()
 
 	override fun viewApplicationSettings() = coroutineScope.launch {
@@ -47,13 +54,13 @@ class DestinationRoutingNavigation(
 	}.toPromise()
 
 	override fun viewServerSettings(libraryId: LibraryId) = coroutineScope.launch {
-		navController.popUpTo { it is ItemScreen }
+		popUpToBrowserScreen()
 
 		navController.navigate(ConnectionSettingsScreen(libraryId))
 	}.toPromise()
 
 	override fun viewActiveDownloads(libraryId: LibraryId) = coroutineScope.launch {
-		navController.popUpTo { it is ItemScreen }
+		popUpToBrowserScreen()
 
 		navController.navigate(DownloadsScreen(libraryId))
 	}.toPromise()
@@ -82,4 +89,8 @@ class DestinationRoutingNavigation(
 	override fun backOut() = coroutineScope.async {
 		itemListMenuBackPressedHandler.hideAllMenus() || navigateUp().suspend()
 	}.toPromise()
+
+	private fun popUpToBrowserScreen() {
+		navController.popUpTo { it is ItemScreen || it is LibraryScreen }
+	}
 }

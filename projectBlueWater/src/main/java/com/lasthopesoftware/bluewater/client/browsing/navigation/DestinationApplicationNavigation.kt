@@ -32,6 +32,14 @@ class DestinationApplicationNavigation(
 			is ApplicationSettingsScreen -> viewApplicationSettings()
 			is LibraryScreen -> viewLibrary(destination.libraryId)
 			is NowPlayingScreen -> viewNowPlaying(destination.libraryId)
+			is SearchScreen -> {
+				val filePropertyFilter = destination.filePropertyFilter
+
+				if (filePropertyFilter != null)
+					search(destination.libraryId, filePropertyFilter)
+				else
+					launchSearch(destination.libraryId)
+			}
 			else -> navController.navigate(destination)
 		}
 	}
