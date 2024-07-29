@@ -23,7 +23,6 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.DelegatingL
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibraryConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.stored.library.items.DelegatingStoredItemServiceFileCollector
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredFilesCounter
 import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
@@ -79,7 +78,8 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 	private val applicationMessageBus by lazy { getApplicationMessageBus().getScopedMessageBus() }
 	private val storedFileAccess by lazy { StoredFileAccess(context) }
 	private val readPermissionArbitratorForOs by lazy { OsPermissionsChecker(context) }
-	private val libraryConnections by lazy { ConnectionSessionManager.get(context) }
+	private val libraryConnections
+		get() = context.applicationDependencies.sessionConnections
 	private val cachingPolicyFactory by lazy { CachingPolicyFactory() }
 
 	private val syncChecker by lazy {

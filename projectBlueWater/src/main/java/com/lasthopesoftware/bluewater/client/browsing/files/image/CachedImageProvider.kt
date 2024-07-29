@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.browsing.files.image
 
 import android.content.Context
 import android.graphics.Bitmap
+import com.lasthopesoftware.bluewater.ApplicationDependenciesContainer.applicationDependencies
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.DiskFileCache
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.access.CachedFilesProvider
@@ -16,7 +17,6 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.repositor
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibraryConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.shared.images.bytes.RemoteImageAccess
 import com.lasthopesoftware.bluewater.shared.images.bytes.cache.DiskCacheImageAccess
 import com.lasthopesoftware.bluewater.shared.images.bytes.cache.ImageCacheKeyLookup
@@ -37,7 +37,7 @@ class CachedImageProvider(
 		private val cache by lazy { LruPromiseCache<String, Bitmap?>(MAX_MEMORY_CACHE_SIZE) }
 
 		fun getInstance(context: Context): CachedImageProvider {
-			val libraryConnectionProvider = ConnectionSessionManager.get(context)
+			val libraryConnectionProvider = context.applicationDependencies.sessionConnections
 			val filePropertiesCache = FilePropertyCache
 			val imageCacheKeyLookup = ImageCacheKeyLookup(
 				CachedFilePropertiesProvider(

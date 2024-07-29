@@ -29,7 +29,6 @@ import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionF
 import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
-import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionStatusViewModel
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionUpdatesView
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.DramaticConnectionInitializationController
@@ -68,7 +67,8 @@ import java.io.IOException
 
 	private val selectedLibraryIdProvider by buildViewModelLazily { LibraryIdProviderViewModel() }
 
-	private val libraryConnections by lazy { buildNewConnectionSessionManager() }
+	private val libraryConnections
+		get() = applicationDependencies.sessionConnections
 
 	private val libraryRevisionProvider by lazy { LibraryRevisionProvider(libraryConnections) }
 

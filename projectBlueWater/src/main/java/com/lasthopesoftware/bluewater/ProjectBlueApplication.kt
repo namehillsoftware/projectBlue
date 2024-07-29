@@ -25,7 +25,6 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePrope
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibraryConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionSettingsChangeReceiver
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.notification.NotificationsConfiguration
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
@@ -57,7 +56,8 @@ open class ProjectBlueApplication : Application() {
 		private var isWorkManagerInitialized = false
 	}
 
-	private val libraryConnections by lazy { ConnectionSessionManager.get(this) }
+	private val libraryConnections
+		get() = applicationDependencies.sessionConnections
 
 	private val libraryRevisionProvider by lazy { LibraryRevisionProvider(libraryConnections) }
 

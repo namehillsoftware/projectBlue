@@ -57,7 +57,6 @@ import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibr
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.polling.PollConnectionServiceProxy
-import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.settings.changes.ObservableConnectionSettingsLibraryStorage
 import com.lasthopesoftware.bluewater.client.playback.caching.datasource.DiskFileCacheSourceFactory
 import com.lasthopesoftware.bluewater.client.playback.caching.uri.CachedAudioFileUriProvider
@@ -407,7 +406,8 @@ import java.util.concurrent.TimeoutException
 		)
 	}
 
-	private val connectionSessionManager by lazy { ConnectionSessionManager.get(this) }
+	private val connectionSessionManager
+		get() = applicationDependencies.sessionConnections
 
 	private val libraryConnectionProvider by lazy {
 		NotifyingLibraryConnectionProvider(

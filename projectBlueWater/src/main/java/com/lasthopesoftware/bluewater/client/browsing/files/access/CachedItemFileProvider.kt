@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.access
 
 import android.content.Context
+import com.lasthopesoftware.bluewater.ApplicationDependenciesContainer.applicationDependencies
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.ItemStringListProvider
@@ -9,7 +10,6 @@ import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.CheckRevisions
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
-import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
 import com.lasthopesoftware.policies.caching.CachePromiseFunctions
 import com.lasthopesoftware.policies.caching.LruPromiseCache
 import com.namehillsoftware.handoff.promises.Promise
@@ -25,7 +25,7 @@ class CachedItemFileProvider(
 		private val itemFunctionCache = LruPromiseCache<Pair<Triple<LibraryId, ItemId?, FileListParameters.Options>, Int>, List<ServiceFile>>(10)
 
 		fun getInstance(context: Context): CachedItemFileProvider {
-			val libraryConnectionProvider = context.buildNewConnectionSessionManager()
+			val libraryConnectionProvider = context.applicationDependencies.sessionConnections
 
 			return CachedItemFileProvider(
 				ItemFileProvider(

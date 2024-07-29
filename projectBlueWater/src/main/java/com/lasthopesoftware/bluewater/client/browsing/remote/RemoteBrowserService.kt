@@ -3,6 +3,7 @@ package com.lasthopesoftware.bluewater.client.browsing.remote
 import android.os.Bundle
 import android.support.v4.media.MediaBrowserCompat
 import androidx.media.MediaBrowserServiceCompat
+import com.lasthopesoftware.bluewater.ApplicationDependenciesContainer.applicationDependencies
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.CachedItemFileProvider
@@ -21,8 +22,6 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepo
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibraryConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
-import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.InMemoryNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
 import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
@@ -66,7 +65,7 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 
 	private val itemProvider by lazy { CachedItemProvider.getInstance(this) }
 
-	private val libraryFileStringListProvider by lazy { LibraryFileStringListProvider(ConnectionSessionManager.get(this)) }
+	private val libraryFileStringListProvider by lazy { LibraryFileStringListProvider(applicationDependencies.sessionConnections) }
 
 	private val fileProvider by lazy {
 		LibraryFileProvider(libraryFileStringListProvider)
@@ -79,7 +78,7 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 	private val rateLimitingPolicy by lazy { RateLimitingExecutionPolicy(max(Runtime.getRuntime().availableProcessors() - 1, 1)) }
 
 	private val filePropertiesProvider by lazy {
-		val libraryConnectionProvider = buildNewConnectionSessionManager()
+		val libraryConnectionProvider = applicationDependencies.sessionConnections
 		SelectedLibraryFilePropertiesProvider(
 			selectedLibraryIdProvider,
 			CachedFilePropertiesProvider(

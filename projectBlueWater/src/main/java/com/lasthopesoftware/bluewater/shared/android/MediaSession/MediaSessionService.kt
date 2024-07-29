@@ -16,7 +16,6 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepo
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibraryConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.remote.MediaSessionBroadcaster
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.InMemoryNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlayingRepository
@@ -41,7 +40,8 @@ import java.util.concurrent.TimeUnit
 		)
 	}
 
-	private val libraryConnectionProvider by lazy { ConnectionSessionManager.get(this) }
+	private val libraryConnectionProvider
+		get() = applicationDependencies.sessionConnections
 
 	private val revisionProvider by lazy { LibraryRevisionProvider(libraryConnectionProvider) }
 
@@ -67,14 +67,13 @@ import java.util.concurrent.TimeUnit
 
 	private val lazyMediaSession = lazy {
 		val newMediaSession = MediaSessionCompat(this, MediaSessionConstants.mediaSessionTag)
-		val connectionProvider = ConnectionSessionManager.get(this)
 		newMediaSession.setCallback(
 			MediaSessionCallbackReceiver(
 				PlaybackServiceController(this),
 				libraryIdProvider,
 				ItemStringListProvider(
 					FileListParameters,
-					LibraryFileStringListProvider(connectionProvider)
+					LibraryFileStringListProvider(libraryConnectionProvider)
 				)
 			)
 		)

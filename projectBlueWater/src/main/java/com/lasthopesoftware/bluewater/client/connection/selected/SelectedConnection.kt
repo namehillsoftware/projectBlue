@@ -1,11 +1,11 @@
 package com.lasthopesoftware.bluewater.client.connection.selected
 
 import android.content.Context
+import com.lasthopesoftware.bluewater.ApplicationDependenciesContainer.applicationDependencies
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.ProvideSelectedLibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
-import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.ManageConnectionSessions
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessage
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
@@ -69,7 +69,7 @@ class SelectedConnection(
 			SelectedConnection(
                 getApplicationMessageBus(),
 				context.getCachedSelectedLibraryIdProvider(),
-				ConnectionSessionManager.get(context)
+				context.applicationDependencies.sessionConnections,
 			)
 	}
 }

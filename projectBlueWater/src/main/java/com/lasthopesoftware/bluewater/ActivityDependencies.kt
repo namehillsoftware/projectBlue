@@ -39,7 +39,6 @@ import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibr
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.polling.LibraryConnectionPoller
 import com.lasthopesoftware.bluewater.client.connection.polling.LibraryConnectionPollingSessions
-import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionWatcherViewModel
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionStatusViewModel
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.DramaticConnectionInitializationController
@@ -173,7 +172,8 @@ class ActivityDependencies(
 		)
 	}
 
-	override val libraryConnectionProvider by lazy { activity.buildNewConnectionSessionManager() }
+	override val libraryConnectionProvider
+		get() = sessionConnections
 
 	override val playbackServiceController by lazy { PlaybackServiceController(activity) }
 
