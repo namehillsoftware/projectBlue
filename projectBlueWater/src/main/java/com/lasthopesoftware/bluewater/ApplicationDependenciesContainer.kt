@@ -2,6 +2,8 @@ package com.lasthopesoftware.bluewater
 
 import android.content.Context
 import com.lasthopesoftware.bluewater.android.intents.IntentBuilder
+import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
+import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.connection.PacketSender
 import com.lasthopesoftware.bluewater.client.connection.builder.UrlScanner
@@ -53,9 +55,17 @@ object ApplicationDependenciesContainer {
 
 		override val syncScheduler by lazy { SyncScheduler(context) }
 
+		private val libraryRepository by lazy { LibraryRepository(context) }
+
+		override val libraryProvider: ILibraryProvider
+			get() = libraryRepository
+
+		override val libraryStorage: ILibraryStorage
+			get() = libraryRepository
+
 		override val sessionConnections by lazy {
-			val serverLookup = ServerLookup(ServerInfoXmlRequest(LibraryRepository(context), OkHttpFactory))
-			val connectionSettingsLookup = ConnectionSettingsLookup(LibraryRepository(context))
+			val serverLookup = ServerLookup(ServerInfoXmlRequest(libraryRepository, OkHttpFactory))
+			val connectionSettingsLookup = ConnectionSettingsLookup(libraryRepository)
 
 			ConnectionSessionManager(
 				ConnectionTester,

@@ -18,8 +18,6 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewMod
 import com.lasthopesoftware.bluewater.client.browsing.items.list.PlaybackLibraryItems
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ReusableChildItemViewModelProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
-import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
-import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryStorage
 import com.lasthopesoftware.bluewater.client.browsing.library.access.RemoveLibraries
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedLibraryViewModel
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
@@ -64,8 +62,6 @@ import com.lasthopesoftware.resources.strings.StringResources
 	val applicationNavigation: NavigateApplication
 	val libraryConnectionProvider: ManageConnectionSessions
 	val storedFileAccess: StoredFileAccess
-	val libraryProvider: ILibraryProvider
-	val libraryStorage: ILibraryStorage
 	val libraryRemoval: RemoveLibraries
 	val navigationMessages: RegisterForTypedMessages<NavigationMessage>
 	val applicationSettingsRepository: HoldApplicationSettings

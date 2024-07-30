@@ -25,9 +25,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.ReusableChildIt
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistsStorage
-import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRemoval
-import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedLibraryViewModel
@@ -90,8 +88,6 @@ class ActivityDependencies(
 	}
 
 	private val connectionLostRetryPolicy by lazy { RetryExecutionPolicy(ConnectionLostRetryHandler) }
-
-	private val libraryRepository by lazy { LibraryRepository(applicationContext) }
 
 	private val singleRatePolicy by lazy { RateLimitingExecutionPolicy(1) }
 
@@ -212,12 +208,9 @@ class ActivityDependencies(
 		)
 	}
 
-	override val libraryProvider: ILibraryProvider
-		get() = libraryRepository
-
 	override val libraryStorage by lazy {
 		ObservableConnectionSettingsLibraryStorage(
-			libraryRepository,
+			applicationDependencies.libraryStorage,
 			ConnectionSettingsLookup(libraryProvider),
 			messageBus
 		)
@@ -226,9 +219,9 @@ class ActivityDependencies(
 	override val libraryRemoval by lazy {
 		LibraryRemoval(
 			storedItemAccess,
-			libraryRepository,
+			libraryStorage,
 			selectedLibraryIdProvider,
-			libraryRepository,
+			libraryProvider,
 			BrowserLibrarySelection(applicationSettingsRepository, messageBus, libraryProvider),
 		)
 	}
