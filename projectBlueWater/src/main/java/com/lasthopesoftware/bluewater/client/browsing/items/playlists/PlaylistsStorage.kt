@@ -21,7 +21,7 @@ class PlaylistsStorage(private val libraryConnections: ProvideLibraryConnections
 					?.promiseResponse("Playlists/List", "IncludeMediaTypes=1")
 					?.then { response ->
 						response.body
-							.use { body -> body.byteStream().use { Jsoup.parse(it, null, "", Parser.xmlParser()) } }
+							.use { body -> Jsoup.parse(body.string(), Parser.xmlParser()) }
 							.let { xml ->
 								xml
 									.getElementsByTag("Item")
