@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -30,6 +31,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.Button
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.ProgressIndicatorDefaults
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -94,7 +96,7 @@ import com.lasthopesoftware.bluewater.client.settings.TvLibrarySettingsView
 import com.lasthopesoftware.bluewater.settings.TvApplicationSettingsView
 import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsView
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
-import com.lasthopesoftware.bluewater.shared.android.ui.absoluteProgressState
+import com.lasthopesoftware.bluewater.shared.android.ui.calculateProgress
 import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberSystemUiController
 import com.lasthopesoftware.bluewater.shared.android.ui.navigable
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
@@ -174,7 +176,6 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedBr
 			}
 		}
 
-		val dragProgress by draggableState.absoluteProgressState
 		val dragOffset by LocalDensity.current.run {
 			remember {
 				derivedStateOf {
@@ -249,7 +250,13 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedBr
 					with (browserViewDependencies) {
 						BackHandler(itemListMenuBackPressedHandler.hideAllMenus()) {}
 
-						val isPlaylistShown by remember { derivedStateOf { playlistOffset < this@BoxWithConstraints.maxWidth } }
+						val isPlaylistShown by remember {
+							derivedStateOf {
+								draggableState.targetValue == NowPlayingDragValue.NowPlayingList
+									|| draggableState.currentValue == NowPlayingDragValue.NowPlayingList
+							}
+						}
+
 						val nowPlayingOverlayWidth by with (this@BoxWithConstraints) {
 							remember {
 								derivedStateOf {
@@ -268,47 +275,74 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedBr
 								modifier = Modifier.fillMaxWidth(),
 								nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel)
 
-							var isMovingRight by remember { mutableStateOf(true) }
-							val browserChevronRotation by remember { derivedStateOf { 90 - (180 * dragProgress) } }
-							Image(
-								painter = painterResource(R.drawable.chevron_up_white_36dp),
-								alpha = playlistControlAlpha,
-								contentDescription = stringResource(R.string.btn_hide_files),
-								modifier = Modifier
-									.navigable(onClick = {
-										scope.launch {
-											draggableState.animateTo(
-												when (draggableState.currentValue) {
-													NowPlayingDragValue.Browser -> {
-														isMovingRight = true
-														NowPlayingDragValue.NowPlaying
-													}
-
-													NowPlayingDragValue.NowPlaying -> {
-														if (isMovingRight) NowPlayingDragValue.NowPlayingList
+							Column(modifier = Modifier
+								.align(Alignment.BottomCenter)
+								.fillMaxWidth()
+							) {
+								Row(
+									verticalAlignment = Alignment.CenterVertically,
+								) {
+									Image(
+										painter = painterResource(
+											if (draggableState.currentValue == NowPlayingDragValue.Browser) R.drawable.baseline_fullscreen_36
+											else R.drawable.baseline_fullscreen_exit_36),
+										alpha = playlistControlAlpha,
+										contentDescription = stringResource(R.string.btn_hide_files),
+										modifier = Modifier
+											.navigable(onClick = {
+												scope.launch {
+													draggableState.animateTo(
+														if (draggableState.currentValue == NowPlayingDragValue.Browser) NowPlayingDragValue.NowPlaying
 														else NowPlayingDragValue.Browser
-													}
-
-													NowPlayingDragValue.NowPlayingList -> {
-														isMovingRight = false
-														nowPlayingPlaylistViewModel.finishPlaylistEdit()
-														NowPlayingDragValue.NowPlaying
-													}
+													)
 												}
-											)
-										}
-									})
-									.rotate(browserChevronRotation)
-									.align(Alignment.Center),
-							)
+											})
+									)
 
-							NowPlayingControls(
-								modifier = Modifier
-									.align(Alignment.BottomCenter)
-									.fillMaxWidth(),
-								nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
-								playbackServiceController = playbackServiceController,
-							)
+									NowPlayingRating(
+										nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
+										modifier = Modifier.weight(1f)
+									)
+
+									val nowPlayingShownProgress by remember {
+										derivedStateOf {
+											with (draggableState) {
+												calculateProgress(
+													anchors.positionOf(NowPlayingDragValue.NowPlaying),
+													anchors.positionOf(NowPlayingDragValue.NowPlayingList),
+													requireOffset()
+												)
+											}
+										}
+									}
+									var previousState by remember { mutableStateOf(draggableState.currentValue) }
+									val browserChevronRotation by remember { derivedStateOf { (-90 + (180 * nowPlayingShownProgress)).coerceIn(-90f, 180f) } }
+									Image(
+										painter = painterResource(R.drawable.chevron_up_white_36dp),
+										alpha = playlistControlAlpha,
+										contentDescription = stringResource(R.string.btn_hide_files),
+										modifier = Modifier
+											.navigable(onClick = {
+												scope.launch {
+													draggableState.animateTo(
+														if (draggableState.currentValue != NowPlayingDragValue.NowPlayingList) {
+															previousState = draggableState.currentValue
+															NowPlayingDragValue.NowPlayingList
+														} else previousState
+													)
+												}
+											})
+											.rotate(browserChevronRotation),
+									)
+								}
+
+								Spacer(modifier = Modifier.height(ProgressIndicatorDefaults.StrokeWidth))
+
+								NowPlayingPlaybackControls(
+									nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
+									playbackServiceController = playbackServiceController,
+								)
+							}
 
 							NowPlayingProgressIndicator(
 								nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
