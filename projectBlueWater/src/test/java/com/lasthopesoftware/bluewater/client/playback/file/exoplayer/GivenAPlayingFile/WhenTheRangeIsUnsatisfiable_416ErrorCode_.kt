@@ -6,6 +6,7 @@ import androidx.media3.common.Player
 import androidx.media3.datasource.DataSpec
 import androidx.media3.datasource.HttpDataSource.InvalidResponseCodeException
 import androidx.media3.exoplayer.ExoPlaybackException
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.PromisingExoPlayer
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -13,10 +14,13 @@ import com.lasthopesoftware.promises.extensions.toPromise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.Test
+import org.junit.Test
+import org.junit.runner.RunWith
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 
+
+@RunWith(AndroidJUnit4::class)
 class WhenTheRangeIsUnsatisfiable_416ErrorCode_ {
 
 	private val playedFile by lazy {
@@ -36,6 +40,7 @@ class WhenTheRangeIsUnsatisfiable_416ErrorCode_ {
 			.eventually { obj -> obj.promisePlayedFile() }
 			.toExpiringFuture()
 
+		val uri = Uri.EMPTY
 		eventListeners.forEach {
 			it.onPlayerError(
 				ExoPlaybackException.createForSource(
@@ -44,7 +49,7 @@ class WhenTheRangeIsUnsatisfiable_416ErrorCode_ {
 						"",
 						IOException(),
 						HashMap(),
-						DataSpec(Uri.EMPTY),
+						DataSpec(uri),
 						ByteArray(0)
 					),
 					PlaybackException.ERROR_CODE_IO_BAD_HTTP_STATUS

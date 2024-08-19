@@ -21,8 +21,8 @@ import kotlin.random.Random.Default.nextInt
 private const val libraryId = 367
 
 class WhenTheQueueIsStarted {
-	private val numberOfFiles by lazy { nextInt(500) }
-	private val startPosition by lazy { nextInt(numberOfFiles) }
+	private val numberOfFiles by lazy { nextInt(1,500) }
+	private val startPosition by lazy { nextInt(1, numberOfFiles) }
 	private val queue by lazy {
 		val serviceFiles = (0..numberOfFiles).map { ServiceFile(nextInt()) }
 		val fileActionMap = serviceFiles.associateWith { MockResolveAction() }
