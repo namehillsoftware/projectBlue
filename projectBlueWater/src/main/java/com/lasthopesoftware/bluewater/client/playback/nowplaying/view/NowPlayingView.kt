@@ -273,7 +273,7 @@ fun PlaylistControls(
 		} else {
 			val isAutoScrollEnabled by playlistViewModel.isAutoScrolling.subscribeAsState()
 			Image(
-				painter = painterResource(id = R.drawable.scroll_to_item_36),
+				painter = painterResource(id = R.drawable.baseline_playlist_play_36),
 				contentDescription = stringResource(R.string.scroll_to_now_playing_item),
 				modifier = Modifier.navigable(
 					interactionSource = remember { MutableInteractionSource() },
