@@ -106,7 +106,8 @@ class FilePropertiesProvider(
 
 			resolve(
 				response.body
-					.use { body -> body.byteStream().use { Jsoup.parse(it, null, "") } }
+					.use { body -> body.string() }
+					.let(Jsoup::parse)
 					.let { xml ->
 						xml
 							.getElementsByTag("item")
