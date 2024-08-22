@@ -150,6 +150,9 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedBr
 
 		val maxWidthPx by LocalDensity.current.run { remember { derivedStateOf { maxWidth.toPx() } } }
 
+		var previousBrowserDragValue by rememberSaveable {
+			mutableStateOf(BooleanDragValue.Shown)
+		}
 		var browserDragValue by rememberSaveable {
 			mutableStateOf(BooleanDragValue.Shown)
 		}
@@ -166,6 +169,7 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedBr
 					velocityThreshold = { 100.dp.toPx() },
 					animationSpec = tween(),
 					confirmValueChange = { newValue ->
+						previousBrowserDragValue = browserDragValue
 						browserDragValue = newValue
 						true
 					}
@@ -347,6 +351,9 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedBr
 												if (playlistDrawerState.currentValue == BooleanDragValue.Shown) {
 													scope.launch {
 														playlistDrawerState.animateTo(BooleanDragValue.Hidden)
+													}
+													scope.launch {
+														browserDrawerState.animateTo(previousBrowserDragValue)
 													}
 												} else {
 													scope.launch {
