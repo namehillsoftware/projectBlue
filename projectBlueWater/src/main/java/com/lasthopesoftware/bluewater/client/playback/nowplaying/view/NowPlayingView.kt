@@ -98,6 +98,7 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.playlist.NowPlayingPlaylistViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
+import com.lasthopesoftware.bluewater.shared.android.ui.BooleanDragValue
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.RatingBar
 import com.lasthopesoftware.bluewater.shared.android.ui.components.dragging.DragDropItemScope
@@ -751,8 +752,6 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 	}
 }
 
-enum class PlaylistDragValue { Collapsed, Expanded }
-
 @ExperimentalFoundationApi
 @Composable
 private fun ScreenDimensionsScope.NowPlayingWideView(
@@ -774,10 +773,10 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 	val draggableState = with (LocalDensity.current) {
 		remember {
 			AnchoredDraggableState(
-				initialValue = PlaylistDragValue.Expanded,
+				initialValue = BooleanDragValue.Shown,
 				anchors = DraggableAnchors {
-					PlaylistDragValue.Collapsed at 0f
-					PlaylistDragValue.Expanded at playlistWidth.toPx()
+					BooleanDragValue.Hidden at 0f
+					BooleanDragValue.Shown at playlistWidth.toPx()
 				},
 				positionalThreshold = { d -> d * .5f },
 				velocityThreshold = { 100.dp.toPx() },
@@ -852,7 +851,7 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 			horizontalAlignment = Alignment.CenterHorizontally,
 		) {
 			DisposableEffect(key1 = draggableState.currentValue) {
-				if (draggableState.currentValue == PlaylistDragValue.Collapsed) {
+				if (draggableState.currentValue == BooleanDragValue.Hidden) {
 					playlistViewModel.enableSystemAutoScrolling()
 				} else {
 					playlistViewModel.disableSystemAutoScrolling()
@@ -879,7 +878,7 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 						.clickable(onClick = {
 							playlistViewModel.finishPlaylistEdit()
 							scope.launch {
-								draggableState.animateTo(PlaylistDragValue.Collapsed)
+								draggableState.animateTo(BooleanDragValue.Hidden)
 							}
 						})
 						.rotate(90f),

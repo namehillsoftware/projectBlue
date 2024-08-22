@@ -96,6 +96,7 @@ import com.lasthopesoftware.bluewater.client.settings.TvLibrarySettingsView
 import com.lasthopesoftware.bluewater.settings.TvApplicationSettingsView
 import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsView
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
+import com.lasthopesoftware.bluewater.shared.android.ui.BooleanDragValue
 import com.lasthopesoftware.bluewater.shared.android.ui.calculateProgress
 import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberSystemUiController
 import com.lasthopesoftware.bluewater.shared.android.ui.navigable
@@ -115,11 +116,8 @@ import dev.olshevski.navigation.reimagined.NavHost
 import dev.olshevski.navigation.reimagined.navigate
 import dev.olshevski.navigation.reimagined.rememberNavController
 import kotlinx.coroutines.launch
-import kotlin.math.abs
 
 private val logger by lazyLogger<ProjectBlueApplication>()
-
-enum class NowPlayingDragValue { Browser, NowPlaying, NowPlayingList }
 
 @OptIn(ExperimentalComposeUiApi::class)
 @ExperimentalFoundationApi
@@ -152,60 +150,84 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedBr
 
 		val maxWidthPx by LocalDensity.current.run { remember { derivedStateOf { maxWidth.toPx() } } }
 
-		var dragValue by rememberSaveable {
-			mutableStateOf(NowPlayingDragValue.Browser)
+		var browserDragValue by rememberSaveable {
+			mutableStateOf(BooleanDragValue.Shown)
 		}
 
-		val draggableState = with (LocalDensity.current) {
+		val browserDrawerState = with (LocalDensity.current) {
 			remember {
 				AnchoredDraggableState(
-					initialValue = dragValue,
+					initialValue = browserDragValue,
 					anchors = DraggableAnchors {
-						NowPlayingDragValue.Browser at 0f
-						NowPlayingDragValue.NowPlaying at halfWidthPx
-						NowPlayingDragValue.NowPlayingList at maxWidthPx
+						BooleanDragValue.Hidden at -halfWidthPx
+						BooleanDragValue.Shown at 0f
 					},
 					positionalThreshold = { d -> d * .5f },
 					velocityThreshold = { 100.dp.toPx() },
 					animationSpec = tween(),
 					confirmValueChange = { newValue ->
-						dragValue = newValue
+						browserDragValue = newValue
 						true
 					}
 				)
 			}
 		}
 
-		val dragOffset by LocalDensity.current.run {
+		val browserDrawerOffset by LocalDensity.current.run {
 			remember {
 				derivedStateOf {
-					draggableState.requireOffset().toDp()
+					browserDrawerState.requireOffset().toDp()
 				}
 			}
 		}
-		val browserOffset by LocalDensity.current.run {
+
+		val nowPlayingWidth by remember { derivedStateOf { (halfWidth - browserDrawerOffset).coerceAtMost(maxWidth) } }
+		val nowPlayingOffset by remember { derivedStateOf { halfWidth + browserDrawerOffset } }
+
+		var playlistDragValue by rememberSaveable { mutableStateOf(BooleanDragValue.Hidden) }
+
+		val playlistDrawerState = with (LocalDensity.current) {
+			remember {
+				AnchoredDraggableState(
+					initialValue = playlistDragValue,
+					anchors = DraggableAnchors {
+						BooleanDragValue.Hidden at maxWidthPx
+						BooleanDragValue.Shown at halfWidthPx
+					},
+					positionalThreshold = { d -> d * .5f },
+					velocityThreshold = { 100.dp.toPx() },
+					animationSpec = tween(),
+					confirmValueChange = { newValue ->
+						playlistDragValue = newValue
+						true
+					}
+				)
+			}
+		}
+
+		val playlistDrawerOffset by LocalDensity.current.run {
 			remember {
 				derivedStateOf {
-					-dragOffset
+					playlistDrawerState
+						.requireOffset()
+						.toDp()
 				}
 			}
 		}
-		val nowPlayingWidth by remember { derivedStateOf { (halfWidth + dragOffset).coerceAtMost(maxWidth) } }
-		val nowPlayingOffset by remember { derivedStateOf { maxWidth - nowPlayingWidth } }
-		val playlistOffset by remember { derivedStateOf { maxWidth + halfWidth - dragOffset } }
 
 		val scope = rememberCoroutineScope()
 
 		val isBrowserShown by remember {
 			derivedStateOf {
-				draggableState.targetValue == NowPlayingDragValue.Browser
-					|| draggableState.currentValue == NowPlayingDragValue.Browser
+				browserDrawerState.targetValue == BooleanDragValue.Shown
+					|| browserDrawerState.currentValue == BooleanDragValue.Shown
 			}
 		}
+
 		if (isBrowserShown) {
 			Box(
 				modifier = Modifier
-					.offset(x = browserOffset)
+					.offset(x = browserDrawerOffset)
 					.width(halfWidth)
 					.fillMaxHeight()
 					.focusGroup()
@@ -215,15 +237,16 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedBr
 		} else {
 			BackHandler {
 				scope.launch {
-					draggableState.animateTo(
-						when (draggableState.currentValue) {
-							NowPlayingDragValue.NowPlayingList -> {
-								browserViewDependencies.nowPlayingPlaylistViewModel.finishPlaylistEdit()
-								NowPlayingDragValue.NowPlaying
-							}
-							else -> NowPlayingDragValue.Browser
+					when {
+						playlistDrawerState.currentValue == BooleanDragValue.Shown -> {
+							browserViewDependencies.nowPlayingPlaylistViewModel.finishPlaylistEdit()
+							playlistDrawerState.animateTo(BooleanDragValue.Hidden)
 						}
-					)
+
+						browserDrawerState.currentValue == BooleanDragValue.Hidden -> {
+							browserDrawerState.animateTo(BooleanDragValue.Shown)
+						}
+					}
 				}
 			}
 		}
@@ -252,23 +275,21 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedBr
 
 						val isPlaylistShown by remember {
 							derivedStateOf {
-								draggableState.targetValue == NowPlayingDragValue.NowPlayingList
-									|| draggableState.currentValue == NowPlayingDragValue.NowPlayingList
+								playlistDrawerState.targetValue == BooleanDragValue.Shown
+									|| playlistDrawerState.currentValue == BooleanDragValue.Shown
 							}
 						}
 
-						val nowPlayingOverlayWidth by with (this@BoxWithConstraints) {
-							remember {
-								derivedStateOf {
-									maxWidth - abs(playlistOffset.value - maxWidth.value).dp.coerceAtMost(maxWidth)
-								}
+						val nowPlayingControlsWidth by remember {
+							derivedStateOf {
+								nowPlayingWidth.coerceAtMost(playlistDrawerOffset)
 							}
 						}
 
 						Box(
 							modifier = Modifier
 								.fillMaxHeight()
-								.width(nowPlayingOverlayWidth)
+								.width(nowPlayingControlsWidth)
 								.focusGroup()
 						) {
 							NowPlayingHeadline(
@@ -284,16 +305,16 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedBr
 								) {
 									Image(
 										painter = painterResource(
-											if (draggableState.currentValue == NowPlayingDragValue.Browser) R.drawable.baseline_fullscreen_36
+											if (browserDragValue == BooleanDragValue.Shown) R.drawable.baseline_fullscreen_36
 											else R.drawable.baseline_fullscreen_exit_36),
 										alpha = playlistControlAlpha,
 										contentDescription = stringResource(R.string.btn_hide_files),
 										modifier = Modifier
 											.navigable(onClick = {
 												scope.launch {
-													draggableState.animateTo(
-														if (draggableState.currentValue == NowPlayingDragValue.Browser) NowPlayingDragValue.NowPlaying
-														else NowPlayingDragValue.Browser
+													browserDrawerState.animateTo(
+														if (browserDragValue == BooleanDragValue.Shown) BooleanDragValue.Hidden
+														else BooleanDragValue.Shown
 													)
 												}
 											})
@@ -306,16 +327,16 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedBr
 
 									val nowPlayingShownProgress by remember {
 										derivedStateOf {
-											with (draggableState) {
+											with (playlistDrawerState) {
 												calculateProgress(
-													anchors.positionOf(NowPlayingDragValue.NowPlaying),
-													anchors.positionOf(NowPlayingDragValue.NowPlayingList),
+													anchors.positionOf(BooleanDragValue.Hidden),
+													anchors.positionOf(BooleanDragValue.Shown),
 													requireOffset()
 												)
 											}
 										}
 									}
-									var previousState by remember { mutableStateOf(draggableState.currentValue) }
+
 									val browserChevronRotation by remember { derivedStateOf { (-90 + (180 * nowPlayingShownProgress)).coerceIn(-90f, 180f) } }
 									Image(
 										painter = painterResource(R.drawable.chevron_up_white_36dp),
@@ -323,13 +344,17 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedBr
 										contentDescription = stringResource(R.string.btn_hide_files),
 										modifier = Modifier
 											.navigable(onClick = {
-												scope.launch {
-													draggableState.animateTo(
-														if (draggableState.currentValue != NowPlayingDragValue.NowPlayingList) {
-															previousState = draggableState.currentValue
-															NowPlayingDragValue.NowPlayingList
-														} else previousState
-													)
+												if (playlistDrawerState.currentValue == BooleanDragValue.Shown) {
+													scope.launch {
+														playlistDrawerState.animateTo(BooleanDragValue.Hidden)
+													}
+												} else {
+													scope.launch {
+														playlistDrawerState.animateTo(BooleanDragValue.Shown)
+													}
+													scope.launch {
+														browserDrawerState.animateTo(BooleanDragValue.Hidden)
+													}
 												}
 											})
 											.rotate(browserChevronRotation),
@@ -365,7 +390,7 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedBr
 								modifier = Modifier
 									.fillMaxHeight()
 									.width(halfWidth)
-									.offset(x = playlistOffset)
+									.offset(x = playlistDrawerOffset)
 									.background(SharedColors.overlayDark)
 									.onFocusChanged { state ->
 										if (state.hasFocus)
