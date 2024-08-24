@@ -5,7 +5,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.FakeLibrary
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.FakeStoredFileAccess
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.external.MediaFileUriProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.GetStoredFileUris
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFileUpdater
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture

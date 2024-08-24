@@ -10,7 +10,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.external.ExternalMusicContent
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.external.HaveExternalContent
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.external.MediaFileUriProvider
 import com.lasthopesoftware.bluewater.client.stored.library.sync.LookupSyncDirectory
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.uri.toURI

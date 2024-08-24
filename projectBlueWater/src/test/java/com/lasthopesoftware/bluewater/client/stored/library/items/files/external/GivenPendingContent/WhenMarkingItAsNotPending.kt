@@ -5,7 +5,6 @@ import android.content.ContentValues
 import android.net.Uri
 import android.provider.MediaStore
 import com.lasthopesoftware.AndroidContext
-import com.lasthopesoftware.AndroidContextRunner
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.external.ExternalContentRepository
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.external.ExternalMusicContent
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -14,10 +13,8 @@ import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
-import org.junit.runner.RunWith
 import java.net.URI
 
-@RunWith(AndroidContextRunner::class)
 class WhenMarkingItAsNotPending : AndroidContext() {
 	companion object {
 

@@ -5,9 +5,9 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryPro
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.AccessStoredFiles
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.external.HaveExternalContent
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.external.MediaFileUriProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.setURI
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.uri.IoCommon
@@ -15,11 +15,11 @@ import com.namehillsoftware.handoff.promises.Promise
 import java.net.URI
 
 class StoredFileUpdater(
-	private val storedFileAccess: AccessStoredFiles,
-	private val mediaFileUriProvider: MediaFileUriProvider,
-	private val libraryProvider: ILibraryProvider,
-	private val lookupStoredFilePaths: GetStoredFileUris,
-	private val externalContent: HaveExternalContent,
+    private val storedFileAccess: AccessStoredFiles,
+    private val mediaFileUriProvider: MediaFileUriProvider,
+    private val libraryProvider: ILibraryProvider,
+    private val lookupStoredFilePaths: GetStoredFileUris,
+    private val externalContent: HaveExternalContent,
 ) : UpdateStoredFiles {
 	override fun markStoredFileAsDownloaded(storedFile: StoredFile): Promise<StoredFile> {
 		storedFile.setIsDownloadComplete(true)

@@ -5,7 +5,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.caching.uri.CachedAudioFileUriProvider
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.external.MediaFileUriProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.uri.StoredFileUriProvider
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
@@ -13,7 +13,7 @@ import com.namehillsoftware.handoff.promises.Promise
 open class BestMatchUriProvider(
     private val libraryProvider: ILibraryProvider,
     private val storedFileUriProvider: StoredFileUriProvider,
-	private val cachedAudioFileUriProvider: CachedAudioFileUriProvider,
+    private val cachedAudioFileUriProvider: CachedAudioFileUriProvider,
     private val mediaFileUriProvider: MediaFileUriProvider,
     private val remoteFileUriProvider: RemoteFileUriProvider
 ) : ProvideFileUrisForLibrary {

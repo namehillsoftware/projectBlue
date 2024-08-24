@@ -3,6 +3,9 @@ package com.lasthopesoftware.bluewater.client.browsing.files.properties
 import org.apache.commons.io.FilenameUtils
 
 object FilePropertyHelpers {
+
+	data class FileNameParts(val directory: String, val baseFileName: String, val ext: String, val postExtension: String)
+
 	/*
 	 * Get the duration of the serviceFile in milliseconds
 	 */
@@ -14,9 +17,25 @@ object FilePropertyHelpers {
 	val Map<String, String>.albumArtistOrArtist
 		get() = this[KnownFileProperties.AlbumArtist] ?: this[KnownFileProperties.Artist]
 
-	val Map<String, String>.baseFileNameAsMp3
+	val Map<String, String>.fileNameParts
 		get() = this[KnownFileProperties.Filename]
 			?.let { f ->
-				FilenameUtils.getBaseName(f) + ".mp3"
+				val path = FilenameUtils.getPath(f)
+				val fileName = FilenameUtils.getName(f)
+				val parts = fileName.split(".", limit = 2)
+				val baseName = parts[0]
+				val ext = parts.elementAtOrNull(1) ?: ""
+				val postExtParts = ext.let {
+					val index = it.indexOf(';')
+					if (index < 0) ""
+					else it.substring(index)
+				}
+				FileNameParts(path, baseName, ext, postExtParts)
+			}
+
+	val Map<String, String>.baseFileNameAsMp3
+		get() = fileNameParts
+			?.run {
+				"$baseFileName.mp3$postExtension"
 			}
 }
