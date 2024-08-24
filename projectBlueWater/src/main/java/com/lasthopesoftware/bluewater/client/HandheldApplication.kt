@@ -274,14 +274,16 @@ fun LibraryDestination.Navigate(
 				val context = LocalContext.current
 				LaunchedEffect(key1 = libraryId) {
 					try {
-						connectionWatcherViewModel.watchLibraryConnection(libraryId)
+						val isConnectionActive = connectionWatcherViewModel.watchLibraryConnection(libraryId).suspend()
 
-						Promise.whenAll(
-							screenViewModel.initializeViewModel(libraryId),
-							nowPlayingFilePropertiesViewModel.initializeViewModel(libraryId),
-							nowPlayingCoverArtViewModel.initializeViewModel(libraryId),
-							nowPlayingPlaylistViewModel.initializeView(libraryId),
-						).suspend()
+						if (isConnectionActive) {
+							Promise.whenAll(
+								screenViewModel.initializeViewModel(libraryId),
+								nowPlayingFilePropertiesViewModel.initializeViewModel(libraryId),
+								nowPlayingCoverArtViewModel.initializeViewModel(libraryId),
+								nowPlayingPlaylistViewModel.initializeView(libraryId),
+							).suspend()
+						}
 					} catch (e: Throwable) {
 						if (ConnectionLostExceptionFilter.isConnectionLostException(e))
 							pollForConnections.pollConnection(libraryId)

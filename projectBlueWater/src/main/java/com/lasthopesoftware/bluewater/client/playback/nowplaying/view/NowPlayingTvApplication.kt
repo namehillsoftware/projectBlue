@@ -127,14 +127,16 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedBr
 	LaunchedEffect(key1 = libraryId) {
 		with (browserViewDependencies) {
 			try {
-				connectionWatcherViewModel.watchLibraryConnection(libraryId)
+				val isConnectionActive = connectionWatcherViewModel.watchLibraryConnection(libraryId).suspend()
 
-				Promise.whenAll(
-					nowPlayingScreenViewModel.initializeViewModel(libraryId),
-					nowPlayingFilePropertiesViewModel.initializeViewModel(libraryId),
-					nowPlayingCoverArtViewModel.initializeViewModel(libraryId),
-					nowPlayingPlaylistViewModel.initializeView(libraryId),
-				).suspend()
+				if (isConnectionActive) {
+					Promise.whenAll(
+						nowPlayingScreenViewModel.initializeViewModel(libraryId),
+						nowPlayingFilePropertiesViewModel.initializeViewModel(libraryId),
+						nowPlayingCoverArtViewModel.initializeViewModel(libraryId),
+						nowPlayingPlaylistViewModel.initializeView(libraryId),
+					).suspend()
+				}
 			} catch (e: Throwable) {
 				if (ConnectionLostExceptionFilter.isConnectionLostException(e))
 					pollForConnections.pollConnection(libraryId)
@@ -516,25 +518,6 @@ private fun LibraryDestination.Navigate(browserViewDependencies: ScopedBrowserVi
 	}
 }
 
-private class NowPlayingNavigation(
-	inner: NavigateApplication,
-	private val navController: NavController<Destination>,
-) : NavigateApplication by inner {
-	override fun viewFileDetails(libraryId: LibraryId, playlist: List<ServiceFile>, position: Int): Promise<Unit> {
-		navController.navigate(FileDetailsScreen(libraryId, playlist, position))
-		return Unit.toPromise()
-	}
-}
-
-private class NowPlayingDependencies<T>(inner: T, navController: NavController<Destination>)
-	: BrowserViewDependencies by inner, AutoCloseable by inner
-	where T : BrowserViewDependencies, T: AutoCloseable
-{
-	override val applicationNavigation by lazy {
-		NowPlayingNavigation(inner.applicationNavigation, navController)
-	}
-}
-
 
 @Composable
 fun NowPlayingTvPlaylist(
@@ -655,6 +638,25 @@ fun NowPlayingTvPlaylist(
 		items(items = nowPlayingFiles, key = { f -> f }) { f ->
 			NowPlayingFileView(positionedFile = f)
 		}
+	}
+}
+
+private class NowPlayingNavigation(
+	inner: NavigateApplication,
+	private val navController: NavController<Destination>,
+) : NavigateApplication by inner {
+	override fun viewFileDetails(libraryId: LibraryId, playlist: List<ServiceFile>, position: Int): Promise<Unit> {
+		navController.navigate(FileDetailsScreen(libraryId, playlist, position))
+		return Unit.toPromise()
+	}
+}
+
+private class NowPlayingDependencies<T>(inner: T, navController: NavController<Destination>)
+	: BrowserViewDependencies by inner, AutoCloseable by inner
+	where T : BrowserViewDependencies, T: AutoCloseable
+{
+	override val applicationNavigation by lazy {
+		NowPlayingNavigation(inner.applicationNavigation, navController)
 	}
 }
 

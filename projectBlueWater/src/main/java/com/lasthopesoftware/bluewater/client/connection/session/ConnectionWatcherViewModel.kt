@@ -8,6 +8,7 @@ import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibrary
 import com.lasthopesoftware.bluewater.client.connection.polling.PollForLibraryConnections
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -17,6 +18,7 @@ class ConnectionWatcherViewModel(
 	private val libraryConnections: ProvideLibraryConnections,
 	private val pollLibraryConnections: PollForLibraryConnections,
 ) : ViewModel(), (ConnectionLostNotification) -> Unit {
+	@Volatile
 	private var promisedConnection = Promise.empty<ProvideConnections?>()
 
 	private var watchedLibraryId: LibraryId? = null
@@ -27,13 +29,16 @@ class ConnectionWatcherViewModel(
 
 	val isCheckingConnection = mutableIsCheckingConnection.asStateFlow()
 
-	fun watchLibraryConnection(libraryId: LibraryId) {
+	fun watchLibraryConnection(libraryId: LibraryId): Promise<Boolean> {
 		watchedLibraryId = libraryId
-		libraryConnections
+		return libraryConnections
 			.promiseLibraryConnection(libraryId)
-			.then(
-				{ if (it == null) maybePollConnection(libraryId) },
-				{ e -> if (ConnectionLostExceptionFilter.isConnectionLostException(e)) maybePollConnection(libraryId) }
+			.eventually(
+				{ if (it == null) maybePollConnection(libraryId) else true.toPromise() },
+				{ e ->
+					if (ConnectionLostExceptionFilter.isConnectionLostException(e)) maybePollConnection(libraryId)
+					else false.toPromise()
+				}
 			)
 	}
 
@@ -49,11 +54,11 @@ class ConnectionWatcherViewModel(
 		maybePollConnection(message.libraryId)
 	}
 
-	private fun maybePollConnection(libraryId: LibraryId) {
-		if (libraryId != watchedLibraryId) return
+	private fun maybePollConnection(libraryId: LibraryId): Promise<Boolean> {
+		if (libraryId != watchedLibraryId) return false.toPromise()
 
 		mutableIsCheckingConnection.value = true
-		promisedConnection = Promise.Proxy { cp ->
+		val proxiedPromisedConnection = Promise.Proxy { cp ->
 			pollLibraryConnections
 				.pollConnection(libraryId)
 				.also(cp::doCancel)
@@ -62,5 +67,9 @@ class ConnectionWatcherViewModel(
 						mutableIsCheckingConnection.value = false
 				}
 		}
+
+		promisedConnection = proxiedPromisedConnection
+
+		return proxiedPromisedConnection.then { _ -> libraryId == watchedLibraryId }
 	}
 }
