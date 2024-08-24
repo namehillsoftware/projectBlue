@@ -5,6 +5,7 @@ import android.database.Cursor
 import android.os.Build
 import android.provider.MediaStore
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.fileNameParts
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -14,7 +15,6 @@ import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import com.namehillsoftware.handoff.promises.response.PromisedResponse
-import org.apache.commons.io.FilenameUtils
 import java.io.IOException
 
 class MediaQueryCursorProvider
@@ -29,15 +29,18 @@ class MediaQueryCursorProvider
 			.eventually(this)
 
 	override fun promiseResponse(fileProperties: Map<String, String>): Promise<Cursor?> {
-		val originalFilename = fileProperties[KnownFileProperties.Filename]
+		val (_, baseFileName, _, postExtension) = fileProperties.fileNameParts
 			?: return Promise(IOException("The filename property was not retrieved. A connection needs to be re-established."))
 
-		val filename = FilenameUtils.getBaseName(originalFilename)
-
-		val selectionArgs = if (Build.VERSION.SDK_INT >= 29) {
-			arrayOf(filename, fileProperties[KnownFileProperties.Album] ?: "")
-		} else {
-			arrayOf(filename)
+		var mediaCollectionFilter = pathFilter
+		val selectionArgs = mutableListOf(baseFileName)
+		if (postExtension.isNotEmpty()) {
+			mediaCollectionFilter += " || ? "
+			selectionArgs.add(postExtension)
+		}
+		if (Build.VERSION.SDK_INT >= 29) {
+			mediaCollectionFilter += extendedMediaCollectionFilter
+			selectionArgs.add(fileProperties[KnownFileProperties.Album] ?: "")
 		}
 
 		return QueuedPromise(
@@ -46,20 +49,17 @@ class MediaQueryCursorProvider
 					MediaCollections.ExternalAudio,
 					mediaQueryProjection,
 					mediaCollectionFilter,
-					selectionArgs,
+					selectionArgs.toTypedArray(),
 					null
 				)
 			}, ThreadPools.io)
 	}
 
 	companion object {
-		private val mediaCollectionFilter = if (Build.VERSION.SDK_INT >= 29) {
-			"""${MediaStore.Audio.Media.IS_PENDING} = 0
-				AND ${MediaStore.Audio.Media.DISPLAY_NAME} LIKE '%' || ? || '%'
-				AND COALESCE(${MediaStore.Audio.AlbumColumns.ALBUM}, "") = ?"""
-		} else {
-			"${MediaStore.Audio.Media.DISPLAY_NAME} LIKE '%' || ? || '%'"
-		}
+		private const val pathFilter = "${MediaStore.Audio.Media.DISPLAY_NAME} LIKE '%' || ? || '%' "
+
+		private const val extendedMediaCollectionFilter = """ ${MediaStore.Audio.Media.IS_PENDING} = 0
+			AND COALESCE(${MediaStore.Audio.AlbumColumns.ALBUM}, "") = ? """
 
 		private val mediaQueryProjection = arrayOf(MediaStore.Audio.Media._ID, MediaStore.Audio.Media.DISPLAY_NAME)
 	}
