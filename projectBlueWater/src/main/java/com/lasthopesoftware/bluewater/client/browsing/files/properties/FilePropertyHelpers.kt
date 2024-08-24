@@ -17,6 +17,14 @@ object FilePropertyHelpers {
 	val Map<String, String>.baseFileNameAsMp3
 		get() = this[KnownFileProperties.Filename]
 			?.let { f ->
-				FilenameUtils.getBaseName(f) + ".mp3"
+				val fileName = FilenameUtils.getName(f)
+				val parts = fileName.split(".", limit = 2)
+				val baseName = parts[0]
+				val postExtParts = parts.elementAtOrNull(1)?.let {
+					val index = it.indexOf(';')
+					if (index < 0) ""
+					else it.substring(index)
+				}
+				"$baseName.mp3$postExtParts"
 			}
 }

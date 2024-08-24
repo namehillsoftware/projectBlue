@@ -34,7 +34,7 @@ class WhenGettingTheStoredFilePath {
 				Pair(KnownFileProperties.AlbumArtist, "6YYPwSql"),
 				Pair(KnownFileProperties.Album, "baKCea7AEK"),
 				Pair(KnownFileProperties.Track, "704"),
-				Pair(KnownFileProperties.Filename, """F:\super\backslash\paths\in_windows.flac""")
+				Pair(KnownFileProperties.Filename, """F:\super\backslash\paths\in_windows.flac;255""")
 			)
 		)
 
@@ -75,7 +75,7 @@ class WhenGettingTheStoredFilePath {
 	fun `then the external audio content is correct`() {
 		assertThat(externalMusicContent).isEqualTo(
 			ExternalMusicContent(
-				displayName = "in_windows.mp3",
+				displayName = "in_windows.mp3;255",
 				relativePath = "6YYPwSql/baKCea7AEK/",
 			)
 		)
