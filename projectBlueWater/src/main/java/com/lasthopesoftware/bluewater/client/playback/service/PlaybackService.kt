@@ -104,8 +104,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.receivers.AudioBec
 import com.lasthopesoftware.bluewater.client.playback.volume.PlaylistVolumeManager
 import com.lasthopesoftware.bluewater.client.servers.version.LibraryServerVersionProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.MediaQueryCursorProvider
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.external.CompatibleMediaFileUriProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.uri.StoredFileUriProvider
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
 import com.lasthopesoftware.bluewater.settings.volumeleveling.VolumeLevelSettings
@@ -550,8 +549,8 @@ import java.util.concurrent.TimeoutException
 				arbitratorForOs,
 				contentResolver),
 			CachedAudioFileUriProvider(remoteFileUriProvider, audioCache),
-			MediaFileUriProvider(
-				MediaQueryCursorProvider(contentResolver, cachedFileProperties),
+			CompatibleMediaFileUriProvider(
+				cachedFileProperties,
 				arbitratorForOs,
 				contentResolver
 			),

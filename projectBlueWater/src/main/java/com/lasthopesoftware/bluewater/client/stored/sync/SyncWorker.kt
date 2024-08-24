@@ -33,10 +33,9 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFi
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFilesChecker
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFilesPruner
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.download.StoredFileDownloader
+import com.lasthopesoftware.bluewater.client.stored.library.items.files.external.CompatibleMediaFileUriProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.external.ExternalContentRepository
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.MediaQueryCursorProvider
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.system.uri.MediaFileUriProvider
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFileUpdater
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.StoredFileUrisLookup
 import com.lasthopesoftware.bluewater.client.stored.library.permissions.read.StorageReadPermissionsRequestedBroadcaster
@@ -129,10 +128,8 @@ open class SyncWorker(private val context: Context, workerParams: WorkerParamete
 	private val storedFilesSynchronization by lazy {
 		val contentResolver = context.contentResolver
 
-		val cursorProvider = MediaQueryCursorProvider(contentResolver, fileProperties)
-
-		val mediaFileUriProvider = MediaFileUriProvider(
-			cursorProvider,
+		val mediaFileUriProvider = CompatibleMediaFileUriProvider(
+			fileProperties,
 			readPermissionArbitratorForOs,
 			contentResolver,
 		)
