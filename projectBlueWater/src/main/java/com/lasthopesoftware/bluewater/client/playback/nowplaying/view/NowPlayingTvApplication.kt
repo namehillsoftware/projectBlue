@@ -209,6 +209,11 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedBr
 			}
 		}
 
+		suspend fun hidePlaylist() {
+			browserViewDependencies.nowPlayingPlaylistViewModel.finishPlaylistEdit()
+			playlistDrawerState.animateTo(BooleanDragValue.Hidden)
+		}
+
 		val playlistDrawerOffset by LocalDensity.current.run {
 			remember {
 				derivedStateOf {
@@ -243,8 +248,7 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedBr
 				scope.launch {
 					when {
 						playlistDrawerState.currentValue == BooleanDragValue.Shown -> {
-							browserViewDependencies.nowPlayingPlaylistViewModel.finishPlaylistEdit()
-							playlistDrawerState.animateTo(BooleanDragValue.Hidden)
+							hidePlaylist()
 						}
 
 						browserDrawerState.currentValue == BooleanDragValue.Hidden -> {
@@ -350,7 +354,7 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedBr
 											.navigable(onClick = {
 												if (playlistDrawerState.currentValue == BooleanDragValue.Shown) {
 													scope.launch {
-														playlistDrawerState.animateTo(BooleanDragValue.Hidden)
+														hidePlaylist()
 													}
 													scope.launch {
 														browserDrawerState.animateTo(previousBrowserDragValue)
