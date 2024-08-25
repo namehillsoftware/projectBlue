@@ -32,7 +32,7 @@ class `When Getting The Uri Using Metadata` : AndroidContext() {
                         )
                     } returns Promise(
                         mapOf(
-                            Pair(KnownFileProperties.Filename, "4WwF4s4E.txt;geop7SLBFQ"),
+                            Pair(KnownFileProperties.Filename, "N4CVqBLbUx. 4WwF4s4E.txt;geop7SLBFQ"),
                             Pair(KnownFileProperties.Album, "DHgcnUk08jl"),
                             Pair(KnownFileProperties.Artist, "Nasceturaugue"),
                         )
@@ -60,7 +60,7 @@ class `When Getting The Uri Using Metadata` : AndroidContext() {
 							MediaCollections.ExternalAudio,
 							arrayOf(MediaStore.Audio.Media._ID, MediaStore.Audio.Media.DISPLAY_NAME),
 							"${MediaStore.Audio.Media.DISPLAY_NAME} LIKE ?",
-							arrayOf("%4WwF4s4E%;geop7SLBFQ"),
+							arrayOf("%N4CVqBLbUx. 4WwF4s4E%;geop7SLBFQ"),
 							null
 						)
 					} returns mockk<Cursor>(relaxUnitFun = true) {

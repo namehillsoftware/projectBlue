@@ -22,14 +22,21 @@ object FilePropertyHelpers {
 			?.let { f ->
 				val path = FilenameUtils.getPath(f)
 				val fileName = FilenameUtils.getName(f)
-				val parts = fileName.split(".", limit = 2)
-				val baseName = parts[0]
-				val ext = parts.elementAtOrNull(1) ?: ""
+
+				var baseName = fileName
+				var ext = ""
+				val extensionIndex = fileName.lastIndexOf('.')
+				if (extensionIndex > -1) {
+					baseName = fileName.substring(0, extensionIndex)
+					ext = fileName.substring(extensionIndex + 1)
+				}
+
 				val postExtParts = ext.let {
 					val index = it.indexOf(';')
 					if (index < 0) ""
 					else it.substring(index)
 				}
+
 				FileNameParts(path, baseName, ext, postExtParts)
 			}
 
