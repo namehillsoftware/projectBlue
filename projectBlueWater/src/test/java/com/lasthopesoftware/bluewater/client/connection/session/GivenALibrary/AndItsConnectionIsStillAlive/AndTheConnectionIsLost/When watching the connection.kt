@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionLostNotification
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionWatcherViewModel
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import io.mockk.every
 import io.mockk.mockk
@@ -36,11 +37,12 @@ class `When watching the connection` {
 	}
 
 	private val checkingConnectionStates = mutableListOf<Boolean>()
+	private var isConnectionActive = false
 
 	@BeforeAll
 	fun act() {
 		val (deferredConnection, messageBus, viewModel) = mut
-		viewModel.watchLibraryConnection(LibraryId(libraryId))
+		val futureConnection = viewModel.watchLibraryConnection(LibraryId(libraryId)).toExpiringFuture()
 
 		checkingConnectionStates.add(viewModel.isCheckingConnection.value)
 
@@ -51,10 +53,17 @@ class `When watching the connection` {
 		deferredConnection.resolve()
 
 		checkingConnectionStates.add(viewModel.isCheckingConnection.value)
+
+		isConnectionActive = futureConnection.get() ?: false
 	}
 
 	@Test
 	fun `then the checking connection states are correct`() {
 		assertThat(checkingConnectionStates).containsExactly(false, true, false)
+	}
+
+	@Test
+	fun `then the connection is active`() {
+		assertThat(isConnectionActive).isTrue()
 	}
 }
