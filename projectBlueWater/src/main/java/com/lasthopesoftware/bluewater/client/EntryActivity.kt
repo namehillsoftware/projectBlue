@@ -31,6 +31,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 private val logger by lazyLogger<EntryActivity>()
 private val magicPropertyBuilder by lazy { MagicPropertyBuilder(cls<EntryActivity>()) }
+private val leanbackModeProperty by lazy { magicPropertyBuilder.buildProperty("isInLeanbackMode") }
 
 val destinationProperty by lazy { magicPropertyBuilder.buildProperty("destination") }
 
@@ -122,6 +123,18 @@ val destinationProperty by lazy { magicPropertyBuilder.buildProperty("destinatio
 				requestId
 			)
 		}
+	}
+
+	override fun onSaveInstanceState(outState: Bundle) {
+		outState.putBoolean(leanbackModeProperty, isInLeanbackMode)
+
+		super.onSaveInstanceState(outState)
+	}
+
+	override fun onRestoreInstanceState(savedInstanceState: Bundle) {
+		super.onRestoreInstanceState(savedInstanceState)
+
+		isInLeanbackMode = savedInstanceState.getBoolean(leanbackModeProperty)
 	}
 
 	override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
