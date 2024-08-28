@@ -8,6 +8,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.shared.android.ui.navigable
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.LocalControlColor
 
@@ -16,7 +18,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.theme.LocalControlColor
 fun BackButton(onBack: () -> Unit, modifier: Modifier = Modifier) {
 	Icon(
 		Icons.AutoMirrored.Filled.ArrowBack,
-		contentDescription = "",
+		contentDescription = stringResource(R.string.navigate_back),
 		tint = LocalControlColor.current,
 		modifier = Modifier
 			.navigable(
