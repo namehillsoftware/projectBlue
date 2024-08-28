@@ -8,6 +8,7 @@ import android.os.Build
 import android.provider.MediaStore
 import androidx.core.database.getLongOrNull
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.albumArtistOrArtist
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.fileNameParts
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
@@ -26,11 +27,6 @@ import com.namehillsoftware.handoff.promises.response.PromisedResponse
 import java.io.IOException
 
 private const val audioIdKey = MediaStore.Audio.Media._ID
-
-private const val META_DATA_FILTER = """${MediaStore.Audio.Media.IS_PENDING} = 0
-				AND COALESCE(${MediaStore.Audio.Media.ARTIST}, "") = ?
-				AND COALESCE(${MediaStore.Audio.Media.TITLE}, "") = ?
-				AND COALESCE(${MediaStore.Audio.AlbumColumns.ALBUM}, "") = ?"""
 
 private const val DISPLAY_NAME_MEDIA_COLLECTION_FILTER = "${MediaStore.Audio.Media.DISPLAY_NAME} LIKE ?"
 
@@ -61,7 +57,7 @@ open class DataFileUriProvider(
 		val (_, baseFileName, _, postExtension) = fileProperties.fileNameParts
 			?: throw IOException("The filename property was not retrieved. A connection needs to be re-established.")
 
-		var fileNamePattern = "%$baseFileName%."
+		var fileNamePattern = "%${fileProperties.albumArtistOrArtist}/${fileProperties[KnownFileProperties.Album]}/%$baseFileName%."
 		if (postExtension.isNotEmpty()) fileNamePattern += postExtension
 
 		return QueuedPromise(
@@ -103,6 +99,7 @@ class MetadataMediaFileUriProvider(
 			MessageWriter {
 				val selectionArgs = arrayOf(
 					fileProperties[KnownFileProperties.Artist] ?: "",
+					fileProperties[KnownFileProperties.AlbumArtist] ?: "",
 					fileProperties[KnownFileProperties.Name] ?: "",
 					fileProperties[KnownFileProperties.Album] ?: ""
 				)
@@ -128,6 +125,12 @@ class MetadataMediaFileUriProvider(
 
 	companion object {
 		private val logger by lazyLogger<MetadataMediaFileUriProvider>()
+
+		private const val META_DATA_FILTER = """${MediaStore.Audio.Media.IS_PENDING} = 0
+				AND COALESCE(${MediaStore.Audio.Media.ARTIST}, "") = ?
+				AND COALESCE(${MediaStore.Audio.Media.ALBUM_ARTIST}, "") = ?
+				AND COALESCE(${MediaStore.Audio.Media.TITLE}, "") = ?
+				AND COALESCE(${MediaStore.Audio.AlbumColumns.ALBUM}, "") = ?"""
 	}
 }
 
