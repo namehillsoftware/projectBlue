@@ -61,7 +61,7 @@ open class DataFileUriProvider(
 		val (_, baseFileName, _, postExtension) = fileProperties.fileNameParts
 			?: throw IOException("The filename property was not retrieved. A connection needs to be re-established.")
 
-		var fileNamePattern = "%$baseFileName%"
+		var fileNamePattern = "%$baseFileName%."
 		if (postExtension.isNotEmpty()) fileNamePattern += postExtension
 
 		return QueuedPromise(
