@@ -1,9 +1,9 @@
 package com.lasthopesoftware.bluewater.client.stored.library.items.files.updates
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.albumArtistOrArtist
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.baseFileNameAsMp3
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.localExternalRelativeFileDirectory
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.localExternalRelativeFilePathAsMp3
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
@@ -18,7 +18,6 @@ import com.namehillsoftware.handoff.promises.Promise
 import org.apache.commons.io.FilenameUtils
 import java.io.File
 import java.net.URI
-import java.util.regex.Pattern
 
 class StoredFileUrisLookup(
 	private val libraryFileProperties: ProvideLibraryFileProperties,
@@ -27,13 +26,6 @@ class StoredFileUrisLookup(
 	private val mediaFileUriProvider: MediaFileUriProvider,
 	private val externalContent: HaveExternalContent,
 ) : GetStoredFileUris {
-
-	companion object {
-		private val reservedCharactersPattern by lazy { Pattern.compile("[|?*<\":>+\\[\\]'/]") }
-
-		private fun String.replaceReservedCharsAndPath(): String =
-			reservedCharactersPattern.matcher(this).replaceAll("_")
-	}
 
 	override fun promiseStoredFileUri(libraryId: LibraryId, serviceFile: ServiceFile): Promise<URI?> =
 		libraryFileProperties
@@ -58,29 +50,9 @@ class StoredFileUrisLookup(
 					?.path
 					?.let { fullPath ->
 						fileProperties
-							.albumArtistOrArtist
-							?.let { a ->
-									FilenameUtils.concat(
-										fullPath,
-										a.trim { c -> c <= ' ' }.replaceReservedCharsAndPath()
-									)
-							}
-							?: fullPath
-					}
-					?.let { fullPath ->
-						fileProperties[KnownFileProperties.Album]
-							?.let { album ->
-								FilenameUtils.concat(
-									fullPath,
-									album.trim { it <= ' ' }.replaceReservedCharsAndPath()
-								)
-							}
-							?: fullPath
-					}
-					?.let { fullPath ->
-						fileProperties.baseFileNameAsMp3
-							?.let { fileName ->
-								FilenameUtils.concat(fullPath, fileName).trim { it <= ' ' }
+							.localExternalRelativeFilePathAsMp3
+							?.let { mp3 ->
+									FilenameUtils.concat(fullPath, mp3)
 							}
 							?: fullPath
 					}
@@ -94,18 +66,7 @@ class StoredFileUrisLookup(
 				existingUri?.toURI()?.toPromise() ?: externalContent.promiseNewContentUri(
 					ExternalMusicContent(
 						displayName = fileProperties.baseFileNameAsMp3,
-						relativePath = fileProperties
-							.albumArtistOrArtist?.trim { c -> c <= ' ' }?.replaceReservedCharsAndPath()
-							?.let { path ->
-								fileProperties[KnownFileProperties.Album]
-									?.let { album ->
-										FilenameUtils.concat(
-											path, album.trim { it <= ' ' }.replaceReservedCharsAndPath()
-										)
-									}
-									?: path
-							}
-							?.let { path -> if (!path.endsWith("/")) "$path/" else path }
+						relativePath = fileProperties.localExternalRelativeFileDirectory
 					)
 				)
 			}

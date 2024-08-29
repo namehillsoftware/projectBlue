@@ -44,9 +44,10 @@ class `When Getting The Uri Using Metadata` : AndroidContext() {
 							arrayOf(MediaStore.Audio.Media._ID, MediaStore.Audio.Media.DISPLAY_NAME),
 							"""${MediaStore.Audio.Media.IS_PENDING} = 0
 				AND COALESCE(${MediaStore.Audio.Media.ARTIST}, "") = ?
+				AND COALESCE(${MediaStore.Audio.Media.ALBUM_ARTIST}, "") = ?
 				AND COALESCE(${MediaStore.Audio.Media.TITLE}, "") = ?
 				AND COALESCE(${MediaStore.Audio.AlbumColumns.ALBUM}, "") = ?""",
-							arrayOf("HkWSHt0", "6ouymea", "dZF7D2gj"),
+							arrayOf("HkWSHt0", "", "6ouymea", "dZF7D2gj"),
 							null
 						)
 					} returns mockk<Cursor>(relaxUnitFun = true) {
