@@ -8,8 +8,8 @@ import android.os.Build
 import android.provider.MediaStore
 import androidx.core.database.getLongOrNull
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.albumArtistOrArtist
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.fileNameParts
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.localExternalRelativeFileDirectory
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.uri.ProvideFileUrisForLibrary
@@ -24,6 +24,7 @@ import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import com.namehillsoftware.handoff.promises.response.PromisedResponse
+import org.apache.commons.io.FilenameUtils
 import java.io.IOException
 
 private const val audioIdKey = MediaStore.Audio.Media._ID
@@ -57,7 +58,7 @@ open class DataFileUriProvider(
 		val (_, baseFileName, _, postExtension) = fileProperties.fileNameParts
 			?: throw IOException("The filename property was not retrieved. A connection needs to be re-established.")
 
-		var fileNamePattern = "%${fileProperties.albumArtistOrArtist}/${fileProperties[KnownFileProperties.Album]}/%$baseFileName%."
+		var fileNamePattern = FilenameUtils.concat("%${fileProperties.localExternalRelativeFileDirectory}", "%$baseFileName%.")
 		if (postExtension.isNotEmpty()) fileNamePattern += postExtension
 
 		return QueuedPromise(

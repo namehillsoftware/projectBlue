@@ -1,8 +1,14 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.properties
 
 import org.apache.commons.io.FilenameUtils
+import java.util.regex.Pattern
 
 object FilePropertyHelpers {
+
+	private val reservedCharactersPattern by lazy { Pattern.compile("[|?*<\":>+\\[\\]'/]") }
+
+	private fun String.replaceReservedCharsAndPath(): String =
+		reservedCharactersPattern.matcher(this).replaceAll("_")
 
 	data class FileNameParts(val directory: String, val baseFileName: String, val ext: String, val postExtension: String)
 
@@ -44,5 +50,25 @@ object FilePropertyHelpers {
 		get() = fileNameParts
 			?.run {
 				"$baseFileName.mp3$postExtension"
+			}
+
+	val Map<String, String>.localExternalRelativeFileDirectory
+		get() = albumArtistOrArtist?.trim { c -> c <= ' ' }?.replaceReservedCharsAndPath()
+			?.let { path ->
+				this[KnownFileProperties.Album]
+					?.let { album ->
+						FilenameUtils.concat(
+							path, album.trim { it <= ' ' }.replaceReservedCharsAndPath()
+						)
+					}
+					?: path
+			}
+			?.let { path -> if (!path.endsWith("/")) "$path/" else path }
+
+	val Map<String, String>.localExternalRelativeFilePathAsMp3
+		get() = localExternalRelativeFileDirectory?.let { dir ->
+			baseFileNameAsMp3?.let { mp3 ->
+					FilenameUtils.concat(dir, mp3).trim { it <= ' ' }
+				}
 			}
 }
