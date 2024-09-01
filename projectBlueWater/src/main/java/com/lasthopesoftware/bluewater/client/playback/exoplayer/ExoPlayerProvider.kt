@@ -22,6 +22,7 @@ import androidx.media3.exoplayer.RenderersFactory
 		val exoPlayerBuilder = ExoPlayer.Builder(context, renderersFactory)
 			.setLoadControl(loadControl)
 			.setLooper(playbackHandler.looper)
+			.setPlaybackLooper(playbackHandler.looper)
 
 		return HandlerDispatchingExoPlayer(exoPlayerBuilder.build(), playbackHandler)
 	}
