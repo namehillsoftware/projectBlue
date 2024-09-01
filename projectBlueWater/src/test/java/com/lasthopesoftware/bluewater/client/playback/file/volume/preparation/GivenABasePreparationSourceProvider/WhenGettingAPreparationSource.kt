@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.G
 
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.IPlayableFilePreparationSourceProvider
 import com.lasthopesoftware.bluewater.client.playback.file.EmptyPlaybackHandler
-import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackFile
+import com.lasthopesoftware.bluewater.client.playback.file.buffering.BufferingPlaybackFile
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile
 import com.lasthopesoftware.bluewater.client.playback.file.volume.preparation.MaxFileVolumePreparationProvider
@@ -21,9 +21,9 @@ class WhenGettingAPreparationSource {
                         Promise(PreparedPlayableFile(
                             EmptyPlaybackHandler(0),
                             mockk(),
-                            object : IBufferingPlaybackFile {
-                                override fun promiseBufferedPlaybackFile(): Promise<IBufferingPlaybackFile> {
-                                    return Promise<IBufferingPlaybackFile>(this)
+                            object : BufferingPlaybackFile {
+                                override fun promiseBufferedPlaybackFile(): Promise<BufferingPlaybackFile> {
+                                    return Promise<BufferingPlaybackFile>(this)
                                 }
                             }
                         ))

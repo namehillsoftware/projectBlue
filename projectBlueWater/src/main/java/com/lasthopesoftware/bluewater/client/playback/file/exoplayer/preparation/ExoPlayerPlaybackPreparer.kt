@@ -1,10 +1,10 @@
 package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation
 
-import android.os.Handler
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.uri.ProvideFileUrisForLibrary
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.ProvideExoPlayers
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.buffering.ProvideBufferingExoPlayers
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.SpawnMediaSources
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile
@@ -15,7 +15,7 @@ import org.joda.time.Duration
 class ExoPlayerPlaybackPreparer(
 	private val mediaSourceProvider: SpawnMediaSources,
 	private val provideExoPlayers: ProvideExoPlayers,
-	private val eventHandler: Handler,
+	private val provideBufferingExoPlayers: ProvideBufferingExoPlayers,
 	private val uriProvider: ProvideFileUrisForLibrary
 ) : PlayableFilePreparationSource {
 
@@ -26,7 +26,7 @@ class ExoPlayerPlaybackPreparer(
 				uri?.let {
 					PreparedExoPlayerPromise(
 						mediaSourceProvider,
-						eventHandler,
+						provideBufferingExoPlayers,
 						provideExoPlayers,
 						libraryId,
 						it,

@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.playback.engine.preparation.GivenA
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.engine.preparation.PreparedPlayableFileQueue
-import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackFile
+import com.lasthopesoftware.bluewater.client.playback.file.buffering.BufferingPlaybackFile
 import com.lasthopesoftware.bluewater.client.playback.file.fakes.FakeBufferingPlaybackHandler
 import com.lasthopesoftware.bluewater.client.playback.file.fakes.FakePreparedPlayableFile
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PlayableFilePreparationSource
@@ -28,7 +28,7 @@ class WhenTheQueueIsStarted {
 		val playbackPreparer = mockk<PlayableFilePreparationSource>().apply {
 			every { promisePreparedPlaybackFile(LibraryId(libraryId), ServiceFile(0), Duration.ZERO) } returns Promise(
 				FakePreparedPlayableFile<FakeBufferingPlaybackHandler>(object : FakeBufferingPlaybackHandler() {
-					override fun promiseBufferedPlaybackFile(): Promise<IBufferingPlaybackFile> =
+					override fun promiseBufferedPlaybackFile(): Promise<BufferingPlaybackFile> =
 						Promise(IOException())
 				})
 			)

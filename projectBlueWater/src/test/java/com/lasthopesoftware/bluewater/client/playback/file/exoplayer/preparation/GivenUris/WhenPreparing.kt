@@ -46,7 +46,15 @@ class WhenPreparing {
 					every { release() } returns selfPromise
 				}
 			},
-			mockk(),
+			mockk {
+				every { promiseBufferingExoPlayer(any(), any()) } answers {
+					BufferingExoPlayer(
+                        mockk(),
+                        firstArg(),
+                        secondArg()
+                    ).toPromise()
+				}
+			},
 			mockk {
 				every { promiseUri(LibraryId(libraryId), ServiceFile(1)) } returns Promise(mockk<Uri>())
 			}
