@@ -15,6 +15,7 @@ import org.joda.time.Duration
 class ExoPlayerPlaybackPreparer(
 	private val mediaSourceProvider: SpawnMediaSources,
 	private val provideExoPlayers: ProvideExoPlayers,
+	private val playbackHandler: Handler,
 	private val eventHandler: Handler,
 	private val uriProvider: ProvideFileUrisForLibrary
 ) : PlayableFilePreparationSource {
@@ -26,6 +27,7 @@ class ExoPlayerPlaybackPreparer(
 				uri?.let {
 					PreparedExoPlayerPromise(
 						mediaSourceProvider,
+						playbackHandler,
 						eventHandler,
 						provideExoPlayers,
 						libraryId,

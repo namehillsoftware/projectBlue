@@ -10,21 +10,20 @@ import androidx.media3.exoplayer.source.MediaSourceEventListener
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.PromisingExoPlayer
 import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackFile
 import com.lasthopesoftware.bluewater.shared.lazyLogger
+import com.lasthopesoftware.promises.extensions.LoopedInPromise.Companion.loopIn
 import com.namehillsoftware.handoff.promises.Promise
+import com.namehillsoftware.handoff.promises.queued.MessageWriter
 import java.io.IOException
 
 @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
-class BufferingExoPlayer(handler: Handler, private val mediaSource: MediaSource, private val exoPlayer: PromisingExoPlayer) : Promise<IBufferingPlaybackFile>(), IBufferingPlaybackFile,
-	MediaSourceEventListener, Player.Listener {
+class BufferingExoPlayer(private val playbackHandler: Handler, private val handler: Handler, private val mediaSource: MediaSource, private val exoPlayer: PromisingExoPlayer) : Promise<IBufferingPlaybackFile>(), IBufferingPlaybackFile,
+	MediaSourceEventListener, Player.Listener, MessageWriter<Unit>, Runnable {
 
 	companion object {
 		private val logger by lazyLogger<BufferingExoPlayer>()
 	}
 
-	init {
-		mediaSource.addEventListener(handler, this)
-		exoPlayer.addListener(this)
-	}
+	fun promiseSubscribedExoPlayer(): Promise<*> = playbackHandler.loopIn(this)
 
 	override fun promiseBufferedPlaybackFile(): Promise<IBufferingPlaybackFile> {
 		return this
@@ -32,8 +31,7 @@ class BufferingExoPlayer(handler: Handler, private val mediaSource: MediaSource,
 
 	override fun onLoadCompleted(windowIndex: Int, mediaPeriodId: MediaSource.MediaPeriodId?, loadEventInfo: LoadEventInfo, mediaLoadData: MediaLoadData) {
 		resolve(this)
-		mediaSource.removeEventListener(this)
-		exoPlayer.removeListener(this)
+		removeListeners()
 	}
 
 	override fun onLoadError(windowIndex: Int, mediaPeriodId: MediaSource.MediaPeriodId?, loadEventInfo: LoadEventInfo, mediaLoadData: MediaLoadData, error: IOException, wasCanceled: Boolean) {
@@ -43,7 +41,20 @@ class BufferingExoPlayer(handler: Handler, private val mediaSource: MediaSource,
 	override fun onPlayerError(error: PlaybackException) {
 		logger.error("A player error occurred during playback buffering", error)
 		reject(error)
+		removeListeners()
+	}
+
+	override fun prepareMessage() {
+		mediaSource.addEventListener(handler, this)
+		exoPlayer.addListener(this)
+	}
+
+	override fun run() {
 		mediaSource.removeEventListener(this)
 		exoPlayer.removeListener(this)
+	}
+
+	private fun removeListeners() {
+		handler.post(this)
 	}
 }

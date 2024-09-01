@@ -28,6 +28,7 @@ import java.util.concurrent.CancellationException
 
 internal class PreparedExoPlayerPromise(
 	private val mediaSourceProvider: SpawnMediaSources,
+	private val playbackHandler: Handler,
 	private val eventHandler: Handler,
 	private val exoPlayers: ProvideExoPlayers,
 	private val libraryId: LibraryId,
@@ -74,7 +75,13 @@ internal class PreparedExoPlayerPromise(
 					mediaSourceProvider
 						.promiseNewMediaSource(libraryId, uri)
 						.eventually { mediaSource ->
-							val newBufferingExoPlayer = BufferingExoPlayer(eventHandler, mediaSource, it)
+							val newBufferingExoPlayer = BufferingExoPlayer(eventHandler, playbackHandler, mediaSource, it)
+							newBufferingExoPlayer
+								.promiseSubscribedExoPlayer()
+								.then { _ -> Pair(mediaSource, newBufferingExoPlayer) }
+						}
+						.eventually { pair ->
+							val (mediaSource, newBufferingExoPlayer) = pair
 							bufferingExoPlayer = newBufferingExoPlayer
 
 							val prepareAtMillis = prepareAt.millis

@@ -19,6 +19,7 @@ import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.HttpDataSource
+import androidx.media3.exoplayer.DefaultLoadControl
 import androidx.media3.exoplayer.ExoPlaybackException
 import com.lasthopesoftware.bluewater.ApplicationDependenciesContainer.applicationDependencies
 import com.lasthopesoftware.bluewater.R
@@ -146,6 +147,7 @@ import io.reactivex.rxjava3.internal.schedulers.ExecutorScheduler
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 import org.joda.time.Duration
+import org.joda.time.Minutes
 import java.io.IOException
 import java.util.concurrent.CancellationException
 import java.util.concurrent.TimeUnit
@@ -173,6 +175,8 @@ import java.util.concurrent.TimeoutException
 		private val errorLatchResetDuration = Duration.standardSeconds(3)
 
 		private val playbackStartTimeout = Duration.standardMinutes(2)
+
+		private val maxBufferMs by lazy { Minutes.minutes(5).toStandardDuration().millis.toInt() }
 
 		fun initialize(context: Context, libraryId: LibraryId) =
 			context.safelyStartService(getNewSelfIntent(context, PlaybackEngineAction.Initialize(libraryId)))
@@ -600,6 +604,15 @@ import java.util.concurrent.TimeoutException
 				MaxFileVolumePreparationProvider(
 					ExoPlayerPlayableFilePreparationSourceProvider(
 						this,
+						DefaultLoadControl.Builder()
+							.setBufferDurationsMs(
+								DefaultLoadControl.DEFAULT_MIN_BUFFER_MS,
+								maxBufferMs,
+								DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_MS,
+								DefaultLoadControl.DEFAULT_BUFFER_FOR_PLAYBACK_AFTER_REBUFFER_MS
+							)
+							.setPrioritizeTimeOverSizeThresholds(true)
+							.build(),
 						ph,
 						Handler(mainLooper),
 						MediaSourceProvider(

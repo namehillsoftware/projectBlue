@@ -125,5 +125,8 @@ open class LoopedInPromise<Result> : Promise<Result> {
 		fun act(task: ImmediateAction, handler: Handler): EventualAction {
 			return OneParameterExecutors.ReducingAction(task, handler)
 		}
+
+		fun <Resolution> Handler.loopIn(messageWriter: MessageWriter<Resolution>): Promise<Resolution> =
+			LoopedInPromise(messageWriter, this)
 	}
 }
