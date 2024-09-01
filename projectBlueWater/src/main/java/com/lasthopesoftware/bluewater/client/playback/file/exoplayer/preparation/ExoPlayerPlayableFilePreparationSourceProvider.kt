@@ -15,7 +15,7 @@ import org.joda.time.Minutes
 @UnstableApi class ExoPlayerPlayableFilePreparationSourceProvider(
 	private val context: Context,
 	private val playbackHandler: Handler,
-	private val eventHandler: Handler,
+	private val interactionsHandler: Handler,
 	private val mediaSourceProvider: SpawnMediaSources,
 	private val bestMatchUriProvider: BestMatchUriProvider
 ) : IPlayableFilePreparationSourceProvider {
@@ -42,12 +42,13 @@ import org.joda.time.Minutes
 			context,
 			renderersFactory,
 			loadControl,
+			interactionsHandler,
 			playbackHandler
 		)
 	}
 
 	private val bufferingExoPlayerProvider by lazy {
-		BufferingExoPlayerProvider(playbackHandler, eventHandler)
+		BufferingExoPlayerProvider(interactionsHandler)
 	}
 
     override val maxQueueSize get() = 1

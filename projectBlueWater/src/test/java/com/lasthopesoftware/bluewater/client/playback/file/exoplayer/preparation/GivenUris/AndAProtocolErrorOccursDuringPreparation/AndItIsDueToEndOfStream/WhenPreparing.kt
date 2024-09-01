@@ -52,11 +52,10 @@ class WhenPreparing {
 			mockk {
 				every { promiseBufferingExoPlayer(any(), any()) } answers {
 					BufferingExoPlayer(
-						mockk(),
-						mockk(),
-						firstArg(),
-						secondArg()
-					).toPromise()
+                        mockk(),
+                        firstArg(),
+                        secondArg()
+                    ).toPromise()
 				}
 			},
 			mockk {

@@ -18,7 +18,11 @@ import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import java.io.IOException
 
 @androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
-class BufferingExoPlayer(private val playbackHandler: Handler, private val handler: Handler, private val mediaSource: MediaSource, private val exoPlayer: PromisingExoPlayer) : Promise<BufferingPlaybackFile>(), BufferingPlaybackFile,
+class BufferingExoPlayer(
+	private val handler: Handler,
+	private val mediaSource: MediaSource,
+	private val exoPlayer: PromisingExoPlayer
+) : Promise<BufferingPlaybackFile>(), BufferingPlaybackFile,
 	MediaSourceEventListener, Player.Listener, MessageWriter<Unit>, Runnable, ImmediateResponse<Collection<Unit>, BufferingExoPlayer> {
 
 	companion object {
@@ -26,7 +30,7 @@ class BufferingExoPlayer(private val playbackHandler: Handler, private val handl
 	}
 
 	fun promiseSubscribedExoPlayer(): Promise<BufferingExoPlayer> = whenAll(
-		playbackHandler.loopIn(this),
+		handler.loopIn(this),
 		exoPlayer.addListener(this).unitResponse()
 	).then(this)
 
