@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation
 
 import android.net.Uri
-import android.os.Handler
 import androidx.annotation.OptIn
 import androidx.media3.common.ParserException
 import androidx.media3.common.PlaybackException
@@ -14,6 +13,7 @@ import com.lasthopesoftware.bluewater.client.playback.exoplayer.ProvideExoPlayer
 import com.lasthopesoftware.bluewater.client.playback.file.EmptyPlaybackHandler
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.ExoPlayerPlaybackHandler
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.buffering.BufferingExoPlayer
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.buffering.ProvideBufferingExoPlayers
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.mediasource.SpawnMediaSources
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile
 import com.lasthopesoftware.bluewater.client.playback.volume.AudioTrackVolumeManager
@@ -28,8 +28,7 @@ import java.util.concurrent.CancellationException
 
 internal class PreparedExoPlayerPromise(
 	private val mediaSourceProvider: SpawnMediaSources,
-	private val playbackHandler: Handler,
-	private val eventHandler: Handler,
+	private val bufferingExoPlayerProvider: ProvideBufferingExoPlayers,
 	private val exoPlayers: ProvideExoPlayers,
 	private val libraryId: LibraryId,
 	private val uri: Uri,
@@ -75,10 +74,9 @@ internal class PreparedExoPlayerPromise(
 					mediaSourceProvider
 						.promiseNewMediaSource(libraryId, uri)
 						.eventually { mediaSource ->
-							val newBufferingExoPlayer = BufferingExoPlayer(eventHandler, playbackHandler, mediaSource, it)
-							newBufferingExoPlayer
-								.promiseSubscribedExoPlayer()
-								.then { _ -> Pair(mediaSource, newBufferingExoPlayer) }
+							bufferingExoPlayerProvider
+								.promiseBufferingExoPlayer(mediaSource, it)
+								.then { ep -> Pair(mediaSource, ep) }
 						}
 						.eventually { pair ->
 							val (mediaSource, newBufferingExoPlayer) = pair

@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.playback.file.fakes
 
 import com.lasthopesoftware.bluewater.client.playback.file.NoTransformVolumeManager
 import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile
-import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackFile
+import com.lasthopesoftware.bluewater.client.playback.file.buffering.BufferingPlaybackFile
 import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedPlayableFile
 
 class FakePreparedPlayableFile<PlaybackHandler>(playbackHandler: PlaybackHandler) :
@@ -10,4 +10,4 @@ class FakePreparedPlayableFile<PlaybackHandler>(playbackHandler: PlaybackHandler
         playbackHandler,
         NoTransformVolumeManager(),
         playbackHandler
-    ) where PlaybackHandler : PlayableFile, PlaybackHandler : IBufferingPlaybackFile
+    ) where PlaybackHandler : PlayableFile, PlaybackHandler : BufferingPlaybackFile

@@ -14,628 +14,457 @@ import androidx.media3.exoplayer.SeekParameters
 import androidx.media3.exoplayer.source.MediaSource
 import androidx.media3.exoplayer.source.ShuffleOrder
 import androidx.media3.exoplayer.trackselection.TrackSelector
-import com.lasthopesoftware.promises.extensions.LoopedInPromise
+import com.lasthopesoftware.promises.extensions.LoopedInPromise.Companion.loopIn
 import com.namehillsoftware.handoff.promises.Promise
-import com.namehillsoftware.handoff.promises.queued.MessageWriter
 
-class HandlerDispatchingExoPlayer(private val innerPlayer: ExoPlayer, private val handler: Handler) : PromisingExoPlayer {
+class HandlerDispatchingExoPlayer(private val innerPlayer: ExoPlayer, private val handler: Handler) :
+	PromisingExoPlayer {
 
-	override fun getApplicationLooper(): Promise<Looper> =
-		LoopedInPromise(
-			MessageWriter { innerPlayer.applicationLooper },
-			handler)
+	override fun getApplicationLooper(): Promise<Looper> = handler.loopIn { innerPlayer.applicationLooper }
 
 	override fun addListener(listener: Player.Listener): Promise<PromisingExoPlayer> =
-		LoopedInPromise(
-			MessageWriter {
-				innerPlayer.addListener(listener)
-				this
-			},
-			handler)
+		handler.loopIn {
+			innerPlayer.addListener(listener)
+			this
+		}
 
 	override fun removeListener(listener: Player.Listener): Promise<PromisingExoPlayer> =
-		LoopedInPromise(
-			MessageWriter {
-				innerPlayer.removeListener(listener)
-				this
-			},
-			handler)
+		handler.loopIn {
+			innerPlayer.removeListener(listener)
+			this
+		}
 
 	override fun setMediaItems(mediaItems: MutableList<MediaItem>): Promise<PromisingExoPlayer> =
-		LoopedInPromise(
-			MessageWriter {
-				innerPlayer.setMediaItems(mediaItems)
-				this
-			},
-			handler)
+		handler.loopIn {
+			innerPlayer.setMediaItems(mediaItems)
+			this
+		}
 
-	override fun setMediaItems(mediaItems: MutableList<MediaItem>, resetPosition: Boolean): Promise<PromisingExoPlayer> =
-		LoopedInPromise(
-			MessageWriter {
-				innerPlayer.setMediaItems(mediaItems, resetPosition)
-				this
-			},
-			handler)
+	override fun setMediaItems(
+		mediaItems: MutableList<MediaItem>,
+		resetPosition: Boolean): Promise<PromisingExoPlayer> =
+		handler.loopIn {
+			innerPlayer.setMediaItems(mediaItems, resetPosition)
+			this
+		}
 
-	override fun setMediaItems(mediaItems: MutableList<MediaItem>, startWindowIndex: Int, startPositionMs: Long): Promise<PromisingExoPlayer> =
-		LoopedInPromise(
-			MessageWriter {
-				innerPlayer.setMediaItems(mediaItems, startWindowIndex, startPositionMs)
-				this
-			},
-			handler)
+	override fun setMediaItems(
+		mediaItems: MutableList<MediaItem>,
+		startWindowIndex: Int,
+		startPositionMs: Long
+	): Promise<PromisingExoPlayer> =
+		handler.loopIn {
+			innerPlayer.setMediaItems(mediaItems, startWindowIndex, startPositionMs)
+			this
+		}
 
 	override fun setMediaItem(mediaItem: MediaItem): Promise<PromisingExoPlayer> =
-		LoopedInPromise(
-			MessageWriter {
-				innerPlayer.setMediaItem(mediaItem)
-				this
-			},
-			handler)
+		handler.loopIn {
+			innerPlayer.setMediaItem(mediaItem)
+			this
+		}
 
 	override fun setMediaItem(mediaItem: MediaItem, startPositionMs: Long): Promise<PromisingExoPlayer> =
-		LoopedInPromise(
-			MessageWriter {
-				innerPlayer.setMediaItem(mediaItem, startPositionMs)
-				this
-			},
-			handler)
+		handler.loopIn {
+			innerPlayer.setMediaItem(mediaItem, startPositionMs)
+			this
+		}
 
 	override fun setMediaItem(mediaItem: MediaItem, resetPosition: Boolean): Promise<PromisingExoPlayer> =
-		LoopedInPromise(
-			MessageWriter {
-				innerPlayer.setMediaItem(mediaItem, resetPosition)
-				this
-			},
-			handler)
+		handler.loopIn {
+			innerPlayer.setMediaItem(mediaItem, resetPosition)
+			this
+		}
 
 	override fun setVolume(volume: Float): Promise<PromisingExoPlayer> =
-		LoopedInPromise(
-			MessageWriter {
-				innerPlayer.volume = volume
-				this
-			},
-			handler
-		)
+		handler.loopIn {
+			innerPlayer.volume = volume
+			this
+		}
 
 	override fun addMediaItem(mediaItem: MediaItem): Promise<PromisingExoPlayer> =
-		LoopedInPromise(
-			MessageWriter {
-				innerPlayer.addMediaItem(mediaItem)
-				this
-			},
-			handler)
+		handler.loopIn {
+			innerPlayer.addMediaItem(mediaItem)
+			this
+		}
 
 	override fun addMediaItem(index: Int, mediaItem: MediaItem): Promise<PromisingExoPlayer> =
-		LoopedInPromise(
-			MessageWriter {
-				innerPlayer.addMediaItem(index, mediaItem)
-				this
-			},
-			handler)
+		handler.loopIn {
+			innerPlayer.addMediaItem(index, mediaItem)
+			this
+		}
 
 	override fun addMediaItems(mediaItems: MutableList<MediaItem>): Promise<PromisingExoPlayer> =
-		LoopedInPromise(
-			MessageWriter {
-				innerPlayer.addMediaItems(mediaItems)
-				this
-			},
-			handler)
+		handler.loopIn {
+			innerPlayer.addMediaItems(mediaItems)
+			this
+		}
 
 	override fun addMediaItems(index: Int, mediaItems: MutableList<MediaItem>): Promise<PromisingExoPlayer> =
-		LoopedInPromise(
-			MessageWriter {
-				innerPlayer.addMediaItems(index, mediaItems)
-				this
-			},
-			handler)
+		handler.loopIn {
+			innerPlayer.addMediaItems(index, mediaItems)
+			this
+		}
 
 	override fun moveMediaItem(currentIndex: Int, newIndex: Int): Promise<PromisingExoPlayer> =
-		LoopedInPromise(
-			MessageWriter {
-				innerPlayer.moveMediaItem(currentIndex, newIndex)
-				this
-			},
-			handler)
+		handler.loopIn {
+			innerPlayer.moveMediaItem(currentIndex, newIndex)
+			this
+		}
 
 	override fun moveMediaItems(fromIndex: Int, toIndex: Int, newIndex: Int): Promise<PromisingExoPlayer> =
-		LoopedInPromise(
-			MessageWriter {
-				innerPlayer.moveMediaItems(fromIndex, toIndex, newIndex)
-				this
-			},
-			handler)
+		handler.loopIn {
+			innerPlayer.moveMediaItems(fromIndex, toIndex, newIndex)
+			this
+		}
 
 	override fun removeMediaItem(index: Int): Promise<PromisingExoPlayer> =
-		LoopedInPromise(
-			MessageWriter {
-				innerPlayer.removeMediaItem(index)
-				this
-			},
-			handler)
+		handler.loopIn {
+			innerPlayer.removeMediaItem(index)
+			this
+		}
 
 	override fun removeMediaItems(fromIndex: Int, toIndex: Int): Promise<PromisingExoPlayer> =
-		LoopedInPromise(
-			MessageWriter {
-				innerPlayer.removeMediaItems(fromIndex, toIndex)
-				this
-			},
-			handler)
+		handler.loopIn {
+			innerPlayer.removeMediaItems(fromIndex, toIndex)
+			this
+		}
 
 	override fun clearMediaItems(): Promise<PromisingExoPlayer> =
-		LoopedInPromise(
-			MessageWriter {
-				innerPlayer.clearMediaItems()
-				this
-			},
-			handler)
+		handler.loopIn {
+			innerPlayer.clearMediaItems()
+			this
+		}
 
 	override fun prepare(): Promise<PromisingExoPlayer> =
-		LoopedInPromise(
-			MessageWriter {
-				innerPlayer.prepare()
-				this
-			},
-			handler)
+		handler.loopIn {
+			innerPlayer.prepare()
+			this
+		}
 
 	override fun getPlaybackState(): Promise<Int> =
-		LoopedInPromise(
-			MessageWriter { innerPlayer.playbackState },
-			handler)
+		handler.loopIn { innerPlayer.playbackState }
 
 	override fun getPlaybackSuppressionReason(): Promise<Int> =
-		LoopedInPromise(
-			MessageWriter { innerPlayer.playbackSuppressionReason },
-			handler)
+		handler.loopIn { innerPlayer.playbackSuppressionReason }
 
 	override fun isPlaying(): Promise<Boolean> =
-		LoopedInPromise(
-			MessageWriter { innerPlayer.isPlaying },
-			handler)
+		handler.loopIn { innerPlayer.isPlaying }
 
 	override fun getPlayerError(): Promise<ExoPlaybackException?> =
-		LoopedInPromise(
-			MessageWriter { innerPlayer.playerError },
-			handler)
+		handler.loopIn { innerPlayer.playerError }
 
 	override fun play(): Promise<PromisingExoPlayer> =
-		LoopedInPromise(
-			MessageWriter {
-				innerPlayer.play()
-				this
-			},
-			handler)
+		handler.loopIn {
+			innerPlayer.play()
+			this
+		}
 
 	override fun pause(): Promise<PromisingExoPlayer> =
-		LoopedInPromise(
-			MessageWriter {
-				innerPlayer.pause()
-				this
-			},
-			handler)
+		handler.loopIn {
+			innerPlayer.pause()
+			this
+		}
 
 	override fun setPlayWhenReady(playWhenReady: Boolean): Promise<PromisingExoPlayer> =
-		LoopedInPromise(
-			MessageWriter {
-				innerPlayer.playWhenReady = playWhenReady
-				this
-			},
-			handler)
+		handler.loopIn {
+			innerPlayer.playWhenReady = playWhenReady
+			this
+		}
 
 	override fun getPlayWhenReady(): Promise<Boolean> =
-		LoopedInPromise(
-			MessageWriter { innerPlayer.playWhenReady },
-			handler)
+		handler.loopIn { innerPlayer.playWhenReady }
 
 	override fun setRepeatMode(repeatMode: Int): Promise<PromisingExoPlayer> =
-		LoopedInPromise(
-			MessageWriter {
-				innerPlayer.repeatMode = repeatMode
-				this
-			},
-			handler)
+		handler.loopIn {
+			innerPlayer.repeatMode = repeatMode
+			this
+		}
 
 	override fun getRepeatMode(): Promise<Int> =
-		LoopedInPromise(
-			MessageWriter { innerPlayer.repeatMode },
-			handler)
+		handler.loopIn { innerPlayer.repeatMode }
 
 	override fun setShuffleModeEnabled(shuffleModeEnabled: Boolean): Promise<PromisingExoPlayer> =
-		LoopedInPromise(
-			MessageWriter {
-				innerPlayer.shuffleModeEnabled = shuffleModeEnabled
-				this
-			},
-			handler)
+		handler.loopIn {
+			innerPlayer.shuffleModeEnabled = shuffleModeEnabled
+			this
+		}
 
 	override fun getShuffleModeEnabled(): Promise<Boolean> =
-		LoopedInPromise(
-			MessageWriter { innerPlayer.shuffleModeEnabled },
-			handler)
+		handler.loopIn { innerPlayer.shuffleModeEnabled }
 
 	override fun isLoading(): Promise<Boolean> =
-		LoopedInPromise(
-			MessageWriter { innerPlayer.isLoading },
-			handler)
+		handler.loopIn { innerPlayer.isLoading }
 
 	override fun seekToDefaultPosition(): Promise<PromisingExoPlayer> =
-		LoopedInPromise(
-			MessageWriter {
-				innerPlayer.seekToDefaultPosition()
-				this
-			},
-			handler)
+		handler.loopIn {
+			innerPlayer.seekToDefaultPosition()
+			this
+		}
 
 	override fun seekToDefaultPosition(windowIndex: Int): Promise<PromisingExoPlayer> =
-		LoopedInPromise(
-			MessageWriter {
-				innerPlayer.seekToDefaultPosition(windowIndex)
-				this
-			},
-			handler)
+		handler.loopIn {
+			innerPlayer.seekToDefaultPosition(windowIndex)
+			this
+		}
 
 	override fun seekTo(positionMs: Long): Promise<PromisingExoPlayer> =
-		LoopedInPromise(
-			MessageWriter {
-				innerPlayer.seekTo(positionMs)
-				this
-			},
-			handler)
+		handler.loopIn {
+			innerPlayer.seekTo(positionMs)
+			this
+		}
 
 	override fun seekTo(windowIndex: Int, positionMs: Long): Promise<PromisingExoPlayer> =
-		LoopedInPromise(
-			MessageWriter {
-				innerPlayer.seekTo(windowIndex, positionMs)
-				this
-			},
-			handler)
+		handler.loopIn {
+			innerPlayer.seekTo(windowIndex, positionMs)
+			this
+		}
 
 	override fun hasPreviousMediaItem(): Promise<Boolean> =
-		LoopedInPromise(
-			MessageWriter { innerPlayer.hasPreviousMediaItem() },
-			handler)
+		handler.loopIn { innerPlayer.hasPreviousMediaItem() }
 
 	override fun seekToPreviousMediaItem(): Promise<PromisingExoPlayer> =
-		LoopedInPromise(
-			MessageWriter {
-				innerPlayer.seekToPreviousMediaItem()
-				this
-			},
-			handler)
+		handler.loopIn {
+			innerPlayer.seekToPreviousMediaItem()
+			this
+		}
 
 	override fun hasNextMediaItem(): Promise<Boolean> =
-		LoopedInPromise(
-			MessageWriter { innerPlayer.hasNextMediaItem() },
-			handler)
+		handler.loopIn { innerPlayer.hasNextMediaItem() }
 
 	override fun seekToNextMediaItem(): Promise<PromisingExoPlayer> =
-		LoopedInPromise(
-			MessageWriter {
-				innerPlayer.seekToNextMediaItem()
-				this
-			},
-			handler)
+		handler.loopIn {
+			innerPlayer.seekToNextMediaItem()
+			this
+		}
 
 	override fun setPlaybackParameters(playbackParameters: PlaybackParameters): Promise<PromisingExoPlayer> =
-		LoopedInPromise(
-			MessageWriter {
-				innerPlayer.playbackParameters = playbackParameters
-				this
-			},
-			handler)
+		handler.loopIn {
+			innerPlayer.playbackParameters = playbackParameters
+			this
+		}
 
 	override fun getPlaybackParameters(): Promise<PlaybackParameters> =
-		LoopedInPromise(
-			MessageWriter { innerPlayer.playbackParameters },
-			handler)
+		handler.loopIn { innerPlayer.playbackParameters }
 
 	override fun stop(): Promise<PromisingExoPlayer> =
-		LoopedInPromise(
-			MessageWriter {
-				innerPlayer.stop()
-				this
-			},
-			handler)
+		handler.loopIn {
+			innerPlayer.stop()
+			this
+		}
 
 	override fun release(): Promise<PromisingExoPlayer> =
-		LoopedInPromise(
-			MessageWriter {
-				innerPlayer.release()
-				this
-			},
-			handler)
+		handler.loopIn {
+			innerPlayer.release()
+			this
+		}
 
 	@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 	override fun getRendererCount(): Promise<Int> =
-		LoopedInPromise(
-			MessageWriter<Int> { innerPlayer.rendererCount },
-			handler)
+		handler.loopIn { innerPlayer.rendererCount }
 
 	@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 	override fun getRendererType(index: Int): Promise<Int> =
-		LoopedInPromise(
-			MessageWriter { innerPlayer.getRendererType(index) },
-			handler)
+		handler.loopIn { innerPlayer.getRendererType(index) }
 
 	@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 	override fun getTrackSelector(): Promise<TrackSelector?> =
-		LoopedInPromise(
-			MessageWriter { innerPlayer.trackSelector },
-			handler)
+		handler.loopIn { innerPlayer.trackSelector }
 
 	override fun getCurrentTracks(): Promise<Tracks?> =
-		LoopedInPromise(
-			MessageWriter { innerPlayer.currentTracks },
-			handler)
+		handler.loopIn { innerPlayer.currentTracks }
 
 	@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 	override fun getCurrentManifest(): Promise<Any?> =
-		LoopedInPromise(
-			MessageWriter { innerPlayer.currentManifest },
-			handler)
+		handler.loopIn { innerPlayer.currentManifest }
 
 	override fun getCurrentTimeline(): Promise<Timeline> =
-		LoopedInPromise(
-			MessageWriter { innerPlayer.currentTimeline },
-			handler)
+		handler.loopIn { innerPlayer.currentTimeline }
 
 	override fun getCurrentPeriodIndex(): Promise<Int> =
-		LoopedInPromise(
-			MessageWriter { innerPlayer.currentPeriodIndex },
-			handler)
+		handler.loopIn { innerPlayer.currentPeriodIndex }
 
 	override fun getCurrentMediaItemIndex(): Promise<Int> =
-		LoopedInPromise(
-			MessageWriter { innerPlayer.currentMediaItemIndex },
-			handler)
+		handler.loopIn { innerPlayer.currentMediaItemIndex }
 
 	override fun getNextMediaItemIndex(): Promise<Int> =
-		LoopedInPromise(
-			MessageWriter { innerPlayer.nextMediaItemIndex },
-			handler)
+		handler.loopIn { innerPlayer.nextMediaItemIndex }
 
 	override fun getPreviousMediaItemIndex(): Promise<Int> =
-		LoopedInPromise(
-			MessageWriter { innerPlayer.previousMediaItemIndex },
-			handler)
+		handler.loopIn { innerPlayer.previousMediaItemIndex }
 
 	override fun getCurrentMediaItem(): Promise<MediaItem?> =
-		LoopedInPromise(
-			MessageWriter { innerPlayer.currentMediaItem },
-			handler)
+		handler.loopIn { innerPlayer.currentMediaItem }
 
 	override fun getMediaItemCount(): Promise<Int> =
-		LoopedInPromise(
-			MessageWriter { innerPlayer.mediaItemCount },
-			handler)
+		handler.loopIn { innerPlayer.mediaItemCount }
 
 	override fun getMediaItemAt(index: Int): Promise<MediaItem> =
-		LoopedInPromise(
-			MessageWriter { innerPlayer.getMediaItemAt(index) },
-			handler)
+		handler.loopIn { innerPlayer.getMediaItemAt(index) }
 
 	override fun getDuration(): Promise<Long> =
-		LoopedInPromise(
-			MessageWriter { innerPlayer.duration },
-			handler)
+		handler.loopIn { innerPlayer.duration }
 
 	override fun getCurrentPosition(): Promise<Long> =
-		LoopedInPromise(
-			MessageWriter { innerPlayer.currentPosition },
-			handler)
+		handler.loopIn { innerPlayer.currentPosition }
 
 	override fun getBufferedPosition(): Promise<Long> =
-		LoopedInPromise(
-			MessageWriter { innerPlayer.bufferedPosition },
-			handler)
+		handler.loopIn { innerPlayer.bufferedPosition }
 
 	override fun getBufferedPercentage(): Promise<Int> =
-		LoopedInPromise(
-			MessageWriter { innerPlayer.bufferedPercentage },
-			handler)
+		handler.loopIn { innerPlayer.bufferedPercentage }
 
 	override fun getTotalBufferedDuration(): Promise<Long> =
-		LoopedInPromise(
-			MessageWriter { innerPlayer.totalBufferedDuration },
-			handler)
+		handler.loopIn { innerPlayer.totalBufferedDuration }
 
 	override fun isCurrentMediaItemDynamic(): Promise<Boolean> =
-		LoopedInPromise(
-			MessageWriter { innerPlayer.isCurrentMediaItemDynamic },
-			handler)
+		handler.loopIn { innerPlayer.isCurrentMediaItemDynamic }
 
 	override fun isCurrentMediaItemLive(): Promise<Boolean> =
-		LoopedInPromise(
-			MessageWriter { innerPlayer.isCurrentMediaItemLive },
-			handler)
+		handler.loopIn { innerPlayer.isCurrentMediaItemLive }
 
 	override fun getCurrentLiveOffset(): Promise<Long> =
-		LoopedInPromise(
-			MessageWriter { innerPlayer.currentLiveOffset },
-			handler)
+		handler.loopIn { innerPlayer.currentLiveOffset }
 
 	override fun isCurrentMediaItemSeekable(): Promise<Boolean> =
-		LoopedInPromise(
-			MessageWriter { innerPlayer.isCurrentMediaItemSeekable },
-			handler)
+		handler.loopIn { innerPlayer.isCurrentMediaItemSeekable }
 
 	override fun isPlayingAd(): Promise<Boolean> =
-		LoopedInPromise(
-			MessageWriter { innerPlayer.isPlayingAd },
-			handler)
+		handler.loopIn { innerPlayer.isPlayingAd }
 
 	override fun getCurrentAdGroupIndex(): Promise<Int> =
-		LoopedInPromise(
-			MessageWriter { innerPlayer.currentAdGroupIndex },
-			handler)
+		handler.loopIn { innerPlayer.currentAdGroupIndex }
 
 	override fun getCurrentAdIndexInAdGroup(): Promise<Int> =
-		LoopedInPromise(
-			MessageWriter { innerPlayer.currentAdIndexInAdGroup },
-			handler)
+		handler.loopIn { innerPlayer.currentAdIndexInAdGroup }
 
 	override fun getContentDuration(): Promise<Long> =
-		LoopedInPromise(
-			MessageWriter { innerPlayer.contentDuration },
-			handler)
+		handler.loopIn { innerPlayer.contentDuration }
 
 	override fun getContentPosition(): Promise<Long> =
-		LoopedInPromise(
-			MessageWriter { innerPlayer.contentPosition },
-			handler)
+		handler.loopIn { innerPlayer.contentPosition }
 
 	override fun getContentBufferedPosition(): Promise<Long> =
-		LoopedInPromise(
-			MessageWriter { innerPlayer.contentBufferedPosition },
-			handler)
+		handler.loopIn { innerPlayer.contentBufferedPosition }
 
 	@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 	override fun getPlaybackLooper(): Promise<Looper> =
-		LoopedInPromise(
-			MessageWriter { innerPlayer.playbackLooper },
-			handler)
+		handler.loopIn { innerPlayer.playbackLooper }
 
 	@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 	override fun setMediaSources(mediaSources: MutableList<MediaSource>): Promise<PromisingExoPlayer> =
-		LoopedInPromise(
-			MessageWriter {
-				innerPlayer.setMediaSources(mediaSources)
-				this
-			},
-			handler)
+		handler.loopIn {
+			innerPlayer.setMediaSources(mediaSources)
+			this
+		}
 
 	@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
-	override fun setMediaSources(mediaSources: MutableList<MediaSource>, resetPosition: Boolean): Promise<PromisingExoPlayer> =
-		LoopedInPromise(
-			MessageWriter {
-				innerPlayer.setMediaSources(mediaSources, resetPosition)
-				this
-			},
-			handler)
+	override fun setMediaSources(
+		mediaSources: MutableList<MediaSource>,
+		resetPosition: Boolean
+	): Promise<PromisingExoPlayer> =
+		handler.loopIn {
+			innerPlayer.setMediaSources(mediaSources, resetPosition)
+			this
+		}
 
 	@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
-	override fun setMediaSources(mediaSources: MutableList<MediaSource>, startWindowIndex: Int, startPositionMs: Long): Promise<PromisingExoPlayer> =
-		LoopedInPromise(
-			MessageWriter {
-				innerPlayer.setMediaSources(mediaSources, startWindowIndex, startPositionMs)
-				this
-			},
-			handler)
+	override fun setMediaSources(
+		mediaSources: MutableList<MediaSource>,
+		startWindowIndex: Int,
+		startPositionMs: Long
+	): Promise<PromisingExoPlayer> =
+		handler.loopIn {
+			innerPlayer.setMediaSources(mediaSources, startWindowIndex, startPositionMs)
+			this
+		}
 
 	@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 	override fun setMediaSource(mediaSource: MediaSource): Promise<PromisingExoPlayer> =
-		LoopedInPromise(
-			MessageWriter {
-				innerPlayer.setMediaSource(mediaSource)
-				this
-			},
-			handler)
+		handler.loopIn {
+			innerPlayer.setMediaSource(mediaSource)
+			this
+		}
 
 	@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 	override fun setMediaSource(mediaSource: MediaSource, startPositionMs: Long): Promise<PromisingExoPlayer> =
-		LoopedInPromise(
-			MessageWriter {
-				innerPlayer.setMediaSource(mediaSource, startPositionMs)
-				this
-			},
-			handler)
+		handler.loopIn {
+			innerPlayer.setMediaSource(mediaSource, startPositionMs)
+			this
+		}
 
 	@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 	override fun setMediaSource(mediaSource: MediaSource, resetPosition: Boolean): Promise<PromisingExoPlayer> =
-		LoopedInPromise(
-			MessageWriter {
-				innerPlayer.setMediaSource(mediaSource, resetPosition)
-				this
-			},
-			handler)
+		handler.loopIn {
+			innerPlayer.setMediaSource(mediaSource, resetPosition)
+			this
+		}
 
 	@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 	override fun addMediaSource(mediaSource: MediaSource): Promise<PromisingExoPlayer> =
-		LoopedInPromise(
-			MessageWriter {
-				innerPlayer.addMediaSource(mediaSource)
-				this
-			},
-			handler)
+		handler.loopIn {
+			innerPlayer.addMediaSource(mediaSource)
+			this
+		}
 
 	@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 	override fun addMediaSource(index: Int, mediaSource: MediaSource): Promise<PromisingExoPlayer> =
-		LoopedInPromise(
-			MessageWriter {
-				innerPlayer.addMediaSource(index, mediaSource)
-				this
-			},
-			handler)
+		handler.loopIn {
+			innerPlayer.addMediaSource(index, mediaSource)
+			this
+		}
 
 	@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 	override fun addMediaSources(mediaSources: MutableList<MediaSource>): Promise<PromisingExoPlayer> =
-		LoopedInPromise(
-			MessageWriter {
-				innerPlayer.addMediaSources(mediaSources)
-				this
-			},
-			handler)
+		handler.loopIn {
+			innerPlayer.addMediaSources(mediaSources)
+			this
+		}
 
 	@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 	override fun addMediaSources(index: Int, mediaSources: MutableList<MediaSource>): Promise<PromisingExoPlayer> =
-		LoopedInPromise(
-			MessageWriter {
-				innerPlayer.addMediaSources(index, mediaSources)
-				this
-			},
-			handler)
+		handler.loopIn {
+			innerPlayer.addMediaSources(index, mediaSources)
+			this
+		}
 
 	@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 	override fun setShuffleOrder(shuffleOrder: ShuffleOrder): Promise<PromisingExoPlayer> =
-		LoopedInPromise(
-			MessageWriter {
-				innerPlayer.setShuffleOrder(shuffleOrder)
-				this
-			},
-			handler)
+		handler.loopIn {
+			innerPlayer.setShuffleOrder(shuffleOrder)
+			this
+		}
 
 	@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 	override fun createMessage(target: PlayerMessage.Target): Promise<PlayerMessage> =
-		LoopedInPromise(
-			MessageWriter { innerPlayer.createMessage(target) },
-			handler)
+		handler.loopIn { innerPlayer.createMessage(target) }
 
 	@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 	override fun setSeekParameters(seekParameters: SeekParameters?): Promise<PromisingExoPlayer> =
-		LoopedInPromise(
-			MessageWriter {
-				innerPlayer.setSeekParameters(seekParameters)
-				this
-			},
-			handler)
+		handler.loopIn {
+			innerPlayer.setSeekParameters(seekParameters)
+			this
+		}
 
 	@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 	override fun getSeekParameters(): Promise<SeekParameters> =
-		LoopedInPromise(
-			MessageWriter { innerPlayer.seekParameters },
-			handler)
+		handler.loopIn { innerPlayer.seekParameters }
 
 	@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 	override fun setForegroundMode(foregroundMode: Boolean): Promise<PromisingExoPlayer> =
-		LoopedInPromise(
-			MessageWriter {
-				innerPlayer.setForegroundMode(foregroundMode)
-				this
-			},
-			handler)
+		handler.loopIn {
+			innerPlayer.setForegroundMode(foregroundMode)
+			this
+		}
 
 	@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 	override fun setPauseAtEndOfMediaItems(pauseAtEndOfMediaItems: Boolean): Promise<PromisingExoPlayer> =
-		LoopedInPromise(
-			MessageWriter {
-				innerPlayer.pauseAtEndOfMediaItems = pauseAtEndOfMediaItems
-				this
-			},
-			handler)
+		handler.loopIn {
+			innerPlayer.pauseAtEndOfMediaItems = pauseAtEndOfMediaItems
+			this
+		}
 
 	@androidx.annotation.OptIn(androidx.media3.common.util.UnstableApi::class)
 	override fun getPauseAtEndOfMediaItems(): Promise<Boolean> =
-		LoopedInPromise(
-			MessageWriter { innerPlayer.pauseAtEndOfMediaItems },
-			handler)
+		handler.loopIn { innerPlayer.pauseAtEndOfMediaItems }
 }

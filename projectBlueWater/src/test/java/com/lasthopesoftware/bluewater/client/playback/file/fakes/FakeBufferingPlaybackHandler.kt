@@ -3,14 +3,14 @@ package com.lasthopesoftware.bluewater.client.playback.file.fakes
 import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile
 import com.lasthopesoftware.bluewater.client.playback.file.PlayedFile
 import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile
-import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackFile
+import com.lasthopesoftware.bluewater.client.playback.file.buffering.BufferingPlaybackFile
 import com.lasthopesoftware.promises.extensions.ProgressedPromise
 import com.lasthopesoftware.promises.extensions.ProgressingPromise
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import org.joda.time.Duration
 
-open class FakeBufferingPlaybackHandler : IBufferingPlaybackFile, PlayableFile, PlayingFile, PlayedFile {
+open class FakeBufferingPlaybackHandler : BufferingPlaybackFile, PlayableFile, PlayingFile, PlayedFile {
 	private val playingStates = mutableListOf(false)
 
 	val recordedPlayingStates
@@ -37,7 +37,7 @@ open class FakeBufferingPlaybackHandler : IBufferingPlaybackFile, PlayableFile, 
 		isClosed = true
 	}
 
-	override fun promiseBufferedPlaybackFile(): Promise<IBufferingPlaybackFile> {
+	override fun promiseBufferedPlaybackFile(): Promise<BufferingPlaybackFile> {
 		return Promise(this)
 	}
 

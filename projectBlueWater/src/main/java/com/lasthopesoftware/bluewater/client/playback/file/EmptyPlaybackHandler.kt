@@ -1,12 +1,12 @@
 package com.lasthopesoftware.bluewater.client.playback.file
 
-import com.lasthopesoftware.bluewater.client.playback.file.buffering.IBufferingPlaybackFile
+import com.lasthopesoftware.bluewater.client.playback.file.buffering.BufferingPlaybackFile
 import com.lasthopesoftware.promises.extensions.ProgressedPromise
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import org.joda.time.Duration
 
-class EmptyPlaybackHandler(private val fileDuration: Int) : ProgressedPromise<Duration, PlayedFile>(), IBufferingPlaybackFile, PlayableFile, PlayingFile, PlayedFile {
+class EmptyPlaybackHandler(private val fileDuration: Int) : ProgressedPromise<Duration, PlayedFile>(), BufferingPlaybackFile, PlayableFile, PlayingFile, PlayedFile {
 	private val promisedThis: Promise<*> = this
 
 	init {
@@ -25,8 +25,8 @@ class EmptyPlaybackHandler(private val fileDuration: Int) : ProgressedPromise<Du
 	}
 
 	@Suppress("UNCHECKED_CAST")
-	override fun promiseBufferedPlaybackFile(): Promise<IBufferingPlaybackFile> {
-		return promisedThis as Promise<IBufferingPlaybackFile>
+	override fun promiseBufferedPlaybackFile(): Promise<BufferingPlaybackFile> {
+		return promisedThis as Promise<BufferingPlaybackFile>
 	}
 
 	@Suppress("UNCHECKED_CAST")

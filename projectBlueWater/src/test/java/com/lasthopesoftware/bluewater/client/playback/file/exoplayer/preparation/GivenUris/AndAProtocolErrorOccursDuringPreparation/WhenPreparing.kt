@@ -10,6 +10,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.PromisingExoPlayer
 import com.lasthopesoftware.bluewater.client.playback.exoplayer.ProvideExoPlayers
+import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.buffering.BufferingExoPlayer
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.preparation.ExoPlayerPlaybackPreparer
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -48,7 +49,16 @@ class WhenPreparing {
 					every { release() } returns selfPromise
 				}
 			},
-			mockk(),
+			mockk {
+				every { promiseBufferingExoPlayer(any(), any()) } answers {
+					BufferingExoPlayer(
+						mockk(),
+						mockk(),
+						firstArg(),
+						secondArg()
+					).toPromise()
+				}
+			},
 			mockk {
 				every { promiseUri(LibraryId(libraryId), ServiceFile(1)) } returns Promise(mockk<Uri>())
 			}
