@@ -78,7 +78,9 @@ class WhenCollectingTheAssociatedServiceFiles {
 	fun act() {
 		collectedFiles = serviceFileCollector
 			.promiseServiceFilesToSync(LibraryId(4))
-			.toExpiringFuture().get()!!
+			.toExpiringFuture()
+			.get()!!
+			.toList()
 	}
 
 	@Test

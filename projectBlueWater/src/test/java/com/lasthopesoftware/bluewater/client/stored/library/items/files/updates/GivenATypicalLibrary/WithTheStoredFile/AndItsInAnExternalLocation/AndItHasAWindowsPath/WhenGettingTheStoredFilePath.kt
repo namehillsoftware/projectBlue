@@ -75,8 +75,8 @@ class WhenGettingTheStoredFilePath {
 	fun `then the external audio content is correct`() {
 		assertThat(externalMusicContent).isEqualTo(
 			ExternalMusicContent(
-				displayName = "in_windows.mp3;255",
-				relativePath = "6YYPwSql/baKCea7AEK/",
+				displayName = "255.mp3",
+				relativePath = "6YYPwSql/baKCea7AEK/in_windows/",
 			)
 		)
 	}

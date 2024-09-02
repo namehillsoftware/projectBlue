@@ -31,7 +31,7 @@ class StoredItemServiceFileCollector(
 		private val logger by lazyLogger<StoredItemServiceFileCollector>()
 	}
 
-	override fun promiseServiceFilesToSync(libraryId: LibraryId): Promise<Collection<ServiceFile>> {
+	override fun promiseServiceFilesToSync(libraryId: LibraryId): Promise<Iterable<ServiceFile>> {
 		return Promise.Proxy { cancellationProxy ->
 			val promisedStoredItems = storedItemAccess.promiseStoredItems(libraryId)
 			cancellationProxy.doCancel(promisedStoredItems)
@@ -47,7 +47,7 @@ class StoredItemServiceFileCollector(
 			promisedServiceFileLists
 				.eventually { serviceFiles ->
 					QueuedPromise(
-						MessageWriter{ serviceFiles.asSequence().flatten().toSet() },
+						MessageWriter{ serviceFiles.asSequence().flatten().asIterable() },
 						ThreadPools.compute
 					)
 				}

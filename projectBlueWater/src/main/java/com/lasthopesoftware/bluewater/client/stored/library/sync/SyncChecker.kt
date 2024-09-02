@@ -18,7 +18,7 @@ class SyncChecker(
 					serviceFilesForSync
 						.promiseServiceFilesToSync(l.libraryId)
 						.eventually { sf ->
-							if (sf.isNotEmpty()) true.toPromise()
+							if (sf.any()) true.toPromise()
 							else checkForAnyStoredFiles.promiseIsAnyStoredFiles(l.libraryId)
 						}
 				})

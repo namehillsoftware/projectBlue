@@ -60,7 +60,7 @@ class `When Getting The Uri Using Metadata` : AndroidContext() {
 							MediaCollections.ExternalAudio,
 							arrayOf(MediaStore.Audio.Media._ID, MediaStore.Audio.Media.DISPLAY_NAME),
 							"${MediaStore.Audio.Media.DISPLAY_NAME} LIKE ?",
-							arrayOf("%Nasceturaugue/DHgcnUk08jl/%N4CVqBLbUx. 4WwF4s4E%.;geop7SLBFQ"),
+							arrayOf("%Nasceturaugue/DHgcnUk08jl/N4CVqBLbUx. 4WwF4s4E/%geop7SLBFQ%."),
 							null
 						)
 					} returns mockk<Cursor>(relaxUnitFun = true) {

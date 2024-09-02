@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.stored.library.sync
 
-import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.PruneStoredFiles
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.ProcessStoredFileJobs
@@ -22,6 +21,7 @@ class LibrarySyncsHandler(
 {
 
 	companion object {
+		private const val IGNORED_ARGUMENT_ERROR = "MIME type application/octet-stream cannot be inserted into content://media/external/audio/media; expected MIME type under audio/*"
 		private val logger by lazy { LoggerFactory.getLogger(LibrarySyncsHandler::class.java) }
 	}
 
@@ -34,20 +34,25 @@ class LibrarySyncsHandler(
 			serviceFilesToSyncCollector
 				.promiseServiceFilesToSync(libraryId)
 				.eventually { allServiceFilesToSync ->
-					val serviceFilesSet = allServiceFilesToSync as? Set<ServiceFile> ?: allServiceFilesToSync.toSet()
 					pruneFilesTasks.excuse { e -> logger.warn("There was an error pruning the files", e) }
-					pruneFilesTasks.then { _ -> serviceFilesSet }
+					pruneFilesTasks.then { _ -> allServiceFilesToSync }
 				}
 		}
 		.stream()
+		.distinct()
 		.flatMapMaybe { serviceFile ->
 			storedFileUpdater
 				.promiseStoredFileUpdate(libraryId, serviceFile)
-				.then { storedFile ->
+				.then<StoredFileJob?>({ storedFile ->
 					storedFile
 						?.takeUnless { sf -> sf.isDownloadComplete }
 						?.let { sf -> StoredFileJob(libraryId, serviceFile, sf) }
-				}
+				}, { e ->
+					if (e !is IllegalArgumentException || e.message != IGNORED_ARGUMENT_ERROR) throw e
+
+					logger.warn("An accepted exception occurred while updating the stored file for $libraryId, $serviceFile, ignoring file.", e)
+					null
+				})
 				.toMaybeObservable()
 		}
 		.toList()

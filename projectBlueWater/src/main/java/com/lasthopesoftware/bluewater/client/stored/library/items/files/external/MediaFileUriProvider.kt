@@ -58,8 +58,9 @@ open class DataFileUriProvider(
 		val (_, baseFileName, _, postExtension) = fileProperties.fileNameParts
 			?: throw IOException("The filename property was not retrieved. A connection needs to be re-established.")
 
-		var fileNamePattern = FilenameUtils.concat("%${fileProperties.localExternalRelativeFileDirectory}", "%$baseFileName%.")
-		if (postExtension.isNotEmpty()) fileNamePattern += postExtension
+		val fileNamePattern = FilenameUtils.concat(
+				"%${fileProperties.localExternalRelativeFileDirectory}",
+				if (postExtension.isEmpty()) "%$baseFileName%." else "%$postExtension%.")
 
 		return QueuedPromise(
 			MessageWriter {
