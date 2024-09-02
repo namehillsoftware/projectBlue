@@ -35,7 +35,7 @@ class StoredFilesPruner(
 			}
 	}
 
-	inner class PruneFilesTask(serviceFilesToKeep: Collection<ServiceFile>) :
+	inner class PruneFilesTask(serviceFilesToKeep: Iterable<ServiceFile>) :
 		PromisedResponse<Collection<StoredFile>, Unit> {
 		private val serviceIdsToKeep by lazy { serviceFilesToKeep.map { obj -> obj.key }.toSet() }
 
