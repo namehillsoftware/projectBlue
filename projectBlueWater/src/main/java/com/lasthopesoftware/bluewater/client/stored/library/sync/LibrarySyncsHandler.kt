@@ -48,8 +48,10 @@ class LibrarySyncsHandler(
 						?.takeUnless { sf -> sf.isDownloadComplete }
 						?.let { sf -> StoredFileJob(libraryId, serviceFile, sf) }
 				}, { e ->
-					if (e is IllegalArgumentException && e.message == IGNORED_ARGUMENT_ERROR) null
-					else throw e
+					if (e !is IllegalArgumentException || e.message != IGNORED_ARGUMENT_ERROR) throw e
+
+					logger.warn("An accepted exception occurred while updating the stored file for $libraryId, $serviceFile, ignoring file.", e)
+					null
 				})
 				.toMaybeObservable()
 		}
