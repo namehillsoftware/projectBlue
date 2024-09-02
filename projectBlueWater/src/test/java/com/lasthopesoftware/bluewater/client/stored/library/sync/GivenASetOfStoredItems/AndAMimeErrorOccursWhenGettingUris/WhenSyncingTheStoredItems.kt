@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.stored.library.sync.GivenASetOfStoredItems
+package com.lasthopesoftware.bluewater.client.stored.library.sync.GivenASetOfStoredItems.AndAMimeErrorOccursWhenGettingUris
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.access.ProvideLibraryFiles
@@ -12,7 +12,6 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.PruneSto
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobProcessor
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobState
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.UpdateStoredFiles
 import com.lasthopesoftware.bluewater.client.stored.library.sync.LibrarySyncsHandler
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
@@ -22,11 +21,10 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
-import java.io.IOException
 import java.net.URI
 import java.util.concurrent.TimeUnit
 
-class WhenSyncingTheStoredItemsAndAnErrorOccursDownloading {
+class WhenSyncingTheStoredItems {
 	private val storedFileJobResults by lazy {
 		val storedItemAccessMock = mockk<AccessStoredItems>()
 		every { storedItemAccessMock.promiseStoredItems(LibraryId(42)) } returns Promise(
@@ -45,28 +43,17 @@ class WhenSyncingTheStoredItemsAndAnErrorOccursDownloading {
 			)
 		} returns Promise(
 			listOf(
-				ServiceFile(1),
-				ServiceFile(2),
-				ServiceFile(4),
-				ServiceFile(10)
+				ServiceFile(692),
+				ServiceFile(703),
+				ServiceFile(36),
+				ServiceFile(356),
+				ServiceFile(862),
 			)
 		)
 
 		val storedFilesPruner = mockk<PruneStoredFiles>()
 		every { storedFilesPruner.pruneDanglingFiles() } returns Unit.toPromise()
 		every { storedFilesPruner.pruneStoredFiles(any()) } returns Unit.toPromise()
-
-		val storedFilesUpdater = mockk<UpdateStoredFiles>()
-		every { storedFilesUpdater.promiseStoredFileUpdate(any(), any()) } answers {
-			Promise(
-				StoredFile(
-					firstArg(),
-                    secondArg(),
-					URI("fake-file-name"),
-					true
-				)
-			)
-		}
 
 		val librarySyncHandler = LibrarySyncsHandler(
 			StoredItemServiceFileCollector(
@@ -75,14 +62,28 @@ class WhenSyncingTheStoredItemsAndAnErrorOccursDownloading {
 				fileListParameters
 			),
 			storedFilesPruner,
-			storedFilesUpdater,
+			mockk {
+				every { promiseStoredFileUpdate(any(), any()) } answers {
+					Promise(
+						StoredFile(
+							firstArg(),
+							secondArg(),
+							URI("fake-file-name"),
+							true
+						)
+					)
+				}
+
+				every { promiseStoredFileUpdate(any(), match { it.key == 356 }) } returns Promise(
+					IllegalArgumentException("MIME type application/octet-stream cannot be inserted into content://media/external/audio/media; expected MIME type under audio/*")
+				)
+			},
 			StoredFileJobProcessor(
 				mockk {
 					every { promiseOutputStream(any()) } returns ByteArrayOutputStream().toPromise()
 				},
 				mockk {
 					every { promiseDownload(any(), any()) } returns Promise(ByteArrayInputStream(ByteArray(0)))
-					every { promiseDownload(any(), match { it.serviceId == 2 }) } returns Promise(IOException())
 				},
 				mockk {
 					every { markStoredFileAsDownloaded(any()) } answers { Promise(firstArg<StoredFile>()) }
@@ -101,6 +102,6 @@ class WhenSyncingTheStoredItemsAndAnErrorOccursDownloading {
 
 	@Test
 	fun `then the other files in the stored items are synced`() {
-		assertThat(storedFileJobResults.map { it.serviceId }).containsExactly(1, 4, 10)
+		assertThat(storedFileJobResults.map { it.serviceId }).containsExactly(692, 703, 36, 862)
 	}
 }
