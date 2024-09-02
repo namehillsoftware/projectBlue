@@ -10,7 +10,12 @@ object FilePropertyHelpers {
 	private fun String.replaceReservedCharsAndPath(): String =
 		reservedCharactersPattern.matcher(this).replaceAll("_")
 
-	data class FileNameParts(val directory: String, val baseFileName: String, val ext: String, val postExtension: String)
+	data class FileNameParts(
+		val directory: String,
+		val baseFileName: String,
+		val ext: String,
+		val postExtension: String
+	)
 
 	/*
 	 * Get the duration of the serviceFile in milliseconds
@@ -37,11 +42,7 @@ object FilePropertyHelpers {
 					ext = fileName.substring(extensionIndex + 1)
 				}
 
-				val postExtParts = ext.let {
-					val index = it.indexOf(';')
-					if (index < 0) ""
-					else it.substring(index)
-				}
+				val postExtParts = ext.substringAfter(';', "")
 
 				FileNameParts(path, baseName, ext, postExtParts)
 			}
@@ -49,7 +50,8 @@ object FilePropertyHelpers {
 	val Map<String, String>.baseFileNameAsMp3
 		get() = fileNameParts
 			?.run {
-				"$baseFileName.mp3$postExtension"
+				if (postExtension.isNotEmpty()) "$postExtension.mp3"
+				else "$baseFileName.mp3"
 			}
 
 	val Map<String, String>.localExternalRelativeFileDirectory
@@ -63,6 +65,7 @@ object FilePropertyHelpers {
 					}
 					?: path
 			}
+			?.let { path -> fileNameParts?.takeIf { it.postExtension.isNotEmpty() }?.run { FilenameUtils.concat(path, baseFileName) } ?: path }
 			?.let { path -> if (!path.endsWith("/")) "$path/" else path }
 
 	val Map<String, String>.localExternalRelativeFilePathAsMp3

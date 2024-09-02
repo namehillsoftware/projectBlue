@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.stored.library.items.files.updates
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.baseFileNameAsMp3
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.fileNameParts
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.localExternalRelativeFileDirectory
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.localExternalRelativeFilePathAsMp3
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
@@ -63,11 +64,13 @@ class StoredFileUrisLookup(
 		mediaFileUriProvider
 			.promiseUri(libraryId, serviceFile)
 			.eventually { existingUri ->
-				existingUri?.toURI()?.toPromise() ?: externalContent.promiseNewContentUri(
-					ExternalMusicContent(
-						displayName = fileProperties.baseFileNameAsMp3,
-						relativePath = fileProperties.localExternalRelativeFileDirectory
+				existingUri?.toURI()?.toPromise() ?: fileProperties.fileNameParts?.let {
+					externalContent.promiseNewContentUri(
+						ExternalMusicContent(
+							displayName = fileProperties.baseFileNameAsMp3,
+							relativePath = fileProperties.localExternalRelativeFileDirectory
+						)
 					)
-				)
+				}
 			}
 }
