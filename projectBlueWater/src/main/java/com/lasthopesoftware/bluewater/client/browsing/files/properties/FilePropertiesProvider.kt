@@ -100,6 +100,7 @@ class FilePropertiesProvider(
 
 		override fun prepareMessage() {
 			if (cancellationProxy.isCancelled) {
+				response.close()
 				reject(FilePropertiesCancellationException(libraryId, serviceFile))
 				return
 			}

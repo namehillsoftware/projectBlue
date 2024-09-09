@@ -35,11 +35,13 @@ class RemoteImageAccess(private val connectionProvider: ProvideLibraryConnection
 				}
 				.then(
 					{ response ->
-						if (cp.isCancelled) throw CancellationException("Cancelled while retrieving image")
-						else when (response?.code) {
-							200 -> response.body.use { it.bytes() }
-							else -> emptyByteArray
-						}
+						response?.use {
+							if (cp.isCancelled) throw CancellationException("Cancelled while retrieving image")
+							else when (response.code) {
+								200 -> response.body.use { it.bytes() }
+								else -> emptyByteArray
+							}
+						} ?: emptyByteArray
 					},
 					{ e ->
 						when (e) {
@@ -78,11 +80,13 @@ class RemoteImageAccess(private val connectionProvider: ProvideLibraryConnection
 				}
 				.then(
 					{ response ->
-						if (cp.isCancelled) throw java.util.concurrent.CancellationException("Cancelled while retrieving image")
-						else when (response?.code) {
-							200 -> response.body.use { it.bytes() }
-							else -> emptyByteArray
-						}
+						response?.use { r ->
+							if (cp.isCancelled) throw CancellationException("Cancelled while retrieving image")
+							else when (r.code) {
+								200 -> r.body.use { it.bytes() }
+								else -> emptyByteArray
+							}
+						} ?: emptyByteArray
 					},
 					{ e ->
 						when (e) {
