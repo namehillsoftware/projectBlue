@@ -11,6 +11,7 @@ import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.exceptions.isOkHttpCanceled
+import com.lasthopesoftware.exceptions.isSocketClosedException
 import com.lasthopesoftware.promises.PromiseDelay
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.promises.extensions.unitResponse
@@ -157,8 +158,7 @@ class ReusableFileViewModel(
 			when (e) {
 				is CancellationException -> return
 				is SocketException -> {
-					val message = e.message
-					if (message != null && message.lowercase(Locale.getDefault()).contains("socket closed")) return
+					if (e.isSocketClosedException()) return
 				}
 				is SSLProtocolException -> {
 					val message = e.message

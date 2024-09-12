@@ -1,14 +1,14 @@
 package com.lasthopesoftware.bluewater.shared.exceptions
 
+import com.lasthopesoftware.exceptions.isSocketClosedException
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.rejections.UnhandledRejectionsReceiver
 import org.slf4j.LoggerFactory
 import java.net.SocketException
-import java.util.Locale
 import java.util.concurrent.CancellationException
 
 private const val UnhandledCancellationException = "A CancellationException was unhandled"
-private const val UnhandledSocketClosedException = ""
+private const val UnhandledSocketClosedException = "A Socket closed exception was unhandled"
 
 object LoggerUncaughtExceptionHandler : Thread.UncaughtExceptionHandler, UnhandledRejectionsReceiver {
 
@@ -38,10 +38,9 @@ object LoggerUncaughtExceptionHandler : Thread.UncaughtExceptionHandler, Unhandl
 				false
 			}
 			is SocketException -> {
-				ex.message
-					?.takeIf { it.lowercase(Locale.getDefault())  == "socket closed" }
+				ex.takeIf { it.isSocketClosedException() }
 					?.let {
-						logger.debug(UnhandledSocketClosedException, ex)
+						logger.debug(UnhandledSocketClosedException, it)
 						false
 					}
 					?: true
