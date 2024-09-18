@@ -4,7 +4,7 @@ import com.lasthopesoftware.exceptions.isSocketClosedException
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.rejections.UnhandledRejectionsReceiver
 import org.slf4j.LoggerFactory
-import java.net.SocketException
+import java.io.IOException
 import java.util.concurrent.CancellationException
 
 private const val UnhandledCancellationException = "A CancellationException was unhandled"
@@ -37,7 +37,7 @@ object LoggerUncaughtExceptionHandler : Thread.UncaughtExceptionHandler, Unhandl
 				logger.debug(UnhandledCancellationException, ex)
 				false
 			}
-			is SocketException -> {
+			is IOException -> {
 				ex.takeIf { it.isSocketClosedException() }
 					?.let {
 						logger.debug(UnhandledSocketClosedException, it)
