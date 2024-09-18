@@ -25,7 +25,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import org.joda.time.Duration
 import java.io.IOException
-import java.net.SocketException
 import java.util.Locale
 import java.util.concurrent.CancellationException
 import javax.net.ssl.SSLProtocolException
@@ -157,15 +156,12 @@ class ReusableFileViewModel(
 
 			when (e) {
 				is CancellationException -> return
-				is SocketException -> {
-					if (e.isSocketClosedException()) return
-				}
 				is SSLProtocolException -> {
 					val message = e.message
 					if (message != null && message.lowercase(Locale.getDefault()).contains("ssl handshake aborted")) return
 				}
 				is IOException -> {
-					if (e.isOkHttpCanceled()) return
+					if (e.isOkHttpCanceled() || e.isSocketClosedException()) return
 				}
 			}
 

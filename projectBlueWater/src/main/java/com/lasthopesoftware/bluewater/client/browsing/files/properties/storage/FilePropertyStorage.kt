@@ -40,10 +40,8 @@ class FilePropertyStorage(
 	private fun ProvideConnections.promiseFileUpdate(libraryId: LibraryId, serviceFile: ServiceFile, property: String, value: String, isFormatted: Boolean): Promise<Unit> {
 		val promisedUpdate = promiseResponse("File/SetInfo", "File=${serviceFile.key}", "Field=$property", "Value=$value", "formatted=" + if (isFormatted) "1" else "0")
 			.then { response ->
-				if (logger.isInfoEnabled) {
-					response.use {
-						logger.info("api/v1/File/SetInfo responded with a response code of ${it.code}")
-					}
+				response.use {
+					logger.info("api/v1/File/SetInfo responded with a response code of {}.", it.code)
 				}
 			}
 
