@@ -30,22 +30,23 @@ class CachedFileOutputStream(
         length: Int
     ): Promise<CacheOutputStream> {
         return QueuedPromise(MessageWriter {
-            lazyFileOutputStream.value.write(buffer, offset, length)
+			if (!isClosed)
+            	lazyFileOutputStream.value.write(buffer, offset, length)
             this
         }, ThreadPools.io)
     }
 
     override fun promiseTransfer(bufferedSource: BufferedSource): Promise<CacheOutputStream> {
         return QueuedPromise(MessageWriter {
-            bufferedSource
-                .readAll(lazyFileOutputStream.value.sink())
+			if (!isClosed)
+            	bufferedSource.readAll(lazyFileOutputStream.value.sink())
             this
         }, ThreadPools.io)
     }
 
     override fun flush(): Promise<CacheOutputStream> {
         return QueuedPromise(MessageWriter {
-            if (lazyFileOutputStream.isInitialized()) lazyFileOutputStream.value.flush()
+            if (!isClosed && lazyFileOutputStream.isInitialized()) lazyFileOutputStream.value.flush()
             this
         }, ThreadPools.io)
     }

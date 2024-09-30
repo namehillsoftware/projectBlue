@@ -16,7 +16,6 @@ import com.lasthopesoftware.bluewater.client.browsing.files.uri.ProvideFileUrisF
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.android.permissions.CheckOsPermissions
 import com.lasthopesoftware.bluewater.shared.lazyLogger
-import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.lasthopesoftware.resources.uri.MediaCollections
 import com.lasthopesoftware.resources.uri.resourceExists
@@ -44,15 +43,25 @@ private fun Cursor.takeFirstAudioFile() = use {
 
 interface MediaFileUriProvider : ProvideFileUrisForLibrary
 
-open class DataFileUriProvider(
+abstract class PermissionsCheckingMediaFileUriProvider(
 	private val filePropertiesProvider: ProvideLibraryFileProperties,
 	private val externalStorageReadPermissionsArbitrator: CheckOsPermissions,
-	private val contentResolver: ContentResolver,
-) : MediaFileUriProvider, PromisedResponse<Map<String, String>, Uri?> {
-
-    override fun promiseUri(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Uri?> =
+): MediaFileUriProvider, PromisedResponse<Map<String, String>, Uri?> {
+	override fun promiseUri(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Uri?> =
 		if (externalStorageReadPermissionsArbitrator.run { !isReadPermissionGranted && !isReadMediaAudioPermissionGranted }) Promise.empty()
 		else getMediaQueryUri(libraryId, serviceFile)
+
+	private fun getMediaQueryUri(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Uri?> =
+		filePropertiesProvider
+			.promiseFileProperties(libraryId, serviceFile)
+			.eventually(this)
+}
+
+class DataFileUriProvider(
+	filePropertiesProvider: ProvideLibraryFileProperties,
+	externalStorageReadPermissionsArbitrator: CheckOsPermissions,
+	private val contentResolver: ContentResolver,
+) : PermissionsCheckingMediaFileUriProvider(filePropertiesProvider, externalStorageReadPermissionsArbitrator), PromisedResponse<Map<String, String>, Uri?> {
 
 	override fun promiseResponse(fileProperties: Map<String, String>): Promise<Uri?> {
 		val (_, baseFileName, _, postExtension) = fileProperties.fileNameParts
@@ -81,13 +90,8 @@ open class DataFileUriProvider(
 		)
 	}
 
-	private fun getMediaQueryUri(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Uri?> =
-		filePropertiesProvider
-			.promiseFileProperties(libraryId, serviceFile)
-			.eventually(this)
-
 	companion object {
-        private val logger by lazyLogger<MediaFileUriProvider>()
+        private val logger by lazyLogger<DataFileUriProvider>()
     }
 }
 
@@ -95,7 +99,8 @@ class MetadataMediaFileUriProvider(
 	filePropertiesProvider: ProvideLibraryFileProperties,
 	externalStorageReadPermissionsArbitrator: CheckOsPermissions,
 	private val contentResolver: ContentResolver,
-) : DataFileUriProvider(filePropertiesProvider, externalStorageReadPermissionsArbitrator, contentResolver), PromisedResponse<Map<String, String>, Uri?> {
+) : PermissionsCheckingMediaFileUriProvider(filePropertiesProvider, externalStorageReadPermissionsArbitrator), PromisedResponse<Map<String, String>, Uri?> {
+
 	override fun promiseResponse(fileProperties: Map<String, String>): Promise<Uri?> {
 		return QueuedPromise(
 			MessageWriter {
@@ -120,9 +125,7 @@ class MetadataMediaFileUriProvider(
 						logger.info(MEDIA_FILE_FOUND_LOG_MESSAGE, it)
 					}
 			}, ThreadPools.io
-		).eventually { uri ->
-			uri?.toPromise() ?: super.promiseResponse(fileProperties)
-		}
+		)
 	}
 
 	companion object {
@@ -141,7 +144,7 @@ class CompatibleMediaFileUriProvider(
 	externalStorageReadPermissionsArbitrator: CheckOsPermissions,
 	contentResolver: ContentResolver,
 ) : MediaFileUriProvider {
-	private val inner =
+	private val inner: MediaFileUriProvider =
 		if (Build.VERSION.SDK_INT >= 29) MetadataMediaFileUriProvider(cachedFilePropertiesProvider, externalStorageReadPermissionsArbitrator, contentResolver)
 		else DataFileUriProvider(cachedFilePropertiesProvider, externalStorageReadPermissionsArbitrator, contentResolver)
 
