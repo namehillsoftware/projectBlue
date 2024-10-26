@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.core.exponentialDecay
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
@@ -14,6 +15,7 @@ import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.anchoredDraggable
 import androidx.compose.foundation.gestures.animateTo
 import androidx.compose.foundation.gestures.snapping.SnapLayoutInfoProvider
+import androidx.compose.foundation.gestures.snapping.SnapPosition
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -49,7 +51,7 @@ import androidx.compose.material.ProgressIndicatorDefaults
 import androidx.compose.material.ProvideTextStyle
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
-import androidx.compose.material.ripple.rememberRipple
+import androidx.compose.material.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
@@ -278,7 +280,7 @@ fun PlaylistControls(
 				contentDescription = stringResource(R.string.scroll_to_now_playing_item),
 				modifier = Modifier.navigable(
 					interactionSource = remember { MutableInteractionSource() },
-					indication = rememberRipple(),
+					indication = ripple(),
 					onClick = {
 						viewModelMessageBus.sendMessage(NowPlayingMessage.ScrollToNowPlaying)
 					},
@@ -309,7 +311,7 @@ private object ConsumeAllVerticalFlingScrollConnection : NestedScrollConnection 
 		source: NestedScrollSource
 	): Offset {
 		return when (source) {
-			NestedScrollSource.Fling -> available.copy(x = 0f)
+			NestedScrollSource.SideEffect -> available.copy(x = 0f)
 			else -> Offset.Zero
 		}
 	}
@@ -603,7 +605,7 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 		}
 	}
 
-	val snappingLayout = remember(pagerState) { SnapLayoutInfoProvider(pagerState) { _, _, _, _, _ -> 0 } }
+	val snappingLayout = remember(pagerState) { SnapLayoutInfoProvider(pagerState, SnapPosition.Start) }
 
 	CompositionLocalProvider(
 		LocalOverscrollConfiguration provides null
@@ -780,7 +782,8 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 				},
 				positionalThreshold = { d -> d * .5f },
 				velocityThreshold = { 100.dp.toPx() },
-				animationSpec = tween()
+				snapAnimationSpec = tween(),
+				decayAnimationSpec = exponentialDecay(),
 			)
 		}
 	}
@@ -790,7 +793,7 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 	Box(
 		modifier = Modifier
 			.fillMaxSize()
-			.anchoredDraggable(draggableState, Orientation.Horizontal, reverseDirection = true),
+			.anchoredDraggable(draggableState, true, Orientation.Horizontal),
 	) {
 		Box(
 			modifier = Modifier

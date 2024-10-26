@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.core.exponentialDecay
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
@@ -54,6 +55,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.coerceAtMost
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
@@ -169,7 +171,8 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedBr
 					},
 					positionalThreshold = { d -> d * .5f },
 					velocityThreshold = { 100.dp.toPx() },
-					animationSpec = tween(),
+					snapAnimationSpec = tween(),
+					decayAnimationSpec = exponentialDecay(),
 					confirmValueChange = { newValue ->
 						previousBrowserDragValue = browserDragValue
 						browserDragValue = newValue
@@ -202,7 +205,8 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedBr
 					},
 					positionalThreshold = { d -> d * .5f },
 					velocityThreshold = { 100.dp.toPx() },
-					animationSpec = tween(),
+					snapAnimationSpec = tween(),
+					decayAnimationSpec = exponentialDecay(),
 					confirmValueChange = { newValue ->
 						playlistDragValue = newValue
 						true
@@ -264,7 +268,7 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedBr
 		Box(
 			modifier = Modifier
 				.width(nowPlayingWidth)
-				.offset(x = nowPlayingOffset)
+				.offset { IntOffset(x = nowPlayingOffset.roundToPx(), y = 0) }
 				.fillMaxHeight()
 				.focusGroup()
 		) {
