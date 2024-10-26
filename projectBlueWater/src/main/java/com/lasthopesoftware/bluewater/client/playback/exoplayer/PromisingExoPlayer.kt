@@ -1,11 +1,13 @@
 package com.lasthopesoftware.bluewater.client.playback.exoplayer
 
 import android.os.Looper
+import androidx.annotation.OptIn
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
 import androidx.media3.common.Timeline
 import androidx.media3.common.Tracks
+import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlaybackException
 import androidx.media3.exoplayer.PlayerMessage
 import androidx.media3.exoplayer.SeekParameters
@@ -15,8 +17,6 @@ import androidx.media3.exoplayer.trackselection.TrackSelector
 import com.namehillsoftware.handoff.promises.Promise
 
 interface PromisingExoPlayer {
-
-	fun getApplicationLooper(): Promise<Looper>
 
 	fun addListener(listener: Player.Listener): Promise<PromisingExoPlayer>
 
@@ -110,6 +110,7 @@ interface PromisingExoPlayer {
 
 	fun getRendererType(index: Int): Promise<Int>
 
+	@OptIn(UnstableApi::class)
 	fun getTrackSelector(): Promise<TrackSelector?>
 
 	fun getCurrentTracks(): Promise<Tracks?>
@@ -184,12 +185,16 @@ interface PromisingExoPlayer {
 
 	fun addMediaSources(index: Int, mediaSources: MutableList<MediaSource>): Promise<PromisingExoPlayer>
 
+	@OptIn(UnstableApi::class)
 	fun setShuffleOrder(shuffleOrder: ShuffleOrder): Promise<PromisingExoPlayer>
 
+	@OptIn(UnstableApi::class)
 	fun createMessage(target: PlayerMessage.Target): Promise<PlayerMessage>
 
+	@OptIn(UnstableApi::class)
 	fun setSeekParameters(seekParameters: SeekParameters?): Promise<PromisingExoPlayer>
 
+	@OptIn(UnstableApi::class)
 	fun getSeekParameters(): Promise<SeekParameters>
 
 	fun setForegroundMode(foregroundMode: Boolean): Promise<PromisingExoPlayer>

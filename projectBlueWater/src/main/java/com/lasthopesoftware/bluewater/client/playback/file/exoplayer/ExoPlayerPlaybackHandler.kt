@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.file.exoplayer
 
 import androidx.annotation.OptIn
+import androidx.lifecycle.AtomicReference
 import androidx.media3.common.ParserException
 import androidx.media3.common.PlaybackException
 import androidx.media3.common.Player
@@ -11,11 +12,14 @@ import com.lasthopesoftware.bluewater.client.playback.file.PlayableFile
 import com.lasthopesoftware.bluewater.client.playback.file.PlayedFile
 import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile
 import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.error.ExoPlayerException
-import com.lasthopesoftware.bluewater.client.playback.file.exoplayer.progress.ExoPlayerFileProgressReader
+import com.lasthopesoftware.bluewater.client.playback.file.progress.ReadFileProgress
 import com.lasthopesoftware.bluewater.shared.lazyLogger
+import com.lasthopesoftware.policies.retries.RetryOnRejectionLazyPromise
 import com.lasthopesoftware.promises.extensions.ProgressedPromise
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.cancellation.CancellationResponse
 import com.namehillsoftware.handoff.promises.Promise
+import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import org.joda.time.Duration
 import org.joda.time.format.PeriodFormatterBuilder
 import java.io.EOFException
@@ -45,7 +49,7 @@ class ExoPlayerPlaybackHandler(private val exoPlayer: PromisingExoPlayer) :
 		private val logger by lazyLogger<ExoPlayerPlaybackHandler>()
 	}
 
-	private val fileProgressReader by lazy { ExoPlayerFileProgressReader(exoPlayer) }
+	private val fileProgressReader = AtomicReference<CloseableReadFileProgress>(PausedExoPlayerFileProgressReader(exoPlayer))
 
 	private var backingDuration = Duration.ZERO
 
@@ -61,12 +65,16 @@ class ExoPlayerPlaybackHandler(private val exoPlayer: PromisingExoPlayer) :
 
 	private var isPlaying = false
 
-	override fun promisePause(): Promise<PlayableFile> = pause().then { _ ->  this }
+	override fun promisePause(): Promise<PlayableFile> {
+		val previousReader = fileProgressReader.getAndSet(PausedExoPlayerFileProgressReader(exoPlayer))
+		previousReader.close()
+		return pause().then { _ -> this }
+	}
 
 	override fun promisePlayedFile(): ProgressedPromise<Duration, PlayedFile> = this
 
 	override val progress: Promise<Duration>
-		get() = fileProgressReader.progress
+		get() = fileProgressReader.get().progress
 
 	override val duration: Promise<Duration>
 		get() = exoPlayer.getDuration().then { newDuration ->
@@ -76,6 +84,8 @@ class ExoPlayerPlaybackHandler(private val exoPlayer: PromisingExoPlayer) :
 
 	override fun promisePlayback(): Promise<PlayingFile> {
 		isPlaying = true
+		val previousReader = fileProgressReader.getAndSet(PlayingExoPlayerFileProgressReader(exoPlayer))
+		previousReader.close()
 		return exoPlayer.setPlayWhenReady(true).then { _ -> this }
 	}
 
@@ -154,7 +164,7 @@ class ExoPlayerPlaybackHandler(private val exoPlayer: PromisingExoPlayer) :
 
 	override fun close() {
 		isPlaying = false
-		fileProgressReader.close()
+		fileProgressReader.get().close()
 		exoPlayer.setPlayWhenReady(false)
 		exoPlayer.stop()
 		removeListener()
@@ -167,4 +177,50 @@ class ExoPlayerPlaybackHandler(private val exoPlayer: PromisingExoPlayer) :
 	}
 
 	private fun removeListener() = exoPlayer.removeListener(this)
+
+	private interface CloseableReadFileProgress : ReadFileProgress, AutoCloseable
+
+	private class PausedExoPlayerFileProgressReader(private val exoPlayer: PromisingExoPlayer) :
+		CloseableReadFileProgress,
+		ImmediateResponse<Long, Duration>
+	{
+		private val promisedFileProgress = RetryOnRejectionLazyPromise {
+			exoPlayer.getCurrentPosition().then(this)
+		}
+
+		@get:Synchronized
+		override val progress: Promise<Duration>
+			get() = promisedFileProgress.value
+
+		override fun respond(currentPosition: Long): Duration = Duration.millis(currentPosition)
+
+		override fun close() {
+			promisedFileProgress.close()
+		}
+	}
+
+	private class PlayingExoPlayerFileProgressReader(private val exoPlayer: PromisingExoPlayer) :
+		CloseableReadFileProgress,
+		ImmediateResponse<Long, Duration>
+	{
+		@Volatile
+		private var isClosed = false
+
+		private val currentDurationPromise = AtomicReference(0L.toPromise())
+
+		override val progress: Promise<Duration>
+			get() =
+				if (isClosed) currentDurationPromise.get().then(this)
+				else currentDurationPromise.updateAndGet { prev ->
+					prev.cancel()
+					exoPlayer.getCurrentPosition()
+				}.then(this)
+
+		override fun respond(currentPosition: Long): Duration = Duration.millis(currentPosition)
+
+		override fun close() {
+			currentDurationPromise.get().cancel()
+			isClosed = true
+		}
+	}
 }
