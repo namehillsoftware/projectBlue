@@ -1,3 +1,3 @@
 package com.lasthopesoftware.bluewater.shared.android.ui
 
-enum class BooleanDragValue { Hidden, Shown }
+enum class SlideOutState { Closed, PartiallyOpen, Open }

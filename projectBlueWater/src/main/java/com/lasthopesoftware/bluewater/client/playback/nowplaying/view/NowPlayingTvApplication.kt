@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.core.exponentialDecay
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
@@ -54,6 +55,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.coerceAtMost
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
@@ -96,7 +98,7 @@ import com.lasthopesoftware.bluewater.client.settings.TvLibrarySettingsView
 import com.lasthopesoftware.bluewater.settings.TvApplicationSettingsView
 import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsView
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
-import com.lasthopesoftware.bluewater.shared.android.ui.BooleanDragValue
+import com.lasthopesoftware.bluewater.shared.android.ui.SlideOutState
 import com.lasthopesoftware.bluewater.shared.android.ui.calculateProgress
 import com.lasthopesoftware.bluewater.shared.android.ui.components.rememberSystemUiController
 import com.lasthopesoftware.bluewater.shared.android.ui.navigable
@@ -153,10 +155,10 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedBr
 		val maxWidthPx by LocalDensity.current.run { remember { derivedStateOf { maxWidth.toPx() } } }
 
 		var previousBrowserDragValue by rememberSaveable {
-			mutableStateOf(BooleanDragValue.Shown)
+			mutableStateOf(SlideOutState.Open)
 		}
 		var browserDragValue by rememberSaveable {
-			mutableStateOf(BooleanDragValue.Shown)
+			mutableStateOf(SlideOutState.Open)
 		}
 
 		val browserDrawerState = with (LocalDensity.current) {
@@ -164,12 +166,13 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedBr
 				AnchoredDraggableState(
 					initialValue = browserDragValue,
 					anchors = DraggableAnchors {
-						BooleanDragValue.Hidden at -halfWidthPx
-						BooleanDragValue.Shown at 0f
+						SlideOutState.Closed at -halfWidthPx
+						SlideOutState.Open at 0f
 					},
 					positionalThreshold = { d -> d * .5f },
 					velocityThreshold = { 100.dp.toPx() },
-					animationSpec = tween(),
+					snapAnimationSpec = tween(),
+					decayAnimationSpec = exponentialDecay(),
 					confirmValueChange = { newValue ->
 						previousBrowserDragValue = browserDragValue
 						browserDragValue = newValue
@@ -190,19 +193,20 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedBr
 		val nowPlayingWidth by remember { derivedStateOf { (halfWidth - browserDrawerOffset).coerceAtMost(maxWidth) } }
 		val nowPlayingOffset by remember { derivedStateOf { halfWidth + browserDrawerOffset } }
 
-		var playlistDragValue by rememberSaveable { mutableStateOf(BooleanDragValue.Hidden) }
+		var playlistDragValue by rememberSaveable { mutableStateOf(SlideOutState.Closed) }
 
 		val playlistDrawerState = with (LocalDensity.current) {
 			remember {
 				AnchoredDraggableState(
 					initialValue = playlistDragValue,
 					anchors = DraggableAnchors {
-						BooleanDragValue.Hidden at maxWidthPx
-						BooleanDragValue.Shown at halfWidthPx
+						SlideOutState.Closed at maxWidthPx
+						SlideOutState.Open at halfWidthPx
 					},
 					positionalThreshold = { d -> d * .5f },
 					velocityThreshold = { 100.dp.toPx() },
-					animationSpec = tween(),
+					snapAnimationSpec = tween(),
+					decayAnimationSpec = exponentialDecay(),
 					confirmValueChange = { newValue ->
 						playlistDragValue = newValue
 						true
@@ -213,7 +217,7 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedBr
 
 		suspend fun hidePlaylist() {
 			browserViewDependencies.nowPlayingPlaylistViewModel.finishPlaylistEdit()
-			playlistDrawerState.animateTo(BooleanDragValue.Hidden)
+			playlistDrawerState.animateTo(SlideOutState.Closed)
 		}
 
 		val playlistDrawerOffset by LocalDensity.current.run {
@@ -228,14 +232,14 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedBr
 
 		val scope = rememberCoroutineScope()
 
-		val isBrowserShown by remember {
+		val isBrowserOpen by remember {
 			derivedStateOf {
-				browserDrawerState.targetValue == BooleanDragValue.Shown
-					|| browserDrawerState.currentValue == BooleanDragValue.Shown
+				browserDrawerState.targetValue == SlideOutState.Open
+					|| browserDrawerState.currentValue == SlideOutState.Open
 			}
 		}
 
-		if (isBrowserShown) {
+		if (isBrowserOpen) {
 			Box(
 				modifier = Modifier
 					.offset(x = browserDrawerOffset)
@@ -249,12 +253,12 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedBr
 			BackHandler {
 				scope.launch {
 					when {
-						playlistDrawerState.currentValue == BooleanDragValue.Shown -> {
+						playlistDrawerState.currentValue == SlideOutState.Open -> {
 							hidePlaylist()
 						}
 
-						browserDrawerState.currentValue == BooleanDragValue.Hidden -> {
-							browserDrawerState.animateTo(BooleanDragValue.Shown)
+						browserDrawerState.currentValue == SlideOutState.Closed -> {
+							browserDrawerState.animateTo(SlideOutState.Open)
 						}
 					}
 				}
@@ -264,7 +268,7 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedBr
 		Box(
 			modifier = Modifier
 				.width(nowPlayingWidth)
-				.offset(x = nowPlayingOffset)
+				.offset { IntOffset(x = nowPlayingOffset.roundToPx(), y = 0) }
 				.fillMaxHeight()
 				.focusGroup()
 		) {
@@ -283,10 +287,10 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedBr
 					with (browserViewDependencies) {
 						BackHandler(itemListMenuBackPressedHandler.hideAllMenus()) {}
 
-						val isPlaylistShown by remember {
+						val isPlaylistOpen by remember {
 							derivedStateOf {
-								playlistDrawerState.targetValue == BooleanDragValue.Shown
-									|| playlistDrawerState.currentValue == BooleanDragValue.Shown
+								playlistDrawerState.targetValue == SlideOutState.Open
+									|| playlistDrawerState.currentValue == SlideOutState.Open
 							}
 						}
 
@@ -315,7 +319,7 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedBr
 								) {
 									Image(
 										painter = painterResource(
-											if (browserDragValue == BooleanDragValue.Shown) R.drawable.baseline_fullscreen_36
+											if (browserDragValue == SlideOutState.Open) R.drawable.baseline_fullscreen_36
 											else R.drawable.baseline_fullscreen_exit_36),
 										alpha = playlistControlAlpha,
 										contentDescription = stringResource(R.string.btn_hide_files),
@@ -323,8 +327,8 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedBr
 											.navigable(onClick = {
 												scope.launch {
 													browserDrawerState.animateTo(
-														if (browserDragValue == BooleanDragValue.Shown) BooleanDragValue.Hidden
-														else BooleanDragValue.Shown
+														if (browserDragValue == SlideOutState.Open) SlideOutState.Closed
+														else SlideOutState.Open
 													)
 												}
 											})
@@ -335,26 +339,26 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedBr
 										modifier = Modifier.weight(1f)
 									)
 
-									val nowPlayingShownProgress by remember {
+									val nowPlayingOpenProgress by remember {
 										derivedStateOf {
 											with (playlistDrawerState) {
 												calculateProgress(
-													anchors.positionOf(BooleanDragValue.Hidden),
-													anchors.positionOf(BooleanDragValue.Shown),
+													anchors.positionOf(SlideOutState.Closed),
+													anchors.positionOf(SlideOutState.Open),
 													requireOffset()
 												)
 											}
 										}
 									}
 
-									val browserChevronRotation by remember { derivedStateOf { (-90 + (180 * nowPlayingShownProgress)).coerceIn(-90f, 180f) } }
+									val browserChevronRotation by remember { derivedStateOf { (-90 + (180 * nowPlayingOpenProgress)).coerceIn(-90f, 180f) } }
 									Image(
 										painter = painterResource(R.drawable.chevron_up_white_36dp),
 										alpha = playlistControlAlpha,
 										contentDescription = stringResource(R.string.btn_hide_files),
 										modifier = Modifier
 											.navigable(onClick = {
-												if (playlistDrawerState.currentValue == BooleanDragValue.Shown) {
+												if (playlistDrawerState.currentValue == SlideOutState.Open) {
 													scope.launch {
 														hidePlaylist()
 													}
@@ -363,10 +367,10 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedBr
 													}
 												} else {
 													scope.launch {
-														playlistDrawerState.animateTo(BooleanDragValue.Shown)
+														playlistDrawerState.animateTo(SlideOutState.Open)
 													}
 													scope.launch {
-														browserDrawerState.animateTo(BooleanDragValue.Hidden)
+														browserDrawerState.animateTo(SlideOutState.Closed)
 													}
 												}
 											})
@@ -392,13 +396,13 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedBr
 						}
 
 						DisposableEffect(key1 = Unit) {
-							if (!isPlaylistShown)
+							if (!isPlaylistOpen)
 								nowPlayingPlaylistViewModel.enableSystemAutoScrolling()
 
 							onDispose {  }
 						}
 
-						if (isPlaylistShown) {
+						if (isPlaylistOpen) {
 							Column(
 								modifier = Modifier
 									.fillMaxHeight()

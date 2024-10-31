@@ -169,15 +169,15 @@ def getGeneratedVersionCode() {
 }
 
 dependencies {
-	def compose_version = '1.6.8'
+	def compose_version = '1.7.4'
 	def media3_version = '1.4.1'
-	def lifecycle_version = '2.8.4'
-	def junit5_version = '5.11.0'
+	def lifecycle_version = '2.8.6'
+	def junit5_version = '5.11.3'
 
-	coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.1'
+	coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.1.2'
 
 	implementation 'androidx.core:core-ktx:1.13.1'
-	implementation 'androidx.annotation:annotation:1.8.2'
+	implementation 'androidx.annotation:annotation:1.9.0'
 	implementation 'androidx.work:work-runtime:2.9.1'
 	implementation 'androidx.media:media:1.7.0'
 	implementation 'androidx.palette:palette-ktx:1.0.0'
@@ -187,9 +187,9 @@ dependencies {
 	implementation "androidx.lifecycle:lifecycle-service:$lifecycle_version"
 	implementation "androidx.lifecycle:lifecycle-runtime-ktx:$lifecycle_version"
 	implementation 'com.google.android.material:material:1.12.0'
-	implementation 'com.google.guava:guava:33.3.0-android'
-	implementation 'joda-time:joda-time:2.12.7'
-	implementation 'commons-io:commons-io:2.16.1'
+	implementation 'com.google.guava:guava:33.3.1-android'
+	implementation 'joda-time:joda-time:2.13.0'
+	implementation 'commons-io:commons-io:2.17.0'
 	implementation 'org.slf4j:slf4j-api:2.0.16'
 	implementation 'com.github.tony19:logback-android:3.0.0'
 	implementation 'com.namehillsoftware:handoff:0.28.0'
@@ -198,14 +198,15 @@ dependencies {
 	implementation 'org.jsoup:jsoup:1.18.1'
 	implementation "androidx.media3:media3-exoplayer:$media3_version"
 	implementation "androidx.media3:media3-datasource-okhttp:$media3_version"
-	implementation 'com.squareup.okio:okio:3.9.0'
+	implementation 'com.squareup.okio:okio:3.9.1'
 	implementation 'com.squareup.okhttp3:okhttp:5.0.0-alpha.14'
 	implementation 'com.namehillsoftware:querydroid:0.5.0'
 	implementation "androidx.compose.ui:ui:$compose_version"
 	implementation "androidx.compose.material:material:$compose_version"
+	implementation "androidx.compose.material:material-icons-core:$compose_version"
 	implementation "androidx.compose.ui:ui-tooling:$compose_version"
 	implementation "androidx.compose.runtime:runtime-rxjava3:$compose_version"
-	implementation 'androidx.activity:activity-compose:1.9.1'
+	implementation 'androidx.activity:activity-compose:1.9.3'
 	implementation "androidx.compose.compiler:compiler:$compose_compiler_version"
 	implementation 'dev.olshevski.navigation:reimagined:1.5.0'
 	debugImplementation "androidx.compose.ui:ui-tooling:$compose_version"
@@ -218,8 +219,8 @@ dependencies {
 	testImplementation 'androidx.test.ext:junit-ktx:1.2.1'
 	testImplementation 'androidx.test:core:1.6.1'
 	testImplementation 'androidx.test:runner:1.6.2'
-	testImplementation 'io.mockk:mockk:1.13.12'
-	testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.1'
+	testImplementation 'io.mockk:mockk:1.13.13'
+	testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.9.0'
 	testImplementation "androidx.compose.ui:ui-test-junit4:$compose_version"
 	testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:$junit5_version"
 	testRuntimeOnly "org.junit.vintage:junit-vintage-engine:$junit5_version"

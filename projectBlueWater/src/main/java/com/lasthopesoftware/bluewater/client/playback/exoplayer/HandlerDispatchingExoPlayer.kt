@@ -20,8 +20,6 @@ import com.namehillsoftware.handoff.promises.Promise
 class HandlerDispatchingExoPlayer(private val innerPlayer: ExoPlayer, private val handler: Handler) :
 	PromisingExoPlayer {
 
-	override fun getApplicationLooper(): Promise<Looper> = handler.loopIn { innerPlayer.applicationLooper }
-
 	override fun addListener(listener: Player.Listener): Promise<PromisingExoPlayer> =
 		handler.loopIn {
 			innerPlayer.addListener(listener)

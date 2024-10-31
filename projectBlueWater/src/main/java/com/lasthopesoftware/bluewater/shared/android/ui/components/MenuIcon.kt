@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.Icon
 import androidx.compose.material.LocalContentColor
 import androidx.compose.material.Text
-import androidx.compose.material.ripple.rememberRipple
+import androidx.compose.material.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -122,7 +122,7 @@ fun MenuIcon(
 		modifier = Modifier
 			.navigable(
 				interactionSource = interactionSource,
-				indication = rememberRipple(),
+				indication = ripple(),
 				onClick = onClick,
 				enabled = enabled,
 			)

@@ -1,11 +1,12 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.SplineBasedFloatDecayAnimationSpec
+import androidx.compose.animation.core.exponentialDecay
+import androidx.compose.animation.core.generateDecayAnimationSpec
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.LocalOverscrollConfiguration
-import androidx.compose.foundation.OverscrollConfiguration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.AnchoredDraggableState
@@ -13,8 +14,6 @@ import androidx.compose.foundation.gestures.DraggableAnchors
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.anchoredDraggable
 import androidx.compose.foundation.gestures.animateTo
-import androidx.compose.foundation.gestures.snapping.SnapLayoutInfoProvider
-import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -34,11 +33,9 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.AlertDialog
 import androidx.compose.material.Button
 import androidx.compose.material.CircularProgressIndicator
@@ -49,28 +46,25 @@ import androidx.compose.material.ProgressIndicatorDefaults
 import androidx.compose.material.ProvideTextStyle
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
-import androidx.compose.material.ripple.rememberRipple
+import androidx.compose.material.ripple
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
-import androidx.compose.ui.input.nestedscroll.NestedScrollSource
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
@@ -79,7 +73,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
-import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.coerceAtMost
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -98,12 +91,12 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.playlist.NowPlayingPlaylistViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
-import com.lasthopesoftware.bluewater.shared.android.ui.BooleanDragValue
+import com.lasthopesoftware.bluewater.shared.android.ui.SlideOutState
+import com.lasthopesoftware.bluewater.shared.android.ui.components.BackButton
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.RatingBar
 import com.lasthopesoftware.bluewater.shared.android.ui.components.dragging.DragDropItemScope
 import com.lasthopesoftware.bluewater.shared.android.ui.components.dragging.DragDropLazyColumn
-import com.lasthopesoftware.bluewater.shared.android.ui.components.dragging.getVisibleItemInfoFor
 import com.lasthopesoftware.bluewater.shared.android.ui.components.dragging.rememberDragDropListState
 import com.lasthopesoftware.bluewater.shared.android.ui.linearInterpolation
 import com.lasthopesoftware.bluewater.shared.android.ui.navigable
@@ -214,7 +207,7 @@ fun PlaylistControls(
 	modifier: Modifier = Modifier,
 	playlistViewModel: NowPlayingPlaylistViewModel,
 	viewModelMessageBus: ViewModelMessageBus<NowPlayingMessage>,
-	hideButton: @Composable() (RowScope.() -> Unit)? = null,
+	hideButton: @Composable (RowScope.() -> Unit)? = null,
 ) {
 	Row(
 		modifier = modifier,
@@ -278,7 +271,7 @@ fun PlaylistControls(
 				contentDescription = stringResource(R.string.scroll_to_now_playing_item),
 				modifier = Modifier.navigable(
 					interactionSource = remember { MutableInteractionSource() },
-					indication = rememberRipple(),
+					indication = ripple(),
 					onClick = {
 						viewModelMessageBus.sendMessage(NowPlayingMessage.ScrollToNowPlaying)
 					},
@@ -299,22 +292,6 @@ fun PlaylistControls(
 			hideButton()
 		}
 	}
-}
-
-private object ConsumeAllVerticalFlingScrollConnection : NestedScrollConnection {
-
-	override fun onPostScroll(
-		consumed: Offset,
-		available: Offset,
-		source: NestedScrollSource
-	): Offset {
-		return when (source) {
-			NestedScrollSource.Fling -> available.copy(x = 0f)
-			else -> Offset.Zero
-		}
-	}
-
-	override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity = available.copy(x = 0f)
 }
 
 @Composable
@@ -568,187 +545,221 @@ fun BoxWithConstraintsScope.NowPlayingNarrowView(
 	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
 	viewModelMessageBus: ViewModelMessageBus<NowPlayingMessage>
 ) {
-	val pagerState = rememberLazyListState()
-	val isSettledOnFirstPage by remember { derivedStateOf { pagerState.firstVisibleItemIndex == 0 && pagerState.firstVisibleItemScrollOffset == 0 } }
-	val isNotSettledOnFirstPage by remember { derivedStateOf { !isSettledOnFirstPage } }
 	val isEditingPlaylist by playlistViewModel.isEditingPlaylist.subscribeAsState()
-
-	val scope = rememberCoroutineScope()
-	BackHandler(isNotSettledOnFirstPage) {
-		when {
-			itemListMenuBackPressedHandler.hideAllMenus() -> {}
-			isEditingPlaylist -> playlistViewModel.finishPlaylistEdit()
-			isNotSettledOnFirstPage -> {
-				playlistViewModel.finishPlaylistEdit()
-				scope.launch { pagerState.animateScrollToItem(0) }
-			}
-		}
-	}
 
 	val isScreenControlsVisible by nowPlayingFilePropertiesViewModel.isScreenControlsVisible.subscribeAsState()
 
 	val filePropertiesHeight = maxHeight - expandedControlsHeight
 
-	val filePropertiesHeightPx = LocalDensity.current.run { filePropertiesHeight.toPx() }
+	val filePropertiesHeightPx by LocalDensity.current.run { remember { derivedStateOf { filePropertiesHeight.toPx() } } }
 
-	val firstPageShownProgress by remember {
-		derivedStateOf {
-			pagerState.layoutInfo.visibleItemsInfo
-				.getVisibleItemInfoFor(0)
-				?.run {
-					(filePropertiesHeightPx + offset) / filePropertiesHeightPx
+	val halfScreenHeight = filePropertiesHeight / 2
+	val halfScreenHeightPx by LocalDensity.current.run { remember { derivedStateOf { halfScreenHeight.toPx() } } }
+
+	var playlistDragValue by remember { mutableStateOf(SlideOutState.Closed) }
+
+	val playlistDrawerState = with (LocalDensity.current) {
+		remember {
+			AnchoredDraggableState(
+				initialValue = playlistDragValue,
+				anchors = DraggableAnchors {
+					SlideOutState.Closed at filePropertiesHeightPx
+					SlideOutState.PartiallyOpen at halfScreenHeightPx
+					SlideOutState.Open at 0f
+				},
+				positionalThreshold = { d -> d * .5f },
+				velocityThreshold = { 100.dp.toPx() },
+				snapAnimationSpec = tween(),
+				decayAnimationSpec = SplineBasedFloatDecayAnimationSpec(this).generateDecayAnimationSpec(),
+				confirmValueChange = { newValue ->
+					playlistDragValue = newValue
+					true
 				}
-				?.coerceIn(0f, 1f)
-				?: 0f
+			)
 		}
 	}
 
-	val snappingLayout = remember(pagerState) { SnapLayoutInfoProvider(pagerState) { _, _, _, _, _ -> 0 } }
+	val playlistEditingShownProgress by remember {
+		derivedStateOf { playlistDrawerState.progress(SlideOutState.PartiallyOpen, SlideOutState.Open) }
+	}
 
-	CompositionLocalProvider(
-		LocalOverscrollConfiguration provides null
+	val isPlaylistEditingShown by remember {
+		derivedStateOf { playlistEditingShownProgress > 0 }
+	}
+
+	val playlistOpenProgress by remember {
+		derivedStateOf { playlistDrawerState.progress(SlideOutState.Closed, SlideOutState.Open) }
+	}
+
+	val isSettledOnFirstPage by remember { derivedStateOf { playlistOpenProgress == 0f } }
+	val isPlaylistShown by remember { derivedStateOf { !isSettledOnFirstPage } }
+
+	val isPlaybackControlsShown by remember {
+		derivedStateOf { !isPlaylistEditingShown && (isScreenControlsVisible || isPlaylistShown) }
+	}
+
+	suspend fun hidePlaylist() {
+		playlistViewModel.finishPlaylistEdit()
+		playlistDrawerState.animateTo(SlideOutState.Closed)
+	}
+
+	val scope = rememberCoroutineScope()
+	BackHandler(isPlaylistShown) {
+		when {
+			itemListMenuBackPressedHandler.hideAllMenus() -> {}
+			isEditingPlaylist -> playlistViewModel.finishPlaylistEdit()
+			isPlaylistShown -> scope.launch { hidePlaylist() }
+		}
+	}
+
+	val playlistDrawerOffset by LocalDensity.current.run {
+		remember {
+			derivedStateOf {
+				playlistDrawerState.requireOffset().toDp()
+			}
+		}
+	}
+
+	Box(
+		modifier = Modifier
+			.fillMaxSize()
+			.anchoredDraggable(playlistDrawerState, orientation = Orientation.Vertical)
+			.clickable(
+				interactionSource = remember { MutableInteractionSource() },
+				indication = null,
+				onClick = { nowPlayingFilePropertiesViewModel.showNowPlayingControls() }
+			),
 	) {
-		LazyColumn(
-			flingBehavior = rememberSnapFlingBehavior(snappingLayout),
-			state = pagerState,
-			userScrollEnabled = !isEditingPlaylist,
-		) {
-			item {
-				Box(
-					modifier = Modifier
-						.height(filePropertiesHeight)
-						.nestedScroll(ConsumeAllVerticalFlingScrollConnection)
-						.clickable(
-							interactionSource = remember { MutableInteractionSource() },
-							indication = null,
-							onClick = { nowPlayingFilePropertiesViewModel.showNowPlayingControls() }
-						),
-				) {
-					Row(
-						modifier = Modifier.fillMaxWidth(),
-						horizontalArrangement = Arrangement.SpaceBetween,
-						verticalAlignment = Alignment.CenterVertically
-					) {
-						NowPlayingHeadline(modifier = Modifier.weight(1f), nowPlayingFilePropertiesViewModel)
+		if (!isPlaylistEditingShown) {
+			Row(
+				modifier = Modifier.fillMaxWidth(),
+				horizontalArrangement = Arrangement.SpaceBetween,
+				verticalAlignment = Alignment.CenterVertically
+			) {
+				NowPlayingHeadline(modifier = Modifier.weight(1f), nowPlayingFilePropertiesViewModel)
 
-						if (isScreenControlsVisible) {
-							Row(modifier = Modifier.wrapContentWidth()) {
-								val isScreenOnEnabled by screenOnState.isScreenOnEnabled.collectAsState()
-								Image(
-									painter = painterResource(if (isScreenOnEnabled) R.drawable.ic_screen_on_white_36dp else R.drawable.ic_screen_off_white_36dp),
-									alpha = .8f,
-									contentDescription = stringResource(if (isScreenOnEnabled) R.string.screen_is_on else R.string.screen_is_off),
-									modifier = Modifier
-										.padding(Dimensions.viewPaddingUnit)
-										.clickable(onClick = screenOnState::toggleScreenOn),
-								)
-
-								Image(
-									painter = painterResource(R.drawable.chevron_up_white_36dp),
-									alpha = .8f,
-									contentDescription = stringResource(R.string.btn_view_files),
-									modifier = Modifier
-										.padding(Dimensions.viewPaddingUnit)
-										.clickable(onClick = {
-											scope.launch {
-												pagerState.animateScrollToItem(1)
-											}
-										}),
-								)
-							}
-						}
-					}
+				if (isScreenControlsVisible) {
+					val isScreenOnEnabled by screenOnState.isScreenOnEnabled.collectAsState()
+					Image(
+						painter = painterResource(if (isScreenOnEnabled) R.drawable.ic_screen_on_white_36dp else R.drawable.ic_screen_off_white_36dp),
+						alpha = .8f,
+						contentDescription = stringResource(if (isScreenOnEnabled) R.string.screen_is_on else R.string.screen_is_off),
+						modifier = Modifier
+							.padding(Dimensions.viewPaddingUnit)
+							.clickable(onClick = screenOnState::toggleScreenOn),
+					)
 				}
 			}
+		}
 
-			item {
-				Column(
-					modifier = Modifier
-						.nestedScroll(ConsumeAllVerticalFlingScrollConnection)
-						.fillMaxSize()
-						.height(maxHeight),
-				) {
-					val controlsHeight by remember {
-						derivedStateOf {
-							linearInterpolation(
-								initial = collapsedControlsHeight,
-								final = expandedControlsHeight,
-								firstPageShownProgress
-							)
-						}
-					}
+		Column(modifier = Modifier
+			.offset(y = playlistDrawerOffset)
+			.fillMaxWidth()
+		) {
+			Row(
+				verticalAlignment = Alignment.CenterVertically,
+				modifier = Modifier
+					.height(Dimensions.appBarHeight)
+					.fillMaxWidth(),
+				horizontalArrangement = Arrangement.SpaceAround
+			) {
+				when {
+					isPlaybackControlsShown -> {
+						BackButton(
+							onBack = applicationNavigation::backOut,
+							modifier = Modifier.padding(start = Dimensions.topRowOuterPadding)
+						)
 
-					Column(
-						modifier = Modifier
-							.fillMaxWidth()
-							.height(controlsHeight),
-						horizontalAlignment = Alignment.CenterHorizontally,
-					) {
-						Box(
-							modifier = Modifier.height(Dimensions.appBarHeight),
-							contentAlignment = Alignment.Center,
-						) {
-							if (isNotSettledOnFirstPage) {
-								PlaylistControls(
-									modifier = Modifier
-										.alpha(1 - firstPageShownProgress)
-										.fillMaxWidth(),
-									playlistViewModel = playlistViewModel,
-									viewModelMessageBus = viewModelMessageBus,
-								) {
-									Image(
-										painter = painterResource(R.drawable.chevron_up_white_36dp),
-										alpha = playlistControlAlpha,
-										contentDescription = stringResource(R.string.btn_hide_files),
-										modifier = Modifier
-											.clickable(onClick = {
-												playlistViewModel.finishPlaylistEdit()
-												scope.launch {
-													pagerState.animateScrollToItem(0)
-												}
-											})
-											.rotate(180f),
-									)
-								}
-							}
-						}
-
-						NowPlayingProgressIndicator(nowPlayingFilePropertiesViewModel, modifier = Modifier.fillMaxWidth())
-					}
-
-					if (isSettledOnFirstPage) {
-						playlistViewModel.enableSystemAutoScrolling()
-					} else {
-						playlistViewModel.disableSystemAutoScrolling()
-					}
-
-					CompositionLocalProvider(LocalOverscrollConfiguration provides OverscrollConfiguration()) {
-						NowPlayingPlaylist(
-							childItemViewModelProvider,
-							nowPlayingFilePropertiesViewModel,
-							applicationNavigation,
-							playbackServiceController,
-							itemListMenuBackPressedHandler,
-							playlistViewModel,
-							viewModelMessageBus,
-							modifier = Modifier
-								.background(SharedColors.overlayDark)
-								.fillMaxHeight()
+						NowPlayingRating(
+							nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
+							modifier = Modifier.weight(1f)
 						)
 					}
+					isPlaylistEditingShown -> PlaylistControls(
+						modifier = Modifier
+							.alpha(playlistEditingShownProgress)
+							.weight(1f),
+						playlistViewModel = playlistViewModel,
+						viewModelMessageBus = viewModelMessageBus,
+					)
+				}
+
+				if (!isSettledOnFirstPage || isPlaybackControlsShown) {
+					val drawerChevronRotation by remember {
+						derivedStateOf {
+							(180 * playlistDrawerState.progress(SlideOutState.Closed, SlideOutState.PartiallyOpen)).coerceIn(0f, 180f)
+						}
+					}
+					Image(
+						painter = painterResource(R.drawable.chevron_up_white_36dp),
+						contentDescription = stringResource(R.string.btn_hide_files),
+						modifier = Modifier
+							.clickable(
+								onClick = {
+									scope.launch {
+										if (playlistDragValue != SlideOutState.Closed) hidePlaylist()
+										else playlistDrawerState.animateTo(SlideOutState.PartiallyOpen)
+									}
+								},
+								indication = null,
+								interactionSource = remember { MutableInteractionSource() })
+							.padding(end = Dimensions.topRowOuterPadding)
+							.rotate(drawerChevronRotation),
+					)
 				}
 			}
-		}
-	}
 
-	if (isSettledOnFirstPage && isScreenControlsVisible) {
-		NowPlayingControls(
-			modifier = Modifier
-				.align(Alignment.BottomCenter)
-				.fillMaxWidth(),
-			nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
-			playbackServiceController = playbackServiceController,
-		)
+			val progressIndicatorPadding by remember { derivedStateOf { linearInterpolation(Dimensions.viewPaddingUnit, 0.dp, playlistOpenProgress) } }
+			NowPlayingProgressIndicator(
+				nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
+				modifier = Modifier
+					.fillMaxWidth()
+					.padding(top = progressIndicatorPadding)
+			)
+
+			val controlRowHeight by remember { derivedStateOf { linearInterpolation(controlRowHeight, 0.dp, playlistEditingShownProgress) } }
+			if (isPlaybackControlsShown) {
+				NowPlayingPlaybackControls(
+					nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
+					playbackServiceController = playbackServiceController,
+				)
+			} else {
+				Spacer(modifier = Modifier.height(controlRowHeight))
+			}
+
+			if (isPlaylistShown) {
+				val playlistHeight by remember {
+					derivedStateOf {
+						this@NowPlayingNarrowView.maxHeight - playlistDrawerOffset - controlRowHeight - progressIndicatorPadding - ProgressIndicatorDefaults.StrokeWidth - Dimensions.appBarHeight
+					}
+				}
+
+				NowPlayingPlaylist(
+					childItemViewModelProvider,
+					nowPlayingFilePropertiesViewModel,
+					applicationNavigation,
+					playbackServiceController,
+					itemListMenuBackPressedHandler,
+					playlistViewModel,
+					viewModelMessageBus,
+					modifier = Modifier
+						.height(playlistHeight)
+						.background(SharedColors.overlayDark)
+				)
+			}
+		}
+
+		DisposableEffect(key1 = isPlaylistEditingShown) {
+			if (!isPlaylistEditingShown) {
+				playlistViewModel.enableSystemAutoScrolling()
+			} else {
+				playlistViewModel.disableSystemAutoScrolling()
+			}
+
+			onDispose {
+				playlistViewModel.disableSystemAutoScrolling()
+			}
+		}
 	}
 }
 
@@ -773,14 +784,15 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 	val draggableState = with (LocalDensity.current) {
 		remember {
 			AnchoredDraggableState(
-				initialValue = BooleanDragValue.Shown,
+				initialValue = SlideOutState.Open,
 				anchors = DraggableAnchors {
-					BooleanDragValue.Hidden at 0f
-					BooleanDragValue.Shown at playlistWidth.toPx()
+					SlideOutState.Closed at 0f
+					SlideOutState.Open at playlistWidth.toPx()
 				},
 				positionalThreshold = { d -> d * .5f },
 				velocityThreshold = { 100.dp.toPx() },
-				animationSpec = tween()
+				snapAnimationSpec = tween(),
+				decayAnimationSpec = exponentialDecay(),
 			)
 		}
 	}
@@ -790,7 +802,7 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 	Box(
 		modifier = Modifier
 			.fillMaxSize()
-			.anchoredDraggable(draggableState, Orientation.Horizontal, reverseDirection = true),
+			.anchoredDraggable(draggableState, true, Orientation.Horizontal),
 	) {
 		Box(
 			modifier = Modifier
@@ -851,7 +863,7 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 			horizontalAlignment = Alignment.CenterHorizontally,
 		) {
 			DisposableEffect(key1 = draggableState.currentValue) {
-				if (draggableState.currentValue == BooleanDragValue.Hidden) {
+				if (draggableState.currentValue == SlideOutState.Closed) {
 					playlistViewModel.enableSystemAutoScrolling()
 				} else {
 					playlistViewModel.disableSystemAutoScrolling()
@@ -878,7 +890,7 @@ private fun ScreenDimensionsScope.NowPlayingWideView(
 						.clickable(onClick = {
 							playlistViewModel.finishPlaylistEdit()
 							scope.launch {
-								draggableState.animateTo(BooleanDragValue.Hidden)
+								draggableState.animateTo(SlideOutState.Closed)
 							}
 						})
 						.rotate(90f),

@@ -19,6 +19,7 @@ class WhenGettingTheFileProgress {
 	@BeforeAll
 	fun act() {
 		val mockMediaPlayer = mockk<PromisingExoPlayer>(relaxed = true).apply {
+			every { getCurrentPosition() } returns 0L.toPromise()
 			every { getPlayWhenReady() } returns false.toPromise()
 			every { getDuration() } returns 203L.toPromise()
 		}
