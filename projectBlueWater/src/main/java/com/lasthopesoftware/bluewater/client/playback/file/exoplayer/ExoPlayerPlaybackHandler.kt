@@ -49,9 +49,13 @@ class ExoPlayerPlaybackHandler(private val exoPlayer: PromisingExoPlayer) :
 		private val logger by lazyLogger<ExoPlayerPlaybackHandler>()
 	}
 
+	private object LongDurationTransformer : ImmediateResponse<Long, Duration> {
+		override fun respond(currentPosition: Long): Duration = Duration.millis(currentPosition)
+	}
+
 	private val fileProgressReader = AtomicReference<CloseableReadFileProgress>(PausedExoPlayerFileProgressReader(exoPlayer))
 
-	private var backingDuration = Duration.ZERO
+	private val promisedDuration = RetryOnRejectionLazyPromise { exoPlayer.getDuration().then(LongDurationTransformer) }
 
 	init {
 		awaitCancellation(this)
@@ -77,10 +81,7 @@ class ExoPlayerPlaybackHandler(private val exoPlayer: PromisingExoPlayer) :
 		get() = fileProgressReader.get().progress
 
 	override val duration: Promise<Duration>
-		get() = exoPlayer.getDuration().then { newDuration ->
-			if (newDuration == backingDuration.millis) backingDuration
-			else Duration.millis(newDuration).also { backingDuration = it }
-		}
+		get() = promisedDuration.value
 
 	override fun promisePlayback(): Promise<PlayingFile> {
 		isPlaying = true
@@ -164,6 +165,7 @@ class ExoPlayerPlaybackHandler(private val exoPlayer: PromisingExoPlayer) :
 
 	override fun close() {
 		isPlaying = false
+		promisedDuration.close()
 		fileProgressReader.get().close()
 		exoPlayer.setPlayWhenReady(false)
 		exoPlayer.stop()
@@ -181,18 +183,14 @@ class ExoPlayerPlaybackHandler(private val exoPlayer: PromisingExoPlayer) :
 	private interface CloseableReadFileProgress : ReadFileProgress, AutoCloseable
 
 	private class PausedExoPlayerFileProgressReader(private val exoPlayer: PromisingExoPlayer) :
-		CloseableReadFileProgress,
-		ImmediateResponse<Long, Duration>
+		CloseableReadFileProgress
 	{
 		private val promisedFileProgress = RetryOnRejectionLazyPromise {
-			exoPlayer.getCurrentPosition().then(this)
+			exoPlayer.getCurrentPosition().then(LongDurationTransformer)
 		}
 
-		@get:Synchronized
 		override val progress: Promise<Duration>
 			get() = promisedFileProgress.value
-
-		override fun respond(currentPosition: Long): Duration = Duration.millis(currentPosition)
 
 		override fun close() {
 			promisedFileProgress.close()
@@ -200,27 +198,28 @@ class ExoPlayerPlaybackHandler(private val exoPlayer: PromisingExoPlayer) :
 	}
 
 	private class PlayingExoPlayerFileProgressReader(private val exoPlayer: PromisingExoPlayer) :
-		CloseableReadFileProgress,
-		ImmediateResponse<Long, Duration>
+		CloseableReadFileProgress
 	{
+		companion object {
+			private val zeroAndLong by lazy { 0L.toPromise() }
+		}
+
 		@Volatile
 		private var isClosed = false
 
-		private val currentDurationPromise = AtomicReference(0L.toPromise())
+		private val currentDurationPromise = AtomicReference(zeroAndLong)
 
 		override val progress: Promise<Duration>
 			get() =
-				if (isClosed) currentDurationPromise.get().then(this)
+				if (isClosed) currentDurationPromise.get().then(LongDurationTransformer)
 				else currentDurationPromise.updateAndGet { prev ->
 					prev.cancel()
 					exoPlayer.getCurrentPosition()
-				}.then(this)
-
-		override fun respond(currentPosition: Long): Duration = Duration.millis(currentPosition)
+				}.then(LongDurationTransformer)
 
 		override fun close() {
-			currentDurationPromise.get().cancel()
 			isClosed = true
+			currentDurationPromise.get().cancel()
 		}
 	}
 }
