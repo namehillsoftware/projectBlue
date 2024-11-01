@@ -91,14 +91,7 @@ fun LibraryMenu(
 			) {
 				val progress by remember {
 					derivedStateOf {
-						val bottomSheetProgress = bottomSheetState.progress
-						when {
-							bottomSheetState.targetValue == BottomSheetValue.Collapsed && bottomSheetProgress == 1f -> 0f
-							bottomSheetState.isCollapsed -> bottomSheetProgress
-							bottomSheetState.targetValue == BottomSheetValue.Expanded && bottomSheetProgress == 1f -> 1f
-							bottomSheetState.isExpanded -> 1 - bottomSheetProgress
-							else -> 0f
-						}
+						bottomSheetState.progress(BottomSheetValue.Collapsed, BottomSheetValue.Expanded)
 					}
 				}
 
