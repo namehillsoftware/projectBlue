@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.properties
 
 import org.apache.commons.io.FilenameUtils
+import org.joda.time.Duration
 import java.util.regex.Pattern
 
 object FilePropertyHelpers {
@@ -17,13 +18,11 @@ object FilePropertyHelpers {
 		val postExtension: String
 	)
 
-	/*
-	 * Get the duration of the serviceFile in milliseconds
-	 */
-	fun parseDurationIntoMilliseconds(fileProperties: Map<String, String>): Long {
-		val durationToParse = fileProperties[KnownFileProperties.Duration]
-		return durationToParse?.toDoubleOrNull()?.let { it * 1000 }?.toLong() ?: -1
-	}
+	val Map<String, String>.durationInMs: Long?
+		get() = this[KnownFileProperties.Duration]?.toDoubleOrNull()?.let { it * 1000 }?.toLong()
+
+	val Map<String, String>.duration: Duration?
+		get() = durationInMs?.let(Duration::millis)
 
 	val Map<String, String>.albumArtistOrArtist
 		get() = this[KnownFileProperties.AlbumArtist] ?: this[KnownFileProperties.Artist]
