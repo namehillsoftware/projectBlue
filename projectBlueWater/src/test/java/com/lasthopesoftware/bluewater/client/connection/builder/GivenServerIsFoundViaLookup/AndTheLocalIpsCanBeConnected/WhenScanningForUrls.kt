@@ -29,11 +29,11 @@ class WhenScanningForUrls {
 				143,
 				null,
 				"1.2.3.4",
-				listOf(
+				setOf(
 					"53.24.19.245",
 					"192.168.1.56"
-				), emptyList(),
-				null
+				), emptySet(),
+				ByteArray(0)
 			)
 		)
 

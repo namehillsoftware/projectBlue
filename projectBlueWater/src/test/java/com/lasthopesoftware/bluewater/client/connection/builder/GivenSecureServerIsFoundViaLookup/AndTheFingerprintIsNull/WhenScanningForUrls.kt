@@ -32,8 +32,8 @@ class WhenScanningForUrls {
 			ServerInfo(
 				143,
 				452,
-				"1.2.3.4", emptyList(), emptyList(),
-				null
+				"1.2.3.4", emptySet(), emptySet(),
+				ByteArray(0),
 			)
 		)
 

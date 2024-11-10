@@ -11,7 +11,7 @@ class ServerAlarm(private val serverLookup: LookupServers, private val server: P
 			serverLookup.promiseServerInformation(libraryId)
 				.also(cp::doCancel)
 				.eventually { serverInfo ->
-					val ips = serverInfo?.remoteIp?.let { serverInfo.localIps.plus(it) } ?: emptyList()
+					val ips = serverInfo?.remoteHost?.let { serverInfo.localIps.plus(it) } ?: emptyList()
 					val macAddresses = serverInfo?.macAddresses ?: emptyList()
 					val addresses = ips.flatMap { ip -> macAddresses.map { m -> MachineAddress(ip, m) } }
 

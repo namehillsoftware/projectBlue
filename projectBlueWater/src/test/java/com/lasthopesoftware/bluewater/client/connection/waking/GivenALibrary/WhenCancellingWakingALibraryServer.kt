@@ -31,14 +31,14 @@ class WhenCancellingWakingALibraryServer {
 
 	private val mut by lazy {
 		val lookupServers = mockk<LookupServers>().apply {
-			every { promiseServerInformation(any()) } returns Promise<ServerInfo?>(
+			every { promiseServerInformation(any()) } returns Promise(
 				ServerInfo(
 					5001,
 					5002,
 					"remote-address",
-					listOf("local-address", "second-local-address"),
-					listOf("AB-E0-9F-24-F5", "99-53-7F-2C-A1"),
-					null
+					setOf("local-address", "second-local-address"),
+					setOf("AB-E0-9F-24-F5", "99-53-7F-2C-A1"),
+					ByteArray(0)
 				)
 			)
 		}

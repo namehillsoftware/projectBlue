@@ -7,6 +7,7 @@ data class ConnectionSettings(
 	val isLocalOnly: Boolean = false,
 	val isWakeOnLanEnabled: Boolean = false,
 	val sslCertificateFingerprint: ByteArray = ByteArray(0),
+	val macAddress: String? = null,
 ) {
 	override fun equals(other: Any?): Boolean {
 		if (this === other) return true
@@ -20,6 +21,7 @@ data class ConnectionSettings(
 		if (isLocalOnly != other.isLocalOnly) return false
 		if (isWakeOnLanEnabled != other.isWakeOnLanEnabled) return false
 		if (!sslCertificateFingerprint.contentEquals(other.sslCertificateFingerprint)) return false
+		if (macAddress != other.macAddress) return false
 
 		return true
 	}
@@ -31,6 +33,10 @@ data class ConnectionSettings(
 		result = 31 * result + isLocalOnly.hashCode()
 		result = 31 * result + isWakeOnLanEnabled.hashCode()
 		result = 31 * result + sslCertificateFingerprint.contentHashCode()
+		result = 31 * result + (macAddress?.hashCode() ?: 0)
 		return result
 	}
+
+	fun isUserCredentialsValid(): Boolean =
+		!userName.isNullOrEmpty() && !password.isNullOrEmpty()
 }

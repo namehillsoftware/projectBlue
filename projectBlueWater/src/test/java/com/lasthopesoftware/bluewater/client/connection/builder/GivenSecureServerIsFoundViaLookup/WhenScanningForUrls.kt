@@ -38,9 +38,9 @@ class WhenScanningForUrls {
 				143,
 				452,
 				"1.2.3.4",
-				emptyList(),
-				emptyList(),
-				"2386166660562C5AAA1253B2BED7C2483F9C2D45"
+				emptySet(),
+				emptySet(),
+				Hex.decodeHex("2386166660562C5AAA1253B2BED7C2483F9C2D45")
 			)
 		)
 

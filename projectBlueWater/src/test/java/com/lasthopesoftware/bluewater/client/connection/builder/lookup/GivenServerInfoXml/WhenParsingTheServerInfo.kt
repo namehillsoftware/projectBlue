@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFutur
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
+import org.apache.commons.codec.binary.Hex
 import org.assertj.core.api.Assertions.assertThat
 import org.jsoup.Jsoup
 import org.jsoup.parser.Parser
@@ -34,13 +35,17 @@ class WhenParsingTheServerInfo {
 				Parser.xmlParser()
 			)
 		)
-		val serverLookup = ServerLookup(serverInfoXml)
+		val serverLookup = ServerLookup(
+			mockk {
+				every { lookupConnectionSettings(any()) } returns Promise.empty()
+			},
+			serverInfoXml)
 		serverLookup.promiseServerInformation(LibraryId(10)).toExpiringFuture().get()
 	}
 
 	@Test
 	fun `then the remote ip is correct`() {
-		assertThat(serverInfo!!.remoteIp).isEqualTo("108.491.23.154")
+		assertThat(serverInfo!!.remoteHost).isEqualTo("108.491.23.154")
 	}
 
 	@Test
@@ -61,7 +66,7 @@ class WhenParsingTheServerInfo {
 
 	@Test
 	fun `then the certificate fingerprint is correct`() {
-		assertThat(serverInfo!!.certificateFingerprint)
+		assertThat(String(Hex.encodeHex(serverInfo!!.certificateFingerprint)))
 			.isEqualToIgnoringCase("746E06046B44CED35658F300DB2D08A799DEBC7E")
 	}
 
