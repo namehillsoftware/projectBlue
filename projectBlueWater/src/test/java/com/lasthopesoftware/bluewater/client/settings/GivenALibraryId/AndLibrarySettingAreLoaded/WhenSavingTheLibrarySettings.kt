@@ -15,20 +15,22 @@ import org.junit.jupiter.api.Test
 class WhenSavingTheLibrarySettings {
 
 	private val libraryId = LibraryId(56)
-	private val services by lazy {
-		val libraryRepository = FakeLibraryRepository(
-			Library(
-				id = libraryId.id,
-				accessCode = "b2q",
-				isLocalOnly = false,
-				isSyncLocalConnectionsOnly = true,
-				isWakeOnLanEnabled = false,
-				password = "hmpyA",
-				syncedFileLocation = Library.SyncedFileLocation.EXTERNAL,
-				isUsingExistingFiles = true,
-			)
-		)
 
+	private val libraryRepository = FakeLibraryRepository(
+		Library(
+			id = libraryId.id,
+			accessCode = "b2q",
+			isLocalOnly = false,
+			isSyncLocalConnectionsOnly = true,
+			isWakeOnLanEnabled = false,
+			password = "hmpyA",
+			syncedFileLocation = Library.SyncedFileLocation.EXTERNAL,
+			isUsingExistingFiles = true,
+			macAddress = "S4YhepUHBcj",
+		)
+	)
+
+	private val services by lazy {
         LibrarySettingsViewModel(
             libraryRepository,
             libraryRepository,
@@ -66,6 +68,7 @@ class WhenSavingTheLibrarySettings {
 			isUsingExistingFiles.value = !isUsingExistingFiles.value
 			isWakeOnLanEnabled.value = !isWakeOnLanEnabled.value
 			syncedFileLocation.value = Library.SyncedFileLocation.EXTERNAL
+			macAddress.value = "sVU0zPNKdFu"
 
 			didSettingsChange = isSettingsChanged.value
 			isSaved = saveLibrary().toExpiringFuture().get() == true
@@ -152,5 +155,27 @@ class WhenSavingTheLibrarySettings {
 	@Test
 	fun `then the library name is correct`() {
 		assertThat(services.libraryName.value).isEqualTo("left")
+	}
+
+	@Test
+	fun `then the mac address is correct`() {
+		assertThat(services.macAddress.value).isEqualTo("sVU0zPNKdFu")
+	}
+
+	@Test
+	fun `then the saved library is correct`() {
+		assertThat(libraryRepository.libraries[56]).isEqualTo(Library(
+			id = libraryId.id,
+			libraryName = "left",
+			accessCode = "V68Bp9rS",
+			isLocalOnly = true,
+			isSyncLocalConnectionsOnly = false,
+			isWakeOnLanEnabled = true,
+			userName = "xw9wy0T",
+			password = "sl0Ha",
+			syncedFileLocation = Library.SyncedFileLocation.EXTERNAL,
+			isUsingExistingFiles = false,
+			macAddress = "sVU0zPNKdFu",
+		))
 	}
 }
