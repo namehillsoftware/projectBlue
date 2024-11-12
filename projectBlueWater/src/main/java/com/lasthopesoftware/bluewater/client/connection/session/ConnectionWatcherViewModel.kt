@@ -8,10 +8,9 @@ import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibrary
 import com.lasthopesoftware.bluewater.client.connection.polling.PollForLibraryConnections
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
+import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 
 class ConnectionWatcherViewModel(
 	messageBus: RegisterForApplicationMessages,
@@ -25,12 +24,13 @@ class ConnectionWatcherViewModel(
 
 	private val connectionLostSubscription = messageBus.registerReceiver(this)
 
-	private val mutableIsCheckingConnection = MutableStateFlow(false)
+	private val mutableIsCheckingConnection = MutableInteractionState(false)
 
-	val isCheckingConnection = mutableIsCheckingConnection.asStateFlow()
+	val isCheckingConnection = mutableIsCheckingConnection.asInteractionState()
 
 	fun watchLibraryConnection(libraryId: LibraryId): Promise<Boolean> {
 		watchedLibraryId = libraryId
+		mutableIsCheckingConnection.value = true
 		return libraryConnections
 			.promiseLibraryConnection(libraryId)
 			.eventually(
@@ -40,6 +40,10 @@ class ConnectionWatcherViewModel(
 					else false.toPromise()
 				}
 			)
+			.must { _ ->
+				if (libraryId == watchedLibraryId)
+					mutableIsCheckingConnection.value = false
+			}
 	}
 
 	fun cancelLibraryConnectionPolling() {
@@ -70,6 +74,6 @@ class ConnectionWatcherViewModel(
 
 		promisedConnection = proxiedPromisedConnection
 
-		return proxiedPromisedConnection.then { _ -> libraryId == watchedLibraryId }
+		return proxiedPromisedConnection.then { cp -> cp != null && libraryId == watchedLibraryId }
 	}
 }

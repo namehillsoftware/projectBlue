@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.systemBars
 import androidx.compose.material.BottomSheetScaffold
 import androidx.compose.material.BottomSheetScaffoldState
 import androidx.compose.material.BottomSheetState
-import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.rememberBottomSheetScaffoldState
 import androidx.compose.runtime.Composable
@@ -58,8 +57,6 @@ import com.lasthopesoftware.bluewater.client.connection.session.initialization.C
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionUpdatesView
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.DramaticConnectionInitializationController
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingView
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.InMemoryNowPlayingDisplaySettings
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingScreenViewModel
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsView
 import com.lasthopesoftware.bluewater.client.settings.PermissionsDependencies
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsView
@@ -80,7 +77,6 @@ import kotlinx.coroutines.launch
 
 private val logger by lazyLogger<ProjectBlueApplication>()
 
-@OptIn(ExperimentalMaterialApi::class)
 private class BottomSheetHidingNavigation(
 	private val inner: NavigateApplication,
 	private val bottomSheetState: BottomSheetState,
@@ -162,7 +158,6 @@ private val bottomAppBarHeight = Dimensions.appBarHeight
 private val bottomSheetElevation = 16.dp
 
 @Composable
-@OptIn(ExperimentalMaterialApi::class)
 private fun BrowserLibraryDestination.Navigate(
 	browserViewDependencies: ScopedBrowserViewDependencies,
 	scaffoldState: BottomSheetScaffoldState,
@@ -209,7 +204,7 @@ private fun BrowserLibraryDestination.Navigate(
 }
 
 @Composable
-@OptIn(ExperimentalMaterialApi::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class)
 fun LibraryDestination.Navigate(
 	browserViewDependencies: ScopedBrowserViewDependencies,
 	scaffoldState: BottomSheetScaffoldState,
@@ -250,18 +245,10 @@ fun LibraryDestination.Navigate(
 				val systemUiController = rememberSystemUiController()
 				systemUiController.setSystemBarsColor(SharedColors.overlayDark)
 
-				val screenViewModel = viewModel {
-					NowPlayingScreenViewModel(
-						messageBus,
-						InMemoryNowPlayingDisplaySettings,
-						playbackServiceController,
-					)
-				}
-
 				NowPlayingView(
 					nowPlayingCoverArtViewModel = nowPlayingCoverArtViewModel,
 					nowPlayingFilePropertiesViewModel = nowPlayingFilePropertiesViewModel,
-					screenOnState = screenViewModel,
+					screenOnState = nowPlayingScreenViewModel,
 					playbackServiceController = playbackServiceController,
 					playlistViewModel = nowPlayingPlaylistViewModel,
 					childItemViewModelProvider = reusablePlaylistFileItemViewModelProvider,
@@ -278,7 +265,7 @@ fun LibraryDestination.Navigate(
 
 						if (isConnectionActive) {
 							Promise.whenAll(
-								screenViewModel.initializeViewModel(libraryId),
+								nowPlayingScreenViewModel.initializeViewModel(libraryId),
 								nowPlayingFilePropertiesViewModel.initializeViewModel(libraryId),
 								nowPlayingCoverArtViewModel.initializeViewModel(libraryId),
 								nowPlayingPlaylistViewModel.initializeView(libraryId),
@@ -297,7 +284,6 @@ fun LibraryDestination.Navigate(
 }
 
 @Composable
-@OptIn(ExperimentalMaterialApi::class)
 fun HandheldApplication(
 	browserViewDependencies: BrowserViewDependencies,
 	permissionsDependencies: PermissionsDependencies,
