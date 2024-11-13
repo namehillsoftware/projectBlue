@@ -10,7 +10,6 @@ import androidx.compose.material.MaterialTheme
 import androidx.compose.material.ProvideTextStyle
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -18,6 +17,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
+import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 
 @Composable
 fun ConnectionUpdatesView(
@@ -27,7 +27,7 @@ fun ConnectionUpdatesView(
 		Box(modifier = Modifier.fillMaxSize()) {
 			Column(modifier = Modifier.align(Alignment.Center)) {
 				ProvideTextStyle(MaterialTheme.typography.h5) {
-					val connectionText by connectionViewModel.connectionStatus.collectAsState()
+					val connectionText by connectionViewModel.connectionStatus.subscribeAsState()
 					Text(text = connectionText, modifier = Modifier.align(Alignment.CenterHorizontally))
 				}
 

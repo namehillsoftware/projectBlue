@@ -5,7 +5,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -40,6 +39,7 @@ import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLa
 import com.lasthopesoftware.bluewater.shared.cls
 import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
+import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 import com.lasthopesoftware.promises.extensions.suspend
 import com.lasthopesoftware.resources.strings.StringResources
 import java.io.IOException
@@ -137,7 +137,7 @@ import java.io.IOException
 
 		setContent {
 			ProjectBlueComposableApplication {
-				val isGettingConnection by connectionStatusViewModel.isGettingConnection.collectAsState()
+				val isGettingConnection by connectionStatusViewModel.isGettingConnection.subscribeAsState()
 				var isConnectionLost by remember { mutableStateOf(false) }
 
 				when {

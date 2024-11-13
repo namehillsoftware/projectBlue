@@ -3,12 +3,11 @@ package com.lasthopesoftware.bluewater.client.connection.session.initialization
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
+import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.strings.GetStringResources
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateAction
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 
 class ConnectionStatusViewModel(
 	private val stringResources: GetStringResources,
@@ -16,13 +15,13 @@ class ConnectionStatusViewModel(
 ) : ViewModel(), (BuildingConnectionStatus) -> Unit, ImmediateAction, TrackConnectionStatus {
 	private var promisedConnectionCheck = false.toPromise()
 
-	private val mutableIsGettingConnection = MutableStateFlow(false)
-	private val mutableConnectionStatus = MutableStateFlow("")
-	private val mutableTestedLibraryId = MutableStateFlow<LibraryId?>(null)
+	private val mutableIsGettingConnection = MutableInteractionState(false)
+	private val mutableConnectionStatus = MutableInteractionState("")
+	private val mutableTestedLibraryId = MutableInteractionState<LibraryId?>(null)
 
-	val connectionStatus = mutableConnectionStatus.asStateFlow()
-	val isGettingConnection = mutableIsGettingConnection.asStateFlow()
-	val testedLibraryId = mutableTestedLibraryId.asStateFlow()
+	val connectionStatus = mutableConnectionStatus.asInteractionState()
+	val isGettingConnection = mutableIsGettingConnection.asInteractionState()
+	val testedLibraryId = mutableTestedLibraryId.asInteractionState()
 	var isCancelled = false
 		private set
 

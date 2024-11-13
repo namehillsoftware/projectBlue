@@ -813,7 +813,7 @@ fun NowPlayingTvApplication(
 			}
 		}
 
-		val isCheckingConnection by connectionStatusViewModel.isGettingConnection.collectAsState()
+		val isCheckingConnection by connectionStatusViewModel.isGettingConnection.subscribeAsState()
 		if (isCheckingConnection) {
 			Box(
 				modifier = Modifier.fillMaxSize()
