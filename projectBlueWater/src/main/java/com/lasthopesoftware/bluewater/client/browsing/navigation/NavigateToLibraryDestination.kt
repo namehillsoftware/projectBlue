@@ -42,13 +42,13 @@ fun BrowserLibraryDestination.NavigateToLibraryDestination(browserViewDependenci
 		is SearchScreen -> {
 			with(browserViewDependencies) {
 				var isConnectionLost by remember { mutableStateOf(false) }
-				var reinitializeConnection by remember { mutableStateOf(false) }
+				var initializeConnection by remember { mutableStateOf(true) }
 
 				if (isConnectionLost) {
 					ConnectionLostView(
 						onCancel = { applicationNavigation.viewApplicationSettings() },
 						onRetry = {
-							reinitializeConnection = true
+							initializeConnection = true
 						}
 					)
 				} else {
@@ -65,10 +65,10 @@ fun BrowserLibraryDestination.NavigateToLibraryDestination(browserViewDependenci
 				ViewModelInitAction {
 					searchFilesViewModel.setActiveLibraryId(libraryId)
 
-					if (reinitializeConnection) {
+					if (initializeConnection) {
 						LaunchedEffect(key1 = Unit) {
 							isConnectionLost = !connectionStatusViewModel.initializeConnection(libraryId).suspend()
-							reinitializeConnection = false
+							initializeConnection = false
 						}
 					}
 

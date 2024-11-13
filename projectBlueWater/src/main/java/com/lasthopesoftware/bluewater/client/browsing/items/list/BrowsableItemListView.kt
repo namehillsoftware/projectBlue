@@ -62,13 +62,13 @@ private fun LoadedItemListView(
 	connectionStatusViewModel: ConnectionStatusViewModel,
 ) {
 	var isConnectionLost by remember { mutableStateOf(false) }
-	var reinitializeConnection by remember { mutableStateOf(false) }
+	var initializeConnection by remember { mutableStateOf(true) }
 
 	if (isConnectionLost) {
 		ConnectionLostView(
 			onCancel = { applicationNavigation.viewApplicationSettings() },
 			onRetry = {
-				reinitializeConnection = true
+				initializeConnection = true
 			}
 		)
 	} else {
@@ -86,10 +86,10 @@ private fun LoadedItemListView(
 	}
 
 	ViewModelInitAction {
-		if (reinitializeConnection) {
+		if (initializeConnection) {
 			LaunchedEffect(key1 = Unit) {
 				isConnectionLost = !connectionStatusViewModel.initializeConnection(libraryId).suspend()
-				reinitializeConnection = false
+				initializeConnection = false
 			}
 		}
 
