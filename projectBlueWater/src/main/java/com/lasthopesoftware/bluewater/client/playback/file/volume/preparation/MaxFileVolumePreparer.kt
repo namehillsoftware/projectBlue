@@ -7,38 +7,30 @@ import com.lasthopesoftware.bluewater.client.playback.file.preparation.PreparedP
 import com.lasthopesoftware.bluewater.client.playback.file.volume.ProvideMaxFileVolume
 import com.namehillsoftware.handoff.promises.Promise
 import org.joda.time.Duration
-import org.slf4j.LoggerFactory
 
 class MaxFileVolumePreparer(
-	private val playableFilePreparationSource: PlayableFilePreparationSource,
+	private val inner: PlayableFilePreparationSource,
 	private val provideMaxFileVolume: ProvideMaxFileVolume
 ) : PlayableFilePreparationSource {
-	override fun promisePreparedPlaybackFile(libraryId: LibraryId, serviceFile: ServiceFile, preparedAt: Duration): Promise<PreparedPlayableFile?> {
-		val promisedMaxFileVolume = provideMaxFileVolume.promiseMaxFileVolume(libraryId, serviceFile)
-		return playableFilePreparationSource
-			.promisePreparedPlaybackFile(libraryId, serviceFile, preparedAt)
-			.then { ppf ->
-				ppf ?: return@then null
+	override fun promisePreparedPlaybackFile(libraryId: LibraryId, serviceFile: ServiceFile, preparedAt: Duration): Promise<PreparedPlayableFile?> = Promise.Proxy { cp ->
+		val promisedPreparedFile = inner.promisePreparedPlaybackFile(libraryId, serviceFile, preparedAt).also(cp::doCancel)
+		provideMaxFileVolume
+			.promiseMaxFileVolume(libraryId, serviceFile)
+			.also(cp::doCancel)
+			.eventually { maxFileVolume ->
+				promisedPreparedFile
+					.then { ppf ->
+						ppf ?: return@then null
 
-				val maxFileVolumeManager = MaxFileVolumeManager(ppf.playableFileVolumeManager)
-				promisedMaxFileVolume
-					.then(maxFileVolumeManager::setMaxFileVolume)
-					.excuse { err ->
-						logger.warn(
-							"There was an error getting the max file volume for file $serviceFile",
-							err
+						val maxFileVolumeManager = MaxFileVolumeManager(ppf.playableFileVolumeManager)
+						maxFileVolumeManager.setMaxFileVolume(maxFileVolume)
+
+						PreparedPlayableFile(
+							ppf.playbackHandler,
+							maxFileVolumeManager,
+							ppf.bufferingPlaybackFile
 						)
 					}
-
-				PreparedPlayableFile(
-					ppf.playbackHandler,
-					maxFileVolumeManager,
-					ppf.bufferingPlaybackFile
-				)
 			}
-	}
-
-	companion object {
-		private val logger by lazy { LoggerFactory.getLogger(MaxFileVolumePreparer::class.java) }
 	}
 }
