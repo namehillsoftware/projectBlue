@@ -1,13 +1,10 @@
 package com.lasthopesoftware.bluewater.client.connection.waking
 
 import com.lasthopesoftware.bluewater.client.connection.SendPackets
-import com.lasthopesoftware.promises.PromiseDelay.Companion.delay
-import com.lasthopesoftware.promises.PromiseMachines
 import com.namehillsoftware.handoff.promises.Promise
-import org.joda.time.Duration
 
 class ServerWakeSignal(private val packetSender: SendPackets) : PokeServer {
-	override fun promiseWakeSignal(machineAddress: MachineAddress, timesToSendSignal: Int, durationBetween: Duration): Promise<Unit> {
+	override fun promiseWakeSignal(machineAddress: MachineAddress): Promise<Unit> {
 		val macBytes = getMacBytes(machineAddress.macAddress)
 		val bytes = ByteArray(6 + 16 * macBytes.size)
 		for (i in 0..5) {
@@ -18,13 +15,7 @@ class ServerWakeSignal(private val packetSender: SendPackets) : PokeServer {
 			System.arraycopy(macBytes, 0, bytes, i, macBytes.size)
 		}
 
-		return PromiseMachines.repeat({
-			Promise.Proxy { cp ->
-				packetSender.promiseSentPackets(machineAddress.host, wakePort, bytes)
-					.also(cp::doCancel)
-					.eventually { delay<Unit>(durationBetween) }
-			}
-		}, timesToSendSignal)
+		return packetSender.promiseSentPackets(machineAddress.host, wakePort, bytes)
 	}
 
 	companion object {

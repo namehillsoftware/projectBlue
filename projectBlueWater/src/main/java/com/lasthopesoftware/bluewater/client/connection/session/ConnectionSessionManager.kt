@@ -136,7 +136,7 @@ class ConnectionSessionManager(
 				LibraryConnectionProvider(
 					ConnectionSettingsValidation,
 					connectionSettingsLookup,
-					ServerAlarm(serverLookup, serverWakeSignal, AlarmConfiguration.standard),
+					ServerAlarm(serverLookup, serverWakeSignal),
 					LiveUrlProvider(
 						ActiveNetworkFinder(context),
 						UrlScanner(
@@ -147,7 +147,8 @@ class ConnectionSessionManager(
 							OkHttpFactory
 						)
 					),
-					OkHttpFactory
+					OkHttpFactory,
+					AlarmConfiguration.standard
 				),
 				connectionRepository,
 				ApplicationMessageBus.getApplicationMessageBus(),

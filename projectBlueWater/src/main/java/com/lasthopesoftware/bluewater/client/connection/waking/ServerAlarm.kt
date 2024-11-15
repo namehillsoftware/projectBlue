@@ -5,7 +5,7 @@ import com.lasthopesoftware.bluewater.client.connection.builder.lookup.LookupSer
 import com.lasthopesoftware.promises.extensions.unitResponse
 import com.namehillsoftware.handoff.promises.Promise
 
-class ServerAlarm(private val serverLookup: LookupServers, private val server: PokeServer, private val alarmConfiguration: AlarmConfiguration) : WakeLibraryServer {
+class ServerAlarm(private val serverLookup: LookupServers, private val server: PokeServer) : WakeLibraryServer {
 	override fun awakeLibraryServer(libraryId: LibraryId): Promise<Unit> =
 		Promise.Proxy { cp ->
 			serverLookup.promiseServerInformation(libraryId)
@@ -16,14 +16,7 @@ class ServerAlarm(private val serverLookup: LookupServers, private val server: P
 					val addresses = ips.flatMap { ip -> macAddresses.map { m -> MachineAddress(ip, m) } }
 
 					if (cp.isCancelled) Promise.empty()
-					else Promise.whenAll(
-						addresses.map {
-							server.promiseWakeSignal(
-								it,
-								alarmConfiguration.timesToWake,
-								alarmConfiguration.timesBetweenWaking)
-						})
-						.also(cp::doCancel)
+					else Promise.whenAll(addresses.map(server::promiseWakeSignal)).also(cp::doCancel)
 				}
 				.unitResponse()
 		}

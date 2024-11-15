@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.client.connection.waking.GivenALibrary
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.LookupServers
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerInfo
-import com.lasthopesoftware.bluewater.client.connection.waking.AlarmConfiguration
 import com.lasthopesoftware.bluewater.client.connection.waking.MachineAddress
 import com.lasthopesoftware.bluewater.client.connection.waking.PokeServer
 import com.lasthopesoftware.bluewater.client.connection.waking.ServerAlarm
@@ -13,7 +12,6 @@ import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.joda.time.Duration
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.util.concurrent.TimeUnit
@@ -44,9 +42,9 @@ class WhenCancellingWakingALibraryServer {
 		}
 
 		val pokeServer = mockk<PokeServer>().apply {
-			every { promiseWakeSignal(any(), any(), any()) } returns Unit.toPromise()
+			every { promiseWakeSignal(any()) } returns Unit.toPromise()
 
-			every { promiseWakeSignal(any(), 4, Duration.standardSeconds(60)) } answers {
+			every { promiseWakeSignal(any()) } answers {
 				Promise { m ->
 					m.awaitCancellation {
 						cancelledPokes.add(firstArg())
@@ -57,10 +55,9 @@ class WhenCancellingWakingALibraryServer {
 		}
 
 		val serverAlarm = ServerAlarm(
-			lookupServers,
-			pokeServer,
-			AlarmConfiguration(4, Duration.standardMinutes(1))
-		)
+            lookupServers,
+            pokeServer
+        )
 
 		serverAlarm
 	}

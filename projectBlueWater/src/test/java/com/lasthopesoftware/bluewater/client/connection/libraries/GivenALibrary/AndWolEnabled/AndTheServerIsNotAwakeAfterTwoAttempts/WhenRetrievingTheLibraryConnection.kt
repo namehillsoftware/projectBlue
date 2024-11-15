@@ -1,20 +1,15 @@
-package com.lasthopesoftware.bluewater.client.connection.libraries.GivenALibrary.AndWolEnabled
+package com.lasthopesoftware.bluewater.client.connection.libraries.GivenALibrary.AndWolEnabled.AndTheServerIsNotAwakeAfterTwoAttempts
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
 import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
-import com.lasthopesoftware.bluewater.client.connection.builder.live.ProvideLiveUrl
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettings
-import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
-import com.lasthopesoftware.bluewater.client.connection.settings.ValidateConnectionSettings
-import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
 import com.lasthopesoftware.bluewater.client.connection.waking.AlarmConfiguration
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
-import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -22,33 +17,34 @@ import org.joda.time.Duration
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
-class WhenRetrievingTheLibraryConnectionIsCancelled {
+class WhenRetrievingTheLibraryConnection {
+
+	private var wakeAttempts = 0
+	private var connectionAttempts = 0
 
 	private val mut by lazy {
-		val validateConnectionSettings = mockk<ValidateConnectionSettings>()
-		every { validateConnectionSettings.isValid(any()) } returns true
-
 		val deferredConnectionSettings =
 			DeferredPromise<ConnectionSettings?>(ConnectionSettings(accessCode = "aB5nf", isWakeOnLanEnabled = true))
 
-		val lookupConnection = mockk<LookupConnectionSettings>()
-		every {
-			lookupConnection.lookupConnectionSettings(LibraryId(3))
-		} returns deferredConnectionSettings
-
-		val liveUrlProvider = mockk<ProvideLiveUrl>()
-		every { liveUrlProvider.promiseLiveUrl(LibraryId(3)) } returns Promise(mockk<IUrlProvider>())
-
 		val libraryConnectionProvider = LibraryConnectionProvider(
-			validateConnectionSettings,
-			lookupConnection,
+			mockk {
+				every { isValid(any()) } returns true
+			},
+			mockk {
+				every { lookupConnectionSettings(LibraryId(3)) } returns deferredConnectionSettings
+			},
 			{
-				isLibraryServerWoken = true
+				++wakeAttempts
 				Unit.toPromise()
 			},
-			liveUrlProvider,
+			mockk {
+				every { promiseLiveUrl(LibraryId(3)) } answers {
+					++connectionAttempts
+					null.toPromise()
+				}
+			},
 			OkHttpFactory,
-			AlarmConfiguration(0, Duration.ZERO),
+			AlarmConfiguration(2, Duration.millis(500)),
 		)
 
 		Pair(deferredConnectionSettings, libraryConnectionProvider)
@@ -56,7 +52,6 @@ class WhenRetrievingTheLibraryConnectionIsCancelled {
 
 	private val statuses: MutableList<BuildingConnectionStatus> = ArrayList()
 	private var connectionProvider: ProvideConnections? = null
-	private var isLibraryServerWoken = false
 
 	@BeforeAll
 	fun before() {
@@ -71,20 +66,23 @@ class WhenRetrievingTheLibraryConnectionIsCancelled {
 				}
 				.toExpiringFuture()
 
-		futureConnectionProvider.cancel(true)
-
 		deferredConnectionSettings.resolve()
 		connectionProvider = futureConnectionProvider.get()
 	}
 
 	@Test
-	fun `then the library is not woken`() {
-		assertThat(isLibraryServerWoken).isFalse
+	fun `then the wake attempts are correct`() {
+		assertThat(wakeAttempts).isEqualTo(2)
 	}
 
 	@Test
-	fun `then the connection is null`() {
-		assertThat(connectionProvider).isNull()
+	fun `then the connection attempts are correct`() {
+		assertThat(connectionAttempts).isEqualTo(wakeAttempts + 1)
+	}
+
+	@Test
+	fun `then the connection is correct`() {
+		assertThat(connectionProvider?.urlProvider).isNull()
 	}
 
 	@Test
@@ -92,6 +90,11 @@ class WhenRetrievingTheLibraryConnectionIsCancelled {
 		assertThat(statuses)
 			.containsExactly(
 				BuildingConnectionStatus.GettingLibrary,
+				BuildingConnectionStatus.BuildingConnection,
+				BuildingConnectionStatus.SendingWakeSignal,
+				BuildingConnectionStatus.BuildingConnection,
+				BuildingConnectionStatus.SendingWakeSignal,
+				BuildingConnectionStatus.BuildingConnection,
 				BuildingConnectionStatus.BuildingConnectionFailed,
 			)
 	}
