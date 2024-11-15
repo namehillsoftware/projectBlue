@@ -49,7 +49,8 @@ class WhenRetrievingTheLibraryConnectionTwice {
 			lookupConnection,
 			NoopServerAlarm,
 			liveUrlProvider,
-			OkHttpFactory
+			OkHttpFactory,
+			mockk(),
 		)
 
 		val connectionSessionManager = ConnectionSessionManager(

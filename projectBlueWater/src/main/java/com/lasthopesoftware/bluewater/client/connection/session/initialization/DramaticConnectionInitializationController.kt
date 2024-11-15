@@ -32,8 +32,10 @@ class DramaticConnectionInitializationController(
 					.promiseIsConnectionActive(libraryId)
 					.eventually { isConnectionAlreadyActive ->
 						if (isConnectionAlreadyActive) {
+							logger.debug("Connection for {} already active.", libraryId)
 							manageConnectionSessions.promiseLibraryConnection(libraryId)
 						} else {
+							logger.debug("Connection for {} not active, creating.", libraryId)
 							val promisedConnection = manageConnectionSessions.promiseTestedLibraryConnection(libraryId)
 							proxyUpdates(promisedConnection)
 							doCancel(promisedConnection)

@@ -25,8 +25,6 @@ import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.unitResponse
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateAction
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 
 
 class FileDetailsViewModel(
@@ -163,13 +161,16 @@ class FileDetailsViewModel(
 
 		private val formattedValue by lazy(LazyThreadSafetyMode.NONE) { fileProperty.getFormattedValue() }
 		private val editableFilePropertyDefinition by lazy(LazyThreadSafetyMode.NONE) { fileProperty.editableFilePropertyDefinition }
-		private val mutableCommittedValue by lazy { MutableStateFlow(formattedValue) }
-		private val mutableUncommittedValue by lazy { MutableStateFlow(formattedValue) }
-		private val mutableIsEditing = MutableStateFlow(false)
+		private val mutableCommittedValue by lazy { MutableInteractionState(formattedValue) }
+		private val mutableUncommittedValue by lazy { MutableInteractionState(formattedValue) }
+		private val mutableIsEditing = MutableInteractionState(false)
 
-		val committedValue by lazy { mutableCommittedValue.asStateFlow() }
-		val uncommittedValue by lazy { mutableUncommittedValue.asStateFlow() }
-		val isEditing = mutableIsEditing.asStateFlow()
+		val committedValue
+			get() = mutableCommittedValue.asInteractionState()
+		val uncommittedValue
+			get() = mutableUncommittedValue.asInteractionState()
+
+		val isEditing = mutableIsEditing.asInteractionState()
 		val isEditable
 			get() = !isConnectionReadOnly && editableFilePropertyDefinition != null
 		val editableType by lazy(LazyThreadSafetyMode.NONE) { editableFilePropertyDefinition?.type }

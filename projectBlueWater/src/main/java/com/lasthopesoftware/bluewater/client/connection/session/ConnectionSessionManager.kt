@@ -125,15 +125,18 @@ class ConnectionSessionManager(
 		fun Context.buildNewConnectionSessionManager(): ConnectionSessionManager = get(this)
 
 		fun get(context: Context): ConnectionSessionManager {
-			val serverLookup = ServerLookup(ServerInfoXmlRequest(LibraryRepository(context), OkHttpFactory))
 			val connectionSettingsLookup = ConnectionSettingsLookup(LibraryRepository(context))
+			val serverLookup = ServerLookup(
+				connectionSettingsLookup,
+				ServerInfoXmlRequest(LibraryRepository(context), OkHttpFactory),
+			)
 
 			return ConnectionSessionManager(
 				ConnectionTester,
 				LibraryConnectionProvider(
 					ConnectionSettingsValidation,
 					connectionSettingsLookup,
-					ServerAlarm(serverLookup, serverWakeSignal, AlarmConfiguration.standard),
+					ServerAlarm(serverLookup, serverWakeSignal),
 					LiveUrlProvider(
 						ActiveNetworkFinder(context),
 						UrlScanner(
@@ -144,7 +147,8 @@ class ConnectionSessionManager(
 							OkHttpFactory
 						)
 					),
-					OkHttpFactory
+					OkHttpFactory,
+					AlarmConfiguration.standard
 				),
 				connectionRepository,
 				ApplicationMessageBus.getApplicationMessageBus(),

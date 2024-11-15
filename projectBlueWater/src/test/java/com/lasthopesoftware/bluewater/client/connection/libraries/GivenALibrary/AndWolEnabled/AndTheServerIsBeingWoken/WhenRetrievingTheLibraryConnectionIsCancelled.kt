@@ -10,12 +10,14 @@ import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSetti
 import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.ValidateConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
+import com.lasthopesoftware.bluewater.client.connection.waking.AlarmConfiguration
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
+import org.joda.time.Duration
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import java.util.concurrent.TimeUnit
@@ -41,7 +43,7 @@ class WhenRetrievingTheLibraryConnectionIsCancelled {
 		} returns deferredConnectionSettings
 
 		val liveUrlProvider = mockk<ProvideLiveUrl>()
-		every { liveUrlProvider.promiseLiveUrl(LibraryId(3)) } returns Promise(mockk<IUrlProvider>())
+		every { liveUrlProvider.promiseLiveUrl(LibraryId(3)) } returns Promise.empty() andThen Promise(mockk<IUrlProvider>())
 
 		val libraryConnectionProvider = LibraryConnectionProvider(
 			validateConnectionSettings,
@@ -51,7 +53,8 @@ class WhenRetrievingTheLibraryConnectionIsCancelled {
 				deferredLibraryWake
 			},
 			liveUrlProvider,
-			OkHttpFactory
+			OkHttpFactory,
+			AlarmConfiguration(1, Duration.ZERO),
 		)
 
 		libraryConnectionProvider
@@ -102,6 +105,7 @@ class WhenRetrievingTheLibraryConnectionIsCancelled {
 		assertThat(statuses)
 			.containsExactly(
 				BuildingConnectionStatus.GettingLibrary,
+				BuildingConnectionStatus.BuildingConnection,
 				BuildingConnectionStatus.SendingWakeSignal,
 				BuildingConnectionStatus.BuildingConnectionFailed,
 			)

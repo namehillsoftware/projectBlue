@@ -21,7 +21,8 @@ data class Library(
 	var isUsingExistingFiles: Boolean = false,
 	var isSyncLocalConnectionsOnly: Boolean = false,
 	var isWakeOnLanEnabled: Boolean = false,
-	var sslCertificateFingerprint: ByteArray = ByteArray(0)
+	var sslCertificateFingerprint: ByteArray = ByteArray(0),
+	var macAddress: String? = null,
 ) : IdentifiableEntity {
 
 	@Keep

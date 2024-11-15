@@ -3,11 +3,11 @@ package com.lasthopesoftware.bluewater.client.connection.session.GivenALibrary.A
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.FakeConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.FakeLibraryConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionLostNotification
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionWatcherViewModel
-import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
+import com.lasthopesoftware.bluewater.shared.observables.toCloseable
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
 import io.mockk.every
 import io.mockk.mockk
@@ -19,11 +19,9 @@ private const val libraryId = 215
 
 class `When watching the connection` {
 	private val mut by lazy {
-		val deferredConnectionProvider = DeferredPromise(FakeConnectionProvider() as ProvideConnections)
-
 		val messageBus = RecordingApplicationMessageBus()
 
-		Triple(deferredConnectionProvider, messageBus, ConnectionWatcherViewModel(
+		Pair(messageBus, ConnectionWatcherViewModel(
 			messageBus,
 			FakeLibraryConnectionProvider(
 				mapOf(
@@ -31,7 +29,7 @@ class `When watching the connection` {
 				)
 			),
 			mockk {
-				every { pollConnection(LibraryId(libraryId)) } returns deferredConnectionProvider
+				every { pollConnection(LibraryId(libraryId)) } returns FakeConnectionProvider().toPromise()
 			}
 		))
 	}
@@ -41,25 +39,19 @@ class `When watching the connection` {
 
 	@BeforeAll
 	fun act() {
-		val (deferredConnection, messageBus, viewModel) = mut
-		val futureConnection = viewModel.watchLibraryConnection(LibraryId(libraryId)).toExpiringFuture()
+		val (messageBus, viewModel) = mut
+		viewModel.isCheckingConnection.subscribe { checkingConnectionStates.add(it.value) }.toCloseable().use {
+			val futureConnection = viewModel.watchLibraryConnection(LibraryId(libraryId)).toExpiringFuture()
 
-		checkingConnectionStates.add(viewModel.isCheckingConnection.value)
+			messageBus.sendMessage(ConnectionLostNotification(LibraryId(libraryId)))
 
-		messageBus.sendMessage(ConnectionLostNotification(LibraryId(libraryId)))
-
-		checkingConnectionStates.add(viewModel.isCheckingConnection.value)
-
-		deferredConnection.resolve()
-
-		checkingConnectionStates.add(viewModel.isCheckingConnection.value)
-
-		isConnectionActive = futureConnection.get() ?: false
+			isConnectionActive = futureConnection.get() ?: false
+		}
 	}
 
 	@Test
 	fun `then the checking connection states are correct`() {
-		assertThat(checkingConnectionStates).containsExactly(false, true, false)
+		assertThat(checkingConnectionStates).containsExactly(false, true, false, true, false)
 	}
 
 	@Test

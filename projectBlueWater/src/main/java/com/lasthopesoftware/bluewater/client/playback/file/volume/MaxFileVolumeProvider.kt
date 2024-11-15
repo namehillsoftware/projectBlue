@@ -8,6 +8,7 @@ import com.lasthopesoftware.bluewater.settings.volumeleveling.IVolumeLevelSettin
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
+import java.util.concurrent.CancellationException
 import kotlin.math.pow
 
 class MaxFileVolumeProvider(
@@ -21,11 +22,13 @@ class MaxFileVolumeProvider(
 		private val promisedUnityVolume = UnityVolume.toPromise()
 	}
 
-	override fun promiseMaxFileVolume(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Float> =
+	override fun promiseMaxFileVolume(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Float> = Promise.Proxy { cp ->
 		volumeLevelSettings.isVolumeLevellingEnabled.eventually { isEnabled ->
+			if (cp.isCancelled) throw CancellationException("Cancelled while computing volume leveling")
 			if (!isEnabled) promisedUnityVolume
 			else libraryFileProperties
 				.promiseFileProperties(libraryId, serviceFile)
+				.also(cp::doCancel)
 				.then { fileProperties ->
 					fileProperties[KnownFileProperties.VolumeLevelReplayGain]
 						?.let { peakGainString ->
@@ -34,11 +37,15 @@ class MaxFileVolumeProvider(
 								val peakGainVolumeLevel = peakGainString.toDouble()
 								10.0.pow(peakGainVolumeLevel / 20.0).toFloat().coerceIn(0f, UnityVolume)
 							} catch (e: NumberFormatException) {
-								logger.info("There was an error attempting to parse the given '${KnownFileProperties.VolumeLevelReplayGain}' level of $peakGainString.", e)
+								logger.info(
+									"There was an error attempting to parse the given '${KnownFileProperties.VolumeLevelReplayGain}' level of $peakGainString.",
+									e
+								)
 								UnityVolume
 							}
 						}
 						?: UnityVolume
 				}
 		}
+	}
 }

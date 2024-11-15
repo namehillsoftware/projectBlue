@@ -36,6 +36,7 @@ class LibrarySettingsViewModel(
 			libraryName = "",
 			userName = "",
 			password = "",
+			macAddress = "",
 			syncedFileLocation = Library.SyncedFileLocation.INTERNAL,
 		)
 	}
@@ -61,6 +62,7 @@ class LibrarySettingsViewModel(
 			observeChanges(isUsingExistingFiles) { isUsingExistingFiles },
 			observeChanges(isSyncLocalConnectionsOnly) { isSyncLocalConnectionsOnly },
 			Observable.combineLatest(libraryState, sslCertificateFingerprint) { l, f -> !f.value.contentEquals(l.value.sslCertificateFingerprint) },
+			observeChanges(macAddress) { macAddress },
 		)
 
 		LiftedInteractionState(
@@ -83,6 +85,7 @@ class LibrarySettingsViewModel(
 	val isUsingExistingFiles = MutableInteractionState(defaultLibrary.isUsingExistingFiles)
 	val isSyncLocalConnectionsOnly = MutableInteractionState(defaultLibrary.isSyncLocalConnectionsOnly)
 	val sslCertificateFingerprint = MutableInteractionState(ByteArray(0))
+	val macAddress = MutableInteractionState(defaultLibrary.macAddress ?: "")
 	val hasSslCertificate
 		get() = hasSslCertificateObserver.value as InteractionState<Boolean>
 
@@ -128,7 +131,8 @@ class LibrarySettingsViewModel(
 				isSyncLocalConnectionsOnly = isSyncLocalConnectionsOnly.value,
 				isWakeOnLanEnabled = isWakeOnLanEnabled.value,
 				libraryName = libraryName.value,
-				sslCertificateFingerprint = sslCertificateFingerprint.value
+				sslCertificateFingerprint = sslCertificateFingerprint.value,
+				macAddress = macAddress.value
 			)
 
 		return applicationPermissions
@@ -159,6 +163,7 @@ class LibrarySettingsViewModel(
 		userName.value = result?.userName ?: ""
 		password.value = result?.password ?: ""
 		libraryName.value = result?.libraryName ?: ""
+		macAddress.value = result?.macAddress ?: ""
 		sslCertificateFingerprint.value = result?.sslCertificateFingerprint ?: ByteArray(0)
 
 		libraryState.value = (result ?: defaultLibrary).copy(
@@ -171,6 +176,7 @@ class LibrarySettingsViewModel(
 			userName = userName.value,
 			password = password.value,
 			libraryName = libraryName.value,
+			macAddress = macAddress.value,
 		)
 	}
 

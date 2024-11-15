@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.service.receivers.scrobble
 
 import android.content.Context
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.duration
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.LibraryPlaybackMessage
@@ -19,13 +19,14 @@ class PlaybackFileStartedScrobbleDroidProxy(
 				val artist = fileProperties[KnownFileProperties.Artist]
 				val name = fileProperties[KnownFileProperties.Name]
 				val album = fileProperties[KnownFileProperties.Album]
-				val duration = FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties)
+				val duration = fileProperties.duration?.standardSeconds
 
 				val scrobbleDroidIntent = scrobbleIntentProvider.provideScrobbleIntent(true)
 				scrobbleDroidIntent.putExtra("artist", artist)
 				scrobbleDroidIntent.putExtra("album", album)
 				scrobbleDroidIntent.putExtra("track", name)
-				scrobbleDroidIntent.putExtra("secs", (duration / 1000).toInt())
+				if (duration != null)
+					scrobbleDroidIntent.putExtra("secs", duration)
 
 				fileProperties[KnownFileProperties.Track]
 					?.takeIf { it.isNotEmpty() }

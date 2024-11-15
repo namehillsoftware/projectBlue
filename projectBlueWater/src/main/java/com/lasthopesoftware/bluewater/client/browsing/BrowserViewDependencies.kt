@@ -74,7 +74,6 @@ import com.lasthopesoftware.resources.strings.StringResources
 	val pollForConnections: PollForLibraryConnections
 	val nowPlayingCoverArtViewModel: NowPlayingCoverArtViewModel
 	val nowPlayingPlaylistViewModel: NowPlayingPlaylistViewModel
-	val nowPlayingScreenViewModel: NowPlayingScreenViewModel
 	val connectionWatcherViewModel: ConnectionWatcherViewModel
 	val reusablePlaylistFileItemViewModelProvider: ReusablePlaylistFileItemViewModelProvider
 	val reusableChildItemViewModelProvider: ReusableChildItemViewModelProvider
@@ -101,4 +100,5 @@ interface ScopedBrowserViewDependencies : BrowserViewDependencies {
 	val librarySettingsViewModel: LibrarySettingsViewModel
 	val nowPlayingViewModelMessageBus: ViewModelMessageBus<NowPlayingMessage>
 	val fileDetailsViewModel: FileDetailsViewModel
+	val nowPlayingScreenViewModel: NowPlayingScreenViewModel
 }

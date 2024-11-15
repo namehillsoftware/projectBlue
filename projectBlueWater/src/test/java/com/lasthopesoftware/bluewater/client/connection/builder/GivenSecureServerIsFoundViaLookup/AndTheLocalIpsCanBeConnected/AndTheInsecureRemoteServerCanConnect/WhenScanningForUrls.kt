@@ -15,6 +15,7 @@ import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
+import org.apache.commons.codec.binary.Hex
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -40,11 +41,11 @@ class WhenScanningForUrls {
 				143,
 				452,
 				"1.2.3.4",
-				listOf(
+				setOf(
 					"53.24.19.245",
 					"192.168.1.56"
-				), emptyList(),
-				"2386166660562C5AAA1253B2BED7C2483F9C2D45"
+				), emptySet(),
+				Hex.decodeHex("2386166660562C5AAA1253B2BED7C2483F9C2D45")
 			)
 		)
 

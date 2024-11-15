@@ -5,6 +5,7 @@ import android.util.Base64
 import androidx.annotation.Keep
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityInformation.createTableSql
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityInformation.isWakeOnLanEnabledColumn
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityInformation.macAddressColumn
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityInformation.sslCertificateFingerprintColumn
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryEntityInformation.tableName
 import com.lasthopesoftware.bluewater.repository.IEntityUpdater
@@ -80,6 +81,10 @@ object LibraryEntityUpdater : IEntityUpdater {
 
 		if (oldVersion < 15) {
 			db.execSQL("ALTER TABLE `$tableName` ADD COLUMN `$sslCertificateFingerprintColumn` BLOB;")
+		}
+
+		if (oldVersion < 17) {
+			db.execSQL("ALTER TABLE `$tableName` ADD COLUMN `$macAddressColumn` VARCHAR(20);")
 		}
 	}
 

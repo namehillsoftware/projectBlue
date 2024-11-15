@@ -198,8 +198,8 @@ private fun RemoveServerConfirmationDialog(
 			buttons = {
 				Row(
 					modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(Dimensions.viewPaddingUnit),
+						.fillMaxWidth()
+						.padding(Dimensions.viewPaddingUnit),
 					horizontalArrangement = Arrangement.SpaceEvenly,
 				) {
 					Button(
@@ -228,9 +228,9 @@ private fun RemoveServerConfirmationDialog(
 			text = {
 				Box(
 					modifier = Modifier
-                        .padding(Dimensions.viewPaddingUnit)
-                        .fillMaxWidth()
-                        .heightIn(100.dp, 300.dp),
+						.padding(Dimensions.viewPaddingUnit)
+						.fillMaxWidth()
+						.heightIn(100.dp, 300.dp),
 					contentAlignment = Alignment.Center
 				) {
 					Text(stringResource(id = R.string.confirmServerRemoval, accessCodeState))
@@ -358,7 +358,11 @@ private fun LibrarySettingsList(
 				}
 			}
 
-			SpacedOutRow {
+			Column(
+				modifier = Modifier
+					.fillMaxWidth(inputRowMaxWidth)
+					.selectableGroup()
+			) {
 				var isWolEnabledState by isWakeOnLanEnabled.subscribeAsMutableState()
 				LabeledSelection(
 					label = stringResource(id = R.string.wake_on_lan_setting),
@@ -369,6 +373,16 @@ private fun LibrarySettingsList(
 					Checkbox(
 						checked = isWolEnabledState,
 						onCheckedChange = null,
+					)
+				}
+
+				if (isWolEnabledState) {
+					var macAddressState by macAddress.subscribeAsMutableState()
+					StandardTextField(
+						placeholder = stringResource(R.string.optional_mac_address),
+						value = macAddressState,
+						onValueChange = { macAddressState = it },
+						modifier = Modifier.padding(innerGroupPadding),
 					)
 				}
 			}
@@ -486,8 +500,8 @@ fun LibrarySettingsView(
 
 		Box(
 			modifier = Modifier
-                .fillMaxSize()
-                .nestedScroll(heightScaler)
+				.fillMaxSize()
+				.nestedScroll(heightScaler)
 		) {
 			val heightValue by heightScaler.getValueState()
 
@@ -513,18 +527,18 @@ fun LibrarySettingsView(
 
 			Box(
 				modifier = Modifier
-                    .fillMaxWidth()
-                    .align(Alignment.TopStart)
-                    .background(MaterialTheme.colors.surface)
-                    .height(LocalDensity.current.run { heightValue.toDp() })
+					.fillMaxWidth()
+					.align(Alignment.TopStart)
+					.background(MaterialTheme.colors.surface)
+					.height(LocalDensity.current.run { heightValue.toDp() })
 			) {
 				val headerHidingProgress by heightScaler.getProgressState()
 				val headerExpandingProgress by remember { derivedStateOf { 1 - headerHidingProgress } }
 				val topPadding by remember { derivedStateOf(structuralEqualityPolicy()) { (appBarHeight - 46.dp * headerHidingProgress) } }
 				BoxWithConstraints(
 					modifier = Modifier
-                        .height(boxHeight)
-                        .padding(top = topPadding)
+						.height(boxHeight)
+						.padding(top = topPadding)
 				) {
 					val iconSize = Dimensions.topMenuIconSize
 					val acceleratedToolbarStateProgress by remember {
@@ -550,8 +564,8 @@ fun LibrarySettingsView(
 							gradientSides = setOf(GradientSide.End),
 							gradientEdgeColor = MaterialTheme.colors.surface,
 							modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(start = startPadding, end = endPadding),
+								.fillMaxWidth()
+								.padding(start = startPadding, end = endPadding),
 						)
 					}
 
@@ -560,14 +574,14 @@ fun LibrarySettingsView(
 					val topRowPadding by remember { derivedStateOf(structuralEqualityPolicy()) { (expandedTopRowPadding - (expandedTopRowPadding - collapsedTopRowPadding) * headerHidingProgress) } }
 					Row(
 						modifier = Modifier
-                            .padding(
-                                top = topRowPadding,
-                                bottom = expandedMenuVerticalPadding,
-                                start = Dimensions.viewPaddingUnit * 2,
-                                end = Dimensions.viewPaddingUnit * 2
-                            )
-                            .width(menuWidth)
-                            .align(Alignment.TopEnd)
+							.padding(
+								top = topRowPadding,
+								bottom = expandedMenuVerticalPadding,
+								start = Dimensions.viewPaddingUnit * 2,
+								end = Dimensions.viewPaddingUnit * 2
+							)
+							.width(menuWidth)
+							.align(Alignment.TopEnd)
 					) {
 						val textModifier = Modifier.alpha(acceleratedToolbarStateProgress)
 

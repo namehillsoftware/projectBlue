@@ -39,7 +39,8 @@ class WhenRetrievingTheLibraryConnection {
 			lookupConnection,
 			NoopServerAlarm,
 			liveUrlProvider,
-			OkHttpFactory
+			OkHttpFactory,
+			mockk(),
 		)
 
 		Pair(deferredConnectionSettings, libraryConnectionProvider)

@@ -13,7 +13,7 @@ import org.jsoup.parser.Parser
 
 class ServerInfoXmlRequest(private val libraryProvider: ILibraryProvider, private val clientFactory: ProvideOkHttpClients) : RequestServerInfoXml {
 	override fun promiseServerInfoXml(libraryId: LibraryId): Promise<Document?> = Promise.Proxy { cp ->
-		libraryProvider.promiseLibrary(libraryId).eventually { library ->
+		libraryProvider.promiseLibrary(libraryId).also(cp::doCancel).eventually { library ->
 			library
 				?.run {
 					Request.Builder()

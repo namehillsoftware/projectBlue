@@ -8,7 +8,6 @@ import com.lasthopesoftware.promises.extensions.toPromise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.joda.time.Duration
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
@@ -29,9 +28,7 @@ class WhenSendingAWakeSignal {
 				MachineAddress(
 					"http://my-sleeping-beauty",
 					"01-58-87-FA-91-25"
-				),
-				1,
-				Duration.ZERO
+				)
 			)
 			.toExpiringFuture()
 			.get()

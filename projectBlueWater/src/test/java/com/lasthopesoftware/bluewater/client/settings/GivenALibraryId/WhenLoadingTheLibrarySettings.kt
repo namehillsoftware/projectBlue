@@ -85,4 +85,9 @@ class WhenLoadingTheLibrarySettings {
 	fun `then the library name is correct`() {
 		assertThat(services.libraryName.value).isEmpty()
 	}
+
+	@Test
+	fun `then the mac address is correct`() {
+		assertThat(services.macAddress.value).isEmpty()
+	}
 }

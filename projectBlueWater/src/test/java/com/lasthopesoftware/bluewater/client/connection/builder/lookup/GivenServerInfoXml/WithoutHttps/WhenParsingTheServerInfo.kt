@@ -32,13 +32,17 @@ class WhenParsingTheServerInfo {
 				Parser.xmlParser()
 			)
 		)
-		val serverLookup = ServerLookup(serverInfoXml)
+		val serverLookup = ServerLookup(
+			mockk {
+				every { lookupConnectionSettings(LibraryId(10)) } returns Promise.empty()
+			},
+			serverInfoXml)
 		serverLookup.promiseServerInformation(LibraryId(10)).toExpiringFuture().get()
 	}
 
 	@Test
 	fun `then the remote ip is correct`() {
-		assertThat(serverInfo!!.remoteIp).isEqualTo("108.491.23.154")
+		assertThat(serverInfo!!.remoteHost).isEqualTo("108.491.23.154")
 	}
 
 	@Test
@@ -58,7 +62,7 @@ class WhenParsingTheServerInfo {
 
 	@Test
 	fun `then the certificate fingerprint is correct is null`() {
-		assertThat(serverInfo!!.certificateFingerprint).isNull()
+		assertThat(serverInfo!!.certificateFingerprint).isEmpty()
 	}
 
 	@Test

@@ -1,7 +1,6 @@
 package com.lasthopesoftware.bluewater.client.connection.builder.lookup.GivenServerInfoErrorXml
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.builder.lookup.RequestServerInfoXml
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerDiscoveryException
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerLookup
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
@@ -18,19 +17,22 @@ import java.util.concurrent.ExecutionException
 class WhenParsingTheServerInfo {
 
 	private val mut by lazy {
-		val serverInfoXml = mockk<RequestServerInfoXml>()
-		every { serverInfoXml.promiseServerInfoXml(any()) } returns Promise(
-			Jsoup.parse(
-				"""<?xml version="1.0" encoding="UTF-8"?>
+		ServerLookup(
+			mockk {
+				every { lookupConnectionSettings(any()) } returns Promise.empty()
+			},
+			mockk {
+				every { promiseServerInfoXml(any()) } returns Promise(
+					Jsoup.parse(
+						"""<?xml version="1.0" encoding="UTF-8"?>
 <Response Status="Error">
 <msg>Keyid gooPc not found.</msg></Response>""",
-				"",
-				Parser.xmlParser()
-			)
+						"",
+						Parser.xmlParser()
+					)
+				)
+			}
 		)
-
-		val serverLookup = ServerLookup(serverInfoXml)
-		serverLookup
 	}
 
 	private var exception: ServerDiscoveryException? = null

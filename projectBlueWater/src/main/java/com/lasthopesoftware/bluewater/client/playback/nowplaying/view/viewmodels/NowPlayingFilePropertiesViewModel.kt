@@ -2,7 +2,7 @@ package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodel
 
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.durationInMs
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideFreshLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertiesUpdatedMessage
@@ -337,8 +337,8 @@ class NowPlayingFilePropertiesViewModel(
 		artistState.value = fileProperties[KnownFileProperties.Artist] ?: stringResources.defaultNowPlayingArtist
 		titleState.value = fileProperties[KnownFileProperties.Name] ?: stringResources.defaultNowPlayingTrackTitle
 
-		val duration = FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties)
-		setTrackDuration(if (duration > 0) duration else Int.MAX_VALUE)
+		val duration = fileProperties.durationInMs ?: Int.MAX_VALUE
+		setTrackDuration(duration)
 
 		if (activeSongRatingUpdates == 0) {
 			val stringRating = fileProperties[KnownFileProperties.Rating]

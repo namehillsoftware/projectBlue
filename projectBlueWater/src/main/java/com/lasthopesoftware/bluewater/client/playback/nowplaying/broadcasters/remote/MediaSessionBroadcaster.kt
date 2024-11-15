@@ -7,7 +7,7 @@ import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideLibraryImages
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.durationInMs
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -138,7 +138,7 @@ class MediaSessionBroadcaster(
 				val artist = fileProperties[KnownFileProperties.Artist]
 				val name = fileProperties[KnownFileProperties.Name]
 				val album = fileProperties[KnownFileProperties.Album]
-				val duration = FilePropertyHelpers.parseDurationIntoMilliseconds(fileProperties)
+				val duration = fileProperties.durationInMs ?: -1
 
 				val metadataBuilder = MediaMetadataCompat.Builder(mediaMetadata)
 				metadataBuilder.putString(MediaMetadata.METADATA_KEY_ARTIST, artist)

@@ -10,12 +10,14 @@ import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSetti
 import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.ValidateConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
+import com.lasthopesoftware.bluewater.client.connection.waking.AlarmConfiguration
 import com.lasthopesoftware.bluewater.shared.promises.extensions.DeferredPromise
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
+import org.joda.time.Duration
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
@@ -44,7 +46,8 @@ class WhenRetrievingTheLibraryConnection {
 				Unit.toPromise()
 			},
 			liveUrlProvider,
-			OkHttpFactory
+			OkHttpFactory,
+			AlarmConfiguration(0, Duration.ZERO),
 		)
 
 		Pair(deferredConnectionSettings, libraryConnectionProvider)
@@ -73,8 +76,8 @@ class WhenRetrievingTheLibraryConnection {
 	}
 
 	@Test
-	fun `then the library is woken`() {
-		assertThat(isLibraryServerWoken).isTrue
+	fun `then the library is not woken because an attempt is made to connect first`() {
+		assertThat(isLibraryServerWoken).isFalse
 	}
 
 	@Test
@@ -87,7 +90,6 @@ class WhenRetrievingTheLibraryConnection {
 		assertThat(statuses)
 			.containsExactly(
 				BuildingConnectionStatus.GettingLibrary,
-				BuildingConnectionStatus.SendingWakeSignal,
 				BuildingConnectionStatus.BuildingConnection,
 				BuildingConnectionStatus.BuildingConnectionComplete
 			)

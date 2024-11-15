@@ -1092,7 +1092,7 @@ fun NowPlayingView(
 		}
 	}
 
-	val isConnectionLost by connectionWatcherViewModel.isCheckingConnection.collectAsState()
+	val isConnectionLost by connectionWatcherViewModel.isCheckingConnection.subscribeAsState()
 	if (isConnectionLost) {
 		AlertDialog(
 			onDismissRequest = { connectionWatcherViewModel.cancelLibraryConnectionPolling() },

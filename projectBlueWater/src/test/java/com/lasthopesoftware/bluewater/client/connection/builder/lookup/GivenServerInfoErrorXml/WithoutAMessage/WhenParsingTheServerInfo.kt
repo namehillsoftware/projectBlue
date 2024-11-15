@@ -29,7 +29,11 @@ class WhenParsingTheServerInfo {
 			)
 		)
 
-		val serverLookup = ServerLookup(serverInfoXml)
+		val serverLookup = ServerLookup(
+			mockk {
+				every { lookupConnectionSettings(LibraryId(5)) } returns Promise.empty()
+			},
+			serverInfoXml)
 		serverLookup
 	}
 

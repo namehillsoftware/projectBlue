@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.properties.playstats.fileproperties
 
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.parseDurationIntoMilliseconds
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.durationInMs
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideFreshLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.UpdateFileProperties
@@ -20,7 +20,7 @@ class FilePropertiesPlayStatsUpdater(
 			.eventually { fileProperties ->
 				try {
 					val lastPlayedServer = fileProperties[KnownFileProperties.LastPlayed]
-					val duration = parseDurationIntoMilliseconds(fileProperties)
+					val duration = fileProperties.durationInMs ?: 0
 					val currentTime = System.currentTimeMillis()
 					if (lastPlayedServer != null && currentTime - duration <= lastPlayedServer.toLong() * 1000) return@eventually Promise.empty<Collection<Unit>>()
 

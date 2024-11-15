@@ -43,7 +43,8 @@ class WhenRetrievingTheLibraryConnection {
 				Unit.toPromise()
 			},
 			liveUrlProvider,
-			OkHttpFactory
+			OkHttpFactory,
+			mockk(),
 		)
 
 		libraryConnectionProvider

@@ -11,6 +11,8 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewMod
 import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingMessage
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.InMemoryNowPlayingDisplaySettings
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingScreenViewModel
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsViewModel
 import com.lasthopesoftware.bluewater.client.settings.PermissionsDependencies
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.view.ActiveFileDownloadsViewModel
@@ -75,6 +77,14 @@ class ScopedViewModelDependencies(inner: BrowserViewDependencies, permissionsDep
 			controlPlayback = playbackServiceController,
 			registerForApplicationMessages = messageBus,
 			urlKeyProvider = urlKeyProvider,
+		)
+	}
+
+	override val nowPlayingScreenViewModel by viewModelStoreOwner.buildViewModelLazily {
+		NowPlayingScreenViewModel(
+			messageBus,
+			InMemoryNowPlayingDisplaySettings,
+			playbackServiceController,
 		)
 	}
 }

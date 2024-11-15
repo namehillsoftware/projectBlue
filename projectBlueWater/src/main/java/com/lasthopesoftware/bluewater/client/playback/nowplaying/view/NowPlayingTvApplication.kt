@@ -444,7 +444,7 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedBr
 	}
 
 	val connectionWatcherViewModel = browserViewDependencies.connectionWatcherViewModel
-	val isConnectionLost by connectionWatcherViewModel.isCheckingConnection.collectAsState()
+	val isConnectionLost by connectionWatcherViewModel.isCheckingConnection.subscribeAsState()
 	if (isConnectionLost) {
 		AlertDialog(
 			onDismissRequest = { connectionWatcherViewModel.cancelLibraryConnectionPolling() },
@@ -813,7 +813,7 @@ fun NowPlayingTvApplication(
 			}
 		}
 
-		val isCheckingConnection by connectionStatusViewModel.isGettingConnection.collectAsState()
+		val isCheckingConnection by connectionStatusViewModel.isGettingConnection.subscribeAsState()
 		if (isCheckingConnection) {
 			Box(
 				modifier = Modifier.fillMaxSize()

@@ -4,5 +4,5 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.namehillsoftware.handoff.promises.Promise
 
 interface LookupServers {
-	fun promiseServerInformation(libraryId: LibraryId): Promise<ServerInfo?>
+	fun promiseServerInformation(libraryId: LibraryId): Promise<ServerInfo>
 }

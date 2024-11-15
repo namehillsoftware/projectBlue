@@ -9,22 +9,30 @@ import com.lasthopesoftware.bluewater.client.connection.okhttp.OkHttpFactory
 import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.ValidateConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.url.IUrlProvider
+import com.lasthopesoftware.bluewater.client.connection.waking.AlarmConfiguration
 import com.lasthopesoftware.bluewater.client.connection.waking.WakeLibraryServer
+import com.lasthopesoftware.promises.PromiseDelay
 import com.lasthopesoftware.promises.extensions.ProgressingPromise
+import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.propagation.CancellationProxy
+import java.util.concurrent.CancellationException
 
 class LibraryConnectionProvider(
 	private val validateConnectionSettings: ValidateConnectionSettings,
 	private val lookupConnectionSettings: LookupConnectionSettings,
 	private val wakeAlarm: WakeLibraryServer,
 	private val liveUrlProvider: ProvideLiveUrl,
-	private val okHttpFactory: OkHttpFactory
+	private val okHttpFactory: OkHttpFactory,
+	private val alarmConfiguration: AlarmConfiguration,
 ) : ProvideLibraryConnections {
 
 	override fun promiseLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, ProvideConnections?> =
 		object : ProgressingPromise<BuildingConnectionStatus, ProvideConnections?>() {
 			private val cancellationProxy = CancellationProxy()
+
+			@Volatile
+			private var wakeAttempts = 0
 
 			init {
 				awaitCancellation(cancellationProxy)
@@ -50,7 +58,7 @@ class LibraryConnectionProvider(
 						reject(it)
 						empty()
 					})
-					.then({ it ->
+					.then({
 						if (it != null) {
 							reportProgress(BuildingConnectionStatus.BuildingConnectionComplete)
 							resolve(ConnectionProvider(it, okHttpFactory))
@@ -58,20 +66,45 @@ class LibraryConnectionProvider(
 							reportProgress(BuildingConnectionStatus.BuildingConnectionFailed)
 							resolve(null)
 						}
-					}, {
+					}, { e ->
 						reportProgress(BuildingConnectionStatus.BuildingConnectionFailed)
-						reject(it)
+						if (e is CancellationException) resolve(null)
+						else reject(e)
 					})
 			}
 
 			private fun wakeAndBuildConnection(): Promise<IUrlProvider?> {
 				if (cancellationProxy.isCancelled) return empty()
 
+				return buildConnection()
+					.eventually({
+						when {
+							it != null -> it.toPromise()
+							wakeAttempts < alarmConfiguration.timesToWake -> attemptToWake()
+							else -> empty()
+						}
+					}, { e ->
+						if (wakeAttempts < alarmConfiguration.timesToWake) attemptToWake() else Promise(e)
+					})
+			}
+
+			private fun attemptToWake(): Promise<IUrlProvider?> {
+				if (cancellationProxy.isCancelled) return empty()
+
+				++wakeAttempts
+
 				reportProgress(BuildingConnectionStatus.SendingWakeSignal)
 				return wakeAlarm
 					.awakeLibraryServer(libraryId)
 					.also(cancellationProxy::doCancel)
-					.eventually { buildConnection() }
+					.eventually {
+						PromiseDelay
+							.delay<Unit>(alarmConfiguration.durationBetweenWaking)
+							.also(cancellationProxy::doCancel)
+					}
+					.eventually {
+						wakeAndBuildConnection()
+					}
 			}
 
 			private fun buildConnection(): Promise<IUrlProvider?> {

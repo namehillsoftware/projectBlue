@@ -37,7 +37,6 @@ import androidx.compose.material.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.State
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -294,7 +293,7 @@ fun FilePropertyRow(viewModel: FileDetailsViewModel, property: FileDetailsViewMo
 				),
 		)
 
-		val propertyValue by property.committedValue.collectAsState()
+		val propertyValue by property.committedValue.subscribeAsState()
 
 		when (property.property) {
 			KnownFileProperties.Rating -> {
@@ -385,8 +384,8 @@ private fun FileDetailsEditor(
 
 					val fieldFocusRequester = remember { FocusRequester() }
 					val propertyValueFlow = fileProperty.uncommittedValue
-					val propertyValue by propertyValueFlow.collectAsState()
-					val isEditing by fileProperty.isEditing.collectAsState()
+					val propertyValue by propertyValueFlow.subscribeAsState()
+					val isEditing by fileProperty.isEditing.subscribeAsState()
 					Box(
 						modifier = Modifier
 							.padding(viewPadding)

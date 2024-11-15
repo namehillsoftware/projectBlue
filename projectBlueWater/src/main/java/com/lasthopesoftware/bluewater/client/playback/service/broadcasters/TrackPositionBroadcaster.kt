@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.service.broadcasters
 
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.duration
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile
@@ -19,14 +19,12 @@ class TrackPositionBroadcaster(
 		fileProperties
 			.promiseFileProperties(libraryId, positionedProgressedFile.serviceFile)
 			.then { p ->
-				FilePropertyHelpers.parseDurationIntoMilliseconds(p)
-					.takeIf { it > -1 }
-					?.let { duration ->
-						positionedProgressedFile.progress
-							.then { progress ->
-								sendApplicationMessages.sendMessage(TrackPositionUpdate(progress, Duration.millis(duration)))
-							}
-					}
+				p.duration?.let { duration ->
+					positionedProgressedFile.progress
+						.then { progress ->
+							sendApplicationMessages.sendMessage(TrackPositionUpdate(progress, duration))
+						}
+				}
 			}
 	}
 

@@ -4,7 +4,7 @@ import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaMetadataCompat
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideScopedImages
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.durationInMs
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideScopedFileProperties
 import com.namehillsoftware.handoff.promises.Promise
@@ -46,7 +46,7 @@ class MediaItemServiceFileLookup(
 					val artist = p[KnownFileProperties.Artist]
 					val name = p[KnownFileProperties.Name]
 					val album = p[KnownFileProperties.Album]
-					val duration = FilePropertyHelpers.parseDurationIntoMilliseconds(p)
+					val duration = p.durationInMs ?: -1
 
 					putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, RemoteBrowserService.serviceFileMediaIdPrefix + RemoteBrowserService.mediaIdDelimiter + p[KnownFileProperties.Key])
 					putString(MediaMetadataCompat.METADATA_KEY_ARTIST, artist)

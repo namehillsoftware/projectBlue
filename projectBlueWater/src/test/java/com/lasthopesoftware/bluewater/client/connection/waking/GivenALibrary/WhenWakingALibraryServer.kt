@@ -3,7 +3,6 @@ package com.lasthopesoftware.bluewater.client.connection.waking.GivenALibrary
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.LookupServers
 import com.lasthopesoftware.bluewater.client.connection.builder.lookup.ServerInfo
-import com.lasthopesoftware.bluewater.client.connection.waking.AlarmConfiguration
 import com.lasthopesoftware.bluewater.client.connection.waking.MachineAddress
 import com.lasthopesoftware.bluewater.client.connection.waking.PokeServer
 import com.lasthopesoftware.bluewater.client.connection.waking.ServerAlarm
@@ -13,7 +12,6 @@ import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.joda.time.Duration
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
@@ -30,24 +28,24 @@ class WhenWakingALibraryServer {
 
 	private val mut by lazy {
 		val lookupServers = mockk<LookupServers>().apply {
-			every { promiseServerInformation(any()) } returns Promise<ServerInfo?>(
+			every { promiseServerInformation(any()) } returns Promise(
 				ServerInfo(
 					5001,
 					5002,
 					"remote-address",
-					listOf("local-address", "second-local-address"),
-					listOf("AB-E0-9F-24-F5", "99-53-7F-2C-A1"),
-					null
+					setOf("local-address", "second-local-address"),
+					setOf("AB-E0-9F-24-F5", "99-53-7F-2C-A1"),
+					ByteArray(0)
 				)
 			)
 		}
 
 		val pokeServer = mockk<PokeServer>().apply {
-			every { promiseWakeSignal(any(), any(), any()) } answers {
+			every { promiseWakeSignal(any()) } answers {
 				Unit.toPromise()
 			}
 
-			every { promiseWakeSignal(any(), 10, Duration.standardHours(10)) } answers {
+			every { promiseWakeSignal(any()) } answers {
 				pokedMachineAddresses.add(firstArg())
 				Unit.toPromise()
 			}
@@ -55,10 +53,9 @@ class WhenWakingALibraryServer {
 		}
 
 		val serverAlarm = ServerAlarm(
-			lookupServers,
-			pokeServer,
-			AlarmConfiguration(10, Duration.standardHours(10))
-		)
+            lookupServers,
+            pokeServer
+        )
 
 		serverAlarm
 	}
