@@ -4,6 +4,7 @@ import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.os.Build
+import java.net.NetworkInterface
 
 class ActiveNetworkFinder(context: Context) : CheckForActiveNetwork {
     private val connectivityManager by lazy {
@@ -30,4 +31,19 @@ class ActiveNetworkFinder(context: Context) : CheckForActiveNetwork {
 				connectivityManager?.activeNetworkInfo?.isConnected ?: false
 			}
 
+	override val activeNetwork: NetworkInterface?
+		get() {
+			val activeNetworkName = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+				connectivityManager?.activeNetwork
+					?.let { network -> connectivityManager?.getLinkProperties(network) }
+					?.interfaceName
+			} else {
+				@Suppress("DEPRECATION") // handled
+				connectivityManager?.activeNetworkInfo?.extraInfo
+			}
+
+			return NetworkInterface.getNetworkInterfaces().asSequence()
+				.filter { i -> i.name == activeNetworkName }
+				.firstOrNull()
+		}
 }

@@ -131,14 +131,15 @@ class ConnectionSessionManager(
 				ServerInfoXmlRequest(LibraryRepository(context), OkHttpFactory),
 			)
 
+			val activeNetwork = ActiveNetworkFinder(context)
 			return ConnectionSessionManager(
 				ConnectionTester,
 				LibraryConnectionProvider(
 					ConnectionSettingsValidation,
 					connectionSettingsLookup,
-					ServerAlarm(serverLookup, serverWakeSignal),
+					ServerAlarm(serverLookup, activeNetwork, serverWakeSignal),
 					LiveUrlProvider(
-						ActiveNetworkFinder(context),
+						activeNetwork,
 						UrlScanner(
 							Base64Encoder,
 							ConnectionTester,

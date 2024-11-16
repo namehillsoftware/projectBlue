@@ -56,6 +56,7 @@ class WhenCancellingWakingALibraryServer {
 
 		val serverAlarm = ServerAlarm(
             lookupServers,
+			mockk(relaxed = true),
             pokeServer
         )
 
