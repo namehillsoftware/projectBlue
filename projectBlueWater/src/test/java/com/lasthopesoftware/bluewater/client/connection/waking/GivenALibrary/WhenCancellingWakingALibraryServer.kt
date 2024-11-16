@@ -24,7 +24,9 @@ class WhenCancellingWakingALibraryServer {
 		MachineAddress("second-local-address", "AB-E0-9F-24-F5"),
 		MachineAddress("second-local-address", "99-53-7F-2C-A1"),
 		MachineAddress("remote-address", "AB-E0-9F-24-F5"),
-		MachineAddress("remote-address", "99-53-7F-2C-A1")
+		MachineAddress("remote-address", "99-53-7F-2C-A1"),
+		MachineAddress("255.255.255.255", "99-53-7F-2C-A1"),
+		MachineAddress("255.255.255.255", "AB-E0-9F-24-F5"),
 	)
 
 	private val mut by lazy {
@@ -56,7 +58,10 @@ class WhenCancellingWakingALibraryServer {
 
 		val serverAlarm = ServerAlarm(
             lookupServers,
-			mockk(relaxed = true),
+			mockk {
+				every { isLocalNetworkActive } returns true
+				every { activeNetworkInterface } returns null
+			},
             pokeServer
         )
 
