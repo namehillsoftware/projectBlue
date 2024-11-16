@@ -41,19 +41,17 @@ class WhenWakingALibraryServer {
 		}
 
 		val pokeServer = mockk<PokeServer>().apply {
-			every { promiseWakeSignal(any()) } answers {
-				Unit.toPromise()
-			}
+			every { promiseWakeSignal(any()) } returns Unit.toPromise()
 
 			every { promiseWakeSignal(any()) } answers {
 				pokedMachineAddresses.add(firstArg())
 				Unit.toPromise()
 			}
-
 		}
 
 		val serverAlarm = ServerAlarm(
             lookupServers,
+			mockk(relaxed = true),
             pokeServer
         )
 

@@ -42,6 +42,7 @@ class WhenCancellingWhileGettingServerInfo {
 
 		val serverAlarm = ServerAlarm(
             lookupServers,
+			mockk(),
             pokeServer
         )
 
