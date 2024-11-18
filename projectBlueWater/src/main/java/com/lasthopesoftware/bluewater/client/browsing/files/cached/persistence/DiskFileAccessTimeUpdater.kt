@@ -7,9 +7,9 @@ import com.lasthopesoftware.bluewater.repository.RepositoryAccessHelper
 import com.lasthopesoftware.resources.executors.ThreadPools.promiseTableMessage
 import com.namehillsoftware.handoff.promises.Promise
 import org.slf4j.LoggerFactory
-import java.util.*
+import java.util.Date
 
-class DiskFileAccessTimeUpdater(private val context: Context) : IDiskFileAccessTimeUpdater {
+class DiskFileAccessTimeUpdater(private val context: Context) : UpdateDiskFileAccessTime {
 	override fun promiseFileAccessedUpdate(cachedFile: CachedFile): Promise<CachedFile> = promiseTableMessage<CachedFile, CachedFile> {
 		doFileAccessedUpdate(cachedFile.id)
 		cachedFile

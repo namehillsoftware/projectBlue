@@ -2,13 +2,13 @@ package com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist
 
 import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.client.connection.session.ManageConnectionSessions
+import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 import okhttp3.Response
 
-class LibraryFileStringListProvider(private val libraryConnections: ManageConnectionSessions) :
+class LibraryFileStringListProvider(private val libraryConnections: ProvideLibraryConnections) :
 	ProvideFileStringListsForParameters,
 	ImmediateResponse<Response?, String>
 {

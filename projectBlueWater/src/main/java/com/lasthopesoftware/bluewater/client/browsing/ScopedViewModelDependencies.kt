@@ -2,29 +2,51 @@ package com.lasthopesoftware.bluewater.client.browsing
 
 import androidx.lifecycle.ViewModelStoreOwner
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
+import com.lasthopesoftware.bluewater.client.browsing.files.image.CachedImageProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
+import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusableFileItemViewModelProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusablePlaylistFileItemViewModelProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.list.SearchFilesViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableLibraryFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
+import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistsStorage
 import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibraryConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionDependencies
+import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
+import com.lasthopesoftware.bluewater.client.connection.session.ConnectionWatcherViewModel
+import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionStatusViewModel
+import com.lasthopesoftware.bluewater.client.connection.session.initialization.DramaticConnectionInitializationController
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingMessage
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.InMemoryNowPlayingDisplaySettings
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingCoverArtViewModel
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingScreenViewModel
+import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.playlist.NowPlayingPlaylistViewModel
 import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsViewModel
 import com.lasthopesoftware.bluewater.client.settings.PermissionsDependencies
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.view.ActiveFileDownloadsViewModel
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 
-class ScopedViewModelDependencies(inner: BrowserViewDependencies, permissionsDependencies: PermissionsDependencies, viewModelStoreOwner: ViewModelStoreOwner) : ScopedBrowserViewDependencies, BrowserViewDependencies by inner {
+class ScopedViewModelDependencies(
+	entryDependencies: EntryDependencies,
+	libraryConnectionDependencies: LibraryConnectionDependencies,
+	permissionsDependencies: PermissionsDependencies,
+	viewModelStoreOwner: ViewModelStoreOwner
+) :
+	ViewDependencies,
+	EntryDependencies by entryDependencies,
+	LibraryConnectionDependencies by libraryConnectionDependencies
+{
+	override val imageProvider by lazy { CachedImageProvider.getInstance(this, this) }
 
 	override val itemListViewModel by viewModelStoreOwner.buildViewModelLazily {
         ItemListViewModel(
             itemProvider,
-            messageBus,
+            registerForApplicationMessages,
             libraryProvider,
         )
 	}
@@ -39,7 +61,7 @@ class ScopedViewModelDependencies(inner: BrowserViewDependencies, permissionsDep
 	override val activeFileDownloadsViewModel by viewModelStoreOwner.buildViewModelLazily {
         ActiveFileDownloadsViewModel(
             storedFileAccess,
-            messageBus,
+            registerForApplicationMessages,
             syncScheduler,
         )
 	}
@@ -54,6 +76,26 @@ class ScopedViewModelDependencies(inner: BrowserViewDependencies, permissionsDep
 			libraryStorage = libraryStorage,
 			libraryRemoval = libraryRemoval,
 			applicationPermissions = permissionsDependencies.applicationPermissions,
+		)
+	}
+
+	override val nowPlayingCoverArtViewModel by viewModelStoreOwner.buildViewModelLazily {
+		NowPlayingCoverArtViewModel(
+			registerForApplicationMessages,
+			nowPlayingState,
+			libraryConnectionProvider,
+			defaultImageProvider,
+			imageProvider,
+			pollForConnections,
+		)
+	}
+
+	override val nowPlayingPlaylistViewModel by viewModelStoreOwner.buildViewModelLazily {
+		NowPlayingPlaylistViewModel(
+			registerForApplicationMessages,
+			nowPlayingState,
+			playbackServiceController,
+			PlaylistsStorage(libraryConnectionProvider),
 		)
 	}
 
@@ -75,16 +117,67 @@ class ScopedViewModelDependencies(inner: BrowserViewDependencies, permissionsDep
 			defaultImageProvider = defaultImageProvider,
 			imageProvider = imageProvider,
 			controlPlayback = playbackServiceController,
-			registerForApplicationMessages = messageBus,
+			registerForApplicationMessages = registerForApplicationMessages,
 			urlKeyProvider = urlKeyProvider,
 		)
 	}
 
 	override val nowPlayingScreenViewModel by viewModelStoreOwner.buildViewModelLazily {
 		NowPlayingScreenViewModel(
-			messageBus,
+			registerForApplicationMessages,
 			InMemoryNowPlayingDisplaySettings,
 			playbackServiceController,
+		)
+	}
+
+	override val nowPlayingFilePropertiesViewModel by viewModelStoreOwner.buildViewModelLazily {
+		NowPlayingFilePropertiesViewModel(
+			registerForApplicationMessages,
+			nowPlayingState,
+			freshLibraryFileProperties,
+			UrlKeyProvider(libraryConnectionProvider),
+			filePropertiesStorage,
+			connectionAuthenticationChecker,
+			playbackServiceController,
+			pollForConnections,
+			stringResources,
+		)
+	}
+
+	override val reusablePlaylistFileItemViewModelProvider by viewModelStoreOwner.buildViewModelLazily {
+		ReusablePlaylistFileItemViewModelProvider(
+			libraryFilePropertiesProvider,
+			urlKeyProvider,
+			stringResources,
+			menuMessageBus,
+			registerForApplicationMessages,
+		)
+	}
+
+	override val reusableFileItemViewModelProvider by viewModelStoreOwner.buildViewModelLazily {
+		ReusableFileItemViewModelProvider(
+			libraryFilePropertiesProvider,
+			urlKeyProvider,
+			stringResources,
+			registerForApplicationMessages,
+		)
+	}
+
+	override val connectionStatusViewModel by viewModelStoreOwner.buildViewModelLazily {
+		ConnectionStatusViewModel(
+			stringResources,
+			DramaticConnectionInitializationController(
+				connectionSessions,
+				applicationNavigation,
+			),
+		)
+	}
+
+	override val connectionWatcherViewModel by viewModelStoreOwner.buildViewModelLazily {
+		ConnectionWatcherViewModel(
+			registerForApplicationMessages,
+			libraryConnectionProvider,
+			pollForConnections,
 		)
 	}
 }

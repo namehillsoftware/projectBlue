@@ -7,6 +7,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.CheckRevisions
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibraryConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionDependencies
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
 import com.lasthopesoftware.policies.caching.CachePromiseFunctions
 import com.lasthopesoftware.policies.caching.LruPromiseCache
@@ -31,6 +32,12 @@ class CachedItemProvider(
 				itemFunctionCache
 			)
 		}
+
+		fun getInstance(dependencies: LibraryConnectionDependencies): CachedItemProvider = CachedItemProvider(
+			dependencies.itemProvider,
+			dependencies.revisionProvider,
+			itemFunctionCache
+		)
 	}
 
 	override fun promiseItems(libraryId: LibraryId, itemId: ItemId?): Promise<List<Item>> =

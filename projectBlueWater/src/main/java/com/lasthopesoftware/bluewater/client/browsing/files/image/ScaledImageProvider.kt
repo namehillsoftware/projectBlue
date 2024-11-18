@@ -1,9 +1,9 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.image
 
-import android.content.Context
 import android.graphics.Bitmap
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.shared.android.ui.ProvideScreenDimensions
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.promises.Promise
@@ -14,9 +14,9 @@ import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.roundToInt
 
-class ScaledImageProvider(private val inner: ProvideLibraryImages, private val context: Context) : ProvideLibraryImages {
+class ScaledImageProvider(private val inner: ProvideLibraryImages, private val screenDimensions: ProvideScreenDimensions) : ProvideLibraryImages {
 	private val maximumScreenDimension by lazy {
-		val dm = context.resources.displayMetrics
+		val dm = screenDimensions
 		max(dm.heightPixels, dm.widthPixels)
 	}
 

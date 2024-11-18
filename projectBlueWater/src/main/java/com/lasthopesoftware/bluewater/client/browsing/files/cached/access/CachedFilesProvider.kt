@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory
 class CachedFilesProvider(
     private val context: Context,
     private val diskFileCacheConfiguration: DiskFileCacheConfiguration
-) : ICachedFilesProvider {
+) : ProvideCachedFiles {
 
 	companion object {
 		private val logger by lazy { LoggerFactory.getLogger(DiskFileCache::class.java) }

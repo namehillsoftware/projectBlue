@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.browsing.files.image
 
 import android.content.Context
 import android.graphics.Bitmap
+import com.lasthopesoftware.bluewater.ApplicationDependencies
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.DiskFileCache
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.access.CachedFilesProvider
@@ -16,7 +17,9 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.repositor
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibraryConnectionProvider
+import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionDependencies
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
+import com.lasthopesoftware.bluewater.shared.android.ui.ScreenDimensions
 import com.lasthopesoftware.bluewater.shared.images.bytes.RemoteImageAccess
 import com.lasthopesoftware.bluewater.shared.images.bytes.cache.DiskCacheImageAccess
 import com.lasthopesoftware.bluewater.shared.images.bytes.cache.ImageCacheKeyLookup
@@ -29,12 +32,12 @@ import com.namehillsoftware.handoff.promises.Promise
 class CachedImageProvider(
 	private val inner: ProvideLibraryImages,
 	private val cacheKeys: LookupImageCacheKey,
-	private val cache: CachePromiseFunctions<String, Bitmap?>
+	private val cache: CachePromiseFunctions<String, Bitmap?> = SHARED_CACHE
 ) : ProvideLibraryImages {
 	companion object {
 		private const val MAX_MEMORY_CACHE_SIZE = 5
 
-		private val cache by lazy { LruPromiseCache<String, Bitmap?>(MAX_MEMORY_CACHE_SIZE) }
+		private val SHARED_CACHE by lazy { LruPromiseCache<String, Bitmap?>(MAX_MEMORY_CACHE_SIZE) }
 
 		fun getInstance(context: Context): CachedImageProvider {
 			val libraryConnectionProvider = ConnectionSessionManager.get(context)
@@ -81,10 +84,23 @@ class CachedImageProvider(
 							)
 						)
 					),
-					context
+					ScreenDimensions(context),
 				),
 				imageCacheKeyLookup,
-				cache
+				SHARED_CACHE
+			)
+		}
+
+		fun getInstance(applicationDependencies: ApplicationDependencies, connectionDependencies: LibraryConnectionDependencies): CachedImageProvider {
+			val imageCacheKeyLookup = ImageCacheKeyLookup(connectionDependencies.libraryFilePropertiesProvider)
+
+			return CachedImageProvider(
+				ScaledImageProvider(
+					connectionDependencies.imageProvider,
+					applicationDependencies.screenDimensions
+				),
+				imageCacheKeyLookup,
+				SHARED_CACHE
 			)
 		}
 	}
