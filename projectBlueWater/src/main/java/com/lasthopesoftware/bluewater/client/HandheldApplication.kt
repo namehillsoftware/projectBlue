@@ -27,11 +27,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.lasthopesoftware.bluewater.LibraryConnectedDependencies
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.ProjectBlueApplication
-import com.lasthopesoftware.bluewater.client.browsing.BrowserViewDependencies
-import com.lasthopesoftware.bluewater.client.browsing.ScopedBrowserViewDependencies
+import com.lasthopesoftware.bluewater.client.browsing.EntryDependencies
 import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelDependencies
+import com.lasthopesoftware.bluewater.client.browsing.ViewDependencies
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
@@ -53,6 +54,7 @@ import com.lasthopesoftware.bluewater.client.browsing.navigation.NowPlayingScree
 import com.lasthopesoftware.bluewater.client.browsing.navigation.RoutedNavigationDependencies
 import com.lasthopesoftware.bluewater.client.browsing.navigation.SelectedLibraryReRouter
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
+import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionDependencies
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionStatusViewModel
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionUpdatesView
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.DramaticConnectionInitializationController
@@ -160,7 +162,8 @@ private val bottomSheetElevation = 16.dp
 
 @Composable
 private fun BrowserLibraryDestination.Navigate(
-	browserViewDependencies: ScopedBrowserViewDependencies,
+	browserViewDependencies: ViewDependencies,
+	libraryConnectionDependencies: LibraryConnectionDependencies,
 	scaffoldState: BottomSheetScaffoldState,
 ) {
 	with(browserViewDependencies) {
@@ -191,7 +194,7 @@ private fun BrowserLibraryDestination.Navigate(
 							nowPlayingFilePropertiesViewModel.initializeViewModel(libraryId).suspend()
 						} catch (e: Throwable) {
 							if (ConnectionLostExceptionFilter.isConnectionLostException(e))
-								pollForConnections.pollConnection(libraryId)
+								libraryConnectionDependencies.pollForConnections.pollConnection(libraryId)
 							else
 								UnexpectedExceptionToaster.announce(context, e)
 						}
@@ -207,7 +210,8 @@ private fun BrowserLibraryDestination.Navigate(
 @Composable
 @OptIn(ExperimentalFoundationApi::class)
 fun LibraryDestination.Navigate(
-	browserViewDependencies: ScopedBrowserViewDependencies,
+	browserViewDependencies: ViewDependencies,
+	libraryConnectionDependencies: LibraryConnectionDependencies,
 	scaffoldState: BottomSheetScaffoldState,
 ) {
 	with(browserViewDependencies) {
@@ -215,6 +219,7 @@ fun LibraryDestination.Navigate(
 			is BrowserLibraryDestination -> {
 				Navigate(
 					browserViewDependencies = browserViewDependencies,
+					libraryConnectionDependencies = libraryConnectionDependencies,
 					scaffoldState = scaffoldState,
 				)
 			}
@@ -278,7 +283,7 @@ fun LibraryDestination.Navigate(
 						).suspend()
 					} catch (e: Throwable) {
 						if (ConnectionLostExceptionFilter.isConnectionLostException(e))
-							pollForConnections.pollConnection(libraryId)
+							libraryConnectionDependencies.pollForConnections.pollConnection(libraryId)
 						else
 							UnexpectedExceptionToaster.announce(context, e)
 					}
@@ -290,7 +295,7 @@ fun LibraryDestination.Navigate(
 
 @Composable
 fun HandheldApplication(
-	browserViewDependencies: BrowserViewDependencies,
+	entryDependencies: EntryDependencies,
 	permissionsDependencies: PermissionsDependencies,
 	initialDestination: Destination?
 ) {
@@ -307,22 +312,22 @@ fun HandheldApplication(
 	val destinationRoutingNavigation = remember {
 		BottomSheetHidingNavigation(
 			DestinationRoutingNavigation(
-				browserViewDependencies.applicationNavigation,
+				entryDependencies.applicationNavigation,
 				navController,
 				coroutineScope,
-				browserViewDependencies.itemListMenuBackPressedHandler
+				entryDependencies.itemListMenuBackPressedHandler
 			),
 			bottomSheetState,
 			coroutineScope,
-			browserViewDependencies.itemListMenuBackPressedHandler
+			entryDependencies.itemListMenuBackPressedHandler
 		)
 	}
 
 	val connectionStatusViewModel = viewModel {
 		ConnectionStatusViewModel(
-			browserViewDependencies.stringResources,
+			entryDependencies.stringResources,
 			DramaticConnectionInitializationController(
-				browserViewDependencies.libraryConnectionProvider,
+				entryDependencies.connectionSessions,
 				destinationRoutingNavigation,
 			),
 		)
@@ -330,12 +335,17 @@ fun HandheldApplication(
 
 	val routedNavigationDependencies = remember {
 		RoutedNavigationDependencies(
-			browserViewDependencies,
+			entryDependencies,
 			destinationRoutingNavigation,
+//			connectionStatusViewModel,
 			connectionStatusViewModel,
 			navController,
 			initialDestination
 		)
+	}
+
+	val libraryConnectionDependencies = remember {
+		LibraryConnectedDependencies(routedNavigationDependencies)
 	}
 
 	DisposableEffect(key1 = routedNavigationDependencies) {
@@ -396,7 +406,13 @@ fun HandheldApplication(
 				is LibraryDestination -> {
 					LocalViewModelStoreOwner.current?.also {
 						destination.Navigate(
-							ScopedViewModelDependencies(routedNavigationDependencies, permissionsDependencies, it),
+							ScopedViewModelDependencies(
+								routedNavigationDependencies,
+								libraryConnectionDependencies,
+								permissionsDependencies,
+								it
+							),
+							libraryConnectionDependencies,
 							scaffoldState
 						)
 					}
@@ -419,7 +435,12 @@ fun HandheldApplication(
 				is NewConnectionSettingsScreen -> {
 					LocalViewModelStoreOwner.current
 						?.let {
-							ScopedViewModelDependencies(routedNavigationDependencies, permissionsDependencies, it)
+							ScopedViewModelDependencies(
+								routedNavigationDependencies,
+								libraryConnectionDependencies,
+								permissionsDependencies,
+								it
+							)
 						}
 						?.apply {
 							Box(

@@ -4,6 +4,6 @@ import com.lasthopesoftware.bluewater.client.browsing.files.cached.repository.Ca
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.namehillsoftware.handoff.promises.Promise
 
-interface ICachedFilesProvider {
+interface ProvideCachedFiles {
     fun promiseCachedFile(libraryId: LibraryId, uniqueKey: String): Promise<CachedFile?>
 }

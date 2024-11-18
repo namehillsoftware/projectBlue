@@ -3,8 +3,11 @@ package com.lasthopesoftware.bluewater.client.connection.session.initialization
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
+import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
+import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
 import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
-import com.lasthopesoftware.promises.extensions.toPromise
+import com.lasthopesoftware.promises.extensions.ProgressingPromise
+import com.lasthopesoftware.promises.extensions.ProgressingPromiseProxy
 import com.lasthopesoftware.resources.strings.GetStringResources
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateAction
@@ -12,8 +15,10 @@ import com.namehillsoftware.handoff.promises.response.ImmediateAction
 class ConnectionStatusViewModel(
 	private val stringResources: GetStringResources,
 	private val connectionInitializationController: ControlConnectionInitialization
-) : ViewModel(), (BuildingConnectionStatus) -> Unit, ImmediateAction, TrackConnectionStatus {
-	private var promisedConnectionCheck = false.toPromise()
+) : ViewModel(), (BuildingConnectionStatus) -> Unit, ImmediateAction, TrackConnectionStatus, ProvideLibraryConnections {
+
+	@Volatile
+	private var promisedConnectionCheck = Promise.empty<ProvideConnections?>()
 
 	private val mutableIsGettingConnection = MutableInteractionState(false)
 	private val mutableConnectionStatus = MutableInteractionState("")
@@ -25,33 +30,41 @@ class ConnectionStatusViewModel(
 	var isCancelled = false
 		private set
 
-	override fun initializeConnection(libraryId: LibraryId): Promise<Boolean> {
-		promisedConnectionCheck.cancel()
+	override fun initializeConnection(libraryId: LibraryId): Promise<Boolean> = Promise.Proxy { cp ->
+		promiseLibraryConnection(libraryId)
+			.also(cp::doCancel)
+			.then { c -> c != null }
+	}
+
+	@Synchronized
+	override fun promiseLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, ProvideConnections?> {
 		isCancelled = false
 
 		mutableIsGettingConnection.value = true
 		mutableTestedLibraryId.value = null
 		mutableConnectionStatus.value = stringResources.connecting
 
-		val promiseIsConnected = Promise.Proxy { cp ->
-			val promisedConnection = connectionInitializationController.promiseActiveLibraryConnection(libraryId)
-			promisedConnection.progress.then { p ->
-				if (p != null) invoke(p)
-				promisedConnection.updates(this)
-			}
-			promisedConnection.must(this)
-			promisedConnection
-				.also(cp::doCancel)
-				.then { it ->
-					val isConnected = it != null
-					if (isConnected) mutableTestedLibraryId.value = libraryId
-					mutableConnectionStatus.value = if (isConnected) stringResources.connected else stringResources.gettingLibraryFailed
-					isConnected
+		val promisedConnection = object : ProgressingPromiseProxy<BuildingConnectionStatus, ProvideConnections?>() {
+			init {
+				val promisedConnection = connectionInitializationController.promiseActiveLibraryConnection(libraryId)
+				proxy(promisedConnection)
+				promisedConnection.progress.then { p ->
+					if (p != null) invoke(p)
+					promisedConnection.updates(this@ConnectionStatusViewModel)
 				}
+				promisedConnection.must(this@ConnectionStatusViewModel)
+				promisedConnection
+					.then { it ->
+						val isConnected = it != null
+						if (isConnected) mutableTestedLibraryId.value = libraryId
+						mutableConnectionStatus.value =
+							if (isConnected) stringResources.connected else stringResources.gettingLibraryFailed
+					}
+			}
 		}
-		promisedConnectionCheck = promiseIsConnected
 
-		return promiseIsConnected
+		promisedConnectionCheck = promisedConnection
+		return promisedConnection
 	}
 
 	fun cancelCurrentCheck() {
