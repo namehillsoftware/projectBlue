@@ -7,7 +7,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import com.lasthopesoftware.bluewater.client.browsing.ViewDependencies
+import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelDependencies
 import com.lasthopesoftware.bluewater.client.browsing.files.list.SearchFilesView
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ConnectionLostView
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
@@ -17,7 +17,7 @@ import com.lasthopesoftware.promises.extensions.suspend
 import java.io.IOException
 
 @Composable
-fun BrowserLibraryDestination.NavigateToLibraryDestination(browserViewDependencies: ViewDependencies) {
+fun BrowserLibraryDestination.NavigateToLibraryDestination(browserViewDependencies: ScopedViewModelDependencies) {
 	when (this) {
 		is LibraryScreen -> {
 			LoadedItemListView(browserViewDependencies, libraryId, null)
