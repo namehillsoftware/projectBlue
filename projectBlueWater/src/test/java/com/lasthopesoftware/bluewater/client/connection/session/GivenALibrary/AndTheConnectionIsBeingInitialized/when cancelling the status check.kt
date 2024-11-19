@@ -17,7 +17,7 @@ import java.util.concurrent.ExecutionException
 
 private const val libraryId = 182
 
-class `when cancelling the validation` {
+class `when cancelling the status check` {
 	private val mut by lazy {
 		val deferredProgressingPromise =
             DeferredProgressingPromise<BuildingConnectionStatus, ProvideConnections?>()
