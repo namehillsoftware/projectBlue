@@ -26,8 +26,8 @@ class `when calling the status check again with another library` {
 		ConnectionStatusViewModel(
 			FakeStringResources(),
 			mockk {
-				every { promiseActiveLibraryConnection(LibraryId(480)) } returns deferredProgressingPromise
-				every { promiseActiveLibraryConnection(LibraryId(libraryId)) } returns ProgressingPromise(mockk<ProvideConnections>())
+				every { promiseLibraryConnection(LibraryId(480)) } returns deferredProgressingPromise
+				every { promiseLibraryConnection(LibraryId(libraryId)) } returns ProgressingPromise(mockk<ProvideConnections>())
 			},
 		)
 	}

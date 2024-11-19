@@ -41,7 +41,7 @@ class `When initializing the connection` {
 	fun act() {
 		val (deferredPromise, controller) = mut
 		val isInitializedPromise = controller
-			.promiseActiveLibraryConnection(LibraryId(libraryId))
+			.promiseLibraryConnection(LibraryId(libraryId))
 			.apply { updates(recordedUpdates::add) }
 
 		deferredPromise.sendProgressUpdates(

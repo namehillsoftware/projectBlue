@@ -268,20 +268,14 @@ fun LibraryDestination.Navigate(
 				val context = LocalContext.current
 				LaunchedEffect(key1 = libraryId) {
 					try {
-						if (!connectionStatusViewModel.initializeConnection(libraryId).suspend()) {
-							return@LaunchedEffect
+						if (connectionWatcherViewModel.watchLibraryConnection(libraryId).suspend()) {
+							Promise.whenAll(
+								nowPlayingScreenViewModel.initializeViewModel(libraryId),
+								nowPlayingFilePropertiesViewModel.initializeViewModel(libraryId),
+								nowPlayingCoverArtViewModel.initializeViewModel(libraryId),
+								nowPlayingPlaylistViewModel.initializeView(libraryId),
+							).suspend()
 						}
-
-						if (!connectionWatcherViewModel.watchLibraryConnection(libraryId).suspend()) {
-							return@LaunchedEffect
-						}
-
-						Promise.whenAll(
-							nowPlayingScreenViewModel.initializeViewModel(libraryId),
-							nowPlayingFilePropertiesViewModel.initializeViewModel(libraryId),
-							nowPlayingCoverArtViewModel.initializeViewModel(libraryId),
-							nowPlayingPlaylistViewModel.initializeView(libraryId),
-						).suspend()
 					} catch (e: Throwable) {
 						if (ConnectionLostExceptionFilter.isConnectionLostException(e))
 							libraryConnectionDependencies.pollForConnections.pollConnection(libraryId)
@@ -310,7 +304,7 @@ fun HandheldApplication(
 	val coroutineScope = rememberCoroutineScope()
 
 	val bottomSheetState = scaffoldState.bottomSheetState
-	val destinationRoutingNavigation = remember {
+	val destinationRoutingNavigation = remember(navController, coroutineScope, bottomSheetState) {
 		BottomSheetHidingNavigation(
 			DestinationRoutingNavigation(
 				entryDependencies.applicationNavigation,
@@ -334,7 +328,7 @@ fun HandheldApplication(
 		)
 	}
 
-	val routedNavigationDependencies = remember {
+	val routedNavigationDependencies = remember(destinationRoutingNavigation, connectionStatusViewModel, navController) {
 		RoutedNavigationDependencies(
 			entryDependencies,
 			destinationRoutingNavigation,
@@ -344,12 +338,12 @@ fun HandheldApplication(
 		)
 	}
 
-	val libraryConnectionDependencies = remember {
+	val libraryConnectionDependencies = remember(routedNavigationDependencies) {
 		LibraryConnectedDependencies(routedNavigationDependencies)
 	}
 
 	val viewModelStoreOwner = LocalViewModelStoreOwner.current ?: return
-	val reusedViewModelDependencies = remember {
+	val reusedViewModelDependencies = remember(routedNavigationDependencies, libraryConnectionDependencies) {
 		ReusedViewModelRegistry(
 			routedNavigationDependencies,
 			libraryConnectionDependencies,

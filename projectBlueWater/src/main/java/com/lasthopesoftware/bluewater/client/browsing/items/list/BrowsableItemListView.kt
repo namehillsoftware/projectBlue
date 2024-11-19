@@ -62,7 +62,7 @@ private fun LoadedItemListView(
 	connectionStatusViewModel: ConnectionStatusViewModel,
 ) {
 	var isConnectionLost by remember { mutableStateOf(false) }
-	var initializeConnection by remember { mutableStateOf(true) }
+	var initializeConnection by remember { mutableStateOf(false) }
 
 	if (isConnectionLost) {
 		ConnectionLostView(

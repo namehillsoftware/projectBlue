@@ -10,7 +10,6 @@ import dev.olshevski.navigation.reimagined.NavController
 class RoutedNavigationDependencies(
 	inner: EntryDependencies,
 	graphNavigation: NavigateApplication,
-//    override val connectionStatusViewModel: ConnectionStatusViewModel,
 	override val libraryConnectionProvider: ProvideLibraryConnections,
 	navController: NavController<Destination>,
 	initialDestination: Destination?

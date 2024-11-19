@@ -11,11 +11,16 @@ import com.lasthopesoftware.promises.extensions.ProgressingPromiseProxy
 import com.lasthopesoftware.resources.strings.GetStringResources
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateAction
+import com.namehillsoftware.handoff.promises.response.ImmediateResponse
 
 class ConnectionStatusViewModel(
 	private val stringResources: GetStringResources,
-	private val connectionInitializationController: ControlConnectionInitialization
-) : ViewModel(), (BuildingConnectionStatus) -> Unit, ImmediateAction, TrackConnectionStatus, ProvideLibraryConnections {
+	private val libraryConnectionProvider: ProvideLibraryConnections
+) :
+	ViewModel(),
+	TrackConnectionStatus,
+	ProvideLibraryConnections
+{
 
 	@Volatile
 	private var promisedConnectionCheck = ProgressingPromise<BuildingConnectionStatus, ProvideConnections?>(null as ProvideConnections?)
@@ -25,11 +30,9 @@ class ConnectionStatusViewModel(
 
 	private val mutableIsGettingConnection = MutableInteractionState(false)
 	private val mutableConnectionStatus = MutableInteractionState("")
-	private val mutableTestedLibraryId = MutableInteractionState<LibraryId?>(null)
 
 	val connectionStatus = mutableConnectionStatus.asInteractionState()
 	val isGettingConnection = mutableIsGettingConnection.asInteractionState()
-	val testedLibraryId = mutableTestedLibraryId.asInteractionState()
 	var isCancelled = false
 		private set
 
@@ -52,35 +55,46 @@ class ConnectionStatusViewModel(
 		initializingLibraryId = libraryId
 
 		mutableIsGettingConnection.value = true
-		mutableTestedLibraryId.value = null
 		mutableConnectionStatus.value = stringResources.connecting
 
-		val promisedConnection = object : ProgressingPromiseProxy<BuildingConnectionStatus, ProvideConnections?>() {
+		val promisedConnection = object : ProgressingPromiseProxy<BuildingConnectionStatus, ProvideConnections?>(), ImmediateResponse<ProvideConnections?, Unit>, ImmediateAction, (BuildingConnectionStatus) -> Unit {
 			init {
-				promisedConnectionCheck.eventually({
-					promiseNewConnectionCheck()
-				}, {
-					promiseNewConnectionCheck()
-				})
-			}
-
-			fun promiseNewConnectionCheck(): ProgressingPromise<BuildingConnectionStatus, ProvideConnections?> {
-				val promisedConnection = connectionInitializationController.promiseActiveLibraryConnection(libraryId)
+				val promisedConnection = libraryConnectionProvider.promiseLibraryConnection(libraryId)
 				proxy(promisedConnection)
 				promisedConnection.progress.then { p ->
-					if (p != null) invoke(p)
-					promisedConnection.updates(this@ConnectionStatusViewModel)
-				}
-				promisedConnection.must(this@ConnectionStatusViewModel)
-				promisedConnection
-					.then { it ->
-						val isConnected = it != null
-						if (isConnected) mutableTestedLibraryId.value = libraryId
-						mutableConnectionStatus.value =
-							if (isConnected) stringResources.connected else stringResources.gettingLibraryFailed
+					if (initializingLibraryId == libraryId) {
+						if (p != null) invoke(p)
+						promisedConnection.updates(this)
 					}
+				}
+				promisedConnection.must(this)
+				promisedConnection.then(this)
+			}
 
-				return promisedConnection
+			override fun respond(connections: ProvideConnections?) {
+				if (initializingLibraryId != libraryId) return
+
+				val isConnected = connections != null
+				mutableConnectionStatus.value =
+					if (isConnected) stringResources.connected else stringResources.gettingLibraryFailed
+			}
+
+			override fun act() {
+				if (initializingLibraryId == libraryId)
+					mutableIsGettingConnection.value = false
+			}
+
+			override fun invoke(status: BuildingConnectionStatus) {
+				if (initializingLibraryId != libraryId) return
+
+				mutableConnectionStatus.value = when (status) {
+					BuildingConnectionStatus.GettingLibrary -> stringResources.gettingLibrary
+					BuildingConnectionStatus.GettingLibraryFailed -> stringResources.gettingLibraryFailed
+					BuildingConnectionStatus.SendingWakeSignal -> stringResources.sendingWakeSignal
+					BuildingConnectionStatus.BuildingConnection -> stringResources.connectingToServerLibrary
+					BuildingConnectionStatus.BuildingConnectionFailed -> stringResources.errorConnectingTryAgain
+					BuildingConnectionStatus.BuildingConnectionComplete -> stringResources.connected
+				}
 			}
 		}
 
@@ -91,20 +105,5 @@ class ConnectionStatusViewModel(
 	fun cancelCurrentCheck() {
 		isCancelled = true
 		promisedConnectionCheck.cancel()
-	}
-
-	override fun invoke(status: BuildingConnectionStatus) {
-		mutableConnectionStatus.value = when (status) {
-			BuildingConnectionStatus.GettingLibrary -> stringResources.gettingLibrary
-			BuildingConnectionStatus.GettingLibraryFailed -> stringResources.gettingLibraryFailed
-			BuildingConnectionStatus.SendingWakeSignal -> stringResources.sendingWakeSignal
-			BuildingConnectionStatus.BuildingConnection -> stringResources.connectingToServerLibrary
-			BuildingConnectionStatus.BuildingConnectionFailed -> stringResources.errorConnectingTryAgain
-			BuildingConnectionStatus.BuildingConnectionComplete -> stringResources.connected
-		}
-	}
-
-	override fun act() {
-		mutableIsGettingConnection.value = false
 	}
 }
