@@ -47,7 +47,7 @@ class `When initializing the connection twice` {
 	fun act() {
 		val (deferredPromise, controller) = mut
 		val isInitializedPromise = controller
-			.promiseActiveLibraryConnection(LibraryId(libraryId))
+			.promiseLibraryConnection(LibraryId(libraryId))
 			.apply { updates(recordedUpdates::add) }
 
 		deferredPromise.sendProgressUpdates(
@@ -62,7 +62,7 @@ class `When initializing the connection twice` {
 			.get(1, TimeUnit.SECONDS)!! // Expect an immediate return
 
 		secondConnection = controller
-			.promiseActiveLibraryConnection(LibraryId(libraryId))
+			.promiseLibraryConnection(LibraryId(libraryId))
 			.toExpiringFuture()
 			.get(1, TimeUnit.SECONDS)!! // Expect an immediate return
 	}

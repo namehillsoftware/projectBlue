@@ -42,7 +42,7 @@ fun BrowserLibraryDestination.NavigateToLibraryDestination(browserViewDependenci
 		is SearchScreen -> {
 			with(browserViewDependencies) {
 				var isConnectionLost by remember { mutableStateOf(false) }
-				var initializeConnection by remember { mutableStateOf(true) }
+				var initializeConnection by remember { mutableStateOf(false) }
 
 				if (isConnectionLost) {
 					ConnectionLostView(

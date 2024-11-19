@@ -23,10 +23,7 @@ there will be no dramatic pause.
 class DramaticConnectionInitializationController(
 	private val manageConnectionSessions: ManageConnectionSessions,
 	private val applicationNavigation: NavigateApplication,
-) : ControlConnectionInitialization, ProvideLibraryConnections {
-
-	override fun promiseActiveLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, ProvideConnections?> =
-		promiseLibraryConnection(libraryId)
+) : ProvideLibraryConnections {
 
 	override fun promiseLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, ProvideConnections?> =
 		object : ProgressingPromiseProxy<BuildingConnectionStatus, ProvideConnections?>() {

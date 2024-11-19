@@ -45,7 +45,7 @@ class `when cancelling the initialization` {
 	fun act() {
 		val (deferredPromise, controller) = mut
 		val promisedConnection = controller
-			.promiseActiveLibraryConnection(LibraryId(libraryId))
+			.promiseLibraryConnection(LibraryId(libraryId))
 			.apply { updates(recordedUpdates::add) }
 
 		deferredPromise.sendProgressUpdates(
