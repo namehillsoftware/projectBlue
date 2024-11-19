@@ -2,12 +2,6 @@ package com.lasthopesoftware.bluewater.client.browsing
 
 import com.lasthopesoftware.bluewater.ApplicationDependencies
 import com.lasthopesoftware.bluewater.NavigateApplication
-import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
-import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
-import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusableFileItemViewModelProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusablePlaylistFileItemViewModelProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.list.SearchFilesViewModel
-import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ReusableChildItemViewModelProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
@@ -16,20 +10,10 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibrarySto
 import com.lasthopesoftware.bluewater.client.browsing.library.access.RemoveLibraries
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedLibraryViewModel
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NavigationMessage
-import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionDependencies
-import com.lasthopesoftware.bluewater.client.connection.session.ConnectionWatcherViewModel
-import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionStatusViewModel
 import com.lasthopesoftware.bluewater.client.connection.trust.ProvideUserSslCertificates
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.NowPlayingMessage
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingCoverArtViewModel
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingScreenViewModel
-import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.playlist.NowPlayingPlaylistViewModel
-import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsViewModel
 import com.lasthopesoftware.bluewater.client.stored.library.items.AccessStoredItems
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
-import com.lasthopesoftware.bluewater.client.stored.library.items.files.view.ActiveFileDownloadsViewModel
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsViewModel
 import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsViewModel
 import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
@@ -57,23 +41,3 @@ interface EntryDependencies : ApplicationDependencies {
 	val userSslCertificateProvider: ProvideUserSslCertificates
 }
 
-/**
- * View Models that work best when declared with a local ViewModelOwner
- */
-interface ViewDependencies : EntryDependencies, LibraryConnectionDependencies {
-	val itemListViewModel: ItemListViewModel
-	val fileListViewModel: FileListViewModel
-	val activeFileDownloadsViewModel: ActiveFileDownloadsViewModel
-	val searchFilesViewModel: SearchFilesViewModel
-	val librarySettingsViewModel: LibrarySettingsViewModel
-	val nowPlayingViewModelMessageBus: ViewModelMessageBus<NowPlayingMessage>
-	val fileDetailsViewModel: FileDetailsViewModel
-	val reusablePlaylistFileItemViewModelProvider: ReusablePlaylistFileItemViewModelProvider
-	val reusableFileItemViewModelProvider: ReusableFileItemViewModelProvider
-	val nowPlayingScreenViewModel: NowPlayingScreenViewModel
-	val nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel
-	val nowPlayingCoverArtViewModel: NowPlayingCoverArtViewModel
-	val nowPlayingPlaylistViewModel: NowPlayingPlaylistViewModel
-	val connectionStatusViewModel: ConnectionStatusViewModel
-	val connectionWatcherViewModel: ConnectionWatcherViewModel
-}

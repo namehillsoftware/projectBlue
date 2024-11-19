@@ -31,8 +31,9 @@ import com.lasthopesoftware.bluewater.LibraryConnectedDependencies
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.ProjectBlueApplication
 import com.lasthopesoftware.bluewater.client.browsing.EntryDependencies
+import com.lasthopesoftware.bluewater.client.browsing.ReusedViewModelRegistry
 import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelDependencies
-import com.lasthopesoftware.bluewater.client.browsing.ViewDependencies
+import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelRegistry
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
@@ -162,7 +163,7 @@ private val bottomSheetElevation = 16.dp
 
 @Composable
 private fun BrowserLibraryDestination.Navigate(
-	browserViewDependencies: ViewDependencies,
+	browserViewDependencies: ScopedViewModelDependencies,
 	libraryConnectionDependencies: LibraryConnectionDependencies,
 	scaffoldState: BottomSheetScaffoldState,
 ) {
@@ -210,7 +211,7 @@ private fun BrowserLibraryDestination.Navigate(
 @Composable
 @OptIn(ExperimentalFoundationApi::class)
 fun LibraryDestination.Navigate(
-	browserViewDependencies: ViewDependencies,
+	browserViewDependencies: ScopedViewModelDependencies,
 	libraryConnectionDependencies: LibraryConnectionDependencies,
 	scaffoldState: BottomSheetScaffoldState,
 ) {
@@ -337,7 +338,6 @@ fun HandheldApplication(
 		RoutedNavigationDependencies(
 			entryDependencies,
 			destinationRoutingNavigation,
-//			connectionStatusViewModel,
 			connectionStatusViewModel,
 			navController,
 			initialDestination
@@ -346,6 +346,15 @@ fun HandheldApplication(
 
 	val libraryConnectionDependencies = remember {
 		LibraryConnectedDependencies(routedNavigationDependencies)
+	}
+
+	val viewModelStoreOwner = LocalViewModelStoreOwner.current ?: return
+	val reusedViewModelDependencies = remember {
+		ReusedViewModelRegistry(
+			routedNavigationDependencies,
+			libraryConnectionDependencies,
+			viewModelStoreOwner
+		)
 	}
 
 	DisposableEffect(key1 = routedNavigationDependencies) {
@@ -406,9 +415,8 @@ fun HandheldApplication(
 				is LibraryDestination -> {
 					LocalViewModelStoreOwner.current?.also {
 						destination.Navigate(
-							ScopedViewModelDependencies(
-								routedNavigationDependencies,
-								libraryConnectionDependencies,
+							ScopedViewModelRegistry(
+								reusedViewModelDependencies,
 								permissionsDependencies,
 								it
 							),
@@ -435,9 +443,8 @@ fun HandheldApplication(
 				is NewConnectionSettingsScreen -> {
 					LocalViewModelStoreOwner.current
 						?.let {
-							ScopedViewModelDependencies(
-								routedNavigationDependencies,
-								libraryConnectionDependencies,
+							ScopedViewModelRegistry(
+								reusedViewModelDependencies,
 								permissionsDependencies,
 								it
 							)

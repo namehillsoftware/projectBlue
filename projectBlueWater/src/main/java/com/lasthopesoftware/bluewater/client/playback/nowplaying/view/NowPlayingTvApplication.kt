@@ -66,8 +66,9 @@ import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.ProjectBlueApplication
 import com.lasthopesoftware.bluewater.R
 import com.lasthopesoftware.bluewater.client.browsing.EntryDependencies
+import com.lasthopesoftware.bluewater.client.browsing.ReusedViewModelRegistry
 import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelDependencies
-import com.lasthopesoftware.bluewater.client.browsing.ViewDependencies
+import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelRegistry
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsView
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewPlaylistFileItem
@@ -125,7 +126,7 @@ private val logger by lazyLogger<ProjectBlueApplication>()
 @OptIn(ExperimentalComposeUiApi::class)
 @ExperimentalFoundationApi
 @Composable
-fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ViewDependencies) {
+fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedViewModelDependencies) {
 	val context = LocalContext.current
 	LaunchedEffect(key1 = libraryId) {
 		with (browserViewDependencies) {
@@ -483,7 +484,7 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ViewDepe
 
 @Composable
 @OptIn(ExperimentalFoundationApi::class)
-private fun LibraryDestination.Navigate(browserViewDependencies: ViewDependencies) {
+private fun LibraryDestination.Navigate(browserViewDependencies: ScopedViewModelDependencies) {
 	when (this) {
 		is BrowserLibraryDestination -> {
 			NowPlayingTvView(browserViewDependencies = browserViewDependencies)
@@ -715,6 +716,14 @@ fun NowPlayingTvApplication(
 	}
 
 	val libraryConnectedDependencies = remember { LibraryConnectedDependencies(routedNavigationDependencies) }
+	val viewModelStoreOwner = LocalViewModelStoreOwner.current ?: return
+	val reusedViewModelDependencies = remember {
+		ReusedViewModelRegistry(
+			routedNavigationDependencies,
+			libraryConnectedDependencies,
+			viewModelStoreOwner
+		)
+	}
 
 	DisposableEffect(key1 = routedNavigationDependencies) {
 		onDispose {
@@ -772,7 +781,7 @@ fun NowPlayingTvApplication(
 				is LibraryDestination -> {
 					LocalViewModelStoreOwner.current?.also {
 						destination.Navigate(
-							ScopedViewModelDependencies(routedNavigationDependencies, libraryConnectedDependencies, permissionsDependencies, it)
+							ScopedViewModelRegistry(reusedViewModelDependencies, permissionsDependencies, it)
 						)
 					}
 				}
@@ -793,7 +802,7 @@ fun NowPlayingTvApplication(
 				is NewConnectionSettingsScreen -> {
 					LocalViewModelStoreOwner.current
 						?.let {
-							ScopedViewModelDependencies(routedNavigationDependencies, libraryConnectedDependencies, permissionsDependencies, it)
+							ScopedViewModelRegistry(reusedViewModelDependencies, permissionsDependencies, it)
 						}
 						?.apply {
 							Box(
