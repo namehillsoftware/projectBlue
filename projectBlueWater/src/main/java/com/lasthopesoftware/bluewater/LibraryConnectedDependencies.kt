@@ -2,11 +2,14 @@ package com.lasthopesoftware.bluewater
 
 import com.lasthopesoftware.bluewater.client.browsing.files.access.CachedItemFileProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.DelegatingItemFileProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.access.ItemFileProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.LibraryFileProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.FileListParameters
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.ItemStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.LibraryFileStringListProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.image.CachedImageProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.image.LibraryImageProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.image.ScaledImageProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.DelegatingFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
@@ -14,6 +17,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.repositor
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.storage.FilePropertyStorage
 import com.lasthopesoftware.bluewater.client.browsing.items.access.CachedItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.access.DelegatingItemProvider
+import com.lasthopesoftware.bluewater.client.browsing.items.access.ItemProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemPlayback
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostRetryHandler
@@ -44,13 +48,15 @@ class LibraryConnectedDependencies(
 
 	private val remoteImageAccess by lazy { RemoteImageAccess(application.libraryConnectionProvider) }
 
+	private val guaranteedLibraryConnectionProvider by lazy { GuaranteedLibraryConnectionProvider(application.libraryConnectionProvider) }
+
 	override val connectionAuthenticationChecker by lazy { ConnectionAuthenticationChecker(application.libraryConnectionProvider) }
 
 	override val freshLibraryFileProperties by lazy {
 		DelegatingFilePropertiesProvider(
 			DelegatingFilePropertiesProvider(
 				FilePropertiesProvider(
-					GuaranteedLibraryConnectionProvider(application.libraryConnectionProvider),
+					guaranteedLibraryConnectionProvider,
 					revisionProvider,
 					FilePropertyCache,
 				),
@@ -71,12 +77,20 @@ class LibraryConnectedDependencies(
 	override val imageCacheKeyLookup by lazy { ImageCacheKeyLookup(libraryFilePropertiesProvider) }
 
 	override val imageProvider by lazy {
-		LibraryImageProvider(
-			DiskCacheImageAccess(
-				remoteImageAccess,
-				imageCacheKeyLookup,
-				application.imageDiskFileCache
-			)
+		val imageCacheKeyLookup = ImageCacheKeyLookup(libraryFilePropertiesProvider)
+
+		CachedImageProvider(
+			ScaledImageProvider(
+				LibraryImageProvider(
+					DiskCacheImageAccess(
+						remoteImageAccess,
+						imageCacheKeyLookup,
+						application.imageDiskFileCache
+					)
+				),
+				application.screenDimensions
+			),
+			imageCacheKeyLookup
 		)
 	}
 
@@ -96,14 +110,25 @@ class LibraryConnectedDependencies(
 
 	override val itemProvider by lazy {
 		DelegatingItemProvider(
-			CachedItemProvider.getInstance(this),
+			CachedItemProvider(
+				ItemProvider(guaranteedLibraryConnectionProvider),
+				revisionProvider
+			),
 			connectionLostRetryPolicy
 		)
 	}
 
 	override val itemFileProvider by lazy {
 		DelegatingItemFileProvider(
-			CachedItemFileProvider.getInstance(this),
+			CachedItemFileProvider(
+				ItemFileProvider(
+					ItemStringListProvider(
+						FileListParameters,
+						libraryFileStringListProvider,
+					)
+				),
+				revisionProvider
+			),
 			connectionLostRetryPolicy,
 		)
 	}

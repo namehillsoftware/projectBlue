@@ -344,7 +344,9 @@ fun HandheldApplication(
 		)
 	}
 
-	val libraryConnectionDependencies = LibraryConnectedDependencies(routedNavigationDependencies)
+	val libraryConnectionDependencies = remember {
+		LibraryConnectedDependencies(routedNavigationDependencies)
+	}
 
 	DisposableEffect(key1 = routedNavigationDependencies) {
 		onDispose {

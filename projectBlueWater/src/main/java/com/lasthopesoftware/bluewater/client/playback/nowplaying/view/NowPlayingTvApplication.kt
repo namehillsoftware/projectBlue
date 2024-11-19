@@ -714,7 +714,7 @@ fun NowPlayingTvApplication(
 		)
 	}
 
-	val libraryConnectedDependencies = LibraryConnectedDependencies(routedNavigationDependencies)
+	val libraryConnectedDependencies = remember { LibraryConnectedDependencies(routedNavigationDependencies) }
 
 	DisposableEffect(key1 = routedNavigationDependencies) {
 		onDispose {

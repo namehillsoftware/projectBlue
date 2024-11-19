@@ -2,18 +2,14 @@ package com.lasthopesoftware.bluewater.client.browsing
 
 import androidx.lifecycle.ViewModelStoreOwner
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
-import com.lasthopesoftware.bluewater.client.browsing.files.image.CachedImageProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusableFileItemViewModelProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusablePlaylistFileItemViewModelProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.list.SearchFilesViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableLibraryFilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.items.playlists.PlaylistsStorage
 import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
-import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionDependencies
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionWatcherViewModel
@@ -41,8 +37,6 @@ class ScopedViewModelDependencies(
 	EntryDependencies by entryDependencies,
 	LibraryConnectionDependencies by libraryConnectionDependencies
 {
-	override val imageProvider by lazy { CachedImageProvider.getInstance(this, this) }
-
 	override val itemListViewModel by viewModelStoreOwner.buildViewModelLazily {
         ItemListViewModel(
             itemProvider,
@@ -106,13 +100,7 @@ class ScopedViewModelDependencies(
 	override val fileDetailsViewModel by viewModelStoreOwner.buildViewModelLazily {
 		FileDetailsViewModel(
 			connectionPermissions = ConnectionAuthenticationChecker(libraryConnectionProvider),
-			filePropertiesProvider = EditableLibraryFilePropertiesProvider(
-				FilePropertiesProvider(
-					GuaranteedLibraryConnectionProvider(libraryConnectionProvider),
-					revisionProvider,
-					FilePropertyCache,
-				)
-			),
+			filePropertiesProvider = EditableLibraryFilePropertiesProvider(libraryFilePropertiesProvider),
 			updateFileProperties = filePropertiesStorage,
 			defaultImageProvider = defaultImageProvider,
 			imageProvider = imageProvider,

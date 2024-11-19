@@ -7,7 +7,6 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.CheckRevisions
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibraryConnectionProvider
-import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionDependencies
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
 import com.lasthopesoftware.policies.caching.CachePromiseFunctions
 import com.lasthopesoftware.policies.caching.LruPromiseCache
@@ -16,12 +15,12 @@ import com.namehillsoftware.handoff.promises.Promise
 class CachedItemProvider(
 	private val inner: ProvideItems,
 	private val revisions: CheckRevisions,
-	private val itemFunctionCache: CachePromiseFunctions<Triple<LibraryId, ItemId?, Int>, List<Item>>,
+	private val itemFunctionCache: CachePromiseFunctions<Triple<LibraryId, ItemId?, Int>, List<Item>> = companionCache,
 ) : ProvideItems {
 
 	companion object {
 
-		private val itemFunctionCache = LruPromiseCache<Triple<LibraryId, ItemId?, Int>, List<Item>>(20)
+		private val companionCache = LruPromiseCache<Triple<LibraryId, ItemId?, Int>, List<Item>>(20)
 
 		fun getInstance(context: Context): CachedItemProvider {
 			val libraryConnectionProvider = context.buildNewConnectionSessionManager()
@@ -29,15 +28,9 @@ class CachedItemProvider(
 			return CachedItemProvider(
 				ItemProvider(GuaranteedLibraryConnectionProvider(libraryConnectionProvider)),
 				LibraryRevisionProvider(libraryConnectionProvider),
-				itemFunctionCache
+				companionCache
 			)
 		}
-
-		fun getInstance(dependencies: LibraryConnectionDependencies): CachedItemProvider = CachedItemProvider(
-			dependencies.itemProvider,
-			dependencies.revisionProvider,
-			itemFunctionCache
-		)
 	}
 
 	override fun promiseItems(libraryId: LibraryId, itemId: ItemId?): Promise<List<Item>> =
