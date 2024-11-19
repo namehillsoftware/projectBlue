@@ -18,7 +18,10 @@ class ConnectionStatusViewModel(
 ) : ViewModel(), (BuildingConnectionStatus) -> Unit, ImmediateAction, TrackConnectionStatus, ProvideLibraryConnections {
 
 	@Volatile
-	private var promisedConnectionCheck = Promise.empty<ProvideConnections?>()
+	private var promisedConnectionCheck = ProgressingPromise<BuildingConnectionStatus, ProvideConnections?>(null as ProvideConnections?)
+
+	@Volatile
+	private var initializingLibraryId = LibraryId(-1)
 
 	private val mutableIsGettingConnection = MutableInteractionState(false)
 	private val mutableConnectionStatus = MutableInteractionState("")
@@ -40,12 +43,28 @@ class ConnectionStatusViewModel(
 	override fun promiseLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, ProvideConnections?> {
 		isCancelled = false
 
+		if (mutableIsGettingConnection.value && libraryId == initializingLibraryId) {
+			return promisedConnectionCheck
+		}
+
+		promisedConnectionCheck.cancel()
+
+		initializingLibraryId = libraryId
+
 		mutableIsGettingConnection.value = true
 		mutableTestedLibraryId.value = null
 		mutableConnectionStatus.value = stringResources.connecting
 
 		val promisedConnection = object : ProgressingPromiseProxy<BuildingConnectionStatus, ProvideConnections?>() {
 			init {
+				promisedConnectionCheck.eventually({
+					promiseNewConnectionCheck()
+				}, {
+					promiseNewConnectionCheck()
+				})
+			}
+
+			fun promiseNewConnectionCheck(): ProgressingPromise<BuildingConnectionStatus, ProvideConnections?> {
 				val promisedConnection = connectionInitializationController.promiseActiveLibraryConnection(libraryId)
 				proxy(promisedConnection)
 				promisedConnection.progress.then { p ->
@@ -60,6 +79,8 @@ class ConnectionStatusViewModel(
 						mutableConnectionStatus.value =
 							if (isConnected) stringResources.connected else stringResources.gettingLibraryFailed
 					}
+
+				return promisedConnection
 			}
 		}
 
