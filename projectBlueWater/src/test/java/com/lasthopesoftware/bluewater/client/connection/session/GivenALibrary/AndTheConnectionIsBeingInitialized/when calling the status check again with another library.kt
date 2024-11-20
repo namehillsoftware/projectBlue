@@ -21,17 +21,30 @@ private const val libraryId = 267
 
 class `when calling the status check again with another library` {
 	private val mut by lazy {
-		val deferredProgressingPromise = DeferredProgressingPromise<BuildingConnectionStatus, ProvideConnections?>()
 
 		ConnectionStatusViewModel(
-			FakeStringResources(),
+			FakeStringResources(
+				connected = "x7lcvspHV",
+				connecting = "5MmZ6OPl",
+				connectingToServerLibrary = "2bsRkyrQO",
+			),
 			mockk {
-				every { promiseLibraryConnection(LibraryId(480)) } returns deferredProgressingPromise
-				every { promiseLibraryConnection(LibraryId(libraryId)) } returns ProgressingPromise(mockk<ProvideConnections>())
+				every { promiseLibraryConnection(LibraryId(480)) } answers {
+					val deferredProgressingPromise = DeferredProgressingPromise<BuildingConnectionStatus, ProvideConnections?>()
+					deferredProgressingPromise.sendProgressUpdate(BuildingConnectionStatus.BuildingConnection)
+					deferredProgressingPromise
+				}
+				every { promiseLibraryConnection(LibraryId(libraryId)) } answers {
+					DeferredProgressingPromise<BuildingConnectionStatus, ProvideConnections?>().apply {
+						sendProgressUpdate(BuildingConnectionStatus.GettingLibrary)
+						sendResolution(mockk())
+					}
+				}
 			},
 		)
 	}
 
+	private val connectionStatuses = mutableListOf<String>()
 	private val isConnectingHistory = mutableListOf<Boolean>()
 
 	private var firstPromisedLibraryConnection: ProgressingPromise<BuildingConnectionStatus, ProvideConnections?>? = null
@@ -45,18 +58,26 @@ class `when calling the status check again with another library` {
 	fun act() {
 		val viewModel = mut
 
-		viewModel.isGettingConnection.subscribe { isConnecting -> isConnectingHistory.add(isConnecting.value) }.toCloseable().use {
-			firstPromisedLibraryConnection = viewModel.promiseLibraryConnection(LibraryId(480))
-			secondPromisedLibraryConnection = viewModel.promiseLibraryConnection(LibraryId(libraryId))
+		viewModel.connectionStatus.subscribe { status -> connectionStatuses.add(status.value) }.toCloseable().use {
+			viewModel.isGettingConnection.subscribe { isConnecting -> isConnectingHistory.add(isConnecting.value) }
+				.toCloseable().use {
+				firstPromisedLibraryConnection = viewModel.promiseLibraryConnection(LibraryId(480))
+				secondPromisedLibraryConnection = viewModel.promiseLibraryConnection(LibraryId(libraryId))
 
-			try {
-				firstPromisedLibraryConnection?.toExpiringFuture()?.get()
-			} catch (ee: ExecutionException) {
-				cancellationException = ee.cause as? CancellationException
+				try {
+					firstPromisedLibraryConnection?.toExpiringFuture()?.get()
+				} catch (ee: ExecutionException) {
+					cancellationException = ee.cause as? CancellationException
+				}
+
+				secondLibraryConnection = secondPromisedLibraryConnection?.toExpiringFuture()?.get()
 			}
-
-			secondLibraryConnection = secondPromisedLibraryConnection?.toExpiringFuture()?.get()
 		}
+	}
+
+	@Test
+	fun `then the connecting statuses are correct`() {
+		assertThat(connectionStatuses).containsExactly("", "5MmZ6OPl", "2bsRkyrQO", "5MmZ6OPl", "", "x7lcvspHV")
 	}
 
 	@Test

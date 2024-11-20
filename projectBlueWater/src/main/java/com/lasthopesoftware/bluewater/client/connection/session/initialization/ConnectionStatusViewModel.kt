@@ -3,6 +3,12 @@ package com.lasthopesoftware.bluewater.client.connection.session.initialization
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
+import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus.BuildingConnection
+import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus.BuildingConnectionComplete
+import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus.BuildingConnectionFailed
+import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus.GettingLibrary
+import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus.GettingLibraryFailed
+import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus.SendingWakeSignal
 import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
 import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
@@ -27,6 +33,9 @@ class ConnectionStatusViewModel(
 
 	@Volatile
 	private var initializingLibraryId = LibraryId(-1)
+
+	@Volatile
+	private var testedLibraryId: LibraryId? = null
 
 	private val mutableIsGettingConnection = MutableInteractionState(false)
 	private val mutableConnectionStatus = MutableInteractionState("")
@@ -54,7 +63,7 @@ class ConnectionStatusViewModel(
 
 		initializingLibraryId = libraryId
 
-		mutableIsGettingConnection.value = true
+		mutableIsGettingConnection.value = testedLibraryId != libraryId
 		mutableConnectionStatus.value = stringResources.connecting
 
 		val promisedConnection = object : ProgressingPromiseProxy<BuildingConnectionStatus, ProvideConnections?>(), ImmediateResponse<ProvideConnections?, Unit>, ImmediateAction, (BuildingConnectionStatus) -> Unit {
@@ -63,7 +72,7 @@ class ConnectionStatusViewModel(
 				proxy(promisedConnection)
 				promisedConnection.progress.then { p ->
 					if (initializingLibraryId == libraryId) {
-						if (p != null) invoke(p)
+						if (p != null && (testedLibraryId != libraryId || p != BuildingConnectionComplete)) invoke(p)
 						promisedConnection.updates(this)
 					}
 				}
@@ -74,6 +83,7 @@ class ConnectionStatusViewModel(
 			override fun respond(connections: ProvideConnections?) {
 				if (initializingLibraryId != libraryId) return
 
+				testedLibraryId = libraryId
 				val isConnected = connections != null
 				mutableConnectionStatus.value =
 					if (isConnected) stringResources.connected else stringResources.gettingLibraryFailed
@@ -87,13 +97,17 @@ class ConnectionStatusViewModel(
 			override fun invoke(status: BuildingConnectionStatus) {
 				if (initializingLibraryId != libraryId) return
 
+				if (status != BuildingConnectionComplete) {
+					testedLibraryId = null
+				}
+
 				mutableConnectionStatus.value = when (status) {
-					BuildingConnectionStatus.GettingLibrary -> stringResources.gettingLibrary
-					BuildingConnectionStatus.GettingLibraryFailed -> stringResources.gettingLibraryFailed
-					BuildingConnectionStatus.SendingWakeSignal -> stringResources.sendingWakeSignal
-					BuildingConnectionStatus.BuildingConnection -> stringResources.connectingToServerLibrary
-					BuildingConnectionStatus.BuildingConnectionFailed -> stringResources.errorConnectingTryAgain
-					BuildingConnectionStatus.BuildingConnectionComplete -> stringResources.connected
+					GettingLibrary -> stringResources.gettingLibrary
+					GettingLibraryFailed -> stringResources.gettingLibraryFailed
+					SendingWakeSignal -> stringResources.sendingWakeSignal
+					BuildingConnection -> stringResources.connectingToServerLibrary
+					BuildingConnectionFailed -> stringResources.errorConnectingTryAgain
+					BuildingConnectionComplete -> stringResources.connected
 				}
 			}
 		}
