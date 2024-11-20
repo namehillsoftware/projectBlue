@@ -30,7 +30,6 @@ class ConnectionWatcherViewModel(
 
 	fun watchLibraryConnection(libraryId: LibraryId): Promise<Boolean> {
 		watchedLibraryId = libraryId
-		mutableIsCheckingConnection.value = true
 		return libraryConnections
 			.promiseLibraryConnection(libraryId)
 			.eventually(
@@ -40,10 +39,6 @@ class ConnectionWatcherViewModel(
 					else false.toPromise()
 				}
 			)
-			.must { _ ->
-				if (libraryId == watchedLibraryId)
-					mutableIsCheckingConnection.value = false
-			}
 	}
 
 	fun cancelLibraryConnectionPolling() {
