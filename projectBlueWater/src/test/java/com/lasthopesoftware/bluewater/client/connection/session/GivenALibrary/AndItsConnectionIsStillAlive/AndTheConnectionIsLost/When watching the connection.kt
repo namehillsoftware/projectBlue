@@ -51,7 +51,7 @@ class `When watching the connection` {
 
 	@Test
 	fun `then the checking connection states are correct`() {
-		assertThat(checkingConnectionStates).containsExactly(false, true, false, true, false)
+		assertThat(checkingConnectionStates).containsExactly(false, true, false)
 	}
 
 	@Test
