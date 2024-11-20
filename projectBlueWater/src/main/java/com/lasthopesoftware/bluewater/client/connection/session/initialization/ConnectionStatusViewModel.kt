@@ -72,7 +72,7 @@ class ConnectionStatusViewModel(
 				proxy(promisedConnection)
 				promisedConnection.progress.then { p ->
 					if (initializingLibraryId == libraryId) {
-						if (p != null) invoke(p)
+						if (p != null && (testedLibraryId != libraryId || p != BuildingConnectionComplete)) invoke(p)
 						promisedConnection.updates(this)
 					}
 				}
@@ -97,6 +97,10 @@ class ConnectionStatusViewModel(
 			override fun invoke(status: BuildingConnectionStatus) {
 				if (initializingLibraryId != libraryId) return
 
+				if (status != BuildingConnectionComplete) {
+					testedLibraryId = null
+				}
+
 				mutableConnectionStatus.value = when (status) {
 					GettingLibrary -> stringResources.gettingLibrary
 					GettingLibraryFailed -> stringResources.gettingLibraryFailed
@@ -104,11 +108,6 @@ class ConnectionStatusViewModel(
 					BuildingConnection -> stringResources.connectingToServerLibrary
 					BuildingConnectionFailed -> stringResources.errorConnectingTryAgain
 					BuildingConnectionComplete -> stringResources.connected
-				}
-
-				mutableIsGettingConnection.value = when (status) {
-					BuildingConnection, GettingLibrary, SendingWakeSignal -> true
-					GettingLibraryFailed, BuildingConnectionFailed, BuildingConnectionComplete -> false
 				}
 			}
 		}
