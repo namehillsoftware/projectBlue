@@ -1,4 +1,4 @@
-package com.lasthopesoftware.bluewater.client.connection.session.GivenALibrary.AndTheConnectionIsBeingInitialized
+package com.lasthopesoftware.bluewater.client.connection.session.GivenALibrary.AndTheConnectionIsInitialized
 
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
@@ -14,29 +14,29 @@ import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
-import java.util.concurrent.CancellationException
-import java.util.concurrent.ExecutionException
 
-private const val libraryId = 267
+private const val libraryId = 107
 
-class `when calling the status check again with another library` {
+class `when calling the status check again` {
 	private val mut by lazy {
+		val firstDeferredProgressingPromise =
+            DeferredProgressingPromise<BuildingConnectionStatus, ProvideConnections?>()
 
-		ConnectionStatusViewModel(
-			FakeStringResources(),
-			mockk {
-				every { promiseLibraryConnection(LibraryId(480)) } answers {
-					val deferredProgressingPromise = DeferredProgressingPromise<BuildingConnectionStatus, ProvideConnections?>()
-					deferredProgressingPromise.sendProgressUpdate(BuildingConnectionStatus.BuildingConnection)
-					deferredProgressingPromise
-				}
-				every { promiseLibraryConnection(LibraryId(libraryId)) } answers {
-					DeferredProgressingPromise<BuildingConnectionStatus, ProvideConnections?>().apply {
-						sendProgressUpdate(BuildingConnectionStatus.GettingLibrary)
-						sendResolution(mockk())
-					}
-				}
-			},
+		val secondDeferredProgressingPromise =
+			DeferredProgressingPromise<BuildingConnectionStatus, ProvideConnections?>()
+
+		Triple(
+			firstDeferredProgressingPromise,
+			secondDeferredProgressingPromise,
+            ConnectionStatusViewModel(
+                FakeStringResources(),
+                mockk {
+                    every { promiseLibraryConnection(LibraryId(libraryId)) } returnsMany listOf(
+						firstDeferredProgressingPromise,
+						secondDeferredProgressingPromise
+					)
+                },
+            )
 		)
 	}
 
@@ -45,45 +45,34 @@ class `when calling the status check again with another library` {
 	private var firstPromisedLibraryConnection: ProgressingPromise<BuildingConnectionStatus, ProvideConnections?>? = null
 	private var secondPromisedLibraryConnection: ProgressingPromise<BuildingConnectionStatus, ProvideConnections?>? = null
 
-	private var cancellationException: CancellationException? = null
-
+	private var firstLibraryConnection: ProvideConnections? = null
 	private var secondLibraryConnection: ProvideConnections? = null
 
 	@BeforeAll
 	fun act() {
-		val viewModel = mut
+		val (firstDeferredPromise, secondDeferredPromise, viewModel) = mut
 
 		viewModel.isGettingConnection.subscribe { isConnecting -> isConnectingHistory.add(isConnecting.value) }.toCloseable().use {
-			firstPromisedLibraryConnection = viewModel.promiseLibraryConnection(LibraryId(480))
+			firstPromisedLibraryConnection = viewModel.promiseLibraryConnection(LibraryId(libraryId))
+
+			firstDeferredPromise.sendResolution(mockk())
+
 			secondPromisedLibraryConnection = viewModel.promiseLibraryConnection(LibraryId(libraryId))
 
-			try {
-				firstPromisedLibraryConnection?.toExpiringFuture()?.get()
-			} catch (ee: ExecutionException) {
-				cancellationException = ee.cause as? CancellationException
-			}
+			secondDeferredPromise.sendResolution(mockk())
 
+			firstLibraryConnection = firstPromisedLibraryConnection?.toExpiringFuture()?.get()
 			secondLibraryConnection = secondPromisedLibraryConnection?.toExpiringFuture()?.get()
 		}
 	}
 
 	@Test
 	fun `then is connecting status history is correct`() {
-		assertThat(isConnectingHistory).containsExactly(false, true, false, true, false)
+		assertThat(isConnectingHistory).containsExactly(false, true, false)
 	}
 
 	@Test
 	fun `then the correct connection is returned`() {
-		assertThat(secondLibraryConnection).isNotNull
-	}
-
-	@Test
-	fun `then the first connection is cancelled`() {
-		assertThat(cancellationException).isNotNull
-	}
-
-	@Test
-	fun `then the second promised connection is NOT the same as the first`() {
-		assertThat(secondPromisedLibraryConnection).isNotSameAs(firstPromisedLibraryConnection)
+		assertThat(firstLibraryConnection).isNotNull
 	}
 }

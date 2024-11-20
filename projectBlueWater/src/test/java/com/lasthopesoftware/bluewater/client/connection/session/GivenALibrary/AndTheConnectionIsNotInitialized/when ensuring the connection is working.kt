@@ -43,6 +43,7 @@ class `when ensuring the connection is working` {
 		isConnectingBeforeCheck = viewModel.isGettingConnection.value
 
 		val isInitializedPromise = viewModel.initializeConnection(LibraryId(libraryId))
+		deferredPromise.sendProgressUpdate(BuildingConnectionStatus.SendingWakeSignal)
 		isConnectingDuringCheck = viewModel.isGettingConnection.value
 		deferredPromise.sendResolution(mockk())
 

@@ -44,6 +44,8 @@ class `when cancelling the status check` {
 		isConnectingBeforeCheck = viewModel.isGettingConnection.value
 
 		val isInitializedPromise = viewModel.initializeConnection(LibraryId(libraryId))
+		deferredPromise.sendProgressUpdate(BuildingConnectionStatus.BuildingConnection)
+
 		isConnectingDuringCheck = viewModel.isGettingConnection.value
 		viewModel.cancelCurrentCheck()
 		deferredPromise.sendResolution(mockk())
