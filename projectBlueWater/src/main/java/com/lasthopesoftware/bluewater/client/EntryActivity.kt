@@ -85,7 +85,7 @@ val destinationProperty by lazy { magicPropertyBuilder.buildProperty("destinatio
 			if (!isInLeanbackMode) {
 				ProjectBlueComposableApplication {
 					HandheldApplication(
-						browserViewDependencies = browserViewDependencies,
+						entryDependencies = browserViewDependencies,
 						permissionsDependencies = this,
 						initialDestination = getDestination(intent),
 					)
@@ -94,7 +94,7 @@ val destinationProperty by lazy { magicPropertyBuilder.buildProperty("destinatio
 				AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES)
 				ProjectBlueComposableApplication(darkTheme = true) {
 					NowPlayingTvApplication(
-						browserViewDependencies = browserViewDependencies,
+						entryDependencies = browserViewDependencies,
 						permissionsDependencies = this,
 						initialDestination = getDestination(intent),
 					)

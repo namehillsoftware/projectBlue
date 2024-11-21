@@ -15,12 +15,12 @@ import com.namehillsoftware.handoff.promises.Promise
 class CachedItemProvider(
 	private val inner: ProvideItems,
 	private val revisions: CheckRevisions,
-	private val itemFunctionCache: CachePromiseFunctions<Triple<LibraryId, ItemId?, Int>, List<Item>>,
+	private val itemFunctionCache: CachePromiseFunctions<Triple<LibraryId, ItemId?, Int>, List<Item>> = companionCache,
 ) : ProvideItems {
 
 	companion object {
 
-		private val itemFunctionCache = LruPromiseCache<Triple<LibraryId, ItemId?, Int>, List<Item>>(20)
+		private val companionCache = LruPromiseCache<Triple<LibraryId, ItemId?, Int>, List<Item>>(20)
 
 		fun getInstance(context: Context): CachedItemProvider {
 			val libraryConnectionProvider = context.buildNewConnectionSessionManager()
@@ -28,7 +28,7 @@ class CachedItemProvider(
 			return CachedItemProvider(
 				ItemProvider(GuaranteedLibraryConnectionProvider(libraryConnectionProvider)),
 				LibraryRevisionProvider(libraryConnectionProvider),
-				itemFunctionCache
+				companionCache
 			)
 		}
 	}

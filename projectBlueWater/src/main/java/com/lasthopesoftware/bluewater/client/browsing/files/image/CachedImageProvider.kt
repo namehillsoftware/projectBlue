@@ -17,6 +17,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryRevisionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
+import com.lasthopesoftware.bluewater.shared.android.ui.ScreenDimensions
 import com.lasthopesoftware.bluewater.shared.images.bytes.RemoteImageAccess
 import com.lasthopesoftware.bluewater.shared.images.bytes.cache.DiskCacheImageAccess
 import com.lasthopesoftware.bluewater.shared.images.bytes.cache.ImageCacheKeyLookup
@@ -29,12 +30,12 @@ import com.namehillsoftware.handoff.promises.Promise
 class CachedImageProvider(
 	private val inner: ProvideLibraryImages,
 	private val cacheKeys: LookupImageCacheKey,
-	private val cache: CachePromiseFunctions<String, Bitmap?>
+	private val cache: CachePromiseFunctions<String, Bitmap?> = companionCache
 ) : ProvideLibraryImages {
 	companion object {
 		private const val MAX_MEMORY_CACHE_SIZE = 5
 
-		private val cache by lazy { LruPromiseCache<String, Bitmap?>(MAX_MEMORY_CACHE_SIZE) }
+		private val companionCache by lazy { LruPromiseCache<String, Bitmap?>(MAX_MEMORY_CACHE_SIZE) }
 
 		fun getInstance(context: Context): CachedImageProvider {
 			val libraryConnectionProvider = ConnectionSessionManager.get(context)
@@ -81,10 +82,10 @@ class CachedImageProvider(
 							)
 						)
 					),
-					context
+					ScreenDimensions(context),
 				),
 				imageCacheKeyLookup,
-				cache
+				companionCache
 			)
 		}
 	}

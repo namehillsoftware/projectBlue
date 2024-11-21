@@ -2,10 +2,10 @@ package com.lasthopesoftware.bluewater.client.browsing.files.cached
 
 import android.content.Context
 import android.database.SQLException
-import com.lasthopesoftware.bluewater.client.browsing.files.cached.access.ICachedFilesProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.cached.access.ProvideCachedFiles
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.configuration.DiskFileCacheConfiguration
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.disk.ProvideDiskCacheDirectory
-import com.lasthopesoftware.bluewater.client.browsing.files.cached.persistence.IDiskFileAccessTimeUpdater
+import com.lasthopesoftware.bluewater.client.browsing.files.cached.persistence.UpdateDiskFileAccessTime
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.repository.CachedFile
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.CacheOutputStream
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.supplier.SupplyCacheStreams
@@ -22,7 +22,14 @@ import com.namehillsoftware.handoff.promises.response.ImmediateAction
 import java.io.File
 import java.io.IOException
 
-class DiskFileCache(private val context: Context, private val diskCacheDirectory: ProvideDiskCacheDirectory, private val diskFileCacheConfiguration: DiskFileCacheConfiguration, private val cacheStreamSupplier: SupplyCacheStreams, private val cachedFilesProvider: ICachedFilesProvider, private val diskFileAccessTimeUpdater: IDiskFileAccessTimeUpdater) : CacheFiles {
+class DiskFileCache(
+	private val context: Context,
+	private val diskCacheDirectory: ProvideDiskCacheDirectory,
+	private val diskFileCacheConfiguration: DiskFileCacheConfiguration,
+	private val cacheStreamSupplier: SupplyCacheStreams,
+	private val cachedFilesProvider: ProvideCachedFiles,
+	private val diskFileAccessTimeUpdater: UpdateDiskFileAccessTime
+) : CacheFiles {
 
 	private val expirationTime = diskFileCacheConfiguration.cacheItemLifetime?.millis ?: -1
 

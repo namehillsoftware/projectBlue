@@ -3,7 +3,7 @@ package com.lasthopesoftware.bluewater.client.browsing.files.cached.persistence
 import android.content.Context
 import android.database.SQLException
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.CacheFlushing
-import com.lasthopesoftware.bluewater.client.browsing.files.cached.access.ICachedFilesProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.cached.access.ProvideCachedFiles
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.configuration.DiskFileCacheConfiguration
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.repository.CachedFile
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.repository.CachedFile.Companion.CACHE_NAME
@@ -26,8 +26,8 @@ import java.io.IOException
 class DiskFileCachePersistence(
 	private val context: Context,
 	private val diskFileCacheConfiguration: DiskFileCacheConfiguration,
-	private val cachedFilesProvider: ICachedFilesProvider,
-	private val diskFileAccessTimeUpdater: IDiskFileAccessTimeUpdater
+	private val cachedFilesProvider: ProvideCachedFiles,
+	private val diskFileAccessTimeUpdater: UpdateDiskFileAccessTime
 ) : IDiskFileCachePersistence {
 	override fun putIntoDatabase(libraryId: LibraryId, uniqueKey: String, file: File): Promise<CachedFile?> {
 		val canonicalFilePath = try {

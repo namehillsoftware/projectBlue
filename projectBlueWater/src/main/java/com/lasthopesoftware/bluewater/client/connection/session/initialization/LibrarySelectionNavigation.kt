@@ -6,13 +6,12 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePrope
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedLibraryViewModel
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
+import com.namehillsoftware.handoff.promises.response.PromisedResponse
 
-class ConnectionInitializingLibrarySelectionNavigation(
+class LibrarySelectionNavigation(
 	private val inner: NavigateApplication,
 	private val selectedLibraryViewModel: SelectedLibraryViewModel,
-	private val connectionStatusViewModel: ConnectionStatusViewModel,
 ) : NavigateApplication by inner {
 	override fun viewLibrary(libraryId: LibraryId): Promise<Unit> =
 		selectConnection(libraryId) { inner.viewLibrary(libraryId) }
@@ -32,12 +31,8 @@ class ConnectionInitializingLibrarySelectionNavigation(
 	override fun viewNowPlaying(libraryId: LibraryId): Promise<Unit> =
 		selectConnection(libraryId) { inner.viewNowPlaying(libraryId) }
 
-	private fun selectConnection(libraryId: LibraryId, onConnectionInitialized: () -> Promise<Unit>) =
+	private fun selectConnection(libraryId: LibraryId, onLibrarySelected: PromisedResponse<LibraryId, Unit>) =
 		selectedLibraryViewModel
 			.selectLibrary(libraryId)
-			.eventually { connectionStatusViewModel.initializeConnection(libraryId) }
-			.eventually {
-				if (it) onConnectionInitialized()
-				else Unit.toPromise()
-			}
+			.eventually(onLibrarySelected)
 }

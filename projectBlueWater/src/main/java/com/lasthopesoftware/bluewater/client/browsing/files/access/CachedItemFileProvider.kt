@@ -17,12 +17,12 @@ import com.namehillsoftware.handoff.promises.Promise
 class CachedItemFileProvider(
 	private val inner: ProvideItemFiles,
 	private val revisions: CheckRevisions,
-	private val itemFunctionCache: CachePromiseFunctions<Pair<Triple<LibraryId, ItemId?, FileListParameters.Options>, Int>, List<ServiceFile>>,
+	private val itemFunctionCache: CachePromiseFunctions<Pair<Triple<LibraryId, ItemId?, FileListParameters.Options>, Int>, List<ServiceFile>> = companionCache,
 ) : ProvideItemFiles {
 
 	companion object {
 
-		private val itemFunctionCache = LruPromiseCache<Pair<Triple<LibraryId, ItemId?, FileListParameters.Options>, Int>, List<ServiceFile>>(10)
+		private val companionCache = LruPromiseCache<Pair<Triple<LibraryId, ItemId?, FileListParameters.Options>, Int>, List<ServiceFile>>(10)
 
 		fun getInstance(context: Context): CachedItemFileProvider {
 			val libraryConnectionProvider = context.buildNewConnectionSessionManager()
@@ -35,7 +35,7 @@ class CachedItemFileProvider(
 					)
 				),
 				LibraryRevisionProvider(libraryConnectionProvider),
-				itemFunctionCache
+				companionCache
 			)
 		}
 	}

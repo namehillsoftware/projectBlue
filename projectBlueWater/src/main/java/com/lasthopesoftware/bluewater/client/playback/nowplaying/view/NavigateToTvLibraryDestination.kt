@@ -6,7 +6,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import com.lasthopesoftware.bluewater.client.browsing.ScopedBrowserViewDependencies
+import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelDependencies
 import com.lasthopesoftware.bluewater.client.browsing.files.list.TvSearchFilesView
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ConnectionLostView
 import com.lasthopesoftware.bluewater.client.browsing.items.list.LoadedTvItemListView
@@ -22,7 +22,7 @@ import com.lasthopesoftware.promises.extensions.suspend
 import java.io.IOException
 
 @Composable
-fun BrowserLibraryDestination.NavigateToTvLibraryDestination(browserViewDependencies: ScopedBrowserViewDependencies) {
+fun BrowserLibraryDestination.NavigateToTvLibraryDestination(browserViewDependencies: ScopedViewModelDependencies) {
 	when (this) {
 		is LibraryScreen -> {
             LoadedTvItemListView(browserViewDependencies, libraryId, null)
