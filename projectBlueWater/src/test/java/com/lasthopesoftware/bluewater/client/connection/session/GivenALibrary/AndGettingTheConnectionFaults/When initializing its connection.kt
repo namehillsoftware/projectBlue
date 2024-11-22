@@ -44,7 +44,7 @@ class `when initializing its connection` {
 	fun act() {
 		val (deferredPromise, controller) = mut
 		val promisedConnection = controller
-			.promiseActiveLibraryConnection(LibraryId(libraryId))
+			.promiseLibraryConnection(LibraryId(libraryId))
 			.apply { updates(recordedUpdates::add) }
 
 		deferredPromise.sendProgressUpdates(

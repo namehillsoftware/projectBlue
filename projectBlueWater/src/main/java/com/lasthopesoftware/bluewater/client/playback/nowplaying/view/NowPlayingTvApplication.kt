@@ -61,12 +61,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.lasthopesoftware.bluewater.LibraryConnectedDependencies
 import com.lasthopesoftware.bluewater.NavigateApplication
 import com.lasthopesoftware.bluewater.ProjectBlueApplication
 import com.lasthopesoftware.bluewater.R
-import com.lasthopesoftware.bluewater.client.browsing.BrowserViewDependencies
-import com.lasthopesoftware.bluewater.client.browsing.ScopedBrowserViewDependencies
+import com.lasthopesoftware.bluewater.client.browsing.EntryDependencies
+import com.lasthopesoftware.bluewater.client.browsing.ReusedViewModelRegistry
 import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelDependencies
+import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelRegistry
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsView
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewPlaylistFileItem
@@ -124,7 +126,7 @@ private val logger by lazyLogger<ProjectBlueApplication>()
 @OptIn(ExperimentalComposeUiApi::class)
 @ExperimentalFoundationApi
 @Composable
-fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedBrowserViewDependencies) {
+fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedViewModelDependencies) {
 	val context = LocalContext.current
 	LaunchedEffect(key1 = libraryId) {
 		with (browserViewDependencies) {
@@ -482,7 +484,7 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedBr
 
 @Composable
 @OptIn(ExperimentalFoundationApi::class)
-private fun LibraryDestination.Navigate(browserViewDependencies: ScopedBrowserViewDependencies) {
+private fun LibraryDestination.Navigate(browserViewDependencies: ScopedViewModelDependencies) {
 	when (this) {
 		is BrowserLibraryDestination -> {
 			NowPlayingTvView(browserViewDependencies = browserViewDependencies)
@@ -656,8 +658,8 @@ private class NowPlayingNavigation(
 }
 
 private class NowPlayingDependencies<T>(inner: T, navController: NavController<Destination>)
-	: BrowserViewDependencies by inner, AutoCloseable by inner
-	where T : BrowserViewDependencies, T: AutoCloseable
+	: EntryDependencies by inner, AutoCloseable by inner
+	where T : EntryDependencies, T: AutoCloseable
 {
 	override val applicationNavigation by lazy {
 		NowPlayingNavigation(inner.applicationNavigation, navController)
@@ -666,7 +668,7 @@ private class NowPlayingDependencies<T>(inner: T, navController: NavController<D
 
 @Composable
 fun NowPlayingTvApplication(
-	browserViewDependencies: BrowserViewDependencies,
+	entryDependencies: EntryDependencies,
 	permissionsDependencies: PermissionsDependencies,
 	initialDestination: Destination?
 ) {
@@ -682,19 +684,19 @@ fun NowPlayingTvApplication(
 	val destinationRoutingNavigation = remember {
 		SkipNowPlayingNavigation(
 			DestinationRoutingNavigation(
-				browserViewDependencies.applicationNavigation,
+				entryDependencies.applicationNavigation,
 				navController,
 				coroutineScope,
-				browserViewDependencies.itemListMenuBackPressedHandler
+				entryDependencies.itemListMenuBackPressedHandler
 			)
 		)
 	}
 
 	val connectionStatusViewModel = viewModel {
 		ConnectionStatusViewModel(
-			browserViewDependencies.stringResources,
+			entryDependencies.stringResources,
 			DramaticConnectionInitializationController(
-				browserViewDependencies.libraryConnectionProvider,
+				entryDependencies.connectionSessions,
 				destinationRoutingNavigation,
 			),
 		)
@@ -703,13 +705,23 @@ fun NowPlayingTvApplication(
 	val routedNavigationDependencies = remember {
 		NowPlayingDependencies(
 			RoutedNavigationDependencies(
-				browserViewDependencies,
+				entryDependencies,
 				destinationRoutingNavigation,
 				connectionStatusViewModel,
 				navController,
 				initialDestination
 			),
 			navController
+		)
+	}
+
+	val libraryConnectedDependencies = remember { LibraryConnectedDependencies(routedNavigationDependencies) }
+	val viewModelStoreOwner = LocalViewModelStoreOwner.current ?: return
+	val reusedViewModelDependencies = remember {
+		ReusedViewModelRegistry(
+			routedNavigationDependencies,
+			libraryConnectedDependencies,
+			viewModelStoreOwner
 		)
 	}
 
@@ -769,7 +781,7 @@ fun NowPlayingTvApplication(
 				is LibraryDestination -> {
 					LocalViewModelStoreOwner.current?.also {
 						destination.Navigate(
-							ScopedViewModelDependencies(routedNavigationDependencies, permissionsDependencies, it)
+							ScopedViewModelRegistry(reusedViewModelDependencies, permissionsDependencies, it)
 						)
 					}
 				}
@@ -790,7 +802,7 @@ fun NowPlayingTvApplication(
 				is NewConnectionSettingsScreen -> {
 					LocalViewModelStoreOwner.current
 						?.let {
-							ScopedViewModelDependencies(routedNavigationDependencies, permissionsDependencies, it)
+							ScopedViewModelRegistry(reusedViewModelDependencies, permissionsDependencies, it)
 						}
 						?.apply {
 							Box(

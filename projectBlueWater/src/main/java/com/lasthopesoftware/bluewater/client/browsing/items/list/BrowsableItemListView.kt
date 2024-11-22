@@ -5,7 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.lasthopesoftware.bluewater.NavigateApplication
-import com.lasthopesoftware.bluewater.client.browsing.ScopedBrowserViewDependencies
+import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelDependencies
 import com.lasthopesoftware.bluewater.client.browsing.files.list.FileListViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ReusablePlaylistFileItemViewModelProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.Item
@@ -27,7 +27,7 @@ import com.namehillsoftware.handoff.promises.Promise
 import java.io.IOException
 
 @Composable
-fun LoadedItemListView(viewModelDependencies: ScopedBrowserViewDependencies, libraryId: LibraryId, item: Item?) {
+fun LoadedItemListView(viewModelDependencies: ScopedViewModelDependencies, libraryId: LibraryId, item: Item?) {
 	with (viewModelDependencies) {
 		LoadedItemListView(
 			libraryId,
@@ -62,7 +62,7 @@ private fun LoadedItemListView(
 	connectionStatusViewModel: ConnectionStatusViewModel,
 ) {
 	var isConnectionLost by remember { mutableStateOf(false) }
-	var initializeConnection by remember { mutableStateOf(true) }
+	var initializeConnection by remember { mutableStateOf(false) }
 
 	if (isConnectionLost) {
 		ConnectionLostView(

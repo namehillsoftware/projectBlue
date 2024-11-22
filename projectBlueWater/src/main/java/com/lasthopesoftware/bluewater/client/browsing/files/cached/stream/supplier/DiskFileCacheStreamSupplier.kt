@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.supplier
 
-import com.lasthopesoftware.bluewater.client.browsing.files.cached.access.ICachedFilesProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.cached.access.ProvideCachedFiles
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.disk.ProvideDiskCacheDirectory
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.persistence.IDiskFileCachePersistence
 import com.lasthopesoftware.bluewater.client.browsing.files.cached.stream.CacheOutputStream
@@ -12,7 +12,7 @@ import java.io.File
 class DiskFileCacheStreamSupplier(
     private val diskCacheDirectory: ProvideDiskCacheDirectory,
     private val diskFileCachePersistence: IDiskFileCachePersistence,
-    private val cachedFilesProvider: ICachedFilesProvider
+    private val cachedFilesProvider: ProvideCachedFiles
 ) : SupplyCacheStreams {
     override fun promiseCachedFileOutputStream(libraryId: LibraryId, uniqueKey: String): Promise<CacheOutputStream> {
         return cachedFilesProvider

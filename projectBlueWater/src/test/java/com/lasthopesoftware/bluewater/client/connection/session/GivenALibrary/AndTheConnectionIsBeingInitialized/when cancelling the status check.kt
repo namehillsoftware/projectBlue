@@ -17,7 +17,7 @@ import java.util.concurrent.ExecutionException
 
 private const val libraryId = 182
 
-class `when cancelling the validation` {
+class `when cancelling the status check` {
 	private val mut by lazy {
 		val deferredProgressingPromise =
             DeferredProgressingPromise<BuildingConnectionStatus, ProvideConnections?>()
@@ -27,7 +27,7 @@ class `when cancelling the validation` {
             ConnectionStatusViewModel(
                 FakeStringResources(),
                 mockk {
-                    every { promiseActiveLibraryConnection(LibraryId(libraryId)) } returns deferredProgressingPromise
+                    every { promiseLibraryConnection(LibraryId(libraryId)) } returns deferredProgressingPromise
                 },
             )
 		)
@@ -44,6 +44,8 @@ class `when cancelling the validation` {
 		isConnectingBeforeCheck = viewModel.isGettingConnection.value
 
 		val isInitializedPromise = viewModel.initializeConnection(LibraryId(libraryId))
+		deferredPromise.sendProgressUpdate(BuildingConnectionStatus.BuildingConnection)
+
 		isConnectingDuringCheck = viewModel.isGettingConnection.value
 		viewModel.cancelCurrentCheck()
 		deferredPromise.sendResolution(mockk())

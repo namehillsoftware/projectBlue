@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.material.BottomSheetState
 import androidx.compose.material.BottomSheetValue
 import androidx.compose.material.ContentAlpha
-import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Icon
 import androidx.compose.material.LinearProgressIndicator
 import androidx.compose.material.LocalContentAlpha
@@ -62,7 +61,6 @@ fun Modifier.iconModifier() = align(Alignment.Center)
 	.size(Dimensions.topMenuIconSize)
 
 @Composable
-@OptIn(ExperimentalMaterialApi::class)
 fun LibraryMenu(
     applicationNavigation: NavigateApplication,
     nowPlayingFilePropertiesViewModel: NowPlayingFilePropertiesViewModel,

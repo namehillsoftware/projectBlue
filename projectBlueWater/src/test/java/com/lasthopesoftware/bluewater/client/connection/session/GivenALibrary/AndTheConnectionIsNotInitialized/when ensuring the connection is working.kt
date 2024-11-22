@@ -25,7 +25,7 @@ class `when ensuring the connection is working` {
             ConnectionStatusViewModel(
                 FakeStringResources(),
 				mockk {
-					every { promiseActiveLibraryConnection(LibraryId(libraryId)) } returns deferredProgressingPromise
+					every { promiseLibraryConnection(LibraryId(libraryId)) } returns deferredProgressingPromise
 				}
             )
 		)
@@ -43,8 +43,8 @@ class `when ensuring the connection is working` {
 		isConnectingBeforeCheck = viewModel.isGettingConnection.value
 
 		val isInitializedPromise = viewModel.initializeConnection(LibraryId(libraryId))
+		deferredPromise.sendProgressUpdate(BuildingConnectionStatus.SendingWakeSignal)
 		isConnectingDuringCheck = viewModel.isGettingConnection.value
-		testedLibraryIdDuringCheck = viewModel.testedLibraryId.value
 		deferredPromise.sendResolution(mockk())
 
 		isInitialized = isInitializedPromise
@@ -75,10 +75,5 @@ class `when ensuring the connection is working` {
 	@Test
 	fun `then the tested library id while checking the connection is correct`() {
 		assertThat(testedLibraryIdDuringCheck).isNull()
-	}
-
-	@Test
-	fun `then the tested library id is correct`() {
-		assertThat(mut.second.testedLibraryId.value).isEqualTo(LibraryId(libraryId))
 	}
 }

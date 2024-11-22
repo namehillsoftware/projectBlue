@@ -1,28 +1,27 @@
 package com.lasthopesoftware.bluewater.client.browsing.navigation
 
 import com.lasthopesoftware.bluewater.NavigateApplication
-import com.lasthopesoftware.bluewater.client.browsing.BrowserViewDependencies
-import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionInitializingLibrarySelectionNavigation
-import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionStatusViewModel
+import com.lasthopesoftware.bluewater.client.browsing.EntryDependencies
+import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
+import com.lasthopesoftware.bluewater.client.connection.session.initialization.LibrarySelectionNavigation
 import com.lasthopesoftware.resources.closables.AutoCloseableManager
 import dev.olshevski.navigation.reimagined.NavController
 
 class RoutedNavigationDependencies(
-    inner: BrowserViewDependencies,
-    graphNavigation: NavigateApplication,
-    override val connectionStatusViewModel: ConnectionStatusViewModel,
-    navController: NavController<Destination>,
-    initialDestination: Destination?
-) : BrowserViewDependencies by inner, AutoCloseable {
+	inner: EntryDependencies,
+	graphNavigation: NavigateApplication,
+	override val libraryConnectionProvider: ProvideLibraryConnections,
+	navController: NavController<Destination>,
+	initialDestination: Destination?
+) : EntryDependencies by inner, AutoCloseable {
 	private val closeableManager = AutoCloseableManager()
 
 	override val applicationNavigation by lazy {
 		closeableManager.manage(
             DestinationApplicationNavigation(
-                ConnectionInitializingLibrarySelectionNavigation(
-                    graphNavigation,
-                    selectedLibraryViewModel,
-                    connectionStatusViewModel,
+                LibrarySelectionNavigation(
+					graphNavigation,
+					selectedLibraryViewModel,
                 ),
                 navController,
                 navigationMessages,
