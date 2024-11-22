@@ -30,7 +30,7 @@ RUN curl -sSL https://dl.google.com/android/repository/${SDK_VERSION} -o /tmp/sd
 
 # Set these to the same versions as in build.gradle to avoid downloading updated tools
 ARG ANDROID_BUILD_VERSION=35
-ARG ANDROID_TOOLS_VERSION=35.0.0
+ARG ANDROID_TOOLS_VERSION=34.0.0
 
 RUN yes | sdkmanager "platform-tools" \
 #        "emulator" \ # keeping just in case it is needed
