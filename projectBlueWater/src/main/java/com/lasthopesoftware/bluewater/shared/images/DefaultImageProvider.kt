@@ -27,8 +27,7 @@ class DefaultImageProvider(private val context: Context) : ProvideDefaultImage {
 					?.toBitmap(maxSize, maxSize)
 					?: Bitmap.createBitmap(maxSize, maxSize, Bitmap.Config.ARGB_8888)
 
-				val immutableBitmap = scaledBitmap.copy(scaledBitmap.config, false)
-				immutableBitmap
+				scaledBitmap.config?.let { config -> scaledBitmap.copy(config, false) } ?: scaledBitmap
 			}, ThreadPools.compute).also { promisedBitmap = it }
 	}
 }

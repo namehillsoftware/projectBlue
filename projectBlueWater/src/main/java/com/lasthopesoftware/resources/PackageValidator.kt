@@ -31,13 +31,12 @@ import androidx.annotation.XmlRes
 import androidx.core.app.NotificationManagerCompat
 import androidx.media.MediaBrowserServiceCompat
 import com.lasthopesoftware.bluewater.BuildConfig
-import org.slf4j.LoggerFactory
+import com.lasthopesoftware.bluewater.shared.lazyLogger
 import org.xmlpull.v1.XmlPullParserException
 import java.io.IOException
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
 import java.util.*
-import kotlin.collections.LinkedHashMap
 
 /**
  * Validates that the calling package is authorized to browse a [MediaBrowserServiceCompat].
@@ -55,7 +54,7 @@ import kotlin.collections.LinkedHashMap
  */
 class PackageValidator(context: Context, @XmlRes xmlResId: Int) {
 	companion object {
-		private val logger by lazy { LoggerFactory.getLogger(PackageValidator::class.java) }
+		private val logger by lazyLogger<PackageValidator>()
 	}
 
     private val context: Context
@@ -183,15 +182,15 @@ given certificate. To allow this caller, add the following to the allowed caller
     private fun buildCallerInfo(callingPackage: String): CallerPackageInfo? {
         val packageInfo = getPackageInfo(callingPackage) ?: return null
 
-        val appName = packageInfo.applicationInfo.loadLabel(packageManager).toString()
-        val uid = packageInfo.applicationInfo.uid
+        val appName = packageInfo.applicationInfo?.loadLabel(packageManager).toString()
+        val uid = packageInfo.applicationInfo?.uid ?: return null
         val signature = getSignature(packageInfo)
 
         val requestedPermissions = packageInfo.requestedPermissions
         val permissionFlags = packageInfo.requestedPermissionsFlags
         val activePermissions = mutableSetOf<String>()
         requestedPermissions?.forEachIndexed { index, permission ->
-            if (permissionFlags[index] and REQUESTED_PERMISSION_GRANTED != 0) {
+            if (permissionFlags != null && (permissionFlags[index] and REQUESTED_PERMISSION_GRANTED != 0)) {
                 activePermissions += permission
             }
         }
@@ -225,14 +224,16 @@ given certificate. To allow this caller, add the following to the allowed caller
      */
     @Suppress("deprecation")
     private fun getSignature(packageInfo: PackageInfo): String? =
-        if (packageInfo.signatures == null || packageInfo.signatures.size != 1) {
-            // Security best practices dictate that an app should be signed with exactly one (1)
-            // signature. Because of this, if there are multiple signatures, reject it.
-            null
-        } else {
-            val certificate = packageInfo.signatures[0].toByteArray()
-            getSignatureSha256(certificate)
-        }
+		packageInfo.signatures?.let { signatures ->
+			if (signatures.size != 1) {
+				// Security best practices dictate that an app should be signed with exactly one (1)
+				// signature. Because of this, if there are multiple signatures, reject it.
+				null
+			} else {
+				val certificate = signatures[0].toByteArray()
+				getSignatureSha256(certificate)
+			}
+		}
 
     private fun buildCertificateAllowList(parser: XmlResourceParser): Map<String, KnownCallerInfo> {
 
