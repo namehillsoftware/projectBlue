@@ -18,10 +18,6 @@ open class ProgressingPromiseProxy<Progress, Resolution> protected constructor()
 		}
 	}
 
-	constructor(source: ProgressingPromise<Progress, Resolution>) : this() {
-		proxy(source)
-	}
-
 	init {
 		awaitCancellation(cancellationProxy)
 	}
@@ -40,11 +36,11 @@ open class ProgressingPromiseProxy<Progress, Resolution> protected constructor()
 		source.then(proxyResolution, proxyRejection)
 	}
 
-	protected fun proxySuccess(source: ProgressingPromise<Progress, Resolution>) {
+	protected fun proxySuccess(source: Promise<Resolution>) {
 		source.then(proxyResolution)
 	}
 
-	protected fun proxyRejection(source: ProgressingPromise<Progress, Resolution>) {
+	protected fun proxyRejection(source: Promise<*>) {
 		source.excuse(proxyRejection)
 	}
 

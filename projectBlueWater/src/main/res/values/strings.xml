@@ -139,4 +139,6 @@
     <string name="auto_scroll_to_now_playing_item">Auto Scroll to Now Playing Item</string>
     <string name="navigate_back">Navigate Back</string>
     <string name="optional_mac_address">Optional MAC Address</string>
+    <string name="test_connection">Test Connection</string>
+    <string name="save_and_test_connection">Save and Test</string>
 </resources>

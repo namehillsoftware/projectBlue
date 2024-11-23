@@ -40,6 +40,8 @@ class WhenRemovingTheLibrary {
 				}
 			},
 			mockk(),
+			mockk(),
+			mockk(),
 		)
     }
 

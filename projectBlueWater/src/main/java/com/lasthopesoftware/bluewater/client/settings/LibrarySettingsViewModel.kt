@@ -8,13 +8,16 @@ import com.lasthopesoftware.bluewater.client.browsing.library.access.RemoveLibra
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.libraryId
+import com.lasthopesoftware.bluewater.client.connection.getStatusString
+import com.lasthopesoftware.bluewater.client.connection.session.ManageConnectionSessions
 import com.lasthopesoftware.bluewater.permissions.RequestApplicationPermissions
 import com.lasthopesoftware.bluewater.shared.NullBox
-import com.lasthopesoftware.bluewater.shared.observables.InteractionState
-import com.lasthopesoftware.bluewater.shared.observables.LiftedInteractionState
-import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
+import com.lasthopesoftware.observables.LiftedInteractionState
+import com.lasthopesoftware.observables.MutableInteractionState
+import com.lasthopesoftware.observables.asInteractionState
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.toPromise
+import com.lasthopesoftware.resources.strings.GetStringResources
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateAction
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
@@ -26,6 +29,8 @@ class LibrarySettingsViewModel(
 	private val libraryStorage: ILibraryStorage,
 	private val libraryRemoval: RemoveLibraries,
 	private val applicationPermissions: RequestApplicationPermissions,
+	private val manageConnectionSessions: ManageConnectionSessions,
+	private val stringResources: GetStringResources,
 ) : ViewModel(), PromisedResponse<Boolean, Boolean>, ImmediateResponse<Library?, Unit>, TrackLoadedViewState, ImmediateAction {
 
 	companion object {
@@ -75,6 +80,8 @@ class LibrarySettingsViewModel(
 		LiftedInteractionState(sslCertificateFingerprint.map { it.value.any() }, false)
 	}
 
+	private val connectionStatusState = MutableInteractionState("")
+
 	val accessCode = MutableInteractionState(defaultLibrary.accessCode ?: "")
 	val libraryName = MutableInteractionState(defaultLibrary.libraryName ?: "")
 	val userName = MutableInteractionState(defaultLibrary.userName ?: "")
@@ -87,17 +94,19 @@ class LibrarySettingsViewModel(
 	val sslCertificateFingerprint = MutableInteractionState(ByteArray(0))
 	val macAddress = MutableInteractionState(defaultLibrary.macAddress ?: "")
 	val hasSslCertificate
-		get() = hasSslCertificateObserver.value as InteractionState<Boolean>
+		get() = hasSslCertificateObserver.value.asInteractionState()
 
 	override val isLoading = mutableIsLoading.asInteractionState()
-	val isSaving = mutableIsSaving as InteractionState<Boolean>
-	val isStoragePermissionsNeeded = mutableIsPermissionsNeeded as InteractionState<Boolean>
-	val isRemovalRequested = mutableIsRemovalRequested as InteractionState<Boolean>
+	val isSaving = mutableIsSaving.asInteractionState()
+	val isStoragePermissionsNeeded = mutableIsPermissionsNeeded.asInteractionState()
+	val isRemovalRequested = mutableIsRemovalRequested.asInteractionState()
 	val isSettingsChanged
-		get() = isSettingsChangedObserver.value as InteractionState<Boolean>
+		get() = isSettingsChangedObserver.value.asInteractionState()
 
 	val activeLibraryId
 		get() = libraryState.value.libraryId.takeIf { it.id > -1 }
+
+	val connectionStatus = connectionStatusState.asInteractionState()
 
 	override fun onCleared() {
 		if (isSettingsChangedObserver.isInitialized())
@@ -140,6 +149,16 @@ class LibrarySettingsViewModel(
 			.eventually(this)
 			.must(this)
 	}
+
+	fun saveAndTestLibrary(): Promise<Boolean> = saveLibrary()
+		.eventually { isSaved ->
+			if (!isSaved) false.toPromise()
+			else activeLibraryId
+				?.let(manageConnectionSessions::promiseTestedLibraryConnection)
+				?.updates { status -> connectionStatusState.value = stringResources.getStatusString(status) }
+				?.then { c -> c != null }
+				.keepPromise(false)
+		}
 
 	fun requestLibraryRemoval() {
 		mutableIsRemovalRequested.value = true

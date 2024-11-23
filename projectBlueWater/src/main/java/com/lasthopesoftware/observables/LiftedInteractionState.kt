@@ -1,23 +1,23 @@
-package com.lasthopesoftware.bluewater.shared.observables
+package com.lasthopesoftware.observables
 
 import com.lasthopesoftware.bluewater.shared.NullBox
+import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.core.Observer
 import io.reactivex.rxjava3.subjects.BehaviorSubject
 
-class MutableInteractionState<T>(private val initialValue: T) : InteractionState<T>() {
+class LiftedInteractionState<T: Any>(source: Observable<T>, private val initialValue: T) : InteractionState<T>(), AutoCloseable {
 
 	private val behaviorSubject = BehaviorSubject.createDefault(NullBox(initialValue))
+	private val subscription = source.distinctUntilChanged().subscribe { behaviorSubject.onNext(NullBox(it)) }
 
-	override var value: T
+	override val value: T
 		get() = behaviorSubject.value?.value ?: initialValue
-		set(newValue) {
-			if (value != newValue)
-				behaviorSubject.onNext(NullBox(newValue))
-		}
 
 	override fun subscribeActual(observer: Observer<in NullBox<T>>) {
 		behaviorSubject.safeSubscribe(observer)
 	}
 
-	fun asInteractionState(): InteractionState<T> = this
+	override fun close() {
+		subscription.dispose()
+	}
 }

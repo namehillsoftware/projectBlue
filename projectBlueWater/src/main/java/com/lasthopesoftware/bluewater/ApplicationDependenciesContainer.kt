@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater
 
+import android.annotation.SuppressLint
 import android.content.Context
 import androidx.annotation.OptIn
 import androidx.media3.common.util.UnstableApi
@@ -19,11 +20,13 @@ import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.application.SendApplicationMessages
+import com.lasthopesoftware.resources.strings.StringResources
 
 object ApplicationDependenciesContainer {
 
 	private val sync = Any()
 
+	@SuppressLint("StaticFieldLeak", "Attached Context if underlying application context changes")
 	@Volatile
 	@OptIn(UnstableApi::class)
 	private var attachedDependencies: AttachedDependencies? = null
@@ -49,6 +52,8 @@ object ApplicationDependenciesContainer {
 		private val imageCachedFilesProvider by lazy { CachedFilesProvider(context, ImageCacheConfiguration) }
 
 		private val imageDiskCacheDirectory by lazy { AndroidDiskCacheDirectoryProvider(context, ImageCacheConfiguration) }
+
+		override val stringResources by lazy { StringResources(context) }
 
 		override val defaultImageProvider by lazy { DefaultImageProvider(context) }
 

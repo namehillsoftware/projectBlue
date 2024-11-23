@@ -23,11 +23,11 @@ class `when ensuring the connection is working` {
 		Pair(
 			deferredProgressingPromise,
             ConnectionStatusViewModel(
-                FakeStringResources(),
+				FakeStringResources(),
 				mockk {
 					every { promiseLibraryConnection(LibraryId(libraryId)) } returns deferredProgressingPromise
 				}
-            )
+			)
 		)
 	}
 

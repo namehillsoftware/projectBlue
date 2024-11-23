@@ -11,6 +11,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.ProvideScreenDimensions
 import com.lasthopesoftware.bluewater.shared.images.ProvideDefaultImage
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.application.SendApplicationMessages
+import com.lasthopesoftware.resources.strings.StringResources
 
 interface ApplicationDependencies {
 	val connectionSessions: ManageConnectionSessions
@@ -24,5 +25,6 @@ interface ApplicationDependencies {
 	val playbackServiceController: ControlPlaybackService
 	val imageDiskFileCache: DiskFileCache
 	val screenDimensions: ProvideScreenDimensions
+	val stringResources: StringResources
 }
 

@@ -42,7 +42,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.appBarH
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.expandedMenuVerticalPadding
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.expandedTitleHeight
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
-import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
+import com.lasthopesoftware.observables.subscribeAsState
 
 @Composable
 fun TvItemListView(

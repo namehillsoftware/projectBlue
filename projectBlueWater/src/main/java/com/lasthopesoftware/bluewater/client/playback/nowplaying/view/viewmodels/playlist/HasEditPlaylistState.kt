@@ -1,6 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.playlist
 
-import com.lasthopesoftware.bluewater.shared.observables.InteractionState
+import com.lasthopesoftware.observables.InteractionState
 
 interface HasEditPlaylistState {
 	val isEditingPlaylist: InteractionState<Boolean>

@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.details
 
-import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -12,7 +11,6 @@ import androidx.compose.runtime.setValue
 import androidx.media3.common.util.UnstableApi
 import com.lasthopesoftware.bluewater.ActivityApplicationNavigation
 import com.lasthopesoftware.bluewater.ApplicationDependenciesContainer.applicationDependencies
-import com.lasthopesoftware.bluewater.android.intents.getIntent
 import com.lasthopesoftware.bluewater.android.intents.safelyGetParcelableExtra
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.image.CachedImageProvider
@@ -28,7 +26,6 @@ import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionF
 import com.lasthopesoftware.bluewater.client.connection.authentication.ConnectionAuthenticationChecker
 import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.libraries.UrlKeyProvider
-import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager.Instance.buildNewConnectionSessionManager
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionStatusViewModel
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionUpdatesView
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.DramaticConnectionInitializationController
@@ -37,9 +34,8 @@ import com.lasthopesoftware.bluewater.shared.MagicPropertyBuilder
 import com.lasthopesoftware.bluewater.shared.android.ui.ProjectBlueComposableApplication
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.buildViewModelLazily
 import com.lasthopesoftware.bluewater.shared.cls
-import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
-import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
+import com.lasthopesoftware.observables.subscribeAsState
 import com.lasthopesoftware.promises.extensions.suspend
 import com.lasthopesoftware.resources.strings.StringResources
 import java.io.IOException
@@ -47,28 +43,17 @@ import java.io.IOException
 @UnstableApi class FileDetailsActivity : ComponentActivity() {
 
 	companion object {
-
 		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(cls<FileDetailsActivity>()) }
 		val playlist by lazy { magicPropertyBuilder.buildProperty("playlist") }
 		val playlistPosition by lazy { magicPropertyBuilder.buildProperty("playlistPosition") }
 		val libraryIdKey by lazy { magicPropertyBuilder.buildProperty("libraryId") }
-
-		fun Context.launchFileDetailsActivity(libraryId: LibraryId, playlist: Collection<ServiceFile>, position: Int) {
-			startActivity(getIntent<FileDetailsActivity>().apply {
-				putExtra(playlistPosition, position)
-				putExtra(Companion.playlist, playlist.map { it.key }.toIntArray())
-				putExtra(libraryIdKey, libraryId)
-			})
-		}
 	}
 
 	private val imageProvider by lazy { CachedImageProvider.getInstance(this) }
 
-	private val defaultImageProvider by lazy { DefaultImageProvider(this) }
-
 	private val selectedLibraryIdProvider by buildViewModelLazily { LibraryIdProviderViewModel() }
 
-	private val libraryConnections by lazy { buildNewConnectionSessionManager() }
+	private val libraryConnections by lazy { applicationDependencies.libraryConnectionProvider }
 
 	private val libraryRevisionProvider by lazy { LibraryRevisionProvider(libraryConnections) }
 
@@ -99,7 +84,7 @@ import java.io.IOException
 			connectionPermissions,
 			filePropertiesProvider,
 			filePropertyUpdates,
-			defaultImageProvider,
+			applicationDependencies.defaultImageProvider,
 			imageProvider,
 			PlaybackServiceController(this),
 			ApplicationMessageBus.getApplicationMessageBus(),
@@ -113,7 +98,7 @@ import java.io.IOException
 		ConnectionStatusViewModel(
 			StringResources(this),
 			DramaticConnectionInitializationController(
-				libraryConnections,
+				applicationDependencies.connectionSessions,
 				applicationNavigation,
             ),
 		)

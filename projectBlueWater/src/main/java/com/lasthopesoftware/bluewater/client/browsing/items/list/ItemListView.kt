@@ -89,7 +89,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.expande
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.expandedTitleHeight
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions.rowScrollPadding
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
-import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
+import com.lasthopesoftware.observables.subscribeAsState
 import kotlin.math.pow
 import kotlin.math.roundToInt
 

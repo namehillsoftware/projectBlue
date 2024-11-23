@@ -25,10 +25,10 @@ class `when cancelling the status check` {
 		Pair(
 			deferredProgressingPromise,
             ConnectionStatusViewModel(
-                FakeStringResources(),
-                mockk {
-                    every { promiseLibraryConnection(LibraryId(libraryId)) } returns deferredProgressingPromise
-                },
+				FakeStringResources(),
+				mockk {
+					every { promiseLibraryConnection(LibraryId(libraryId)) } returns deferredProgressingPromise
+				},
             )
 		)
 	}

@@ -57,10 +57,11 @@ import com.lasthopesoftware.bluewater.shared.android.ui.components.LabeledSelect
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.StandardTextField
 import com.lasthopesoftware.bluewater.shared.android.ui.components.memorableScrollConnectedScaler
+import com.lasthopesoftware.bluewater.shared.android.ui.linearInterpolation
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
-import com.lasthopesoftware.bluewater.shared.observables.subscribeAsMutableState
-import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
+import com.lasthopesoftware.observables.subscribeAsMutableState
+import com.lasthopesoftware.observables.subscribeAsState
 import com.lasthopesoftware.promises.extensions.suspend
 import com.lasthopesoftware.resources.strings.GetStringResources
 import kotlinx.coroutines.launch
@@ -112,6 +113,54 @@ private fun RowScope.UnlabelledRemoveServerButton(
 		onClick = librarySettingsViewModel::requestLibraryRemoval,
 		iconPainter = painterResource(id = R.drawable.ic_remove_item_36dp),
 		contentDescription = stringResources.removeServer,
+		label = null,
+	)
+}
+
+@Composable
+private fun RowScope.LabelledSaveAndTestButton(
+	librarySettingsViewModel: LibrarySettingsViewModel,
+	stringResources: GetStringResources,
+	modifier: Modifier = Modifier,
+) {
+	val isSettingsChanged by librarySettingsViewModel.isSettingsChanged.subscribeAsState()
+	val saveAndTestText by remember {
+		derivedStateOf {
+			if (isSettingsChanged) stringResources.saveAndTestConnection
+			else stringResources.testConnection
+		}
+	}
+
+	ColumnMenuIcon(
+		onClick = {
+			librarySettingsViewModel.saveAndTestLibrary()
+		},
+		iconPainter = painterResource(id = R.drawable.baseline_check_36dp),
+		contentDescription = saveAndTestText,
+		label = saveAndTestText,
+		labelModifier = modifier,
+	)
+}
+
+@Composable
+private fun RowScope.UnlabelledSaveAndTestButton(
+	librarySettingsViewModel: LibrarySettingsViewModel,
+	stringResources: GetStringResources,
+) {
+	val isSettingsChanged by librarySettingsViewModel.isSettingsChanged.subscribeAsState()
+	val saveAndConnectText by remember {
+		derivedStateOf {
+			if (isSettingsChanged) stringResources.saveAndTestConnection
+			else stringResources.testConnection
+		}
+	}
+
+	ColumnMenuIcon(
+		onClick = {
+			librarySettingsViewModel.saveAndTestLibrary()
+		},
+		iconPainter = painterResource(id = R.drawable.baseline_check_36dp),
+		contentDescription = saveAndConnectText,
 		label = null,
 	)
 }
@@ -569,9 +618,18 @@ fun LibrarySettingsView(
 						)
 					}
 
-					val menuWidth by remember { derivedStateOf(structuralEqualityPolicy()) { (maxWidth - (maxWidth - iconSize) * acceleratedHeaderHidingProgress) } }
+					val menuWidth by remember {
+						derivedStateOf(structuralEqualityPolicy()) {
+							linearInterpolation(maxWidth, iconSize * 2, acceleratedHeaderHidingProgress)
+						}
+					}
 					val expandedTopRowPadding = expandedTitleHeight + expandedMenuVerticalPadding
-					val topRowPadding by remember { derivedStateOf(structuralEqualityPolicy()) { (expandedTopRowPadding - (expandedTopRowPadding - collapsedTopRowPadding) * headerHidingProgress) } }
+					val topRowPadding by remember {
+						derivedStateOf(structuralEqualityPolicy()) {
+							(expandedTopRowPadding - (expandedTopRowPadding - collapsedTopRowPadding) * headerHidingProgress)
+						}
+					}
+
 					Row(
 						modifier = Modifier
 							.padding(
@@ -585,19 +643,32 @@ fun LibrarySettingsView(
 					) {
 						val textModifier = Modifier.alpha(acceleratedToolbarStateProgress)
 
-						if (menuWidth > iconSize * 2) {
-							if (acceleratedHeaderHidingProgress < 1) {
-								LabelledRemoveServerButton(
-									librarySettingsViewModel = librarySettingsViewModel,
-									stringResources = stringResources,
-									modifier = textModifier
-								)
-							} else {
-								UnlabelledRemoveServerButton(
-									librarySettingsViewModel = librarySettingsViewModel,
-									stringResources = stringResources
-								)
-							}
+//						if (menuWidth > iconSize * 2) {
+//							if (acceleratedHeaderHidingProgress < 1) {
+//								LabelledRemoveServerButton(
+//									librarySettingsViewModel = librarySettingsViewModel,
+//									stringResources = stringResources,
+//									modifier = textModifier
+//								)
+//							} else {
+//								UnlabelledRemoveServerButton(
+//									librarySettingsViewModel = librarySettingsViewModel,
+//									stringResources = stringResources
+//								)
+//							}
+//						}
+
+						if (acceleratedHeaderHidingProgress < 1) {
+							LabelledSaveAndTestButton(
+								librarySettingsViewModel = librarySettingsViewModel,
+								stringResources = stringResources,
+								modifier = textModifier
+							)
+						} else {
+							UnlabelledSaveAndTestButton(
+								librarySettingsViewModel = librarySettingsViewModel,
+								stringResources = stringResources
+							)
 						}
 
 						if (acceleratedHeaderHidingProgress < 1) {

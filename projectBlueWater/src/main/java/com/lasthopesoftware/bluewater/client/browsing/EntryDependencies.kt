@@ -19,14 +19,12 @@ import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsViewModel
 import com.lasthopesoftware.bluewater.settings.repository.access.HoldApplicationSettings
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.RegisterForTypedMessages
-import com.lasthopesoftware.resources.strings.StringResources
 
 interface EntryDependencies : ApplicationDependencies {
 	val selectedLibraryViewModel: SelectedLibraryViewModel
 	val menuMessageBus: ViewModelMessageBus<ItemListMenuMessage>
 	val storedItemAccess: AccessStoredItems
 	val itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler
-	val stringResources: StringResources
 	val applicationNavigation: NavigateApplication
 	val storedFileAccess: StoredFileAccess
 	val libraryProvider: ILibraryProvider

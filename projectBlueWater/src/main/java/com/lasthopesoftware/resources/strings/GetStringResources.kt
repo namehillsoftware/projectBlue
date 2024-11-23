@@ -38,10 +38,17 @@ interface GetStringResources {
 		get() = ""
 	val connectingToServerTitle: String
 		get() = ""
+
 	val saveAndConnect: String
 		get() = ""
 
 	val connect: String
+		get() = ""
+
+	val saveAndTestConnection: String
+		get() = ""
+
+	val testConnection: String
 		get() = ""
 
 	val clear: String

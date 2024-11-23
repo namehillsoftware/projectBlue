@@ -6,8 +6,8 @@ import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.Proc
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJob
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.job.StoredFileJobStatus
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.updates.UpdateStoredFiles
-import com.lasthopesoftware.bluewater.shared.observables.stream
-import com.lasthopesoftware.bluewater.shared.observables.toMaybeObservable
+import com.lasthopesoftware.observables.stream
+import com.lasthopesoftware.observables.toMaybeObservable
 import com.namehillsoftware.handoff.promises.Promise
 import io.reactivex.rxjava3.core.Observable
 import org.slf4j.LoggerFactory

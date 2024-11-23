@@ -82,8 +82,8 @@ import com.lasthopesoftware.bluewater.shared.android.ui.indicateFocus
 import com.lasthopesoftware.bluewater.shared.android.ui.navigable
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
-import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
-import com.lasthopesoftware.bluewater.shared.observables.toMaybeObservable
+import com.lasthopesoftware.observables.subscribeAsState
+import com.lasthopesoftware.observables.toMaybeObservable
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.core.Single
 import kotlinx.coroutines.launch

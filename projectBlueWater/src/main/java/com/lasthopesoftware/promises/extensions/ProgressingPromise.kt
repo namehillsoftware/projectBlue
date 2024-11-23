@@ -28,13 +28,15 @@ open class ProgressingPromise<Progress, Resolution> : ProgressedPromise<Progress
 		for (action in updateListeners.keys) action(progress)
 	}
 
-	fun updates(action: (Progress) -> Unit) {
-		if (isResolved.get()) return
+	fun updates(action: (Progress) -> Unit): ProgressingPromise<Progress, Resolution> {
+		if (isResolved.get()) return this
 
 		updateListeners[action] = Unit
 		must { _ ->
 			isResolved.set(true)
 			updateListeners.remove(action)
 		}
+
+		return this
 	}
 }

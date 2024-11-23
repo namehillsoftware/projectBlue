@@ -3,15 +3,11 @@ package com.lasthopesoftware.bluewater.client.connection.session.initialization
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus
-import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus.BuildingConnection
 import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus.BuildingConnectionComplete
-import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus.BuildingConnectionFailed
-import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus.GettingLibrary
-import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus.GettingLibraryFailed
-import com.lasthopesoftware.bluewater.client.connection.BuildingConnectionStatus.SendingWakeSignal
 import com.lasthopesoftware.bluewater.client.connection.ProvideConnections
+import com.lasthopesoftware.bluewater.client.connection.getStatusString
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
-import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
+import com.lasthopesoftware.observables.MutableInteractionState
 import com.lasthopesoftware.promises.extensions.ProgressingPromise
 import com.lasthopesoftware.promises.extensions.ProgressingPromiseProxy
 import com.lasthopesoftware.resources.strings.GetStringResources
@@ -101,14 +97,7 @@ class ConnectionStatusViewModel(
 					testedLibraryId = null
 				}
 
-				mutableConnectionStatus.value = when (status) {
-					GettingLibrary -> stringResources.gettingLibrary
-					GettingLibraryFailed -> stringResources.gettingLibraryFailed
-					SendingWakeSignal -> stringResources.sendingWakeSignal
-					BuildingConnection -> stringResources.connectingToServerLibrary
-					BuildingConnectionFailed -> stringResources.errorConnectingTryAgain
-					BuildingConnectionComplete -> stringResources.connected
-				}
+				mutableConnectionStatus.value = stringResources.getStatusString(status)
 			}
 		}
 
