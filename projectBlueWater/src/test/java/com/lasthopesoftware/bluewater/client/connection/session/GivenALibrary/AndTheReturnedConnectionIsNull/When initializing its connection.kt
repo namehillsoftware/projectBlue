@@ -31,7 +31,7 @@ class `when initializing its connection` {
 					every { promiseLibraryConnection(LibraryId(libraryId)) } returns deferredProgressingPromise
 				},
 				mockk {
-					every { viewApplicationSettings() } answers {
+					every { viewServerSettings(LibraryId(libraryId)) } answers {
 						isSettingsLaunched = true
 						Unit.toPromise()
 					}

@@ -41,7 +41,7 @@ class DramaticConnectionInitializationController(
 								if (c == null) {
 									removeConnection(libraryId)
 									applicationNavigation
-										.viewApplicationSettings()
+										.viewServerSettings(libraryId)
 										.also(::doCancel)
 										.then({ _ -> null }, { null })
 								} else {
@@ -50,7 +50,7 @@ class DramaticConnectionInitializationController(
 							},
 							{ e ->
 								logger.error("An error occurred getting the connection for library ID ${libraryId.id}.", e)
-								applicationNavigation.viewApplicationSettings().then({ _ -> null }, { null })
+								applicationNavigation.viewServerSettings(libraryId).then({ _ -> null }, { null })
 							}
 						)
 				)
@@ -81,7 +81,7 @@ class DramaticConnectionInitializationController(
 							if (c == null) {
 								removeConnection(libraryId)
 								applicationNavigation
-									.viewApplicationSettings()
+									.viewServerSettings(libraryId)
 									.also(::doCancel)
 									.then({ _ -> null }, { null })
 							} else {
@@ -90,7 +90,7 @@ class DramaticConnectionInitializationController(
 						},
 						{  e ->
 							logger.error("An error occurred getting the connection for library ID ${libraryId.id}.", e)
-							applicationNavigation.viewApplicationSettings().then({ _ -> null }, { null })
+							applicationNavigation.viewServerSettings(libraryId).then({ _ -> null }, { null })
 						}
 					)
 

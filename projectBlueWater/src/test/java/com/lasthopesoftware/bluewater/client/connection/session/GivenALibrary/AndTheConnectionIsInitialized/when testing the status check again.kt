@@ -10,7 +10,7 @@ import com.lasthopesoftware.observables.toCloseable
 import com.lasthopesoftware.resources.strings.FakeStringResources
 import io.mockk.every
 import io.mockk.mockk
-import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
@@ -92,12 +92,12 @@ class `when testing the status check again` {
 
 	@Test
 	fun `then is connecting history is correct`() {
-		Assertions.assertThat(isConnectingHistory).containsExactly(false, true, false)
+		assertThat(isConnectingHistory).containsExactly(false, true, false, true, false)
 	}
 
 	@Test
 	fun `then the connection status history does NOT contain initial BuildingConnectionComplete from second attempt because it is assumed the connection is healthy`() {
-		Assertions.assertThat(connectionStatusHistory).containsExactly(
+		assertThat(connectionStatusHistory).containsExactly(
 			"",
 			"5MmZ6OPl",
 			"x7lcvspHV",
@@ -111,11 +111,11 @@ class `when testing the status check again` {
 
 	@Test
 	fun `then the correct connection is returned`() {
-		Assertions.assertThat(firstLibraryConnection).isNotNull
+		assertThat(firstLibraryConnection).isNotNull
 	}
 
 	@Test
 	fun `then the correct connection is returned again`() {
-		Assertions.assertThat(secondLibraryConnection).isNotNull
+		assertThat(secondLibraryConnection).isNotNull
 	}
 }

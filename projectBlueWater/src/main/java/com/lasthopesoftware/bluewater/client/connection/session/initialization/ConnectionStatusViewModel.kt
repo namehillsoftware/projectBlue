@@ -33,6 +33,8 @@ class ConnectionStatusViewModel(
 	@Volatile
 	private var testedLibraryId: LibraryId? = null
 
+	private val connectionSync = Any()
+
 	private val mutableIsGettingConnection = MutableInteractionState(false)
 	private val mutableConnectionStatus = MutableInteractionState("")
 
@@ -47,22 +49,7 @@ class ConnectionStatusViewModel(
 			.then { c -> c != null }
 	}
 
-	override fun promiseLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, ProvideConnections?> {
-		return promiseDecoratedConnection(libraryId, inner::promiseLibraryConnection)
-	}
-
-	@Synchronized
-	override fun promiseTestedLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, ProvideConnections?> {
-		return promiseDecoratedConnection(libraryId, inner::promiseTestedLibraryConnection)
-	}
-
-	fun cancelCurrentCheck() {
-		isCancelled = true
-		promisedConnectionCheck.cancel()
-	}
-
-	@Synchronized
-	private fun promiseDecoratedConnection(libraryId: LibraryId, connectionProviderCall: (LibraryId) -> ProgressingPromise<BuildingConnectionStatus, ProvideConnections?>): ProgressingPromise<BuildingConnectionStatus, ProvideConnections?> {
+	override fun promiseLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, ProvideConnections?> = synchronized(connectionSync) {
 		isCancelled = false
 
 		if (mutableIsGettingConnection.value && libraryId == initializingLibraryId) {
@@ -76,6 +63,32 @@ class ConnectionStatusViewModel(
 		mutableIsGettingConnection.value = testedLibraryId != libraryId
 		mutableConnectionStatus.value = stringResources.connecting
 
+		promiseDecoratedConnection(libraryId, inner::promiseLibraryConnection)
+	}
+
+	override fun promiseTestedLibraryConnection(libraryId: LibraryId): ProgressingPromise<BuildingConnectionStatus, ProvideConnections?> = synchronized(connectionSync) {
+		isCancelled = false
+
+		if (mutableIsGettingConnection.value && libraryId == initializingLibraryId) {
+			return promisedConnectionCheck
+		}
+
+		promisedConnectionCheck.cancel()
+
+		initializingLibraryId = libraryId
+
+		mutableIsGettingConnection.value = true
+		mutableConnectionStatus.value = stringResources.connecting
+
+		promiseDecoratedConnection(libraryId, inner::promiseTestedLibraryConnection)
+	}
+
+	fun cancelCurrentCheck() {
+		isCancelled = true
+		promisedConnectionCheck.cancel()
+	}
+
+	private fun promiseDecoratedConnection(libraryId: LibraryId, connectionProviderCall: (LibraryId) -> ProgressingPromise<BuildingConnectionStatus, ProvideConnections?>): ProgressingPromise<BuildingConnectionStatus, ProvideConnections?> = synchronized(connectionSync) {
 		val promisedConnection = object : ProgressingPromiseProxy<BuildingConnectionStatus, ProvideConnections?>(), ImmediateResponse<ProvideConnections?, Unit>, ImmediateAction, (BuildingConnectionStatus) -> Unit {
 			init {
 				val promisedConnection = connectionProviderCall(libraryId)

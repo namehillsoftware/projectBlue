@@ -15,7 +15,7 @@ import org.junit.jupiter.api.Test
 
 private const val libraryId = 327
 
-class `When testing its connection` {
+class `When dramatically testing its connection` {
 	private val mut by lazy {
 		val deferredProgressingPromise =
             DeferredProgressingPromise<BuildingConnectionStatus, ProvideConnections?>()
@@ -27,7 +27,7 @@ class `When testing its connection` {
                     every { promiseTestedLibraryConnection(LibraryId(libraryId)) } returns deferredProgressingPromise
                 },
 				mockk {
-					every { viewApplicationSettings() } answers {
+					every { viewServerSettings(LibraryId(libraryId)) } answers {
 						isSettingsLaunched = true
 						Unit.toPromise()
 					}
