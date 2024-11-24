@@ -17,9 +17,9 @@ import org.junit.jupiter.api.Test
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ExecutionException
 
-class `when calling the status check again with another library` {
+class `when testing the status check again with another library` {
 	companion object {
-		private const val libraryId = 267
+		private const val libraryId = 92
 	}
 
 	private val mut by lazy {
@@ -31,12 +31,12 @@ class `when calling the status check again with another library` {
 				connectingToServerLibrary = "2bsRkyrQO",
 			),
 			mockk {
-				every { promiseLibraryConnection(LibraryId(480)) } answers {
+				every { promiseTestedLibraryConnection(LibraryId(480)) } answers {
 					val deferredProgressingPromise = DeferredProgressingPromise<BuildingConnectionStatus, ProvideConnections?>()
 					deferredProgressingPromise.sendProgressUpdate(BuildingConnectionStatus.BuildingConnection)
 					deferredProgressingPromise
 				}
-				every { promiseLibraryConnection(LibraryId(libraryId)) } answers {
+				every { promiseTestedLibraryConnection(LibraryId(libraryId)) } answers {
 					DeferredProgressingPromise<BuildingConnectionStatus, ProvideConnections?>().apply {
 						sendProgressUpdate(BuildingConnectionStatus.GettingLibrary)
 						sendResolution(mockk())
@@ -63,8 +63,8 @@ class `when calling the status check again with another library` {
 		viewModel.connectionStatus.subscribe { status -> connectionStatuses.add(status.value) }.toCloseable().use {
 			viewModel.isGettingConnection.subscribe { isConnecting -> isConnectingHistory.add(isConnecting.value) }
 				.toCloseable().use {
-				firstPromisedLibraryConnection = viewModel.promiseLibraryConnection(LibraryId(480))
-				secondPromisedLibraryConnection = viewModel.promiseLibraryConnection(LibraryId(libraryId))
+				firstPromisedLibraryConnection = viewModel.promiseTestedLibraryConnection(LibraryId(480))
+				secondPromisedLibraryConnection = viewModel.promiseTestedLibraryConnection(LibraryId(libraryId))
 
 				try {
 					firstPromisedLibraryConnection?.toExpiringFuture()?.get()

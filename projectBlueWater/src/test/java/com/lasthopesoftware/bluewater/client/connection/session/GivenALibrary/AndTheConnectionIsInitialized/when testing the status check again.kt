@@ -10,13 +10,13 @@ import com.lasthopesoftware.observables.toCloseable
 import com.lasthopesoftware.resources.strings.FakeStringResources
 import io.mockk.every
 import io.mockk.mockk
-import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
-class `when calling the status check again` {
+class `when testing the status check again` {
 	companion object {
-		private const val libraryId = 107
+		private const val libraryId = 278
 	}
 
 	private val mut by lazy {
@@ -25,25 +25,25 @@ class `when calling the status check again` {
 		firstDeferredProgressingPromise.sendProgressUpdate(BuildingConnectionStatus.BuildingConnectionComplete)
 
 		val secondDeferredProgressingPromise =
-			DeferredProgressingPromise<BuildingConnectionStatus, ProvideConnections?>()
+            DeferredProgressingPromise<BuildingConnectionStatus, ProvideConnections?>()
 		secondDeferredProgressingPromise.sendProgressUpdate(BuildingConnectionStatus.BuildingConnectionComplete)
 
 		Triple(
 			firstDeferredProgressingPromise,
 			secondDeferredProgressingPromise,
-			ConnectionStatusViewModel(
-				FakeStringResources(
-					connected = "x7lcvspHV",
-					connecting = "5MmZ6OPl",
-					connectingToServerLibrary = "2bsRkyrQO",
-				),
-				mockk {
-					every { promiseLibraryConnection(LibraryId(libraryId)) } returnsMany listOf(
-						firstDeferredProgressingPromise,
-						secondDeferredProgressingPromise
-					)
-				},
-			)
+            ConnectionStatusViewModel(
+                FakeStringResources(
+                    connected = "x7lcvspHV",
+                    connecting = "5MmZ6OPl",
+                    connectingToServerLibrary = "2bsRkyrQO",
+                ),
+                mockk {
+                    every { promiseTestedLibraryConnection(LibraryId(libraryId)) } returnsMany listOf(
+                        firstDeferredProgressingPromise,
+                        secondDeferredProgressingPromise
+                    )
+                },
+            )
 		)
 	}
 
@@ -60,12 +60,12 @@ class `when calling the status check again` {
 		with (viewModel) {
 			connectionStatus.subscribe { status -> connectionStatusHistory.add(status.value) }.toCloseable().use {
 				isGettingConnection.subscribe { isConnecting -> isConnectingHistory.add(isConnecting.value) }.toCloseable().use {
-					val futureFirstConnection = promiseLibraryConnection(LibraryId(libraryId)).toExpiringFuture()
+					val futureFirstConnection = promiseTestedLibraryConnection(LibraryId(libraryId)).toExpiringFuture()
 
 					with (firstDeferredPromise) {
 						sendProgressUpdates(
-							BuildingConnectionStatus.BuildingConnection,
-							BuildingConnectionStatus.BuildingConnectionComplete,
+                            BuildingConnectionStatus.BuildingConnection,
+                            BuildingConnectionStatus.BuildingConnectionComplete,
 						)
 
 						sendResolution(mockk())
@@ -73,12 +73,12 @@ class `when calling the status check again` {
 
 					firstLibraryConnection = futureFirstConnection.get()
 
-					val futureSecondConnection = promiseLibraryConnection(LibraryId(libraryId)).toExpiringFuture()
+					val futureSecondConnection = promiseTestedLibraryConnection(LibraryId(libraryId)).toExpiringFuture()
 
 					with (secondDeferredPromise) {
 						sendProgressUpdates(
-							BuildingConnectionStatus.BuildingConnection,
-							BuildingConnectionStatus.BuildingConnectionComplete,
+                            BuildingConnectionStatus.BuildingConnection,
+                            BuildingConnectionStatus.BuildingConnectionComplete,
 						)
 
 						sendResolution(mockk())
@@ -92,12 +92,12 @@ class `when calling the status check again` {
 
 	@Test
 	fun `then is connecting history is correct`() {
-		assertThat(isConnectingHistory).containsExactly(false, true, false)
+		Assertions.assertThat(isConnectingHistory).containsExactly(false, true, false)
 	}
 
 	@Test
 	fun `then the connection status history does NOT contain initial BuildingConnectionComplete from second attempt because it is assumed the connection is healthy`() {
-		assertThat(connectionStatusHistory).containsExactly(
+		Assertions.assertThat(connectionStatusHistory).containsExactly(
 			"",
 			"5MmZ6OPl",
 			"x7lcvspHV",
@@ -111,11 +111,11 @@ class `when calling the status check again` {
 
 	@Test
 	fun `then the correct connection is returned`() {
-		assertThat(firstLibraryConnection).isNotNull
+		Assertions.assertThat(firstLibraryConnection).isNotNull
 	}
 
 	@Test
 	fun `then the correct connection is returned again`() {
-		assertThat(secondLibraryConnection).isNotNull
+		Assertions.assertThat(secondLibraryConnection).isNotNull
 	}
 }

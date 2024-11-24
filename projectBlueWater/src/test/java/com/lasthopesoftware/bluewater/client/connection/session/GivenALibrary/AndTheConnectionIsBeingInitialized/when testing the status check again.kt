@@ -16,7 +16,7 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
 
-class `when calling the status check again` {
+class `when testing the status check again` {
 	companion object {
 		private const val libraryId = 265
 	}
@@ -30,7 +30,7 @@ class `when calling the status check again` {
 			ConnectionStatusViewModel(
 				FakeStringResources(),
 				mockk {
-					every { promiseLibraryConnection(LibraryId(libraryId)) } returns deferredProgressingPromise
+					every { promiseTestedLibraryConnection(LibraryId(libraryId)) } returns deferredProgressingPromise
 				},
 			)
 		)
@@ -49,8 +49,8 @@ class `when calling the status check again` {
 		val (deferredPromise, viewModel) = mut
 
 		viewModel.isGettingConnection.subscribe { isConnecting -> isConnectingHistory.add(isConnecting.value) }.toCloseable().use {
-			firstPromisedLibraryConnection = viewModel.promiseLibraryConnection(LibraryId(libraryId))
-			secondPromisedLibraryConnection = viewModel.promiseLibraryConnection(LibraryId(libraryId))
+			firstPromisedLibraryConnection = viewModel.promiseTestedLibraryConnection(LibraryId(libraryId))
+			secondPromisedLibraryConnection = viewModel.promiseTestedLibraryConnection(LibraryId(libraryId))
 
 			deferredPromise.sendResolution(mockk())
 

@@ -15,10 +15,9 @@ import org.junit.jupiter.api.Test
 
 private const val libraryId = 552
 
-class `when cancelling the initialization` {
+class `when cancelling the dramatic initialization` {
 	private val mut by lazy {
-		val deferredProgressingPromise =
-			DeferredProgressingPromise<BuildingConnectionStatus, ProvideConnections?>()
+		val deferredProgressingPromise = DeferredProgressingPromise<BuildingConnectionStatus, ProvideConnections?>()
 
 		Pair(
 			deferredProgressingPromise,
