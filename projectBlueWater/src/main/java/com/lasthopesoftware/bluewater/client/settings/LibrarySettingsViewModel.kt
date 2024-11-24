@@ -80,6 +80,7 @@ class LibrarySettingsViewModel(
 		LiftedInteractionState(sslCertificateFingerprint.map { it.value.any() }, false)
 	}
 
+	private val isTestingConnectionState = MutableInteractionState(false)
 	private val connectionStatusState = MutableInteractionState("")
 
 	val accessCode = MutableInteractionState(defaultLibrary.accessCode ?: "")
@@ -107,6 +108,7 @@ class LibrarySettingsViewModel(
 		get() = libraryState.value.libraryId.takeIf { it.id > -1 }
 
 	val connectionStatus = connectionStatusState.asInteractionState()
+	val isTestingConnection = isTestingConnectionState.asInteractionState()
 
 	override fun onCleared() {
 		if (isSettingsChangedObserver.isInitialized())
@@ -150,15 +152,21 @@ class LibrarySettingsViewModel(
 			.must(this)
 	}
 
-	fun saveAndTestLibrary(): Promise<Boolean> = saveLibrary()
-		.eventually { isSaved ->
-			if (!isSaved) false.toPromise()
-			else activeLibraryId
-				?.let(manageConnectionSessions::promiseTestedLibraryConnection)
-				?.updates { status -> connectionStatusState.value = stringResources.getStatusString(status) }
-				?.then { c -> c != null }
-				.keepPromise(false)
-		}
+	fun saveAndTestLibrary(): Promise<Boolean> {
+		isTestingConnectionState.value = true
+		return saveLibrary()
+			.eventually { isSaved ->
+				if (!isSaved) false.toPromise()
+				else activeLibraryId
+					?.let(manageConnectionSessions::promiseTestedLibraryConnection)
+					?.updates { status -> connectionStatusState.value = stringResources.getStatusString(status) }
+					?.then { c -> c != null }
+					.keepPromise(false)
+			}
+			.must { _ ->
+				isTestingConnectionState.value = false
+			}
+	}
 
 	fun requestLibraryRemoval() {
 		mutableIsRemovalRequested.value = true

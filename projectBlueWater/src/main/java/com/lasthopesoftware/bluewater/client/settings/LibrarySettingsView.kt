@@ -124,10 +124,15 @@ private fun RowScope.LabelledSaveAndTestButton(
 	modifier: Modifier = Modifier,
 ) {
 	val isSettingsChanged by librarySettingsViewModel.isSettingsChanged.subscribeAsState()
+	val isTestingConnection by librarySettingsViewModel.isTestingConnection.subscribeAsState()
+	val connectionStatusText by librarySettingsViewModel.connectionStatus.subscribeAsState()
 	val saveAndTestText by remember {
 		derivedStateOf {
-			if (isSettingsChanged) stringResources.saveAndTestConnection
-			else stringResources.testConnection
+			when {
+				isTestingConnection -> connectionStatusText
+				isSettingsChanged -> stringResources.saveAndTestConnection
+				else -> stringResources.testConnection
+			}
 		}
 	}
 
@@ -139,6 +144,7 @@ private fun RowScope.LabelledSaveAndTestButton(
 		contentDescription = saveAndTestText,
 		label = saveAndTestText,
 		labelModifier = modifier,
+		enabled = !isTestingConnection
 	)
 }
 
@@ -148,10 +154,15 @@ private fun RowScope.UnlabelledSaveAndTestButton(
 	stringResources: GetStringResources,
 ) {
 	val isSettingsChanged by librarySettingsViewModel.isSettingsChanged.subscribeAsState()
-	val saveAndConnectText by remember {
+	val isTestingConnection by librarySettingsViewModel.isTestingConnection.subscribeAsState()
+	val connectionStatusText by librarySettingsViewModel.connectionStatus.subscribeAsState()
+	val saveAndTestText by remember {
 		derivedStateOf {
-			if (isSettingsChanged) stringResources.saveAndTestConnection
-			else stringResources.testConnection
+			when {
+				isTestingConnection -> connectionStatusText
+				isSettingsChanged -> stringResources.saveAndTestConnection
+				else -> stringResources.testConnection
+			}
 		}
 	}
 
@@ -160,8 +171,9 @@ private fun RowScope.UnlabelledSaveAndTestButton(
 			librarySettingsViewModel.saveAndTestLibrary()
 		},
 		iconPainter = painterResource(id = R.drawable.baseline_check_36dp),
-		contentDescription = saveAndConnectText,
+		contentDescription = saveAndTestText,
 		label = null,
+		enabled = !isTestingConnection
 	)
 }
 

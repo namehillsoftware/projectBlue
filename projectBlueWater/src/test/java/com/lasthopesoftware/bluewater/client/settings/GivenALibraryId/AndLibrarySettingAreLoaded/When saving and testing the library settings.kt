@@ -62,6 +62,7 @@ class `When saving and testing the library settings` {
     }
 
 	private val connectionStatuses = mutableListOf<String>()
+	private val isTestingConnectionStates = mutableListOf<Boolean>()
 	private var isSaved = false
 	private var settingsChangedAfterSaving = false
 	private var didSettingsChange = false
@@ -74,39 +75,41 @@ class `When saving and testing the library settings` {
 		val (promise, viewModel) = services
 		with (viewModel) {
 			connectionStatus.filterNonNull().subscribe(connectionStatuses::add).toCloseable().use {
-				loadLibrary(libraryId).toExpiringFuture().get()
-				didSettingsChangeAfterLoad = isSettingsChanged.value
+				isTestingConnection.filterNonNull().subscribe(isTestingConnectionStates::add).toCloseable().use {
+					loadLibrary(libraryId).toExpiringFuture().get()
+					didSettingsChangeAfterLoad = isSettingsChanged.value
 
-				accessCode.value = "V68Bp9rS"
-				didSettingsChangeAfterAccessCodeChanged = isSettingsChanged.value
+					accessCode.value = "V68Bp9rS"
+					didSettingsChangeAfterAccessCodeChanged = isSettingsChanged.value
 
-				accessCode.value = "b2q"
-				didSettingsChangeAfterAccessCodeReverted = isSettingsChanged.value
+					accessCode.value = "b2q"
+					didSettingsChangeAfterAccessCodeReverted = isSettingsChanged.value
 
-				accessCode.value = "V68Bp9rS"
-				password.value = "sl0Ha"
-				userName.value = "xw9wy0T"
-				libraryName.value = "left"
-				isLocalOnly.value = !isLocalOnly.value
-				isSyncLocalConnectionsOnly.value = !isSyncLocalConnectionsOnly.value
-				isUsingExistingFiles.value = !isUsingExistingFiles.value
-				isWakeOnLanEnabled.value = !isWakeOnLanEnabled.value
-				syncedFileLocation.value = Library.SyncedFileLocation.EXTERNAL
-				macAddress.value = "sVU0zPNKdFu"
+					accessCode.value = "V68Bp9rS"
+					password.value = "sl0Ha"
+					userName.value = "xw9wy0T"
+					libraryName.value = "left"
+					isLocalOnly.value = !isLocalOnly.value
+					isSyncLocalConnectionsOnly.value = !isSyncLocalConnectionsOnly.value
+					isUsingExistingFiles.value = !isUsingExistingFiles.value
+					isWakeOnLanEnabled.value = !isWakeOnLanEnabled.value
+					syncedFileLocation.value = Library.SyncedFileLocation.EXTERNAL
+					macAddress.value = "sVU0zPNKdFu"
 
-				didSettingsChange = isSettingsChanged.value
+					didSettingsChange = isSettingsChanged.value
 
-				val promisedSaveAndTest = saveAndTestLibrary()
+					val promisedSaveAndTest = saveAndTestLibrary()
 
-				promise.sendProgressUpdates(
-					BuildingConnectionStatus.GettingLibrary,
-					BuildingConnectionStatus.BuildingConnection,
-					BuildingConnectionStatus.BuildingConnectionComplete
-				)
-				promise.sendResolution(mockk())
+					promise.sendProgressUpdates(
+						BuildingConnectionStatus.GettingLibrary,
+						BuildingConnectionStatus.BuildingConnection,
+						BuildingConnectionStatus.BuildingConnectionComplete
+					)
+					promise.sendResolution(mockk())
 
-				isSaved = promisedSaveAndTest.toExpiringFuture().get() == true
-				settingsChangedAfterSaving = isSettingsChanged.value
+					isSaved = promisedSaveAndTest.toExpiringFuture().get() == true
+					settingsChangedAfterSaving = isSettingsChanged.value
+				}
 			}
 		}
     }
@@ -205,6 +208,11 @@ class `When saving and testing the library settings` {
 			"o2C3Emsri",
 			"TB3IyvtaWr",
 		)
+	}
+
+	@Test
+	fun `then the is testing connection states are correct`() {
+		assertThat(isTestingConnectionStates).containsExactly(false, true, false)
 	}
 
 	@Test

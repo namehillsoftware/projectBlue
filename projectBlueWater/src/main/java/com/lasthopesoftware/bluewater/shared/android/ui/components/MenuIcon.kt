@@ -29,6 +29,7 @@ fun RowScope.ColumnMenuIcon(
 	labelColor: Color = LocalContentColor.current,
 	labelModifier: Modifier = Modifier,
 	labelMaxLines: Int = 1,
+	enabled: Boolean = true,
 ) {
 	MenuIcon(
 		onClick = onClick,
@@ -37,7 +38,7 @@ fun RowScope.ColumnMenuIcon(
 				painter = iconPainter,
 				contentDescription = contentDescription,
 				modifier = Modifier.size(Dimensions.topMenuIconSize),
-				tint = LocalControlColor.current
+				tint = if (enabled) LocalControlColor.current else LocalControlColor.current.copy(alpha = .6f)
 			)
 		},
 		modifier = Modifier
@@ -47,6 +48,7 @@ fun RowScope.ColumnMenuIcon(
 		labelColor = labelColor,
 		labelModifier = labelModifier,
 		labelMaxLines = labelMaxLines,
+		enabled = enabled
 	)
 }
 
@@ -59,6 +61,7 @@ fun RowScope.ColumnMenuIcon(
 	labelColor: Color = LocalContentColor.current,
 	labelModifier: Modifier = Modifier,
 	labelMaxLines: Int = 1,
+	enabled: Boolean = true
 ) {
 	MenuIcon(
 		onClick = onClick,
@@ -70,6 +73,7 @@ fun RowScope.ColumnMenuIcon(
 		labelColor = labelColor,
 		labelModifier = labelModifier,
 		labelMaxLines = labelMaxLines,
+		enabled = enabled
 	)
 }
 
@@ -82,6 +86,7 @@ fun MenuIcon(
 	labelColor: Color = LocalContentColor.current,
 	labelModifier: Modifier = Modifier,
 	labelMaxLines: Int = Int.MAX_VALUE,
+	enabled: Boolean = true,
 ) {
 	if (label != null) {
 		MenuIcon(
@@ -95,14 +100,16 @@ fun MenuIcon(
 					maxLines = labelMaxLines,
 					color = labelColor,
 				)
-			}
+			},
+			enabled = enabled
 		)
 	} else {
 		MenuIcon(
 			onClick = onClick,
 			icon = icon,
 			modifier = modifier,
-			label = null as @Composable (() -> Unit)?
+			label = null as @Composable (() -> Unit)?,
+			enabled = enabled
 		)
 	}
 }
