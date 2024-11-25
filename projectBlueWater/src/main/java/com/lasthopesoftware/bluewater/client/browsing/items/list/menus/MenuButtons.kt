@@ -214,7 +214,7 @@ fun RowScope.UnlabelledRefreshButton(
 }
 
 @Composable
-fun BoxScope.MoreOptionsMenu(fileListViewModel: FileListViewModel) {
+fun BoxScope.MoreFileOptionsMenu(fileListViewModel: FileListViewModel) {
 	Box(modifier = Modifier
 		.fillMaxSize()
 		.wrapContentSize(Alignment.TopEnd)
@@ -240,6 +240,41 @@ fun BoxScope.MoreOptionsMenu(fileListViewModel: FileListViewModel) {
 					else stringResource(id = R.string.files_synced)
 				Text(syncButtonLabel)
 				UnlabelledSyncButton(fileListViewModel = fileListViewModel)
+			}
+		}
+	}
+}
+
+@Composable
+fun BoxScope.MoreItemsOnlyOptionsMenu(
+	itemListViewModel: ItemListViewModel,
+	applicationNavigation: NavigateApplication,
+) {
+	Box(modifier = Modifier
+		.fillMaxSize()
+		.wrapContentSize(Alignment.TopEnd)
+		.align(Alignment.TopEnd)
+	) {
+		var isExpanded by remember { mutableStateOf(false) }
+		Icon(
+			painter = painterResource(R.drawable.more_vertical_24),
+			contentDescription = stringResource(R.string.view_more_options),
+			modifier = Modifier
+				.padding(Dimensions.topRowOuterPadding)
+				.clickable { isExpanded = !isExpanded }
+		)
+
+		DropdownMenu(
+			expanded = isExpanded,
+			onDismissRequest = { isExpanded = false }
+		) {
+			DropdownMenuItem(onClick = { itemListViewModel.loadedLibraryId?.also(applicationNavigation::viewServerSettings) }) {
+				val settingsButtonLabel = stringResource(id = R.string.settings)
+				Text(settingsButtonLabel)
+				UnlabelledSettingsButton(
+					itemListViewModel = itemListViewModel,
+					applicationNavigation = applicationNavigation,
+				)
 			}
 		}
 	}

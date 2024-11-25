@@ -65,12 +65,11 @@ import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledActiveDownloadsButton
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledRefreshButton
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledSearchButton
-import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledSettingsButton
-import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.MoreOptionsMenu
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.MoreFileOptionsMenu
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.MoreItemsOnlyOptionsMenu
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.UnlabelledActiveDownloadsButton
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.UnlabelledRefreshButton
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.UnlabelledSearchButton
-import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.UnlabelledSettingsButton
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
@@ -167,13 +166,13 @@ private fun BoxScope.CollapsedItemListMenu(
 				serviceFilesListState = fileListViewModel
 			)
 
-			UnlabelledRefreshButton(itemListViewModel, fileListViewModel)
-
 			UnlabelledShuffleButton(
 				libraryState = itemListViewModel,
 				playbackServiceController = playbackServiceController,
 				serviceFilesListState = fileListViewModel
 			)
+
+			UnlabelledRefreshButton(itemListViewModel, fileListViewModel)
 		} else {
 			UnlabelledActiveDownloadsButton(
 				itemListViewModel = itemListViewModel,
@@ -185,10 +184,7 @@ private fun BoxScope.CollapsedItemListMenu(
 				applicationNavigation = applicationNavigation
 			)
 
-			UnlabelledSettingsButton(
-				itemListViewModel = itemListViewModel,
-				applicationNavigation = applicationNavigation
-			)
+			UnlabelledRefreshButton(itemListViewModel, fileListViewModel)
 		}
 	}
 }
@@ -499,7 +495,8 @@ fun ItemListView(
 								.padding(Dimensions.topRowOuterPadding)
 						)
 
-						MoreOptionsMenu(fileListViewModel)
+						if (files.any()) MoreFileOptionsMenu(fileListViewModel)
+						else MoreItemsOnlyOptionsMenu(itemListViewModel, applicationNavigation)
 
 						val headerCollapseProgress by heightScaler.getProgressState()
 						val topPadding by remember { derivedStateOf { linearInterpolation(appBarHeight, 14.dp, headerCollapseProgress) } }
@@ -613,16 +610,16 @@ fun ItemListView(
 											modifier = textModifier,
 										)
 
-										LabelledRefreshButton(
-											itemListViewModel,
-											fileListViewModel,
-											modifier = textModifier
-										)
-
 										LabelledShuffleButton(
 											libraryState = itemListViewModel,
 											playbackServiceController = playbackServiceController,
 											serviceFilesListState = fileListViewModel,
+											modifier = textModifier
+										)
+
+										LabelledRefreshButton(
+											itemListViewModel,
+											fileListViewModel,
 											modifier = textModifier
 										)
 									} else {
@@ -638,9 +635,9 @@ fun ItemListView(
 											modifier = textModifier
 										)
 
-										LabelledSettingsButton(
-											itemListViewModel = itemListViewModel,
-											applicationNavigation = applicationNavigation,
+										LabelledRefreshButton(
+											itemListViewModel,
+											fileListViewModel,
 											modifier = textModifier
 										)
 									}
