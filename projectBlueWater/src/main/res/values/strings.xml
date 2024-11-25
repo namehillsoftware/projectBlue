@@ -139,4 +139,6 @@
     <string name="auto_scroll_to_now_playing_item">Auto Scroll to Now Playing Item</string>
     <string name="navigate_back">Navigate Back</string>
     <string name="optional_mac_address">Optional MAC Address</string>
+    <string name="refresh">Refresh</string>
+    <string name="view_more_options">View More Options</string>
 </resources>

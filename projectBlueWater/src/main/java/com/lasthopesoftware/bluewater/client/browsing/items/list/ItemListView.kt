@@ -24,6 +24,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Divider
+import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.ProvideTextStyle
 import androidx.compose.material.Text
@@ -63,13 +64,13 @@ import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewPlaylistFil
 import com.lasthopesoftware.bluewater.client.browsing.items.IItem
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledActiveDownloadsButton
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledRefreshButton
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledSearchButton
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledSettingsButton
-import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledSyncButton
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.UnlabelledActiveDownloadsButton
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.UnlabelledRefreshButton
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.UnlabelledSearchButton
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.UnlabelledSettingsButton
-import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.UnlabelledSyncButton
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
@@ -166,7 +167,7 @@ private fun BoxScope.CollapsedItemListMenu(
 				serviceFilesListState = fileListViewModel
 			)
 
-			UnlabelledSyncButton(fileListViewModel)
+			UnlabelledRefreshButton(itemListViewModel, fileListViewModel)
 
 			UnlabelledShuffleButton(
 				libraryState = itemListViewModel,
@@ -498,6 +499,14 @@ fun ItemListView(
 								.padding(Dimensions.topRowOuterPadding)
 						)
 
+						Icon(
+							painter = painterResource(R.drawable.more_vertical_24),
+							contentDescription = stringResource(R.string.view_more_options),
+							modifier = Modifier
+								.align(Alignment.TopEnd)
+								.padding(Dimensions.topRowOuterPadding)
+						)
+
 						val headerCollapseProgress by heightScaler.getProgressState()
 						val topPadding by remember { derivedStateOf { linearInterpolation(appBarHeight, 14.dp, headerCollapseProgress) } }
 						BoxWithConstraints(modifier = Modifier.padding(top = topPadding)) nestedBoxScope@{
@@ -526,7 +535,7 @@ fun ItemListView(
 									derivedStateOf {
 										linearInterpolation(
 											Dimensions.viewPaddingUnit,
-											Dimensions.viewPaddingUnit + minimumMenuWidth,
+											Dimensions.viewPaddingUnit + minimumMenuWidth + 48.dp,
 											acceleratedHeaderHidingProgress
 										)
 									}
@@ -578,6 +587,16 @@ fun ItemListView(
 								}
 							}
 
+							val menuEndPadding by remember {
+								derivedStateOf {
+									linearInterpolation(
+										Dimensions.viewPaddingUnit * 2,
+										48.dp,
+										headerCollapseProgress
+									)
+								}
+							}
+
 							if (acceleratedHeaderHidingProgress < 1) {
 								val textModifier = Modifier.alpha(acceleratedToolbarStateProgress)
 								Row(
@@ -586,7 +605,7 @@ fun ItemListView(
 											top = topRowPadding,
 											bottom = expandedMenuVerticalPadding,
 											start = Dimensions.viewPaddingUnit * 2,
-											end = Dimensions.viewPaddingUnit * 2
+											end = menuEndPadding
 										)
 										.width(menuWidth)
 										.align(Alignment.TopEnd),
@@ -600,8 +619,9 @@ fun ItemListView(
 											modifier = textModifier,
 										)
 
-										LabelledSyncButton(
-											fileListViewModel = fileListViewModel,
+										LabelledRefreshButton(
+											itemListViewModel,
+											fileListViewModel,
 											modifier = textModifier
 										)
 
@@ -641,7 +661,7 @@ fun ItemListView(
 										top = topRowPadding,
 										bottom = expandedMenuVerticalPadding,
 										start = Dimensions.viewPaddingUnit * 2,
-										end = Dimensions.viewPaddingUnit * 2
+										end = menuEndPadding
 									),
 									menuWidth = menuWidth,
 								)

@@ -16,7 +16,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 
-class `When loading the items twice` {
+class `When refreshing the items` {
 	companion object {
 		private const val libraryId = 105
 		private const val itemId = 259
@@ -67,7 +67,7 @@ class `When loading the items twice` {
 		val (deferredItem, vm) = mut
 		vm.loadItem(LibraryId(libraryId), Item(itemId, "6snT")).toExpiringFuture().get()
 
-		val futureLoading = vm.loadItem(LibraryId(libraryId), Item(itemId, "6snT")).toExpiringFuture()
+		val futureLoading = vm.promiseRefresh().toExpiringFuture()
 
 		isLoadingAfterReload = vm.isLoading.value
 		deferredItem.resolve()
@@ -81,8 +81,8 @@ class `When loading the items twice` {
 	}
 
 	@Test
-	fun `then the view model does reflect loading when reloading`() {
-		assertThat(isLoadingAfterReload).isFalse
+	fun `then the view model does reflect loading when refreshing`() {
+		assertThat(isLoadingAfterReload).isTrue
 	}
 
 	@Test

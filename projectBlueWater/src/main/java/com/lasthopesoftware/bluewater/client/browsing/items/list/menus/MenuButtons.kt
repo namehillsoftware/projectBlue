@@ -161,3 +161,40 @@ fun RowScope.UnlabelledSettingsButton(
 		contentDescription = settingsButtonLabel,
 	)
 }
+
+
+@Composable
+fun RowScope.LabelledRefreshButton(
+	itemListViewModel: ItemListViewModel,
+	fileListViewModel: FileListViewModel,
+	modifier: Modifier = Modifier,
+) {
+	val refreshButtonLabel = stringResource(id = R.string.refresh)
+	ColumnMenuIcon(
+		onClick = {
+			itemListViewModel.promiseRefresh()
+			fileListViewModel.promiseRefresh()
+		},
+		iconPainter = painterResource(id = R.drawable.refresh_36),
+		contentDescription = refreshButtonLabel,
+		label = refreshButtonLabel,
+		labelModifier = modifier,
+		labelMaxLines = 1,
+	)
+}
+
+@Composable
+fun RowScope.UnlabelledRefreshButton(
+	itemListViewModel: ItemListViewModel,
+	fileListViewModel: FileListViewModel,
+) {
+	val refreshButtonLabel = stringResource(R.string.refresh)
+	ColumnMenuIcon(
+		onClick = {
+			itemListViewModel.promiseRefresh()
+			fileListViewModel.promiseRefresh()
+		},
+		iconPainter = painterResource(id = R.drawable.refresh_36),
+		contentDescription = refreshButtonLabel,
+	)
+}

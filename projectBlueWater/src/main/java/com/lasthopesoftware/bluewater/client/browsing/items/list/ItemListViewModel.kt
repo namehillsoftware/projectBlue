@@ -12,6 +12,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
+import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -30,7 +31,7 @@ class ItemListViewModel(
 	private val mutableIsLoading = MutableInteractionState(true)
 	private val mutableItemValue = MutableStateFlow("")
 
-	private var loadedItem: IItem? = null
+	private var loadedItem: Item? = null
 	override var loadedLibraryId: LibraryId? = null
 		private set
 
@@ -69,4 +70,13 @@ class ItemListViewModel(
 				mutableIsLoading.value = false
 			}
 	}
+
+	fun promiseRefresh(): Promise<Unit> = loadedLibraryId
+		?.let { l ->
+			val item = loadedItem
+			loadedLibraryId = null
+			loadedItem = null
+			loadItem(l, item)
+		}
+		.keepPromise(Unit)
 }

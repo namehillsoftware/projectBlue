@@ -63,6 +63,15 @@ class FileListViewModel(
 			}
 	}
 
+	fun promiseRefresh(): Promise<Unit> = loadedLibraryId
+		?.let { l ->
+			val item = loadedItem
+			loadedLibraryId = null
+			loadedItem = null
+			loadItem(l, item)
+		}
+		.keepPromise(Unit)
+
 	fun toggleSync(): Promise<Unit> = loadedLibraryId
 		?.let { libraryId ->
 			loadedItem?.let { (it as? Item)?.playlistId ?: ItemId(it.key) }?.let { key ->
