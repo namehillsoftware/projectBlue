@@ -24,7 +24,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Divider
-import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.ProvideTextStyle
 import androidx.compose.material.Text
@@ -67,6 +66,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledA
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledRefreshButton
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledSearchButton
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.LabelledSettingsButton
+import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.MoreOptionsMenu
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.UnlabelledActiveDownloadsButton
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.UnlabelledRefreshButton
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.UnlabelledSearchButton
@@ -499,13 +499,7 @@ fun ItemListView(
 								.padding(Dimensions.topRowOuterPadding)
 						)
 
-						Icon(
-							painter = painterResource(R.drawable.more_vertical_24),
-							contentDescription = stringResource(R.string.view_more_options),
-							modifier = Modifier
-								.align(Alignment.TopEnd)
-								.padding(Dimensions.topRowOuterPadding)
-						)
+						MoreOptionsMenu(fileListViewModel)
 
 						val headerCollapseProgress by heightScaler.getProgressState()
 						val topPadding by remember { derivedStateOf { linearInterpolation(appBarHeight, 14.dp, headerCollapseProgress) } }
