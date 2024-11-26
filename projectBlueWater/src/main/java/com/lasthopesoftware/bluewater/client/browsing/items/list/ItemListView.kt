@@ -458,7 +458,7 @@ fun ItemListView(
 	BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
 		ControlSurface {
 
-			val collapsedHeight = appBarHeight
+			val collapsedHeight = appBarHeight + expandedIconSize + expandedMenuVerticalPadding * 2
 
 			val expandedHeightPx = LocalDensity.current.run { boxHeight.toPx() }
 			val collapsedHeightPx = LocalDensity.current.run { collapsedHeight.toPx() }
@@ -557,105 +557,69 @@ fun ItemListView(
 
 							if (isFilesLoading) return@nestedBoxScope
 
-							val menuWidth by remember {
-								derivedStateOf {
-									linearInterpolation(
-										maxWidth,
-										minimumMenuWidth,
-										acceleratedHeaderHidingProgress
-									)
-								}
-							}
-
 							val expandedTopRowPadding = expandedTitleHeight + expandedMenuVerticalPadding
 							val topRowPadding by remember {
 								derivedStateOf {
 									linearInterpolation(
 										expandedTopRowPadding,
-										collapsedTopRowPadding,
+										appBarHeight,
 										headerCollapseProgress
 									)
 								}
 							}
 
-							val menuEndPadding by remember {
-								derivedStateOf {
-									linearInterpolation(
-										Dimensions.viewPaddingUnit * 2,
-										48.dp,
-										headerCollapseProgress
-									)
-								}
-							}
-
-							if (acceleratedHeaderHidingProgress < 1) {
-								val textModifier = Modifier.alpha(acceleratedToolbarStateProgress)
-								Row(
-									modifier = Modifier
-										.padding(
-											top = topRowPadding,
-											bottom = expandedMenuVerticalPadding,
-											start = Dimensions.viewPaddingUnit * 2,
-											end = menuEndPadding
-										)
-										.width(menuWidth)
-										.align(Alignment.TopEnd),
-									horizontalArrangement = Arrangement.SpaceEvenly,
-								) {
-									if (files.any()) {
-										LabelledPlayButton(
-											libraryState = itemListViewModel,
-											playbackServiceController = playbackServiceController,
-											serviceFilesListState = fileListViewModel,
-											modifier = textModifier,
-										)
-
-										LabelledShuffleButton(
-											libraryState = itemListViewModel,
-											playbackServiceController = playbackServiceController,
-											serviceFilesListState = fileListViewModel,
-											modifier = textModifier
-										)
-
-										LabelledRefreshButton(
-											itemListViewModel,
-											fileListViewModel,
-											modifier = textModifier
-										)
-									} else {
-										LabelledActiveDownloadsButton(
-											itemListViewModel = itemListViewModel,
-											applicationNavigation = applicationNavigation,
-											modifier = textModifier
-										)
-
-										LabelledSearchButton(
-											itemListViewModel = itemListViewModel,
-											applicationNavigation = applicationNavigation,
-											modifier = textModifier
-										)
-
-										LabelledRefreshButton(
-											itemListViewModel,
-											fileListViewModel,
-											modifier = textModifier
-										)
-									}
-								}
-							} else {
-								CollapsedItemListMenu(
-									itemListViewModel = itemListViewModel,
-									fileListViewModel = fileListViewModel,
-									applicationNavigation = applicationNavigation,
-									playbackServiceController = playbackServiceController,
-									menuPaddingValues = PaddingValues(
+							val textModifier = Modifier.alpha(acceleratedToolbarStateProgress)
+							Row(
+								modifier = Modifier
+									.padding(
 										top = topRowPadding,
 										bottom = expandedMenuVerticalPadding,
 										start = Dimensions.viewPaddingUnit * 2,
-										end = menuEndPadding
-									),
-									menuWidth = menuWidth,
-								)
+										end = Dimensions.viewPaddingUnit * 2
+									)
+									.fillMaxWidth()
+									.align(Alignment.TopEnd),
+								horizontalArrangement = Arrangement.SpaceEvenly,
+							) {
+								if (files.any()) {
+									LabelledPlayButton(
+										libraryState = itemListViewModel,
+										playbackServiceController = playbackServiceController,
+										serviceFilesListState = fileListViewModel,
+										modifier = textModifier,
+									)
+
+									LabelledShuffleButton(
+										libraryState = itemListViewModel,
+										playbackServiceController = playbackServiceController,
+										serviceFilesListState = fileListViewModel,
+										modifier = textModifier
+									)
+
+									LabelledRefreshButton(
+										itemListViewModel,
+										fileListViewModel,
+										modifier = textModifier
+									)
+								} else {
+									LabelledActiveDownloadsButton(
+										itemListViewModel = itemListViewModel,
+										applicationNavigation = applicationNavigation,
+										modifier = textModifier
+									)
+
+									LabelledSearchButton(
+										itemListViewModel = itemListViewModel,
+										applicationNavigation = applicationNavigation,
+										modifier = textModifier
+									)
+
+									LabelledRefreshButton(
+										itemListViewModel,
+										fileListViewModel,
+										modifier = textModifier
+									)
+								}
 							}
 						}
 					}
@@ -668,7 +632,7 @@ fun ItemListView(
 					) {
 						BackButton(applicationNavigation::navigateUp, modifier = Modifier.align(Alignment.TopStart))
 
-						val topPadding = appBarHeight - 42.dp
+						val topPadding = 14.dp
 						BoxWithConstraints(modifier = Modifier.padding(top = topPadding)) nestedBoxScope@{
 							ProvideTextStyle(MaterialTheme.typography.h5) {
 								MarqueeText(
@@ -686,23 +650,21 @@ fun ItemListView(
 								)
 							}
 
-							if (isFilesLoading) return@nestedBoxScope
-
-							val menuWidth = minimumMenuWidth
-
-							CollapsedItemListMenu(
-								itemListViewModel = itemListViewModel,
-								fileListViewModel = fileListViewModel,
-								applicationNavigation = applicationNavigation,
-								playbackServiceController = playbackServiceController,
-								menuPaddingValues = PaddingValues(
-									top = collapsedTopRowPadding,
-									bottom = expandedMenuVerticalPadding,
-									start = Dimensions.viewPaddingUnit * 2,
-									end = Dimensions.viewPaddingUnit * 2
-								),
-								menuWidth = menuWidth,
-							)
+							if (!isFilesLoading) {
+								CollapsedItemListMenu(
+									itemListViewModel = itemListViewModel,
+									fileListViewModel = fileListViewModel,
+									applicationNavigation = applicationNavigation,
+									playbackServiceController = playbackServiceController,
+									menuPaddingValues = PaddingValues(
+										top = collapsedTopRowPadding,
+										bottom = expandedMenuVerticalPadding,
+										start = Dimensions.viewPaddingUnit * 2,
+										end = Dimensions.viewPaddingUnit * 2
+									),
+									menuWidth = minimumMenuWidth,
+								)
+							}
 						}
 					}
 				}
