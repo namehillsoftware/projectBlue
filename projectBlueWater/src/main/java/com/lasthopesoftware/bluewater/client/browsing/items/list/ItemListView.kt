@@ -444,7 +444,7 @@ fun ItemListView(
 
 			val isItemsLoading by itemListViewModel.isLoading.subscribeAsState()
 
-			val collapsedHeight = appBarHeight
+			val collapsedHeight = appBarHeight + expandedIconSize + Dimensions.viewPaddingUnit * 2
 
 			val expandedHeightPx = LocalDensity.current.run { boxHeight.toPx() }
 			val collapsedHeightPx = LocalDensity.current.run { collapsedHeight.toPx() }
@@ -533,15 +533,7 @@ fun ItemListView(
 									}
 								}
 
-								val textEndPadding by remember {
-									derivedStateOf {
-										linearInterpolation(
-											Dimensions.viewPaddingUnit,
-											Dimensions.viewPaddingUnit + minimumMenuWidth,
-											acceleratedHeaderHidingProgress
-										)
-									}
-								}
+								val textEndPadding = Dimensions.viewPaddingUnit
 								val maxLines by remember { derivedStateOf { (2 - headerCollapseProgress).roundToInt() } }
 								if (maxLines > 1) {
 									Text(
@@ -568,95 +560,69 @@ fun ItemListView(
 
 							if (isFilesLoading) return@nestedBoxScope
 
-							val menuWidth by remember {
-								derivedStateOf {
-									linearInterpolation(
-										maxWidth,
-										minimumMenuWidth,
-										acceleratedHeaderHidingProgress
-									)
-								}
-							}
-
 							val expandedTopRowPadding = expandedTitleHeight + expandedMenuVerticalPadding
 							val topRowPadding by remember {
 								derivedStateOf {
 									linearInterpolation(
 										expandedTopRowPadding,
-										collapsedTopRowPadding,
+										appBarHeight,
 										headerCollapseProgress
 									)
 								}
 							}
 
-							if (acceleratedHeaderHidingProgress < 1) {
-								val textModifier = Modifier.alpha(acceleratedToolbarStateProgress)
-								Row(
-									modifier = Modifier
-										.padding(
-											top = topRowPadding,
-											bottom = expandedMenuVerticalPadding,
-											start = Dimensions.viewPaddingUnit * 2
-										)
-										.width(menuWidth)
-										.align(Alignment.TopEnd),
-									horizontalArrangement = Arrangement.SpaceEvenly,
-								) {
-									if (files.any()) {
-										LabelledPlayButton(
-											libraryState = itemListViewModel,
-											playbackServiceController = playbackServiceController,
-											serviceFilesListState = fileListViewModel,
-											modifier = textModifier,
-										)
+							val textModifier = Modifier.alpha(acceleratedToolbarStateProgress)
+							Row(
+								modifier = Modifier
+									.padding(
+										top = topRowPadding,
+										bottom = expandedMenuVerticalPadding,
+										start = Dimensions.viewPaddingUnit * 2,
+										end = Dimensions.viewPaddingUnit * 2
+									)
+									.fillMaxWidth()
+									.align(Alignment.TopEnd),
+								horizontalArrangement = Arrangement.SpaceEvenly,
+							) {
+								if (files.any()) {
+									LabelledPlayButton(
+										libraryState = itemListViewModel,
+										playbackServiceController = playbackServiceController,
+										serviceFilesListState = fileListViewModel,
+										modifier = textModifier,
+									)
 
-										LabelledShuffleButton(
-											libraryState = itemListViewModel,
-											playbackServiceController = playbackServiceController,
-											serviceFilesListState = fileListViewModel,
-											modifier = textModifier
-										)
+									LabelledShuffleButton(
+										libraryState = itemListViewModel,
+										playbackServiceController = playbackServiceController,
+										serviceFilesListState = fileListViewModel,
+										modifier = textModifier
+									)
 
-										LabelledRefreshButton(
-											itemListViewModel,
-											fileListViewModel,
-											modifier = textModifier
-										)
-									} else {
-										LabelledActiveDownloadsButton(
-											itemListViewModel = itemListViewModel,
-											applicationNavigation = applicationNavigation,
-											modifier = textModifier
-										)
+									LabelledRefreshButton(
+										itemListViewModel,
+										fileListViewModel,
+										modifier = textModifier
+									)
+								} else {
+									LabelledActiveDownloadsButton(
+										itemListViewModel = itemListViewModel,
+										applicationNavigation = applicationNavigation,
+										modifier = textModifier
+									)
 
-										LabelledSearchButton(
-											itemListViewModel = itemListViewModel,
-											applicationNavigation = applicationNavigation,
-											modifier = textModifier
-										)
+									LabelledSearchButton(
+										itemListViewModel = itemListViewModel,
+										applicationNavigation = applicationNavigation,
+										modifier = textModifier
+									)
 
-										LabelledRefreshButton(
-											itemListViewModel,
-											fileListViewModel,
-											modifier = textModifier
-										)
-									}
+									LabelledRefreshButton(
+										itemListViewModel,
+										fileListViewModel,
+										modifier = textModifier
+									)
 								}
-							} else {
-								CollapsedItemListMenu(
-									itemListViewModel = itemListViewModel,
-									fileListViewModel = fileListViewModel,
-									applicationNavigation = applicationNavigation,
-									playbackServiceController = playbackServiceController,
-									modifier = Modifier
-										.padding(
-											top = topRowPadding,
-											bottom = expandedMenuVerticalPadding,
-											start = Dimensions.viewPaddingUnit * 2
-										)
-										.width(menuWidth)
-										.align(Alignment.TopEnd),
-								)
 							}
 						}
 					}
