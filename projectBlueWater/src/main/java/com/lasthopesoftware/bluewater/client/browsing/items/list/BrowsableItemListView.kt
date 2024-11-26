@@ -20,6 +20,7 @@ import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionF
 import com.lasthopesoftware.bluewater.client.connection.session.initialization.ConnectionStatusViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
+import com.lasthopesoftware.bluewater.shared.android.BuildUndoBackStack
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.ViewModelInitAction
 import com.lasthopesoftware.promises.extensions.suspend
@@ -42,6 +43,7 @@ fun LoadedItemListView(viewModelDependencies: ScopedViewModelDependencies, libra
 			playbackLibraryItems = playbackLibraryItems,
 			playbackServiceController = playbackServiceController,
 			connectionStatusViewModel = connectionStatusViewModel,
+			undoBackStack = undoBackStackBuilder,
 		)
 	}
 }
@@ -50,16 +52,17 @@ fun LoadedItemListView(viewModelDependencies: ScopedViewModelDependencies, libra
 private fun LoadedItemListView(
 	libraryId: LibraryId,
 	item: Item?,
-    itemListViewModel: ItemListViewModel,
-    fileListViewModel: FileListViewModel,
-    nowPlayingViewModel: NowPlayingFilePropertiesViewModel,
-    itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
-    reusablePlaylistFileItemViewModelProvider: ReusablePlaylistFileItemViewModelProvider,
-    childItemViewModelProvider: PooledCloseablesViewModel<ReusableChildItemViewModel>,
-    applicationNavigation: NavigateApplication,
-    playbackLibraryItems: PlaybackLibraryItems,
-    playbackServiceController: ControlPlaybackService,
+	itemListViewModel: ItemListViewModel,
+	fileListViewModel: FileListViewModel,
+	nowPlayingViewModel: NowPlayingFilePropertiesViewModel,
+	itemListMenuBackPressedHandler: ItemListMenuBackPressedHandler,
+	reusablePlaylistFileItemViewModelProvider: ReusablePlaylistFileItemViewModelProvider,
+	childItemViewModelProvider: PooledCloseablesViewModel<ReusableChildItemViewModel>,
+	applicationNavigation: NavigateApplication,
+	playbackLibraryItems: PlaybackLibraryItems,
+	playbackServiceController: ControlPlaybackService,
 	connectionStatusViewModel: ConnectionStatusViewModel,
+	undoBackStack: BuildUndoBackStack,
 ) {
 	var isConnectionLost by remember { mutableStateOf(false) }
 	var initializeConnection by remember { mutableStateOf(false) }
@@ -82,6 +85,7 @@ private fun LoadedItemListView(
 			applicationNavigation,
 			playbackLibraryItems,
 			playbackServiceController,
+			undoBackStack,
 		)
 	}
 

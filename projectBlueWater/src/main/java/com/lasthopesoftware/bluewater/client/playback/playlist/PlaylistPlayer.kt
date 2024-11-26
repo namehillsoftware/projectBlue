@@ -84,7 +84,7 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 	override val isPlaying: Boolean
 		get() = positionedPlayingFile != null
 
-	override fun setVolume(volume: Float): Promise<Unit> {
+	override fun setVolume(volume: Float): Promise<Unit> = synchronized(stateChangeSync) {
 		this.volume = volume
 		return positionedPlayableFile
 			?.eventually { it?.playableFileVolumeManager?.setVolume(volume)?.unitResponse().keepPromise(Unit) }
@@ -93,8 +93,8 @@ class PlaylistPlayer(private val preparedPlaybackFileProvider: SupplyQueuedPrepa
 			}.keepPromise(Unit)
 	}
 
-	override fun haltPlayback(): Promise<Unit> = synchronized(stateChangeSync) {
-		pause()
+	override fun haltPlayback(): Promise<Unit> {
+		return pause()
 			.then({ p ->
 				if (!isHalted) {
 					isHalted = true

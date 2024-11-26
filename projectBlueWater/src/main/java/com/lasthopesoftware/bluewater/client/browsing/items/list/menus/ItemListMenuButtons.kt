@@ -16,6 +16,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import com.lasthopesoftware.bluewater.NavigateApplication
@@ -25,7 +26,6 @@ import com.lasthopesoftware.bluewater.client.browsing.files.list.UnlabelledSyncB
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ItemListViewModel
 import com.lasthopesoftware.bluewater.shared.android.ui.components.ColumnMenuIcon
 import com.lasthopesoftware.bluewater.shared.android.ui.components.LabelledRefreshButton
-import com.lasthopesoftware.bluewater.shared.android.ui.components.UnlabelledRefreshButton
 import com.lasthopesoftware.bluewater.shared.android.ui.navigable
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.LocalControlColor
 
@@ -50,22 +50,6 @@ fun RowScope.LabelledActiveDownloadsButton(
 }
 
 @Composable
-fun RowScope.UnlabelledActiveDownloadsButton(
-	itemListViewModel: ItemListViewModel,
-	applicationNavigation: NavigateApplication,
-) {
-	ColumnMenuIcon(
-		onClick = {
-			itemListViewModel.loadedLibraryId?.also {
-				applicationNavigation.viewActiveDownloads(it)
-			}
-		},
-		iconPainter = painterResource(id = R.drawable.ic_water),
-		contentDescription = stringResource(id = R.string.activeDownloads),
-	)
-}
-
-@Composable
 fun RowScope.LabelledSearchButton(
 	itemListViewModel: ItemListViewModel,
 	applicationNavigation: NavigateApplication,
@@ -81,40 +65,6 @@ fun RowScope.LabelledSearchButton(
 		label = searchButtonLabel,
 		labelMaxLines = 1,
 		labelModifier = modifier,
-	)
-}
-
-@Composable
-fun RowScope.UnlabelledSearchButton(
-	itemListViewModel: ItemListViewModel,
-	applicationNavigation: NavigateApplication,
-) {
-	val searchButtonLabel = stringResource(id = R.string.search)
-	ColumnMenuIcon(
-		onClick = {
-			itemListViewModel.loadedLibraryId?.also(applicationNavigation::launchSearch)
-		},
-		iconPainter = painterResource(id = R.drawable.search_36dp),
-		contentDescription = searchButtonLabel,
-	)
-}
-
-@Composable
-fun RowScope.LabelledSettingsButton(
-	itemListViewModel: ItemListViewModel,
-	applicationNavigation: NavigateApplication,
-	modifier: Modifier = Modifier,
-) {
-	val settingsButtonLabel = stringResource(id = R.string.settings)
-	ColumnMenuIcon(
-		onClick = {
-			itemListViewModel.loadedLibraryId?.also(applicationNavigation::viewServerSettings)
-		},
-		iconPainter = painterResource(id = R.drawable.ic_action_settings),
-		contentDescription = settingsButtonLabel,
-		label = settingsButtonLabel,
-		labelModifier = modifier,
-		labelMaxLines = 1,
 	)
 }
 
@@ -139,6 +89,7 @@ fun RowScope.LabelledRefreshButton(
 	itemListViewModel: ItemListViewModel,
 	fileListViewModel: FileListViewModel,
 	modifier: Modifier = Modifier,
+	focusRequester: FocusRequester? = null,
 ) {
 	LabelledRefreshButton(
 		onClick = {
@@ -146,23 +97,13 @@ fun RowScope.LabelledRefreshButton(
 			fileListViewModel.promiseRefresh()
 		},
 		modifier = modifier,
+		focusRequester = focusRequester,
 	)
 }
 
 @Composable
-fun RowScope.UnlabelledRefreshButton(
-	itemListViewModel: ItemListViewModel,
-	fileListViewModel: FileListViewModel,
-) {
-	UnlabelledRefreshButton {
-		itemListViewModel.promiseRefresh()
-		fileListViewModel.promiseRefresh()
-	}
-}
-
-@Composable
 @OptIn(ExperimentalComposeUiApi::class)
-fun MoreFileOptionsMenu(fileListViewModel: FileListViewModel, modifier: Modifier = Modifier) {
+fun MoreFileOptionsMenu(fileListViewModel: FileListViewModel, modifier: Modifier = Modifier, focusRequester: FocusRequester? = null) {
 	Box(modifier = Modifier
 		.wrapContentSize(Alignment.TopEnd)
 		.then(modifier)
@@ -171,7 +112,7 @@ fun MoreFileOptionsMenu(fileListViewModel: FileListViewModel, modifier: Modifier
 		Icon(
 			painter = painterResource(R.drawable.more_vertical_24),
 			contentDescription = stringResource(R.string.view_more_options),
-			modifier = Modifier.navigable(onClick = { isExpanded = !isExpanded }),
+			modifier = Modifier.navigable(onClick = { isExpanded = !isExpanded }, focusRequester = focusRequester),
 			tint = LocalControlColor.current,
 		)
 
@@ -196,7 +137,8 @@ fun MoreFileOptionsMenu(fileListViewModel: FileListViewModel, modifier: Modifier
 fun MoreItemsOnlyOptionsMenu(
 	itemListViewModel: ItemListViewModel,
 	applicationNavigation: NavigateApplication,
-	modifier: Modifier = Modifier
+	modifier: Modifier = Modifier,
+	focusRequester: FocusRequester? = null,
 ) {
 	Box(modifier = Modifier
 		.wrapContentSize(Alignment.TopEnd)
@@ -207,7 +149,7 @@ fun MoreItemsOnlyOptionsMenu(
 			painter = painterResource(R.drawable.more_vertical_24),
 			contentDescription = stringResource(R.string.view_more_options),
 			modifier = Modifier
-				.navigable(onClick = { isExpanded = !isExpanded }),
+				.navigable(onClick = { isExpanded = !isExpanded }, focusRequester = focusRequester),
 			tint = LocalControlColor.current,
 		)
 

@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view
 
+import LoadedItemListView
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -7,9 +8,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.lasthopesoftware.bluewater.client.browsing.ScopedViewModelDependencies
-import com.lasthopesoftware.bluewater.client.browsing.files.list.TvSearchFilesView
+import com.lasthopesoftware.bluewater.client.browsing.files.list.SearchFilesView
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ConnectionLostView
-import com.lasthopesoftware.bluewater.client.browsing.items.list.LoadedTvItemListView
 import com.lasthopesoftware.bluewater.client.browsing.navigation.BrowserLibraryDestination
 import com.lasthopesoftware.bluewater.client.browsing.navigation.DownloadsScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.ItemScreen
@@ -25,11 +25,11 @@ import java.io.IOException
 fun BrowserLibraryDestination.NavigateToTvLibraryDestination(browserViewDependencies: ScopedViewModelDependencies) {
 	when (this) {
 		is LibraryScreen -> {
-            LoadedTvItemListView(browserViewDependencies, libraryId, null)
+            LoadedItemListView(browserViewDependencies, libraryId, null)
 		}
 
 		is ItemScreen -> {
-            LoadedTvItemListView(browserViewDependencies, libraryId, item)
+            LoadedItemListView(browserViewDependencies, libraryId, item)
 		}
 
 		is DownloadsScreen -> {
@@ -37,7 +37,8 @@ fun BrowserLibraryDestination.NavigateToTvLibraryDestination(browserViewDependen
 				ActiveFileDownloadsView(
                     activeFileDownloadsViewModel = activeFileDownloadsViewModel,
                     trackHeadlineViewModelProvider = reusableFileItemViewModelProvider,
-                    applicationNavigation,
+					applicationNavigation = applicationNavigation,
+					undoBackStack = undoBackStackBuilder,
                 )
 
 				activeFileDownloadsViewModel.loadActiveDownloads(libraryId)
@@ -57,13 +58,14 @@ fun BrowserLibraryDestination.NavigateToTvLibraryDestination(browserViewDependen
 						}
 					)
 				} else {
-					TvSearchFilesView(
+					SearchFilesView(
 						searchFilesViewModel = searchFilesViewModel,
 						nowPlayingViewModel = nowPlayingFilePropertiesViewModel,
 						trackHeadlineViewModelProvider = reusablePlaylistFileItemViewModelProvider,
 						itemListMenuBackPressedHandler = itemListMenuBackPressedHandler,
 						applicationNavigation = applicationNavigation,
 						playbackServiceController = playbackServiceController,
+						backStackBuilder = undoBackStackBuilder,
 					)
 				}
 

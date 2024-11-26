@@ -102,10 +102,11 @@ class NowPlayingPlaylistViewModel(
 		autoScrollChangeableLatch.value = false
 	}
 
-	override fun finishPlaylistEdit() {
+	override fun finishPlaylistEdit(): Boolean {
 		mutableEditingPlaylistState.value = false
 		autoScrollChangeableLatch.value = true
 		disableSavingPlaylist()
+		return !mutableEditingPlaylistState.value
 	}
 
 	fun lockOutAutoScroll() {

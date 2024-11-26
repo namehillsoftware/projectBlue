@@ -18,11 +18,13 @@ class `When finishing playlist editing` {
 		)
 	}
 
+	private var finishSucceeded = false
+
 	@BeforeAll
 	fun act() {
 		playlistViewModel.enableSystemAutoScrolling()
 		playlistViewModel.editPlaylist()
-		playlistViewModel.finishPlaylistEdit()
+		finishSucceeded = playlistViewModel.finishPlaylistEdit()
 	}
 
 	@Test
@@ -43,5 +45,10 @@ class `When finishing playlist editing` {
 	@Test
 	fun `then the playlist cannot be saved`() {
 		assertThat(playlistViewModel.isSavingPlaylistActive.value).isFalse()
+	}
+
+	@Test
+	fun `then finish succeeded`() {
+		assertThat(finishSucceeded).isTrue
 	}
 }

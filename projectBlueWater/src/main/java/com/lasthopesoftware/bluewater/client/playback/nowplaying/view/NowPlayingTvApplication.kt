@@ -85,6 +85,7 @@ import com.lasthopesoftware.bluewater.client.browsing.navigation.NewConnectionSe
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NowPlayingScreen
 import com.lasthopesoftware.bluewater.client.browsing.navigation.RoutedNavigationDependencies
 import com.lasthopesoftware.bluewater.client.browsing.navigation.SelectedLibraryReRouter
+import com.lasthopesoftware.bluewater.client.browsing.registerBackNav
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
 import com.lasthopesoftware.bluewater.client.connection.libraries.LibraryConnectionRegistry
 import com.lasthopesoftware.bluewater.client.connection.libraries.RateLimitedFilePropertiesDependencies
@@ -97,8 +98,8 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.components
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingFilePropertiesViewModel
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.playlist.NowPlayingPlaylistViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
+import com.lasthopesoftware.bluewater.client.settings.LibrarySettingsView
 import com.lasthopesoftware.bluewater.client.settings.PermissionsDependencies
-import com.lasthopesoftware.bluewater.client.settings.TvLibrarySettingsView
 import com.lasthopesoftware.bluewater.settings.TvApplicationSettingsView
 import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsView
 import com.lasthopesoftware.bluewater.shared.android.messages.ViewModelMessageBus
@@ -309,8 +310,6 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedVi
 							}
 						}
 
-						BackHandler(itemListMenuBackPressedHandler.hideAllMenus()) {}
-
 						val isPlaylistOpen by remember {
 							derivedStateOf {
 								playlistDrawerState.targetValue == SlideOutState.Open
@@ -449,6 +448,7 @@ fun BrowserLibraryDestination.NowPlayingTvView(browserViewDependencies: ScopedVi
 										.height(Dimensions.appBarHeight),
 									playlistViewModel = nowPlayingPlaylistViewModel,
 									viewModelMessageBus = nowPlayingViewModelMessageBus,
+									undoBackStack = undoBackStackBuilder,
 								)
 
 								NowPlayingTvPlaylist(
@@ -531,11 +531,12 @@ private fun LibraryDestination.Navigate(browserViewDependencies: ScopedViewModel
 						.fillMaxSize()
 						.padding(systemBarsPadding)
 				) {
-					TvLibrarySettingsView(
+					LibrarySettingsView(
 						librarySettingsViewModel = viewModel,
 						navigateApplication = applicationNavigation,
 						stringResources = stringResources,
 						userSslCertificates = userSslCertificateProvider,
+						undoBackStack = undoBackStackBuilder,
 					)
 				}
 
@@ -592,10 +593,6 @@ fun NowPlayingTvPlaylist(
 	}
 
 	val isEditing by playlistViewModel.isEditingPlaylist.subscribeAsState()
-	BackHandler(enabled = isEditing) {
-		if (isEditing)
-			playlistViewModel.finishPlaylistEdit()
-	}
 
 	@Composable
 	fun NowPlayingFileView(positionedFile: PositionedFile) {
@@ -765,7 +762,7 @@ fun NowPlayingTvApplication(
 		}
 	}
 
-	BackHandler { routedNavigationDependencies.applicationNavigation.backOut() }
+	routedNavigationDependencies.registerBackNav()
 
 	ControlSurface {
 		NavHost(navController) { destination ->
@@ -813,11 +810,16 @@ fun NowPlayingTvApplication(
 					}
 				}
 				is LibraryDestination -> {
-					LocalViewModelStoreOwner.current?.also {
-						destination.Navigate(
-							ScopedViewModelRegistry(reusedViewModelDependencies, permissionsDependencies, it)
-						)
-					}
+					LocalViewModelStoreOwner.current
+						?.let { viewModelStoreOwner ->
+							ScopedViewModelRegistry(
+								reusedViewModelDependencies,
+								permissionsDependencies,
+								viewModelStoreOwner,
+							)
+						}
+						?.registerBackNav()
+						?.also { registry -> destination.Navigate(registry) }
 				}
 				is ApplicationSettingsScreen -> {
 					Box(
@@ -834,18 +836,24 @@ fun NowPlayingTvApplication(
 				}
 				is NewConnectionSettingsScreen -> {
 					LocalViewModelStoreOwner.current
-						?.let {
-							ScopedViewModelRegistry(reusedViewModelDependencies, permissionsDependencies, it)
+						?.let { viewModelStoreOwner ->
+							ScopedViewModelRegistry(
+								reusedViewModelDependencies,
+								permissionsDependencies,
+								viewModelStoreOwner,
+							)
 						}
+						?.registerBackNav()
 						?.apply {
 							Box(
 								modifier = Modifier.fillMaxSize()
 							) {
-								TvLibrarySettingsView(
+								LibrarySettingsView(
 									librarySettingsViewModel = librarySettingsViewModel,
 									navigateApplication = applicationNavigation,
 									stringResources = stringResources,
 									userSslCertificates = userSslCertificateProvider,
+									undoBackStack = undoBackStackBuilder,
 								)
 							}
 						}
