@@ -458,7 +458,7 @@ fun ItemListView(
 	BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
 		ControlSurface {
 
-			val collapsedHeight = appBarHeight + expandedIconSize + expandedMenuVerticalPadding * 2
+			val collapsedHeight = appBarHeight + expandedIconSize + Dimensions.viewPaddingUnit * 2
 
 			val expandedHeightPx = LocalDensity.current.run { boxHeight.toPx() }
 			val collapsedHeightPx = LocalDensity.current.run { collapsedHeight.toPx() }
@@ -526,7 +526,7 @@ fun ItemListView(
 									derivedStateOf {
 										linearInterpolation(
 											Dimensions.viewPaddingUnit,
-											Dimensions.viewPaddingUnit + minimumMenuWidth + 48.dp,
+											Dimensions.viewPaddingUnit + 48.dp,
 											acceleratedHeaderHidingProgress
 										)
 									}
