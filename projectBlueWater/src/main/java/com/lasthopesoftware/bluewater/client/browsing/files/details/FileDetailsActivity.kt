@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.details
 
-import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -9,10 +8,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.core.view.WindowCompat
 import androidx.media3.common.util.UnstableApi
 import com.lasthopesoftware.bluewater.ActivityApplicationNavigation
 import com.lasthopesoftware.bluewater.ApplicationDependenciesContainer.applicationDependencies
-import com.lasthopesoftware.bluewater.android.intents.getIntent
 import com.lasthopesoftware.bluewater.android.intents.safelyGetParcelableExtra
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.image.CachedImageProvider
@@ -47,19 +46,10 @@ import java.io.IOException
 @UnstableApi class FileDetailsActivity : ComponentActivity() {
 
 	companion object {
-
 		private val magicPropertyBuilder by lazy { MagicPropertyBuilder(cls<FileDetailsActivity>()) }
 		val playlist by lazy { magicPropertyBuilder.buildProperty("playlist") }
 		val playlistPosition by lazy { magicPropertyBuilder.buildProperty("playlistPosition") }
 		val libraryIdKey by lazy { magicPropertyBuilder.buildProperty("libraryId") }
-
-		fun Context.launchFileDetailsActivity(libraryId: LibraryId, playlist: Collection<ServiceFile>, position: Int) {
-			startActivity(getIntent<FileDetailsActivity>().apply {
-				putExtra(playlistPosition, position)
-				putExtra(Companion.playlist, playlist.map { it.key }.toIntArray())
-				putExtra(libraryIdKey, libraryId)
-			})
-		}
 	}
 
 	private val imageProvider by lazy { CachedImageProvider.getInstance(this) }
@@ -133,6 +123,8 @@ import java.io.IOException
 			return
 		}
 
+		WindowCompat.setDecorFitsSystemWindows(window, false)
+
 		selectedLibraryIdProvider.selectLibraryId(libraryId)
 
 		setContent {
@@ -141,34 +133,25 @@ import java.io.IOException
 				var isConnectionLost by remember { mutableStateOf(false) }
 
 				when {
-					isGettingConnection -> {
-						ConnectionUpdatesView(connectionViewModel = connectionStatusViewModel)
-					}
-					isConnectionLost -> {
-						ConnectionLostView(onCancel = { finish() }, onRetry = { isConnectionLost = false })
-					}
-					else -> {
-						FileDetailsView(vm, activityApplicationNavigation)
-					}
+					isGettingConnection -> ConnectionUpdatesView(connectionViewModel = connectionStatusViewModel)
+					isConnectionLost -> ConnectionLostView(onCancel = { finish() }, onRetry = { isConnectionLost = false })
+					else -> FileDetailsView(vm, activityApplicationNavigation)
 				}
 
 				if (!isConnectionLost) {
 					LaunchedEffect(key1 = Unit) {
 						try {
 							val isInitialized = connectionStatusViewModel.initializeConnection(libraryId).suspend()
-							if (!isInitialized) {
-								isConnectionLost = true
-								return@LaunchedEffect
-							}
-
 							val position = intent.getIntExtra(playlistPosition, -1)
-							if (position < 0) {
-								finish()
-								return@LaunchedEffect
-							}
-							val playlist = intent.getIntArrayExtra(playlist)?.map(::ServiceFile) ?: emptyList()
+							when {
+								position < 0 -> finish()
+								!isInitialized -> isConnectionLost = true
+								else -> {
+									val playlist = intent.getIntArrayExtra(playlist)?.map(::ServiceFile) ?: emptyList()
 
-							vm.loadFromList(libraryId, playlist, position).suspend()
+									vm.loadFromList(libraryId, playlist, position).suspend()
+								}
+							}
 						} catch (e: IOException) {
 							if (ConnectionLostExceptionFilter.isConnectionLostException(e))
 								isConnectionLost = true

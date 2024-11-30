@@ -13,16 +13,25 @@ import androidx.compose.foundation.layout.BoxWithConstraintsScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
+import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -59,6 +68,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -505,11 +515,9 @@ fun FileDetailsView(viewModel: FileDetailsViewModel, navigateApplication: Naviga
 
 	val paletteProvider = MediaStylePaletteProvider(activity)
 	val coverArtColorState by rememberComputedColorPalette(paletteProvider = paletteProvider, viewModel = viewModel)
+
 	val systemUiController = rememberSystemUiController()
 	systemUiController.setStatusBarColor(coverArtColorState.actionBarColor)
-
-	val artist by viewModel.artist.subscribeAsState()
-	val album by viewModel.album.subscribeAsState()
 
 	FileDetailsEditor(viewModel = viewModel, navigateApplication = navigateApplication, palette = coverArtColorState)
 
@@ -579,13 +587,15 @@ fun FileDetailsView(viewModel: FileDetailsViewModel, navigateApplication: Naviga
 							start = viewPadding + 40.dp,
 							end = viewPadding + 40.dp,
 						)
-						.offset(y = coverArtScrollOffset)
+						.offset { IntOffset(x = 0, y = coverArtScrollOffset.roundToPx()) }
 						.fillMaxWidth()
 				) {
 					val coverArtBitmaps by viewModel.coverArt.subscribeAsState()
 					val coverArtState by remember { derivedStateOf { coverArtBitmaps?.asImageBitmap() } }
 					coverArtState
 						?.let {
+							val album by viewModel.album.subscribeAsState()
+							val artist by viewModel.artist.subscribeAsState()
 							Image(
 								bitmap = it,
 								contentDescription = stringResource(
@@ -767,20 +777,39 @@ fun FileDetailsView(viewModel: FileDetailsViewModel, navigateApplication: Naviga
 	val isLoading by viewModel.isLoading.subscribeAsState()
 
 
-	ControlSurface(
-		color = coverArtColorState.backgroundColor,
-		contentColor = coverArtColorState.primaryTextColor,
-		controlColor = coverArtColorState.secondaryTextColor
-	) {
-		BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
-			when {
-				isLoading -> CircularProgressIndicator(
-					color = coverArtColorState.primaryTextColor,
-					modifier = Modifier.align(Alignment.Center)
-				)
-				maxWidth >= 450.dp -> fileDetailsTwoColumn()
-				else -> fileDetailsSingleColumn()
+	Column(modifier = Modifier.fillMaxSize()) {
+		Spacer(
+			modifier = Modifier.windowInsetsTopHeight(WindowInsets.statusBars)
+				.fillMaxWidth()
+				.background(coverArtColorState.actionBarColor)
+		)
+
+		ControlSurface(
+			color = coverArtColorState.backgroundColor,
+			contentColor = coverArtColorState.primaryTextColor,
+			controlColor = coverArtColorState.secondaryTextColor
+		) {
+			BoxWithConstraints(modifier = Modifier
+				.fillMaxSize()
+				.consumeWindowInsets(WindowInsets.systemBars.only(WindowInsetsSides.Vertical))
+			) {
+				when {
+					isLoading -> CircularProgressIndicator(
+						color = coverArtColorState.primaryTextColor,
+						modifier = Modifier.align(Alignment.Center)
+					)
+
+					maxWidth >= 450.dp -> fileDetailsTwoColumn()
+					else -> fileDetailsSingleColumn()
+				}
 			}
 		}
+
+		Spacer(
+			modifier = Modifier
+				.windowInsetsBottomHeight(WindowInsets.navigationBars)
+				.fillMaxWidth()
+				.background(coverArtColorState.actionBarColor)
+		)
 	}
 }

@@ -24,12 +24,9 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Divider
-import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.ProvideTextStyle
 import androidx.compose.material.Text
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
@@ -56,6 +53,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.list.TrackTitleItemV
 import com.lasthopesoftware.bluewater.client.browsing.files.list.ViewFileItem
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.repository.StoredFile
 import com.lasthopesoftware.bluewater.client.stored.library.sync.SyncIcon
+import com.lasthopesoftware.bluewater.shared.android.ui.components.BackButton
 import com.lasthopesoftware.bluewater.shared.android.ui.components.GradientSide
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MarqueeText
 import com.lasthopesoftware.bluewater.shared.android.ui.components.MenuIcon
@@ -280,19 +278,17 @@ fun ActiveFileDownloadsView(
 
 				// Always draw box to help the collapsing toolbar measure minimum size
 				Box(modifier = Modifier.height(appBarHeight.dp)) {
-                    Icon(
-                        Icons.AutoMirrored.Filled.ArrowBack,
-                        contentDescription = "",
-                        tint = MaterialTheme.colors.onSurface,
-                        modifier = Modifier
-                            .align(Alignment.CenterStart)
-                            .clickable(
-                                interactionSource = remember { MutableInteractionSource() },
-                                indication = null,
-                                onClick = applicationNavigation::backOut
-                            )
-							.padding(16.dp)
-                    )
+					BackButton(
+						applicationNavigation::backOut,
+						Modifier
+							.align(Alignment.CenterStart)
+							.clickable(
+								interactionSource = remember { MutableInteractionSource() },
+								indication = null,
+								onClick = applicationNavigation::backOut
+							)
+							.padding(Dimensions.topRowOuterPadding)
+					)
 				}
 			}
 		}

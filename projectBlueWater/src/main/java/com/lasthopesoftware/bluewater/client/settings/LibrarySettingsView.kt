@@ -144,7 +144,7 @@ private fun RowScope.LabelledSaveAndConnectButton(
 				librarySettingsViewModel.activeLibraryId?.also(navigateApplication::viewLibrary)
 			}
 		},
-		iconPainter = painterResource(id = R.drawable.ic_arrow_right),
+		iconPainter = painterResource(id = R.drawable.arrow_right_24dp),
 		contentDescription = saveAndConnectText,
 		label = saveAndConnectText,
 		labelModifier = modifier,
@@ -178,7 +178,7 @@ private fun RowScope.UnlabelledSaveAndConnectButton(
 				librarySettingsViewModel.activeLibraryId?.also(navigateApplication::viewLibrary)
 			}
 		},
-		iconPainter = painterResource(id = R.drawable.ic_arrow_right),
+		iconPainter = painterResource(id = R.drawable.arrow_right_24dp),
 		contentDescription = saveAndConnectText,
 		label = null,
 	)

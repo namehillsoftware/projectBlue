@@ -24,8 +24,6 @@ import androidx.compose.material.LocalContentAlpha
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.ProvideTextStyle
 import androidx.compose.material.Text
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.derivedStateOf
@@ -157,7 +155,7 @@ fun LibraryMenu(
 					)
 
 					Icon(
-						Icons.AutoMirrored.Filled.ArrowForward,
+						painterResource(R.drawable.arrow_right_24dp),
 						contentDescription = stringResource(id = R.string.title_activity_view_now_playing),
 						tint = MaterialTheme.colors.onSecondary,
 						modifier = Modifier

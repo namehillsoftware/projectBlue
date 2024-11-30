@@ -1,10 +1,24 @@
 package com.lasthopesoftware.bluewater.client.browsing.items.list.menus
 
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.RowScope
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.material.DropdownMenu
+import androidx.compose.material.DropdownMenuItem
+import androidx.compose.material.Icon
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -160,4 +174,108 @@ fun RowScope.UnlabelledSettingsButton(
 		iconPainter = painterResource(id = R.drawable.ic_action_settings),
 		contentDescription = settingsButtonLabel,
 	)
+}
+
+
+@Composable
+fun RowScope.LabelledRefreshButton(
+	itemListViewModel: ItemListViewModel,
+	fileListViewModel: FileListViewModel,
+	modifier: Modifier = Modifier,
+) {
+	val refreshButtonLabel = stringResource(id = R.string.refresh)
+	ColumnMenuIcon(
+		onClick = {
+			itemListViewModel.promiseRefresh()
+			fileListViewModel.promiseRefresh()
+		},
+		iconPainter = painterResource(id = R.drawable.refresh_36),
+		contentDescription = refreshButtonLabel,
+		label = refreshButtonLabel,
+		labelModifier = modifier,
+		labelMaxLines = 1,
+	)
+}
+
+@Composable
+fun RowScope.UnlabelledRefreshButton(
+	itemListViewModel: ItemListViewModel,
+	fileListViewModel: FileListViewModel,
+) {
+	val refreshButtonLabel = stringResource(R.string.refresh)
+	ColumnMenuIcon(
+		onClick = {
+			itemListViewModel.promiseRefresh()
+			fileListViewModel.promiseRefresh()
+		},
+		iconPainter = painterResource(id = R.drawable.refresh_36),
+		contentDescription = refreshButtonLabel,
+	)
+}
+
+@Composable
+fun BoxScope.MoreFileOptionsMenu(fileListViewModel: FileListViewModel) {
+	Box(modifier = Modifier
+		.fillMaxSize()
+		.wrapContentSize(Alignment.TopEnd)
+		.align(Alignment.TopEnd)
+	) {
+		var isExpanded by remember { mutableStateOf(false) }
+		Icon(
+			painter = painterResource(R.drawable.more_vertical_24),
+			contentDescription = stringResource(R.string.view_more_options),
+			modifier = Modifier
+				.padding(Dimensions.topRowOuterPadding)
+				.clickable { isExpanded = !isExpanded }
+		)
+
+		DropdownMenu(
+			expanded = isExpanded,
+			onDismissRequest = { isExpanded = false }
+		) {
+			DropdownMenuItem(onClick = { fileListViewModel.toggleSync() }) {
+				val isSynced by fileListViewModel.isSynced.collectAsState()
+				val syncButtonLabel =
+					if (!isSynced) stringResource(id = R.string.btn_sync_item)
+					else stringResource(id = R.string.files_synced)
+				Text(syncButtonLabel)
+				UnlabelledSyncButton(fileListViewModel = fileListViewModel)
+			}
+		}
+	}
+}
+
+@Composable
+fun BoxScope.MoreItemsOnlyOptionsMenu(
+	itemListViewModel: ItemListViewModel,
+	applicationNavigation: NavigateApplication,
+) {
+	Box(modifier = Modifier
+		.fillMaxSize()
+		.wrapContentSize(Alignment.TopEnd)
+		.align(Alignment.TopEnd)
+	) {
+		var isExpanded by remember { mutableStateOf(false) }
+		Icon(
+			painter = painterResource(R.drawable.more_vertical_24),
+			contentDescription = stringResource(R.string.view_more_options),
+			modifier = Modifier
+				.padding(Dimensions.topRowOuterPadding)
+				.clickable { isExpanded = !isExpanded }
+		)
+
+		DropdownMenu(
+			expanded = isExpanded,
+			onDismissRequest = { isExpanded = false }
+		) {
+			DropdownMenuItem(onClick = { itemListViewModel.loadedLibraryId?.also(applicationNavigation::viewServerSettings) }) {
+				val settingsButtonLabel = stringResource(id = R.string.settings)
+				Text(settingsButtonLabel)
+				UnlabelledSettingsButton(
+					itemListViewModel = itemListViewModel,
+					applicationNavigation = applicationNavigation,
+				)
+			}
+		}
+	}
 }
