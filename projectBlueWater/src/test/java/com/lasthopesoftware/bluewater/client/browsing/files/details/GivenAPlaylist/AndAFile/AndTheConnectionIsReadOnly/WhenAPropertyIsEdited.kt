@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAPlaylist.AndAFile.AndTheConnectionIsReadOnly
 
 import android.graphics.BitmapFactory
-import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableFilePropertyDefinition
@@ -18,16 +18,13 @@ import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.AfterClass
-import org.junit.BeforeClass
 import org.junit.Test
-import org.junit.runner.RunWith
 import java.net.URL
 
 private const val libraryId = 792
 private const val serviceFileId = 220
 
-@RunWith(AndroidJUnit4::class)
-class WhenAnotherPropertyIsEdited {
+class WhenAnotherPropertyIsEdited : AndroidContext() {
 	companion object {
 		private var persistedValue = ""
 
@@ -85,21 +82,19 @@ class WhenAnotherPropertyIsEdited {
 			get() = fileProperties.value.first { it.property == EditableFilePropertyDefinition.Band.propertyName }
 
 		@JvmStatic
-		@BeforeClass
-		fun act() {
-			viewModel?.value?.apply {
-				loadFromList(LibraryId(libraryId), listOf(ServiceFile(serviceFileId)), 0).toExpiringFuture().get()
-				propertyToEdit.apply {
-					highlight()
-					edit()
-				}
-			}
-		}
-
-		@JvmStatic
 		@AfterClass
 		fun cleanup() {
 			viewModel = null
+		}
+	}
+
+	override fun before() {
+		viewModel?.value?.apply {
+			loadFromList(LibraryId(libraryId), listOf(ServiceFile(serviceFileId)), 0).toExpiringFuture().get()
+			propertyToEdit.apply {
+				highlight()
+				edit()
+			}
 		}
 	}
 

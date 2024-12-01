@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAPlaylist.AndAFile
 
 import android.graphics.BitmapFactory
-import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
@@ -16,17 +16,14 @@ import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.AfterClass
-import org.junit.BeforeClass
 import org.junit.Test
-import org.junit.runner.RunWith
 import java.net.URL
 
 private const val libraryId = 591
 private const val serviceFileId = 338
 
 // Needed for image bytes
-@RunWith(AndroidJUnit4::class)
-class WhenPlayingFromFileDetails {
+class WhenPlayingFromFileDetails : AndroidContext() {
 	companion object {
 
 		private lateinit var startedLibraryId: LibraryId
@@ -76,9 +73,15 @@ class WhenPlayingFromFileDetails {
 			)
 		}
 
-		@BeforeClass
+		@AfterClass
 		@JvmStatic
-		fun act(): Unit = mut?.value?.run {
+		fun cleanup() {
+			mut = null
+		}
+	}
+
+	override fun before() {
+		mut?.value?.apply {
 			loadFromList(
 				LibraryId(libraryId),
 				listOf(
@@ -95,12 +98,6 @@ class WhenPlayingFromFileDetails {
 			).toExpiringFuture().get()
 
 			play()
-		} ?: Unit
-
-		@AfterClass
-		@JvmStatic
-		fun cleanup() {
-			mut = null
 		}
 	}
 

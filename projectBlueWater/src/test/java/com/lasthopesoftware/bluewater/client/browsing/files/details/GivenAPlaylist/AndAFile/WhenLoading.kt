@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAPlaylist.AndAFile
 
 import android.graphics.BitmapFactory
-import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
@@ -18,16 +18,13 @@ import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormatterBuilder
 import org.junit.AfterClass
-import org.junit.BeforeClass
 import org.junit.Test
-import org.junit.runner.RunWith
 import java.net.URL
 
 private const val libraryId = 944
 private const val serviceFileId = 161
 
-@RunWith(AndroidJUnit4::class)
-class WhenLoading {
+class WhenLoading : AndroidContext() {
 	companion object {
 
 		private var viewModel: Lazy<FileDetailsViewModel>? = lazy {
@@ -68,16 +65,14 @@ class WhenLoading {
 		}
 
 		@JvmStatic
-		@BeforeClass
-		fun act() {
-			viewModel?.value?.loadFromList(LibraryId(libraryId), listOf(ServiceFile(serviceFileId)), 0)?.toExpiringFuture()?.get()
-		}
-
-		@JvmStatic
 		@AfterClass
 		fun cleanup() {
 			viewModel = null
 		}
+	}
+
+	override fun before() {
+		viewModel?.value?.loadFromList(LibraryId(libraryId), listOf(ServiceFile(serviceFileId)), 0)?.toExpiringFuture()?.get()
 	}
 
 	@Test

@@ -1,7 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAPlaylist.AndAFile.AndThePropertiesAreBeingEdited.AndAPropertyIsModified
 
 import android.graphics.BitmapFactory
-import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
@@ -16,16 +16,13 @@ import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.AfterClass
-import org.junit.BeforeClass
 import org.junit.Test
-import org.junit.runner.RunWith
 import java.net.URL
 
 private const val libraryId = 114
 private const val serviceFileId = 371
 
-@RunWith(AndroidJUnit4::class)
-class WhenCancellingAndEditingAgain {
+class WhenCancellingAndEditingAgain : AndroidContext() {
 	companion object {
 
 		private var persistedTrackNumber = ""
@@ -80,24 +77,22 @@ class WhenCancellingAndEditingAgain {
 		}
 
 		@JvmStatic
-		@BeforeClass
-		fun act() {
-			viewModel?.value?.apply {
-				loadFromList(LibraryId(libraryId), listOf(ServiceFile(serviceFileId)), 0).toExpiringFuture().get()
-				fileProperties.value.first { it.property == KnownFileProperties.Date }.apply {
-					highlight()
-					edit()
-					cancel()
-					highlight()
-					edit()
-				}
-			}
-		}
-
-		@JvmStatic
 		@AfterClass
 		fun cleanup() {
 			viewModel = null
+		}
+	}
+
+	override fun before() {
+		viewModel?.value?.apply {
+			loadFromList(LibraryId(libraryId), listOf(ServiceFile(serviceFileId)), 0).toExpiringFuture().get()
+			fileProperties.value.first { it.property == KnownFileProperties.Date }.apply {
+				highlight()
+				edit()
+				cancel()
+				highlight()
+				edit()
+			}
 		}
 	}
 
