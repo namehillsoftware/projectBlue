@@ -6,7 +6,7 @@ import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.shared.android.ui.ProvideScreenDimensions
-import com.lasthopesoftware.bluewater.shared.images.bytes.GetRawImages
+import com.lasthopesoftware.bluewater.shared.images.bytes.GetImageBytes
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.namehillsoftware.handoff.cancellation.CancellationSignal
@@ -21,9 +21,9 @@ import kotlin.math.min
 import kotlin.math.roundToInt
 
 class ScaledImageProvider(
-	private val innerRawImages: GetRawImages,
+	private val innerRawImages: GetImageBytes,
 	private val screenDimensions: ProvideScreenDimensions
-) : GetRawImages, PromisedResponse<ByteArray, ByteArray> {
+) : GetImageBytes, PromisedResponse<ByteArray, ByteArray> {
 
 	companion object {
 		private fun Int.scaleInteger(scaleRatio: Double): Int = (this.toDouble() * scaleRatio).roundToInt()

@@ -5,7 +5,7 @@ import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.namehillsoftware.handoff.promises.Promise
 
-interface GetRawImages {
+interface GetImageBytes {
 	fun promiseImageBytes(libraryId: LibraryId, serviceFile: ServiceFile): Promise<ByteArray>
 
 	fun promiseImageBytes(libraryId: LibraryId, itemId: ItemId): Promise<ByteArray>

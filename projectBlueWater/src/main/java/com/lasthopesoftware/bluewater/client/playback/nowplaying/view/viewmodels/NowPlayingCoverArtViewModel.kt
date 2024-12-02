@@ -10,7 +10,7 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowP
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.LibraryPlaybackMessage
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.images.ProvideDefaultImage
-import com.lasthopesoftware.bluewater.shared.images.bytes.GetRawImages
+import com.lasthopesoftware.bluewater.shared.images.bytes.GetImageBytes
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
@@ -25,12 +25,12 @@ import java.util.concurrent.CancellationException
 private val logger by lazyLogger<NowPlayingCoverArtViewModel>()
 
 class NowPlayingCoverArtViewModel(
-    applicationMessage: RegisterForApplicationMessages,
-    private val nowPlayingRepository: GetNowPlayingState,
-    private val libraryConnectionProvider: ProvideLibraryConnections,
-    private val defaultImageProvider: ProvideDefaultImage,
-    private val imageProvider: GetRawImages,
-    private val pollConnections: PollForLibraryConnections,
+	applicationMessage: RegisterForApplicationMessages,
+	private val nowPlayingRepository: GetNowPlayingState,
+	private val libraryConnectionProvider: ProvideLibraryConnections,
+	private val defaultImageProvider: ProvideDefaultImage,
+	private val imageProvider: GetImageBytes,
+	private val pollConnections: PollForLibraryConnections,
 ) : ViewModel() {
 
 	private val trackChangedSubscription = applicationMessage.registerReceiver { m: LibraryPlaybackMessage.TrackChanged ->

@@ -11,7 +11,7 @@ import java.io.FileNotFoundException
 import java.io.IOException
 import kotlin.coroutines.cancellation.CancellationException
 
-class RemoteImageAccess(private val connectionProvider: ProvideLibraryConnections) : GetRawImages {
+class RemoteImageAccess(private val connectionProvider: ProvideLibraryConnections) : GetImageBytes {
 	companion object {
 		private const val imageFormat = "jpg"
 

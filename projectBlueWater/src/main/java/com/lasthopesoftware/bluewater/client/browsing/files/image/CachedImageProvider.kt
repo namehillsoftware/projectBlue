@@ -18,7 +18,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.revisions.LibraryR
 import com.lasthopesoftware.bluewater.client.connection.libraries.GuaranteedLibraryConnectionProvider
 import com.lasthopesoftware.bluewater.client.connection.session.ConnectionSessionManager
 import com.lasthopesoftware.bluewater.shared.android.ui.ScreenDimensions
-import com.lasthopesoftware.bluewater.shared.images.bytes.GetRawImages
+import com.lasthopesoftware.bluewater.shared.images.bytes.GetImageBytes
 import com.lasthopesoftware.bluewater.shared.images.bytes.RemoteImageAccess
 import com.lasthopesoftware.bluewater.shared.images.bytes.cache.DiskCacheImageAccess
 import com.lasthopesoftware.bluewater.shared.images.bytes.cache.ImageCacheKeyLookup
@@ -28,10 +28,10 @@ import com.lasthopesoftware.policies.caching.LruPromiseCache
 import com.namehillsoftware.handoff.promises.Promise
 
 class CachedImageProvider(
-	private val innerRawImages: GetRawImages,
+	private val innerRawImages: GetImageBytes,
 	private val cacheKeys: LookupImageCacheKey,
 	private val rawCache: CachePromiseFunctions<String, ByteArray> = rawCompanionCache,
-) : GetRawImages {
+) : GetImageBytes {
 	companion object {
 		private const val MAX_MEMORY_CACHE_SIZE = 5
 

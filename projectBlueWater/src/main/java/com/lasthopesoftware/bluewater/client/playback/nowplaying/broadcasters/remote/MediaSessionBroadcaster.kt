@@ -14,7 +14,7 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.Pl
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.TrackPositionUpdate
 import com.lasthopesoftware.bluewater.shared.android.MediaSession.ControlMediaSession
-import com.lasthopesoftware.bluewater.shared.images.bytes.GetRawImages
+import com.lasthopesoftware.bluewater.shared.images.bytes.GetImageBytes
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
@@ -33,7 +33,7 @@ private const val standardCapabilities = PlaybackStateCompat.ACTION_PLAY_PAUSE o
 class MediaSessionBroadcaster(
     private val nowPlayingState: GetNowPlayingState,
     private val filePropertiesProvider: ProvideLibraryFileProperties,
-    private val imageProvider: GetRawImages,
+    private val imageProvider: GetImageBytes,
     private val mediaSession: ControlMediaSession,
     applicationMessages: RegisterForApplicationMessages,
 ) : PlaybackNotificationRouter(applicationMessages) {

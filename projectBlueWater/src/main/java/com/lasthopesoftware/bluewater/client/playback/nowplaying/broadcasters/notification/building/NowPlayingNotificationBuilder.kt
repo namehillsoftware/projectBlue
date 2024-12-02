@@ -15,7 +15,7 @@ import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Co
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Companion.pendingPlayingIntent
 import com.lasthopesoftware.bluewater.client.playback.service.PlaybackService.Companion.pendingPreviousIntent
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
-import com.lasthopesoftware.bluewater.shared.images.bytes.GetRawImages
+import com.lasthopesoftware.bluewater.shared.images.bytes.GetImageBytes
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
@@ -25,7 +25,7 @@ import com.namehillsoftware.handoff.promises.Promise
     private val mediaStyleNotificationSetup: SetupMediaStyleNotifications,
     private val urlKeyProvider: ProvideUrlKey,
     private val cachedFilePropertiesProvider: ProvideLibraryFileProperties,
-    private val imageProvider: GetRawImages,
+    private val imageProvider: GetImageBytes,
 ) : BuildNowPlayingNotificationContent, AutoCloseable {
 	private val notificationSync = Any()
 

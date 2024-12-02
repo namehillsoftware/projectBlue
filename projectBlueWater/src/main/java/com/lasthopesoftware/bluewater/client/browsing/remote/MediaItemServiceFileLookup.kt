@@ -8,12 +8,12 @@ import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePrope
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
-import com.lasthopesoftware.bluewater.shared.images.bytes.GetRawImages
+import com.lasthopesoftware.bluewater.shared.images.bytes.GetImageBytes
 import com.namehillsoftware.handoff.promises.Promise
 
 class MediaItemServiceFileLookup(
 	private val filePropertiesProvider: ProvideLibraryFileProperties,
-	private val imageProvider: GetRawImages
+	private val imageProvider: GetImageBytes
 ) : GetMediaItemsFromServiceFiles {
 
 	override fun promiseMediaItem(libraryId: LibraryId, serviceFile: ServiceFile): Promise<MediaBrowserCompat.MediaItem> {

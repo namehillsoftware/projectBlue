@@ -7,11 +7,8 @@ import com.lasthopesoftware.bluewater.client.browsing.EntryDependencies
 import com.lasthopesoftware.bluewater.client.browsing.items.list.ReusableChildItemViewModelProvider
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.ItemListMenuMessage
 import com.lasthopesoftware.bluewater.client.browsing.items.list.menus.changes.handlers.ItemListMenuBackPressedHandler
-import com.lasthopesoftware.bluewater.client.browsing.library.access.ILibraryProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRemoval
-import com.lasthopesoftware.bluewater.client.browsing.library.access.LibraryRepository
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.BrowserLibrarySelection
-import com.lasthopesoftware.bluewater.client.browsing.library.access.session.CachedSelectedLibraryIdProvider.Companion.getCachedSelectedLibraryIdProvider
 import com.lasthopesoftware.bluewater.client.browsing.library.access.session.SelectedLibraryViewModel
 import com.lasthopesoftware.bluewater.client.browsing.navigation.NavigationMessage
 import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettingsLookup
@@ -21,7 +18,6 @@ import com.lasthopesoftware.bluewater.client.playback.engine.selection.SelectedP
 import com.lasthopesoftware.bluewater.client.playback.engine.selection.defaults.DefaultPlaybackEngineLookup
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.LiveNowPlayingLookup
 import com.lasthopesoftware.bluewater.client.stored.library.items.StateChangeBroadcastingStoredItemAccess
-import com.lasthopesoftware.bluewater.client.stored.library.items.StoredItemAccess
 import com.lasthopesoftware.bluewater.client.stored.library.items.files.StoredFileAccess
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsViewModel
 import com.lasthopesoftware.bluewater.settings.hidden.HiddenSettingsViewModel
@@ -45,10 +41,6 @@ class ActivityDependencies(
 	private val applicationContext by lazy { activity.applicationContext }
 
 	private val viewModelScope by activity.buildViewModelLazily { ViewModelCloseableManager() }
-
-	private val libraryRepository by lazy { LibraryRepository(applicationContext) }
-
-	private val selectedLibraryIdProvider by lazy { activity.getCachedSelectedLibraryIdProvider() }
 
 	private val selectedPlaybackEngineTypeAccess by lazy {
 		SelectedPlaybackEngineTypeAccess(
@@ -80,7 +72,7 @@ class ActivityDependencies(
 	override val nowPlayingState by lazy { LiveNowPlayingLookup.getInstance() }
 
 	override val storedItemAccess by lazy {
-		StateChangeBroadcastingStoredItemAccess(StoredItemAccess(applicationContext), messageBus)
+		StateChangeBroadcastingStoredItemAccess(applicationDependencies.storedItemAccess, messageBus)
 	}
 
 	override val storedFileAccess by lazy { StoredFileAccess(applicationContext) }
@@ -94,12 +86,9 @@ class ActivityDependencies(
 		)
 	}
 
-	override val libraryProvider: ILibraryProvider
-		get() = libraryRepository
-
 	override val libraryStorage by lazy {
 		ObservableConnectionSettingsLibraryStorage(
-			libraryRepository,
+			applicationDependencies.libraryStorage,
 			ConnectionSettingsLookup(libraryProvider),
 			messageBus
 		)
@@ -108,10 +97,10 @@ class ActivityDependencies(
 	override val libraryRemoval by lazy {
 		LibraryRemoval(
 			storedItemAccess,
-			libraryRepository,
+			libraryStorage,
 			selectedLibraryIdProvider,
-			libraryRepository,
-			BrowserLibrarySelection(applicationSettingsRepository, messageBus, libraryProvider),
+			libraryProvider,
+			libraryBrowserSelection,
 		)
 	}
 
