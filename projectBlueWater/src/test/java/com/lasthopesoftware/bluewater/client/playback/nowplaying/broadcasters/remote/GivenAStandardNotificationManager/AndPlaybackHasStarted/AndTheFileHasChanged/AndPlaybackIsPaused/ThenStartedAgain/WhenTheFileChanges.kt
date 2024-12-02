@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.broadcasters.remote.GivenAStandardNotificationManager.AndPlaybackHasStarted.AndTheFileHasChanged.AndPlaybackIsPaused.ThenStartedAgain
 
-import android.graphics.BitmapFactory
 import android.media.MediaMetadata
 import android.support.v4.media.MediaMetadataCompat
 import android.support.v4.media.session.PlaybackStateCompat
@@ -54,9 +53,7 @@ class WhenTheFileChanges : AndroidContext() {
 				).toPromise()
 			},
 			mockk {
-				every { promiseFileBitmap(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns BitmapFactory
-					.decodeByteArray(byteArrayOf((912 % 128).toByte(), (368 % 128).toByte(), (395 % 128).toByte()), 0, 3)
-					.toPromise()
+				every { promiseImageBytes(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns byteArrayOf((912).toByte(), (368).toByte(), (395).toByte()).toPromise()
 			},
 			mockk {
 				every { setPlaybackState(any()) } answers {

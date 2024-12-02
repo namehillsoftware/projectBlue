@@ -1,12 +1,14 @@
 package com.lasthopesoftware.bluewater.client.connection.settings
 
+import com.lasthopesoftware.resources.emptyByteArray
+
 data class ConnectionSettings(
 	val accessCode: String,
 	val userName: String? = null,
 	val password: String? = null,
 	val isLocalOnly: Boolean = false,
 	val isWakeOnLanEnabled: Boolean = false,
-	val sslCertificateFingerprint: ByteArray = ByteArray(0),
+	val sslCertificateFingerprint: ByteArray = emptyByteArray,
 	val macAddress: String? = null,
 ) {
 	override fun equals(other: Any?): Boolean {

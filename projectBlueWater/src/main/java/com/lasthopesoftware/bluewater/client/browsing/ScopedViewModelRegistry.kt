@@ -62,7 +62,7 @@ class ScopedViewModelRegistry(
 			filePropertiesProvider = EditableLibraryFilePropertiesProvider(libraryFilePropertiesProvider),
 			updateFileProperties = filePropertiesStorage,
 			defaultImageProvider = defaultImageProvider,
-			imageProvider = imageProvider,
+			imageProvider = rawImageProvider,
 			controlPlayback = playbackServiceController,
 			registerForApplicationMessages = registerForApplicationMessages,
 			urlKeyProvider = urlKeyProvider,

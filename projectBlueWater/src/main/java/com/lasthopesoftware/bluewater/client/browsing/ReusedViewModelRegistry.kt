@@ -33,7 +33,7 @@ class ReusedViewModelRegistry(
 			nowPlayingState,
 			libraryConnectionProvider,
 			defaultImageProvider,
-			imageProvider,
+			rawImageProvider,
 			pollForConnections,
 		)
 	}

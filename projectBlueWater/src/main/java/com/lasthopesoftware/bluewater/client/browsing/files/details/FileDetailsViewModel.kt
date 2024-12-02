@@ -1,9 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.details
 
-import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideLibraryImages
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FileProperty
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideEditableLibraryFileProperties
@@ -18,11 +16,13 @@ import com.lasthopesoftware.bluewater.client.playback.file.PositionedFile
 import com.lasthopesoftware.bluewater.client.playback.service.ControlPlaybackService
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.images.ProvideDefaultImage
+import com.lasthopesoftware.bluewater.shared.images.bytes.GetRawImages
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.unitResponse
+import com.lasthopesoftware.resources.emptyByteArray
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateAction
 
@@ -32,7 +32,7 @@ class FileDetailsViewModel(
 	private val filePropertiesProvider: ProvideEditableLibraryFileProperties,
 	private val updateFileProperties: UpdateFileProperties,
 	defaultImageProvider: ProvideDefaultImage,
-	private val imageProvider: ProvideLibraryImages,
+	private val imageProvider: GetRawImages,
 	private val controlPlayback: ControlPlaybackService,
 	registerForApplicationMessages: RegisterForApplicationMessages,
 	private val urlKeyProvider: ProvideUrlKey,
@@ -71,8 +71,8 @@ class FileDetailsViewModel(
 	private val mutableArtist = MutableInteractionState("")
 	private val mutableFileProperties = MutableInteractionState(emptyList<FilePropertyViewModel>())
 	private val mutableIsLoading = MutableInteractionState(false)
-	private val mutableCoverArt = MutableInteractionState<Bitmap?>(null)
-	private val promisedSetDefaultCoverArt = defaultImageProvider.promiseFileBitmap()
+	private val mutableCoverArt = MutableInteractionState(emptyByteArray)
+	private val promisedSetDefaultCoverArt = defaultImageProvider.promiseImageBytes()
 		.then { art ->
 			mutableCoverArt.value = art
 			art
@@ -116,7 +116,7 @@ class FileDetailsViewModel(
 		val bitmapSetPromise = promisedSetDefaultCoverArt // Ensure default cover art is first set before apply cover art from file properties
 			.eventually { default ->
 				imageProvider
-					.promiseFileBitmap(libraryId, serviceFile)
+					.promiseImageBytes(libraryId, serviceFile)
 					.then { bitmap -> mutableCoverArt.value = bitmap ?: default }
 			}
 

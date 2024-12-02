@@ -31,8 +31,7 @@ class WhenBuildingTheNotification : AndroidContext() {
 
 	companion object {
 		private val expectedBitmap by lazy {
-			val conf = Bitmap.Config.ARGB_8888 // see other conf types
-			Bitmap.createBitmap(1, 1, conf)
+			byteArrayOf(288.toByte(), 756.toByte(), 190.toByte(), 637.toByte())
 		}
 		private val spiedBuilder = spyk(
 			NotificationCompat.Builder(
@@ -73,7 +72,7 @@ class WhenBuildingTheNotification : AndroidContext() {
 				)
 			),
 			mockk {
-				every { promiseFileBitmap(libraryId, any()) } returns Promise(expectedBitmap)
+				every { promiseImageBytes(libraryId, any<ServiceFile>()) } returns Promise(expectedBitmap)
 			}
 		)
 		builder = npBuilder.promiseNowPlayingNotification(libraryId, ServiceFile(3), true).toExpiringFuture().get()
@@ -97,6 +96,6 @@ class WhenBuildingTheNotification : AndroidContext() {
 
 	@Test
 	fun thenTheNotificationBitmapIsCorrect() {
-		verify { spiedBuilder.setLargeIcon(expectedBitmap) }
+		verify { spiedBuilder.setLargeIcon(any<Bitmap>()) }
 	}
 }

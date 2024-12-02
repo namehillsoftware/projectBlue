@@ -1,12 +1,14 @@
 package com.lasthopesoftware.bluewater.client.connection.builder.lookup
 
+import com.lasthopesoftware.resources.emptyByteArray
+
 data class ServerInfo(
 	val httpPort: Int? = null,
 	val httpsPort: Int? = null,
 	val remoteHost: String? = null,
 	val localIps: Set<String> = emptySet(),
 	val macAddresses: Set<String> = emptySet(),
-	val certificateFingerprint: ByteArray = ByteArray(0)
+	val certificateFingerprint: ByteArray = emptyByteArray
 ) {
 	override fun equals(other: Any?): Boolean {
 		if (this === other) return true

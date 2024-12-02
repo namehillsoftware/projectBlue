@@ -8,7 +8,6 @@ import com.lasthopesoftware.bluewater.client.browsing.files.access.parameters.Fi
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.ItemStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.LibraryFileStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.image.CachedImageProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.image.LibraryImageProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.image.ScaledImageProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.DelegatingFilePropertiesProvider
@@ -76,20 +75,20 @@ class LibraryConnectedDependencies(
 
 	override val imageCacheKeyLookup by lazy { ImageCacheKeyLookup(libraryFilePropertiesProvider) }
 
-	override val imageProvider by lazy {
-		val imageCacheKeyLookup = ImageCacheKeyLookup(libraryFilePropertiesProvider)
+	override val rawImageProvider by lazy {
+		val diskImageProvider = DiskCacheImageAccess(
+			remoteImageAccess,
+			imageCacheKeyLookup,
+			application.imageDiskFileCache
+		)
+
+		val scaledImageProvider = ScaledImageProvider(
+			diskImageProvider,
+			application.screenDimensions,
+		)
 
 		CachedImageProvider(
-			ScaledImageProvider(
-				LibraryImageProvider(
-					DiskCacheImageAccess(
-						remoteImageAccess,
-						imageCacheKeyLookup,
-						application.imageDiskFileCache
-					)
-				),
-				application.screenDimensions
-			),
+			scaledImageProvider,
 			imageCacheKeyLookup
 		)
 	}

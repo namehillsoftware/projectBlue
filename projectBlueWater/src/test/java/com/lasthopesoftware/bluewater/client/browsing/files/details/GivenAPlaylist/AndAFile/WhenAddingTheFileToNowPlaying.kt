@@ -1,7 +1,5 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.details.GivenAPlaylist.AndAFile
 
-import android.graphics.BitmapFactory
-import com.lasthopesoftware.AndroidContext
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.details.FileDetailsViewModel
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -13,61 +11,48 @@ import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.AfterClass
-import org.junit.Test
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Test
 import java.net.URL
 
 private const val libraryId = 275
 private const val serviceFileId = 860
 
-class WhenAddingTheFileToNowPlaying : AndroidContext() {
-	companion object {
+class WhenAddingTheFileToNowPlaying {
+	private var addedLibraryId: LibraryId? = null
+	private var addedServiceFile: ServiceFile? = null
 
-		private var addedLibraryId: LibraryId? = null
-		private var addedServiceFile: ServiceFile? = null
-
-		private var viewModel: Lazy<FileDetailsViewModel>? = lazy {
-			FileDetailsViewModel(
-				mockk {
-					every { promiseIsReadOnly(LibraryId(libraryId)) } returns false.toPromise()
-				},
-				mockk {
-					every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns Promise(emptySequence())
-				},
-				mockk(),
-				mockk {
-					every { promiseFileBitmap() } returns BitmapFactory
-						.decodeByteArray(byteArrayOf(3, 4), 0, 2)
-						.toPromise()
-				},
-				mockk {
-					every { promiseFileBitmap(LibraryId(libraryId), any()) } returns BitmapFactory
-						.decodeByteArray(byteArrayOf(61, 127), 0, 2)
-						.toPromise()
-				},
-				mockk {
-					every { addToPlaylist(any(), any()) } answers {
-						addedLibraryId = firstArg()
-						addedServiceFile = lastArg()
-					}
-				},
-				RecordingApplicationMessageBus(),
-				mockk {
-					every { promiseUrlKey(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns UrlKeyHolder(URL("http://bow"), ServiceFile(serviceFileId)).toPromise()
-				},
-			)
-		}
-
-		@JvmStatic
-		@AfterClass
-		fun cleanup() {
-			viewModel = null
-			addedServiceFile = null
-		}
+	private val viewModel by lazy {
+		FileDetailsViewModel(
+			mockk {
+				every { promiseIsReadOnly(LibraryId(libraryId)) } returns false.toPromise()
+			},
+			mockk {
+				every { promiseFileProperties(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns Promise(emptySequence())
+			},
+			mockk(),
+			mockk {
+				every { promiseImageBytes() } returns byteArrayOf(3, 4).toPromise()
+			},
+			mockk {
+				every { promiseImageBytes(LibraryId(libraryId), any<ServiceFile>()) } returns byteArrayOf(61, 127).toPromise()
+			},
+			mockk {
+				every { addToPlaylist(any(), any()) } answers {
+					addedLibraryId = firstArg()
+					addedServiceFile = lastArg()
+				}
+			},
+			RecordingApplicationMessageBus(),
+			mockk {
+				every { promiseUrlKey(LibraryId(libraryId), ServiceFile(serviceFileId)) } returns UrlKeyHolder(URL("http://bow"), ServiceFile(serviceFileId)).toPromise()
+			},
+		)
 	}
 
-	override fun before() {
-		viewModel?.value?.loadFromList(
+	@BeforeAll
+	fun act() {
+		viewModel.loadFromList(
 			LibraryId(libraryId),
 			listOf(
 				ServiceFile(291),
@@ -80,8 +65,8 @@ class WhenAddingTheFileToNowPlaying : AndroidContext() {
 				ServiceFile(543),
 			),
 			4
-		)?.toExpiringFuture()?.get()
-		viewModel?.value?.addToNowPlaying()
+		).toExpiringFuture().get()
+		viewModel.addToNowPlaying()
 	}
 
 	@Test

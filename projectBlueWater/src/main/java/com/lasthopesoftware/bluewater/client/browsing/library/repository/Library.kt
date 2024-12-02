@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.browsing.library.repository
 
 import androidx.annotation.Keep
 import com.lasthopesoftware.bluewater.IdentifiableEntity
+import com.lasthopesoftware.resources.emptyByteArray
 
 @Keep
 data class Library(
@@ -21,7 +22,7 @@ data class Library(
 	var isUsingExistingFiles: Boolean = false,
 	var isSyncLocalConnectionsOnly: Boolean = false,
 	var isWakeOnLanEnabled: Boolean = false,
-	var sslCertificateFingerprint: ByteArray = ByteArray(0),
+	var sslCertificateFingerprint: ByteArray = emptyByteArray,
 	var macAddress: String? = null,
 ) : IdentifiableEntity {
 

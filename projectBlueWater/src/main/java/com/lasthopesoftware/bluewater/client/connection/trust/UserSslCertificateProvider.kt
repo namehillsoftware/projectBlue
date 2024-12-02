@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.connection.trust
 
 import android.content.ContentResolver
 import com.lasthopesoftware.promises.extensions.keepPromise
+import com.lasthopesoftware.resources.emptyByteArray
 import com.lasthopesoftware.resources.executors.ThreadPools
 import com.lasthopesoftware.resources.uri.SelectDocumentUris
 import com.lasthopesoftware.resources.uri.toUri
@@ -20,7 +21,6 @@ class UserSslCertificateProvider(
 ) : ProvideUserSslCertificates, PromisedResponse<URI?, ByteArray> {
 
 	companion object {
-		private val emptyByteArray by lazy { ByteArray(0) }
 		private val x509CertificateFactory by lazy { CertificateFactory.getInstance("X.509") }
 	}
 

@@ -15,6 +15,7 @@ import com.lasthopesoftware.bluewater.shared.observables.LiftedInteractionState
 import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
 import com.lasthopesoftware.promises.extensions.keepPromise
 import com.lasthopesoftware.promises.extensions.toPromise
+import com.lasthopesoftware.resources.emptyByteArray
 import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.response.ImmediateAction
 import com.namehillsoftware.handoff.promises.response.ImmediateResponse
@@ -164,7 +165,7 @@ class LibrarySettingsViewModel(
 		password.value = result?.password ?: ""
 		libraryName.value = result?.libraryName ?: ""
 		macAddress.value = result?.macAddress ?: ""
-		sslCertificateFingerprint.value = result?.sslCertificateFingerprint ?: ByteArray(0)
+		sslCertificateFingerprint.value = result?.sslCertificateFingerprint ?: emptyByteArray
 
 		libraryState.value = (result ?: defaultLibrary).copy(
 			isLocalOnly = isLocalOnly.value,

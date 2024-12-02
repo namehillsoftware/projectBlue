@@ -1,9 +1,7 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels
 
-import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideLibraryImages
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
 import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
@@ -12,11 +10,13 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowP
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.LibraryPlaybackMessage
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
 import com.lasthopesoftware.bluewater.shared.images.ProvideDefaultImage
+import com.lasthopesoftware.bluewater.shared.images.bytes.GetRawImages
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.promises.extensions.unitResponse
+import com.lasthopesoftware.resources.emptyByteArray
 import com.namehillsoftware.handoff.promises.Promise
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -29,7 +29,7 @@ class NowPlayingCoverArtViewModel(
     private val nowPlayingRepository: GetNowPlayingState,
     private val libraryConnectionProvider: ProvideLibraryConnections,
     private val defaultImageProvider: ProvideDefaultImage,
-    private val imageProvider: ProvideLibraryImages,
+    private val imageProvider: GetRawImages,
     private val pollConnections: PollForLibraryConnections,
 ) : ViewModel() {
 
@@ -41,10 +41,10 @@ class NowPlayingCoverArtViewModel(
 		setViewIfLibraryIsCorrect(m.libraryId)
 	}
 
-	private val promisedDefaultImage by lazy { defaultImageProvider.promiseFileBitmap() }
+	private val promisedDefaultImage by lazy { defaultImageProvider.promiseImageBytes() }
 	private val isNowPlayingImageLoadingState = MutableStateFlow(false)
-	private val defaultImageState = MutableStateFlow<Bitmap?>(null)
-	private val nowPlayingImageState = MutableStateFlow<Bitmap?>(null)
+	private val defaultImageState = MutableStateFlow(emptyByteArray)
+	private val nowPlayingImageState = MutableStateFlow(emptyByteArray)
 
 	private var activeLibraryId: LibraryId? = null
 	private var cachedPromises: CachedPromises? = null
@@ -131,7 +131,7 @@ class NowPlayingCoverArtViewModel(
 
 				val currentCachedPromises = CachedPromises(
 					urlKeyHolder,
-					imageProvider.promiseFileBitmap(libraryId, serviceFile)
+					imageProvider.promiseImageBytes(libraryId, serviceFile)
 				).also { cachedPromises = it }
 				setNowPlayingImage(currentCachedPromises)
 			}
@@ -142,7 +142,7 @@ class NowPlayingCoverArtViewModel(
 
 	private class CachedPromises(
 		val urlKeyHolder: UrlKeyHolder<ServiceFile>,
-		val promisedImage: Promise<Bitmap?>
+		val promisedImage: Promise<ByteArray>
 	)
 		: AutoCloseable
 	{

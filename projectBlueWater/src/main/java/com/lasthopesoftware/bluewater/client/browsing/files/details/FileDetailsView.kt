@@ -1,6 +1,7 @@
 package com.lasthopesoftware.bluewater.client.browsing.files.details
 
 import android.app.Activity
+import android.graphics.BitmapFactory
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -171,8 +172,16 @@ private fun CoverArtColumn(viewModel: FileDetailsViewModel, mediaStylePalette: M
 				.weight(1.0f)
 				.align(Alignment.CenterHorizontally)
 		) {
-			val coverArtBitmaps by viewModel.coverArt.subscribeAsState()
-			val coverArtState by remember { derivedStateOf { coverArtBitmaps?.asImageBitmap() } }
+			val coverArtBitmap by viewModel.coverArt.subscribeAsState()
+			val coverArtState by remember {
+				derivedStateOf {
+					coverArtBitmap
+						.takeIf { it.isNotEmpty() }
+						?.let {
+							BitmapFactory.decodeByteArray(it, 0, it.size).asImageBitmap()
+						}
+				}
+			}
 
 			coverArtState
 				?.let {
@@ -232,6 +241,8 @@ fun rememberComputedColorPalette(
 		viewModel.coverArt
 			.flatMap { maybeArt ->
 				maybeArt.value
+					.takeIf { it.isNotEmpty() }
+					?.let { BitmapFactory.decodeByteArray(it, 0, it.size) }
 					?.takeIf { it.width > 0 && it.height > 0 }
 					?.let(paletteProvider::promisePalette)
 					?.toMaybeObservable()
@@ -590,8 +601,18 @@ fun FileDetailsView(viewModel: FileDetailsViewModel, navigateApplication: Naviga
 						.offset { IntOffset(x = 0, y = coverArtScrollOffset.roundToPx()) }
 						.fillMaxWidth()
 				) {
-					val coverArtBitmaps by viewModel.coverArt.subscribeAsState()
-					val coverArtState by remember { derivedStateOf { coverArtBitmaps?.asImageBitmap() } }
+					val coverArtBitmap by viewModel.coverArt.subscribeAsState()
+					val coverArtState by remember {
+						derivedStateOf {
+							coverArtBitmap
+								.takeIf { it.isNotEmpty() }
+								?.let {
+									BitmapFactory.decodeByteArray(it, 0, it.size)
+								}
+								?.asImageBitmap()
+						}
+					}
+
 					coverArtState
 						?.let {
 							val album by viewModel.album.subscribeAsState()

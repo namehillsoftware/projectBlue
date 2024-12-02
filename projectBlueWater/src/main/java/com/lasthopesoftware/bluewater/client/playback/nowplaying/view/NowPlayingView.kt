@@ -1,5 +1,6 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view
 
+import android.graphics.BitmapFactory
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.SplineBasedFloatDecayAnimationSpec
 import androidx.compose.animation.core.exponentialDecay
@@ -120,17 +121,23 @@ fun NowPlayingCoverArtView(nowPlayingCoverArtViewModel: NowPlayingCoverArtViewMo
 		modifier = Modifier.fillMaxSize()
 	) {
 		val defaultImage by nowPlayingCoverArtViewModel.defaultImage.collectAsState()
-		defaultImage
-			?.let {
-				val defaultImageBitmap by remember { derivedStateOf { it.asImageBitmap() } }
-				Image(
-					bitmap = defaultImageBitmap,
-					contentDescription = stringResource(id = R.string.img_now_playing_loading),
-					contentScale = ContentScale.Crop,
-					alignment = Alignment.Center,
-					modifier = Modifier.fillMaxSize(),
-				)
+		val defaultImageBitmap by remember {
+			derivedStateOf {
+				defaultImage
+					.takeIf { it.isNotEmpty() }
+					?.let { BitmapFactory.decodeByteArray(it, 0, it.size) }
+					?.asImageBitmap()
 			}
+		}
+		defaultImageBitmap?.let {
+			Image(
+				bitmap = it,
+				contentDescription = stringResource(id = R.string.img_now_playing_loading),
+				contentScale = ContentScale.Crop,
+				alignment = Alignment.Center,
+				modifier = Modifier.fillMaxSize(),
+			)
+		}
 
 		val isLoadingImage by nowPlayingCoverArtViewModel.isNowPlayingImageLoading.collectAsState()
 		if (isLoadingImage) {
@@ -139,8 +146,16 @@ fun NowPlayingCoverArtView(nowPlayingCoverArtViewModel: NowPlayingCoverArtViewMo
 			)
 		} else {
 			val coverArt by nowPlayingCoverArtViewModel.nowPlayingImage.collectAsState()
-			val coverArtBitmap by remember { derivedStateOf { coverArt?.asImageBitmap() } }
-			coverArtBitmap
+			val coverArtState by remember {
+				derivedStateOf {
+					coverArt
+						.takeIf { it.isNotEmpty() }
+						?.let {
+							BitmapFactory.decodeByteArray(it, 0, it.size).asImageBitmap()
+						}
+				}
+			}
+			coverArtState
 				?.let {
 					Image(
 						bitmap = it,

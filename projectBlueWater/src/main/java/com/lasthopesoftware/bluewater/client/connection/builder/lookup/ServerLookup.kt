@@ -4,6 +4,7 @@ import com.lasthopesoftware.bluewater.client.browsing.library.repository.Library
 import com.lasthopesoftware.bluewater.client.connection.settings.ConnectionSettings
 import com.lasthopesoftware.bluewater.client.connection.settings.LookupConnectionSettings
 import com.lasthopesoftware.promises.extensions.toPromise
+import com.lasthopesoftware.resources.emptyByteArray
 import com.namehillsoftware.handoff.promises.Promise
 
 class ServerLookup(
@@ -110,7 +111,7 @@ class ServerLookup(
 									?.certificateFingerprint
 									?.takeIf { it.any() }
 									?: response.getElementsByTag(certificateFingerprintElementTag).firstOrNull()?.wholeOwnText()?.hexToByteArray()
-									?: ByteArray(0)
+									?: emptyByteArray
 							)
 						}
 						.then({ remoteServerInfo ->

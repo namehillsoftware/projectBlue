@@ -8,11 +8,12 @@ import com.namehillsoftware.handoff.promises.Promise
 
 class SelectedLibraryImageProvider(private val selectedLibraryId: ProvideSelectedLibraryId, private val provideLibraryImages: ProvideLibraryImages) : ProvideScopedImages {
 	override fun promiseFileBitmap(serviceFile: ServiceFile): Promise<Bitmap?> =
-		Promise.Proxy { cp ->
-			selectedLibraryId.promiseSelectedLibraryId()
+		Promise.Proxy {
+			selectedLibraryId
+				.promiseSelectedLibraryId()
 				.eventually { libraryId ->
 					libraryId
-						?.let { l -> provideLibraryImages.promiseFileBitmap(l, serviceFile).also(cp::doCancel) }
+						?.let { l -> provideLibraryImages.promiseFileBitmap(l, serviceFile) }
 						.keepPromise()
 				}
 		}
