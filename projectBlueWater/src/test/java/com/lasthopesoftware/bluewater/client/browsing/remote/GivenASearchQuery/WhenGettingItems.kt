@@ -51,7 +51,7 @@ class `When Getting Items` {
 
 			val serviceFiles = mockk<GetMediaItemsFromServiceFiles>()
 			for (id in serviceFileIds) {
-				every { serviceFiles.promiseMediaItem(ServiceFile(id)) } returns Promise(
+				every { serviceFiles.promiseMediaItem(LibraryId(22), ServiceFile(id)) } returns Promise(
 					MediaMetadataCompat.Builder()
 						.apply {
 							putString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID, "sf:$id")

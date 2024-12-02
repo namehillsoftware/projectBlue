@@ -1,14 +1,13 @@
 package com.lasthopesoftware.bluewater.client.browsing.remote.GivenAServiceFile
 
-import android.graphics.BitmapFactory
 import android.support.v4.media.MediaBrowserCompat
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideScopedImages
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.FakeScopedCachedFilesPropertiesProvider
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.FakeFilesPropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.browsing.remote.MediaItemServiceFileLookup
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
-import com.namehillsoftware.handoff.promises.Promise
+import com.lasthopesoftware.promises.extensions.toPromise
 import io.mockk.every
 import io.mockk.mockk
 import org.assertj.core.api.Assertions.assertThat
@@ -19,10 +18,13 @@ import org.robolectric.RobolectricTestRunner
 @RunWith(RobolectricTestRunner::class)
 class `When Looking Up The Media Item With The Image` {
 	companion object {
+		private const val libraryId = 794
+
 		private val mediaItem by lazy {
-			val fileProperties = FakeScopedCachedFilesPropertiesProvider()
+			val fileProperties = FakeFilesPropertiesProvider()
 			fileProperties.addFilePropertiesToCache(
 				ServiceFile(14),
+				LibraryId(libraryId),
 				mapOf(
 					Pair(KnownFileProperties.Key, "14"),
 					Pair(KnownFileProperties.Artist, "Billy Bob"),
@@ -32,15 +34,13 @@ class `When Looking Up The Media Item With The Image` {
 				)
 			)
 
-			val imageProvider = mockk<ProvideScopedImages>()
-			every { imageProvider.promiseFileBitmap(ServiceFile(14)) } returns Promise(BitmapFactory.decodeByteArray(
-				byteArrayOf(1, 2), 0, 2))
-
 			val mediaItemServiceFileLookup = MediaItemServiceFileLookup(
 				fileProperties,
-				imageProvider
+				mockk {
+					every { promiseImageBytes(LibraryId(libraryId), ServiceFile(14)) } returns byteArrayOf(1, 2).toPromise()
+				}
 			)
-			mediaItemServiceFileLookup.promiseMediaItemWithImage(ServiceFile(14))
+			mediaItemServiceFileLookup.promiseMediaItemWithImage(LibraryId(libraryId), ServiceFile(14))
 				.toExpiringFuture()
 				.get()
 		}

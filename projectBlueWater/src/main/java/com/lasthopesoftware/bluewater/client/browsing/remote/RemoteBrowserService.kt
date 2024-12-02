@@ -9,12 +9,9 @@ import com.lasthopesoftware.bluewater.client.browsing.files.access.CachedItemFil
 import com.lasthopesoftware.bluewater.client.browsing.files.access.LibraryFileProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.access.stringlist.LibraryFileStringListProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.image.CachedImageProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.image.LibraryImageProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.image.SelectedLibraryImageProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.CachedFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.DelegatingFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertiesProvider
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.SelectedLibraryFilePropertiesProvider
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.repository.FilePropertyCache
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.items.access.CachedItemProvider
@@ -81,20 +78,17 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 
 	private val filePropertiesProvider by lazy {
 		val libraryConnectionProvider = buildNewConnectionSessionManager()
-		SelectedLibraryFilePropertiesProvider(
-			selectedLibraryIdProvider,
-			CachedFilePropertiesProvider(
-				libraryConnectionProvider,
-				FilePropertyCache,
-				DelegatingFilePropertiesProvider(
-					FilePropertiesProvider(
-						GuaranteedLibraryConnectionProvider(libraryConnectionProvider),
-						LibraryRevisionProvider(libraryConnectionProvider),
-						FilePropertyCache,
-					),
-					rateLimitingPolicy,
-				)
-			),
+		CachedFilePropertiesProvider(
+			libraryConnectionProvider,
+			FilePropertyCache,
+			DelegatingFilePropertiesProvider(
+				FilePropertiesProvider(
+					GuaranteedLibraryConnectionProvider(libraryConnectionProvider),
+					LibraryRevisionProvider(libraryConnectionProvider),
+					FilePropertyCache,
+				),
+				rateLimitingPolicy,
+			)
 		)
 	}
 
@@ -103,23 +97,19 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 	private val mediaItemServiceFileLookup by lazy {
 		MediaItemServiceFileLookup(
 			filePropertiesProvider,
-			SelectedLibraryImageProvider(
-				selectedLibraryIdProvider,
-				LibraryImageProvider(imageProvider)
-			),
+			imageProvider,
 		)
 	}
 
 	private val nowPlayingMediaItemLookup by lazy {
 		val libraryRepository = LibraryRepository(this)
 
-		val repository =
-			NowPlayingRepository(
-				selectedLibraryIdProvider,
-				libraryRepository,
-				libraryRepository,
-				InMemoryNowPlayingState,
-			)
+		val repository = NowPlayingRepository(
+			selectedLibraryIdProvider,
+			libraryRepository,
+			libraryRepository,
+			InMemoryNowPlayingState,
+		)
 
 		NowPlayingMediaItemLookup(
 			selectedLibraryIdProvider,
@@ -207,7 +197,13 @@ class RemoteBrowserService : MediaBrowserServiceCompat() {
 
 		result.detach()
 
-		mediaItemServiceFileLookup.promiseMediaItemWithImage(ServiceFile(id))
+		selectedLibraryIdProvider
+			.promiseSelectedLibraryId()
+			.eventually {
+				it?.let { l ->
+					mediaItemServiceFileLookup.promiseMediaItemWithImage(l, ServiceFile(id))
+				}.keepPromise()
+			}
 			.then(result::sendResult)
 			.excuse { e -> result.sendError(Bundle().apply { putString(error, e.message) }) }
 	}

@@ -45,7 +45,7 @@ class MediaItemsBrowser(
 								itemFileProvider
 									.promiseFiles(libraryId, itemId, FileListParameters.Options.None)
 									.eventually<Collection<MediaBrowserCompat.MediaItem>> { files ->
-										Promise.whenAll(files.map { f -> mediaItemServiceFileLookup.promiseMediaItem(f).then { mi -> Pair(f, mi) } })
+										Promise.whenAll(files.map { f -> mediaItemServiceFileLookup.promiseMediaItem(libraryId, f).then { mi -> Pair(f, mi) } })
 											.then { pairs ->
 												val mediaItemsLookup = pairs.associate { p -> p }
 												files.mapIndexedNotNull { i, f ->
@@ -90,10 +90,13 @@ class MediaItemsBrowser(
 			.eventually { maybeId ->
 				maybeId
 					?.let { libraryId ->
-						fileProvider.promiseFiles(libraryId, FileListParameters.Options.None, *parameters)
+						fileProvider
+							.promiseFiles(libraryId, FileListParameters.Options.None, *parameters)
+							.eventually { files ->
+								Promise.whenAll(files.map { mediaItemServiceFileLookup.promiseMediaItem(libraryId, it) })
+							}
 					}
 					.keepPromise(emptyList())
 			}
-			.eventually { files -> Promise.whenAll(files.map(mediaItemServiceFileLookup::promiseMediaItem)) }
 	}
 }

@@ -1,21 +1,23 @@
 package com.lasthopesoftware.bluewater.client.browsing.remote
 
+import android.graphics.BitmapFactory
 import android.support.v4.media.MediaBrowserCompat
 import android.support.v4.media.MediaMetadataCompat
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
-import com.lasthopesoftware.bluewater.client.browsing.files.image.ProvideScopedImages
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.FilePropertyHelpers.durationInMs
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.KnownFileProperties
-import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideScopedFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.files.properties.ProvideLibraryFileProperties
+import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
+import com.lasthopesoftware.bluewater.shared.images.bytes.GetRawImages
 import com.namehillsoftware.handoff.promises.Promise
 
 class MediaItemServiceFileLookup(
-	private val filePropertiesProvider: ProvideScopedFileProperties,
-	private val imageProvider: ProvideScopedImages
+	private val filePropertiesProvider: ProvideLibraryFileProperties,
+	private val imageProvider: GetRawImages
 ) : GetMediaItemsFromServiceFiles {
 
-	override fun promiseMediaItem(serviceFile: ServiceFile): Promise<MediaBrowserCompat.MediaItem> {
-		return promiseMediaMetadataWithFileProperties(serviceFile)
+	override fun promiseMediaItem(libraryId: LibraryId, serviceFile: ServiceFile): Promise<MediaBrowserCompat.MediaItem> {
+		return promiseMediaMetadataWithFileProperties(libraryId, serviceFile)
 			.then { mediaMetadataBuilder ->
 				MediaBrowserCompat.MediaItem(
 					mediaMetadataBuilder.build().description,
@@ -24,12 +26,12 @@ class MediaItemServiceFileLookup(
 			}
 	}
 
-	override fun promiseMediaItemWithImage(serviceFile: ServiceFile): Promise<MediaBrowserCompat.MediaItem> {
-		val promisedImage = imageProvider.promiseFileBitmap(serviceFile)
-		return promiseMediaMetadataWithFileProperties(serviceFile)
+	override fun promiseMediaItemWithImage(libraryId: LibraryId, serviceFile: ServiceFile): Promise<MediaBrowserCompat.MediaItem> {
+		val promisedImage = imageProvider.promiseImageBytes(libraryId, serviceFile)
+		return promiseMediaMetadataWithFileProperties(libraryId, serviceFile)
 			.eventually { mediaMetadataBuilder ->
 				promisedImage.then { image ->
-					mediaMetadataBuilder.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, image)
+					mediaMetadataBuilder.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, BitmapFactory.decodeByteArray(image, 0, image.size))
 
 					MediaBrowserCompat.MediaItem(
 						mediaMetadataBuilder.build().description,
@@ -39,8 +41,8 @@ class MediaItemServiceFileLookup(
 			}
 	}
 
-	private fun promiseMediaMetadataWithFileProperties(serviceFile: ServiceFile) =
-		filePropertiesProvider.promiseFileProperties(serviceFile)
+	private fun promiseMediaMetadataWithFileProperties(libraryId: LibraryId, serviceFile: ServiceFile) =
+		filePropertiesProvider.promiseFileProperties(libraryId, serviceFile)
 			.then { p ->
 				MediaMetadataCompat.Builder().apply {
 					val artist = p[KnownFileProperties.Artist]
