@@ -120,7 +120,7 @@ fun NowPlayingCoverArtView(nowPlayingCoverArtViewModel: NowPlayingCoverArtViewMo
 	Box(
 		modifier = Modifier.fillMaxSize()
 	) {
-		val defaultImage by nowPlayingCoverArtViewModel.defaultImage.collectAsState()
+		val defaultImage by nowPlayingCoverArtViewModel.defaultImage.subscribeAsState()
 		val defaultImageBitmap by remember {
 			derivedStateOf {
 				defaultImage
@@ -139,13 +139,13 @@ fun NowPlayingCoverArtView(nowPlayingCoverArtViewModel: NowPlayingCoverArtViewMo
 			)
 		}
 
-		val isLoadingImage by nowPlayingCoverArtViewModel.isNowPlayingImageLoading.collectAsState()
+		val isLoadingImage by nowPlayingCoverArtViewModel.isNowPlayingImageLoading.subscribeAsState()
 		if (isLoadingImage) {
 			CircularProgressIndicator(
 				modifier = Modifier.align(Alignment.Center)
 			)
 		} else {
-			val coverArt by nowPlayingCoverArtViewModel.nowPlayingImage.collectAsState()
+			val coverArt by nowPlayingCoverArtViewModel.nowPlayingImage.subscribeAsState()
 			val coverArtState by remember {
 				derivedStateOf {
 					coverArt

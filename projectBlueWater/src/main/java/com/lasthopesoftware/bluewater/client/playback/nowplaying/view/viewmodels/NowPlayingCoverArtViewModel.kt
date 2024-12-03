@@ -14,12 +14,11 @@ import com.lasthopesoftware.bluewater.shared.images.bytes.GetImageBytes
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
+import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.promises.extensions.unitResponse
 import com.lasthopesoftware.resources.emptyByteArray
 import com.namehillsoftware.handoff.promises.Promise
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import java.util.concurrent.CancellationException
 
 private val logger by lazyLogger<NowPlayingCoverArtViewModel>()
@@ -42,16 +41,16 @@ class NowPlayingCoverArtViewModel(
 	}
 
 	private val promisedDefaultImage by lazy { defaultImageProvider.promiseImageBytes() }
-	private val isNowPlayingImageLoadingState = MutableStateFlow(false)
-	private val defaultImageState = MutableStateFlow(emptyByteArray)
-	private val nowPlayingImageState = MutableStateFlow(emptyByteArray)
+	private val isNowPlayingImageLoadingState = MutableInteractionState(false)
+	private val defaultImageState = MutableInteractionState(emptyByteArray)
+	private val nowPlayingImageState = MutableInteractionState(emptyByteArray)
 
 	private var activeLibraryId: LibraryId? = null
 	private var cachedPromises: CachedPromises? = null
 
-	val isNowPlayingImageLoading = isNowPlayingImageLoadingState.asStateFlow()
-	val nowPlayingImage = nowPlayingImageState.asStateFlow()
-	val defaultImage = defaultImageState.asStateFlow()
+	val isNowPlayingImageLoading = isNowPlayingImageLoadingState.asInteractionState()
+	val nowPlayingImage = nowPlayingImageState.asInteractionState()
+	val defaultImage = defaultImageState.asInteractionState()
 
 	override fun onCleared() {
 		cachedPromises?.close()
@@ -82,7 +81,7 @@ class NowPlayingCoverArtViewModel(
 				}
 			}
 
-		promisedSetView.excuse { error -> logger.warn("An error occurred initializing `NowPlayingActivity`", error) }
+		promisedSetView.excuse { error -> logger.warn("An error occurred initializing `NowPlayingCoverArtViewModel`", error) }
 
 		return promisedSetView
 	}
@@ -104,11 +103,14 @@ class NowPlayingCoverArtViewModel(
 			isNowPlayingImageLoadingState.value = true
 			cachedPromises
 				.promisedImage
-				.then { bitmap ->
-					if (this.cachedPromises?.urlKeyHolder == cachedPromises.urlKeyHolder) {
-						nowPlayingImageState.value = bitmap
-						isNowPlayingImageLoadingState.value = false
-					}
+				.eventually { bitmap ->
+					promisedDefaultImage
+						.then { default ->
+							if (this.cachedPromises?.urlKeyHolder == cachedPromises.urlKeyHolder) {
+								nowPlayingImageState.value = bitmap.takeIf { it.isNotEmpty() } ?: default
+								isNowPlayingImageLoadingState.value = false
+							}
+						}
 				}
 				.excuse { e ->
 					if (e is CancellationException)	logger.debug("Bitmap retrieval cancelled", e)

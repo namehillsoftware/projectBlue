@@ -117,7 +117,7 @@ class FileDetailsViewModel(
 			.eventually { default ->
 				imageProvider
 					.promiseImageBytes(libraryId, serviceFile)
-					.then { bitmap -> mutableCoverArt.value = bitmap ?: default }
+					.then { bytes -> mutableCoverArt.value = bytes.takeIf { it.isNotEmpty() } ?: default }
 			}
 
 		return Promise

@@ -25,9 +25,7 @@ class HttpPromisedResponse(private val call: Call) : Promise<Response>(), Callba
 
 		if (response.isSuccessful || !DebugFlag.isDebugCompilation || !logger.isDebugEnabled) return
 
-		response.body.use {
-			logger.debug("Response returned error code {} with response {}.", response.code, it.string())
-		}
+		logger.debug("Response returned error code {}.", response.code)
 	}
 
 	override fun cancellationRequested() = call.cancel()
