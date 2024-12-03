@@ -7,12 +7,11 @@ import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.NowPlay
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.view.viewmodels.NowPlayingCoverArtViewModel
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.LibraryPlaybackMessage
 import com.lasthopesoftware.bluewater.shared.UrlKeyHolder
-import com.lasthopesoftware.bluewater.shared.observables.filterNotNull
+import com.lasthopesoftware.bluewater.shared.observables.mapNotNull
 import com.lasthopesoftware.bluewater.shared.observables.toCloseable
 import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.RecordingApplicationMessageBus
-import com.lasthopesoftware.resources.emptyByteArray
 import com.namehillsoftware.handoff.promises.Promise
 import io.mockk.every
 import io.mockk.mockk
@@ -89,8 +88,8 @@ class `When the now playing file changes` {
 	fun act() {
 		val (messageBus, viewModel) = services
 
-		viewModel.isNowPlayingImageLoading.filterNotNull().subscribe(imageLoadingStates::add).toCloseable().use {
-			viewModel.nowPlayingImage.filterNotNull().subscribe(loadedImages::add).toCloseable().use {
+		viewModel.isNowPlayingImageLoading.mapNotNull().subscribe(imageLoadingStates::add).toCloseable().use {
+			viewModel.nowPlayingImage.mapNotNull().subscribe(loadedImages::add).toCloseable().use {
 				viewModel.initializeViewModel(LibraryId(libraryId)).toExpiringFuture().get()
 				messageBus.sendMessage(
 					LibraryPlaybackMessage.TrackChanged(
@@ -118,7 +117,6 @@ class `When the now playing file changes` {
 	@Test
 	fun `then the loaded images are correct`() {
 		assertThat(loadedImages).containsExactly(
-			emptyByteArray,
 			byteArrayOf(898.toByte(), 441.toByte(), 87.toByte(), 501.toByte()),
 			byteArrayOf(629.toByte(), 122),
 			byteArrayOf(898.toByte(), 441.toByte(), 87.toByte(), 501.toByte()),

@@ -61,7 +61,6 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -93,6 +92,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.indicateFocus
 import com.lasthopesoftware.bluewater.shared.android.ui.navigable
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
+import com.lasthopesoftware.bluewater.shared.android.ui.toImageBitmap
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
 import com.lasthopesoftware.bluewater.shared.observables.toMaybeObservable
 import io.reactivex.rxjava3.core.Observable
@@ -177,9 +177,7 @@ private fun CoverArtColumn(viewModel: FileDetailsViewModel, mediaStylePalette: M
 				derivedStateOf {
 					coverArtBitmap
 						.takeIf { it.isNotEmpty() }
-						?.let {
-							BitmapFactory.decodeByteArray(it, 0, it.size).asImageBitmap()
-						}
+						?.toImageBitmap()
 				}
 			}
 
@@ -606,10 +604,7 @@ fun FileDetailsView(viewModel: FileDetailsViewModel, navigateApplication: Naviga
 						derivedStateOf {
 							coverArtBitmap
 								.takeIf { it.isNotEmpty() }
-								?.let {
-									BitmapFactory.decodeByteArray(it, 0, it.size)
-								}
-								?.asImageBitmap()
+								?.toImageBitmap()
 						}
 					}
 

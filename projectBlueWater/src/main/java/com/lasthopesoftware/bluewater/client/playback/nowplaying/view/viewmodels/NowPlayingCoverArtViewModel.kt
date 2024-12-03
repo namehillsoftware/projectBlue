@@ -14,7 +14,9 @@ import com.lasthopesoftware.bluewater.shared.images.bytes.GetImageBytes
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
+import com.lasthopesoftware.bluewater.shared.observables.LiftedInteractionState
 import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
+import com.lasthopesoftware.bluewater.shared.observables.toMaybeObservable
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.lasthopesoftware.resources.emptyByteArray
 import com.namehillsoftware.handoff.promises.Promise
@@ -48,10 +50,16 @@ class NowPlayingCoverArtViewModel(
 	private var cachedPromises: CachedPromises? = null
 
 	val isNowPlayingImageLoading = isNowPlayingImageLoadingState.asInteractionState()
-	val nowPlayingImage = nowPlayingImageState.asInteractionState()
+	val nowPlayingImage = LiftedInteractionState(
+		promisedDefaultImage
+			.toMaybeObservable()
+			.toObservable()
+			.concatWith(nowPlayingImageState.filter { it.value.isNotEmpty() }.map { it.value }),
+		emptyByteArray)
 
 	override fun onCleared() {
 		cachedPromises?.close()
+		nowPlayingImage.close()
 		trackChangedSubscription.close()
 		playlistChangedSubscription.close()
 	}

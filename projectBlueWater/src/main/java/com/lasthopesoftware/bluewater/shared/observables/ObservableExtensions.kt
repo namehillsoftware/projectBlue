@@ -8,4 +8,4 @@ fun Disposable.toCloseable() = AutoCloseable { dispose() }
 
 fun <T> InteractionState<T>.asInteractionState() = this
 
-fun <T> Observable<NullBox<T>>.filterNotNull() = filter { it.value != null }.map { it.value!! }
+fun <T> Observable<NullBox<T>>.mapNotNull() = filter { it.value != null }.map { it.value!! }
