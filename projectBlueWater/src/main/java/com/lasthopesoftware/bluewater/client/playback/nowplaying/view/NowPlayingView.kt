@@ -1,6 +1,5 @@
 package com.lasthopesoftware.bluewater.client.playback.nowplaying.view
 
-import android.graphics.BitmapFactory
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.SplineBasedFloatDecayAnimationSpec
 import androidx.compose.animation.core.exponentialDecay
@@ -65,7 +64,6 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
@@ -104,6 +102,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.navigable
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.ControlSurface
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.Dimensions
 import com.lasthopesoftware.bluewater.shared.android.ui.theme.SharedColors
+import com.lasthopesoftware.bluewater.shared.android.ui.toImageBitmap
 import com.lasthopesoftware.bluewater.shared.android.viewmodels.PooledCloseablesViewModel
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.observables.subscribeAsState
@@ -120,51 +119,29 @@ fun NowPlayingCoverArtView(nowPlayingCoverArtViewModel: NowPlayingCoverArtViewMo
 	Box(
 		modifier = Modifier.fillMaxSize()
 	) {
-		val defaultImage by nowPlayingCoverArtViewModel.defaultImage.subscribeAsState()
-		val defaultImageBitmap by remember {
-			derivedStateOf {
-				defaultImage
-					.takeIf { it.isNotEmpty() }
-					?.let { BitmapFactory.decodeByteArray(it, 0, it.size) }
-					?.asImageBitmap()
-			}
-		}
-		defaultImageBitmap?.let {
-			Image(
-				bitmap = it,
-				contentDescription = stringResource(id = R.string.img_now_playing_loading),
-				contentScale = ContentScale.Crop,
-				alignment = Alignment.Center,
-				modifier = Modifier.fillMaxSize(),
-			)
-		}
-
 		val isLoadingImage by nowPlayingCoverArtViewModel.isNowPlayingImageLoading.subscribeAsState()
-		if (isLoadingImage) {
-			CircularProgressIndicator(
-				modifier = Modifier.align(Alignment.Center)
-			)
-		} else {
-			val coverArt by nowPlayingCoverArtViewModel.nowPlayingImage.subscribeAsState()
-			val coverArtState by remember {
-				derivedStateOf {
-					coverArt
-						.takeIf { it.isNotEmpty() }
-						?.let {
-							BitmapFactory.decodeByteArray(it, 0, it.size).asImageBitmap()
-						}
-				}
+
+		val coverArt by nowPlayingCoverArtViewModel.nowPlayingImage.subscribeAsState()
+		val coverArtBitmap by remember {
+			derivedStateOf {
+				coverArt
+					.takeIf { it.isNotEmpty() }
+					?.toImageBitmap()
 			}
-			coverArtState
-				?.let {
-					Image(
-						bitmap = it,
-						contentDescription = stringResource(id = R.string.img_now_playing),
-						contentScale = ContentScale.Crop,
-						alignment = Alignment.Center,
-						modifier = Modifier.fillMaxSize(),
-					)
-				}
+		}
+		coverArtBitmap
+			?.let {
+				Image(
+					bitmap = it,
+					contentDescription = stringResource(id = R.string.img_now_playing),
+					contentScale = ContentScale.Crop,
+					alignment = Alignment.Center,
+					modifier = Modifier.fillMaxSize(),
+				)
+			}
+
+		if (isLoadingImage) {
+			CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
 		}
 	}
 }

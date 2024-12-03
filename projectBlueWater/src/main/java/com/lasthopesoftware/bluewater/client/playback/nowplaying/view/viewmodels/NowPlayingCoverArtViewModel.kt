@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
 import com.lasthopesoftware.bluewater.client.connection.ConnectionLostExceptionFilter
-import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideLibraryConnections
+import com.lasthopesoftware.bluewater.client.connection.libraries.ProvideUrlKey
 import com.lasthopesoftware.bluewater.client.connection.polling.PollForLibraryConnections
 import com.lasthopesoftware.bluewater.client.playback.nowplaying.storage.GetNowPlayingState
 import com.lasthopesoftware.bluewater.client.playback.service.broadcasters.messages.LibraryPlaybackMessage
@@ -16,7 +16,6 @@ import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApp
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
 import com.lasthopesoftware.bluewater.shared.observables.MutableInteractionState
 import com.lasthopesoftware.promises.extensions.toPromise
-import com.lasthopesoftware.promises.extensions.unitResponse
 import com.lasthopesoftware.resources.emptyByteArray
 import com.namehillsoftware.handoff.promises.Promise
 import java.util.concurrent.CancellationException
@@ -26,7 +25,7 @@ private val logger by lazyLogger<NowPlayingCoverArtViewModel>()
 class NowPlayingCoverArtViewModel(
 	applicationMessage: RegisterForApplicationMessages,
 	private val nowPlayingRepository: GetNowPlayingState,
-	private val libraryConnectionProvider: ProvideLibraryConnections,
+	private val provideUrlKey: ProvideUrlKey,
 	private val defaultImageProvider: ProvideDefaultImage,
 	private val imageProvider: GetImageBytes,
 	private val pollConnections: PollForLibraryConnections,
@@ -40,17 +39,16 @@ class NowPlayingCoverArtViewModel(
 		setViewIfLibraryIsCorrect(m.libraryId)
 	}
 
-	private val promisedDefaultImage by lazy { defaultImageProvider.promiseImageBytes() }
 	private val isNowPlayingImageLoadingState = MutableInteractionState(false)
-	private val defaultImageState = MutableInteractionState(emptyByteArray)
 	private val nowPlayingImageState = MutableInteractionState(emptyByteArray)
+
+	private val promisedDefaultImage by lazy { defaultImageProvider.promiseImageBytes() }
 
 	private var activeLibraryId: LibraryId? = null
 	private var cachedPromises: CachedPromises? = null
 
 	val isNowPlayingImageLoading = isNowPlayingImageLoadingState.asInteractionState()
 	val nowPlayingImage = nowPlayingImageState.asInteractionState()
-	val defaultImage = defaultImageState.asInteractionState()
 
 	override fun onCleared() {
 		cachedPromises?.close()
@@ -60,10 +58,7 @@ class NowPlayingCoverArtViewModel(
 
 	fun initializeViewModel(libraryId: LibraryId): Promise<Unit> {
 		activeLibraryId = libraryId
-		return Promise.whenAll(
-			setView(libraryId),
-			promisedDefaultImage.then { it -> defaultImageState.value = it }
-		).unitResponse()
+		return setView(libraryId)
 	}
 
 	private fun setViewIfLibraryIsCorrect(libraryId: LibraryId) {
@@ -72,13 +67,16 @@ class NowPlayingCoverArtViewModel(
 	}
 
 	private fun setView(libraryId: LibraryId): Promise<Unit> {
-		val promisedSetView = nowPlayingRepository
-			.promiseNowPlaying(libraryId)
-			.eventually { np ->
-				np?.playingFile?.run { setView(np.libraryId, serviceFile) } ?: run {
-					nowPlayingImageState.value = defaultImage.value
-					Unit.toPromise()
-				}
+		val promisedSetView = promisedDefaultImage
+			.eventually { defaultImage ->
+				nowPlayingRepository
+					.promiseNowPlaying(libraryId)
+					.eventually { np ->
+						np?.playingFile?.run { setView(np.libraryId, serviceFile) } ?: run {
+							nowPlayingImageState.value = defaultImage
+							Unit.toPromise()
+						}
+					}
 			}
 
 		promisedSetView.excuse { error -> logger.warn("An error occurred initializing `NowPlayingCoverArtViewModel`", error) }
@@ -101,11 +99,13 @@ class NowPlayingCoverArtViewModel(
 
 		fun setNowPlayingImage(cachedPromises: CachedPromises) {
 			isNowPlayingImageLoadingState.value = true
-			cachedPromises
-				.promisedImage
-				.eventually { bitmap ->
-					promisedDefaultImage
-						.then { default ->
+
+			promisedDefaultImage
+				.eventually { default ->
+					nowPlayingImageState.value = default
+					cachedPromises
+						.promisedImage
+						.then { bitmap ->
 							if (this.cachedPromises?.urlKeyHolder == cachedPromises.urlKeyHolder) {
 								nowPlayingImageState.value = bitmap.takeIf { it.isNotEmpty() } ?: default
 								isNowPlayingImageLoadingState.value = false
@@ -121,12 +121,9 @@ class NowPlayingCoverArtViewModel(
 				}
 		}
 
-		return libraryConnectionProvider
-			.promiseLibraryConnection(libraryId)
-			.then { connectionProvider ->
-				val baseUrl = connectionProvider?.urlProvider?.baseUrl ?: return@then
-
-				val urlKeyHolder = UrlKeyHolder(baseUrl, serviceFile)
+		return provideUrlKey
+			.promiseGuaranteedUrlKey(libraryId, serviceFile)
+			.then { urlKeyHolder ->
 				if (cachedPromises?.urlKeyHolder == urlKeyHolder) return@then
 
 				cachedPromises?.close()

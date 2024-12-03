@@ -173,11 +173,11 @@ class NowPlayingFilePropertiesViewModel(
 				.delay<Any?>(screenControlVisibilityTime)
 				.also(cp::doCancel)
 				.then(
-					{ _ ->
-						if (!cp.isCancelled)
+					{ _, cs ->
+						if (!cs.isCancelled)
 							isScreenControlsVisibleState.value = false
 					},
-					{
+					{ _, _ ->
 						// ignored - handle to avoid excessive logging
 					}
 				)
