@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.browsing.files.image
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import androidx.core.graphics.scale
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
 import com.lasthopesoftware.bluewater.client.browsing.library.repository.LibraryId
@@ -14,7 +15,7 @@ import com.namehillsoftware.handoff.promises.Promise
 import com.namehillsoftware.handoff.promises.queued.QueuedPromise
 import com.namehillsoftware.handoff.promises.queued.cancellation.CancellableMessageWriter
 import com.namehillsoftware.handoff.promises.response.PromisedResponse
-import java.nio.ByteBuffer
+import java.io.ByteArrayOutputStream
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.max
 import kotlin.math.min
@@ -68,8 +69,7 @@ class ScaledImageProvider(
 
 					if (signal.isCancelled) throw cancellationException()
 
-					val scaledBitmap = Bitmap.createScaledBitmap(
-						image,
+					val scaledBitmap = image.scale(
 						image.width.scaleInteger(minimumShrink),
 						image.height.scaleInteger(minimumShrink),
 						true
@@ -78,10 +78,10 @@ class ScaledImageProvider(
 					if (signal.isCancelled) throw cancellationException()
 
 					val byteArraySize = scaledBitmap.rowBytes * scaledBitmap.height
-					val byteBuffer = ByteBuffer.allocate(byteArraySize)
-					scaledBitmap.copyPixelsToBuffer(byteBuffer)
-					byteBuffer.rewind()
-					byteBuffer.array()
+					ByteArrayOutputStream(byteArraySize).use {
+						scaledBitmap.compress(Bitmap.CompressFormat.PNG, 100, it)
+						it.toByteArray()
+					}
 				}
 				?: inputBytes
 		}
