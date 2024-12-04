@@ -29,7 +29,6 @@ import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApp
 import com.lasthopesoftware.bluewater.shared.messages.application.SendApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.application.getScopedMessageBus
 import com.lasthopesoftware.resources.closables.ViewModelCloseableManager
-import com.lasthopesoftware.resources.strings.StringResources
 import com.lasthopesoftware.resources.uri.DocumentUriSelector
 
 @UnstableApi
@@ -76,8 +75,6 @@ class ActivityDependencies(
 	}
 
 	override val storedFileAccess by lazy { StoredFileAccess(applicationContext) }
-
-	override val stringResources by lazy { StringResources(applicationContext) }
 
 	override val applicationNavigation by lazy {
 		ActivityApplicationNavigation(

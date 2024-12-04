@@ -59,7 +59,7 @@ class ScopedViewModelRegistry(
 	override val fileDetailsViewModel by viewModelStoreOwner.buildViewModelLazily {
 		FileDetailsViewModel(
 			connectionPermissions = ConnectionAuthenticationChecker(libraryConnectionProvider),
-			filePropertiesProvider = EditableLibraryFilePropertiesProvider(libraryFilePropertiesProvider),
+			filePropertiesProvider = EditableLibraryFilePropertiesProvider(freshLibraryFileProperties),
 			updateFileProperties = filePropertiesStorage,
 			defaultImageProvider = defaultImageProvider,
 			imageProvider = imageBytesProvider,

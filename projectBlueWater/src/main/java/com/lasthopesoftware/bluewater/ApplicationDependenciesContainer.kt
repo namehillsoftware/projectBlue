@@ -27,6 +27,7 @@ import com.lasthopesoftware.bluewater.shared.images.DefaultImageProvider
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.application.SendApplicationMessages
+import com.lasthopesoftware.resources.strings.StringResources
 
 object ApplicationDependenciesContainer {
 
@@ -118,5 +119,7 @@ object ApplicationDependenciesContainer {
 		}
 
 		override val screenDimensions by lazy { ScreenDimensions(context) }
+
+		override val stringResources by lazy { StringResources(context) }
 	}
 }

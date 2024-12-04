@@ -15,6 +15,7 @@ import com.lasthopesoftware.bluewater.shared.android.ui.ProvideScreenDimensions
 import com.lasthopesoftware.bluewater.shared.images.ProvideDefaultImage
 import com.lasthopesoftware.bluewater.shared.messages.application.RegisterForApplicationMessages
 import com.lasthopesoftware.bluewater.shared.messages.application.SendApplicationMessages
+import com.lasthopesoftware.resources.strings.GetStringResources
 
 interface ApplicationDependencies {
 	val libraryProvider: ILibraryProvider
@@ -32,5 +33,6 @@ interface ApplicationDependencies {
 	val imageDiskFileCache: DiskFileCache
 	val screenDimensions: ProvideScreenDimensions
 	val selectedLibraryIdProvider: ProvideSelectedLibraryId
+	val stringResources: GetStringResources
 }
 

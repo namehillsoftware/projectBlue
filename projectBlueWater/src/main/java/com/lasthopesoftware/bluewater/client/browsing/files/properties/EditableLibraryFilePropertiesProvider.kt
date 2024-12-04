@@ -25,7 +25,7 @@ private fun buildProperties(rawProperties: Map<String, String>): Sequence<FilePr
 	}
 }
 
-class EditableLibraryFilePropertiesProvider(private val inner: ProvideLibraryFileProperties): ProvideEditableLibraryFileProperties {
+class EditableLibraryFilePropertiesProvider(private val inner: ProvideFreshLibraryFileProperties): ProvideEditableLibraryFileProperties {
 	override fun promiseFileProperties(libraryId: LibraryId, serviceFile: ServiceFile): Promise<Sequence<FileProperty>> =
 		Promise.Proxy { cp ->
 			inner
