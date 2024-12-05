@@ -12,7 +12,7 @@ import androidx.core.view.WindowCompat
 import androidx.media3.common.util.UnstableApi
 import com.lasthopesoftware.bluewater.ActivityApplicationNavigation
 import com.lasthopesoftware.bluewater.ApplicationDependenciesContainer.applicationDependencies
-import com.lasthopesoftware.bluewater.RetryingLibraryConnectedDependencies
+import com.lasthopesoftware.bluewater.RetryingLibraryConnectionRegistry
 import com.lasthopesoftware.bluewater.android.intents.safelyGetParcelableExtra
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.files.properties.EditableLibraryFilePropertiesProvider
@@ -40,7 +40,7 @@ import java.io.IOException
 	}
 
 	private val libraryConnectedDependencies by lazy {
-		RetryingLibraryConnectedDependencies(applicationDependencies)
+		RetryingLibraryConnectionRegistry(applicationDependencies)
 	}
 
 	private val filePropertiesProvider by lazy {

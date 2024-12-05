@@ -2,6 +2,7 @@ package com.lasthopesoftware.bluewater.client.browsing.files.image
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.os.Build
 import androidx.core.graphics.scale
 import com.lasthopesoftware.bluewater.client.browsing.files.ServiceFile
 import com.lasthopesoftware.bluewater.client.browsing.items.ItemId
@@ -67,6 +68,13 @@ class ScaledImageProvider(
 					val minimumImageDimension = min(image.width, image.height).toDouble()
 					val minimumShrink = maximumScreenDimension / minimumImageDimension
 
+					val compressFormat = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+						Bitmap.CompressFormat.WEBP_LOSSLESS
+					} else {
+						@Suppress("DEPRECATION")
+						Bitmap.CompressFormat.WEBP
+					}
+
 					if (signal.isCancelled) throw cancellationException()
 
 					val scaledBitmap = image.scale(
@@ -79,7 +87,7 @@ class ScaledImageProvider(
 
 					val byteArraySize = scaledBitmap.rowBytes * scaledBitmap.height
 					ByteArrayOutputStream(byteArraySize).use {
-						scaledBitmap.compress(Bitmap.CompressFormat.PNG, 100, it)
+						scaledBitmap.compress(compressFormat, 100, it)
 						it.toByteArray()
 					}
 				}

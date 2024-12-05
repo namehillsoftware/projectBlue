@@ -35,7 +35,7 @@ import com.lasthopesoftware.bluewater.shared.images.bytes.cache.ImageCacheKeyLoo
 import com.lasthopesoftware.policies.retries.RateLimitingExecutionPolicy
 import com.lasthopesoftware.policies.retries.RetryExecutionPolicy
 
-open class LibraryConnectedDependencies(
+open class LibraryConnectionRegistry(
 	application: ApplicationDependencies
 ) : LibraryConnectionDependencies {
 	private val libraryFileStringListProvider by lazy { LibraryFileStringListProvider(application.libraryConnectionProvider) }
@@ -49,11 +49,7 @@ open class LibraryConnectedDependencies(
 	override val connectionAuthenticationChecker by lazy { ConnectionAuthenticationChecker(application.libraryConnectionProvider) }
 
 	override val freshLibraryFileProperties: ProvideFreshLibraryFileProperties by lazy {
-		FilePropertiesProvider(
-			guaranteedLibraryConnectionProvider,
-			revisionProvider,
-			FilePropertyCache,
-		)
+		FilePropertiesProvider(guaranteedLibraryConnectionProvider, revisionProvider, FilePropertyCache)
 	}
 
 	override val libraryFilePropertiesProvider by lazy {
@@ -67,19 +63,24 @@ open class LibraryConnectedDependencies(
 	override val imageCacheKeyLookup by lazy { ImageCacheKeyLookup(libraryFilePropertiesProvider) }
 
 	override val imageBytesProvider by lazy {
-		val diskImageProvider = DiskCacheImageAccess(
+		val scaledSourceImageProvider = ScaledImageProvider(
 			RemoteImageAccess(application.libraryConnectionProvider),
+			application.screenDimensions,
+		)
+
+		val diskImageProvider = DiskCacheImageAccess(
+			scaledSourceImageProvider,
 			imageCacheKeyLookup,
 			application.imageDiskFileCache
 		)
 
-		val scaledImageProvider = ScaledImageProvider(
+		val scaledDiskImageProvider = ScaledImageProvider(
 			diskImageProvider,
 			application.screenDimensions,
 		)
 
 		CachedImageProvider(
-			scaledImageProvider,
+			scaledDiskImageProvider,
 			imageCacheKeyLookup
 		)
 	}
@@ -128,9 +129,9 @@ open class LibraryConnectedDependencies(
 	}
 }
 
-open class RetryingLibraryConnectedDependencies(
+open class RetryingLibraryConnectionRegistry(
 	application: ApplicationDependencies,
-) : LibraryConnectedDependencies(application) {
+) : LibraryConnectionRegistry(application) {
 	private val connectionLostRetryPolicy by lazy { RetryExecutionPolicy(ConnectionLostRetryHandler) }
 
 	override val freshLibraryFileProperties by lazy {
@@ -158,7 +159,7 @@ open class RetryingLibraryConnectedDependencies(
 open class RateLimitedFilePropertiesDependencies(
 	application: ApplicationDependencies,
 	private val filePropertiesRatePolicy: RateLimitingExecutionPolicy,
-) : RetryingLibraryConnectedDependencies(application) {
+) : RetryingLibraryConnectionRegistry(application) {
 	override val freshLibraryFileProperties by lazy {
 		DelegatingFilePropertiesProvider(
 			super.freshLibraryFileProperties,
