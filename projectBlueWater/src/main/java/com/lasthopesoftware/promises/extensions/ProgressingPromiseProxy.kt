@@ -8,15 +8,6 @@ open class ProgressingPromiseProxy<Progress, Resolution> protected constructor()
 	private val cancellationProxy = CancellationProxy()
 	private val proxyResolution = ImmediateResponse<Resolution, Unit> { resolve(it) }
 	private val proxyRejection = ImmediateResponse<Throwable, Unit> { reject(it) }
-	private val proxyUpdates = object : ImmediateResponse<Progress, Unit>, (Progress) -> Unit {
-		override fun respond(resolution: Progress) {
-			if (resolution != null) reportProgress(resolution)
-		}
-
-		override fun invoke(progress: Progress) {
-			reportProgress(progress)
-		}
-	}
 
 	constructor(source: ProgressingPromise<Progress, Resolution>) : this() {
 		proxy(source)
@@ -53,7 +44,15 @@ open class ProgressingPromiseProxy<Progress, Resolution> protected constructor()
 	}
 
 	protected fun proxyUpdates(source: ProgressingPromise<Progress, *>) {
-		source.progress.then(proxyUpdates)
-		source.updates(proxyUpdates)
+		source.progress.then(object : ImmediateResponse<Progress, Unit>, (Progress) -> Unit {
+			override fun respond(resolution: Progress) {
+				reportProgress(resolution)
+				source.updates(this)
+			}
+
+			override fun invoke(progress: Progress) {
+				reportProgress(progress)
+			}
+		})
 	}
 }

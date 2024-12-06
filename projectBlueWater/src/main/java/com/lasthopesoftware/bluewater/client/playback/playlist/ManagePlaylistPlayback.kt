@@ -1,8 +1,8 @@
 package com.lasthopesoftware.bluewater.client.playback.playlist
 
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile
+import com.lasthopesoftware.promises.extensions.ProgressingPromise
 import com.namehillsoftware.handoff.promises.Promise
-import io.reactivex.rxjava3.core.Observable
 
 interface ManagePlaylistPlayback {
 	fun pause(): Promise<*>
@@ -11,7 +11,7 @@ interface ManagePlaylistPlayback {
 
 	fun haltPlayback(): Promise<*>
 
-	fun observe(): Observable<PositionedPlayingFile>
+	fun promisePlayedPlaylist(): ProgressingPromise<PositionedPlayingFile, Unit>
 
 	val isPlaying: Boolean
 }

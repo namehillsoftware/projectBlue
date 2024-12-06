@@ -14,6 +14,8 @@ import org.assertj.core.api.Assertions.assertThat
 import org.joda.time.Duration
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.TimeoutException
 
 class `When Halting Playback` {
 
@@ -39,13 +41,16 @@ class `When Halting Playback` {
 	fun act() {
 		val playlistPlayback = mut
 		playlistPlayback.resume()
-		val disposable = playlistPlayback.observe().subscribe(
-			{},
-			{ e -> exception = e },
-			{ isCompleted = true }
-		)
+		val promisedPlayback = playlistPlayback.promisePlayedPlaylist().toExpiringFuture()
 		playlistPlayback.haltPlayback().toExpiringFuture().get()
-		disposable.dispose()
+		try {
+			promisedPlayback.get(3, TimeUnit.SECONDS)
+			isCompleted = false
+		} catch (e: TimeoutException) {
+			// ignore
+		} catch (e: Throwable) {
+			exception = e
+		}
 	}
 
 	@Test

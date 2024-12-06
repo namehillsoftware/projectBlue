@@ -76,7 +76,7 @@ class WhenRetrievingTheLibraryConnectionTwice {
 			connectionSessionManager
 				.promiseLibraryConnection(LibraryId(libraryId))
 				.apply {
-					progress.then { it -> if (it != null) statuses.add(it) }
+					progress.then(statuses::add)
 					updates(statuses::add)
 				}
 				.toExpiringFuture()
@@ -89,7 +89,7 @@ class WhenRetrievingTheLibraryConnectionTwice {
 			connectionSessionManager
 				.promiseLibraryConnection(LibraryId(libraryId))
 				.apply {
-					progress.then { it -> if (it != null) statuses.add(it) }
+					progress.then(statuses::add)
 					updates(statuses::add)
 				}
 				.toExpiringFuture()

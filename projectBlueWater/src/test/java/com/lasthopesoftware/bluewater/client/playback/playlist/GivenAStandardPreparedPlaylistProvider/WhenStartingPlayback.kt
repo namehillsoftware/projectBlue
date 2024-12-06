@@ -9,6 +9,7 @@ import com.lasthopesoftware.bluewater.client.playback.file.PlayingFile
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayableFile
 import com.lasthopesoftware.bluewater.client.playback.file.PositionedPlayingFile
 import com.lasthopesoftware.bluewater.client.playback.playlist.PlaylistPlayer
+import com.lasthopesoftware.bluewater.shared.promises.extensions.toExpiringFuture
 import com.lasthopesoftware.promises.extensions.ProgressingPromise
 import com.lasthopesoftware.promises.extensions.toPromise
 import com.namehillsoftware.handoff.promises.Promise
@@ -21,7 +22,7 @@ import org.junit.jupiter.api.Test
 import java.util.concurrent.TimeUnit
 
 class WhenStartingPlayback {
-	private var positionedPlayingFiles: List<PositionedPlayingFile>? = null
+	private val positionedPlayingFiles = mutableListOf<PositionedPlayingFile>()
 
 	@BeforeAll
 	fun before() {
@@ -59,15 +60,18 @@ class WhenStartingPlayback {
 
 		val playlistPlayer = PlaylistPlayer(preparedPlaybackFileQueue, Duration.ZERO)
 
-		val futurePositionedPlayingFiles = playlistPlayer.observe().toList().toFuture()
+		val futurePositionedPlayingFiles = playlistPlayer
+			.promisePlayedPlaylist()
+			.updates { positionedPlayingFiles.add(it) }
+			.toExpiringFuture()
 
 		playlistPlayer.resume()
 
-		positionedPlayingFiles = futurePositionedPlayingFiles.get(30, TimeUnit.SECONDS)
+		futurePositionedPlayingFiles.get(30, TimeUnit.SECONDS)
 	}
 
 	@Test
 	fun `then the playback count is correct`() {
-		assertThat(positionedPlayingFiles?.size).isEqualTo(5)
+		assertThat(positionedPlayingFiles.size).isEqualTo(5)
 	}
 }
