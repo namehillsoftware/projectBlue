@@ -47,9 +47,8 @@ class WhenChangingTracks {
 
 		val playlistPlayer = PlaylistPlayer(preparedPlaybackFileQueue, Duration.ZERO)
 		playlistPlayer.resume()
-        val subscription = playlistPlayer.observe().subscribe { this.positionedPlayingFile = it }
+        playlistPlayer.promisePlayedPlaylist().updates { this.positionedPlayingFile = it }
         playbackHandler.resolve()
-		subscription.dispose()
     }
 
     @Test

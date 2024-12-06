@@ -50,10 +50,7 @@ class WhenGettingATestedLibraryConnection {
 		val futureConnectionProvider =
 			mut
 				.promiseLibraryConnection(libraryId)
-				.apply {
-					progress.then { it -> if (it != null) statuses.add(it) }
-					updates(statuses::add)
-				}
+				.updates(statuses::add)
 				.toExpiringFuture()
 
 		firstDeferredConnectionProvider.apply {
@@ -70,7 +67,7 @@ class WhenGettingATestedLibraryConnection {
 			mut
 				.promiseTestedLibraryConnection(libraryId)
 				.apply {
-					progress.then { it -> if (it != null) statuses.add(it) }
+					progress.then { it -> statuses.add(it) }
 					updates(statuses::add)
 				}
 				.toExpiringFuture()

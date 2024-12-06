@@ -49,11 +49,10 @@ class WhenPlaybackIsPausedBeforeNextFileIsPrepared {
 
 		val playlistPlayer = PlaylistPlayer(preparedPlaybackFileQueue, Duration.ZERO)
 		playlistPlayer.resume()
-		val subscription = playlistPlayer.observe().subscribe { this.positionedPlayingFile = it }
+		playlistPlayer.promisePlayedPlaylist().updates { this.positionedPlayingFile = it }
 		playbackHandler.resolve()
 		playlistPlayer.pause()
 		secondPositionedPlaybackHandlerContainer.resolve()
-		subscription.dispose()
 	}
 
 	@Test
