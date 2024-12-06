@@ -40,7 +40,7 @@ import com.lasthopesoftware.bluewater.client.stored.sync.receivers.SyncItemState
 import com.lasthopesoftware.bluewater.settings.ApplicationSettingsUpdated
 import com.lasthopesoftware.bluewater.settings.repository.ApplicationSettings
 import com.lasthopesoftware.bluewater.settings.repository.access.CachingApplicationSettingsRepository.Companion.getApplicationSettingsRepository
-import com.lasthopesoftware.bluewater.shared.exceptions.LoggerUncaughtExceptionHandler
+import com.lasthopesoftware.bluewater.shared.exceptions.UncaughtExceptionHandlerLogger
 import com.lasthopesoftware.bluewater.shared.lazyLogger
 import com.lasthopesoftware.bluewater.shared.messages.application.ApplicationMessageBus.Companion.getApplicationMessageBus
 import com.lasthopesoftware.bluewater.shared.messages.registerReceiver
@@ -118,8 +118,8 @@ open class ProjectBlueApplication : Application() {
 
 		initializeLogging()
 
-		Thread.setDefaultUncaughtExceptionHandler(LoggerUncaughtExceptionHandler)
-		Promise.Rejections.setUnhandledRejectionsReceiver(LoggerUncaughtExceptionHandler)
+		Thread.setDefaultUncaughtExceptionHandler(UncaughtExceptionHandlerLogger)
+		Promise.Rejections.setUnhandledRejectionsReceiver(UncaughtExceptionHandlerLogger)
 
 		applicationSettings
 			.promiseApplicationSettings()

@@ -10,7 +10,7 @@ import java.util.concurrent.CancellationException
 private const val UnhandledCancellationException = "A CancellationException was unhandled"
 private const val UnhandledSocketClosedException = "A Socket closed exception was unhandled"
 
-object LoggerUncaughtExceptionHandler : Thread.UncaughtExceptionHandler, UnhandledRejectionsReceiver {
+object UncaughtExceptionHandlerLogger : Thread.UncaughtExceptionHandler, UnhandledRejectionsReceiver {
 
 	private val logger by lazy {
 		LoggerFactory.getLogger(javaClass).apply {
@@ -20,7 +20,7 @@ object LoggerUncaughtExceptionHandler : Thread.UncaughtExceptionHandler, Unhandl
 
 	override fun uncaughtException(thread: Thread, ex: Throwable) {
 		if (reportException(ex)) {
-			ThreadPools.exceptionsLogger.execute { logger.error("Uncaught Exception", ex) }
+			logger.error("Uncaught Exception", ex)
 		}
 	}
 
